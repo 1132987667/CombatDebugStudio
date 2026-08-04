@@ -11,7 +11,7 @@
  *
  * 静默规则：
  *   - 未触发的概率被动 → 完全省略
- *   - 伤害计算过程 → 只给最终值，暴击标 ★
+ *   - 伤害计算过程 → 只给最终值，暴击标 
  *   - 系统初始化日志 → 过滤
  */
 
@@ -98,7 +98,7 @@ export class RoundNarrativeRenderer {
     for (const e of entries) {
       const meta = e.meta ?? {}
 
-      // ★ 战斗开始/结束日志（role='battle'）走独立分支，不参与回合分组
+      //  战斗开始/结束日志（role='battle'）走独立分支，不参与回合分组
       if (meta.role === BattleLogMetaRole.BATTLE) {
         flushAll()
         blocks.push({
@@ -114,7 +114,7 @@ export class RoundNarrativeRenderer {
       if (turn !== currentTurn) {
         flushAll()
         flushRound()
-        // ★ 防止 turn: 0 产生“第 0 回合”分隔线
+        //  防止 turn: 0 产生“第 0 回合”分隔线
         if (turn > 0) {
           const roundBlock: Extract<
             BattleLogNarrativeBlock,
@@ -126,11 +126,16 @@ export class RoundNarrativeRenderer {
         currentTurn = turn
       }
 
-      // ★ 主循环状态收集（替代事后推断）：消费 meta 显式语义，回合切换时即得标签
+      //  主循环状态收集（替代事后推断）：消费 meta 显式语义，回合切换时即得标签
       if (meta.role === BattleLogMetaRole.ACTION && meta.kill) {
         roundHasKill = true
       } else if (meta.role === BattleLogMetaRole.SUB) {
-        roundSubCount++
+        // NOTE: "多重触发"仅统计被动效果 sub（segments 首段 kind='passive'），
+        //       排除"受到伤害"等结算行——否则 1 次普攻（受击+被动）就被误标为多重触发
+        const isPassive = (e.segments ?? []).some(
+          (s) => s.kind === 'passive',
+        )
+        if (isPassive) roundSubCount++
       }
 
       switch (meta.role) {

@@ -151,7 +151,7 @@ export function escapeHtml(text: string): string {
 /**
  * 导出专用 CSS — 提取自 tokens.scss + _battle-log.scss，自包含供离线查看。
  *
- * ⚠️ 双源同步检查清单：此常量是 SCSS 令牌体系的"快照"，不参与构建。
+ *  双源同步检查清单：此常量是 SCSS 令牌体系的"快照"，不参与构建。
  *    修改 SCSS 中以下内容时，必须手动同步此处（grep "EXPORT_CSS" 定位）：
  *    - 颜色令牌: --color-bg-primary/-secondary/-tertiary, --color-text-primary/
  *      -secondary/-tertiary, --color-border-default/-tertiary, --color-success,
@@ -252,7 +252,7 @@ body { margin:0; background:var(--color-bg-primary); color:var(--color-text-prim
 .battle-block > summary { cursor:pointer; padding:8px 12px; color:var(--color-text-secondary);
   user-select:none; list-style:none; }
 .battle-block > summary::-webkit-details-marker { display:none; }
-.battle-block > summary::before { content:'▶ '; color:var(--color-info); }
+.battle-block > summary::before { content:'▸ '; color:var(--color-info); }
 .battle-block[open] > summary::before { content:'▼ '; }
 .battle-block > summary:hover { background:rgba(255,255,255,0.04); }
 .battle-body { padding:8px 12px 12px; border-top:1px solid var(--color-border-default); }

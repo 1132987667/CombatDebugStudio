@@ -111,7 +111,7 @@ $transition-fast: var(--transition-fast);
   --alpha-glow: 0.5; /* 辉光、投影、脉冲 */
 
   /* ═══ 机制三：语义补全 —— 收编当前裸奔的色值 ═══ */
-  --color-energy: #22d3ee; /* ⚠ 原 #1099ae，改判给事实标准青 */
+  --color-energy: #22d3ee; /* 原 #1099ae，改判给事实标准青 */
   --color-energy-deep: #0a7f91; /* 深青：渐变端点、选中态、元素标签 */
   --color-selected: var(--color-energy-deep);
   --color-crit-glow: rgba(var(--rgb-warning), var(--alpha-glow));
@@ -252,6 +252,8 @@ $transition-fast: var(--transition-fast);
   --color-bg-primary: #f0f2f5;
   --color-bg-secondary: #ffffff;
   --color-bg-tertiary: #e8eaf0;
+  --color-bg-tertiary-hover: #d9dee8; /* 浅色 hover 略深，与暗色主题 ΔL 方向相反 */
+  --color-bg-tertiary-active: #cfd6e2;
 
   --color-text-primary: #1a1a2e;
   --color-text-secondary: #444444;
@@ -262,6 +264,8 @@ $transition-fast: var(--transition-fast);
 
   --color-border-default: #d0d5dd;
   --color-border-tertiary: #b0b8c4;
+  --color-border-tertiary-hover: #7c8aa0;
+  --color-border-tertiary-active: #1976e1;
 
   --color-brand-red: #e94560;
   --color-brand-red-hover: #d63350;

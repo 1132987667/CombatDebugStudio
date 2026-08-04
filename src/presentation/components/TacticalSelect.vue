@@ -7,24 +7,12 @@
 * 依赖: tokens.scss 设计令牌；无额外 JS 依赖
 -->
 <template>
-  <div
-    ref="rootRef"
-    class="t-select"
-    :class="[`t-select--${size}`, { 'is-open': open, 'is-disabled': disabled }]"
-  >
+  <div ref="rootRef" class="t-select" :class="[`t-select--${size}`, { 'is-open': open, 'is-disabled': disabled }]">
     <!-- ═══ 触发器 ═══ -->
-    <div
-      ref="triggerRef"
-      class="t-select__trigger"
-      role="combobox"
-      tabindex="0"
-      aria-haspopup="listbox"
-      :aria-expanded="open"
-      :aria-disabled="disabled"
-      :aria-activedescendant="open && highlightedIndex >= 0 ? optionIdOf(highlightedIndex) : undefined"
-      @click="toggle"
-      @keydown="onKeydown"
-    >
+    <div ref="triggerRef" class="t-select__trigger" role="combobox" tabindex="0" aria-haspopup="listbox"
+      :aria-expanded="open" :aria-disabled="disabled"
+      :aria-activedescendant="open && highlightedIndex >= 0 ? optionIdOf(highlightedIndex) : undefined" @click="toggle"
+      @keydown="onKeydown">
       <i class="t-select__tick t-select__tick--tl" aria-hidden="true"></i>
       <i class="t-select__tick t-select__tick--br" aria-hidden="true"></i>
 
@@ -38,18 +26,12 @@
       </span>
 
       <span class="t-select__ops">
-        <button
-          v-if="clearable && selected && !disabled"
-          type="button"
-          class="t-select__clear"
-          title="清空"
-          @click.stop="onClear"
-          @keydown.enter.stop="onClear"
-        >×</button>
-        <svg class="t-select__chevron" :class="{ 'is-flipped': open }"
-          viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-          <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor"
-            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <button v-if="clearable && selected && !disabled" type="button" class="t-select__clear" title="清空"
+          @click.stop="onClear" @keydown.enter.stop="onClear">×</button>
+        <svg class="t-select__chevron" :class="{ 'is-flipped': open }" viewBox="0 0 12 12" width="12" height="12"
+          aria-hidden="true">
+          <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
       </span>
     </div>
@@ -57,13 +39,8 @@
     <!-- ═══ 下拉面板（Teleport 避免被祖先 overflow 裁剪） ═══ -->
     <Teleport to="body">
       <Transition name="t-panel">
-        <div
-          v-if="open"
-          ref="panelRef"
-          class="t-select__panel"
-          :class="{ 't-select__panel--up': dropUp }"
-          :style="panelStyle"
-        >
+        <div v-if="open" ref="panelRef" class="t-select__panel" :class="{ 't-select__panel--up': dropUp }"
+          :style="panelStyle">
           <i class="t-select__corner t-select__corner--tl" aria-hidden="true"></i>
           <i class="t-select__corner t-select__corner--tr" aria-hidden="true"></i>
           <i class="t-select__corner t-select__corner--bl" aria-hidden="true"></i>
@@ -72,14 +49,8 @@
 
           <div v-if="searchable" class="t-select__search">
             <span class="t-select__search-glyph" aria-hidden="true">⌕</span>
-            <input
-              ref="searchRef"
-              v-model="query"
-              class="t-select__search-input"
-              type="text"
-              placeholder="筛选选项…"
-              @keydown="onKeydown"
-            />
+            <input ref="searchRef" v-model="query" class="t-select__search-input" type="text" placeholder="筛选选项…"
+              @keydown="onKeydown" />
             <span v-if="query" class="t-select__search-count">{{ visibleFlat.length }}</span>
           </div>
 
@@ -96,23 +67,13 @@
                   <span class="t-select__group-dot" aria-hidden="true"></span>{{ g.label }}
                   <span class="t-select__group-rule" aria-hidden="true"></span>
                 </div>
-                <div
-                  v-for="opt in g.options"
-                  :key="String(opt.value)"
-                  :id="optionIdOf(opt._index)"
-                  :data-index="opt._index"
-                  class="t-select__option"
-                  :class="{
+                <div v-for="opt in g.options" :key="String(opt.value)" :id="optionIdOf(opt._index)"
+                  :data-index="opt._index" class="t-select__option" :class="{
                     'is-selected': isSelected(opt),
                     'is-highlighted': highlightedIndex === opt._index,
                     'is-disabled': opt.disabled,
-                  }"
-                  role="option"
-                  :aria-selected="isSelected(opt)"
-                  :aria-disabled="opt.disabled || undefined"
-                  @click="choose(opt)"
-                  @mouseenter="highlightedIndex = opt._index"
-                >
+                  }" role="option" :aria-selected="isSelected(opt)" :aria-disabled="opt.disabled || undefined"
+                  @click="choose(opt)" @mouseenter="highlightedIndex = opt._index">
                   <span class="t-select__option-rail" aria-hidden="true"></span>
                   <span v-if="opt.icon" class="t-select__option-icon">{{ opt.icon }}</span>
                   <span class="t-select__option-label" :title="opt.label">{{ opt.label }}</span>
@@ -164,6 +125,9 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  // NOTE: modelValue 默认 null —— 父组件绑定时若意外为 undefined（如 reactive 动态键缺失），
+  // Vue 会以默认值替换并跳过类型检查；null 与 undefined 在本组件语义等价（显示 placeholder）。
+  modelValue: null,
   placeholder: '请选择',
   disabled: false,
   clearable: false,
@@ -359,16 +323,20 @@ function onKeydown(e: KeyboardEvent) {
     case 'Enter':
       e.preventDefault()
       if (!open.value) { setOpen(true); return }
-      { const opt = visibleFlat.value[highlightedIndex.value]
-        if (opt && !opt.disabled) choose(opt) }
+      {
+        const opt = visibleFlat.value[highlightedIndex.value]
+        if (opt && !opt.disabled) choose(opt)
+      }
       break
     case ' ':
       // P1-2: 搜索框内空格正常输入
       if (inInput) return
       e.preventDefault()
       if (!open.value) { setOpen(true); return }
-      { const opt = visibleFlat.value[highlightedIndex.value]
-        if (opt && !opt.disabled) choose(opt) }
+      {
+        const opt = visibleFlat.value[highlightedIndex.value]
+        if (opt && !opt.disabled) choose(opt)
+      }
       break
     case 'Escape':
       if (open.value) { e.preventDefault(); close() }
@@ -448,7 +416,7 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
 .t-select {
   position: relative;
   display: inline-flex;
-  width: 100%;
+  width: 8rem;
   font-family: var(--font-family-base);
   --accent: var(--color-energy);
   --accent-rgb: var(--rgb-energy);
@@ -473,20 +441,34 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-.t-select--md .t-select__trigger { min-height: 34px; font-size: var(--font-size-md); }
-.t-select--sm .t-select__trigger { min-height: 26px; font-size: var(--font-size-sm); padding: 0 var(--space-2); }
 
-.t-select__trigger:hover { border-color: var(--color-border-tertiary-hover); }
+.t-select--md .t-select__trigger {
+  min-height: 34px;
+  font-size: var(--font-size-md);
+}
+
+.t-select--sm .t-select__trigger {
+  min-height: 26px;
+  font-size: var(--font-size-sm);
+  padding: 0 var(--space-2);
+}
+
+.t-select__trigger:hover {
+  border-color: var(--color-border-tertiary-hover);
+}
+
 .t-select__trigger:focus-visible {
   border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px rgba(var(--rgb-info), var(--alpha-wash-strong));
 }
+
 .t-select.is-open .t-select__trigger {
   border-color: var(--accent);
   box-shadow:
     0 0 12px rgba(var(--accent-rgb), var(--alpha-wash-strong)),
     inset 0 0 10px rgba(var(--accent-rgb), var(--alpha-tint));
 }
+
 .t-select.is-disabled .t-select__trigger {
   color: var(--color-text-disabled);
   cursor: not-allowed;
@@ -502,9 +484,26 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   pointer-events: none;
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
-.t-select__tick--tl { top: 3px; left: 3px; border-top-width: 1px; border-left-width: 1px; }
-.t-select__tick--br { bottom: 3px; right: 3px; border-bottom-width: 1px; border-right-width: 1px; }
-.t-select.is-open .t-select__tick { width: 8px; height: 8px; border-color: var(--accent); }
+
+.t-select__tick--tl {
+  top: 3px;
+  left: 3px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.t-select__tick--br {
+  bottom: 3px;
+  right: 3px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.t-select.is-open .t-select__tick {
+  width: 8px;
+  height: 8px;
+  border-color: var(--accent);
+}
 
 /* 值区 */
 .t-select__value {
@@ -514,13 +513,34 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   flex: 1;
   min-width: 0;
 }
-.t-select__value.is-placeholder { color: var(--color-text-tertiary); }
-.t-select__value-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.t-select__value-icon { flex-shrink: 0; }
-.t-select__value-hint { flex-shrink: 0; color: var(--color-text-tertiary); font-size: var(--font-size-xs); }
+
+.t-select__value.is-placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.t-select__value-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.t-select__value-icon {
+  flex-shrink: 0;
+}
+
+.t-select__value-hint {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
 
 /* 右侧控件 */
-.t-select__ops { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }
+.t-select__ops {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
 .t-select__clear {
   display: inline-flex;
   align-items: center;
@@ -537,10 +557,25 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   opacity: 0;
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
-.t-select__trigger:hover .t-select__clear { opacity: 1; }
-.t-select__clear:hover { background: rgba(var(--rgb-danger), var(--alpha-wash-strong)); color: var(--color-danger); }
-.t-select__chevron { color: var(--color-text-tertiary); transition: transform var(--transition-fast), color var(--transition-fast); }
-.t-select.is-open .t-select__chevron { transform: rotate(180deg); color: var(--accent); }
+
+.t-select__trigger:hover .t-select__clear {
+  opacity: 1;
+}
+
+.t-select__clear:hover {
+  background: rgba(var(--rgb-danger), var(--alpha-wash-strong));
+  color: var(--color-danger);
+}
+
+.t-select__chevron {
+  color: var(--color-text-tertiary);
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.t-select.is-open .t-select__chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
 
 /* ── 下拉面板 ── */
 .t-select__panel {
@@ -557,7 +592,10 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   overflow: hidden;
   transform-origin: top center;
 }
-.t-select__panel--up { transform-origin: bottom center; }
+
+.t-select__panel--up {
+  transform-origin: bottom center;
+}
 
 /* 四角括号 — 战术 HUD 签名 */
 .t-select__corner {
@@ -568,20 +606,42 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   pointer-events: none;
   z-index: 1;
 }
-.t-select__corner--tl { top: 4px; left: 4px; border-top-width: 1px; border-left-width: 1px; }
-.t-select__corner--tr { top: 4px; right: 4px; border-top-width: 1px; border-right-width: 1px; }
-.t-select__corner--bl { bottom: 4px; left: 4px; border-bottom-width: 1px; border-left-width: 1px; }
-.t-select__corner--br { bottom: 4px; right: 4px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.t-select__corner--tl {
+  top: 4px;
+  left: 4px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.t-select__corner--tr {
+  top: 4px;
+  right: 4px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.t-select__corner--bl {
+  bottom: 4px;
+  left: 4px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.t-select__corner--br {
+  bottom: 4px;
+  right: 4px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
 
 /* 扫描线纹理 */
 .t-select__scan {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg, transparent 0px, transparent 3px,
-    rgba(var(--rgb-white), 0.015) 3px, rgba(var(--rgb-white), 0.015) 4px
-  );
+  background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px,
+      rgba(var(--rgb-white), 0.015) 3px, rgba(var(--rgb-white), 0.015) 4px);
 }
 
 /* 搜索框 */
@@ -592,7 +652,11 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--color-border-default);
 }
-.t-select__search-glyph { color: var(--color-text-tertiary); }
+
+.t-select__search-glyph {
+  color: var(--color-text-tertiary);
+}
+
 .t-select__search-input {
   flex: 1;
   min-width: 0;
@@ -601,10 +665,16 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   outline: none;
   color: var(--color-text-primary);
   font-family: inherit;
-  font-size: var(--font-size-sm);
-  &::placeholder { color: var(--color-text-disabled); }
+
+  &::placeholder {
+    color: var(--color-text-disabled);
+  }
 }
-.t-select__search-count { color: var(--accent); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
+
+.t-select__search-count {
+  color: var(--accent);
+  font-weight: var(--font-weight-bold);
+}
 
 /* 选项列表 */
 .t-select__list {
@@ -622,13 +692,24 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   gap: var(--space-2);
   padding: var(--space-2) var(--space-2) var(--space-1);
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
-.t-select__group-dot { width: 4px; height: 4px; background: var(--accent); transform: rotate(45deg); flex-shrink: 0; }
-.t-select__group-rule { flex: 1; height: 1px; background: var(--color-border-default); }
+
+.t-select__group-dot {
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+.t-select__group-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-default);
+}
 
 /* 选项行 */
 .t-select__option {
@@ -645,8 +726,16 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   content-visibility: auto;
   contain-intrinsic-size: 34px;
 }
-.t-select--md .t-select__option { font-size: var(--font-size-md); min-height: 34px; }
-.t-select--sm .t-select__option { font-size: var(--font-size-sm); min-height: 26px; }
+
+.t-select--md .t-select__option {
+  font-size: var(--font-size-md);
+  min-height: 34px;
+}
+
+.t-select--sm .t-select__option {
+  font-size: var(--font-size-sm);
+  min-height: 26px;
+}
 
 /* 左侧轨道 — 悬停锁定 */
 .t-select__option-rail {
@@ -660,20 +749,53 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   box-shadow: 0 0 6px rgba(var(--accent-rgb), var(--alpha-glow));
   transition: height var(--transition-fast);
 }
-.t-select__option.is-highlighted { background: rgba(var(--accent-rgb), var(--alpha-wash)); color: var(--color-text-primary); }
-.t-select__option.is-highlighted .t-select__option-rail { height: 60%; }
+
+.t-select__option.is-highlighted {
+  background: rgba(var(--accent-rgb), var(--alpha-wash));
+  color: var(--color-text-primary);
+}
+
+.t-select__option.is-highlighted .t-select__option-rail {
+  height: 60%;
+}
+
 .t-select__option.is-selected {
   background: rgba(var(--accent-rgb), var(--alpha-wash-strong));
   color: var(--accent);
   font-weight: var(--font-weight-semibold);
 }
-.t-select__option.is-selected .t-select__option-rail { height: 60%; }
-.t-select__option.is-disabled { color: var(--color-text-disabled); cursor: not-allowed; opacity: 0.5; }
-.t-select__option.is-disabled:hover { background: transparent; }
 
-.t-select__option-icon { flex-shrink: 0; }
-.t-select__option-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.t-select__option-hint { flex-shrink: 0; color: var(--color-text-tertiary); font-size: var(--font-size-xs); }
+.t-select__option.is-selected .t-select__option-rail {
+  height: 60%;
+}
+
+.t-select__option.is-disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.t-select__option.is-disabled:hover {
+  background: transparent;
+}
+
+.t-select__option-icon {
+  flex-shrink: 0;
+}
+
+.t-select__option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.t-select__option-hint {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
 .t-select__option-check {
   flex-shrink: 0;
   font-size: 9px;
@@ -682,7 +804,11 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   transform: scale(0.5);
   transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
-.t-select__option.is-selected .t-select__option-check { opacity: 1; transform: scale(1); }
+
+.t-select__option.is-selected .t-select__option-check {
+  opacity: 1;
+  transform: scale(1);
+}
 
 /* 状态 */
 .t-select__state {
@@ -694,15 +820,27 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
 }
+
 .t-select__pulse {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--accent);
   animation: t-pulse 1s ease-in-out infinite;
 }
+
 @keyframes t-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 /* 页脚状态条 */
@@ -716,24 +854,53 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   color: var(--color-text-tertiary);
   letter-spacing: 0.5px;
 }
-.t-select__footer-count { color: var(--accent); font-weight: var(--font-weight-bold); }
-.t-select__footer-keys { font-family: 'Cinzel', var(--font-family-base); }
+
+.t-select__footer-count {
+  color: var(--accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.t-select__footer-keys {
+  font-family: 'Cinzel', var(--font-family-base);
+}
 
 /* ── 面板进出场 ── */
 .t-panel-enter-active {
   transition: opacity var(--transition-fast) ease-out,
     transform var(--transition-fast) cubic-bezier(0.34, 1.3, 0.64, 1);
 }
-.t-panel-leave-active { transition: opacity 120ms ease-in, transform 120ms ease-in; }
-.t-panel-enter-from, .t-panel-leave-to { opacity: 0; transform: scaleY(0.92); }
+
+.t-panel-leave-active {
+  transition: opacity 120ms ease-in, transform 120ms ease-in;
+}
+
+.t-panel-enter-from,
+.t-panel-leave-to {
+  opacity: 0;
+  transform: scaleY(0.92);
+}
 
 /* P2-5: 对齐系统 BuffTextTag 的减弱动效约定 */
 @media (prefers-reduced-motion: reduce) {
-  .t-select__pulse { animation: none; }
-  .t-select__panel, .t-select__option, .t-select__chevron, .t-select__option-rail {
+  .t-select__pulse {
+    animation: none;
+  }
+
+  .t-select__panel,
+  .t-select__option,
+  .t-select__chevron,
+  .t-select__option-rail {
     transition: none;
   }
-  .t-panel-enter-active, .t-panel-leave-active { transition: opacity 1ms; }
-  .t-panel-enter-from, .t-panel-leave-to { transform: none; }
+
+  .t-panel-enter-active,
+  .t-panel-leave-active {
+    transition: opacity 1ms;
+  }
+
+  .t-panel-enter-from,
+  .t-panel-leave-to {
+    transform: none;
+  }
 }
 </style>

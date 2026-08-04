@@ -56,7 +56,7 @@ export class BerserkBuff extends BaseBuffScript {
   // ==================== 气血周期 ====================
 
   protected _onApply(context: BuffContext): void {
-    this.log(context, '🔥 陷入狂暴状态！攻击力大幅提升，但防御力降低')
+    this.log(context, '陷入狂暴状态！攻击力大幅提升，但防御力降低')
 
     const params = this.resolveParams(context)
 
@@ -94,7 +94,7 @@ export class BerserkBuff extends BaseBuffScript {
   }
 
   protected _onRemove(context: BuffContext): void {
-    this.log(context, '😌 狂暴状态结束，恢复平静')
+    this.log(context, '狂暴状态结束，恢复平静')
     // ponytail: 基类 BaseBuffScript.onRemove 已调用 context.removeModifiers()，无需重复
   }
 
@@ -111,7 +111,7 @@ export class BerserkBuff extends BaseBuffScript {
     if (turnsSince >= interval) {
       this.log(
         context,
-        `💢 狂暴的代价：损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前气血值`,
+        `狂暴的代价：损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前气血值`,
       )
       // 通过百分比伤害回调造成自残
       this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
@@ -128,7 +128,7 @@ export class BerserkBuff extends BaseBuffScript {
    * 在此场景下旧修饰符仍存在，因此以增量方式叠加 refreshBonus。
    */
   protected _onRefresh(context: BuffContext): void {
-    this.log(context, '⚡ 狂暴之力进一步增强！')
+    this.log(context, '狂暴之力进一步增强！')
 
     const params = this.resolveParams(context)
     const currentAttack =
@@ -159,7 +159,7 @@ export class BerserkBuff extends BaseBuffScript {
 
     this.log(
       context,
-      `✨ 攻击力额外 +${params.refreshAttackBonus}，暴击率 +${(params.refreshCritRateBonus * 100).toFixed(0)}%`,
+      `攻击力额外 +${params.refreshAttackBonus}，暴击率 +${(params.refreshCritRateBonus * 100).toFixed(0)}%`,
     )
   }
 

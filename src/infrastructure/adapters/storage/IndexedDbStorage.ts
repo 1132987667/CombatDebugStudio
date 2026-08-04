@@ -58,7 +58,7 @@ export class IndexedDbStorage implements IPersistentStorage {
         }
 
         request.onerror = (event: Event) => {
-          this.dbPromise = null  // ★ 清空缓存，允许后续操作重试
+          this.dbPromise = null  // 清空缓存，允许后续操作重试
           reject((event.target as IDBOpenDBRequest).error)
         }
       })
@@ -172,7 +172,7 @@ export class IndexedDbStorage implements IPersistentStorage {
         request.onerror = () => reject(request.error)
       })
     } catch (e) {
-      // ★ 索引缺失/DB 异常：静默返回 [] 会导致持久化裁剪静默失效，记录日志便于排查
+      //  索引缺失/DB 异常：静默返回 [] 会导致持久化裁剪静默失效，记录日志便于排查
       try {
         LoggerProvider.logger.addDebugLog('按字段索引读取存储键失败，返回空列表', {
           level: LogLevel.ERROR,

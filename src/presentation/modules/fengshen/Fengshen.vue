@@ -54,10 +54,11 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
   {
     label: '战斗核心',
     items: [
-      { table: 'actors', label: '角色' },
+      // NOTE: 当前阶段角色与敌人是一体（无阵营之分），enemies 数据表保留供战斗引擎/引用使用，
+      //       数据域 UI 统一经 actors 入口管理；后续需要拆分时恢复 enemies 侧栏项即可。
+      { table: 'actors', label: '角色/敌人' },
       { table: 'skills', label: '技能' },
       { table: 'buffs', label: '状态与 Buff' },
-      { table: 'enemies', label: '敌人' },
     ],
   },
   {
@@ -108,5 +109,5 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-@use './styles/fengshen.scss';
+@use '@/presentation/modules/fengshen/styles/fengshen.scss';
 </style>

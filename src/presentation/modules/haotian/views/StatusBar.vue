@@ -1,16 +1,13 @@
 <template>
   <div class="ht-status">
     <div class="ht-st-item click" title="点击查看校验报告" @click="store.toggleDiag()">
-      事件流 v{{ store.archive?.version ?? '—' }} ·
       <span :class="store.validation?.errors.length ? 'ht-st-warn' : 'ht-st-ok'">
         {{ store.validation?.errors.length ?? 0 }} 错误 / {{ store.validation?.warnings.length ?? 0 }} 警告
       </span>
     </div>
-    <div class="ht-st-item">事件 <b>{{ store.validation?.stats.events ?? 0 }}</b> · 因果链 <b>{{ store.validation?.stats.chains ?? 0 }}</b></div>
-    <div class="ht-st-item">锚点 <b>{{ store.validation?.stats.anchorsEv ?? 0 }}</b> 增量 + <b>{{ store.validation?.stats.anchorsTurn ?? 0 }}</b> 全量</div>
+    <div class="ht-st-item">事件 <b>{{ store.validation?.stats.events ?? 0 }}</b></div>
     <div class="ht-st-item">书签 <b>{{ store.bookmarkCount }}</b></div>
     <div class="ht-st-item">模式 <b>{{ store.mode === 'replay' ? '回放' : '调试' }}</b></div>
-    <div class="ht-st-item">种子 {{ store.archive?.randomSeed ?? '—' }}</div>
     <div class="ht-st-item">渲染 <b>{{ fps }}</b> FPS</div>
     <div class="ht-st-right">
       <div class="ht-st-item"><span class="ht-st-dot"></span>就绪</div>

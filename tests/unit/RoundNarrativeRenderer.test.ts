@@ -13,13 +13,17 @@ import type {
 } from '@/shared/types/battle-log'
 import { LogType, NarrativeBlockType } from '@/shared/types/battle-log'
 
-function entry(turn: number, meta: BattleLogMeta = {}): BattleLogEntry {
+function entry(
+  turn: number,
+  meta: BattleLogMeta = {},
+  segments?: LogSegment[],
+): BattleLogEntry {
   return {
     turn,
     message: 'x',
     index: -1,
     type: LogType.BATTLE,
-    segments: [{ text: 'x' }],
+    segments: segments ?? [{ text: 'x' }],
     meta,
   }
 }
@@ -52,7 +56,19 @@ describe('RoundNarrativeRenderer.renderEntries', () => {
     expect(rounds[1].tag).toBe('击杀!')
   })
 
-  it('回合内 sub 超过 3 条且无击杀 → 多重触发', () => {
+  it('回合内被动触发超过 3 次且无击杀 → 多重触发', () => {
+    const passiveSeg: LogSegment = { text: '被动', kind: 'passive' }
+    const blocks = renderer.renderEntries([
+      entry(1, { role: 'action' }),
+      entry(1, { role: 'sub' }, [passiveSeg]),
+      entry(1, { role: 'sub' }, [passiveSeg]),
+      entry(1, { role: 'sub' }, [passiveSeg]),
+      entry(1, { role: 'sub' }, [passiveSeg]),
+    ])
+    expect(roundBlocks(blocks)[0].tag).toBe('多重触发')
+  })
+
+  it('普通 sub（受击结算等）不计数：4 条非被动 sub 不标多重触发', () => {
     const blocks = renderer.renderEntries([
       entry(1, { role: 'action' }),
       entry(1, { role: 'sub' }),
@@ -60,7 +76,7 @@ describe('RoundNarrativeRenderer.renderEntries', () => {
       entry(1, { role: 'sub' }),
       entry(1, { role: 'sub' }),
     ])
-    expect(roundBlocks(blocks)[0].tag).toBe('多重触发')
+    expect(roundBlocks(blocks)[0].tag).toBeUndefined()
   })
 
   it('无击杀且 sub 不超过 3 → 无标签', () => {

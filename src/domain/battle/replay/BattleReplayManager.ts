@@ -104,11 +104,11 @@ export class BattleReplayManager {
   startReplay(recording: BattleReplay) {
     this.resetReplayState()
 
-    // ★ 临时关闭日志自动清理，防止长战斗回放日志被截断
+    //  临时关闭日志自动清理，防止长战斗回放日志被截断
     LoggerProvider.logger.setAutoCleanup(false)
 
     this.replayEngine = new ReplayEngine()
-    // ★ 注入技能配置查询（由 DI 容器在构造时传入）
+    //  注入技能配置查询（由 DI 容器在构造时传入）
     if (this.skillConfigLookup) {
       this.replayEngine.setSkillConfigLookup(this.skillConfigLookup)
     }
@@ -170,7 +170,7 @@ export class BattleReplayManager {
    */
   stopReplay() {
     this.resetReplayState()
-    // ★ 恢复日志自动清理
+    //  恢复日志自动清理
     LoggerProvider.logger.setAutoCleanup(true)
     this.logger.addSystemLog({
       message: '回放已停止',
@@ -435,7 +435,7 @@ export class BattleReplayManager {
    */
   destroy() {
     this.resetReplayState()
-    // ★ 恢复日志自动清理，与 stopReplay() 保持一致
+    //  恢复日志自动清理，与 stopReplay() 保持一致
     LoggerProvider.logger.setAutoCleanup(true)
   }
 }

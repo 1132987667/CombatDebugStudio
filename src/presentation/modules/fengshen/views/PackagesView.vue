@@ -21,7 +21,7 @@
           </label>
         </div>
         <div class="fs-toolbar" style="margin: 12px 0 0;">
-          <button class="fs-btn fs-btn-primary" @click="doExport">导出所选 JSON</button>
+          <Button variant="primary" @click="doExport">导出所选 JSON</Button>
           <span class="fs-form-hint">包含 meta：dataVersion + 导出时间 + 表清单</span>
         </div>
       </div>
@@ -37,8 +37,8 @@
         <input ref="fileInput" type="file" accept=".json" style="display: none" @change="onPick" />
 
         <div class="fs-toolbar" style="margin-top: 12px;">
-          <TacticalSelect v-model="strategy" size="sm" :options="strategyOptions" />
-          <button class="fs-btn fs-btn-primary" :disabled="!pendingPkg" @click="doImport">开始导入</button>
+          <TacticalSelect v-model="strategy" size="md" :options="strategyOptions" />
+          <Button variant="primary" :disabled="!pendingPkg" @click="doImport">开始导入</Button>
           <span v-if="importResult" class="fs-form-hint">
             导入 {{ importResult.importedCount }} 条 / 跳过 {{ importResult.skippedCount }} 条 · 版本 v{{ importResult.version }}
             <span v-if="importResult.issues?.length" class="fs-form-error">断裂引用 {{ importResult.issues.length }} 处（见健康检查）</span>
@@ -67,6 +67,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
+import Button from '@/presentation/components/Button.vue'
 import { DataPackageService, type DataPackage, type ImportResult, type ImportStrategy } from '@/application/service/DataPackageService'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'

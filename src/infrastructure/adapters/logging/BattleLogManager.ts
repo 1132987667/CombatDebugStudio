@@ -70,8 +70,8 @@ export class BattleLogManager implements IBattleLogManager {
 
   /** 战斗日志条目数组 */
   private battleLogs: BattleLogEntry[] = []
-  /** 战斗日志最大数量 */
-  private battleMaxLogs: number = 200
+  /** 战斗日志最大数量（10+ 回合长战斗约 150-200 条；500 保证整场战斗可回看） */
+  private battleMaxLogs: number = 500
 
   /** 系统日志条目数组 */
   private systemLogs: LogEntry[] = []
@@ -267,6 +267,14 @@ export class BattleLogManager implements IBattleLogManager {
    * @param params 战斗日志参数（turn 必填）
    */
   addBattleLog(params: BattleLogParams): void {
+    // 攻击结算期间（beginBufferSubLogs → flushBufferedSubLogs）的 sub 日志暂存，
+    // 待攻击主日志（role='action'）发射后统一 flush，保证 sub 显示在所属 action 之下。
+    // NOTE: 修复前 sub 日志直接入列，导致 ON_HIT/DAMAGE_TAKEN 被动日志排在攻击主日志之前。
+    if (this._buffering && params.meta?.role === 'sub') {
+      this._pendingSubLogs.push(params)
+      return
+    }
+
     const { message = '', segments = [], level = LogLevel.INFO, turn, source, target, action, category, context, error, meta } = params
 
     const logEntry: BattleLogEntry = {
@@ -391,10 +399,10 @@ export class BattleLogManager implements IBattleLogManager {
   }
 
   /**
-   * 导出战斗日志
+   * 导出战斗日志（全量：战斗 + 动作 + 系统 + 物品，按全局序号排序）
    */
   exportLogs(): string {
-    return JSON.stringify(this.battleLogs, null, 2)
+    return JSON.stringify(this.getAllLogs(), null, 2)
   }
 
   /**

@@ -136,7 +136,7 @@
     "energyCost": 0,
     "cooldown": 0,
     "selector": {
-      "faction": "self",
+      "faction": "enemy",
       "strategy": "first"
     },
     "triggerTimes": ["on_hit"],
@@ -188,7 +188,7 @@
     "energyCost": 0,
     "cooldown": 0,
     "selector": {
-      "faction": "self",
+      "faction": "enemy",
       "strategy": "first"
     },
     "triggerTimes": ["on_hit"],

@@ -56,7 +56,7 @@ export function resolveSkillTargets(
   let candidates = all.filter(factionFilter)
   if (candidates.length === 0) return []
 
-  // ★ 仅在 faction === 'enemy' 时检查嘲讽 + 仇恨（修复 S1）
+  //  仅在 faction === 'enemy' 时检查嘲讽 + 仇恨（修复 S1）
   if (selector.faction === TargetFaction.ENEMY) {
     // 嘲讽优先 — 通过回调检测（由调用方注入 buffSystem.hasBuffWithTag）
     const tauntTarget = hasTaunt
@@ -138,7 +138,7 @@ export function resolveSkillTargets(
       const hasHeal = steps?.some((s) => s.type === EffectType.HEAL)
       const hasDamage = steps?.some((s) => s.type === EffectType.DEAL_DAMAGE || s.type === EffectType.DRAIN)
 
-      // ★ 前排保护：非治疗/增益默认策略中，若敌方启用前排保护且前排存活，过滤后排（修复 S1）
+      //  前排保护：非治疗/增益默认策略中，若敌方启用前排保护且前排存活，过滤后排（修复 S1）
       if (frontProtectionLookup && formationRowLookup && !(hasHeal && !hasDamage)) {
         const enemySide = source.team === ParticipantSide.ALLY ? ParticipantSide.ENEMY : ParticipantSide.ALLY
         if (frontProtectionLookup(enemySide)) {

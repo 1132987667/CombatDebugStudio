@@ -2,7 +2,7 @@
   <div class="ht-diag" :class="{ open: store.diagOpen }" role="dialog" aria-label="校验报告">
     <div class="ht-diag-hd">
       <span>统一事件流 · 校验报告</span>
-      <button class="ht-btn" @click="store.toggleDiag()">关闭 ×</button>
+      <Button @click="store.toggleDiag()">关闭 ×</Button>
     </div>
     <div class="ht-diag-list" v-if="store.validation">
       <div v-for="(row, i) in rows" :key="i" class="ht-dl">
@@ -20,6 +20,7 @@
 import { computed } from 'vue'
 import type { ValidationResult } from '@/domain/battle/replay/unified/unified-validator'
 import { useHaotianStore } from '../stores/haotianStore'
+import Button from '@/presentation/components/Button.vue'
 
 const store = useHaotianStore()
 

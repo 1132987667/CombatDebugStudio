@@ -29,7 +29,7 @@
       <div class="debug-toggle" role="button" tabindex="0" @click.stop="battleStore.setShowDebug(!showDebug)"
         @keydown.enter.stop.prevent="battleStore.setShowDebug(!showDebug)"
         @keydown.space.stop.prevent="battleStore.setShowDebug(!showDebug)">
-        {{ showDebug ? '▼' : '▶' }} 调试信息
+        {{ showDebug ? '▾' : '▸' }} 调试信息
       </div>
       <div v-if="showDebug" class="debug-content">
         <div class="debug-row"><span class="debug-label">实例ID:</span><code>{{ buff.instanceId }}</code></div>

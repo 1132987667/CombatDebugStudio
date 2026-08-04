@@ -5,19 +5,19 @@
       <span v-if="field.required" class="fs-required">*</span>
     </label>
 
-    <!-- 数字 -->
-    <input v-if="field.type === 'number'" type="number" class="fs-input"
-      :value="(modelValue as number | undefined) ?? ''"
-      :min="field.min" :max="field.max"
-      @change="emit('update:modelValue', parseNumber(($event.target as HTMLInputElement).value))" />
+    <!-- 数字：校验 + 限制由 TacticalInput 托管（过滤/越界提示/clamp） -->
+    <TacticalInput v-if="field.type === 'number'" type="number"
+      :model-value="(modelValue as number | undefined) ?? null"
+      :min="field.min" :max="field.max" :hint="field.description"
+      @update:model-value="(v) => emit('update:modelValue', v)" />
 
     <!-- 文本 -->
-    <input v-else-if="field.type === 'text'" type="text" class="fs-input"
-      :value="(modelValue as string | undefined) ?? ''"
-      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
+    <TacticalInput v-else-if="field.type === 'text'"
+      :model-value="(modelValue as string | undefined) ?? ''" :hint="field.description"
+      @update:model-value="(v) => emit('update:modelValue', v)" />
 
     <!-- 单选下拉 -->
-    <TacticalSelect v-else-if="field.type === 'select'" size="sm"
+    <TacticalSelect v-else-if="field.type === 'select'" size="md"
       :model-value="(modelValue as string | undefined) ?? ''"
       :options="tacticalSelectOptions" placeholder="— 未选择 —"
       @update:model-value="(v) => emit('update:modelValue', v ?? '')" />
@@ -41,13 +41,13 @@
     <!-- 键值对（map：属性名 + 数值） -->
     <div v-else-if="field.type === 'map'" class="fs-map">
       <div v-for="(entry, idx) in mapEntries" :key="idx" class="fs-map-row">
-        <input class="fs-input" :value="entry.key" placeholder="属性名"
-          @input="setMapKey(idx, ($event.target as HTMLInputElement).value)" />
-        <input class="fs-input" type="number" :value="entry.value" placeholder="数值"
-          @input="setMapValue(idx, ($event.target as HTMLInputElement).value)" />
-        <button class="fs-btn fs-btn-sm fs-btn-danger" @click="removeMapRow(idx)">×</button>
+        <TacticalInput size="md" :model-value="entry.key" placeholder="属性名"
+          @update:model-value="(v) => setMapKey(idx, String(v ?? ''))" />
+        <TacticalInput size="md" type="number" :model-value="entry.value" placeholder="数值"
+          @update:model-value="(v) => setMapValue(idx, String(v ?? ''))" />
+        <Button size="small" variant="danger" @click="removeMapRow(idx)">×</Button>
       </div>
-      <button class="fs-btn fs-btn-sm" @click="addMapRow">＋ 添加属性</button>
+      <Button size="small" @click="addMapRow">＋ 添加属性</Button>
     </div>
 
     <!-- 数组（先以 JSON 文本编辑，复杂子项编辑后续增强） -->
@@ -56,15 +56,18 @@
       @input="emit('update:modelValue', parseArray(($event.target as HTMLTextAreaElement).value))"
       placeholder='[{"key":"value"}]' />
 
-    <div v-if="field.description" class="fs-field-hint">{{ field.description }}</div>
+    <!-- description 提示：number/text 由 TacticalInput 的 hint 显示，其余字段类型在此统一显示 -->
+    <div v-if="field.description && field.type !== 'number' && field.type !== 'text'" class="fs-field-hint">{{ field.description }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import Button from '@/presentation/components/Button.vue'
 import type { FieldSchema } from '@/domain/fengshen/schema'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const props = defineProps<{
   field: FieldSchema
@@ -94,12 +97,6 @@ const tacticalSelectOptions = computed<TSelectOption[]>(() => [
   { value: '', label: '— 未选择 —' },
   ...selectOptions.value.map((o) => ({ value: o.id, label: o.label })),
 ])
-
-function parseNumber(v: string): number | undefined {
-  if (v === '') return undefined
-  const n = Number(v)
-  return Number.isFinite(n) ? n : undefined
-}
 
 function toggleMulti(id: string): void {
   const cur = Array.isArray(props.modelValue) ? (props.modelValue as string[]) : []

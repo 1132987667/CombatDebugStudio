@@ -22,11 +22,11 @@
     <ModuleHeader v-model:active-module="activeModule">
       <template #actions>
         <template v-if="activeModule === 'huanling'">
-          <button class="btn-medium" @click="showRulesDialog = true">战斗规则</button>
+          <Button @click="showRulesDialog = true">战斗规则</Button>
           <!-- NOTE: 调试控制/数据快照操作活战场（battleStore/BattleField 动画），归属唤灵台而非分析模块 -->
-          <button class="btn-medium" @click="showDataSnapshotDialog = true">数据快照</button>
-          <button class="btn-medium" @click="showDebugControlDialog = true">调试面板</button>
-          <button class="btn-medium" @click="saveRecording">保存战斗记录</button>
+          <Button @click="showDataSnapshotDialog = true">数据快照</Button>
+          <Button @click="showDebugControlDialog = true">调试面板</Button>
+          <Button @click="saveRecording">保存战斗记录</Button>
         </template>
         <!-- NOTE: 封神榜数据管理已内聚到模块内（Fengshen.vue），顶部不再暴露弹窗入口 -->
       </template>
@@ -46,7 +46,7 @@
       <BattleDashboard />
     </div>
 
-    <!-- 昊天镜：战斗分析（双工作台 · 回放系统 ⇄ 调试系统） -->
+    <!-- 昊天镜：战斗分析（双工作台 · 回放 / 调试） -->
     <div v-show="activeModule === 'haotian'" class="module-layout module-layout--full" :id="modulePanelId('haotian')"
       role="tabpanel" :aria-labelledby="moduleTabId('haotian')">
       <HaotianMirror :active="activeModule === 'haotian'" />
@@ -118,6 +118,7 @@ import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogMan
 import { container } from '@/infrastructure/di/Container';
 import type { BattleSystem } from '@/domain/battle/BattleSystem';
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
+import Button from "@/presentation/components/Button.vue";
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import Notification from "@/presentation/components/Notification.vue";
 import ConfirmDialog from "@/presentation/components/ConfirmDialog.vue";

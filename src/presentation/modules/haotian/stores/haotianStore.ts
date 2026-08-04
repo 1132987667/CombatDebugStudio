@@ -637,14 +637,17 @@ export const useHaotianStore = defineStore('haotian', () => {
   /** CSV 字段转义（RFC 4180）：含分隔符/引号/换行时双引号包裹，内部引号翻倍 */
   const escCsvCell = (s: string): string => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s)
 
+  /** 单位 id → 名字（摘要导出与对话框一致；未知单位回退 id） */
+  const nm = (id: string): string => pname.value(id)
+
   function summaryMarkdown(): string {
     const sum = summary.value
     if (!sum) return ''
-    const win = sum.winner ? archive.value?.initialState.participants.find((p) => p.id === sum.winner)?.name ?? sum.winner : '—'
+    const win = sum.winner ? nm(sum.winner) : '—'
     const rows = summaryRows()
     const head = ['参战单位', '攻击', '输出', '承伤', '治疗', '暴击', '闪避', '抵抗', 'Buff 施加', '击杀']
     const line = (r: { id: string; s: UnitSummary }): string =>
-      `| ${escMdCell(r.id)} | ${r.s.attacks} | ${r.s.dealt} | ${r.s.taken} | ${r.s.healed} | ${r.s.crits} | ${r.s.dodges} | ${r.s.resists} | ${r.s.buffsApplied} | ${r.s.kills} |`
+      `| ${escMdCell(nm(r.id))} | ${r.s.attacks} | ${r.s.dealt} | ${r.s.taken} | ${r.s.healed} | ${r.s.crits} | ${r.s.dodges} | ${r.s.resists} | ${r.s.buffsApplied} | ${r.s.kills} |`
     return [
       `## 战斗摘要 · ${escMdCell(sum.battleId)}`,
       '',
@@ -667,7 +670,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     const lines = [
       head.join(','),
       ...rows.map((r) =>
-        [escCsvCell(r.id), r.s.attacks, r.s.dealt, r.s.taken, r.s.healed, r.s.crits, r.s.dodges, r.s.resists, r.s.buffsApplied, r.s.kills].join(','),
+        [escCsvCell(nm(r.id)), r.s.attacks, r.s.dealt, r.s.taken, r.s.healed, r.s.crits, r.s.dodges, r.s.resists, r.s.buffsApplied, r.s.kills].join(','),
       ),
     ]
     // BOM 前缀：Windows Excel 按 UTF-8 打开中文不乱码
@@ -780,7 +783,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     mode.value = m
     if (m === 'replay') rebuildState(playback.value.t)
     syncHash()
-    if (!silent) toast(m === 'replay' ? '回放系统 — 按 timestamp 播放 · StateDelta 快照跳转' : '调试系统 — 时间线树 / 卡片流 / RNG 凭证 · 按 correlationId 消费')
+    if (!silent) toast(m === 'replay' ? '回放系统 — 按 timestamp 播放 · StateDelta 快照跳转' : '调试系统 — 时间线树 / 卡片流 / RNG 凭证')
   }
 
   function toggleMode(): void {
@@ -799,10 +802,6 @@ export const useHaotianStore = defineStore('haotian', () => {
   // ───────────── 派生展示 ─────────────
 
   const timeRead = computed(() => formatTime(playback.value.t))
-  const phaseChip = computed(() => {
-    const e = lastEvent.value
-    return e ? e.id : null
-  })
 
   // 初始化偏好
   {
@@ -840,7 +839,6 @@ export const useHaotianStore = defineStore('haotian', () => {
     lastEvent,
     pname,
     timeRead,
-    phaseChip,
     summary,
     exportSummaryMarkdown,
     exportSummaryCsv,

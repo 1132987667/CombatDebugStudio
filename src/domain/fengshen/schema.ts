@@ -27,6 +27,8 @@ export interface FieldSchema {
     format?: 'id' | 'number' | 'tag'
     /** 标签着色依据（Demo 多色标签）：值 → 标签语义色 */
     tagKind?: 'polarity' | 'category' | 'side' | 'type' | 'slot' | 'rarity' | 'neutral'
+    /** 列表单元格可点击（点击后在右侧详情面板显示该行；name 字段默认可点击） */
+    clickable?: boolean
   }
   description?: string
 }
@@ -91,12 +93,11 @@ export const REFERENCE_RULES: ReferenceRule[] = [
 export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   actors: {
     table: 'actors',
-    label: '角色',
-    columns: ['id', 'name', 'level', 'faction', 'growth', 'skillIds'],
+    label: '角色/敌人',
+    columns: ['id', 'name', 'level', 'growth', 'skillIds'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'level', label: '等级', type: 'number', required: true, min: 1, max: 99, column: { format: 'number' } },
-      { key: 'faction', label: '所属阵营', type: 'select', refTable: 'elements', column: { tagKind: 'neutral' } },
       { key: 'growth', label: '成长曲线', type: 'select', refTable: 'growth' },
       { key: 'skillIds', label: '可用技能', type: 'multi', refTable: 'skills' },
       { key: 'energyInit', label: '初始能量', type: 'number', min: 0, max: 200 },
@@ -105,7 +106,6 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     ],
     uniqueFields: ['name'],
     filters: [
-      { key: 'faction', label: '阵营', type: 'select', refTable: 'elements' },
       { key: 'level', label: '等级', type: 'range', min: 1, max: 99 },
     ],
   },
@@ -152,11 +152,10 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   enemies: {
     table: 'enemies',
     label: '敌人',
-    columns: ['id', 'name', 'level', 'faction', 'skills'],
+    columns: ['id', 'name', 'level', 'skills'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'level', label: '等级', type: 'number', required: true, min: 1, max: 99, column: { format: 'number' } },
-      { key: 'faction', label: '所属阵营', type: 'select', refTable: 'elements' },
       { key: 'stats', label: '属性', type: 'map' },
       { key: 'skills', label: '技能组', type: 'array' },
       { key: 'drops', label: '掉落', type: 'array' },

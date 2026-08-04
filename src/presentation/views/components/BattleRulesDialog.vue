@@ -29,8 +29,9 @@
     </div>
     <SpeedSelector :model-value="localSpeed" label="自动速率:" @update:model-value="updateSpeed">
       <template #extra>
-        <input type="number" v-model.number="customSpeed" class="custom-speed" placeholder="自定义"
-          aria-label="自定义速率" @change="updateCustomSpeed" />
+        <TacticalInput type="number" size="md" class="custom-speed-slot" :model-value="customSpeed"
+          placeholder="自定义" aria-label="自定义速率"
+          @update:model-value="customSpeed = $event as number | null" @change="updateCustomSpeed" />
       </template>
     </SpeedSelector>
   </Dialog>
@@ -40,6 +41,7 @@
 import { ref, watch, reactive } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import SpeedSelector from '@/presentation/components/SpeedSelector.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import { BattleRules } from '@/presentation/stores/battleStore'
 
 interface Props {
@@ -125,5 +127,10 @@ const updateCustomSpeed = () => {
 .rule-item span {
   font-size: var(--font-size-md);
   color: var(--color-text-secondary);
+}
+
+/* TacticalInput 根默认 width:100%，速率行内给定宽紧凑显示 */
+.custom-speed-slot {
+  flex: 0 0 64px;
 }
 </style>

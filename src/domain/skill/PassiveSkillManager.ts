@@ -115,7 +115,7 @@ export class PassiveSkillManager {
     this.tracePort = port ?? undefined
   }
 
-  /** ★ 注入动画发射开关 getter（headless/quickMode 时抑制动画事件） */
+  /**  注入动画发射开关 getter（headless/quickMode 时抑制动画事件） */
   setAnimationEnabledGetter(getter: () => boolean): void {
     this._getAnimationEnabled = getter
   }
@@ -432,7 +432,7 @@ export class PassiveSkillManager {
     if (!steps || steps.length === 0) return { executed: true, totalDamage: 0 }
     if (targets.length === 0) return { executed: true, totalDamage: 0 }
 
-    // ★ 1. 捕获执行前的 气血 快照
+    //  1. 捕获执行前的 气血 快照
     const hpSnapshots = new Map<string, { before: number; after: number }>()
     const allEntities = [source, ...targets]
     for (const entity of allEntities) {
@@ -454,7 +454,7 @@ export class PassiveSkillManager {
       extra: { skillId: config.id },
     })
 
-    // ★ 2. 执行步骤 (SkillExecutor 产出结构化 effects)
+    //  2. 执行步骤 (SkillExecutor 产出结构化 effects)
     for (const target of targets) {
       // ponytail: 跳过已死亡目标，被动技能不应对死尸生效
       if (!target.isAlive()) continue
@@ -492,7 +492,7 @@ export class PassiveSkillManager {
       totalDamage += action.damage ?? 0
     }
 
-    // ★ 3. 捕获执行后的 气血 快照
+    //  3. 捕获执行后的 气血 快照
     for (const [id] of hpSnapshots) {
       let entity: BattleEntity | undefined
       if (id === source.id) {
@@ -508,7 +508,7 @@ export class PassiveSkillManager {
       }
     }
 
-    // ★ 4. 构建渲染上下文
+    //  4. 构建渲染上下文
     const renderCtx: RenderContext = {
       source,
       targets,
@@ -529,13 +529,13 @@ export class PassiveSkillManager {
       hpSnapshots,
     }
 
-    // ★ 5. 渲染日志片段
+    //  5. 渲染日志片段
     const segments =
       allEffects.length > 0
         ? this.effectRenderer.render(allEffects, renderCtx)
         : []
 
-    // ★ 6. 输出日志
+    //  6. 输出日志
     const configName = config.name || config.id
     const passiveNameSeg = {
       text: configName,
@@ -543,7 +543,7 @@ export class PassiveSkillManager {
       kind: 'passive' as const,
       hover: { kind: 'passive' as const, id: config.id },
     }
-    // ★ 触发者实体片段（带阵营前缀）
+    //  触发者实体片段（带阵营前缀）
     const sourcePrefix =
       source.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
     const sourceSeg = {
@@ -564,7 +564,7 @@ export class PassiveSkillManager {
           ]
         : [passiveNameSeg, { text: '  ' }, sourceSeg, { text: '  生效' }]
 
-    // ★ 独立触发阶段（无父 action）使用 plain 渲染；行动内触发保持 sub 附加
+    //  独立触发阶段（无父 action）使用 plain 渲染；行动内触发保持 sub 附加
     const standalonePhases: BattleTriggerPhase[] = [
       BattleTriggerPhase.BATTLE_START,
       BattleTriggerPhase.TURN_START,
@@ -580,7 +580,7 @@ export class PassiveSkillManager {
       meta: isStandalone ? undefined : { role: 'sub' },
     })
 
-    // ★ 7. 统一发射动画
+    //  7. 统一发射动画
     this.emitAnimations(allEffects, hpSnapshots)
 
     return { executed: anyExecuted, totalDamage }
@@ -593,7 +593,7 @@ export class PassiveSkillManager {
     effects: BattleEffect[],
     snapshots: Map<string, { before: number; after: number }>,
   ): void {
-    if (!this._getAnimationEnabled()) return // ★ 无头/快速模式：抑制
+    if (!this._getAnimationEnabled()) return // 无头/快速模式：抑制
     for (const effect of effects) {
       if (!effect.targetId) continue
 

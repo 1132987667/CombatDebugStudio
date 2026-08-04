@@ -176,8 +176,8 @@ defineExpose({ updateIndicator })
   z-index: 0;
   /* 建立层叠上下文：胶囊(0) 在轨道上，页签文字(1) 在胶囊上 */
   display: flex;
-  gap: var(--space-1);
-  padding: var(--space-1);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border-default);
   flex-shrink: 0;
@@ -190,14 +190,12 @@ defineExpose({ updateIndicator })
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   border: none;
   border-radius: var(--radius-md);
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
-  font-family: inherit;
   line-height: var(--line-height-md);
   white-space: nowrap;
   cursor: pointer;
@@ -281,9 +279,9 @@ defineExpose({ updateIndicator })
 .tabs-indicator {
   position: absolute;
   /* 顶部对齐轨道 padding，底部留出 border-bottom 宽度，精确覆盖页签区域 */
-  top: var(--space-1);
-  bottom: calc(var(--space-1) + 1px);
-  border-radius: var(--radius-full);
+  top: var(--space-2);
+  bottom: calc(var(--space-2) + 1px);
+  border-radius: var(--radius-md);
   background: var(--color-bg-tertiary);
   border: 1px solid var(--tabs-accent-glow);
   box-shadow: var(--shadow-sm);

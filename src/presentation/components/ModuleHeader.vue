@@ -97,7 +97,7 @@ function onKeydown(e: KeyboardEvent) {
   left: 0;
   right: 0;
   z-index: var(--z-sticky);
-  height: 80px;
+  height: 60px;
   box-sizing: border-box;
   padding: 0 var(--space-6);
   display: flex;
@@ -131,6 +131,7 @@ function onKeydown(e: KeyboardEvent) {
 .module-tabs {
   position: absolute;
   left: 50%;
+  bottom: 0;
   transform: translateX(-50%);
   display: flex;
   gap: var(--space-1);

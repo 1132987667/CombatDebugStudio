@@ -10,14 +10,14 @@
     </div>
 
     <div class="control-group">
-      <button class="control-btn" @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</button>
+      <Button @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</Button>
       <!-- 暂停/继续按钮 -->
-      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">
+      <Button @click="$emit('toggle-pause')" :disabled="!isBattleActive">
         {{ isPaused ? '继 续' : '暂 停' }}
-      </button>
-      <button class="control-btn" @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</button>
-      <button class="control-btn" @click="$emit('reset-battle')"
-        :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</button>
+      </Button>
+      <Button @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</Button>
+      <Button @click="$emit('reset-battle')"
+        :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</Button>
 
       <span class="separator"></span>
 
@@ -26,14 +26,11 @@
         @update:model-value="handleAutoPlayModeChange" />
 
       <!-- 战斗速度控制按钮 -->
-      <button class="control-btn speed-control-btn" @click="toggleBattleSpeed">
-        <span class="speed-icon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 8-10h-7z"/></svg>
-        </span>
+      <Button class="speed-control-btn" @click="toggleBattleSpeed">
         <span class="speed-text">战斗速度 x{{ props.battleSpeed ?? 1 }}</span>
-      </button>
+      </Button>
 
-      <!-- ★ 快速战斗开关 -->
+      <!--  快速战斗开关 -->
       <ToggleSwitch :model-value="store.quickMode" @update:model-value="store.toggleQuickMode()"
         accent-color="var(--color-warning)" label="快速" />
 
@@ -46,12 +43,12 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="3" width="5" height="18" rx="1"/><rect x="14" y="3" width="5" height="18" rx="1"/></svg>
           暂停于：{{ debugPhaseLabel }}
         </span>
-        <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
+        <Button @click="handleDebugStep" :disabled="!debugPhase">
           {{ debugPhase ? '继 续' : '暂 停' }}
-        </button>
-        <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
+        </Button>
+        <Button @click="handleDebugStep" :disabled="!debugPhase">
           {{ debugPhase ? '下一步' : '单步调试' }}
-        </button>
+        </Button>
       </template>
       <span class="separator"></span>
 
@@ -63,6 +60,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from "vue";
+import Button from "@/presentation/components/Button.vue";
 import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
 import ToggleSwitch from "@/presentation/components/ToggleSwitch.vue";
 import { container } from '@/infrastructure/di/Container'

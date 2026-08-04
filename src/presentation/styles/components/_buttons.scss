@@ -1,57 +1,15 @@
 /* ==========================================================================
    Component: Buttons (_buttons.scss)
    依赖: tokens.scss
-   作用: 所有按钮变体 — btn-medium, btn-tiny, btn-small, speed-btn, action-btn, play-btn
+   作用: 速度选择按钮（speed-btn，SpeedSelector 控件使用）
+   注意: 通用按钮已收敛到 Button.vue 组件（ui-button），本文件仅保留控件专属样式
    ========================================================================== */
-@use '../mixins' as *;
-
-/* ----- 2. 按钮尺寸体系 ----- */
-/* 使用说明: <button class="btn-tiny"> 或 <button class="btn-small"> 或 <button class="btn-medium"> */
-/* 共用 btn-base，仅差异行保留 */
-
-/* 2.1 极小按钮（标签式、紧凑场景） */
-.btn-tiny {
-  @include btn-base;
-  padding: 0.15rem 0.35rem;
-}
-
-/* 2.2 小型按钮（面板内操作） */
-.btn-small {
-  @include btn-base;
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-xs);
-  line-height: 1.4;
-}
-
-/* 2.3 中型按钮（通用、对话框操作） */
-.btn-medium {
-  @include btn-base;
-  line-height: 1.4;
-}
-
-/* 2.4 大按钮（强调场景） */
-.btn-large {
-  @include btn-base;
-  padding: var(--space-3) var(--space-5);
-  font-size: var(--font-size-md);
-}
-
-/* 2.5 按钮危险变体（可叠加 .btn-danger） */
-.btn-danger {
-  border-color: var(--color-brand-red) !important;
-  color: var(--color-danger) !important;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: var(--color-enemy-primary) !important;
-  border-color: var(--color-danger) !important;
-}
-
-/* ----- 4. 速度选择按钮 ----- */
+/* 速度选择按钮（speed-btn，SpeedSelector 控件使用） */
 .speed-btn {
   background: var(--color-border-default);
   color: var(--color-info);
   border: 1px solid var(--color-border-tertiary);
+  /* NOTE: 速度按钮紧凑 padding（~2.4px/6.4px），非 4px 栅格值，保持紧凑形态 */
   padding: 0.15rem 0.4rem;
   cursor: pointer;
 }
@@ -69,84 +27,5 @@
   color: var(--color-text-primary);
 }
 
-/* ----- 5. 通用操作按钮 ----- */
-.action-btn {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-secondary);
-  cursor: pointer;
-  font-size: var(--font-size-md);
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-  color: var(--color-info);
-}
-
-.action-btn:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-tertiary-hover); /* 补上这一行 */
-}
-
-.action-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.action-btn.primary {
-  background: var(--color-brand-red);
-  color: var(--color-text-primary);
-  border-color: var(--color-brand-red);
-}
-
-.action-btn.primary:hover {
-  background: var(--color-brand-red-hover);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* ----- 6. 播放按钮 ----- */
-.play-btn {
-  width: 50px;
-  height: 50px;
-  font-size: var(--font-size-xl);
-  background: var(--color-brand-red);
-  color: var(--color-text-primary);
-  border-color: var(--color-brand-red);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-
-.play-btn:hover:not(:disabled) {
-  background: var(--color-brand-red-active);
-}
-
-.play-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.play-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ----- 7. 重置按钮（回放设置中） ----- */
-.reset-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-secondary);
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-  color: var(--color-info);
-}
-
-.reset-btn:hover {
-  background: var(--color-bg-hover);
-}
-
-.reset-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
+/* 删除：play-btn 无使用者（回放控制已由 haotian 模块 Button 组件承载） */

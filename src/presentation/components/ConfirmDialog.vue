@@ -13,16 +13,17 @@
   <Dialog :model-value="modelValue" :title="title" width="420px" @update:model-value="onUpdate">
     <div class="confirm-message">{{ message }}</div>
     <template #footer>
-      <button class="btn-medium" @click="cancel">取消</button>
-      <button class="btn-medium" :class="{ 'btn-danger': danger }" @click="confirm">
+      <Button @click="cancel">取消</Button>
+      <Button :variant="danger ? 'danger' : 'secondary'" @click="confirm">
         {{ confirmText }}
-      </button>
+      </Button>
     </template>
   </Dialog>
 </template>
 
 <script setup lang="ts">
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 
 interface Props {
   modelValue: boolean

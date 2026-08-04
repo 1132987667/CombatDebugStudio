@@ -1,55 +1,75 @@
 <template>
   <div class="fs-list-view">
-    <div class="fs-page-title">
-      {{ schema.label }}管理
-      <span class="fs-page-hint">{{ tableHint }}</span>
-    </div>
+    <div class="fs-list-layout">
+      <!-- 左：列表（18/24 栅格） -->
+      <div class="fs-list-main">
+        <div class="fs-page-title">
+          {{ schema.label }}管理
+          <span class="fs-page-hint">{{ tableHint }}</span>
+        </div>
 
     <div class="fs-toolbar">
       <div class="fs-search-box">
-        <input v-model="store.search" class="fs-input fs-search" placeholder="按名称模糊搜索…"
-          aria-label="按名称搜索" @keyup.enter="onSearch" />
+        <TacticalInput :model-value="store.search" placeholder="按名称模糊搜索…" aria-label="按名称搜索"
+          @update:model-value="store.search = String($event ?? '')" @keyup.enter="onSearch">
+          <template #icon>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" aria-hidden="true">
+              <circle cx="7" cy="7" r="5" />
+              <path d="M11 11l3.5 3.5" />
+            </svg>
+          </template>
+        </TacticalInput>
       </div>
 
       <template v-for="f in schema.filters ?? []" :key="f.key">
-        <TacticalSelect v-if="f.type === 'select'" v-model="filterState[f.key]" size="sm"
-          :placeholder="`全部${f.label}`" :options="filterOptions(f)" @change="page = 1" />
+        <TacticalSelect v-if="f.type === 'select'" v-model="filterState[f.key]" size="md" :placeholder="`全部${f.label}`"
+          :options="filterOptions(f)" @change="page = 1" />
         <span v-else-if="f.type === 'range'" class="fs-range">
           <span class="fs-range-label">{{ f.label }}</span>
-          <input class="fs-input fs-range-input" type="number" :min="f.min" :max="f.max"
-            :value="rangeState[f.key]?.min" placeholder="最小"
-            @input="setRange(f.key, 'min', ($event.target as HTMLInputElement).value)" />
+          <!-- NOTE: 过滤边界是查询条件而非受校验字段，不传 min/max 避免 blur 时被 clamp 篡改过滤语义 -->
+          <TacticalInput type="number" size="md" :model-value="rangeState[f.key]?.min ?? ''" placeholder="最小"
+            @update:model-value="(v) => setRange(f.key, 'min', String(v ?? ''))" />
           <span class="fs-range-sep">—</span>
-          <input class="fs-input fs-range-input" type="number" :min="f.min" :max="f.max"
-            :value="rangeState[f.key]?.max" placeholder="最大"
-            @input="setRange(f.key, 'max', ($event.target as HTMLInputElement).value)" />
+          <TacticalInput type="number" size="md" :model-value="rangeState[f.key]?.max ?? ''" placeholder="最大"
+            @update:model-value="(v) => setRange(f.key, 'max', String(v ?? ''))" />
         </span>
       </template>
 
       <span class="fs-spacer"></span>
       <span class="fs-version" title="任何写操作都会递增全局数据版本号">数据版本 v{{ store.dataVersion }}</span>
-      <button class="fs-btn fs-btn-primary fs-btn-sm" @click="store.openCreate">＋ 新增{{ schema.label }}</button>
-      <button class="fs-btn fs-btn-sm" title="复制选中数据为模板" :disabled="!store.selectedIds.length"
-        @click="duplicateFirst">复制为模板</button>
-      <button v-if="store.selectedIds.length" class="fs-btn fs-btn-danger fs-btn-sm"
-        @click="removeSelected">删除所选（{{ store.selectedIds.length }}）</button>
+      <Button variant="primary" size="small" @click="store.openCreate">＋ 新增{{ schema.label }}</Button>
+      <Button size="small" title="复制选中数据为模板" :disabled="!store.selectedIds.length"
+        @click="duplicateFirst">复制为模板</Button>
+      <Button v-if="store.selectedIds.length" variant="danger" size="small" @click="removeSelected">删除所选（{{
+        store.selectedIds.length }}）</Button>
     </div>
 
     <DataTable :schema="schema" :rows="pagedRows" :selected-ids="store.selectedIds" :loading="store.loading"
-      @toggle-select="store.toggleSelect" @edit="store.openEdit" @copy="store.duplicateAsTemplate"
-      @remove="onRemove" />
+      :detail-id="detailId" @toggle-select="store.toggleSelect" @edit="store.openEdit" @copy="store.duplicateAsTemplate"
+      @remove="onRemove" @detail="onDetail" />
 
     <div v-if="totalPages > 1" class="fs-pagination" role="navigation" aria-label="分页">
       <span class="fs-page-info">共 {{ filteredRows.length }} 条 · 第 {{ page }}/{{ totalPages }} 页</span>
       <button class="fs-page-btn" :disabled="page <= 1" @click="go(page - 1)">«</button>
-      <button v-for="p in pageButtons" :key="p" class="fs-page-btn" :class="{ active: p === page }"
-        @click="go(p)">{{ p }}</button>
+      <button v-for="p in pageButtons" :key="p" class="fs-page-btn" :class="{ active: p === page }" @click="go(p)">{{ p
+        }}</button>
       <button class="fs-page-btn" :disabled="page >= totalPages" @click="go(page + 1)">»</button>
     </div>
+      </div>
 
-    <EntityDrawer :open="store.drawerOpen" :schema="schema" :entity="store.editingEntity"
-      :is-new="store.isNew" :errors="store.formErrors" :load-options="store.loadOptions"
-      @save="store.save" @close="store.closeDrawer" />
+      <!-- 右：实体详情（6/24 栅格，预留扩展） -->
+      <aside class="fs-list-detail" aria-label="实体详情">
+        <EntityDetailPanel v-if="detailEntity" :schema="schema" :entity="detailEntity" />
+        <div v-else class="fs-detail-empty">
+          <span class="fs-detail-empty-title">实体详情</span>
+          <span class="fs-detail-empty-hint">点击列表中的名称查看对应信息</span>
+        </div>
+      </aside>
+    </div>
+
+    <EntityDrawer :open="store.drawerOpen" :schema="schema" :entity="store.editingEntity" :is-new="store.isNew"
+      :errors="store.formErrors" :load-options="store.loadOptions" @save="store.save" @close="store.closeDrawer" />
   </div>
 </template>
 
@@ -59,8 +79,11 @@ import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshe
 import type { TableFilter } from '@/domain/fengshen/schema'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import DataTable from '@/presentation/modules/fengshen/components/DataTable.vue'
+import Button from '@/presentation/components/Button.vue'
 import EntityDrawer from '@/presentation/modules/fengshen/components/EntityDrawer.vue'
+import EntityDetailPanel from '@/presentation/modules/fengshen/components/EntityDetailPanel.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const PAGE_SIZE = 20
 
@@ -70,6 +93,14 @@ const page = ref(1)
 const filterState = reactive<Record<string, string>>({})
 const rangeState = reactive<Record<string, { min: string; max: string }>>({})
 const optionsCache = ref<Record<string, OptionItem[]>>({})
+
+/** 右侧详情面板：当前选中行 id 与实体（点击列表中的名称触发） */
+const detailId = ref<string | null>(null)
+const detailEntity = computed(() => store.rows.find((r) => String(r.id) === detailId.value) ?? null)
+
+function onDetail(row: Record<string, unknown>): void {
+  detailId.value = String(row.id)
+}
 
 const tableHint = computed(() => {
   const hints: Record<string, string> = {
@@ -152,8 +183,13 @@ function onSearch(): void {
   void store.refreshList()
 }
 
+/** 重置筛选：select 键重置为空串而非删除 —— v-model="filterState[f.key]" 动态键绑定下，
+ * 键不存在会传 undefined 给 TacticalSelect（其 modelValue 为 required，触发 prop 类型检查警告） */
 function resetFilters(): void {
   for (const key of Object.keys(filterState)) delete filterState[key]
+  for (const f of schema.value.filters ?? []) {
+    if (f.type === 'select') filterState[f.key] = ''
+  }
   for (const key of Object.keys(rangeState)) delete rangeState[key]
   page.value = 1
 }
@@ -165,11 +201,12 @@ async function duplicateFirst(): Promise<void> {
   if (row) await store.duplicateAsTemplate(row)
 }
 
-// 表切换：重置筛选 / 分页 / 预载 refTable 选项
+// 表切换：重置筛选 / 分页 / 预载 refTable 选项（immediate：首次挂载即预填 select 键，避免 v-model 绑 undefined）
 watch(
   () => store.currentTable,
   () => {
     resetFilters()
+    detailId.value = null
     for (const f of schema.value.filters ?? []) {
       if (f.refTable && !optionsCache.value[f.refTable]) {
         void store.loadOptions(f.refTable).then((items) => {
@@ -178,6 +215,7 @@ watch(
       }
     }
   },
+  { immediate: true },
 )
 
 async function onRemove(row: Record<string, unknown>): Promise<void> {

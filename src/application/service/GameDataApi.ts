@@ -32,6 +32,20 @@ export interface ListQuery {
   offset?: number
 }
 
+/**
+ * 自然排序（数字感知字典序）：actors_002 < actors_010（数字按数值），
+ * growth_attack < growth_balanced（无数字段按字典序）。
+ * 封神榜 id 含补零自增（hero_001）、固定名（elements / growth_balanced / guardian_fire）等混合格式，统一按此排序。
+ */
+const idCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+
+/** 按 id 升序（原地排序） */
+function sortById<T>(rows: T[]): T[] {
+  return rows.sort((a, b) =>
+    idCollator.compare(String((a as { id?: unknown }).id ?? ''), String((b as { id?: unknown }).id ?? '')),
+  )
+}
+
 export class GameDataApi {
   constructor(private readonly storage: IPersistentStorage) {}
 
@@ -92,17 +106,17 @@ export class GameDataApi {
   }
 
   async listLineups(filter?: { side?: LineupData['side'] }): Promise<LineupData[]> {
-    const all = await this.listAll<LineupData>(FENGSHEN_STORE.LINEUPS)
+    const all = sortById(await this.listAll<LineupData>(FENGSHEN_STORE.LINEUPS))
     return filter?.side ? all.filter((l) => l.side === filter.side) : all
   }
 
   async listEquipment(filter?: { slot?: EquipmentData['slot'] }): Promise<EquipmentData[]> {
-    const all = await this.listAll<EquipmentData>(FENGSHEN_STORE.EQUIPMENT)
+    const all = sortById(await this.listAll<EquipmentData>(FENGSHEN_STORE.EQUIPMENT))
     return filter?.slot ? all.filter((e) => e.slot === filter.slot) : all
   }
 
   async listBattleParams(): Promise<BattleParamData[]> {
-    return this.listAll<BattleParamData>(FENGSHEN_STORE.PARAMS)
+    return sortById(await this.listAll<BattleParamData>(FENGSHEN_STORE.PARAMS))
   }
 
   /** 通用分页 / 搜索查询（辅助功能用） */
@@ -114,11 +128,8 @@ export class GameDataApi {
       const kw = query.search.toLowerCase()
       rows = rows.filter((r) => String((r as { name?: unknown }).name ?? '').toLowerCase().includes(kw))
     }
-    rows.sort((a, b) =>
-      String((b as { updatedAt?: string }).updatedAt ?? '').localeCompare(
-        String((a as { updatedAt?: string }).updatedAt ?? ''),
-      ),
-    )
+    // 按 id 升序（自然排序）：列表 / 下拉选项 / 自增 id 计算共用同一稳定顺序
+    sortById(rows)
     if (query?.offset) rows = rows.slice(query.offset)
     if (query?.limit) rows = rows.slice(0, query.limit)
     return rows

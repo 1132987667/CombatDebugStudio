@@ -120,13 +120,13 @@ export class AutoBattleManager {
       return
     }
 
-    // ⭐ 单步执行仅在暂停状态下允许，防止自动战斗运行期间误触
+    //  单步执行仅在暂停状态下允许，防止自动战斗运行期间误触
     if (!this.battleSystem.getIsPaused()) {
       this.logger.addSystemLog({ message: '单步执行仅在暂停状态下可用', level: LogLevel.WARN })
       return
     }
 
-    // ⭐ 并发锁：防止快速连点导致两个 processTurn 异步并发执行
+    //  并发锁：防止快速连点导致两个 processTurn 异步并发执行
     if (this.isProcessing) {
       this.logger.addDebugLog('已有单步执行进行中，忽略重复请求', { level: LogLevel.WARN })
       return
@@ -142,10 +142,8 @@ export class AutoBattleManager {
 
       this.battleStateManager.syncBattleState()
 
-      const battleState = this.battleSystem.getBattleState()
-      if (battleState) {
-        await this.logger.syncBattleLogs(battleState)
-      }
+      // NOTE: 不再从 actions 重新生成日志（syncBattleLogs）— 实时日志已由
+      //       BattleExecutor/BattleSystem 逐条写入，事后重生成会导致重复且格式不一致
 
       // 执行完成后暂停（仅在战斗仍活跃时才切换，防止 ENDED 被误切为 PAUSED）
       if (!this.battleSystem.getIsPaused() && this.battleSystem.isBattleInProgress()) {

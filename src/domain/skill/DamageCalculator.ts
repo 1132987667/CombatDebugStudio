@@ -117,7 +117,7 @@ export class DamageCalculator {
       rawDamage: 0,
     }
 
-    // ★ 检测必暴标记：必暴意味着必中+必暴
+    //  检测必暴标记：必暴意味着必中+必暴
     const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff('buff_guaranteed_crit')
 
     // 命中/闪避判定 — 默认命中率100%，减去目标闪避率

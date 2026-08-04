@@ -19,21 +19,13 @@
 
 .log-header {
   background: var(--color-bg-tertiary);
-  padding: 0.4rem 0.5rem;
+  padding: 0.4rem var(--space-2);
   color: var(--color-info);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-
-.log-keyword {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  padding: 0.15rem 0.4rem;
-  width: 80px;
 }
 
 .log-content {

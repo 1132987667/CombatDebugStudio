@@ -9,7 +9,7 @@
   <Dialog :model-value="modelValue" @update:model-value="handleModelValueChange" title="角色编辑器" width="45vw"
     height="50vh" :show-mask="false" :mask-closable="false" :esc-closable="false">
     <template #header-actions>
-      <TacticalSelect v-model="innerSelectedCharId" size="sm" searchable class="char-selector"
+      <TacticalSelect v-model="innerSelectedCharId" size="md" searchable class="char-selector"
         :placeholder="characters.length === 0 ? '暂无参战角色' : '选择角色'" :options="charOptions"
         @change="emitSelectChar" />
     </template>
@@ -36,7 +36,8 @@
                 <span class="status-count">{{ checkedBuffs.length }}/{{ localStatuses.length }}</span>
               </div>
 
-              <input v-model="buffSearch" class="ce-search" placeholder="搜索状态名称..." aria-label="搜索状态名称" />
+              <TacticalInput size="md" :model-value="buffSearch" placeholder="搜索状态名称..." aria-label="搜索状态名称"
+                @update:model-value="buffSearch = String($event ?? '')" />
 
               <div class="status-list">
                 <div v-for="status in filteredStatuses" :key="status.id" class="ce-status-item"
@@ -49,8 +50,9 @@
                       </span>
                     </label>
                     <div class="ce-duration-wrap">
-                      <input type="number" class="ce-duration-input" v-model="status.duration" min="0" max="99"
-                        :disabled="!innerSelectedCharId" aria-label="状态持续回合数">
+                      <TacticalInput type="number" integer size="md" :min="0" :max="99" :model-value="status.duration"
+                        :disabled="!innerSelectedCharId" aria-label="状态持续回合数"
+                        @update:model-value="(v) => (status.duration = v === null ? null : Number(v))" />
                       <span class="ce-duration-unit">回合</span>
                     </div>
                   </div>
@@ -63,15 +65,15 @@
               </div>
 
               <div class="ce-section-actions">
-                <button class="btn-medium" @click="toggleCurrentCategory" :disabled="!innerSelectedCharId"
+                <Button @click="toggleCurrentCategory" :disabled="!innerSelectedCharId"
                   :title="currentCategoryAllChecked ? '取消全选当前分类' : '全选当前分类'">
                   {{ currentCategoryAllChecked ? '取消全选' : '全选本类' }}
-                </button>
-                <button class="btn-medium" @click="emitApplyBuffs"
+                </Button>
+                <Button @click="emitApplyBuffs"
                   :disabled="checkedBuffs.length === 0 || !innerSelectedCharId">
                   注入选中 ({{ checkedBuffs.length }})
-                </button>
-                <button class="btn-medium" @click="clearAllChecks" :disabled="checkedBuffs.length === 0">清空</button>
+                </Button>
+                <Button @click="clearAllChecks" :disabled="checkedBuffs.length === 0">清空</Button>
               </div>
             </div>
           </div>
@@ -90,8 +92,8 @@
             </div>
           </div>
           <div class="ce-section-actions">
-            <button class="btn-medium" @click="emitApplyAttrs" :disabled="!innerSelectedCharId">应用属性</button>
-            <button class="btn-medium" @click="resetAttrOverrides">重置到当前值</button>
+            <Button @click="emitApplyAttrs" :disabled="!innerSelectedCharId">应用属性</Button>
+            <Button @click="resetAttrOverrides">重置到当前值</Button>
           </div>
         </div>
 
@@ -100,12 +102,12 @@
         <div class="ce-tab-content">
           <p class="reset-desc">对选中的角色执行以下操作：</p>
           <div class="reset-actions">
-            <button class="btn-medium reset-btn" @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
-              Buff</button>
-            <button class="btn-medium reset-btn" @click="emitReset('hp_energy')"
-              :disabled="!innerSelectedCharId">恢复满血满能量</button>
-            <button class="btn-medium reset-btn btn-danger" @click="confirmResetAll = true"
-              :disabled="!innerSelectedCharId">完全重置</button>
+            <Button block @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
+              Buff</Button>
+            <Button block @click="emitReset('hp_energy')"
+              :disabled="!innerSelectedCharId">恢复满血满能量</Button>
+            <Button block variant="danger" @click="confirmResetAll = true"
+              :disabled="!innerSelectedCharId">完全重置</Button>
           </div>
         </div> <!-- /ce-tab-content reset -->
       </template>
@@ -121,11 +123,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff } from '@/shared/types/buff-classification'
@@ -143,8 +147,8 @@ export interface EditorBuffEntry {
   primaryFacet: string
   /** 极性 */
   polarity: BuffPolarity
-  /** 用户可调的回合数（0=永久） */
-  duration: number
+  /** 用户可调的回合数（0=永久；null=编辑中/未设置，注入时转 0） */
+  duration: number | null
   effect: string
   active: boolean
 }
@@ -296,7 +300,7 @@ function emitApplyBuffs() {
   if (checked.length === 0 || !innerSelectedCharId.value) return
   emit('applyBuffs', {
     charId: innerSelectedCharId.value,
-    buffs: checked.map(s => ({ buffId: s.id, duration: s.duration })),
+    buffs: checked.map(s => ({ buffId: s.id, duration: s.duration ?? 0 })),
   })
   clearAllChecks()
 }
@@ -545,22 +549,6 @@ watch(() => props.modelValue, (visible) => {
   border: 1px solid var(--color-border-default);
 }
 
-.ce-search {
-  width: 100%;
-  padding: var(--space-2) var(--space-2);
-  margin-bottom: var(--space-2);
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  box-sizing: border-box;
-}
-
-.ce-search:focus {
-  outline: none;
-  border-color: var(--color-info);
-}
-
 /* ═══ 状态列表 ═══ */
 .status-list {
   flex: 1;
@@ -637,14 +625,14 @@ watch(() => props.modelValue, (visible) => {
   margin-left: auto;
 }
 
-.ce-duration-input {
-  width: 36px;
-  padding: 1px 2px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  text-align: center;
+/* TacticalInput 根默认 width:100%，在状态行内给固定宽度紧凑显示 */
+.ce-duration-wrap .t-input {
+  flex: 0 0 56px;
+}
+
+/* 搜索框与状态列表间距（原 .ce-search margin-bottom） */
+.buff-main > .t-input {
+  margin-bottom: var(--space-2);
 }
 
 .ce-duration-unit {
@@ -724,10 +712,5 @@ watch(() => props.modelValue, (visible) => {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-
-.reset-btn {
-  width: 100%;
-  text-align: center;
 }
 </style>

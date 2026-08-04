@@ -1,12 +1,12 @@
 <template>
-  <Dialog :model-value="open" :title="`分支对比 · ${store.archive?.battleId ?? '—'} → ${store.branch?.battleId ?? '—'}`"
+  <Dialog :model-value="open" :title="'分支对比'"
     width="min(760px, 94vw)" content-class="dialog-content--flush" @update:model-value="onModelValue">
     <div class="ht-diff-toolbar">
-      <button class="ht-btn" @click="store.loadSampleBranch()">生成示例分支（阈值 → 0.30）</button>
-      <TacticalSelect v-model="branchKey" size="sm" searchable placeholder="从战斗记录选分支…"
+      <Button @click="store.loadSampleBranch()">生成示例分支（阈值 → 0.30）</Button>
+      <TacticalSelect v-model="branchKey" size="md" searchable placeholder="从战斗记录选分支…"
         :options="branchOptions" />
-      <button class="ht-btn" @click="branchInput?.click()">载入分支 JSON</button>
-      <button class="ht-btn" @click="store.clearBranch()" :disabled="!store.branch">清除分支</button>
+      <Button @click="branchInput?.click()">载入分支 JSON</Button>
+      <Button @click="store.clearBranch()" :disabled="!store.branch">清除分支</Button>
       <span class="ht-diff-meta">
         <span class="ht-st-ok">相同</span> {{ store.diffStats.total - store.diffStats.changed }} ·
         <span class="ht-st-warn">差异</span> {{ store.diffStats.changed }}
@@ -15,7 +15,7 @@
     <div class="ht-diff-body">
       <div v-if="store.diffRows.length" class="ht-diff-cols">
         <div class="ht-diff-col">
-          <div class="ht-diff-col-hd">修改前（{{ store.archive?.battleId }}）</div>
+          <div class="ht-diff-col-hd">修改前</div>
           <template v-for="row in store.diffRows" :key="'b' + row.eventId">
             <div v-if="row.side !== 'branch-only'" class="ht-diff-row" :class="{ changed: row.changed }">
               <span class="ht-diff-sum">{{ row.summary }}</span>
@@ -28,7 +28,7 @@
           </template>
         </div>
         <div class="ht-diff-col">
-          <div class="ht-diff-col-hd">修改后（{{ store.branch?.battleId }}）</div>
+          <div class="ht-diff-col-hd">修改后</div>
           <template v-for="row in store.diffRows" :key="'a' + row.eventId">
             <div v-if="row.side !== 'base-only'" class="ht-diff-row" :class="{ changed: row.changed }">
               <span class="ht-diff-sum">{{ row.side === 'branch-only' ? row.summary : baseSummary(row) }}</span>
@@ -47,7 +47,7 @@
       </div>
     </div>
     <template #footer>
-      <button class="ht-btn primary" @click="close">关闭</button>
+      <Button variant="energy" @click="close">关闭</Button>
     </template>
     <input ref="branchInput" type="file" accept="application/json" hidden @change="onBranchFile" />
   </Dialog>
@@ -61,6 +61,7 @@ import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { DiffRow } from '@/domain/battle/replay/unified/unified-diff'
 import { useHaotianStore } from '../stores/haotianStore'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const props = defineProps<{ open: boolean }>()

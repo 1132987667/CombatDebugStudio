@@ -523,7 +523,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
             // 同步 _stacks 变量，供 ModifierEffect.perStack 读取
             target.context.variables.set('_stacks', maxStacks)
 
-            // ★ 修复：通知 effectPlan 原语层数未变但需要校准（如修饰符被外部清除后恢复）
+            //  修复：通知 effectPlan 原语层数未变但需要校准（如修饰符被外部清除后恢复）
             const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
             if (buffResolved?.effectPlan) {
               for (const effect of buffResolved.effectPlan) {
@@ -554,7 +554,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           target.script?.onRefresh?.(target.context)
           target.effectLines =
             target.script?.getEffectLines?.(target.context) ?? []
-          // ★ 数据驱动：通知 effectPlan 各原语层数变化（如 ModifierEffect 重新计算值）
+          //  数据驱动：通知 effectPlan 各原语层数变化（如 ModifierEffect 重新计算值）
           const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
           if (buffResolved?.effectPlan) {
             for (const effect of buffResolved.effectPlan) {
@@ -858,7 +858,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const instance = this.buffInstances.get(instanceId)
     if (!instance || !instance.isActive) return false
 
-    // ★ 第一步就标记，防止重入
+    //  第一步就标记，防止重入
     instance.isActive = false
 
     try {
@@ -894,7 +894,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       }
       // PATH D：无回调
     } finally {
-      // ★ 无论是否异常，保证清理
+      //  无论是否异常，保证清理
       this.unregisterTriggersForInstance(instanceId)
       this.buffInstances.delete(instanceId)
 
@@ -987,7 +987,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       // 注入回合号到 context（修正 P0-4 的根因）
       instance.context.currentTurn = currentTurn
 
-      // ★ 持续到下一个回合结束：施加当轮的结算既不触发 onTick/onUpdate 也不扣减回合。
+      //  持续到下一个回合结束：施加当轮的结算既不触发 onTick/onUpdate 也不扣减回合。
       // 例：duration=1 在第 N 轮施加 → 第 N 轮结束仍在 → 第 N+1 轮结束移除。
       // 放在 tick 之前执行，保证 dot 跳伤次数与行动顺序无关（快/慢单位施加均为 N 次）。
       if (instance.startTurn === currentTurn) return
@@ -1117,7 +1117,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.modifierStacks.delete(characterId)
   }
 
-  /** ★ 彻底清理指定角色的所有 Buff 相关状态（批量生成防内存泄漏） */
+  /**  彻底清理指定角色的所有 Buff 相关状态（批量生成防内存泄漏） */
   public clearCharacterState(characterId: string): void {
     this.clearAllBuffs(characterId)
     this.shieldValues.delete(characterId)

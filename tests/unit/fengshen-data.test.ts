@@ -396,3 +396,42 @@ describe('纯函数', () => {
     expect(keys).toContain('drops.entries[].itemId')
   })
 })
+
+describe('GameDataApi.listByTable id 排序', () => {
+  it('按 id 升序返回（数字感知：actors_002 < actors_010 < actors_100）', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+    // 覆盖写入乱序 id 记录（seed 已有若干 actor，追加高低位）
+    await storage.set(FENGSHEN_STORE.ACTORS, 'hero_010', { ...validActor, id: 'hero_010', name: '甲' })
+    await storage.set(FENGSHEN_STORE.ACTORS, 'hero_100', { ...validActor, id: 'hero_100', name: '乙' })
+    await storage.set(FENGSHEN_STORE.ACTORS, 'hero_002', { ...validActor, id: 'hero_002', name: '丙' })
+
+    const rows = await new GameDataApi(storage).listByTable<{ id: string }>('actors')
+    const nums = rows.map((r) => Number(r.id.match(/(\d+)$/)?.[1] ?? 0))
+    expect([...nums].sort((a, b) => a - b)).toEqual(nums)
+  })
+
+  it('无数字后缀 id（seed 常见，如 growth_* / guardian_*）按字典序排列', async () => {
+    const storage = new MemoryStorage()
+    // 按乱序写入四条 growth（与 seed 写入顺序相反），列表应呈现字典序
+    await storage.set(FENGSHEN_STORE.GROWTH, 'growth_speed', { id: 'growth_speed', name: '速度' })
+    await storage.set(FENGSHEN_STORE.GROWTH, 'growth_balanced', { id: 'growth_balanced', name: '均衡' })
+    await storage.set(FENGSHEN_STORE.GROWTH, 'growth_defense', { id: 'growth_defense', name: '防御' })
+    await storage.set(FENGSHEN_STORE.GROWTH, 'growth_attack', { id: 'growth_attack', name: '攻击' })
+
+    const rows = await new GameDataApi(storage).listByTable<{ id: string }>('growth')
+    expect(rows.map((r) => r.id)).toEqual([
+      'growth_attack',
+      'growth_balanced',
+      'growth_defense',
+      'growth_speed',
+    ])
+  })
+
+  it('无数字后缀的 id（如 elements 固定 id）与数值 id 共存时不报错', async () => {
+    const storage = new MemoryStorage()
+    await storage.set(FENGSHEN_STORE.ELEMENTS, 'elements', { id: 'elements', name: '元素矩阵', matrix: [] })
+    const rows = await new GameDataApi(storage).listByTable<{ id: string }>('elements')
+    expect(rows.map((r) => r.id)).toEqual(['elements'])
+  })
+})

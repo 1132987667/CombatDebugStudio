@@ -3,8 +3,8 @@
     <div class="ht-pane-hd">
       <span class="t">战斗时间线</span>
       <span style="display: flex; gap: 8px; align-items: center">
-        <button class="ht-btn mini" :class="{ on: store.focusMode }" title="聚焦选中事件的因果链，淡化无关分支"
-          @click="store.toggleFocus()">聚焦</button>
+        <Button size="tiny" :active="store.focusMode" title="聚焦选中事件的因果链，淡化无关分支"
+          @click="store.toggleFocus()">聚焦</Button>
         <span class="s">{{ roundCount }} 个回合</span>
       </span>
     </div>
@@ -13,7 +13,7 @@
         <template v-for="entry in store.debugEntries" :key="entry.id">
           <div v-if="entry.kind === 'round'" class="ht-t-round">
             <div class="ht-t-row" title="点击折叠/展开本回合" @click="toggleRound(entry.id)">
-              <span class="ht-t-tgl" :class="{ open: expanded.has(entry.id) }">▶</span>
+              <span class="ht-t-tgl" :class="{ open: expanded.has(entry.id) }">▸</span>
               <span class="ht-t-ico">◈</span>
               <span class="ht-t-lab">{{ entry.name }}</span>
               <span class="ht-t-meta">{{ entry.nodes.length }} 节点</span>
@@ -46,6 +46,7 @@
 import { computed, reactive, watch } from 'vue'
 import type { DebugNode } from '@/domain/battle/replay/unified/unified-debug-tree'
 import { useHaotianStore } from '../stores/haotianStore'
+import Button from '@/presentation/components/Button.vue'
 
 const store = useHaotianStore()
 

@@ -24,7 +24,7 @@ coverage
 build/
 
 # json数据
-configs/
+# configs/
 
 docs/
 documents/
@@ -33,10 +33,17 @@ tests/
 
 output.txt
 
+.scss
+.vue
+
+
 .gitattributes
 .git
 .nuxt
 .github/
+.mimocode/
+.cron-lock
+scripts/tools/
 
 .dumpignore
 .gitignore

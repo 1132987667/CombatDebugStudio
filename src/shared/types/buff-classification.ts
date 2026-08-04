@@ -55,7 +55,7 @@ export function deriveBuffFacets(config: {
 }): StatusCategory[] {
   const facets: StatusCategory[] = []
 
-  // ★ 优先从 effectPlan 派生（数据驱动方式）
+  //  优先从 effectPlan 派生（数据驱动方式）
   if (config.effectPlan && config.effectPlan.length > 0) {
     for (const effect of config.effectPlan) {
       switch (effect.type) {

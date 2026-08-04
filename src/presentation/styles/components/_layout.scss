@@ -198,7 +198,7 @@
 .turn-num {
   background: var(--color-brand-red);
   color: var(--color-text-primary);
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem var(--space-2);
   border-radius: var(--radius-sm);
   font-weight: var(--font-weight-bold);
 }
@@ -302,14 +302,6 @@
   margin-bottom: var(--space-2);
 }
 
-.scene-input {
-  flex: 1;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  padding: var(--space-1) var(--space-2);
-}
-
 /* ----- 空状态 ----- */
 .empty-message {
   text-align: center;
@@ -328,15 +320,6 @@
 /* ----- 搜索输入框 ----- */
 .character-search {
   margin-bottom: var(--space-2);
-}
-
-.search-input {
-  width: 100%;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  padding: 0.4rem;
-  border-radius: var(--radius-sm);
 }
 
 
@@ -372,85 +355,6 @@
 
 .control-group.right {
   justify-content: flex-end;
-}
-
-.control-btn {
-  background: var(--color-bg-tertiary);
-  color: var(--color-info);
-  border: 1px solid var(--color-border-default);
-  padding: 0.4rem 0.75rem;
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-
-.control-btn:hover:not(:disabled) {
-  background: var(--color-bg-tertiary-hover);
-  border-color: var(--color-border-tertiary-hover);
-}
-
-.control-btn:active:not(:disabled) {
-  transform: scale(0.96);
-}
-
-.control-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.control-btn.stop {
-  color: var(--color-danger);
-  border-color: rgba(var(--rgb-danger), var(--alpha-glow));
-}
-
-.control-btn.stop:hover:not(:disabled) {
-  background: var(--color-bg-hover);
-  border-color: var(--color-danger);
-}
-
-.auto-play-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-width: 120px;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-
-.auto-play-btn:hover:not(:disabled) {
-  background: var(--color-bg-hover);
-  border-color: var(--color-info);
-  transform: translateY(-1px);
-}
-
-.auto-play-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.auto-play-btn.auto-playing {
-  background: var(--color-live);
-  border-color: var(--color-live-hover);
-  color: var(--color-text-primary);
-}
-
-.auto-play-btn.auto-playing:hover:not(:disabled) {
-  background: var(--color-live-hover);
-  border-color: var(--color-live-active);
-}
-
-.play-icon {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-}
-
-.stop-icon {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-danger);
-}
-
-.auto-text {
 }
 
 .speed-control-btn {

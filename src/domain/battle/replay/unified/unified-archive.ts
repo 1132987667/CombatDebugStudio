@@ -121,16 +121,16 @@ export const PHASE_META: Record<
 > = {
   battle_lifecycle: { label: '生命周期', icon: '◉', cls: 'c-amber', tick: 'tc-amber' },
   turn_flow: { label: '回合流转', icon: '◇', cls: 'c-slate', tick: 'tc-slate' },
-  action_execution: { label: '行动', icon: '⚔', cls: 'c-blue', tick: 'tc-blue' },
+  action_execution: { label: '行动', icon: '战', cls: 'c-blue', tick: 'tc-blue' },
   damage_calculation: { label: '伤害', icon: '✦', cls: 'c-red', tick: 'tc-red' },
   heal_calculation: { label: '治疗', icon: '✚', cls: 'c-green', tick: 'tc-green' },
   buff_lifecycle: { label: 'Buff', icon: '❖', cls: 'c-orange', tick: 'tc-orange' },
   buff_trigger: { label: 'Buff 触发', icon: '❖', cls: 'c-orange', tick: 'tc-orange' },
-  passive_trigger: { label: '被动', icon: '⚡', cls: 'c-cyan', tick: 'tc-cyan' },
+  passive_trigger: { label: '被动', icon: '被', cls: 'c-cyan', tick: 'tc-cyan' },
   ai_decision: { label: 'AI决策', icon: '◈', cls: 'c-dbg', tick: 'tc-dbg', debugOnly: true },
   attribute_recalc: { label: '属性重算', icon: '∑', cls: 'c-dbg', tick: 'tc-dbg', debugOnly: true },
-  config_load: { label: '配置', icon: '⚙', cls: 'c-dbg', tick: 'tc-dbg', debugOnly: true },
-  config_validation: { label: '配置校验', icon: '⚙', cls: 'c-dbg', tick: 'tc-dbg', debugOnly: true },
+  config_load: { label: '配置', icon: '配', cls: 'c-dbg', tick: 'tc-dbg', debugOnly: true },
+  config_validation: { label: '配置校验', icon: '配', cls: 'c-dbg', tick: 'tc-dbg', debugOnly: true },
 }
 
 /** 回放投影默认隐藏的调试专属阶段（调试系统始终可见） */

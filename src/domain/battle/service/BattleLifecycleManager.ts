@@ -41,7 +41,7 @@ export class BattleLifecycleManager {
     const battle = this.getBattleData()
     if (!battle) return
 
-    // ⭐ 幂等性守卫：防止重复触发 endBattle
+    //  幂等性守卫：防止重复触发 endBattle
     if (
       battle.battleState === BattleStatus.ENDED ||
       battle.battleState === BattleStatus.SETTLEMENT
@@ -61,7 +61,7 @@ export class BattleLifecycleManager {
     battle.winner = winner
     battle.endTime = Date.now()
 
-    // ⭐ 强制中断所有正在等待的动画，让 processTurnInternal 立即退出
+    //  强制中断所有正在等待的动画，让 processTurnInternal 立即退出
     this.animationManager.cleanupAnimationState()
 
     const endAction = BattleActionHelper.createSkill({
@@ -89,7 +89,7 @@ export class BattleLifecycleManager {
       battle.currentTurn || 1,
     )
     this.battleRecorder.endRecording(battle.battleId, winner)
-    // ★ headless 模式跳过持久化保存；保存失败不阻塞战斗结束流程
+    //  headless 模式跳过持久化保存；保存失败不阻塞战斗结束流程
     if (!battle.headless) {
       try {
         await this.battleRecorder.saveRecording(battle.battleId)
@@ -101,7 +101,7 @@ export class BattleLifecycleManager {
     }
 
     battle.battleState = BattleStatus.ENDED
-    // ★ headless（批量数据生成等无 UI 场景）不广播战斗结束事件，避免 UI 状态与战报累加器被批量战斗污染
+    //  headless（批量数据生成等无 UI 场景）不广播战斗结束事件，避免 UI 状态与战报累加器被批量战斗污染
     if (!battle.headless) {
       this.uiEventPort.emit(BattleEventCodes.BATTLE_ENDED, { winner })
     }
@@ -181,7 +181,7 @@ export class BattleLifecycleManager {
         if (!this.getIsPaused()) {
           const delay = this.getBattleDelay()
           if (delay === 0) {
-            // ★ 快速模式：使用微任务而非 RAF，避免每回合 ~16ms 的 RAF 等待开销
+            //  快速模式：使用微任务而非 RAF，避免每回合 ~16ms 的 RAF 等待开销
             Promise.resolve().then(this.autoBattleLoop!)
           } else {
             const timerId = this.rafTimer.setTimeout(this.autoBattleLoop!, delay)
@@ -198,7 +198,7 @@ export class BattleLifecycleManager {
 
     const delay = this.getBattleDelay()
     if (delay === 0) {
-      // ★ 快速模式：首次调用使用微任务
+      //  快速模式：首次调用使用微任务
       Promise.resolve().then(this.autoBattleLoop)
     } else {
       this.autoBattleTimerId = this.rafTimer.setTimeout(
@@ -258,7 +258,7 @@ export class BattleLifecycleManager {
     ) {
       const delay = this.getBattleDelay()
       if (delay === 0) {
-        // ★ 快速模式：恢复时使用微任务
+        //  快速模式：恢复时使用微任务
         Promise.resolve().then(this.autoBattleLoop)
       } else {
         const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
@@ -277,7 +277,7 @@ export class BattleLifecycleManager {
   private getBattleDelay(): number {
     const battle = this.getBattleData()
     if (!battle) return AUTO_BATTLE_CONFIG.DEFAULT_DELAY
-    // ★ 快速/无头模式：零延迟
+    //  快速/无头模式：零延迟
     if (battle.quickMode || battle.headless) return 0
     return (
       AUTO_BATTLE_CONFIG.DELAYS[battle.battleSpeed] ??

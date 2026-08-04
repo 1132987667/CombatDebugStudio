@@ -1,5 +1,5 @@
 <template>
-  <Dialog :model-value="open" :title="`战斗摘要 · ${store.archive?.battleId ?? '—'}`"
+  <Dialog :model-value="open" :title="'战斗摘要'"
     width="min(840px, 94vw)" content-class="dialog-content--flush" @update:model-value="onModelValue">
     <div class="ht-sum-toolbar">
       <span class="ht-sum-meta">
@@ -7,8 +7,8 @@
         <template v-if="winnerText"> · 胜方 <b class="ht-st-ok">{{ winnerText }}</b></template>
       </span>
       <span class="ht-sum-spacer"></span>
-      <button class="ht-btn" title="导出战斗摘要为 Markdown 报告（回合/胜方 + 单位指标表）" @click="store.exportSummaryMarkdown()">⇩ Markdown</button>
-      <button class="ht-btn" title="导出战斗摘要为 CSV（带 BOM，Excel 直接打开）" @click="store.exportSummaryCsv()">⇩ CSV</button>
+      <Button title="导出战斗摘要为 Markdown 报告（回合/胜方 + 单位指标表）" @click="store.exportSummaryMarkdown()">Markdown</Button>
+      <Button title="导出战斗摘要为 CSV（带 BOM，Excel 直接打开）" @click="store.exportSummaryCsv()">CSV</Button>
     </div>
     <div class="ht-sum-body">
       <table v-if="rows.length" class="ht-sum-table">
@@ -28,7 +28,7 @@
         </thead>
         <tbody>
           <tr v-for="r in rows" :key="r.id">
-            <td class="l nm">{{ store.pname(r.id) }}<span class="id">{{ r.id }}</span></td>
+            <td class="l nm">{{ store.pname(r.id) }}</td>
             <td>{{ r.s.attacks }}</td>
             <td class="num">{{ r.s.dealt }}</td>
             <td class="num">{{ r.s.taken }}</td>
@@ -45,7 +45,7 @@
       <div v-if="dotHint" class="ht-sum-note">{{ dotHint }}</div>
     </div>
     <template #footer>
-      <button class="ht-btn primary" @click="close">关闭</button>
+      <Button variant="energy" @click="close">关闭</Button>
     </template>
   </Dialog>
 </template>
@@ -56,6 +56,7 @@ import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import type { UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { useHaotianStore } from '../stores/haotianStore'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 
 defineProps<{ open: boolean }>()
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()

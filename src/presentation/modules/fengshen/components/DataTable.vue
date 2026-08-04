@@ -11,7 +11,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="String(row.id)">
+        <tr v-for="row in rows" :key="String(row.id)"
+          :class="{ 'is-detail-selected': detailId === String(row.id) }">
           <td class="fs-col-check">
             <input type="checkbox" :checked="selectedIds.includes(String(row.id))"
               @change="emit('toggle-select', String(row.id))" :aria-label="`选择 ${row.id}`" />
@@ -20,12 +21,14 @@
             <template v-if="tagInfo(row, col)">
               <span class="fs-tag" :class="tagInfo(row, col)!.cls">{{ tagInfo(row, col)!.text }}</span>
             </template>
+            <button v-else-if="isClickableField(col)" type="button" class="fs-link"
+              @click="emit('detail', row)">{{ cellText(row, col) }}</button>
             <template v-else>{{ cellText(row, col) }}</template>
           </td>
           <td class="fs-col-actions">
-            <button class="fs-btn fs-btn-sm" @click="emit('edit', row)">编辑</button>
-            <button class="fs-btn fs-btn-sm" title="复制选中数据为模板" @click="emit('copy', row)">复制</button>
-            <button class="fs-btn fs-btn-sm fs-btn-danger" @click="emit('remove', row)">删</button>
+            <Button size="small" @click="emit('edit', row)">编辑</Button>
+            <Button size="small" title="复制选中数据为模板" @click="emit('copy', row)">复制</Button>
+            <Button size="small" variant="danger" @click="emit('remove', row)">删</Button>
           </td>
         </tr>
         <tr v-if="rows.length === 0">
@@ -41,6 +44,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import Button from '@/presentation/components/Button.vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
 
 const props = defineProps<{
@@ -48,6 +52,8 @@ const props = defineProps<{
   rows: Record<string, unknown>[]
   selectedIds: string[]
   loading?: boolean
+  /** 右侧详情面板当前选中的行 id（用于行高亮） */
+  detailId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -55,9 +61,20 @@ const emit = defineEmits<{
   edit: [row: Record<string, unknown>]
   copy: [row: Record<string, unknown>]
   remove: [row: Record<string, unknown>]
+  /** 点击可点击字段（名称等）→ 右侧详情面板 */
+  detail: [row: Record<string, unknown>]
 }>()
 
 const columns = computed(() => props.schema.columns)
+
+/** 可点击字段：默认名称列；schema 字段可通过 column.clickable 扩展 */
+const clickableFields = computed(() =>
+  props.schema.fields.filter((f) => f.key === 'name' || f.column?.clickable).map((f) => f.key),
+)
+
+function isClickableField(col: string): boolean {
+  return clickableFields.value.includes(col)
+}
 
 const allSelected = computed(
   () => props.rows.length > 0 && props.rows.every((r) => props.selectedIds.includes(String(r.id))),

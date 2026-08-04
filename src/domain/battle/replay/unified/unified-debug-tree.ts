@@ -109,7 +109,7 @@ export function deriveDebugTree(
           id: `n_${root.id}`,
           name: pname(root.sourceId ?? ''),
           action: true,
-          icon: root.sourceId && root.sourceId.length > 0 ? '⚔' : '☠',
+          icon: root.sourceId && root.sourceId.length > 0 ? '战' : '亡',
           meta: `${String(pl.skill ?? '')} · ${pl.controlMode === 'ai' ? 'AI' : '玩家'}`,
           actor: root.sourceId,
           target: root.targetId,

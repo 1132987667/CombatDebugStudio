@@ -3,7 +3,7 @@
     <div class="fs-page-title">
       操作日志
       <span class="fs-page-hint">记录每条数据的修改时间戳与操作类型（增 / 删 / 改 / 导入）</span>
-      <button class="fs-btn fs-btn-sm" @click="store.loadLogs">刷新</button>
+      <Button size="small" @click="store.loadLogs">刷新</Button>
     </div>
 
     <div v-if="store.logs.length" class="fs-timeline">
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import Button from '@/presentation/components/Button.vue'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import type { OperationKind } from '@/domain/fengshen/types'
 

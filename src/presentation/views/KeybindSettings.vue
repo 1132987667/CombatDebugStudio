@@ -22,20 +22,20 @@
           >
             {{ listeningFor === setting.action ? '按任意键...' : setting.key.toUpperCase() }}
           </div>
-          <button 
-            class="reset-btn"
+          <Button 
+            size="small"
             @click="resetKeybind(setting.action)"
             title="重置为默认值"
           >
             重置
-          </button>
+          </Button>
         </div>
       </div>
     </div>
 
     <div class="settings-actions">
-      <button class="action-btn" @click="resetAll">重置所有</button>
-      <button class="action-btn primary" @click="saveSettings">保存设置</button>
+      <Button @click="resetAll">重置所有</Button>
+      <Button variant="primary" @click="saveSettings">保存设置</Button>
     </div>
     
     <!-- 通知组件 -->
@@ -48,6 +48,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { keybindManager } from '@/infrastructure/input/KeybindManager';
 import type { KeybindAction, KeybindSetting } from '@/shared/types/input';
 import Notification from '@/presentation/components/Notification.vue';
+import Button from '@/presentation/components/Button.vue';
 
 // 通知组件引用
 const notification = ref(null);

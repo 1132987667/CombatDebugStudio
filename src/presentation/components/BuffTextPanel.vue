@@ -23,7 +23,7 @@
               <div class="secondary-toggle" role="button" tabindex="0" @click="showSecondary = !showSecondary"
                 @keydown.enter.prevent="showSecondary = !showSecondary"
                 @keydown.space.prevent="showSecondary = !showSecondary">
-                {{ showSecondary ? '▼' : '▶' }} 其他效果（{{ longDurationItems.length }}）
+                {{ showSecondary ? '▾' : '▸' }} 其他效果（{{ longDurationItems.length }}）
               </div>
               <div v-if="showSecondary" class="secondary-groups">
                 <BuffTextGroup

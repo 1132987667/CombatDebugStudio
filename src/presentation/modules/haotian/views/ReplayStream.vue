@@ -1,16 +1,17 @@
 <template>
   <div class="ht-pane" style="--pc: var(--color-energy)">
     <div class="ht-pane-hd">
-      <span class="t">事件流 · 时间戳序</span>
+      <span class="t">事件流 · 按时间</span>
       <span style="display: flex; gap: 8px; align-items: center">
-        <button class="ht-btn mini" :class="{ on: store.showDbg }" title="显示/隐藏调试专属事件（AI 决策 / 属性重算 / 配置）" @click="store.toggleDbg()">
+        <Button size="tiny" :active="store.showDbg" title="显示/隐藏调试专属事件（AI 决策 / 属性重算 / 配置）" @click="store.toggleDbg()">
           {{ store.showDbg ? '调试专属 · 显示' : '调试专属 · 隐藏' }}
-        </button>
+        </Button>
         <span class="s">{{ shownCount }} / {{ store.evs.length }}</span>
       </span>
     </div>
     <div class="ht-stream-filter">
-      <input v-model="store.streamText" class="ht-select ht-search" placeholder="过滤关键词 / 数值…" aria-label="过滤关键词" />
+      <TacticalInput size="md" :model-value="store.streamText" placeholder="过滤关键词 / 数值…" aria-label="过滤关键词"
+        @update:model-value="store.streamText = String($event ?? '')" />
     </div>
     <div class="ht-pane-bd" ref="boxRef">
       <div v-if="store.archive" class="ht-stream">
@@ -37,6 +38,8 @@ import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archiv
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
+import Button from '@/presentation/components/Button.vue'
 
 const store = useHaotianStore()
 const boxRef = ref<HTMLElement | null>(null)

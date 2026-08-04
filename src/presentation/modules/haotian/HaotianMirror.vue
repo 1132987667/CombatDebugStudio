@@ -11,8 +11,8 @@
           <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0">
             <div class="ht-pane" style="--pc: var(--color-warning)">
               <div class="ht-pane-hd">
-                <span class="t">检视器 · 共用渲染器</span>
-                <span class="s">载荷 + 结算</span>
+                <span class="t">事件检视</span>
+                <span class="s">事件详情</span>
               </div>
               <div class="ht-pane-bd">
                 <Inspector />
@@ -30,8 +30,8 @@
           <div style="flex: 1.3; min-width: 0; display: flex; flex-direction: column; min-height: 0">
             <div class="ht-pane" style="--pc: var(--color-success)">
               <div class="ht-pane-hd">
-                <span class="t">深度检视 · 共用渲染器</span>
-                <span class="s">{{ store.selectedEvent ? '载荷 + 结算' : '—' }}</span>
+                <span class="t">深度检视</span>
+                <span class="s">{{ store.selectedEvent ? '事件详情' : '—' }}</span>
               </div>
               <div class="ht-pane-bd">
                 <Inspector />

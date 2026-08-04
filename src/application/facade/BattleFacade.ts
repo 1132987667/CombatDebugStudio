@@ -221,12 +221,12 @@ export class BattleService {
     this.battleManager.setBattleSpeed(speed)
   }
 
-  /** ★ 切换快速战斗模式 */
+  /**  切换快速战斗模式 */
   setQuickMode(enabled: boolean): void {
     this.battleManager.setQuickMode(enabled)
   }
 
-  /** ★ 获取快速战斗模式 */
+  /**  获取快速战斗模式 */
   getQuickMode(): boolean {
     return this.battleManager.getQuickMode()
   }

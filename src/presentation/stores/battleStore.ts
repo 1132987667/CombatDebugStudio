@@ -11,7 +11,6 @@ import {
   BattleEventCode,
   BattleEventCodes,
   BattleEventName,
-  BattleLogEventData,
   BattleEndedEventData,
   DamageEventData,
   BuffEffectEventData,
@@ -28,7 +27,6 @@ import type {
 } from '@/shared/types/battle-log'
 import {
   BATTLE_LOG_CATEGORIES,
-  battleActionToLogEntry,
   LogType,
   toLogLevel,
 } from '@/shared/types/battle-log'
@@ -38,6 +36,8 @@ import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
+import type { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { getActionBudget } from '@/shared/constants/animation-timing'
@@ -98,7 +98,7 @@ export interface ErrorState {
 
 // ================= Store 核心定义 (Composition API) =================
 export const useBattleStore = defineStore('battle', () => {
-  // 🔹 1. UI 层状态（仅负责视图渲染，与业务逻辑隔离）
+  //  1. UI 层状态（仅负责视图渲染，与业务逻辑隔离）
   /** 战斗规则配置（速度优先/固定回合/暴击/闪避开关） */
   const rules = ref<BattleRules>({
     speedFirst: true,
@@ -146,14 +146,12 @@ export const useBattleStore = defineStore('battle', () => {
     action: true,
     debug: false,
   })
-  /** 已处理过的战斗动作ID集合（防止重复解析和显示同一动作） */
-  const processedActionIds = ref(new Set<string>())
 
   const selectedCharacterId = ref<string | null>(null)
   /** 角色库预览实体（未加入队伍，仅供属性监控预览） */
   const previewEntity = shallowRef<BattleEntity | null>(null)
 
-  // 🔹 2. 业务层引用（适配器桥接，使用 shallowRef 避免深层 Proxy 开销）
+  //  2. 业务层引用（适配器桥接，使用 shallowRef 避免深层 Proxy 开销）
   /** 战斗应用服务（门面，通过依赖注入获取） */
   const battleService = shallowRef<BattleService | undefined>(
     container.resolve<BattleService>('BattleService'),
@@ -176,16 +174,16 @@ export const useBattleStore = defineStore('battle', () => {
 
   const showDebug = ref(true)
 
-  /** ★ 快速战斗模式（跳过动画和等待） */
+  /**  快速战斗模式（跳过动画和等待） */
   const quickMode = ref(false)
-  /** ★ 战斗数据生成进度 */
+  /**  战斗数据生成进度 */
   const generationProgress = reactive({
     isGenerating: false,
     current: 0,
     total: 0,
     percent: 0,
   })
-  /** ★ 当前运行的生成器引用（用于 destroy 时取消） */
+  /**  当前运行的生成器引用（用于 destroy 时取消） */
   let _currentGenerator: import('@/application/service/BattleDataGenerator').BattleDataGenerator | null = null
 
   /** 参与者快照表 — UI 的唯一数据源（由投影层填充） */
@@ -246,17 +244,9 @@ export const useBattleStore = defineStore('battle', () => {
     initProjection()
   }
 
-  // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
+  // 所有事件订阅在 events Map 创建后统一注册（见下方  3. 事件订阅管理器）
 
-  // 🔹 4. 事件处理器（仅负责同步业务数据到响应式状态）
-
-  /** 处理战斗日志事件（将日志数据添加到日志管理器） */
-  const handleBattleLogEvent = (data: BattleLogEventData) => {
-    if (data?.log) {
-      console.log('接受战斗日志:', data)
-      battleLogManager.addSystemLog(data.log)
-    }
-  }
+  //  4. 事件处理器（仅负责同步业务数据到响应式状态）
 
   /** 处理战斗结束事件（重置战斗状态，记录胜负结果） */
   const handleBattleEndEvent = (data: BattleEndedEventData) => {
@@ -279,6 +269,15 @@ export const useBattleStore = defineStore('battle', () => {
         category: BATTLE_LOG_CATEGORIES.STATUS,
         meta: { role: 'battle' },
       })
+      // NOTE: 生成战报并发射事件（原 BattleEventManager 死代码逻辑迁移至此 —
+      //       BattleEventManager.startListening 无调用方，BATTLE_ENDED 唯一活跃订阅者是本 handler）
+      const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
+      if (summary) {
+        container
+          .resolve<UIEventBus>('UIEventBus')
+          .getEmitter()
+          .emit(BattleEventCodes.BATTLE_SUMMARY, summary)
+      }
     }
   }
 
@@ -328,10 +327,9 @@ export const useBattleStore = defineStore('battle', () => {
   const handleBattleResetEvent = () => {
     battleLogManager.addSystemLog({ message: '战斗重置' })
   }
-  // 🔹 3. 事件订阅管理器（防止内存泄漏）
+  //  3. 事件订阅管理器（防止内存泄漏）
   /** 事件处理器映射表（将事件码与对应的处理函数关联） */
   const events = new Map<BattleEventCode, (data: any) => void>()
-  events.set(BattleEventCodes.BATTLE_LOG, handleBattleLogEvent)
   events.set(BattleEventCodes.BATTLE_ENDED, handleBattleEndEvent)
   events.set(BattleEventCodes.BATTLE_RESET, handleBattleResetEvent)
   events.set(BattleEventCodes.TURN_START, handleTurnStartEvent)
@@ -367,7 +365,7 @@ export const useBattleStore = defineStore('battle', () => {
     battleService.value!.on(eventCode as BattleEventName, handler)
   }
 
-  // 🔹 5. 核心 Actions（纯函数，仅更新本地状态或调用 Manager）
+  //  5. 核心 Actions（纯函数，仅更新本地状态或调用 Manager）
 
   /**
    * 初始化战斗管理器
@@ -446,10 +444,9 @@ export const useBattleStore = defineStore('battle', () => {
   const setShowDebug = (show: boolean) => {
     showDebug.value = show
   }
-  /** 清空所有战斗日志和已处理动作记录 */
+  /** 清空所有战斗日志 */
   const clearBattleLogs = () => {
     battleLogManager.clearLogs()
-    processedActionIds.value.clear()
   }
 
   /**
@@ -480,7 +477,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const updateRules = (newRules: Partial<BattleRules>) => {
     Object.assign(rules.value, newRules)
-    // ★ 同步暴击/闪避开关到领域层规则管理器，下一场战斗 initialize 时生效
+    //  同步暴击/闪避开关到领域层规则管理器，下一场战斗 initialize 时生效
     try {
       const ruleManager = container.resolve<BattleRuleManager>(
         BATTLE_RULE_MANAGER_TOKEN.toString(),
@@ -541,7 +538,7 @@ export const useBattleStore = defineStore('battle', () => {
     animationState[type] = null
   }
 
-  // 🔹 业务动作包装器（统一错误处理与 Loading 状态）
+  //  业务动作包装器（统一错误处理与 Loading 状态）
 
   /**
    * 开始新战斗
@@ -781,7 +778,7 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
-  /** ★ 切换快速战斗模式 */
+  /**  切换快速战斗模式 */
   const toggleQuickMode = () => {
     if (!battleService.value) return
     quickMode.value = !quickMode.value
@@ -791,7 +788,7 @@ export const useBattleStore = defineStore('battle', () => {
     })
   }
 
-  /** ★ 执行战斗数据生成 */
+  /**  执行战斗数据生成 */
   const generateBattleData = async (
     mode: '1v1' | '2v2' | 'random' = 'random',
     format: 'txt' | 'html' = 'txt',
@@ -846,7 +843,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const destroy = () => {
     try {
-      // ★ 取消正在执行的战斗数据生成
+      //  取消正在执行的战斗数据生成
       if (_currentGenerator) {
         _currentGenerator.cancel()
         _currentGenerator = null
@@ -873,68 +870,6 @@ export const useBattleStore = defineStore('battle', () => {
       console.log('战斗管理器事件监听器已清理')
     } catch (err) {
       console.error('清理战斗管理器事件监听器时出错:', err)
-    }
-  }
-
-  /**
-   * 解析单个战斗动作并转换为日志条目
-   * @param action 战斗动作对象
-   * @param battleState 当前战斗状态快照
-   * @returns 解析结果（日志条目和是否需要显示）
-   * @description 将原始战斗动作数据转换为格式化的日志条目，并处理去重逻辑
-   */
-  const parseBattleAction = async (
-    action: BattleAction,
-    battleState: BattleState,
-  ): Promise<{ log: BattleLogEntry | null; shouldDisplay: boolean }> => {
-    if (processedActionIds.value.has(action.id))
-      return { log: null, shouldDisplay: false }
-    processedActionIds.value.add(action.id)
-    const sourceIsAlly =
-      action.sourceId !== 'system'
-        ? battleState.participants.get(action.sourceId)?.team ===
-          ParticipantSide.ALLY
-        : false
-    const targetIsAlly =
-      action.targetId && action.targetId !== 'system'
-        ? battleState.participants.get(action.targetId)?.team ===
-          ParticipantSide.ALLY
-        : undefined
-    const fullLog = battleActionToLogEntry(action, battleState.participants, {
-      turnNumber: action.turn,
-      sourceIsAlly,
-      targetIsAlly,
-    })
-    return { log: fullLog, shouldDisplay: shouldDisplayLog(fullLog) }
-  }
-
-  /**
-   * 同步战斗日志（批量处理所有动作）
-   * @param battleState 当前战斗状态快照
-   * @description 按时间戳排序所有动作，逐一解析并添加到日志管理器
-   */
-  const syncBattleLogs = async (battleState: BattleState) => {
-    const sortedActions = [...battleState.actions].sort((a, b) => {
-      if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp
-      const turnA = a.turn || 0
-      const turnB = b.turn || 0
-      if (turnA !== turnB) return turnA - turnB
-      return a.id.localeCompare(b.id)
-    })
-    for (const action of sortedActions) {
-      const { log, shouldDisplay } = await parseBattleAction(
-        action,
-        battleState,
-      )
-      if (!shouldDisplay || !log) continue
-      battleLogManager.addBattleLog({
-        turn: log.turn,
-        message: log.segments?.map((s) => s.text).join('') ?? '',
-        segments: log.segments,
-        category: log.category ?? 'battle',
-        source: log.source,
-        target: log.target,
-      })
     }
   }
 
@@ -1015,12 +950,12 @@ export const useBattleStore = defineStore('battle', () => {
   const setCharacterEnabled = (characterId: string, enabled: boolean) => {
     battleService.value!.setCharacterEnabled(characterId, enabled)
   }
-  // 🔹 气血周期清理（防止 SPA 路由切换导致内存泄漏）
+  //  气血周期清理（防止 SPA 路由切换导致内存泄漏）
   onScopeDispose(() => {
     destroy()
   })
 
-  // 🔹 暴露给外部
+  //  暴露给外部
   return {
     // ========== 状态属性（State） ==========
     rules, // 战斗规则配置
@@ -1033,7 +968,6 @@ export const useBattleStore = defineStore('battle', () => {
     turnOrder, // 回合行动顺序
     battleSpeed, // 战斗速度
     filters, // 日志过滤器
-    processedActionIds, // 已处理动作ID集合
     battleService, // 战斗应用服务
     selectedCharacterId, // 选中角色ID
     previewEntity, // 角色库预览实体
@@ -1049,8 +983,8 @@ export const useBattleStore = defineStore('battle', () => {
     isBattleActive, // 战斗激活状态
     isPaused, // 暂停状态
     showDebug, // 显示调试信息状态
-    quickMode, // ★ 快速战斗模式
-    generationProgress, // ★ 战斗数据生成进度
+    quickMode, // 快速战斗模式
+    generationProgress, // 战斗数据生成进度
 
     // ========== Computed Getters (用于模板访问) ==========
     getCurrentActorId: () => currentActorId.value,
@@ -1102,8 +1036,6 @@ export const useBattleStore = defineStore('battle', () => {
     generateBattleData, // 执行战斗数据生成
 
     // ========== 日志处理 ==========
-    parseBattleAction, // 解析战斗动作
-    syncBattleLogs, // 同步战斗日志
     getSkillName, // 获取技能名称
     shouldDisplayLog, // 判断是否显示日志
     addLog, // 添加系统日志

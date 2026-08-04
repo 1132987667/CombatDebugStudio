@@ -14,9 +14,9 @@
         <span class="section-title">保存场景</span>
       </div>
       <div class="scene-actions">
-        <input type="text" v-model="localSceneName" placeholder="测试场景名称" class="scene-input"
-          aria-label="测试场景名称" @keydown.enter="handleSave">
-        <button class="btn-medium" @click="handleSave" :disabled="!localSceneName.trim()">[S]保存</button>
+        <TacticalInput size="md" :model-value="localSceneName" placeholder="测试场景名称" aria-label="测试场景名称"
+          @keydown.enter="handleSave" @update:model-value="localSceneName = String($event ?? '')" />
+        <Button @click="handleSave" :disabled="!localSceneName.trim()">[S]保存</Button>
       </div>
     </div>
 
@@ -25,10 +25,10 @@
         <span class="section-title">加载/删除场景</span>
       </div>
       <div class="scene-actions">
-        <TacticalSelect v-model="localSelectedScene" size="sm" class="scene-select-slot"
+        <TacticalSelect v-model="localSelectedScene" size="md" class="scene-select-slot"
           :options="sceneOptions" :disabled="savedScenes.length === 0" />
-        <button class="btn-medium" @click="handleLoad" :disabled="!localSelectedScene">[L]加载</button>
-        <button class="btn-medium btn-danger" @click="confirmDelete = true" :disabled="!localSelectedScene">[D]删除</button>
+        <Button @click="handleLoad" :disabled="!localSelectedScene">[L]加载</Button>
+        <Button variant="danger" @click="confirmDelete = true" :disabled="!localSelectedScene">[D]删除</Button>
       </div>
     </div>
 
@@ -46,8 +46,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 interface Props {
   modelValue: boolean
@@ -137,7 +139,8 @@ const doDelete = () => {
   align-items: center;
 }
 
-.scene-input {
+/* TacticalInput 根默认 width:100%，场景行内给弹性宽度 */
+.scene-actions .t-input {
   flex: 1;
 }
 

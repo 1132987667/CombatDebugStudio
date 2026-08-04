@@ -301,6 +301,11 @@ export class SkillExecutor {
       .getScriptRegistry()
       .getBuffConfig(buffId)
     const buffName = buffCfgForName?.name ?? buffId
+    // 读取实际叠加层数（addBuff 内部已按 stackRule 合并，effect.stacks 反映真实层数）
+    const buffInstance = instanceId
+      ? this.buffSystem.getBuffInstanceById(instanceId)
+      : undefined
+    const actualStacks = buffInstance?.currentStacks ?? skillStep.stacks ?? 1
     action.effects.push({
       type: EffectType.BUFF,
       sourceId: source.id,
@@ -308,7 +313,7 @@ export class SkillExecutor {
       buffId,
       buffName,
       instanceId,
-      stacks: skillStep.stacks ?? 1,
+      stacks: actualStacks,
       description: `${buffTarget.name} 获得 【${buffName}】`,
     })
 
@@ -319,10 +324,9 @@ export class SkillExecutor {
         .getScriptRegistry()
         .getResolvedBuffConfig(buffId)
       let effectSummary = resolved?.effectSummary ?? ''
-      const instance = this.buffSystem.getBuffInstanceById(instanceId)
-      if (instance && instance.currentStacks > 1) {
-        const maxStacks = resolved?.maxStacks ?? instance.currentStacks
-        effectSummary += ` （${instance.currentStacks}/${maxStacks}层）`
+      if (buffInstance && buffInstance.currentStacks > 1) {
+        const maxStacks = resolved?.maxStacks ?? buffInstance.currentStacks
+        effectSummary += ` （${buffInstance.currentStacks}/${maxStacks}层）`
       }
 
       LoggerProvider.logger.addBattleLog({

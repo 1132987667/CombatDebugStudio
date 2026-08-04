@@ -591,7 +591,7 @@ export class BattleManager {
    * @param winner 获胜方
    */
   endBattle(winner: string) {
-    // ⭐ 幂等性守卫：防止重复触发 endBattle
+    //  幂等性守卫：防止重复触发 endBattle
     const battleData = this.battleSystem.getBattleData()
     if (
       battleData?.battleState === BattleStatus.ENDED ||
@@ -653,17 +653,17 @@ export class BattleManager {
     return this.battleSystem.getBattleSpeed()
   }
 
-  /** ★ 设置快速战斗模式 */
+  /**  设置快速战斗模式 */
   setQuickMode(enabled: boolean): void {
     this.battleSystem.setQuickMode(enabled)
   }
 
-  /** ★ 获取快速战斗模式 */
+  /**  获取快速战斗模式 */
   getQuickMode(): boolean {
     return this.battleSystem.getQuickMode()
   }
 
-  /** ★ 重新生成战斗ID */
+  /**  重新生成战斗ID */
   regenerateBattleId(): void {
     this.battleSystem.regenerateBattleId()
   }

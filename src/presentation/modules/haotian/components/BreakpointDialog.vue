@@ -4,19 +4,20 @@
     <div class="ht-modal-bd">
       <div class="ht-kvrow">
         <span class="k">条件类型</span>
-        <TacticalSelect v-model="type" size="sm" :options="typeOptions" />
+        <TacticalSelect v-model="type" size="md" :options="typeOptions" />
       </div>
       <div v-if="type === 'damage' || type === 'roll'" class="ht-kvrow">
         <span class="k">阈值</span>
-        <input v-model.number="value" type="number" min="0" step="1" class="ht-select" aria-label="断点阈值" />
+        <TacticalInput type="number" integer min="0" size="md" :model-value="value"
+          aria-label="断点阈值" @update:model-value="(v) => (value = (v ?? '') as string | number)" />
       </div>
       <div v-if="type === 'level'" class="ht-kvrow">
         <span class="k">级别</span>
-        <TacticalSelect v-model="value" size="sm" :options="levelOptions" />
+        <TacticalSelect v-model="value" size="md" :options="levelOptions" />
       </div>
       <div v-if="type === 'actor'" class="ht-kvrow">
         <span class="k">单位</span>
-        <TacticalSelect v-model="value" size="sm" :options="actorOptions" />
+        <TacticalSelect v-model="value" size="md" :options="actorOptions" />
       </div>
       <label class="ht-bp-arm">
         <input v-model="armed" type="checkbox" /> 启用断点（播放命中自动暂停并定位）
@@ -24,8 +25,8 @@
       <div class="ht-bp-note">示例：伤害 ≥ 150 → 命中结算事件即暂停；级别 warn → 命中「阵亡」。</div>
     </div>
     <template #footer>
-      <button class="ht-btn" @click="close">取消</button>
-      <button class="ht-btn primary" @click="save">保存断点</button>
+      <Button @click="close">取消</Button>
+      <Button variant="energy" @click="save">保存断点</Button>
     </template>
   </Dialog>
 </template>
@@ -35,7 +36,9 @@ import { ref, watch } from 'vue'
 import type { BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { useHaotianStore } from '../stores/haotianStore'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()

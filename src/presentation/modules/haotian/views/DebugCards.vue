@@ -3,8 +3,8 @@
     <div class="ht-pane-hd">
       <span class="t">事件流 · 卡片流</span>
       <span style="display: flex; gap: 6px; align-items: center">
-        <button class="ht-btn square" title="上一事件（←）" @click="store.stepEvent(-1)">上一事件</button>
-        <button class="ht-btn square" title="下一事件（空格/→）" @click="store.stepEvent(1)">下一事件</button>
+        <Button class="ht-tbtn" title="上一事件（←）" @click="store.stepEvent(-1)">上一事件</Button>
+        <Button class="ht-tbtn" title="下一事件（空格/→）" @click="store.stepEvent(1)">下一事件</Button>
       </span>
     </div>
     <div class="ht-stream-hd">
@@ -25,12 +25,11 @@
               <span v-if="store.isBookmarked(item.id)" class="ht-ev-bm" title="书签（右键切换）">◆</span>
               <span class="ht-ev-badge" :class="badgeOf(item)[0]">{{ badgeOf(item)[1] }}</span>
             </div>
-            <div class="ht-ev-bd" v-html="descHtml(item)"></div>
             <div class="ht-ev-meta">
-              {{ item.correlationId }}<template v-if="item.parentId"> · ← {{ item.parentId }}</template>
-              <template v-if="item.sourceId"> · {{ item.sourceId }}</template>
-              <template v-if="item.targetId"> → {{ item.targetId }}</template>
-              · 时间={{ formatTime(item.timestamp) }}
+              <template v-if="item.sourceId">{{ store.pname(item.sourceId) }}</template>
+              <template v-if="item.targetId">{{ item.sourceId ? ' → ' : '' }}{{ store.pname(item.targetId) }}</template>
+              <template v-if="item.sourceId || item.targetId"> · </template>
+              时间={{ formatTime(item.timestamp) }}
             </div>
             <div v-if="segIndicators.length" class="ht-ev-multi">
               <i v-for="(m, j) in segIndicators" :key="j" :class="[m, curSeg === j + 1 ? 'cur' : '']"></i>
@@ -50,6 +49,7 @@ import { buildSegResults } from '@/domain/battle/replay/unified/unified-debug-tr
 import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { escapeHtml } from '@/shared/utils/log-segment-factory'
+import Button from '@/presentation/components/Button.vue'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
 
@@ -230,13 +230,5 @@ function badgeOf(ev: UnifiedEvent): [string, string] {
   if (ev.phase === 'passive_trigger') return ['b-miss', '触发']
   if (ev.phase === 'action_execution') return ['b-hit', '行动']
   return ['b-ok', '系统']
-}
-
-/** 摘要着色：先转义 HTML（v-html 渲染，防存档注入 XSS），再对数值/暴击着色 */
-function descHtml(ev: UnifiedEvent): string {
-  let s = escapeHtml(ev.summary)
-  s = s.replace(/(\d+(?:\.\d+)?)/g, '<span class="hd">$1</span>')
-  s = s.replace(/暴击/g, '<span class="hc">暴击</span>')
-  return s
 }
 </script>

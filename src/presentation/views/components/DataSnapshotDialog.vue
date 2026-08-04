@@ -4,8 +4,8 @@
       <div class="snapshot-section">
         <div class="snapshot-section-title">导出 / 导入</div>
         <div class="snapshot-btn-group">
-          <button class="snapshot-btn primary" @click="exportState">导出当前状态 (JSON)</button>
-          <button class="snapshot-btn" @click="importState">导入状态数据</button>
+          <Button variant="primary" @click="exportState">导出当前状态 (JSON)</Button>
+          <Button @click="importState">导入状态数据</Button>
         </div>
       </div>
 
@@ -15,8 +15,8 @@
           <span class="snapshot-time">{{ debugStore.lastExportTime || '无' }}</span>
         </div>
         <div class="snapshot-btn-group">
-          <button class="snapshot-btn small" @click="viewExport">查看导出</button>
-          <button class="snapshot-btn small" @click="reloadExport">重载导出</button>
+          <Button size="small" @click="viewExport">查看导出</Button>
+          <Button size="small" @click="reloadExport">重载导出</Button>
         </div>
       </div>
 
@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import Notification from '@/presentation/components/Notification.vue'
 import { container } from '@/infrastructure/di/Container'
 import { useBattleStore, useDebugStore } from '@/presentation/stores'
@@ -189,33 +190,6 @@ const reloadExport = () => {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
-}
-
-.snapshot-btn {
-  padding: var(--space-2) var(--space-4);
-  border: 2px solid var(--border-debug-color);
-  border-radius: var(--radius-md);
-  background: rgba(var(--rgb-energy), var(--alpha-tint));
-  color: var(--color-energy);
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-  outline: 1px solid rgba(var(--rgb-black), 0.8);
-  outline-offset: -3px;
-}
-
-.snapshot-btn:hover {
-  background: var(--border-debug-color-dark);
-  outline-color: rgba(var(--rgb-black), 0.5);
-  border-color: var(--color-energy);
-}
-
-.snapshot-btn.primary {
-  background: var(--border-debug-color-dark);
-  border-color: var(--color-energy);
-}
-
-.snapshot-btn.small {
-  padding: var(--space-1) var(--space-3);
 }
 
 .snapshot-last-export {

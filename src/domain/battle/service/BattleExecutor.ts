@@ -264,7 +264,7 @@ export class BattleExecutor {
             participant,
             baseScope,
           )
-          // ★ 木人/训练靶子：noAttack 跳过行动（AI 返回 skip 决策）
+          //  木人/训练靶子：noAttack 跳过行动（AI 返回 skip 决策）
           if (decision.type === ActionTypes.SKIP) {
             LoggerProvider.logger.addBattleLog({
               turn: battle.currentTurn || 1,
@@ -289,7 +289,7 @@ export class BattleExecutor {
           if (decision.type === 'skill' && decision.skillId) {
             const skill = this.skillManager.getSkillConfig(decision.skillId)
             if (skill) {
-              // ★ 拦截普通攻击，强制走普攻路径，避免日志格式不一致
+              //  拦截普通攻击，强制走普攻路径，避免日志格式不一致
               if (this.isNormalAttackSkill(skill)) {
                 await this.selectAndExecuteAttack(
                   battle,
@@ -377,7 +377,7 @@ export class BattleExecutor {
       if (bestSkillId) {
         const skill = this.skillManager.getSkillConfig(bestSkillId)
         if (skill) {
-          // ★ 拦截普通攻击，强制走普攻路径
+          //  拦截普通攻击，强制走普攻路径
           if (this.isNormalAttackSkill(skill)) {
             await this.selectAndExecuteAttack(battle, participant, undefined, scope)
             return
@@ -396,7 +396,7 @@ export class BattleExecutor {
       const skillId = availableSkills[0]
       const skill = this.skillManager.getSkillConfig(skillId)
       if (skill) {
-        // ★ 拦截普通攻击，强制走普攻路径
+        //  拦截普通攻击，强制走普攻路径
         if (this.isNormalAttackSkill(skill)) {
           await this.selectAndExecuteAttack(battle, participant, undefined, scope)
           return
@@ -469,7 +469,7 @@ export class BattleExecutor {
     const overkillMap = new Map<string, number>()
 
     try {
-      // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
+      //  开始缓冲 BEFORE_ATTACK 的 sub 日志
       LoggerProvider.logger.beginBufferSubLogs()
 
       this.passiveSkillManager.triggerPassives(
@@ -655,9 +655,9 @@ export class BattleExecutor {
         this.emitSkillLog(battleData, manifest)
       }
     } catch (error) {
-      // ★ catch 路径也需刷出缓冲的 sub 日志，防止内存泄漏
+      //  catch 路径也需刷出缓冲的 sub 日志，防止内存泄漏
       LoggerProvider.logger.flushBufferedSubLogs()
-      // ★ 异常兜底：输出用户可见的降级警告，防止日志静默丢失（风险点 3 修复）
+      //  异常兜底：输出用户可见的降级警告，防止日志静默丢失（风险点 3 修复）
       const warnSegs: LogSegment[] = [
         this.buildEntitySegment(source),
         { text: ' 尝试使用 ' },
@@ -686,7 +686,7 @@ export class BattleExecutor {
       ]
     }
 
-    // ★ 复活结算：SkillExecutor.executeRevive 已通过 action.extra 标记，由这里统一调用（修复 R2）
+    //  复活结算：SkillExecutor.executeRevive 已通过 action.extra 标记，由这里统一调用（修复 R2）
     if (action.extra?.revivedEntityId && this.reviveTracker) {
       const revivedId = action.extra.revivedEntityId as string
       const reviveParams = action.extra.reviveParams as ReviveStepParams
@@ -788,7 +788,7 @@ export class BattleExecutor {
     return targets.length > 0 ? targets[0].id : ''
   }
 
-  /** ★ 识别「伪装成技能的普通攻击」
+  /**  识别「伪装成技能的普通攻击」
    *  数据契约：技能配置显式声明 isNormalAttack，替代名称/结构启发式猜测
    */
   private isNormalAttackSkill(skill: SkillConfig): boolean {
@@ -878,10 +878,10 @@ export class BattleExecutor {
    */
   private emitSkillLog(battle: BattleData, m: ActionManifest): void {
     const { source, targets, results, totalDamage, totalHeal } = m
-    const totalRaw = results.reduce((s, r) => s + r.rawDamage, 0)
     const primary = results[0]
 
-    const damageText = totalRaw > 0 ? `，造成 ${totalRaw} 点伤害` : ''
+    // NOTE: 主日志显示实际伤害（totalDamage，已扣防御），与 result sub 行一致，避免"造成 N / 受到 M"双数字困惑
+    const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
     const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
     const targetSegs: LogSegment[] = []
     targets.forEach((t, i) => {
@@ -929,10 +929,10 @@ export class BattleExecutor {
       },
     })
 
-    // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
+    //  刷出缓冲的 BEFORE_ATTACK sub 日志
     LoggerProvider.logger.flushBufferedSubLogs()
 
-    // ★ 为每个目标输出 result sub 日志
+    //  为每个目标输出 result sub 日志
     for (const r of results) {
       if (r.damage > 0) {
         const dmgSegs: LogSegment[] = [
@@ -1022,7 +1022,8 @@ export class BattleExecutor {
     }
 
     const r = results[0]
-    const rawSuffix = `，造成 ${r.rawDamage} 点伤害`
+    // NOTE: 主日志显示实际伤害（r.damage，已扣防御），与 result sub 行一致，避免"造成 N / 受到 M"双数字困惑
+    const rawSuffix = `，造成 ${r.damage} 点伤害`
     const hitSegs: LogSegment[] = [
       this.buildEntitySegment(source),
       { text: ' 对 ' },
@@ -1085,6 +1086,7 @@ export class BattleExecutor {
     rawDamage: number,
     isCritical: boolean,
     battle: BattleData,
+    deferHitPassives = false,
   ): number {
     // 1. 扣血（内部处理护盾吸收、背水护甲能量抵扣）
     const actualDamage = target.takeDamage(finalDamage)
@@ -1108,6 +1110,36 @@ export class BattleExecutor {
     }
 
     // 4. 被动触发（ON_HIT 仅当有来源时触发）
+    // NOTE: deferHitPassives 时由调用方在攻击日志（emitAttackLog/emitSkillLog）之后
+    //       调用 triggerHitPassives，保证被动效果显示在"受到伤害"结算之后。
+    if (!deferHitPassives) {
+      this.triggerHitPassives(source, target, actualDamage, battle)
+    }
+
+    // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
+    if (!target.isAlive()) {
+      this.skillManager.getExecutor().cleanupComboState(target.id)
+      this.skillManager.getExecutor().cleanupRotatingState(target.id)
+      this.pendingDeaths.push({
+        deadId: target.id,
+        killerId: source?.id ?? 'system',
+        battle,
+      })
+    }
+
+    return actualDamage
+  }
+
+  /**
+   * 攻击命中后的被动触发（ON_HIT 来源 + DAMAGE_TAKEN 目标）
+   * 从 settleDamage 抽出，供日志发射后再调用以维持"受到伤害 → 被动"的显示顺序。
+   */
+  private triggerHitPassives(
+    source: BattleEntity | null,
+    target: BattleEntity,
+    actualDamage: number,
+    battle: BattleData,
+  ): void {
     if (source) {
       this.passiveSkillManager.triggerPassives(
         source,
@@ -1124,19 +1156,6 @@ export class BattleExecutor {
         damage: actualDamage,
       }),
     )
-
-    // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
-    if (!target.isAlive()) {
-      this.skillManager.getExecutor().cleanupComboState(target.id)
-      this.skillManager.getExecutor().cleanupRotatingState(target.id)
-      this.pendingDeaths.push({
-        deadId: target.id,
-        killerId: source?.id ?? 'system',
-        battle,
-      })
-    }
-
-    return actualDamage
   }
 
   /**
@@ -1224,8 +1243,10 @@ export class BattleExecutor {
     const hpBefore = target.currentHealth
 
     // 命中瞬间（50%T）：扣血，气血 条与 UI 特效同帧开始
-    const actualDamage = this.settleDamage(source, target, damage, rawDamage, isCritical, battle)
-    // ★ overkill = takeDamage 返回值超出目标扣血前 HP 的部分
+    // NOTE: deferHitPassives — 被动触发推迟到 emitAttackLog 之后，
+    //       保证日志顺序为「攻击 → 受到伤害 → 被动效果」。
+    const actualDamage = this.settleDamage(source, target, damage, rawDamage, isCritical, battle, true)
+    //  overkill = takeDamage 返回值超出目标扣血前 HP 的部分
     const overkill = Math.max(0, actualDamage - hpBefore)
     if (record && overkill > 0) record.overkill = overkill
 
@@ -1261,7 +1282,13 @@ export class BattleExecutor {
       ],
     })
 
-    // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
+    // 攻击日志（含"受到伤害"sub）已发射，再触发 ON_HIT/DAMAGE_TAKEN 被动，
+    // 使其效果日志排在"受到伤害"之后（pending 缓冲顺序）
+    if (actualDamage > 0) {
+      this.triggerHitPassives(source, target, actualDamage, battle)
+    }
+
+    // settleDamage 内部已处理：DAMAGE_TAKEN 事件、仇恨、pendingDeaths
   }
 
   /**
@@ -1289,7 +1316,7 @@ export class BattleExecutor {
 
     const currentTurn = battle.currentTurn
 
-    // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
+    //  开始缓冲 BEFORE_ATTACK 的 sub 日志
     LoggerProvider.logger.beginBufferSubLogs()
 
     this.passiveSkillManager.triggerPassives(
@@ -1329,7 +1356,7 @@ export class BattleExecutor {
 
     const action = this.createBattleAction(source.id, targetId, currentTurn)
 
-    // ★ 消耗必暴标记（无论是自然暴击还是必暴强制暴击，只要暴击了就消耗）
+    //  消耗必暴标记（无论是自然暴击还是必暴强制暴击，只要暴击了就消耗）
     if (
       damageResult.isCritical &&
       this.buffSystem.hasBuff(source.id, 'buff_guaranteed_crit')
@@ -1347,7 +1374,7 @@ export class BattleExecutor {
       await this.handleHitAttack(action, source, target, damageResult, battle, record)
     }
 
-    // ★ action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
+    //  action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
     LoggerProvider.logger.flushBufferedSubLogs()
 
     // 回填最终伤害到记录
@@ -1706,10 +1733,10 @@ export class BattleExecutor {
               skillName: skillId,
             },
           })
-          // ★ action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
+          //  action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
           LoggerProvider.logger.flushBufferedSubLogs()
 
-          // ★ 输出 result sub 日志
+          //  输出 result sub 日志
           if ((action.damage ?? 0) > 0) {
             LoggerProvider.logger.addBattleLog({
               turn: action.turn ?? 0,
@@ -1743,7 +1770,7 @@ export class BattleExecutor {
       } catch (error) {
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
         this.buffSystem.setBuffAppliedCallbackEnabled(true)
-        // ★ 出错时也刷出缓冲的 sub 日志，防止内存泄漏
+        //  出错时也刷出缓冲的 sub 日志，防止内存泄漏
         LoggerProvider.logger.flushBufferedSubLogs()
         LoggerProvider.logger.addDebugLog(`技能执行失败: ${action.skillId}`, {
           level: LogLevel.ERROR,

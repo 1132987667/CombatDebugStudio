@@ -102,7 +102,7 @@
           @click="advancedExpanded = !advancedExpanded"
           @keydown.enter.prevent="advancedExpanded = !advancedExpanded"
           @keydown.space.prevent="advancedExpanded = !advancedExpanded">
-          进阶属性 {{ advancedExpanded ? '▼' : '▶' }}
+          进阶属性 {{ advancedExpanded ? '▾' : '▸' }}
         </div>
         <div v-show="advancedExpanded">
           <div v-for="(attrs, group) in advancedAttributes" :key="group">
@@ -122,7 +122,7 @@
         </div>
       </div>
       <div class="monitor-group">
-        <Tabs v-model="activeTab" :tabs="skillTabs" size="sm" destroy-inactive>
+        <Tabs v-model="activeTab" :tabs="skillTabs" size="md" destroy-inactive>
           <template #passive>
           <EmptyState v-if="groupedPassives.length === 0">暂无被动技能</EmptyState>
             <div v-else class="skills-list" @mouseleave="hideSkillTooltip">

@@ -51,16 +51,21 @@ function onClick(e: MouseEvent) {
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  border: 1px solid var(--color-border-tertiary);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
+  font-weight: var(--font-weight-medium);
   line-height: 1.4;
   padding: var(--space-2) var(--space-4);
   font-size: var(--font-size-md);
-  color: var(--color-info);
-  background: var(--color-border-default);
+  color: var(--color-text-primary);
+  /* NOTE: 表面色底 + 顶部高光/内描边营造层次；原先用边框色平底显脏 */
+  background: var(--color-bg-tertiary);
+  box-shadow:
+    inset 0 1px 0 rgba(var(--rgb-white), 0.06),
+    inset 0 0 0 1px rgba(var(--rgb-white), 0.02);
   transition:
     color var(--transition-fast),
     background-color var(--transition-fast),
@@ -69,12 +74,18 @@ function onClick(e: MouseEvent) {
     transform var(--transition-fast);
 
   &:hover:not(:disabled):not(.is-loading) {
-    background: var(--color-border-tertiary);
-    border-color: var(--color-border-tertiary-active);
+    /* NOTE: 提亮 + 边框变亮 + 文本变能量青 + 内高光增强；不做位移动效（无上浮） */
+    background: var(--color-bg-tertiary-hover);
+    border-color: var(--color-border-tertiary-hover);
+    color: var(--color-energy);
+    box-shadow: inset 0 1px 0 rgba(var(--rgb-white), 0.1);
   }
 
   &:active:not(:disabled):not(.is-loading) {
-    transform: scale(0.97);
+    transform: translateY(0) scale(0.98);
+    box-shadow:
+      inset 0 1px 0 rgba(var(--rgb-white), 0.03),
+      var(--shadow-sm);
   }
 
   &:focus-visible {
@@ -99,12 +110,10 @@ function onClick(e: MouseEvent) {
 /* ---------- 尺寸 ---------- */
 .ui-button--tiny {
   padding: 0.15rem 0.35rem;
-  font-size: var(--font-size-xxs);
 }
 
 .ui-button--small {
   padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-xs);
 }
 
 .ui-button--medium {
@@ -126,14 +135,12 @@ function onClick(e: MouseEvent) {
 
   &:hover:not(:disabled):not(.is-loading) {
     border-color: rgba(var(--rgb-white), 0.6);
+    /* NOTE: 实色底 hover 保持白字，避免继承基类能量青 */
+    color: var(--color-text-primary);
   }
 
   &:active:not(:disabled):not(.is-loading) {
     transform: translateY(3px);
-  }
-
-  &:disabled {
-    margin-bottom: var(--space-1);
   }
 }
 
@@ -171,6 +178,7 @@ function onClick(e: MouseEvent) {
 
   &:hover:not(:disabled):not(.is-loading) {
     background: var(--color-jade-light);
+    color: var(--color-text-primary);
   }
 }
 
@@ -181,6 +189,7 @@ function onClick(e: MouseEvent) {
 
   &:hover:not(:disabled):not(.is-loading) {
     background: var(--color-live);
+    color: var(--color-text-inverse);
   }
 }
 
@@ -191,6 +200,7 @@ function onClick(e: MouseEvent) {
 
   &:hover:not(:disabled):not(.is-loading) {
     background: var(--color-brand-red-active);
+    color: var(--color-text-primary);
   }
 }
 

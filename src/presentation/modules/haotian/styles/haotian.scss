@@ -1,5 +1,5 @@
 /* ==========================================================================
-   haotian.scss — 昊天镜双工作台（回放系统 ⇄ 调试系统）
+   haotian.scss — 昊天镜双工作台（回放 / 调试）
    依据《调试日志UI-V4.html》工程化深色主题，映射项目 tokens。
    文本字号一律 ≥ --font-size-md（AGENTS.md 红线）。
    ========================================================================== */
@@ -98,59 +98,10 @@
   flex: 1;
 }
 
-.ht-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: var(--color-bg-primary);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--ht-bd);
-  border-radius: var(--radius-md);
-  padding: 6px 12px;
-  font-size: var(--font-size-md);
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-
-.ht-btn:hover {
-  border-color: var(--color-energy);
-  color: var(--color-energy);
-}
-
-.ht-btn.primary {
-  background: var(--color-energy);
-  border-color: var(--color-energy);
-  color: var(--color-bg-secondary);
-  font-weight: var(--font-weight-bold);
-}
-
-.ht-btn.primary:hover {
-  filter: brightness(1.1);
-}
-
-.ht-btn.on {
-  border-color: var(--color-energy);
-  color: var(--color-energy);
-}
-
-/* 迷你按钮（原 ht-mini-btn） */
-.ht-btn.mini {
-  padding: 2px 10px;
-  color: var(--color-text-tertiary);
-}
-
-/* 方形传输按钮（原 ht-tbtn） */
-.ht-btn.square {
+/* 方形传输按钮（Button 组件固定宽度，替代原 .ht-btn.square） */
+.ht-tbtn {
   width: 6rem;
   height: 30px;
-  display: grid;
-  place-items: center;
-}
-
-.ht-btn.square.tgl {
-  color: var(--color-text-tertiary);
 }
 
 /* ───────────── 工作台容器 ───────────── */
@@ -355,12 +306,6 @@
   text-overflow: ellipsis;
 }
 
-.ht-u-id {
-  font-family: var(--ht-mono);
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-md);
-}
-
 .ht-u-dead {
   display: none;
   margin-left: auto;
@@ -466,26 +411,9 @@
   flex-wrap: wrap;
 }
 
-.ht-speed-seg {
-  display: flex;
-  border: 1px solid var(--ht-bd);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.ht-speed-seg button {
-  border: none;
-  background: var(--color-bg-primary);
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-md);
-  padding: 3px 9px;
-  cursor: pointer;
-}
-
-.ht-speed-seg button.on {
-  background: rgba(var(--rgb-energy), 0.14);
-  color: var(--color-energy);
-  font-weight: var(--font-weight-bold);
+.ht-speed-select {
+  width: 88px;
+  flex-shrink: 0;
 }
 
 .ht-seek {
@@ -802,15 +730,6 @@
 .ht-ev-badge.b-ok { background: rgba(var(--rgb-success), 0.16); color: var(--ht-green); }
 .ht-ev-badge.b-dbg { background: rgba(var(--rgb-white), 0.08); color: var(--color-text-tertiary); }
 
-.ht-ev-bd {
-  margin-top: 5px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.ht-ev-bd .hd { color: var(--ht-red); font-weight: var(--font-weight-bold); }
-.ht-ev-bd .hc { color: var(--ht-amber); font-weight: var(--font-weight-bold); }
-
 .ht-ev-meta {
   margin-top: 5px;
   font-family: var(--ht-mono);
@@ -945,11 +864,6 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-}
-
-.ht-flab .src {
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-md);
 }
 
 .ht-fval {
@@ -1372,31 +1286,6 @@
   flex-shrink: 0;
 }
 
-.ht-search {
-  width: 100%;
-}
-
-.ht-select {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-md);
-  color: var(--color-text-primary);
-  background: var(--color-bg-primary);
-  border: 1px solid var(--ht-bd);
-  border-radius: var(--radius-md);
-  padding: 6px 10px;
-  outline: none;
-}
-
-.ht-select:focus {
-  border-color: var(--color-energy);
-  box-shadow: 0 0 0 2px rgba(var(--rgb-energy), 0.15);
-}
-
-.ht-select option {
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-}
-
 /* 书签标记 */
 .ht-s-bm,
 .ht-ev-bm {
@@ -1639,12 +1528,6 @@
 .ht-sum-table td.nm {
   white-space: nowrap;
   font-family: var(--font-family-sans);
-}
-
-.ht-sum-table td.nm .id {
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-md);
-  margin-left: 6px;
 }
 
 .ht-sum-table td.num.heal {

@@ -83,9 +83,9 @@
 
     <!-- 底部按钮 -->
     <template #footer>
-      <button class="btn-medium" @click="copySummary">复制摘要</button>
-      <button class="btn-medium" @click="exportJson">导出 JSON</button>
-      <button class="btn-medium" @click="closeDialog">关闭</button>
+      <Button @click="copySummary">复制摘要</Button>
+      <Button @click="exportJson">导出 JSON</Button>
+      <Button @click="closeDialog">关闭</Button>
     </template>
   </Dialog>
 </template>
@@ -93,6 +93,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import type { BattleSummary } from '@/shared/types/battle-summary'
 
 interface Props {

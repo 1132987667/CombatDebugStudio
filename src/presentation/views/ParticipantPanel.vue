@@ -11,10 +11,10 @@
       <div class="section-header">
         <span>参战管理</span>
         <div class="expand-collapse-controls">
-          <button class="btn-medium" @click="confirmClear = true"
+          <Button @click="confirmClear = true"
             :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
             <span class="icon mr-2">[−]</span>清空
-          </button>
+          </Button>
         </div>
       </div>
       <div class="section-content">
@@ -75,9 +75,9 @@
         </div>
       </div>
       <div class="section-actions">
-        <button class="btn-medium" @click="moveCharacter(-1)"><span class="icon mr-2">[↑]</span>上调</button>
-        <button class="btn-medium" @click="moveCharacter(1)"><span class="icon mr-2">[↓]</span>下调</button>
-        <button class="btn-medium btn-remove" @click="confirmRemove = true"><span class="icon mr-2">[−]</span>移除</button>
+        <Button @click="moveCharacter(-1)"><span class="icon mr-2">[↑]</span>上调</Button>
+        <Button @click="moveCharacter(1)"><span class="icon mr-2">[↓]</span>下调</Button>
+        <Button variant="danger" @click="confirmRemove = true"><span class="icon mr-2">[−]</span>移除</Button>
       </div>
     </div>
 
@@ -85,17 +85,18 @@
       <div class="section-header">
         <span>角色库</span>
         <div class="expand-collapse-controls">
-          <button class="btn-medium" @click="collapseAllScenes" :disabled="!hasExpandedScenes">
+          <Button @click="collapseAllScenes" :disabled="!hasExpandedScenes">
             <span class="icon mr-2">[−]</span>一键折叠
-          </button>
-          <button class="btn-medium" @click="expandAllScenes" :disabled="allScenesExpanded">
+          </Button>
+          <Button @click="expandAllScenes" :disabled="allScenesExpanded">
             <span class="icon mr-2">[+]</span>一键展开
-          </button>
+          </Button>
         </div>
       </div>
       <div class="section-content">
         <div class="character-search">
-          <input type="text" v-model="enemySearch" placeholder="搜索角色库..." class="search-input" aria-label="搜索角色库">
+          <TacticalInput size="md" :model-value="enemySearch" placeholder="搜索角色库..." aria-label="搜索角色库"
+            @update:model-value="enemySearch = String($event ?? '')" />
         </div>
         <div class="scene-enemy-list">
           <div v-if="actors.length" class="scene-group">
@@ -107,7 +108,8 @@
               <span class="scene-count">{{ actors.length }}人</span>
             </div>
             <div v-if="actorExpanded" class="character-search">
-              <input type="text" v-model="actorSearch" placeholder="搜索角色..." class="search-input" aria-label="搜索角色">
+              <TacticalInput size="md" :model-value="actorSearch" placeholder="搜索角色..." aria-label="搜索角色"
+                @update:model-value="actorSearch = String($event ?? '')" />
             </div>
             <Transition name="scene-enemies">
               <div class="scene-enemies" v-show="actorExpanded">
@@ -117,10 +119,10 @@
                   @keydown.space.prevent="previewActor(actor)">
                   <div class="char-info">
                     <span class="char-name">{{ actor.name }} (Lv.{{ actor.level }})</span>
-                    <span class="char-stats">气血:{{ actor.stats.maxHealth ?? '—' }} 阵营:{{ actor.faction ?? '—' }}</span>
+                    <span class="char-stats">气血:{{ actor.stats.maxHealth ?? '—' }}</span>
                   </div>
                   <div class="char-actions">
-                    <button class="btn-tiny" @click.stop="addActorToBattle(actor)"><span class="icon mr-2">[+]</span>我方</button>
+                    <Button size="tiny" @click.stop="addActorToBattle(actor)"><span class="icon mr-2">[+]</span>我方</Button>
                   </div>
                 </div>
               </div>
@@ -147,8 +149,8 @@
                     }}-{{ enemy.stats.maxAttack }}</span>
                   </div>
                   <div class="char-actions">
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)"><span class="icon mr-2">[+]</span>我方</button>
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)"><span class="icon mr-2">[+]</span>敌方</button>
+                    <Button size="tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)"><span class="icon mr-2">[+]</span>我方</Button>
+                    <Button size="tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)"><span class="icon mr-2">[+]</span>敌方</Button>
                   </div>
                 </div>
               </div>
@@ -180,8 +182,10 @@ import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore';
 import EmptyState from '@/presentation/components/EmptyState.vue'
+import Button from '@/presentation/components/Button.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -666,7 +670,7 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   gap: var(--space-2);
 }
 
-.expand-collapse-controls .btn-medium .icon {
+.expand-collapse-controls .icon {
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-md);
   line-height: 1;

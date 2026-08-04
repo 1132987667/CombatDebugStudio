@@ -67,7 +67,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
 
@@ -514,10 +513,3 @@
 }
 
 /* ----- 11. 速度选择器（布局由 utilities .flex/.items-center/.gap-2 提供） ----- */
-.custom-speed {
-  width: 50px;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  padding: 0.15rem;
-}

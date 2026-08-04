@@ -4,7 +4,7 @@
       <span class="ht-time-read">{{ store.timeRead }}</span>
       <span class="ht-chip ht-turn">{{ store.currentTurn ? '第 ' + store.currentTurn + ' 回合' : '待命' }}</span>
       <span class="ht-chip">{{ phaseChipLabel }}</span>
-      <span class="ht-proj-tag">投影 1 · <b>按时间戳回放</b></span>
+      <span class="ht-proj-tag">回放 · <b>按时间播放</b></span>
     </div>
 
     <div class="ht-arena">
@@ -13,7 +13,6 @@
           :class="{ dead: hpOf(p) <= 0, acting: actingId === p.id }">
           <div class="ht-u-top">
             <span class="ht-u-name">{{ p.name }}</span>
-            <span class="ht-u-id">{{ p.id }}</span>
             <span class="ht-u-dead">阵亡</span>
           </div>
           <div class="ht-bar hp" :class="hpTone(p)">
@@ -35,19 +34,16 @@
     </div>
 
     <div class="ht-transport">
-      <button class="ht-btn square" title="回到开头" @click="store.seekTo(0)">回到开头</button>
-      <button class="ht-btn square" title="上一事件 (←)" @click="store.stepEvent(-1)">上一事件</button>
-      <button class="ht-btn square primary" title="播放/暂停 (空格)" @click="store.togglePlay()">
-        {{ store.playback.playing ? '⏸' : '▶' }}
-      </button>
-      <button class="ht-btn square" title="下一事件 (→)" @click="store.stepEvent(1)">下一事件</button>
-      <button class="ht-btn square" title="到结尾" @click="store.seekTo(store.duration)">到结尾</button>
+      <Button class="ht-tbtn" title="回到开头" @click="store.seekTo(0)">回到开头</Button>
+      <Button class="ht-tbtn" title="上一事件 (←)" @click="store.stepEvent(-1)">上一事件</Button>
+      <Button variant="energy" class="ht-tbtn" title="播放/暂停 (空格)" @click="store.togglePlay()">
+        {{ store.playback.playing ? '暂停' : '播放' }}
+      </Button>
+      <Button class="ht-tbtn" title="下一事件 (→)" @click="store.stepEvent(1)">下一事件</Button>
+      <Button class="ht-tbtn" title="到结尾" @click="store.seekTo(store.duration)">到结尾</Button>
 
-      <div class="ht-speed-seg">
-        <button v-for="s in SPEEDS" :key="s" :class="{ on: store.playback.speed === s }" :title="`播放速度 ${s} 倍`" @click="store.playback.speed = s">
-          {{ s }}×
-        </button>
-      </div>
+      <TacticalSelect v-model="speedModel" size="md" class="ht-speed-select"
+        :options="speedOptions" placeholder="速度" />
 
       <div class="ht-seek" @click="onSeekClick">
         <div class="ht-seek-track"></div>
@@ -57,8 +53,8 @@
         <span class="ht-cur" :style="{ left: curPct + '%' }"></span>
       </div>
 
-      <button class="ht-btn square tgl" :class="{ on: store.playback.follow }" title="播放时跟随事件流 (F)"
-        @click="store.playback.follow = !store.playback.follow">⌖</button>
+      <Button class="ht-tbtn" :active="store.playback.follow" title="播放时跟随事件流 (F)"
+        @click="store.playback.follow = !store.playback.follow">跟随</Button>
     </div>
 
     <!-- 战斗视觉特效层（复用唤灵台同款 BattleVisualEffects，视口坐标定位） -->
@@ -73,11 +69,21 @@ import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
 import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
+import Button from '@/presentation/components/Button.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import { getActionBudget } from '@/shared/constants/animation-timing'
 
-const SPEEDS = [0.5, 1, 2, 4]
+const speedOptions: TSelectOption[] = [0.5, 1, 2, 4].map((s) => ({ value: s, label: `${s}×` }))
 
 const store = useHaotianStore()
+
+/** 播放速度 v-model 适配：TacticalSelect 值为 string | number | null，仅接收 number */
+const speedModel = computed({
+  get: () => store.playback.speed,
+  set: (v: string | number | null) => {
+    if (typeof v === 'number') store.playback.speed = v
+  },
+})
 
 const meta = (ev: UnifiedEvent) => PHASE_META[ev.phase]
 
@@ -110,7 +116,7 @@ const hpTone = (p: ArchiveParticipant): string => {
 
 const phaseChipLabel = computed(() => {
   const e = store.lastEvent
-  return e ? `${meta(e).label} · ${e.id}` : '—'
+  return e ? meta(e).label : '—'
 })
 
 const tsPct = (ev: UnifiedEvent): number => (store.duration ? (ev.timestamp / store.duration) * 100 : 0)

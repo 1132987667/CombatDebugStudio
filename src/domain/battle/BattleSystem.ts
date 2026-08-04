@@ -356,7 +356,7 @@ export class BattleSystem {
     enemyParticipants: BattleEntity[],
     sceneId?: string,
   ): BattleState {
-    // ★ 桥接战斗规则 → 伤害计算器（暴击/闪避开关+场地元素修正），每场战斗开始时生效
+    //  桥接战斗规则 → 伤害计算器（暴击/闪避开关+场地元素修正），每场战斗开始时生效
     // NOTE: §1.1 修复后 this.damageCalculator 与 this.skillManager.getDamageCalculator()
     //       为同一实例，一次 setConfig 即覆盖普攻和技能两条路径
     const combatRules = this.ruleManager.getCombatRules()
@@ -432,7 +432,7 @@ export class BattleSystem {
     // ponytail: 注册 buff 添加回调，被动触发路径通过 eventBus 告知 UI 播放动画
     this.buffSystem.setBuffAppliedCallback(
       (characterId: string, buffId: string) => {
-        if (this.shouldSuppressAnimationEvents()) return  // ★ 无头/快速模式：抑制
+        if (this.shouldSuppressAnimationEvents()) return  // 无头/快速模式：抑制
         this.uiEventPort.emit(BattleEventCodes.BUFF_EFFECT, {
           targetId: characterId,
           buffName: buffId,
@@ -527,7 +527,7 @@ export class BattleSystem {
               })
             }
           }
-          // ★ 统一管道：触发器伤害/治疗动画（所有分支都需要）
+          //  统一管道：触发器伤害/治疗动画（所有分支都需要）
           if (actualDamage > 0 && !this.shouldSuppressAnimationEvents()) {
             this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
               targetId,
@@ -537,7 +537,7 @@ export class BattleSystem {
               isHeal,
             })
           }
-          // ★ TriggerEventBus + 被动触发（仅非 settleDamage 分支需要，Defect 2 修复）
+          //  TriggerEventBus + 被动触发（仅非 settleDamage 分支需要，Defect 2 修复）
           if (!settledViaExecutor && actualDamage > 0) {
             this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
               sourceId: '',
@@ -554,7 +554,7 @@ export class BattleSystem {
               ),
             )
           }
-          // ★ 队友伤害事件（所有分支都需要）
+          //  队友伤害事件（所有分支都需要）
           if (actualDamage > 0) {
             const isDead = !target.isAlive()
             battleData.participants.forEach((p) => {
@@ -582,7 +582,7 @@ export class BattleSystem {
       const target = battleData.participants.get(targetId)
       if (target?.isAlive()) {
         const actualHeal = target.heal(amount)
-        // ★ 统一管道：触发器治疗动画
+        //  统一管道：触发器治疗动画
         if (actualHeal > 0 && !this.shouldSuppressAnimationEvents()) {
           this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId,
@@ -607,14 +607,14 @@ export class BattleSystem {
       }
     })
 
-    // ★ 能量恢复回调
+    //  能量恢复回调
     this.buffSystem.setEnergyCallback((targetId: string, amount: number) => {
       const target = battleData.participants.get(targetId)
       if (target?.isAlive()) {
         target.gainEnergy(amount)
         // gainEnergy 内部已通过 TriggerEventBus 发射 ENERGY_GAINED 事件
 
-        // ★ 补充：触发 ENERGY_GAINED 被动技能
+        //  补充：触发 ENERGY_GAINED 被动技能
         this.passiveSkillManager.triggerPassives(
           target,
           createPassiveContext(BattleTriggerPhase.ENERGY_GAINED, battleData, {}),
@@ -622,7 +622,7 @@ export class BattleSystem {
       }
     })
 
-    // ★ Phase 0：召唤回调占位 — 仅记录日志，不创建实体
+    //  Phase 0：召唤回调占位 — 仅记录日志，不创建实体
     this.buffSystem.setSummonCallback((request: SummonRequest) => {
       LoggerProvider.logger.addBattleLog({
         turn: this.battleData.currentTurn ?? 1,
@@ -634,12 +634,12 @@ export class BattleSystem {
       // TODO(P2): 实现完整召唤管道
     })
 
-    // ★ 每次 initialize 确保技能配置已加载（幂等，批量生成器独立运行时兜底）
+    //  每次 initialize 确保技能配置已加载（幂等，批量生成器独立运行时兜底）
     if (this.skillManager.getSkillConfigs().size === 0) {
       this.loadSkillConfigs(GameDataProcessor.getSkillsData())
     }
 
-    // ★ 每次 initialize 重新注册被动和免疫，消除对外部调用顺序的依赖
+    //  每次 initialize 重新注册被动和免疫，消除对外部调用顺序的依赖
     this.passiveSkillManager.clearAll()
     for (const participant of participants.values()) {
       // 先清理上一场残留的免疫标签（防止多次 initialize 累积）
@@ -650,7 +650,7 @@ export class BattleSystem {
         this.buffSystem.registerCharacterImmunities(participant.id, immunities)
       }
     }
-    // ★ 注入角色解析器 — 必须在 applyPassiveSkills 之前
+    //  注入角色解析器 — 必须在 applyPassiveSkills 之前
     // NOTE: 闭包引用 this.battleData 而非 this.battleData.participants，
     //       因为 initialize() 会执行 battleData.participants = participants 重新赋值，
     //       闭包自动指向新数据，无需在 resetBattle() 中清除。
@@ -670,7 +670,7 @@ export class BattleSystem {
     // 此处扫描所有参与者上的光环 buff 并分发修饰符到同队/异队成员
     this.distributeAuras(participants)
 
-    // ★ 场地效果加载（在 distributeAuras 之后）
+    //  场地效果加载（在 distributeAuras 之后）
     if (sceneId) {
       const scene = GameDataProcessor.findSceneById(sceneId)
       if (scene?.fieldEffects?.length) {
@@ -683,7 +683,7 @@ export class BattleSystem {
       }
     }
 
-    // ★ 阵型加载
+    //  阵型加载
     // NOTE: allyFormation/enemyFormation 由 BattleManager.startBattle 在调用 initialize 前设置
     // 若设置了阵型，applyFormation 会通过 BuffSystem.addBuff 施加阵型 Buff（修复 F1）
     if (this.currentAllyFormation) {
@@ -885,7 +885,28 @@ export class BattleSystem {
       // 为所有存活角色增加回合开始能量
       const combatRules = this.ruleManager.getCombatRules()
       aliveParticipants.forEach((participant) => {
-        participant.gainEnergy(combatRules.energyGainPerTurn)
+        const gain = combatRules.energyGainPerTurn
+        participant.gainEnergy(gain)
+        // NOTE: 回合开始能量是能量规则的核心来源，此前完全不可见；补一条日志便于验证规则
+        if (gain > 0) {
+          LoggerProvider.logger.addBattleLog({
+            turn: battle.currentTurn,
+            message: `${participant.name} 获得回合开始能量 +${gain}`,
+            segments: [
+              {
+                text: participant.name,
+                classStr:
+                  participant.team === ParticipantSide.ALLY
+                    ? 'log-friendly'
+                    : 'log-hostile',
+              },
+              { text: ` 获得回合开始能量 `, classStr: 'log-info' },
+              { text: `+${gain}`, classStr: 'log-heal' },
+            ],
+            category: BATTLE_LOG_CATEGORIES.STATUS,
+            meta: { role: 'sub' },
+          })
+        }
       })
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
@@ -911,7 +932,7 @@ export class BattleSystem {
       await this.debugGate.waitIfNeeded('TURN_START')
 
       const battleId = battle.battleId
-      this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0]!)
+      this.battleRecorder.recordTurnStart(battleId, battle.currentTurn, currentTurnOrder[0]!)
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
         await this.animationManager.waitForAnimation()
@@ -952,7 +973,7 @@ export class BattleSystem {
 
         await this.animationManager.waitForAnimation()
 
-        // ⭐ 补充守卫：如果在等待间隔期间战斗已结束，跳过后续操作
+        //  补充守卫：如果在等待间隔期间战斗已结束，跳过后续操作
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
@@ -1030,7 +1051,7 @@ export class BattleSystem {
         )
       }
 
-      // ★ 回合态势快照
+      //  回合态势快照
       const allySnapshot: string[] = []
       const enemySnapshot: string[] = []
       battle.participants.forEach((p) => {
@@ -1143,7 +1164,7 @@ export class BattleSystem {
     const battle = this.battleData
     if (!battle) return
 
-    // ★ 先结算待处理的死亡：对仍然死亡的角色触发 ON_DEATH/ON_KILL
+    //  先结算待处理的死亡：对仍然死亡的角色触发 ON_DEATH/ON_KILL
     // 已被复活的角色跳过死亡被动（修复 F1/F3）
     const pendingDeaths = this.executor.drainPendingDeaths()
     for (const { deadId, killerId } of pendingDeaths) {
@@ -1204,7 +1225,7 @@ export class BattleSystem {
         this.traceCollector.exportAll(),
       )
     }
-    // ★ 补偿可能缺失的回合末态势快照（战斗在回合中途结束时）
+    //  补偿可能缺失的回合末态势快照（战斗在回合中途结束时）
     this.ensureFinalSnapshot()
     return this.lifecycleManager.endBattle(winner)
   }
@@ -1213,7 +1234,7 @@ export class BattleSystem {
   private ensureFinalSnapshot(): void {
     const battle = this.battleData
     if (!battle) return
-    // ★ 如果 roundState 已经是 END，说明正常流程已产出快照，无需补偿
+    //  如果 roundState 已经是 END，说明正常流程已产出快照，无需补偿
     if (battle.roundState === RoundStatus.END) return
     const allySnapshot: string[] = []
     const enemySnapshot: string[] = []
@@ -1253,7 +1274,7 @@ export class BattleSystem {
 
   public resetBattle(): void {
     // ponytail: 清除上一场战斗的被动注册、连击状态和待处理额外行动，防止跨战斗污染
-    this.executor.reset() // ★ 新增：重置 pendingDeaths / currentActionOrder，防止跨战斗残留
+    this.executor.reset() // 新增：重置 pendingDeaths / currentActionOrder，防止跨战斗残留
     this.passiveSkillManager.clearAll()
     this.skillManager.getExecutor().clearAllComboStates()
     this.skillManager.getExecutor().clearAllRotatingStates()
@@ -1269,9 +1290,9 @@ export class BattleSystem {
     this.currentAllyFormation = null
     this.currentEnemyFormation = null
     this.lifecycleManager.resetBattle()
-    // ★ 兜底清理触发器事件总线残留监听器（正常路径 removeBuff 已反注册，此处防漏网）
+    //  兜底清理触发器事件总线残留监听器（正常路径 removeBuff 已反注册，此处防漏网）
     this.getTriggerEventBus().clear()
-    // ★ 清空调试追踪收集器 — 战斗隔离（文档 §3.2）：上一场战斗的 TraceEvent 不混入下一场
+    //  清空调试追踪收集器 — 战斗隔离（文档 §3.2）：上一场战斗的 TraceEvent 不混入下一场
     this.traceCollector.clear()
   }
 
@@ -1303,36 +1324,36 @@ export class BattleSystem {
     if (this.battleData) this.battleData.battleSpeed = speed
   }
 
-  /** ★ 设置快速战斗模式（跳过动画和等待） */
+  /**  设置快速战斗模式（跳过动画和等待） */
   public setQuickMode(enabled: boolean): void {
     if (this.battleData) {
       this.battleData.quickMode = enabled
     }
   }
 
-  /** ★ 获取快速战斗模式状态 */
+  /**  获取快速战斗模式状态 */
   public getQuickMode(): boolean {
     return this.battleData?.quickMode ?? false
   }
 
-  /** ★ 设置无头模式（批量生成用，抑制所有 UI 动画事件） */
+  /**  设置无头模式（批量生成用，抑制所有 UI 动画事件） */
   public setHeadless(enabled: boolean): void {
     if (this.battleData) {
       this.battleData.headless = enabled
     }
   }
 
-  /** ★ 获取无头模式状态 */
+  /**  获取无头模式状态 */
   public getHeadless(): boolean {
     return this.battleData?.headless ?? false
   }
 
-  /** ★ 是否抑制 UI 动画事件发射（快速战斗 || 无头模式） */
+  /**  是否抑制 UI 动画事件发射（快速战斗 || 无头模式） */
   private shouldSuppressAnimationEvents(): boolean {
     return !!(this.battleData?.quickMode || this.battleData?.headless)
   }
 
-  /** ★ 重新生成战斗ID（用于批量生成场景中每场战斗拥有独立ID） */
+  /**  重新生成战斗ID（用于批量生成场景中每场战斗拥有独立ID） */
   public regenerateBattleId(): void {
     const id = this.generateBattleId()
     if (this.battleData) {

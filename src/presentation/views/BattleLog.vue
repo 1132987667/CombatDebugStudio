@@ -7,11 +7,12 @@
       <div class="log-tools">
         <ToggleSwitch v-model="showStatus" label="状态明细" />
 
-        <input class="log-keyword" v-model="keyword" placeholder="搜索…" aria-label="搜索日志" />
+        <TacticalInput size="md" :model-value="keyword" placeholder="搜索…" aria-label="搜索日志"
+          @update:model-value="keyword = String($event ?? '')" />
         <div class="export-wrapper" ref="exportWrapperRef">
-          <button class="export-btn" @click="showExportMenu = !showExportMenu" title="导出当前页签日志">
+          <Button @click="showExportMenu = !showExportMenu" title="导出当前页签日志">
             导出 ▾
-          </button>
+          </Button>
           <div v-if="showExportMenu" class="export-menu">
             <button @click="exportLogs('txt')">导出为 TXT</button>
             <!-- 修复⑤：HTML 仅对战斗页签提供 -->
@@ -121,8 +122,9 @@
           </div>
           <EmptyState v-if="debugLogs.length === 0">暂无调试日志</EmptyState>
 
-          <div v-for="entry in debugLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
-            <span class="flat-seq">#{{ entry.index }}</span>
+          <div v-for="(entry, idx) in debugLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
+            <!-- NOTE: 显示本地序号而非全局 index——全局计数器被 debug 等占用会产生空洞（跳号） -->
+            <span class="flat-seq">#{{ idx + 1 }}</span>
             <span class="flat-level">{{ levelName(entry.level) }}</span>
             <span class="flat-msg">{{ entry.message }}</span>
             <pre v-if="entry.context" class="flat-ctx">{{ JSON.stringify(entry.context, null, 2) }}</pre>
@@ -148,8 +150,10 @@ import { LogType, LogLevel } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import LogSeg from '@/presentation/components/LogSeg.vue'
+import Button from '@/presentation/components/Button.vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import EmptyState from '@/presentation/components/EmptyState.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
@@ -443,37 +447,10 @@ onUnmounted(() => {
   margin-left: auto;
 }
 
-.log-keyword {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  width: 110px;
-  transition: border-color var(--transition-fast), width var(--transition-fast);
-}
-
-.log-keyword:focus {
-  outline: none;
-  border-color: var(--color-energy);
-  width: 150px;
-}
-
-.export-btn {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.export-btn:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
-  border-color: var(--color-energy);
+/* TacticalInput 根默认 width:100%，工具条内给弹性宽度避免占满整行 */
+.log-tools .t-input {
+  flex: 0 1 120px;
+  min-width: 0;
 }
 
 .export-wrapper {

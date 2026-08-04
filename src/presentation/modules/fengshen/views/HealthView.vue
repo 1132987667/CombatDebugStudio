@@ -33,13 +33,14 @@
     </div>
 
     <div class="fs-toolbar" style="margin-top: 14px; justify-content: flex-start;">
-      <button class="fs-btn fs-btn-primary" @click="store.runHealth">重新扫描</button>
+      <Button variant="primary" @click="store.runHealth">重新扫描</Button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import Button from '@/presentation/components/Button.vue'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 
 const store = useFengshenStore()

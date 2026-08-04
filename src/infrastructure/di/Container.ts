@@ -95,7 +95,6 @@ import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { BattleManager } from '@/domain/battle/BattleManager'
 import { BattleSystem } from '@/domain/battle/BattleSystem'
 import { DebugGate } from '@/domain/battle/debug/DebugGate'
-import { battleEventManager } from '@/infrastructure/adapters/event/BattleEventManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
@@ -154,7 +153,7 @@ export function initializeContainer(): void {
   // 领域实体的事件总线注入（静态字段）
   BattleParticipantImpl.eventBus = triggerEventBus
 
-  // 3. ★ 先创建计算服务，确保 SkillManager 复用同一实例（消除双实例）
+  // 3.  先创建计算服务，确保 SkillManager 复用同一实例（消除双实例）
   const damageCalculator = new DamageCalculator()
   const healCalculator = new HealCalculator()
   container.register('DamageCalculator', damageCalculator)
@@ -243,9 +242,6 @@ export function initializeContainer(): void {
         uiEventBus,
         uiEventBus.getEmitter(),
       )
-
-      // 注入战斗系统引用到事件管理器
-      battleEventManager.setBattleSystem(battleSystem, battleStateManager)
 
       return battleManager
     },

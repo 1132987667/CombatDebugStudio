@@ -27,7 +27,7 @@ import type {
 export class BattleAnimationManager {
   private animationQueue: AnimationQueueItem[] = []
   private isAnimationPlaying = false
-  /** ⭐ 记录 waitForAnimation 中当前轮询间隔的 resolve，外部可强制中断 */
+  /**  记录 waitForAnimation 中当前轮询间隔的 resolve，外部可强制中断 */
   private _interruptResolve: (() => void) | null = null
 
   constructor(
@@ -35,11 +35,11 @@ export class BattleAnimationManager {
     private getParticipants: () => Map<string, BattleEntity> | undefined,
     private getBattleSpeed: () => number,   // 改：传速度，不传（反向的）时长
     private getQuickMode: () => boolean = () => false,
-    private getHeadless: () => boolean = () => false,  // ★ 新增：无头模式回调
+    private getHeadless: () => boolean = () => false,  // 新增：无头模式回调
     private readonly uiEventPort: IUIEventPort,
   ) {}
 
-  /** ★ 是否跳过动画（快速模式 || 无头模式） */
+  /**  是否跳过动画（快速模式 || 无头模式） */
   private get shouldSkipAnimation(): boolean {
     return this.getQuickMode() || this.getHeadless()
   }
@@ -79,7 +79,7 @@ export class BattleAnimationManager {
   cleanupAnimationState(): void {
     this.animationQueue = []
     this.isAnimationPlaying = false
-    // ⭐ 强制 resolve 当前轮询等待，让 waitForAnimation 立即检查 isAnimating 并退出
+    //  强制 resolve 当前轮询等待，让 waitForAnimation 立即检查 isAnimating 并退出
     if (this._interruptResolve) {
       this._interruptResolve()
       this._interruptResolve = null

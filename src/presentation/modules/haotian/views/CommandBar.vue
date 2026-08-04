@@ -3,29 +3,29 @@
     <div class="ht-mode-switch" role="tablist" aria-label="双工作台切换">
       <button type="button" role="tab" title="回放系统：按时间戳播放，StateDelta 快照跳转（快捷键 1）"
         :aria-selected="store.mode === 'replay'" :class="{ on: store.mode === 'replay' }" @click="store.setMode('replay')">
-        ▶ 回放系统 <span class="k">1</span>
+        回放系统 <span class="k">1</span>
       </button>
       <button type="button" role="tab" title="调试系统：时间线树 / 卡片流 / RNG 凭证，按因果链消费（快捷键 2）"
         :aria-selected="store.mode === 'debug'" :class="{ on: store.mode === 'debug' }" @click="store.setMode('debug')">
-        ⌬ 调试系统 <span class="k">2</span>
+        调试系统 <span class="k">2</span>
       </button>
     </div>
 
     <div class="ht-cmd-spacer"></div>
 
-    <TacticalSelect v-model="source" size="sm" :options="sourceOptions"
+    <TacticalSelect v-model="source" size="md" :options="sourceOptions"
       title="数据源：演示存档 / 战斗记录 / 压测合成 / 实时战斗" />
-    <TacticalSelect v-if="source === 'recordings'" v-model="recKey" size="sm" searchable
+    <TacticalSelect v-if="source === 'recordings'" v-model="recKey" size="md" searchable
       placeholder="选择记录…" :options="recOptions"
       title="选择已保存到本地的战斗记录（唤灵台「保存战斗记录」）" />
 
-    <button class="ht-btn" :class="{ on: store.bpArmed }" title="配置条件断点（伤害/级别/随机值/单位），播放命中自动暂停定位" @click="bpOpen = true">⏸ 断点</button>
-    <button class="ht-btn" title="导出调试会话：模式 + 书签 + 断点 + 过滤，一键复现调试现场" @click="store.exportSession()">⤓ 会话</button>
-    <button class="ht-btn" title="导入调试会话 JSON 文件" @click="sessionInput?.click()">⤒ 会话导入</button>
-    <button class="ht-btn" title="与另一份存档逐链路对比差异（分支 diff：生成示例分支 / 从战斗记录选 / 载入 JSON）" @click="diffOpen = true">⇋ 分支对比</button>
-    <button class="ht-btn" title="战斗摘要：回合数/胜方/每单位输出/承伤/暴击/闪避/抵抗/Buff/击杀，支持 Markdown 与 CSV 导出" @click="sumOpen = true">⌖ 摘要</button>
-    <button class="ht-btn" title="复制当前模式与事件定位链接（#m=&e=）" @click="store.copyDeepLink()">⎘ 深链</button>
-    <button class="ht-btn primary" title="导出统一存档 JSON（一份文件，回放与调试两种能力）" @click="store.exportArchive()">⇩ 导出存档</button>
+    <Button :active="store.bpArmed" title="配置条件断点（伤害/级别/随机值/单位），播放命中自动暂停定位" @click="bpOpen = true">断点</Button>
+    <Button title="导出调试会话：模式 + 书签 + 断点 + 过滤，一键复现调试现场" @click="store.exportSession()">会话</Button>
+    <Button title="导入调试会话 JSON 文件" @click="sessionInput?.click()">会话导入</Button>
+    <Button title="与另一份存档逐链路对比差异（分支 diff：生成示例分支 / 从战斗记录选 / 载入 JSON）" @click="diffOpen = true">分支对比</Button>
+    <Button title="战斗摘要：回合数/胜方/每单位输出/承伤/暴击/闪避/抵抗/Buff/击杀，支持 Markdown 与 CSV 导出" @click="sumOpen = true">摘要</Button>
+    <Button title="复制当前模式与事件定位链接（#m=&e=）" @click="store.copyDeepLink()">深链</Button>
+    <Button variant="energy" title="导出统一存档 JSON（一份文件，回放与调试两种能力）" @click="store.exportArchive()">导出存档</Button>
 
     <input ref="sessionInput" type="file" accept="application/json" hidden @change="onSessionFile" />
     <BreakpointDialog v-model:open="bpOpen" />
@@ -42,6 +42,7 @@ import { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import BreakpointDialog from '../components/BreakpointDialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import DiffDialog from '../components/DiffDialog.vue'
 import SummaryDialog from '../components/SummaryDialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'

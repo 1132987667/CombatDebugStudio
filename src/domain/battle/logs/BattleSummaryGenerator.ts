@@ -3,8 +3,8 @@
  * 功能: 战报生成器 — 战斗过程中累积数据，战斗结束时生成 BattleSummary
  * 描述: 通过 onAction 接收 CombatRecord 增量更新累加器，
  *      通过 onBattleEnd 生成最终战报。
- *      集成点在 BattleRecorder.recordCombatRecord() 和
- *      BattleEventManager.handleBattleEndEvent()。
+ *      集成点：BattleRecorder.recordCombatRecord()（onAction）、
+ *      battleStore.handleBattleEndEvent()（onBattleEnd + 发射 battle-summary 事件）。
  * 版本: 1.0.0
  */
 

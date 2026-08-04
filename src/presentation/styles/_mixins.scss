@@ -12,36 +12,6 @@
   align-items: $align;
 }
 
-// ── 按钮基座（18 个变体共享 80% 结构） ──
-@mixin btn-base {
-  background: var(--color-border-default);
-  color: var(--color-info);
-  border: 1px solid var(--color-border-tertiary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast);
-  padding: var(--space-2) var(--space-4);
-  &:hover:not(:disabled) {
-    background: var(--color-border-tertiary);
-    border-color: var(--color-border-tertiary-active);
-  }
-  &.active {
-    background: rgba(var(--rgb-active-color), var(--alpha-wash-strong));
-    color: var(--color-active);
-    border-color: var(--color-active);
-  }
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-}
-
 // ── 输入字段 ──
 @mixin field {
   background: var(--color-bg-secondary);

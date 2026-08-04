@@ -16,38 +16,28 @@
         <span class="module-name">{{ module.name }}</span>
       </div>
       <div class="module-buttons">
-        <button v-for="btn in module.buttons" :key="btn.label" class="debug-btn" :class="btn.class"
+        <Button v-for="btn in module.buttons" :key="btn.label" :variant="btn.variant ?? 'secondary'"
           @click="handleButtonClick(btn.action)" :title="btn.description">
           {{ btn.label }}
-        </button>
+        </Button>
       </div>
-      <!-- ponytail: 动画调试模块增加爆炸样式选择器 -->
       <div v-if="module.name === '动画调试'" class="impact-style-selector">
-        <span class="selector-label">爆炸样式:</span>
-        <div class="style-options">
-          <button v-for="opt in impactStyles" :key="opt.value"
-            class="style-btn" :class="{ active: debugStore.impactStyle === opt.value }"
-            @click="debugStore.setImpactStyle(opt.value)" :title="opt.desc">
-            {{ opt.label }}
-          </button>
-        </div>
+        <span class="selector-label">爆炸样式</span>
+        <TacticalSelect v-model="debugStore.impactStyle" size="md" class="impact-style-select"
+          :options="impactStyleOptions" placeholder="选择爆炸样式" />
       </div>
       <!-- 数据生成模块控件 -->
       <div v-if="module.name === '数据生成'" class="log-gen-control">
         <div class="log-gen-row flex items-center gap-2">
           <span class="log-gen-label">模式:</span>
-          <div class="log-gen-options">
-            <button v-for="opt in modeOptions" :key="opt.value"
-              class="log-gen-opt-btn" :class="{ active: genMode === opt.value }"
-              @click="genMode = opt.value">{{ opt.label }}</button>
-          </div>
+          <TacticalSelect v-model="genMode" size="md" class="log-gen-select" :options="modeOptions" />
         </div>
         <div class="log-gen-row flex items-center gap-2">
           <span class="log-gen-label">格式:</span>
           <div class="log-gen-options">
-            <button v-for="opt in formatOptions" :key="opt.value"
-              class="log-gen-opt-btn" :class="{ active: genFormat === opt.value }"
-              @click="genFormat = opt.value">{{ opt.label }}</button>
+            <Button v-for="opt in formatOptions" :key="opt.value"
+              size="small" :active="genFormat === opt.value"
+              @click="genFormat = opt.value">{{ opt.label }}</Button>
           </div>
         </div>
         <div class="log-gen-row flex items-center gap-2">
@@ -58,13 +48,13 @@
           <span class="log-gen-label">记录:</span>
           <ToggleSwitch v-model="genRecord" label="保存回放/调试记录（昊天镜可加载）" />
         </div>
-        <button class="log-gen-btn"
+        <Button variant="energy"
           :disabled="battleStore.generationProgress.isGenerating"
-          @click="battleStore.generateBattleData(genMode, genFormat, genCount, genRecord)">
+          @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount, genRecord)">
           {{ battleStore.generationProgress.isGenerating
             ? `生成中 ${battleStore.generationProgress.percent}%`
             : `生成数据（${genCount}场）` }}
-        </button>
+        </Button>
       </div>
     </div>
   </Dialog>
@@ -75,14 +65,17 @@ import { ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const debugStore = useDebugStore()
 const battleStore = useBattleStore()
 
 // ==================== 战斗数据生成 ====================
-const genMode = ref<'1v1' | '2v2' | 'random'>('random')
+// NOTE: 战术下拉 v-model 值为 string | number | null，故放宽为 string；调用处按已知选项断言
+const genMode = ref<string>('random')
 const genFormat = ref<'txt' | 'html'>('txt')
 const genCount = ref(50)
 const genRecord = ref(true)
@@ -102,12 +95,19 @@ const impactStyles = [
   { label: '冲击波', value: 'shockwave', desc: '环形冲击波扩散' },
   { label: '暗影', value: 'shadow', desc: '紫黑能量爆发' },
 ]
+/** desc 作为下拉选项的 hint（面板与触发器均显示，替代原按钮组 hover title） */
+const impactStyleOptions: TSelectOption[] = impactStyles.map((s) => ({
+  value: s.value,
+  label: s.label,
+  hint: s.desc,
+}))
 
 interface DebugButton {
   label: string
   action: string
   description?: string
-  class?: string
+  /** Button 组件样式族；缺省 secondary */
+  variant?: 'primary' | 'energy' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost'
 }
 
 interface DebugModule {
@@ -136,48 +136,48 @@ const debugModules: DebugModule[] = [
   {
     name: '战斗控制',
     buttons: [
-      { label: '立即胜利', action: 'win_battle', description: '直接判定我方胜利', class: 'btn-success' },
-      { label: '立即失败', action: 'lose_battle', description: '直接判定敌方胜利', class: 'btn-danger' },
-      { label: '跳过回合', action: 'skip_turn', description: '跳过当前回合', class: 'btn-warning' },
-      { label: '强制结束', action: 'end_battle', description: '强制结束当前战斗', class: 'btn-danger' }
+      { label: '立即胜利', action: 'win_battle', description: '直接判定我方胜利', variant: 'success' },
+      { label: '立即失败', action: 'lose_battle', description: '直接判定敌方胜利', variant: 'danger' },
+      { label: '跳过回合', action: 'skip_turn', description: '跳过当前回合', variant: 'warning' },
+      { label: '强制结束', action: 'end_battle', description: '强制结束当前战斗', variant: 'danger' }
     ]
   },
   {
     name: '角色状态',
     buttons: [
-      { label: '满血', action: 'full_health', description: '恢复所有角色气血', class: 'btn-success' },
-      { label: '满能量', action: 'full_energy', description: '恢复所有角色能量', class: 'btn-info' },
-      { label: '杀死选中', action: 'kill_selected', description: '将选中角色血量设为0', class: 'btn-danger' },
-      { label: '满技能CD', action: 'max_skill_cd', description: '设置所有技能冷却', class: 'btn-warning' }
+      { label: '满血', action: 'full_health', description: '恢复所有角色气血', variant: 'success' },
+      { label: '满能量', action: 'full_energy', description: '恢复所有角色能量', variant: 'secondary' },
+      { label: '杀死选中', action: 'kill_selected', description: '将选中角色血量设为0', variant: 'danger' },
+      { label: '满技能CD', action: 'max_skill_cd', description: '设置所有技能冷却', variant: 'warning' }
     ]
   },
   {
     name: '战斗事件',
     buttons: [
-      { label: '触发暴击', action: 'force_crit', description: '下次攻击必定暴击', class: 'btn-info' },
-      { label: '触发闪避', action: 'force_dodge', description: '下次攻击必定闪避', class: 'btn-info' },
-      { label: '触发格挡', action: 'force_block', description: '下次攻击必定格挡', class: 'btn-info' },
-      { label: '添加Buff', action: 'add_buff', description: '给选中角色添加Buff', class: 'btn-info' }
+      { label: '触发暴击', action: 'force_crit', description: '下次攻击必定暴击', variant: 'secondary' },
+      { label: '触发闪避', action: 'force_dodge', description: '下次攻击必定闪避', variant: 'secondary' },
+      { label: '触发格挡', action: 'force_block', description: '下次攻击必定格挡', variant: 'secondary' },
+      { label: '添加Buff', action: 'add_buff', description: '给选中角色添加Buff', variant: 'secondary' }
     ]
   },
   {
     name: '系统调试',
     buttons: [
-      { label: '输出日志', action: 'dump_logs', description: '输出当前日志到控制台', class: 'btn-default' },
-      { label: '导出状态', action: 'export_state', description: '导出战斗状态', class: 'btn-default' },
-      { label: '导入状态', action: 'import_state', description: '导入战斗状态', class: 'btn-default' },
-      { label: '重置战斗', action: 'reset_battle', description: '重置战斗数据', class: 'btn-warning' },
-      { label: 'Buff热重载', action: 'reload_buffs', description: '重新加载所有Buff脚本', class: 'btn-info' },
+      { label: '输出日志', action: 'dump_logs', description: '输出当前日志到控制台', variant: 'secondary' },
+      { label: '导出状态', action: 'export_state', description: '导出战斗状态', variant: 'secondary' },
+      { label: '导入状态', action: 'import_state', description: '导入战斗状态', variant: 'secondary' },
+      { label: '重置战斗', action: 'reset_battle', description: '重置战斗数据', variant: 'warning' },
+      { label: 'Buff热重载', action: 'reload_buffs', description: '重新加载所有Buff脚本', variant: 'secondary' },
     ]
   },
   {
     name: '日志调试',
     buttons: [
-      { label: '战斗日志', action: 'log_battle', description: '调用 addBattleLog', class: 'btn-info' },
-      { label: '系统日志', action: 'log_system', description: '调用 addSystemLog', class: 'btn-info' },
-      { label: '物品日志', action: 'log_item', description: '调用 addItemLog', class: 'btn-info' },
-      { label: '行为日志', action: 'log_action', description: '调用 addActionLog', class: 'btn-info' },
-      { label: '调试日志', action: 'log_debug', description: '调用 addDebugLog', class: 'btn-info' },
+      { label: '战斗日志', action: 'log_battle', description: '调用 addBattleLog', variant: 'secondary' },
+      { label: '系统日志', action: 'log_system', description: '调用 addSystemLog', variant: 'secondary' },
+      { label: '物品日志', action: 'log_item', description: '调用 addItemLog', variant: 'secondary' },
+      { label: '行为日志', action: 'log_action', description: '调用 addActionLog', variant: 'secondary' },
+      { label: '调试日志', action: 'log_debug', description: '调用 addDebugLog', variant: 'secondary' },
     ],
   },
   {
@@ -187,12 +187,12 @@ const debugModules: DebugModule[] = [
   {
     name: '动画调试',
     buttons: [
-      { label: '测试伤害数字', action: 'test_damage_num', description: '在选中角色上显示伤害飘字', class: 'btn-info' },
-      { label: '测试暴击数字', action: 'test_crit_num', description: '在选中角色上显示暴击飘字', class: 'btn-warning' },
-      { label: '测试治疗数字', action: 'test_heal_num', description: '在选中角色上显示治疗飘字', class: 'btn-success' },
-      { label: '测试技能飞行', action: 'test_skill_fly', description: '从首个友方飞向首个敌方显示技能名', class: 'btn-info' },
-      { label: '清除所有动画', action: 'clear_animations', description: '停止所有动画并重置视觉状态', class: 'btn-danger' },
-      { label: '输出动画状态', action: 'dump_animation', description: '输出当前动画状态到控制台', class: 'btn-default' },
+      { label: '测试伤害数字', action: 'test_damage_num', description: '在选中角色上显示伤害飘字', variant: 'secondary' },
+      { label: '测试暴击数字', action: 'test_crit_num', description: '在选中角色上显示暴击飘字', variant: 'warning' },
+      { label: '测试治疗数字', action: 'test_heal_num', description: '在选中角色上显示治疗飘字', variant: 'success' },
+      { label: '测试技能飞行', action: 'test_skill_fly', description: '从首个友方飞向首个敌方显示技能名', variant: 'secondary' },
+      { label: '清除所有动画', action: 'clear_animations', description: '停止所有动画并重置视觉状态', variant: 'danger' },
+      { label: '输出动画状态', action: 'dump_animation', description: '输出当前动画状态到控制台', variant: 'secondary' },
     ],
   }
 ]
@@ -243,106 +243,24 @@ const handleButtonClick = (action: string) => {
   gap: var(--space-2);
 }
 
-.debug-btn {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid rgba(var(--rgb-white), var(--alpha-wash-strong));
-  border-radius: var(--radius-sm);
-  background: rgba(var(--rgb-white), var(--alpha-tint));
-  color: rgba(var(--rgb-white), 0.8);
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-
-.debug-btn:hover {
-  background: rgba(var(--rgb-energy), var(--alpha-wash-strong));
-  border-color: var(--border-debug-color-light);
-  color: var(--color-text-primary);
-}
-
-.debug-btn.btn-success {
-  border-color: rgba(var(--rgb-success), var(--alpha-glow));
-  color: var(--color-success);
-}
-
-.debug-btn.btn-success:hover {
-  background: rgba(var(--rgb-success), var(--alpha-wash-strong));
-  border-color: var(--color-success);
-}
-
-.debug-btn.btn-danger {
-  border-color: rgba(var(--rgb-danger), var(--alpha-glow));
-  color: var(--color-danger);
-}
-
-.debug-btn.btn-danger:hover {
-  background: rgba(var(--rgb-danger), var(--alpha-wash-strong));
-  border-color: var(--color-danger);
-}
-
-.debug-btn.btn-warning {
-  border-color: rgba(var(--rgb-warning), var(--alpha-glow));
-  color: var(--color-warning);
-}
-
-.debug-btn.btn-warning:hover {
-  background: rgba(var(--rgb-warning), var(--alpha-wash-strong));
-  border-color: var(--color-warning);
-}
-
-.debug-btn.btn-info {
-  border-color: rgba(var(--rgb-info), var(--alpha-glow));
-  color: var(--color-info);
-}
-
-.debug-btn.btn-info:hover {
-  background: rgba(var(--rgb-info), var(--alpha-wash-strong));
-  border-color: var(--color-info);
-}
-
-.debug-btn.btn-default {
-  border-color: rgba(var(--rgb-white), var(--alpha-border));
-}
-
 /* 爆炸样式选择器 */
 .impact-style-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin-top: var(--space-2);
   padding-top: var(--space-2);
   border-top: 1px solid rgba(var(--rgb-white), var(--alpha-tint));
 }
 
+.impact-style-select {
+  flex: 1;
+  min-width: 0;
+}
+
 .selector-label {
-  display: block;
   color: rgba(var(--rgb-white), 0.6);
-  margin-bottom: var(--space-1);
-}
-
-.style-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-}
-
-.style-btn {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid rgba(var(--rgb-white), var(--alpha-wash-strong));
-  border-radius: var(--radius-sm);
-  background: rgba(var(--rgb-white), var(--alpha-tint));
-  color: rgba(var(--rgb-white), 0.7);
-  font-size: 11px;
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-
-.style-btn:hover {
-  background: var(--border-debug-color-dark);
-  border-color: rgba(var(--rgb-energy), 0.4);
-  color: var(--color-text-primary);
-}
-
-.style-btn.active {
-  background: rgba(var(--rgb-energy), var(--alpha-border));
-  border-color: var(--color-energy);
-  color: var(--color-energy);
+  flex-shrink: 0;
 }
 
 /* ====== 日志生成控件 ====== */
@@ -362,49 +280,15 @@ const handleButtonClick = (action: string) => {
   flex-shrink: 0;
 }
 
+.log-gen-select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 格式行仍为按钮组（2 项，保持按钮形态） */
 .log-gen-options {
   display: flex;
   gap: var(--space-1);
   flex-wrap: wrap;
-}
-
-.log-gen-opt-btn {
-  padding: 2px 10px;
-  border: 1px solid rgba(var(--rgb-white), var(--alpha-wash-strong));
-  border-radius: var(--radius-sm);
-  background: rgba(var(--rgb-white), var(--alpha-tint));
-  color: rgba(var(--rgb-white), 0.7);
-  font-size: var(--font-size-md);
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-
-.log-gen-opt-btn:hover {
-  background: var(--border-debug-color-dark);
-  border-color: rgba(var(--rgb-energy), 0.4);
-  color: var(--color-text-primary);
-}
-
-.log-gen-opt-btn.active {
-  background: rgba(var(--rgb-energy), var(--alpha-border));
-  border-color: var(--color-energy);
-  color: var(--color-energy);
-}
-
-.log-gen-btn {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-energy);
-  border-radius: var(--radius-sm);
-  background: var(--border-debug-color-dark);
-  color: var(--color-energy);
-  cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-  font-weight: var(--font-weight-medium);
-  align-self: flex-start;
-}
-
-.log-gen-btn:hover {
-  background: var(--border-debug-color);
-  box-shadow: 0 0 8px var(--border-debug-color);
 }
 </style>

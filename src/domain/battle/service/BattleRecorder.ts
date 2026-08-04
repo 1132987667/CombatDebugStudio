@@ -357,7 +357,7 @@ export class BattleRecorder {
     // 在内存记录中保存持久化键名（供删除和清理使用）
     recording.saveKey = saveKey
 
-    // ★ 持久化上限裁剪：兑现 maxRecordings=50 语义（cleanupOldRecordings 只淘汰内存副本，
+    //  持久化上限裁剪：兑现 maxRecordings=50 语义（cleanupOldRecordings 只淘汰内存副本，
     //   批量生成等场景 resetBattle→clearRecording 会让持久化副本永远进不了淘汰视野）
     await this.trimPersistedRecordings()
 
@@ -395,7 +395,7 @@ export class BattleRecorder {
     try {
       const recording = savedData
 
-      // ★ 旧数据一次性迁移：补充缺失字段
+      //  旧数据一次性迁移：补充缺失字段
       recording.combatRecords ??= []
       for (const record of recording.combatRecords) {
         if (record.actionOrder === undefined) record.actionOrder = 0
@@ -412,7 +412,7 @@ export class BattleRecorder {
         }
       }
 
-      // ★ 旧持久化数据中的 traceLogs 字段（旧 TraceLogEntry 结构）不迁移：
+      //  旧持久化数据中的 traceLogs 字段（旧 TraceLogEntry 结构）不迁移：
       //    无任何消费者（回放/UI 都不读取），且旧结构无法映射为合法 TraceEvent
       //    （缺少 correlationId/phase/payload），不做类型谎言的字段改名。
       //    字段保留在持久化 JSON 中，新代码不再读取。
@@ -578,7 +578,7 @@ export class BattleRecorder {
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
       this.currentTurnNumbers.delete(battleId)
-      // ★ 同步清理持久化记录
+      //  同步清理持久化记录
       if (recording.saveKey) {
         this.storage.remove(STORAGE_STORE.RECORDINGS, recording.saveKey)
           .catch((e) => LoggerProvider.logger.addDebugLog(`清理持久化记录失败: ${recording.saveKey}`, { level: LogLevel.ERROR, error: e }))

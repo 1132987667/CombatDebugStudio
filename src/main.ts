@@ -56,9 +56,9 @@ import('@/infrastructure/di/Container').then(({ container }) => {
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // ★ 等待旧数据迁移完成，防止竞态
+  //  等待旧数据迁移完成，防止竞态
   await migrationPromise
-  // ★ 封神榜数据引导完成后再挂载，确保引擎数据源就绪
+  //  封神榜数据引导完成后再挂载，确保引擎数据源就绪
   await bootstrapFengshen()
 
   const appElement = document.getElementById('app')

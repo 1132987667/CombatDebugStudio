@@ -160,7 +160,7 @@ export class BattleDataGenerator {
           continue
         }
 
-        // ★ headless 下 BATTLE_ENDED 不广播，战报生成器不会自动 onBattleEnd：
+        //  headless 下 BATTLE_ENDED 不广播，战报生成器不会自动 onBattleEnd：
         //   手动触发以恢复导出中的"战报摘要"块（与面板导出格式一致），顺带释放累加器
         const winner = battleData.winner
         if (winner) BattleSummaryGenerator.instance.onBattleEnd(winner)
@@ -177,7 +177,7 @@ export class BattleDataGenerator {
           narrativeBlocks,
         })
 
-        // ★ 保存回放/调试记录（必须在 resetBattle 清除内存录制之前）
+        //  保存回放/调试记录（必须在 resetBattle 清除内存录制之前）
         //   RecordedBattle 已含 events/traceEvents/initialState/randomSeed/winner，
         //   昊天镜「战斗记录」源（UnifiedArchiveService.fromRecordedBattle）可直接加载回放与调试。
         //   NOTE: 保持 headless=true，lifecycleManager.endBattle 的自动保存被跳过，这里手动保存不双写。

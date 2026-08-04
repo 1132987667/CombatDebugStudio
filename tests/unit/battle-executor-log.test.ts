@@ -148,9 +148,9 @@ describe('BattleExecutor 日志发射器', () => {
     expect(addBattleLog).toHaveBeenCalledTimes(2)
     const [action, sub] = addBattleLog.mock.calls.map((c) => c[0])
 
-    // action 日志：rawDamage 进文本，finalDamage 进 meta.damage
+    // action 日志：实际伤害（totalDamage）进文本 + meta.damage；rawDamage 不再显示
     expect(action.message).toBe(
-      '[友方]剑客 对 [敌方]史莱姆 使用 【火球术】，造成 35 点伤害',
+      '[友方]剑客 对 [敌方]史莱姆 使用 【火球术】，造成 30 点伤害',
     )
     expect(action.category).toBe(BATTLE_LOG_CATEGORIES.DAMAGE)
     expect(action.meta).toMatchObject({
@@ -271,9 +271,9 @@ describe('BattleExecutor 日志发射器', () => {
     expect(addBattleLog).toHaveBeenCalledTimes(3) // action + 2 sub
     const [action, sub1, sub2] = addBattleLog.mock.calls.map((c) => c[0])
 
-    // header：rawDamage 总和进文本，目标间 ", " 分隔
+    // header：实际伤害总和（totalDamage）进文本，目标间 ", " 分隔
     expect(action.message).toBe(
-      '[友方]剑客 对 [敌方]史莱姆, [敌方]骷髅 使用 【火球术】，造成 63 点伤害',
+      '[友方]剑客 对 [敌方]史莱姆, [敌方]骷髅 使用 【火球术】，造成 55 点伤害',
     )
     const targetSegs = action.segments.filter((s: any) => s.kind === 'entity')
     expect(targetSegs.map((s: any) => s.text)).toEqual([

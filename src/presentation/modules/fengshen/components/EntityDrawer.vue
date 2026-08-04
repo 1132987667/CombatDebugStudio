@@ -7,10 +7,8 @@
 
     <div class="fs-drawer-body">
       <div v-if="isNew && !readonlyId" class="fs-form-group">
-        <label class="fs-field-label">ID<span class="fs-required">*</span></label>
-        <input class="fs-input" :value="String(entity?.id ?? '')" disabled aria-disabled="true"
-          title="新实体的 ID 自动生成，保存后不可修改" />
-        <div class="fs-field-hint">新实体 ID 自动生成，保存后不可修改</div>
+        <TacticalInput :model-value="String(entity?.id ?? '')" disabled label="ID" required
+          hint="新实体 ID 自动生成，保存后不可修改" aria-label="实体 ID" />
       </div>
 
       <template v-for="field in editableFields" :key="field.key">
@@ -25,10 +23,10 @@
     </div>
 
     <template #footer>
-      <button class="fs-btn fs-btn-ghost" @click="close">取消</button>
-      <button class="fs-btn fs-btn-primary" :disabled="saving" @click="onSave">
+      <Button variant="ghost" @click="close">取消</Button>
+      <Button variant="primary" :disabled="saving" @click="onSave">
         {{ saving ? '保存中…' : '保存' }}
-      </button>
+      </Button>
     </template>
   </Dialog>
 </template>
@@ -38,7 +36,9 @@ import { computed, ref, watch } from 'vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Button from '@/presentation/components/Button.vue'
 import FieldEditor from './FieldEditor.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const props = defineProps<{
   open: boolean

@@ -100,10 +100,10 @@ export function dealDotDamage(ctx: TriggerExecutionContext): void {
  * 反伤模型说明：
  * - basis='final'（模型一）：反伤 = 最终扣血 × 比例。受目标防御影响。
  * - basis='raw'  （模型二）：反伤 = 原始伤害 × 比例。
- *   ★ 原始伤害 = 来源方全部产出（含暴击、伤害提升、火系/物理/低血量加成），
+ *    原始伤害 = 来源方全部产出（含暴击、伤害提升、火系/物理/低血量加成），
  *     目标方减免前。鼓励坦克堆防御，反伤下限稳定。
  * 
- * ⚠️ 数值平衡影响：rawDamage 基数已包含来源方全部加成（damageBoost、火系/物理/低血量等），
+ *  数值平衡影响：rawDamage 基数已包含来源方全部加成（damageBoost、火系/物理/低血量等），
  *    配置了 basis='raw' 的反伤 Buff 数值约增大 10-30%，需策划确认。
  * 
  * @param ctx.params.percent - 反弹比例 (0.0 - 1.0)

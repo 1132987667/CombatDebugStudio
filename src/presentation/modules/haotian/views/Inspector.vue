@@ -2,14 +2,13 @@
   <div v-if="ev" class="ht-insp">
     <div class="ht-insp-hd">
       <div class="ht-insp-kicker">
-        {{ ev.id }} · <span :class="'ht-' + meta(ev).cls">{{ meta(ev).label }}</span> · {{ ev.correlationId }}
-        <template v-if="ev.parentId"> · ← {{ ev.parentId }}</template>
+        事件 {{ ev.id }} · <span :class="'ht-' + meta(ev).cls">{{ meta(ev).label }}</span> · 关联 {{ ev.correlationId }}
         · 时间={{ formatTime(ev.timestamp) }}
       </div>
       <div class="ht-insp-title">{{ ev.summary }}</div>
       <div class="ht-insp-actions">
-        <button class="ht-btn" title="切换到回放系统，并从该事件时间点开始播放" @click="playFromHere">▶ 从此回放</button>
-        <button class="ht-btn" title="导出该事件 JSON（含 payload / 快照 / 元信息）" @click="exportEvent">⇩ 导出事件 JSON</button>
+        <Button title="切换到回放系统，并从该事件时间点开始播放" @click="playFromHere">从此回放</Button>
+        <Button title="导出该事件 JSON（含 payload / 快照 / 元信息）" @click="exportEvent">导出事件 JSON</Button>
       </div>
     </div>
 
@@ -20,7 +19,7 @@
       </div>
       <div v-for="(m, i) in steps" :key="i" class="ht-frow">
         <span class="ht-fop" :class="opClass(m.op)">{{ m.op || '＝' }}</span>
-        <span class="ht-flab">{{ m.step.n }}<span class="src" :title="srcTitle(m.step.src)">{{ m.step.src }}</span></span>
+        <span class="ht-flab" :title="srcTitle(m.step.src)">{{ m.step.n }}</span>
         <span class="ht-fval" :class="valClass(m.op, m.step.v)">{{ fmtVal(m.op, m.step.v) }}</span>
         <span class="ht-facc">{{ fmtRunning(m.running) }}</span>
       </div>
@@ -54,7 +53,7 @@
           <span class="ht-rng-margin" :class="{ fragile: marginOf(i) < 10 }">
             余量 {{ marginOf(i).toFixed(1) }}%<template v-if="marginOf(i) < 10"> · 敏感</template>
           </span>
-          <button class="ht-btn mini" title="仅模拟重掷，不改变存档数据" @click="doReroll(i)">重掷该判定（仅模拟）</button>
+          <Button size="tiny" title="仅模拟重掷，不改变存档数据" @click="doReroll(i)">重掷该判定（仅模拟）</Button>
           <span v-if="rerolled(i)" class="ht-rng-reroll" :class="rerollFlip(i) ? 'v-fail' : 'v-pass'">
             {{ rerollFlip(i) ? '重掷翻转！' : '重掷未翻转' }}
           </span>
@@ -142,6 +141,7 @@ import {
   type StepAccum,
 } from '@/domain/battle/replay/unified/unified-steps'
 import { useHaotianStore } from '../stores/haotianStore'
+import Button from '@/presentation/components/Button.vue'
 
 interface ScoreCandidate {
   id: string
@@ -195,11 +195,14 @@ const ROLL_NAME: Record<string, string> = {
 
 const KV_LABEL: Record<string, string> = {
   skill: '技能',
+  skillName: '技能名',
   hits: '段数',
   controlMode: '控制模式',
   buff: 'Buff',
+  buffName: 'Buff 名',
   resisted: '是否被抵抗',
   passive: '被动',
+  passiveId: '被动 ID',
   chance: '触发概率',
   death: '致死',
   dot: '持续伤害',
@@ -212,6 +215,35 @@ const KV_LABEL: Record<string, string> = {
   action: '动作',
   engine: '引擎',
   seg: '段序号',
+  dodge: '闪避',
+  crit: '暴击',
+  stacks: '层数',
+  oldStacks: '原层数',
+  newStacks: '新层数',
+  duration: '持续回合',
+  remainingTurns: '剩余回合',
+  turns: '回合数',
+  round: '回合',
+  amount: '数值',
+  base: '基础值',
+  raw: '原始值',
+  final: '最终值',
+  overflow: '溢出',
+  targetId: '目标',
+  sourceId: '来源',
+  actorId: '行动方',
+  attribute: '属性',
+  value: '数值',
+  currentTotal: '当前总值',
+  verdict: '判定',
+  skipReason: '跳过原因',
+  owner: '持有者',
+  trigger: '触发时机',
+  aliveCount: '存活数',
+  energyGain: '能量回复',
+  chosen: '选定目标',
+  instanceId: '实例 ID',
+  stepId: '步骤 ID',
 }
 
 const SKIP_KEYS = ['steps', 'rolls', 'chain', 'candidates', 'fields', 'anchor', 'result']
@@ -257,6 +289,9 @@ function doReroll(i: number): void {
   rerolls.set(rerollKey(i), Math.round(Math.random() * 1000) / 1000)
 }
 
+/** 载荷中值为单位 id 的字段：显示名字而非内部 id（真实录制 payload 含 sourceId/targetId 等） */
+const ID_KEYS = new Set(['sourceId', 'targetId', 'actorId', 'chosen'])
+
 const kvRows = computed<Array<[string, string]>>(() => {
   const rows: Array<[string, string]> = []
   const payload = pl.value
@@ -264,7 +299,7 @@ const kvRows = computed<Array<[string, string]>>(() => {
     if (SKIP_KEYS.includes(k)) continue
     const v = payload[k]
     if (v === null || typeof v === 'object') continue
-    rows.push([KV_LABEL[k] ?? k, String(v)])
+    rows.push([KV_LABEL[k] ?? k, ID_KEYS.has(k) ? store.pname(String(v)) : String(v)])
   }
   return rows
 })

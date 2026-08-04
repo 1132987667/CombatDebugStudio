@@ -140,6 +140,12 @@ export class BattleEventManager {
    */
   private handleBattleEndEvent(data: BattleEndedEventData) {
     try {
+      // ★ headless（批量数据生成等无 UI 场景）：不更新 UI 状态、不弹战报窗，仅释放战报累加器
+      if (this.battleSystem?.getHeadless()) {
+        if (data?.winner) BattleSummaryGenerator.instance.onBattleEnd(data.winner)
+        return
+      }
+
       const store = this.getBattleStore()
       if (!store) return
       store.setBattleActive(false)

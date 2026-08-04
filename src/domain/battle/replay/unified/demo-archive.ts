@@ -4,6 +4,8 @@
  * 描述: 覆盖全部 phase 与富 payload 形态（steps/rolls/chain/candidates/fields/anchor/snapshot），
  *       供双工作台全功能自检与离线演示。真实录制经 UnifiedArchiveService.fromRecordedBattle 映射。
  * NOTE: buildArchiveIndices 会原地注入 _delta / rolls.idx，因此对外提供 createDemoArchive()（结构化克隆）。
+ * NOTE: 参与者取自 configs/enemies/enemies.json 的真实角色（火护法 vs 金护法），
+ *       技能/Buff 名与数值均对齐现有系统，事件流骨架为合成（真实录制难覆盖全部 phase）。
  */
 
 import type { UnifiedArchive, UnifiedEvent } from './unified-archive'
@@ -20,8 +22,8 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
   checksum: 'a3f8c2e1',
   initialState: {
     participants: [
-      { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200, hp: 3200, maxEnergy: 100, energy: 100, side: 'ally', buffs: [{ name: '魔力放出', stacks: 3, turns: 3 }] },
-      { id: 'u2', name: '骷髅战士', maxHp: 1500, hp: 1500, maxEnergy: 100, energy: 60, side: 'enemy', buffs: [] },
+      { id: 'u1', name: '火护法', maxHp: 350, hp: 350, maxEnergy: 100, energy: 100, side: 'ally', buffs: [{ name: '复仇怒火', stacks: 1, turns: -1 }] },
+      { id: 'u2', name: '金护法', maxHp: 500, hp: 500, maxEnergy: 100, energy: 60, side: 'enemy', buffs: [] },
     ],
   },
   events: [
@@ -32,40 +34,40 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
       payload: {
         action: 'start', turn: 1,
         anchor: { participants: [
-          { id: 'u1', hp: 3200, energy: 100, buffs: [{ name: '魔力放出', stacks: 3, turns: 3 }] },
-          { id: 'u2', hp: 1500, energy: 70, buffs: [] },
+          { id: 'u1', hp: 350, energy: 100, buffs: [{ name: '复仇怒火', stacks: 1, turns: -1 }] },
+          { id: 'u2', hp: 500, energy: 70, buffs: [] },
         ] },
       },
       summary: '第 1 回合开始 · 全量锚点',
     }),
     ev({
       id: 'ev03', phase: 'damage_calculation', correlationId: 'corr_t1', parentId: 'ev02', timestamp: 340, level: 'info', targetId: 'u2',
-      payload: { steps: [{ n: '灼烧基础值', op: '', v: 120, src: 'buff.scorch' }], result: 120, dot: true },
-      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 1380 }] },
-      summary: '骷髅战士 受到 [烈焰灼烧] 120 点伤害',
+      payload: { steps: [{ n: '中毒基础值', op: '', v: 15, src: 'buff.poison' }], result: 15, dot: true },
+      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 485 }] },
+      summary: '金护法 受到 [中毒] 15 点伤害',
     }),
     ev({
       id: 'ev04', phase: 'action_execution', correlationId: 'corr_1_1', timestamp: 950, level: 'info', sourceId: 'u1', targetId: 'u2',
-      payload: { skill: '誓约胜利之剑', hits: 3, controlMode: 'player' },
+      payload: { skill: '普通攻击', hits: 3, controlMode: 'player' },
       snapshot: { turn: 1, participants: [{ id: 'u1', energy: 60 }] },
-      summary: '剑士 使用 [誓约胜利之剑] → 骷髅战士（3 段）',
+      summary: '火护法 使用 [普通攻击] → 金护法（3 段 · 连击之心）',
     }),
     ev({
       id: 'ev05', phase: 'damage_calculation', correlationId: 'corr_1_1', parentId: 'ev04', timestamp: 1100, level: 'info', sourceId: 'u1', targetId: 'u2',
       payload: {
         seg: 1, crit: true,
         steps: [
-          { n: '技能基础值', op: '', v: 200, src: 'skill_cfg.base' },
-          { n: '攻击力', op: '+', v: 450, src: 'unit.atk' },
-          { n: '防御减免', op: '−', v: 150, src: 'target.def' },
+          { n: '技能基础值', op: '', v: 20, src: 'skill_cfg.base' },
+          { n: '攻击力', op: '+', v: 65, src: 'unit.atk' },
+          { n: '防御减免', op: '−', v: 15, src: 'target.def' },
           { n: '暴击倍率', op: '×', v: 1.5, src: 'crit_rate' },
-          { n: '属性克制', op: '×', v: 1.2, src: 'fire → ice' },
+          { n: '复仇怒火', op: '+', v: 8, src: 'buff_guardian_revenge_rage' },
         ],
         rolls: [{ kind: 'hit', rate: 0.875, roll: 0.642 }, { kind: 'crit', rate: 0.25, roll: 0.12 }],
-        result: 900,
+        result: 113,
       },
-      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 480 }] },
-      summary: '第 1 段 · 暴击 900 伤害',
+      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 372 }] },
+      summary: '第 1 段 · 暴击 113 伤害',
     }),
     ev({
       id: 'ev06', phase: 'damage_calculation', correlationId: 'corr_1_1', parentId: 'ev04', timestamp: 1250, level: 'info', sourceId: 'u1', targetId: 'u2',
@@ -77,80 +79,80 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
       payload: {
         seg: 3,
         steps: [
-          { n: '技能基础值', op: '', v: 200, src: 'skill_cfg.base' },
-          { n: '攻击力', op: '+', v: 450, src: 'unit.atk' },
-          { n: '防御减免', op: '−', v: 150, src: 'target.def' },
-          { n: '暴击倍率', op: '×', v: 1.0, src: 'crit_rate' },
-          { n: '护盾吸收', op: '−', v: 80, src: 'buff_031' },
+          { n: '技能基础值', op: '', v: 20, src: 'skill_cfg.base' },
+          { n: '攻击力', op: '+', v: 65, src: 'unit.atk' },
+          { n: '防御减免', op: '−', v: 15, src: 'target.def' },
+          { n: '连击倍率', op: '×', v: 1.0, src: 'passive.combo_heart' },
+          { n: '金甲护体', op: '−', v: 12, src: 'buff_gold_shield' },
         ],
-        rolls: [{ kind: 'hit', rate: 0.875, roll: 0.451 }, { kind: 'resist', rate: 0.3, roll: 0.152, buff: '破甲' }],
-        result: 420,
+        rolls: [{ kind: 'hit', rate: 0.875, roll: 0.451 }, { kind: 'resist', rate: 0.3, roll: 0.152, buff: '破甲打击' }],
+        result: 58,
       },
-      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 60 }] },
-      summary: '第 3 段 · 420 伤害（护盾吸收 80）',
+      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 314 }] },
+      summary: '第 3 段 · 58 伤害（金甲护体吸收 12）',
     }),
     ev({
       id: 'ev08', phase: 'buff_lifecycle', correlationId: 'corr_1_1', parentId: 'ev04', timestamp: 1500, level: 'info', sourceId: 'u1', targetId: 'u2',
-      payload: { action: 'apply', buff: '破甲', resisted: true },
-      summary: '施加 [破甲] → 被抵抗',
+      payload: { action: 'apply', buff: '破甲打击', resisted: true },
+      summary: '施加 [破甲打击] → 被抵抗',
     }),
     ev({
       id: 'ev09', phase: 'ai_decision', correlationId: 'corr_1_2', parentId: 'ev10', timestamp: 1900, level: 'debug', sourceId: 'u2',
-      payload: { candidates: [{ id: 'u1', name: '剑士', score: 88 }, { id: 'u2', name: '自身', score: 12 }], chosen: 'u1' },
-      summary: 'AI 决策 · 目标：剑士（威胁评分 88）',
+      payload: { candidates: [{ id: 'u1', name: '火护法', score: 82 }, { id: 'u2', name: '自身', score: 18 }], chosen: 'u1' },
+      summary: 'AI 决策 · 目标：火护法（威胁评分 82）',
     }),
     ev({
       id: 'ev10', phase: 'action_execution', correlationId: 'corr_1_2', timestamp: 1980, level: 'info', sourceId: 'u2', targetId: 'u1',
-      payload: { skill: '骨刺', hits: 1, controlMode: 'ai' },
+      payload: { skill: '普通攻击', hits: 1, controlMode: 'ai' },
       snapshot: { turn: 1, participants: [{ id: 'u2', energy: 50 }] },
-      summary: '骷髅战士 使用 [骨刺] → 剑士',
+      summary: '金护法 使用 [普通攻击] → 火护法',
     }),
     ev({
       id: 'ev11', phase: 'damage_calculation', correlationId: 'corr_1_2', parentId: 'ev10', timestamp: 2120, level: 'info', sourceId: 'u2', targetId: 'u1',
       payload: {
         steps: [
-          { n: '技能基础值', op: '', v: 120, src: 'skill_cfg.base' },
-          { n: '攻击力', op: '+', v: 260, src: 'unit.atk' },
-          { n: '防御减免', op: '−', v: 230, src: 'target.def' },
-          { n: '易伤加成', op: '×', v: 1.2, src: 'debuff_012' },
+          { n: '技能基础值', op: '', v: 15, src: 'skill_cfg.base' },
+          { n: '攻击力', op: '+', v: 50, src: 'unit.atk' },
+          { n: '防御减免', op: '−', v: 8, src: 'target.def' },
+          { n: '易伤加成', op: '×', v: 1.1, src: 'buff_yishang' },
         ],
         rolls: [{ kind: 'hit', rate: 0.8, roll: 0.356 }],
-        result: 180,
+        result: 63,
       },
-      snapshot: { turn: 1, participants: [{ id: 'u1', hp: 3020 }] },
-      summary: '180 伤害 · 易伤生效',
+      snapshot: { turn: 1, participants: [{ id: 'u1', hp: 287 }] },
+      summary: '63 伤害 · 易伤生效',
     }),
     ev({
       id: 'ev12', phase: 'passive_trigger', correlationId: 'corr_1_2', parentId: 'ev11', timestamp: 2220, level: 'info', sourceId: 'u1',
       payload: {
-        passive: '骑士直觉', chance: 0.3,
-        rolls: [{ kind: 'passive', rate: 0.3, roll: 0.22 }],
+        passive: '复仇怒火', chance: 0.35,
+        rolls: [{ kind: 'passive', rate: 0.35, roll: 0.22 }],
         chain: [
-          { t: '受到攻击', d: '骷髅战士 → 剑士 · 骨刺' },
-          { t: '触发被动', d: '剑士【骑士直觉】：受击时 30% 概率反击' },
-          { t: '执行反击', d: '剑士 → 骷髅战士 · 即时反击' },
+          { t: '受到攻击', d: '金护法 → 火护法 · 普通攻击' },
+          { t: '触发被动', d: '火护法【复仇怒火】：受击时 35% 概率反击' },
+          { t: '执行反击', d: '火护法 → 金护法 · 即时反击' },
         ],
       },
-      summary: '被动 [骑士直觉] 触发 → 反击',
+      summary: '被动 [复仇怒火] 触发 → 反击',
     }),
     ev({
       id: 'ev13', phase: 'damage_calculation', correlationId: 'corr_1_2', parentId: 'ev12', timestamp: 2340, level: 'info', sourceId: 'u1', targetId: 'u2',
       payload: {
         counter: true,
         steps: [
-          { n: '反击基础值', op: '', v: 60, src: 'passive.base' },
-          { n: '攻击力', op: '+', v: 120, src: 'unit.atk' },
-          { n: '防御减免', op: '−', v: 140, src: 'target.def' },
+          { n: '反击基础值', op: '', v: 12, src: 'passive.base' },
+          { n: '攻击力', op: '+', v: 30, src: 'unit.atk' },
+          { n: '防御减免', op: '−', v: 10, src: 'target.def' },
         ],
-        result: 40,
+        result: 32,
       },
-      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 20 }] },
-      summary: '被动反击 · 40 伤害',
+      snapshot: { turn: 1, participants: [{ id: 'u2', hp: 282 }] },
+      summary: '被动反击 · 32 伤害',
     }),
     ev({
       id: 'ev14', phase: 'attribute_recalc', correlationId: 'corr_1_2', parentId: 'ev12', timestamp: 2440, level: 'debug', sourceId: 'u1',
-      payload: { fields: [{ k: 'ATK', from: 450, to: 517 }], reason: '反击后 [魔力放出] 增算' },
-      summary: '属性重算 · 剑士 ATK 450 → 517',
+      payload: { fields: [{ k: 'ATK', from: 65, to: 72 }], reason: '反击后 [复仇怒火] 增算' },
+      summary: '属性重算 · 火护法 ATK 65 → 72',
     }),
     ev({
       id: 'ev15', phase: 'turn_flow', correlationId: 'corr_t1e', timestamp: 2700, level: 'info', turn: 1,
@@ -159,30 +161,42 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
     }),
     ev({
       id: 'ev16', phase: 'buff_lifecycle', correlationId: 'corr_t1e', parentId: 'ev15', timestamp: 2760, level: 'info', targetId: 'u1',
-      payload: { action: 'update', buff: '魔力放出', stacks: 2, turns: 2 },
-      summary: '[魔力放出] 层数 3 → 2',
+      payload: { action: 'update', buff: '复仇怒火', stacks: 2, turns: -1 },
+      summary: '[复仇怒火] 层数 1 → 2',
     }),
     ev({
       id: 'ev17', phase: 'turn_flow', correlationId: 'corr_t2', timestamp: 3000, level: 'info', turn: 2,
       payload: {
         action: 'start', turn: 2,
         anchor: { participants: [
-          { id: 'u1', hp: 3020, energy: 70, buffs: [{ name: '魔力放出', stacks: 2, turns: 2 }] },
-          { id: 'u2', hp: 20, energy: 60, buffs: [] },
+          { id: 'u1', hp: 287, energy: 70, buffs: [{ name: '复仇怒火', stacks: 2, turns: -1 }] },
+          { id: 'u2', hp: 282, energy: 60, buffs: [] },
         ] },
       },
       summary: '第 2 回合开始 · 全量锚点',
     }),
     ev({
-      id: 'ev18', phase: 'damage_calculation', correlationId: 'corr_t2', parentId: 'ev17', timestamp: 3140, level: 'warn', targetId: 'u2',
-      payload: { steps: [{ n: '灼烧基础值', op: '', v: 120, src: 'buff.scorch' }], result: 120, dot: true, death: true },
+      id: 'ev18', phase: 'damage_calculation', correlationId: 'corr_t2', parentId: 'ev17', timestamp: 3140, level: 'warn', sourceId: 'u1', targetId: 'u2',
+      payload: {
+        seg: 3,
+        steps: [
+          { n: '技能基础值', op: '', v: 30, src: 'skill_cfg.base' },
+          { n: '攻击力', op: '+', v: 75, src: 'unit.atk' },
+          { n: '防御减免', op: '−', v: 20, src: 'target.def' },
+          { n: '暴击倍率', op: '×', v: 1.5, src: 'crit_rate' },
+          { n: '连击之心 × 3', op: '×', v: 2.4, src: 'passive.combo_heart' },
+        ],
+        rolls: [{ kind: 'hit', rate: 0.875, roll: 0.2 }, { kind: 'crit', rate: 0.25, roll: 0.05 }],
+        result: 306,
+        death: true,
+      },
       snapshot: { turn: 2, participants: [{ id: 'u2', hp: 0 }] },
-      summary: '骷髅战士 受到灼烧 120 · HP 归零，阵亡',
+      summary: '连击终结 306 · HP 归零，阵亡',
     }),
     ev({
       id: 'ev19', phase: 'battle_lifecycle', correlationId: 'corr_end', timestamp: 3600, level: 'info',
       payload: { action: 'battle_end', winner: 'u1', rounds: 2 },
-      summary: '战斗结束 · 剑士获胜',
+      summary: '战斗结束 · 火护法获胜',
     }),
   ],
 }

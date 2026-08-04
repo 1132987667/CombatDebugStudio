@@ -792,7 +792,12 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** ★ 执行战斗数据生成 */
-  const generateBattleData = async (mode: '1v1' | '2v2' | 'random' = 'random', format: 'txt' | 'html' = 'txt') => {
+  const generateBattleData = async (
+    mode: '1v1' | '2v2' | 'random' = 'random',
+    format: 'txt' | 'html' = 'txt',
+    count: number = 50,
+    record: boolean = false,
+  ) => {
     if (!battleService.value) return
     if (generationProgress.isGenerating) return
     generationProgress.isGenerating = true
@@ -804,16 +809,17 @@ export const useBattleStore = defineStore('battle', () => {
       const generator = new BattleDataGenerator(container)
       _currentGenerator = generator
       await generator.generate({
-        totalBattles: 50,
+        totalBattles: count,
         mode,
         format,
+        record,
         onProgress: (_progress: number, current: number, total: number) => {
           generationProgress.current = current
           generationProgress.total = total
           generationProgress.percent = Math.round((current / total) * 100)
         },
       })
-      battleLogManager.addSystemLog({ message: `战斗数据生成完成（${mode}×50场），文件已下载` })
+      battleLogManager.addSystemLog({ message: `战斗数据生成完成（${mode}×${count}场），文件已下载` })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)

@@ -11,10 +11,10 @@ const ev = (id: string) => DEMO.events.find((e) => e.id === id)!
 
 describe('checkBreakpointHit', () => {
   it('伤害 ≥ 阈值：命中与未命中', () => {
-    const ev05 = ev('ev05') // damage result 900
-    const ev03 = ev('ev03') // damage result 120
-    expect(checkBreakpointHit(ev05, { type: 'damage', value: 150 }, true)).toBe(true)
-    expect(checkBreakpointHit(ev03, { type: 'damage', value: 150 }, true)).toBe(false)
+    const ev05 = ev('ev05') // damage result 113
+    const ev03 = ev('ev03') // damage result 15
+    expect(checkBreakpointHit(ev05, { type: 'damage', value: 50 }, true)).toBe(true)
+    expect(checkBreakpointHit(ev03, { type: 'damage', value: 50 }, true)).toBe(false)
   })
 
   it('级别 / 随机值 / 单位行动', () => {
@@ -36,6 +36,6 @@ describe('checkBreakpointHit', () => {
     const ev05 = ev('ev05')
     expect(checkBreakpointHit(ev05, { type: 'none' }, true)).toBe(false)
     expect(checkBreakpointHit(ev05, { type: 'damage', value: 150 }, false)).toBe(false)
-    expect(checkBreakpointHit(ev05, { type: 'damage', value: 150 }, true)).toBe(true)
+    expect(checkBreakpointHit(ev05, { type: 'damage', value: 50 }, true)).toBe(true)
   })
 })

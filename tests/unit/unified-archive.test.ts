@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { createDemoArchive, DEMO_ARCHIVE } from '@/domain/battle/replay/unified/demo-archive'
+import type { CalcStep } from '@/domain/battle/replay/unified/unified-archive'
 import { validateUnified } from '@/domain/battle/replay/unified/unified-validator'
 import { buildArchiveIndices } from '@/domain/battle/replay/unified/unified-indices'
 import {
@@ -20,7 +21,15 @@ import {
   currentTurnAt,
   lastEventAt,
   formatTime,
+  cloneSimTable,
+  buildSimCheckpoints,
+  nearestCheckpoint,
 } from '@/domain/battle/replay/unified/unified-sim'
+import {
+  accumulateSteps,
+  describeSrc,
+  normalizeOp,
+} from '@/domain/battle/replay/unified/unified-steps'
 
 const pname = (id: string): string => {
   const p = DEMO_ARCHIVE.initialState.participants.find((x) => x.id === id)
@@ -38,8 +47,8 @@ describe('validateUnified（演示存档应通过全部结构校验）', () => {
     ])
     expect(v.stats.events).toBe(20)
     expect(v.stats.chains).toBe(8)
-    // rolls: ev05×2 + ev06×1 + ev07×2 + ev11×1 + ev12×1 = 7
-    expect(v.stats.checks).toBe(7)
+    // rolls: ev05×2 + ev06×1 + ev07×2 + ev11×1 + ev12×1 + ev18×2 = 9
+    expect(v.stats.checks).toBe(9)
     // snapshot: ev03/04/05/07/10/11/13/18 = 8；anchor: ev02/ev17 = 2
     expect(v.stats.anchorsEv).toBe(8)
     expect(v.stats.anchorsTurn).toBe(2)
@@ -79,7 +88,7 @@ describe('buildArchiveIndices', () => {
     expect(rolls[1].idx).toBe(2)
 
     const ev03 = idx.byId.get('ev03')!
-    expect(ev03._delta).toEqual([{ id: 'u2', fields: [{ k: 'HP', before: 1500, after: 1380 }] }])
+    expect(ev03._delta).toEqual([{ id: 'u2', fields: [{ k: 'HP', before: 500, after: 485 }] }])
 
     // 回合开始锚点：u2 energy 60 → 70（相对游标有变化）
     const ev02 = idx.byId.get('ev02')!
@@ -107,7 +116,7 @@ describe('deriveDebugTree', () => {
     const flat = allNodesFlat(entries)
     const actionNodes = flat.filter((n) => n.action)
     expect(actionNodes).toHaveLength(2)
-    // 誓约胜利之剑（3 段）→ seg 结果 [c, m, h]
+    // 普通攻击（3 段 · 连击之心）→ seg 结果 [c, m, h]
     const excalibur = actionNodes.find((n) => n.hits === 3)!
     expect(buildSegResults(excalibur)).toEqual(['c', 'm', 'h'])
   })
@@ -126,21 +135,21 @@ describe('unified-sim（回放投影状态推演）', () => {
   it('freshSim 深拷贝 initialState', () => {
     const log = createDemoArchive()
     const sim = freshSim(log)
-    expect(sim.u1.hp).toBe(3200)
-    expect(sim.u1.buffs[0].name).toBe('魔力放出')
+    expect(sim.u1.hp).toBe(350)
+    expect(sim.u1.buffs[0].name).toBe('复仇怒火')
     // 修改克隆不影响原存档
     sim.u1.buffs[0].stacks = 99
-    expect(log.initialState.participants[0].buffs![0].stacks).toBe(3)
+    expect(log.initialState.participants[0].buffs![0].stacks).toBe(1)
   })
 
-  it('推进到时点 ev18 时 u2 阵亡、u1 保持 3020', () => {
+  it('推进到时点 ev18 时 u2 阵亡、u1 保持 287', () => {
     const log = createDemoArchive()
     const idx = buildArchiveIndices(log)
     const sim = freshSim(log)
     const fired = advanceSimTo(sim, idx.evs, 3600)
     expect(fired).toBe(20)
     expect(sim.u2.hp).toBe(0)
-    expect(sim.u1.hp).toBe(3020)
+    expect(sim.u1.hp).toBe(287)
     // 第 2 回合开始锚点将 u2 能量重置为 60（覆盖 ev10 的 50）
     expect(sim.u2.en).toBe(60)
   })
@@ -149,10 +158,10 @@ describe('unified-sim（回放投影状态推演）', () => {
     const log = createDemoArchive()
     const idx = buildArchiveIndices(log)
     const sim = freshSim(log)
-    advanceSimTo(sim, idx.evs, 1500) // 到 ev08（破甲被抵抗，不施加）
-    expect(sim.u2.buffs.some((b) => b.name === '破甲')).toBe(false)
-    advanceSimTo(sim, idx.evs, 2760) // ev16 update 魔力放出 3→2
-    expect(sim.u1.buffs.find((b) => b.name === '魔力放出')!.stacks).toBe(2)
+    advanceSimTo(sim, idx.evs, 1500) // 到 ev08（破甲打击被抵抗，不施加）
+    expect(sim.u2.buffs.some((b) => b.name === '破甲打击')).toBe(false)
+    advanceSimTo(sim, idx.evs, 2760) // ev16 update 复仇怒火 1→2
+    expect(sim.u1.buffs.find((b) => b.name === '复仇怒火')!.stacks).toBe(2)
   })
 
   it('currentTurnAt / lastEventAt / formatTime', () => {
@@ -170,7 +179,126 @@ describe('unified-sim（回放投影状态推演）', () => {
     const idx = buildArchiveIndices(log)
     const sim = freshSim(log)
     applyEventToSim(sim, idx.byId.get('ev03')!)
-    expect(sim.u2.hp).toBe(1380)
-    expect(sim.u1.hp).toBe(3200)
+    expect(sim.u2.hp).toBe(485)
+    expect(sim.u1.hp).toBe(350)
+  })
+})
+
+describe('unified-sim 检查点（seek 性能优化）', () => {
+  it('从最近检查点续推与全量推演结果一致（多时点）', () => {
+    const log = createDemoArchive()
+    const idx = buildArchiveIndices(log)
+    const cps = buildSimCheckpoints(log, idx.evs, 5)
+    for (const t of [0, 340, 1500, 2760, 3600]) {
+      const full = freshSim(log)
+      const fullFired = advanceSimTo(full, idx.evs, t)
+      const cp = nearestCheckpoint(cps, t)
+      const sim = cloneSimTable(cp.sim)
+      const fired = advanceSimTo(sim, idx.evs, t, cp.idx)
+      expect(fired).toBe(fullFired)
+      expect(sim).toEqual(full)
+    }
+  })
+
+  it('末位检查点续推到终态与全量一致', () => {
+    const log = createDemoArchive()
+    const idx = buildArchiveIndices(log)
+    const cps = buildSimCheckpoints(log, idx.evs, 7)
+    const last = cps[cps.length - 1]
+    const sim = cloneSimTable(last.sim)
+    advanceSimTo(sim, idx.evs, Infinity, last.idx)
+    const full = freshSim(log)
+    advanceSimTo(full, idx.evs, Infinity)
+    expect(sim).toEqual(full)
+  })
+
+  it('cloneSimTable 深拷贝，改动克隆不影响源表', () => {
+    const log = createDemoArchive()
+    const src = freshSim(log)
+    const copy = cloneSimTable(src)
+    copy.u1.hp = 999
+    copy.u1.buffs[0].stacks = 99
+    expect(src.u1.hp).toBe(350)
+    expect(src.u1.buffs[0].stacks).toBe(1)
+  })
+
+  it('增量扩展：尾部追加事件后与全量重建完全一致', () => {
+    const log = createDemoArchive()
+    const idx = buildArchiveIndices(log)
+    // 先用小事件子集建检查点，再追加剩余事件走增量路径
+    const cut = 11
+    const first = idx.evs.slice(0, cut)
+    const cps1 = buildSimCheckpoints(log, first, 4)
+    const cps2 = buildSimCheckpoints(log, idx.evs, 4, cps1)
+    const full = buildSimCheckpoints(log, idx.evs, 4)
+    expect(cps2).toEqual(full)
+    // 末尾追加后可从新检查点续推到达终态
+    const sim = cloneSimTable(cps2[cps2.length - 1].sim)
+    advanceSimTo(sim, idx.evs, Infinity, cps2[cps2.length - 1].idx)
+    const ff = freshSim(log)
+    advanceSimTo(ff, idx.evs, Infinity)
+    expect(sim).toEqual(ff)
+  })
+
+  it('增量前缀不一致（边界事件被替换）时回退全量重建', () => {
+    const log = createDemoArchive()
+    const idx = buildArchiveIndices(log)
+    const cps1 = buildSimCheckpoints(log, idx.evs.slice(0, 8), 4)
+    // 破坏 idx7（末位检查点 lastId 对应的事件）：前缀校验失败 → 回退全量
+    const reordered = [...idx.evs.slice(0, 7), { ...idx.evs[7], id: 'ev_prefix_broken' }, ...idx.evs.slice(8)]
+    const cps2 = buildSimCheckpoints(log, reordered, 4, cps1)
+    const full = buildSimCheckpoints(log, reordered, 4)
+    expect(cps2).toEqual(full)
+  })
+
+  it('nearestCheckpoint 空序列返回 null，不做全量回退以外的静默错误', () => {
+    expect(nearestCheckpoint([], 100)).toBeNull()
+  })
+})
+
+describe('unified-steps（结算步骤展示辅助）', () => {
+  it('逐步累计：20 +65 −15 ×1.5 +8 = 113', () => {
+    const out = accumulateSteps([
+      { n: '技能基础值', op: '', v: 20, src: 'skill_cfg.base' },
+      { n: '攻击力', op: '+', v: 65, src: 'unit.atk' },
+      { n: '防御减免', op: '−', v: 15, src: 'target.def' },
+      { n: '暴击倍率', op: '×', v: 1.5, src: 'crit_rate' },
+      { n: '复仇怒火', op: '+', v: 8, src: 'buff_guardian_revenge_rage' },
+    ])
+    expect(out.map((s) => s.running)).toEqual([20, 85, 70, 105, 113])
+    expect(out.map((s) => s.op)).toEqual(['', '+', '−', '×', '+'])
+  })
+
+  it('运算符归一：半角 - * x 归一为全角', () => {
+    expect(normalizeOp('-')).toBe('−')
+    expect(normalizeOp('*')).toBe('×')
+    expect(normalizeOp('x')).toBe('×')
+    expect(normalizeOp('+')).toBe('+')
+  })
+
+  it('src 释义：精确命中 + 前缀归类 + 未命中', () => {
+    expect(describeSrc('skill_cfg.base')).toBe('技能基础值')
+    expect(describeSrc('unit.atk')).toBe('攻击者攻击力')
+    expect(describeSrc('target.def')).toBe('目标防御力')
+    expect(describeSrc('buff_guardian_revenge_rage')).toBe('复仇怒火')
+    expect(describeSrc('unit.spd')).toBe('攻击者属性 · spd')
+    expect(describeSrc('passive.combo_heart')).toBe('连击之心被动')
+    expect(describeSrc('foo.bar')).toBeNull()
+  })
+
+  it('demo 全部 steps 链：累计终值与 result 偏差 ≤1（链式假设自检）', () => {
+    const log = createDemoArchive()
+    let chains = 0
+    for (const e of log.events) {
+      const steps = (e.payload as Record<string, unknown>)?.steps as CalcStep[] | undefined
+      if (!steps?.length) continue
+      chains++
+      const acc = accumulateSteps(steps)
+      const r = (e.payload as Record<string, unknown>).result
+      expect(typeof r).toBe('number')
+      expect(Math.abs(acc[acc.length - 1].running - (r as number))).toBeLessThanOrEqual(1)
+    }
+    // demo 确有 steps 链（防止该自检因数据缺失而空转）
+    expect(chains).toBeGreaterThan(0)
   })
 })

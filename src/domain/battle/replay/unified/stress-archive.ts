@@ -22,7 +22,8 @@ function createRng(seed: number): () => number {
   }
 }
 
-const SKILLS = ['誓约胜利之剑', '骨刺', '烈焰灼烧', '雷霆斩', '碎甲重击', '寒冰箭', '神圣庇护', '裂空斩']
+// NOTE: 技能名取自现有系统（configs/skills 与 guardian 被动），参与者为真实角色
+const SKILLS = ['普通攻击', '复仇怒火', '破甲打击', '连击之心', '首领光环', '能量过载', '疾风叠步', '灼烧爆破']
 
 /**
  * 生成压测存档。
@@ -31,8 +32,8 @@ const SKILLS = ['誓约胜利之剑', '骨刺', '烈焰灼烧', '雷霆斩', '�
  */
 export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): UnifiedArchive {
   const rng = createRng(seed)
-  const p1 = { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200, side: 'ally' as const }
-  const p2 = { id: 'u2', name: '骷髅战士', maxHp: 1500, side: 'enemy' as const }
+  const p1 = { id: 'u1', name: '火护法', maxHp: 350, side: 'ally' as const }
+  const p2 = { id: 'u2', name: '金护法', maxHp: 500, side: 'enemy' as const }
   const participants = [
     { ...p1, hp: p1.maxHp, maxEnergy: 100, energy: 100, buffs: [] as Array<{ name: string; stacks: number; turns: number }> },
     { ...p2, hp: p2.maxHp, maxEnergy: 100, energy: 60, buffs: [] as Array<{ name: string; stacks: number; turns: number }> },
@@ -70,8 +71,6 @@ export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): Unif
   let seq = 0
   const nextId = (): string => `evt_${(++seq).toString().padStart(4, '0')}`
 
-  // 事件预算：扣除根事件后按行动切分
-  const budget = Math.max(1, eventCount - 2)
   let actions = 0
   while (events.length < eventCount - 1) {
     const round = actions + 1
@@ -124,9 +123,9 @@ export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): Unif
 
       // 结算事件（伤害或治疗）
       const evId = nextId()
-      const base = 80 + Math.floor(rng() * 120)
-      const atk = 120 + Math.floor(rng() * 180)
-      const def = 60 + Math.floor(rng() * 80)
+      const base = 15 + Math.floor(rng() * 25)
+      const atk = 40 + Math.floor(rng() * 30)
+      const def = 10 + Math.floor(rng() * 20)
       const crit = rng() < 0.2
       const dodge = !isHeal && rng() < 0.12
       const result = dodge ? 0 : Math.max(0, Math.round((base + atk - def) * (crit ? 1.5 : 1)))

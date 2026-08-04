@@ -83,7 +83,7 @@ describe('haotianStore（演示存档装配）', () => {
     const s = useHaotianStore()
     await s.loadDemo()
     const total = s.evs.length
-    s.streamText = '灼烧'
+    s.streamText = '暴击'
     expect(s.filteredEvents.length).toBeGreaterThan(0)
     expect(s.filteredEvents.length).toBeLessThan(total)
     s.streamText = '不存在的关键词zz'

@@ -31,10 +31,11 @@ function getDebugGate(): DebugGate | undefined {
   catch { return undefined }
 }
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import { LogType, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { LogType, LogLevel, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
 import type { NarrativeBlock } from '@/shared/types/battle-log'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 export interface BattleGenerationOptions {
   /** 总场次数（默认 50） */
@@ -45,6 +46,8 @@ export interface BattleGenerationOptions {
   onProgress?: (progress: number, current: number, total: number) => void
   /** 导出格式，默认 'txt' */
   format?: 'txt' | 'html'
+  /** 是否保存每场战斗的回放/调试记录到本地（IndexedDB，昊天镜「战斗记录」源可加载） */
+  record?: boolean
 }
 
 export interface SingleBattleLog {
@@ -162,6 +165,21 @@ export class BattleDataGenerator {
           totalRounds: rounds,
           narrativeBlocks,
         })
+
+        // ★ 保存回放/调试记录（必须在 resetBattle 清除内存录制之前）
+        //   RecordedBattle 已含 events/traceEvents/initialState/randomSeed/winner，
+        //   昊天镜「战斗记录」源（UnifiedArchiveService.fromRecordedBattle）可直接加载回放与调试。
+        //   NOTE: 保持 headless=true，lifecycleManager.endBattle 的自动保存被跳过，这里手动保存不双写。
+        if (options.record) {
+          const label = battleMode === '1v1' ? '1v1' : '2v2'
+          try {
+            await this.battleSystem.saveBattleRecording(battleId, `数据生成 第${i + 1}场（${label}）`)
+          } catch (e) {
+            LoggerProvider.logger.addDebugLog(`保存生成战斗记录失败: ${e}`, {
+              level: LogLevel.ERROR,
+            })
+          }
+        }
 
         this.battleSystem.resetBattle()
         this._prevParticipantIds = this._currentParticipantIds

@@ -13,15 +13,19 @@
       </div>
     </div>
 
-    <div class="ht-sec" v-if="pl.steps">
-      <div class="ht-sec-t">计算过程 · 结算步骤</div>
-      <div v-for="(m, i) in pl.steps as CalcStep[]" :key="i" class="ht-frow">
-        <span class="ht-fop" :class="opClass(m.op)">{{ m.op || '＝' }}</span>
-        <span class="ht-flab">{{ m.n }}<span class="src">{{ m.src }}</span></span>
-        <span class="ht-fval" :class="valClass(m.op, m.v)">{{ fmtVal(m.op, m.v) }}</span>
+    <div class="ht-sec" v-if="steps.length">
+      <div class="ht-sec-t">
+        计算过程 · 结算步骤
+        <span class="ht-steps-hint">悬停来源查看释义 · 右侧为累计值</span>
       </div>
-      <div v-if="pl.result != null" class="ht-fres">
-        <span class="lab">最终 · 结算结果</span>
+      <div v-for="(m, i) in steps" :key="i" class="ht-frow">
+        <span class="ht-fop" :class="opClass(m.op)">{{ m.op || '＝' }}</span>
+        <span class="ht-flab">{{ m.step.n }}<span class="src" :title="srcTitle(m.step.src)">{{ m.step.src }}</span></span>
+        <span class="ht-fval" :class="valClass(m.op, m.step.v)">{{ fmtVal(m.op, m.step.v) }}</span>
+        <span class="ht-facc">{{ fmtRunning(m.running) }}</span>
+      </div>
+      <div v-if="pl.result != null" class="ht-fres" :class="{ mismatch: resultMismatch }">
+        <span class="lab">最终 · 结算结果<template v-if="resultMismatch">（与累计不一致，差额 {{ resultDiff }}）</template></span>
         <span class="num">{{ pl.result }}</span>
       </div>
     </div>
@@ -131,6 +135,12 @@ import { computed, reactive } from 'vue'
 import type { CalcStep, ChainNode, RngRoll, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
+import {
+  accumulateSteps,
+  describeSrc,
+  fmtRunning,
+  type StepAccum,
+} from '@/domain/battle/replay/unified/unified-steps'
 import { useHaotianStore } from '../stores/haotianStore'
 
 interface ScoreCandidate {
@@ -151,6 +161,30 @@ const store = useHaotianStore()
 const ev = computed<UnifiedEvent | null>(() => store.selectedEvent)
 const meta = (e: UnifiedEvent) => PHASE_META[e.phase]
 const pl = computed<Record<string, unknown>>(() => (ev.value?.payload ?? {}) as Record<string, unknown>)
+
+// ───────────── 结算步骤：逐步累计 + 来源释义 ─────────────
+const steps = computed<StepAccum[]>(() => {
+  const list = pl.value.steps as CalcStep[] | undefined
+  return list ? accumulateSteps(list) : []
+})
+
+const srcTitle = (src: string): string => {
+  const hint = describeSrc(src)
+  return hint ? `${hint}（${src}）` : src
+}
+
+const resultMismatch = computed(() => {
+  const r = pl.value.result
+  if (typeof r !== 'number' || !steps.value.length) return false
+  return Math.abs(steps.value[steps.value.length - 1].running - r) > 1
+})
+
+const resultDiff = computed(() => {
+  const r = pl.value.result
+  if (typeof r !== 'number' || !steps.value.length) return '—'
+  const diff = steps.value[steps.value.length - 1].running - r
+  return `${diff > 0 ? '+' : ''}${Math.round(diff * 100) / 100}`
+})
 
 const ROLL_NAME: Record<string, string> = {
   hit: '命中判定',

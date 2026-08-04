@@ -17,6 +17,80 @@ export interface SimUnit {
 /** 任意时点的参与者状态表（id → SimUnit） */
 export type SimTable = Record<string, SimUnit>
 
+/** 深拷贝状态表（buffs 数组与条目均复制，避免快照间共享引用被后续推演污染） */
+export function cloneSimTable(sim: SimTable): SimTable {
+  const out: SimTable = {}
+  for (const id in sim) {
+    const s = sim[id]
+    out[id] = {
+      hp: s.hp,
+      en: s.en,
+      buffs: s.buffs.map((b) => ({ name: b.name, stacks: b.stacks, turns: b.turns })),
+    }
+  }
+  return out
+}
+
+/** 推演检查点：idx 为该时点已应用的事件下标（从 idx 续推），t 为事件时间戳 */
+export interface SimCheckpoint {
+  idx: number
+  t: number
+  /** 已应用事件（下标 idx-1）的 id，供增量扩展校验前缀一致（实时流尾部追加场景） */
+  lastId: string | null
+  sim: SimTable
+}
+
+/**
+ * 预构建/增量扩展检查点序列：起点（idx 0）＋ 每 interval 个事件一份状态快照。
+ * 快进/回跳时从最近的检查点续推，避免 seek 每次都从 initialState 全量重跑。
+ *
+ * 传入 prev 时走增量路径（实时流尾部追加场景）：从末位检查点克隆状态后只重放
+ * 尾部新增事件，避免每帧全量重建。增量安全前提——新 evs 前 idx 个事件与 prev 构建
+ * 时一致（以 lastId 校验）；前缀不一致（事件被重排/回拨）时回退全量重建。
+ */
+export function buildSimCheckpoints(
+  log: UnifiedArchive,
+  evs: UnifiedEvent[],
+  interval = 200,
+  prev?: SimCheckpoint[],
+): SimCheckpoint[] {
+  const base = prev && prev.length ? prev[prev.length - 1] : null
+  const prefixOk =
+    !!base && (base.idx === 0 || (evs.length >= base.idx && evs[base.idx - 1]?.id === base.lastId))
+  if (prefixOk) {
+    const out = prev!.slice()
+    const sim = cloneSimTable(base!.sim)
+    for (let i = base!.idx; i < evs.length; i++) {
+      applyEventToSim(sim, evs[i])
+      if ((i + 1) % interval === 0) {
+        out.push({ idx: i + 1, t: evs[i].timestamp, lastId: evs[i].id, sim: cloneSimTable(sim) })
+      }
+    }
+    return out
+  }
+
+  const cps: SimCheckpoint[] = [{ idx: 0, t: 0, lastId: null, sim: freshSim(log) }]
+  const sim = freshSim(log)
+  for (let i = 0; i < evs.length; i++) {
+    applyEventToSim(sim, evs[i])
+    if ((i + 1) % interval === 0) {
+      cps.push({ idx: i + 1, t: evs[i].timestamp, lastId: evs[i].id, sim: cloneSimTable(sim) })
+    }
+  }
+  return cps
+}
+
+/** 定位不晚于 t 的最近检查点（cps 按 t 升序）；空序列返回 null */
+export function nearestCheckpoint(cps: SimCheckpoint[], t: number): SimCheckpoint | null {
+  if (!cps.length) return null
+  let best = cps[0]
+  for (const cp of cps) {
+    if (cp.t > t) break
+    best = cp
+  }
+  return best
+}
+
 /** 从 initialState 构造全新状态表（深拷贝 buffs） */
 export function freshSim(log: UnifiedArchive): SimTable {
   const sim: SimTable = {}

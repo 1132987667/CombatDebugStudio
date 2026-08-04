@@ -924,6 +924,13 @@
 }
 
 /* 公式链 */
+.ht-steps-hint {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+  margin-left: auto;
+}
+
 .ht-frow {
   display: flex;
   align-items: center;
@@ -975,6 +982,21 @@
 .ht-fval.mul { color: var(--ht-amber); }
 .ht-fval.neg { color: var(--ht-red); }
 .ht-fval.pos { color: var(--ht-green); }
+
+/* 逐步累计列 */
+.ht-facc {
+  min-width: 4em;
+  text-align: right;
+  font-weight: var(--font-weight-bold);
+  color: var(--ht-amber);
+  border-left: 1px dashed var(--ht-bd);
+  padding-left: 10px;
+}
+
+.ht-fres.mismatch .lab,
+.ht-fres.mismatch .num {
+  color: var(--ht-red);
+}
 
 .ht-fres {
   display: flex;
@@ -1623,4 +1645,81 @@
   font-family: var(--ht-mono);
   font-size: var(--font-size-md);
   color: var(--ht-amber);
+}
+
+/* ───────────── 战斗摘要 ───────────── */
+.ht-modal-box.ht-summary {
+  width: min(840px, 94vw);
+}
+
+.ht-sum-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--ht-bd);
+  flex-wrap: wrap;
+}
+
+.ht-sum-meta {
+  font-family: var(--ht-mono);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+}
+
+.ht-sum-spacer {
+  flex: 1;
+}
+
+.ht-sum-body {
+  max-height: 60vh;
+  overflow: auto;
+  padding: 10px 14px;
+}
+
+.ht-sum-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-md);
+}
+
+.ht-sum-table th,
+.ht-sum-table td {
+  padding: 5px 9px;
+  border-bottom: 1px dashed var(--ht-bd);
+  text-align: right;
+  font-family: var(--ht-mono);
+}
+
+.ht-sum-table th {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.ht-sum-table th.l,
+.ht-sum-table td.l {
+  text-align: left;
+}
+
+.ht-sum-table td.nm {
+  white-space: nowrap;
+  font-family: var(--font-family-sans);
+}
+
+.ht-sum-table td.nm .id {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  margin-left: 6px;
+}
+
+.ht-sum-table td.num.heal {
+  color: var(--ht-green);
+}
+
+.ht-sum-note {
+  margin-top: 10px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
 }

@@ -57,12 +57,20 @@
                       @click="genFormat = opt.value">{{ opt.label }}</button>
                   </div>
                 </div>
+                <div class="log-gen-row">
+                  <span class="log-gen-label">场次:</span>
+                  <NumericStepper v-model="genCount" :min="1" :max="200" :steps="[1, 10, 50]" />
+                </div>
+                <div class="log-gen-row">
+                  <span class="log-gen-label">记录:</span>
+                  <ToggleSwitch v-model="genRecord" label="保存回放/调试记录（昊天镜可加载）" />
+                </div>
                 <button class="log-gen-btn"
                   :disabled="battleStore.generationProgress.isGenerating"
-                  @click="battleStore.generateBattleData(genMode, genFormat)">
+                  @click="battleStore.generateBattleData(genMode, genFormat, genCount, genRecord)">
                   {{ battleStore.generationProgress.isGenerating
                     ? `生成中 ${battleStore.generationProgress.percent}%`
-                    : '生成数据（50场）' }}
+                    : `生成数据（${genCount}场）` }}
                 </button>
               </div>
             </div>
@@ -77,6 +85,8 @@
 import { computed, ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import NumericStepper from '@/presentation/components/NumericStepper.vue'
+import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
 
 const debugStore = useDebugStore()
 const battleStore = useBattleStore()
@@ -84,6 +94,8 @@ const battleStore = useBattleStore()
 // ==================== 战斗数据生成 ====================
 const genMode = ref<'1v1' | '2v2' | 'random'>('random')
 const genFormat = ref<'txt' | 'html'>('txt')
+const genCount = ref(50)
+const genRecord = ref(true)
 const modeOptions = [
   { value: '1v1' as const, label: '1v1' },
   { value: '2v2' as const, label: '2v2' },

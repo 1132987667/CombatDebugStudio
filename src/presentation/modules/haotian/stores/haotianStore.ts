@@ -21,15 +21,19 @@ import {
 import { validateUnified, type ValidationResult } from '@/domain/battle/replay/unified/unified-validator'
 import {
   advanceSimTo,
-  freshSim,
   currentTurnAt,
   formatTime,
   lastEventAt,
+  cloneSimTable,
+  buildSimCheckpoints,
+  nearestCheckpoint,
   type SimTable,
+  type SimCheckpoint,
 } from '@/domain/battle/replay/unified/unified-sim'
 import { createStressArchive } from '@/domain/battle/replay/unified/stress-archive'
 import { diffArchives, createRateVariant, diffSummary, type DiffRow } from '@/domain/battle/replay/unified/unified-diff'
 import { checkBreakpointHit, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
+import { summarizeBattle, type BattleSummary, type UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { runValidationPipeline } from '@/shared/utils/unified-worker'
 import { UnifiedArchiveService, type RecordingMeta } from '@/application/service/UnifiedArchiveService'
 import { LiveBattleStream, type LiveParticipant } from '@/application/service/LiveBattleStream'
@@ -115,6 +119,8 @@ export const useHaotianStore = defineStore('haotian', () => {
   const toasts = ref<ToastItem[]>([])
   const playback = ref<PlaybackState>({ t: 0, playing: false, speed: 1, follow: true, firedIdx: 0, last: 0 })
   const cur = ref<SimTable>({})
+  /** 推演检查点（seek 从最近检查点续推，避免全量重跑） */
+  const simCheckpoints = ref<SimCheckpoint[]>([])
   const debugNodeId = ref<string | null>(null)
   const fxEventId = ref<string | null>(null)
 
@@ -146,6 +152,7 @@ export const useHaotianStore = defineStore('haotian', () => {
   const currentTurn = computed(() => currentTurnAt(evs.value, playback.value.t))
   const lastEvent = computed(() => lastEventAt(evs.value, playback.value.t))
   const bookmarkCount = computed(() => bookmarks.value.size)
+  const summary = computed<BattleSummary | null>(() => (archive.value ? summarizeBattle(archive.value) : null))
   const filteredEvents = computed(() => {
     let list = evs.value
     if (!showDbg.value) list = list.filter((e) => !PHASE_META[e.phase].debugOnly)
@@ -239,6 +246,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     validateMs.value = pipeline.validateMs
     indices.value = idx
     debugEntries.value = deriveDebugTree(idx.evs, idx.byId, pnameOf(next))
+    simCheckpoints.value = buildSimCheckpoints(next, idx.evs)
     selectedId.value = null
     debugNodeId.value = null
     playback.value = { t: 0, playing: false, speed: playback.value.speed, follow: playback.value.follow, firedIdx: 0, last: 0 }
@@ -323,6 +331,8 @@ export const useHaotianStore = defineStore('haotian', () => {
       const idx = buildArchiveIndices(arch)
       indices.value = idx
       debugEntries.value = deriveDebugTree(idx.evs, idx.byId, pnameOf(arch))
+      // 增量扩展检查点（实时流尾部追加），避免每帧全量重建
+      simCheckpoints.value = buildSimCheckpoints(arch, idx.evs, 200, simCheckpoints.value)
       rebuildState(duration.value) // 跟随尾部：舞台/事件流显示最新状态
     })
   }
@@ -404,8 +414,11 @@ export const useHaotianStore = defineStore('haotian', () => {
   function rebuildState(t: number): void {
     if (!archive.value || !indices.value) return
     playback.value.t = Math.max(0, Math.min(duration.value, t))
-    cur.value = freshSim(archive.value)
-    playback.value.firedIdx = advanceSimTo(cur.value, evs.value, playback.value.t)
+    // 从最近的检查点续推：seek 无需每次从 initialState 全量重跑
+    const cp = nearestCheckpoint(simCheckpoints.value, playback.value.t)
+    if (!cp) return
+    cur.value = cloneSimTable(cp.sim)
+    playback.value.firedIdx = advanceSimTo(cur.value, evs.value, playback.value.t, cp.idx)
   }
 
   function play(): void {
@@ -424,7 +437,8 @@ export const useHaotianStore = defineStore('haotian', () => {
   }
 
   function togglePlay(): void {
-    playback.value.playing ? pause() : play()
+    if (playback.value.playing) pause()
+    else play()
   }
 
   function checkBreakpoint(ev: UnifiedEvent): boolean {
@@ -606,6 +620,81 @@ export const useHaotianStore = defineStore('haotian', () => {
     toast('已导出调试会话 — 书签/断点/过滤一键复现')
   }
 
+  /** 摘要单位行（按 initialState 顺序，附意外单位） */
+  function summaryRows(): Array<{ id: string; s: UnitSummary }> {
+    const sum = summary.value
+    if (!sum) return []
+    const known = new Set(archive.value?.initialState.participants.map((p) => p.id) ?? [])
+    const ids = (archive.value?.initialState.participants.map((p) => p.id) ?? []).concat(
+      Object.keys(sum.units).filter((id) => !known.has(id)),
+    )
+    return ids.map((id) => ({ id, s: sum.units[id] })).filter((r) => r.s)
+  }
+
+  /** Markdown 表格单元转义：竖线与换行会破坏表格结构（存档 id 可来自外部导入） */
+  const escMdCell = (s: string): string => s.replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' ')
+
+  /** CSV 字段转义（RFC 4180）：含分隔符/引号/换行时双引号包裹，内部引号翻倍 */
+  const escCsvCell = (s: string): string => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s)
+
+  function summaryMarkdown(): string {
+    const sum = summary.value
+    if (!sum) return ''
+    const win = sum.winner ? archive.value?.initialState.participants.find((p) => p.id === sum.winner)?.name ?? sum.winner : '—'
+    const rows = summaryRows()
+    const head = ['参战单位', '攻击', '输出', '承伤', '治疗', '暴击', '闪避', '抵抗', 'Buff 施加', '击杀']
+    const line = (r: { id: string; s: UnitSummary }): string =>
+      `| ${escMdCell(r.id)} | ${r.s.attacks} | ${r.s.dealt} | ${r.s.taken} | ${r.s.healed} | ${r.s.crits} | ${r.s.dodges} | ${r.s.resists} | ${r.s.buffsApplied} | ${r.s.kills} |`
+    return [
+      `## 战斗摘要 · ${escMdCell(sum.battleId)}`,
+      '',
+      `- 回合数：${sum.rounds}`,
+      `- 时长：${formatTime(sum.durationMs)}`,
+      `- 胜方：${escMdCell(win)}`,
+      '',
+      `| ${head.join(' | ')} |`,
+      `| ${head.map(() => '---').join(' | ')} |`,
+      ...rows.map(line),
+      '',
+    ].join('\n')
+  }
+
+  function summaryCsv(): string {
+    const sum = summary.value
+    if (!sum) return ''
+    const rows = summaryRows()
+    const head = ['单位', '攻击', '输出', '承伤', '治疗', '暴击', '闪避', '抵抗', 'Buff 施加', '击杀']
+    const lines = [
+      head.join(','),
+      ...rows.map((r) =>
+        [escCsvCell(r.id), r.s.attacks, r.s.dealt, r.s.taken, r.s.healed, r.s.crits, r.s.dodges, r.s.resists, r.s.buffsApplied, r.s.kills].join(','),
+      ),
+    ]
+    // BOM 前缀：Windows Excel 按 UTF-8 打开中文不乱码
+    return '\uFEFF' + lines.join('\r\n')
+  }
+
+  function download(filename: string, content: string, mime: string): void {
+    const blob = new Blob([content], { type: mime })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = filename
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 500)
+  }
+
+  function exportSummaryMarkdown(): void {
+    if (!summary.value) return
+    download(`battle_summary_${summary.value.battleId}.md`, summaryMarkdown(), 'text/markdown;charset=utf-8')
+    toast('已导出战斗摘要 Markdown')
+  }
+
+  function exportSummaryCsv(): void {
+    if (!summary.value) return
+    download(`battle_summary_${summary.value.battleId}.csv`, summaryCsv(), 'text/csv;charset=utf-8')
+    toast('已导出战斗摘要 CSV')
+  }
+
   /** 导入调试会话（文件 JSON），应用后提示 */
   async function importSession(file: File): Promise<void> {
     try {
@@ -752,6 +841,9 @@ export const useHaotianStore = defineStore('haotian', () => {
     pname,
     timeRead,
     phaseChip,
+    summary,
+    exportSummaryMarkdown,
+    exportSummaryCsv,
     bookmarks,
     bookmarkCount,
     isBookmarked,

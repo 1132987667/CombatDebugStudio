@@ -20,7 +20,6 @@ import type { BattleEntity } from '@/domain/battle/type/types'
 import { ParticipantSide, ParticipantSideName, BattleStatus } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { container } from '@/infrastructure/di/Container'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
@@ -33,6 +32,7 @@ function getDebugGate(): DebugGate | undefined {
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { LogType, LogLevel, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
+import { projectSnapshotLogs } from '@/domain/battle/logs/BattleLogProjector'
 import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
 import type { NarrativeBlock } from '@/shared/types/battle-log'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
@@ -268,39 +268,11 @@ export class BattleDataGenerator {
     // 检查是否已有态势快照
     const hasSnapshot = allBattles.some((l) => l.meta?.role === 'snapshot')
     if (!hasSnapshot) {
-      const allySnapshot: string[] = []
-      const enemySnapshot: string[] = []
-      battleData.participants.forEach((p) => {
-        if (!p.isAlive()) return
-        const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
-        const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
-        const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
-        if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
-        else enemySnapshot.push(entry)
-      })
-
-      if (allySnapshot.length > 0) {
+      // 投影器统一生成（与 BattleSystem 回合末/终局快照同口径）
+      for (const log of projectSnapshotLogs(battleData.participants, lastTurn)) {
         battleLogManager.addBattleLog({
           turn: lastTurn,
-          message: `我方  ${allySnapshot.join(' · ')}`,
-          segments: [
-            { text: '我方  ', classStr: 'log-friendly' },
-            { text: allySnapshot.join(' · ') },
-          ],
-          category: BATTLE_LOG_CATEGORIES.STATUS,
-          meta: { role: 'snapshot' },
-        })
-      }
-      if (enemySnapshot.length > 0) {
-        battleLogManager.addBattleLog({
-          turn: lastTurn,
-          message: `敌方  ${enemySnapshot.join(' · ')}`,
-          segments: [
-            { text: '敌方  ', classStr: 'log-hostile' },
-            { text: enemySnapshot.join(' · ') },
-          ],
-          category: BATTLE_LOG_CATEGORIES.STATUS,
-          meta: { role: 'snapshot' },
+          ...log,
         })
       }
     }

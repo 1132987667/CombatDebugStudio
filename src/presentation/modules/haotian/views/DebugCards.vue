@@ -28,8 +28,7 @@
             <div class="ht-ev-meta">
               <template v-if="item.sourceId">{{ store.pname(item.sourceId) }}</template>
               <template v-if="item.targetId">{{ item.sourceId ? ' → ' : '' }}{{ store.pname(item.targetId) }}</template>
-              <template v-if="item.sourceId || item.targetId"> · </template>
-              时间={{ formatTime(item.timestamp) }}
+              <template v-if="turnOf(item)"> · 第 {{ turnOf(item) }} 回合</template>
             </div>
             <div v-if="segIndicators.length" class="ht-ev-multi">
               <i v-for="(m, j) in segIndicators" :key="j" :class="[m, curSeg === j + 1 ? 'cur' : '']"></i>
@@ -50,7 +49,6 @@ import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archiv
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { escapeHtml } from '@/shared/utils/log-segment-factory'
 import Button from '@/presentation/components/Button.vue'
-import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
 
 const props = defineProps<{ active?: boolean }>()
@@ -59,6 +57,13 @@ const store = useHaotianStore()
 const scrollRef = ref<HTMLElement | null>(null)
 
 const meta = (ev: UnifiedEvent) => PHASE_META[ev.phase]
+
+/** 事件所属回合：优先事件自带 turn，其次快照 turn；都没有则省略不显示 */
+function turnOf(ev: UnifiedEvent): number | undefined {
+  if (typeof ev.turn === 'number') return ev.turn
+  const snapTurn = ev.snapshot?.turn
+  return typeof snapTurn === 'number' ? snapTurn : undefined
+}
 
 // ───────────── 虚拟列表（V4 VL 简化版）─────────────
 

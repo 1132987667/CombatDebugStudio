@@ -31,8 +31,6 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   currentHealth:               { displayTier: 'hidden',      group: 'defense' },
   maxHealth:                   { displayTier: 'core',        group: 'defense' },
   attack:                      { displayTier: 'core',        group: 'offense' },
-  minAttack:                   { displayTier: 'core',        group: 'offense' },
-  maxAttack:                   { displayTier: 'core',        group: 'offense' },
   defense:                     { displayTier: 'core',        group: 'defense' },
   speed:                       { displayTier: 'core',        group: 'utility' },
   critRate:                    { displayTier: 'core',        group: 'offense' },

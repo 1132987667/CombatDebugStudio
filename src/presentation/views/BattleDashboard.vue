@@ -5,13 +5,6 @@
         <span>角色监控</span>
         <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
       </div>
-      <!-- 显示层级过滤器（调试面板） -->
-      <div class="tier-filters">
-        <label class="tier-filter" v-for="tier in (['core', 'advanced', 'situational', 'hidden'] as const)" :key="tier">
-          <input type="checkbox" v-model="tierFilters[tier]" />
-          <span>{{ { core: '核心', advanced: '进阶', situational: '情境', hidden: '隐藏' }[tier] }}</span>
-        </label>
-      </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid" @mouseleave="hideAttrTooltip">
@@ -25,79 +18,27 @@
             <span class="monitor-label">能量:</span>
             <span class="monitor-value">{{ displayEnergy }}</span>
           </div>
-          <div class="monitor-item" @mouseenter="showAttackTooltip($event)" @mousemove="updateTooltipPosition"
+          <div class="monitor-item" v-for="a in coreAttrs" :key="a.code"
+            @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)" @mousemove="updateTooltipPosition"
             @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">攻击:</span>
-            <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.defense)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">防御:</span>
-            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.defense) }}</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.speed)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">速度:</span>
-            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.speed) }}</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.critRate)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">暴击率:</span>
-            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.critRate) }}%</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.critDamage)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">暴击伤害:</span>
-            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.critDamage) }}%</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.damageReduction)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">免伤率:</span>
-            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.damageReduction) }}%</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.hit)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">命中率:</span>
-            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.hit) }}%</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.dodge)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">闪避率:</span>
-            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.dodge) }}%</span>
+            <span class="monitor-label">{{ a.meta.displayName }}:</span>
+            <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : '' }}</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">属性加成</div>
         <div class="monitor-grid" @mouseleave="hideAttrTooltip">
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.healthBonus)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">气血加成:</span>
-            <span class="monitor-value bonus">{{
-              formatBonusValue(attrVal(ATTRIBUTE_CODE.healthBonus)) }}</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.attackBonus)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">攻击加成:</span>
-            <span class="monitor-value bonus">{{
-              formatBonusValue(attrVal(ATTRIBUTE_CODE.attackBonus)) }}</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.defenseBonus)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">防御加成:</span>
-            <span class="monitor-value bonus">{{
-              formatBonusValue(attrVal(ATTRIBUTE_CODE.defenseBonus)) }}</span>
-          </div>
-          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.speedBonus)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">速度加成:</span>
-            <span class="monitor-value bonus">{{
-              formatBonusValue(attrVal(ATTRIBUTE_CODE.speedBonus)) }}</span>
+          <div class="monitor-item" v-for="a in bonusAttrs" :key="a.code"
+            @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)" @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">{{ a.meta.displayName }}:</span>
+            <span class="monitor-value bonus">{{ formatBonusValue(attrVal(a.code as ATTRIBUTE_CODE)) }}</span>
           </div>
         </div>
       </div>
       <!-- 进阶属性（折叠） -->
-      <div class="monitor-group" v-if="tierFilters.advanced">
+      <div class="monitor-group">
         <div class="monitor-subtitle" role="button" tabindex="0" style="cursor:pointer"
           @click="advancedExpanded = !advancedExpanded"
           @keydown.enter.prevent="advancedExpanded = !advancedExpanded"
@@ -233,22 +174,21 @@
     <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title"
       :modifiers="attrTooltipData.modifiers" :final-value="attrTooltipData.finalValue"
       :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect"
-      :display-text="attrTooltipData.displayText" :range-layers="attrTooltipData.rangeLayers"
-      :attribute-code="attrTooltipData.attributeCode" />
+      :display-text="attrTooltipData.displayText" :attribute-code="attrTooltipData.attributeCode" />
 
   </div>
 </template>
 
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
-import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
+import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier } from "@/domain/attribute/types";
 import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay';
 import { BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
 import { container } from '@/infrastructure/di/Container';
-import AttributeTooltip, { type RangeLayerData, type RangeModifierRow } from "@/presentation/components/AttributeTooltip.vue";
+import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
 import BuffTextGroup from "@/presentation/components/BuffTextGroup.vue";
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
@@ -264,7 +204,7 @@ const battleStore = useBattleStore();
 
 // 获取 BattleService
 const battleService = container.resolve<BattleService>('BattleService');
-defineProps<{}>();
+defineProps();
 
 // 响应式获取选中角色数据
 const currentCharacter: ComputedRef<BattleEntity | null> = computed(() => {
@@ -314,16 +254,6 @@ const attrVal = (code: ATTRIBUTE_CODE): number => {
   return char?.getAttrVal(code)?.value ?? getAttrDv(code)
 }
 
-const attackRange = computed(() => {
-  return readEntity(
-    char => ({
-      min: char.getAttrVal(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
-      max: char.getAttrVal(ATTRIBUTE_CODE.maxAttack)?.value ?? 0,
-    }),
-    { min: 0, max: 0 }
-  )
-})
-
 // 进阶属性配置
 const groupLabels: Record<string, string> = {
   defense: '防御',
@@ -333,12 +263,49 @@ const groupLabels: Record<string, string> = {
   utility: '辅助',
 }
 const advancedExpanded = ref(false)
-const tierFilters = ref({
-  core: true,
-  advanced: true,
-  situational: false,
-  hidden: false,
+// 基础属性区（core tier，排除气血/能量/护盾等 hidden 语义项与加成属性）— 元数据驱动
+const coreAttrs = computed(() => {
+  const excluded = new Set([
+    ATTRIBUTE_CODE.currentHealth,
+    ATTRIBUTE_CODE.currentEnergy,
+    ATTRIBUTE_CODE.maxHealth,
+    ATTRIBUTE_CODE.maxEnergy,
+    ATTRIBUTE_CODE.shield,
+    ATTRIBUTE_CODE.healthBonus,
+    ATTRIBUTE_CODE.attackBonus,
+    ATTRIBUTE_CODE.defenseBonus,
+    ATTRIBUTE_CODE.speedBonus,
+  ])
+  return Object.entries(AttributeMetaMap)
+    .filter(([code]) =>
+      getAttributeDisplayConfig(code).displayTier === 'core' &&
+      !excluded.has(code as ATTRIBUTE_CODE),
+    )
+    .map(([code, meta]) => ({
+      code,
+      meta: { displayName: meta.displayName, isPercentage: !!meta.isPercentage },
+    }))
 })
+
+// 属性加成区（formatBonusValue 专用格式化）— 元数据驱动
+const bonusAttrs = computed(() => {
+  const codes = [
+    ATTRIBUTE_CODE.healthBonus,
+    ATTRIBUTE_CODE.attackBonus,
+    ATTRIBUTE_CODE.defenseBonus,
+    ATTRIBUTE_CODE.speedBonus,
+  ]
+  return codes
+    .filter(code => AttributeMetaMap[code])
+    .map(code => ({
+      code,
+      meta: {
+        displayName: AttributeMetaMap[code].displayName,
+        isPercentage: !!AttributeMetaMap[code].isPercentage,
+      },
+    }))
+})
+
 const advancedAttributes = computed(() => {
   const groups: Record<string, Array<{ code: string; meta: { displayName: string; isPercentage: boolean } }>> = {}
   for (const [code, meta] of Object.entries(AttributeMetaMap)) {
@@ -547,7 +514,6 @@ const attrTooltipData = ref<{
   valueType: AttributeValueType
   triggerRect: DOMRect | null
   displayText?: string
-  rangeLayers?: RangeLayerData[]
   attributeCode?: string
 }>({
   title: '',
@@ -557,7 +523,7 @@ const attrTooltipData = ref<{
   triggerRect: null
 })
 
-const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, rangeLayers?: RangeLayerData[], attributeCode?: string) => {
+const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, attributeCode?: string) => {
   if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
   attrTooltipData.value = {
     title,
@@ -566,7 +532,6 @@ const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[]
     valueType,
     triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect(),
     displayText,
-    rangeLayers,
     attributeCode,
   }
   attrTooltipVisible.value = true
@@ -578,95 +543,7 @@ const showAttrTooltipSimple = (event: MouseEvent, code: ATTRIBUTE_CODE) => {
   const valueType = meta?.isPercentage ? AttributeValueType.PERCENT : AttributeValueType.VALUE
   const defaultValue = getAttrDv(code)
   const attr = currentCharacter.value?.getAttrVal(code)
-  showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType, undefined, undefined, code)
-}
-
-/**
- * 将修饰符列表按类型分组，同 source 的合并为 min/max 区间行
- */
-const buildRangeLayer = (
-  title: string,
-  minMods: Modifier[],
-  maxMods: Modifier[],
-  modType: string,
-): RangeLayerData => {
-  // 按 sourceKey 聚合 min 和 max 的修饰符值
-  const sourceMap = new Map<string, { label: string; minVal: number; maxVal: number }>()
-
-  for (const m of minMods) {
-    if (m.type !== modType) continue
-    const key = m.sourceKey || m.description || 'unknown'
-    const entry = sourceMap.get(key) || { label: m.description || key, minVal: 0, maxVal: 0 }
-    entry.minVal += m.value
-    sourceMap.set(key, entry)
-  }
-  for (const m of maxMods) {
-    if (m.type !== modType) continue
-    const key = m.sourceKey || m.description || 'unknown'
-    const entry = sourceMap.get(key) || { label: m.description || key, minVal: 0, maxVal: 0 }
-    entry.maxVal += m.value
-    sourceMap.set(key, entry)
-  }
-
-  const rows: RangeModifierRow[] = []
-  let minTotal = 0
-  let maxTotal = 0
-
-  for (const [, entry] of sourceMap) {
-    // 标注仅作用单边的修饰符
-    let label = entry.label
-    if (entry.minVal !== 0 && entry.maxVal === 0) {
-      label += '(最小攻击力)'
-      rows.push({ label, minValue: entry.minVal, maxValue: null, isPercent: modType === 'PERCENTAGE' })
-      minTotal += entry.minVal
-      continue
-    } else if (entry.maxVal !== 0 && entry.minVal === 0) {
-      label += '(最大攻击力)'
-      rows.push({ label, minValue: null, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
-      maxTotal += entry.maxVal
-      continue
-    } else if (entry.minVal !== entry.maxVal) {
-      // 两边值不同：分别标注
-      rows.push({ label: entry.label + '(最小攻击力)', minValue: entry.minVal, maxValue: null, isPercent: modType === 'PERCENTAGE' })
-      rows.push({ label: entry.label + '(最大攻击力)', minValue: null, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
-      minTotal += entry.minVal
-      maxTotal += entry.maxVal
-      continue
-    }
-    rows.push({ label, minValue: entry.minVal, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
-    minTotal += entry.minVal
-    maxTotal += entry.maxVal
-  }
-
-  return { title, minTotal, maxTotal, rows }
-}
-
-/**
- * 攻击力 tooltip：按四层架构组织 min/max 修饰符，显示区间
- */
-const showAttackTooltip = (event: MouseEvent) => {
-  const char = currentCharacter.value
-  if (!char) return
-
-  const minAttr = char.getAttrVal(ATTRIBUTE_CODE.minAttack)
-  const maxAttr = char.getAttrVal(ATTRIBUTE_CODE.maxAttack)
-  if (!minAttr || !maxAttr) return
-
-  const minMods = minAttr.modifiers
-  const maxMods = maxAttr.modifiers
-
-  const layers: RangeLayerData[] = [
-    buildRangeLayer(ModifierTypeNames.ADDITIVE, minMods, maxMods, ModifierType.ADDITIVE),
-    buildRangeLayer(ModifierTypeNames.PERCENTAGE, minMods, maxMods, ModifierType.PERCENTAGE),
-    buildRangeLayer(ModifierTypeNames.MULTIPLICATIVE, minMods, maxMods, ModifierType.MULTIPLICATIVE),
-    buildRangeLayer(ModifierTypeNames.FINAL, minMods, maxMods, ModifierType.FINAL),
-  ]
-  showAttrTooltip(
-    event, '攻击力', [],
-    attackRange.value.min, AttributeValueType.VALUE,
-    `${attackRange.value.min}-${attackRange.value.max}`,
-    layers,
-  )
+  showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType, undefined, code)
 }
 
 const hideAttrTooltip = () => {
@@ -693,27 +570,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 显示层级过滤器 */
-.tier-filters {
-  display: flex;
-  gap: 12px;
-  padding: 4px 12px 8px;
-  border-bottom: 1px solid var(--border-common-color-dark);
-  margin-bottom: 4px;
-}
-
-.tier-filter {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8em;
-  color: rgba(var(--rgb-white), 0.65);
-  cursor: pointer;
-  user-select: none;
-}
-
-.tier-filter input[type="checkbox"] {
-  accent-color: #0a7f91;
+/* 角色监控：约束在右侧面板可用高度内（panel-right 为 flex column 且 main-layout 高度固定），
+   内容超出时在面板内滚动，避免被外层 overflow:hidden 裁剪 */
+.section.flex-1 {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--space-2);
 }
 
 .skill-item {

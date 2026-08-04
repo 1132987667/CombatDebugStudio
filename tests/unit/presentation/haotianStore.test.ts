@@ -90,3 +90,33 @@ describe('haotianStore（演示存档装配）', () => {
     expect(s.filteredEvents).toHaveLength(0)
   })
 })
+
+describe('pnameSide（摘要导出/面板单位名 — 带阵营前缀，与日志口径一致）', () => {
+  it('demo 存档：ally/enemy 单位带 [友方]/[敌方] 前缀', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    expect(s.pnameSide('u1')).toBe('[友方]火护法')
+    expect(s.pnameSide('u2')).toBe('[敌方]金护法')
+  })
+
+  it('未知 id 回退原样；side 缺失的旧档回退纯名字（不误标阵营）', () => {
+    const s = useHaotianStore()
+    s.archive = {
+      battleId: 't1',
+      replayId: 'r1',
+      version: '1',
+      randomSeed: 'x',
+      startTime: 0,
+      initialState: {
+        participants: [
+          { id: 'a', name: '甲', side: 'ally' },
+          { id: 'b', name: '乙' }, // 缺 side（老档迁移）
+        ],
+      },
+      events: [],
+    } as never
+    expect(s.pnameSide('a')).toBe('[友方]甲')
+    expect(s.pnameSide('b')).toBe('乙')
+    expect(s.pnameSide('ghost')).toBe('ghost')
+  })
+})

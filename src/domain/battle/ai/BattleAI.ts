@@ -416,15 +416,16 @@ export class BaseBattleAI implements BattleAI {
 
   /** 选择普通攻击 */
   public selectAttack(participant: BattleEntity): BattleAction {
+    const atk = participant.getAttribute(ATTRIBUTE_CODE.attack)
     return BattleActionHelper.createAttack({
       sourceId: participant.id,
       targetId: '',
-      damage: participant.getRandomAttackDamage(),
+      damage: atk,
       turn: 0,
       effects: [
         {
           type: EffectType.DAMAGE,
-          value: participant.getRandomAttackDamage(),
+          value: atk,
           description: `${participant.name} normal attack`,
         },
       ],

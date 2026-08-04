@@ -1,6 +1,6 @@
 <template>
-  <span v-if="seg.kind === 'entity'" class="chip" :class="seg.faction === 'ally' ? 'chip--ally' : 'chip--enemy'">
-    {{ seg.text }}
+  <span v-if="seg.kind === 'entity'" class="chip" :class="entityFaction(seg) === 'ally' ? 'chip--ally' : 'chip--enemy'">
+    {{ entityDisplayText(seg) }}
   </span>
   <b v-else-if="seg.kind === 'damage'" class="num num--damage">{{ seg.text }}</b>
   <b v-else-if="seg.kind === 'heal'" class="num num--heal">{{ seg.text }}</b>
@@ -14,7 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import type { LogSegment, LogSegmentHover } from '@/shared/types/battle-log'
+import {
+  entityDisplayText,
+  entityFaction,
+  type LogSegment,
+  type LogSegmentHover,
+} from '@/shared/types/battle-log'
 
 defineProps<{
   seg: LogSegment

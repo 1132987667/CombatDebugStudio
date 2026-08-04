@@ -4,8 +4,6 @@
  */
 
 import {
-  BattleAction,
-  ActionTypes,
   ActionResultType,
   ParticipantSide,
 } from '@/domain/battle/type/types'
@@ -75,6 +73,10 @@ export type BattleLogMetaRole = (typeof BattleLogMetaRole)[keyof typeof BattleLo
 export interface BattleLogMeta {
   /** 叙事角色：决定归入哪种块 */
   role?: BattleLogMetaRole
+  /** 来源实体（施法者/被动触发者）— 因果链：谁引起了这条日志 */
+  sourceId?: string
+  /** 触发阶段（被动因果链：ON_HIT/DAMAGE_TAKEN/TURN_START…）— 为什么触发 */
+  triggerPhase?: string
   entityId?: string
   entityName?: string
   entityFaction?: 'ally' | 'enemy'
@@ -90,6 +92,9 @@ export interface BattleLogMeta {
   skillName?: string
   /** 回合标签（可选）：提供后作为回合标签默认值；未提供时渲染器按本回合击杀/sub 统计计算 */
   roundTag?: string
+  /** 能量变化快照（能量类日志） */
+  energyBefore?: number
+  energyAfter?: number
 }
 
 export const LogLevelLabel: Record<LogLevel, string> = {
@@ -268,6 +273,33 @@ export interface LogSegment {
   kind?: LogSegmentKind
   /** 阵营（kind=entity 时使用） */
   faction?: ParticipantSide
+}
+
+/**
+ * entity 段的明确阵营：优先 faction 字段，退而求其次由着色 classStr 反推。
+ * 用于渲染层 chip 着色（颜色提示无误导风险）。
+ */
+export function entityFaction(
+  seg: LogSegment,
+): ParticipantSide | undefined {
+  if (seg.faction) return seg.faction
+  if (seg.classStr === 'log-friendly') return ParticipantSide.ALLY
+  if (seg.classStr === 'log-hostile') return ParticipantSide.ENEMY
+  return undefined
+}
+
+/**
+ * entity 段显示文本：缺 [友方]/[敌方] 前缀且阵营字段明确时自动补前缀。
+ * 渲染层兜底——即使未来有调用方手写 entity 段漏了前缀，UI 仍统一。
+ * NOTE: 只认 faction 字段，不按 classStr 反推前缀（回放 id 段只有 classStr，
+ *       阵营未知时宁可不标，避免误标敌我）。
+ */
+export function entityDisplayText(seg: LogSegment): string {
+  if (seg.kind !== 'entity') return seg.text
+  if (seg.text.startsWith('[友方]') || seg.text.startsWith('[敌方]')) return seg.text
+  if (seg.text === '自身') return seg.text
+  if (!seg.faction) return seg.text
+  return seg.faction === ParticipantSide.ALLY ? `[友方]${seg.text}` : `[敌方]${seg.text}`
 }
 
 export const NarrativeBlockType = {
@@ -475,90 +507,6 @@ export const LogUtils = {
 }
 
 /**
- * 生成带着色的来源/目标名称段
- *
- * 统一辅助函数，解决战斗日志中角色名缺少颜色的问题。
- * 所有 addBattleLog 调用处应当使用此函数生成前 2~3 个 segment，
- * 确保日志中所有角色名都有敌我颜色区分。
- *
- * 使用示例：
- * ```
- * const segs = buildNameSegments('剑士', true, '史莱姆', false)
- * // → [{text:'剑士', classStr:'log-friendly'}, {text:' 对 '}, {text:'史莱姆', classStr:'log-hostile'}]
- * segs.push({ text: ' 发起 「普通攻击」，造成 104 点伤害' })
- * ```
- */
-export function buildNameSegments(
-  source: string,
-  sourceIsAlly: boolean,
-  target?: string,
-  targetIsAlly?: boolean,
-): LogSegment[] {
-  const sourcePrefix = sourceIsAlly ? '[友方]' : '[敌方]'
-  const sourceFaction = sourceIsAlly ? ('ally' as const) : ('enemy' as const)
-  const segs: LogSegment[] = [
-    {
-      text: `${sourcePrefix}${source}`,
-      classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
-      kind: 'entity',
-      faction: sourceFaction,
-    },
-  ]
-  if (target && target !== source) {
-    const targetPrefix =
-      targetIsAlly != null ? (targetIsAlly ? '[友方]' : '[敌方]') : ''
-    const targetFaction =
-      targetIsAlly != null
-        ? targetIsAlly
-          ? ('ally' as const)
-          : ('enemy' as const)
-        : undefined
-    segs.push({ text: ' 对 ' })
-    segs.push({
-      text: `${targetPrefix}${target}`,
-      classStr:
-        targetIsAlly != null
-          ? targetIsAlly
-            ? 'log-friendly'
-            : 'log-hostile'
-          : undefined,
-      kind: 'entity',
-      faction: targetFaction,
-    })
-  }
-  return segs
-}
-
-/** 便捷版本：直接返回完整的一段着色日志 segments */
-export function buildColoredLogSegments(
-  source: string,
-  sourceIsAlly: boolean,
-  target: string | undefined,
-  targetIsAlly: boolean | undefined,
-  actionDescription: string,
-): LogSegment[] {
-  const segs = buildNameSegments(source, sourceIsAlly, target, targetIsAlly)
-  segs.push({ text: ` ${actionDescription}` })
-  return segs
-}
-
-/** 便捷版本：带数值的着色日志 */
-export function buildColoredValueLogSegments(
-  source: string,
-  sourceIsAlly: boolean,
-  target: string | undefined,
-  targetIsAlly: boolean | undefined,
-  actionText: string,
-  valueText: string,
-  valueClass?: string,
-): LogSegment[] {
-  const segs = buildNameSegments(source, sourceIsAlly, target, targetIsAlly)
-  segs.push({ text: ` ${actionText} ` })
-  segs.push({ text: valueText, classStr: valueClass })
-  return segs
-}
-
-/**
  * 计算日志接口 - 统一所有计算日志定义
  */
 export interface CalculationLog {
@@ -591,388 +539,6 @@ export interface CalculationLog {
 
   /** 修正系数（兼容原有系统） */
   modifiers?: Record<string, number>
-}
-
-/**
- * BattleAction 转换为 BattleLogEntry 的选项
- */
-export interface BattleActionToLogEntryOptions {
-  turnNumber?: number
-  sourceIsAlly?: boolean
-  targetIsAlly?: boolean
-}
-
-/**
- * 参与者映射类型
- */
-export interface ParticipantMap {
-  get(id: string): { name: string; team: string } | undefined
-}
-
-/**
- * 将 BattleAction 转换为 BattleLogEntry
- * 统一转换逻辑，确保日志生成准确、可复用
- */
-export function battleActionToLogEntry(
-  action: BattleAction,
-  participants: ParticipantMap,
-  options?: BattleActionToLogEntryOptions,
-): BattleLogEntry {
-  const turn = options?.turnNumber ?? action.turn ?? 1
-
-  let sourceName = action.sourceId
-  if (action.sourceId === 'system') {
-    sourceName = '系统'
-  } else {
-    const sourceParticipant = participants.get(action.sourceId)
-    if (sourceParticipant) {
-      const prefix = sourceParticipant.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
-      sourceName = `${prefix}${sourceParticipant.name}`
-    }
-  }
-
-  let targetName = ''
-  if (action.targetId && action.targetId !== 'system') {
-    const targetParticipant = participants.get(action.targetId)
-    if (targetParticipant) {
-      const prefix = targetParticipant.team === 'ally' ? '[友方]' : '[敌方]'
-      targetName = `${prefix}${targetParticipant.name}`
-    }
-  }
-
-  const sourceIsAlly =
-    options?.sourceIsAlly ??
-    (action.sourceId !== 'system'
-      ? participants.get(action.sourceId)?.team === ParticipantSide.ALLY
-      : false)
-  const targetIsAlly =
-    options?.targetIsAlly ??
-    (action.targetId
-      ? participants.get(action.targetId)?.team === ParticipantSide.ALLY
-      : undefined)
-
-  const { category, level, segments } = generateLogSegments(
-    action,
-    sourceName,
-    targetName,
-    sourceIsAlly,
-    targetIsAlly,
-  )
-
-  return {
-    turn,
-    source: sourceName,
-    action: '对',
-    target: targetName,
-    index: -1,
-    type: LogType.BATTLE,
-    message: `${sourceName} ${action}${targetName}`,
-    level: toLogLevel(level),
-    category,
-    segments,
-  }
-}
-
-/**
- * 根据动作类型生成日志片段
- */
-function generateLogSegments(
-  action: BattleAction,
-  sourceName: string,
-  targetName: string,
-  sourceIsAlly: boolean,
-  targetIsAlly: boolean | undefined,
-): {
-  category: BattleLogCategory
-  level: BattleLogMessageType
-  segments: LogSegment[]
-} {
-  if (action.sourceId === 'system') {
-    return generateSystemLogSegments(action)
-  }
-
-  if (!action.success || action.isHit === false) {
-    return generateMissLogSegments(
-      action,
-      sourceName,
-      targetName,
-      sourceIsAlly,
-      targetIsAlly,
-    )
-  }
-
-  if (action.isCrit) {
-    return generateCritLogSegments(
-      action,
-      sourceName,
-      targetName,
-      sourceIsAlly,
-      targetIsAlly,
-    )
-  }
-
-  if (action.heal && action.heal > 0) {
-    return generateHealLogSegments(
-      action,
-      sourceName,
-      targetName,
-      sourceIsAlly,
-      targetIsAlly,
-    )
-  }
-
-  if (action.damage && action.damage > 0) {
-    return generateDamageLogSegments(
-      action,
-      sourceName,
-      targetName,
-      sourceIsAlly,
-      targetIsAlly,
-    )
-  }
-
-  return generateDefaultLogSegments(
-    action,
-    sourceName,
-    targetName,
-    sourceIsAlly,
-    targetIsAlly,
-  )
-}
-
-/**
- * 生成系统日志片段
- * NOTE: 数据契约优先 — 系统事件的类别/级别由 BattleAction.systemMeta 显式声明，
- *       不再解析 description 文本（文本只承载展示内容）。
- */
-function generateSystemLogSegments(action: BattleAction): {
-  category: BattleLogCategory
-  level: BattleLogMessageType
-  segments: LogSegment[]
-} {
-  const description = action.effects[0]?.description || ''
-  const meta = action.systemMeta
-
-  // battle_start / battle_end → SYSTEM 类别；结果从 meta.result 读取，不猜文本
-  if (meta?.event === 'battle_start' || meta?.event === 'battle_end') {
-    return {
-      category: BATTLE_LOG_CATEGORIES.SYSTEM,
-      level: meta.result === 'lose' ? 'warning' : 'info',
-      segments: [{ text: description }],
-    }
-  }
-
-  // 无 systemMeta 的系统 action（历史兼容）：仍按 SYSTEM 处理
-  return {
-    category: BATTLE_LOG_CATEGORIES.SYSTEM,
-    level: 'info',
-    segments: [{ text: description }],
-  }
-}
-
-/**
- * 生成未命中日志片段
- */
-function generateMissLogSegments(
-  action: BattleAction,
-  sourceName: string,
-  targetName: string,
-  sourceIsAlly: boolean,
-  targetIsAlly: boolean | undefined,
-): {
-  category: BattleLogCategory
-  level: BattleLogMessageType
-  segments: LogSegment[]
-} {
-  const skillName = action.skillName || '普通攻击'
-  const isSkill = action.type === ActionTypes.SKILL
-
-  return {
-    category: BATTLE_LOG_CATEGORIES.STATUS,
-    level: 'info',
-    segments: [
-      {
-        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
-        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ' 对 ' },
-      {
-        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
-        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ` 发动${isSkill ? `【${skillName}】` : ''}，攻击被闪避，未命中` },
-    ],
-  }
-}
-
-/**
- * 生成暴击日志片段
- */
-function generateCritLogSegments(
-  action: BattleAction,
-  sourceName: string,
-  targetName: string,
-  sourceIsAlly: boolean,
-  targetIsAlly: boolean | undefined,
-): {
-  category: BattleLogCategory
-  level: BattleLogMessageType
-  segments: LogSegment[]
-} {
-  const skillName = action.skillName || '普通攻击'
-  const isSkill = action.type === 'skill'
-  const damage = action.damage || 0
-
-  return {
-    category: BATTLE_LOG_CATEGORIES.CRIT,
-    level: 'info',
-    segments: [
-      {
-        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
-        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ' 对 ' },
-      {
-        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
-        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      {
-        text: ` 发动${isSkill ? `【${skillName}】` : ''}，触发会心一击，造成 `,
-      },
-      { text: damage.toString(), classStr: 'log-crit' },
-      { text: ' 点暴击伤害！' },
-    ],
-  }
-}
-
-/**
- * 生成治疗日志片段
- */
-function generateHealLogSegments(
-  action: BattleAction,
-  sourceName: string,
-  targetName: string,
-  sourceIsAlly: boolean,
-  targetIsAlly: boolean | undefined,
-): {
-  category: BattleLogCategory
-  level: BattleLogMessageType
-  segments: LogSegment[]
-} {
-  const skillName = action.skillName || '治疗'
-  const healAmount = action.heal || 0
-
-  return {
-    category: BATTLE_LOG_CATEGORIES.HEAL,
-    level: 'info',
-    segments: [
-      {
-        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
-        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ' 对 ' },
-      {
-        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
-        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ` 施放【${skillName}】，为其恢复 ` },
-      { text: healAmount.toString(), classStr: 'log-heal' },
-      { text: ' 点气血' },
-    ],
-  }
-}
-
-/**
- * 生成伤害日志片段
- */
-function generateDamageLogSegments(
-  action: BattleAction,
-  sourceName: string,
-  targetName: string,
-  sourceIsAlly: boolean,
-  targetIsAlly: boolean | undefined,
-): {
-  category: BattleLogCategory
-  level: BattleLogMessageType
-  segments: LogSegment[]
-} {
-  const skillName = action.skillName
-  const isSkill = action.type === 'skill'
-  const damage = action.damage || 0
-
-  if (isSkill && skillName) {
-    return {
-      category: BATTLE_LOG_CATEGORIES.DAMAGE,
-      level: 'info',
-      segments: [
-        {
-          text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
-          classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
-        },
-        { text: ' 对 ' },
-        {
-          text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
-          classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
-        },
-        { text: ` 发动终极技能【${skillName}】，造成 ` },
-        { text: damage.toString(), classStr: 'log-damage' },
-        { text: ' 点魔法伤害' },
-      ],
-    }
-  }
-
-  return {
-    category: BATTLE_LOG_CATEGORIES.DAMAGE,
-    level: 'info',
-    segments: [
-      {
-        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
-        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ' 对 ' },
-      {
-        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
-        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ' 发起 「普通攻击」，造成 ' },
-      { text: damage.toString(), classStr: 'log-damage' },
-      { text: ' 点伤害' },
-    ],
-  }
-}
-
-/**
- * 生成默认日志片段
- */
-function generateDefaultLogSegments(
-  action: BattleAction,
-  sourceName: string,
-  targetName: string,
-  sourceIsAlly: boolean,
-  targetIsAlly: boolean | undefined,
-): {
-  category: BattleLogCategory
-  level: BattleLogMessageType
-  segments: LogSegment[]
-} {
-  const effectDescription = action.effects[0]?.description || '执行了动作'
-
-  return {
-    category: BATTLE_LOG_CATEGORIES.STATUS,
-    level: 'info',
-    segments: [
-      {
-        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
-        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ' 对 ' },
-      {
-        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
-        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
-      },
-      { text: ` ${effectDescription}` },
-    ],
-  }
 }
 
 /**

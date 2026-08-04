@@ -12,8 +12,8 @@
     <transition name="tooltip-fade">
       <div v-if="visible" ref="tooltipRef" class="attribute-tooltip" :style="tooltipStyle">
         <div class="tooltip-header">
-          <span class="tooltip-title">{{ title }}</span>
-          <span class="tooltip-value">{{ displayText || displayValue }}</span>
+          <span class="tooltip-title">{{ displayText || title }}</span>
+          <span class="tooltip-value">{{ displayValue }}</span>
         </div>
 
         <!-- 属性描述部分 -->
@@ -35,43 +35,15 @@
         <div class="tooltip-divider"></div>
 
         <div class="tooltip-content">
-          <!-- ==================== 区间模式（攻击力） ==================== -->
-          <template v-if="rangeLayers && rangeLayers.length > 0">
-            <div class="source-list">
-              <div v-for="layer in rangeLayers" :key="layer.title" class="source-section">
-                <div class="section-title-row">
-                  <span class="stat-section-title">{{ layer.title }}</span>
-                  <span class="layer-total">{{ formatRangeTotal(layer.minTotal, layer.title) }}-{{
-                    formatRangeTotal(layer.maxTotal, layer.title) }}</span>
-                </div>
-                <div v-for="(row, idx) in layer.rows" :key="layer.title + '-' + idx" class="source-item range-row">
-                  <span class="source-name-label">{{ row.label }}</span>
-                  <span class="source-range-value">{{ formatRangeRow(row) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="tooltip-divider"></div>
-
-            <div class="calculation-section">
-              <div class="calculation-title">计算过程</div>
-              <div class="calculation-formula">
-                <div class="calc-line">[最小] {{ rangeFormulaMin }}</div>
-                <div class="calc-line">[最大] {{ rangeFormulaMax }}</div>
-              </div>
-              <div class="calculation-result">
-                <span class="result-label">→</span>
-                <span class="result-value">{{ rangeResultMin }}-{{ rangeResultMax }}</span>
-              </div>
-            </div>
-          </template>
-
           <!-- ==================== 标准模式（单值属性） ==================== -->
-          <template v-else>
+          <template>
             <div class="source-list">
               <!-- 基础数值 -->
               <div v-if="additiveGroup.length > 0" class="source-section">
-                <div class="stat-section-title">基础数值</div>
+                <div class="section-title-row">
+                  <span class="stat-section-title">基础数值</span>
+                  <span class="layer-total">{{ formatLayerTotal(additiveGroup, ModifierType.ADDITIVE) }}</span>
+                </div>
                 <div v-for="(modifier, index) in additiveGroup" :key="'a-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
@@ -88,7 +60,10 @@
 
               <!-- 属性加成 -->
               <div v-if="percentGroup.length > 0" class="source-section">
-                <div class="stat-section-title">属性加成</div>
+                <div class="section-title-row">
+                  <span class="stat-section-title">属性加成</span>
+                  <span class="layer-total">{{ formatLayerTotal(percentGroup, ModifierType.PERCENTAGE) }}</span>
+                </div>
                 <div v-for="(modifier, index) in percentGroup" :key="'p-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
@@ -105,7 +80,10 @@
 
               <!-- 独立乘区 -->
               <div v-if="multiGroup.length > 0" class="source-section">
-                <div class="stat-section-title">独立乘区</div>
+                <div class="section-title-row">
+                  <span class="stat-section-title">独立乘区</span>
+                  <span class="layer-total">{{ formatLayerTotal(multiGroup, ModifierType.MULTIPLICATIVE) }}</span>
+                </div>
                 <div v-for="(modifier, index) in multiGroup" :key="'m-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
@@ -122,7 +100,10 @@
 
               <!-- 最终乘区 -->
               <div v-if="finalGroup.length > 0" class="source-section">
-                <div class="stat-section-title">最终乘区</div>
+                <div class="section-title-row">
+                  <span class="stat-section-title">最终乘区</span>
+                  <span class="layer-total">{{ formatLayerTotal(finalGroup, ModifierType.FINAL) }}</span>
+                </div>
                 <div v-for="(modifier, index) in finalGroup" :key="'f-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
@@ -146,11 +127,17 @@
 
             <div class="calculation-section">
               <div class="calculation-title">计算过程</div>
-              <div class="calculation-formula">{{ formula }}</div>
-              <div class="calculation-result">
-                <span class="result-label">=</span>
-                <span class="result-value">{{ finalValue }}</span>
-              </div>
+              <div v-if="calcSteps.length === 0" class="calculation-empty">无详细计算信息</div>
+              <template v-else>
+                <div v-for="(step, i) in calcSteps" :key="i" class="calc-step">
+                  <span class="calc-step-label">{{ step.label }}</span>
+                  <span class="calc-step-result">{{ step.result }}</span>
+                </div>
+                <div class="calculation-result">
+                  <span class="result-label">=</span>
+                  <span class="result-value">{{ finalValue }}</span>
+                </div>
+              </template>
             </div>
           </template>
         </div>
@@ -169,21 +156,6 @@ import { getAttrMeta } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
 import { BuffPolarity } from '@/shared/types/buff-classification'
 import { round } from '@/shared/utils/math'
-// ===================== 区间模式类型导出 =====================
-export interface RangeModifierRow {
-  label: string
-  minValue: number | null
-  maxValue: number | null
-  /** ponytail: 是否按百分比格式化；由 buildRangeLayer 根据 modType 注入 */
-  isPercent: boolean
-}
-
-export interface RangeLayerData {
-  title: string
-  minTotal: number
-  maxTotal: number
-  rows: RangeModifierRow[]
-}
 
 interface Props {
   visible: boolean
@@ -192,12 +164,10 @@ interface Props {
   finalValue: number
   valueType: AttributeValueType
   triggerRect?: DOMRect | null
-  /** 覆盖值的显示文本（如范围 "25-40"），为空时自动格式化 finalValue */
-  displayText?: string
-  /** 区间模式数据（攻击力使用），存在时切换为区间渲染 */
-  rangeLayers?: RangeLayerData[]
   /** 属性编码（可选），传此值可避免从 title 反向查找 attributeMeta */
   attributeCode?: string
+  /** 属性展示文本（如"攻击力 123"），有值时标题区优先显示（无值时回退 title） */
+  displayText?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -208,7 +178,6 @@ const props = withDefaults(defineProps<Props>(), {
   valueType: AttributeValueType.VALUE,
   triggerRect: null,
   displayText: '',
-  rangeLayers: () => [],
 })
 
 const tooltipRef = ref<HTMLElement | null>(null)
@@ -236,83 +205,6 @@ const displayValue = computed(() => {
   return formatValue(props.finalValue, props.valueType)
 })
 
-// ===================== 区间模式计算 =====================
-
-/** 格式化区间层的合计值 */
-const formatRangeTotal = (total: number, layerTitle: string): string => {
-  // 基础数值层直接显示数值；其他三层的 total 已经是百分比点（如 20=20%）
-  if (layerTitle === '基础数值') {
-    return Math.round(total * 100) / 100 + ''
-  }
-  return Math.round(total * 100) / 100 + '%'
-}
-
-/** 格式化区间行 */
-const formatRangeRow = (row: RangeModifierRow): string => {
-  const fmt = (v: number) => row.isPercent ? formatModifierValue(v, ModifierType.PERCENTAGE) : formatModifierValue(v, ModifierType.ADDITIVE)
-
-  if (row.minValue !== null && row.maxValue !== null) {
-    if (row.minValue === row.maxValue) {
-      return fmt(row.minValue)
-    }
-    return `${fmt(row.minValue)} / ${fmt(row.maxValue)}`
-  }
-  if (row.minValue !== null) return fmt(row.minValue)
-  if (row.maxValue !== null) return fmt(row.maxValue)
-  return ''
-}
-
-/** 基础数值层合计（用于计算式起点） */
-const rangeBaseMin = computed(() => props.rangeLayers[0]?.minTotal ?? 0)
-const rangeBaseMax = computed(() => props.rangeLayers[0]?.maxTotal ?? 0)
-
-/** 属性加成/独立/最终三层的合计（百分比点 → 小数，供公式使用） */
-const rangeLayerMultipliers = computed(() => {
-  const layers = props.rangeLayers || []
-  // 跳过第0层（基础数值），后面三层是百分比点（如 20 = 20%），转为小数 1.20
-  const pct = layers[1]  // 属性加成
-  const multi = layers[2] // 独立乘区
-  const final = layers[3] // 最终乘区
-  return {
-    pctMin: pct ? 1 + pct.minTotal / 100 : 1,
-    pctMax: pct ? 1 + pct.maxTotal / 100 : 1,
-    multiMin: multi ? 1 + multi.minTotal / 100 : 1,
-    multiMax: multi ? 1 + multi.maxTotal / 100 : 1,
-    finalMin: final ? 1 + final.minTotal / 100 : 1,
-    finalMax: final ? 1 + final.maxTotal / 100 : 1,
-  }
-})
-
-const rangeFormulaMin = computed(() => {
-  const m = rangeLayerMultipliers.value
-  const base = rangeBaseMin.value
-  const parts = [`${base}`]
-  if (m.pctMin !== 1) parts.push(`${m.pctMin.toFixed(2)}`)
-  if (m.multiMin !== 1) parts.push(`${m.multiMin.toFixed(2)}`)
-  if (m.finalMin !== 1) parts.push(`${m.finalMin.toFixed(2)}`)
-  return parts.join(' × ')
-})
-
-const rangeFormulaMax = computed(() => {
-  const m = rangeLayerMultipliers.value
-  const base = rangeBaseMax.value
-  const parts = [`${base}`]
-  if (m.pctMax !== 1) parts.push(`${m.pctMax.toFixed(2)}`)
-  if (m.multiMax !== 1) parts.push(`${m.multiMax.toFixed(2)}`)
-  if (m.finalMax !== 1) parts.push(`${m.finalMax.toFixed(2)}`)
-  return parts.join(' × ')
-})
-
-const rangeResultMin = computed(() => {
-  const m = rangeLayerMultipliers.value
-  return +(rangeBaseMin.value * m.pctMin * m.multiMin * m.finalMin).toFixed(2)
-})
-
-const rangeResultMax = computed(() => {
-  const m = rangeLayerMultipliers.value
-  return +(rangeBaseMax.value * m.pctMax * m.multiMax * m.finalMax).toFixed(2)
-})
-
 // ===================== 标准模式计算 =====================
 
 // 按乘区分组修饰符
@@ -329,52 +221,74 @@ const finalGroup = computed(() => {
   return props.modifiers.filter(m => m.type === ModifierType.FINAL)
 })
 
-const formula = computed(() => {
-  if (props.modifiers.length === 0) return '无'
-
-  let baseValue = 0
-  const additiveMods: Modifier[] = []
-  const percentMods: Modifier[] = []
-  const multiMods: Modifier[] = []
-  const finalMods: Modifier[] = []
-  for (const m of props.modifiers) {
-    if (m.sourceKey === 'base') {
-      baseValue = m.value
-    } else if (m.type === ModifierType.ADDITIVE) additiveMods.push(m)
-    else if (m.type === ModifierType.PERCENTAGE) percentMods.push(m)
-    else if (m.type === ModifierType.MULTIPLICATIVE) multiMods.push(m)
-    else if (m.type === ModifierType.FINAL) finalMods.push(m)
+/** 四层分组的层合计：基础/加法层显示数值合计，百分比/乘法/最终层显示百分比合计 */
+const formatLayerTotal = (mods: Modifier[], type: ModifierType): string => {
+  if (mods.length === 0) return ''
+  const total = mods.reduce((s, m) => s + m.value, 0)
+  if (type === ModifierType.MULTIPLICATIVE || type === ModifierType.FINAL) {
+    return `${total >= 0 ? '+' : ''}${round(total * 100, 2)}%`
   }
+  return formatModifierValue(total, type)
+}
 
-  const brackets: string[] = []
+/** 分步计算过程：基础值 → 加法 → 百分比乘区 → 独立乘区 → 最终乘区，每步带中间结果 */
+const calcSteps = computed(() => {
+  const mods = props.modifiers
+  if (mods.length === 0) return []
 
-  if (additiveMods.length === 0) {
-    brackets.push(`${baseValue}`)
-  } else {
-    const parts = [`${baseValue}`]
-    for (const m of additiveMods) {
-      parts.push(`${m.value > 0 ? '+' : ''}${m.value}`)
-    }
-    brackets.push(`(${parts.join(' ')})`)
+  const baseMod = mods.find(m => m.sourceKey === 'base')
+  const additiveMods = mods.filter(m => m.sourceKey !== 'base' && m.type === ModifierType.ADDITIVE)
+  const percentMods = mods.filter(m => m.type === ModifierType.PERCENTAGE)
+  const multiMods = mods.filter(m => m.type === ModifierType.MULTIPLICATIVE)
+  const finalMods = mods.filter(m => m.type === ModifierType.FINAL)
+
+  const steps: Array<{ label: string; result: string }> = []
+  const fmt = (v: number): string => `${round(v, 2)}`
+  const signed = (v: number): string => (v >= 0 ? '+' : '') + fmt(v)
+  let current = baseMod?.value ?? 0
+
+  steps.push({ label: '基础值', result: fmt(current) })
+
+  if (additiveMods.length > 0) {
+    const total = additiveMods.reduce((s, m) => s + m.value, 0)
+    const before = current
+    current = before + total
+    steps.push({
+      label: `加法修正 (${additiveMods.map(m => formatModifierValue(m.value, ModifierType.ADDITIVE)).join(' ')})`,
+      result: `${fmt(before)} → ${fmt(current)} (${signed(total)})`,
+    })
   }
 
   if (percentMods.length > 0) {
-    const parts: string[] = ['1']
-    for (const m of percentMods) {
-      parts.push(`${m.value > 0 ? '+' : ''}${m.value}%`)
-    }
-    brackets.push(`(${parts.join(' ')})`)
+    const total = percentMods.reduce((s, m) => s + m.value, 0)
+    const before = current
+    const mult = 1 + total / 100
+    current = before * mult
+    steps.push({
+      label: `属性加成 (${percentMods.map(m => formatModifierValue(m.value, m.type)).join(' ')})`,
+      result: `${fmt(before)} → ${fmt(current)} (×${round(mult, 3)})`,
+    })
   }
 
   for (const m of multiMods) {
-    brackets.push(`(${1 + m.value})`)
+    const before = current
+    current = before * (1 + m.value)
+    steps.push({
+      label: `独立乘区 (${m.description ?? m.sourceKey})`,
+      result: `${fmt(before)} → ${fmt(current)} (×${round(1 + m.value, 3)})`,
+    })
   }
 
   for (const m of finalMods) {
-    brackets.push(`(${1 + m.value}最终)`)
+    const before = current
+    current = before * (1 + m.value)
+    steps.push({
+      label: `最终乘区 (${m.description ?? m.sourceKey})`,
+      result: `${fmt(before)} → ${fmt(current)} (×${round(1 + m.value, 3)})`,
+    })
   }
 
-  return brackets.length > 0 ? `${brackets.join(' × ')} = ${props.finalValue}` : '无'
+  return steps
 })
 
 // ===================== 定位 =====================
@@ -544,7 +458,9 @@ onUnmounted(() => {
         }
 
         .section-title-row {
-          @include flex-layout;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           margin-bottom: var(--space-1);
           padding-bottom: var(--space-1);
           border-bottom: 1px solid var(--border-common-color-dark);
@@ -613,19 +529,6 @@ onUnmounted(() => {
             }
           }
         }
-
-        &.range-row {
-          .source-name-label {
-            font-weight: var(--font-weight-medium);
-            color: var(--color-text-secondary);
-          }
-
-          .source-range-value {
-            font-weight: var(--font-weight-semibold);
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--color-energy);
-          }
-        }
       }
 
       .no-sources {
@@ -649,16 +552,34 @@ onUnmounted(() => {
         letter-spacing: 0.5px;
       }
 
-      .calculation-formula {
-        color: var(--color-text-secondary);
+      .calc-step {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: var(--space-2);
+        padding: var(--space-1) 0;
+        border-bottom: 1px dashed var(--border-common-color-dark);
         font-family: 'JetBrains Mono', monospace;
-        line-height: var(--line-height-lg);
-        white-space: pre-wrap;
-        word-break: break-all;
 
-        .calc-line {
-          margin-bottom: var(--space-1);
+        &:last-child {
+          border-bottom: none;
         }
+
+        .calc-step-label {
+          color: var(--color-text-tertiary);
+          flex-shrink: 0;
+        }
+
+        .calc-step-result {
+          color: var(--color-text-secondary);
+          text-align: right;
+          white-space: nowrap;
+        }
+      }
+
+      .calculation-empty {
+        color: var(--color-text-tertiary);
+        font-style: italic;
       }
 
       .calculation-result {

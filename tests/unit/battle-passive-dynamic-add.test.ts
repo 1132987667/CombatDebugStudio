@@ -59,6 +59,8 @@ describe('战斗中动态添加角色触发被动', () => {
     battleManager.addCharacterToTeam(bard, ParticipantSide.ENEMY)
 
     // 被动「战斗鼓舞」已生效：攻击 +10%
+    // NOTE: 战斗已开始后才入队，guardian_gold 首领光环已于 startBattle 时施加完毕，
+    //       故只吃到自身 +10%（aura 不追溯后来加入者）。
     expect(bard.getAttribute(ATTRIBUTE_CODE.attack)).toBeCloseTo(baseAttack * 1.1, 5)
   })
 
@@ -75,8 +77,10 @@ describe('战斗中动态添加角色触发被动', () => {
     expect(bard.getAttribute(ATTRIBUTE_CODE.attack)).toBeCloseTo(baseAttack, 5)
 
     // startBattle → initialize() 统一注册并触发 BATTLE_START 被动（不重复、不遗漏）
+    // NOTE: bard 在编成阶段入队（ENEMY），startBattle 时已在场——
+    //       「战斗鼓舞」(+10%) + 同队金护法「首领光环」aura(+15%) 同时生效（PERCENTAGE 加法聚合）
     await battleManager.startBattle()
-    expect(bard.getAttribute(ATTRIBUTE_CODE.attack)).toBeCloseTo(baseAttack * 1.1, 5)
+    expect(bard.getAttribute(ATTRIBUTE_CODE.attack)).toBeCloseTo(baseAttack * 1.25, 5)
   })
 
   it('回合级被动统计接线：BATTLE_START 触发计入 fired（TURN_END passiveTriggers 数据源，文档 §5 示例 5）', async () => {

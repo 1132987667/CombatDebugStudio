@@ -13,7 +13,6 @@ import {
   LogFilters,
   LogEntry,
   LogHandler,
-  ParticipantMap,
   UnifiedLogParams,
   BattleLogParams,
   DebugLogParams,
@@ -106,9 +105,6 @@ export class BattleLogManager implements IBattleLogManager {
   private level: LogLevel = LogLevel.DEBUG
   /** 日志处理器数组 */
   private handlers: LogHandler[] = []
-
-  /** 参与者映射表（由 addPlayerLog 的调用方注入） */
-  private participantMap: ParticipantMap = { get: () => undefined }
 
   /**
    * 获取单例实例

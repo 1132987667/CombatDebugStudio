@@ -111,16 +111,57 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
     )
     expect(standalone).toHaveLength(0)
 
-    // A3：回合开始能量应有可见日志
+    // A3：回合开始能量应有可见日志（且实体段带敌我前缀 — 统一口径回归断言）
     const energyLogs = logs.filter((l) =>
       (l.message ?? '').includes('获得回合开始能量'),
     )
     expect(energyLogs.length).toBeGreaterThanOrEqual(2)
     expect(energyLogs[0].message).toMatch(/回合开始能量 \+/)
+    expect(energyLogs.every((l) => /[友方]|[敌方]/.test(l.message ?? ''))).toBe(
+      true,
+    )
 
     // B3：叠加 buff 应显示层数（第 2 回合疾风叠步/复仇怒火叠加到 2 层）
     const layerLogs = logs.filter((l) => (l.message ?? '').includes('层)'))
     expect(layerLogs.length).toBeGreaterThanOrEqual(2)
+
+    // P3 因果链：被动日志 meta 携带 triggerPhase（为什么触发）+ sourceId（谁触发）
+    const findMeta = (sub: string) => {
+      const entry = logs.find((l) => (l.message ?? '').includes(sub))
+      expect(entry).toBeDefined()
+      return entry!.meta as { triggerPhase?: string; sourceId?: string }
+    }
+    // 能量过载 = 普攻命中触发（on_hit）
+    const overloadMeta = findMeta('能量过载')
+    expect(overloadMeta.triggerPhase).toBe('on_hit')
+    expect(overloadMeta.sourceId).toBeTruthy()
+    // 复仇怒火 = 受击触发（damage_taken）
+    expect(findMeta('复仇怒火').triggerPhase).toBe('damage_taken')
+    // 首领光环 = 战斗开始触发（battle_start，standalone 无 role 但保留因果链）
+    const auraMeta = findMeta('首领光环')
+    expect(auraMeta.triggerPhase).toBe('battle_start')
+    expect(auraMeta.role).toBeUndefined()
+
+    // B1：回合结束阶段标记存在
+    const turnEndLogs = logs.filter((l) =>
+      (l.message ?? '').includes('回合结束'),
+    )
+    expect(turnEndLogs.length).toBeGreaterThanOrEqual(2)
+    expect(turnEndLogs[0].message).toMatch(/第 \d+ 回合结束/)
+
+    // B2：回合开始能量日志携带 before/after 快照（且显示实际到账）
+    const energyEntry = logs.find((l) =>
+      (l.message ?? '').includes('获得回合开始能量'),
+    )!
+    const energyMeta = energyEntry.meta as {
+      energyBefore?: number
+      energyAfter?: number
+    }
+    expect(energyMeta.energyBefore).toBeTypeOf('number')
+    expect(energyMeta.energyAfter).toBeTypeOf('number')
+    expect(energyMeta.energyAfter!).toBeGreaterThanOrEqual(
+      energyMeta.energyBefore!,
+    )
   })
 
   it('缓冲机制：sub 日志在 flush 前不入列，flush 后排在 action 日志之后', () => {

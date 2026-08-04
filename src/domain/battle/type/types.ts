@@ -273,8 +273,6 @@ export interface BattleEntity {
   /** 设置修饰符提供者 */
   setModifierProvider(provider: IModifierProvider): void
 
-  getRandomAttackDamage(): number
-
   takeDamage(amount: number): number
   heal(amount: number): number
   isAlive(): boolean
@@ -641,10 +639,8 @@ export interface ParticipantInfo {
   currentEnergy?: number
   /** 等级（≥1） */
   level: number
-  /** 最小攻击力（≤最大攻击） */
-  minAttack: number
-  /** 最大攻击力（≥最小攻击） */
-  maxAttack: number
+  /** 攻击力（攻击模型扁平化后为单一数值） */
+  attack: number
   /** 防御力（≥0） */
   defense: number
   /** 速度（≥1） */

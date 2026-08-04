@@ -10,12 +10,10 @@
     <div class="panel-section">
       <div class="section-header">
         <span>参战管理</span>
-        <div class="expand-collapse-controls">
-          <Button @click="confirmClear = true"
-            :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
-            <span class="icon mr-2">[−]</span>清空
-          </Button>
-        </div>
+        <Button @click="confirmClear = true"
+          :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
+          <span class="icon mr-2">[−]</span>清空
+        </Button>
       </div>
       <div class="section-content">
         <div class="character-field">
@@ -84,79 +82,63 @@
     <div class="panel-section">
       <div class="section-header">
         <span>角色库</span>
-        <div class="expand-collapse-controls">
-          <Button @click="collapseAllScenes" :disabled="!hasExpandedScenes">
-            <span class="icon mr-2">[−]</span>一键折叠
-          </Button>
-          <Button @click="expandAllScenes" :disabled="allScenesExpanded">
-            <span class="icon mr-2">[+]</span>一键展开
-          </Button>
-        </div>
       </div>
-      <div class="section-content">
-        <div class="character-search">
-          <TacticalInput size="md" :model-value="enemySearch" placeholder="搜索角色库..." aria-label="搜索角色库"
-            @update:model-value="enemySearch = String($event ?? '')" />
+      <div class="section-content roster-layout">
+        <!-- 左侧：场景列表 -->
+        <div class="roster-scenes">
+          <div v-if="actors.length" class="scene-item"
+            :class="{ active: activeRosterKey === ROSTER_KEY.ACTORS }" role="button" tabindex="0"
+            @click="selectActors" @keydown.enter.prevent="selectActors" @keydown.space.prevent="selectActors">
+            <span class="scene-item-name">我的角色</span>
+            <span class="scene-item-count">{{ actors.length }}人</span>
+          </div>
+          <div v-for="group in sceneGroups" :key="group.scene.id" class="scene-item"
+            :class="{ active: activeRosterKey === group.scene.id }" role="button" tabindex="0"
+            @click="selectScene(group.scene.id)" @keydown.enter.prevent="selectScene(group.scene.id)"
+            @keydown.space.prevent="selectScene(group.scene.id)">
+            <span class="scene-item-name">{{ group.scene.name }}</span>
+            <span class="scene-item-level">Lv.{{ group.scene.requiredLevel }}</span>
+            <span class="scene-item-count">{{ group.enemies.length }}人</span>
+          </div>
+          <EmptyState v-if="sceneGroups.length === 0">暂无场景</EmptyState>
         </div>
-        <div class="scene-enemy-list">
-          <div v-if="actors.length" class="scene-group">
-            <div class="scene-header" role="button" tabindex="0" @click="actorExpanded = !actorExpanded"
-              @keydown.enter.prevent="actorExpanded = !actorExpanded"
-              @keydown.space.prevent="actorExpanded = !actorExpanded">
-              <span class="expand-icon mr-2">{{ actorExpanded ? '[-]' : '[+]' }}</span>
-              <span class="scene-name">我的角色</span>
-              <span class="scene-count">{{ actors.length }}人</span>
-            </div>
-            <div v-if="actorExpanded" class="character-search">
-              <TacticalInput size="md" :model-value="actorSearch" placeholder="搜索角色..." aria-label="搜索角色"
-                @update:model-value="actorSearch = String($event ?? '')" />
-            </div>
-            <Transition name="scene-enemies">
-              <div class="scene-enemies" v-show="actorExpanded">
-                <div v-for="actor in filteredActors" :key="actor.id" class="character-item"
-                  :class="{ selected: isActorSelected(actor.id) }" role="button" tabindex="0"
-                  @click="previewActor(actor)" @keydown.enter.prevent="previewActor(actor)"
-                  @keydown.space.prevent="previewActor(actor)">
-                  <div class="char-info">
-                    <span class="char-name">{{ actor.name }} (Lv.{{ actor.level }})</span>
-                    <span class="char-stats">气血:{{ actor.stats.maxHealth ?? '—' }}</span>
-                  </div>
-                  <div class="char-actions">
-                    <Button size="tiny" @click.stop="addActorToBattle(actor)"><span class="icon mr-2">[+]</span>我方</Button>
-                  </div>
+        <!-- 右侧：对应场景的角色列表 -->
+        <div class="roster-characters">
+          <div class="character-search">
+            <TacticalInput size="md" :model-value="rosterSearch" placeholder="搜索当前场景角色..." aria-label="搜索角色"
+              @update:model-value="rosterSearch = String($event ?? '')" />
+          </div>
+          <div class="roster-char-list">
+            <template v-if="activeRosterKey === ROSTER_KEY.ACTORS">
+              <div v-for="actor in visibleActors" :key="actor.id" class="character-item"
+                :class="{ selected: isActorSelected(actor.id) }" role="button" tabindex="0"
+                @click="previewActor(actor)" @keydown.enter.prevent="previewActor(actor)"
+                @keydown.space.prevent="previewActor(actor)">
+                <div class="char-info">
+                  <span class="char-name">{{ actor.name }} (Lv.{{ actor.level }})</span>
+                </div>
+                <div class="char-actions">
+                  <Button size="tiny" @click.stop="addActorToBattle(actor)"><span class="icon mr-2">[+]</span>我方</Button>
                 </div>
               </div>
-            </Transition>
-          </div>
-          <div v-for="group in groupedEnemies" :key="group.scene.id" class="scene-group">
-            <div class="scene-header" role="button" tabindex="0" @click="toggleSceneExpand(group.scene.id)"
-              @keydown.enter.prevent="toggleSceneExpand(group.scene.id)"
-              @keydown.space.prevent="toggleSceneExpand(group.scene.id)">
-              <span class="expand-icon mr-2">{{ isSceneExpanded(group.scene.id) ? '[-]' : '[+]' }}</span>
-              <span class="scene-name">{{ group.scene.name }}</span>
-              <span class="scene-level">Lv.{{ group.scene.requiredLevel }}+</span>
-              <span class="scene-count">{{ group.enemies.length }}人</span>
-            </div>
-            <Transition name="scene-enemies">
-              <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
-                <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item"
-                  :class="{ selected: isRosterCharSelected(enemy.id) }" role="button" tabindex="0"
-                  @click="previewRosterCharacter(enemy)" @keydown.enter.prevent="previewRosterCharacter(enemy)"
-                  @keydown.space.prevent="previewRosterCharacter(enemy)">
-                  <div class="char-info">
-                    <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
-                    <span class="char-stats">气血:{{ enemy.stats.maxHealth }} 攻击:{{ enemy.stats.minAttack
-                    }}-{{ enemy.stats.maxAttack }}</span>
-                  </div>
-                  <div class="char-actions">
-                    <Button size="tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)"><span class="icon mr-2">[+]</span>我方</Button>
-                    <Button size="tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)"><span class="icon mr-2">[+]</span>敌方</Button>
-                  </div>
+              <EmptyState v-if="visibleActors.length === 0">未找到匹配的角色</EmptyState>
+            </template>
+            <template v-else>
+              <div v-for="enemy in visibleEnemies" :key="enemy.id" class="character-item"
+                :class="{ selected: isRosterCharSelected(enemy.id) }" role="button" tabindex="0"
+                @click="previewRosterCharacter(enemy)" @keydown.enter.prevent="previewRosterCharacter(enemy)"
+                @keydown.space.prevent="previewRosterCharacter(enemy)">
+                <div class="char-info">
+                  <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
+                </div>
+                <div class="char-actions">
+                  <Button size="tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)"><span class="icon mr-2">[+]</span>我方</Button>
+                  <Button size="tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)"><span class="icon mr-2">[+]</span>敌方</Button>
                 </div>
               </div>
-            </Transition>
+              <EmptyState v-if="visibleEnemies.length === 0">未找到匹配的角色</EmptyState>
+            </template>
           </div>
-          <EmptyState v-if="groupedEnemies.length === 0">未找到匹配的敌人</EmptyState>
         </div>
       </div>
     </div>
@@ -170,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { container } from '@/infrastructure/di/Container';
 import { GameDataApi } from '@/application/service/GameDataApi';
@@ -199,18 +181,43 @@ const gameDataApi = container.resolve<GameDataApi>('GameDataApi');
 const fengshenStore = useFengshenStore();
 
 // 初始化 GameDataProcessor（敌人/场景经数据源切换反映封神榜最新数据）
-const enemySearch = ref("");
+const rosterSearch = ref("");
 const enemiesData = ref<Enemy[]>([]);
 const scenesData = ref<SceneData[]>([]);
 enemiesData.value = GameDataProcessor.getEnemiesData();
 scenesData.value = GameDataProcessor.getScenesData();
-const expandedScenes = reactive<Record<string, boolean>>({});
 
 // 封神榜阵容 / 角色（可管理，数据变更自动刷新）
 const lineups = ref<LineupData[]>([]);
 const actors = ref<ActorData[]>([]);
-const actorSearch = ref('');
-const actorExpanded = ref(true);
+
+// 角色库选中项：'actors' 表示"我的角色"，否则为场景 id
+const ROSTER_KEY = { ACTORS: '__actors__' } as const;
+
+/** 首个有敌人的场景 id（数据源为空时回退到"我的角色"） */
+function firstPopulatedSceneId(): string {
+  for (const scene of scenesData.value) {
+    const sceneEnemyIds = new Set([
+      ...(scene.difficulties.easy.enemyIds ?? []),
+      ...(scene.difficulties.normal.enemyIds ?? []),
+      ...(scene.difficulties.hard.enemyIds ?? []),
+    ]);
+    if (enemiesData.value.some((enemy) => sceneEnemyIds.has(enemy.id))) {
+      return scene.id;
+    }
+  }
+  return ROSTER_KEY.ACTORS;
+}
+
+const activeRosterKey = ref<string>(firstPopulatedSceneId());
+
+function selectActors(): void {
+  activeRosterKey.value = ROSTER_KEY.ACTORS;
+}
+
+function selectScene(sceneId: string): void {
+  activeRosterKey.value = sceneId;
+}
 
 async function loadFengshenData(): Promise<void> {
   try {
@@ -230,9 +237,6 @@ onMounted(() => {
     () => void loadFengshenData(),
   )
 })
-
-// 默认展开所有场景
-scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
 
 // 阵容预设
 interface Preset {
@@ -502,52 +506,10 @@ const enemyTeamCount = computed(() => enemyTeam.value.filter(c => c.enabled).len
 
 const selectedCharacterId = computed(() => battleStore.selectedCharacterId);
 
-const toggleSceneExpand = (sceneId: string) => {
-  expandedScenes[sceneId] = !expandedScenes[sceneId];
-};
-
-const isSceneExpanded = (sceneId: string): boolean => {
-  return expandedScenes[sceneId] === true;
-};
-
-// 一键展开所有场景
-const expandAllScenes = () => {
-  scenesData.value.forEach((scene) => {
-    expandedScenes[scene.id] = true;
-  });
-};
-
-// 一键折叠所有场景
-const collapseAllScenes = () => {
-  scenesData.value.forEach((scene) => {
-    expandedScenes[scene.id] = false;
-  });
-};
-
-// 检查是否有展开的场景
-const hasExpandedScenes = computed(() => {
-  return scenesData.value.some((scene) => expandedScenes[scene.id]);
-});
-
-// 检查是否所有场景都已展开
-const allScenesExpanded = computed(() => {
-  return scenesData.value.every((scene) => expandedScenes[scene.id]);
-});
-
-const filteredEnemies = computed(() => {
-  let filtered = [...enemiesData.value];
-  if (enemySearch.value) {
-    const keyword = enemySearch.value.toLowerCase();
-    filtered = filtered.filter((enemy) =>
-      enemy.name.toLowerCase().includes(keyword)
-    );
-  }
-  return filtered;
-});
-
-const groupedEnemies = computed<GroupedEnemies[]>(() => {
+// 场景 → 敌人分组（左侧场景列表 + 右侧角色列表的数据源）
+const sceneGroups = computed<GroupedEnemies[]>(() => {
   const allScenes = scenesData.value;
-  const allEnemies = filteredEnemies.value;
+  const allEnemies = enemiesData.value;
   return allScenes
     .map((scene) => {
       const sceneEnemyIds = new Set([
@@ -566,6 +528,28 @@ const groupedEnemies = computed<GroupedEnemies[]>(() => {
       };
     })
     .filter((group) => group.enemies.length > 0);
+});
+
+// 右侧角色列表：当前选中场景的敌人（未选中场景时为空）
+const currentSceneEnemies = computed<Enemy[]>(() => {
+  if (activeRosterKey.value === ROSTER_KEY.ACTORS) return []
+  const group = sceneGroups.value.find((g) => g.scene.id === activeRosterKey.value)
+  return group?.enemies ?? []
+});
+
+// 右侧角色列表：搜索词过滤后（我的角色 / 场景敌人二选一）
+const visibleActors = computed(() => {
+  const base = actors.value
+  if (!rosterSearch.value) return base
+  const kw = rosterSearch.value.toLowerCase()
+  return base.filter((a) => a.name.toLowerCase().includes(kw))
+});
+
+const visibleEnemies = computed(() => {
+  const base = currentSceneEnemies.value
+  if (!rosterSearch.value) return base
+  const kw = rosterSearch.value.toLowerCase()
+  return base.filter((e) => e.name.toLowerCase().includes(kw))
 });
 
 const getOrderIndex = (charId: string) => {
@@ -599,13 +583,7 @@ const addEnemyToBattle = (enemy: Enemy, side: typeof ParticipantSide.ALLY | type
   battleStore.selectCharacter(newCharacter.id)
 };
 
-// ── 封神榜角色（actors 表）：搜索 / 预览 / 加入我方 ──
-const filteredActors = computed(() => {
-  if (!actorSearch.value) return actors.value
-  const kw = actorSearch.value.toLowerCase()
-  return actors.value.filter((a) => a.name.toLowerCase().includes(kw))
-});
-
+// ── 封神榜角色（actors 表）：预览 / 加入我方 ──
 const isActorSelected = (actorId: string): boolean => {
   const id = battleStore.selectedCharacterId
   if (!id || !battleStore.previewEntity) return false
@@ -665,50 +643,104 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 </script>
 
 <style scoped>
-.expand-collapse-controls {
+/* ── 角色库：左右布局（左场景列表 / 右角色列表） ── */
+.roster-layout {
   display: flex;
   gap: var(--space-2);
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding-right: 0;
 }
 
-.expand-collapse-controls .icon {
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-md);
-  line-height: 1;
-}
-
-.scene-enemies {
-  transition: var(--transition-base);
+.panel-section > .section-content.roster-layout {
   overflow: hidden;
 }
 
-.scene-enemies-enter-active,
-.scene-enemies-leave-active {
-  transition: var(--transition-base);
+.roster-scenes {
+  flex: 0 0 40%;
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: var(--space-1);
 }
 
-.scene-enemies-enter-from,
-.scene-enemies-leave-to {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-10px);
+.roster-scenes > .scene-item:not(:last-child) {
+  margin-bottom: var(--space-2);
 }
 
-.scene-enemies-enter-to,
-.scene-enemies-leave-from {
-  max-height: 500px;
-  opacity: 1;
-  transform: translateY(0);
+.scene-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.expand-icon {
-  display: inline-block;
-  width: 1rem;
-  text-align: center;
+.scene-item:hover {
+  border-color: var(--color-bg-tertiary-hover);
+}
+
+.scene-item.active {
+  background: var(--color-bg-tertiary-active);
+  border-color: var(--color-info);
+}
+
+.scene-item-name {
   font-weight: var(--font-weight-bold);
-  transition: transform 0.2s ease;
+  color: var(--color-brand-red);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.scene-item-level {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
 
+.scene-item-count {
+  color: var(--color-text-tertiary);
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.roster-characters {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roster-char-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+}
+
+.roster-char-list > .character-item:not(:last-child) {
+  margin-bottom: var(--space-2);
+}
+
+/* 角色库列表项：纵向布局，按钮放在名称下一行 */
+.roster-char-list .character-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.roster-char-list .char-actions {
+  margin-left: 0;
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
 
 .section-actions {
   display: flex;

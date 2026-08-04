@@ -380,42 +380,14 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获取最小攻击力
-   */
-  get minAttack(): number {
-    return this.getAttribute(ATTRIBUTE_CODE.minAttack)
-  }
-
-  /**
-   * 设置最小攻击力
-   */
-  set minAttack(value: number) {
-    this.setAttributeBase(ATTRIBUTE_CODE.minAttack, value)
-  }
-
-  /**
-   * 获取最大攻击力
-   */
-  get maxAttack(): number {
-    return this.getAttribute(ATTRIBUTE_CODE.maxAttack)
-  }
-
-  /**
-   * 设置最大攻击力
-   */
-  set maxAttack(value: number) {
-    this.setAttributeBase(ATTRIBUTE_CODE.maxAttack, value)
-  }
-
-  /**
-   * 获取平均攻击力
+   * 获取攻击力
    */
   get attack(): number {
     return this.getAttribute(ATTRIBUTE_CODE.attack)
   }
 
   /**
-   * 设置平均攻击力
+   * 设置攻击力
    */
   set attack(value: number) {
     this.setAttributeBase(ATTRIBUTE_CODE.attack, value)
@@ -534,17 +506,6 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获取随机攻击力（用于伤害计算）
-   * 在minAttack和maxAttack之间随机取值
-   * @returns 随机攻击力
-   */
-  getRandomAttackDamage(): number {
-    const minAtk = this.getAttribute(ATTRIBUTE_CODE.minAttack)
-    const maxAtk = this.getAttribute(ATTRIBUTE_CODE.maxAttack)
-    return Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
-  }
-
-  /**
    * 设置属性值
    * @param attribute - 属性名称
    * @param value - 属性值
@@ -565,12 +526,6 @@ export class BattleParticipantImpl implements BattleEntity {
         break
       case ATTRIBUTE_CODE.attack:
         this.attack = value
-        break
-      case ATTRIBUTE_CODE.minAttack:
-        this.minAttack = value
-        break
-      case ATTRIBUTE_CODE.maxAttack:
-        this.maxAttack = value
         break
       case ATTRIBUTE_CODE.defense:
         this.defense = value

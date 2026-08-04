@@ -20,8 +20,6 @@ import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
 import {
-  REVERSE_BONUS_ATTR_MAP,
-  syncAttackRange,
   syncBonusAttribute,
   syncReverseBonusAttribute,
 } from '@/shared/utils/attributeSync'
@@ -391,17 +389,6 @@ export class SkillExecutor {
         syncBonusAttribute(modTarget, attrCode, newMod, sourceKey)
         // 反向：加成属性 → 主属性（仅 SkillExecutor 有此逻辑）
         syncReverseBonusAttribute(modTarget, attrCode, newMod, sourceKey)
-        // attackBonus → attack → 再拆分到 minAttack/maxAttack
-        const mainAttr = REVERSE_BONUS_ATTR_MAP[attrCode]
-        if (mainAttr === ATTRIBUTE_CODE.attack) {
-          syncAttackRange(
-            modTarget,
-            { ...newMod, attribute: ATTRIBUTE_CODE.attack },
-            sourceKey,
-          )
-        }
-        // PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
-        syncAttackRange(modTarget, newMod, sourceKey)
       }
     }
 

@@ -11,18 +11,6 @@ export const defaultAttrs = {
     modifiers: [],
     cachedVersion: 0,
   },
-  [ATTRIBUTE_CODE.minAttack]: {
-    value: 50,
-    base: 50,
-    modifiers: [],
-    cachedVersion: 0,
-  },
-  [ATTRIBUTE_CODE.maxAttack]: {
-    value: 75,
-    base: 75,
-    modifiers: [],
-    cachedVersion: 0,
-  },
   [ATTRIBUTE_CODE.defense]: {
     value: 15,
     base: 15,
@@ -121,13 +109,6 @@ export function createMockEntity(
     setModifierProvider: () => {},
     getBuffInstanceIds: () => [],
     hasBuff: () => false,
-    getRandomAttackDamage: () =>
-      Math.floor(
-        Math.random() *
-          ((attrs[ATTRIBUTE_CODE.maxAttack]?.value ?? 0) -
-            (attrs[ATTRIBUTE_CODE.minAttack]?.value ?? 0) +
-            1),
-      ) + (attrs[ATTRIBUTE_CODE.minAttack]?.value ?? 0),
     takeDamage: (n: number) => n,
     heal: (n: number) => n,
     isAlive: () => true,

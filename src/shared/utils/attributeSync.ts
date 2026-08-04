@@ -1,17 +1,16 @@
 /**
  * 文件: attributeSync.ts
- * 功能: 属性加成同步工具 — 主属性 ⇄ 加成属性、attack → minAttack/maxAttack
+ * 功能: 属性加成同步工具 — 主属性 ⇄ 加成属性
  * 描述: 抽取 SkillExecutor.executeModifyAttribute 和 GameDataProcessor.pushModifier
  *       中重复的加成同步逻辑，统一维护。
  */
-import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType, type Modifier } from '@/domain/attribute/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 
 /** 主属性 → 加成属性映射 */
 export const BONUS_ATTR_MAP: Partial<Record<string, string>> = {
   [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
-  [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
-  [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
+  [ATTRIBUTE_CODE.attack]: ATTRIBUTE_CODE.attackBonus,
   [ATTRIBUTE_CODE.defense]: ATTRIBUTE_CODE.defenseBonus,
   [ATTRIBUTE_CODE.speed]: ATTRIBUTE_CODE.speedBonus,
 }
@@ -60,23 +59,4 @@ export function syncReverseBonusAttribute(
   mainData.modifiers = mainData.modifiers.filter(m => m.sourceKey !== sourceKey)
   mainData.modifiers.push({ ...mod, attribute: mainAttr as ATTRIBUTE_CODE })
   mainData.cachedVersion = -1
-}
-
-/**
- * 同步 attack 的修饰符到 minAttack/maxAttack
- * 类型和值保持不变（PERCENTAGE → PERCENTAGE, ADDITIVE → ADDITIVE）
- */
-export function syncAttackRange(
-  participant: BattleEntity,
-  mod: Modifier,
-  sourceKey: string,
-): void {
-  if (mod.attribute !== ATTRIBUTE_CODE.attack) return
-  for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-    const targetData = participant.getAttrValue(targetAttr)
-    if (!targetData) continue
-    targetData.modifiers = targetData.modifiers.filter(m => m.sourceKey !== sourceKey)
-    targetData.modifiers.push({ ...mod, attribute: targetAttr })
-    targetData.cachedVersion = -1
-  }
 }

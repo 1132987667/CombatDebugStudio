@@ -23,8 +23,7 @@
       <template #actions>
         <template v-if="activeModule === 'huanling'">
           <Button @click="showRulesDialog = true">战斗规则</Button>
-          <!-- NOTE: 调试控制/数据快照操作活战场（battleStore/BattleField 动画），归属唤灵台而非分析模块 -->
-          <Button @click="showDataSnapshotDialog = true">数据快照</Button>
+          <!-- NOTE: 调试控制操作活战场（battleStore/BattleField 动画），归属唤灵台而非分析模块 -->
           <Button @click="showDebugControlDialog = true">调试面板</Button>
           <Button @click="saveRecording">保存战斗记录</Button>
         </template>
@@ -83,8 +82,6 @@
 
     <CompendiumDialog v-model="showCompendiumDialog" />
 
-    <DataSnapshotDialog v-model="showDataSnapshotDialog" />
-
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
     <!-- 底部控制栏（唤灵台专属） -->
@@ -131,7 +128,6 @@ import BattleField from "./BattleField.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import type { CharacterOption } from "./components/CharacterEditor.vue";
 import CharacterEditor from "./components/CharacterEditor.vue";
-import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import ControlBar from "./ControlBar.vue";
@@ -154,7 +150,6 @@ const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const showCompendiumDialog = ref(false);
-const showDataSnapshotDialog = ref(false);
 const showDebugControlDialog = ref(false);
 
 // 当前激活模块（9.3：唤灵台为默认模块）
@@ -378,12 +373,12 @@ const characterOptions = computed<CharacterOption[]>(() => {
 /** 当前选中角色的 5 个核心属性值（用于属性调整 Tab 的显示，通过 getAttrVal 获取以保证类型正确） */
 const currentAttrs = computed(() => {
   const char = selectedCharacter.value
-  const defaults = { currentHealth: 0, currentEnergy: 0, minAttack: 0, defense: 0, speed: 0 }
+  const defaults = { currentHealth: 0, currentEnergy: 0, attack: 0, defense: 0, speed: 0 }
   if (!char) return defaults
   return {
     currentHealth: battleStore.participants.get(char.id)?.currentHealth ?? 0,
     currentEnergy: battleStore.participants.get(char.id)?.currentEnergy ?? 0,
-    minAttack: char.getAttrVal(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
+    attack: char.getAttrVal(ATTRIBUTE_CODE.attack)?.value ?? 0,
     defense: char.getAttrVal(ATTRIBUTE_CODE.defense)?.value ?? 0,
     speed: char.getAttrVal(ATTRIBUTE_CODE.speed)?.value ?? 0,
   }
@@ -584,7 +579,7 @@ const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_ene
     buffSystem.clearAllBuffs(payload.charId)
     // 同时清除属性注入修饰符
     const stack = buffSystem.getModifierStack(payload.charId)
-    for (const key of ['minAttack', 'defense', 'speed']) {
+    for (const key of ['attack', 'defense', 'speed']) {
       stack.removeModifier(`injection_${key}`)
     }
     entity.recalcAll()

@@ -6,13 +6,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 18,
-      "maxAttack": 22,
       "defense": 0,
       "speed": 100,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 20
     },
     "drops": [],
     "skills": {
@@ -28,13 +27,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 4,
-      "maxAttack": 6,
       "defense": 20,
       "speed": 50,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 5
     },
     "drops": [],
     "skills": {
@@ -50,13 +48,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 13,
-      "maxAttack": 17,
       "defense": 0,
       "speed": 120,
       "critRate": 100,
       "critDamage": 150,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 15
     },
     "drops": [],
     "skills": {
@@ -72,14 +69,13 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 9,
-      "maxAttack": 11,
       "defense": 0,
       "speed": 80,
       "critRate": 0,
       "critDamage": 100,
       "dodge": 0,
-      "critDmgTakenReduction": 100
+      "critDmgTakenReduction": 100,
+      "attack": 10
     },
     "drops": [],
     "skills": {
@@ -95,13 +91,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 9,
-      "maxAttack": 11,
       "defense": 0,
       "speed": 110,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 80
+      "dodge": 80,
+      "attack": 10
     },
     "drops": [],
     "skills": {
@@ -121,13 +116,12 @@
     "stats": {
       "currentHealth": 150,
       "maxHealth": 150,
-      "minAttack": 34,
-      "maxAttack": 42,
       "defense": 12,
       "speed": 90,
       "critRate": 50,
       "critDamage": 120,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 38
     },
     "drops": [],
     "skills": {
@@ -146,13 +140,12 @@
     "stats": {
       "currentHealth": 150,
       "maxHealth": 150,
-      "minAttack": 31,
-      "maxAttack": 39,
       "defense": 15,
       "speed": 60,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 35
     },
     "drops": [],
     "skills": {
@@ -171,13 +164,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 4,
-      "maxAttack": 6,
       "defense": 0,
       "speed": 80,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 5
     },
     "drops": [],
     "skills": {
@@ -197,13 +189,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 4,
-      "maxAttack": 6,
       "defense": 0,
       "speed": 70,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 5
     },
     "drops": [],
     "skills": {
@@ -222,13 +213,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 4,
-      "maxAttack": 6,
       "defense": 0,
       "speed": 100,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 5
     },
     "drops": [],
     "skills": {
@@ -248,13 +238,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 7,
-      "maxAttack": 9,
       "defense": 5,
       "speed": 75,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 8
     },
     "drops": [],
     "skills": {
@@ -273,13 +262,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 10,
-      "maxAttack": 14,
       "defense": 0,
       "speed": 95,
       "critRate": 50,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 12
     },
     "drops": [],
     "skills": {
@@ -298,13 +286,12 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "minAttack": 0,
-      "maxAttack": 0,
       "defense": 5,
       "speed": 5,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 0
     },
     "drops": [],
     "skills": {},
@@ -317,13 +304,12 @@
     "stats": {
       "currentHealth": 500,
       "maxHealth": 500,
-      "minAttack": 0,
-      "maxAttack": 0,
       "defense": 15,
       "speed": 15,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 0
     },
     "drops": [],
     "skills": {},
@@ -336,13 +322,12 @@
     "stats": {
       "currentHealth": 1000,
       "maxHealth": 1000,
-      "minAttack": 0,
-      "maxAttack": 0,
       "defense": 30,
       "speed": 30,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 0
     },
     "drops": [],
     "skills": {},
@@ -355,13 +340,12 @@
     "stats": {
       "currentHealth": 500,
       "maxHealth": 500,
-      "minAttack": 20,
-      "maxAttack": 30,
       "defense": 10,
       "speed": 90,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 25
     },
     "drops": [],
     "skills": {
@@ -380,13 +364,12 @@
     "stats": {
       "currentHealth": 500,
       "maxHealth": 500,
-      "minAttack": 20,
-      "maxAttack": 30,
       "defense": 10,
       "speed": 90,
       "critRate": 0,
       "critDamage": 100,
-      "dodge": 0
+      "dodge": 0,
+      "attack": 25
     },
     "drops": [],
     "skills": {

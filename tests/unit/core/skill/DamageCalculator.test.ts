@@ -4,6 +4,8 @@ import { createMockEntity, defaultAttrs } from '@tests/mocks/MockEntity'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory } from '@/domain/skill/types'
+import type { CombatRecord } from '@/domain/battle/combat-record'
+import type { StepExecutionContext } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 
@@ -44,7 +46,6 @@ describe('DamageCalculator', () => {
     it('should calculate damage based on formula', () => {
       const source = createMockEntity()
       const target = createMockEntity()
-      source.getRandomAttackDamage = () => 100
       const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] } })
 
       const result = calculator.calculateDamage(step, source, target)
@@ -52,6 +53,48 @@ describe('DamageCalculator', () => {
       expect(result.isMiss).toBe(false)
       expect(result.damage).toBeGreaterThan(0)
       expect(result.damage).toBeLessThanOrEqual(300)
+    })
+
+    it('v2.1.0: 无 calculation 时基础伤害 = attack + level×2，且确定无区间随机', () => {
+      // 攻击模型扁平化：无 calculation 的 skillStep 走 calculateBaseDamage 默认分支，
+      // 直接取单一 attack（不再用 min/max 区间 + Math.random）
+      const source = createMockEntity() // attack=63, level=50
+      const target = createMockEntity()
+      calculator = new DamageCalculator({ minDamageThreshold: 0, maxDamageThreshold: 99999 })
+
+      const step = createSkillStep({ calculation: undefined })
+      const context: StepExecutionContext = { record: { effects: [] } as unknown as CombatRecord }
+      calculator.calculateDamage(step, source, target, context)
+
+      // floor(63 + 50×2) = 163 —— 精确值，覆盖等级加成项（levelBonus=100）
+      expect(context.record!.damageBreakdown!.baseDamage).toBe(163)
+
+      // 确定性：多次调用结果一致（扁平化后不再依赖随机伤害区间）
+      const r1 = calculator.calculateDamage(step, source, target)
+      const r2 = calculator.calculateDamage(step, source, target)
+      expect(r1.damage).toBe(r2.damage)
+    })
+
+    it('v2.1.0: 基础伤害随 attack 线性变化（单一数据源）', () => {
+      const target = createMockEntity()
+      const step = createSkillStep({ calculation: undefined })
+
+      const baseOf = (atk: number): number => {
+        const s = createMockEntity()
+        const orig = s.getAttribute
+        s.getAttribute = (attr: string) => {
+          if (attr === ATTRIBUTE_CODE.attack) return atk
+          return orig(attr)
+        }
+        const ctx: StepExecutionContext = { record: { effects: [] } as unknown as CombatRecord }
+        calculator.calculateDamage(step, s, target, ctx)
+        return ctx.record!.damageBreakdown!.baseDamage
+      }
+
+      // level=50 → levelBonus=100；attack 63→163、100→200、0→100（仅剩等级加成）
+      expect(baseOf(63)).toBe(163)
+      expect(baseOf(100)).toBe(200)
+      expect(baseOf(0)).toBe(100)
     })
 
     it('should apply dodge when target has max dodge rate', () => {
@@ -84,11 +127,10 @@ describe('DamageCalculator', () => {
       const source = createMockEntity()
       const target = createMockEntity()
       const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] } })
-      source.getRandomAttackDamage = () => 0
       const origGetAttr = source.getAttribute
       source.getAttribute = (attr: string) => {
         if (attr === ATTRIBUTE_CODE.hit) return 100
-        if (attr === ATTRIBUTE_CODE.attack || attr === ATTRIBUTE_CODE.minAttack || attr === ATTRIBUTE_CODE.maxAttack) return 0
+        if (attr === ATTRIBUTE_CODE.attack) return 0
         return origGetAttr(attr)
       }
 

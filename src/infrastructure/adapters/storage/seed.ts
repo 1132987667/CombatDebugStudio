@@ -133,7 +133,7 @@ function buildGrowth(): GrowthCurveData[] {
     {
       id: 'growth_balanced',
       name: '均衡型',
-      perLevel: { maxHealth: 60, minAttack: 8, maxAttack: 8, defense: 4, speed: 2 },
+      perLevel: { maxHealth: 60, attack: 8, defense: 4, speed: 2 },
       expTable: [
         { level: 2, expRequired: 120 },
         { level: 3, expRequired: 260 },
@@ -143,7 +143,7 @@ function buildGrowth(): GrowthCurveData[] {
     {
       id: 'growth_attack',
       name: '攻击型',
-      perLevel: { maxHealth: 45, minAttack: 12, maxAttack: 12, defense: 2, speed: 3 },
+      perLevel: { maxHealth: 45, attack: 12, defense: 2, speed: 3 },
       expTable: [
         { level: 2, expRequired: 140 },
         { level: 3, expRequired: 300 },
@@ -152,7 +152,7 @@ function buildGrowth(): GrowthCurveData[] {
     {
       id: 'growth_defense',
       name: '防御型',
-      perLevel: { maxHealth: 90, minAttack: 4, maxAttack: 4, defense: 10, speed: 1 },
+      perLevel: { maxHealth: 90, attack: 4, defense: 10, speed: 1 },
       expTable: [
         { level: 2, expRequired: 110 },
         { level: 3, expRequired: 240 },
@@ -161,7 +161,7 @@ function buildGrowth(): GrowthCurveData[] {
     {
       id: 'growth_speed',
       name: '速度型',
-      perLevel: { maxHealth: 50, minAttack: 6, maxAttack: 6, defense: 3, speed: 5 },
+      perLevel: { maxHealth: 50, attack: 6, defense: 3, speed: 5 },
       expTable: [
         { level: 2, expRequired: 130 },
         { level: 3, expRequired: 280 },

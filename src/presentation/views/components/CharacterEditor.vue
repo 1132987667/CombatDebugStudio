@@ -218,7 +218,7 @@ const activeCategory = ref<string>('all') // 'all' 或 facet key
 const localStatuses = ref<EditorBuffEntry[]>([]) // 本地状态的 Buff 入口
 
 const attrOverrides = ref<Record<string, number>>({
-  currentHealth: 0, currentEnergy: 0, minAttack: 0, defense: 0, speed: 0,
+  currentHealth: 0, currentEnergy: 0, attack: 0, defense: 0, speed: 0,
 })
 const attrDirty = ref(false)
 let _skipDirtyMark = false
@@ -242,7 +242,7 @@ const SIDEBAR_DEFS: { key: string; label: string; categoryMatch?: StatusCategory
 const attrFields: AttrOverrideItem[] = [
   { key: 'currentHealth', label: '气血', min: 0, max: 99999, steps: [100, 10, 1] },
   { key: 'currentEnergy', label: '能量', min: 0, max: 999, steps: [100, 10, 1] },
-  { key: 'minAttack', label: '攻击', min: 0, max: 99999, steps: [100, 10, 1] },
+  { key: 'attack', label: '攻击', min: 0, max: 99999, steps: [100, 10, 1] },
   { key: 'defense', label: '防御', min: 0, max: 99999, steps: [100, 10, 1] },
   { key: 'speed', label: '速度', min: 0, max: 9999, steps: [100, 10, 1] },
 ]

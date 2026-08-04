@@ -33,7 +33,12 @@
     "type": "consumable",
     "description": "基础的恢复丹药，可恢复少量气血值",
     "rarity": 1,
-    "effects": [{ "type": "heal", "value": 30 }]
+    "effects": [
+      {
+        "type": "heal",
+        "value": 30
+      }
+    ]
   },
   {
     "id": "elix_002",
@@ -41,7 +46,12 @@
     "type": "consumable",
     "description": "中级的恢复丹药，可恢复中等气血值",
     "rarity": 2,
-    "effects": [{ "type": "heal", "value": 60 }]
+    "effects": [
+      {
+        "type": "heal",
+        "value": 60
+      }
+    ]
   },
   {
     "id": "elix_003",
@@ -49,7 +59,12 @@
     "type": "consumable",
     "description": "高级的恢复丹药，可恢复大量气血值",
     "rarity": 3,
-    "effects": [{ "type": "heal", "value": 100 }]
+    "effects": [
+      {
+        "type": "heal",
+        "value": 100
+      }
+    ]
   },
   {
     "id": "weapon_001",
@@ -59,8 +74,7 @@
     "rarity": 1,
     "slot": "weapon",
     "stats": {
-      "minAttack": 5,
-      "maxAttack": 8
+      "attack": 7
     }
   },
   {
@@ -357,7 +371,12 @@
     "type": "consumable",
     "description": "中阶恢复丹药，可恢复中等偏多的气血值",
     "rarity": 2,
-    "effects": [{ "type": "heal", "value": 120 }]
+    "effects": [
+      {
+        "type": "heal",
+        "value": 120
+      }
+    ]
   },
   {
     "id": "elix_005",
@@ -365,7 +384,12 @@
     "type": "consumable",
     "description": "聚气丹药，服用后短暂凝聚力量",
     "rarity": 2,
-    "effects": [{ "type": "heal", "value": 60 }]
+    "effects": [
+      {
+        "type": "heal",
+        "value": 60
+      }
+    ]
   },
   {
     "id": "elix_006",
@@ -373,7 +397,12 @@
     "type": "consumable",
     "description": "凝聚元气的高阶丹药，可恢复大量气血值",
     "rarity": 3,
-    "effects": [{ "type": "heal", "value": 160 }]
+    "effects": [
+      {
+        "type": "heal",
+        "value": 160
+      }
+    ]
   },
   {
     "id": "elix_007",
@@ -381,6 +410,11 @@
     "type": "consumable",
     "description": "传说级别的还魂丹药，危急时刻起死回生",
     "rarity": 3,
-    "effects": [{ "type": "heal", "value": 200 }]
+    "effects": [
+      {
+        "type": "heal",
+        "value": 200
+      }
+    ]
   }
 ]

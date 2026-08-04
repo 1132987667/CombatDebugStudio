@@ -12,7 +12,7 @@ import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import type { BattleData, BattleEntity } from '@/domain/battle/type/types'
-import { ParticipantSide } from '@/domain/battle/type/types'
+import { ParticipantSide, ActionTypes } from '@/domain/battle/type/types'
 
 // 镜像 BattleExecutor 内的局部 DTO（非导出，测试侧定义同构结构）
 interface TestTargetResult {
@@ -56,6 +56,7 @@ function makeEntity(
     team,
     currentHealth: hp,
     isAlive: () => hp > 0,
+    afterAction: () => {},
   } as unknown as BattleEntity
 }
 
@@ -413,6 +414,57 @@ describe('BattleExecutor 日志发射器', () => {
     expect(warn[0].meta).toMatchObject({
       role: 'action',
       skillName: '火球术',
+    })
+  })
+
+  it('executeAction 技能路径：日志经 projectSkillLog 统一投影（【技能名】+ 敌我前缀，不再手写裸 skillId）', async () => {
+    const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
+    const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50)
+    const battle = {
+      currentTurn: 1,
+      battleId: 'b1',
+      participants: new Map<string, BattleEntity>([
+        ['s1', source],
+        ['t1', target],
+      ]),
+      actions: [],
+    } as unknown as BattleData
+    // 零伤害零治疗技能（走"无伤害/治疗"分支，避免动画/结算依赖）
+    vi.spyOn(skillManager, 'executeSkill').mockReturnValue({
+      success: true,
+      damage: 0,
+      heal: 0,
+      effects: [],
+      isCrit: false,
+    } as any)
+    // 替换 animationManager mock，提供动画方法
+    ;(executor as any).animationManager = {
+      triggerAnimationAndWait: vi.fn().mockResolvedValue(undefined),
+      triggerFlightPhaseAndWait: vi.fn().mockResolvedValue(undefined),
+      triggerImpactPhaseAndWait: vi.fn().mockResolvedValue(undefined),
+      triggerDirectImpactAndWait: vi.fn().mockResolvedValue(undefined),
+      triggerMissImpactAndWait: vi.fn().mockResolvedValue(undefined),
+      triggerBuffEffectAndWait: vi.fn().mockResolvedValue(undefined),
+    }
+
+    await (executor as any).executeAction(battle, {
+      type: ActionTypes.SKILL,
+      sourceId: 's1',
+      targetId: 't1',
+      skillId: 'skill_fireball',
+      turn: 1,
+    })
+
+    const action = addBattleLog.mock.calls[0][0]
+    expect(action.message).toBe('[友方]剑客 对 [敌方]史莱姆 使用 【火球术】')
+    expect(action.category).toBe(BATTLE_LOG_CATEGORIES.STATUS)
+    expect(action.meta).toMatchObject({ role: 'action', skillName: 'skill_fireball' })
+    const skillSeg = action.segments.find((s: any) => s.kind === 'skill')
+    expect(skillSeg).toMatchObject({ text: '【火球术】' })
+    expect(action.segments[0]).toMatchObject({
+      text: '[友方]剑客',
+      kind: 'entity',
+      faction: 'ally',
     })
   })
 })

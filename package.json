@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "generate:attributes": "node scripts/generate-attributes.cjs",
+    "predev": "node scripts/generate-attributes.cjs",
     "dev": "vite --host",
+    "prebuild": "node scripts/generate-attributes.cjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

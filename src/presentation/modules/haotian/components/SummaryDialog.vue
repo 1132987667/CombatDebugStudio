@@ -28,7 +28,7 @@
         </thead>
         <tbody>
           <tr v-for="r in rows" :key="r.id">
-            <td class="l nm">{{ store.pname(r.id) }}</td>
+            <td class="l nm">{{ store.pnameSide(r.id) }}</td>
             <td>{{ r.s.attacks }}</td>
             <td class="num">{{ r.s.dealt }}</td>
             <td class="num">{{ r.s.taken }}</td>
@@ -78,7 +78,7 @@ const rows = computed<Array<{ id: string; s: UnitSummary }>>(() => {
 const winnerText = computed(() => {
   const sum = summary.value
   if (!sum?.winner) return ''
-  return store.archive?.initialState.participants.find((p) => p.id === sum.winner)?.name ?? sum.winner
+  return store.pnameSide(sum.winner)
 })
 
 /** dot 伤害无 sourceId，提示承伤与输出无需对账 */

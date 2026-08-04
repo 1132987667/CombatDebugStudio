@@ -5,10 +5,9 @@
     "level": 1,
     "stats": {
       "currentHealth": 57,
-      "minAttack": 6,
-      "maxAttack": 9,
       "defense": 3,
-      "speed": 11
+      "speed": 11,
+      "attack": 8
     },
     "drops": [
       {
@@ -23,7 +22,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_001_small"]
+      "small": [
+        "skill_enemy_001_small"
+      ]
     }
   },
   {
@@ -32,10 +33,9 @@
     "level": 2,
     "stats": {
       "currentHealth": 68,
-      "minAttack": 7,
-      "maxAttack": 11,
       "defense": 4,
-      "speed": 13
+      "speed": 13,
+      "attack": 9
     },
     "drops": [
       {
@@ -50,7 +50,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_002_small"]
+      "small": [
+        "skill_enemy_002_small"
+      ]
     }
   },
   {
@@ -59,10 +61,9 @@
     "level": 2,
     "stats": {
       "currentHealth": 68,
-      "minAttack": 7,
-      "maxAttack": 11,
       "defense": 4,
-      "speed": 13
+      "speed": 13,
+      "attack": 9
     },
     "drops": [
       {
@@ -77,7 +78,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_003_small"]
+      "small": [
+        "skill_enemy_003_small"
+      ]
     }
   },
   {
@@ -86,10 +89,9 @@
     "level": 4,
     "stats": {
       "currentHealth": 81,
-      "minAttack": 10,
-      "maxAttack": 15,
       "defense": 7,
-      "speed": 16
+      "speed": 16,
+      "attack": 13
     },
     "drops": [
       {
@@ -104,8 +106,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_004_small"],
-      "passive": ["skill_enemy_004_passive"]
+      "small": [
+        "skill_enemy_004_small"
+      ],
+      "passive": [
+        "skill_enemy_004_passive"
+      ]
     }
   },
   {
@@ -114,10 +120,9 @@
     "level": 5,
     "stats": {
       "currentHealth": 92,
-      "minAttack": 12,
-      "maxAttack": 18,
       "defense": 8,
-      "speed": 18
+      "speed": 18,
+      "attack": 15
     },
     "drops": [
       {
@@ -132,8 +137,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_005_small"],
-      "passive": ["skill_enemy_005_passive"]
+      "small": [
+        "skill_enemy_005_small"
+      ],
+      "passive": [
+        "skill_enemy_005_passive"
+      ]
     }
   },
   {
@@ -142,10 +151,9 @@
     "level": 5,
     "stats": {
       "currentHealth": 92,
-      "minAttack": 12,
-      "maxAttack": 18,
       "defense": 8,
-      "speed": 18
+      "speed": 18,
+      "attack": 15
     },
     "drops": [
       {
@@ -160,8 +168,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_006_small"],
-      "passive": ["skill_enemy_006_passive"]
+      "small": [
+        "skill_enemy_006_small"
+      ],
+      "passive": [
+        "skill_enemy_006_passive"
+      ]
     }
   },
   {
@@ -170,10 +182,9 @@
     "level": 8,
     "stats": {
       "currentHealth": 147,
-      "minAttack": 20,
-      "maxAttack": 30,
       "defense": 14,
-      "speed": 23
+      "speed": 23,
+      "attack": 25
     },
     "drops": [
       {
@@ -188,9 +199,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_007_small"],
-      "passive": ["skill_enemy_007_passive"],
-      "ultimate": ["skill_enemy_007_ultimate"]
+      "small": [
+        "skill_enemy_007_small"
+      ],
+      "passive": [
+        "skill_enemy_007_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_007_ultimate"
+      ]
     }
   },
   {
@@ -199,10 +216,9 @@
     "level": 9,
     "stats": {
       "currentHealth": 160,
-      "minAttack": 22,
-      "maxAttack": 33,
       "defense": 15,
-      "speed": 25
+      "speed": 25,
+      "attack": 28
     },
     "drops": [
       {
@@ -217,9 +233,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_008_small"],
-      "passive": ["skill_enemy_008_passive"],
-      "ultimate": ["skill_enemy_008_ultimate"]
+      "small": [
+        "skill_enemy_008_small"
+      ],
+      "passive": [
+        "skill_enemy_008_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_008_ultimate"
+      ]
     }
   },
   {
@@ -228,10 +250,9 @@
     "level": 9,
     "stats": {
       "currentHealth": 160,
-      "minAttack": 22,
-      "maxAttack": 33,
       "defense": 15,
-      "speed": 25
+      "speed": 25,
+      "attack": 28
     },
     "drops": [
       {
@@ -246,9 +267,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_001_small"],
-      "passive": ["skill_boss_001_passive"],
-      "ultimate": ["skill_boss_001_ultimate"]
+      "small": [
+        "skill_boss_001_small"
+      ],
+      "passive": [
+        "skill_boss_001_passive"
+      ],
+      "ultimate": [
+        "skill_boss_001_ultimate"
+      ]
     }
   },
   {
@@ -257,10 +284,9 @@
     "level": 3,
     "stats": {
       "currentHealth": 80,
-      "minAttack": 9,
-      "maxAttack": 14,
       "defense": 5,
-      "speed": 15
+      "speed": 15,
+      "attack": 12
     },
     "drops": [
       {
@@ -275,7 +301,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_009_small"]
+      "small": [
+        "skill_enemy_009_small"
+      ]
     }
   },
   {
@@ -284,10 +312,9 @@
     "level": 4,
     "stats": {
       "currentHealth": 92,
-      "minAttack": 10,
-      "maxAttack": 16,
       "defense": 7,
-      "speed": 18
+      "speed": 18,
+      "attack": 13
     },
     "drops": [
       {
@@ -302,7 +329,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_010_small"]
+      "small": [
+        "skill_enemy_010_small"
+      ]
     }
   },
   {
@@ -311,10 +340,9 @@
     "level": 4,
     "stats": {
       "currentHealth": 92,
-      "minAttack": 10,
-      "maxAttack": 16,
       "defense": 7,
-      "speed": 18
+      "speed": 18,
+      "attack": 13
     },
     "drops": [
       {
@@ -329,7 +357,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_011_small"]
+      "small": [
+        "skill_enemy_011_small"
+      ]
     }
   },
   {
@@ -338,10 +368,9 @@
     "level": 6,
     "stats": {
       "currentHealth": 115,
-      "minAttack": 14,
-      "maxAttack": 22,
       "defense": 10,
-      "speed": 22
+      "speed": 22,
+      "attack": 18
     },
     "drops": [
       {
@@ -356,8 +385,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_012_small"],
-      "passive": ["skill_enemy_012_passive"]
+      "small": [
+        "skill_enemy_012_small"
+      ],
+      "passive": [
+        "skill_enemy_012_passive"
+      ]
     }
   },
   {
@@ -366,10 +399,9 @@
     "level": 7,
     "stats": {
       "currentHealth": 128,
-      "minAttack": 16,
-      "maxAttack": 24,
       "defense": 11,
-      "speed": 24
+      "speed": 24,
+      "attack": 20
     },
     "drops": [
       {
@@ -384,8 +416,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_013_small"],
-      "passive": ["skill_enemy_013_passive"]
+      "small": [
+        "skill_enemy_013_small"
+      ],
+      "passive": [
+        "skill_enemy_013_passive"
+      ]
     }
   },
   {
@@ -394,10 +430,9 @@
     "level": 7,
     "stats": {
       "currentHealth": 128,
-      "minAttack": 16,
-      "maxAttack": 24,
       "defense": 11,
-      "speed": 24
+      "speed": 24,
+      "attack": 20
     },
     "drops": [
       {
@@ -412,8 +447,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_014_small"],
-      "passive": ["skill_enemy_014_passive"]
+      "small": [
+        "skill_enemy_014_small"
+      ],
+      "passive": [
+        "skill_enemy_014_passive"
+      ]
     }
   },
   {
@@ -422,10 +461,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 184,
-      "minAttack": 26,
-      "maxAttack": 38,
       "defense": 16,
-      "speed": 29
+      "speed": 29,
+      "attack": 32
     },
     "drops": [
       {
@@ -440,9 +478,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_015_small"],
-      "passive": ["skill_enemy_015_passive"],
-      "ultimate": ["skill_enemy_015_ultimate"]
+      "small": [
+        "skill_enemy_015_small"
+      ],
+      "passive": [
+        "skill_enemy_015_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_015_ultimate"
+      ]
     }
   },
   {
@@ -451,10 +495,9 @@
     "level": 11,
     "stats": {
       "currentHealth": 198,
-      "minAttack": 28,
-      "maxAttack": 41,
       "defense": 17,
-      "speed": 31
+      "speed": 31,
+      "attack": 35
     },
     "drops": [
       {
@@ -469,9 +512,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_016_small"],
-      "passive": ["skill_enemy_016_passive"],
-      "ultimate": ["skill_enemy_016_ultimate"]
+      "small": [
+        "skill_enemy_016_small"
+      ],
+      "passive": [
+        "skill_enemy_016_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_016_ultimate"
+      ]
     }
   },
   {
@@ -480,10 +529,9 @@
     "level": 11,
     "stats": {
       "currentHealth": 198,
-      "minAttack": 28,
-      "maxAttack": 41,
       "defense": 17,
-      "speed": 31
+      "speed": 31,
+      "attack": 35
     },
     "drops": [
       {
@@ -498,9 +546,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_002_small"],
-      "passive": ["skill_boss_002_passive"],
-      "ultimate": ["skill_boss_002_ultimate"]
+      "small": [
+        "skill_boss_002_small"
+      ],
+      "passive": [
+        "skill_boss_002_passive"
+      ],
+      "ultimate": [
+        "skill_boss_002_ultimate"
+      ]
     }
   },
   {
@@ -509,10 +563,9 @@
     "level": 5,
     "stats": {
       "currentHealth": 92,
-      "minAttack": 12,
-      "maxAttack": 18,
       "defense": 8,
-      "speed": 18
+      "speed": 18,
+      "attack": 15
     },
     "drops": [
       {
@@ -527,7 +580,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_017_small"]
+      "small": [
+        "skill_enemy_017_small"
+      ]
     }
   },
   {
@@ -536,10 +591,9 @@
     "level": 6,
     "stats": {
       "currentHealth": 104,
-      "minAttack": 14,
-      "maxAttack": 21,
       "defense": 9,
-      "speed": 21
+      "speed": 21,
+      "attack": 18
     },
     "drops": [
       {
@@ -554,7 +608,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_018_small"]
+      "small": [
+        "skill_enemy_018_small"
+      ]
     }
   },
   {
@@ -563,10 +619,9 @@
     "level": 6,
     "stats": {
       "currentHealth": 104,
-      "minAttack": 14,
-      "maxAttack": 21,
       "defense": 9,
-      "speed": 21
+      "speed": 21,
+      "attack": 18
     },
     "drops": [
       {
@@ -581,7 +636,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_019_small"]
+      "small": [
+        "skill_enemy_019_small"
+      ]
     }
   },
   {
@@ -590,10 +647,9 @@
     "level": 8,
     "stats": {
       "currentHealth": 147,
-      "minAttack": 20,
-      "maxAttack": 30,
       "defense": 14,
-      "speed": 23
+      "speed": 23,
+      "attack": 25
     },
     "drops": [
       {
@@ -608,8 +664,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_020_small"],
-      "passive": ["skill_enemy_020_passive"]
+      "small": [
+        "skill_enemy_020_small"
+      ],
+      "passive": [
+        "skill_enemy_020_passive"
+      ]
     }
   },
   {
@@ -618,10 +678,9 @@
     "level": 9,
     "stats": {
       "currentHealth": 160,
-      "minAttack": 22,
-      "maxAttack": 33,
       "defense": 15,
-      "speed": 25
+      "speed": 25,
+      "attack": 28
     },
     "drops": [
       {
@@ -636,8 +695,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_021_small"],
-      "passive": ["skill_enemy_021_passive"]
+      "small": [
+        "skill_enemy_021_small"
+      ],
+      "passive": [
+        "skill_enemy_021_passive"
+      ]
     }
   },
   {
@@ -646,10 +709,9 @@
     "level": 9,
     "stats": {
       "currentHealth": 160,
-      "minAttack": 22,
-      "maxAttack": 33,
       "defense": 15,
-      "speed": 25
+      "speed": 25,
+      "attack": 28
     },
     "drops": [
       {
@@ -664,8 +726,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_022_small"],
-      "passive": ["skill_enemy_022_passive"]
+      "small": [
+        "skill_enemy_022_small"
+      ],
+      "passive": [
+        "skill_enemy_022_passive"
+      ]
     }
   },
   {
@@ -674,10 +740,9 @@
     "level": 12,
     "stats": {
       "currentHealth": 242,
-      "minAttack": 33,
-      "maxAttack": 49,
       "defense": 21,
-      "speed": 34
+      "speed": 34,
+      "attack": 41
     },
     "drops": [
       {
@@ -692,9 +757,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_023_small"],
-      "passive": ["skill_enemy_023_passive"],
-      "ultimate": ["skill_enemy_023_ultimate"]
+      "small": [
+        "skill_enemy_023_small"
+      ],
+      "passive": [
+        "skill_enemy_023_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_023_ultimate"
+      ]
     }
   },
   {
@@ -703,10 +774,9 @@
     "level": 13,
     "stats": {
       "currentHealth": 257,
-      "minAttack": 35,
-      "maxAttack": 52,
       "defense": 22,
-      "speed": 36
+      "speed": 36,
+      "attack": 44
     },
     "drops": [
       {
@@ -721,9 +791,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_024_small"],
-      "passive": ["skill_enemy_024_passive"],
-      "ultimate": ["skill_enemy_024_ultimate"]
+      "small": [
+        "skill_enemy_024_small"
+      ],
+      "passive": [
+        "skill_enemy_024_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_024_ultimate"
+      ]
     }
   },
   {
@@ -732,10 +808,9 @@
     "level": 13,
     "stats": {
       "currentHealth": 257,
-      "minAttack": 35,
-      "maxAttack": 52,
       "defense": 22,
-      "speed": 36
+      "speed": 36,
+      "attack": 44
     },
     "drops": [
       {
@@ -750,9 +825,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_003_small"],
-      "passive": ["skill_boss_003_passive"],
-      "ultimate": ["skill_boss_003_ultimate"]
+      "small": [
+        "skill_boss_003_small"
+      ],
+      "passive": [
+        "skill_boss_003_passive"
+      ],
+      "ultimate": [
+        "skill_boss_003_ultimate"
+      ]
     }
   },
   {
@@ -761,10 +842,9 @@
     "level": 7,
     "stats": {
       "currentHealth": 128,
-      "minAttack": 16,
-      "maxAttack": 24,
       "defense": 11,
-      "speed": 24
+      "speed": 24,
+      "attack": 20
     },
     "drops": [
       {
@@ -779,7 +859,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_025_small"]
+      "small": [
+        "skill_enemy_025_small"
+      ]
     }
   },
   {
@@ -788,10 +870,9 @@
     "level": 8,
     "stats": {
       "currentHealth": 142,
-      "minAttack": 18,
-      "maxAttack": 27,
       "defense": 12,
-      "speed": 26
+      "speed": 26,
+      "attack": 23
     },
     "drops": [
       {
@@ -806,7 +887,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_026_small"]
+      "small": [
+        "skill_enemy_026_small"
+      ]
     }
   },
   {
@@ -815,10 +898,9 @@
     "level": 8,
     "stats": {
       "currentHealth": 142,
-      "minAttack": 18,
-      "maxAttack": 27,
       "defense": 12,
-      "speed": 26
+      "speed": 26,
+      "attack": 23
     },
     "drops": [
       {
@@ -833,7 +915,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_027_small"]
+      "small": [
+        "skill_enemy_027_small"
+      ]
     }
   },
   {
@@ -842,10 +926,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 184,
-      "minAttack": 26,
-      "maxAttack": 38,
       "defense": 16,
-      "speed": 29
+      "speed": 29,
+      "attack": 32
     },
     "drops": [
       {
@@ -860,8 +943,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_028_small"],
-      "passive": ["skill_enemy_028_passive"]
+      "small": [
+        "skill_enemy_028_small"
+      ],
+      "passive": [
+        "skill_enemy_028_passive"
+      ]
     }
   },
   {
@@ -870,10 +957,9 @@
     "level": 11,
     "stats": {
       "currentHealth": 198,
-      "minAttack": 28,
-      "maxAttack": 41,
       "defense": 17,
-      "speed": 31
+      "speed": 31,
+      "attack": 35
     },
     "drops": [
       {
@@ -888,8 +974,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_029_small"],
-      "passive": ["skill_enemy_029_passive"]
+      "small": [
+        "skill_enemy_029_small"
+      ],
+      "passive": [
+        "skill_enemy_029_passive"
+      ]
     }
   },
   {
@@ -898,10 +988,9 @@
     "level": 11,
     "stats": {
       "currentHealth": 198,
-      "minAttack": 28,
-      "maxAttack": 41,
       "defense": 17,
-      "speed": 31
+      "speed": 31,
+      "attack": 35
     },
     "drops": [
       {
@@ -916,8 +1005,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_030_small"],
-      "passive": ["skill_enemy_030_passive"]
+      "small": [
+        "skill_enemy_030_small"
+      ],
+      "passive": [
+        "skill_enemy_030_passive"
+      ]
     }
   },
   {
@@ -926,10 +1019,9 @@
     "level": 14,
     "stats": {
       "currentHealth": 276,
-      "minAttack": 38,
-      "maxAttack": 56,
       "defense": 23,
-      "speed": 39
+      "speed": 39,
+      "attack": 47
     },
     "drops": [
       {
@@ -944,9 +1036,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_031_small"],
-      "passive": ["skill_enemy_031_passive"],
-      "ultimate": ["skill_enemy_031_ultimate"]
+      "small": [
+        "skill_enemy_031_small"
+      ],
+      "passive": [
+        "skill_enemy_031_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_031_ultimate"
+      ]
     }
   },
   {
@@ -955,10 +1053,9 @@
     "level": 15,
     "stats": {
       "currentHealth": 293,
-      "minAttack": 40,
-      "maxAttack": 59,
       "defense": 24,
-      "speed": 41
+      "speed": 41,
+      "attack": 50
     },
     "drops": [
       {
@@ -973,9 +1070,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_032_small"],
-      "passive": ["skill_enemy_032_passive"],
-      "ultimate": ["skill_enemy_032_ultimate"]
+      "small": [
+        "skill_enemy_032_small"
+      ],
+      "passive": [
+        "skill_enemy_032_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_032_ultimate"
+      ]
     }
   },
   {
@@ -984,10 +1087,9 @@
     "level": 15,
     "stats": {
       "currentHealth": 293,
-      "minAttack": 40,
-      "maxAttack": 59,
       "defense": 24,
-      "speed": 41
+      "speed": 41,
+      "attack": 50
     },
     "drops": [
       {
@@ -1002,9 +1104,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_004_small"],
-      "passive": ["skill_boss_004_passive"],
-      "ultimate": ["skill_boss_004_ultimate"]
+      "small": [
+        "skill_boss_004_small"
+      ],
+      "passive": [
+        "skill_boss_004_passive"
+      ],
+      "ultimate": [
+        "skill_boss_004_ultimate"
+      ]
     }
   },
   {
@@ -1013,10 +1121,9 @@
     "level": 9,
     "stats": {
       "currentHealth": 160,
-      "minAttack": 22,
-      "maxAttack": 33,
       "defense": 15,
-      "speed": 25
+      "speed": 25,
+      "attack": 28
     },
     "drops": [
       {
@@ -1031,7 +1138,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_033_small"]
+      "small": [
+        "skill_enemy_033_small"
+      ]
     }
   },
   {
@@ -1040,10 +1149,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 175,
-      "minAttack": 24,
-      "maxAttack": 36,
       "defense": 16,
-      "speed": 28
+      "speed": 28,
+      "attack": 30
     },
     "drops": [
       {
@@ -1058,7 +1166,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_034_small"]
+      "small": [
+        "skill_enemy_034_small"
+      ]
     }
   },
   {
@@ -1067,10 +1177,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 175,
-      "minAttack": 24,
-      "maxAttack": 36,
       "defense": 16,
-      "speed": 28
+      "speed": 28,
+      "attack": 30
     },
     "drops": [
       {
@@ -1085,7 +1194,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_035_small"]
+      "small": [
+        "skill_enemy_035_small"
+      ]
     }
   },
   {
@@ -1094,10 +1205,9 @@
     "level": 12,
     "stats": {
       "currentHealth": 242,
-      "minAttack": 33,
-      "maxAttack": 49,
       "defense": 21,
-      "speed": 34
+      "speed": 34,
+      "attack": 41
     },
     "drops": [
       {
@@ -1112,8 +1222,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_036_small"],
-      "passive": ["skill_enemy_036_passive"]
+      "small": [
+        "skill_enemy_036_small"
+      ],
+      "passive": [
+        "skill_enemy_036_passive"
+      ]
     }
   },
   {
@@ -1122,10 +1236,9 @@
     "level": 13,
     "stats": {
       "currentHealth": 257,
-      "minAttack": 35,
-      "maxAttack": 52,
       "defense": 22,
-      "speed": 36
+      "speed": 36,
+      "attack": 44
     },
     "drops": [
       {
@@ -1140,8 +1253,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_037_small"],
-      "passive": ["skill_enemy_037_passive"]
+      "small": [
+        "skill_enemy_037_small"
+      ],
+      "passive": [
+        "skill_enemy_037_passive"
+      ]
     }
   },
   {
@@ -1150,10 +1267,9 @@
     "level": 13,
     "stats": {
       "currentHealth": 257,
-      "minAttack": 35,
-      "maxAttack": 52,
       "defense": 22,
-      "speed": 36
+      "speed": 36,
+      "attack": 44
     },
     "drops": [
       {
@@ -1168,8 +1284,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_038_small"],
-      "passive": ["skill_enemy_038_passive"]
+      "small": [
+        "skill_enemy_038_small"
+      ],
+      "passive": [
+        "skill_enemy_038_passive"
+      ]
     }
   },
   {
@@ -1178,10 +1298,9 @@
     "level": 16,
     "stats": {
       "currentHealth": 340,
-      "minAttack": 46,
-      "maxAttack": 68,
       "defense": 28,
-      "speed": 45
+      "speed": 45,
+      "attack": 57
     },
     "drops": [
       {
@@ -1196,9 +1315,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_039_small"],
-      "passive": ["skill_enemy_039_passive"],
-      "ultimate": ["skill_enemy_039_ultimate"]
+      "small": [
+        "skill_enemy_039_small"
+      ],
+      "passive": [
+        "skill_enemy_039_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_039_ultimate"
+      ]
     }
   },
   {
@@ -1207,10 +1332,9 @@
     "level": 17,
     "stats": {
       "currentHealth": 357,
-      "minAttack": 48,
-      "maxAttack": 71,
       "defense": 29,
-      "speed": 47
+      "speed": 47,
+      "attack": 60
     },
     "drops": [
       {
@@ -1225,9 +1349,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_040_small"],
-      "passive": ["skill_enemy_040_passive"],
-      "ultimate": ["skill_enemy_040_ultimate"]
+      "small": [
+        "skill_enemy_040_small"
+      ],
+      "passive": [
+        "skill_enemy_040_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_040_ultimate"
+      ]
     }
   },
   {
@@ -1236,10 +1366,9 @@
     "level": 17,
     "stats": {
       "currentHealth": 357,
-      "minAttack": 48,
-      "maxAttack": 71,
       "defense": 29,
-      "speed": 47
+      "speed": 47,
+      "attack": 60
     },
     "drops": [
       {
@@ -1254,9 +1383,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_005_small"],
-      "passive": ["skill_boss_005_passive"],
-      "ultimate": ["skill_boss_005_ultimate"]
+      "small": [
+        "skill_boss_005_small"
+      ],
+      "passive": [
+        "skill_boss_005_passive"
+      ],
+      "ultimate": [
+        "skill_boss_005_ultimate"
+      ]
     }
   },
   {
@@ -1265,10 +1400,9 @@
     "level": 11,
     "stats": {
       "currentHealth": 198,
-      "minAttack": 28,
-      "maxAttack": 41,
       "defense": 17,
-      "speed": 31
+      "speed": 31,
+      "attack": 35
     },
     "drops": [
       {
@@ -1283,7 +1417,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_041_small"]
+      "small": [
+        "skill_enemy_041_small"
+      ]
     }
   },
   {
@@ -1292,10 +1428,9 @@
     "level": 12,
     "stats": {
       "currentHealth": 213,
-      "minAttack": 30,
-      "maxAttack": 44,
       "defense": 18,
-      "speed": 33
+      "speed": 33,
+      "attack": 37
     },
     "drops": [
       {
@@ -1310,7 +1445,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_042_small"]
+      "small": [
+        "skill_enemy_042_small"
+      ]
     }
   },
   {
@@ -1319,10 +1456,9 @@
     "level": 12,
     "stats": {
       "currentHealth": 213,
-      "minAttack": 30,
-      "maxAttack": 44,
       "defense": 18,
-      "speed": 33
+      "speed": 33,
+      "attack": 37
     },
     "drops": [
       {
@@ -1337,7 +1473,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_043_small"]
+      "small": [
+        "skill_enemy_043_small"
+      ]
     }
   },
   {
@@ -1346,10 +1484,9 @@
     "level": 14,
     "stats": {
       "currentHealth": 276,
-      "minAttack": 38,
-      "maxAttack": 56,
       "defense": 23,
-      "speed": 39
+      "speed": 39,
+      "attack": 47
     },
     "drops": [
       {
@@ -1364,8 +1501,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_044_small"],
-      "passive": ["skill_enemy_044_passive"]
+      "small": [
+        "skill_enemy_044_small"
+      ],
+      "passive": [
+        "skill_enemy_044_passive"
+      ]
     }
   },
   {
@@ -1374,10 +1515,9 @@
     "level": 15,
     "stats": {
       "currentHealth": 293,
-      "minAttack": 40,
-      "maxAttack": 59,
       "defense": 24,
-      "speed": 41
+      "speed": 41,
+      "attack": 50
     },
     "drops": [
       {
@@ -1392,8 +1532,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_045_small"],
-      "passive": ["skill_enemy_045_passive"]
+      "small": [
+        "skill_enemy_045_small"
+      ],
+      "passive": [
+        "skill_enemy_045_passive"
+      ]
     }
   },
   {
@@ -1402,10 +1546,9 @@
     "level": 15,
     "stats": {
       "currentHealth": 293,
-      "minAttack": 40,
-      "maxAttack": 59,
       "defense": 24,
-      "speed": 41
+      "speed": 41,
+      "attack": 50
     },
     "drops": [
       {
@@ -1420,8 +1563,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_046_small"],
-      "passive": ["skill_enemy_046_passive"]
+      "small": [
+        "skill_enemy_046_small"
+      ],
+      "passive": [
+        "skill_enemy_046_passive"
+      ]
     }
   },
   {
@@ -1430,10 +1577,9 @@
     "level": 18,
     "stats": {
       "currentHealth": 414,
-      "minAttack": 56,
-      "maxAttack": 82,
       "defense": 32,
-      "speed": 51
+      "speed": 51,
+      "attack": 69
     },
     "drops": [
       {
@@ -1448,9 +1594,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_047_small"],
-      "passive": ["skill_enemy_047_passive"],
-      "ultimate": ["skill_enemy_047_ultimate"]
+      "small": [
+        "skill_enemy_047_small"
+      ],
+      "passive": [
+        "skill_enemy_047_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_047_ultimate"
+      ]
     }
   },
   {
@@ -1459,10 +1611,9 @@
     "level": 19,
     "stats": {
       "currentHealth": 433,
-      "minAttack": 58,
-      "maxAttack": 85,
       "defense": 33,
-      "speed": 53
+      "speed": 53,
+      "attack": 72
     },
     "drops": [
       {
@@ -1477,9 +1628,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_048_small"],
-      "passive": ["skill_enemy_048_passive"],
-      "ultimate": ["skill_enemy_048_ultimate"]
+      "small": [
+        "skill_enemy_048_small"
+      ],
+      "passive": [
+        "skill_enemy_048_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_048_ultimate"
+      ]
     }
   },
   {
@@ -1488,10 +1645,9 @@
     "level": 19,
     "stats": {
       "currentHealth": 433,
-      "minAttack": 58,
-      "maxAttack": 85,
       "defense": 33,
-      "speed": 53
+      "speed": 53,
+      "attack": 72
     },
     "drops": [
       {
@@ -1506,9 +1662,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_006_small"],
-      "passive": ["skill_boss_006_passive"],
-      "ultimate": ["skill_boss_006_ultimate"]
+      "small": [
+        "skill_boss_006_small"
+      ],
+      "passive": [
+        "skill_boss_006_passive"
+      ],
+      "ultimate": [
+        "skill_boss_006_ultimate"
+      ]
     }
   },
   {
@@ -1517,10 +1679,9 @@
     "level": 13,
     "stats": {
       "currentHealth": 257,
-      "minAttack": 35,
-      "maxAttack": 52,
       "defense": 22,
-      "speed": 36
+      "speed": 36,
+      "attack": 44
     },
     "drops": [
       {
@@ -1535,7 +1696,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_049_small"]
+      "small": [
+        "skill_enemy_049_small"
+      ]
     }
   },
   {
@@ -1544,10 +1707,9 @@
     "level": 14,
     "stats": {
       "currentHealth": 276,
-      "minAttack": 38,
-      "maxAttack": 56,
       "defense": 23,
-      "speed": 39
+      "speed": 39,
+      "attack": 47
     },
     "drops": [
       {
@@ -1562,7 +1724,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_050_small"]
+      "small": [
+        "skill_enemy_050_small"
+      ]
     }
   },
   {
@@ -1571,10 +1735,9 @@
     "level": 14,
     "stats": {
       "currentHealth": 276,
-      "minAttack": 38,
-      "maxAttack": 56,
       "defense": 23,
-      "speed": 39
+      "speed": 39,
+      "attack": 47
     },
     "drops": [
       {
@@ -1589,7 +1752,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_051_small"]
+      "small": [
+        "skill_enemy_051_small"
+      ]
     }
   },
   {
@@ -1598,10 +1763,9 @@
     "level": 16,
     "stats": {
       "currentHealth": 340,
-      "minAttack": 46,
-      "maxAttack": 68,
       "defense": 28,
-      "speed": 45
+      "speed": 45,
+      "attack": 57
     },
     "drops": [
       {
@@ -1616,8 +1780,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_052_small"],
-      "passive": ["skill_enemy_052_passive"]
+      "small": [
+        "skill_enemy_052_small"
+      ],
+      "passive": [
+        "skill_enemy_052_passive"
+      ]
     }
   },
   {
@@ -1626,10 +1794,9 @@
     "level": 17,
     "stats": {
       "currentHealth": 357,
-      "minAttack": 48,
-      "maxAttack": 71,
       "defense": 29,
-      "speed": 47
+      "speed": 47,
+      "attack": 60
     },
     "drops": [
       {
@@ -1644,8 +1811,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_053_small"],
-      "passive": ["skill_enemy_053_passive"]
+      "small": [
+        "skill_enemy_053_small"
+      ],
+      "passive": [
+        "skill_enemy_053_passive"
+      ]
     }
   },
   {
@@ -1654,10 +1825,9 @@
     "level": 17,
     "stats": {
       "currentHealth": 357,
-      "minAttack": 48,
-      "maxAttack": 71,
       "defense": 29,
-      "speed": 47
+      "speed": 47,
+      "attack": 60
     },
     "drops": [
       {
@@ -1672,8 +1842,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_054_small"],
-      "passive": ["skill_enemy_054_passive"]
+      "small": [
+        "skill_enemy_054_small"
+      ],
+      "passive": [
+        "skill_enemy_054_passive"
+      ]
     }
   },
   {
@@ -1682,10 +1856,9 @@
     "level": 20,
     "stats": {
       "currentHealth": 530,
-      "minAttack": 71,
-      "maxAttack": 105,
       "defense": 38,
-      "speed": 59
+      "speed": 59,
+      "attack": 88
     },
     "drops": [
       {
@@ -1700,9 +1873,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_055_small"],
-      "passive": ["skill_enemy_055_passive"],
-      "ultimate": ["skill_enemy_055_ultimate"]
+      "small": [
+        "skill_enemy_055_small"
+      ],
+      "passive": [
+        "skill_enemy_055_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_055_ultimate"
+      ]
     }
   },
   {
@@ -1711,10 +1890,9 @@
     "level": 21,
     "stats": {
       "currentHealth": 551,
-      "minAttack": 73,
-      "maxAttack": 108,
       "defense": 39,
-      "speed": 61
+      "speed": 61,
+      "attack": 91
     },
     "drops": [
       {
@@ -1729,9 +1907,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_056_small"],
-      "passive": ["skill_enemy_056_passive"],
-      "ultimate": ["skill_enemy_056_ultimate"]
+      "small": [
+        "skill_enemy_056_small"
+      ],
+      "passive": [
+        "skill_enemy_056_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_056_ultimate"
+      ]
     }
   },
   {
@@ -1740,10 +1924,9 @@
     "level": 21,
     "stats": {
       "currentHealth": 551,
-      "minAttack": 73,
-      "maxAttack": 108,
       "defense": 39,
-      "speed": 61
+      "speed": 61,
+      "attack": 91
     },
     "drops": [
       {
@@ -1758,9 +1941,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_007_small"],
-      "passive": ["skill_boss_007_passive"],
-      "ultimate": ["skill_boss_007_ultimate"]
+      "small": [
+        "skill_boss_007_small"
+      ],
+      "passive": [
+        "skill_boss_007_passive"
+      ],
+      "ultimate": [
+        "skill_boss_007_ultimate"
+      ]
     }
   },
   {
@@ -1769,10 +1958,9 @@
     "level": 15,
     "stats": {
       "currentHealth": 293,
-      "minAttack": 40,
-      "maxAttack": 59,
       "defense": 24,
-      "speed": 41
+      "speed": 41,
+      "attack": 50
     },
     "drops": [
       {
@@ -1787,7 +1975,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_057_small"]
+      "small": [
+        "skill_enemy_057_small"
+      ]
     }
   },
   {
@@ -1796,10 +1986,9 @@
     "level": 16,
     "stats": {
       "currentHealth": 312,
-      "minAttack": 42,
-      "maxAttack": 62,
       "defense": 25,
-      "speed": 43
+      "speed": 43,
+      "attack": 52
     },
     "drops": [
       {
@@ -1814,7 +2003,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_058_small"]
+      "small": [
+        "skill_enemy_058_small"
+      ]
     }
   },
   {
@@ -1823,10 +2014,9 @@
     "level": 16,
     "stats": {
       "currentHealth": 312,
-      "minAttack": 42,
-      "maxAttack": 62,
       "defense": 25,
-      "speed": 43
+      "speed": 43,
+      "attack": 52
     },
     "drops": [
       {
@@ -1841,7 +2031,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_059_small"]
+      "small": [
+        "skill_enemy_059_small"
+      ]
     }
   },
   {
@@ -1850,10 +2042,9 @@
     "level": 18,
     "stats": {
       "currentHealth": 414,
-      "minAttack": 56,
-      "maxAttack": 82,
       "defense": 32,
-      "speed": 51
+      "speed": 51,
+      "attack": 69
     },
     "drops": [
       {
@@ -1868,8 +2059,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_060_small"],
-      "passive": ["skill_enemy_060_passive"]
+      "small": [
+        "skill_enemy_060_small"
+      ],
+      "passive": [
+        "skill_enemy_060_passive"
+      ]
     }
   },
   {
@@ -1878,10 +2073,9 @@
     "level": 19,
     "stats": {
       "currentHealth": 433,
-      "minAttack": 58,
-      "maxAttack": 85,
       "defense": 33,
-      "speed": 53
+      "speed": 53,
+      "attack": 72
     },
     "drops": [
       {
@@ -1896,8 +2090,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_061_small"],
-      "passive": ["skill_enemy_061_passive"]
+      "small": [
+        "skill_enemy_061_small"
+      ],
+      "passive": [
+        "skill_enemy_061_passive"
+      ]
     }
   },
   {
@@ -1906,10 +2104,9 @@
     "level": 19,
     "stats": {
       "currentHealth": 433,
-      "minAttack": 58,
-      "maxAttack": 85,
       "defense": 33,
-      "speed": 53
+      "speed": 53,
+      "attack": 72
     },
     "drops": [
       {
@@ -1924,8 +2121,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_062_small"],
-      "passive": ["skill_enemy_062_passive"]
+      "small": [
+        "skill_enemy_062_small"
+      ],
+      "passive": [
+        "skill_enemy_062_passive"
+      ]
     }
   },
   {
@@ -1934,10 +2135,9 @@
     "level": 22,
     "stats": {
       "currentHealth": 648,
-      "minAttack": 87,
-      "maxAttack": 128,
       "defense": 44,
-      "speed": 69
+      "speed": 69,
+      "attack": 108
     },
     "drops": [
       {
@@ -1952,9 +2152,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_063_small"],
-      "passive": ["skill_enemy_063_passive"],
-      "ultimate": ["skill_enemy_063_ultimate"]
+      "small": [
+        "skill_enemy_063_small"
+      ],
+      "passive": [
+        "skill_enemy_063_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_063_ultimate"
+      ]
     }
   },
   {
@@ -1963,10 +2169,9 @@
     "level": 23,
     "stats": {
       "currentHealth": 670,
-      "minAttack": 89,
-      "maxAttack": 131,
       "defense": 45,
-      "speed": 71
+      "speed": 71,
+      "attack": 110
     },
     "drops": [
       {
@@ -1981,9 +2186,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_064_small"],
-      "passive": ["skill_enemy_064_passive"],
-      "ultimate": ["skill_enemy_064_ultimate"]
+      "small": [
+        "skill_enemy_064_small"
+      ],
+      "passive": [
+        "skill_enemy_064_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_064_ultimate"
+      ]
     }
   },
   {
@@ -1992,10 +2203,9 @@
     "level": 23,
     "stats": {
       "currentHealth": 670,
-      "minAttack": 89,
-      "maxAttack": 131,
       "defense": 45,
-      "speed": 71
+      "speed": 71,
+      "attack": 110
     },
     "drops": [
       {
@@ -2010,9 +2220,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_008_small"],
-      "passive": ["skill_boss_008_passive"],
-      "ultimate": ["skill_boss_008_ultimate"]
+      "small": [
+        "skill_boss_008_small"
+      ],
+      "passive": [
+        "skill_boss_008_passive"
+      ],
+      "ultimate": [
+        "skill_boss_008_ultimate"
+      ]
     }
   },
   {
@@ -2021,10 +2237,9 @@
     "level": 17,
     "stats": {
       "currentHealth": 357,
-      "minAttack": 48,
-      "maxAttack": 71,
       "defense": 29,
-      "speed": 47
+      "speed": 47,
+      "attack": 60
     },
     "drops": [
       {
@@ -2039,7 +2254,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_065_small"]
+      "small": [
+        "skill_enemy_065_small"
+      ]
     }
   },
   {
@@ -2048,10 +2265,9 @@
     "level": 18,
     "stats": {
       "currentHealth": 377,
-      "minAttack": 50,
-      "maxAttack": 74,
       "defense": 30,
-      "speed": 49
+      "speed": 49,
+      "attack": 62
     },
     "drops": [
       {
@@ -2066,7 +2282,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_066_small"]
+      "small": [
+        "skill_enemy_066_small"
+      ]
     }
   },
   {
@@ -2075,10 +2293,9 @@
     "level": 18,
     "stats": {
       "currentHealth": 377,
-      "minAttack": 50,
-      "maxAttack": 74,
       "defense": 30,
-      "speed": 49
+      "speed": 49,
+      "attack": 62
     },
     "drops": [
       {
@@ -2093,7 +2310,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_067_small"]
+      "small": [
+        "skill_enemy_067_small"
+      ]
     }
   },
   {
@@ -2102,10 +2321,9 @@
     "level": 20,
     "stats": {
       "currentHealth": 530,
-      "minAttack": 71,
-      "maxAttack": 105,
       "defense": 38,
-      "speed": 59
+      "speed": 59,
+      "attack": 88
     },
     "drops": [
       {
@@ -2120,8 +2338,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_068_small"],
-      "passive": ["skill_enemy_068_passive"]
+      "small": [
+        "skill_enemy_068_small"
+      ],
+      "passive": [
+        "skill_enemy_068_passive"
+      ]
     }
   },
   {
@@ -2130,10 +2352,9 @@
     "level": 21,
     "stats": {
       "currentHealth": 551,
-      "minAttack": 73,
-      "maxAttack": 108,
       "defense": 39,
-      "speed": 61
+      "speed": 61,
+      "attack": 91
     },
     "drops": [
       {
@@ -2148,8 +2369,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_069_small"],
-      "passive": ["skill_enemy_069_passive"]
+      "small": [
+        "skill_enemy_069_small"
+      ],
+      "passive": [
+        "skill_enemy_069_passive"
+      ]
     }
   },
   {
@@ -2158,10 +2383,9 @@
     "level": 21,
     "stats": {
       "currentHealth": 551,
-      "minAttack": 73,
-      "maxAttack": 108,
       "defense": 39,
-      "speed": 61
+      "speed": 61,
+      "attack": 91
     },
     "drops": [
       {
@@ -2176,8 +2400,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_070_small"],
-      "passive": ["skill_enemy_070_passive"]
+      "small": [
+        "skill_enemy_070_small"
+      ],
+      "passive": [
+        "skill_enemy_070_passive"
+      ]
     }
   },
   {
@@ -2186,10 +2414,9 @@
     "level": 24,
     "stats": {
       "currentHealth": 794,
-      "minAttack": 107,
-      "maxAttack": 158,
       "defense": 50,
-      "speed": 81
+      "speed": 81,
+      "attack": 133
     },
     "drops": [
       {
@@ -2204,9 +2431,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_071_small"],
-      "passive": ["skill_enemy_071_passive"],
-      "ultimate": ["skill_enemy_071_ultimate"]
+      "small": [
+        "skill_enemy_071_small"
+      ],
+      "passive": [
+        "skill_enemy_071_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_071_ultimate"
+      ]
     }
   },
   {
@@ -2215,10 +2448,9 @@
     "level": 25,
     "stats": {
       "currentHealth": 819,
-      "minAttack": 109,
-      "maxAttack": 162,
       "defense": 51,
-      "speed": 83
+      "speed": 83,
+      "attack": 136
     },
     "drops": [
       {
@@ -2233,9 +2465,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_072_small"],
-      "passive": ["skill_enemy_072_passive"],
-      "ultimate": ["skill_enemy_072_ultimate"]
+      "small": [
+        "skill_enemy_072_small"
+      ],
+      "passive": [
+        "skill_enemy_072_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_072_ultimate"
+      ]
     }
   },
   {
@@ -2244,10 +2482,9 @@
     "level": 25,
     "stats": {
       "currentHealth": 819,
-      "minAttack": 109,
-      "maxAttack": 162,
       "defense": 51,
-      "speed": 83
+      "speed": 83,
+      "attack": 136
     },
     "drops": [
       {
@@ -2262,9 +2499,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_009_small"],
-      "passive": ["skill_boss_009_passive"],
-      "ultimate": ["skill_boss_009_ultimate"]
+      "small": [
+        "skill_boss_009_small"
+      ],
+      "passive": [
+        "skill_boss_009_passive"
+      ],
+      "ultimate": [
+        "skill_boss_009_ultimate"
+      ]
     }
   },
   {
@@ -2273,10 +2516,9 @@
     "level": 19,
     "stats": {
       "currentHealth": 433,
-      "minAttack": 58,
-      "maxAttack": 85,
       "defense": 33,
-      "speed": 53
+      "speed": 53,
+      "attack": 72
     },
     "drops": [
       {
@@ -2291,7 +2533,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_073_small"]
+      "small": [
+        "skill_enemy_073_small"
+      ]
     }
   },
   {
@@ -2300,10 +2544,9 @@
     "level": 20,
     "stats": {
       "currentHealth": 454,
-      "minAttack": 60,
-      "maxAttack": 88,
       "defense": 34,
-      "speed": 55
+      "speed": 55,
+      "attack": 74
     },
     "drops": [
       {
@@ -2318,7 +2561,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_074_small"]
+      "small": [
+        "skill_enemy_074_small"
+      ]
     }
   },
   {
@@ -2327,10 +2572,9 @@
     "level": 20,
     "stats": {
       "currentHealth": 454,
-      "minAttack": 60,
-      "maxAttack": 88,
       "defense": 34,
-      "speed": 55
+      "speed": 55,
+      "attack": 74
     },
     "drops": [
       {
@@ -2345,7 +2589,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_075_small"]
+      "small": [
+        "skill_enemy_075_small"
+      ]
     }
   },
   {
@@ -2354,10 +2600,9 @@
     "level": 22,
     "stats": {
       "currentHealth": 648,
-      "minAttack": 87,
-      "maxAttack": 128,
       "defense": 44,
-      "speed": 69
+      "speed": 69,
+      "attack": 108
     },
     "drops": [
       {
@@ -2372,8 +2617,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_076_small"],
-      "passive": ["skill_enemy_076_passive"]
+      "small": [
+        "skill_enemy_076_small"
+      ],
+      "passive": [
+        "skill_enemy_076_passive"
+      ]
     }
   },
   {
@@ -2382,10 +2631,9 @@
     "level": 23,
     "stats": {
       "currentHealth": 670,
-      "minAttack": 89,
-      "maxAttack": 131,
       "defense": 45,
-      "speed": 71
+      "speed": 71,
+      "attack": 110
     },
     "drops": [
       {
@@ -2400,8 +2648,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_077_small"],
-      "passive": ["skill_enemy_077_passive"]
+      "small": [
+        "skill_enemy_077_small"
+      ],
+      "passive": [
+        "skill_enemy_077_passive"
+      ]
     }
   },
   {
@@ -2410,10 +2662,9 @@
     "level": 23,
     "stats": {
       "currentHealth": 670,
-      "minAttack": 89,
-      "maxAttack": 131,
       "defense": 45,
-      "speed": 71
+      "speed": 71,
+      "attack": 110
     },
     "drops": [
       {
@@ -2428,8 +2679,12 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_078_small"],
-      "passive": ["skill_enemy_078_passive"]
+      "small": [
+        "skill_enemy_078_small"
+      ],
+      "passive": [
+        "skill_enemy_078_passive"
+      ]
     }
   },
   {
@@ -2438,10 +2693,9 @@
     "level": 26,
     "stats": {
       "currentHealth": 988,
-      "minAttack": 133,
-      "maxAttack": 196,
       "defense": 56,
-      "speed": 91
+      "speed": 91,
+      "attack": 165
     },
     "drops": [
       {
@@ -2456,9 +2710,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_079_small"],
-      "passive": ["skill_enemy_079_passive"],
-      "ultimate": ["skill_enemy_079_ultimate"]
+      "small": [
+        "skill_enemy_079_small"
+      ],
+      "passive": [
+        "skill_enemy_079_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_079_ultimate"
+      ]
     }
   },
   {
@@ -2467,10 +2727,9 @@
     "level": 27,
     "stats": {
       "currentHealth": 1014,
-      "minAttack": 135,
-      "maxAttack": 200,
       "defense": 57,
-      "speed": 93
+      "speed": 93,
+      "attack": 168
     },
     "drops": [
       {
@@ -2485,9 +2744,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_080_small"],
-      "passive": ["skill_enemy_080_passive"],
-      "ultimate": ["skill_enemy_080_ultimate"]
+      "small": [
+        "skill_enemy_080_small"
+      ],
+      "passive": [
+        "skill_enemy_080_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_080_ultimate"
+      ]
     }
   },
   {
@@ -2496,10 +2761,9 @@
     "level": 27,
     "stats": {
       "currentHealth": 1014,
-      "minAttack": 135,
-      "maxAttack": 200,
       "defense": 57,
-      "speed": 93
+      "speed": 93,
+      "attack": 168
     },
     "drops": [
       {
@@ -2514,9 +2778,15 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_010_small"],
-      "passive": ["skill_boss_010_passive"],
-      "ultimate": ["skill_boss_010_ultimate"]
+      "small": [
+        "skill_boss_010_small"
+      ],
+      "passive": [
+        "skill_boss_010_passive"
+      ],
+      "ultimate": [
+        "skill_boss_010_ultimate"
+      ]
     }
   },
   {
@@ -2525,15 +2795,16 @@
     "level": 10,
     "stats": {
       "currentHealth": 500,
-      "minAttack": 40,
-      "maxAttack": 60,
       "defense": 30,
-      "speed": 20
+      "speed": 20,
+      "attack": 50
     },
     "drops": [],
     "skills": {
       "small": [],
-      "passive": ["skill_enemy_079_passive"],
+      "passive": [
+        "skill_enemy_079_passive"
+      ],
       "ultimate": []
     }
   },
@@ -2543,10 +2814,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 450,
-      "minAttack": 35,
-      "maxAttack": 55,
       "defense": 25,
-      "speed": 25
+      "speed": 25,
+      "attack": 45
     },
     "drops": [],
     "skills": {
@@ -2561,10 +2831,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 400,
-      "minAttack": 30,
-      "maxAttack": 50,
       "defense": 20,
-      "speed": 30
+      "speed": 30,
+      "attack": 40
     },
     "drops": [],
     "skills": {
@@ -2579,10 +2848,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 350,
-      "minAttack": 50,
-      "maxAttack": 75,
       "defense": 15,
-      "speed": 35
+      "speed": 35,
+      "attack": 63
     },
     "drops": [],
     "skills": {
@@ -2602,10 +2870,9 @@
     "level": 10,
     "stats": {
       "currentHealth": 600,
-      "minAttack": 25,
-      "maxAttack": 40,
       "defense": 40,
-      "speed": 15
+      "speed": 15,
+      "attack": 33
     },
     "drops": [],
     "skills": {

@@ -22,6 +22,11 @@ import {
 } from '@/domain/battle/entity/BattleInterfaces'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import {
+  entitySegment,
+  projectSnapshotLogs,
+  projectTurnEndLog,
+} from '@/domain/battle/logs/BattleLogProjector'
 import { TraceEventCollector } from '@/domain/battle/logs/TraceEventCollector'
 import { createTraceEvent, TraceLevel, TracePhase, TurnFlowAction, TraceTriggerSource } from '@/shared/types/trace-event'
 import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
@@ -59,6 +64,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
+import type { LogSegment } from '@/shared/types/battle-log'
 import { Counter } from '@/shared/utils/Counter'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { RAFTimer } from '@/shared/utils/RAF'
@@ -509,14 +515,20 @@ export class BattleSystem {
                 dotRecord,
               )
               // NOTE: DOT 叙事日志
+              const dotSegs: LogSegment[] = [
+                entitySegment(target),
+                { text: ' 受到 ' },
+                {
+                  text: `${actualDamage}`,
+                  classStr: 'log-damage',
+                  kind: 'damage',
+                },
+                { text: ' 点持续伤害' },
+              ]
               LoggerProvider.logger.addBattleLog({
                 turn: battleData.currentTurn ?? 1,
-                message: `${target.name} 受到 ${actualDamage} 点持续伤害`,
-                segments: [
-                  { text: `${target.name} `, classStr: 'log-hostile' },
-                  { text: `${actualDamage}`, classStr: 'log-damage' },
-                  { text: ' 点持续伤害', classStr: 'log-text' },
-                ],
+                message: dotSegs.map((s) => s.text).join(''),
+                segments: dotSegs,
                 category: BATTLE_LOG_CATEGORIES.DAMAGE,
                 meta: {
                   role: 'settlement',
@@ -886,25 +898,27 @@ export class BattleSystem {
       const combatRules = this.ruleManager.getCombatRules()
       aliveParticipants.forEach((participant) => {
         const gain = combatRules.energyGainPerTurn
+        // NOTE: 记录实际到账（gainEnergy 有上限封顶），并携带 before/after 快照（B2）
+        const energyBefore = participant.currentEnergy
         participant.gainEnergy(gain)
-        // NOTE: 回合开始能量是能量规则的核心来源，此前完全不可见；补一条日志便于验证规则
-        if (gain > 0) {
+        const energyAfter = participant.currentEnergy
+        const actualGain = energyAfter - energyBefore
+        if (actualGain > 0) {
+          const segs: LogSegment[] = [
+            entitySegment(participant),
+            { text: ` 获得回合开始能量 `, classStr: 'log-info' },
+            { text: `+${actualGain}`, classStr: 'log-heal' },
+          ]
           LoggerProvider.logger.addBattleLog({
             turn: battle.currentTurn,
-            message: `${participant.name} 获得回合开始能量 +${gain}`,
-            segments: [
-              {
-                text: participant.name,
-                classStr:
-                  participant.team === ParticipantSide.ALLY
-                    ? 'log-friendly'
-                    : 'log-hostile',
-              },
-              { text: ` 获得回合开始能量 `, classStr: 'log-info' },
-              { text: `+${gain}`, classStr: 'log-heal' },
-            ],
+            message: segs.map((s) => s.text).join(''),
+            segments: segs,
             category: BATTLE_LOG_CATEGORIES.STATUS,
-            meta: { role: 'sub' },
+            meta: {
+              role: 'sub',
+              energyBefore,
+              energyAfter,
+            },
           })
         }
       })
@@ -1051,42 +1065,20 @@ export class BattleSystem {
         )
       }
 
-      //  回合态势快照
-      const allySnapshot: string[] = []
-      const enemySnapshot: string[] = []
-      battle.participants.forEach((p) => {
-        if (!p.isAlive()) return
-        const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
-        const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
-        const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
-        if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
-        else enemySnapshot.push(entry)
-      })
+      //  回合态势快照（投影器统一生成，与终局/补捞快照同口径）
+      for (const log of projectSnapshotLogs(battle.participants, battle.currentTurn)) {
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          ...log,
+        })
+      }
 
-      if (allySnapshot.length > 0) {
-        LoggerProvider.logger.addBattleLog({
-          turn: battle.currentTurn,
-          message: `我方  ${allySnapshot.join(' · ')}`,
-          segments: [
-            { text: '我方  ', classStr: 'log-friendly' },
-            { text: allySnapshot.join(' · ') },
-          ],
-          category: BATTLE_LOG_CATEGORIES.STATUS,
-          meta: { role: 'snapshot' },
-        })
-      }
-      if (enemySnapshot.length > 0) {
-        LoggerProvider.logger.addBattleLog({
-          turn: battle.currentTurn,
-          message: `敌方  ${enemySnapshot.join(' · ')}`,
-          segments: [
-            { text: '敌方  ', classStr: 'log-hostile' },
-            { text: enemySnapshot.join(' · ') },
-          ],
-          category: BATTLE_LOG_CATEGORIES.STATUS,
-          meta: { role: 'snapshot' },
-        })
-      }
+      // NOTE: 回合结束阶段标记（原 handleTurnEndEvent 死代码逻辑落地点 —
+      //       TURN_END 事件在 BattleSystem 处统一生成，回合切换的时序可读）
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        ...projectTurnEndLog(battle.currentTurn),
+      })
 
       battle.roundState = RoundStatus.END
 
@@ -1236,38 +1228,12 @@ export class BattleSystem {
     if (!battle) return
     //  如果 roundState 已经是 END，说明正常流程已产出快照，无需补偿
     if (battle.roundState === RoundStatus.END) return
-    const allySnapshot: string[] = []
-    const enemySnapshot: string[] = []
-    battle.participants.forEach((p) => {
-      if (!p.isAlive()) return
-      const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
-      const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
-      const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
-      if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
-      else enemySnapshot.push(entry)
-    })
-    if (allySnapshot.length > 0) {
+    //  投影器统一生成（与回合末快照同口径）
+    const turn = battle.currentTurn
+    for (const log of projectSnapshotLogs(battle.participants, turn)) {
       LoggerProvider.logger.addBattleLog({
-        turn: battle.currentTurn,
-        message: `我方  ${allySnapshot.join(' · ')}`,
-        segments: [
-          { text: '我方  ', classStr: 'log-friendly' },
-          { text: allySnapshot.join(' · ') },
-        ],
-        category: BATTLE_LOG_CATEGORIES.STATUS,
-        meta: { role: 'snapshot' },
-      })
-    }
-    if (enemySnapshot.length > 0) {
-      LoggerProvider.logger.addBattleLog({
-        turn: battle.currentTurn,
-        message: `敌方  ${enemySnapshot.join(' · ')}`,
-        segments: [
-          { text: '敌方  ', classStr: 'log-hostile' },
-          { text: enemySnapshot.join(' · ') },
-        ],
-        category: BATTLE_LOG_CATEGORIES.STATUS,
-        meta: { role: 'snapshot' },
+        turn,
+        ...log,
       })
     }
   }
@@ -1593,7 +1559,7 @@ export class BattleSystem {
       // 默认攻击（AI 决策后续扩展）
       const targetId = this.selectCommandTarget(battle, participant)
       if (targetId) {
-        const damage = participant.getRandomAttackDamage()
+        const damage = participant.getAttribute(ATTRIBUTE_CODE.attack)
         commands.push({
           type: 'APPLY_DAMAGE',
           payload: {

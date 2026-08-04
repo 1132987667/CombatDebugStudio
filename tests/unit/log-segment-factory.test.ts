@@ -7,6 +7,7 @@ import {
   skillSegment,
   passiveSegment,
   blocksToHtml,
+  segsText,
 } from '@/shared/utils/log-segment-factory'
 import type {
   BuffConfigLookup,
@@ -108,8 +109,32 @@ function makeHealSeg(value: number): LogSegment {
 }
 
 
-describe('blocksToHtml', () => {
-  it('renders skill chip with correct class', () => {
+describe('segsText（TXT 导出纯文本 — 与 HTML/面板同口径补前缀）', () => {
+  it('entity 段缺前缀但 faction 明确 → 自动补 [友方]/[敌方]', () => {
+    const segs = [
+      { text: '史莱姆', kind: 'entity', faction: 'enemy' },
+      { text: ' 受到 ' },
+      { text: '30', classStr: 'log-damage', kind: 'damage' },
+      { text: ' 点伤害' },
+    ]
+    expect(segsText(segs)).toBe('[敌方]史莱姆 受到 30 点伤害')
+  })
+
+  it('已带前缀 / 自身 / 无 faction（回放 id）原样输出', () => {
+    expect(
+      segsText([
+        { text: '[友方]剑客', kind: 'entity', faction: 'ally' },
+        { text: ' 对 ' },
+        { text: '[敌方]史莱姆', kind: 'entity', faction: 'enemy' },
+        { text: ' 使用 【火球术】' },
+      ]),
+    ).toBe('[友方]剑客 对 [敌方]史莱姆 使用 【火球术】')
+    expect(segsText([{ text: '自身', kind: 'entity', faction: 'ally' }])).toBe('自身')
+    expect(segsText([{ text: 'u1', kind: 'entity', classStr: 'log-friendly' }])).toBe('u1')
+  })
+})
+
+describe('blocksToHtml', () => {  it('renders skill chip with correct class', () => {
     const blocks: NarrativeBlock[] = [
       {
         type: 'action',

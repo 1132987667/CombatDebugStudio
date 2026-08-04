@@ -38,7 +38,7 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
           { id: 'u2', hp: 500, energy: 70, buffs: [] },
         ] },
       },
-      summary: '第 1 回合开始 · 全量锚点',
+      summary: '第 1 回合开始',
     }),
     ev({
       id: 'ev03', phase: 'damage_calculation', correlationId: 'corr_t1', parentId: 'ev02', timestamp: 340, level: 'info', targetId: 'u2',
@@ -173,7 +173,7 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
           { id: 'u2', hp: 282, energy: 60, buffs: [] },
         ] },
       },
-      summary: '第 2 回合开始 · 全量锚点',
+      summary: '第 2 回合开始',
     }),
     ev({
       id: 'ev18', phase: 'damage_calculation', correlationId: 'corr_t2', parentId: 'ev17', timestamp: 3140, level: 'warn', sourceId: 'u1', targetId: 'u2',

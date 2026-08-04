@@ -3,6 +3,7 @@ import {
   EffectRenderer,
   type RenderContext,
 } from '@/domain/battle/logs/EffectRenderer'
+import { projectPassiveLog } from '@/domain/battle/logs/BattleLogProjector'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import {
   PassiveSkipReason,
@@ -266,6 +267,14 @@ export class PassiveSkillManager {
     skipReason: PassiveSkipReasonType,
     checks: Record<string, unknown>,
   ): void {
+    // NOTE: B3 — 有信息量的跳过（概率/冷却/次数/条件）写入调试日志，
+    //       使"为什么没触发"可复现；PHASE_MISMATCH 每回合每个被动都会发生，排除防噪音。
+    if (skipReason !== PassiveSkipReason.PHASE_MISMATCH) {
+      LoggerProvider.logger.addDebugLog(
+        `被动未触发 [${entity.name}] ${config.name || config.skillId}：${skipReason}`,
+        { level: LogLevel.DEBUG, context: checks },
+      )
+    }
     if (!this.tracePort || !this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) return
     this.turnSkippedCount++
     this.tracePort.emit(
@@ -535,49 +544,17 @@ export class PassiveSkillManager {
         ? this.effectRenderer.render(allEffects, renderCtx)
         : []
 
-    //  6. 输出日志
-    const configName = config.name || config.id
-    const passiveNameSeg = {
-      text: configName,
-      classStr: 'log-passive' as const,
-      kind: 'passive' as const,
-      hover: { kind: 'passive' as const, id: config.id },
-    }
-    //  触发者实体片段（带阵营前缀）
-    const sourcePrefix =
-      source.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
-    const sourceSeg = {
-      text: `${sourcePrefix}${source.name}`,
-      classStr:
-        source.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile',
-      kind: 'entity' as const,
-      faction: source.team,
-    }
-    const logSegments =
-      segments.length > 0
-        ? [
-            passiveNameSeg,
-            { text: '  ' },
-            sourceSeg,
-            { text: ' ' },
-            ...segments,
-          ]
-        : [passiveNameSeg, { text: '  ' }, sourceSeg, { text: '  生效' }]
-
-    //  独立触发阶段（无父 action）使用 plain 渲染；行动内触发保持 sub 附加
-    const standalonePhases: BattleTriggerPhase[] = [
-      BattleTriggerPhase.BATTLE_START,
-      BattleTriggerPhase.TURN_START,
-      BattleTriggerPhase.TURN_END,
-    ]
-    const isStandalone = standalonePhases.includes(context.phase)
-
+    //  6. 输出日志 — 由 BattleLogProjector 投影（统一拼装 + 因果链 meta：triggerPhase/sourceId）
+    const projected = projectPassiveLog({
+      passiveName: config.name || config.id,
+      passiveId: config.id,
+      source,
+      segments,
+      context,
+    })
     LoggerProvider.logger.addBattleLog({
       turn: context.currentTurn,
-      message: logSegments.map((s) => s.text).join(''),
-      segments: logSegments,
-      category: BATTLE_LOG_CATEGORIES.STATUS,
-      meta: isStandalone ? undefined : { role: 'sub' },
+      ...projected,
     })
 
     //  7. 统一发射动画

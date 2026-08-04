@@ -18,29 +18,9 @@
     <div class="enemy-stats-panel">
       <div class="enemy-section-title">基础属性</div>
       <div class="enemy-stats-grid">
-        <div class="enemy-stat-item">
-          <span class="enemy-stat-label">气血</span>
-          <span class="enemy-stat-value">{{ enemy.stats.currentHealth }}</span>
-        </div>
-        <div class="monitor-item">
-          <span class="enemy-stat-label">攻击</span>
-          <span class="enemy-stat-value">{{ enemy.stats.minAttack }}-{{ enemy.stats.maxAttack }}</span>
-        </div>
-        <div class="monitor-item">
-          <span class="enemy-stat-label">防御</span>
-          <span class="enemy-stat-value">{{ enemy.stats.defense }}</span>
-        </div>
-        <div class="monitor-item">
-          <span class="enemy-stat-label">速度</span>
-          <span class="enemy-stat-value">{{ enemy.stats.speed }}</span>
-        </div>
-        <div class="monitor-item">
-          <span class="enemy-stat-label">暴击率</span>
-          <span class="enemy-stat-value">{{ enemy.stats.critRate || 10 }}%</span>
-        </div>
-        <div class="monitor-item">
-          <span class="enemy-stat-label">暴击伤害</span>
-          <span class="enemy-stat-value">{{ enemy.stats.critDamage || 125 }}%</span>
+        <div class="enemy-stat-item" v-for="row in statRows" :key="row.code">
+          <span class="enemy-stat-label">{{ row.label }}</span>
+          <span class="enemy-stat-value">{{ row.value }}</span>
         </div>
       </div>
     </div>
@@ -116,7 +96,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCompendium, type CompendiumEnemy, type CompendiumSkill } from '@/presentation/composables/useCompendium'
-import { formatTargetConfig } from '@/domain/skill/types'
+import { formatTargetConfig, type SkillTargetConfig } from '@/domain/skill/types'
+import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
+
+/** 敌人配置中未配置但值得补全默认值的核心属性（图鉴展示默认档位） */
+const CORE_DEFAULT_CODES: ATTRIBUTE_CODE[] = [
+  ATTRIBUTE_CODE.critRate,
+  ATTRIBUTE_CODE.critDamage,
+]
 
 /** 被动分类展示配置：优先级从高到低 */
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
@@ -139,6 +126,29 @@ interface Props {
 const props = defineProps<Props>()
 
 const { getSkillById, getItemById } = useCompendium()
+
+/** 属性展示行：遍历敌人实际配置的 stats 字段（元数据驱动 label/百分比格式），缺失的核心属性补默认值 */
+const statRows = computed(() => {
+  const stats = props.enemy.stats as Record<string, number | undefined>
+  const rows: Array<{ code: string; label: string; value: string }> = []
+  const seen = new Set<string>()
+  const push = (code: string, v: number | undefined) => {
+    const meta = getAttrMeta(code as ATTRIBUTE_CODE)
+    const value = v ?? meta?.defaultValue
+    if (value === undefined || value === null) return
+    seen.add(code)
+    rows.push({
+      code,
+      label: meta?.displayName ?? code,
+      value: meta?.isPercentage ? `${value}%` : String(value),
+    })
+  }
+  for (const [code, v] of Object.entries(stats)) push(code, v)
+  for (const code of CORE_DEFAULT_CODES) {
+    if (!seen.has(code)) push(code, undefined)
+  }
+  return rows
+})
 
 /** 合并所有技能，标记分类 */
 const allSkills = computed(() => {
@@ -192,8 +202,8 @@ const otherSkills = computed(() => {
   return allSkills.value.filter(s => s.category !== 'passive')
 })
 
-const getSelectorText = (selector: any): string => {
-  return formatTargetConfig(selector)
+const getSelectorText = (selector: unknown): string => {
+  return formatTargetConfig(selector as SkillTargetConfig)
 }
 
 

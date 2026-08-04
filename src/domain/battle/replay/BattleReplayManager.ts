@@ -1,7 +1,12 @@
 import type { BattleState, BattleReplay } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { projectReplayActionLog } from '@/domain/battle/logs/BattleLogProjector'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
-import { BattleEventType } from '@/domain/battle/type/types'
+import {
+  BattleEventType,
+  ParticipantSide,
+  ParticipantSideName,
+} from '@/domain/battle/type/types'
 import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import type { BattleLogCategory } from '@/shared/types/battle-log'
 import {
@@ -36,6 +41,9 @@ export class BattleReplayManager {
   private replayTimer: symbol | null = null
   private replayEngine: ReplayEngine | null = null
   private loadedReplayData: BattleReplay | null = null
+  /** 回放实体反查表（id → 名字+阵营），由 initialState 构建，用于日志敌我前缀（对齐实时口径） */
+  private replayEntityMap: Map<string, { name: string; team: ParticipantSide }> =
+    new Map()
   private stateUnsubscribe: (() => void) | null = null
   private eventUnsubscribe: (() => void) | null = null
 
@@ -98,6 +106,27 @@ export class BattleReplayManager {
   }
 
   /**
+   * 构建回放实体反查表（id → 名字+阵营）。
+   * 回放日志无实时实体对象，靠 initialState 快照反查阵营以补敌我前缀。
+   */
+  private buildReplayEntityMap(
+    recording: BattleReplay,
+  ): Map<string, { name: string; team: ParticipantSide }> {
+    const map = new Map<string, { name: string; team: ParticipantSide }>()
+    for (const p of recording.initialState?.participants ?? []) {
+      map.set(p.id, { name: p.name, team: p.team })
+    }
+    return map
+  }
+
+  /** 回放实体文本：反查到阵营则输出 [友方]/[敌方]前缀 + 名字，否则退回 id */
+  private replayEntityText(id: string): string {
+    const info = this.replayEntityMap.get(id)
+    if (!info) return id
+    return `[${ParticipantSideName[info.team]}]${info.name}`
+  }
+
+  /**
    * 开始回放
    * @param recording 回放记录
    */
@@ -113,6 +142,7 @@ export class BattleReplayManager {
       this.replayEngine.setSkillConfigLookup(this.skillConfigLookup)
     }
     this.loadedReplayData = recording
+    this.replayEntityMap = this.buildReplayEntityMap(recording)
 
     const success = this.replayEngine.loadReplay(recording)
     if (!success) {
@@ -295,29 +325,27 @@ export class BattleReplayManager {
     }
   }
 
-  /** 处理动作回放 */
-  private handleActionReplay(action: any, category?: string) {
+  /** 处理动作回放 — 委托 BattleLogProjector（消除"[回放]"裸字符串格式，与实时口径对齐） */
+  private handleActionReplay(action: any, _category?: string) {
     if (!action) return
-    const sourceName = action.sourceId ?? '未知'
-    const targetName = action.targetId ?? '未知'
-    const dmgText = (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点伤害` : ''
-    const healText = (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点气血` : ''
+    const projected = projectReplayActionLog(
+      action,
+      action.turn ?? 0,
+      this.replayEntityMap,
+    )
     LoggerProvider.logger.addBattleLog({
       turn: action.turn ?? 0,
-      message: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}`,
-      segments: [{ text: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}` }],
-      // 日志类别由录制端写入（BattleRecorder.recordEvent），此处直接读取
-      category: (category as BattleLogCategory) ?? BATTLE_LOG_CATEGORIES.STATUS,
-      meta: { role: 'action' },
+      ...projected,
     })
   }
 
   /** 处理回合开始回放 */
   private handleTurnStartReplay(turn: number, participantId: string) {
+    const text = `[回放] 第 ${turn} 回合开始，行动者：${this.replayEntityText(participantId)}`
     LoggerProvider.logger.addBattleLog({
       turn,
-      message: `[回放] 第 ${turn} 回合开始，行动者：${participantId}`,
-      segments: [{ text: `[回放] 第 ${turn} 回合开始`, classStr: 'log-system' }],
+      message: text,
+      segments: [{ text, classStr: 'log-system' }],
       category: BATTLE_LOG_CATEGORIES.SYSTEM,
       meta: { role: 'battle' },
     })
@@ -361,10 +389,11 @@ export class BattleReplayManager {
   /** 处理 Buff 添加回放 */
   private handleBuffAddReplay(data: any) {
     if (!data?.targetId) return
+    const targetText = this.replayEntityText(data.targetId)
     LoggerProvider.logger.addBattleLog({
       turn: data.turn ?? 0,
-      message: `[回放] ${data.targetId} 获得 Buff: ${data.buffId ?? '未知'}`,
-      segments: [{ text: `[回放] Buff 添加: ${data.buffId ?? '未知'}` }],
+      message: `[回放] ${targetText} 获得 Buff: ${data.buffId ?? '未知'}`,
+      segments: [{ text: `[回放] ${targetText} 获得 Buff: ${data.buffId ?? '未知'}` }],
       category: BATTLE_LOG_CATEGORIES.STATUS,
       meta: { role: 'sub' },
     })
@@ -373,10 +402,11 @@ export class BattleReplayManager {
   /** 处理 Buff 移除回放 */
   private handleBuffRemoveReplay(data: any) {
     if (!data?.targetId) return
+    const targetText = this.replayEntityText(data.targetId)
     LoggerProvider.logger.addBattleLog({
       turn: data.turn ?? 0,
-      message: `[回放] ${data.targetId} 移除 Buff: ${data.instanceId ?? '未知'}`,
-      segments: [{ text: `[回放] Buff 移除: ${data.instanceId ?? '未知'}` }],
+      message: `[回放] ${targetText} 移除 Buff: ${data.instanceId ?? '未知'}`,
+      segments: [{ text: `[回放] ${targetText} 移除 Buff: ${data.instanceId ?? '未知'}` }],
       category: BATTLE_LOG_CATEGORIES.STATUS,
       meta: { role: 'sub' },
     })
@@ -388,10 +418,11 @@ export class BattleReplayManager {
     const info: string[] = []
     if (data.remainingTurns != null) info.push(`剩余${data.remainingTurns}回合`)
     if (data.stacks != null) info.push(`${data.stacks}层`)
+    const targetText = this.replayEntityText(data.targetId)
     LoggerProvider.logger.addBattleLog({
       turn: data.turn ?? 0,
-      message: `[回放] ${data.targetId} Buff 更新: ${info.join('，') || '状态变化'}`,
-      segments: [{ text: `[回放] Buff 更新: ${info.join('，') || '状态变化'}` }],
+      message: `[回放] ${targetText} Buff 更新: ${info.join('，') || '状态变化'}`,
+      segments: [{ text: `[回放] ${targetText} Buff 更新: ${info.join('，') || '状态变化'}` }],
       category: BATTLE_LOG_CATEGORIES.STATUS,
       meta: { role: 'sub' },
     })

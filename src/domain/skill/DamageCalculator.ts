@@ -183,9 +183,7 @@ export class DamageCalculator {
     if (skillStep.calculation?.extraValues) {
       const { total, contributions } = processExtraValues(
         skillStep.calculation.extraValues,
-        (attr) => resolveAttributeValue(attr, source, target, {
-          [ATTRIBUTE_CODE.attack]: () => source.getRandomAttackDamage(),
-        }),
+        (attr) => resolveAttributeValue(attr, source, target),
       )
       damage += total
       breakdown.extraContributions.push(...contributions)
@@ -598,19 +596,10 @@ export class DamageCalculator {
       baseDamage = skillStep.calculation.baseValue
       // ponytail: extraValues 在主循环 calculateDamage 中通过 getAttrVal 处理，不在基础伤害阶段重复
     } else {
-      const minAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.minAttack)
-      const maxAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.maxAttack)
+      // NOTE: v2.1.0 攻击模型扁平化 — 基础伤害直接取单一 attack 属性，不再做 min/max 区间随机
+      const atk = this.getAttributeSafe(source, ATTRIBUTE_CODE.attack)
       const levelBonus = (source.level || 1) * 2
-      if (
-        skillStep.attackType === AttackType.NORMAL &&
-        minAtk > 0 &&
-        maxAtk > 0
-      ) {
-        baseDamage = Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
-      } else {
-        const atk = source.getRandomAttackDamage()
-        baseDamage = Math.floor(atk + levelBonus)
-      }
+      baseDamage = Math.floor(atk + levelBonus)
     }
 
     this.logCalculation('base', baseDamage, `基础伤害: ${baseDamage}`)

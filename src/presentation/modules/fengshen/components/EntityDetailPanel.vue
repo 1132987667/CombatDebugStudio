@@ -26,6 +26,14 @@
                 </li>
               </ul>
             </template>
+            <template v-else-if="isStatsField(field)">
+              <dl class="fs-detail-map">
+                <div v-for="(v, k) in entity[field.key] as Record<string, unknown>" :key="k" class="fs-detail-map-row">
+                  <dt class="fs-detail-map-key">{{ attrLabel(String(k)) }}</dt>
+                  <dd class="fs-detail-map-val">{{ attrValue(String(k), v) }}</dd>
+                </div>
+              </dl>
+            </template>
             <template v-else-if="isObject(entity[field.key])">
               <dl class="fs-detail-map">
                 <div v-for="(v, k) in entity[field.key] as Record<string, unknown>" :key="k" class="fs-detail-map-row">
@@ -45,6 +53,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
+import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 
 const props = defineProps<{
   schema: TableSchema
@@ -52,6 +61,24 @@ const props = defineProps<{
 }>()
 
 const detailName = computed(() => String(props.entity.name ?? props.entity.id ?? '未命名'))
+
+/** stats 字段 = 属性统计对象（actors/enemies 的 `{ attrCode: number }`），走友好属性面板渲染 */
+function isStatsField(field: TableSchema['fields'][number]): boolean {
+  return field.type === 'map' && field.key === 'stats'
+}
+
+/** 属性 code → 展示名（无元数据时回退原 code） */
+function attrLabel(code: string): string {
+  return getAttrMeta(code as ATTRIBUTE_CODE)?.displayName ?? code
+}
+
+/** 属性值格式化：百分比属性追加 %，其余保持原有展示 */
+function attrValue(code: string, v: unknown): string {
+  if (typeof v === 'number' && getAttrMeta(code as ATTRIBUTE_CODE)?.isPercentage) {
+    return `${v}%`
+  }
+  return formatItem(v)
+}
 
 function isEmpty(v: unknown): boolean {
   return v === undefined || v === null || v === ''

@@ -9,7 +9,7 @@
  * - 一致性：classStr 和 hover 在同一处决定
  */
 
-import { LogSegment, LogSegmentHover, NarrativeBlock, NarrativeBlockType } from '@/shared/types/battle-log'
+import { LogSegment, LogSegmentHover, NarrativeBlock, NarrativeBlockType, entityDisplayText, entityFaction } from '@/shared/types/battle-log'
 import {
   type BuffClassificationInput,
 } from '@/shared/types/buff-classification'
@@ -79,9 +79,9 @@ export function passiveSegment(
 
 // ==================== 叙事文本导出 ====================
 
-/** 将 LogSegment[] 拼接为纯文本 */
+/** 将 LogSegment[] 拼接为纯文本（entity 段缺前缀时自动补 [友方]/[敌方]，与 HTML 导出/面板渲染同口径） */
 export function segsText(segs: LogSegment[]): string {
-  return segs.map((s) => s.text).join('')
+  return segs.map(entityDisplayText).join('')
 }
 
 /** 将 NarrativeBlock[] 渲染为叙事纯文本 —— 与日志面板"导出"格式完全一致 */
@@ -263,9 +263,10 @@ body { margin:0; background:var(--color-bg-primary); color:var(--color-text-prim
  * NOTE: 分支与 LogSeg.vue 的 v-if 链严格同源，修改 LogSeg.vue 时须同步此处。
  */
 function segToHtml(seg: LogSegment): string {
-  const text = escapeHtml(seg.text)
+  const text = escapeHtml(entityDisplayText(seg))
   if (seg.kind === 'entity') {
-    const cls = seg.faction === ParticipantSide.ALLY ? 'chip--ally' : 'chip--enemy'
+    const cls =
+      entityFaction(seg) === ParticipantSide.ALLY ? 'chip--ally' : 'chip--enemy'
     return `<span class="chip ${cls}">${text}</span>`
   }
   if (seg.kind === 'damage') return `<b class="num num--damage">${text}</b>`

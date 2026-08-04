@@ -21,8 +21,7 @@ export interface CompendiumEnemy {
   level: number
   stats: {
     currentHealth: number
-    minAttack: number
-    maxAttack: number
+    attack: number
     defense: number
     speed: number
     critRate?: number

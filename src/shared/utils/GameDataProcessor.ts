@@ -148,7 +148,7 @@ export class GameDataProcessor {
       enemy.skills?.passive ?? [],
     )
 
-    // 3. 补全派生属性（配置只有 currentHealth/minAttack/maxAttack，但引擎需要 maxHealth）
+    // 3. 补全派生属性（配置只有 currentHealth/attack，但引擎需要 maxHealth）
     const stats = { ...enemy.stats } as Partial<Record<ATTRIBUTE_CODE, number>>
     if (
       !stats[ATTRIBUTE_CODE.maxHealth] &&
@@ -185,18 +185,16 @@ export class GameDataProcessor {
 
     // 6. 将配置中的 attackBonus/healthBonus 作为 PERCENTAGE 修饰符注入到对应属性
     if (attackBonusBase) {
-      for (const attr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-        const attrData = participant.getAttrValue(attr)
-        if (attrData) {
-          attrData.modifiers.push({
-            sourceKey: 'bonus:attackBonus',
-            sourceType: ModifierSourceType.BASE,
-            attribute: attr,
-            value: attackBonusBase,
-            type: ModifierType.PERCENTAGE,
-            description: '攻击加成',
-          })
-        }
+      const attrData = participant.getAttrValue(ATTRIBUTE_CODE.attack)
+      if (attrData) {
+        attrData.modifiers.push({
+          sourceKey: 'bonus:attackBonus',
+          sourceType: ModifierSourceType.BASE,
+          attribute: ATTRIBUTE_CODE.attack,
+          value: attackBonusBase,
+          type: ModifierType.PERCENTAGE,
+          description: '攻击加成',
+        })
       }
     }
     if (healthBonusBase) {

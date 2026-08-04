@@ -163,6 +163,7 @@ import { container } from '@/infrastructure/di/Container'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { blocksToText, blocksToHtml, segsText } from '@/shared/utils/log-segment-factory'
+import { entityDisplayText } from '@/shared/types/battle-log'
 
 // ───────────────────────── 渲染器 & 悬浮解析器 ─────────────────────────
 const renderer = new RoundNarrativeRenderer()
@@ -208,7 +209,8 @@ function applyKeyword(list: LogEntry[], kw: string): LogEntry[] {
   const k = kw.toLowerCase()
   return list.filter((e) => {
     if (e.message?.toLowerCase().includes(k)) return true
-    if (e.segments?.some((s) => s.text.toLowerCase().includes(k))) return true
+    // NOTE: 按显示文本匹配（entity 段缺前缀时也补全），与导出/面板渲染同口径
+    if (e.segments?.some((s) => entityDisplayText(s).toLowerCase().includes(k))) return true
     return false
   })
 }

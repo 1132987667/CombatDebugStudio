@@ -73,17 +73,13 @@ export function processTargetModifiers(
 
 /**
  * 获取实体的属性值（含特殊属性的处理 hook）
- * 各计算器传入自己的特殊处理逻辑（如 attack→getRandomAttackDamage, damageDealt→context.damage）
+ * 各计算器传入自己的特殊处理逻辑（如 damageDealt→context.damage）
  */
 export function resolveAttributeValue(
   attr: string,
   source: BattleEntity,
   target: BattleEntity,
-  customResolvers: Record<string, () => number>,
 ): number {
-  const custom = customResolvers[attr]
-  if (custom) return custom()
-
   // 默认：尝试从目标读取，否则从来源读取
   const entity = (attr === 'maxHealth' || attr === 'currentHealth') ? target : source
   return entity.getAttribute(attr as ATTRIBUTE_CODE) || 0

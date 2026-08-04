@@ -637,8 +637,17 @@ export const useHaotianStore = defineStore('haotian', () => {
   /** CSV 字段转义（RFC 4180）：含分隔符/引号/换行时双引号包裹，内部引号翻倍 */
   const escCsvCell = (s: string): string => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s)
 
+  /** 单位 id → 带阵营前缀的名字（摘要导出/面板与日志口径一致；side 缺失或未知回退纯名字） */
+  const pnameSide = (id: string): string => {
+    const p = archive.value?.initialState.participants.find((x) => x.id === id)
+    if (!p) return pname.value(id)
+    if (p.side === 'ally') return `[友方]${p.name}`
+    if (p.side === 'enemy') return `[敌方]${p.name}`
+    return p.name
+  }
+
   /** 单位 id → 名字（摘要导出与对话框一致；未知单位回退 id） */
-  const nm = (id: string): string => pname.value(id)
+  const nm = (id: string): string => pnameSide(id)
 
   function summaryMarkdown(): string {
     const sum = summary.value
@@ -838,6 +847,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     currentTurn,
     lastEvent,
     pname,
+    pnameSide,
     timeRead,
     summary,
     exportSummaryMarkdown,

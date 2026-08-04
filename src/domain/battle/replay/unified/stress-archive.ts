@@ -93,7 +93,7 @@ export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): Unif
           ],
         },
       },
-      summary: `第 ${round} 回合开始 · 全量锚点`,
+      summary: `第 ${round} 回合开始`,
     })
     ts += 40
 

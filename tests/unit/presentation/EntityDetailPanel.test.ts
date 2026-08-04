@@ -61,12 +61,14 @@ describe('EntityDetailPanel 只读详情', () => {
     expect(root.textContent).toContain('skill_b')
   })
 
-  it('Map 字段以键值对展示', () => {
-    const root = mount({ id: 'h1', name: '甲', stats: { maxHealth: 100, minAttack: 5 } })
-    expect(root.textContent).toContain('maxHealth')
+  it('stats 属性面板：label 用元数据 displayName，百分比属性追加 %', () => {
+    const root = mount({ id: 'h1', name: '甲', stats: { maxHealth: 100, attack: 5, critRate: 20 } })
+    expect(root.textContent).toContain('最大气血值')
     expect(root.textContent).toContain('100')
-    expect(root.textContent).toContain('minAttack')
+    expect(root.textContent).toContain('攻击力')
     expect(root.textContent).toContain('5')
+    expect(root.textContent).toContain('暴击率')
+    expect(root.textContent).toContain('20%')
   })
 
   it('空值显示 —', () => {

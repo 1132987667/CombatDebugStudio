@@ -36,8 +36,7 @@
 
         <div class="tooltip-content">
           <!-- ==================== 标准模式（单值属性） ==================== -->
-          <template>
-            <div class="source-list">
+            <div v-if="modifiers.length > 0" class="source-list">
               <!-- 基础数值 -->
               <div v-if="additiveGroup.length > 0" class="source-section">
                 <div class="section-title-row">
@@ -118,28 +117,21 @@
                 </div>
               </div>
 
-              <div v-if="modifiers.length === 0" class="no-sources">
-                无详细来源信息
-              </div>
             </div>
 
-            <div class="tooltip-divider"></div>
+            <div v-if="modifiers.length > 0" class="tooltip-divider"></div>
 
             <div class="calculation-section">
               <div class="calculation-title">计算过程</div>
-              <div v-if="calcSteps.length === 0" class="calculation-empty">无详细计算信息</div>
-              <template v-else>
-                <div v-for="(step, i) in calcSteps" :key="i" class="calc-step">
-                  <span class="calc-step-label">{{ step.label }}</span>
-                  <span class="calc-step-result">{{ step.result }}</span>
-                </div>
-                <div class="calculation-result">
-                  <span class="result-label">=</span>
-                  <span class="result-value">{{ finalValue }}</span>
-                </div>
-              </template>
+              <div v-for="(step, i) in calcSteps" :key="i" class="calc-step">
+                <span class="calc-step-label">{{ step.label }}</span>
+                <span class="calc-step-result">{{ step.result }}</span>
+              </div>
+              <div class="calculation-result">
+                <span class="result-label">=</span>
+                <span class="result-value">{{ finalValue }}</span>
+              </div>
             </div>
-          </template>
         </div>
 
         <div class="tooltip-arrow" :class="arrowClass"></div>
@@ -150,7 +142,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Modifier, ModifierType, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
+import { Modifier, ModifierType, AttributeValueType, ModifierSourceType, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttrMeta } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
@@ -186,7 +178,7 @@ const tooltipRef = ref<HTMLElement | null>(null)
 // NOTE: 优先用 attributeCode 直接查 meta，无则跳过（title 反向查找不可靠）
 const attributeMeta = computed(() => {
   if (!props.attributeCode) return undefined
-  return getAttrMeta(props.attributeCode as any)
+  return getAttrMeta(props.attributeCode as ATTRIBUTE_CODE)
 })
 
 const getSourceLabel = (source: ModifierSourceType): string => {
@@ -234,7 +226,13 @@ const formatLayerTotal = (mods: Modifier[], type: ModifierType): string => {
 /** 分步计算过程：基础值 → 加法 → 百分比乘区 → 独立乘区 → 最终乘区，每步带中间结果 */
 const calcSteps = computed(() => {
   const mods = props.modifiers
-  if (mods.length === 0) return []
+  const fmt = (v: number): string => `${round(v, 2)}`
+  const signed = (v: number): string => (v >= 0 ? '+' : '') + fmt(v)
+
+  // 无修饰符：基础值即最终值，避免空内容（只有分隔线的空 tooltip）
+  if (mods.length === 0) {
+    return [{ label: '基础值', result: fmt(props.finalValue) }]
+  }
 
   const baseMod = mods.find(m => m.sourceKey === 'base')
   const additiveMods = mods.filter(m => m.sourceKey !== 'base' && m.type === ModifierType.ADDITIVE)
@@ -243,8 +241,6 @@ const calcSteps = computed(() => {
   const finalMods = mods.filter(m => m.type === ModifierType.FINAL)
 
   const steps: Array<{ label: string; result: string }> = []
-  const fmt = (v: number): string => `${round(v, 2)}`
-  const signed = (v: number): string => (v >= 0 ? '+' : '') + fmt(v)
   let current = baseMod?.value ?? 0
 
   steps.push({ label: '基础值', result: fmt(current) })
@@ -304,7 +300,6 @@ const arrowClass = computed(() => {
   const rightSpace = viewportWidth - props.triggerRect.right
   const leftSpace = props.triggerRect.left
   const bottomSpace = viewportHeight - props.triggerRect.bottom
-  const topSpace = props.triggerRect.top
 
   if (rightSpace > leftSpace && rightSpace > tooltipWidth) {
     return 'arrow-left'
@@ -362,7 +357,7 @@ const tooltipStyle = computed(() => {
   }
 })
 
-const handleClickOutside = (e: MouseEvent) => {
+const handleClickOutside = () => {
   // 可以添加点击外部关闭的逻辑
 }
 
@@ -531,14 +526,6 @@ onUnmounted(() => {
         }
       }
 
-      .no-sources {
-        text-align: center;
-        padding: var(--space-3);
-        color: var(--color-text-tertiary);
-        font-style: italic;
-      }
-    }
-
     .calculation-section {
       background: rgba(var(--rgb-energy), var(--alpha-tint));
       border-radius: var(--radius-md);
@@ -575,11 +562,6 @@ onUnmounted(() => {
           text-align: right;
           white-space: nowrap;
         }
-      }
-
-      .calculation-empty {
-        color: var(--color-text-tertiary);
-        font-style: italic;
       }
 
       .calculation-result {

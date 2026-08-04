@@ -43,6 +43,7 @@
 import { onMounted, ref } from 'vue'
 import { useFengshenStore, type FengshenView } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import type { FengshenTableName } from '@/domain/fengshen/types'
+import { persistentStorage } from '@/infrastructure/adapters/storage'
 import ListView from '@/presentation/modules/fengshen/views/ListView.vue'
 import FormulasView from '@/presentation/modules/fengshen/views/FormulasView.vue'
 import HealthView from '@/presentation/modules/fengshen/views/HealthView.vue'
@@ -105,6 +106,7 @@ function selectDomain(table: FengshenTableName): void {
 onMounted(() => {
   void store.refreshVersion()
   void store.refreshList()
+  void persistentStorage.isAvailable().then((ok) => (storageOk.value = ok))
 })
 </script>
 

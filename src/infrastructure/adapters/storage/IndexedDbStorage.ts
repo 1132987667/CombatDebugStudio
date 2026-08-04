@@ -24,6 +24,16 @@ export class IndexedDbStorage implements IPersistentStorage {
 
   private dbPromise: Promise<IDBDatabase> | null = null
 
+  /** IndexedDB 是否可用（复用现有连接，不额外建库；供 UI 展示存储后端状态） */
+  async isAvailable(): Promise<boolean> {
+    try {
+      await this.getDb()
+      return true
+    } catch {
+      return false
+    }
+  }
+
   /**
    * 获取 DB 连接的 Promise（延迟初始化 + 缓存）
    */

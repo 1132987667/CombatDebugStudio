@@ -3,7 +3,7 @@ import {
   EffectRenderer,
   type RenderContext,
 } from '@/domain/battle/logs/EffectRenderer'
-import { projectPassiveLog } from '@/domain/battle/logs/BattleLogProjector'
+import { projectPassiveLog, entitySegment } from '@/domain/battle/logs/BattleLogProjector'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import {
   PassiveSkipReason,
@@ -522,10 +522,8 @@ export class PassiveSkillManager {
       source,
       targets,
       getEntityName: (id: string) => {
-        const resolve = (e: BattleEntity) => {
-          const prefix = e.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
-          return `${prefix}${e.name}`
-        }
+        // NOTE: 委托 entitySegment 单一实现（[友方]/[敌方] 前缀 + 名字）
+        const resolve = (e: BattleEntity) => entitySegment(e).text
         if (id === source.id) return resolve(source)
         const t = targets.find((e) => e.id === id)
         if (t) return resolve(t)

@@ -11,7 +11,7 @@
     <div class="fs-toolbar">
       <div class="fs-search-box">
         <TacticalInput :model-value="store.search" placeholder="按名称模糊搜索…" aria-label="按名称搜索"
-          @update:model-value="store.search = String($event ?? '')" @keyup.enter="onSearch">
+          @update:model-value="store.search = String($event ?? '')">
           <template #icon>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
               stroke-linecap="round" aria-hidden="true">
@@ -41,13 +41,13 @@
       <Button variant="primary" size="small" @click="store.openCreate">＋ 新增{{ schema.label }}</Button>
       <Button size="small" title="复制选中数据为模板" :disabled="!store.selectedIds.length"
         @click="duplicateFirst">复制为模板</Button>
-      <Button v-if="store.selectedIds.length" variant="danger" size="small" @click="removeSelected">删除所选（{{
+      <Button v-if="store.selectedIds.length" variant="danger" size="small" @click="requestRemoveSelected">删除所选（{{
         store.selectedIds.length }}）</Button>
     </div>
 
     <DataTable :schema="schema" :rows="pagedRows" :selected-ids="store.selectedIds" :loading="store.loading"
-      :detail-id="detailId" @toggle-select="store.toggleSelect" @edit="store.openEdit" @copy="store.duplicateAsTemplate"
-      @remove="onRemove" @detail="onDetail" />
+      :detail-id="detailId" @toggle-select="store.toggleSelect" @edit="store.openEdit" @copy="onCopy"
+      @remove="requestRemove" @detail="onDetail" />
 
     <div v-if="totalPages > 1" class="fs-pagination" role="navigation" aria-label="分页">
       <span class="fs-page-info">共 {{ filteredRows.length }} 条 · 第 {{ page }}/{{ totalPages }} 页</span>
@@ -70,6 +70,11 @@
 
     <EntityDrawer :open="store.drawerOpen" :schema="schema" :entity="store.editingEntity" :is-new="store.isNew"
       :errors="store.formErrors" :load-options="store.loadOptions" @save="store.save" @close="store.closeDrawer" />
+
+    <!-- 危险操作二次确认 + 统一提示 -->
+    <ConfirmDialog v-model="confirmRemove" :title="`删除${schema.label}`" :message="removeMessage"
+      confirm-text="删除" danger @confirm="doRemove" />
+    <Notification ref="notification" />
   </div>
 </template>
 
@@ -84,6 +89,8 @@ import EntityDrawer from '@/presentation/modules/fengshen/components/EntityDrawe
 import EntityDetailPanel from '@/presentation/modules/fengshen/components/EntityDetailPanel.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
+import Notification from '@/presentation/components/Notification.vue'
 
 const PAGE_SIZE = 20
 
@@ -121,9 +128,13 @@ const tableHint = computed(() => {
   return hints[store.currentTable] ?? ''
 })
 
-/** 客户端筛选：select 精确 + range 范围 */
+/** 客户端过滤：name 搜索 + select 精确 + range 范围（搜索与筛选同节奏，输入即见） */
 const filteredRows = computed(() => {
   let rows = store.rows
+  if (store.search) {
+    const kw = store.search.toLowerCase()
+    rows = rows.filter((r) => String(r.name ?? r.id ?? '').toLowerCase().includes(kw))
+  }
   for (const f of schema.value.filters ?? []) {
     if (f.type === 'select') {
       const v = filterState[f.key]
@@ -138,6 +149,11 @@ const filteredRows = computed(() => {
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / PAGE_SIZE)))
+
+// 过滤条件（搜索/筛选）变化导致结果收缩时，当前页可能超出范围——自动回到有效页
+watch(totalPages, (total) => {
+  if (page.value > total) page.value = total
+})
 
 const pagedRows = computed(() => {
   const start = (page.value - 1) * PAGE_SIZE
@@ -178,11 +194,6 @@ function go(p: number): void {
   page.value = p
 }
 
-function onSearch(): void {
-  page.value = 1
-  void store.refreshList()
-}
-
 /** 重置筛选：select 键重置为空串而非删除 —— v-model="filterState[f.key]" 动态键绑定下，
  * 键不存在会传 undefined 给 TacticalSelect（其 modelValue 为 required，触发 prop 类型检查警告） */
 function resetFilters(): void {
@@ -194,11 +205,19 @@ function resetFilters(): void {
   page.value = 1
 }
 
-/** 复制首个选中项为模板（工具条批量复制） */
+/** 复制首个选中项为模板（工具条批量复制）；不可复制（elements）时统一提示 */
 async function duplicateFirst(): Promise<void> {
   if (!store.selectedIds.length) return
   const row = store.rows.find((r) => String(r.id) === store.selectedIds[0])
-  if (row) await store.duplicateAsTemplate(row)
+  if (!row) return
+  const ok = await store.duplicateAsTemplate(row)
+  if (!ok) notification.value?.addNotification('提示', '阵营克制为单文档数据，不支持复制', 'warning')
+}
+
+/** 行内复制；不可复制（elements）时统一提示 */
+async function onCopy(row: Record<string, unknown>): Promise<void> {
+  const ok = await store.duplicateAsTemplate(row)
+  if (!ok) notification.value?.addNotification('提示', '阵营克制为单文档数据，不支持复制', 'warning')
 }
 
 // 表切换：重置筛选 / 分页 / 预载 refTable 选项（immediate：首次挂载即预填 select 键，避免 v-model 绑 undefined）
@@ -218,16 +237,34 @@ watch(
   { immediate: true },
 )
 
-async function onRemove(row: Record<string, unknown>): Promise<void> {
-  const id = String(row.id)
-  const name = String(row.name ?? id)
-  if (!window.confirm(`确定删除 ${schema.value.label}「${name}」？`)) return
-  const errors = await store.remove(id)
-  if (errors) window.alert(errors.join('\n'))
+// ── 删除：ConfirmDialog 二次确认 + Notification 结果反馈 ──
+const notification = ref<InstanceType<typeof Notification> | null>(null)
+const confirmRemove = ref(false)
+const removeMessage = ref('')
+let removeTarget: (() => Promise<void>) | null = null
+
+function requestRemove(row: Record<string, unknown>): void {
+  const name = String(row.name ?? row.id)
+  removeMessage.value = `确定删除 ${schema.value.label}「${name}」？此操作不可恢复。`
+  removeTarget = async () => {
+    const errors = await store.remove(String(row.id))
+    if (errors) notification.value?.addNotification('删除失败', errors.join('\n'), 'error')
+    else notification.value?.addNotification('已删除', `「${name}」已删除`, 'success')
+  }
+  confirmRemove.value = true
 }
 
-async function removeSelected(): Promise<void> {
-  if (!window.confirm(`确定删除所选 ${store.selectedIds.length} 条 ${schema.value.label}？`)) return
-  await store.removeSelected()
+function requestRemoveSelected(): void {
+  const count = store.selectedIds.length
+  removeMessage.value = `确定删除所选 ${count} 条 ${schema.value.label}？此操作不可恢复。`
+  removeTarget = async () => {
+    await store.removeSelected()
+    notification.value?.addNotification('已删除', `已删除所选 ${count} 条记录`, 'success')
+  }
+  confirmRemove.value = true
+}
+
+async function doRemove(): Promise<void> {
+  await removeTarget?.()
 }
 </script>

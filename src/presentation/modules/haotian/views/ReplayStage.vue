@@ -1,13 +1,19 @@
 <template>
   <div class="ht-stage">
     <div class="ht-stage-hd">
-      <span class="ht-time-read">{{ store.timeRead }}</span>
       <span class="ht-chip ht-turn">{{ store.currentTurn ? '第 ' + store.currentTurn + ' 回合' : '待命' }}</span>
       <span class="ht-chip">{{ phaseChipLabel }}</span>
-      <span class="ht-proj-tag">回放 · <b>按时间播放</b></span>
+      <span class="ht-time-read">{{ store.timeRead }}</span>
+      <span class="ht-stage-hd-fill"></span>
+      <span class="ht-proj-tag">回放 · 按时间播放</span>
     </div>
 
-    <div class="ht-arena">
+    <div v-if="!store.archive" class="ht-stage-empty">
+      <div class="ht-se-hint">尚未加载战斗数据</div>
+      <div class="ht-se-sub">从顶部「选择数据源」载入演示存档、战斗记录或实时战斗</div>
+    </div>
+
+    <div class="ht-arena" v-show="!!store.archive">
       <div v-for="(side, si) in sides" :key="si" class="ht-arena-side" :class="{ right: si === 1 }">
         <div v-for="p in side" :key="p.id" class="ht-unit" :data-uid="p.id" :ref="(el) => registerUnit(p.id, el)"
           :class="{ dead: hpOf(p) <= 0, acting: actingId === p.id }">

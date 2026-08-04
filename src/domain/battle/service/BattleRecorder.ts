@@ -195,8 +195,11 @@ export class BattleRecorder {
       message: `开始记录战斗: ${battleId}`,
     })
 
-    // ponytail: 战报累加器初始化
-    BattleSummaryGenerator.instance.startBattle(battleId)
+    // ponytail: 战报累加器初始化（传入参与者以支持时间线敌我前缀）
+    BattleSummaryGenerator.instance.startBattle(
+      battleId,
+      initialState.participants,
+    )
 
     this.scheduleCleanup()
   }

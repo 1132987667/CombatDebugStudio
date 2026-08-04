@@ -78,47 +78,72 @@
     </div>
 
     <div class="ht-sec" v-if="pl.chain">
-      <div class="ht-sec-t">事件因果链</div>
-      <div v-for="(n, i) in pl.chain as ChainNode[]" :key="i" class="ht-cnode">
-        <span class="ht-cnum">{{ i + 1 }}</span>
-        <div>
-          <div class="ht-ct">{{ n.t }}</div>
-          <div class="ht-cd">{{ n.d }}</div>
+      <button type="button" class="ht-sec-t ht-sec-toggle" :class="{ open: showAdvanced.chain }"
+        @click="showAdvanced.chain = !showAdvanced.chain">
+        <span class="ht-sec-caret">▸</span> 事件因果链
+      </button>
+      <div v-show="showAdvanced.chain" class="ht-sec-body">
+        <div v-for="(n, i) in pl.chain as ChainNode[]" :key="i" class="ht-cnode">
+          <span class="ht-cnum">{{ i + 1 }}</span>
+          <div>
+            <div class="ht-ct">{{ n.t }}</div>
+            <div class="ht-cd">{{ n.d }}</div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="ht-sec" v-if="pl.candidates">
-      <div class="ht-sec-t">AI 候选评分</div>
-      <div v-for="(c, i) in pl.candidates as ScoreCandidate[]" :key="i" class="ht-scrow" :class="{ win: c.id === pl.chosen }">
-        <span class="n">{{ c.name }}{{ c.id === pl.chosen ? ' ✓' : '' }}</span>
-        <span class="b"><i :style="{ width: c.score + '%' }"></i></span>
-        <span class="v">{{ c.score }}</span>
+      <button type="button" class="ht-sec-t ht-sec-toggle" :class="{ open: showAdvanced.candidates }"
+        @click="showAdvanced.candidates = !showAdvanced.candidates">
+        <span class="ht-sec-caret">▸</span> AI 候选评分
+      </button>
+      <div v-show="showAdvanced.candidates" class="ht-sec-body">
+        <div v-for="(c, i) in pl.candidates as ScoreCandidate[]" :key="i" class="ht-scrow" :class="{ win: c.id === pl.chosen }">
+          <span class="n">{{ c.name }}{{ c.id === pl.chosen ? ' ✓' : '' }}</span>
+          <span class="b"><i :style="{ width: c.score + '%' }"></i></span>
+          <span class="v">{{ c.score }}</span>
+        </div>
       </div>
     </div>
 
     <div class="ht-sec" v-if="pl.fields">
-      <div class="ht-sec-t">属性重算</div>
-      <div v-for="(f, i) in pl.fields as FieldChange[]" :key="i" class="ht-kvrow">
-        <span class="k">{{ f.k }}</span>
-        <span class="v">{{ f.from }} → <b style="color: var(--color-warning)">{{ f.to }}</b></span>
+      <button type="button" class="ht-sec-t ht-sec-toggle" :class="{ open: showAdvanced.fields }"
+        @click="showAdvanced.fields = !showAdvanced.fields">
+        <span class="ht-sec-caret">▸</span> 属性重算
+      </button>
+      <div v-show="showAdvanced.fields" class="ht-sec-body">
+        <div v-for="(f, i) in pl.fields as FieldChange[]" :key="i" class="ht-kvrow">
+          <span class="k">{{ f.k }}</span>
+          <span class="v">{{ f.from }} → <b style="color: var(--color-warning)">{{ f.to }}</b></span>
+        </div>
       </div>
     </div>
 
     <div class="ht-sec" v-if="kvRows.length">
-      <div class="ht-sec-t">载荷字段</div>
-      <div v-for="(r, i) in kvRows" :key="i" class="ht-kvrow">
-        <span class="k">{{ r[0] }}</span>
-        <span class="v">{{ r[1] }}</span>
+      <button type="button" class="ht-sec-t ht-sec-toggle" :class="{ open: showAdvanced.kv }"
+        @click="showAdvanced.kv = !showAdvanced.kv">
+        <span class="ht-sec-caret">▸</span> 载荷字段<span class="ht-sec-count">{{ kvRows.length }}</span>
+      </button>
+      <div v-show="showAdvanced.kv" class="ht-sec-body">
+        <div v-for="(r, i) in kvRows" :key="i" class="ht-kvrow">
+          <span class="k">{{ r[0] }}</span>
+          <span class="v">{{ r[1] }}</span>
+        </div>
       </div>
     </div>
 
     <div class="ht-sec" v-if="children.length">
-      <div class="ht-sec-t">子事件（{{ children.length }}）</div>
-      <div v-for="c in children" :key="c.id" class="ht-childrow" @click="store.focusEvent(c.id, { seek: true })">
-        <span class="ci" :class="'ht-' + meta(c).cls">{{ meta(c).icon }}</span>
-        <span class="cs">{{ c.summary }}</span>
-        <span class="ctm">{{ formatTime(c.timestamp) }}</span>
+      <button type="button" class="ht-sec-t ht-sec-toggle" :class="{ open: showAdvanced.children }"
+        @click="showAdvanced.children = !showAdvanced.children">
+        <span class="ht-sec-caret">▸</span> 子事件（{{ children.length }}）
+      </button>
+      <div v-show="showAdvanced.children" class="ht-sec-body">
+        <div v-for="c in children" :key="c.id" class="ht-childrow" @click="store.focusEvent(c.id, { seek: true })">
+          <span class="ci" :class="'ht-' + meta(c).cls">{{ meta(c).icon }}</span>
+          <span class="cs">{{ c.summary }}</span>
+          <span class="ctm">{{ formatTime(c.timestamp) }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -161,6 +186,15 @@ const store = useHaotianStore()
 const ev = computed<UnifiedEvent | null>(() => store.selectedEvent)
 const meta = (e: UnifiedEvent) => PHASE_META[e.phase]
 const pl = computed<Record<string, unknown>>(() => (ev.value?.payload ?? {}) as Record<string, unknown>)
+
+// 高级区折叠态（载荷字段 / 因果链 / AI 候选 / 属性重算 / 子事件默认收起，减少信息轰炸）
+const showAdvanced = reactive<Record<string, boolean>>({
+  kv: false,
+  chain: false,
+  candidates: false,
+  fields: false,
+  children: false,
+})
 
 // ───────────── 结算步骤：逐步累计 + 来源释义 ─────────────
 const steps = computed<StepAccum[]>(() => {

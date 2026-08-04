@@ -17,7 +17,8 @@
             <input type="checkbox" :checked="selectedIds.includes(String(row.id))"
               @change="emit('toggle-select', String(row.id))" :aria-label="`选择 ${row.id}`" />
           </td>
-          <td v-for="col in columns" :key="col" :class="cellClass(row, col)">
+          <td v-for="col in columns" :key="col" :class="cellClass(row, col)"
+            :title="previewOf(row, col) ?? undefined">
             <template v-if="tagInfo(row, col)">
               <span class="fs-tag" :class="tagInfo(row, col)!.cls">{{ tagInfo(row, col)!.text }}</span>
             </template>
@@ -90,6 +91,23 @@ function cellText(row: Record<string, unknown>, col: string): string {
   if (Array.isArray(v)) return v.length > 0 ? `×${v.length}` : '—'
   if (typeof v === 'object') return '···'
   return String(v)
+}
+
+/** 数组/对象单元格的悬浮预览：展示前几项，帮助用户不用点开就能了解内容 */
+function previewOf(row: Record<string, unknown>, col: string): string | null {
+  const v = row[col]
+  if (Array.isArray(v)) {
+    if (!v.length) return null
+    const head = v.slice(0, 3).map((x) => (typeof x === 'object' ? JSON.stringify(x) : String(x))).join(' · ')
+    return v.length > 3 ? `${head} …（共 ${v.length} 项）` : head
+  }
+  if (typeof v === 'object' && v !== null) {
+    const entries = Object.entries(v as Record<string, unknown>).slice(0, 4)
+    if (!entries.length) return null
+    const head = entries.map(([k, x]) => `${k}: ${typeof x === 'object' ? JSON.stringify(x) : String(x)}`).join(' · ')
+    return Object.keys(v as Record<string, unknown>).length > 4 ? `${head} …` : head
+  }
+  return null
 }
 
 function cellClass(row: Record<string, unknown>, col: string): Record<string, boolean> {

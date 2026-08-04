@@ -81,9 +81,8 @@ export const useFengshenStore = defineStore('fengshen', () => {
   async function refreshList(): Promise<void> {
     loading.value = true
     try {
-      rows.value = await api.listByTable<Record<string, unknown>>(currentTable.value, {
-        search: search.value || undefined,
-      })
+      // 全量拉取：搜索/筛选统一在界面层客户端完成（数据量级为几十~几百条，输入即见无需服务端往返）
+      rows.value = await api.listByTable<Record<string, unknown>>(currentTable.value)
     } finally {
       loading.value = false
     }
@@ -104,6 +103,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
   function setTable(table: FengshenTableName): void {
     currentTable.value = table
     selectedIds.value = []
+    search.value = ''
     void refreshList()
   }
 
@@ -124,17 +124,11 @@ export const useFengshenStore = defineStore('fengshen', () => {
       // 战斗规则参数复用数据域 params 的列表/编辑
       currentTable.value = 'params'
       selectedIds.value = []
+      search.value = ''
       void refreshList()
     }
     if (view === 'health') void runHealth()
     if (view === 'logs') void loadLogs()
-  }
-
-  function openCreate(): void {
-    editingEntity.value = {}
-    isNew.value = true
-    formErrors.value = []
-    drawerOpen.value = true
   }
 
   function openEdit(entity: Record<string, unknown>, isNewEntity = false): void {
@@ -144,16 +138,14 @@ export const useFengshenStore = defineStore('fengshen', () => {
     drawerOpen.value = true
   }
 
-  /** 复制为模板：新 ID 派生 + 名称加副本后缀，进入编辑抽屉（新增态） */
-  async function duplicateAsTemplate(row: Record<string, unknown>): Promise<void> {
-    if (currentTable.value === 'elements') {
-      window.alert('阵营克制为单文档数据，不支持复制')
-      return
-    }
+  /** 复制为模板：新 ID 派生 + 名称加副本后缀，进入编辑抽屉（新增态）；不可复制时返回 false 由界面提示 */
+  async function duplicateAsTemplate(row: Record<string, unknown>): Promise<boolean> {
+    if (currentTable.value === 'elements') return false
     const existing = await api.listByTable<Record<string, unknown>>(currentTable.value, { limit: 1000 })
     const newId = nextEntityId(existing.map((r) => String(r.id)), `${currentTable.value}_`)
     const name = String(row.name ?? newId)
     openEdit({ ...row, id: newId, name: `${name}·副本` }, true)
+    return true
   }
 
   function closeDrawer(): void {

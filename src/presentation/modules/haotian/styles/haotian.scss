@@ -28,6 +28,7 @@
 
 /* ───────────── 指令栏 ───────────── */
 .ht-cmd {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -96,6 +97,65 @@
 
 .ht-cmd-spacer {
   flex: 1;
+}
+
+/* 工具按钮分组：组间用细分隔线划分，降低 7+ 按钮的认知负担 */
+.ht-cmd-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ht-cmd-group + .ht-cmd-group {
+  padding-left: 14px;
+  border-left: 1px solid var(--ht-bd);
+}
+
+/* 快捷键提示弹层 */
+.ht-hint-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 16px;
+  z-index: 50;
+  min-width: 260px;
+  padding: 12px 14px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--ht-bd);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.ht-hint-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--ht-bd);
+  padding-bottom: 8px;
+}
+
+.ht-hint-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ht-hint-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ht-hint-keys {
+  flex: 0 0 84px;
+  font-family: var(--ht-mono);
+  color: var(--color-energy);
+  font-size: var(--font-size-md);
+}
+
+.ht-hint-desc {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
 }
 
 /* 方形传输按钮（Button 组件固定宽度，替代原 .ht-btn.square） */
@@ -210,9 +270,9 @@
 }
 
 .ht-time-read {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-energy);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
 }
 
 .ht-chip {
@@ -228,8 +288,33 @@
   font-weight: var(--font-weight-bold);
 }
 
+.ht-stage-hd-fill {
+  flex: 1;
+}
+
+.ht-stage-empty {
+  flex: 1;
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.ht-se-hint {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  letter-spacing: 2px;
+}
+
+.ht-se-sub {
+  font-size: var(--font-size-md);
+}
+
 .ht-proj-tag {
-  margin-left: auto;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-md);
 }
@@ -819,6 +904,39 @@
   height: 14px;
   border-radius: 2px;
   background: var(--color-energy);
+}
+
+/* 可点击折叠标题（button 基座重置） */
+.ht-sec-t.ht-sec-toggle {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.ht-sec-toggle .ht-sec-caret {
+  display: inline-block;
+  transition: transform 0.15s ease;
+  color: var(--color-text-tertiary);
+}
+
+.ht-sec-toggle.open .ht-sec-caret {
+  transform: rotate(90deg);
+}
+
+.ht-sec-toggle .ht-sec-count {
+  margin-left: auto;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary);
+}
+
+.ht-sec-body {
+  padding-left: 4px;
 }
 
 /* 公式链 */

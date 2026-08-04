@@ -26,6 +26,8 @@ export class BattleSummaryGenerator {
   private accumulator: BattleSummaryAccumulator | null = null
   /** 最新生成的战报 */
   private _lastSummary: BattleSummary | null = null
+  /** id → 阵营映射（startBattle 时由参与者建立，用于时间线/最高记录的敌我前缀） */
+  private idToTeam = new Map<string, string>()
 
   static get instance(): BattleSummaryGenerator {
     if (!this._instance) {
@@ -41,10 +43,25 @@ export class BattleSummaryGenerator {
 
   /**
    * 战斗开始时初始化累加器
+   * @param participants 参战者（含 id/team），用于时间线敌我前缀；缺省时时间线不标阵营
    */
-  startBattle(battleId: string): void {
+  startBattle(
+    battleId: string,
+    participants?: Array<{ id: string; team: string }>,
+  ): void {
     this.accumulator = createAccumulator(battleId)
     this._lastSummary = null
+    this.idToTeam = new Map()
+    for (const p of participants ?? []) {
+      this.idToTeam.set(p.id, p.team)
+    }
+  }
+
+  /** 敌我前缀（与日志口径一致）：id 反查到阵营时输出 [友方]/[敌方] + 名字，否则原样 */
+  private prefixedName(id: string, name: string): string {
+    const team = this.idToTeam.get(id)
+    if (team !== 'ally' && team !== 'enemy') return name
+    return `[${ParticipantSideName[team]}]${name}`
   }
 
   /**
@@ -71,7 +88,7 @@ export class BattleSummaryGenerator {
       // 最高单次伤害
       if (!acc.highestDamage || record.damage > acc.highestDamage.value) {
         acc.highestDamage = {
-          actor: record.actorName,
+          actor: this.prefixedName(record.actorId, record.actorName),
           value: record.damage,
           crit: record.damageBreakdown?.isCritical ?? false,
         }
@@ -89,7 +106,7 @@ export class BattleSummaryGenerator {
 
       if (!acc.highestHeal || record.heal > acc.highestHeal.value) {
         acc.highestHeal = {
-          actor: record.actorName,
+          actor: this.prefixedName(record.actorId, record.actorName),
           value: record.heal,
         }
       }
@@ -98,9 +115,11 @@ export class BattleSummaryGenerator {
     // 时间线
     acc.timeline.push({
       turn: record.turn,
-      actor: record.actorName,
+      actor: this.prefixedName(record.actorId, record.actorName),
       action: record.actionType,
-      target: record.targetName ?? '',
+      target: record.targetName
+        ? this.prefixedName(record.targetId, record.targetName)
+        : '',
       damage: record.damage > 0 ? record.damage : undefined,
       heal: record.heal > 0 ? record.heal : undefined,
       crit: record.damageBreakdown?.isCritical,
@@ -131,7 +150,7 @@ export class BattleSummaryGenerator {
     // 构建参与者数组
     const participantList = (participants ?? []).map((p) => ({
       id: p.id,
-      name: p.name,
+      name: this.prefixedName(p.id, p.name),
       team: p.team,
       hpEnd: p.hpEnd,
       hpMax: p.hpMax,
@@ -157,6 +176,7 @@ export class BattleSummaryGenerator {
 
     this._lastSummary = summary
     this.accumulator = null // 释放累加器
+    this.idToTeam = new Map() // 清阵营映射，防 headless 路径（无 startBattle）继承上一场
     return summary
   }
 
@@ -164,5 +184,6 @@ export class BattleSummaryGenerator {
   reset(): void {
     this.accumulator = null
     this._lastSummary = null
+    this.idToTeam = new Map()
   }
 }

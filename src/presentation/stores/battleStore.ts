@@ -895,8 +895,6 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const shouldDisplayLog = (log: BattleLogEntry): boolean => {
     const category = log.category
-    const logText = log.segments!.map((s) => s.text).join('')
-    const isLogExists = false // 简化逻辑，实际可按需接入日志去重
     if (category === 'system' && !filters.system) return false
     if (
       category === 'action' &&

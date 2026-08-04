@@ -97,7 +97,10 @@ useHaotianHotkeys({
 })
 
 onMounted(async () => {
-  await store.loadDemo()
+  // NOTE: 首载不自动灌演示存档——保持空态让用户主动选数据源（深链定位除外）
+  // applyDeepLink 依赖已加载存档的事件索引（byId），深链需先载入一份存档再定位
+  const hasEventLink = /e=/.test(location.hash)
+  if (hasEventLink) await store.loadDemo()
   store.applyDeepLink()
 })
 </script>

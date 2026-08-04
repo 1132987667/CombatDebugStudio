@@ -13,7 +13,8 @@
 
     <div class="ht-cmd-spacer"></div>
 
-    <Button title="查看昊天镜快捷键" :active="hintOpen" @click="hintOpen = !hintOpen">快捷键</Button>
+    <Button title="查看昊天镜快捷键" :active="hintOpen" @click="toggleHint()">快捷键</Button>
+    <Button title="查看事件阶段图例（颜色与图标含义）" :active="legendOpen" @click="toggleLegend()">图例</Button>
 
     <div v-if="hintOpen" class="ht-hint-pop">
       <div class="ht-hint-title">昊天镜快捷键</div>
@@ -21,6 +22,17 @@
         <div v-for="h in hintRows" :key="h.keys" class="ht-hint-row">
           <span class="ht-hint-keys">{{ h.keys }}</span>
           <span class="ht-hint-desc">{{ h.desc }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="legendOpen" class="ht-hint-pop ht-legend-pop">
+      <div class="ht-hint-title">事件阶段图例</div>
+      <div class="ht-legend-grid">
+        <div v-for="row in legendRows" :key="row.cls" class="ht-legend-row">
+          <span class="ht-legend-ico" :class="'ht-' + row.cls">{{ row.icon }}</span>
+          <span class="ht-legend-label">{{ row.label }}</span>
+          <span v-if="row.debugOnly" class="ht-legend-dbg">调试</span>
         </div>
       </div>
     </div>
@@ -34,25 +46,37 @@
         title="选择已保存到本地的战斗记录（唤灵台「保存战斗记录」）" />
     </div>
 
-    <!-- 分析：断点 / 对比 / 摘要 -->
+    <!-- 分析：断点 / 对比 / 摘要 / 书签 -->
     <div class="ht-cmd-group">
-      <Button :active="store.bpArmed" title="配置条件断点（伤害/级别/随机值/单位），播放命中自动暂停定位" @click="bpOpen = true">断点</Button>
-      <Button title="与另一份存档逐链路对比差异（分支 diff：生成示例分支 / 从战斗记录选 / 载入 JSON）" @click="diffOpen = true">分支对比</Button>
-      <Button title="战斗摘要：回合数/胜方/每单位输出/承伤/暴击/闪避/抵抗/Buff/击杀，支持 Markdown 与 CSV 导出" @click="sumOpen = true">摘要</Button>
+      <Button :active="store.bpArmed" title="配置条件断点（伤害/级别/随机值/单位），播放命中自动暂停定位" @click="store.bpOpen = true">断点</Button>
+      <Button title="与另一份存档逐链路对比差异（分支 diff：生成示例分支 / 从战斗记录选 / 载入 JSON）" @click="store.diffOpen = true">分支对比</Button>
+      <Button title="战斗摘要：回合数/胜方/每单位输出/承伤/暴击/闪避/抵抗/Buff/击杀，支持 Markdown 与 CSV 导出" @click="store.sumOpen = true">摘要</Button>
+      <Button :active="store.bookmarkOpen" title="书签列表（快捷键 K）：收藏事件的快速跳转" @click="store.toggleBookmarkPanel()">
+        书签{{ store.bookmarkCount ? ` · ${store.bookmarkCount}` : '' }}
+      </Button>
     </div>
 
-    <!-- 运维：会话 / 深链 / 导出 -->
+    <!-- 运维：导出 / 会话 / 深链 -->
     <div class="ht-cmd-group">
-      <Button title="导出调试会话：模式 + 书签 + 断点 + 过滤，一键复现调试现场" @click="store.exportSession()">会话</Button>
-      <Button title="导入调试会话 JSON 文件" @click="sessionInput?.click()">会话导入</Button>
-      <Button title="复制当前模式与事件定位链接（#m=&e=）" @click="store.copyDeepLink()">深链</Button>
       <Button variant="energy" title="导出统一存档 JSON（一份文件，回放与调试两种能力）" @click="store.exportArchive()">导出存档</Button>
+      <Button :active="opsOpen" title="导出/导入调试会话、复制事件定位链接" @click="opsOpen = !opsOpen">会话 ▾</Button>
+      <div v-if="opsOpen" class="ht-ops-pop">
+        <button type="button" class="ht-ops-item" title="导出调试会话：模式 + 书签 + 断点 + 过滤，一键复现调试现场" @click="store.exportSession()">
+          导出调试会话
+        </button>
+        <button type="button" class="ht-ops-item" title="导入调试会话 JSON 文件" @click="sessionInput?.click()">
+          导入调试会话…
+        </button>
+        <button type="button" class="ht-ops-item" title="复制当前模式与事件定位链接（#m=&e=）" @click="store.copyDeepLink()">
+          复制深链
+        </button>
+      </div>
     </div>
 
     <input ref="sessionInput" type="file" accept="application/json" hidden @change="onSessionFile" />
-    <BreakpointDialog v-model:open="bpOpen" />
-    <DiffDialog v-model:open="diffOpen" />
-    <SummaryDialog v-model:open="sumOpen" />
+    <BreakpointDialog v-model:open="store.bpOpen" />
+    <DiffDialog v-model:open="store.diffOpen" />
+    <SummaryDialog v-model:open="store.sumOpen" />
   </div>
 </template>
 
@@ -60,9 +84,8 @@
 import { computed, ref, watch } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
-import { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
+import { PHASE_META, type TracePhase } from '@/domain/battle/replay/unified/unified-archive'
 import BreakpointDialog from '../components/BreakpointDialog.vue'
 import Button from '@/presentation/components/Button.vue'
 import DiffDialog from '../components/DiffDialog.vue'
@@ -74,11 +97,44 @@ const store = useHaotianStore()
 
 const source = ref('')
 const recKey = ref('')
-const bpOpen = ref(false)
-const diffOpen = ref(false)
-const sumOpen = ref(false)
 const hintOpen = ref(false)
+const legendOpen = ref(false)
+const opsOpen = ref(false)
 const sessionInput = ref<HTMLInputElement | null>(null)
+
+/** 快捷键 / 图例弹层互斥，避免同侧两个 popover 叠放 */
+function toggleHint(): void {
+  hintOpen.value = !hintOpen.value
+  if (hintOpen.value) legendOpen.value = false
+}
+function toggleLegend(): void {
+  legendOpen.value = !legendOpen.value
+  if (legendOpen.value) hintOpen.value = false
+}
+
+const LEGEND_ORDER: TracePhase[] = [
+  'battle_lifecycle',
+  'turn_flow',
+  'action_execution',
+  'damage_calculation',
+  'heal_calculation',
+  'buff_lifecycle',
+  'buff_trigger',
+  'passive_trigger',
+  'ai_decision',
+  'attribute_recalc',
+  'config_load',
+  'config_validation',
+]
+
+const legendRows = computed(() =>
+  LEGEND_ORDER.map((p) => ({
+    cls: PHASE_META[p].cls,
+    icon: PHASE_META[p].icon,
+    label: PHASE_META[p].label,
+    debugOnly: !!PHASE_META[p].debugOnly,
+  })),
+)
 
 /** 快捷键帮助表（与 useHaotianHotkeys 键位一致） */
 const hintRows: Array<{ keys: string; desc: string }> = [
@@ -87,8 +143,27 @@ const hintRows: Array<{ keys: string; desc: string }> = [
   { keys: '← / →', desc: '上一 / 下一事件' },
   { keys: '↑ / ↓', desc: '调试卡片导航' },
   { keys: 'F', desc: '播放时跟随事件流' },
+  { keys: 'B', desc: '断点配置' },
+  { keys: 'S', desc: '战斗摘要' },
+  { keys: 'D', desc: '分支对比' },
+  { keys: 'K', desc: '书签面板' },
   { keys: 'Esc', desc: '关闭诊断面板' },
 ]
+
+/** 快捷键帮助面板开关跨会话记忆（常开可作为速查卡） */
+const HINT_KEY = 'haotian.hint-open.v1'
+try {
+  hintOpen.value = localStorage.getItem(HINT_KEY) === '1'
+} catch {
+  /* 读取失败静默 */
+}
+watch(hintOpen, (v) => {
+  try {
+    localStorage.setItem(HINT_KEY, v ? '1' : '0')
+  } catch {
+    /* 写入失败静默 */
+  }
+})
 
 const resolveBattleSystem = (): BattleSystem => container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
 
@@ -109,11 +184,8 @@ const recOptions = computed<TSelectOption[]>(() =>
 watch(source, async (val) => {
   if (!val) return
   if (val === 'live') {
-    const battleSystem = resolveBattleSystem()
-    const eventBus = container.resolve<BuffSystem>('BuffSystem').getEventBus() as IDomainEventBus
-    const ok = await store.startLive(battleSystem, eventBus)
     // 战斗未开始时保持待命，开战后自动接入
-    if (!ok) store.armLiveFollow(battleSystem, eventBus)
+    await store.attachLive()
   } else {
     store.stopLive()
     if (val === 'recordings') {

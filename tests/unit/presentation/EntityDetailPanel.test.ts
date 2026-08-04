@@ -76,8 +76,9 @@ describe('EntityDetailPanel 只读详情', () => {
     expect(root.textContent).toContain('—')
   })
 
-  it('对象数组元素格式化为 JSON', () => {
+  it('对象数组元素渲染为键值对（不再整体 JSON 化，提升可读性）', () => {
     const root = mount({ id: 'h1', name: '甲', skillIds: [{ id: 'x', name: '技能X' }] })
-    expect(root.textContent).toContain('{"id":"x","name":"技能X"}')
+    expect(root.textContent).toContain('技能X')
+    expect(root.textContent).toContain('x')
   })
 })

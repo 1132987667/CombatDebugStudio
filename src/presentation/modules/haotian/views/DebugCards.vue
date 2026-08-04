@@ -1,7 +1,7 @@
 <template>
   <div class="ht-pane" style="--pc: var(--color-energy)">
     <div class="ht-pane-hd">
-      <span class="t">事件流 · 卡片流</span>
+      <span class="t">行动卡片 · 因果序</span>
       <span style="display: flex; gap: 6px; align-items: center">
         <Button class="ht-tbtn" title="上一事件（←）" @click="store.stepEvent(-1)">上一事件</Button>
         <Button class="ht-tbtn" title="下一事件（空格/→）" @click="store.stepEvent(1)">下一事件</Button>
@@ -17,12 +17,20 @@
           :ref="(el) => measure(item.id, el as HTMLElement | null)"
           :style="{ transform: `translateY(${offsetOf(item.id)}px)` }">
           <div class="ht-ev" :title="`${item.summary}（点击检视，右键切换书签）`"
+            role="button" tabindex="0"
+            :aria-label="`${item.summary}${store.isBookmarked(item.id) ? ' · 已书签' : ''}`"
             :class="[toneClass(item), { on: item.id === store.selectedId, 'dbg-dim': meta(item).debugOnly, bm: store.isBookmarked(item.id), dim: isDim(item.id) }]"
-            @click="store.focusEvent(item.id, { seek: true })" @contextmenu.prevent="store.toggleBookmark(item.id)">
+            @click="store.focusEvent(item.id, { seek: true })"
+            @keydown.enter.prevent="store.focusEvent(item.id, { seek: true })"
+            @keydown.space.prevent="store.focusEvent(item.id, { seek: true })"
+            @contextmenu.prevent="store.toggleBookmark(item.id)">
             <div class="ht-ev-hd">
               <span v-if="item.payload?.seg" class="ht-ev-step">段 {{ item.payload.seg }}</span>
               <span class="ht-ev-title">{{ item.summary }}</span>
-              <span v-if="store.isBookmarked(item.id)" class="ht-ev-bm" title="书签（右键切换）">◆</span>
+              <button type="button" class="ht-bm-btn ht-ev-bm" :class="{ on: store.isBookmarked(item.id) }"
+                :title="store.isBookmarked(item.id) ? '移除书签' : '添加书签'"
+                :aria-label="store.isBookmarked(item.id) ? '移除书签' : '添加书签'"
+                @click.stop="store.toggleBookmark(item.id)">◆</button>
               <span class="ht-ev-badge" :class="badgeOf(item)[0]">{{ badgeOf(item)[1] }}</span>
             </div>
             <div class="ht-ev-meta">
@@ -42,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, watch } from 'vue'
 import type { DebugNode } from '@/domain/battle/replay/unified/unified-debug-tree'
 import { buildSegResults } from '@/domain/battle/replay/unified/unified-debug-tree'
 import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
@@ -50,11 +58,11 @@ import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { escapeHtml } from '@/shared/utils/log-segment-factory'
 import Button from '@/presentation/components/Button.vue'
 import { useHaotianStore } from '../stores/haotianStore'
+import { useVirtualList } from '../composables/useVirtualList'
 
 const props = defineProps<{ active?: boolean }>()
 
 const store = useHaotianStore()
-const scrollRef = ref<HTMLElement | null>(null)
 
 const meta = (ev: UnifiedEvent) => PHASE_META[ev.phase]
 
@@ -65,95 +73,24 @@ function turnOf(ev: UnifiedEvent): number | undefined {
   return typeof snapTurn === 'number' ? snapTurn : undefined
 }
 
-// ───────────── 虚拟列表（V4 VL 简化版）─────────────
+// ───────────── 虚拟列表（复用 useVirtualList）─────────────
 
-const EST = 122
-const GAP = 10
-const PAD = 12
-/** 测量高度非响应式缓存；布局节拍触发重排，避免渲染期改响应式 Map 导致重渲染循环 */
-const heights = new Map<string, number>()
-const layoutTick = ref(0)
-const scrollTop = ref(0)
-const viewH = ref(400)
-let layoutRaf = 0
+const items = computed<UnifiedEvent[]>(() => currentNode.value?.events ?? [])
 
-function updateView(): void {
-  if (scrollRef.value) viewH.value = scrollRef.value.clientHeight || 400
-}
-
-function onScroll(): void {
-  if (scrollRef.value) scrollTop.value = scrollRef.value.scrollTop
-}
-
-function measure(id: string, el: HTMLElement | null): void {
-  if (!el) return
-  const h = el.offsetHeight
-  // NOTE: 容器 display:none（昊天镜 tab 未激活 / 未切到调试模式）时 offsetHeight 恒为 0，
-  // 写入缓存会让虚拟列表按 0 高度布局 → 首次打开时所有卡片叠在一起。隐藏期测量直接忽略，
-  // 待容器可见后由 remeasure() 显式重测（vitem 为绝对定位 + translateY，DOM 复用不触发 :ref 回调）。
-  if (h <= 0) return
-  if (heights.get(id) !== h) {
-    heights.set(id, h)
-    if (!layoutRaf) {
-      layoutRaf = requestAnimationFrame(() => {
-        layoutRaf = 0
-        layoutTick.value++
-      })
-    }
-  }
-}
-
-/** 容器变为可见后重测已渲染项，修正隐藏期缺失/错误的高度缓存 */
-function remeasure(): void {
-  nextTick(() => {
-    const box = scrollRef.value
-    if (!box || !box.offsetParent) return
-    box.querySelectorAll<HTMLElement>('.ht-vitem').forEach((el) => {
-      const id = el.getAttribute('data-id')
-      if (id) measure(id, el)
-    })
+const { scrollRef, onScroll, updateView, remeasure, resetScroll, measure, offsetOf, totalHeight, visible } =
+  useVirtualList<UnifiedEvent>({
+    items: () => items.value,
+    estimate: 122,
+    gap: 10,
+    padding: 12,
+    rowQuery: '.ht-vitem',
+    attr: 'data-id',
   })
-}
-
-function offsetOf(id: string): number {
-  void layoutTick.value
-  let y = PAD
-  for (const it of items.value) {
-    if (it.id === id) return y
-    y += (heights.get(it.id) ?? EST) + GAP
-  }
-  return y
-}
-
-const totalHeight = computed(() => {
-  void layoutTick.value
-  let y = PAD
-  for (const it of items.value) y += (heights.get(it.id) ?? EST) + GAP
-  return y + PAD
-})
-
-const visible = computed(() => {
-  void layoutTick.value
-  const st = scrollTop.value
-  const vh = viewH.value
-  const out: UnifiedEvent[] = []
-  let y = PAD
-  for (const it of items.value) {
-    const h = heights.get(it.id) ?? EST
-    if (y + h >= st - 240 && y <= st + vh + 240) out.push(it)
-    y += h + GAP
-  }
-  return out
-})
 
 // 切换节点时回到顶部并重测视口
 watch(
   () => store.debugNodeId,
-  () => {
-    scrollTop.value = 0
-    if (scrollRef.value) scrollRef.value.scrollTop = 0
-    nextTick(updateView)
-  },
+  () => resetScroll(),
 )
 
 // 容器从隐藏变为可见（昊天镜 tab 激活 / 切到调试模式）时重测视口与已渲染卡片高度
@@ -166,8 +103,6 @@ watch(
 )
 
 // ───────────── 卡片内容 ─────────────
-
-const items = computed<UnifiedEvent[]>(() => currentNode.value?.events ?? [])
 
 const isDim = (id: string): boolean => store.focusMode && !!store.selectedEvent && !store.isRelated(id)
 

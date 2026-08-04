@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="keybind-settings">
     <h3>快捷键设置</h3>
     
@@ -37,9 +37,6 @@
       <Button @click="resetAll">重置所有</Button>
       <Button variant="primary" @click="saveSettings">保存设置</Button>
     </div>
-    
-    <!-- 通知组件 -->
-    <Notification ref="notification" />
   </div>
 </template>
 
@@ -47,11 +44,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { keybindManager } from '@/infrastructure/input/KeybindManager';
 import type { KeybindAction, KeybindSetting } from '@/shared/types/input';
-import Notification from '@/presentation/components/Notification.vue';
+import { useNotificationStore } from '@/presentation/stores/notificationStore';
 import Button from '@/presentation/components/Button.vue';
 
-// 通知组件引用
-const notification = ref(null);
+// 全局通知（统一入口）
+const notification = useNotificationStore();
 
 const listeningFor = ref<string | null>(null);
 const keybindSettings = ref<KeybindSetting[]>([]);
@@ -101,7 +98,7 @@ function resetAll() {
 // 保存设置
 function saveSettings() {
   // 由于每次修改都已经保存，这里主要是提供一个确认的反馈
-  notification.value?.addNotification('成功', '快捷键设置已保存！', 'success');
+  notification.notify('成功', '快捷键设置已保存！', 'success');
 }
 
 // 处理键盘事件
@@ -120,7 +117,7 @@ function handleKeyDown(event: KeyboardEvent) {
         setting.key = key;
       }
     } else {
-      notification.value?.addNotification('提示', '该按键已被使用，请选择其他按键！', 'warning');
+      notification.notify('提示', '该按键已被使用，请选择其他按键！', 'warning');
     }
     
     stopListening();
@@ -136,3 +133,4 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 </script>
+

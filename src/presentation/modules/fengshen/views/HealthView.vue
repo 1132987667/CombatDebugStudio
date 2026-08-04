@@ -16,7 +16,7 @@
     <div class="fs-table-wrap">
       <table class="fs-table">
         <thead>
-          <tr><th>引用方</th><th>引用字段</th><th>缺失 ID</th><th>目标表</th></tr>
+          <tr><th>引用方</th><th>引用字段</th><th>缺失 ID</th><th>目标表</th><th>操作</th></tr>
         </thead>
         <tbody>
           <tr v-for="(issue, i) in report?.issues ?? []" :key="i">
@@ -24,9 +24,15 @@
             <td>{{ issue.field }}</td>
             <td class="fs-cell-missing">{{ issue.missingId }}</td>
             <td>{{ issue.targetTable }}</td>
+            <td class="fs-col-actions">
+              <Button size="small" :title="`跳转到「${tableLabel(issue.sourceTable)}」表并定位该实体`"
+                @click="store.navigateTo(issue.sourceTable, issue.sourceId)">定位引用方</Button>
+              <Button size="small" :title="`跳转到「${tableLabel(issue.targetTable)}」表`"
+                @click="store.navigateTo(issue.targetTable)">目标表</Button>
+            </td>
           </tr>
           <tr v-if="!report?.issues?.length">
-            <td colspan="4" class="fs-empty">{{ report ? '未发现断裂引用' : '尚未扫描，点击「重新扫描」' }}</td>
+            <td colspan="5" class="fs-empty">{{ report ? '未发现断裂引用' : '尚未扫描，点击「重新扫描」' }}</td>
           </tr>
         </tbody>
       </table>
@@ -41,9 +47,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Button from '@/presentation/components/Button.vue'
+import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
+import type { FengshenTableName } from '@/domain/fengshen/types'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 
 const store = useFengshenStore()
 const report = computed(() => store.healthReport)
 const issueCount = computed(() => report.value?.issues.length ?? 0)
+
+function tableLabel(table: FengshenTableName): string {
+  return TABLE_SCHEMAS[table]?.label ?? table
+}
 </script>

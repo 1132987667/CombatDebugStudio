@@ -1,11 +1,13 @@
 <template>
   <div v-if="ev" class="ht-insp">
     <div class="ht-insp-hd">
-      <div class="ht-insp-kicker">
-        事件 {{ ev.id }} · <span :class="'ht-' + meta(ev).cls">{{ meta(ev).label }}</span> · 关联 {{ ev.correlationId }}
-        · 时间={{ formatTime(ev.timestamp) }}
+      <div class="ht-insp-title">
+        <span class="ht-insp-phase" :class="'ht-' + meta(ev).cls" :title="'阶段分类：' + meta(ev).label">{{ meta(ev).icon }}</span>
+        {{ ev.summary }}
       </div>
-      <div class="ht-insp-title">{{ ev.summary }}</div>
+      <div class="ht-insp-kicker">
+        事件 {{ ev.id }} · {{ meta(ev).label }} · 关联 {{ ev.correlationId }} · 时间 {{ formatTime(ev.timestamp) }}
+      </div>
       <div class="ht-insp-actions">
         <Button title="切换到回放系统，并从该事件时间点开始播放" @click="playFromHere">从此回放</Button>
         <Button title="导出该事件 JSON（含 payload / 快照 / 元信息）" @click="exportEvent">导出事件 JSON</Button>
@@ -30,10 +32,14 @@
     </div>
 
     <div class="ht-sec" v-if="pl.rolls">
-      <div class="ht-sec-t">随机判定凭证</div>
+      <div class="ht-sec-t">
+        随机判定凭证
+        <span class="ht-steps-hint">余量越小越敏感 · 重掷仅模拟，不改存档数据</span>
+      </div>
       <div v-for="(c, i) in pl.rolls as RngRoll[]" :key="i" class="ht-rng">
         <div class="ht-rng-top">
           <span class="ht-rng-name">{{ rollName(c.kind) }}</span>
+          <span v-if="rerolled(i)" class="ht-rng-sim" title="当前显示为重掷模拟结果，未写入存档数据">模拟</span>
           <span v-if="c.buff" class="ht-rng-note">· {{ c.buff }}</span>
           <span v-if="(c as { derived?: boolean }).derived" class="ht-rng-note" title="真实录制未记录随机值，此值由判定结果反推">· 由结果推导</span>
           <span class="ht-rng-idx">随机 #{{ String(c.idx ?? 0).padStart(4, '0') }}</span>
@@ -150,12 +156,12 @@
 
   <div v-else class="ht-insp-empty">
     点击任意事件以检视底层数据<br />
-    回放与调试共用同一渲染数据源（设计约定）
+    回放系统按时间序检视每一秒 · 调试系统按因果链审查每一次行动 —— 两者共享同一数据源
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import type { CalcStep, ChainNode, RngRoll, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
@@ -188,13 +194,39 @@ const meta = (e: UnifiedEvent) => PHASE_META[e.phase]
 const pl = computed<Record<string, unknown>>(() => (ev.value?.payload ?? {}) as Record<string, unknown>)
 
 // 高级区折叠态（载荷字段 / 因果链 / AI 候选 / 属性重算 / 子事件默认收起，减少信息轰炸）
+// NOTE: 折叠偏好按 localStorage 持久化，跨事件 / 跨会话记忆，避免每次展开期望的区
+const INSP_SEC_KEY = 'haotian.insp-sections.v1'
+
+function loadSections(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(INSP_SEC_KEY)
+    if (raw) return JSON.parse(raw) as Record<string, boolean>
+  } catch {
+    /* 读取失败静默 */
+  }
+  return {}
+}
+
 const showAdvanced = reactive<Record<string, boolean>>({
   kv: false,
   chain: false,
   candidates: false,
   fields: false,
   children: false,
+  ...loadSections(),
 })
+
+watch(
+  showAdvanced,
+  (v) => {
+    try {
+      localStorage.setItem(INSP_SEC_KEY, JSON.stringify(v))
+    } catch {
+      /* 写入失败静默 */
+    }
+  },
+  { deep: true },
+)
 
 // ───────────── 结算步骤：逐步累计 + 来源释义 ─────────────
 const steps = computed<StepAccum[]>(() => {

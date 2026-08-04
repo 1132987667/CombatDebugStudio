@@ -21,6 +21,14 @@ export interface HaotianHotkeyContext {
   /** 调试卡片导航：当前选中 id，dir=1 下移 / -1 上移，返回目标 id 或 null */
   navCards: (dir: 1 | -1) => string | null
   selectEvent: (id: string, opts?: { seek?: boolean; fx?: boolean }) => void
+  /** B 打开断点配置 */
+  openBreakpoint: () => void
+  /** S 打开战斗摘要 */
+  openSummary: () => void
+  /** D 打开分支对比 */
+  openDiff: () => void
+  /** K 打开 / 关闭书签面板 */
+  toggleBookmarkPanel: () => void
 }
 
 export function useHaotianHotkeys(ctx: HaotianHotkeyContext): void {
@@ -57,6 +65,18 @@ export function useHaotianHotkeys(ctx: HaotianHotkeyContext): void {
     } else if (e.key === 'f' || e.key === 'F') {
       e.preventDefault()
       ctx.toggleFollow()
+    } else if (e.key === 'b' || e.key === 'B') {
+      e.preventDefault()
+      ctx.openBreakpoint()
+    } else if (e.key === 's' || e.key === 'S') {
+      e.preventDefault()
+      ctx.openSummary()
+    } else if (e.key === 'd' || e.key === 'D') {
+      e.preventDefault()
+      ctx.openDiff()
+    } else if (e.key === 'k' || e.key === 'K') {
+      e.preventDefault()
+      ctx.toggleBookmarkPanel()
     } else if (e.key === 'Escape') {
       ctx.closeDiag()
     }

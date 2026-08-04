@@ -131,6 +131,23 @@ export class DataIntegrityService {
     return { scannedRules: REFERENCE_RULES.length, checkedEntities, issues }
   }
 
+  /** 反向引用：哪些表的哪些实体引用了指定 id（供详情面板「被引用」视图） */
+  async findReferencing(
+    table: FengshenTableName,
+    id: string,
+  ): Promise<Array<{ sourceTable: FengshenTableName; ids: string[] }>> {
+    const out: Array<{ sourceTable: FengshenTableName; ids: string[] }> = []
+    for (const rule of REFERENCE_RULES) {
+      if (!rule.targetTables.includes(table)) continue
+      const entities = await this.listAll(rule.sourceTable)
+      const ids = entities
+        .filter((e) => extractReferenceIds(e, rule.path).includes(id))
+        .map((e) => e.id)
+      if (ids.length) out.push({ sourceTable: rule.sourceTable, ids })
+    }
+    return out
+  }
+
   // ── 内部工具 ────────────────────────────────────────────────
 
   private async listAll(table: FengshenTableName): Promise<Array<Record<string, unknown> & { id: string }>> {

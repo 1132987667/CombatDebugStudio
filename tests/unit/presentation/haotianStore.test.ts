@@ -33,13 +33,19 @@ describe('haotianStore（演示存档装配）', () => {
     expect(s.bookmarkCount).toBe(0)
   })
 
-  it('断点配置存储', () => {
+  it('断点列表：添加 / 启停 / 清除', () => {
     const s = useHaotianStore()
-    s.setBreakpoint({ type: 'damage', value: 150 }, true)
-    expect(s.breakpoint.type).toBe('damage')
-    expect(s.breakpoint.value).toBe(150)
+    s.addBreakpoint('damage', 150)
+    expect(s.breakpoints).toHaveLength(1)
+    expect(s.breakpoints[0].type).toBe('damage')
+    expect(s.breakpoints[0].value).toBe(150)
     expect(s.bpArmed).toBe(true)
-    s.setBreakpoint({ type: 'none' }, true)
+    s.toggleBreakpoint(s.breakpoints[0].id)
+    expect(s.bpArmed).toBe(false)
+    s.addBreakpoint('level', 'warn')
+    expect(s.bpArmed).toBe(true)
+    s.clearBreakpoints()
+    expect(s.breakpoints).toHaveLength(0)
     expect(s.bpArmed).toBe(false)
   })
 
@@ -62,8 +68,11 @@ describe('haotianStore（演示存档装配）', () => {
     await s.importSession(file)
 
     expect(s.bookmarkCount).toBe(2)
-    expect(s.breakpoint.type).toBe('damage')
-    expect(s.breakpoint.value).toBe(200)
+    // v1 会话迁移：单断点 → 断点数组（enabled 取原 bpArmed）
+    expect(s.breakpoints).toHaveLength(1)
+    expect(s.breakpoints[0].type).toBe('damage')
+    expect(s.breakpoints[0].value).toBe(200)
+    expect(s.breakpoints[0].enabled).toBe(true)
     expect(s.bpArmed).toBe(true)
     expect(s.showDbg).toBe(true)
     expect(s.streamText).toBe('暴击')

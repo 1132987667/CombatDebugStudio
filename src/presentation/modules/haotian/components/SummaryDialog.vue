@@ -3,10 +3,16 @@
     width="min(840px, 94vw)" content-class="dialog-content--flush" @update:model-value="onModelValue">
     <div class="ht-sum-toolbar">
       <span class="ht-sum-meta">
-        {{ summary?.rounds ?? 0 }} 回合 · 时长 {{ formatTime(summary?.durationMs ?? 0) }}
+        {{ summary?.rounds ?? 0 }} 回合 ·
+        <template v-if="store.summaryCut === 'playback'">至 {{ formatTime(store.playback.t) }}</template>
+        <template v-else>时长 {{ formatTime(summary?.durationMs ?? 0) }}</template>
         <template v-if="winnerText"> · 胜方 <b class="ht-st-ok">{{ winnerText }}</b></template>
       </span>
       <span class="ht-sum-spacer"></span>
+      <Button size="tiny" :active="store.summaryCut === 'playback'"
+        title="摘要只统计当前回放位置之前的事件，便于对比前中后阶段" @click="store.toggleSummaryCut()">
+        {{ store.summaryCut === 'playback' ? '截断至当前位置' : '整场统计' }}
+      </Button>
       <Button title="导出战斗摘要为 Markdown 报告（回合/胜方 + 单位指标表）" @click="store.exportSummaryMarkdown()">Markdown</Button>
       <Button title="导出战斗摘要为 CSV（带 BOM，Excel 直接打开）" @click="store.exportSummaryCsv()">CSV</Button>
     </div>

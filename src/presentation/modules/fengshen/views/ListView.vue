@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="fs-list-view">
     <div class="fs-list-layout">
       <!-- 左：列表（18/24 栅格） -->
@@ -46,21 +46,23 @@
     </div>
 
     <DataTable :schema="schema" :rows="pagedRows" :selected-ids="store.selectedIds" :loading="store.loading"
-      :detail-id="detailId" @toggle-select="store.toggleSelect" @edit="store.openEdit" @copy="onCopy"
-      @remove="requestRemove" @detail="onDetail" />
+      :detail-id="detailId" :sort-key="sortKey" :sort-dir="sortDir" @toggle-select="store.toggleSelect"
+      @edit="store.openEdit" @copy="onCopy" @remove="requestRemove" @detail="onDetail" @sort="onSort" />
 
     <div v-if="totalPages > 1" class="fs-pagination" role="navigation" aria-label="分页">
       <span class="fs-page-info">共 {{ filteredRows.length }} 条 · 第 {{ page }}/{{ totalPages }} 页</span>
-      <button class="fs-page-btn" :disabled="page <= 1" @click="go(page - 1)">«</button>
-      <button v-for="p in pageButtons" :key="p" class="fs-page-btn" :class="{ active: p === page }" @click="go(p)">{{ p
+      <button class="fs-page-btn" :disabled="page <= 1" aria-label="上一页" @click="go(page - 1)">«</button>
+      <button v-for="p in pageButtons" :key="p" class="fs-page-btn" :class="{ active: p === page }"
+        :aria-label="`第 ${p} 页`" :aria-current="p === page ? 'page' : undefined" @click="go(p)">{{ p
         }}</button>
-      <button class="fs-page-btn" :disabled="page >= totalPages" @click="go(page + 1)">»</button>
+      <button class="fs-page-btn" :disabled="page >= totalPages" aria-label="下一页" @click="go(page + 1)">»</button>
     </div>
       </div>
 
       <!-- 右：实体详情（6/24 栅格，预留扩展） -->
-      <aside class="fs-list-detail" aria-label="实体详情">
-        <EntityDetailPanel v-if="detailEntity" :schema="schema" :entity="detailEntity" />
+      <aside class="fs-list-detail" role="region" aria-label="实体详情">
+        <EntityDetailPanel v-if="detailEntity" :schema="schema" :entity="detailEntity" :references="store.references"
+          @edit="store.openEdit(detailEntity)" @goto="onGotoTable" />
         <div v-else class="fs-detail-empty">
           <span class="fs-detail-empty-title">实体详情</span>
           <span class="fs-detail-empty-hint">点击列表中的名称查看对应信息</span>
@@ -69,12 +71,11 @@
     </div>
 
     <EntityDrawer :open="store.drawerOpen" :schema="schema" :entity="store.editingEntity" :is-new="store.isNew"
-      :errors="store.formErrors" :load-options="store.loadOptions" @save="store.save" @close="store.closeDrawer" />
+      :errors="store.formErrors" :load-options="store.loadOptions" @save="onSave" @close="store.closeDrawer" />
 
     <!-- 危险操作二次确认 + 统一提示 -->
     <ConfirmDialog v-model="confirmRemove" :title="`删除${schema.label}`" :message="removeMessage"
       confirm-text="删除" danger @confirm="doRemove" />
-    <Notification ref="notification" />
   </div>
 </template>
 
@@ -90,7 +91,7 @@ import EntityDetailPanel from '@/presentation/modules/fengshen/components/Entity
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
-import Notification from '@/presentation/components/Notification.vue'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 const PAGE_SIZE = 20
 
@@ -104,6 +105,19 @@ const optionsCache = ref<Record<string, OptionItem[]>>({})
 /** 右侧详情面板：当前选中行 id 与实体（点击列表中的名称触发） */
 const detailId = ref<string | null>(null)
 const detailEntity = computed(() => store.rows.find((r) => String(r.id) === detailId.value) ?? null)
+
+/** 表头排序状态（客户端排序，作用于过滤后的结果） */
+const sortKey = ref('')
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+function onSort(col: string): void {
+  if (sortKey.value === col) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  else {
+    sortKey.value = col
+    sortDir.value = 'asc'
+  }
+  page.value = 1
+}
 
 function onDetail(row: Record<string, unknown>): void {
   detailId.value = String(row.id)
@@ -155,9 +169,22 @@ watch(totalPages, (total) => {
   if (page.value > total) page.value = total
 })
 
+/** 排序（数字列按数值，其余按本地化字符串；升/降切换） */
+const sortedRows = computed(() => {
+  if (!sortKey.value) return filteredRows.value
+  const key = sortKey.value
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  return [...filteredRows.value].sort((a, b) => {
+    const va = a[key]
+    const vb = b[key]
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir
+    return String(va ?? '').localeCompare(String(vb ?? ''), 'zh-Hans-CN') * dir
+  })
+})
+
 const pagedRows = computed(() => {
   const start = (page.value - 1) * PAGE_SIZE
-  return filteredRows.value.slice(start, start + PAGE_SIZE)
+  return sortedRows.value.slice(start, start + PAGE_SIZE)
 })
 
 /** 页码按钮：总页数 ≤7 全显，否则首尾 + 当前附近 */
@@ -211,20 +238,36 @@ async function duplicateFirst(): Promise<void> {
   const row = store.rows.find((r) => String(r.id) === store.selectedIds[0])
   if (!row) return
   const ok = await store.duplicateAsTemplate(row)
-  if (!ok) notification.value?.addNotification('提示', '阵营克制为单文档数据，不支持复制', 'warning')
+  if (!ok) notification.notify('提示', '阵营克制为全局唯一文档，无需复制，直接编辑即可', 'warning')
 }
 
 /** 行内复制；不可复制（elements）时统一提示 */
 async function onCopy(row: Record<string, unknown>): Promise<void> {
   const ok = await store.duplicateAsTemplate(row)
-  if (!ok) notification.value?.addNotification('提示', '阵营克制为单文档数据，不支持复制', 'warning')
+  if (!ok) notification.notify('提示', '阵营克制为全局唯一文档，无需复制，直接编辑即可', 'warning')
 }
 
-// 表切换：重置筛选 / 分页 / 预载 refTable 选项（immediate：首次挂载即预填 select 键，避免 v-model 绑 undefined）
+/** 保存成功反馈：抽屉直接关闭，需显式确认 + 版本增量感知 */
+async function onSave(): Promise<void> {
+  const name = String(store.editingEntity?.name ?? store.editingEntity?.id ?? '')
+  const ok = await store.save()
+  if (ok) {
+    notification.notify('已保存', `已保存「${name}」 · 数据版本 v${store.dataVersion}`, 'success')
+  }
+}
+
+/** 详情面板「被引用」跳转到引用方表 */
+function onGotoTable(table: string): void {
+  store.navigateTo(table as never)
+}
+
+// 表切换：重置筛选 / 分页 / 排序 / 预载 refTable 选项（immediate：首次挂载即预填 select 键，避免 v-model 绑 undefined）
 watch(
   () => store.currentTable,
   () => {
     resetFilters()
+    sortKey.value = ''
+    sortDir.value = 'asc'
     detailId.value = null
     for (const f of schema.value.filters ?? []) {
       if (f.refTable && !optionsCache.value[f.refTable]) {
@@ -237,8 +280,23 @@ watch(
   { immediate: true },
 )
 
-// ── 删除：ConfirmDialog 二次确认 + Notification 结果反馈 ──
-const notification = ref<InstanceType<typeof Notification> | null>(null)
+// 跨表定位（健康检查 / 反向引用跳转）：待定位 id 在表切换后应用为详情高亮
+watch(
+  () => store.pendingDetailId,
+  (id) => {
+    if (!id) return
+    detailId.value = id
+    store.pendingDetailId = null
+  },
+)
+
+// 详情行变化：加载该实体的反向引用（谁引用了它）
+watch(detailId, (id) => {
+  if (id) void store.loadReferences(id)
+})
+
+// ── 删除：ConfirmDialog 二次确认 + 全局通知结果反馈 ──
+const notification = useNotificationStore()
 const confirmRemove = ref(false)
 const removeMessage = ref('')
 let removeTarget: (() => Promise<void>) | null = null
@@ -248,8 +306,8 @@ function requestRemove(row: Record<string, unknown>): void {
   removeMessage.value = `确定删除 ${schema.value.label}「${name}」？此操作不可恢复。`
   removeTarget = async () => {
     const errors = await store.remove(String(row.id))
-    if (errors) notification.value?.addNotification('删除失败', errors.join('\n'), 'error')
-    else notification.value?.addNotification('已删除', `「${name}」已删除`, 'success')
+    if (errors) notification.notify('删除失败', errors.join('\n'), 'error')
+    else notification.notify('已删除', `「${name}」已删除`, 'success')
   }
   confirmRemove.value = true
 }
@@ -259,7 +317,7 @@ function requestRemoveSelected(): void {
   removeMessage.value = `确定删除所选 ${count} 条 ${schema.value.label}？此操作不可恢复。`
   removeTarget = async () => {
     await store.removeSelected()
-    notification.value?.addNotification('已删除', `已删除所选 ${count} 条记录`, 'success')
+    notification.notify('已删除', `已删除所选 ${count} 条记录`, 'success')
   }
   confirmRemove.value = true
 }
@@ -268,3 +326,4 @@ async function doRemove(): Promise<void> {
   await removeTarget?.()
 }
 </script>
+

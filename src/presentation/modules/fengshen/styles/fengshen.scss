@@ -124,6 +124,47 @@
   font-variant-numeric: tabular-nums;
 }
 
+.fs-help-toggle {
+  margin-top: var(--space-1);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+
+  &:hover,
+  &.on {
+    border-color: rgba(var(--rgb-energy), var(--alpha-border));
+    color: var(--color-energy);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-energy);
+    outline-offset: -1px;
+  }
+}
+
+.fs-help-pop {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+
+  p {
+    margin: 0;
+  }
+}
+
 .fs-dot {
   width: 8px;
   height: 8px;
@@ -782,3 +823,115 @@ input[type='checkbox'] {
 .fs-placeholder-desc {
   font-size: var(--font-size-md);
 }
+
+/* ── 表头排序（F3）── */
+.fs-th {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+
+  &.fs-sorted {
+    color: var(--color-energy);
+  }
+}
+
+.fs-sort-ico {
+  display: inline-block;
+  min-width: 12px;
+  margin-left: 2px;
+  color: var(--color-energy);
+}
+
+/* ── 字段级错误内联（F2）── */
+.fs-field.has-error .fs-field-label {
+  color: var(--color-danger);
+}
+
+.fs-field-error {
+  margin-top: 4px;
+  font-size: var(--font-size-md);
+  color: var(--color-danger);
+  line-height: 1.5;
+}
+
+/* ── 数组 JSON 编辑（F1/F12）── */
+.fs-array-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.fs-array-state {
+  font-size: var(--font-size-md);
+
+  &.ok {
+    color: var(--color-success);
+  }
+
+  &.err {
+    color: var(--color-danger);
+  }
+
+  &.warn {
+    color: var(--color-warning);
+  }
+
+  &.empty {
+    color: var(--color-text-tertiary);
+  }
+}
+
+.fs-array-spacer {
+  flex: 1;
+}
+
+.fs-array .fs-textarea {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
+}
+
+/* ── 抽屉提示条（F13）── */
+.fs-drawer-note {
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+  border: 1px solid rgba(var(--rgb-warning), var(--alpha-border));
+  border-radius: var(--radius-md);
+  background: rgba(var(--rgb-warning), var(--alpha-tint));
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+/* ── 数据包导入预览（F8）── */
+.fs-pkg-preview {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid rgba(var(--rgb-info), var(--alpha-border));
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fs-pkg-preview-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.fs-pkg-preview-meta {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.fs-pkg-preview-tables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+

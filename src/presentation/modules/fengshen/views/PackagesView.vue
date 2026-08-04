@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="fs-list-view">
     <div class="fs-page-title">
       数据包管理
@@ -30,11 +30,25 @@
     <div class="fs-block">
       <div class="fs-block-title">导入 <span class="fs-page-hint">全量覆盖 / 增量合并</span></div>
       <div class="fs-package-card">
-        <div class="fs-drop-zone" @click="fileInput?.click()" @dragover.prevent @drop.prevent="onDrop">
+        <div class="fs-drop-zone" role="button" tabindex="0" aria-label="选择 JSON 数据包"
+          @click="fileInput?.click()" @dragover.prevent @drop.prevent="onDrop"
+          @keydown.enter.prevent="fileInput?.click()" @keydown.space.prevent="fileInput?.click()">
           <div class="fs-dz-main">将 JSON 数据包拖拽到此处，或点击选择文件</div>
           <div class="fs-form-hint">支持 .json · 完整包或选择性导出包 · 导入前建议先导出备份</div>
         </div>
         <input ref="fileInput" type="file" accept=".json" style="display: none" @change="onPick" />
+
+        <div v-if="pendingPkg" class="fs-pkg-preview">
+          <div class="fs-pkg-preview-title">待导入数据包</div>
+          <div class="fs-pkg-preview-meta">
+            导出版本 v{{ pendingPkg.meta.dataVersion }} · {{ formatTime(pendingPkg.meta.exportedAt) }} · 共 {{ pendingPkg.meta.count }} 条
+          </div>
+          <div class="fs-pkg-preview-tables">
+            <span v-for="t in pendingPkg.meta.tables" :key="t" class="fs-tag fs-tag-buff">
+              {{ tableLabel(t) }} · {{ rowCount(t) }}
+            </span>
+          </div>
+        </div>
 
         <div class="fs-toolbar" style="margin-top: 12px;">
           <TacticalSelect v-model="strategy" size="md" :options="strategyOptions" />
@@ -55,8 +69,11 @@
             <tr><th>DB 版本</th><th>变更内容</th><th>状态</th></tr>
           </thead>
           <tbody>
-            <tr><td class="fs-cell-num">v1</td><td>创建 recordings / snapshots store</td><td><span class="fs-tag fs-tag-ok">已应用</span></td></tr>
-            <tr><td class="fs-cell-num">v2</td><td>新增封神榜数据表（14 store + meta）</td><td><span class="fs-tag fs-tag-ok">已应用</span></td></tr>
+            <tr v-for="m in STORAGE_MIGRATIONS" :key="m.version">
+              <td class="fs-cell-num">v{{ m.version }}</td>
+              <td>{{ m.note }}</td>
+              <td><span class="fs-tag fs-tag-ok">已应用</span></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -70,7 +87,10 @@ import { container } from '@/infrastructure/di/Container'
 import Button from '@/presentation/components/Button.vue'
 import { DataPackageService, type DataPackage, type ImportResult, type ImportStrategy } from '@/application/service/DataPackageService'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
+import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
+import { STORAGE_MIGRATIONS } from '@/infrastructure/adapters/storage/IndexedDbStorage'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import type { FengshenTableName } from '@/domain/fengshen/types'
 
 const TABLE_OPTIONS: Array<{ table: FengshenTableName; label: string }> = [
@@ -102,12 +122,28 @@ const strategyOptions: TSelectOption[] = [
 const pendingPkg = ref<DataPackage | null>(null)
 const importResult = ref<ImportResult | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const notification = useNotificationStore()
 
 const statCount = computed(() => store.rows.length)
 
 onMounted(() => {
   void store.refreshVersion()
 })
+
+function tableLabel(table: string): string {
+  return TABLE_SCHEMAS[table as keyof typeof TABLE_SCHEMAS]?.label ?? table
+}
+
+function rowCount(table: string): number {
+  const rows = pendingPkg.value?.[table]
+  return Array.isArray(rows) ? rows.length : 0
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString()
+}
 
 function doExport(): void {
   void pkgService.exportPackage(exportTables.value).then((pkg) => {
@@ -125,12 +161,12 @@ async function readPackage(file: File): Promise<void> {
     const text = await file.text()
     const pkg = JSON.parse(text) as DataPackage
     if (!Array.isArray(pkg.meta?.tables)) {
-      window.alert('数据包格式不合法：缺少 meta.tables')
+      notification.notify('导入失败', '数据包格式不合法：缺少 meta.tables', 'error')
       return
     }
     pendingPkg.value = pkg
   } catch {
-    window.alert('JSON 解析失败')
+    notification.notify('导入失败', 'JSON 解析失败，请确认选择的是数据包文件', 'error')
   }
 }
 
@@ -151,3 +187,4 @@ async function doImport(): Promise<void> {
   pendingPkg.value = null
 }
 </script>
+

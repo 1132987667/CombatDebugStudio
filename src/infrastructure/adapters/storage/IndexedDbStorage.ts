@@ -19,6 +19,12 @@ const DB_NAME = 'combat-debug-studio'
 // NOTE: v1 = recordings/snapshots；v2 = 封神榜 14 数据表（封神榜开发计划 §3.2）
 const DB_VERSION = 2
 
+/** 存储迁移历史（PackagesView「版本迁移记录」读取；新增迁移在此追加即可，UI 自动更新） */
+export const STORAGE_MIGRATIONS: Array<{ version: number; note: string }> = [
+  { version: 1, note: '创建 recordings / snapshots store' },
+  { version: 2, note: '新增封神榜数据表（14 store + meta）' },
+]
+
 export class IndexedDbStorage implements IPersistentStorage {
   readonly backend = 'indexeddb' as const
 

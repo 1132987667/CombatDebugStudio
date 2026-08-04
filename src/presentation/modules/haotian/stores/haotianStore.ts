@@ -8,6 +8,9 @@
 
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import { container } from '@/infrastructure/di/Container'
+import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { UnifiedArchive, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
@@ -32,13 +35,14 @@ import {
 } from '@/domain/battle/replay/unified/unified-sim'
 import { createStressArchive } from '@/domain/battle/replay/unified/stress-archive'
 import { diffArchives, createRateVariant, diffSummary, type DiffRow } from '@/domain/battle/replay/unified/unified-diff'
-import { checkBreakpointHit, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
+import { checkAnyBreakpointHit, createBreakpoint, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { summarizeBattle, type BattleSummary, type UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { runValidationPipeline } from '@/shared/utils/unified-worker'
 import { UnifiedArchiveService, type RecordingMeta } from '@/application/service/UnifiedArchiveService'
 import { LiveBattleStream, type LiveParticipant } from '@/application/service/LiveBattleStream'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 export type HaotianMode = 'replay' | 'debug'
 
@@ -53,43 +57,42 @@ export interface PlaybackState {
   last: number
 }
 
-export interface ToastItem {
-  id: number
-  msg: string
-}
-
 /** 调试会话（导出/导入 JSON 载荷） */
 export interface DebugSession {
   app: 'haotian'
-  version: 1
+  version: 2
   battleId: string
   mode: HaotianMode
   selectedId: string | null
   bookmarks: string[]
-  breakpoint: BreakpointConfig
-  bpArmed: boolean
+  breakpoints: BreakpointConfig[]
   showDbg: boolean
   streamText: string
 }
 
 const PREF_KEY = 'haotian.prefs.v1'
-const PREF_VERSION = 1
+const PREF_VERSION = 2
 
 interface PersistedPrefs {
   version: number
   showDbg: boolean
   streamText: string
   bookmarks: string[]
-  breakpoint: BreakpointConfig
-  bpArmed: boolean
+  breakpoints: BreakpointConfig[]
 }
 
 function loadPrefs(): Partial<PersistedPrefs> {
   try {
     const raw = localStorage.getItem(PREF_KEY)
     if (!raw) return {}
-    const parsed = JSON.parse(raw) as PersistedPrefs
-    // 版本不匹配视为格式已变更，忽略旧偏好，避免静默错位
+    const parsed = JSON.parse(raw) as Partial<PersistedPrefs> & { breakpoint?: BreakpointConfig; bpArmed?: boolean }
+    if (parsed.version === 1) {
+      // v1 迁移：单断点 + 全局开关 → 断点数组
+      if (parsed.breakpoint) {
+        parsed.breakpoints = [{ id: 'bp_v1', ...parsed.breakpoint, enabled: !!parsed.bpArmed }]
+      }
+      return parsed
+    }
     if (parsed.version !== PREF_VERSION) return {}
     return parsed
   } catch {
@@ -102,7 +105,6 @@ const pnameOf = (archive: UnifiedArchive) => (id: string): string => {
   return p ? p.name : id
 }
 
-let toastSeq = 0
 let rafHandle = 0
 
 export const useHaotianStore = defineStore('haotian', () => {
@@ -116,19 +118,27 @@ export const useHaotianStore = defineStore('haotian', () => {
   const selectedId = ref<string | null>(null)
   const showDbg = ref(false)
   const diagOpen = ref(false)
-  const toasts = ref<ToastItem[]>([])
   const playback = ref<PlaybackState>({ t: 0, playing: false, speed: 1, follow: true, firedIdx: 0, last: 0 })
   const cur = ref<SimTable>({})
   /** 推演检查点（seek 从最近检查点续推，避免全量重跑） */
   const simCheckpoints = ref<SimCheckpoint[]>([])
   const debugNodeId = ref<string | null>(null)
   const fxEventId = ref<string | null>(null)
+  /** 当前存档来源（演示/录制/压测/实时），供状态栏等展示 */
+  const source = ref('')
 
   // ── P1：书签 / 断点 / 过滤 ──
   const bookmarks = ref<Set<string>>(new Set())
-  const breakpoint = ref<BreakpointConfig>({ type: 'none' })
-  const bpArmed = ref(false)
+  const bookmarkOpen = ref(false)
+  const breakpoints = ref<BreakpointConfig[]>([])
   const streamText = ref('')
+
+  // ── UI 面板开关（命令栏 / 快捷键 / 组件共享）──
+  const bpOpen = ref(false)
+  const sumOpen = ref(false)
+  const diffOpen = ref(false)
+  /** 战斗摘要范围：整场 / 截断到当前回放位置 */
+  const summaryCut = ref<'full' | 'playback'>('full')
 
   // ── P1：分支对比 / 树聚焦 ──
   const branch = ref<UnifiedArchive | null>(null)
@@ -152,7 +162,9 @@ export const useHaotianStore = defineStore('haotian', () => {
   const currentTurn = computed(() => currentTurnAt(evs.value, playback.value.t))
   const lastEvent = computed(() => lastEventAt(evs.value, playback.value.t))
   const bookmarkCount = computed(() => bookmarks.value.size)
-  const summary = computed<BattleSummary | null>(() => (archive.value ? summarizeBattle(archive.value) : null))
+  const summary = computed<BattleSummary | null>(() =>
+    archive.value ? summarizeBattle(archive.value, summaryCut.value === 'playback' ? playback.value.t : undefined) : null,
+  )
   const filteredEvents = computed(() => {
     let list = evs.value
     if (!showDbg.value) list = list.filter((e) => !PHASE_META[e.phase].debugOnly)
@@ -209,8 +221,7 @@ export const useHaotianStore = defineStore('haotian', () => {
         showDbg: showDbg.value,
         streamText: streamText.value,
         bookmarks: [...bookmarks.value],
-        breakpoint: breakpoint.value,
-        bpArmed: bpArmed.value,
+        breakpoints: breakpoints.value,
       }
       localStorage.setItem(PREF_KEY, JSON.stringify(prefs))
     } catch {
@@ -220,17 +231,14 @@ export const useHaotianStore = defineStore('haotian', () => {
 
   // ───────────── 数据装配 ─────────────
 
+  // NOTE: 通知统一走全局 notificationStore（C1 重构），store 保留 toast 语义入口
   function toast(msg: string): void {
-    const item: ToastItem = { id: ++toastSeq, msg }
-    toasts.value.push(item)
-    setTimeout(() => {
-      toasts.value = toasts.value.filter((x) => x.id !== item.id)
-    }, 2400)
+    useNotificationStore().toast(msg, 'info', 2600)
   }
 
   async function loadArchive(
     next: UnifiedArchive,
-    opts: { followEnd?: boolean; skipWorker?: boolean } = {},
+    opts: { followEnd?: boolean; skipWorker?: boolean; label?: string } = {},
   ): Promise<void> {
     let pipeline: { validation: ValidationResult; parseMs: number; validateMs: number }
     if (opts.skipWorker) {
@@ -250,6 +258,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     selectedId.value = null
     debugNodeId.value = null
     playback.value = { t: 0, playing: false, speed: playback.value.speed, follow: playback.value.follow, firedIdx: 0, last: 0 }
+    if (opts.label !== undefined) source.value = opts.label
     const firstAction = allNodesFlat(debugEntries.value).find((n) => n.action)
     if (firstAction) selectDebugNode(firstAction.id)
     rebuildState(opts.followEnd ? duration.value : 0)
@@ -257,12 +266,12 @@ export const useHaotianStore = defineStore('haotian', () => {
   }
 
   async function loadDemo(): Promise<void> {
-    await loadArchive(service.loadDemo())
+    await loadArchive(service.loadDemo(), { label: '演示存档' })
   }
 
   async function loadLatest(battleSystem: BattleSystem): Promise<void> {
     const arch = await service.loadLatest(battleSystem)
-    if (arch) await loadArchive(arch)
+    if (arch) await loadArchive(arch, { label: '战斗记录' })
     else await loadDemo()
   }
 
@@ -278,13 +287,13 @@ export const useHaotianStore = defineStore('haotian', () => {
   /** 按 saveKey 加载指定录制 */
   async function loadRecording(battleSystem: BattleSystem, saveKey: string): Promise<void> {
     const arch = await service.loadRecording(battleSystem, saveKey)
-    if (arch) await loadArchive(arch)
+    if (arch) await loadArchive(arch, { label: '战斗记录' })
     else toast('战斗记录加载失败')
   }
 
   async function loadStress(count = 2000): Promise<void> {
     const t0 = performance.now()
-    await loadArchive(createStressArchive(count))
+    await loadArchive(createStressArchive(count), { label: '压测存档' })
     toast(`压测存档已生成：${count} 事件（合成 ${Math.round(performance.now() - t0)}ms）`)
   }
 
@@ -321,7 +330,7 @@ export const useHaotianStore = defineStore('haotian', () => {
       const arch = archive.value
       // 首次装载或切换场次：全量
       if (!arch || arch.battleId !== liveStream.getBattleId()) {
-        void loadArchive(liveStream.currentArchive(), { followEnd: true, skipWorker: true })
+        void loadArchive(liveStream.currentArchive(), { followEnd: true, skipWorker: true, label: '实时战斗' })
         return
       }
       const existing = new Set(arch.events.map((e) => e.id))
@@ -359,7 +368,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     liveStream = makeStream()
     liveMode.value = true
     liveStream.start()
-    await loadArchive(liveStream.currentArchive(), { followEnd: true, skipWorker: true })
+    await loadArchive(liveStream.currentArchive(), { followEnd: true, skipWorker: true, label: '实时战斗' })
     // resetBattle() 会 clear() 共享事件总线（清掉本订阅）；以 currentBattleId 变化为重建信号
     liveWatcher = watch(
       () => b.currentBattleId,
@@ -409,6 +418,20 @@ export const useHaotianStore = defineStore('haotian', () => {
     )
   }
 
+  /** 数据源入口（命令栏 / 空态共用）：加载最近一次战斗记录，无记录回退演示存档 */
+  async function attachLatest(): Promise<void> {
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    await loadLatest(battleSystem)
+  }
+
+  /** 数据源入口（命令栏 / 空态共用）：战斗已激活则直接接管，否则保持待命（开战后自动接入） */
+  async function attachLive(): Promise<void> {
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const eventBus = container.resolve<BuffSystem>('BuffSystem').getEventBus() as IDomainEventBus
+    const ok = await startLive(battleSystem, eventBus)
+    if (!ok) armLiveFollow(battleSystem, eventBus)
+  }
+
   // ───────────── 回放状态机 ─────────────
 
   function rebuildState(t: number): void {
@@ -442,7 +465,7 @@ export const useHaotianStore = defineStore('haotian', () => {
   }
 
   function checkBreakpoint(ev: UnifiedEvent): boolean {
-    return checkBreakpointHit(ev, breakpoint.value, bpArmed.value)
+    return checkAnyBreakpointHit(ev, breakpoints.value)
   }
 
   function tickLoop(now: number): void {
@@ -521,11 +544,48 @@ export const useHaotianStore = defineStore('haotian', () => {
     persistPrefs()
   }
 
+  function removeBookmark(id: string): void {
+    const next = new Set(bookmarks.value)
+    next.delete(id)
+    bookmarks.value = next
+    persistPrefs()
+  }
+
+  function clearBookmarks(): void {
+    bookmarks.value = new Set()
+    persistPrefs()
+    toast('已清除全部书签')
+  }
+
+  function toggleBookmarkPanel(): void {
+    bookmarkOpen.value = !bookmarkOpen.value
+  }
+
+  /** 书签事件列表（按时间序），供书签面板展示与跳转 */
+  const bookmarkedEvents = computed<UnifiedEvent[]>(() => evs.value.filter((e) => bookmarks.value.has(e.id)))
+
   // ───────────── 断点 ─────────────
 
-  function setBreakpoint(bp: BreakpointConfig, armed: boolean): void {
-    breakpoint.value = bp
-    bpArmed.value = armed && bp.type !== 'none'
+  /** 是否有任一启用断点（命令栏 / 状态栏显性标识） */
+  const bpArmed = computed(() => breakpoints.value.some((b) => b.enabled && b.type !== 'none'))
+
+  function addBreakpoint(type: BreakpointConfig['type'], value: number | string | undefined): void {
+    breakpoints.value.push(createBreakpoint(type, value))
+    persistPrefs()
+  }
+
+  function removeBreakpoint(id: string): void {
+    breakpoints.value = breakpoints.value.filter((b) => b.id !== id)
+    persistPrefs()
+  }
+
+  function toggleBreakpoint(id: string): void {
+    breakpoints.value = breakpoints.value.map((b) => (b.id === id ? { ...b, enabled: !b.enabled } : b))
+    persistPrefs()
+  }
+
+  function clearBreakpoints(): void {
+    breakpoints.value = []
     persistPrefs()
   }
 
@@ -600,13 +660,12 @@ export const useHaotianStore = defineStore('haotian', () => {
     if (!archive.value) return
     const session: DebugSession = {
       app: 'haotian',
-      version: 1,
+      version: 2,
       battleId: archive.value.battleId,
       mode: mode.value,
       selectedId: selectedId.value,
       bookmarks: [...bookmarks.value],
-      breakpoint: breakpoint.value,
-      bpArmed: bpArmed.value,
+      breakpoints: breakpoints.value,
       showDbg: showDbg.value,
       streamText: streamText.value,
     }
@@ -711,8 +770,8 @@ export const useHaotianStore = defineStore('haotian', () => {
   async function importSession(file: File): Promise<void> {
     try {
       const text = await file.text()
-      const s = JSON.parse(text) as DebugSession
-      if (s?.app !== 'haotian' || s.version !== 1) {
+      const s = JSON.parse(text) as DebugSession & { breakpoint?: BreakpointConfig; bpArmed?: boolean }
+      if (s?.app !== 'haotian' || (s.version !== 1 && s.version !== 2)) {
         toast('会话文件格式不合法')
         return
       }
@@ -721,8 +780,12 @@ export const useHaotianStore = defineStore('haotian', () => {
         return
       }
       if (Array.isArray(s.bookmarks)) bookmarks.value = new Set(s.bookmarks)
-      if (s.breakpoint) breakpoint.value = s.breakpoint
-      bpArmed.value = s.bpArmed ?? false
+      if (s.version === 2 && Array.isArray(s.breakpoints)) {
+        breakpoints.value = s.breakpoints
+      } else if (s.version === 1 && s.breakpoint) {
+        // v1 会话迁移：单断点 → 断点数组
+        breakpoints.value = [{ id: 'bp_v1', ...s.breakpoint, enabled: !!s.bpArmed }]
+      }
       showDbg.value = s.showDbg ?? false
       streamText.value = s.streamText ?? ''
       if (s.mode) setMode(s.mode, true)
@@ -808,6 +871,10 @@ export const useHaotianStore = defineStore('haotian', () => {
     diagOpen.value = !diagOpen.value
   }
 
+  function toggleSummaryCut(): void {
+    summaryCut.value = summaryCut.value === 'full' ? 'playback' : 'full'
+  }
+
   // ───────────── 派生展示 ─────────────
 
   const timeRead = computed(() => formatTime(playback.value.t))
@@ -818,8 +885,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     if (prefs.showDbg !== undefined) showDbg.value = prefs.showDbg
     if (prefs.streamText !== undefined) streamText.value = prefs.streamText
     if (Array.isArray(prefs.bookmarks)) bookmarks.value = new Set(prefs.bookmarks)
-    if (prefs.breakpoint) breakpoint.value = prefs.breakpoint
-    if (prefs.bpArmed) bpArmed.value = true
+    if (Array.isArray(prefs.breakpoints) && prefs.breakpoints.length) breakpoints.value = prefs.breakpoints
   }
 
   return {
@@ -831,6 +897,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     evs,
     byId,
     filteredEvents,
+    source,
     debugEntries,
     debugNodes,
     mode,
@@ -838,7 +905,6 @@ export const useHaotianStore = defineStore('haotian', () => {
     selectedEvent,
     showDbg,
     diagOpen,
-    toasts,
     playback,
     cur,
     debugNodeId,
@@ -850,15 +916,29 @@ export const useHaotianStore = defineStore('haotian', () => {
     pnameSide,
     timeRead,
     summary,
+    summaryCut,
+    toggleSummaryCut,
     exportSummaryMarkdown,
     exportSummaryCsv,
     bookmarks,
     bookmarkCount,
+    bookmarkOpen,
+    bookmarkedEvents,
     isBookmarked,
     toggleBookmark,
-    breakpoint,
+    removeBookmark,
+    clearBookmarks,
+    toggleBookmarkPanel,
+    breakpoints,
     bpArmed,
-    setBreakpoint,
+    addBreakpoint,
+    removeBreakpoint,
+    toggleBreakpoint,
+    clearBreakpoints,
+    checkBreakpoint,
+    bpOpen,
+    sumOpen,
+    diffOpen,
     streamText,
     branch,
     diffRows,
@@ -875,6 +955,8 @@ export const useHaotianStore = defineStore('haotian', () => {
     loadDemo,
     loadLatest,
     loadStress,
+    attachLatest,
+    attachLive,
     liveMode,
     liveFollowArmed,
     recordings,

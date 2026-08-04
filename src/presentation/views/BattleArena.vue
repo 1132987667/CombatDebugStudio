@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="battle-test-tool">
     <!-- 加载指示器 -->
     <div v-if="battleStore.loading.isLoading" class="loading-overlay">
@@ -94,8 +94,8 @@
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
 
-    <!-- 通知组件 -->
-    <Notification ref="notification" />
+    <!-- 全局通知（各模块统一入口） -->
+    <GlobalNotifications />
 
     <!-- 重置战斗二次确认 -->
     <ConfirmDialog v-model="confirmResetBattle" title="重置战斗"
@@ -117,9 +117,10 @@ import type { BattleSystem } from '@/domain/battle/BattleSystem';
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
 import Button from "@/presentation/components/Button.vue";
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
-import Notification from "@/presentation/components/Notification.vue";
 import ConfirmDialog from "@/presentation/components/ConfirmDialog.vue";
+import GlobalNotifications from "@/presentation/components/GlobalNotifications.vue";
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
+import { useNotificationStore } from '@/presentation/stores/notificationStore';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
@@ -135,8 +136,8 @@ import ModuleHeader, { modulePanelId, moduleTabId, type ModuleId } from "@/prese
 import ParticipantPanel from "./ParticipantPanel.vue";
 import HaotianMirror from "@/presentation/modules/haotian/HaotianMirror.vue";
 import Fengshen from "@/presentation/modules/fengshen/Fengshen.vue";
-// 通知组件引用
-const notification = ref<InstanceType<typeof Notification> | null>(null);
+// 全局通知（统一入口：各模块经 notificationStore.notify 调用）
+const notification = useNotificationStore();
 
 // 使用Pinia状态管理
 const battleStore = useBattleStore();
@@ -608,11 +609,11 @@ const startBattle = async () => {
   const enabledEnemyTeam = enemyTeam.value.filter((e) => e.enabled);
 
   if (enabledAllyTeam.length === 0) {
-    notification.value?.addNotification("提示", "敌我双方各至少选择一个角色参战", "warning");
+    notification.notify("提示", "敌我双方各至少选择一个角色参战", "warning");
     return;
   }
   if (enabledEnemyTeam.length === 0) {
-    notification.value?.addNotification("提示", "敌我双方各至少选择一个角色参战", "warning");
+    notification.notify("提示", "敌我双方各至少选择一个角色参战", "warning");
     return;
   }
 
@@ -622,9 +623,9 @@ const startBattle = async () => {
     if (result) {
       // ponytail: 开始战斗后同步预设的战斗速度
       battleStore.setBattleSpeed(battleStore.battleSpeed)
-      notification.value?.addNotification("成功", "战斗已开始", "success");
+      notification.notify("成功", "战斗已开始", "success");
     } else {
-      notification.value?.addNotification("错误", "开始战斗失败", "error");
+      notification.notify("错误", "开始战斗失败", "error");
     }
   } catch (error) {
     console.error("开始战斗时出错:", error);
@@ -632,7 +633,7 @@ const startBattle = async () => {
     battleLogManager.addSystemLog({
       message: `开始战斗时出错: ${errorMsg}`,
     });
-    notification.value?.addNotification("错误", errorMsg, "error");
+    notification.notify("错误", errorMsg, "error");
   }
 };
 
@@ -652,13 +653,13 @@ const endBattle = async () => {
           saved = false;
         }
       }
-      notification.value?.addNotification(
+      notification.notify(
         "成功",
         saved ? "战斗已结束，记录已保存，可在昊天镜回放" : "战斗已结束",
         "success",
       );
     } else {
-      notification.value?.addNotification("错误", battleStore.error.message || "结束战斗失败", "error");
+      notification.notify("错误", battleStore.error.message || "结束战斗失败", "error");
     }
   } catch (error) {
     console.error("结束战斗时出错:", error);
@@ -666,7 +667,7 @@ const endBattle = async () => {
     battleLogManager.addSystemLog({
       message: `结束战斗时出错: ${errorMsg}`,
     });
-    notification.value?.addNotification("错误", errorMsg, "error");
+    notification.notify("错误", errorMsg, "error");
   }
 };
 
@@ -682,9 +683,9 @@ const resetBattle = async () => {
     const result = await battleStore.resetBattle();
 
     if (result) {
-      notification.value?.addNotification("成功", "战斗已重置", "success");
+      notification.notify("成功", "战斗已重置", "success");
     } else {
-      notification.value?.addNotification("错误", battleStore.error.message || "重置战斗失败", "error");
+      notification.notify("错误", battleStore.error.message || "重置战斗失败", "error");
     }
   } catch (error) {
     console.error("重置战斗时出错:", error);
@@ -692,7 +693,7 @@ const resetBattle = async () => {
     battleLogManager.addSystemLog({
       message: `重置战斗时出错: ${errorMsg}`,
     });
-    notification.value?.addNotification("错误", errorMsg, "error");
+    notification.notify("错误", errorMsg, "error");
   }
 };
 
@@ -703,9 +704,9 @@ const toggleAutoPlay = async () => {
   try {
     const result = await battleStore.toggleAutoPlay();
     if (result) {
-      notification.value?.addNotification("成功", battleStore.autoPlayMode ? "已开始自动战斗" : "已停止自动战斗", "success");
+      notification.notify("成功", battleStore.autoPlayMode ? "已开始自动战斗" : "已停止自动战斗", "success");
     } else {
-      notification.value?.addNotification("错误", battleStore.error.message || "切换自动战斗状态失败", "error");
+      notification.notify("错误", battleStore.error.message || "切换自动战斗状态失败", "error");
     }
   } catch (error) {
     console.error("切换自动战斗状态失败:", error);
@@ -713,7 +714,7 @@ const toggleAutoPlay = async () => {
     battleLogManager.addSystemLog({
       message: `切换自动战斗状态失败: ${errorMsg}`,
     });
-    notification.value?.addNotification("错误", errorMsg, "error");
+    notification.notify("错误", errorMsg, "error");
   }
 };
 
@@ -726,7 +727,7 @@ const handleBattleSpeedChange = (speed: number) => {
 const saveRecording = async () => {
   const battleId = battleStore.currentBattleId;
   if (!battleId) {
-    notification.value?.addNotification("提示", "当前没有进行中的战斗", "warning");
+    notification.notify("提示", "当前没有进行中的战斗", "warning");
     return;
   }
   try {
@@ -734,13 +735,13 @@ const saveRecording = async () => {
     const saveKey = await battleSystem.saveBattleRecording(battleId);
     if (saveKey) {
       battleLogManager.addSystemLog({ message: `战斗记录已保存: ${battleId}` });
-      notification.value?.addNotification("成功", "战斗记录已保存到本地，可在昊天镜回放", "success");
+      notification.notify("成功", "战斗记录已保存到本地，可在昊天镜回放", "success");
     } else {
-      notification.value?.addNotification("错误", "保存失败：未找到该战斗的录制数据", "error");
+      notification.notify("错误", "保存失败：未找到该战斗的录制数据", "error");
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    notification.value?.addNotification("错误", `保存失败: ${errorMsg}`, "error");
+    notification.notify("错误", `保存失败: ${errorMsg}`, "error");
   }
 };
 

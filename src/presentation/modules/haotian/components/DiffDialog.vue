@@ -7,6 +7,7 @@
         :options="branchOptions" />
       <Button @click="branchInput?.click()">载入分支 JSON</Button>
       <Button @click="store.clearBranch()" :disabled="!store.branch">清除分支</Button>
+      <Button :disabled="!store.diffStats.changed" title="跳到下一处差异" @click="nextDiff">下一差异</Button>
       <span class="ht-diff-meta">
         <span class="ht-st-ok">相同</span> {{ store.diffStats.total - store.diffStats.changed }} ·
         <span class="ht-st-warn">差异</span> {{ store.diffStats.changed }}
@@ -14,12 +15,12 @@
     </div>
     <div class="ht-diff-body">
       <div v-if="store.diffRows.length" class="ht-diff-cols">
-        <div class="ht-diff-col">
+        <div ref="colBeforeRef" class="ht-diff-col" @scroll.passive="syncScroll('before')">
           <div class="ht-diff-col-hd">修改前</div>
-          <template v-for="row in store.diffRows" :key="'b' + row.eventId">
-            <div v-if="row.side !== 'branch-only'" class="ht-diff-row" :class="{ changed: row.changed }">
+          <template v-for="(row, i) in store.diffRows" :key="'b' + row.eventId">
+            <div v-if="row.side !== 'branch-only'" class="ht-diff-row" :class="{ changed: row.changed }" :data-diff-idx="i">
               <span class="ht-diff-sum">{{ row.summary }}</span>
-              <div v-for="(f, i) in row.fields" :key="'bf' + i" class="ht-diff-field">
+              <div v-for="(f, fi) in row.fields" :key="'bf' + fi" class="ht-diff-field">
                 <span class="ht-diff-k">{{ f.key }}</span>
                 <span class="ht-diff-v">{{ f.before }}</span>
               </div>
@@ -27,12 +28,12 @@
             </div>
           </template>
         </div>
-        <div class="ht-diff-col">
+        <div ref="colAfterRef" class="ht-diff-col" @scroll.passive="syncScroll('after')">
           <div class="ht-diff-col-hd">修改后</div>
-          <template v-for="row in store.diffRows" :key="'a' + row.eventId">
-            <div v-if="row.side !== 'base-only'" class="ht-diff-row" :class="{ changed: row.changed }">
+          <template v-for="(row, i) in store.diffRows" :key="'a' + row.eventId">
+            <div v-if="row.side !== 'base-only'" class="ht-diff-row" :class="{ changed: row.changed }" :data-diff-idx="i">
               <span class="ht-diff-sum">{{ row.side === 'branch-only' ? row.summary : baseSummary(row) }}</span>
-              <div v-for="(f, i) in row.fields" :key="'af' + i" class="ht-diff-field">
+              <div v-for="(f, fi) in row.fields" :key="'af' + fi" class="ht-diff-field">
                 <span class="ht-diff-k">{{ f.key }}</span>
                 <span class="ht-diff-v">{{ f.after }}</span>
               </div>
@@ -70,6 +71,40 @@ const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 const store = useHaotianStore()
 const branchInput = ref<HTMLInputElement | null>(null)
 const branchKey = ref('')
+
+const colBeforeRef = ref<HTMLElement | null>(null)
+const colAfterRef = ref<HTMLElement | null>(null)
+let diffCursor = -1
+let syncing = false
+
+/** 双栏同步滚动：任一侧滚动时对齐另一侧（行数一致，按偏移近似对齐） */
+function syncScroll(from: 'before' | 'after'): void {
+  if (syncing) return
+  syncing = true
+  const src = from === 'before' ? colBeforeRef.value : colAfterRef.value
+  const dst = from === 'before' ? colAfterRef.value : colBeforeRef.value
+  if (src && dst) dst.scrollTop = src.scrollTop
+  requestAnimationFrame(() => {
+    syncing = false
+  })
+}
+
+/** 跳到下一处差异（循环），滚动定位并高亮闪烁 */
+function nextDiff(): void {
+  const rows = store.diffRows
+  if (!rows.length || !colBeforeRef.value) return
+  for (let step = 1; step <= rows.length; step++) {
+    const idx = (diffCursor + step) % rows.length
+    if (rows[idx].changed) {
+      diffCursor = idx
+      const row = colBeforeRef.value.querySelector<HTMLElement>(`[data-diff-idx="${idx}"]`)
+      row?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      row?.classList.add('flash')
+      setTimeout(() => row?.classList.remove('flash'), 1600)
+      return
+    }
+  }
+}
 
 const branchOptions = computed<TSelectOption[]>(() => [
   { value: '', label: '从战斗记录选分支…' },

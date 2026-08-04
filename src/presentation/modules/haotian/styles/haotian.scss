@@ -336,6 +336,7 @@
 .ht-arena-side {
   flex: 1;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: stretch;
 }
@@ -359,6 +360,7 @@
 .ht-unit {
   position: relative;
   width: 200px;
+  min-width: 150px;
   border: 1px solid var(--ht-bd);
   border-radius: var(--radius-lg);
   background: var(--color-bg-tertiary);
@@ -419,7 +421,7 @@
   transition: width 0.25s;
 }
 
-.ht-bar.hp i { background: linear-gradient(90deg, #d32f2f, var(--ht-red)); }
+.ht-bar.hp i { background: var(--ht-red); }
 .ht-bar.hp.warn i { background: var(--ht-amber); }
 .ht-bar.hp.low i { background: var(--ht-red); }
 .ht-bar.en i { background: linear-gradient(90deg, var(--ht-blue), var(--ht-cyan)); }
@@ -1149,7 +1151,7 @@
   transition: width 0.4s;
 }
 
-.ht-dbar i.hp { background: linear-gradient(90deg, #d32f2f, var(--ht-red)); }
+.ht-dbar i.hp { background: var(--ht-red); }
 .ht-dbar i.en { background: linear-gradient(90deg, var(--ht-blue), var(--ht-cyan)); }
 
 .ht-dbefore { color: var(--color-text-tertiary); min-width: 3em; text-align: right; }
@@ -1361,34 +1363,6 @@
 .ht-tag.info { background: rgba(var(--rgb-info), 0.18); color: var(--color-info); }
 .ht-tag.ok { background: rgba(var(--rgb-success), 0.18); color: var(--ht-green); }
 
-/* ───────────── Toast ───────────── */
-.ht-toast {
-  position: fixed;
-  top: 96px;
-  right: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: var(--z-toast);
-}
-
-.ht-toast-item {
-  background: var(--color-bg-primary);
-  border: 1px solid var(--ht-bd);
-  border-left: 3px solid var(--color-energy);
-  border-radius: var(--radius-md);
-  padding: 9px 14px;
-  font-size: var(--font-size-md);
-  box-shadow: var(--shadow-md);
-  animation: ht-toastIn 0.25s ease both;
-  max-width: 340px;
-}
-
-@keyframes ht-toastIn {
-  from { opacity: 0; transform: translateX(24px); }
-  to { opacity: 1; transform: none; }
-}
-
 /* ───────────── 空态 ───────────── */
 .ht-empty {
   color: var(--color-text-tertiary);
@@ -1405,7 +1379,6 @@
 }
 
 /* 书签标记 */
-.ht-s-bm,
 .ht-ev-bm {
   color: var(--ht-amber);
   font-size: var(--font-size-md);
@@ -1658,3 +1631,418 @@
   font-size: var(--font-size-md);
   line-height: 1.6;
 }
+
+/* ───────────── 面板可拖拽分隔条 ───────────── */
+.ht-grid {
+  overflow-x: auto;
+}
+
+.ht-col-flex {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ht-resizer {
+  flex-shrink: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.ht-resizer:hover,
+.ht-resizer:focus-visible {
+  background: rgba(var(--rgb-energy), 0.28);
+  outline: none;
+}
+
+/* ───────────── 空态主 CTA ───────────── */
+.ht-empty-cards {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ht-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 220px;
+  padding: 14px 16px;
+  border: 1px solid var(--ht-bd);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.ht-empty-card:hover {
+  border-color: rgba(var(--rgb-energy), 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.ht-empty-card:focus-visible {
+  outline: 2px solid var(--color-energy);
+  outline-offset: 2px;
+}
+
+.ht-ec-t {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-energy);
+  letter-spacing: 0.5px;
+}
+
+.ht-ec-d {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+}
+
+/* ───────────── 时间轴刻度密度（缩放）───────────── */
+.ht-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--ht-bd);
+  border-radius: var(--radius-md);
+  padding: 2px 4px;
+  background: var(--color-bg-secondary);
+}
+
+.ht-zoom-label {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+  margin-right: 2px;
+}
+
+.ht-zoom-btn {
+  min-width: 26px;
+  padding: 1px 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+}
+
+.ht-zoom-btn.on {
+  background: rgba(var(--rgb-energy), 0.16);
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
+
+.ht-zoom-btn:focus-visible {
+  outline: 2px solid var(--color-energy);
+  outline-offset: -1px;
+}
+
+/* ───────────── 检视器头部层级 ───────────── */
+.ht-insp-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ht-insp-phase {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--rgb-white), 0.08);
+  font-size: var(--font-size-md);
+}
+
+/* ───────────── RNG 模拟徽标 ───────────── */
+.ht-rng-sim {
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--rgb-warning), 0.18);
+  border: 1px solid rgba(var(--rgb-warning), 0.5);
+  color: var(--ht-amber);
+  font-size: var(--font-size-md);
+}
+
+/* ───────────── 行内书签按钮 ───────────── */
+.ht-bm-btn {
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.ht-srow:hover .ht-bm-btn,
+.ht-ev:hover .ht-bm-btn,
+.ht-bm-btn.on {
+  opacity: 1;
+}
+
+.ht-bm-btn.on {
+  color: var(--ht-amber);
+}
+
+.ht-bm-btn:focus-visible {
+  outline: 2px solid var(--color-energy);
+  outline-offset: 1px;
+}
+
+/* ───────────── 书签面板 ───────────── */
+.ht-bm-body {
+  padding: 12px 14px;
+  min-height: 120px;
+}
+
+.ht-bm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ht-bm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.ht-bm-row.on {
+  background: var(--color-bg-hover);
+}
+
+.ht-bm-row:hover {
+  background: var(--color-bg-hover);
+}
+
+.ht-bm-time {
+  font-family: var(--ht-mono);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  width: 5em;
+}
+
+.ht-bm-goto {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ht-bm-goto:hover {
+  color: var(--color-energy);
+}
+
+.ht-bm-goto:focus-visible {
+  outline: 2px solid var(--color-energy);
+  outline-offset: 1px;
+}
+
+.ht-bm-del {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.ht-bm-del:hover {
+  color: var(--ht-red);
+}
+
+.ht-bm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 0;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.ht-bm-empty-sub {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+}
+
+/* ───────────── 图例弹层 ───────────── */
+.ht-legend-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 240px;
+}
+
+.ht-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ht-legend-ico {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--rgb-white), 0.08);
+  font-size: var(--font-size-md);
+}
+
+.ht-legend-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}
+
+.ht-legend-dbg {
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+}
+
+/* ───────────── 命令栏运维折叠菜单 ───────────── */
+.ht-ops-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 16px;
+  z-index: 50;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--ht-bd);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ht-ops-item {
+  border: none;
+  background: none;
+  color: var(--color-text-primary);
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+}
+
+.ht-ops-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.ht-ops-item:focus-visible {
+  outline: 2px solid var(--color-energy);
+  outline-offset: -1px;
+}
+
+/* ───────────── 断点列表（多断点管理）───────────── */
+.ht-bp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.ht-bp-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--ht-bd);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+}
+
+.ht-bp-item.off {
+  opacity: 0.55;
+}
+
+.ht-bp-item-arm {
+  display: grid;
+  place-items: center;
+}
+
+.ht-bp-item-label {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--ht-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ht-bp-item-label.muted {
+  text-decoration: line-through;
+  color: var(--color-text-tertiary);
+}
+
+.ht-bp-item-del {
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.ht-bp-item-del:hover {
+  color: var(--ht-red);
+}
+
+.ht-bp-empty {
+  padding: 10px 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+}
+
+.ht-bp-add {
+  border-top: 1px dashed var(--ht-bd);
+  padding-top: 12px;
+}
+
+.ht-bp-add-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  font-size: var(--font-size-md);
+}
+
+/* ───────────── 分支对比差异闪烁 ───────────── */
+.ht-diff-row.flash {
+  animation: ht-diffFlash 1.6s ease;
+}
+
+@keyframes ht-diffFlash {
+  0%, 100% { background: transparent; }
+  20%, 60% { background: rgba(var(--rgb-warning), 0.18); }
+}
+

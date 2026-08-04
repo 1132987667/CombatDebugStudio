@@ -5,12 +5,31 @@
       <span class="ht-chip">{{ phaseChipLabel }}</span>
       <span class="ht-time-read">{{ store.timeRead }}</span>
       <span class="ht-stage-hd-fill"></span>
+      <span class="ht-zoom" role="group" aria-label="时间轴刻度密度">
+        <span class="ht-zoom-label">刻度</span>
+        <button v-for="z in ZOOMS" :key="z.v" type="button" class="ht-zoom-btn" :class="{ on: zoom === z.v }"
+          :title="z.t" :aria-pressed="zoom === z.v" @click="zoom = z.v">{{ z.l }}</button>
+      </span>
       <span class="ht-proj-tag">回放 · 按时间播放</span>
     </div>
 
     <div v-if="!store.archive" class="ht-stage-empty">
       <div class="ht-se-hint">尚未加载战斗数据</div>
-      <div class="ht-se-sub">从顶部「选择数据源」载入演示存档、战斗记录或实时战斗</div>
+      <div class="ht-se-sub">选择一种数据来源开始分析</div>
+      <div class="ht-empty-cards">
+        <button type="button" class="ht-empty-card" @click="onLoadDemo">
+          <span class="ht-ec-t">载入演示存档</span>
+          <span class="ht-ec-d">无需准备，立即体验回放与调试</span>
+        </button>
+        <button type="button" class="ht-empty-card" @click="onLoadLatest">
+          <span class="ht-ec-t">打开最近战斗记录</span>
+          <span class="ht-ec-d">唤灵台「保存战斗记录」后自动存档于此</span>
+        </button>
+        <button type="button" class="ht-empty-card" @click="onAttachLive">
+          <span class="ht-ec-t">接入实时战斗</span>
+          <span class="ht-ec-d">先在唤灵台开战，过程实时流入此处</span>
+        </button>
+      </div>
     </div>
 
     <div class="ht-arena" v-show="!!store.archive">
@@ -83,6 +102,11 @@ const speedOptions: TSelectOption[] = [0.5, 1, 2, 4].map((s) => ({ value: s, lab
 
 const store = useHaotianStore()
 
+// 空态主 CTA（首次进入即可完成的第一个动作）
+const onLoadDemo = (): void => void store.loadDemo()
+const onLoadLatest = (): void => void store.attachLatest()
+const onAttachLive = (): void => void store.attachLive()
+
 /** 播放速度 v-model 适配：TacticalSelect 值为 string | number | null，仅接收 number */
 const speedModel = computed({
   get: () => store.playback.speed,
@@ -128,12 +152,27 @@ const phaseChipLabel = computed(() => {
 const tsPct = (ev: UnifiedEvent): number => (store.duration ? (ev.timestamp / store.duration) * 100 : 0)
 const curPct = computed(() => (store.duration ? (store.playback.t / store.duration) * 100 : 0))
 
-// seek 刻度聚簇：只标 回合开始 与 战斗根事件（生命周期），避免千级事件刻度重叠
+// seek 刻度聚簇：默认只标 回合开始 与 战斗根事件（生命周期），避免千级事件刻度重叠
+// 缩放级别放大时逐级加入更多事件类型
+const ZOOMS: Array<{ v: number; l: string; t: string }> = [
+  { v: 1, l: '粗', t: '只标回合开始与生命周期事件' },
+  { v: 2, l: '中', t: '加入 Buff / 被动触发' },
+  { v: 3, l: '细', t: '再加入伤害 / 治疗' },
+  { v: 4, l: '全', t: '全部可见事件' },
+]
+const zoom = ref(1)
+
 const seekMarks = computed(() =>
   store.evs.filter((e) => {
     if (meta(e).debugOnly && !store.showDbg) return false
     if (e.phase === 'turn_flow') return (e.payload as Record<string, unknown>)?.action === 'start'
-    return e.phase === 'battle_lifecycle'
+    if (e.phase === 'battle_lifecycle') return true
+    if (zoom.value < 2) return false
+    if (e.phase === 'buff_lifecycle' || e.phase === 'buff_trigger' || e.phase === 'passive_trigger') return true
+    if (zoom.value < 3) return false
+    if (e.phase === 'damage_calculation' || e.phase === 'heal_calculation') return true
+    if (zoom.value < 4) return false
+    return e.phase === 'action_execution'
   }),
 )
 

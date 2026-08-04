@@ -10,6 +10,8 @@
   height: 100vh;
   margin: 0;
   padding: 0;
+  /* NOTE: 双工作台与数据管理为桌面工具，最小宽度守卫——过窄时整页横向滚动而非挤压布局 */
+  min-width: 960px;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--font-family-base);

@@ -36,102 +36,102 @@
 
         <div class="tooltip-content">
           <!-- ==================== 标准模式（单值属性） ==================== -->
-            <div v-if="modifiers.length > 0" class="source-list">
-              <!-- 基础数值 -->
-              <div v-if="additiveGroup.length > 0" class="source-section">
-                <div class="section-title-row">
-                  <span class="stat-section-title">基础数值</span>
-                  <span class="layer-total">{{ formatLayerTotal(additiveGroup, ModifierType.ADDITIVE) }}</span>
-                </div>
-                <div v-for="(modifier, index) in additiveGroup" :key="'a-' + index" class="source-item">
-                  <div class="source-header">
-                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                  </div>
-                  <div class="source-value">
-                    <span class="source-amount"
-                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
-                      {{ formatModifierValue(modifier.value, modifier.type) }}
-                    </span>
-                  </div>
-                </div>
+          <div v-if="modifiers.length > 0" class="source-list">
+            <!-- 基础数值 -->
+            <div v-if="additiveGroup.length > 0" class="source-section">
+              <div class="section-title-row">
+                <span class="stat-section-title">基础数值</span>
+                <span class="layer-total">{{ formatLayerTotal(additiveGroup, ModifierType.ADDITIVE) }}</span>
               </div>
-
-              <!-- 属性加成 -->
-              <div v-if="percentGroup.length > 0" class="source-section">
-                <div class="section-title-row">
-                  <span class="stat-section-title">属性加成</span>
-                  <span class="layer-total">{{ formatLayerTotal(percentGroup, ModifierType.PERCENTAGE) }}</span>
+              <div v-for="(modifier, index) in additiveGroup" :key="'a-' + index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
                 </div>
-                <div v-for="(modifier, index) in percentGroup" :key="'p-' + index" class="source-item">
-                  <div class="source-header">
-                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                  </div>
-                  <div class="source-value">
-                    <span class="source-amount"
-                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
-                      {{ formatModifierValue(modifier.value, modifier.type) }}
-                    </span>
-                  </div>
+                <div class="source-value">
+                  <span class="source-amount"
+                    :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
                 </div>
-              </div>
-
-              <!-- 独立乘区 -->
-              <div v-if="multiGroup.length > 0" class="source-section">
-                <div class="section-title-row">
-                  <span class="stat-section-title">独立乘区</span>
-                  <span class="layer-total">{{ formatLayerTotal(multiGroup, ModifierType.MULTIPLICATIVE) }}</span>
-                </div>
-                <div v-for="(modifier, index) in multiGroup" :key="'m-' + index" class="source-item">
-                  <div class="source-header">
-                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                  </div>
-                  <div class="source-value">
-                    <span class="source-amount"
-                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
-                      {{ formatModifierValue(modifier.value, modifier.type) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 最终乘区 -->
-              <div v-if="finalGroup.length > 0" class="source-section">
-                <div class="section-title-row">
-                  <span class="stat-section-title">最终乘区</span>
-                  <span class="layer-total">{{ formatLayerTotal(finalGroup, ModifierType.FINAL) }}</span>
-                </div>
-                <div v-for="(modifier, index) in finalGroup" :key="'f-' + index" class="source-item">
-                  <div class="source-header">
-                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                  </div>
-                  <div class="source-value">
-                    <span class="source-amount"
-                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
-                      {{ formatModifierValue(modifier.value, modifier.type) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <div v-if="modifiers.length > 0" class="tooltip-divider"></div>
-
-            <div class="calculation-section">
-              <div class="calculation-title">计算过程</div>
-              <div v-for="(step, i) in calcSteps" :key="i" class="calc-step">
-                <span class="calc-step-label">{{ step.label }}</span>
-                <span class="calc-step-result">{{ step.result }}</span>
-              </div>
-              <div class="calculation-result">
-                <span class="result-label">=</span>
-                <span class="result-value">{{ finalValue }}</span>
               </div>
             </div>
+
+            <!-- 属性加成 -->
+            <div v-if="percentGroup.length > 0" class="source-section">
+              <div class="section-title-row">
+                <span class="stat-section-title">属性加成</span>
+                <span class="layer-total">{{ formatLayerTotal(percentGroup, ModifierType.PERCENTAGE) }}</span>
+              </div>
+              <div v-for="(modifier, index) in percentGroup" :key="'p-' + index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                </div>
+                <div class="source-value">
+                  <span class="source-amount"
+                    :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 独立乘区 -->
+            <div v-if="multiGroup.length > 0" class="source-section">
+              <div class="section-title-row">
+                <span class="stat-section-title">独立乘区</span>
+                <span class="layer-total">{{ formatLayerTotal(multiGroup, ModifierType.MULTIPLICATIVE) }}</span>
+              </div>
+              <div v-for="(modifier, index) in multiGroup" :key="'m-' + index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                </div>
+                <div class="source-value">
+                  <span class="source-amount"
+                    :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 最终乘区 -->
+            <div v-if="finalGroup.length > 0" class="source-section">
+              <div class="section-title-row">
+                <span class="stat-section-title">最终乘区</span>
+                <span class="layer-total">{{ formatLayerTotal(finalGroup, ModifierType.FINAL) }}</span>
+              </div>
+              <div v-for="(modifier, index) in finalGroup" :key="'f-' + index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                </div>
+                <div class="source-value">
+                  <span class="source-amount"
+                    :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div v-if="modifiers.length > 0" class="tooltip-divider"></div>
+
+          <div class="calculation-section">
+            <div class="calculation-title">计算过程</div>
+            <div v-for="(step, i) in calcSteps" :key="i" class="calc-step">
+              <span class="calc-step-label">{{ step.label }}</span>
+              <span class="calc-step-result">{{ step.result }}</span>
+            </div>
+            <div class="calculation-result">
+              <span class="result-label">=</span>
+              <span class="result-value">{{ finalValue }}</span>
+            </div>
+          </div>
         </div>
 
         <div class="tooltip-arrow" :class="arrowClass"></div>
@@ -526,101 +526,102 @@ onUnmounted(() => {
         }
       }
 
-    .calculation-section {
-      background: rgba(var(--rgb-energy), var(--alpha-tint));
-      border-radius: var(--radius-md);
-      padding: var(--space-3);
-      margin-top: var(--space-2);
-
-      .calculation-title {
-        color: var(--color-text-tertiary);
-        margin-bottom: var(--space-2);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .calc-step {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: var(--space-2);
-        padding: var(--space-1) 0;
-        border-bottom: 1px dashed var(--border-common-color-dark);
-        font-family: 'JetBrains Mono', monospace;
-
-        &:last-child {
-          border-bottom: none;
-        }
-
-        .calc-step-label {
-          color: var(--color-text-tertiary);
-          flex-shrink: 0;
-        }
-
-        .calc-step-result {
-          color: var(--color-text-secondary);
-          text-align: right;
-          white-space: nowrap;
-        }
-      }
-
-      .calculation-result {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
+      .calculation-section {
+        background: rgba(var(--rgb-energy), var(--alpha-tint));
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
         margin-top: var(--space-2);
-        padding-top: var(--space-2);
-        border-top: 1px dashed var(--border-common-color-dark);
 
-        .result-label {
-          font-size: var(--font-size-md);
+        .calculation-title {
           color: var(--color-text-tertiary);
+          margin-bottom: var(--space-2);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
-        .result-value {
-          font-size: var(--font-size-lg);
-          font-weight: var(--font-weight-bold);
-          color: var(--color-energy);
+        .calc-step {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          gap: var(--space-2);
+          padding: var(--space-1) 0;
+          border-bottom: 1px dashed var(--border-common-color-dark);
           font-family: 'JetBrains Mono', monospace;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .calc-step-label {
+            color: var(--color-text-tertiary);
+            flex-shrink: 0;
+          }
+
+          .calc-step-result {
+            color: var(--color-text-secondary);
+            text-align: right;
+            white-space: nowrap;
+          }
+        }
+
+        .calculation-result {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          margin-top: var(--space-2);
+          padding-top: var(--space-2);
+          border-top: 1px dashed var(--border-common-color-dark);
+
+          .result-label {
+            font-size: var(--font-size-md);
+            color: var(--color-text-tertiary);
+          }
+
+          .result-value {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-energy);
+            font-family: 'JetBrains Mono', monospace;
+          }
         }
       }
     }
-  }
 
-  .tooltip-arrow {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background: var(--color-overlay-panel);
-    border: 1px solid var(--border-common-color);
-    transform: rotate(45deg);
+    .tooltip-arrow {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: var(--color-overlay-panel);
+      border: 1px solid var(--border-common-color);
+      transform: rotate(45deg);
 
-    &.arrow-top {
-      top: -7px;
-      left: 20px;
-      border-bottom: none;
-      border-right: none;
-    }
+      &.arrow-top {
+        top: -7px;
+        left: 20px;
+        border-bottom: none;
+        border-right: none;
+      }
 
-    &.arrow-bottom {
-      bottom: -7px;
-      left: 20px;
-      border-top: none;
-      border-left: none;
-    }
+      &.arrow-bottom {
+        bottom: -7px;
+        left: 20px;
+        border-top: none;
+        border-left: none;
+      }
 
-    &.arrow-left {
-      left: -7px;
-      top: 20px;
-      border-top: none;
-      border-right: none;
-    }
+      &.arrow-left {
+        left: -7px;
+        top: 20px;
+        border-top: none;
+        border-right: none;
+      }
 
-    &.arrow-right {
-      right: -7px;
-      top: 20px;
-      border-bottom: none;
-      border-left: none;
+      &.arrow-right {
+        right: -7px;
+        top: 20px;
+        border-bottom: none;
+        border-left: none;
+      }
     }
   }
 }

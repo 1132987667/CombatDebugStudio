@@ -25,6 +25,14 @@
           IndexedDB {{ storageOk ? '已连接' : '降级 configs' }}
         </div>
         <div class="fs-storage-stat">数据版本 v{{ store.dataVersion }}</div>
+        <button type="button" class="fs-help-toggle" :class="{ on: helpOpen }"
+          :aria-expanded="helpOpen" @click="helpOpen = !helpOpen">使用说明</button>
+        <div v-if="helpOpen" class="fs-help-pop">
+          <p>· 数据存于浏览器 IndexedDB，任何写操作（增/删/改/导入）都会递增全局数据版本。</p>
+          <p>· 编辑保存后、未开战时，战斗引擎数据源自动重载，改动即时生效。</p>
+          <p>· 复杂数组字段（技能步骤 / Buff 效果等）以 JSON 编辑，输入时实时校验语法。</p>
+          <p>· 引用断裂可在「健康检查」页面一键定位到具体实体修复。</p>
+        </div>
       </div>
     </aside>
 
@@ -97,6 +105,7 @@ const SYSTEM_VIEWS: Array<{ view: FengshenView; label: string }> = [
 
 const store = useFengshenStore()
 const storageOk = ref(true)
+const helpOpen = ref(false)
 
 function selectDomain(table: FengshenTableName): void {
   store.activeView = 'domain' as FengshenView

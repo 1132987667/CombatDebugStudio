@@ -52,8 +52,8 @@ function empty(id: string): UnitSummary {
   }
 }
 
-/** 从统一存档汇总战斗指标（单次遍历） */
-export function summarizeBattle(archive: UnifiedArchive): BattleSummary {
+/** 从统一存档汇总战斗指标（单次遍历）；maxTimestamp 传入时仅统计截止该时间点之前的事件（时间切面） */
+export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number): BattleSummary {
   const units: Record<string, UnitSummary> = {}
   const get = (id?: string): UnitSummary => {
     if (!id) return empty('')
@@ -66,7 +66,12 @@ export function summarizeBattle(archive: UnifiedArchive): BattleSummary {
   }
 
   let rounds = 0
+  let reachedEnd = true
   for (const e of archive.events) {
+    if (maxTimestamp !== undefined && e.timestamp > maxTimestamp) {
+      reachedEnd = false
+      break
+    }
     const pl = e.payload ?? {}
     if (e.phase === 'turn_flow' && typeof e.turn === 'number') {
       rounds = Math.max(rounds, e.turn)
@@ -106,6 +111,9 @@ export function summarizeBattle(archive: UnifiedArchive): BattleSummary {
     }
   }
 
-  const last = archive.events.length ? archive.events[archive.events.length - 1].timestamp : 0
-  return { battleId: archive.battleId, rounds, durationMs: last, winner: archive.winner, units }
+  // 截止时间：显式传入用截断点，否则用事件流尾部；截断未到战斗结束则胜方未知
+  const last =
+    maxTimestamp !== undefined ? Math.min(maxTimestamp, archive.events.length ? archive.events[archive.events.length - 1].timestamp : maxTimestamp) : archive.events.length ? archive.events[archive.events.length - 1].timestamp : 0
+  const winner = reachedEnd ? archive.winner : undefined
+  return { battleId: archive.battleId, rounds, durationMs: last, winner, units }
 }

@@ -54,6 +54,10 @@ export const useFengshenStore = defineStore('fengshen', () => {
   // 引用选项缓存（下拉：技能/阵型/元素/成长曲线等）
   const optionsCache = ref<Record<string, OptionItem[]>>({})
 
+  // 详情面板：当前实体的反向引用（谁引用了它）与跨表定位待办
+  const references = ref<Array<{ sourceTable: FengshenTableName; ids: string[] }>>([])
+  const pendingDetailId = ref<string | null>(null)
+
   const currentSchema = () => TABLE_SCHEMAS[currentTable.value]
 
   // ── dataVersion 订阅：任何写操作（增/删/改/导入）后刷新版本 + 当前列表；未开战时重载引擎数据源 ──
@@ -105,6 +109,25 @@ export const useFengshenStore = defineStore('fengshen', () => {
     selectedIds.value = []
     search.value = ''
     void refreshList()
+  }
+
+  /** 跨表定位（健康检查 / 反向引用跳转）：切换列表并预置详情面板高亮行 */
+  function navigateTo(table: FengshenTableName, id?: string): void {
+    currentTable.value = table
+    activeView.value = 'domain'
+    selectedIds.value = []
+    search.value = ''
+    pendingDetailId.value = id ?? null
+    void refreshList()
+  }
+
+  /** 加载指定实体的反向引用（谁引用了它） */
+  async function loadReferences(id: string): Promise<void> {
+    try {
+      references.value = await integrity.findReferencing(currentTable.value, id)
+    } catch {
+      references.value = []
+    }
   }
 
   async function openCreate(): Promise<void> {
@@ -225,12 +248,16 @@ export const useFengshenStore = defineStore('fengshen', () => {
     logs,
     params,
     optionsCache,
+    references,
+    pendingDetailId,
     currentSchema,
     refreshVersion,
     refreshList,
     loadOptions,
     invalidateOptions,
     setTable,
+    navigateTo,
+    loadReferences,
     setView,
     openCreate,
     openEdit,

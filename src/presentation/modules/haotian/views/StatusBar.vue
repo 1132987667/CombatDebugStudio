@@ -8,33 +8,29 @@
     <div class="ht-st-item">事件 <b>{{ store.validation?.stats.events ?? 0 }}</b></div>
     <div class="ht-st-item">书签 <b>{{ store.bookmarkCount }}</b></div>
     <div class="ht-st-item">模式 <b>{{ store.mode === 'replay' ? '回放' : '调试' }}</b></div>
+    <div class="ht-st-item">
+      数据源 <b>{{ store.source || '—' }}</b>
+    </div>
+    <div class="ht-st-item">
+      断点 <b :class="store.bpArmed ? 'ht-st-warn' : ''">{{ bpLabel }}</b>
+    </div>
     <div class="ht-st-right">
-      <div class="ht-st-item"><span class="ht-st-dot"></span>就绪</div>
-      <div class="ht-st-item">{{ utcClock }}</div>
+      <div class="ht-st-item">
+        <span class="ht-st-dot"></span>
+        <span :class="store.validation?.errors.length ? 'ht-st-warn' : 'ht-st-ok'">就绪</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed } from 'vue'
 import { useHaotianStore } from '../stores/haotianStore'
 
 const store = useHaotianStore()
 
-const utcClock = ref('--:--:--')
-
-let timer = 0
-
-onMounted(() => {
-  const tick = (): void => {
-    const d = new Date()
-    const p = (n: number): string => String(n).padStart(2, '0')
-    utcClock.value = `世界时 ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`
-  }
-  tick()
-  timer = window.setInterval(tick, 1000)
-})
-onUnmounted(() => {
-  window.clearInterval(timer)
+const bpLabel = computed(() => {
+  const enabled = store.breakpoints.filter((b) => b.enabled && b.type !== 'none')
+  return enabled.length ? `${enabled.length} 条启用` : '未启用'
 })
 </script>

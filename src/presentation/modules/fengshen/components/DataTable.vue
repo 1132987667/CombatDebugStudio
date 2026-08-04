@@ -6,7 +6,14 @@
           <th class="fs-col-check">
             <input type="checkbox" :checked="allSelected" @change="toggleAll" aria-label="全选" />
           </th>
-          <th v-for="col in columns" :key="col">{{ fieldLabel(col) }}</th>
+          <th v-for="col in columns" :key="col" class="fs-th"
+            :class="{ 'fs-sorted': sortKey === col }"
+            :aria-sort="sortAria(col)"
+            :title="`按「${fieldLabel(col)}」排序`"
+            @click="emit('sort', col)">
+            {{ fieldLabel(col) }}
+            <span class="fs-sort-ico">{{ sortIco(col) }}</span>
+          </th>
           <th class="fs-col-actions">操作</th>
         </tr>
       </thead>
@@ -55,6 +62,9 @@ const props = defineProps<{
   loading?: boolean
   /** 右侧详情面板当前选中的行 id（用于行高亮） */
   detailId?: string | null
+  /** 当前排序列（表头点击切换） */
+  sortKey?: string
+  sortDir?: 'asc' | 'desc'
 }>()
 
 const emit = defineEmits<{
@@ -64,9 +74,21 @@ const emit = defineEmits<{
   remove: [row: Record<string, unknown>]
   /** 点击可点击字段（名称等）→ 右侧详情面板 */
   detail: [row: Record<string, unknown>]
+  /** 点击表头按该列排序 */
+  sort: [col: string]
 }>()
 
 const columns = computed(() => props.schema.columns)
+
+function sortAria(col: string): 'ascending' | 'descending' | 'none' {
+  if (props.sortKey !== col) return 'none'
+  return props.sortDir === 'asc' ? 'ascending' : 'descending'
+}
+
+function sortIco(col: string): string {
+  if (props.sortKey !== col) return ''
+  return props.sortDir === 'asc' ? '↑' : '↓'
+}
 
 /** 可点击字段：默认名称列；schema 字段可通过 column.clickable 扩展 */
 const clickableFields = computed(() =>

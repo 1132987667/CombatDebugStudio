@@ -5,7 +5,6 @@
       <span style="display: flex; gap: 6px; align-items: center">
         <button class="ht-tbtn" title="上一事件（←）" @click="store.stepEvent(-1)">上一事件</button>
         <button class="ht-tbtn" title="下一事件（空格/→）" @click="store.stepEvent(1)">下一事件</button>
-        <span class="s">投影 2 · 因果链</span>
       </span>
     </div>
     <div class="ht-stream-hd">

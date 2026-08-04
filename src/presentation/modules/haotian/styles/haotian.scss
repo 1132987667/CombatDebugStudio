@@ -208,12 +208,6 @@
   background: var(--pc, var(--ht-slate));
 }
 
-.ht-pane-hd .s {
-  color: var(--color-text-tertiary);
-  font-family: var(--ht-mono);
-  font-size: var(--font-size-md);
-}
-
 .ht-pane-bd {
   flex: 1;
   min-height: 0;
@@ -464,7 +458,7 @@
 }
 
 .ht-tbtn {
-  width: 34px;
+  width: 6rem;
   height: 30px;
   display: grid;
   place-items: center;
@@ -749,11 +743,11 @@
 }
 
 .ht-ev {
-  border: 1px solid var(--ht-bd);
-  border-left-width: 3px;
+  border: 2px solid var(--ht-bd);
+  border-left-width: 6px;
   border-radius: var(--radius-lg);
   background: var(--color-bg-primary);
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -776,6 +770,16 @@
 .ht-ev.t-debuff { border-left-color: var(--ht-orange); }
 .ht-ev.t-passive{ border-left-color: var(--ht-cyan); }
 .ht-ev.t-death  { border-left-color: var(--ht-red); }
+
+.ht-ev.t-action:hover  { border-color: var(--ht-blue); }
+.ht-ev.t-damage:hover  { border-color: var(--ht-red); }
+.ht-ev.t-crit:hover    { border-color: var(--ht-amber); }
+.ht-ev.t-miss:hover    { border-color: var(--ht-cyan); }
+.ht-ev.t-heal:hover    { border-color: var(--ht-green); }
+.ht-ev.t-buff:hover    { border-color: var(--ht-green); }
+.ht-ev.t-debuff:hover  { border-color: var(--ht-orange); }
+.ht-ev.t-passive:hover { border-color: var(--ht-cyan); }
+.ht-ev.t-death:hover   { border-color: var(--ht-red); }
 
 .ht-ev.dbg-dim {
   opacity: 0.6;

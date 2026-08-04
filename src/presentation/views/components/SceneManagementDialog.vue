@@ -145,11 +145,6 @@ const doDelete = () => {
   flex: 1;
 }
 
-.scene-select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .empty-tip {
   padding: var(--space-5);
   text-align: center;

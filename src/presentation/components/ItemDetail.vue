@@ -36,7 +36,7 @@
 
     <div v-if="item.effects && item.effects.length > 0" class="item-effects-panel">
       <h3 class="section-title">物品效果</h3>
-      <div class="effects-list">
+      <div class="effects-list flex flex-col gap-1">
         <div v-for="effect in item.effects" :key="effect.type" class="effect-item">
           <span class="effect-type">{{ getEffectTypeText(effect.type) }}</span>
           <span class="effect-value">{{ formatEffectValue(effect.value) }}</span>
@@ -191,11 +191,6 @@ const formatEffectValue = (value: number): string => {
   margin-bottom: var(--space-2);
 }
 
-.effects-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
 
 .effect-item {
   display: flex;

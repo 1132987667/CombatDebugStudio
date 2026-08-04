@@ -126,7 +126,7 @@
           <template #passive>
           <EmptyState v-if="groupedPassives.length === 0">暂无被动技能</EmptyState>
             <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-              <div v-for="group in groupedPassives" :key="group.category" class="skill-category">
+              <div v-for="group in groupedPassives" :key="group.category" class="skill-category flex flex-col gap-1">
                 <div class="skill-category-title">
                   <span class="category-dot" :style="{ background: group.color }"></span>
                   {{ group.label }}
@@ -144,7 +144,7 @@
             <div class="skills-display">
               <EmptyState v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length">暂无主动技能</EmptyState>
               <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-                <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
+                <div v-if="currentCharacter!.skills.small?.length" class="skill-category flex flex-col gap-1">
                   <div class="skill-category-title">小技能</div>
                   <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
                     @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
@@ -152,7 +152,7 @@
                     {{ skill.name || '未知技能' }}
                   </div>
                 </div>
-                <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
+                <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category flex flex-col gap-1">
                   <div class="skill-category-title">终极技能</div>
                   <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
                     class="skill-item ultimate" @mouseenter="showSkillTooltip($event, skill)"
@@ -775,11 +775,6 @@ onUnmounted(() => {
   gap: var(--space-2);
 }
 
-.skill-category {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
 
 .skill-category-title {
   font-weight: var(--font-weight-semibold);

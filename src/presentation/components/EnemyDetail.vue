@@ -52,7 +52,7 @@
       </div>
       <div v-else class="skills-container">
         <!-- 被动技能按分类分组 -->
-        <div v-for="group in groupedPassives" :key="group.category" class="skill-group">
+        <div v-for="group in groupedPassives" :key="group.category" class="skill-group flex flex-col gap-1">
           <div class="skill-group-title">
             <span class="group-dot" :style="{ background: group.color }"></span>
             {{ group.label }}
@@ -94,7 +94,7 @@
 
     <div class="enemy-drops-panel">
       <div class="enemy-section-title">掉落物品</div>
-      <div v-if="enemy.drops && enemy.drops.length > 0" class="drops-list">
+      <div v-if="enemy.drops && enemy.drops.length > 0" class="drops-list flex flex-col gap-1">
         <div v-for="drop in enemy.drops" :key="drop.itemId" class="drop-item">
           <span class="drop-item-name">{{ getItemById(drop.itemId)?.name ?? drop.itemId }}</span>
           <span class="drop-quantity">×{{ drop.quantity }}</span>
@@ -276,11 +276,6 @@ const getSelectorText = (selector: any): string => {
   gap: var(--space-2);
 }
 
-.skill-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
 
 .skill-group-title {
   display: flex;
@@ -396,11 +391,6 @@ const getSelectorText = (selector: any): string => {
   margin-bottom: var(--space-2);
 }
 
-.drops-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
 
 .drop-item {
   display: flex;

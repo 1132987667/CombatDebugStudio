@@ -310,14 +310,6 @@
   padding: var(--space-1) var(--space-2);
 }
 
-.scene-select {
-  flex: 1;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  padding: var(--space-1);
-}
-
 /* ----- 空状态 ----- */
 .empty-message {
   text-align: center;

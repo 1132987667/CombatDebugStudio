@@ -41,7 +41,7 @@
               <div class="status-list">
                 <div v-for="status in filteredStatuses" :key="status.id" class="ce-status-item"
                   :class="{ active: status.active, disabled: !innerSelectedCharId }">
-                  <div class="ce-status-row">
+                  <div class="ce-status-row flex items-center gap-2">
                     <label class="status-label">
                       <input type="checkbox" v-model="status.active" :disabled="!innerSelectedCharId">
                       <span class="ce-status-name" :class="status.polarity">
@@ -80,7 +80,7 @@
       <template #attrs>
         <div class="ce-tab-content">
           <div class="attr-grid">
-            <div v-for="attr in attrFields" :key="attr.key" class="attr-row">
+            <div v-for="attr in attrFields" :key="attr.key" class="attr-row flex items-center gap-2">
               <label class="attr-label">{{ attr.label }}</label>
               <div class="attr-control">
                 <NumericStepper v-model.number="attrOverrides[attr.key]" :min="attr.min" :max="attr.max"
@@ -594,12 +594,6 @@ watch(() => props.modelValue, (visible) => {
   opacity: 0.5;
 }
 
-.ce-status-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .status-label {
   display: flex;
   align-items: center;
@@ -697,12 +691,6 @@ watch(() => props.modelValue, (visible) => {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-}
-
-.attr-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
 }
 
 .attr-label {

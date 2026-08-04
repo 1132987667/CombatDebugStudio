@@ -84,7 +84,7 @@
             :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }" @mouseenter="clearHoverTimer"
             @mouseleave="scheduleLeave">
             <div class="breakdown-header">【{{ hoveredBuff.name }}】</div>
-            <div class="breakdown-body">
+            <div class="breakdown-body flex flex-col gap-1">
               <div v-if="hoveredBuff.description" class="breakdown-desc">{{ hoveredBuff.description }}</div>
               <div class="breakdown-meta">
                 <span v-if="hoveredBuff.remainingTurns > 0">{{ hoveredBuff.remainingTurns }}回合</span>
@@ -480,11 +480,6 @@ defineExpose({
   white-space: nowrap;
 }
 
-.breakdown-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
 
 .breakdown-desc {
   color: var(--color-text-tertiary);

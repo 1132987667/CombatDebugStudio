@@ -43,7 +43,6 @@ import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManage
 import { getActionBudget } from '@/shared/constants/animation-timing'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
-import { normalizeExportedBattleState } from '@/infrastructure/adapters/storage/migration'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -719,8 +718,6 @@ export const useBattleStore = defineStore('battle', () => {
     try {
       const savedState = await persistentStorage.get(STORAGE_STORE.SNAPSHOTS, 'battleStateExport')
       if (savedState) {
-        // v2.1.0 兼容：旧快照 minAttack/maxAttack → attack
-        normalizeExportedBattleState(savedState)
         battleLogManager.addSystemLog({ message: '战斗状态已导入' })
         return true
       }

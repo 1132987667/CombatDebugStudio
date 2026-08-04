@@ -46,6 +46,9 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 export type HaotianMode = 'replay' | 'debug'
 
+/** 顶部数据源 key（CommandBar 下拉回显，与 store.source 展示标签联动） */
+export type HaotianSourceKey = '' | 'demo' | 'recordings' | 'stress' | 'live'
+
 export interface PlaybackState {
   t: number
   playing: boolean
@@ -105,6 +108,14 @@ const pnameOf = (archive: UnifiedArchive) => (id: string): string => {
   return p ? p.name : id
 }
 
+/** 存档来源展示标签 → 顶部下拉 key（CommandBar 回显） */
+const LABEL_TO_SOURCE_KEY: Record<string, HaotianSourceKey> = {
+  演示存档: 'demo',
+  战斗记录: 'recordings',
+  压测存档: 'stress',
+  实时战斗: 'live',
+}
+
 let rafHandle = 0
 
 export const useHaotianStore = defineStore('haotian', () => {
@@ -126,6 +137,8 @@ export const useHaotianStore = defineStore('haotian', () => {
   const fxEventId = ref<string | null>(null)
   /** 当前存档来源（演示/录制/压测/实时），供状态栏等展示 */
   const source = ref('')
+  /** 数据源 key（顶部下拉回显与命令栏联动，R3） */
+  const sourceKey = ref<HaotianSourceKey>('')
 
   // ── P1：书签 / 断点 / 过滤 ──
   const bookmarks = ref<Set<string>>(new Set())
@@ -258,7 +271,10 @@ export const useHaotianStore = defineStore('haotian', () => {
     selectedId.value = null
     debugNodeId.value = null
     playback.value = { t: 0, playing: false, speed: playback.value.speed, follow: playback.value.follow, firedIdx: 0, last: 0 }
-    if (opts.label !== undefined) source.value = opts.label
+    if (opts.label !== undefined) {
+      source.value = opts.label
+      sourceKey.value = LABEL_TO_SOURCE_KEY[opts.label] ?? sourceKey.value
+    }
     const firstAction = allNodesFlat(debugEntries.value).find((n) => n.action)
     if (firstAction) selectDebugNode(firstAction.id)
     rebuildState(opts.followEnd ? duration.value : 0)
@@ -430,6 +446,30 @@ export const useHaotianStore = defineStore('haotian', () => {
     const eventBus = container.resolve<BuffSystem>('BuffSystem').getEventBus() as IDomainEventBus
     const ok = await startLive(battleSystem, eventBus)
     if (!ok) armLiveFollow(battleSystem, eventBus)
+  }
+
+  /** 顶部下拉数据源分发（CommandBar select 唯一入口；loader 内部回写 sourceKey 保证回显一致） */
+  function setSourceKey(key: HaotianSourceKey): void {
+    if (key === sourceKey.value) return
+    switch (key) {
+      case 'demo':
+        void loadDemo()
+        break
+      case 'stress':
+        void loadStress()
+        break
+      case 'live':
+        void attachLive()
+        break
+      case 'recordings': {
+        const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+        void refreshRecordings(battleSystem)
+        break
+      }
+      case '':
+        stopLive()
+        break
+    }
   }
 
   // ───────────── 回放状态机 ─────────────
@@ -898,6 +938,8 @@ export const useHaotianStore = defineStore('haotian', () => {
     byId,
     filteredEvents,
     source,
+    sourceKey,
+    setSourceKey,
     debugEntries,
     debugNodes,
     mode,

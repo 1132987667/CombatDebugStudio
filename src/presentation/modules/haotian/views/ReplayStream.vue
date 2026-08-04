@@ -79,6 +79,8 @@ watch(
   () => store.lastEvent?.id,
   () => {
     if (!store.playback.playing || !store.playback.follow || !store.lastEvent || !scrollRef.value) return
+    // lastEvent 被关键词 / 调试专属过滤掉时忽略跟随，避免跳到顶部（R5）
+    if (!store.filteredEvents.some((e) => e.id === store.lastEvent!.id)) return
     const y = offsetOf(store.lastEvent.id)
     const st = scrollRef.value.scrollTop
     const vh = scrollRef.value.clientHeight

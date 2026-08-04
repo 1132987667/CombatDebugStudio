@@ -20,83 +20,6 @@ export interface MigrationResult {
   snapshots: number
 }
 
-// ========== 攻击模型扁平化兼容（v2.1.0） ==========
-// 旧版导出的战斗状态快照（battleStateExport / debugSnapshot / interventionExport）中，
-// 参与者属性可能仍含 minAttack/maxAttack。读取时合并为 attack（取平均值）并丢弃旧字段。
-
-/** 从参与者对象中读取属性容器（兼容 Map 与普通对象两种序列化形态） */
-function readAttributeContainer(
-  participant: unknown,
-): Map<string, unknown> | Record<string, unknown> | null {
-  if (!participant || typeof participant !== 'object') return null
-  const p = participant as Record<string, unknown>
-  const stats = p.stats as Record<string, unknown> | undefined
-  const attrs = stats?.attributes as unknown
-  if (attrs instanceof Map) return attrs
-  if (attrs && typeof attrs === 'object') return attrs as Record<string, unknown>
-  return null
-}
-
-/**
- * 将单个参与者属性中的 minAttack/maxAttack 合并为 attack。
- * 规则：attack = Math.round((minAttack + maxAttack) / 2)；已存在 attack 则保留现值。
- * 返回是否发生了变更。
- */
-function normalizeParticipantAttackRange(participant: unknown): boolean {
-  const attrs = readAttributeContainer(participant)
-  if (!attrs) return false
-
-  const isMap = attrs instanceof Map
-  const getAttr = (key: string): number | undefined => {
-    const entry = isMap ? attrs.get(key) : (attrs as Record<string, unknown>)[key]
-    const value = (entry as { value?: unknown } | undefined)?.value
-    return typeof value === 'number' ? value : undefined
-  }
-  const hasKey = (key: string): boolean =>
-    isMap ? attrs.has(key) : key in (attrs as Record<string, unknown>)
-
-  const min = getAttr('minAttack')
-  const max = getAttr('maxAttack')
-  const hasAttack = hasKey('attack')
-
-  let changed = false
-  if (min !== undefined && max !== undefined && !hasAttack) {
-    const merged = Math.round((min + max) / 2)
-    if (isMap) {
-      attrs.set('attack', { value: merged, base: merged, modifiers: [], isPercentage: false, cachedVersion: 0 })
-    } else {
-      ;(attrs as Record<string, unknown>).attack = { value: merged, base: merged, modifiers: [], isPercentage: false, cachedVersion: 0 }
-    }
-    changed = true
-  }
-
-  for (const key of ['minAttack', 'maxAttack']) {
-    if (isMap ? attrs.delete(key) : delete (attrs as Record<string, unknown>)[key]) {
-      changed = true
-    }
-  }
-
-  return changed
-}
-
-/**
- * 反序列化后的旧版战斗状态兼容：遍历 battleCharacters / enemyParty，
- * 将其中 minAttack/maxAttack 合并为 attack。原地修改并返回。
- */
-export function normalizeExportedBattleState<T>(state: T): T {
-  if (!state || typeof state !== 'object') return state
-  const s = state as Record<string, unknown>
-  for (const key of ['battleCharacters', 'enemyParty']) {
-    const team = s[key]
-    if (!Array.isArray(team)) continue
-    for (const participant of team) {
-      normalizeParticipantAttackRange(participant)
-    }
-  }
-  return state
-}
-
-
 /**
  * 执行 localStorage → IndexedDB 迁移
  * @param storage IPersistentStorage 实例
@@ -135,8 +58,6 @@ export async function migrateLegacyLocalStorage(storage: IPersistentStorage): Pr
   if (state) {
     try {
       const parsed = JSON.parse(state)
-      // v2.1.0 兼容：minAttack/maxAttack → attack
-      normalizeExportedBattleState(parsed)
       // 根据数据形状判断写入哪个键
       if (parsed.battleCharacters) {
         await storage.set(STORAGE_STORE.SNAPSHOTS, 'interventionExport', parsed)

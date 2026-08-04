@@ -6,7 +6,8 @@
 
 .notifications-container {
   position: fixed;
-  top: 20px;
+  /* 下沉到顶部栏（60px）下方，通知不遮挡模块导航 */
+  top: 70px;
   right: 20px;
   z-index: var(--z-toast);
   display: flex;

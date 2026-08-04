@@ -39,9 +39,10 @@
 
     <!-- 加载：数据源 -->
     <div class="ht-cmd-group">
-      <TacticalSelect v-model="source" size="md" :options="sourceOptions"
-        title="数据源：演示存档 / 战斗记录 / 压测合成 / 实时战斗" />
-      <TacticalSelect v-if="source === 'recordings'" v-model="recKey" size="md" searchable
+      <TacticalSelect :model-value="store.sourceKey" size="md" :options="sourceOptions"
+        title="数据源：演示存档 / 战斗记录 / 压测合成 / 实时战斗"
+        @update:model-value="onSourceChange" />
+      <TacticalSelect v-if="store.sourceKey === 'recordings'" v-model="recKey" size="md" searchable
         placeholder="选择记录…" :options="recOptions"
         title="选择已保存到本地的战斗记录（唤灵台「保存战斗记录」）" />
     </div>
@@ -91,11 +92,10 @@ import Button from '@/presentation/components/Button.vue'
 import DiffDialog from '../components/DiffDialog.vue'
 import SummaryDialog from '../components/SummaryDialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import { useHaotianStore } from '../stores/haotianStore'
+import { useHaotianStore, type HaotianSourceKey } from '../stores/haotianStore'
 
 const store = useHaotianStore()
 
-const source = ref('')
 const recKey = ref('')
 const hintOpen = ref(false)
 const legendOpen = ref(false)
@@ -181,23 +181,12 @@ const recOptions = computed<TSelectOption[]>(() =>
   store.recordings.map((r) => ({ value: r.saveKey, label: `${r.name} · ${fmtTime(r.startTime)} · ${r.eventCount} 事件` })),
 )
 
-watch(source, async (val) => {
-  if (!val) return
-  if (val === 'live') {
-    // 战斗未开始时保持待命，开战后自动接入
-    await store.attachLive()
-  } else {
-    store.stopLive()
-    if (val === 'recordings') {
-      await store.refreshRecordings(resolveBattleSystem())
-      recKey.value = ''
-    } else if (val === 'stress') {
-      await store.loadStress(2000)
-    } else {
-      await store.loadDemo()
-    }
-  }
-})
+/** 顶部数据源下拉：分发到 store 统一入口（空态 CTA 加载后回显一致，R3） */
+function onSourceChange(v: string | number | null): void {
+  const key = String(v ?? '') as HaotianSourceKey
+  if (key === 'recordings') recKey.value = ''
+  store.setSourceKey(key)
+}
 
 watch(recKey, async (key) => {
   if (!key) return

@@ -64,7 +64,7 @@
         <Button size="tiny" title="清空数组" :disabled="!arrayHasValue" @click="clearArray">清空</Button>
       </div>
       <textarea class="fs-input fs-textarea" rows="4"
-        :value="arrayJson" :aria-label="field.label"
+        :value="arrayDraft" :aria-label="field.label"
         @input="onArrayInput" :placeholder="arrayPlaceholder" />
     </div>
 
@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Button from '@/presentation/components/Button.vue'
 import type { FieldSchema } from '@/domain/fengshen/schema'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
@@ -185,11 +185,22 @@ const arrayJson = computed(() => {
   const v = props.modelValue
   return Array.isArray(v) ? JSON.stringify(v, null, 2) : ''
 })
-const arrayHasValue = computed(() => arrayJson.value.trim() !== '')
 
-/** 顶层解析结果：合法 JSON 时返回解析值，否则 undefined */
+/** 本地草稿：输入中的中间态（含非法 JSON）不回弹，仅提交合法值 */
+const arrayDraft = ref('')
+watch(
+  () => arrayJson.value,
+  (v) => {
+    if (arrayDraft.value !== v) arrayDraft.value = v
+  },
+  { immediate: true },
+)
+
+const arrayHasValue = computed(() => arrayDraft.value.trim() !== '')
+
+/** 顶层解析结果：合法 JSON 时返回解析值，否则 undefined（基于草稿实时判断） */
 const arrayParsed = computed<unknown>(() => {
-  const t = arrayJson.value.trim()
+  const t = arrayDraft.value.trim()
   if (!t) return undefined
   try {
     return JSON.parse(t)
@@ -199,7 +210,7 @@ const arrayParsed = computed<unknown>(() => {
 })
 
 const arrayState = computed<{ cls: string; text: string }>(() => {
-  const t = arrayJson.value.trim()
+  const t = arrayDraft.value.trim()
   if (!t) return { cls: 'empty', text: '空数组' }
   const parsed = arrayParsed.value
   if (parsed === undefined) return { cls: 'err', text: 'JSON 语法错误' }
@@ -209,7 +220,7 @@ const arrayState = computed<{ cls: string; text: string }>(() => {
 
 const arrayCanFormat = computed(() => {
   const parsed = arrayParsed.value
-  return typeof parsed === 'object' && parsed !== null && arrayJson.value !== JSON.stringify(parsed, null, 2)
+  return typeof parsed === 'object' && parsed !== null && arrayDraft.value !== JSON.stringify(parsed, null, 2)
 })
 
 /** 数组示例：优先字段描述，否则通用占位（供用户对照结构） */
@@ -220,6 +231,7 @@ const arrayPlaceholder = computed(() => {
 
 function onArrayInput(e: Event): void {
   const v = (e.target as HTMLTextAreaElement).value
+  arrayDraft.value = v
   if (!v.trim()) {
     emit('update:modelValue', undefined)
     return

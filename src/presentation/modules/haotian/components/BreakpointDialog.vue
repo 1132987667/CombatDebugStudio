@@ -34,6 +34,7 @@
           <span class="k">单位</span>
           <TacticalSelect v-model="value" size="md" :options="actorOptions" />
         </div>
+        <div v-if="type === 'actor' && !actorOptions.length" class="ht-bp-note">需先加载一份战斗数据（顶部选择数据源）才能按单位设置断点。</div>
         <div class="ht-bp-note">示例：伤害 ≥ 150 → 命中结算即暂停；级别 warn → 命中「阵亡」。可添加多条，任一命中即暂停。</div>
       </div>
     </div>

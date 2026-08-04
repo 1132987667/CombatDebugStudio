@@ -213,12 +213,6 @@ const effectTypeClass = computed(() => {
   margin-bottom: var(--space-2);
 }
 
-.description-text {
-  color: var(--color-text-tertiary);
-  line-height: var(--line-height-lg);
-  margin: 0;
-}
-
 .buff-effect-panel {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-default);

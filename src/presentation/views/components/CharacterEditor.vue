@@ -9,12 +9,9 @@
   <Dialog :model-value="modelValue" @update:model-value="handleModelValueChange" title="角色编辑器" width="45vw"
     height="50vh" :show-mask="false" :mask-closable="false" :esc-closable="false">
     <template #header-actions>
-      <select v-model="innerSelectedCharId" class="char-selector" @change="emitSelectChar">
-        <option value="" disabled>{{ characters.length === 0 ? '暂无参战角色' : '选择角色' }}</option>
-        <option v-for="char in characters" :key="char.id" :value="char.id">
-          {{ char.name }} ({{ ParticipantSideName[char.side] }})
-        </option>
-      </select>
+      <TacticalSelect v-model="innerSelectedCharId" size="sm" searchable class="char-selector"
+        :placeholder="characters.length === 0 ? '暂无参战角色' : '选择角色'" :options="charOptions"
+        @change="emitSelectChar" />
     </template>
 
     <Tabs v-model="activeTab" :tabs="editorTabs" equal-width>
@@ -128,6 +125,7 @@ import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff } from '@/shared/types/buff-classification'
@@ -209,6 +207,9 @@ const editorTabs: TabItem[] = [
 ]
 const buffSearch = ref('')
 const innerSelectedCharId = ref('')
+const charOptions = computed<TSelectOption[]>(() =>
+  props.characters.map((c) => ({ value: c.id, label: `${c.name} (${ParticipantSideName[c.side]})` })),
+)
 const activeCategory = ref<string>('all') // 'all' 或 facet key
 const localStatuses = ref<EditorBuffEntry[]>([]) // 本地状态的 Buff 入口
 
@@ -406,18 +407,7 @@ watch(() => props.modelValue, (visible) => {
 /* ═══ 角色选择器 ═══ */
 .char-selector {
   flex: 1;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  color: var(--color-text-primary);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
   max-width: 160px;
-}
-
-.char-selector:focus {
-  outline: none;
-  border-color: var(--color-info);
 }
 
 /* ═══ 双列布局 ═══ */

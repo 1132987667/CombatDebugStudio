@@ -25,10 +25,8 @@
         <span class="section-title">加载/删除场景</span>
       </div>
       <div class="scene-actions">
-        <select v-model="localSelectedScene" class="scene-select" :disabled="savedScenes.length === 0">
-          <option value="">选择场景...</option>
-          <option v-for="scene in savedScenes" :key="scene" :value="scene">{{ scene }}</option>
-        </select>
+        <TacticalSelect v-model="localSelectedScene" size="sm" class="scene-select-slot"
+          :options="sceneOptions" :disabled="savedScenes.length === 0" />
         <button class="btn-medium" @click="handleLoad" :disabled="!localSelectedScene">[L]加载</button>
         <button class="btn-medium btn-danger" @click="confirmDelete = true" :disabled="!localSelectedScene">[D]删除</button>
       </div>
@@ -46,9 +44,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 interface Props {
   modelValue: boolean
@@ -77,6 +76,11 @@ const emit = defineEmits<Emits>()
 
 const localSceneName = ref(props.sceneName)
 const localSelectedScene = ref(props.selectedScene)
+
+const sceneOptions = computed<TSelectOption[]>(() => [
+  { value: '', label: '选择场景...' },
+  ...props.savedScenes.map((s) => ({ value: s, label: s })),
+])
 
 const handleModelValueChange = (value: boolean) => {
   emit('update:modelValue', value)
@@ -137,7 +141,7 @@ const doDelete = () => {
   flex: 1;
 }
 
-.scene-select {
+.scene-select-slot {
   flex: 1;
 }
 

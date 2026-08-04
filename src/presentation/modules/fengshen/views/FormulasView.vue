@@ -1,0 +1,64 @@
+<template>
+  <div class="fs-list-view">
+    <div class="fs-page-title">
+      属性与公式
+      <span class="fs-page-hint">一级 / 二级属性 · 计算规则（当前公式在代码中，此页为只读参考）</span>
+    </div>
+
+    <div class="fs-block">
+      <div class="fs-block-title">属性定义</div>
+      <div class="fs-table-wrap">
+        <table class="fs-table">
+          <thead>
+            <tr><th>属性</th><th>级别</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="attr in ATTRIBUTES" :key="attr.name">
+              <td>{{ attr.name }}</td>
+              <td><span class="fs-tag" :class="attr.tier === 'primary' ? 'fs-tag-aura' : 'fs-tag-buff'">{{ attr.tier === 'primary' ? '一级' : '二级' }}</span></td>
+              <td class="fs-cell-num">{{ attr.desc }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="fs-block">
+      <div class="fs-block-title">计算公式</div>
+      <div class="fs-table-wrap">
+        <table class="fs-table">
+          <thead>
+            <tr><th>名称</th><th>公式</th><th>来源</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="f in FORMULAS" :key="f.name">
+              <td>{{ f.name }}</td>
+              <td class="fs-formula">{{ f.formula }}</td>
+              <td>{{ f.source }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fs-form-hint">昊天镜可据此反推伤害计算是否符合预期；表达式引擎动态解析为增强项。</div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+const ATTRIBUTES = [
+  { name: '气血', tier: 'primary', desc: '0 时死亡' },
+  { name: '攻击（最小–最大）', tier: 'primary', desc: '决定伤害波动' },
+  { name: '防御', tier: 'primary', desc: '减伤 = 防御 × 0.01' },
+  { name: '速度', tier: 'primary', desc: '决定行动顺序' },
+  { name: '暴击率', tier: 'secondary', desc: '0–100%，攻击产生暴击的概率' },
+  { name: '暴击伤害', tier: 'secondary', desc: '暴击时伤害倍率' },
+  { name: '命中率 / 闪避率', tier: 'secondary', desc: '实际命中 = 命中 − 闪避' },
+] as const
+
+const FORMULAS = [
+  { name: '基础伤害', formula: 'rand(攻击最小, 攻击最大) × Σ修正系数', source: 'DamageCalculator' },
+  { name: '防御减免', formula: '最终伤害 = 基础伤害 × (1 − 防御 × 0.01)', source: 'DamageCalculator' },
+  { name: '暴击', formula: '暴击伤害 = 最终伤害 × 暴击伤害倍率', source: 'DamageCalculator' },
+  { name: '实际命中', formula: '命中概率 = 命中率 − 目标闪避率', source: 'HitCalculator' },
+] as const
+</script>

@@ -800,6 +800,11 @@ export const useBattleStore = defineStore('battle', () => {
   ) => {
     if (!battleService.value) return
     if (generationProgress.isGenerating) return
+    // 战斗中禁止生成：initialize 会复用并重置 battleData.participants，覆盖正在进行的战斗且无法还原
+    if (battleService.value.getIsBattleActive()) {
+      setError('请先结束当前战斗再生成数据（生成会重置战场）')
+      return
+    }
     generationProgress.isGenerating = true
     generationProgress.current = 0
     generationProgress.percent = 0
@@ -808,8 +813,12 @@ export const useBattleStore = defineStore('battle', () => {
       const { BattleDataGenerator } = await import('@/application/service/BattleDataGenerator')
       const generator = new BattleDataGenerator(container)
       _currentGenerator = generator
+      // 非正/非法场次回退默认 50，超过 50 钳制到 50（与 UI 上限、maxRecordings 语义一致）
+      const safeCount = Number.isFinite(count) && Math.floor(count) >= 1
+        ? Math.min(Math.floor(count), 50)
+        : 50
       await generator.generate({
-        totalBattles: count,
+        totalBattles: safeCount,
         mode,
         format,
         record,

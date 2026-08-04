@@ -462,11 +462,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use '@/presentation/styles/mixins' as *;
+
 .attribute-tooltip {
   position: fixed;
   z-index: 9999;
   width: 320px;
-  max-width: 90vw;
+  max-width: 40vw;
   background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color-light);
   border-radius: var(--radius-lg);
@@ -476,9 +478,7 @@ onUnmounted(() => {
   pointer-events: none;
 
   .tooltip-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    @include flex-layout;
     margin-bottom: var(--space-3);
     padding-bottom: var(--space-2);
     border-bottom: 1px solid var(--border-common-color-dark);
@@ -544,9 +544,7 @@ onUnmounted(() => {
         }
 
         .section-title-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+          @include flex-layout;
           margin-bottom: var(--space-1);
           padding-bottom: var(--space-1);
           border-bottom: 1px solid var(--border-common-color-dark);
@@ -722,23 +720,5 @@ onUnmounted(() => {
       border-left: none;
     }
   }
-}
-
-/* 悬浮提示过渡动画 */
-.tooltip-fade-enter-active,
-.tooltip-fade-leave-active {
-  transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
-}
-
-.tooltip-fade-enter-from,
-.tooltip-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.tooltip-fade-enter-to,
-.tooltip-fade-leave-from {
-  opacity: 1;
-  transform: translateY(0);
 }
 </style>

@@ -3,7 +3,7 @@
     <div class="ht-pane-hd">
       <span class="t">事件流 · 时间戳序</span>
       <span style="display: flex; gap: 8px; align-items: center">
-        <button class="ht-mini-btn" :class="{ on: store.showDbg }" title="显示/隐藏调试专属事件（AI 决策 / 属性重算 / 配置）" @click="store.toggleDbg()">
+        <button class="ht-btn mini" :class="{ on: store.showDbg }" title="显示/隐藏调试专属事件（AI 决策 / 属性重算 / 配置）" @click="store.toggleDbg()">
           {{ store.showDbg ? '调试专属 · 显示' : '调试专属 · 隐藏' }}
         </button>
         <span class="s">{{ shownCount }} / {{ store.evs.length }}</span>

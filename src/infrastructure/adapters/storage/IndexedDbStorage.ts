@@ -11,9 +11,13 @@
  */
 
 import type { IPersistentStorage, StorageStoreName, StorageStats } from '@/domain/port/IPersistentStorage'
+import { ALL_STORES, FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 const DB_NAME = 'combat-debug-studio'
-const DB_VERSION = 1
+// NOTE: v1 = recordings/snapshots；v2 = 封神榜 14 数据表（封神榜开发计划 §3.2）
+const DB_VERSION = 2
 
 export class IndexedDbStorage implements IPersistentStorage {
   readonly backend = 'indexeddb' as const
@@ -38,6 +42,14 @@ export class IndexedDbStorage implements IPersistentStorage {
           // Store 2: snapshots — 状态快照
           if (!db.objectStoreNames.contains('snapshots')) {
             db.createObjectStore('snapshots')
+          }
+          // 封神榜数据表（v2）：新增 store 幂等创建；meta 含 updatedAt 索引（操作日志按时间排序）
+          for (const name of Object.values(FENGSHEN_STORE)) {
+            if (db.objectStoreNames.contains(name)) continue
+            const store = db.createObjectStore(name)
+            if (name === FENGSHEN_STORE.META) {
+              store.createIndex('updatedAt', 'updatedAt', { unique: false })
+            }
           }
         }
 
@@ -159,7 +171,16 @@ export class IndexedDbStorage implements IPersistentStorage {
         }
         request.onerror = () => reject(request.error)
       })
-    } catch {
+    } catch (e) {
+      // ★ 索引缺失/DB 异常：静默返回 [] 会导致持久化裁剪静默失效，记录日志便于排查
+      try {
+        LoggerProvider.logger.addDebugLog('按字段索引读取存储键失败，返回空列表', {
+          level: LogLevel.ERROR,
+          context: { store, field, error: e },
+        })
+      } catch {
+        /* DI 未初始化时忽略（绕过容器直构场景；正常路径不会发生） */
+      }
       return []
     }
   }
@@ -168,7 +189,7 @@ export class IndexedDbStorage implements IPersistentStorage {
     try {
       const db = await this.getDb()
       let usedBytes = 0
-      for (const storeName of ['recordings', 'snapshots']) {
+      for (const storeName of ALL_STORES) {
         const tx = db.transaction(storeName, 'readonly')
         const objectStore = tx.objectStore(storeName)
         const cursor = objectStore.openCursor()

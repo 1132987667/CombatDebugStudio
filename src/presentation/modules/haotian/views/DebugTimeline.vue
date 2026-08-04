@@ -3,7 +3,7 @@
     <div class="ht-pane-hd">
       <span class="t">战斗时间线</span>
       <span style="display: flex; gap: 8px; align-items: center">
-        <button class="ht-mini-btn" :class="{ on: store.focusMode }" title="聚焦选中事件的因果链，淡化无关分支"
+        <button class="ht-btn mini" :class="{ on: store.focusMode }" title="聚焦选中事件的因果链，淡化无关分支"
           @click="store.toggleFocus()">聚焦</button>
         <span class="s">{{ roundCount }} 个回合</span>
       </span>

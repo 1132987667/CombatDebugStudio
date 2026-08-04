@@ -115,6 +115,10 @@ import { SkillManager } from '@/domain/skill/SkillManager'
 import { RAFTimer } from '@/shared/utils/RAF'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
+import { GameDataApi } from '@/application/service/GameDataApi'
+import { DataIntegrityService } from '@/application/service/DataIntegrityService'
+import { FengshenDataService } from '@/application/service/FengshenDataService'
+import { DataPackageService } from '@/application/service/DataPackageService'
 
 
 /**
@@ -196,6 +200,15 @@ export function initializeContainer(): void {
 
   // ── 注册 DebugGate（DI 容器管理，废弃全局单例）────────────────────────
   container.register('DebugGate', new DebugGate(uiEventBus))
+
+  // ── 封神榜服务（封神榜开发计划 M0/M2）──────────────────────────────────
+  const gameDataApi = new GameDataApi(persistentStorage)
+  const dataIntegrityService = new DataIntegrityService(persistentStorage)
+  const fengshenDataService = new FengshenDataService(persistentStorage, dataIntegrityService)
+  container.register('GameDataApi', gameDataApi)
+  container.register('DataIntegrityService', dataIntegrityService)
+  container.register('FengshenDataService', fengshenDataService)
+  container.register('DataPackageService', new DataPackageService(persistentStorage, dataIntegrityService))
 
   // 注册子管理器，使其可通过容器独立访问
   container.registerFactory('BattleStateManager', () => {

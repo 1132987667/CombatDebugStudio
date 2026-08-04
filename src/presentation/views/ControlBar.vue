@@ -197,28 +197,6 @@ onUnmounted(() => {
   color: var(--color-energy);
 }
 
-@keyframes pulse-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 5px var(--border-debug-color);
-  }
-
-  50% {
-    box-shadow: 0 0 20px rgba(var(--rgb-energy), 0.6);
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .separator {
   width: 1px;
   height: 24px;
@@ -239,7 +217,4 @@ onUnmounted(() => {
   white-space: nowrap;
   animation: pulse-glow 2s ease-in-out infinite;
 }
-
-
-
 </style>

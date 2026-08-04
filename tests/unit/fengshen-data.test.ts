@@ -1,0 +1,398 @@
+/**
+ * 封神榜数据层测试（M0 单元自检）
+ *
+ * 覆盖：种子导入幂等、校验服务（范围/唯一性/引用/删除保护）、健康检查、
+ * 版本戳递增、操作日志、数据源切换、纯函数（nextEntityId/extractReferenceIds）。
+ *
+ * 运行: npx vitest run tests/unit/fengshen-data.test.ts
+ */
+import { describe, it, expect, beforeEach } from 'vitest'
+import type { IPersistentStorage, StorageStats, StorageStoreName } from '@/domain/port/IPersistentStorage'
+import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
+import { seedFengshenData } from '@/infrastructure/adapters/storage/seed'
+import { GameDataApi } from '@/application/service/GameDataApi'
+import { DataIntegrityService } from '@/application/service/DataIntegrityService'
+import { FengshenDataService } from '@/application/service/FengshenDataService'
+import { DataPackageService } from '@/application/service/DataPackageService'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
+import type { IDataSource } from '@/domain/port/IDataSource'
+import { extractReferenceIds, REFERENCE_RULES } from '@/domain/fengshen/schema'
+import { resolveElementCoefficient } from '@/domain/fengshen/elementMatrix'
+import { nextEntityId } from '@/domain/fengshen/types'
+import type { ActorData } from '@/domain/fengshen/types'
+import type { Enemy } from '@/shared/types/enemy'
+import type { SkillConfig } from '@/domain/skill/types'
+import type { SceneData } from '@/shared/types/scene'
+
+/** 按 store 分桶的内存版持久化存储 */
+class MemoryStorage implements IPersistentStorage {
+  readonly backend = 'indexeddb' as const
+  private buckets = new Map<string, Map<string, unknown>>()
+
+  private bucket(store: string): Map<string, unknown> {
+    let b = this.buckets.get(store)
+    if (!b) {
+      b = new Map()
+      this.buckets.set(store, b)
+    }
+    return b
+  }
+
+  async set<T>(store: StorageStoreName, key: string, value: T): Promise<boolean> {
+    this.bucket(store).set(key, value)
+    return true
+  }
+  async get<T>(store: StorageStoreName, key: string): Promise<T | null> {
+    return (this.bucket(store).get(key) as T | undefined) ?? null
+  }
+  async remove(store: StorageStoreName, key: string): Promise<boolean> {
+    return this.bucket(store).delete(key)
+  }
+  async keys(store: StorageStoreName): Promise<string[]> {
+    return Array.from(this.bucket(store).keys())
+  }
+  async clear(store: StorageStoreName): Promise<boolean> {
+    this.bucket(store).clear()
+    return true
+  }
+  async keysByField(): Promise<string[]> {
+    return []
+  }
+  async getStats(): Promise<StorageStats | null> {
+    return null
+  }
+}
+
+function makeServices() {
+  const storage = new MemoryStorage()
+  const api = new GameDataApi(storage)
+  const integrity = new DataIntegrityService(storage)
+  const write = new FengshenDataService(storage, integrity)
+  return { storage, api, integrity, write }
+}
+
+const validActor: ActorData = {
+  id: 'hero_001',
+  name: '测试角色',
+  level: 1,
+  stats: { maxHealth: 100, minAttack: 10, maxAttack: 15, defense: 5, speed: 10 },
+  skillIds: ['skill_normal_attack'],
+  faction: 'fire',
+  energyInit: 30,
+}
+
+describe('种子导入 seedFengshenData', () => {
+  it('首次导入写入各表并置 dataVersion 初值，二次调用幂等跳过', async () => {
+    const storage = new MemoryStorage()
+    const first = await seedFengshenData(storage)
+    expect(first.imported).toBe(true)
+
+    const enemyKeys = await storage.keys(FENGSHEN_STORE.ENEMIES)
+    const skillKeys = await storage.keys(FENGSHEN_STORE.SKILLS)
+    expect(enemyKeys.length).toBeGreaterThan(0)
+    expect(skillKeys.length).toBeGreaterThan(0)
+
+    // actors 从 guardian_* 派生 5 个，id 与敌人保持一致
+    const actorKeys = await storage.keys(FENGSHEN_STORE.ACTORS)
+    expect(actorKeys).toContain('guardian_fire')
+    expect(actorKeys).toContain('guardian_gold')
+
+    // 装备从材料剥离
+    const materialKeys = await storage.keys(FENGSHEN_STORE.MATERIALS)
+    expect(materialKeys).not.toContain('weapon_001')
+    const equipKeys = await storage.keys(FENGSHEN_STORE.EQUIPMENT)
+    expect(equipKeys).toContain('weapon_001')
+
+    const version = await new GameDataApi(storage).getDataVersion()
+    expect(version).toBe(1)
+
+    const second = await seedFengshenData(storage)
+    expect(second.imported).toBe(false)
+  })
+
+  it('种子数据自洽：导入后健康检查无断裂引用', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+    const report = await new DataIntegrityService(storage).runHealthCheck()
+    // NOTE: 材料域补全（42 种）+ buff_silence + effects 并入 buffs 表后，种子数据应完全自洽
+    expect(report.issues).toEqual([])
+  })
+})
+
+describe('DataIntegrityService 校验', () => {
+  it('数值范围约束：等级越界保存失败', async () => {
+    const { integrity } = makeServices()
+    const result = await integrity.validateOnSave('actors', { ...validActor, level: 200 })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('等级'))).toBe(true)
+  })
+
+  it('引用完整性：skillIds 引用不存在的技能被拦截', async () => {
+    const { integrity } = makeServices()
+    const result = await integrity.validateOnSave('actors', { ...validActor, skillIds: ['skill_not_exist'] })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('skill_not_exist'))).toBe(true)
+  })
+
+  it('唯一性：同名角色保存失败', async () => {
+    const { integrity, write, storage } = makeServices()
+    await seedFengshenData(storage)
+    await write.save('actors', validActor)
+    const result = await integrity.validateOnSave('actors', { ...validActor, id: 'hero_002' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.includes('重复'))).toBe(true)
+  })
+
+  it('删除保护：被预设阵容引用的阵型无法删除', async () => {
+    const { storage } = makeServices()
+    await seedFengshenData(storage)
+    const integrity = new DataIntegrityService(storage)
+    const write2 = new FengshenDataService(storage, integrity)
+
+    // lineups 引用了 crane_wing（seed 阵容），删除应被拦截
+    const result = await write2.remove('formations', 'crane_wing')
+    expect(result.ok).toBe(false)
+    expect(result.errors?.[0]).toContain('被以下数据引用')
+  })
+})
+
+describe('健康检查 runHealthCheck', () => {
+  it('构造断裂引用后输出完整报告', async () => {
+    const { integrity, storage } = makeServices()
+    await seedFengshenData(storage)
+    // 造一个引用不存在 Buff 的技能
+    await storage.set(FENGSHEN_STORE.SKILLS, 'skill_broken', {
+      id: 'skill_broken',
+      name: '断裂技能',
+      steps: [{ type: 'apply_buff', effectId: 'buff_not_exist' }],
+      updatedAt: new Date().toISOString(),
+    })
+    const report = await integrity.runHealthCheck()
+    const hit = report.issues.find((i) => i.sourceId === 'skill_broken' && i.missingId === 'buff_not_exist')
+    expect(hit).toBeDefined()
+    expect(hit?.targetTable).toBe('buffs')
+  })
+})
+
+describe('DataPackageService 导入导出', () => {
+  it('完整导出含全部数据表；导出→清空→导入可还原', async () => {
+    const src = new MemoryStorage()
+    await seedFengshenData(src)
+    const pkgService = new DataPackageService(src, new DataIntegrityService(src))
+
+    const pkg = await pkgService.exportPackage()
+    expect(pkg.meta.count).toBeGreaterThan(0)
+    expect(pkg.meta.tables).toContain('actors')
+    expect(Array.isArray(pkg.actors)).toBe(true)
+
+    // 还原到全新 storage：覆盖导入
+    const dst = new MemoryStorage()
+    const dstIntegrity = new DataIntegrityService(dst)
+    const result = await new DataPackageService(dst, dstIntegrity).importPackage(pkg, 'overwrite')
+    expect(result.ok).toBe(true)
+    expect(result.importedCount).toBe(pkg.meta.count)
+
+    const srcApi = new GameDataApi(src)
+    const dstApi = new GameDataApi(dst)
+    expect(await dstApi.getDataVersion()).toBe(await srcApi.getDataVersion())
+    const actorsSrc = await srcApi.listByTable('actors', { limit: 1000 })
+    const actorsDst = await dstApi.listByTable('actors', { limit: 1000 })
+    expect(actorsDst.map((a) => (a as { id: string }).id).sort()).toEqual(
+      actorsSrc.map((a) => (a as { id: string }).id).sort(),
+    )
+  })
+
+  it('增量合并（保留现有）：冲突 ID 跳过，不覆盖已有', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+    const pkg = await new DataPackageService(storage, new DataIntegrityService(storage)).exportPackage(['actors'])
+
+    // 修改一条 actor 后再导入同一包：merge-keep-existing 应保留修改
+    const api = new GameDataApi(storage)
+    const write = new FengshenDataService(storage, new DataIntegrityService(storage))
+    await write.save('actors', { id: 'guardian_fire', name: '火护法·已修改', level: 10, stats: {}, skillIds: [] })
+
+    const pkgService = new DataPackageService(storage, new DataIntegrityService(storage))
+    const result = await pkgService.importPackage(pkg, 'merge-keep-existing')
+    expect(result.importedCount).toBe(0) // 全部冲突跳过
+    expect(result.skippedCount).toBeGreaterThan(0)
+
+    const actor = await api.getActorById('guardian_fire')
+    expect(actor?.name).toBe('火护法·已修改')
+  })
+
+  it('导入非法数据包被拒绝', async () => {
+    const storage = new MemoryStorage()
+    const result = await new DataPackageService(storage, new DataIntegrityService(storage)).importPackage(
+      { meta: {} } as never,
+      'overwrite',
+    )
+    expect(result.ok).toBe(false)
+    expect(result.errors?.[0]).toContain('meta.tables')
+  })
+
+  it('导入成功触发 onDataChanged 回调（与常规写操作同机制）', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+    const service = new DataPackageService(storage, new DataIntegrityService(storage))
+    let notified: number | null = null
+    service.onDataChanged = (v) => {
+      notified = v
+    }
+    const before = await new GameDataApi(storage).getDataVersion()
+    const pkg = await service.exportPackage(['actors'])
+    const result = await service.importPackage(pkg, 'overwrite')
+    expect(result.ok).toBe(true)
+    expect(notified).toBe(before + 1)
+  })
+})
+
+describe('FengshenDataService 版本戳与操作日志', () => {
+  it('保存递增 dataVersion 并写入操作日志，onDataChanged 回调触发', async () => {
+    const { write, api, storage } = makeServices()
+    await seedFengshenData(storage)
+    let notified: number | null = null
+    write.onDataChanged = (v) => {
+      notified = v
+    }
+    const before = await api.getDataVersion()
+    const result = await write.save('actors', validActor)
+    expect(result.ok).toBe(true)
+    expect(await api.getDataVersion()).toBe(before + 1)
+    expect(notified).toBe(before + 1)
+
+    const logs = await api.listOperationLogs()
+    expect(logs.length).toBe(1)
+    expect(logs[0].op).toBe('create')
+    expect(logs[0].table).toBe('actors')
+    expect(logs[0].entityId).toBe('hero_001')
+  })
+})
+
+describe('数据源切换（GameDataProcessor）', () => {
+  beforeEach(() => {
+    // 恢复默认数据源，避免测试间污染
+    GameDataProcessor.setDataSource(new ConfigDataSource())
+  })
+
+  it('setDataSource 后 getEnemiesData 返回新源数据', () => {
+    const fakeEnemy: Enemy = {
+      id: 'enemy_fake',
+      name: '假敌人',
+      level: 1,
+      stats: {},
+      drops: [],
+      skills: {},
+    }
+    const source: IDataSource = {
+      getEnemies: () => [fakeEnemy],
+      getSkills: () => [] as SkillConfig[],
+      getScenes: () => [] as SceneData[],
+      getLineups: () => [],
+    }
+    GameDataProcessor.setDataSource(source)
+    expect(GameDataProcessor.findEnemyById('enemy_fake')?.name).toBe('假敌人')
+    expect(GameDataProcessor.findEnemyById('enemy_not_exist')).toBeUndefined()
+  })
+
+  it('lineupToEnemies 按 seatIndex 排序展开敌人参战者，查不到的站位跳过', () => {
+    const source: IDataSource = {
+      getEnemies: () => [
+        {
+          id: 'enemy_a',
+          name: '敌人A',
+          level: 5,
+          stats: { currentHealth: 100, minAttack: 10, maxAttack: 12, defense: 3, speed: 8 },
+          drops: [],
+          skills: { small: ['skill_normal_attack'] },
+        } as Enemy,
+      ],
+      getSkills: () => [] as SkillConfig[],
+      getScenes: () => [] as SceneData[],
+      getLineups: () => [],
+    }
+    GameDataProcessor.setDataSource(source)
+    const lineup = {
+      id: 'lineup_t',
+      name: '测试阵容',
+      side: 'enemy' as const,
+      formationId: 'crane_wing',
+      roles: [
+        { seatIndex: 1, roleId: 'enemy_missing' },
+        { seatIndex: 0, roleId: 'enemy_a' },
+      ],
+    }
+    const participants = GameDataProcessor.lineupToEnemies(lineup)
+    expect(participants).toHaveLength(1)
+    expect(participants[0].seatIndex).toBe(0)
+  })
+
+  it('findLineupById 命中数据源阵容', () => {
+    const source: IDataSource = {
+      getEnemies: () => [],
+      getSkills: () => [] as SkillConfig[],
+      getScenes: () => [] as SceneData[],
+      getLineups: () => [
+        { id: 'lineup_1', name: '阵容1', side: 'ally', formationId: 'f1', roles: [] },
+      ],
+    }
+    GameDataProcessor.setDataSource(source)
+    expect(GameDataProcessor.findLineupById('lineup_1')?.name).toBe('阵容1')
+    expect(GameDataProcessor.findLineupById('lineup_missing')).toBeUndefined()
+  })
+})
+
+describe('纯函数', () => {
+  it('nextEntityId 前缀自增并补零', () => {
+    expect(nextEntityId(['hero_001', 'hero_002'], 'hero_')).toBe('hero_003')
+    expect(nextEntityId([], 'hero_')).toBe('hero_001')
+    expect(nextEntityId(['boss_001'], 'hero_')).toBe('hero_001')
+  })
+
+  it('resolveElementCoefficient：命中克制矩阵取系数，无匹配/缺阵营取默认值', () => {
+    const matrix = {
+      matrix: [{ attackerId: 'fire', defenderId: 'wood', coefficient: 1.2 }],
+      defaultCoefficient: 1.0,
+    }
+    expect(resolveElementCoefficient(matrix, 'fire', 'wood')).toBe(1.2)
+    expect(resolveElementCoefficient(matrix, 'fire', 'earth')).toBe(1.0)
+    expect(resolveElementCoefficient(matrix, undefined, 'wood')).toBe(1.0)
+    expect(resolveElementCoefficient(undefined, 'fire', 'wood')).toBe(1.0)
+  })
+
+  it('resolveElementCoefficient：faction 缺失时不受 defaultCoefficient 影响（恒 1.0）', () => {
+    const matrix = {
+      matrix: [],
+      defaultCoefficient: 1.2,
+    }
+    // 无阵营的实体不应被全局默认系数缩放
+    expect(resolveElementCoefficient(matrix, undefined, 'wood')).toBe(1.0)
+    expect(resolveElementCoefficient(matrix, 'fire', undefined)).toBe(1.0)
+    expect(resolveElementCoefficient(matrix, undefined, undefined)).toBe(1.0)
+    // 双方都有阵营但矩阵无匹配 → 用 defaultCoefficient
+    expect(resolveElementCoefficient(matrix, 'fire', 'wood')).toBe(1.2)
+  })
+
+  it('extractReferenceIds 支持数组遍历与顶层数组', () => {
+    expect(extractReferenceIds({ skillIds: ['a', 'b'] }, 'skillIds')).toEqual(['a', 'b'])
+    expect(
+      extractReferenceIds({ steps: [{ effectId: 'x' }, { effectId: 'y' }] }, 'steps[].effectId'),
+    ).toEqual(['x', 'y'])
+    expect(extractReferenceIds({ difficulties: { hard: { lineupId: 'l1' } } }, 'difficulties.hard.lineupId')).toEqual(['l1'])
+    expect(extractReferenceIds({ foo: undefined }, 'foo')).toEqual([])
+  })
+
+  it('REFERENCE_RULES 覆盖规格说明书要求的引用关系', () => {
+    const keys = REFERENCE_RULES.map((r) => `${r.sourceTable}.${r.path}`)
+    expect(keys).toContain('actors.skillIds')
+    expect(keys).toContain('skills.steps[].effectId')
+    expect(keys).toContain('scenes.difficulties.hard.lineupId')
+    expect(keys).toContain('lineups.formationId')
+    expect(keys).toContain('lineups.roles[].roleId')
+    expect(keys).toContain('enemies.drops[].itemId')
+    expect(keys).toContain('equipment.factionRestriction')
+    expect(keys).toContain('actors.growth')
+    expect(keys).toContain('drops.entries[].itemId')
+  })
+})

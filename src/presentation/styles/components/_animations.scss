@@ -2,7 +2,22 @@
    Component: Animations (_animations.scss)
    依赖: tokens.scss
    作用: 全局关键帧动画
+
+   NOTE: 动画集中管理约定——新动画一律定义在本文件，组件 scoped style
+   中禁止再写 @keyframes（此前 spin 重复定义 3 次即源于此）。例外：
+   模块私有动画（fengshen/haotian 的 fs-* / ht-* 前缀）留在模块样式内；
+   @media(prefers-reduced-motion) 上下文内的动画留在原文件。
    ========================================================================== */
+
+/* ----- 通用旋转（加载 spinner 等） ----- */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ----- 受击闪烁 ----- */
 @keyframes hitFlash {
@@ -28,6 +43,48 @@
   }
 }
 
+/* ----- 受击抖动 / 淡出 / 气血条闪烁 ----- */
+@keyframes hurt-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(-5px, 1px) rotate(-1.5deg);
+  }
+  30% {
+    transform: translate(5px, -1px) rotate(1.5deg);
+  }
+  45% {
+    transform: translate(-4px, 1px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(4px, -1px) rotate(1deg);
+  }
+  75% {
+    transform: translate(-2px, 0) rotate(-0.5deg);
+  }
+}
+
+@keyframes hurt-flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hp-bar-flash {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(2) saturate(1.5);
+  }
+}
+
 /* ----- 施法发光 ----- */
 @keyframes castingGlow {
   0%,
@@ -49,6 +106,37 @@
   }
   50% {
     box-shadow: 0 0 12px rgba(var(--rgb-success), var(--alpha-glow));
+  }
+}
+
+/* ----- 状态发光（调试徽标 / 治疗 / 护盾） ----- */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px var(--border-debug-color);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--rgb-energy), 0.6);
+  }
+}
+
+@keyframes heal-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 30px var(--color-heal), inset 0 0 20px rgba(var(--rgb-success), 0.2);
+  }
+}
+
+@keyframes shield-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 30px var(--color-energy), inset 0 0 20px rgba(var(--rgb-energy), 0.2);
   }
 }
 
@@ -79,6 +167,41 @@
   }
 }
 
+/* ----- 脉冲缩放（施法蓄力 / 选择指示点 / 霓虹点） ----- */
+@keyframes cast-pulse {
+  0%,
+  100% {
+    transform: translateY(-3px) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.018);
+  }
+}
+
+@keyframes t-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes neon-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
 /* ----- 滑入（通知） ----- */
 @keyframes slideIn {
   from {
@@ -91,9 +214,76 @@
   }
 }
 
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* ----- 进出场（内容切入 / 回合宣告 / 徽章弹跳） ----- */
+@keyframes content-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes round-rise {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -150%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes tabs-badge-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes badge-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* ==========================================================================
    Buff 纯文本动画（buff-text-display-design-v2）
-   ponytail: 以下 keyframes 定义后暂未被组件引用，属于设计预定义。
+   NOTE: buffTextLastTurn 已被 BuffTextTag.vue 引用（tag--last-turn 闪烁）；
+   其余 keyframes 定义后暂未被组件引用，属于设计预定义。
    升级路径：当 BuffTextTag/BuffTextBar 需要动画时，
    在组件的 scoped style 中引用对应的 animation-name。
    ========================================================================== */

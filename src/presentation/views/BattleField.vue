@@ -320,25 +320,4 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-@keyframes round-rise {
-  0% {
-    transform: translate(-50%, -50%) scale(0.6);
-    opacity: 0;
-  }
-
-  15% {
-    transform: translate(-50%, -50%) scale(1.2);
-    opacity: 1;
-  }
-
-  30% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translate(-50%, -150%) scale(0.9);
-    opacity: 0;
-  }
-}
 </style>

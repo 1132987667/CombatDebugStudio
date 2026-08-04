@@ -495,7 +495,6 @@ onUnmounted(() => {
 }
 
 @keyframes visual-shake {
-
   0%,
   100% {
     transform: translate(0, 0);
@@ -639,10 +638,12 @@ onUnmounted(() => {
 .impact.fire {
   background: radial-gradient(circle, #fff, var(--vfx-fire) 20%, var(--vfx-fire-core) 50%, transparent 70%);
 }
+
 .impact.frost,
 .impact.shield {
   background: radial-gradient(circle, #fff, var(--vfx-frost) 20%, var(--vfx-frost-glow) 50%, transparent 70%);
 }
+
 .impact.heal {
   background: radial-gradient(circle, #fff, var(--vfx-heal) 20%, var(--vfx-heal-glow) 50%, transparent 70%);
 }
@@ -653,10 +654,22 @@ onUnmounted(() => {
 .impact.explosion {
   animation-name: impact-burst;
 }
+
 @keyframes impact-burst {
-  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
-  50%  { transform: translate(-50%, -50%) scale(1.8); opacity: 0.8; }
-  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+  }
 }
 
 /* 2. 斩击 — 干净利落的一刀斜线 */
@@ -666,10 +679,12 @@ onUnmounted(() => {
   border-radius: 0;
   background: none !important;
 }
+
 .impact.slash::before {
   content: '';
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   width: 80px;
   height: 4px;
   border-radius: 2px;
@@ -677,24 +692,46 @@ onUnmounted(() => {
   transform: translate(-50%, -50%) rotate(-45deg);
   animation: slash-cut 0.25s ease-out both;
 }
+
 .impact.slash.fire::before {
   background: linear-gradient(90deg, transparent, var(--vfx-fire), #fff, var(--vfx-fire), transparent);
   box-shadow: 0 0 16px var(--vfx-fire-glow), 0 0 32px var(--vfx-fire-core);
 }
+
 .impact.slash.frost::before,
 .impact.slash.shield::before {
   background: linear-gradient(90deg, transparent, var(--vfx-frost), #fff, var(--vfx-frost), transparent);
   box-shadow: 0 0 16px var(--vfx-frost-glow), 0 0 32px var(--vfx-frost-glow);
 }
+
 .impact.slash.heal::before {
   background: linear-gradient(90deg, transparent, var(--vfx-heal), #fff, var(--vfx-heal), transparent);
   box-shadow: 0 0 16px var(--vfx-heal-glow), 0 0 32px var(--vfx-heal-glow);
 }
+
 @keyframes slash-cut {
-  0%   { transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.1); opacity: 0; }
-  15%  { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1.3); opacity: 1; filter: brightness(2); }
-  40%  { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1.0); opacity: 1; filter: brightness(1.2); }
-  100% { transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.6); opacity: 0; filter: brightness(0.5); }
+  0% {
+    transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.1);
+    opacity: 0;
+  }
+
+  15% {
+    transform: translate(-50%, -50%) rotate(-45deg) scaleX(1.3);
+    opacity: 1;
+    filter: brightness(2);
+  }
+
+  40% {
+    transform: translate(-50%, -50%) rotate(-45deg) scaleX(1.0);
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.6);
+    opacity: 0;
+    filter: brightness(0.5);
+  }
 }
 
 /* 3. 冰裂 — 菱形冰晶碎裂（不再是圆形扩散） */
@@ -705,22 +742,26 @@ onUnmounted(() => {
   background: none !important;
   animation-name: ice-crystal;
 }
+
 /* 冰晶主体 — 菱形 */
 .impact.iceshatter::before {
   content: '';
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   width: 40px;
   height: 40px;
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
   transform: translate(-50%, -50%);
   animation: ice-flash 0.5s ease-out forwards;
 }
+
 /* 外层碎片光环 */
 .impact.iceshatter::after {
   content: '';
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   width: 70px;
   height: 70px;
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
@@ -728,48 +769,102 @@ onUnmounted(() => {
   opacity: 0;
   animation: ice-shards 0.6s ease-out forwards;
 }
+
 .impact.iceshatter.fire::before {
   background: linear-gradient(135deg, #fff, var(--vfx-fire), var(--vfx-fire-core));
   box-shadow: 0 0 20px var(--vfx-fire-glow), 0 0 40px var(--vfx-fire-core);
 }
+
 .impact.iceshatter.fire::after {
   background: linear-gradient(135deg, transparent, var(--vfx-fire) 40%, transparent);
   box-shadow: 0 0 15px var(--vfx-fire-glow);
 }
+
 .impact.iceshatter.frost::before,
 .impact.iceshatter.shield::before {
   background: linear-gradient(135deg, #fff, var(--vfx-frost), var(--vfx-frost-glow));
   box-shadow: 0 0 20px var(--vfx-frost-glow), 0 0 40px var(--vfx-frost-glow);
 }
+
 .impact.iceshatter.frost::after,
 .impact.iceshatter.shield::after {
   background: linear-gradient(135deg, transparent, var(--vfx-frost) 40%, transparent);
   box-shadow: 0 0 15px var(--vfx-frost-glow);
 }
+
 .impact.iceshatter.heal::before {
   background: linear-gradient(135deg, #fff, var(--vfx-heal), var(--vfx-heal-glow));
   box-shadow: 0 0 20px var(--vfx-heal-glow), 0 0 40px var(--vfx-heal-glow);
 }
+
 .impact.iceshatter.heal::after {
   background: linear-gradient(135deg, transparent, var(--vfx-heal) 40%, transparent);
   box-shadow: 0 0 15px var(--vfx-heal-glow);
 }
+
 @keyframes ice-crystal {
-  0%   { transform: translate(-50%, -50%) scale(0.1) rotate(0deg); opacity: 0; }
-  15%  { transform: translate(-50%, -50%) scale(1.3) rotate(15deg); opacity: 1; }
-  40%  { transform: translate(-50%, -50%) scale(1.1) rotate(30deg); opacity: 0.9; }
-  100% { transform: translate(-50%, -50%) scale(0.8) rotate(60deg); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.1) rotate(0deg);
+    opacity: 0;
+  }
+
+  15% {
+    transform: translate(-50%, -50%) scale(1.3) rotate(15deg);
+    opacity: 1;
+  }
+
+  40% {
+    transform: translate(-50%, -50%) scale(1.1) rotate(30deg);
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(0.8) rotate(60deg);
+    opacity: 0;
+  }
 }
+
 @keyframes ice-flash {
-  0%   { transform: translate(-50%, -50%) scale(0.1); opacity: 1; filter: brightness(2); }
-  20%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; filter: brightness(1.5); }
-  50%  { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; filter: brightness(1); }
-  100% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; filter: brightness(0.3); }
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 1;
+    filter: brightness(2);
+  }
+
+  20% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.8;
+    filter: brightness(1);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+    filter: brightness(0.3);
+  }
 }
+
 @keyframes ice-shards {
-  0%   { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0.6; }
-  50%  { transform: translate(-50%, -50%) scale(1.6) rotate(45deg); opacity: 0.4; }
-  100% { transform: translate(-50%, -50%) scale(2.2) rotate(90deg); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.6) rotate(45deg);
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.2) rotate(90deg);
+    opacity: 0;
+  }
 }
 
 /* 4. 冲击波 — 多环扩散 */
@@ -777,22 +872,27 @@ onUnmounted(() => {
   background: none !important;
   animation-name: shockwave-burst;
 }
+
 .impact.shockwave::before,
 .impact.shockwave::after {
   content: '';
   position: absolute;
-  top: 50%; left: 50%;
-  width: 100%; height: 100%;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   border: 3px solid;
   transform-origin: center center;
   transform: translate(-50%, -50%);
 }
+
 .impact.shockwave.fire::before,
 .impact.shockwave.fire::after {
   border-color: var(--vfx-fire-glow);
   box-shadow: 0 0 12px var(--vfx-fire-glow), inset 0 0 12px var(--vfx-fire-glow);
 }
+
 .impact.shockwave.frost::before,
 .impact.shockwave.frost::after,
 .impact.shockwave.shield::before,
@@ -800,19 +900,39 @@ onUnmounted(() => {
   border-color: var(--vfx-frost-glow);
   box-shadow: 0 0 12px var(--vfx-frost-glow), inset 0 0 12px var(--vfx-frost-glow);
 }
+
 .impact.shockwave.heal::before,
 .impact.shockwave.heal::after {
   border-color: var(--vfx-heal-glow);
   box-shadow: 0 0 12px var(--vfx-heal-glow), inset 0 0 12px var(--vfx-heal-glow);
 }
-.impact.shockwave::after { animation: ring-2 0.5s ease-out forwards; }
-@keyframes shockwave-burst {
-  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+
+.impact.shockwave::after {
+  animation: ring-2 0.5s ease-out forwards;
 }
+
+@keyframes shockwave-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.2);
+    opacity: 0;
+  }
+}
+
 @keyframes ring-2 {
-  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0.8; }
-  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+  }
 }
 
 /* 5. 暗影 — 紫黑能量爆发 */
@@ -820,6 +940,7 @@ onUnmounted(() => {
   animation-name: shadow-burst;
   mix-blend-mode: screen;
 }
+
 .impact.shadow.fire,
 .impact.shadow.frost,
 .impact.shadow.shield,
@@ -828,11 +949,31 @@ onUnmounted(() => {
   background: radial-gradient(circle, #c084fc 10%, #a855f7 30%, #7c3aed 50%, transparent 70%);
   box-shadow: 0 0 30px #a855f7, 0 0 60px #7c3aed;
 }
+
 @keyframes shadow-burst {
-  0%   { transform: translate(-50%, -50%) scale(0.1); opacity: 0; filter: blur(8px); }
-  30%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; filter: blur(2px); }
-  60%  { transform: translate(-50%, -50%) scale(1.6); opacity: 0.7; filter: blur(0px); }
-  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; filter: blur(6px); }
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0;
+    filter: blur(8px);
+  }
+
+  30% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+    filter: blur(2px);
+  }
+
+  60% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0.7;
+    filter: blur(0px);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+    filter: blur(6px);
+  }
 }
 
 /* 治疗光环 */
@@ -912,7 +1053,7 @@ onUnmounted(() => {
 .floating-num.dmg {
   text-shadow: 0 0 10px currentColor, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 24px currentColor;
   animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards,
-             dmg-glow 1.4s ease-out forwards;
+    dmg-glow 1.4s ease-out forwards;
 }
 
 .floating-num.dmg.normal {
@@ -925,7 +1066,7 @@ onUnmounted(() => {
   color: var(--color-warning);
   text-shadow: 0 0 14px var(--color-warning), 0 3px 8px rgba(0, 0, 0, 0.95), 0 0 32px var(--color-warning);
   animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards,
-             dmg-crit-glow 1.4s ease-out forwards;
+    dmg-crit-glow 1.4s ease-out forwards;
 }
 
 .floating-num.dmg.crit::before {
@@ -946,14 +1087,17 @@ onUnmounted(() => {
     transform: translate(-50%, -50%) scale(0.2) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
+
   15% {
     transform: translate(-50%, -65%) scale(1.5) rotate(var(--rotate, 0deg));
     opacity: 1;
     animation-timing-function: cubic-bezier(0.17, 0.67, 0.83, 0.67);
   }
+
   30% {
     transform: translate(-50%, -70%) scale(1.2) rotate(var(--rotate, 0deg));
   }
+
   100% {
     transform: translate(-50%, -220%) scale(0.85) rotate(var(--rotate, 0deg));
     opacity: 0;
@@ -963,14 +1107,28 @@ onUnmounted(() => {
 
 /* 普通伤害发光消散 */
 @keyframes dmg-glow {
-  0%, 30% { filter: drop-shadow(0 0 8px currentColor) brightness(1.2); }
-  100%    { filter: drop-shadow(0 0 24px currentColor) brightness(0.6); }
+
+  0%,
+  30% {
+    filter: drop-shadow(0 0 8px currentColor) brightness(1.2);
+  }
+
+  100% {
+    filter: drop-shadow(0 0 24px currentColor) brightness(0.6);
+  }
 }
 
 /* 暴击伤害：更强烈的能量爆发 */
 @keyframes dmg-crit-glow {
-  0%, 20% { filter: drop-shadow(0 0 15px var(--color-warning)) brightness(1.5); }
-  100%    { filter: drop-shadow(0 0 35px var(--color-warning)) brightness(0.4); }
+
+  0%,
+  20% {
+    filter: drop-shadow(0 0 15px var(--color-warning)) brightness(1.5);
+  }
+
+  100% {
+    filter: drop-shadow(0 0 35px var(--color-warning)) brightness(0.4);
+  }
 }
 
 .floating-num.heal-num {

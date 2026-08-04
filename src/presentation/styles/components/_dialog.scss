@@ -70,6 +70,23 @@
   gap: var(--space-2);
 }
 
+/* ----- 变体：右缘停靠（如调试面板），overlay 右对齐、容器近满高 ----- */
+.dialog-overlay--placement-right {
+  justify-content: flex-end;
+}
+
+.dialog-overlay--placement-right .dialog-container {
+  max-height: calc(100vh - 24px);
+}
+
+/* ----- 变体：内容区无内边距、由内部自行布局/滚动（如分栏图鉴） ----- */
+.dialog-content--flush {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
 /* ----- 对话框过渡动画 ----- */
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {

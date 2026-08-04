@@ -13,19 +13,11 @@
 
     <div class="ht-cmd-spacer"></div>
 
-    <select v-model="source" class="ht-btn" aria-label="档案来源" title="数据源：演示存档 / 战斗记录 / 压测合成 / 实时战斗">
-      <option value="demo">演示存档</option>
-      <option value="recordings">战斗记录</option>
-      <option value="stress">压测 · 2000+ 事件</option>
-      <option value="live">实时战斗</option>
-    </select>
-    <select v-if="source === 'recordings'" v-model="recKey" class="ht-btn" aria-label="选择战斗记录"
-      title="选择已保存到本地的战斗记录（唤灵台「保存战斗记录」）">
-      <option value="">选择记录…</option>
-      <option v-for="r in store.recordings" :key="r.saveKey" :value="r.saveKey">
-        {{ r.name }} · {{ fmtTime(r.startTime) }} · {{ r.eventCount }} 事件
-      </option>
-    </select>
+    <TacticalSelect v-model="source" size="sm" :options="sourceOptions"
+      title="数据源：演示存档 / 战斗记录 / 压测合成 / 实时战斗" />
+    <TacticalSelect v-if="source === 'recordings'" v-model="recKey" size="sm" searchable
+      placeholder="选择记录…" :options="recOptions"
+      title="选择已保存到本地的战斗记录（唤灵台「保存战斗记录」）" />
 
     <button class="ht-btn" :class="{ on: store.bpArmed }" title="配置条件断点（伤害/级别/随机值/单位），播放命中自动暂停定位" @click="bpOpen = true">⏸ 断点</button>
     <button class="ht-btn" title="导出调试会话：模式 + 书签 + 断点 + 过滤，一键复现调试现场" @click="store.exportSession()">⤓ 会话</button>
@@ -43,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -52,6 +44,7 @@ import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import BreakpointDialog from '../components/BreakpointDialog.vue'
 import DiffDialog from '../components/DiffDialog.vue'
 import SummaryDialog from '../components/SummaryDialog.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import { useHaotianStore } from '../stores/haotianStore'
 
 const store = useHaotianStore()
@@ -66,6 +59,17 @@ const sessionInput = ref<HTMLInputElement | null>(null)
 const resolveBattleSystem = (): BattleSystem => container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
 
 const fmtTime = (t: number): string => (t ? new Date(t).toLocaleString() : '—')
+
+const sourceOptions: TSelectOption[] = [
+  { value: 'demo', label: '演示存档' },
+  { value: 'recordings', label: '战斗记录' },
+  { value: 'stress', label: '压测 · 2000+ 事件' },
+  { value: 'live', label: '实时战斗' },
+]
+
+const recOptions = computed<TSelectOption[]>(() =>
+  store.recordings.map((r) => ({ value: r.saveKey, label: `${r.name} · ${fmtTime(r.startTime)} · ${r.eventCount} 事件` })),
+)
 
 watch(source, async (val) => {
   if (val === 'live') {

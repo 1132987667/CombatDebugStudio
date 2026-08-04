@@ -13,6 +13,7 @@ import { processExtraValues, processTargetModifiers, resolveAttributeValue } fro
 import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
 import { floor } from '@/shared/utils/math'
+import { resolveElementCoefficient, type ElementMatrixLike } from '@/domain/fengshen/elementMatrix'
 
 export interface DamageCalculationConfig {
   enableCrit: boolean
@@ -25,6 +26,8 @@ export interface DamageCalculationConfig {
   maxDamageThreshold?: number
   /** 场地元素修正回调 */
   fieldElementalModifier?: (elementType: string) => number
+  /** 阵营元素克制矩阵（封神榜 elements 表注入；缺省不生效） */
+  elementMatrix?: ElementMatrixLike
 }
 
 export interface DamageResult {
@@ -524,6 +527,26 @@ export class DamageCalculator {
           `${e.attribute} 目标修正: x${1 + e.effect}`,
         )
       }
+    }
+
+    // ===== 阵营元素克制系数（来源方阵营 vs 目标阵营，缺省 1.0） =====
+    const elementCoefficient = resolveElementCoefficient(
+      this.config.elementMatrix,
+      source.faction,
+      target.faction,
+    )
+    if (elementCoefficient !== 1) {
+      const before = damage
+      damage = floor(damage * elementCoefficient)
+      breakdown.steps.push({
+        stepName: 'elementMatrix',
+        value: damage,
+        before,
+        after: damage,
+        sourceType: 'system',
+        description: `阵营克制(x${elementCoefficient.toFixed(2)}): ${before} → ${damage}`,
+      })
+      this.logCalculation('element_matrix', elementCoefficient, `阵营克制 x${elementCoefficient}`)
     }
 
     // 伤害阈值限制（最小/最大伤害）

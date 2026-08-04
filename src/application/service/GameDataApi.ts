@@ -1,0 +1,166 @@
+/**
+ * GameDataApi.ts — 封神榜数据访问 API（封神榜开发计划 §3.3 / 规格说明书 §6.1）
+ *
+ * 面向界面层/其他模块的 Promise 只读接口，唯一读取入口（不直接操作 IndexedDB）。
+ * 底层经 IPersistentStorage 端口读取封神榜 store，写操作走 FengshenDataService。
+ */
+
+import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersistentStorage'
+import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
+import type {
+  ActorData,
+  BattleParamData,
+  DropGroupData,
+  ElementsData,
+  EquipmentData,
+  GrowthCurveData,
+  LineupData,
+  MetaDataVersion,
+  OperationLogEntry,
+  FengshenTableName,
+} from '@/domain/fengshen/types'
+import type { SkillConfig } from '@/domain/skill/types'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { Enemy } from '@/shared/types/enemy'
+import type { SceneData } from '@/shared/types/scene'
+import type { FormationConfig } from '@/shared/types/formation'
+
+export interface ListQuery {
+  /** 按 name 模糊搜索 */
+  search?: string
+  limit?: number
+  offset?: number
+}
+
+export class GameDataApi {
+  constructor(private readonly storage: IPersistentStorage) {}
+
+  // ── 单实体查询 ──────────────────────────────────────────────
+
+  async getActorById(id: string): Promise<ActorData | null> {
+    return this.storage.get<ActorData>(FENGSHEN_STORE.ACTORS, id)
+  }
+
+  async getBuffDef(id: string): Promise<BuffJsonEntry | null> {
+    return this.storage.get<BuffJsonEntry>(FENGSHEN_STORE.BUFFS, id)
+  }
+
+  async getEnemyById(id: string): Promise<Enemy | null> {
+    return this.storage.get<Enemy>(FENGSHEN_STORE.ENEMIES, id)
+  }
+
+  async getScene(id: string): Promise<SceneData | null> {
+    return this.storage.get<SceneData>(FENGSHEN_STORE.SCENES, id)
+  }
+
+  async getFormation(id: string): Promise<FormationConfig | null> {
+    return this.storage.get<FormationConfig>(FENGSHEN_STORE.FORMATIONS, id)
+  }
+
+  async getLineup(id: string): Promise<LineupData | null> {
+    return this.storage.get<LineupData>(FENGSHEN_STORE.LINEUPS, id)
+  }
+
+  async getEquipment(id: string): Promise<EquipmentData | null> {
+    return this.storage.get<EquipmentData>(FENGSHEN_STORE.EQUIPMENT, id)
+  }
+
+  async getGrowthCurve(id: string): Promise<GrowthCurveData | null> {
+    return this.storage.get<GrowthCurveData>(FENGSHEN_STORE.GROWTH, id)
+  }
+
+  async getDropGroup(id: string): Promise<DropGroupData | null> {
+    return this.storage.get<DropGroupData>(FENGSHEN_STORE.DROPS, id)
+  }
+
+  async getBattleParam(id: string): Promise<BattleParamData | null> {
+    return this.storage.get<BattleParamData>(FENGSHEN_STORE.PARAMS, id)
+  }
+
+  async getElementMatrix(): Promise<ElementsData | null> {
+    return this.storage.get<ElementsData>(FENGSHEN_STORE.ELEMENTS, 'elements')
+  }
+
+  // ── 批量查询 ────────────────────────────────────────────────
+
+  async getSkillList(ids: string[]): Promise<SkillConfig[]> {
+    return this.loadByIds<SkillConfig>(FENGSHEN_STORE.SKILLS, ids)
+  }
+
+  async getEnemyList(ids: string[]): Promise<Enemy[]> {
+    return this.loadByIds<Enemy>(FENGSHEN_STORE.ENEMIES, ids)
+  }
+
+  async listLineups(filter?: { side?: LineupData['side'] }): Promise<LineupData[]> {
+    const all = await this.listAll<LineupData>(FENGSHEN_STORE.LINEUPS)
+    return filter?.side ? all.filter((l) => l.side === filter.side) : all
+  }
+
+  async listEquipment(filter?: { slot?: EquipmentData['slot'] }): Promise<EquipmentData[]> {
+    const all = await this.listAll<EquipmentData>(FENGSHEN_STORE.EQUIPMENT)
+    return filter?.slot ? all.filter((e) => e.slot === filter.slot) : all
+  }
+
+  async listBattleParams(): Promise<BattleParamData[]> {
+    return this.listAll<BattleParamData>(FENGSHEN_STORE.PARAMS)
+  }
+
+  /** 通用分页 / 搜索查询（辅助功能用） */
+  async listByTable<T>(table: FengshenTableName, query?: ListQuery): Promise<T[]> {
+    // NOTE: 表名与 store 名一致（FENGSHEN_STORE 值），直接用表名作 store
+    const store = table as StorageStoreName
+    let rows = await this.listAll<T>(store)
+    if (query?.search) {
+      const kw = query.search.toLowerCase()
+      rows = rows.filter((r) => String((r as { name?: unknown }).name ?? '').toLowerCase().includes(kw))
+    }
+    rows.sort((a, b) =>
+      String((b as { updatedAt?: string }).updatedAt ?? '').localeCompare(
+        String((a as { updatedAt?: string }).updatedAt ?? ''),
+      ),
+    )
+    if (query?.offset) rows = rows.slice(query.offset)
+    if (query?.limit) rows = rows.slice(0, query.limit)
+    return rows
+  }
+
+  // ── 元数据 ──────────────────────────────────────────────────
+
+  async getDataVersion(): Promise<number> {
+    const meta = await this.storage.get<MetaDataVersion>(FENGSHEN_STORE.META, 'dataVersion')
+    return meta?.version ?? 0
+  }
+
+  /** 操作日志（meta store，按时间倒序） */
+  async listOperationLogs(limit = 50): Promise<OperationLogEntry[]> {
+    const keys = await this.storage.keys(FENGSHEN_STORE.META)
+    const logs: OperationLogEntry[] = []
+    for (const key of keys) {
+      const rec = await this.storage.get<OperationLogEntry>(FENGSHEN_STORE.META, key)
+      if (rec && rec.op) logs.push(rec)
+    }
+    logs.sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+    return logs.slice(0, limit)
+  }
+
+  // ── 内部工具 ────────────────────────────────────────────────
+
+  private async loadByIds<T>(store: StorageStoreName, ids: string[]): Promise<T[]> {
+    const out: T[] = []
+    for (const id of ids) {
+      const rec = await this.storage.get<T>(store, id)
+      if (rec) out.push(rec)
+    }
+    return out
+  }
+
+  private async listAll<T>(store: StorageStoreName): Promise<T[]> {
+    const keys = await this.storage.keys(store)
+    const out: T[] = []
+    for (const key of keys) {
+      const rec = await this.storage.get<T>(store, key)
+      if (rec) out.push(rec)
+    }
+    return out
+  }
+}

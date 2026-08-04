@@ -16,7 +16,7 @@
         'radio-button--disabled': disabled
       }" :disabled="disabled" role="radio" :aria-checked="modelValue === option.value" :aria-label="option.label"
         @click="selectOption(option.value)" @keydown="handleKeydown">
-        <span class="radio-button__icon">{{ option.icon }}</span>
+        <!-- <span class="radio-button__icon">{{ option.icon }}</span> -->
         <span class="radio-button__label">{{ option.label }}</span>
       </button>
     </div>

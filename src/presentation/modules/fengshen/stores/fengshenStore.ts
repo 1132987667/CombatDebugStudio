@@ -1,0 +1,255 @@
+/**
+ * 文件: fengshenStore.ts
+ * 功能: 封神榜后台数据管理状态中枢
+ * 描述: 持有当前数据域/视图切换、dataVersion、列表搜索选中、编辑抽屉状态，
+ *       读写经 GameDataApi / FengshenDataService（写后 dataVersion 递增 + 自动刷新）。
+ */
+
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { container } from '@/infrastructure/di/Container'
+import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { GameDataApi } from '@/application/service/GameDataApi'
+import { FengshenDataService } from '@/application/service/FengshenDataService'
+import { BattleDataLoader } from '@/application/service/BattleDataLoader'
+import { DataPackageService } from '@/application/service/DataPackageService'
+import { DataIntegrityService, type HealthCheckReport } from '@/application/service/DataIntegrityService'
+import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
+import { nextEntityId, type FengshenTableName } from '@/domain/fengshen/types'
+import type { OperationLogEntry, BattleParamData } from '@/domain/fengshen/types'
+import { useBattleStore } from '@/presentation/stores'
+
+export type FengshenView = 'domain' | 'formulas' | 'rules' | 'packages' | 'health' | 'logs'
+
+export interface OptionItem {
+  id: string
+  name: string
+}
+
+export const useFengshenStore = defineStore('fengshen', () => {
+  const api = container.resolve<GameDataApi>('GameDataApi')
+  const write = container.resolve<FengshenDataService>('FengshenDataService')
+  const pkgService = container.resolve<DataPackageService>('DataPackageService')
+  const integrity = container.resolve<DataIntegrityService>('DataIntegrityService')
+
+  const activeView = ref<FengshenView>('domain')
+  const currentTable = ref<FengshenTableName>('actors')
+  const dataVersion = ref(0)
+  const search = ref('')
+  const selectedIds = ref<string[]>([])
+  const loading = ref(false)
+  const rows = ref<Record<string, unknown>[]>([])
+
+  // 编辑抽屉
+  const drawerOpen = ref(false)
+  const editingEntity = ref<Record<string, unknown> | null>(null)
+  const isNew = ref(false)
+  const formErrors = ref<string[]>([])
+
+  // 系统视图数据
+  const healthReport = ref<HealthCheckReport | null>(null)
+  const logs = ref<OperationLogEntry[]>([])
+  const params = ref<BattleParamData[]>([])
+
+  // 引用选项缓存（下拉：技能/阵型/元素/成长曲线等）
+  const optionsCache = ref<Record<string, OptionItem[]>>({})
+
+  const currentSchema = () => TABLE_SCHEMAS[currentTable.value]
+
+  // ── dataVersion 订阅：任何写操作（增/删/改/导入）后刷新版本 + 当前列表；未开战时重载引擎数据源 ──
+  // NOTE: FengshenDataService 与 DataPackageService 共享同一回调（封神榜开发计划 §3.4 关键路径）——
+  // 导入（数据包）与常规写操作统一触发，避免遗漏。
+  const onDataChanged = (version: number): void => {
+    dataVersion.value = version
+    if (activeView.value === 'domain') void refreshList()
+    const battleStore = useBattleStore()
+    if (!battleStore.isBattleActive) {
+      void new BattleDataLoader(persistentStorage).reload()
+    }
+  }
+  write.onDataChanged = onDataChanged
+  pkgService.onDataChanged = onDataChanged
+
+  async function refreshVersion(): Promise<void> {
+    try {
+      dataVersion.value = await api.getDataVersion()
+    } catch {
+      dataVersion.value = 0
+    }
+  }
+
+  async function refreshList(): Promise<void> {
+    loading.value = true
+    try {
+      rows.value = await api.listByTable<Record<string, unknown>>(currentTable.value, {
+        search: search.value || undefined,
+      })
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadOptions(table: FengshenTableName): Promise<OptionItem[]> {
+    if (optionsCache.value[table]) return optionsCache.value[table]
+    const rows = await api.listByTable<Record<string, unknown>>(table, { limit: 500 })
+    const items = rows.map((r) => ({ id: String(r.id), name: String(r.name ?? r.id) }))
+    optionsCache.value[table] = items
+    return items
+  }
+
+  function invalidateOptions(): void {
+    optionsCache.value = {}
+  }
+
+  function setTable(table: FengshenTableName): void {
+    currentTable.value = table
+    selectedIds.value = []
+    void refreshList()
+  }
+
+  async function openCreate(): Promise<void> {
+    const existing = await api.listByTable<Record<string, unknown>>(currentTable.value, { limit: 1000 })
+    // elements 为单文档（固定 id），其余表按前缀自增生成
+    editingEntity.value = currentTable.value === 'elements'
+      ? { id: 'elements' }
+      : { id: nextEntityId(existing.map((r) => String(r.id)), `${currentTable.value}_`) }
+    isNew.value = true
+    formErrors.value = []
+    drawerOpen.value = true
+  }
+
+  function setView(view: FengshenView): void {
+    activeView.value = view
+    if (view === 'rules') {
+      // 战斗规则参数复用数据域 params 的列表/编辑
+      currentTable.value = 'params'
+      selectedIds.value = []
+      void refreshList()
+    }
+    if (view === 'health') void runHealth()
+    if (view === 'logs') void loadLogs()
+  }
+
+  function openCreate(): void {
+    editingEntity.value = {}
+    isNew.value = true
+    formErrors.value = []
+    drawerOpen.value = true
+  }
+
+  function openEdit(entity: Record<string, unknown>, isNewEntity = false): void {
+    editingEntity.value = { ...entity }
+    isNew.value = isNewEntity
+    formErrors.value = []
+    drawerOpen.value = true
+  }
+
+  /** 复制为模板：新 ID 派生 + 名称加副本后缀，进入编辑抽屉（新增态） */
+  async function duplicateAsTemplate(row: Record<string, unknown>): Promise<void> {
+    if (currentTable.value === 'elements') {
+      window.alert('阵营克制为单文档数据，不支持复制')
+      return
+    }
+    const existing = await api.listByTable<Record<string, unknown>>(currentTable.value, { limit: 1000 })
+    const newId = nextEntityId(existing.map((r) => String(r.id)), `${currentTable.value}_`)
+    const name = String(row.name ?? newId)
+    openEdit({ ...row, id: newId, name: `${name}·副本` }, true)
+  }
+
+  function closeDrawer(): void {
+    drawerOpen.value = false
+    editingEntity.value = null
+    formErrors.value = []
+  }
+
+  async function save(): Promise<boolean> {
+    if (!editingEntity.value) return false
+    const result = await write.save(currentTable.value, editingEntity.value)
+    if (!result.ok) {
+      formErrors.value = result.errors ?? []
+      return false
+    }
+    closeDrawer()
+    invalidateOptions()
+    await refreshList()
+    await refreshVersion()
+    return true
+  }
+
+  async function remove(id: string): Promise<string[] | null> {
+    const result = await write.remove(currentTable.value, id)
+    if (!result.ok) {
+      return result.errors ?? []
+    }
+    invalidateOptions()
+    await refreshList()
+    await refreshVersion()
+    return null
+  }
+
+  async function toggleSelect(id: string): Promise<void> {
+    selectedIds.value = selectedIds.value.includes(id)
+      ? selectedIds.value.filter((x) => x !== id)
+      : [...selectedIds.value, id]
+  }
+
+  async function removeSelected(): Promise<void> {
+    for (const id of selectedIds.value) {
+      await write.remove(currentTable.value, id)
+    }
+    selectedIds.value = []
+    invalidateOptions()
+    await refreshList()
+    await refreshVersion()
+  }
+
+  // ── 系统视图数据装载 ──
+
+  async function runHealth(): Promise<void> {
+    healthReport.value = await integrity.runHealthCheck()
+  }
+
+  async function loadLogs(): Promise<void> {
+    logs.value = await api.listOperationLogs(200)
+  }
+
+  async function loadParams(): Promise<void> {
+    params.value = await api.listBattleParams()
+  }
+
+  return {
+    activeView,
+    currentTable,
+    dataVersion,
+    search,
+    selectedIds,
+    loading,
+    rows,
+    drawerOpen,
+    editingEntity,
+    isNew,
+    formErrors,
+    healthReport,
+    logs,
+    params,
+    optionsCache,
+    currentSchema,
+    refreshVersion,
+    refreshList,
+    loadOptions,
+    invalidateOptions,
+    setTable,
+    setView,
+    openCreate,
+    openEdit,
+    duplicateAsTemplate,
+    closeDrawer,
+    save,
+    remove,
+    toggleSelect,
+    removeSelected,
+    runHealth,
+    loadLogs,
+    loadParams,
+  }
+})

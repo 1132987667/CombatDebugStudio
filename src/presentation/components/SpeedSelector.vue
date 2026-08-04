@@ -1,5 +1,5 @@
 <template>
-  <div class="speed-selector">
+  <div class="speed-selector flex items-center gap-2">
     <span v-if="label" class="speed-label">{{ label }}</span>
     <button v-for="s in resolvedOptions" :key="s" class="speed-btn" :class="{ active: modelValue === s }"
       @click="$emit('update:modelValue', s)">
@@ -29,12 +29,6 @@ const resolvedOptions = SPEED_OPTIONS
 </script>
 
 <style scoped>
-.speed-selector {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .speed-label {
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);

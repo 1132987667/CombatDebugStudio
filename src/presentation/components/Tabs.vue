@@ -136,21 +136,10 @@ defineExpose({ updateIndicator })
 <template>
   <div class="tabs-root" :class="[`tabs-root--${size}`, { 'tabs-root--equal': equalWidth }]">
     <div ref="headerRef" class="tabs-header" role="tablist">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        :ref="(el) => setTabRef(tab.id, el as HTMLButtonElement | null)"
-        :id="tabButtonId(tab.id)"
-        class="tabs-tab"
-        :class="{ 'is-active': tab.id === activeId }"
-        role="tab"
-        :aria-selected="tab.id === activeId"
-        :aria-controls="panelId(tab.id)"
-        :tabindex="tab.id === activeId ? 0 : -1"
-        :disabled="tab.disabled"
-        @click="select(tab)"
-        @keydown="onKeydown"
-      >
+      <button v-for="tab in tabs" :key="tab.id" :ref="(el) => setTabRef(tab.id, el as HTMLButtonElement | null)"
+        :id="tabButtonId(tab.id)" class="tabs-tab" :class="{ 'is-active': tab.id === activeId }" role="tab"
+        :aria-selected="tab.id === activeId" :aria-controls="panelId(tab.id)" :tabindex="tab.id === activeId ? 0 : -1"
+        :disabled="tab.disabled" @click="select(tab)" @keydown="onKeydown">
         <span class="tabs-tab-label">{{ tab.label }}</span>
         <!-- :key 绑定 count：数值变化时强制重建节点，重触发弹跳动画 -->
         <span v-if="tab.count != null" :key="tab.count" class="tabs-badge">{{ tab.count }}</span>
@@ -158,17 +147,11 @@ defineExpose({ updateIndicator })
       <span class="tabs-indicator" :style="indicatorStyle" aria-hidden="true"></span>
     </div>
 
-    <div class="tabs-panels">
+    <div class="flex-col-fill">
       <template v-for="tab in tabs" :key="tab.id">
         <!-- v-if 处理销毁模式，v-show 处理保活模式；二者同节点时 v-if 先求值 -->
-        <div
-          v-if="!destroyInactive || tab.id === activeId"
-          v-show="tab.id === activeId"
-          :id="panelId(tab.id)"
-          class="tabs-panel"
-          role="tabpanel"
-          :aria-labelledby="tabButtonId(tab.id)"
-        >
+        <div v-if="!destroyInactive || tab.id === activeId" v-show="tab.id === activeId" :id="panelId(tab.id)"
+          class="flex-col-fill" role="tabpanel" :aria-labelledby="tabButtonId(tab.id)">
           <slot :name="tab.id" :tab="tab" />
         </div>
       </template>
@@ -190,7 +173,8 @@ defineExpose({ updateIndicator })
 /* ====== 页签头：凹陷轨道（segmented 容器），激活胶囊悬浮其上 ====== */
 .tabs-header {
   position: relative;
-  z-index: 0; /* 建立层叠上下文：胶囊(0) 在轨道上，页签文字(1) 在胶囊上 */
+  z-index: 0;
+  /* 建立层叠上下文：胶囊(0) 在轨道上，页签文字(1) 在胶囊上 */
   display: flex;
   gap: var(--space-1);
   padding: var(--space-1);
@@ -293,18 +277,6 @@ defineExpose({ updateIndicator })
   }
 }
 
-@keyframes tabs-badge-pop {
-  0% {
-    transform: scale(0.6);
-  }
-  60% {
-    transform: scale(1.15);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 /* ====== 滑动胶囊指示条：覆盖激活页签，left/width 由 JS 校准 ====== */
 .tabs-indicator {
   position: absolute;
@@ -318,20 +290,5 @@ defineExpose({ updateIndicator })
   box-sizing: border-box;
   pointer-events: none;
   z-index: 0;
-}
-
-/* ====== 面板：flex 列布局，让日志/列表类内容自然撑满 ====== */
-.tabs-panels {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.tabs-panel {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 </style>

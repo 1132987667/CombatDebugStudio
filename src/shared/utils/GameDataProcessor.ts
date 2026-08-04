@@ -22,24 +22,21 @@ import type {
   PassiveSkillManager,
 } from '@/domain/skill/PassiveSkillManager'
 import type { SkillConfig } from '@/domain/skill/types'
+import { SkillType } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
+import type { LineupData, ActorData } from '@/domain/fengshen/types'
 import { Counter } from '@/shared/utils/Counter'
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import { toArray } from '@/shared/utils/Utils'
-import enemiesDataRaw from '@configs/enemies/enemies.json'
-import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
-import scenesData from '@configs/scenes/scenes.json'
-import passiveSkillsData from '@configs/skills/skill_passive.json'
-import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
-import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
-import skillsData from '@configs/skills/skills.json'
+import type { IDataSource } from '@/domain/port/IDataSource'
+import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 
-const enemiesData = [
-  ...(enemiesDataRaw as Enemy[]),
-  ...(enemiesTestDataRaw as Enemy[]),
-]
 const counter = new Counter()
+
+// NOTE: 引擎数据源（封神榜开发计划 §3.4）——默认 ConfigDataSource 兜底，
+// 启动编排（main.ts bootstrap）完成种子导入后切换为 IdbDataSource。
+let dataSource: IDataSource = new ConfigDataSource()
 
 /**
  * 游戏数据处理工具类
@@ -47,10 +44,19 @@ const counter = new Counter()
  */
 export class GameDataProcessor {
   /**
+   * 切换引擎数据源（封神榜开发计划 §3.4）。
+   * 切换后清空实体缓存，避免旧数据残留。
+   */
+  static setDataSource(source: IDataSource): void {
+    dataSource = source
+    DataProcessor.clearCache()
+  }
+
+  /**
    * 获取所有敌人数据
    */
   static getEnemiesData(): Enemy[] {
-    return enemiesData
+    return dataSource.getEnemies()
   }
 
   /**
@@ -63,7 +69,7 @@ export class GameDataProcessor {
     const cached = DataProcessor.getCachedData<Enemy>(cacheKey)
     if (cached) return cached
 
-    const enemy = DataProcessor.find(enemiesData, (e) => e.id === enemyId)
+    const enemy = DataProcessor.find(dataSource.getEnemies(), (e) => e.id === enemyId)
     if (enemy) {
       DataProcessor.setCachedData(cacheKey, enemy)
     }
@@ -81,7 +87,7 @@ export class GameDataProcessor {
         const cacheKey = `enemy_${id}`
         const cached = DataProcessor.getCachedData<Enemy>(cacheKey)
         if (cached) return cached
-        const enemy = DataProcessor.find(enemiesData, (e) => e.id === id)
+        const enemy = DataProcessor.find(dataSource.getEnemies(), (e) => e.id === id)
         if (enemy) {
           // ponytail: 先设 maxHealth 再缓存，避免后续修改副作用
           enemy.stats.maxHealth = enemy.stats.currentHealth
@@ -93,19 +99,31 @@ export class GameDataProcessor {
   }
 
   static getSkillsData(): SkillConfig[] {
-    return [
-      ...skillsData,
-      ...passiveSkillsData,
-      ...guardianPassiveSkillsData,
-      ...passiveTestSkillsData,
-    ] as SkillConfig[]
+    return dataSource.getSkills()
   }
 
   /**
    * 获取所有场景数据
    */
   static getScenesData(): SceneData[] {
-    return scenesData
+    return dataSource.getScenes()
+  }
+
+  /** 获取所有预设阵容数据（lineups 表，场景 lineupId 展开用） */
+  static getLineupsData(): LineupData[] {
+    return dataSource.getLineups()
+  }
+
+  /** 根据阵容 ID 查找预设阵容 */
+  static findLineupById(lineupId: string): LineupData | undefined {
+    const cacheKey = `lineup_${lineupId}`
+    const cached = DataProcessor.getCachedData<LineupData>(cacheKey)
+    if (cached) return cached
+    const lineup = DataProcessor.find(dataSource.getLineups(), (l) => l.id === lineupId)
+    if (lineup) {
+      DataProcessor.setCachedData(cacheKey, lineup)
+    }
+    return lineup
   }
 
   /**
@@ -152,6 +170,8 @@ export class GameDataProcessor {
       enabled: true,
       seatIndex,
       noAttack: enemy.noAttack ?? false,
+      // NOTE: 阵营元素（克制矩阵用）——configs 敌人暂未建模 faction 字段，读扩展字段兼容
+      faction: (enemy as Enemy & { faction?: string }).faction,
       skills: {
         small: GameDataProcessor.getSkillByIds(enemy.skills?.small ?? []),
         passive: passiveSkills,
@@ -203,6 +223,57 @@ export class GameDataProcessor {
     }
 
     return participant
+  }
+
+  /**
+   * 将封神榜角色（actors 表）转换为 BattleParticipant。
+   * 技能按 skillType 分桶（small/ultimate/passive）；faction 供阵营克制矩阵使用。
+   */
+  static actorToParticipant(
+    actor: ActorData,
+    type: ParticipantSide = ParticipantSide.ALLY,
+    seatIndex: number = 0,
+  ): BattleParticipantImpl {
+    const skillConfigs = GameDataProcessor.getSkillByIds(actor.skillIds)
+    const initData: BattleParticipantData = {
+      id: `[${type}]_${actor.id}_${counter.next()}`,
+      name: actor.name,
+      team: type,
+      level: actor.level,
+      enabled: true,
+      seatIndex,
+      noAttack: false,
+      faction: actor.faction,
+      skills: {
+        small: skillConfigs.filter((s) => s.skillType === SkillType.SMALL),
+        passive: skillConfigs.filter((s) => s.skillType === SkillType.PASSIVE),
+        ultimate: skillConfigs.filter((s) => s.skillType === SkillType.ULTIMATE),
+      },
+      attributeValues: actor.stats as Partial<Record<ATTRIBUTE_CODE, number>>,
+    }
+    const participant = new BattleParticipantImpl(initData)
+    participant.recalcAll()
+    const curHp = participant.getAttrVal(ATTRIBUTE_CODE.currentHealth)
+    if (curHp) {
+      curHp.value = participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    }
+    return participant
+  }
+
+  /**
+   * 按预设阵容展开为参战者（场景 lineupId / 一键布阵）。
+   * 按 seatIndex 排序；roleId 优先按敌人解析（敌方阵容），查不到的站位跳过。
+   * 我方阵容引用角色（actors 表）的完整支持随演劫台接入。
+   */
+  static lineupToEnemies(lineup: LineupData): BattleParticipantImpl[] {
+    const roles = [...lineup.roles].sort((a, b) => a.seatIndex - b.seatIndex)
+    return roles
+      .map((role) => {
+        const enemy = GameDataProcessor.findEnemyById(role.roleId)
+        if (!enemy) return null
+        return GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, role.seatIndex)
+      })
+      .filter((p): p is BattleParticipantImpl => p !== null)
   }
 
   /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
@@ -284,7 +355,7 @@ export class GameDataProcessor {
     const cacheKey = `scene_${sceneId}`
     const cached = DataProcessor.getCachedData<SceneData>(cacheKey)
     if (cached) return cached
-    const scene = DataProcessor.find(scenesData, (s) => s.id === sceneId)
+    const scene = DataProcessor.find(dataSource.getScenes(), (s) => s.id === sceneId)
     if (scene) {
       DataProcessor.setCachedData(cacheKey, scene)
     }

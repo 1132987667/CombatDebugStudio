@@ -3,88 +3,78 @@
  * 创建日期: 2026-03-13
  * 作者: CombatDebugStudio
  * 功能: 调试控制面板弹窗
- * 描述: 提供各种调试按钮，按模块分类
+ * 描述: 提供各种调试按钮，按模块分类；右缘停靠，透明遮罩不拦截战斗操作
  * 版本: 1.0.0
--->
+ -->
 
 <template>
-  <Teleport to="body">
-    <Transition name="dialog-slide">
-      <div v-if="modelValue" class="debug-control-overlay" @click.self="handleClose">
-        <div class="debug-control-dialog" :style="dialogStyle">
-          <div class="dialog-header">
-            <span class="dialog-title">调试控制面板</span>
-            <button class="dialog-close" @click="handleClose">&times;</button>
-          </div>
-          <div class="dialog-content">
-            <div v-for="module in debugModules" :key="module.name" class="debug-module">
-              <div class="module-header">
-                <span v-if="module.icon" class="module-icon">{{ module.icon }}</span>
-                <span class="module-name">{{ module.name }}</span>
-              </div>
-              <div class="module-buttons">
-                <button v-for="btn in module.buttons" :key="btn.label" class="debug-btn" :class="btn.class"
-                  @click="handleButtonClick(btn.action)" :title="btn.description">
-                  {{ btn.label }}
-                </button>
-              </div>
-              <!-- ponytail: 动画调试模块增加爆炸样式选择器 -->
-              <div v-if="module.name === '动画调试'" class="impact-style-selector">
-                <span class="selector-label">爆炸样式:</span>
-                <div class="style-options">
-                  <button v-for="opt in impactStyles" :key="opt.value"
-                    class="style-btn" :class="{ active: debugStore.impactStyle === opt.value }"
-                    @click="debugStore.setImpactStyle(opt.value)" :title="opt.desc">
-                    {{ opt.label }}
-                  </button>
-                </div>
-              </div>
-              <!-- 数据生成模块控件 -->
-              <div v-if="module.name === '数据生成'" class="log-gen-control">
-                <div class="log-gen-row">
-                  <span class="log-gen-label">模式:</span>
-                  <div class="log-gen-options">
-                    <button v-for="opt in modeOptions" :key="opt.value"
-                      class="log-gen-opt-btn" :class="{ active: genMode === opt.value }"
-                      @click="genMode = opt.value">{{ opt.label }}</button>
-                  </div>
-                </div>
-                <div class="log-gen-row">
-                  <span class="log-gen-label">格式:</span>
-                  <div class="log-gen-options">
-                    <button v-for="opt in formatOptions" :key="opt.value"
-                      class="log-gen-opt-btn" :class="{ active: genFormat === opt.value }"
-                      @click="genFormat = opt.value">{{ opt.label }}</button>
-                  </div>
-                </div>
-                <div class="log-gen-row">
-                  <span class="log-gen-label">场次:</span>
-                  <NumericStepper v-model="genCount" :min="1" :max="200" :steps="[1, 10, 50]" />
-                </div>
-                <div class="log-gen-row">
-                  <span class="log-gen-label">记录:</span>
-                  <ToggleSwitch v-model="genRecord" label="保存回放/调试记录（昊天镜可加载）" />
-                </div>
-                <button class="log-gen-btn"
-                  :disabled="battleStore.generationProgress.isGenerating"
-                  @click="battleStore.generateBattleData(genMode, genFormat, genCount, genRecord)">
-                  {{ battleStore.generationProgress.isGenerating
-                    ? `生成中 ${battleStore.generationProgress.percent}%`
-                    : `生成数据（${genCount}场）` }}
-                </button>
-              </div>
-            </div>
-          </div>
+  <Dialog :model-value="modelValue" title="调试控制面板" width="30vw" height="calc(100vh - 24px)"
+    :show-mask="false" placement="right" @update:model-value="onUpdate">
+    <div v-for="module in debugModules" :key="module.name" class="debug-module">
+      <div class="module-header">
+        <span v-if="module.icon" class="module-icon">{{ module.icon }}</span>
+        <span class="module-name">{{ module.name }}</span>
+      </div>
+      <div class="module-buttons">
+        <button v-for="btn in module.buttons" :key="btn.label" class="debug-btn" :class="btn.class"
+          @click="handleButtonClick(btn.action)" :title="btn.description">
+          {{ btn.label }}
+        </button>
+      </div>
+      <!-- ponytail: 动画调试模块增加爆炸样式选择器 -->
+      <div v-if="module.name === '动画调试'" class="impact-style-selector">
+        <span class="selector-label">爆炸样式:</span>
+        <div class="style-options">
+          <button v-for="opt in impactStyles" :key="opt.value"
+            class="style-btn" :class="{ active: debugStore.impactStyle === opt.value }"
+            @click="debugStore.setImpactStyle(opt.value)" :title="opt.desc">
+            {{ opt.label }}
+          </button>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+      <!-- 数据生成模块控件 -->
+      <div v-if="module.name === '数据生成'" class="log-gen-control">
+        <div class="log-gen-row">
+          <span class="log-gen-label">模式:</span>
+          <div class="log-gen-options">
+            <button v-for="opt in modeOptions" :key="opt.value"
+              class="log-gen-opt-btn" :class="{ active: genMode === opt.value }"
+              @click="genMode = opt.value">{{ opt.label }}</button>
+          </div>
+        </div>
+        <div class="log-gen-row">
+          <span class="log-gen-label">格式:</span>
+          <div class="log-gen-options">
+            <button v-for="opt in formatOptions" :key="opt.value"
+              class="log-gen-opt-btn" :class="{ active: genFormat === opt.value }"
+              @click="genFormat = opt.value">{{ opt.label }}</button>
+          </div>
+        </div>
+        <div class="log-gen-row">
+          <span class="log-gen-label">场次:</span>
+          <NumericStepper v-model="genCount" :min="1" :max="50" :steps="[1, 10, 50]" />
+        </div>
+        <div class="log-gen-row">
+          <span class="log-gen-label">记录:</span>
+          <ToggleSwitch v-model="genRecord" label="保存回放/调试记录（昊天镜可加载）" />
+        </div>
+        <button class="log-gen-btn"
+          :disabled="battleStore.generationProgress.isGenerating"
+          @click="battleStore.generateBattleData(genMode, genFormat, genCount, genRecord)">
+          {{ battleStore.generationProgress.isGenerating
+            ? `生成中 ${battleStore.generationProgress.percent}%`
+            : `生成数据（${genCount}场）` }}
+        </button>
+      </div>
+    </div>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import Dialog from '@/presentation/components/Dialog.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
 
@@ -141,13 +131,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
-
-const dialogStyle = computed(() => ({
-  top: '12px',
-  bottom: '12px',
-  right: '12px',
-  width: '30vw'
-}))
 
 const debugModules: DebugModule[] = [
   {
@@ -214,8 +197,8 @@ const debugModules: DebugModule[] = [
   }
 ]
 
-const handleClose = () => {
-  emit('update:modelValue', false)
+const onUpdate = (value: boolean) => {
+  emit('update:modelValue', value)
 }
 
 const handleButtonClick = (action: string) => {
@@ -224,27 +207,6 @@ const handleButtonClick = (action: string) => {
 </script>
 
 <style scoped>
-.debug-control-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2000;
-}
-
-.debug-control-dialog {
-  position: absolute;
-  max-height: calc(100vh - 24px);
-  background: var(--color-overlay-panel);
-  border: 1px solid var(--border-debug-color);
-  border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 8px 32px rgba(var(--rgb-black), var(--alpha-glow));
-  backdrop-filter: blur(10px);
-}
-
 .debug-module {
   margin-bottom: var(--space-4);
   padding: var(--space-3);
@@ -339,24 +301,6 @@ const handleButtonClick = (action: string) => {
 
 .debug-btn.btn-default {
   border-color: rgba(var(--rgb-white), var(--alpha-border));
-}
-
-.dialog-slide-enter-active,
-.dialog-slide-leave-active {
-  transition: opacity var(--transition-fast) ease;
-}
-
-.dialog-slide-enter-from,
-.dialog-slide-leave-to {
-  opacity: 0;
-}
-
-.dialog-slide-enter-active .debug-control-dialog {
-  animation: slideIn 0.2s ease;
-}
-
-.dialog-slide-leave-active .debug-control-dialog {
-  animation: slideOut 0.2s ease;
 }
 
 /* 爆炸样式选择器 */
@@ -467,29 +411,5 @@ const handleButtonClick = (action: string) => {
 .log-gen-btn:hover {
   background: var(--border-debug-color);
   box-shadow: 0 0 8px var(--border-debug-color);
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOut {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
 }
 </style>

@@ -36,6 +36,7 @@ import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarr
 import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
 import type { NarrativeBlock } from '@/shared/types/battle-log'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 
 export interface BattleGenerationOptions {
   /** 总场次数（默认 50） */
@@ -140,6 +141,8 @@ export class BattleDataGenerator {
 
         // 执行战斗直到结束
         let rounds = 0
+        // NOTE: 硬上限防死循环。低于 battle.maxTurns（默认 999）时可能截断——
+        //       截断场次无 winner，走下方 record 分支的"不保存录制"路径
         const MAX_ROUNDS = 200
         while (this.battleSystem.getBattleStatus() === BattleStatus.ACTIVE && rounds < MAX_ROUNDS) {
           await this.battleSystem.processTurn()
@@ -151,17 +154,25 @@ export class BattleDataGenerator {
 
         // ── 收集本场叙事日志（与面板导出同管线）──
         const battleData = this.battleSystem.getBattleData()
-        if (!battleData) continue
+        if (!battleData) {
+          // 防御：正常流程不可达（initialize 后必有 battleData），但若发生需清理本场内存录制避免泄漏
+          this.battleSystem.resetBattle()
+          continue
+        }
+
+        // ★ headless 下 BATTLE_ENDED 不广播，战报生成器不会自动 onBattleEnd：
+        //   手动触发以恢复导出中的"战报摘要"块（与面板导出格式一致），顺带释放累加器
+        const winner = battleData.winner
+        if (winner) BattleSummaryGenerator.instance.onBattleEnd(winner)
 
         const narrativeBlocks = this.collectNarrativeBlocks()
-        const winner = battleData.winner
 
         battleLogs.push({
           battleIndex: i + 1,
           battleId,
           allyNames: allyTeam.map(e => e.name),
           enemyNames: enemyTeam.map(e => e.name),
-          winner: ParticipantSideName[winner!],
+          winner: winner ? ParticipantSideName[winner] : '未分胜负',
           totalRounds: rounds,
           narrativeBlocks,
         })
@@ -171,13 +182,21 @@ export class BattleDataGenerator {
         //   昊天镜「战斗记录」源（UnifiedArchiveService.fromRecordedBattle）可直接加载回放与调试。
         //   NOTE: 保持 headless=true，lifecycleManager.endBattle 的自动保存被跳过，这里手动保存不双写。
         if (options.record) {
-          const label = battleMode === '1v1' ? '1v1' : '2v2'
-          try {
-            await this.battleSystem.saveBattleRecording(battleId, `数据生成 第${i + 1}场（${label}）`)
-          } catch (e) {
-            LoggerProvider.logger.addDebugLog(`保存生成战斗记录失败: ${e}`, {
-              level: LogLevel.ERROR,
-            })
+          if (!winner) {
+            // 超出 MAX_ROUNDS 截断的战斗未走 endBattle：无 winner/BATTLE_END 事件，保存为残缺录制没有分析价值
+            LoggerProvider.logger.addDebugLog(
+              `第 ${i + 1} 场战斗达到 ${MAX_ROUNDS} 回合上限未决出胜负，未保存回放记录`,
+              { level: LogLevel.WARN },
+            )
+          } else {
+            const label = battleMode === '1v1' ? '1v1' : '2v2'
+            try {
+              await this.battleSystem.saveBattleRecording(battleId, `数据生成 第${i + 1}场（${label}）`)
+            } catch (e) {
+              LoggerProvider.logger.addDebugLog(`保存生成战斗记录失败: ${e}`, {
+                level: LogLevel.ERROR,
+              })
+            }
           }
         }
 
@@ -328,11 +347,12 @@ export class BattleDataGenerator {
     header.push('')
 
     const allyWins = battleLogs.filter(b => b.winner === '友方').length
-    const enemyWins = battleLogs.length - allyWins
+    const draws = battleLogs.filter(b => b.winner === '未分胜负').length
+    const enemyWins = battleLogs.length - allyWins - draws
     const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
     const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
     header.push('【统计摘要】')
-    header.push(`  我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场`)
+    header.push(`  我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场 | 平局: ${draws} 场`)
     header.push(`  平均回合数: ${avgRounds}`)
     header.push(`  总回合数: ${totalRounds}`)
     header.push('')
@@ -356,13 +376,14 @@ export class BattleDataGenerator {
   /** 合并所有战斗日志为 HTML（头部统计 + <details> 折叠 + 语义渲染） */
   private mergeLogsHtml(battleLogs: SingleBattleLog[]): string {
     const allyWins = battleLogs.filter(b => b.winner === '友方').length
-    const enemyWins = battleLogs.length - allyWins
+    const draws = battleLogs.filter(b => b.winner === '未分胜负').length
+    const enemyWins = battleLogs.length - allyWins - draws
     const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
     const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
 
     const headerHtml = `<div class="report-stats">\n` +
       `<div>战斗数据报告 — 共 ${battleLogs.length} 场</div>\n` +
-      `<div>我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场</div>\n` +
+      `<div>我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场 | 平局: ${draws} 场</div>\n` +
       `<div>平均回合数: ${avgRounds} | 总回合数: ${totalRounds}</div>\n` +
       `</div>`
 

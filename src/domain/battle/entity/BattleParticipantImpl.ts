@@ -13,9 +13,7 @@ import {
 } from '@/domain/battle/type/types'
 import type {
   StatusEffect,
-  ParticipantSnapshot,
   BattleEntity,
-  BuffInstanceSnapshot,
   ControlMode,
   SkillAvailability,
 } from '@/domain/battle/type/types'
@@ -27,7 +25,6 @@ import {
   AttributeValue,
   ATTRIBUTE_CODE,
   getAttrMeta,
-  type AttributeValues,
   ModifierType,
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
@@ -48,6 +45,8 @@ export type BattleParticipantData = {
   skills: SkillSet
   statusEffects?: StatusEffect[]
   attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
+  /** 阵营元素 ID（克制矩阵用，引用封神榜 elements 表） */
+  faction?: string
   /** ponytail: P0/AI-1 — 控制模式，默认 AI */
   controlMode?: ControlMode
   /** 是否完全不会攻击（木人/训练靶子） */
@@ -70,6 +69,8 @@ export class BattleParticipantImpl implements BattleEntity {
   seatIndex: number
   statusEffects?: StatusEffect[]
   skills: SkillSet
+  /** 阵营元素 ID（克制矩阵用） */
+  faction?: string
 
   /**
    * Buff 实例 ID 列表（派生自 BuffSystem)
@@ -162,6 +163,7 @@ export class BattleParticipantImpl implements BattleEntity {
     this.team = data.team
     this.enabled = data.enabled ?? true
     this.seatIndex = data.seatIndex ?? 0
+    this.faction = data.faction
     this.stats.setOwnerId(this.id)
     this.stats.setOwnerName(this.name)
     this.statusEffects = data.statusEffects

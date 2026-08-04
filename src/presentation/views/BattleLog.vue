@@ -140,10 +140,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import type {
-  LogSegment,
   LogSegmentHover,
   BattleLogEntry,
-  NarrativeBlock,
   LogEntry,
 } from '@/shared/types/battle-log'
 import { LogType, LogLevel } from '@/shared/types/battle-log'
@@ -522,18 +520,6 @@ onUnmounted(() => {
   animation: content-in 0.18s ease-out;
 }
 
-@keyframes content-in {
-  from {
-    opacity: 0.4;
-    transform: translateY(3px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 
 
 /* ─────────── 扁平容器（系统/调试共用） ─────────── */
@@ -772,17 +758,5 @@ onUnmounted(() => {
       transform: none;
     }
   }
-}
-
-/* 可悬浮锚点 */
-.log-hoverable {
-  text-decoration: underline dotted;
-  text-underline-offset: 2px;
-  cursor: help;
-  transition: filter var(--transition-fast);
-}
-
-.log-hoverable:hover {
-  filter: brightness(1.35);
 }
 </style>

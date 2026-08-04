@@ -54,7 +54,7 @@
           <span class="ht-rng-margin" :class="{ fragile: marginOf(i) < 10 }">
             余量 {{ marginOf(i).toFixed(1) }}%<template v-if="marginOf(i) < 10"> · 敏感</template>
           </span>
-          <button class="ht-mini-btn" title="仅模拟重掷，不改变存档数据" @click="doReroll(i)">重掷该判定（仅模拟）</button>
+          <button class="ht-btn mini" title="仅模拟重掷，不改变存档数据" @click="doReroll(i)">重掷该判定（仅模拟）</button>
           <span v-if="rerolled(i)" class="ht-rng-reroll" :class="rerollFlip(i) ? 'v-fail' : 'v-pass'">
             {{ rerollFlip(i) ? '重掷翻转！' : '重掷未翻转' }}
           </span>

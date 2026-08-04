@@ -433,10 +433,4 @@ const getSelectorText = (selector: any): string => {
   border-radius: var(--radius-sm);
   padding: var(--space-2);
 }
-
-.description-text {
-  color: var(--color-text-tertiary);
-  line-height: var(--line-height-lg);
-  margin: 0;
-}
 </style>

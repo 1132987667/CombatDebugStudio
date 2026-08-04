@@ -84,5 +84,303 @@
     "stats": {
       "speed": 5
     }
+  },
+  {
+    "id": "mat_005",
+    "name": "水族鳞片",
+    "type": "material",
+    "description": "虾兵蟹将身上脱落的鳞甲，蕴含浅水灵气",
+    "rarity": 1
+  },
+  {
+    "id": "mat_006",
+    "name": "岩核",
+    "type": "material",
+    "description": "岩妖石精体内凝结的岩石核心，可锻造坚硬器具",
+    "rarity": 1
+  },
+  {
+    "id": "mat_007",
+    "name": "岩石结晶",
+    "type": "material",
+    "description": "岩妖首领掉落的精纯结晶，是炼制高级矿石的基础",
+    "rarity": 1
+  },
+  {
+    "id": "mat_008",
+    "name": "灵木枝",
+    "type": "material",
+    "description": "树精妖物身上折下的灵木枝，带淡淡草木清香",
+    "rarity": 1
+  },
+  {
+    "id": "mat_009",
+    "name": "野猪獠牙",
+    "type": "material",
+    "description": "野猪精的锋利獠牙，可作骨制武器材料",
+    "rarity": 1
+  },
+  {
+    "id": "mat_010",
+    "name": "家仆信物",
+    "type": "material",
+    "description": "家仆妖随身携带的信物，记录着主人的密令",
+    "rarity": 1
+  },
+  {
+    "id": "mat_011",
+    "name": "千年木心",
+    "type": "material",
+    "description": "千年树妖凝结的木心，蕴含磅礴生机",
+    "rarity": 2
+  },
+  {
+    "id": "mat_012",
+    "name": "蛛丝",
+    "type": "material",
+    "description": "蜘蛛精吐出的坚韧蛛丝，可织成护甲",
+    "rarity": 1
+  },
+  {
+    "id": "mat_013",
+    "name": "火蜥蜴鳞片",
+    "type": "material",
+    "description": "火蜥蜴的灼热鳞片，接触便微微发烫",
+    "rarity": 1
+  },
+  {
+    "id": "mat_014",
+    "name": "熔岩矿渣",
+    "type": "material",
+    "description": "熔岩精体内残留的矿渣，仍带高温余烬",
+    "rarity": 1
+  },
+  {
+    "id": "mat_015",
+    "name": "火童符纸",
+    "type": "material",
+    "description": "火童侍者使用的符纸，画着赤红的火焰纹",
+    "rarity": 1
+  },
+  {
+    "id": "mat_016",
+    "name": "兽王鬃毛",
+    "type": "material",
+    "description": "狮王象妖褪下的鬃毛，粗硬如铁",
+    "rarity": 2
+  },
+  {
+    "id": "mat_017",
+    "name": "浊浪水珠",
+    "type": "material",
+    "description": "浊浪中凝结的水珠，澄澈而沉重",
+    "rarity": 2
+  },
+  {
+    "id": "mat_018",
+    "name": "毒蛾鳞粉",
+    "type": "material",
+    "description": "毒蛾振翅抖落的鳞粉，沾之即麻",
+    "rarity": 1
+  },
+  {
+    "id": "mat_019",
+    "name": "金刚石粉",
+    "type": "material",
+    "description": "金刚罗汉周身散落的石粉，坚不可摧",
+    "rarity": 2
+  },
+  {
+    "id": "mat_020",
+    "name": "狮王爪",
+    "type": "material",
+    "description": "狮兵统领锋利的利爪，适合磨制成武器",
+    "rarity": 1
+  },
+  {
+    "id": "mat_021",
+    "name": "水灵珠",
+    "type": "material",
+    "description": "浅水涧孕育的灵珠，内含一汪清泉",
+    "rarity": 2
+  },
+  {
+    "id": "mat_022",
+    "name": "毒蛾翅膜",
+    "type": "material",
+    "description": "毒蛾的薄膜翅翼，薄如蝉翼却带剧毒",
+    "rarity": 1
+  },
+  {
+    "id": "mat_023",
+    "name": "蛛网丝",
+    "type": "material",
+    "description": "幼蛛织出的初生蛛丝，柔韧细密",
+    "rarity": 1
+  },
+  {
+    "id": "mat_024",
+    "name": "象妖象牙",
+    "type": "material",
+    "description": "象妖将军的象牙，是极好的雕刻与炼器材料",
+    "rarity": 2
+  },
+  {
+    "id": "mat_025",
+    "name": "鹏羽",
+    "type": "material",
+    "description": "大鹏怪脱落的羽毛，根根如铁",
+    "rarity": 1
+  },
+  {
+    "id": "mat_026",
+    "name": "金刚舍利",
+    "type": "material",
+    "description": "护法金刚体内凝结的舍利，佛光流转",
+    "rarity": 2
+  },
+  {
+    "id": "crys_001",
+    "name": "结晶灵石",
+    "type": "material",
+    "description": "山野精怪体内凝结的灵石，是炼器的通用核心",
+    "rarity": 3
+  },
+  {
+    "id": "crys_002",
+    "name": "青木灵晶",
+    "type": "material",
+    "description": "迷雾林中蕴生的青色灵晶，木气盎然",
+    "rarity": 3
+  },
+  {
+    "id": "crys_003",
+    "name": "赤火灵晶",
+    "type": "material",
+    "description": "熔岩火脉中凝出的赤红灵晶，灼热逼人",
+    "rarity": 3
+  },
+  {
+    "id": "crys_004",
+    "name": "碧水灵晶",
+    "type": "material",
+    "description": "深水之下的碧色灵晶，水光潋滟",
+    "rarity": 3
+  },
+  {
+    "id": "crys_005",
+    "name": "迷雾灵晶",
+    "type": "material",
+    "description": "迷雾林深处的神秘灵晶，雾影缭绕",
+    "rarity": 2
+  },
+  {
+    "id": "crys_006",
+    "name": "熔岩灵晶",
+    "type": "material",
+    "description": "熔岩核心处的结晶，仍泛着暗红火光",
+    "rarity": 3
+  },
+  {
+    "id": "crys_007",
+    "name": "白玉灵晶",
+    "type": "material",
+    "description": "山门重地凝出的白玉灵晶，温润如脂",
+    "rarity": 3
+  },
+  {
+    "id": "crys_008",
+    "name": "灵泉晶石",
+    "type": "material",
+    "description": "河伯府邸灵泉中凝出的晶石，清澈透亮",
+    "rarity": 2
+  },
+  {
+    "id": "crys_009",
+    "name": "玄铁灵晶",
+    "type": "material",
+    "description": "铁砂风暴中淬出的玄色灵晶，坚硬沉重",
+    "rarity": 3
+  },
+  {
+    "id": "frag_001",
+    "name": "叛徒令牌碎片",
+    "type": "material",
+    "description": "佛门叛徒佩戴的令牌碎片，记载着反叛的印记",
+    "rarity": 2
+  },
+  {
+    "id": "frag_002",
+    "name": "金刚护符碎片",
+    "type": "material",
+    "description": "金刚护法随从的护符残片，仍存一丝护体佛光",
+    "rarity": 2
+  },
+  {
+    "id": "frag_003",
+    "name": "罗汉袈裟碎片",
+    "type": "material",
+    "description": "罗汉使者所着袈裟的碎片，金线仍熠熠生辉",
+    "rarity": 2
+  },
+  {
+    "id": "frag_004",
+    "name": "护法经文碎片",
+    "type": "material",
+    "description": "护法学徒背诵的经文残页，字迹模糊而庄严",
+    "rarity": 2
+  },
+  {
+    "id": "ess_001",
+    "name": "降龙罗汉精华",
+    "type": "material",
+    "description": "降龙罗汉之力凝成的精华，蕴含降妖伏魔的真意",
+    "rarity": 3
+  },
+  {
+    "id": "ess_002",
+    "name": "佛光精华",
+    "type": "material",
+    "description": "禅音崖上汇聚的佛光精华，柔和而庄严",
+    "rarity": 3
+  },
+  {
+    "id": "ess_003",
+    "name": "金刚护法精华",
+    "type": "material",
+    "description": "金刚护法将帅凝出的精华，坚如磐石",
+    "rarity": 3
+  },
+  {
+    "id": "elix_004",
+    "name": "还灵丹",
+    "type": "consumable",
+    "description": "中阶恢复丹药，可恢复中等偏多的气血值",
+    "rarity": 2,
+    "effects": [{ "type": "heal", "value": 120 }]
+  },
+  {
+    "id": "elix_005",
+    "name": "聚力丹",
+    "type": "consumable",
+    "description": "聚气丹药，服用后短暂凝聚力量",
+    "rarity": 2,
+    "effects": [{ "type": "heal", "value": 60 }]
+  },
+  {
+    "id": "elix_006",
+    "name": "凝元丹",
+    "type": "consumable",
+    "description": "凝聚元气的高阶丹药，可恢复大量气血值",
+    "rarity": 3,
+    "effects": [{ "type": "heal", "value": 160 }]
+  },
+  {
+    "id": "elix_007",
+    "name": "九转还魂丹",
+    "type": "consumable",
+    "description": "传说级别的还魂丹药，危急时刻起死回生",
+    "rarity": 3,
+    "effects": [{ "type": "heal", "value": 200 }]
   }
 ]

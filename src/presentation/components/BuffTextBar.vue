@@ -180,15 +180,4 @@ function onTagLeave() {
   animation: badge-pop-in 0.15s ease-in reverse;
 }
 
-@keyframes badge-pop-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 </style>

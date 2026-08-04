@@ -213,19 +213,6 @@ export class BattleRecorder {
       turn,
       roundNumber,
     )
-
-    const recording = this.recordings.get(battleId)
-    if (recording && recording.rounds.length > 0) {
-      const currentTurn = recording.rounds[recording.rounds.length - 1]
-      currentTurn.events.push({
-        eventId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        type: BattleEventType.ACTION,
-        timestamp: Date.now(),
-        turn,
-        roundNumber,
-        data: { action, turn },
-      })
-    }
   }
 
   /**
@@ -246,72 +233,6 @@ export class BattleRecorder {
     if (recording) {
       recording.traceEvents = entries
     }
-  }
-
-  public recordBuffAdd(
-    battleId: string,
-    targetId: string,
-    buffId: string,
-    instanceId: string,
-    turn: number,
-  ) {
-    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
-    this.recordEvent(
-      battleId,
-      BattleEventType.BUFF_ADD,
-      {
-        targetId,
-        buffId,
-        instanceId,
-        turn,
-      },
-      turn,
-      roundNumber,
-    )
-  }
-
-  public recordBuffRemove(
-    battleId: string,
-    targetId: string,
-    instanceId: string,
-    turn: number,
-  ) {
-    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
-    this.recordEvent(
-      battleId,
-      BattleEventType.BUFF_REMOVE,
-      {
-        targetId,
-        instanceId,
-        turn,
-      },
-      turn,
-      roundNumber,
-    )
-  }
-
-  public recordBuffUpdate(
-    battleId: string,
-    targetId: string,
-    instanceId: string,
-    remainingTurns: number,
-    stacks: number,
-    turn: number,
-  ) {
-    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
-    this.recordEvent(
-      battleId,
-      BattleEventType.BUFF_UPDATE,
-      {
-        targetId,
-        instanceId,
-        remainingTurns,
-        stacks,
-        turn,
-      },
-      turn,
-      roundNumber,
-    )
   }
 
   public recordTurnStart(
@@ -436,7 +357,30 @@ export class BattleRecorder {
     // 在内存记录中保存持久化键名（供删除和清理使用）
     recording.saveKey = saveKey
 
+    // ★ 持久化上限裁剪：兑现 maxRecordings=50 语义（cleanupOldRecordings 只淘汰内存副本，
+    //   批量生成等场景 resetBattle→clearRecording 会让持久化副本永远进不了淘汰视野）
+    await this.trimPersistedRecordings()
+
     return saveKey
+  }
+
+  /**
+   * 持久化记录上限裁剪：按 savedAt 升序取键，超出 maxRecordings 删最旧。
+   * keysByField 为可选端口能力，无实现时跳过（不阻塞保存）。
+   */
+  private async trimPersistedRecordings(): Promise<void> {
+    if (!this.storage.keysByField) return
+    try {
+      const keys = await this.storage.keysByField(STORAGE_STORE.RECORDINGS, 'savedAt', 'asc')
+      if (keys.length <= this.maxRecordings) return
+      const toRemove = keys.slice(0, keys.length - this.maxRecordings)
+      await Promise.all(toRemove.map((k) => this.storage.remove(STORAGE_STORE.RECORDINGS, k)))
+    } catch (e) {
+      LoggerProvider.logger.addDebugLog('裁剪过期战斗记录失败', {
+        level: LogLevel.ERROR,
+        context: { error: e },
+      })
+    }
   }
 
   public async loadRecording(saveKey: string): Promise<RecordedBattle | null> {

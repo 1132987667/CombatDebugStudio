@@ -219,13 +219,7 @@ function onClick(e: MouseEvent) {
   border: 2px solid currentColor;
   border-top-color: transparent;
   border-radius: 50%;
-  animation: ui-button-spin 0.8s linear infinite;
+  animation: spin 0.8s linear infinite;
   flex-shrink: 0;
-}
-
-@keyframes ui-button-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

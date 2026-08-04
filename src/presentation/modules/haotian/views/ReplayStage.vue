@@ -35,13 +35,13 @@
     </div>
 
     <div class="ht-transport">
-      <button class="ht-tbtn" title="回到开头" @click="store.seekTo(0)">回到开头</button>
-      <button class="ht-tbtn" title="上一事件 (←)" @click="store.stepEvent(-1)">上一事件</button>
-      <button class="ht-tbtn primary" title="播放/暂停 (空格)" @click="store.togglePlay()">
+      <button class="ht-btn square" title="回到开头" @click="store.seekTo(0)">回到开头</button>
+      <button class="ht-btn square" title="上一事件 (←)" @click="store.stepEvent(-1)">上一事件</button>
+      <button class="ht-btn square primary" title="播放/暂停 (空格)" @click="store.togglePlay()">
         {{ store.playback.playing ? '⏸' : '▶' }}
       </button>
-      <button class="ht-tbtn" title="下一事件 (→)" @click="store.stepEvent(1)">下一事件</button>
-      <button class="ht-tbtn" title="到结尾" @click="store.seekTo(store.duration)">到结尾</button>
+      <button class="ht-btn square" title="下一事件 (→)" @click="store.stepEvent(1)">下一事件</button>
+      <button class="ht-btn square" title="到结尾" @click="store.seekTo(store.duration)">到结尾</button>
 
       <div class="ht-speed-seg">
         <button v-for="s in SPEEDS" :key="s" :class="{ on: store.playback.speed === s }" :title="`播放速度 ${s} 倍`" @click="store.playback.speed = s">
@@ -57,7 +57,7 @@
         <span class="ht-cur" :style="{ left: curPct + '%' }"></span>
       </div>
 
-      <button class="ht-tbtn tgl" :class="{ on: store.playback.follow }" title="播放时跟随事件流 (F)"
+      <button class="ht-btn square tgl" :class="{ on: store.playback.follow }" title="播放时跟随事件流 (F)"
         @click="store.playback.follow = !store.playback.follow">⌖</button>
     </div>
 

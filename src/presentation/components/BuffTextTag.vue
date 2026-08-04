@@ -127,23 +127,11 @@ const tooltipText = computed(() => {
 /* 剩余 1 回合闪烁 — 尊重系统减少动效设置 */
 @media (prefers-reduced-motion: no-preference) {
   .tag--last-turn {
-    animation: blink-turn 1s ease-in-out infinite;
+    animation: buffTextLastTurn 1s ease-in-out infinite;
   }
 }
 
 .tag--last-turn {
   opacity: 0.7;
-}
-
-@keyframes blink-turn {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.35;
-  }
 }
 </style>

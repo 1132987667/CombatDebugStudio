@@ -34,6 +34,15 @@ class MemoryStorage implements IPersistentStorage {
     this.store.clear()
     return true
   }
+  async keysByField(_store: string, field: string, direction: 'asc' | 'desc' = 'asc'): Promise<string[]> {
+    const entries = Array.from(this.store.entries())
+      .map(([k, v]) => ({
+        k,
+        v: (v as Record<string, unknown> | undefined)?.[field] as number | undefined ?? 0,
+      }))
+    entries.sort((a, b) => (direction === 'asc' ? a.v - b.v : b.v - a.v))
+    return entries.map((e) => e.k)
+  }
   async getStats(): Promise<StorageStats | null> {
     return null
   }
@@ -67,5 +76,22 @@ describe('BattleRecorder 旧数据迁移', () => {
     for (const rec of recorder.getAllRecordings()) {
       expect(Array.isArray(rec.combatRecords)).toBe(true)
     }
+  })
+
+  it('持久化记录超出 maxRecordings 上限时按 savedAt 删最旧（防批量生成无限累积）', async () => {
+    const storage = new MemoryStorage()
+    const recorder = new BattleRecorder(storage)
+
+    // 连续保存 55 条（模拟多次"生成数据·保存记录"累积）
+    for (let i = 0; i < 55; i++) {
+      recorder.startRecording(`b_${i}`, { participants: [] })
+      await recorder.saveRecording(`b_${i}`, `rec_${i}`)
+    }
+
+    const keys = await storage.keys(STORAGE_STORE.RECORDINGS)
+    // maxRecordings = 50：超出部分按保存时间（savedAt）删最旧
+    expect(keys.length).toBe(50)
+    expect(keys.some((k) => k.includes('b_0'))).toBe(false) // 最早 5 条已被裁剪
+    expect(keys.some((k) => k.includes('b_54'))).toBe(true) // 最新保存的保留
   })
 })

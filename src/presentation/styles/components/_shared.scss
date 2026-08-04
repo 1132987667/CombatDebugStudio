@@ -1,0 +1,59 @@
+/* ==========================================================================
+   Component: Shared (_shared.scss)
+   依赖: tokens.scss
+   作用: 跨组件重复样式的统一归口——至少两个组件重复过同一段样式，上收至此。
+   注意: 全局类优先级低于组件 scoped 样式；若组件需要差异化，用 scoped 覆盖。
+   ========================================================================== */
+
+/* ----- 悬浮提示淡入淡出（AttributeTooltip / EntityTooltip / ParticipantCard） ----- */
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.tooltip-fade-enter-to,
+.tooltip-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ----- 详情描述文本（BuffDetail / EnemyDetail / ItemDetail） -----
+   NOTE: AttributeTooltip 内部也使用同名类，但其 scoped 定义
+   (`.description-item .description-text`) 优先级更高，不受此全局类影响。 */
+.description-text {
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-lg);
+  margin: 0;
+}
+
+/* ----- 物品稀有度标签（CompendiumDialog / ItemDetail） -----
+   padding 两处组件各不相同（1px 4px / var(--space-1)），保留在组件 scoped。 */
+.item-rarity {
+  border-radius: var(--radius-sm);
+}
+
+.item-rarity.rarity-1 {
+  color: var(--color-text-tertiary);
+  background: rgba(var(--rgb-neutral), var(--alpha-wash));
+}
+
+.item-rarity.rarity-2 {
+  color: var(--color-info);
+  background: var(--border-common-color-dark);
+}
+
+.item-rarity.rarity-3 {
+  color: var(--color-debuff);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
+}
+
+.item-rarity.rarity-4 {
+  color: var(--color-warning);
+  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash));
+}

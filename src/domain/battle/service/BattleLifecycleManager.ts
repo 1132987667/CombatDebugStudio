@@ -101,7 +101,10 @@ export class BattleLifecycleManager {
     }
 
     battle.battleState = BattleStatus.ENDED
-    this.uiEventPort.emit(BattleEventCodes.BATTLE_ENDED, { winner })
+    // ★ headless（批量数据生成等无 UI 场景）不广播战斗结束事件，避免 UI 状态与战报累加器被批量战斗污染
+    if (!battle.headless) {
+      this.uiEventPort.emit(BattleEventCodes.BATTLE_ENDED, { winner })
+    }
 
     // ponytail: 调试模式 — 战斗结束事件已派发后暂停
     await this.debugGate.waitIfNeeded('BATTLE_END')

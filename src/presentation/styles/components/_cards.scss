@@ -393,18 +393,6 @@
   z-index: 1;
   animation: neon-pulse 1.5s ease-in-out infinite;
 }
-@keyframes neon-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: translateY(-50%) scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-50%) scale(1.2);
-  }
-}
-
 /* 脉冲色调——气血 各态 */
 .hp-fill.high .pulse {
   background: rgba(var(--rgb-success), var(--alpha-glow));
@@ -525,15 +513,7 @@
   margin-right: var(--space-2);
 }
 
-/* ----- 11. 速度选择器 ----- */
-.speed-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-  color: var(--color-text-primary);
-}
-
+/* ----- 11. 速度选择器（布局由 utilities .flex/.items-center/.gap-2 提供） ----- */
 .custom-speed {
   width: 50px;
   background: var(--color-bg-secondary);

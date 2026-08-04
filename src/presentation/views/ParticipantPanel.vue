@@ -3,14 +3,8 @@
     <!-- 阵容预设选择器 -->
     <div class="preset-selector">
       <label class="preset-label">阵容预设：</label>
-      <select v-model="selectedPreset" class="preset-select" @change="applyPreset">
-        <option value="">-- 手动配置 --</option>
-        <optgroup v-for="group in presetGroups" :key="group.label" :label="group.label">
-          <option v-for="p in group.items" :key="p.id" :value="p.id">
-            {{ p.name }}
-          </option>
-        </optgroup>
-      </select>
+      <TacticalSelect v-model="selectedPreset" class="preset-select-slot" :options="presetOptions"
+        @change="applyPreset" />
       <span v-if="currentPresetDesc" class="preset-desc">{{ currentPresetDesc }}</span>
     </div>
     <div class="panel-section">
@@ -104,6 +98,34 @@
           <input type="text" v-model="enemySearch" placeholder="搜索角色库..." class="search-input" aria-label="搜索角色库">
         </div>
         <div class="scene-enemy-list">
+          <div v-if="actors.length" class="scene-group">
+            <div class="scene-header" role="button" tabindex="0" @click="actorExpanded = !actorExpanded"
+              @keydown.enter.prevent="actorExpanded = !actorExpanded"
+              @keydown.space.prevent="actorExpanded = !actorExpanded">
+              <span class="expand-icon mr-2">{{ actorExpanded ? '[-]' : '[+]' }}</span>
+              <span class="scene-name">我的角色</span>
+              <span class="scene-count">{{ actors.length }}人</span>
+            </div>
+            <div v-if="actorExpanded" class="character-search">
+              <input type="text" v-model="actorSearch" placeholder="搜索角色..." class="search-input" aria-label="搜索角色">
+            </div>
+            <Transition name="scene-enemies">
+              <div class="scene-enemies" v-show="actorExpanded">
+                <div v-for="actor in filteredActors" :key="actor.id" class="character-item"
+                  :class="{ selected: isActorSelected(actor.id) }" role="button" tabindex="0"
+                  @click="previewActor(actor)" @keydown.enter.prevent="previewActor(actor)"
+                  @keydown.space.prevent="previewActor(actor)">
+                  <div class="char-info">
+                    <span class="char-name">{{ actor.name }} (Lv.{{ actor.level }})</span>
+                    <span class="char-stats">气血:{{ actor.stats.maxHealth ?? '—' }} 阵营:{{ actor.faction ?? '—' }}</span>
+                  </div>
+                  <div class="char-actions">
+                    <button class="btn-tiny" @click.stop="addActorToBattle(actor)"><span class="icon mr-2">[+]</span>我方</button>
+                  </div>
+                </div>
+              </div>
+            </Transition>
+          </div>
           <div v-for="group in groupedEnemies" :key="group.scene.id" class="scene-group">
             <div class="scene-header" role="button" tabindex="0" @click="toggleSceneExpand(group.scene.id)"
               @keydown.enter.prevent="toggleSceneExpand(group.scene.id)"
@@ -146,16 +168,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch, onMounted } from "vue";
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { container } from '@/infrastructure/di/Container';
+import { GameDataApi } from '@/application/service/GameDataApi';
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
+import type { ActorData, LineupData } from '@/domain/fengshen/types';
 import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
+import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore';
 import EmptyState from '@/presentation/components/EmptyState.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -165,14 +191,41 @@ interface GroupedEnemies {
 // 获取 BattleService
 const battleService = container.resolve<BattleService>('BattleService');
 const battleStore = useBattleStore();
+const gameDataApi = container.resolve<GameDataApi>('GameDataApi');
+const fengshenStore = useFengshenStore();
 
-// 初始化 GameDataProcessor
+// 初始化 GameDataProcessor（敌人/场景经数据源切换反映封神榜最新数据）
 const enemySearch = ref("");
 const enemiesData = ref<Enemy[]>([]);
 const scenesData = ref<SceneData[]>([]);
 enemiesData.value = GameDataProcessor.getEnemiesData();
 scenesData.value = GameDataProcessor.getScenesData();
 const expandedScenes = reactive<Record<string, boolean>>({});
+
+// 封神榜阵容 / 角色（可管理，数据变更自动刷新）
+const lineups = ref<LineupData[]>([]);
+const actors = ref<ActorData[]>([]);
+const actorSearch = ref('');
+const actorExpanded = ref(true);
+
+async function loadFengshenData(): Promise<void> {
+  try {
+    lineups.value = await gameDataApi.listLineups()
+    actors.value = await gameDataApi.listByTable<ActorData>('actors', { limit: 1000 })
+  } catch {
+    lineups.value = []
+    actors.value = []
+  }
+}
+
+onMounted(() => {
+  void loadFengshenData()
+  // 封神榜写操作后自动刷新（与封神榜模块共享 dataVersion 订阅）
+  watch(
+    () => fengshenStore.dataVersion,
+    () => void loadFengshenData(),
+  )
+})
 
 // 默认展开所有场景
 scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
@@ -318,22 +371,76 @@ const presets: Preset[] = [
 ]
 const selectedPreset = ref('')
 
-const presetGroups = computed(() => [
-  { label: '已有角色基线', items: presets.filter(p => p.id.startsWith('baseline_')) },
-  { label: '基础机制', items: presets.filter(p => ['test_basic_damage', 'test_defense', 'test_crit_vs_anti_crit'].includes(p.id)) },
-  { label: '被动技能', items: presets.filter(p => ['test_dodge_chain', 'test_lifesteal_vs_shield', 'test_thorns', 'test_combo_vs_thorns'].includes(p.id)) },
-  { label: 'Buff/Debuff', items: presets.filter(p => ['test_control', 'test_dot_poison', 'test_buff_stack'].includes(p.id)) },
-  { label: '混合对抗', items: presets.filter(p => p.id.startsWith('mixed_')) },
+/** 预设下拉：封神榜阵容（可管理）+ 内置调试预设（测试用例） */
+interface PresetGroupItem {
+  id: string
+  name: string
+  description: string
+  source: 'lineup' | 'builtin'
+}
+
+const presetGroups = computed(() => {
+  const groups: Array<{ label: string; items: PresetGroupItem[] }> = []
+  const allyLineups = lineups.value.filter((l) => l.side === 'ally')
+  const enemyLineups = lineups.value.filter((l) => l.side === 'enemy')
+  if (allyLineups.length) {
+    groups.push({
+      label: '封神榜阵容 · 我方',
+      items: allyLineups.map((l) => ({ id: l.id, name: l.name, description: l.description ?? '封神榜预设阵容', source: 'lineup' as const })),
+    })
+  }
+  if (enemyLineups.length) {
+    groups.push({
+      label: '封神榜阵容 · 敌方',
+      items: enemyLineups.map((l) => ({ id: l.id, name: l.name, description: l.description ?? '封神榜预设阵容', source: 'lineup' as const })),
+    })
+  }
+  groups.push(
+    { label: '调试 · 已有角色基线', items: presets.filter(p => p.id.startsWith('baseline_')) },
+    { label: '调试 · 基础机制', items: presets.filter(p => ['test_basic_damage', 'test_defense', 'test_crit_vs_anti_crit'].includes(p.id)) },
+    { label: '调试 · 被动技能', items: presets.filter(p => ['test_dodge_chain', 'test_lifesteal_vs_shield', 'test_thorns', 'test_combo_vs_thorns'].includes(p.id)) },
+    { label: '调试 · Buff/Debuff', items: presets.filter(p => ['test_control', 'test_dot_poison', 'test_buff_stack'].includes(p.id)) },
+    { label: '调试 · 混合对抗', items: presets.filter(p => p.id.startsWith('mixed_')) },
+  )
+  return groups
+})
+
+/** 预设下拉选项：手动配置（空值）+ 各分组阵容 */
+const presetOptions = computed<TSelectOption[]>(() => [
+  { value: '', label: '-- 手动配置 --' },
+  ...presetGroups.value.flatMap((g) =>
+    g.items.map((p) => ({ value: p.id, label: p.name, group: g.label } as TSelectOption)),
+  ),
 ])
 
 const currentPresetDesc = computed(() => {
-  const p = presets.find(p => p.id === selectedPreset.value)
-  return p?.description ?? ''
+  const lineup = lineups.value.find((l) => l.id === selectedPreset.value)
+  if (lineup) return lineup.description ?? '封神榜预设阵容'
+  return presets.find(p => p.id === selectedPreset.value)?.description ?? ''
 })
 
+/** 封神榜阵容 → 参战者（roles 按 seatIndex 排序；roleId 优先角色、其次敌人） */
+function applyLineup(lineup: LineupData): void {
+  const side = lineup.side === 'ally' ? ParticipantSide.ALLY : ParticipantSide.ENEMY
+  const roles = [...lineup.roles].sort((a, b) => a.seatIndex - b.seatIndex)
+  for (const role of roles) {
+    const actor = actors.value.find((a) => a.id === role.roleId)
+    if (actor) {
+      const entity = GameDataProcessor.actorToParticipant(actor, side, role.seatIndex)
+      battleService.addCharacterToTeam(entity, side)
+      continue
+    }
+    const enemy = GameDataProcessor.findEnemyById(role.roleId)
+    if (enemy) {
+      const entity = GameDataProcessor.enemyToParticipant(enemy, side, role.seatIndex)
+      battleService.addCharacterToTeam(entity, side)
+    }
+  }
+}
+
 const applyPreset = () => {
-  const preset = presets.find(p => p.id === selectedPreset.value)
-  if (!preset) return
+  const id = selectedPreset.value
+  if (!id) return
 
   // 先停止可能正在进行的战斗
   if (battleStore.isBattleActive) {
@@ -342,11 +449,23 @@ const applyPreset = () => {
   battleStore.resetBattle()
   battleService.clearParticipants()
 
+  const lineup = lineups.value.find((l) => l.id === id)
+  if (lineup) {
+    applyLineup(lineup)
+    battleStore.syncTeams()
+    const first = battleService.getAllyTeam()[0] ?? battleService.getEnemyTeam()[0]
+    if (first) battleStore.selectCharacter(first.id)
+    return
+  }
+
+  const preset = presets.find(p => p.id === id)
+  if (!preset) return
+
   // 构建我方
-  preset.ally.forEach((id, index) => {
-    const enemyData = GameDataProcessor.findEnemyById(id)
+  preset.ally.forEach((pid, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(pid)
     if (!enemyData) {
-      console.warn(`预设角色未找到: ${id}`)
+      console.warn(`预设角色未找到: ${pid}`)
       return
     }
     const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index)
@@ -354,10 +473,10 @@ const applyPreset = () => {
   })
 
   // 构建敌方
-  preset.enemy.forEach((id, index) => {
-    const enemyData = GameDataProcessor.findEnemyById(id)
+  preset.enemy.forEach((pid, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(pid)
     if (!enemyData) {
-      console.warn(`预设角色未找到: ${id}`)
+      console.warn(`预设角色未找到: ${pid}`)
       return
     }
     const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index)
@@ -428,9 +547,9 @@ const groupedEnemies = computed<GroupedEnemies[]>(() => {
   return allScenes
     .map((scene) => {
       const sceneEnemyIds = new Set([
-        ...scene.difficulties.easy.enemyIds,
-        ...scene.difficulties.normal.enemyIds,
-        ...scene.difficulties.hard.enemyIds,
+        ...(scene.difficulties.easy.enemyIds ?? []),
+        ...(scene.difficulties.normal.enemyIds ?? []),
+        ...(scene.difficulties.hard.enemyIds ?? []),
       ]);
 
       const sceneEnemies = allEnemies.filter((enemy) =>
@@ -474,6 +593,37 @@ const addEnemyToBattle = (enemy: Enemy, side: typeof ParticipantSide.ALLY | type
   const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
   battleService.addCharacterToTeam(newCharacter, side)
   battleStore.selectCharacter(newCharacter.id)
+};
+
+// ── 封神榜角色（actors 表）：搜索 / 预览 / 加入我方 ──
+const filteredActors = computed(() => {
+  if (!actorSearch.value) return actors.value
+  const kw = actorSearch.value.toLowerCase()
+  return actors.value.filter((a) => a.name.toLowerCase().includes(kw))
+});
+
+const isActorSelected = (actorId: string): boolean => {
+  const id = battleStore.selectedCharacterId
+  if (!id || !battleStore.previewEntity) return false
+  return id.startsWith(`[ALLY]_${actorId}_`)
+};
+
+const previewActor = (actor: ActorData): void => {
+  // actors 复用 previewEntity 通道（转 Enemy 形状供预览面板展示）
+  battleStore.previewRosterCharacter({
+    id: actor.id,
+    name: actor.name,
+    level: actor.level,
+    stats: actor.stats as Enemy['stats'],
+    drops: [],
+    skills: {},
+  })
+};
+
+const addActorToBattle = (actor: ActorData): void => {
+  const entity = GameDataProcessor.actorToParticipant(actor, ParticipantSide.ALLY)
+  battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
+  battleStore.selectCharacter(entity.id)
 };
 
 const moveCharacter = (direction: number) => {
@@ -590,20 +740,9 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   font-weight: var(--font-weight-medium);
 }
 
-.preset-select {
+.preset-select-slot {
   flex: 1;
   min-width: 140px;
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  cursor: pointer;
-}
-
-.preset-select:focus {
-  outline: none;
-  border-color: var(--color-info);
 }
 
 .preset-desc {

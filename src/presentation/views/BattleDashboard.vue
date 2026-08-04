@@ -717,6 +717,10 @@ onUnmounted(() => {
 }
 
 .skill-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: 0.35rem;
   color: rgba(var(--rgb-white), 0.85);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
@@ -725,8 +729,24 @@ onUnmounted(() => {
   border-left: 3px solid transparent;
 }
 
+.skill-item:last-child {
+  margin-bottom: 0;
+}
+
 .skill-item.passive {
+  background: rgba(var(--rgb-debuff), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-debuff), var(--alpha-glow));
   border-left-color: var(--color-border-default);
+}
+
+.skill-item.small {
+  background: rgba(var(--rgb-skill-active), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-skill-active), var(--alpha-glow));
+}
+
+.skill-item.ultimate {
+  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-skill-ultimate), var(--alpha-glow));
 }
 
 .skill-item:hover {
@@ -966,21 +986,4 @@ onUnmounted(() => {
   border: 1px solid rgba(var(--rgb-live), var(--alpha-border));
 }
 
-/* 悬浮提示过渡动画 */
-.tooltip-fade-enter-active,
-.tooltip-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.tooltip-fade-enter-from,
-.tooltip-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.tooltip-fade-enter-to,
-.tooltip-fade-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
 </style>

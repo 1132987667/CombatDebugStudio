@@ -284,21 +284,4 @@ const tooltipStyle = computed(() => {
   }
 }
 
-/* 过渡动画 */
-.tooltip-fade-enter-active,
-.tooltip-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.tooltip-fade-enter-from,
-.tooltip-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-.tooltip-fade-enter-to,
-.tooltip-fade-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
 </style>

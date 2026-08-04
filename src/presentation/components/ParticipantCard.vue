@@ -536,21 +536,6 @@ defineExpose({
   color: var(--color-text-disabled);
 }
 
-/* 追溯浮层过渡 */
-.tooltip-fade-enter-active {
-  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
-}
-
-.tooltip-fade-leave-active {
-  transition: opacity 0.1s ease-in;
-}
-
-.tooltip-fade-enter-from,
-.tooltip-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
 /* ============ 卡片视觉状态动画 ============ */
 
 /* 蓄力/施法 */
@@ -558,18 +543,6 @@ defineExpose({
   transform: translateY(-3px);
   box-shadow: 0 0 30px var(--color-brand-red), 0 6px 24px rgba(var(--rgb-black), 0.7);
   animation: cast-pulse 0.6s ease;
-}
-
-@keyframes cast-pulse {
-
-  0%,
-  100% {
-    transform: translateY(-3px) scale(1);
-  }
-
-  50% {
-    transform: translateY(-3px) scale(1.018);
-  }
 }
 
 /* 受击 */
@@ -586,59 +559,9 @@ defineExpose({
   animation: hurt-flash 0.45s ease;
 }
 
-@keyframes hurt-shake {
-
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-
-  15% {
-    transform: translate(-5px, 1px) rotate(-1.5deg);
-  }
-
-  30% {
-    transform: translate(5px, -1px) rotate(1.5deg);
-  }
-
-  45% {
-    transform: translate(-4px, 1px) rotate(-1deg);
-  }
-
-  60% {
-    transform: translate(4px, -1px) rotate(1deg);
-  }
-
-  75% {
-    transform: translate(-2px, 0) rotate(-0.5deg);
-  }
-}
-
-@keyframes hurt-flash {
-  0% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
 /* 被治疗 */
 .member-card.healed {
   animation: heal-glow 0.8s ease;
-}
-
-@keyframes heal-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 transparent;
-  }
-
-  50% {
-    box-shadow: 0 0 30px var(--color-heal), inset 0 0 20px rgba(var(--rgb-success), 0.2);
-  }
 }
 
 /* 被加护盾 */
@@ -646,32 +569,8 @@ defineExpose({
   animation: shield-glow 0.8s ease;
 }
 
-@keyframes shield-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 transparent;
-  }
-
-  50% {
-    box-shadow: 0 0 30px var(--color-energy), inset 0 0 20px rgba(var(--rgb-energy), 0.2);
-  }
-}
-
 /* 气血 条闪光 */
 .hp-fill.hp-flash {
   animation: hp-bar-flash 0.8s ease;
-}
-
-@keyframes hp-bar-flash {
-
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-
-  50% {
-    filter: brightness(2) saturate(1.5);
-  }
 }
 </style>

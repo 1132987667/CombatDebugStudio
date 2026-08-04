@@ -134,27 +134,6 @@ const formatEffectValue = (value: number): string => {
 
 .item-rarity {
   padding: var(--space-1);
-  border-radius: var(--radius-sm);
-}
-
-.item-rarity.rarity-1 {
-  color: var(--color-text-tertiary);
-  background: rgba(var(--rgb-neutral), var(--alpha-wash));
-}
-
-.item-rarity.rarity-2 {
-  color: var(--color-info);
-  background: var(--border-common-color-dark);
-}
-
-.item-rarity.rarity-3 {
-  color: var(--color-debuff);
-  background: rgba(var(--rgb-debuff), var(--alpha-wash));
-}
-
-.item-rarity.rarity-4 {
-  color: var(--color-warning);
-  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash));
 }
 
 .item-description-panel {
@@ -163,12 +142,6 @@ const formatEffectValue = (value: number): string => {
   border-radius: var(--radius-sm);
   padding: var(--space-2);
   margin-bottom: var(--space-2);
-}
-
-.description-text {
-  color: var(--color-text-tertiary);
-  line-height: var(--line-height-lg);
-  margin: 0;
 }
 
 .item-stats-panel {

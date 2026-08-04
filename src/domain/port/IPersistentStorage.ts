@@ -10,7 +10,30 @@ export const STORAGE_STORE = {
   RECORDINGS: 'recordings',
   SNAPSHOTS: 'snapshots',
 } as const
-export type StorageStoreName = (typeof STORAGE_STORE)[keyof typeof STORAGE_STORE]
+
+/** 封神榜数据表 store 名（IndexedDB DB v2 起，见封神榜开发计划 §3.2） */
+export const FENGSHEN_STORE = {
+  ACTORS: 'actors',
+  SKILLS: 'skills',
+  BUFFS: 'buffs',
+  ENEMIES: 'enemies',
+  SCENES: 'scenes',
+  FORMATIONS: 'formations',
+  LINEUPS: 'lineups',
+  MATERIALS: 'materials',
+  EQUIPMENT: 'equipment',
+  ELEMENTS: 'elements',
+  GROWTH: 'growth',
+  DROPS: 'drops',
+  PARAMS: 'params',
+  META: 'meta',
+} as const
+export type FengshenStoreName = (typeof FENGSHEN_STORE)[keyof typeof FENGSHEN_STORE]
+
+/** 全部 store 名（基础 + 封神榜），供迁移/统计遍历 */
+export const ALL_STORES = [...Object.values(STORAGE_STORE), ...Object.values(FENGSHEN_STORE)] as const
+
+export type StorageStoreName = (typeof STORAGE_STORE)[keyof typeof STORAGE_STORE] | FengshenStoreName
 
 export interface StorageStats {
   usedBytes: number

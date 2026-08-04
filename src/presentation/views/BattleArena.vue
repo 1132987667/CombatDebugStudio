@@ -28,11 +28,7 @@
           <button class="btn-medium" @click="showDebugControlDialog = true">调试面板</button>
           <button class="btn-medium" @click="saveRecording">保存战斗记录</button>
         </template>
-        <template v-else-if="activeModule === 'fengshen'">
-          <button class="btn-medium" @click="showStatusDialog = true">角色编辑</button>
-          <button class="btn-medium" @click="showCompendiumDialog = true">图鉴</button>
-          <button class="btn-medium" @click="showSceneDialog = true">场景管理</button>
-        </template>
+        <!-- NOTE: 封神榜数据管理已内聚到模块内（Fengshen.vue），顶部不再暴露弹窗入口 -->
       </template>
     </ModuleHeader>
 
@@ -56,13 +52,10 @@
       <HaotianMirror :active="activeModule === 'haotian'" />
     </div>
 
-    <!-- 封神榜：数据后台管理（M1/M2 开发中，先占位） -->
-    <div v-show="activeModule === 'fengshen'" class="module-layout" :id="modulePanelId('fengshen')"
+    <!-- 封神榜：数据后台管理 -->
+    <div v-show="activeModule === 'fengshen'" class="module-layout module-layout--full" :id="modulePanelId('fengshen')"
       role="tabpanel" :aria-labelledby="moduleTabId('fengshen')">
-      <div class="module-placeholder">
-        <h2 class="module-placeholder-title">封神榜</h2>
-        <p class="module-placeholder-desc">游戏数据后台管理（开发中）</p>
-      </div>
+      <Fengshen />
     </div>
 
     <!-- 演劫台：游戏模块（规划中） -->
@@ -144,6 +137,7 @@ import ControlBar from "./ControlBar.vue";
 import ModuleHeader, { modulePanelId, moduleTabId, type ModuleId } from "@/presentation/components/ModuleHeader.vue";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import HaotianMirror from "@/presentation/modules/haotian/HaotianMirror.vue";
+import Fengshen from "@/presentation/modules/fengshen/Fengshen.vue";
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -820,12 +814,6 @@ onUnmounted(() => {
       color: var(--color-text-primary);
       font-size: var(--font-size-md);
       text-align: center;
-    }
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
     }
   }
 }

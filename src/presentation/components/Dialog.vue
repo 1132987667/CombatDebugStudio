@@ -10,17 +10,21 @@
 <template>
   <Teleport to="body">
     <Transition name="dialog-fade">
-      <div v-if="modelValue" ref="overlayRef" class="dialog-overlay" :class="{ 'dialog-overlay--transparent': !showMask }"
+      <div v-if="modelValue" ref="overlayRef" class="dialog-overlay"
+        :class="{
+          'dialog-overlay--transparent': !showMask,
+          'dialog-overlay--placement-right': placement === 'right',
+        }"
         role="dialog" aria-modal="true" :aria-label="title" tabindex="-1" @click.self="onOverlayClick">
         <div class="dialog-container" :style="{ width: width, height: height }">
           <div class="dialog-header">
-            <span class="dialog-title">{{ title }}</span>
-            <div class="dialog-header-actions">
+              <span class="dialog-title">{{ title }}</span>
+              <div class="dialog-header-actions flex items-center gap-2">
               <slot name="header-actions"></slot>
               <button class="dialog-close" aria-label="关闭弹窗" @click="close">×</button>
             </div>
           </div>
-          <div class="dialog-content">
+          <div class="dialog-content" :class="contentClass">
             <slot></slot>
           </div>
           <div v-if="$slots.footer" class="dialog-footer">
@@ -52,6 +56,10 @@ interface Props {
   maskClosable?: boolean;
   /** 按 ESC 时是否关闭弹窗，默认 true。编辑类弹窗（未保存内容）应设为 false */
   escClosable?: boolean;
+  /** 追加到内容区（.dialog-content）的类名，用于覆写默认内边距/滚动布局（如分栏图鉴） */
+  contentClass?: string;
+  /** 停靠位置：'center' 居中弹窗（默认），'right' 右缘停靠（如调试面板） */
+  placement?: "center" | "right";
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -165,12 +173,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.dialog-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 
 /* 确保弹窗内的表单元素样式与应用程序一致 */
 .dialog-content input[type="checkbox"] {

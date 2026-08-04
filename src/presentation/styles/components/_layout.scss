@@ -492,3 +492,11 @@
   color: var(--color-text-tertiary);
   margin-left: var(--space-4);
 }
+
+
+.flex-col-fill {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}

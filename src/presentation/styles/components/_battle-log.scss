@@ -1,7 +1,7 @@
 /* ==========================================================================
    Component: Battle Log (_battle-log.scss)
    依赖: tokens.scss
-   作用: 战斗日志区域 — 日志列表、过滤、颜色语义
+   作用: 战斗日志区域 — 日志面板、片段颜色语义
    ========================================================================== */
 @use '../mixins' as *;
 
@@ -28,23 +28,6 @@
   gap: var(--space-2);
 }
 
-.log-filters {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.filter-check {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-  cursor: pointer;
-}
-
-.filter-check input {
-  cursor: pointer;
-}
-
 .log-keyword {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-default);
@@ -61,81 +44,7 @@
   line-height: var(--line-height-md);
 }
 
-/* ----- 2. 日志条目 ----- */
-.log-entry {
-  padding: 0.4rem 0.5rem;
-  margin-bottom: 0.25rem;
-  background: var(--color-bg-tertiary);
-  border-left: 3px solid var(--color-border-default);
-  line-height: var(--line-height-md);
-}
-
-.log-entry.info {
-  border-left-color: var(--color-info);
-}
-
-.log-entry.damage {
-  border-left-color: var(--color-danger);
-  color: var(--color-damage);
-}
-
-.log-entry.crit {
-  border-left-color: var(--color-warning);
-  color: var(--color-crit);
-  background: var(--color-crit-bg);
-}
-
-.log-entry.heal {
-  border-left-color: var(--color-heal);
-  color: var(--color-heal);
-}
-
-.log-entry.enemy {
-  border-left-color: var(--color-danger);
-  color: var(--color-damage);
-}
-
-.log-entry.ally {
-  border-left-color: var(--color-heal);
-  color: var(--color-heal);
-}
-
-.log-type {
-  color: var(--color-info);
-  margin-right: var(--space-2);
-}
-
-.log-source {
-  font-weight: var(--font-weight-bold);
-}
-
-.log-entry.ally .log-source {
-  color: var(--color-heal);
-}
-
-.log-entry.enemy .log-source {
-  color: var(--color-danger);
-}
-
-.log-entry.info .log-source {
-  color: var(--color-info);
-}
-
-.log-action {
-  color: var(--color-text-tertiary);
-  margin: 0 0.25rem;
-}
-
-.log-target {
-  color: var(--color-danger);
-  font-weight: var(--font-weight-bold);
-}
-
-.log-result {
-  color: var(--color-text-primary);
-}
-
-/* ----- 3. 日志片段颜色 ----- */
+/* ----- 2. 日志片段颜色 ----- */
 .log-friendly {
   color: var(--color-success);
   font-weight: var(--font-weight-bold);
@@ -176,65 +85,8 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* ----- 4. 战斗日志语义化标签 ----- */
-.normal-attack {
-  color: var(--color-skill-active);
-  font-weight: var(--font-weight-medium);
-}
-
-.skill-attack {
-  color: var(--color-warning);
-  font-weight: var(--font-weight-medium);
-}
-
-.skill-heal {
-  color: var(--color-heal);
-  font-weight: var(--font-weight-medium);
-}
-
-.skill-debuff {
-  color: var(--color-debuff);
-  font-weight: var(--font-weight-medium);
-}
-
-.damage-value {
-  color: var(--color-damage);
-  font-weight: var(--font-weight-bold);
-}
-
-.crit-value {
-  color: var(--color-danger);
-  font-weight: var(--font-weight-bold);
-  font-size: 1.1em;
-}
-
-.heal-value {
-  color: var(--color-heal);
-  font-weight: var(--font-weight-bold);
-}
-
-.shield-value {
-  color: var(--color-energy);
-  font-weight: var(--font-weight-bold);
-}
-
-.evade {
-  color: var(--color-heal);
-  font-weight: var(--font-weight-medium);
-}
-
-.buff {
-  color: var(--color-heal);
-  font-weight: var(--font-weight-medium);
-}
-
-.debuff {
-  color: var(--color-debuff);
-  font-weight: var(--font-weight-medium);
-}
-
 /* ==========================================================================
-   5. LogSegment 语义着色类（方案一）
+   3. LogSegment 语义着色类
    与 buff-classification.ts 的 classifyBuff() + getBuffLogClass() 联动。
    颜色规则与 BuffTextTag 的增益/减益/控制三色保持同一视觉语言。
    ========================================================================== */
@@ -269,28 +121,10 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* 能量数值 — 青色 */
-.log-energy {
-  color: var(--color-energy);
-  font-weight: var(--font-weight-bold);
-}
-
 /* 护盾数值 — 蓝色 */
 .log-shield {
   color: var(--color-info);
   font-weight: var(--font-weight-bold);
-}
-
-/* 可悬浮锚点视觉暗示 — 虚线下划线 + 手型光标 */
-.log-hoverable {
-  text-decoration: underline dotted;
-  text-underline-offset: 2px;
-  cursor: help;
-  transition: filter var(--transition-fast);
-}
-
-.log-hoverable:hover {
-  filter: brightness(1.3);
 }
 
 /* 系统信息（装饰线、标题等） */
@@ -305,57 +139,7 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* ==========================================================================
-   6. 叙事块渲染（Phase 2+ 新增）
-   ========================================================================== */
-
-/* 回合分割条 */
-.log-block--divider {
-  margin: var(--space-2) 0;
-}
-
-.log-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-semibold);
-}
-
-.log-divider::before,
-.log-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--color-border-default);
-}
-
-/* 行动块 */
-.log-block {
-  padding: 0;
-  margin-bottom: 0.25rem;
-  line-height: var(--line-height-md);
-}
-
-.log-block__header,
-.log-block__result {
-  display: inline;
-}
-
-.log-block__subs {
-  margin-left: 10px;
-  padding-left: 14px;
-  border-left: 2px solid var(--color-border-default);
-  list-style: none;
-}
-
-.sub-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 0;
-}
-
-/* 芯片：角色名 / 技能 / buff */
+/* ----- 4. 芯片：角色名 / 技能 / buff ----- */
 .chip {
   border-radius: var(--radius-sm);
   font-weight: var(--font-weight-medium);
@@ -414,82 +198,4 @@
 .hp-after {
   color: var(--color-warning);
   font-weight: var(--font-weight-bold);
-}
-
-/* 高光 callout：★暴击 ✦击杀 ✦免疫 */
-.log-callout {
-  margin: 4px 0;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  color: var(--color-crit);
-  background: rgba(var(--rgb-warning), var(--alpha-wash));
-  border-left: 3px solid var(--color-crit);
-  font-weight: var(--font-weight-bold);
-}
-
-/* 态势快照 气血 条 */
-.log-snapshot {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-1) 0;
-}
-
-.snap-unit {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var();
-}
-
-.snap-name {
-  color: var(--color-text-secondary);
-  min-width: 40px;
-}
-
-.snap-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--color-bg-tertiary);
-  border-radius: 3px;
-  overflow: hidden;
-  min-width: 60px;
-}
-
-.snap-bar i {
-  display: block;
-  height: 100%;
-  background: var(--color-heal);
-  transition: width var(--transition-slow);
-}
-
-.snap-bar i.low {
-  background: var(--color-danger);
-}
-
-.snap-hp {
-  color: var(--color-text-secondary);
-  min-width: 50px;
-  text-align: right;
-}
-
-.log-system-line {
-  color: var(--color-text-tertiary);
-}
-
-/* 微交互 */
-@media (prefers-reduced-motion: no-preference) {
-  .log-block {
-    animation: block-in var(--transition-fast);
-  }
-
-  @keyframes block-in {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
 }

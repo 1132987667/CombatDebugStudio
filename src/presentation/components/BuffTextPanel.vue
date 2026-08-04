@@ -190,10 +190,6 @@ const summaryLines = computed<SummaryLine[]>(() => {
   padding: var(--space-2) 0;
 }
 
-.panel-groups-wrapper {
-  /* 包装 primary + secondary 分组，与底部的 v-else 空状态共享 v-if/v-else */
-}
-
 .panel-groups {
   padding: 0;
 }

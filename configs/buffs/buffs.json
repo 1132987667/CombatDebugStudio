@@ -2883,5 +2883,23 @@
     ],
     "polarity": "positive",
     "description": "阵型效果：防御+10%"
+  },
+  {
+    "id": "buff_silence",
+    "name": "沉默",
+    "category": "control",
+    "maxStacks": 1,
+    "duration": 1,
+    "controlType": "silence",
+    "effects": [
+      {
+        "type": "control",
+        "params": {
+          "controlType": "silence"
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "使目标沉默，无法释放技能"
   }
 ]

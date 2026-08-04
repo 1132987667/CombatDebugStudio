@@ -37,14 +37,23 @@ export interface FieldEffectConfig {
   periodic?: FieldEffectPeriodic
 }
 
+/**
+ * 场景难度编组：直接列敌人（enemyIds）与引用预设阵容（lineupId）二选一，lineupId 优先。
+ * 兼容旧数据：enemyIds 缺省时回退 lineupId 展开。
+ */
+export interface SceneDifficulty {
+  enemyIds?: string[]
+  lineupId?: string
+}
+
 export interface SceneData {
   id: string
   name: string
   background: string
   difficulties: {
-    easy: { enemyIds: string[] }
-    normal: { enemyIds: string[] }
-    hard: { enemyIds: string[] }
+    easy: SceneDifficulty
+    normal: SceneDifficulty
+    hard: SceneDifficulty
   }
   requiredLevel: number
   rewards: {

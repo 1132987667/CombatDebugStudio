@@ -11,7 +11,6 @@ import type {
   IModifierProvider,
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
-import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
 import type { BuffQuery } from '@/domain/buff/types'
 import { Counter } from '@/shared/utils/Counter'
@@ -236,6 +235,8 @@ export interface BattleEntity {
   enabled: boolean // 实体是否启用
   /** 队伍位置序号（从0开始，用于前排/后排/相邻判定） */
   seatIndex: number
+  /** 阵营元素 ID（克制矩阵用，引用封神榜 elements 表；缺省时克制系数按默认值 1.0） */
+  faction?: string
   /** 状态效果列表 */
   statusEffects?: StatusEffect[]
   /** 技能配置 */

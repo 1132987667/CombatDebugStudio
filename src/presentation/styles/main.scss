@@ -15,6 +15,7 @@
 
 // 4. 组件层
 @forward 'components/animations';
+@forward 'components/shared';
 @forward 'components/layout';
 @forward 'components/buttons';
 @forward 'components/cards';

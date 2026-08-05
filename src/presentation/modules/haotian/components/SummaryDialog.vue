@@ -117,7 +117,8 @@ const rows = computed<Array<{ id: string; s: UnitSummary }>>(() => {
 const winnerText = computed(() => {
   const sum = summary.value
   if (!sum?.winner) return ''
-  return store.pnameSide(sum.winner)
+  // winner 可能是 side（真实录制）或 unit id（demo），统一经 store.winnerLabel 翻译
+  return store.winnerLabel(sum.winner)
 })
 
 /** L2 阵营对比行 */

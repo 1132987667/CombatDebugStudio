@@ -183,7 +183,7 @@ const overlayShow = computed(() => {
 const overlaySub = computed(() => {
   const end = store.evs.find((e) => e.phase === 'battle_lifecycle' && (e.payload as Record<string, unknown>)?.action === 'battle_end')
   if (!end || !store.archive) return ''
-  const winner = store.archive.winner ? store.pnameSide(store.archive.winner) : '未知'
+  const winner = store.archive.winner ? store.winnerLabel(store.archive.winner) : '未知'
   return `${winner} 获胜 · ${formatTime(end.timestamp)}`
 })
 

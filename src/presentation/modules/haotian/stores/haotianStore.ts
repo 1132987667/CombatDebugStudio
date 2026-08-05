@@ -763,10 +763,18 @@ export const useHaotianStore = defineStore('haotian', () => {
   /** 单位 id → 名字（摘要导出与对话框一致；未知单位回退 id） */
   const nm = (id: string): string => pnameSide(id)
 
+  /**
+   * 胜方显示名：winner 可能是 side 值（真实录制 'ally'/'enemy'）或 unit id（demo），
+   * 统一为可读中文——side 值翻译为 友方/敌方，unit id 走 pnameSide（带阵营前缀）。
+   * 修复前 side 值经 pnameSide 查不到参与者、原样返回 'ally'，与实时战报弹窗口径不一致。
+   */
+  const SIDE_LABEL: Record<string, string> = { ally: '友方', enemy: '敌方' }
+  const winnerLabel = (winner: string): string => SIDE_LABEL[winner] ?? pnameSide(winner)
+
   function summaryMarkdown(): string {
     const sum = summary.value
     if (!sum) return ''
-    const win = sum.winner ? nm(sum.winner) : '—'
+    const win = sum.winner ? winnerLabel(sum.winner) : '—'
     const rows = summaryRows()
     const head = ['参战单位', '攻击', '输出', '承伤', '治疗', '暴击', '闪避', '抵抗', 'Buff 施加', '击杀']
     const line = (r: { id: string; s: UnitSummary }): string =>
@@ -972,6 +980,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     lastEvent,
     pname,
     pnameSide,
+    winnerLabel,
     timeRead,
     summary,
     summaryCut,
@@ -979,6 +988,8 @@ export const useHaotianStore = defineStore('haotian', () => {
     showEmptyStats,
     hasResisted,
     toggleShowEmptyStats,
+    summaryMarkdown,
+    summaryCsv,
     exportSummaryMarkdown,
     exportSummaryCsv,
     bookmarks,

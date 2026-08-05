@@ -129,3 +129,28 @@ describe('pnameSide（摘要导出/面板单位名 — 带阵营前缀，与日�
     expect(s.pnameSide('ghost')).toBe('ghost')
   })
 })
+
+describe('winnerLabel（胜方翻译 — 与实时战报弹窗口径一致，修复 winner=side 显示原文）', () => {
+  it('side 值翻译为 友方/敌方；unit id 带阵营前缀；未知回退原样', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    expect(s.winnerLabel('ally')).toBe('友方')
+    expect(s.winnerLabel('enemy')).toBe('敌方')
+    // unit id（demo 形态）走 pnameSide：带阵营前缀
+    expect(s.winnerLabel('u1')).toBe('[友方]火护法')
+    expect(s.winnerLabel('ghost')).toBe('ghost')
+  })
+
+  it('summaryMarkdown 导出：真实录制形态（winner=ally）显示 友方', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.archive = { ...s.archive!, winner: 'ally' }
+    expect(s.summaryMarkdown()).toContain('- 胜方：友方')
+  })
+
+  it('summaryMarkdown 导出：demo（winner=u1）显示 [友方]火护法（保持现有格式）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    expect(s.summaryMarkdown()).toContain('- 胜方：[友方]火护法')
+  })
+})

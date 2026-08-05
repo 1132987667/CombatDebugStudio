@@ -1731,18 +1731,8 @@
     "category": "dot",
     "maxStacks": 3,
     "duration": 2,
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "deal_dot_damage",
-        "params": {
-          "damageCategory": "elemental",
-          "baseDamageFormula": "target.maxHp * 0.05"
-        }
-      }
-    ],
     "polarity": "negative",
-    "description": "每回合持续伤害"
+    "description": "每回合持续伤害（伤害随层数递增，由 StrongPoisonDebuff 脚本驱动）"
   },
   {
     "id": "buff_stun",

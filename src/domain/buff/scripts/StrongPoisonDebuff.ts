@@ -60,8 +60,10 @@ export class StrongPoisonDebuff extends BaseBuffScript {
     )
 
     this.log(context, `强毒伤害：${currentDamage}`)
+    // dot:true → 战报补发 dot 事件，计入承伤不计命中/技能
     this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
       damage: currentDamage,
+      dot: true,
     })
 
     context.setVariable('damageStacks', stacks)

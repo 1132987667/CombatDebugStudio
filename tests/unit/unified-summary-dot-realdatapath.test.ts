@@ -144,6 +144,136 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
     expect(sum.judgment.hits).toBe(0)
     expect(sum.skills.some((s) => s.damage > 0)).toBe(false)
   })
+
+  it('脚本型毒（buff_poison）伤害补发 dot 事件进入战报', async () => {
+    const { allies, enemies } = createTestParticipantsFromConfig(
+      ['guardian_fire'],
+      ['guardian_gold'],
+    )
+    battleSystem.initialize(allies, enemies)
+    battleSystem.setBattleState(BattleStatus.ACTIVE)
+    battleSystem.setQuickMode(true)
+    const battleData = battleSystem.getBattleData()!
+    const enemy = enemies[0]
+    const initialHp =
+      battleSystem.getBattleRecording(battleData.battleId)!.initialState
+        .participants.find((p) => p.id === enemy.id)!.currentHealth
+
+    // 加载 buff 脚本（生产由 main.ts 调用；测试环境需手动）
+    const { BuffScriptLoader } = await import('@/domain/buff/BuffScriptLoader')
+    const loader = container.resolve<BuffScriptLoader>('BuffScriptLoader')
+    await loader.loadScripts()
+
+    // 给金护法上脚本型毒（PoisonDebuff，施加当轮不 tick）
+    battleSystem.getBuffSystem().addBuff(enemy.id, 'buff_poison', {}, battleData.currentTurn ?? 1)
+
+    // 跑若干回合让毒 tick（战斗自然结束时中断）
+    for (let i = 0; i < 5 && battleData.battleState === BattleStatus.ACTIVE; i++) {
+      await battleSystem.processTurn()
+    }
+
+    // 毒伤害已补发 dot 事件（无来源）
+    const dots = battleSystem.traceCollector
+      .query({ phase: TracePhase.DAMAGE_CALCULATION })
+      .filter((e) => (e.payload as Record<string, unknown>).dot === true)
+    expect(dots.length).toBeGreaterThanOrEqual(1)
+    expect(dots.every((e) => e.sourceId === undefined)).toBe(true)
+
+    await battleSystem.endBattle(ParticipantSide.ALLY)
+    const rec = battleSystem.getBattleRecording(battleData.battleId)!
+    const archive = fromRecordedBattle(rec)!
+    const sum = summarizeBattle(archive)
+    const poisonDamage = dots.reduce(
+      (s, e) => s + ((e.payload as { result: number }).result ?? 0),
+      0,
+    )
+    // 毒伤害以 dot 事件进入承伤（战斗含普攻命中，承伤 ≥ 毒伤害 + 普攻）
+    expect(poisonDamage).toBeGreaterThan(0)
+    expect(sum.units[enemy.id].taken).toBeGreaterThanOrEqual(poisonDamage)
+    expect(sum.units[enemy.id].hpEnd).toBeLessThan(initialHp)
+  })
+
+  it('JSON 触发器型毒（deal_dot_damage）真实触发链路：伤害产生并进战报', async () => {
+    const { allies, enemies } = createTestParticipantsFromConfig(
+      ['guardian_fire'],
+      ['guardian_gold'],
+    )
+    battleSystem.initialize(allies, enemies)
+    battleSystem.setBattleState(BattleStatus.ACTIVE)
+    battleSystem.setQuickMode(true)
+    const battleData = battleSystem.getBattleData()!
+    const enemy = enemies[0]
+
+    // buff_poison_test：path D（triggers 驱动，无脚本），ON_TURN_START → deal_dot_damage，
+    // percent=0.1（当前气血 10%）。修复前 ctx.buffSystem 未注入，参数也错位，毒完全无效。
+    battleSystem.getBuffSystem().addBuff(enemy.id, 'buff_poison_test', {}, battleData.currentTurn ?? 1)
+
+    for (let i = 0; i < 5 && battleData.battleState === BattleStatus.ACTIVE; i++) {
+      await battleSystem.processTurn()
+    }
+
+    const dots = battleSystem.traceCollector
+      .query({ phase: TracePhase.DAMAGE_CALCULATION })
+      .filter((e) => (e.payload as Record<string, unknown>).dot === true)
+    // 修复后：dealDotDamage 经 ctx.buffSystem.requestDamage 产生 percent 伤害并补发 dot 事件
+    expect(dots.length).toBeGreaterThanOrEqual(1)
+    const first = dots[0].payload as { result: number }
+    expect(first.result).toBeGreaterThan(0)
+
+    await battleSystem.endBattle(ParticipantSide.ALLY)
+    const rec = battleSystem.getBattleRecording(battleData.battleId)!
+    const archive = fromRecordedBattle(rec)!
+    const sum = summarizeBattle(archive)
+    const poisonDamage = dots.reduce(
+      (s, e) => s + ((e.payload as { result: number }).result ?? 0),
+      0,
+    )
+    expect(poisonDamage).toBeGreaterThan(0)
+    expect(sum.units[enemy.id].taken).toBeGreaterThanOrEqual(poisonDamage)
+  })
+
+  it('剧毒（buff_strong_poison，脚本型）伤害经 dot 事件进战报', async () => {
+    const { allies, enemies } = createTestParticipantsFromConfig(
+      ['guardian_fire'],
+      ['guardian_gold'],
+    )
+    battleSystem.initialize(allies, enemies)
+    battleSystem.setBattleState(BattleStatus.ACTIVE)
+    battleSystem.setQuickMode(true)
+    const battleData = battleSystem.getBattleData()!
+    const enemy = enemies[0]
+    const initialHp =
+      battleSystem.getBattleRecording(battleData.battleId)!.initialState
+        .participants.find((p) => p.id === enemy.id)!.currentHealth
+
+    const { BuffScriptLoader } = await import('@/domain/buff/BuffScriptLoader')
+    const loader = container.resolve<BuffScriptLoader>('BuffScriptLoader')
+    await loader.loadScripts()
+
+    // 强毒由 StrongPoisonDebuff 脚本驱动（冗余 triggers 已移除，避免双算）
+    battleSystem.getBuffSystem().addBuff(enemy.id, 'buff_strong_poison', {}, battleData.currentTurn ?? 1)
+
+    for (let i = 0; i < 5 && battleData.battleState === BattleStatus.ACTIVE; i++) {
+      await battleSystem.processTurn()
+    }
+
+    const dots = battleSystem.traceCollector
+      .query({ phase: TracePhase.DAMAGE_CALCULATION })
+      .filter((e) => (e.payload as Record<string, unknown>).dot === true)
+    expect(dots.length).toBeGreaterThanOrEqual(1)
+
+    await battleSystem.endBattle(ParticipantSide.ALLY)
+    const rec = battleSystem.getBattleRecording(battleData.battleId)!
+    const archive = fromRecordedBattle(rec)!
+    const sum = summarizeBattle(archive)
+    const poisonDamage = dots.reduce(
+      (s, e) => s + ((e.payload as { result: number }).result ?? 0),
+      0,
+    )
+    expect(poisonDamage).toBeGreaterThan(0)
+    expect(sum.units[enemy.id].taken).toBeGreaterThanOrEqual(poisonDamage)
+    expect(sum.units[enemy.id].hpEnd).toBeLessThan(initialHp)
+  })
 })
 
 

@@ -10,6 +10,8 @@
 import { describe, it, expect } from 'vitest'
 import { DotEffect } from '@/domain/buff/atomic/effects/DotEffect'
 import { HotEffect } from '@/domain/buff/atomic/effects/HotEffect'
+import { dealDotDamage } from '@/domain/buff/triggers/index'
+import type { TriggerExecutionContext } from '@/domain/buff/BuffSystem'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 function makeCtx(stacks: number) {
@@ -52,5 +54,19 @@ describe('DOT/HOT 层数缩放（P2-3）', () => {
     const { ctx, healCalls } = makeCtx(2)
     new HotEffect().onTick(ctx, { healType: 'flat', value: 50, resource: 'health' }, 1)
     expect(healCalls[0][1]).toBe(100)
+  })
+
+  it('dealDotDamage：percent 传 damagePercent 参数位 + origin=dot（修复参数错位）', () => {
+    const calls: unknown[][] = []
+    const buffSystem = { requestDamage: (...args: unknown[]) => calls.push(args) }
+    const ctx = {
+      targetId: 'e1',
+      params: { percent: 0.1 },
+      buffSystem,
+    } as unknown as TriggerExecutionContext
+    dealDotDamage(ctx)
+    // 修复前：['e1', 0, 0.1]（percent 落入 rawDamage 位，BattleSystem 回调不命中任何分支）
+    // 修复后：percent 落入 damagePercent 位，origin='dot' 使伤害补发 dot 事件
+    expect(calls[0]).toEqual(['e1', 0, undefined, 0.1, 'dot'])
   })
 })

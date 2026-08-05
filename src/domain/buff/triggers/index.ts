@@ -88,10 +88,14 @@ export function healOnFireDamage(ctx: TriggerExecutionContext): void {
 
 // ===================== 伤害/反弹/格挡类 =====================
 
-/** deal_dot_damage — 持续伤害（百分比），由 buff_poison/buff_strong_poison 使用 */
+/** deal_dot_damage — 持续伤害（当前气血百分比），由 buff_poison/buff_strong_poison 使用 */
 export function dealDotDamage(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percent as number) ?? 0.05
-  ctx.buffSystem?.requestDamage(ctx.targetId ?? '', 0, percent)
+  // NOTE: 修复参数错位——percent 是"当前气血百分比"，必须传 damagePercent 参数位。
+  //       原实现 `requestDamage(id, 0, percent)` 把 percent 放入 rawDamage 位，
+  //       BattleSystem 回调不命中任何分支，毒完全失效。origin='dot' 使伤害补发
+  //       dot 事件进入战报（承伤/HP），不计命中/技能（见 documents/需求文档/战斗战报数据契约.md §2.1）
+  ctx.buffSystem?.requestDamage(ctx.targetId ?? '', 0, undefined, percent, 'dot')
 }
 
 /** 

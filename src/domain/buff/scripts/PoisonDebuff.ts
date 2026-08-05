@@ -42,9 +42,10 @@ export class PoisonDebuff extends BaseBuffScript {
     )
 
     this.log(context, `毒素伤害：${currentDamage}`)
-    // 通过触发系统造成伤害
+    // 通过触发系统造成伤害（dot:true → 战报补发 dot 事件，计入承伤不计命中/技能）
     this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
       damage: currentDamage,
+      dot: true,
     })
 
     context.setVariable('damageStacks', stacks)

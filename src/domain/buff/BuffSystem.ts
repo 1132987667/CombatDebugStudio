@@ -164,10 +164,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       (ctx: TriggerExecutionContext) => {
         const damage = (ctx.params?.damage as number) ?? 0
         const damagePercent = (ctx.params?.damagePercent as number) ?? 0
+        // 脚本型毒（PoisonDebuff/StrongPoisonDebuff）在 triggerEvent 数据中带 dot:true，
+        // 使伤害补发 dot 事件进入战报；BerserkBuff 自残等非 dot 脚本不带此标记
+        const origin = ctx.params?.dot ? ('dot' as const) : undefined
         if (damagePercent > 0) {
-          this.dealDirectDamage(ctx.targetId ?? '', 0, damagePercent)
+          this.dealDirectDamage(ctx.targetId ?? '', 0, damagePercent, undefined, origin)
         } else if (damage > 0) {
-          this.dealDirectDamage(ctx.targetId ?? '', damage)
+          this.dealDirectDamage(ctx.targetId ?? '', damage, undefined, undefined, origin)
         }
       },
     )
@@ -353,7 +356,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         targetId,
         instanceId,
         params: data ?? {},
-        currentTurn: data?.currentTurn ?? -1,
+        buffSystem: this,
+        currentTurn: (data?.currentTurn as number) ?? -1,
       } as TriggerExecutionContext)
     }
   }
@@ -406,6 +410,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
             ...ctx,
             instanceId,
             targetId: characterId,
+            // NOTE: 修复 JSON 触发器脚本 ctx.buffSystem 缺失——emitTriggerEvent 构造的
+            //       TriggerEventContext 不含 buffSystem，此前 dealDotDamage/reflectDamage/
+            //       shareDamage 等全部通过 `ctx.buffSystem?.requestDamage` 的脚本实际无效
+            buffSystem: this,
             params: trigger.params as
               | Record<string, number | string>
               | undefined,

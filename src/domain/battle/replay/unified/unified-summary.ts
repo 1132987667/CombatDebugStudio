@@ -151,7 +151,6 @@ function critFlag(c: unknown): boolean {
 export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number): BattleSummary {
   const units: Record<string, UnitSummary> = {}
   const hpSim = new Map<string, { cur: number; max: number }>()
-  const known = new Set<string>()
 
   // 预置全部参战单位，保证摘要表始终覆盖无行动者
   for (const p of archive.initialState.participants) {
@@ -176,7 +175,6 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
       hpMax: p.maxHp,
     }
     hpSim.set(p.id, { cur: p.hp, max: p.maxHp })
-    known.add(p.id)
   }
 
   const skills = new Map<string, SkillSummary>()

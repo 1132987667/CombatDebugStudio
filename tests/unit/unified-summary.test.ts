@@ -93,4 +93,22 @@ describe('summarizeBattle（战斗摘要统计）', () => {
     expect(sum.units.u2.alive).toBe(false)
     expect(sum.units.u1.alive).toBe(true)
   })
+
+  it('L6 被动触发：demo 契约字段（verdict/passiveId/owner）统计触发次数', () => {
+    const sum = summarizeBattle(createDemoArchive())
+    expect(sum.passives).toHaveLength(1)
+    expect(sum.passives[0].passiveId).toBe('buff_guardian_revenge_rage')
+    expect(sum.passives[0].name).toBe('复仇怒火')
+    expect(sum.passives[0].owner).toBe('火护法')
+    expect(sum.passives[0].triggered).toBe(1)
+  })
+
+  it('L7 关键事件：最高单次仅全局一条（不复刻每个单位）', () => {
+    const sum = summarizeBattle(createDemoArchive())
+    const highest = sum.keyEvents.filter((e) => e.kind === 'highest_hit')
+    // u1 最高 306（ev18）、u2 最高 63（ev11）→ 只保留全局最高一条
+    expect(highest).toHaveLength(1)
+    expect(highest[0].text).toContain('火护法')
+    expect(highest[0].text).toContain('306')
+  })
 })

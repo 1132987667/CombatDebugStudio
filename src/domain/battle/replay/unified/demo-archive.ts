@@ -125,6 +125,10 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
     ev({
       id: 'ev12', phase: 'passive_trigger', correlationId: 'corr_1_2', parentId: 'ev11', timestamp: 2220, level: 'info', sourceId: 'u1',
       payload: {
+        // 契约字段（§2.6）：verdict/passiveId/passiveName/owner 与 PassiveSkillManager 真实发射形态一致，
+        // 缺失会导致演示战报 L6 被动统计恒为空（统计层只认这组字段）
+        passiveId: 'buff_guardian_revenge_rage', passiveName: '复仇怒火', owner: '火护法',
+        verdict: 'TRIGGERED',
         passive: '复仇怒火', chance: 0.35,
         rolls: [{ kind: 'passive', rate: 0.35, roll: 0.22 }],
         chain: [

@@ -68,6 +68,7 @@ import type { LogSegment } from '@/shared/types/battle-log'
 import { Counter } from '@/shared/utils/Counter'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { RAFTimer } from '@/shared/utils/RAF'
+import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { ReviveTracker } from '@/domain/battle/service/ReviveTracker'
 import { ThreatManager } from '@/domain/battle/service/ThreatManager'
 import { FieldEffectManager } from '@/domain/battle/service/FieldEffectManager'
@@ -274,6 +275,14 @@ export class BattleSystem {
     eventBus.emit(phase, fullContext)
   }
 
+  /** 行动后钩子（P2-8）：广播 ACTION_END 触发器事件（主行动与额外行动统一走此回调） */
+  private emitActionEnd(participantId: string, turn: number): void {
+    this.emitTriggerEvent(BattleTriggerPhase.ACTION_END, {
+      sourceId: participantId,
+      currentTurn: turn,
+    })
+  }
+
   /**
    * 使用容器创建战斗系统实例（推荐方式）
    * 容器会自动解析所有依赖
@@ -355,12 +364,14 @@ export class BattleSystem {
    * @param {BattleEntity[]} allyParticipants - 我方参与者数组
    * @param {BattleEntity[]} enemyParticipants - 敌方参与者数组
    * @param {string} [sceneId] - 可选场景 ID，用于加载场地效果
+   * @param {string} [seed] - 可选确定性随机种子（回放复现用；缺省随机生成并同步给 BattleRecorder）
    * @returns {BattleState} 初始化后的战斗状态
    */
   public initialize(
     allyParticipants: BattleEntity[],
     enemyParticipants: BattleEntity[],
     sceneId?: string,
+    seed?: string,
   ): BattleState {
     //  桥接战斗规则 → 伤害计算器（暴击/闪避开关+场地元素修正），每场战斗开始时生效
     // NOTE: §1.1 修复后 this.damageCalculator 与 this.skillManager.getDamageCalculator()
@@ -390,6 +401,13 @@ export class BattleSystem {
     })
     const battleData = this.battleData
 
+    // NOTE: 每场战斗重建确定性随机源 — 战斗内所有随机判定（命中/暴击/目标/AI/触发器）
+    //       统一走 battleData.rng，使回放可从 seed 复现；seed 同步给 BattleRecorder 持久化。
+    const seedValue = seed ?? SeededRandom.generateSeed()
+    battleData.rng = new SeededRandom(seedValue)
+    // 注入确定性随机源到各随机消费方（未注入的路径回退 Math.random，仅测试/非战斗场景）
+    this.injectRng(battleData.rng)
+
     // 【防止跨战斗污染】设置当前活跃战斗 ID
     this.activeBattleId = battleData.battleId
 
@@ -407,7 +425,7 @@ export class BattleSystem {
     const battleId = this.battleData.battleId
     this.battleRecorder.startRecording(battleId, {
       participants: allParticipants,
-    })
+    }, seedValue)
 
     LoggerProvider.logger.addBattleLog({
       turn: 0,
@@ -676,6 +694,7 @@ export class BattleSystem {
     // ponytail: 被动加成已生效，此时创建回合顺序确保速度加成正确
     battleData.turnOrder = this.turnManager.createTurnOrder(
       Array.from(participants.values()),
+      battleData.rng,
     )
 
     // ponytail: 光环在 applyPassiveSkills 中已通过 addBuff 添加到源参与者，
@@ -691,6 +710,7 @@ export class BattleSystem {
         allParticipants.forEach(p => p.recalcAll(TraceTriggerSource.FIELD_EFFECT))
         battleData.turnOrder = this.turnManager.createTurnOrder(
           Array.from(participants.values()),
+          battleData.rng,
         )
       }
     }
@@ -713,6 +733,7 @@ export class BattleSystem {
       allParticipants.forEach(p => p.recalcAll(TraceTriggerSource.FORMATION))
       battleData.turnOrder = this.turnManager.createTurnOrder(
         Array.from(participants.values()),
+        battleData.rng,
       )
     }
 
@@ -992,7 +1013,8 @@ export class BattleSystem {
           return
         }
 
-        this.buffSystem.updatePerTurn(participant.id, battle.currentTurn)
+        // 行动后钩子（P2-8）：ACTION_END 触发器事件 — 供 buff/被动监听"该角色行动完成"，
+        this.emitActionEnd(participant.id, battle.currentTurn)
 
         await this.runEndConditionCheck()
 
@@ -1016,10 +1038,21 @@ export class BattleSystem {
       // ponytail: 调试模式 — 回合结束事件已派发后暂停
       await this.debugGate.waitIfNeeded('TURN_END')
 
-      // 触发回合结束事件
+      // P2-8：回合末统一 buff 结算（原"行动后逐角色结算" → 回合末全量统一，
+      // 名实相符：updatePerTurn = 每回合一次，对所有存活角色）
       const endParticipants = Array.from(battle.participants.values()).filter(
         (p) => p.isAlive(),
       )
+      endParticipants.forEach((participant) => {
+        this.buffSystem.updatePerTurn(participant.id, battle.currentTurn)
+      })
+      // dot 致死及时判定胜负（对齐原"行动后结算 → 检查"节奏）
+      await this.runEndConditionCheck()
+      if (battle.battleState !== BattleStatus.ACTIVE) {
+        return
+      }
+
+      // 触发回合结束事件
       endParticipants.forEach((participant) => {
         this.emitTriggerEvent(BattleTriggerPhase.TURN_END, {
           sourceId: participant.id,
@@ -1052,6 +1085,8 @@ export class BattleSystem {
             level: LogLevel.INFO,
           })
           await this.executor.executeParticipantAction(battle, entity)
+          // 额外行动同样走行动后钩子（ACTION_END）
+          this.emitActionEnd(entity.id, battle.currentTurn)
         }
         extraCount++
         // 消费本轮执行中可能新产生的 extra_action 请求
@@ -1238,6 +1273,14 @@ export class BattleSystem {
     }
   }
 
+  /** 将当前战斗的确定性随机源注入各随机消费方（initialize / resetBattle 共用） */
+  private injectRng(rng: SeededRandom): void {
+    this.damageCalculator.setRng(rng)
+    this.buffSystem.setRng(rng)
+    this.passiveSkillManager.setRng(rng)
+    this.aiSystem.setRng(rng)
+  }
+
   public resetBattle(): void {
     // ponytail: 清除上一场战斗的被动注册、连击状态和待处理额外行动，防止跨战斗污染
     this.executor.reset() // 新增：重置 pendingDeaths / currentActionOrder，防止跨战斗残留
@@ -1246,6 +1289,12 @@ export class BattleSystem {
     this.skillManager.getExecutor().clearAllRotatingStates()
     this.skillManager.getExecutor().drainExtraActions()
     this.threatManager.reset()
+    // NOTE: 重建确定性随机源并同步重新注入 — 防止 reset 后 battleData.rng 与
+    //       各消费方持有的引用漂移（下一场 initialize 仍会重建 + 重新注入）
+    if (this.battleData) {
+      this.battleData.rng = new SeededRandom(SeededRandom.generateSeed())
+      this.injectRng(this.battleData.rng)
+    }
     if (this.battleData) {
       this.fieldEffectManager.removeAll(this.battleData.participants, this.buffSystem)
     }
@@ -1586,6 +1635,6 @@ export class BattleSystem {
       (p) => p.team !== source.team && p.isAlive(),
     )
     if (enemies.length === 0) return null
-    return enemies[Math.floor(Math.random() * enemies.length)].id
+    return enemies[battle.rng.nextInt(0, enemies.length - 1)].id
   }
 }

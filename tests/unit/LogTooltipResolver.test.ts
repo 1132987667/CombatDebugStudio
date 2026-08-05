@@ -16,10 +16,6 @@ function createMockRegistries(): { buffRegistry: BuffScriptRegistry; skillManage
           name: '首领光环',
           category: 'aura',
           duration: -1,
-          aura: {
-            targetSelector: 'allies',
-            modifiers: [{ targetAttribute: 'attack', type: 'PERCENTAGE', value: 0.15 }],
-          },
         },
         buff_poison: {
           id: 'buff_poison',
@@ -48,6 +44,22 @@ function createMockRegistries(): { buffRegistry: BuffScriptRegistry; skillManage
       return configs[id]
     }),
     getResolvedBuffConfig: vi.fn((id: string) => {
+      if (id === 'buff_leader_aura') {
+        // 光环配置已迁移至 effectPlan 的 AURA 原语（修饰值 15 = +15%，整数百分数）
+        return {
+          id: 'buff_leader_aura',
+          name: '首领光环',
+          description: '',
+          polarity: 'positive',
+          effectPlan: [{
+            type: 'aura',
+            params: {
+              targetSelector: 'allies',
+              modifiers: [{ targetAttribute: 'attack', type: 'PERCENTAGE', value: 15 }],
+            },
+          }],
+        }
+      }
       if (id === 'buff_iron_armor') {
         // 解析结果：attributes 已迁移至 effectPlan 的 MODIFIER 原语
         return {
@@ -88,6 +100,7 @@ describe('LogTooltipResolver', () => {
     expect(data!.details).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: '生效范围', value: '全体友方' }),
+        expect.objectContaining({ label: 'attack', value: '15%' }),
       ]),
     )
   })

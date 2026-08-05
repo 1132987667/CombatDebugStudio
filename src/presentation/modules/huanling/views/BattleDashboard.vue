@@ -47,7 +47,7 @@
         </div>
         <div v-show="advancedExpanded">
           <div v-for="(attrs, group) in advancedAttributes" :key="group">
-            <div class="monitor-subtitle" style="font-size:0.85em;opacity:0.7;margin-top:8px">
+            <div class="monitor-subtitle">
               {{ groupLabels[group] || group }}
             </div>
             <div class="monitor-grid" @mouseleave="hideAttrTooltip">

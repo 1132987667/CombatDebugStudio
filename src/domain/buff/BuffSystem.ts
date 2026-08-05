@@ -36,6 +36,7 @@ import { LogLevel } from '@/shared/types/battle-log'
 import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
 import { Counter } from '@/shared/utils/Counter'
 import { ConditionState } from '@/shared/types/buff-display'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
@@ -89,6 +90,24 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     (context: TriggerExecutionContext) => void
   >()
   private instanceIdCounter = new Counter(1)
+
+  /** 确定性随机源 — 由 BattleSystem.initialize 注入 battleData.rng；未注入时回退 Math.random */
+  private rng?: SeededRandom
+
+  /** 注入确定性随机源（触发器概率判定走此实例） */
+  setRng(rng: SeededRandom): void {
+    this.rng = rng
+  }
+
+  /** 读取确定性随机源（供触发器脚本等共享实例消费；未注入时返回 undefined） */
+  getRng(): SeededRandom | undefined {
+    return this.rng
+  }
+
+  /** 读取当前随机源（未注入时回退全局 Math.random） */
+  private random(): number {
+    return this.rng ? this.rng.next() : Math.random()
+  }
 
   /** 角色免疫标签注册表（初始化时由被动技能填充，运行时可查询） */
   private characterImmunities = new Map<string, Set<string>>()
@@ -355,7 +374,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         if (
           trigger.probability !== undefined &&
           trigger.probability < 1 &&
-          Math.random() > trigger.probability
+          this.random() > trigger.probability
         )
           return
         // 触发次数检查

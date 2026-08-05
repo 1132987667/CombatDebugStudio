@@ -64,8 +64,8 @@ import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.v
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
 import { useBattleStore } from '@/presentation/stores/battleStore';
-import BattleLog from "@/presentation/views/BattleLog.vue";
-import BattleSummaryDialog from "@/presentation/views/components/BattleSummaryDialog.vue";
+import BattleLog from "./BattleLog.vue";
+import BattleSummaryDialog from "../components/BattleSummaryDialog.vue";
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing';
 import type { BattleSummary } from '@/shared/types/battle-summary';
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper';

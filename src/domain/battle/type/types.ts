@@ -18,6 +18,7 @@ import { SkillType } from '@/domain/skill/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import type { TraceScope } from '@/shared/types/trace-event'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 const counter = new Counter()
 /**
@@ -121,7 +122,7 @@ export const BATTLE_CONSTANTS = {
   /** 默认初始能量 */
   DEFAULT_INITIAL_ENERGY: 30,
   /** 默认最大回合数 */
-  DEFAULT_MAX_TURNS: 999,
+  DEFAULT_MAX_TURNS: 99,
   /** 威胁值计算权重 */
   THREAT_HEALTH_WEIGHT: 50,
   THREAT_ENERGY_WEIGHT: 30,
@@ -708,6 +709,8 @@ export interface BattleData {
   quickMode: boolean
   /**  无头模式：跳过动画时序 + 抑制所有 UI 动画事件（批量生成用） */
   headless: boolean
+  /** 确定性随机数生成器 — 战斗内所有随机判定（命中/暴击/目标/AI/触发器）统一走此实例，保证回放可复现 */
+  rng: SeededRandom
 }
 
 /** 战斗回放系统版本号 */
@@ -801,6 +804,8 @@ export const BattleTriggerPhase = {
   BEFORE_ATTACK: 'before_attack',
   ON_HIT: 'on_hit',
   AFTER_ATTACK: 'after_attack',
+  /** 行动完成时（每次行动后，仅行动者本人；与 TURN_END 回合末全量区分） */
+  ACTION_END: 'action_end',
   DAMAGE_TAKEN: 'damage_taken',
   ON_KILL: 'on_kill',
   ON_DEATH: 'on_death',
@@ -857,6 +862,7 @@ export const BattleTriggerPhaseName: Record<BattleTriggerPhase, string> = {
   [BattleTriggerPhase.BEFORE_ATTACK]: '攻击前',
   [BattleTriggerPhase.ON_HIT]: '命中时',
   [BattleTriggerPhase.AFTER_ATTACK]: '攻击后',
+  [BattleTriggerPhase.ACTION_END]: '行动完成',
   [BattleTriggerPhase.DAMAGE_TAKEN]: '受击时',
   [BattleTriggerPhase.ON_KILL]: '击杀时',
   [BattleTriggerPhase.ON_DEATH]: '死亡时',

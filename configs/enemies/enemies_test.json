@@ -380,5 +380,23 @@
         "test_passive_dot_rotator"
       ]
     }
+  },
+  {
+    "id": "test_dummy_ultimate",
+    "name": "木人·究极",
+    "level": 1,
+    "stats": {
+      "currentHealth": 2000,
+      "maxHealth": 2000,
+      "defense": 60,
+      "speed": 60,
+      "critRate": 0,
+      "critDamage": 100,
+      "dodge": 0,
+      "attack": 0
+    },
+    "drops": [],
+    "skills": {},
+    "noAttack": true
   }
 ]

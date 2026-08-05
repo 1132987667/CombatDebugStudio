@@ -137,30 +137,8 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     }
   }
 
-  async function playDeathAnimation(targetId: string): Promise<void> {
-    const targetElement = getElement(targetId)
-    if (!targetElement) {
-      console.warn(`[useBattleAnimation] 未找到目标元素: ${targetId}`)
-      return
-    }
-
-    state.value.isPlaying = true
-    state.value.currentAnimation = 'death'
-
-    try {
-      await animationService.value.playDeathAnimation(targetElement)
-    } finally {
-      state.value.isPlaying = false
-      state.value.currentAnimation = null
-    }
-  }
-
   function setBattleSpeed(speed: number): void {
     animationService.value.setBattleSpeed(speed)
-  }
-
-  function getAnimationDuration(): number {
-    return animationService.value.getAnimationDuration()
   }
 
   function stopAllAnimations(): void {
@@ -182,9 +160,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     playAttackAnimation,
     playHitAnimation,
     playBuffAnimation,
-    playDeathAnimation,
     setBattleSpeed,
-    getAnimationDuration,
     stopAllAnimations,
   }
 }

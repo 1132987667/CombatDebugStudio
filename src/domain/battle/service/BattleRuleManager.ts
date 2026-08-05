@@ -173,7 +173,7 @@ export class BattleRuleManager {
           // fixedTurns: 是否使用固定回合数模式，false表示根据战斗情况自动结束
           fixedTurns: false,
           // maxTurns: 最大回合数限制，达到该回合数时强制结束战斗
-          maxTurns: 999,
+          maxTurns: 99,
           // turnTimeout: 单回合操作超时时间（毫秒），超时则判定为自动跳过
           turnTimeout: 30000,
         },

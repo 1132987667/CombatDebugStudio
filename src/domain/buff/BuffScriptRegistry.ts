@@ -111,6 +111,7 @@ export class BuffScriptRegistry {
   /** 加载时校验：不合规配置在加载时立即失败（校验失败 = 构建失败） */
   private validateBuffConfigs(): void {
     const knownCodes = Object.values(ATTRIBUTE_CODE) as string[]
+    const VALID_AURA_TYPES = ['ADDITIVE', 'PERCENTAGE', 'MULTIPLICATIVE', 'FINAL']
 
     const validateAttrs = (
       attrs: Record<string, unknown> | undefined,
@@ -127,10 +128,39 @@ export class BuffScriptRegistry {
         if (
           typeof cfg !== 'object' || cfg === null ||
           typeof cfg.value !== 'number' ||
+          !Number.isInteger(cfg.value) ||
           (cfg.type !== 'PERCENTAGE' && cfg.type !== 'ADDITIVE')
         ) {
           throw new Error(
-            `[BuffConfigValidator] ${where} 中 "${key}" 的值格式非法，须为 { value: number, type: 'PERCENTAGE'|'ADDITIVE' }`,
+            `[BuffConfigValidator] ${where} 中 "${key}" 的值格式非法，须为 { value: 整数, type: 'PERCENTAGE'|'ADDITIVE' }（小数会按原始单位累加导致数值错误）`,
+          )
+        }
+      }
+    }
+
+    // aura 效果结构不同（{targetAttribute, type, value}），单独校验：
+    // 修饰值必须为整数——属性引擎按"原始单位累加"处理 ADDITIVE，小数（如 0.1）会静默变成微不可见的加成
+    const validateAuraModifiers = (
+      modifiers: Array<Record<string, unknown>> | undefined,
+      where: string,
+    ) => {
+      if (!modifiers) return
+      for (const m of modifiers) {
+        const attr = m.targetAttribute as string | undefined
+        if (attr && !knownCodes.includes(attr)) {
+          throw new Error(
+            `[BuffConfigValidator] ${where} 中的 targetAttribute "${attr}" 不在 ATTRIBUTE_CODE 中，光环修饰符将静默失效`,
+          )
+        }
+        const type = m.type as string | undefined
+        if (type && !VALID_AURA_TYPES.includes(type)) {
+          throw new Error(
+            `[BuffConfigValidator] ${where} 中的 type "${type}" 非法，须为 ${VALID_AURA_TYPES.join('/')}`,
+          )
+        }
+        if (typeof m.value !== 'number' || !Number.isInteger(m.value)) {
+          throw new Error(
+            `[BuffConfigValidator] ${where} 中 "${attr ?? 'unknown'}" 的 value 必须为整数（本项目修饰值语义：整数百分数/点数）`,
           )
         }
       }
@@ -143,10 +173,17 @@ export class BuffScriptRegistry {
       validateAttrs(raw.attributes as Record<string, unknown> | undefined, `${buffId}.attributes`)
       if (raw.effects) {
         for (const effect of raw.effects) {
-          validateAttrs(
-            (effect.params?.attributes ?? undefined) as Record<string, unknown> | undefined,
-            `${buffId}.effects[].params.attributes`,
-          )
+          if (effect.type === 'aura') {
+            validateAuraModifiers(
+              (effect.params?.modifiers ?? undefined) as Array<Record<string, unknown>> | undefined,
+              `${buffId}.effects[].params.modifiers`,
+            )
+          } else {
+            validateAttrs(
+              (effect.params?.attributes ?? undefined) as Record<string, unknown> | undefined,
+              `${buffId}.effects[].params.attributes`,
+            )
+          }
         }
       }
 
@@ -157,10 +194,11 @@ export class BuffScriptRegistry {
       const hasEffectPlan = resolved?.effectPlan && resolved.effectPlan.length > 0
       const hasTriggers = (raw.triggers?.length ?? 0) > 0
 
-      if (!hasScript && !hasEffectPlan && !hasTriggers) {
+      if (!hasScript && !hasEffectPlan && !hasTriggers && raw.executionMode !== 'marker') {
         throw new Error(
           `[BuffConfigValidator] ${buffId}: 无脚本、无 effects[]、无 triggers。` +
-          `请至少配置其一。旧字段 attributes/controlType/immunities/aura 不再被识别。`
+          `请至少配置其一，或显式声明 executionMode: 'marker'（有意图但尚未实现的占位 buff）。` +
+          `旧字段 attributes/controlType/immunities/aura 不再被识别。`
         )
       }
     }

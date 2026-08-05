@@ -664,7 +664,7 @@ export class BattleExecutor {
         error: error as Error,
       })
       action.type = ActionTypes.ATTACK
-      action.damage = Math.floor(Math.random() * 20) + 10
+      action.damage = battleData.rng.nextInt(10, 29)
       action.effects = [
         {
           type: EffectType.DAMAGE,
@@ -745,6 +745,7 @@ export class BattleExecutor {
       this.formationRowLookup,
       this.frontProtectionLookup,
       (e) => this.buffSystem.hasBuffWithTag(e.id, 'taunt'),
+      battle.rng,
     )
   }
 
@@ -761,7 +762,7 @@ export class BattleExecutor {
     mainTarget: BattleEntity,
     stepTargetType: string,
   ): BattleEntity[] {
-    return resolveStepTargets(battle.participants, mainTarget, stepTargetType)
+    return resolveStepTargets(battle.participants, mainTarget, stepTargetType, battle.rng)
   }
 
   /**
@@ -1266,7 +1267,7 @@ export class BattleExecutor {
       if (highestId) return highestId
     }
 
-    return enemies[Math.floor(Math.random() * enemies.length)].id
+    return enemies[battle.rng.nextInt(0, enemies.length - 1)].id
   }
 
   // ============ 工具方法 ============
@@ -1320,14 +1321,14 @@ export class BattleExecutor {
     let damage: number
 
     if (participant.team === ParticipantSide.ALLY && enemies.length > 0) {
-      targetId = enemies[Math.floor(Math.random() * enemies.length)]
-      damage = Math.floor(Math.random() * 20) + 10
+      targetId = enemies[battle.rng.nextInt(0, enemies.length - 1)]
+      damage = battle.rng.nextInt(10, 29)
     } else if (
       participant.team === ParticipantSide.ENEMY &&
       characters.length > 0
     ) {
-      targetId = characters[Math.floor(Math.random() * characters.length)]
-      damage = Math.floor(Math.random() * 15) + 8
+      targetId = characters[battle.rng.nextInt(0, characters.length - 1)]
+      damage = battle.rng.nextInt(8, 22)
     } else {
       return
     }
@@ -1554,7 +1555,7 @@ export class BattleExecutor {
           error: error as Error,
         })
         action.type = ActionTypes.ATTACK
-        action.damage = Math.floor(Math.random() * 20) + 10
+        action.damage = battle.rng.nextInt(10, 29)
         action.effects = [
           {
             type: EffectType.DAMAGE,

@@ -137,17 +137,23 @@ export class LogTooltipResolver {
   ): void {
     switch (category) {
       case StatusCategory.AURA: {
-        const aura = config.aura
-        if (aura) {
-          const scope = aura.targetSelector === 'allies' ? '全体友方' : aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
-          details.push({ label: '生效范围', value: scope })
-          if (aura.modifiers?.length) {
-            for (const m of aura.modifiers) {
-              details.push({
-                label: m.targetAttribute ?? '属性',
-                value: this.formatModifierValue(m),
-              })
-            }
+        // aura 配置已迁移至 effectPlan（旧 config.aura 字段全库 0 条），从解析结果读取
+        const auraEffect = resolved?.effectPlan?.find(
+          (e) => e.type === AtomicEffectType.AURA,
+        )
+        const modifiers = (auraEffect?.params.modifiers ??
+          []) as BuffJsonAuraModifier[]
+        const targetSelector = (auraEffect?.params.targetSelector as
+          | string
+          | undefined) ?? 'self'
+        const scope = targetSelector === 'allies' ? '全体友方' : targetSelector === 'enemies' ? '全体敌方' : '自身'
+        details.push({ label: '生效范围', value: scope })
+        if (modifiers.length) {
+          for (const m of modifiers) {
+            details.push({
+              label: m.targetAttribute ?? '属性',
+              value: this.formatModifierValue(m),
+            })
           }
         }
         break

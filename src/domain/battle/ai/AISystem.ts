@@ -19,6 +19,7 @@ import type { BuffConfigLookup } from '@/domain/skill/types'
 import type { TraceScope } from '@/shared/types/trace-event'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 /**
  * AI系统类
@@ -31,6 +32,14 @@ export class AISystem {
   private aiInstances = new Map<string, BattleAI>()
   /** 调试追踪端口（由 BattleSystem 注入，转发给每个 AI 实例——含 getOrCreateAI 惰性创建的） */
   private tracePort?: IDebugTracePort
+  /** 确定性随机源（由 BattleSystem.initialize 注入，转发给每个 AI 实例） */
+  private rng?: SeededRandom
+
+  /** 设置确定性随机源（BattleSystem.initialize 时注入，含惰性创建的实例） */
+  setRng(rng: SeededRandom): void {
+    this.rng = rng
+    this.aiInstances.forEach((ai) => ai.setRng(rng))
+  }
 
   /** 设置调试追踪端口（BattleSystem 初始化时注入） */
   setTracePort(port: IDebugTracePort | null): void {
@@ -73,6 +82,7 @@ export class AISystem {
         this.buffLookup,
       )
       ai.setTracePort(this.tracePort ?? null)
+      if (this.rng) ai.setRng(this.rng)
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
     })
@@ -97,6 +107,7 @@ export class AISystem {
       )
       // 惰性创建的实例同样注入追踪端口（AI_DECISION 事件不丢失）
       ai.setTracePort(this.tracePort ?? null)
+      if (this.rng) ai.setRng(this.rng)
       this.aiInstances.set(participant.id, ai)
     }
 

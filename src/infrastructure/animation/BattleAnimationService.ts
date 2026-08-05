@@ -351,56 +351,6 @@ export class BattleAnimationService {
       })
   }
 
-  private playMissTextAnimation(
-    targetElement: HTMLElement,
-    delayMs: number,
-  ): void {
-    const textElement = document.createElement('div')
-    textElement.className = 'floating-miss-text'
-
-    textElement.style.cssText = `
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 16px;
-      font-weight: bold;
-      color: var(--color-text-tertiary);
-      text-shadow: 0 0 5px rgba(var(--rgb-neutral), var(--alpha-glow));
-      pointer-events: none;
-      z-index: 100;
-    `
-    textElement.textContent = '闪避'
-
-    targetElement.style.position = 'relative'
-    targetElement.appendChild(textElement)
-
-    const timeline = this.createTimeline()
-    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
-    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
-
-    timeline
-      .set(textElement, { opacity: 1, scale: 1, y: 0 })
-      .to(textElement, {
-        y: -40,
-        scale: 0.8,
-        duration: moveDurationMs / 1000,
-        ease: 'power2.out',
-        delay: delayMs / 1000,
-      })
-      .to(textElement, {
-        opacity: 0,
-        scale: 0.3,
-        duration: fadeDurationMs / 1000,
-        ease: 'power2.in',
-        onComplete: () => {
-          if (textElement.parentNode) {
-            textElement.parentNode.removeChild(textElement)
-          }
-        },
-      })
-  }
-
   private playPassiveTextAnimation(
     targetElement: HTMLElement,
     passiveName: string,
@@ -483,27 +433,6 @@ export class BattleAnimationService {
     })
   }
 
-  playDeathAnimation(targetElement: HTMLElement): Promise<void> {
-    // 无障碍：减少动效时直接落到最终视觉状态（死亡灰化）
-    if (prefersReducedMotion()) {
-      gsap.set(targetElement, { opacity: 0.3, scale: 0.95, filter: 'grayscale(1)' })
-      return Promise.resolve()
-    }
-
-    return new Promise((resolve) => {
-      const timeline = this.createTimeline()
-
-      timeline.to(targetElement, {
-        opacity: 0.3,
-        scale: 0.95,
-        filter: 'grayscale(1)',
-        duration: this.getScaledDuration(300) / 1000,
-        ease: 'power2.out',
-        onComplete: resolve,
-      })
-    })
-  }
-
   stopAllAnimations(): void {
     this.activeAnimations.forEach((timeline) => {
       timeline.kill()
@@ -516,26 +445,11 @@ export class BattleAnimationService {
 
     document
       .querySelectorAll(
-        '.floating-skill-name, .floating-damage-text, .floating-miss-text, .floating-passive-text',
+        '.floating-skill-name, .floating-damage-text, .floating-passive-text',
       )
       .forEach((el) => {
         el.remove()
       })
-  }
-
-  getAnimationDuration(): number {
-    if (prefersReducedMotion()) return 0
-    return this.getScaledDuration(this.BASE_ATTACK_DURATION)
-  }
-
-  getTotalAttackSequenceDuration(): number {
-    if (prefersReducedMotion()) return 0
-    return this.getScaledDuration(
-      this.BASE_ATTACK_DURATION +
-        this.SKILL_NAME_DELAY +
-        this.SKILL_NAME_MOVE_DURATION +
-        this.SKILL_NAME_FADE_DURATION,
-    )
   }
 }
 

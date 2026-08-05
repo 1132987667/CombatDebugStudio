@@ -220,9 +220,13 @@ export interface ITurnManager {
   /**
    * 根据参与者速度创建回合顺序
    * @param participants 参与者数组
+   * @param rng 可选确定性随机源（未传时回退 Math.random）
    * @returns 按速度排序的参与者ID数组
    */
-  createTurnOrder(participants: BattleEntity[]): string[]
+  createTurnOrder(
+    participants: BattleEntity[],
+    rng?: import('@/shared/utils/SeededRandom').SeededRandom,
+  ): string[]
 
   /**
    * 初始化战斗的回合信息

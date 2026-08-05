@@ -34,11 +34,15 @@ import {
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
 import type { BuffConfigLookup } from '@/domain/skill/types'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 /** 战斗AI接口 */
 export interface BattleAI {
   /** 设置上下文（Buff系统、技能管理器）*/
   setContext(buffSystem: BuffSystem, skillManager: SkillManager): void
+
+  /** 设置确定性随机源（AI 概率判定走此实例；BattleSystem.initialize 注入） */
+  setRng(rng: SeededRandom): void
 
   /** 设置调试追踪端口（BattleSystem 创建 AI 实例后注入，AI_DECISION 事件用） */
   setTracePort(port: IDebugTracePort | null): void
@@ -86,6 +90,13 @@ export class BaseBattleAI implements BattleAI {
   protected priorityStrategy: AIPriorityStrategy
   /** 调试追踪端口（由 BattleSystem 注入，AI_DECISION 事件用） */
   protected tracePort?: IDebugTracePort
+  /** 确定性随机源（由 BattleSystem.initialize 注入；未注入时回退 Math.random） */
+  protected rng?: SeededRandom
+
+  /** 设置确定性随机源 */
+  setRng(rng: SeededRandom): void {
+    this.rng = rng
+  }
 
   constructor(
     skillIds?: string[],
@@ -362,7 +373,7 @@ export class BaseBattleAI implements BattleAI {
     if (this.skills.size === 0) return false
 
     // ponytail: 加入概率检查，与非AI路径的 SKILL_USE_CHANCE 保持一致
-    if (Math.random() >= BATTLE_CONSTANTS.SKILL_USE_CHANCE) return false
+    if ((this.rng ? this.rng.next() : Math.random()) >= BATTLE_CONSTANTS.SKILL_USE_CHANCE) return false
 
     // Check if any skill is available and has enough energy
     for (const skillId of this.skills.keys()) {

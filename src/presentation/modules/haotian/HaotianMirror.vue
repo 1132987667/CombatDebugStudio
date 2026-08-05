@@ -175,5 +175,5 @@ onMounted(async () => {
 </script>
 
 <style lang="scss">
-@import './styles/haotian.scss';
+@use './styles/haotian.scss';
 </style>

@@ -31,6 +31,7 @@ import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
 import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { DamageCategory } from '@/domain/skill/types'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 export interface PassiveSkillConfig {
   id: string
@@ -66,6 +67,19 @@ export class PassiveSkillManager {
   >()
   private skillManager: SkillManager
   private buffSystem: BuffSystem
+
+  /** 确定性随机源 — 由 BattleSystem.initialize 注入 battleData.rng；未注入时回退 Math.random */
+  private rng?: SeededRandom
+
+  /** 注入确定性随机源（被动触发概率判定走此实例） */
+  setRng(rng: SeededRandom): void {
+    this.rng = rng
+  }
+
+  /** 读取当前随机源（未注入时回退全局 Math.random） */
+  private random(): number {
+    return this.rng ? this.rng.next() : Math.random()
+  }
 
   /** 可选的 IDebugTracePort */
   private tracePort?: IDebugTracePort
@@ -204,7 +218,7 @@ export class PassiveSkillManager {
       return false
     }
     // 检查触发概率是否命中
-    if (config.triggerProbability && Math.random() > config.triggerProbability) {
+    if (config.triggerProbability && this.random() > config.triggerProbability) {
       this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.PROBABILITY, {
         probability: { required: config.triggerProbability, passed: false },
       })
@@ -339,6 +353,7 @@ export class PassiveSkillManager {
             undefined,
             undefined,
             (e) => this.buffSystem.hasBuffWithTag?.(e.id, 'taunt') ?? false,
+            this.rng,
           )
         } else {
           targets = [contextTarget ?? entity]

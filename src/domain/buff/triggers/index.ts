@@ -213,7 +213,11 @@ export function cleanseRandomDebuff(ctx: TriggerExecutionContext): void {
     return classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative && config?.dispellable !== false
   })
   if (debuffs.length === 0) return
-  const target = debuffs[Math.floor(Math.random() * debuffs.length)]
+  // 随机驱散一个 debuff — 走 BuffSystem 的确定性随机源（回退 Math.random）
+  const idx = ctx.buffSystem?.getRng()
+    ? ctx.buffSystem!.getRng()!.nextInt(0, debuffs.length - 1)
+    : Math.floor(Math.random() * debuffs.length)
+  const target = debuffs[idx]
   ctx.buffSystem?.removeBuff(target.id)
 }
 

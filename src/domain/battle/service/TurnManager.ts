@@ -8,6 +8,7 @@
 import type { BattleEntity, BattleData } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 /**
  * 回合管理器类
@@ -28,11 +29,15 @@ export class TurnManager {
 
   /**
    * 根据参与者有效速度创建回合顺序
-   * 速度高的参与者排在前面，相同速度时随机排序
+   * 速度高的参与者排在前面，相同速度时随机排序（走 rng，未注入时回退 Math.random）
    * @param participants 参与者数组
+   * @param rng 确定性随机源（战斗路径由 BattleSystem 传入 battleData.rng）
    * @returns 按速度排序的参与者ID数组
    */
-  public createTurnOrder(participants: BattleEntity[]): string[] {
+  public createTurnOrder(
+    participants: BattleEntity[],
+    rng?: SeededRandom,
+  ): string[] {
     return participants
       .filter((p) => p.isAlive())
       .sort((a, b) => {
@@ -43,7 +48,7 @@ export class TurnManager {
           return speedB - speedA
         }
 
-        return Math.random() - 0.5
+        return rng ? (rng.nextBoolean() ? -1 : 1) : Math.random() - 0.5
       })
       .map((p) => p.id)
   }
@@ -51,7 +56,7 @@ export class TurnManager {
   /**
    * 重新计算回合顺序
    * 考虑所有角色的实际属性值（包括Buff效果）后重新排序
-   * 速度高的参与者排在前面，相同速度时随机排序
+   * 速度高的参与者排在前面，相同速度时随机排序（走 battle.rng）
    * @param battle 战斗数据
    * @returns 按实际速度排序的参与者ID数组
    */
@@ -69,7 +74,7 @@ export class TurnManager {
           return speedB - speedA
         }
 
-        return Math.random() - 0.5
+        return battle.rng.nextBoolean() ? -1 : 1
       })
       .map((p) => p.id)
   }

@@ -44,13 +44,9 @@
           <span class="log-gen-label">场次:</span>
           <NumericStepper v-model="genCount" :min="1" :max="50" :steps="[1, 10, 50]" />
         </div>
-        <div class="log-gen-row flex items-center gap-2">
-          <span class="log-gen-label">记录:</span>
-          <ToggleSwitch v-model="genRecord" label="保存回放/调试记录（昊天镜可加载）" />
-        </div>
         <Button variant="energy"
           :disabled="battleStore.generationProgress.isGenerating"
-          @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount, genRecord)">
+          @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount)">
           {{ battleStore.generationProgress.isGenerating
             ? `生成中 ${battleStore.generationProgress.percent}%`
             : `生成数据（${genCount}场）` }}
@@ -67,7 +63,6 @@ import { useBattleStore } from '@/presentation/stores/battleStore'
 import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
-import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const debugStore = useDebugStore()
@@ -76,9 +71,8 @@ const battleStore = useBattleStore()
 // ==================== 战斗数据生成 ====================
 // NOTE: 战术下拉 v-model 值为 string | number | null，故放宽为 string；调用处按已知选项断言
 const genMode = ref<string>('random')
-const genFormat = ref<'txt' | 'html'>('txt')
+const genFormat = ref<'txt' | 'html' | 'record'>('txt')
 const genCount = ref(50)
-const genRecord = ref(true)
 const modeOptions = [
   { value: '1v1' as const, label: '1v1' },
   { value: '2v2' as const, label: '2v2' },
@@ -87,6 +81,7 @@ const modeOptions = [
 const formatOptions = [
   { value: 'txt' as const, label: 'TXT' },
   { value: 'html' as const, label: 'HTML' },
+  { value: 'record' as const, label: '记录' },
 ]
 const impactStyles = [
   { label: '爆炸', value: 'explosion', desc: '径向火球扩散+火花' },
@@ -285,7 +280,7 @@ const handleButtonClick = (action: string) => {
   min-width: 0;
 }
 
-/* 格式行仍为按钮组（2 项，保持按钮形态） */
+/* 格式行仍为按钮组（3 项，保持按钮形态） */
 .log-gen-options {
   display: flex;
   gap: var(--space-1);

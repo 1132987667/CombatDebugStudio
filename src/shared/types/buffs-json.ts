@@ -60,6 +60,8 @@ export interface BuffJsonEntry {
   stackRule?: StackRule
   tags?: string[]
   onAdd?: string
+  /** 显式声明执行模式（无 effects/triggers 的占位 buff 须声明 'marker' 才可通过校验） */
+  executionMode?: 'effectPlan' | 'triggerOnly' | 'marker'
 
   // --- 补全遗漏字段 ---
   immunities?: string[] // 免疫标签

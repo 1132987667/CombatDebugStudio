@@ -168,7 +168,7 @@ export const useBattleStore = defineStore('battle', () => {
   /** 当前战斗回合数（从1开始计数，用于日志和UI显示） */
   const currentTurn = ref(1)
   /** 最大回合数（从 BattleService 读取） */
-  const maxTurns = ref(999)
+  const maxTurns = ref(99)
   /** 战斗激活状态标识（true表示战斗进行中，false表示未开始或已结束） */
   const isBattleActive = ref(false)
 
@@ -236,7 +236,7 @@ export const useBattleStore = defineStore('battle', () => {
       .value!.getEnemyTeam()
       .map((p) => shallowReactive(p))
     currentTurn.value = battleService.value!.getCurrentTurn()
-    maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
+    maxTurns.value = battleService.value!.getMaxTurns?.() ?? 99
     isBattleActive.value = battleService.value!.getIsBattleActive()
     isPaused.value = battleService.value!.getIsPaused()
 
@@ -791,7 +791,7 @@ export const useBattleStore = defineStore('battle', () => {
   /**  执行战斗数据生成 */
   const generateBattleData = async (
     mode: '1v1' | '2v2' | 'random' = 'random',
-    format: 'txt' | 'html' = 'txt',
+    format: 'txt' | 'html' | 'record' = 'txt',
     count: number = 50,
     record: boolean = false,
   ) => {

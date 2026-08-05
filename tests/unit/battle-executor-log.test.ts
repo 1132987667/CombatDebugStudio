@@ -13,6 +13,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import type { BattleData, BattleEntity } from '@/domain/battle/type/types'
 import { ParticipantSide, ActionTypes } from '@/domain/battle/type/types'
+import { SeededRandom } from '@/shared/utils/SeededRandom'
 
 // 镜像 BattleExecutor 内的局部 DTO（非导出，测试侧定义同构结构）
 interface TestTargetResult {
@@ -384,6 +385,7 @@ describe('BattleExecutor 日志发射器', () => {
       battleId: 'b1',
       participants: new Map<string, BattleEntity>([['s1', source]]),
       actions: [],
+      rng: new SeededRandom('test-seed'),
     } as unknown as BattleData
     const skill = {
       id: 'skill_fireball',
@@ -428,6 +430,7 @@ describe('BattleExecutor 日志发射器', () => {
         ['t1', target],
       ]),
       actions: [],
+      rng: new SeededRandom('test-seed'),
     } as unknown as BattleData
     // 零伤害零治疗技能（走"无伤害/治疗"分支，避免动画/结算依赖）
     vi.spyOn(skillManager, 'executeSkill').mockReturnValue({

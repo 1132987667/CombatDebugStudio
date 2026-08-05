@@ -14,6 +14,7 @@ import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStatus, BattleTriggerPhase } from '@/domain/battle/type/types'
 import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { SeededRandom } from '@/shared/utils/SeededRandom'
 
 vi.mock('@/main', () => ({
   eventBus: { emit: () => {}, on: () => {}, off: () => {} },
@@ -130,7 +131,8 @@ describe('木人 + 轮转被动 E2E', () => {
 
   it('duration=1 的 buff 持续到下一个回合结束（当轮结束后仍在木人身上）', async () => {
     // 固定随机数 → 80% 触发概率必中，测试确定性
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.1)
+    // NOTE: 战斗内随机已走 battleData.rng（P2-3/P2-8 改造后），mock SeededRandom.next 而非 Math.random
+    const randomSpy = vi.spyOn(SeededRandom.prototype, 'next').mockReturnValue(0.1)
     try {
       const { allies, enemies } = createTestParticipantsFromConfig(
         ['test_control_rotator'],

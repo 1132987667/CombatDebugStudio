@@ -571,7 +571,7 @@
               "id": "demon_aura_dodge",
               "targetAttribute": "dodge",
               "type": "ADDITIVE",
-              "value": 0.1
+              "value": 10
             }
           ]
         }
@@ -694,7 +694,7 @@
               "id": "mist_coverage_dodge",
               "targetAttribute": "dodge",
               "type": "ADDITIVE",
-              "value": 0.15
+              "value": 15
             }
           ]
         }
@@ -1356,7 +1356,7 @@
               "id": "commander_aura_crit_rate",
               "targetAttribute": "critRate",
               "type": "ADDITIVE",
-              "value": 0.1
+              "value": 10
             }
           ]
         }
@@ -1870,7 +1870,7 @@
           "attributes": {
             "damageBoost": {
               "value": 25,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -1893,7 +1893,7 @@
           "attributes": {
             "damageBoost": {
               "value": 100,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -1980,6 +1980,7 @@
     "maxStacks": 1,
     "duration": -1,
     "polarity": "positive",
+    "executionMode": "marker",
     "description": "下次攻击附加等同上一次所受伤害50%的额外伤害"
   },
   {
@@ -2000,7 +2001,7 @@
             },
             "critRate": {
               "value": 20,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2057,7 +2058,7 @@
             },
             "critRate": {
               "value": 20,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2141,6 +2142,7 @@
     "maxStacks": 1,
     "duration": -1,
     "polarity": "positive",
+    "executionMode": "marker",
     "tags": [
       "energy_absorption"
     ],

@@ -17,7 +17,8 @@ import type { Container } from '@/infrastructure/di/Container'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import { ParticipantSide, ParticipantSideName, BattleStatus } from '@/domain/battle/type/types'
+import type { RecordedBattle } from '@/domain/battle/service/BattleRecorder'
+import { ParticipantSide, ParticipantSideName, BattleStatus, BattleEventType } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import type { Enemy } from '@/shared/types/enemy'
@@ -45,8 +46,8 @@ export interface BattleGenerationOptions {
   mode?: '1v1' | '2v2' | 'random'
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
-  /** 导出格式，默认 'txt' */
-  format?: 'txt' | 'html'
+  /** 导出格式，默认 'txt'；'record' = 保存录制给昊天镜 + 下载录制 JSON */
+  format?: 'txt' | 'html' | 'record'
   /** 是否保存每场战斗的回放/调试记录到本地（IndexedDB，昊天镜「战斗记录」源可加载） */
   record?: boolean
 }
@@ -98,6 +99,10 @@ export class BattleDataGenerator {
     battleLogManager.clearLogs()
 
     const battleLogs: SingleBattleLog[] = []
+    //  录制格式时收集本场 RecordedBattle（须在 resetBattle 清除内存录制之前取值）
+    const recordings: RecordedBattle[] = []
+    //  'record' 格式隐式开启录制保存（保存给昊天镜）
+    const shouldRecord = options.record || options.format === 'record'
     const dg = getDebugGate()
     const prevDebugEnabled = dg?.enabled ?? false
     if (dg) dg.enabled = false
@@ -181,7 +186,7 @@ export class BattleDataGenerator {
         //   RecordedBattle 已含 events/traceEvents/initialState/randomSeed/winner，
         //   昊天镜「战斗记录」源（UnifiedArchiveService.fromRecordedBattle）可直接加载回放与调试。
         //   NOTE: 保持 headless=true，lifecycleManager.endBattle 的自动保存被跳过，这里手动保存不双写。
-        if (options.record) {
+        if (shouldRecord) {
           if (!winner) {
             // 超出 MAX_ROUNDS 截断的战斗未走 endBattle：无 winner/BATTLE_END 事件，保存为残缺录制没有分析价值
             LoggerProvider.logger.addDebugLog(
@@ -192,6 +197,8 @@ export class BattleDataGenerator {
             const label = battleMode === '1v1' ? '1v1' : '2v2'
             try {
               await this.battleSystem.saveBattleRecording(battleId, `数据生成 第${i + 1}场（${label}）`)
+              const rec = this.battleSystem.getBattleRecording(battleId)
+              if (rec) recordings.push(rec)
             } catch (e) {
               LoggerProvider.logger.addDebugLog(`保存生成战斗记录失败: ${e}`, {
                 level: LogLevel.ERROR,
@@ -227,7 +234,12 @@ export class BattleDataGenerator {
 
     if (!this._cancelled && battleLogs.length > 0) {
       const format = options.format ?? 'txt'
-      if (format === 'html') {
+      if (format === 'record') {
+        const json = this.mergeRecordings(recordings)
+        if (json !== null) {
+          this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
+        }
+      } else if (format === 'html') {
         const mergedHtml = this.mergeLogsHtml(battleLogs)
         this.downloadFile(mergedHtml, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.html`, 'text/html;charset=utf-8')
       } else {
@@ -369,6 +381,67 @@ export class BattleDataGenerator {
       title: `战斗数据报告 (${battleLogs.length}场)`,
       generatedAt: new Date().toLocaleString(),
     })
+  }
+
+  /**
+   * 合并所有战斗录制为单个 JSON（供备份/共享；无法序列化时返回 null，不阻断已完成的昊天镜保存）。
+   * NOTE: 内存录制的 initialState.participants 与 BATTLE_START 事件的 data.participants
+   *       是活的 BattleEntity 实例，直接 stringify 会把 buffSystem/stats/skillManager 等
+   *       运行时对象连同整个 BuffSystem 快照混入 JSON（体积膨胀且与持久化契约不符），
+   *       因此这里按 RecordedBattle 白名单字段重建纯数据快照。
+   */
+  private mergeRecordings(recordings: RecordedBattle[]): string | null {
+    const payload = {
+      version: '2.0.0',
+      generatedAt: new Date().toLocaleString(),
+      count: recordings.length,
+      battles: recordings.map((rec) => {
+        const cleanParticipants = rec.initialState.participants.map((p) => this.participantSnapshot(p))
+        return {
+          battleId: rec.battleId,
+          name: rec.name,
+          replayId: rec.replayId,
+          version: rec.version,
+          randomSeed: rec.randomSeed,
+          startTime: rec.startTime,
+          endTime: rec.endTime,
+          winner: rec.winner,
+          checksum: rec.checksum,
+          saveKey: rec.saveKey,
+          result: rec.result,
+          rounds: rec.rounds,
+          combatRecords: rec.combatRecords,
+          traceEvents: rec.traceEvents,
+          initialState: { participants: cleanParticipants },
+          events: rec.events.map((ev) =>
+            ev.type === BattleEventType.BATTLE_START && Array.isArray(ev.data?.participants)
+              ? { ...ev, data: { ...ev.data, participants: cleanParticipants } }
+              : ev,
+          ),
+        }
+      }),
+    }
+    try {
+      return JSON.stringify(payload, null, 2)
+    } catch (e) {
+      LoggerProvider.logger.addDebugLog('序列化战斗录制失败，跳过下载（昊天镜保存不受影响）', {
+        level: LogLevel.ERROR,
+      })
+      return null
+    }
+  }
+
+  /** 参与者持久化快照（仅保留 RecordedBattle 契约字段，丢弃运行时引用） */
+  private participantSnapshot(p: RecordedBattle['initialState']['participants'][number]) {
+    return {
+      id: p.id,
+      name: p.name,
+      team: p.team,
+      maxHealth: p.maxHealth,
+      currentHealth: p.currentHealth,
+      maxEnergy: p.maxEnergy,
+      currentEnergy: p.currentEnergy,
+    }
   }
 
   private downloadFile(content: string, filename: string, mime: string = 'text/plain;charset=utf-8'): void {

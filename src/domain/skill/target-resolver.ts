@@ -12,6 +12,7 @@ import {
 } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 
 /**
@@ -24,6 +25,7 @@ import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
  * @param formationRowLookup 可选 — 阵型行查询回调
  * @param frontProtectionLookup 可选 — 前排保护查询回调
  * @param hasTaunt 可选 — 嘲讽检测回调（替换硬编码 buff_taunt 查询）
+ * @param rng 可选 — 确定性随机源（战斗路径传入 battleData.rng，未传回退 Math.random）
  * @returns 目标实体数组
  */
 export function resolveSkillTargets(
@@ -35,6 +37,7 @@ export function resolveSkillTargets(
   formationRowLookup?: (side: ParticipantSide, seatIndex: number) => 'front' | 'back' | null,
   frontProtectionLookup?: (side: ParticipantSide) => boolean,
   hasTaunt?: (entity: BattleEntity) => boolean,
+  rng?: SeededRandom,
 ): BattleEntity[] {
   const all = Array.from(participants.values())
 
@@ -95,7 +98,9 @@ export function resolveSkillTargets(
     }
     case TargetStrategy.RANDOM:
       return take(
-        candidates.sort(() => Math.random() - 0.5),
+        candidates.sort(() =>
+          rng ? (rng.nextBoolean() ? -1 : 1) : Math.random() - 0.5,
+        ),
         selector.count === TargetStrategy.ALL
           ? candidates.length
           : (selector.count ?? 1),
@@ -130,7 +135,10 @@ export function resolveSkillTargets(
         (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
       )
       if (adjacent.length === 0) return [source]
-      return [adjacent[Math.floor(Math.random() * adjacent.length)]]
+      const idx = rng
+        ? rng.nextInt(0, adjacent.length - 1)
+        : Math.floor(Math.random() * adjacent.length)
+      return [adjacent[idx]]
     }
     case TargetStrategy.FIRST:
     default: {
@@ -178,12 +186,14 @@ export function resolveSkillTargets(
  * @param participants 所有参与者
  * @param mainTarget 主目标
  * @param stepTargetType 步骤目标策略（如 random_adjacent）
+ * @param rng 可选 — 确定性随机源（未传回退 Math.random）
  * @returns 额外目标数组
  */
 export function resolveStepTargets(
   participants: Map<string, BattleEntity>,
   mainTarget: BattleEntity,
   stepTargetType: string,
+  rng?: SeededRandom,
 ): BattleEntity[] {
   const all = Array.from(participants.values())
   const teamMates = all.filter(
@@ -195,8 +205,12 @@ export function resolveStepTargets(
   if (adjacent.length === 0) return []
 
   switch (stepTargetType) {
-    case 'random_adjacent':
-      return [adjacent[Math.floor(Math.random() * adjacent.length)]]
+    case 'random_adjacent': {
+      const idx = rng
+        ? rng.nextInt(0, adjacent.length - 1)
+        : Math.floor(Math.random() * adjacent.length)
+      return [adjacent[idx]]
+    }
     case 'adjacent':
       return adjacent
     default:

@@ -21,28 +21,6 @@ export { MountainChildBuff } from '@/domain/buff/scripts/MountainChildBuff'
 export { StrongPoisonDebuff } from '@/domain/buff/scripts/StrongPoisonDebuff'
 export { StunDebuff } from '@/domain/buff/scripts/StunDebuff'
 
-// 守护者buff 脚本
-export {
-  RevengeRageBuff,
-  ArmorBreakBuff,
-  FirmShieldBuff,
-  StaticReboundBuff,
-  FirstStrikeBuff,
-  ChargeBurstBuff,
-  ElementSlowBuff,
-  DespairAuraBuff,
-  HealBreezeBuff,
-  EyeForEyeBuff,
-  RevengeFuryBuff,
-  ParalyzeBuff,
-  SacrificeRageBuff,
-  BerserkerBuff,
-  WindThunderBuff,
-  RandomTauntBuff,
-  BackwaterArmorBuff,
-  SwiftWindBuff,
-} from '@/domain/buff/scripts/GuardianBuffs'
-
 // 导出脚本映射，方便注入
 // NOTE: 映射键必须等于脚本类的静态 BUFF_ID——BuffScriptLoader 按 v.BUFF_ID === buffId 精确匹配，
 //       键与 BUFF_ID 不一致会导致脚本静默注册失败（此前 4 个键用短名，脚本从未被加载）。
@@ -68,43 +46,6 @@ export const buffScripts = {
   buff_strong_poison: () =>
     import('@/domain/buff/scripts/StrongPoisonDebuff'),
   buff_stun: () => import('@/domain/buff/scripts/StunDebuff'),
-  // 守护者buff 脚本
-  guardian_buff_revenge_rage: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_armor_break: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_firm_shield: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_static_rebound: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_first_strike: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_charge_burst: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_element_slow: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_despair_aura: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_heal_breeze: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_eye_for_eye: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_revenge_fury: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_paralyze: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_sacrifice_rage: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_berserker: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_wind_thunder: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_random_taunt: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_backwater_armor: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
-  guardian_buff_swift_wind: () =>
-    import('@/domain/buff/scripts/GuardianBuffs'),
 }
 
 export type BuffScriptType = keyof typeof buffScripts

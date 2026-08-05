@@ -14,6 +14,7 @@ import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
 import { floor } from '@/shared/utils/math'
 import { resolveElementCoefficient, type ElementMatrixLike } from '@/domain/fengshen/elementMatrix'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 
 export interface DamageCalculationConfig {
   enableCrit: boolean
@@ -63,6 +64,19 @@ export class DamageCalculator {
     critDamage: 0,
     minDamageThreshold: 1,
     maxDamageThreshold: 9999,
+  }
+
+  /** 确定性随机源 — 由 BattleSystem.initialize 注入 battleData.rng；未注入时回退 Math.random */
+  private rng?: SeededRandom
+
+  /** 注入确定性随机源（命中/暴击判定走此实例） */
+  setRng(rng: SeededRandom): void {
+    this.rng = rng
+  }
+
+  /** 读取当前随机源（未注入时回退全局 Math.random） */
+  private random(): number {
+    return this.rng ? this.rng.next() : Math.random()
   }
 
   constructor(config?: Partial<DamageCalculationConfig>) {
@@ -129,7 +143,7 @@ export class DamageCalculator {
       if (actualHitRate < 0) {
         actualHitRate = 0
       }
-      if (Math.random() * 100 > actualHitRate) {
+      if (this.random() * 100 > actualHitRate) {
         isMiss = true
         damageResult.isMiss = true
         return damageResult
@@ -141,7 +155,7 @@ export class DamageCalculator {
     if (Number.isNaN(cr)) {
       cr = getAttrDv(ATTRIBUTE_CODE.critRate)
     }
-    if (hasGuaranteedCrit || (this.config.enableCrit && Math.random() * 100 < cr)) {
+    if (hasGuaranteedCrit || (this.config.enableCrit && this.random() * 100 < cr)) {
       damageResult.isCritical = true
     }
 

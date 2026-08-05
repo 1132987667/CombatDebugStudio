@@ -447,7 +447,7 @@ export class BattleManager {
    * 获取最大回合数
    */
   getMaxTurns(): number {
-    return 999
+    return this.battleSystem.getBattleData()?.maxTurns ?? BATTLE_CONSTANTS.DEFAULT_MAX_TURNS
   }
 
   /**

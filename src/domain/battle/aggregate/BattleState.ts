@@ -8,6 +8,7 @@
 import type { BattleData, BattleState } from '@/domain/battle/type/types'
 import { BattleStatus, RoundStatus, BATTLE_CONSTANTS } from '@/domain/battle/type/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
+import { SeededRandom } from '@/shared/utils/SeededRandom'
 
 export function createDefaultBattleData(
   battleId: string,
@@ -30,6 +31,8 @@ export function createDefaultBattleData(
     skillManager,
     quickMode: false,
     headless: false,
+    // NOTE: 占位实例 — 实际种子由 BattleSystem.initialize 每场战斗重建
+    rng: new SeededRandom(SeededRandom.generateSeed()),
   }
 }
 

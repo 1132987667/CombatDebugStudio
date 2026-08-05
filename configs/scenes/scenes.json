@@ -208,5 +208,26 @@
       "exp": 600,
       "gold": 1200
     }
+  },
+  {
+    "id": "scene_test",
+    "name": "测试场景",
+    "background": "战斗系统验证场：五行护法与四档木人（气血/防御递增、不攻击）携全部测试角色陪练，验证伤害、防御减伤、状态机制与回合封顶。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["test_warrior", "test_tank", "test_anti_crit", "test_dodge_master", "test_bard", "guardian_gold", "test_dummy_low", "test_dummy_mid"]
+      },
+      "normal": {
+        "enemyIds": ["test_assassin", "test_thorns", "test_combo", "test_poisoner", "test_shield_guard", "guardian_wood", "guardian_water", "guardian_fire"]
+      },
+      "hard": {
+        "enemyIds": ["test_vampire", "test_controller", "test_control_rotator", "test_dot_rotator", "guardian_earth", "test_dummy_high", "test_dummy_ultimate"]
+      }
+    },
+    "requiredLevel": 1,
+    "rewards": {
+      "exp": 0,
+      "gold": 0
+    }
   }
 ]

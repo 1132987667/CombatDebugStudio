@@ -30,8 +30,9 @@ export class HotEffect implements IAtomicEffect {
 
     if (resource === 'health') {
       if (healType === 'percent') {
-        // 百分比治疗：通过负 damagePercent 实现
-        buffSystem.requestDamage(ctx.characterId, 0, undefined, -Math.abs(value) / 100)
+        // NOTE: 百分比治疗随层数缩放，对齐 DotEffect percent（P2-3）——flat/percent 语义一致
+        const stacks = ctx.getVariable<number>('_stacks') ?? 1
+        buffSystem.requestDamage(ctx.characterId, 0, undefined, -(Math.abs(value) / 100) * stacks)
       } else {
         const stacks = ctx.getVariable<number>('_stacks') ?? 1
         buffSystem.requestHeal(ctx.characterId, value * stacks)

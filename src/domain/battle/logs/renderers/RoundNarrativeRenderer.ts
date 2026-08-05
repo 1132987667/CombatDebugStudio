@@ -203,17 +203,19 @@ export class RoundNarrativeRenderer {
         (best, u) => (u.highestHit > (best?.highestHit ?? -1) ? u : best),
         null,
       )
-      // winner 可能是单位 id（demo）或阵营 side（真实录制），统一显示为可读名称
+      // winner 可能是单位 id（demo）或阵营 side（真实录制），统一显示为可读名称；
+      // 无 winner（平局/截断）显示"未分胜负"，不再输出误导性的"未知胜利"
       const SIDE_LABEL: Record<string, string> = { ally: '友方', enemy: '敌方' }
       const winnerLabel = summary.winner
         ? SIDE_LABEL[summary.winner] ??
           summary.units[summary.winner]?.name ??
           summary.winner
-        : '未知'
+        : '未分胜负'
+      const resultText = summary.winner ? `${winnerLabel}胜利` : '未分胜负'
       const summaryLines: LogSegment[][] = []
       summaryLines.push([
         {
-          text: `战斗结束 · ${winnerLabel}胜利 · ${summary.rounds}回合 · 剩余血量 ${summary.survivorHpPct}%`,
+          text: `战斗结束 · ${resultText} · ${summary.rounds}回合 · 剩余血量 ${summary.survivorHpPct}%`,
           classStr: 'log-system',
         },
       ])

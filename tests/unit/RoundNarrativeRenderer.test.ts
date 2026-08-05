@@ -3,8 +3,10 @@
  *
  * 覆盖回合标签状态前置（击杀!/多重触发/显式 roundTag 默认值）与 result 高亮激活。
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
+import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
+import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary'
 import type {
   BattleLogEntry,
   BattleLogMeta,
@@ -123,5 +125,68 @@ describe('RoundNarrativeRenderer.renderEntries', () => {
 
   it('空输入返回空数组', () => {
     expect(renderer.renderEntries([])).toEqual([])
+  })
+})
+
+/** 合成最小战报（RoundNarrativeRenderer 摘要块数据源） */
+function mkSummary(winner?: string): BattleSummary {
+  return {
+    battleId: 'bt1',
+    rounds: 3,
+    durationMs: 1200,
+    winner,
+    survivorCount: 1,
+    survivorHpPct: 80,
+    teams: [],
+    units: {
+      a1: {
+        id: 'a1', name: '剑客', side: 'ally', attacks: 2, dealt: 100, taken: 30,
+        healed: 0, crits: 1, hits: 2, highestHit: 60, dodges: 0, resists: 0,
+        buffsApplied: 0, kills: 1, alive: true, hpEnd: 80, hpMax: 100,
+      },
+    },
+    judgment: { attacks: 2, hits: 2, crits: 1, critRate: 50, dodges: 0, resists: 0 },
+    skills: [],
+    passives: [],
+    keyEvents: [],
+  }
+}
+
+describe('RoundNarrativeRenderer 战报摘要块', () => {
+  const renderer = new RoundNarrativeRenderer()
+
+  afterEach(() => {
+    // 清理全局单例，避免污染后续用例（lastSummary 跨测试共享）
+    BattleSummaryGenerator.instance.reset()
+  })
+
+  const summaryText = (blocks: NarrativeBlock[]): string => {
+    const last = blocks[blocks.length - 1]
+    expect(last.type).toBe(NarrativeBlockType.SUMMARY)
+    return (last as Extract<NarrativeBlock, { type: 'summary' }>).lines
+      .map((l) => l.map((s) => s.text).join(''))
+      .join('\n')
+  }
+
+  it('有胜方（side）时摘要块显示 友方胜利 + 回合/剩余血量/MVP', () => {
+    BattleSummaryGenerator.instance.setSummary(mkSummary('ally'))
+    const text = summaryText(renderer.renderEntries([entry(1, { role: 'action' })]))
+    expect(text).toContain('友方胜利')
+    expect(text).toContain('3回合')
+    expect(text).toContain('剩余血量 80%')
+    expect(text).toContain('MVP: 剑客 — 总伤害 100')
+  })
+
+  it('胜方为单位 id 时显示单位名', () => {
+    BattleSummaryGenerator.instance.setSummary(mkSummary('a1'))
+    const text = summaryText(renderer.renderEntries([entry(1, { role: 'action' })]))
+    expect(text).toContain('剑客胜利')
+  })
+
+  it('无胜方（平局/截断）时显示 未分胜负，而非误导性的 未知胜利', () => {
+    BattleSummaryGenerator.instance.setSummary(mkSummary(undefined))
+    const text = summaryText(renderer.renderEntries([entry(1, { role: 'action' })]))
+    expect(text).toContain('未分胜负')
+    expect(text).not.toContain('未知胜利')
   })
 })

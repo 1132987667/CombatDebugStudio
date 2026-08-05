@@ -262,10 +262,11 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
           if (tgt) tgt.dodges++
         } else {
           // dot 是持续伤害而非攻击命中；无 sourceId 的伤害（触发器反伤/平摊/场地）
-          // 也无攻击判定——两者都不计入命中/暴击率分母与技能使用，只计承伤与 HP
+          // 也无攻击判定——两者都不计入命中/暴击率分母与技能使用，只计承伤与 HP；
+          // dot 的暴击同样不计（非攻击判定），保持暴击率分子/分母口径一致
           const hasSrc = !!e.sourceId
           if (!isDot && hasSrc) judgment.hits++
-          if (isCrit) judgment.crits++
+          if (isCrit && !isDot) judgment.crits++
           const src = e.sourceId ? units[e.sourceId] : undefined
           const tgt = e.targetId ? units[e.targetId] : undefined
           if (src) {
@@ -275,7 +276,7 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
             if (result > (bestHits.get(src.id)?.value ?? 0)) {
               bestHits.set(src.id, { value: result, turn: e.turn ?? 0 })
             }
-            if (isCrit) src.crits++
+            if (isCrit && !isDot) src.crits++
           }
           if (tgt) {
             tgt.taken += result
@@ -348,11 +349,15 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
     }
   }
 
-  // 最高单次事件
+  // 最高单次事件（仅全局最高一条，与叙事渲染器 bestHit 口径一致——"最高单次"是全局语义）
+  let bestHit: { u: UnitSummary; turn: number } | null = null
   for (const u of Object.values(units)) {
-    if (u.highestHit > 0) {
-      keyEvents.push({ turn: bestHits.get(u.id)?.turn ?? 0, kind: 'highest_hit', text: `${u.name} 单次造成 ${u.highestHit}` })
+    if (u.highestHit > 0 && (!bestHit || u.highestHit > bestHit.u.highestHit)) {
+      bestHit = { u, turn: bestHits.get(u.id)?.turn ?? 0 }
     }
+  }
+  if (bestHit) {
+    keyEvents.push({ turn: bestHit.turn, kind: 'highest_hit', text: `${bestHit.u.name} 单次造成 ${bestHit.u.highestHit}` })
   }
 
   // 截止时间：显式传入用截断点，否则用事件流尾部；截断未到战斗结束则胜方未知

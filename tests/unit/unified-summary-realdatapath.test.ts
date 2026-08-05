@@ -59,8 +59,8 @@ function buildRecording(): RecordedBattle {
       }),
       ev({
         timestamp: 500, phase: TracePhase.DAMAGE_CALCULATION, targetId: 'e1',
-        payload: { result: 5, dot: true },
-        summary: 'e1 中毒 5',
+        payload: { result: 5, dot: true, crit: { rate: 0, triggered: true } },
+        summary: 'e1 中毒 5（dot 暴击不计入战报暴击）',
       }),
       ev({
         timestamp: 600, phase: TracePhase.DAMAGE_CALCULATION, sourceId: 'a1', targetId: 'e1',
@@ -112,6 +112,14 @@ describe('真实录制路径战报统计（对抗评审修复回归）', () => {
     // 命中 4：技能A×3 + 技能B×1；dot(ev500) 不计
     expect(sum.judgment.hits).toBe(4)
     expect(sum.judgment.critRate).toBe(25)
+  })
+
+  it('dot 暴击不计入全局暴击数（非攻击判定，与命中分母同口径）', () => {
+    // ev500 为 dot 且 crit.triggered=true：若计入则 crits=2/critRate=50%，实为 1/25%
+    expect(sum.judgment.crits).toBe(1)
+    expect(sum.judgment.critRate).toBe(25)
+    // dot 无来源，不归属任何单位输出/暴击
+    expect(sum.units.a1.crits).toBe(1)
   })
 
   it('击杀标记：kills/alive 正确且无重复', () => {

@@ -391,7 +391,9 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
     t.hpEnd += u.hpEnd
     t.hpMax += u.hpMax
   }
-  const teams = Array.from(teamMap.values()).sort((a) => (a.side === 'ally' ? -1 : a.side === 'enemy' ? 1 : 0))
+  // 阵营显示序：友方 → 敌方 → 未知（权重差排序，保证 ally 恒在 enemy 前）
+  const sideRank = (side: string): number => (side === 'ally' ? -1 : side === 'enemy' ? 1 : 0)
+  const teams = Array.from(teamMap.values()).sort((a, b) => sideRank(a.side) - sideRank(b.side))
 
   // L1 胜负边际：胜方阵营存活数 + 剩余血量%
   let survivorCount = 0

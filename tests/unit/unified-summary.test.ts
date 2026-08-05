@@ -68,6 +68,8 @@ describe('summarizeBattle（战斗摘要统计）', () => {
     expect(enemy.survivors).toBe(0)
     expect(enemy.hpEnd).toBe(0)
     expect(enemy.hpMax).toBe(500)
+    // 阵营显示序：友方恒在敌方前
+    expect(sum.teams.map((t) => t.side)).toEqual(['ally', 'enemy'])
 
     // L4 判定健康度：攻击 2（ev04/ev10）、命中 5（dot ev03 不计）、暴击 1（ev05 顶层标记）、闪避 1、抵抗 1
     expect(sum.judgment.attacks).toBe(2)

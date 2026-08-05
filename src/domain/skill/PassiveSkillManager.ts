@@ -418,6 +418,7 @@ export class PassiveSkillManager {
               summary: `${entity.name} 触发 【${configName}】`,
               payload: {
                 passiveId: config.skillId,
+                passiveName: configName,
                 owner: entity.name,
                 trigger: context?.phase,
                 verdict: PassiveVerdict.TRIGGERED,

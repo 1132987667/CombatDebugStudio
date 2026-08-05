@@ -681,6 +681,23 @@ export class BattleExecutor {
       const revived = battleData.participants.get(revivedId)
       if (revived?.isAlive()) {
         this.reviveTracker.recordRevive(revivedId, reviveParams.cooldown ?? 0)
+        // 复活 trace：lethalMark 会把目标 alive 标死，无复活事件则战报始终显示阵亡，
+        // 胜负边际（存活数/剩余血量%）失真（见 unified-summary.ts 存活约定）
+        if (this.tracePort?.isEnabled(TracePhase.BATTLE_LIFECYCLE)) {
+          this.tracePort.emit(
+            createTraceEvent({
+              correlationId: scope?.correlationId ?? `revive_${battleData.currentTurn ?? 1}_${revivedId}`,
+              phase: TracePhase.BATTLE_LIFECYCLE,
+              parentId: scope?.parentId,
+              battleId: battleData.battleId,
+              turn: battleData.currentTurn ?? 1,
+              targetId: revivedId,
+              level: TraceLevel.INFO,
+              summary: `${revived.name} 被复活，恢复 ${revived.currentHealth} 气血`,
+              payload: { action: 'revive', hp: revived.currentHealth },
+            }),
+          )
+        }
         this.passiveSkillManager.triggerPassives(
           revived,
           createPassiveContext(BattleTriggerPhase.ON_REVIVE, battleData, {
@@ -942,6 +959,8 @@ export class BattleExecutor {
     }
 
     // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
+    // NOTE: 击杀 trace 不在此发出——pendingDeaths 延迟结算，目标可能被复活（ReviveTracker）；
+    //       最终确认死亡在 BattleSystem.runEndConditionCheck 统一补发（见 battle 死亡分支）。
     if (!target.isAlive()) {
       this.skillManager.getExecutor().cleanupComboState(target.id)
       this.skillManager.getExecutor().cleanupRotatingState(target.id)
@@ -1023,6 +1042,23 @@ export class BattleExecutor {
       totalHeal: 0,
       results: [],
     })
+
+    // 闪避事件（供战报判定统计；phase 未开启时零开销）
+    if (this.tracePort?.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+      this.tracePort.emit(
+        createTraceEvent({
+          correlationId: `dodge_${battle.currentTurn ?? 1}_${target.id}`,
+          phase: TracePhase.DAMAGE_CALCULATION,
+          battleId: battle.battleId,
+          turn: battle.currentTurn ?? 1,
+          sourceId: source.id,
+          targetId: target.id,
+          level: TraceLevel.DEBUG,
+          summary: `${target.name} 闪避了 ${source.name} 的攻击`,
+          payload: { result: 0, dodge: true },
+        }),
+      )
+    }
 
     // 闪避后触发 DODGE 被动技能（闪避者作为触发者）
     this.passiveSkillManager.triggerPassives(

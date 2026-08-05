@@ -57,7 +57,7 @@ export class EffectRenderer {
         return this.renderReflect(effect, ctx, snapshot)
       case EffectType.BUFF:
       case EffectType.DEBUFF:
-        return this.renderBuff(effect, targetName)
+        return this.renderBuff(effect, targetName, effect.targetId === ctx.source.id)
       case EffectType.SHIELD:
         return this.renderShield(effect, targetName)
       case EffectType.MISS:
@@ -80,7 +80,8 @@ export class EffectRenderer {
     name: string,
     snap?: { before: number; after: number },
   ): LogSegment[] {
-    const dmg = Math.round(e.damage ?? e.value ?? 0)
+    // NOTE: 「造成」显示减免前原始伤害（rawDamage），HP 箭头显示最终承伤 —— 与 action 日志同口径
+    const dmg = Math.round(e.rawDamage ?? e.damage ?? e.value ?? 0)
     const segs: LogSegment[] = [
       { text: `对 ${name} 造成 ` },
       { text: `${dmg}`, classStr: 'log-damage' },
@@ -163,11 +164,14 @@ export class EffectRenderer {
 
   /**
    * 渲染 Buff：附加【{buffName}】
+   * NOTE: 目标非触发者时必须显示目标名（如控制轮转施加给敌人），否则日志看起来像触发者给自己上控制
    */
-  private renderBuff(e: BattleEffect, _name: string): LogSegment[] {
+  private renderBuff(e: BattleEffect, name: string, isSelf: boolean): LogSegment[] {
     const displayName = e.buffName ?? e.buffId ?? '未知效果'
     const segs: LogSegment[] = [
-      { text: `获得 `, classStr: 'log-info' },
+      ...(isSelf
+        ? [{ text: `获得 `, classStr: 'log-info' }]
+        : [{ text: `${name} 获得 `, classStr: 'log-info' }]),
       {
         text: `【${displayName}】`,
         classStr: 'log-buff',

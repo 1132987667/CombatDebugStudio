@@ -15,7 +15,12 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
-import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
+import type {
+  CustomStepParams,
+  ExtendedSkillStep,
+  GainEnergyStepParams,
+  ReviveStepParams,
+} from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
@@ -23,6 +28,7 @@ import {
   syncBonusAttribute,
   syncReverseBonusAttribute,
 } from '@/shared/utils/attributeSync'
+import { entitySegment } from '@/domain/battle/logs/BattleLogProjector'
 
 /** 追踪同一攻击者的连续命中目标和计数 */
 interface ComboState {
@@ -173,6 +179,7 @@ export class SkillExecutor {
           sourceId: source.id,
           targetId: target.id,
           value: result.damage,
+          rawDamage: result.rawDamage,
           description: `${source.name} deals ${result.damage} damage`,
           isCritical: result.isCritical,
         })
@@ -187,6 +194,7 @@ export class SkillExecutor {
           sourceId: source.id,
           targetId: target.id,
           value: actualDamage,
+          rawDamage: result.rawDamage,
           description: `${source.name} deals ${actualDamage} damage`,
           isCritical: result.isCritical,
         })
@@ -284,7 +292,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
-      parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
     const instanceId = this.buffSystem.addBuff(
@@ -329,15 +336,17 @@ export class SkillExecutor {
 
       LoggerProvider.logger.addBattleLog({
         turn: action?.turn || 1,
-        message: `${buffName}  ${effectSummary}`,
+        message: `${entitySegment(buffTarget).text} 获得 【${buffName}】${effectSummary}`,
         segments: [
+          entitySegment(buffTarget),
+          { text: ' 获得 ', classStr: 'log-info' },
           {
-            text: buffName,
+            text: `【${buffName}】`,
             classStr: 'log-buff',
             kind: 'buff',
             hover: { kind: 'buff', id: buffId },
           },
-          { text: `  ${effectSummary}` },
+          ...(effectSummary ? [{ text: ` ${effectSummary}` }] : []),
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
         meta: { role: 'sub' },
@@ -394,11 +403,8 @@ export class SkillExecutor {
 
     modTarget.recalcAll()
 
-    action.effects.push({
-      type: EffectType.STATUS,
-      targetId: modTarget.id,
-      description: `modify_attribute: ${modifiers.length} 个属性已修改`,
-    })
+    // NOTE: 属性微调是静默机制，效果已由被动名（chip）承载，不产 STATUS effect——
+    //       否则日志会输出 `modify_attribute: N 个属性已修改` 这类内部调试文本
   }
 
   /** 净化/移除减益（cleanse / remove_debuff 步骤） */
@@ -511,8 +517,9 @@ export class SkillExecutor {
     target: BattleEntity,
     context?: StepExecutionContext,
   ): void {
-    const customType = skillStep.parameters?.customType as string | undefined
-    const desc = (skillStep.parameters?.description as string) || ''
+    const customParams = skillStep.parameters as CustomStepParams | undefined
+    const customType = customParams?.customType
+    const desc = customParams?.description || ''
 
     // 根据 customType 分发
     if (customType === 'third_strike') {
@@ -523,8 +530,7 @@ export class SkillExecutor {
       customType === 'burn_detonate' ||
       customType === 'burn_detonate_full'
     ) {
-      const burnPct =
-        (skillStep.parameters?.burnDamagePercent as number) ?? 0.05
+      const burnPct = customParams?.burnDamagePercent ?? 0.05
       this.handleBurnDetonate(
         action,
         source,
@@ -619,7 +625,8 @@ export class SkillExecutor {
     target: BattleEntity,
     context?: StepExecutionContext,
   ): void {
-    const buffIds = (skillStep.parameters?.buffIds as string[] | undefined) ?? []
+    const buffIds =
+      (skillStep.parameters as CustomStepParams | undefined)?.buffIds ?? []
     if (buffIds.length === 0) return
 
     const index = this.rotatingBuffIndex.get(source.id) ?? 0
@@ -649,7 +656,6 @@ export class SkillExecutor {
         cooldown: 0,
         stackRule: StackRule.LIMITED,
         controlType: ControlType.NONE,
-        parameters: skillStep.parameters || skillStep.effectParams || {},
       }
       for (let i = 1; i < stacks; i++) {
         this.buffSystem.addBuff(
@@ -808,7 +814,8 @@ export class SkillExecutor {
   ): void {
     const modTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
-    const value = skillStep.parameters?.value ?? 0
+    const value =
+      (skillStep.parameters as GainEnergyStepParams | undefined)?.value ?? 0
     if (value <= 0) return
     modTarget.gainEnergy(value)
     action.effects.push({
@@ -890,7 +897,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.REFRESH,
       controlType,
-      parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config, action.turn ?? 0)
     if (!instanceId) {
@@ -919,7 +925,8 @@ export class SkillExecutor {
     target: BattleEntity,
     context?: StepExecutionContext,
   ): void {
-    const params = (skillStep.parameters ?? {}) as ReviveStepParams
+    const params: ReviveStepParams =
+      (skillStep.parameters as ReviveStepParams | undefined) ?? {}
     const hpPercent = params.hpPercent ?? 30
 
     // 前置校验：目标必须已死亡

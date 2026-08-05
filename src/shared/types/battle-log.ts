@@ -83,6 +83,8 @@ export interface BattleLogMeta {
   hpBefore?: number
   hpAfter?: number
   damage?: number
+  /** 减免前原始伤害（action header「造成 X 点伤害」口径） */
+  rawDamage?: number
   heal?: number
   crit?: boolean
   kill?: boolean
@@ -95,6 +97,13 @@ export interface BattleLogMeta {
   /** 能量变化快照（能量类日志） */
   energyBefore?: number
   energyAfter?: number
+  /** 回合开始能量（合并日志）：角色级到账明细 */
+  energyChanges?: Array<{
+    entityId: string
+    name?: string
+    energyBefore: number
+    energyAfter: number
+  }>
 }
 
 export const LogLevelLabel: Record<LogLevel, string> = {

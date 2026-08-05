@@ -47,7 +47,7 @@ import {
   ParticipantSideName,
   RoundStatus,
 } from '@/domain/battle/type/types'
-import { BuffSystem, type SummonRequest } from '@/domain/buff/BuffSystem'
+import { BuffSystem, type SummonRequest, type DamageOrigin } from '@/domain/buff/BuffSystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 import type { TriggerEventContext } from '@/domain/buff/types'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
@@ -471,9 +471,47 @@ export class BattleSystem {
     let _damageCallbackDepth = 0
     const MAX_DAMAGE_CALLBACK_DEPTH = 3
 
+    // HOT 持续治疗补发（与 setDamageCallback 负 percent 分支共用）
+    const emitHotHealTrace = (targetId: string, amount: number): void => {
+      const t = battleData.participants.get(targetId)
+      if (this.traceCollector.isEnabled(TracePhase.HEAL_CALCULATION)) {
+        this.traceCollector.emit(
+          createTraceEvent({
+            correlationId: `hot_${battleData.currentTurn ?? 1}_${targetId}`,
+            phase: TracePhase.HEAL_CALCULATION,
+            battleId: battleData.battleId,
+            turn: battleData.currentTurn ?? 1,
+            targetId,
+            level: TraceLevel.DEBUG,
+            summary: `${t?.name ?? targetId} 受到持续治疗 ${amount}`,
+            payload: { result: amount, hot: true },
+          }),
+        )
+      }
+    }
+
+    // 触发器脚本伤害补发（反伤/平摊/场地等）：无来源、无 dot 标记，仅计承伤/HP
+    const emitTriggerTrace = (targetId: string, dmg: number): void => {
+      const t = battleData.participants.get(targetId)
+      if (this.traceCollector.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+        this.traceCollector.emit(
+          createTraceEvent({
+            correlationId: `trg_${battleData.currentTurn ?? 1}_${targetId}`,
+            phase: TracePhase.DAMAGE_CALCULATION,
+            battleId: battleData.battleId,
+            turn: battleData.currentTurn ?? 1,
+            targetId,
+            level: TraceLevel.DEBUG,
+            summary: `${t?.name ?? targetId} 受到 ${dmg} 点伤害`,
+            payload: { result: dmg },
+          }),
+        )
+      }
+    }
+
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback(
-      (targetId: string, damage: number, rawDamage?: number, damagePercent?: number) => {
+      (targetId: string, damage: number, rawDamage?: number, damagePercent?: number, origin?: DamageOrigin) => {
         // ponytail: 递归守卫 — 深度计数器替代布尔标志，允许有限嵌套
         if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
           throw new Error(
@@ -485,6 +523,26 @@ export class BattleSystem {
         try {
           const target = battleData.participants.get(targetId)
           if (!target?.isAlive()) return
+
+          // 补发 dot 伤害 trace 事件：DOT 不走 TraceDamageLogger（无 CombatRecord 链路），
+          // 否则真实录制的战报（承伤/HP 模拟）完全缺失持续伤害。
+          // 仅标记 origin='dot' 的请求补发，反伤/平摊等触发器脚本不误标（战报口径见 unified-summary.ts）。
+          const emitDotTrace = (dmg: number): void => {
+            if (this.traceCollector.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+              this.traceCollector.emit(
+                createTraceEvent({
+                  correlationId: `dot_${battleData.currentTurn ?? 1}_${targetId}`,
+                  phase: TracePhase.DAMAGE_CALCULATION,
+                  battleId: battleData.battleId,
+                  turn: battleData.currentTurn ?? 1,
+                  targetId,
+                  level: TraceLevel.DEBUG,
+                  summary: `${target.name} 受到持续伤害 ${dmg}`,
+                  payload: { result: dmg, dot: true },
+                }),
+              )
+            }
+          }
 
           let actualDamage = damage
           let isHeal = false
@@ -498,6 +556,8 @@ export class BattleSystem {
               Math.floor(target.currentHealth * damagePercent),
             )
             target.takeDamage(actualDamage)
+            if (origin === 'dot') emitDotTrace(actualDamage)
+            else if (origin === 'trigger') emitTriggerTrace(targetId, actualDamage)
           } else if (damagePercent && damagePercent < 0) {
             // 负百分比 = 按最大气血百分比治疗
             actualDamage = Math.floor(
@@ -505,6 +565,7 @@ export class BattleSystem {
             )
             target.heal(actualDamage)
             isHeal = true
+            if (origin === 'hot') emitHotHealTrace(targetId, actualDamage)
           } else if (damage > 0) {
             // 固定值伤害：走 settleDamage（统一处理 TriggerEventBus/仇恨/被动/pendingDeaths）
             // NOTE: 在扣血前捕获 气血，用于 DOT 叙事日志
@@ -515,6 +576,8 @@ export class BattleSystem {
             settledViaExecutor = true
             // DOT 特有逻辑（DOT CombatRecord、叙事日志）
             if (actualDamage > 0) {
+              if (origin === 'dot') emitDotTrace(actualDamage)
+              else if (origin === 'trigger') emitTriggerTrace(targetId, actualDamage)
               const hpAfter = target.currentHealth
               const dotRecord = createEmptyRecord(
                 battleData.battleId,
@@ -608,10 +671,12 @@ export class BattleSystem {
         }
       },
     )
-    this.buffSystem.setHealCallback((targetId: string, amount: number) => {
+    this.buffSystem.setHealCallback((targetId: string, amount: number, origin?: DamageOrigin) => {
       const target = battleData.participants.get(targetId)
       if (target?.isAlive()) {
         const actualHeal = target.heal(amount)
+        // HOT 持续治疗补发 HEAL_CALCULATION：与 dot 对称，不计技能表（hot 标记），只恢复 HP 模拟
+        if (origin === 'hot') emitHotHealTrace(targetId, actualHeal)
         //  统一管道：触发器治疗动画
         if (actualHeal > 0 && !this.shouldSuppressAnimationEvents()) {
           this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
@@ -915,8 +980,14 @@ export class BattleSystem {
         participant.resetEnergyHitCount()
       })
 
-      // 为所有存活角色增加回合开始能量
+      // 为所有存活角色增加回合开始能量（按 阵营:实际到账 分组，同组角色合并为一行，敌我分开）
       const combatRules = this.ruleManager.getCombatRules()
+      const energyGains: Array<{
+        participant: BattleEntity
+        actualGain: number
+        energyBefore: number
+        energyAfter: number
+      }> = []
       aliveParticipants.forEach((participant) => {
         const gain = combatRules.energyGainPerTurn
         // NOTE: 记录实际到账（gainEnergy 有上限封顶），并携带 before/after 快照（B2）
@@ -925,11 +996,34 @@ export class BattleSystem {
         const energyAfter = participant.currentEnergy
         const actualGain = energyAfter - energyBefore
         if (actualGain > 0) {
-          const segs: LogSegment[] = [
-            entitySegment(participant),
+          energyGains.push({ participant, actualGain, energyBefore, energyAfter })
+        }
+      })
+
+      if (energyGains.length > 0) {
+        const groups = new Map<string, typeof energyGains>()
+        for (const item of energyGains) {
+          const key = `${item.participant.team}:${item.actualGain}`
+          const group = groups.get(key) ?? []
+          group.push(item)
+          groups.set(key, group)
+        }
+        // 我方在前，敌方在后（与态势快照同口径）
+        const sortedGroups = [...groups.values()].sort((a, b) => {
+          const aSide = a[0].participant.team === ParticipantSide.ALLY ? 0 : 1
+          const bSide = b[0].participant.team === ParticipantSide.ALLY ? 0 : 1
+          return aSide - bSide
+        })
+        for (const items of sortedGroups) {
+          const segs: LogSegment[] = []
+          items.forEach((item, i) => {
+            if (i > 0) segs.push({ text: '、' })
+            segs.push(entitySegment(item.participant))
+          })
+          segs.push(
             { text: ` 获得回合开始能量 `, classStr: 'log-info' },
-            { text: `+${actualGain}`, classStr: 'log-heal' },
-          ]
+            { text: `+${items[0].actualGain}`, classStr: 'log-heal' },
+          )
           LoggerProvider.logger.addBattleLog({
             turn: battle.currentTurn,
             message: segs.map((s) => s.text).join(''),
@@ -937,12 +1031,16 @@ export class BattleSystem {
             category: BATTLE_LOG_CATEGORIES.STATUS,
             meta: {
               role: 'sub',
-              energyBefore,
-              energyAfter,
+              energyChanges: items.map((g) => ({
+                entityId: g.participant.id,
+                name: g.participant.name,
+                energyBefore: g.energyBefore,
+                energyAfter: g.energyAfter,
+              })),
             },
           })
         }
-      })
+      }
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -959,9 +1057,15 @@ export class BattleSystem {
       battle.turnOrder = currentTurnOrder
 
       // 发送回合开始事件到 UI 层（此时拥有正确的出手顺序）
-      const firstActorId =
-        currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
-      this.uiEventPort.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
+      // NOTE: headless（批量数据生成）下不发射 — 这些是驱动 Vue 重新渲染的 UI 状态事件，
+      //       批量生成时发射会让整个战场每回合重渲染数千次，导致界面白屏/冻结
+      if (!battle.headless) {
+        const firstActorId =
+          currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
+        this.uiEventPort.emit(BattleEventCodes.TURN_START, {
+          actorId: firstActorId,
+        })
+      }
 
       // ponytail: 调试模式 — 回合开始事件已派发后暂停
       await this.debugGate.waitIfNeeded('TURN_START')
@@ -987,9 +1091,12 @@ export class BattleSystem {
         this.executor.setActionOrder(i + 1)
 
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
-        this.uiEventPort.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, {
-          actorId: participantId,
-        })
+        // NOTE: headless 下不发射（同上，避免批量生成驱动 UI 重渲染风暴）
+        if (!battle.headless) {
+          this.uiEventPort.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, {
+            actorId: participantId,
+          })
+        }
 
         try {
           await this.executor.executeParticipantAction(battle, participant)
@@ -1033,7 +1140,10 @@ export class BattleSystem {
       }
 
       // 发送回合结束事件到 UI 层
-      this.uiEventPort.emit(BattleEventCodes.TURN_END)
+      // NOTE: headless 下不发射（同上，避免批量生成驱动 UI 重渲染风暴）
+      if (!battle.headless) {
+        this.uiEventPort.emit(BattleEventCodes.TURN_END)
+      }
 
       // ponytail: 调试模式 — 回合结束事件已派发后暂停
       await this.debugGate.waitIfNeeded('TURN_END')
@@ -1198,6 +1308,24 @@ export class BattleSystem {
       const dead = battle.participants.get(deadId)
       const killer = battle.participants.get(killerId)
       if (dead && !dead.isAlive()) {
+        // 最终确认死亡 → 补发击杀 trace（供战报击杀/存活统计）
+        // NOTE: lethalMark 事件 result=0，仅作死亡标记；伤害已由 TraceDamageLogger 的
+        //       damage_calculation 事件统计，避免双算。phase 未开启时零开销。
+        if (this.traceCollector.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+          this.traceCollector.emit(
+            createTraceEvent({
+              correlationId: `kill_${battle.currentTurn ?? 1}_${deadId}`,
+              phase: TracePhase.DAMAGE_CALCULATION,
+              battleId: battle.battleId,
+              turn: battle.currentTurn ?? 1,
+              sourceId: killerId,
+              targetId: deadId,
+              level: TraceLevel.INFO,
+              summary: `${killer?.name ?? '未知'} 击败 ${dead.name}`,
+              payload: { result: 0, death: true, lethalMark: true },
+            }),
+          )
+        }
         // 仍然死亡 → 触发死亡被动
         this.passiveSkillManager.triggerPassives(
           dead,

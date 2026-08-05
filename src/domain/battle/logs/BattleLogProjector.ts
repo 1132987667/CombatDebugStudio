@@ -218,11 +218,17 @@ export function projectAttackLog(
   }
 
   const r = results[0]
+  // NOTE: 「造成」显示减免前原始伤害（rawDamage），「受到」sub 显示最终承伤 ——
+  //       设计口径见 BattleExecutor.TargetResult.rawDamage 注释；rawDamage 缺失时回退最终值
+  const shownDamage = r.rawDamage ?? r.damage
   const hitSegs: LogSegment[] = [
     entitySegment(source),
     { text: ' 对 ' },
     entitySegment(target),
-    { text: ` 发起「普通攻击」，造成 ${r.damage} 点伤害` },
+    { text: ' 发起「普通攻击」' },
+    ...(isCrit ? [{ text: '，★ 暴击!', classStr: 'log-crit' }] : []),
+    { text: `，造成 ${shownDamage} 点伤害` },
+    ...(!target.isAlive() ? [{ text: '，✦ 击杀!', classStr: 'log-kill' }] : []),
   ]
   const dmgSegs: LogSegment[] = [
     entitySegment(target),
@@ -241,6 +247,7 @@ export function projectAttackLog(
         hpBefore: r.hpBefore,
         hpAfter: r.hpAfter,
         damage: r.damage,
+        rawDamage: r.rawDamage,
         crit: isCrit,
         kill: !target.isAlive(),
         skillName: input.skillName,
@@ -274,8 +281,14 @@ export function projectSkillLog(
   const { source, targets, results, totalDamage, totalHeal, isCrit } = input
   const primary = results[0]
 
-  const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
+  // NOTE: 「造成」显示减免前原始伤害总和，「受到」sub 显示最终承伤 —— 与普通攻击同口径
+  const totalRawDamage = results.reduce(
+    (sum, r) => sum + (r.rawDamage ?? r.damage),
+    0,
+  )
+  const damageText = totalRawDamage > 0 ? `，造成 ${totalRawDamage} 点伤害` : ''
   const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
+  const isKill = primary ? !primary.target.isAlive() : false
   const targetSegs: LogSegment[] = []
   targets.forEach((t, i) => {
     if (i > 0) targetSegs.push({ text: ', ' })
@@ -304,7 +317,9 @@ export function projectSkillLog(
     ...targetSegs,
     { text: ' 使用 ' },
     skillSeg,
+    ...(isCrit ? [{ text: '，★ 暴击!', classStr: 'log-crit' }] : []),
     { text: `${damageText}${healText}` },
+    ...(isKill ? [{ text: '，✦ 击杀!', classStr: 'log-kill' }] : []),
   ]
 
   let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
@@ -367,8 +382,9 @@ export function projectSkillLog(
         hpBefore: primary?.hpBefore,
         hpAfter: primary?.hpAfter,
         damage: totalDamage,
+        rawDamage: totalRawDamage,
         crit: isCrit,
-        kill: primary ? !primary.target.isAlive() : false,
+        kill: isKill,
         skillName: input.skillName,
       },
     },
@@ -449,6 +465,7 @@ export function projectReplayActionLog(
     { text: ' 对 ' },
     targetSeg,
     ...actionSegs,
+    ...(action.isCrit ? [{ text: '，★ 暴击!', classStr: 'log-crit' }] : []),
     ...(valueText ? [{ text: valueText }] : []),
   ]
 

@@ -120,7 +120,7 @@ export function reflectDamage(ctx: TriggerExecutionContext): void {
 
   const attackerId = ctx.sourceId ?? ''
   if (baseDamage <= 0 || !attackerId) return
-  ctx.buffSystem?.requestDamage(attackerId, Math.round(baseDamage * percent))
+  ctx.buffSystem?.requestDamage(attackerId, Math.round(baseDamage * percent), undefined, undefined, 'trigger')
 }
 
 /** reflect_fire_damage — 按百分比反弹火焰伤害 */
@@ -130,7 +130,7 @@ export function reflectFireDamage(ctx: TriggerExecutionContext): void {
   const damageTaken = (ctx.extra?.damage as number) ?? 0
   const attackerId = ctx.sourceId ?? ''
   if (damageTaken <= 0 || !attackerId) return
-  ctx.buffSystem?.requestDamage(attackerId, Math.round(damageTaken * percent))
+  ctx.buffSystem?.requestDamage(attackerId, Math.round(damageTaken * percent), undefined, undefined, 'trigger')
 }
 
 /** block_damage_percent — 按百分比格挡伤害，减少所受伤害 */
@@ -156,7 +156,7 @@ export function shareDamage(ctx: TriggerExecutionContext): void {
   const sharePerAlly = Math.round(damageTaken / allies.length)
   for (const ally of allies) {
     if (ally.id !== ctx.targetId) {
-      ctx.buffSystem?.requestDamage(ally.id, sharePerAlly)
+      ctx.buffSystem?.requestDamage(ally.id, sharePerAlly, undefined, undefined, 'trigger')
     }
   }
   ctx.buffSystem?.requestHeal(ctx.targetId ?? '', damageTaken - sharePerAlly)

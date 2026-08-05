@@ -149,18 +149,24 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
     expect(turnEndLogs.length).toBeGreaterThanOrEqual(2)
     expect(turnEndLogs[0].message).toMatch(/第 \d+ 回合结束/)
 
-    // B2：回合开始能量日志携带 before/after 快照（且显示实际到账）
+    // B2：回合开始能量日志携带 before/after 快照（合并后每组一条，含角色明细）
     const energyEntry = logs.find((l) =>
       (l.message ?? '').includes('获得回合开始能量'),
     )!
     const energyMeta = energyEntry.meta as {
-      energyBefore?: number
-      energyAfter?: number
+      energyChanges?: Array<{
+        entityId: string
+        energyBefore: number
+        energyAfter: number
+      }>
     }
-    expect(energyMeta.energyBefore).toBeTypeOf('number')
-    expect(energyMeta.energyAfter).toBeTypeOf('number')
-    expect(energyMeta.energyAfter!).toBeGreaterThanOrEqual(
-      energyMeta.energyBefore!,
+    expect(energyMeta.energyChanges).toBeDefined()
+    expect(energyMeta.energyChanges!.length).toBeGreaterThanOrEqual(1)
+    const firstChange = energyMeta.energyChanges![0]
+    expect(firstChange.energyBefore).toBeTypeOf('number')
+    expect(firstChange.energyAfter).toBeTypeOf('number')
+    expect(firstChange.energyAfter!).toBeGreaterThanOrEqual(
+      firstChange.energyBefore!,
     )
   })
 

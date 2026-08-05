@@ -150,9 +150,9 @@ describe('BattleExecutor 日志发射器', () => {
     expect(addBattleLog).toHaveBeenCalledTimes(2)
     const [action, sub] = addBattleLog.mock.calls.map((c) => c[0])
 
-    // action 日志：实际伤害（totalDamage）进文本 + meta.damage；rawDamage 不再显示
+    // action 日志：减免前原始伤害（totalRawDamage）进文本 + meta.damage；rawDamage 不再显示
     expect(action.message).toBe(
-      '[友方]剑客 对 [敌方]史莱姆 使用 【火球术】，造成 30 点伤害',
+      '[友方]剑客 对 [敌方]史莱姆 使用 【火球术】，★ 暴击!，造成 35 点伤害',
     )
     expect(action.category).toBe(BATTLE_LOG_CATEGORIES.DAMAGE)
     expect(action.meta).toMatchObject({
@@ -273,9 +273,9 @@ describe('BattleExecutor 日志发射器', () => {
     expect(addBattleLog).toHaveBeenCalledTimes(3) // action + 2 sub
     const [action, sub1, sub2] = addBattleLog.mock.calls.map((c) => c[0])
 
-    // header：实际伤害总和（totalDamage）进文本，目标间 ", " 分隔
+    // header：减免前原始伤害总和（totalRawDamage）进文本，目标间 ", " 分隔
     expect(action.message).toBe(
-      '[友方]剑客 对 [敌方]史莱姆, [敌方]骷髅 使用 【火球术】，造成 55 点伤害',
+      '[友方]剑客 对 [敌方]史莱姆, [敌方]骷髅 使用 【火球术】，造成 63 点伤害',
     )
     const targetSegs = action.segments.filter((s: any) => s.kind === 'entity')
     expect(targetSegs.map((s: any) => s.text)).toEqual([
@@ -307,7 +307,7 @@ describe('BattleExecutor 日志发射器', () => {
     expect(flushOrder).toBeLessThan(subOrder)
   })
 
-  it('普攻命中暴击：action 日志 CRIT + rawDamage 文本 + sub 日志', () => {
+  it('普攻命中暴击：action 日志 CRIT + 原始伤害文本（rawDamage）+ sub 显示最终承伤', () => {
     const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
     const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50)
     ;(executor as any).emitAttackLog(makeBattle(), {
@@ -320,15 +320,16 @@ describe('BattleExecutor 日志发射器', () => {
       totalDamage: 30,
       totalHeal: 0,
       results: [
-        { target, hpBefore: 50, hpAfter: 20, damage: 30, heal: 0, rawDamage: 30 },
+        { target, hpBefore: 50, hpAfter: 20, damage: 30, heal: 0, rawDamage: 35 },
       ],
     })
 
     expect(addBattleLog).toHaveBeenCalledTimes(2)
     const [action, sub] = addBattleLog.mock.calls.map((c) => c[0])
 
+    // 「造成」= 减免前原始伤害（rawDamage）；「受到」sub = 最终承伤
     expect(action.message).toBe(
-      '[友方]剑客 对 [敌方]史莱姆 发起「普通攻击」，造成 30 点伤害',
+      '[友方]剑客 对 [敌方]史莱姆 发起「普通攻击」，★ 暴击!，造成 35 点伤害',
     )
     expect(action.category).toBe(BATTLE_LOG_CATEGORIES.CRIT)
     expect(action.meta).toMatchObject({
@@ -337,6 +338,7 @@ describe('BattleExecutor 日志发射器', () => {
       hpBefore: 50,
       hpAfter: 20,
       damage: 30,
+      rawDamage: 35,
       crit: true,
       kill: false,
       skillName: '普通攻击',

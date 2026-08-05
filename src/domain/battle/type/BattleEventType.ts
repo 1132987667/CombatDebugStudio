@@ -4,7 +4,7 @@ import type {
   DamageCategory,
 } from '@/domain/skill/types';
 import type { BattleLogEntry } from '@/shared/types/battle-log';
-import type { BattleSummary } from '@/shared/types/battle-summary';
+import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary';
 
 
 

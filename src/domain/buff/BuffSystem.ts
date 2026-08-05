@@ -47,6 +47,13 @@ export interface TriggerExecutionContext extends TriggerEventContext {
 /** 角色解析器：characterId → BattleEntity */
 export type CharacterResolver = (characterId: string) => BattleEntity | undefined
 
+/**
+ * 伤害/治疗请求来源标记：区分 dot 持续伤害、hot 持续治疗与触发器脚本伤害。
+ * 供 BattleSystem 在补发 DAMAGE_CALCULATION / HEAL_CALCULATION 事件时判断语义
+ * （dot 带 dot 标记不计命中/技能表；hot 带 hot 标记不计技能表），战报口径见 unified-summary.ts。
+ */
+export type DamageOrigin = 'dot' | 'hot' | 'trigger'
+
 /** 召唤配置（最小定义，供回调传递） */
 export interface SummonRequest {
   /** 召唤物模板 ID（对应 enemies.json 中的 id） */
@@ -78,8 +85,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     damage: number,
     rawDamage?: number,
     damagePercent?: number,
+    origin?: DamageOrigin,
   ) => void
-  private onHealRequest?: (targetId: string, amount: number) => void
+  private onHealRequest?: (targetId: string, amount: number, origin?: DamageOrigin) => void
   private onEnergyRequest?: (targetId: string, amount: number) => void
   private onSummonRequest?: (request: SummonRequest) => void
   private onBuffApplied?: (characterId: string, buffId: string) => void
@@ -210,16 +218,17 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     damage: number,
     rawDamage?: number,
     damagePercent?: number,
+    origin?: DamageOrigin,
   ): void {
-    this.dealDirectDamage(targetId, damage, rawDamage, damagePercent)
+    this.dealDirectDamage(targetId, damage, rawDamage, damagePercent, origin)
   }
 
   /**
    * 请求治疗目标（供触发器脚本调用）
    * 委托给 BattleSystem 注册的 onHealRequest 回调
    */
-  public requestHeal(targetId: string, amount: number): void {
-    this.healTarget(targetId, amount)
+  public requestHeal(targetId: string, amount: number, origin?: DamageOrigin): void {
+    this.healTarget(targetId, amount, origin)
   }
 
   /**
@@ -244,15 +253,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     damage: number,
     rawDamage?: number,
     damagePercent?: number,
+    origin?: DamageOrigin,
   ): void {
     if (this.onDamageRequest) {
-      this.onDamageRequest(targetId, damage, rawDamage, damagePercent)
+      this.onDamageRequest(targetId, damage, rawDamage, damagePercent, origin)
     }
   }
 
-  private healTarget(targetId: string, amount: number): void {
+  private healTarget(targetId: string, amount: number, origin?: DamageOrigin): void {
     if (this.onHealRequest) {
-      this.onHealRequest(targetId, amount)
+      this.onHealRequest(targetId, amount, origin)
     }
   }
 
@@ -275,13 +285,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       damage: number,
       rawDamage?: number,
       damagePercent?: number,
+      origin?: DamageOrigin,
     ) => void,
   ): void {
     this.onDamageRequest = callback
   }
 
   public setHealCallback(
-    callback: (targetId: string, amount: number) => void,
+    callback: (targetId: string, amount: number, origin?: DamageOrigin) => void,
   ): void {
     this.onHealRequest = callback
   }

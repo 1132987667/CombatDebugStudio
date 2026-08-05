@@ -92,6 +92,7 @@ export function fromRecordedBattle(rec: RecordedBattle | undefined | null): Unif
     hp: p.currentHealth,
     maxEnergy: p.maxEnergy,
     energy: p.currentEnergy,
+    side: p.team,
     buffs: [],
   }))
 

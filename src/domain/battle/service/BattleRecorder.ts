@@ -164,6 +164,21 @@ export class BattleRecorder {
     const seed = randomSeed || this.generateRandomSeed()
     this.randomSeeds.set(battleId, seed)
 
+    // NOTE: participants 是活的 BattleEntity 引用，战斗中 currentHealth/currentEnergy
+    //       会被扣血/耗能/治疗持续改写。若不冻结快照，战斗结束后 initialState 将不再是
+    //       "初始状态"，统一战报（fromRecordedBattle + summarizeBattle）会以结束血量当起点
+    //       再次累减事件流伤害，HP 模拟双重扣血失真（见 unified-summary.ts HP 约定）。
+    //       此处按 RecordedBattle 白名单字段冻结纯数据快照。
+    const participants = initialState.participants.map((p) => ({
+      id: p.id,
+      name: p.name,
+      team: p.team,
+      maxHealth: p.maxHealth,
+      currentHealth: p.currentHealth,
+      maxEnergy: p.maxEnergy,
+      currentEnergy: p.currentEnergy,
+    }))
+
     const recording: RecordedBattle = {
       battleId,
       replayId: generateReplayId(),
@@ -171,7 +186,7 @@ export class BattleRecorder {
       randomSeed: seed,
       startTime: Date.now(),
       events: [],
-      initialState,
+      initialState: { participants },
       rounds: [],
       combatRecords: [],
     }
@@ -184,7 +199,7 @@ export class BattleRecorder {
       BattleEventType.BATTLE_START,
       {
         timestamp: Date.now(),
-        participants: initialState.participants,
+        participants,
       },
       0,
       0,
@@ -195,11 +210,8 @@ export class BattleRecorder {
       message: `开始记录战斗: ${battleId}`,
     })
 
-    // ponytail: 战报累加器初始化（传入参与者以支持时间线敌我前缀）
-    BattleSummaryGenerator.instance.startBattle(
-      battleId,
-      initialState.participants,
-    )
+    //  新战斗开始：清空上一场战报，防止日志面板导出/叙事渲染器误用上一场摘要
+    BattleSummaryGenerator.instance.reset()
 
     this.scheduleCleanup()
   }
@@ -226,8 +238,6 @@ export class BattleRecorder {
     if (recording) {
       recording.combatRecords.push(record)
     }
-    // ponytail: 战报数据累积
-    BattleSummaryGenerator.instance.onAction(record)
   }
 
   /** 记录结构化调试追踪事件（由 TraceEventCollector 在战斗结束时导出） */

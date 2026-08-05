@@ -36,6 +36,8 @@ import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
+import { summarizeBattle, type BattleSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import type { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
@@ -248,6 +250,18 @@ export const useBattleStore = defineStore('battle', () => {
 
   //  4. 事件处理器（仅负责同步业务数据到响应式状态）
 
+  /** 从当前战斗录制生成统一战报（与昊天镜摘要共用 fromRecordedBattle + summarizeBattle 统计源） */
+  const buildBattleSummary = (): BattleSummary | null => {
+    if (!battleService.value || !currentBattleId.value) return null
+    const bs = battleService.value.getBattleManager().getBattleSystem()
+    const rec = bs.getBattleRecording(currentBattleId.value)
+    if (!rec) return null
+    const archive = fromRecordedBattle(rec)
+    const summary = archive ? summarizeBattle(archive) : null
+    if (summary) BattleSummaryGenerator.instance.setSummary(summary)
+    return summary
+  }
+
   /** 处理战斗结束事件（重置战斗状态，记录胜负结果） */
   const handleBattleEndEvent = (data: BattleEndedEventData) => {
     isBattleActive.value = false
@@ -269,9 +283,9 @@ export const useBattleStore = defineStore('battle', () => {
         category: BATTLE_LOG_CATEGORIES.STATUS,
         meta: { role: 'battle' },
       })
-      // NOTE: 生成战报并发射事件（原 BattleEventManager 死代码逻辑迁移至此 —
-      //       BattleEventManager.startListening 无调用方，BATTLE_ENDED 唯一活跃订阅者是本 handler）
-      const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
+      // NOTE: 战报统一从录制事件流派生（fromRecordedBattle + summarizeBattle），
+      //       与昊天镜摘要共用同一统计源，不维护第二套累加口径。
+      const summary = buildBattleSummary()
       if (summary) {
         container
           .resolve<UIEventBus>('UIEventBus')
@@ -794,6 +808,7 @@ export const useBattleStore = defineStore('battle', () => {
     format: 'txt' | 'html' | 'record' = 'txt',
     count: number = 50,
     record: boolean = false,
+    store: boolean = false,
   ) => {
     if (!battleService.value) return
     if (generationProgress.isGenerating) return
@@ -814,18 +829,23 @@ export const useBattleStore = defineStore('battle', () => {
       const safeCount = Number.isFinite(count) && Math.floor(count) >= 1
         ? Math.min(Math.floor(count), 50)
         : 50
+      // NOTE: store=true（存入昊天镜）时只入库不下载；format 强制 'record' 以走录制保存管线
+      const effFormat = store ? 'record' : format
       await generator.generate({
         totalBattles: safeCount,
         mode,
-        format,
-        record,
+        format: effFormat,
+        record: store || record,
+        download: store ? false : undefined,
         onProgress: (_progress: number, current: number, total: number) => {
           generationProgress.current = current
           generationProgress.total = total
           generationProgress.percent = Math.round((current / total) * 100)
         },
       })
-      battleLogManager.addSystemLog({ message: `战斗数据生成完成（${mode}×${count}场），文件已下载` })
+      battleLogManager.addSystemLog({ message: store
+        ? `战斗数据生成完成（${mode}×${count}场），已存入昊天镜`
+        : `战斗数据生成完成（${mode}×${count}场），文件已下载` })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)

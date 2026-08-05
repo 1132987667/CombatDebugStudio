@@ -567,6 +567,8 @@ export interface BattleEffect {
   value?: number
   /** 伤害值别名，与 value 同语义（规范要求的显式字段名） */
   damage?: number
+  /** 减免前原始伤害（展示「造成 X 点伤害」用；damage 保持最终承伤值） */
+  rawDamage?: number
   /** 治疗值（heal/drain 类型时有效，与 value/damage 分离以便渲染层区分） */
   heal?: number
   /** 治疗/吸血溢出量 */

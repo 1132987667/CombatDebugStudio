@@ -82,6 +82,8 @@ interface PersistedPrefs {
   streamText: string
   bookmarks: string[]
   breakpoints: BreakpointConfig[]
+  /** 强制显示无数据源的战报指标列（默认按存档完整性动态渲染） */
+  showEmptyStats: boolean
 }
 
 function loadPrefs(): Partial<PersistedPrefs> {
@@ -178,6 +180,18 @@ export const useHaotianStore = defineStore('haotian', () => {
   const summary = computed<BattleSummary | null>(() =>
     archive.value ? summarizeBattle(archive.value, summaryCut.value === 'playback' ? playback.value.t : undefined) : null,
   )
+  /** 是否强制显示无数据源的指标列（resists 等；默认按存档完整性动态渲染） */
+  const showEmptyStats = ref(false)
+  /** 当前存档是否含被抵抗事件（真实录制无 debuff 抵抗机制，恒无此事件 → resists 列默认隐藏） */
+  const hasResisted = computed(() =>
+    evs.value.some(
+      (e) => e.phase === 'buff_lifecycle' && (e.payload as Record<string, unknown>)?.resisted,
+    ),
+  )
+  function toggleShowEmptyStats(): void {
+    showEmptyStats.value = !showEmptyStats.value
+    persistPrefs()
+  }
   const filteredEvents = computed(() => {
     let list = evs.value
     if (!showDbg.value) list = list.filter((e) => !PHASE_META[e.phase].debugOnly)
@@ -235,6 +249,7 @@ export const useHaotianStore = defineStore('haotian', () => {
         streamText: streamText.value,
         bookmarks: [...bookmarks.value],
         breakpoints: breakpoints.value,
+        showEmptyStats: showEmptyStats.value,
       }
       localStorage.setItem(PREF_KEY, JSON.stringify(prefs))
     } catch {
@@ -926,6 +941,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     if (prefs.streamText !== undefined) streamText.value = prefs.streamText
     if (Array.isArray(prefs.bookmarks)) bookmarks.value = new Set(prefs.bookmarks)
     if (Array.isArray(prefs.breakpoints) && prefs.breakpoints.length) breakpoints.value = prefs.breakpoints
+    if (prefs.showEmptyStats !== undefined) showEmptyStats.value = prefs.showEmptyStats
   }
 
   return {
@@ -960,6 +976,9 @@ export const useHaotianStore = defineStore('haotian', () => {
     summary,
     summaryCut,
     toggleSummaryCut,
+    showEmptyStats,
+    hasResisted,
+    toggleShowEmptyStats,
     exportSummaryMarkdown,
     exportSummaryCsv,
     bookmarks,

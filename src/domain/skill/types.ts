@@ -434,19 +434,18 @@ export interface SkillStep {
   condition?: string
 
   /**
-   * 效果参数（旧版扩展字段）
-   */
-  effectParams?: Record<string, any>
-
-  /**
    * 资源消耗类型
    */
   costType?: CostType
 
   /**
-   * 自定义参数
+   * 步骤参数
+   * 按步骤类型区分：
+   * - gain_energy: GainEnergyStepParams
+   * - custom: CustomStepParams
+   * - revive: ReviveStepParams
    */
-  parameters?: Record<string, any>
+  parameters?: SkillStepParameters
 
   /**
    * 优先级
@@ -605,10 +604,34 @@ export function convertSkillConfigToSkill(
   return skill
 }
 
+/** gain_energy 步骤参数 */
+export interface GainEnergyStepParams {
+  /** 能量获得量 */
+  value: number
+}
+
+/** custom 步骤参数（按 customType 分发） */
+export interface CustomStepParams {
+  /** 自定义步骤类型标识 */
+  customType: string
+  /** 自定义步骤描述（未实现时用于报错信息） */
+  description?: string
+  /** burn_detonate 每层灼烧伤害百分比（默认 5%） */
+  burnDamagePercent?: number
+  /** rotating_apply_buff 轮转施加的 buff 列表 */
+  buffIds?: string[]
+}
+
+/** 步骤参数：按步骤类型判别，业务参数全部显式类型化 */
+export type SkillStepParameters =
+  | GainEnergyStepParams
+  | CustomStepParams
+  | ReviveStepParams
+
 /** 复活步骤参数 */
 export interface ReviveStepParams {
   /** 复活后气血百分比（默认 30） */
-  hpPercent: number
+  hpPercent?: number
   /** 最大复活次数限制 */
   maxRevives?: number
   /** 复活冷却回合数 */

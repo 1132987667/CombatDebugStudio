@@ -1,77 +1,155 @@
 <!--
  * 文件: BattleSummaryDialog.vue
- * 功能: 战斗战报弹窗
- * 描述: 战斗结束后展示多维度统计数据，支持复制摘要和导出 JSON。
- *       纯中文排版，无图标/Emoji，信息密度优先。
+ * 功能: 战斗战报弹窗（七层模型）
+ * 描述: 战斗结束后展示统一战报（unified-summary.ts 从事件流派生）：
+ *       L1 结果+胜负边际 / L2 阵营对比 / L3 单位贡献排名 / L4 判定健康度 /
+ *       L5 技能使用 / L6 被动触发 / L7 关键事件。
+ *       纯中文排版，无图标/Emoji，信息密度优先。支持复制摘要与导出 JSON。
 -->
 <template>
-  <Dialog :model-value="modelValue" @update:model-value="emitModelValue" title="战斗战报" width="650px">
+  <Dialog :model-value="modelValue" @update:model-value="emitModelValue" title="战斗战报" width="760px">
     <div v-if="summary" class="summary-container">
-      <!-- 头部 -->
+      <!-- L1 头部：结果 + 胜负边际 -->
       <div class="summary-header">
-        <span class="winner-badge" :class="summary.winner === '友方' ? 'win' : 'lose'">
-          {{ summary.winner === '友方' ? '胜利' : '败北' }}
+        <span class="winner-badge" :class="verdict === 'win' ? 'win' : verdict === 'lose' ? 'lose' : 'unknown'">
+          {{ verdict === 'win' ? '胜利' : verdict === 'lose' ? '败北' : '未分胜负' }}
         </span>
         <span class="summary-meta">
-          {{ summary.totalRounds }} 回合 · {{ formatDuration(summary.duration) }}
+          {{ summary.rounds }} 回合 · {{ formatDuration(summary.durationMs) }} ·
+          剩余血量 {{ summary.survivorHpPct }}%（存活 {{ summary.survivorCount }}）
         </span>
       </div>
 
-      <!-- 数据总览 -->
-      <div class="summary-stats">
-        <div class="stat-card">
-          <div class="stat-value damage">{{ summary.totalDamageDealt }}</div>
-          <div class="stat-label">总伤害</div>
+      <!-- L2 阵营对比 -->
+      <div v-if="teams.length" class="section">
+        <div class="section-title">阵营对比</div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">阵营</th>
+              <th>输出</th>
+              <th>承伤</th>
+              <th>治疗</th>
+              <th>击杀</th>
+              <th>存活</th>
+              <th>剩余血量</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="t in teams" :key="t.side" :class="{ 'row-win': t.side === winnerSide }">
+              <td class="l">{{ teamLabel(t.side) }}</td>
+              <td class="num dmg">{{ t.dealt }}</td>
+              <td class="num">{{ t.taken }}</td>
+              <td class="num heal">{{ t.healed }}</td>
+              <td class="num">{{ t.kills }}</td>
+              <td class="num">{{ t.survivors }}/{{ t.total }}</td>
+              <td class="num">{{ t.hpEnd }}/{{ t.hpMax }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- L3 单位贡献排名（输出降序 + MVP） -->
+      <div v-if="rankedUnits.length" class="section">
+        <div class="section-title">单位贡献 <span v-if="mvp" class="mvp-tag">MVP: {{ nameText(mvp.id) }}</span></div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">单位</th>
+              <th>输出</th>
+              <th>承伤</th>
+              <th>治疗</th>
+              <th>攻击</th>
+              <th>暴击</th>
+              <th>击杀</th>
+              <th>每击</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="u in rankedUnits" :key="u.id" :class="{ 'row-mvp': mvp && mvp.id === u.id }">
+              <td class="l nm">{{ nameText(u.id) }}</td>
+              <td class="num dmg">{{ u.dealt }}</td>
+              <td class="num">{{ u.taken }}</td>
+              <td class="num heal">{{ u.healed }}</td>
+              <td class="num">{{ u.attacks }}</td>
+              <td class="num">{{ u.crits }}</td>
+              <td class="num">{{ u.kills }}</td>
+              <td class="num">{{ u.hits > 0 ? Math.round(u.dealt / u.hits) : '-' }}</td>
+              <td class="num" :class="u.alive ? 'ok' : 'dead'">{{ u.alive ? `存活 ${u.hpEnd}` : '阵亡' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- L4 判定健康度 -->
+      <div class="section">
+        <div class="section-title">判定健康度</div>
+        <div class="judge-row">
+          <span class="judge-item">攻击 {{ summary.judgment.attacks }}</span>
+          <span class="judge-item">命中 {{ summary.judgment.hits }}</span>
+          <span class="judge-item">暴击 {{ summary.judgment.crits }}（{{ summary.judgment.critRate }}%）</span>
+          <span class="judge-item">闪避 {{ summary.judgment.dodges }}</span>
+          <span class="judge-item">抵抗 {{ summary.judgment.resists }}</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-value heal">{{ summary.totalHealing }}</div>
-          <div class="stat-label">总治疗</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" :class="summary.totalDamageTaken > 0 ? 'damage' : ''">
-            {{ summary.totalDamageTaken }}
+      </div>
+
+      <!-- L5 技能使用 -->
+      <div v-if="summary.skills.length" class="section">
+        <div class="section-title">技能使用</div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">技能</th>
+              <th>次数</th>
+              <th>输出</th>
+              <th>占比</th>
+              <th>治疗</th>
+              <th>暴击</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(s, i) in summary.skills" :key="i">
+              <td class="l nm">{{ s.skillName }}</td>
+              <td class="num">{{ s.uses }}</td>
+              <td class="num dmg">{{ s.damage }}</td>
+              <td class="num">{{ s.pct }}%</td>
+              <td class="num heal">{{ s.heal }}</td>
+              <td class="num">{{ s.crits }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- L6 被动触发 -->
+      <div v-if="summary.passives.length" class="section">
+        <div class="section-title">被动触发</div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">被动</th>
+              <th class="l">拥有者</th>
+              <th>触发次数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(p, i) in summary.passives" :key="i">
+              <td class="l nm">{{ p.name }}</td>
+              <td class="l">{{ p.owner }}</td>
+              <td class="num">{{ p.triggered }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- L7 关键事件 -->
+      <div v-if="summary.keyEvents.length" class="section">
+        <div class="section-title">关键事件</div>
+        <div class="key-events">
+          <div v-for="(ev, i) in summary.keyEvents" :key="i" class="ke-line">
+            <span class="ke-turn">T{{ ev.turn }}</span>
+            <span :class="`ke-${ev.kind}`">{{ ev.text }}</span>
           </div>
-          <div class="stat-label">受击伤害</div>
-        </div>
-      </div>
-
-      <!-- 最高单次 -->
-      <div v-if="summary.highestSingleDamage || summary.highestSingleHeal" class="summary-records">
-        <div v-if="summary.highestSingleDamage" class="record-line">
-          最高伤害: <strong>{{ summary.highestSingleDamage.actor }}</strong> —
-          {{ summary.highestSingleDamage.value }} 点{{ summary.highestSingleDamage.crit ? '（暴击）' : '' }}
-        </div>
-        <div v-if="summary.highestSingleHeal" class="record-line">
-          最高治疗: <strong>{{ summary.highestSingleHeal.actor }}</strong> —
-          {{ summary.highestSingleHeal.value }} 点
-        </div>
-      </div>
-
-      <!-- 参与者列表 -->
-      <div v-if="summary.participants.length > 0" class="summary-participants">
-        <div class="section-title">参与者状态</div>
-        <div class="participant-row" v-for="p in summary.participants" :key="p.id">
-          <span class="p-name">{{ p.name }}</span>
-          <span class="p-hp">{{ p.hpEnd }}/{{ p.hpMax }}</span>
-          <span class="p-stat damage" title="造成伤害">{{ p.totalDamageDealt }}</span>
-          <span class="p-stat" title="承受伤害">{{ p.totalDamageTaken }}</span>
-          <span class="p-stat heal" title="获得治疗">{{ p.totalHealingReceived }}</span>
-        </div>
-      </div>
-
-      <!-- 动作时间线摘要 -->
-      <div v-if="summary.actionTimeline.length > 0" class="summary-timeline">
-        <div class="section-title">动作时间线</div>
-        <div class="timeline-entry" v-for="(a, i) in trimmedTimeline" :key="i">
-          <span class="tl-turn">T{{ a.turn }}</span>
-          <span class="tl-actor">{{ a.actor }}</span>
-          <span class="tl-action">{{ a.action }}</span>
-          <span class="tl-target" v-if="a.target">→ {{ a.target }}</span>
-          <span class="tl-value damage" v-if="a.damage"> {{ a.damage }}{{ a.crit ? ' 暴击' : '' }}</span>
-          <span class="tl-value heal" v-if="a.heal"> +{{ a.heal }}</span>
-        </div>
-        <div v-if="summary.actionTimeline.length > 10" class="timeline-more">
-          ... 共 {{ summary.actionTimeline.length }} 条动作
         </div>
       </div>
     </div>
@@ -94,7 +172,7 @@
 import { computed } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
-import type { BattleSummary } from '@/shared/types/battle-summary'
+import type { BattleSummary, UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 
 interface Props {
   modelValue: boolean
@@ -113,16 +191,54 @@ const emit = defineEmits<{
 const emitModelValue = (v: boolean) => emit('update:modelValue', v)
 const closeDialog = () => emit('update:modelValue', false)
 
-// 格式化耗时
+const teamLabel = (side: string): string => (side === 'ally' ? '友方' : side === 'enemy' ? '敌方' : side)
+
+/** 阵营前缀名：与日志口径一致 [友方]/[敌方] */
+const nameText = (id: string): string => {
+  const u = props.summary?.units[id]
+  if (!u) return id
+  return `${teamLabel(u.side)}·${u.name}`
+}
+
+const verdict = computed<'win' | 'lose' | 'unknown'>(() => {
+  const s = props.summary
+  if (!s?.winner) return 'unknown'
+  if (s.winner === 'ally') return 'win'
+  if (s.winner === 'enemy') return 'lose'
+  const side = s.units[s.winner]?.side
+  if (side === 'ally') return 'win'
+  if (side === 'enemy') return 'lose'
+  return 'unknown'
+})
+
+const winnerSide = computed(() => {
+  const s = props.summary
+  if (!s?.winner) return ''
+  if (s.winner === 'ally' || s.winner === 'enemy') return s.winner
+  return s.units[s.winner]?.side ?? ''
+})
+
+const teams = computed(() => props.summary?.teams ?? [])
+
+/** 单位按输出降序 */
+const rankedUnits = computed(() => {
+  if (!props.summary) return []
+  return Object.values(props.summary.units).sort((a, b) => b.dealt - a.dealt || b.healed - a.healed)
+})
+
+const mvp = computed<UnitSummary | null>(() => {
+  if (!props.summary) return null
+  const best = Object.values(props.summary.units).reduce<UnitSummary | null>(
+    (acc, u) => (u.dealt > (acc?.dealt ?? -1) && u.dealt > 0 ? u : acc),
+    null,
+  )
+  return best
+})
+
 const formatDuration = (ms: number): string => {
   if (ms < 1000) return `${ms}ms`
   return `${(ms / 1000).toFixed(1)}s`
 }
-
-// 时间线仅显示前 10 条
-const trimmedTimeline = computed(() => {
-  return props.summary?.actionTimeline.slice(0, 10) ?? []
-})
 
 // 复制纯文本摘要
 const copySummary = () => {
@@ -130,20 +246,23 @@ const copySummary = () => {
   if (!s) return
 
   const lines = [
-    `战斗战报 — ${s.winner === '友方' ? '胜利' : '败北'}`,
-    `${s.totalRounds} 回合 · ${formatDuration(s.duration)}`,
-    `─── 数据统计 ───`,
-    `总伤害: ${s.totalDamageDealt}  |  总治疗: ${s.totalHealing}  |  受击: ${s.totalDamageTaken}`,
+    `战斗战报 — ${verdict.value === 'win' ? '胜利' : verdict.value === 'lose' ? '败北' : '未分胜负'}`,
+    `${s.rounds} 回合 · ${formatDuration(s.durationMs)} · 胜方剩余血量 ${s.survivorHpPct}%`,
+    `─── 阵营对比 ───`,
   ]
-  if (s.highestSingleDamage) {
-    lines.push(`最高伤害: ${s.highestSingleDamage.actor} — ${s.highestSingleDamage.value} 点${s.highestSingleDamage.crit ? '（暴击）' : ''}`)
+  for (const t of s.teams) {
+    lines.push(`${teamLabel(t.side)}: 输出 ${t.dealt} | 承伤 ${t.taken} | 治疗 ${t.healed} | 击杀 ${t.kills} | 存活 ${t.survivors}/${t.total}`)
   }
-  if (s.highestSingleHeal) {
-    lines.push(`最高治疗: ${s.highestSingleHeal.actor} — ${s.highestSingleHeal.value} 点`)
+  lines.push(`─── 判定 ───`)
+  lines.push(`攻击 ${s.judgment.attacks} | 命中 ${s.judgment.hits} | 暴击 ${s.judgment.crits}(${s.judgment.critRate}%) | 闪避 ${s.judgment.dodges} | 抵抗 ${s.judgment.resists}`)
+  if (mvp.value) lines.push(`MVP: ${nameText(mvp.value.id)} — 输出 ${mvp.value.dealt}`)
+  if (s.keyEvents.length) {
+    lines.push(`─── 关键事件 ───`)
+    for (const ev of s.keyEvents) lines.push(`T${ev.turn} ${ev.text}`)
   }
 
   navigator.clipboard.writeText(lines.join('\n')).catch(() => {
-    // ponytail: 静默失败，剪贴板不可用时不做处理
+    // HACK: 剪贴板不可用时静默失败（旧实现同口径）
   })
 }
 
@@ -165,7 +284,7 @@ const exportJson = () => {
 <style scoped>
 .summary-container {
   padding: var(--space-2);
-  max-height: 60vh;
+  max-height: 62vh;
   overflow-y: auto;
 }
 .summary-header {
@@ -186,78 +305,76 @@ const exportJson = () => {
   color: var(--color-text-secondary);
 }
 
-.summary-stats {
-  display: flex;
-  gap: var(--space-3);
+.section {
   margin-bottom: var(--space-3);
 }
-.stat-card {
-  flex: 1;
-  text-align: center;
-  padding: var(--space-2);
-  background: var(--color-bg-tertiary);
-  border-radius: 6px;
-  border: 1px solid var(--color-border-default);
-}
-.stat-value {
-  font-size: 1.5em;
-  font-weight: bold;
-}
-.stat-value.damage { color: var(--color-damage, #f44336); }
-.stat-value.heal { color: var(--color-heal, #4caf50); }
-.stat-label {
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-
-.summary-records {
-  margin-bottom: var(--space-3);
-  padding: var(--space-2);
-  background: var(--color-bg-tertiary);
-  border-radius: 6px;
-}
-.record-line {
-  margin: 4px 0;
-}
-
 .section-title {
   font-weight: bold;
   margin-bottom: var(--space-1);
   color: var(--color-text-secondary);
 }
-.summary-participants {
-  margin-bottom: var(--space-3);
+.mvp-tag {
+  color: var(--color-heal, #4caf50);
+  font-weight: bold;
+  margin-left: var(--space-2);
 }
-.participant-row {
-  display: flex;
-  gap: var(--space-2);
-  padding: 4px 0;
+
+.sum-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-md);
+}
+.sum-table th {
+  text-align: right;
+  padding: 4px 6px;
+  color: var(--color-text-tertiary);
+  font-weight: normal;
   border-bottom: 1px solid var(--color-border-hairline);
 }
-.p-name { flex: 0 0 80px; font-weight: bold; }
-.p-hp { flex: 0 0 70px; }
-.p-stat { flex: 0 0 60px; text-align: right; }
-.p-stat.damage { color: var(--color-damage, #f44336); }
-.p-stat.heal { color: var(--color-heal, #4caf50); }
-
-.summary-timeline {
-  margin-bottom: var(--space-2);
+.sum-table th.l,
+.sum-table td.l {
+  text-align: left;
 }
-.timeline-entry {
+.sum-table td {
+  text-align: right;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+.sum-table td.nm {
+  font-weight: bold;
+}
+.row-win td { background: rgba(76, 175, 80, 0.06); }
+.row-mvp td { background: rgba(76, 175, 80, 0.1); }
+.num.dmg { color: var(--color-damage, #f44336); }
+.num.heal { color: var(--color-heal, #4caf50); }
+.num.ok { color: var(--color-heal, #4caf50); }
+.num.dead { color: var(--color-damage, #f44336); }
+
+.judge-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.judge-item {
+  color: var(--color-text-secondary);
+}
+
+.key-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ke-line {
   display: flex;
   gap: var(--space-2);
   padding: 2px 0;
 }
-.tl-turn { flex: 0 0 30px; color: var(--color-text-tertiary); }
-.tl-actor { flex: 0 0 60px; font-weight: bold; }
-.tl-action { flex: 0 0 50px; color: var(--color-text-secondary); }
-.tl-target { flex: 1; color: var(--color-text-secondary); }
-.tl-value.damage { color: var(--color-damage, #f44336); }
-.tl-value.heal { color: var(--color-heal, #4caf50); }
-.timeline-more {
+.ke-turn {
+  flex: 0 0 40px;
   color: var(--color-text-tertiary);
-  font-style: italic;
 }
+.ke-kill, .ke-first_blood { color: var(--color-damage, #f44336); }
+.ke-highest_hit { color: var(--color-heal, #4caf50); }
 
 .summary-empty {
   padding: var(--space-4);

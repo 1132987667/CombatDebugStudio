@@ -26,12 +26,12 @@ export class DotEffect implements IAtomicEffect {
     if (!buffSystem) return
 
     if (damageType === 'percent') {
-      // 百分比伤害随层数缩放（3 层 = 3 倍百分比），与 flat 模式的 value × stacks 语义一致
+      // 百分比伤害随层数缩放（−3 层 = 3 倍百分比），与 flat 模式的 value × stacks 语义一致
       const stacks = ctx.getVariable<number>('_stacks') ?? 1
-      buffSystem.requestDamage(ctx.characterId, 0, undefined, (value / 100) * stacks)
+      buffSystem.requestDamage(ctx.characterId, 0, undefined, (value / 100) * stacks, 'dot')
     } else {
       const stacks = ctx.getVariable<number>('_stacks') ?? 1
-      buffSystem.requestDamage(ctx.characterId, value * stacks)
+      buffSystem.requestDamage(ctx.characterId, value * stacks, undefined, undefined, 'dot')
     }
   }
 

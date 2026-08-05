@@ -189,46 +189,55 @@ export class RoundNarrativeRenderer {
     flushAll()
     flushRound()
 
-    // 战报摘要：战斗结束后追加 summary 块
+    // 战报摘要：战斗结束后追加 summary 块（统一战报模型，见 unified-summary.ts）
     const summary = BattleSummaryGenerator.instance.lastSummary
     if (summary) {
+      const units = Object.values(summary.units)
+      const totalDealt = units.reduce((s, u) => s + u.dealt, 0)
+      const totalHeal = units.reduce((s, u) => s + u.healed, 0)
+      const mvp = units.reduce<(typeof units)[number] | null>(
+        (best, u) => (u.dealt > (best?.dealt ?? -1) && u.dealt > 0 ? u : best),
+        null,
+      )
+      const bestHit = units.reduce<(typeof units)[number] | null>(
+        (best, u) => (u.highestHit > (best?.highestHit ?? -1) ? u : best),
+        null,
+      )
+      // winner 可能是单位 id（demo）或阵营 side（真实录制），统一显示为可读名称
+      const SIDE_LABEL: Record<string, string> = { ally: '友方', enemy: '敌方' }
+      const winnerLabel = summary.winner
+        ? SIDE_LABEL[summary.winner] ??
+          summary.units[summary.winner]?.name ??
+          summary.winner
+        : '未知'
       const summaryLines: LogSegment[][] = []
       summaryLines.push([
         {
-          text: `战斗结束 · ${summary.winner}胜利 · ${summary.totalRounds}回合`,
+          text: `战斗结束 · ${winnerLabel}胜利 · ${summary.rounds}回合 · 剩余血量 ${summary.survivorHpPct}%`,
           classStr: 'log-system',
         },
       ])
       summaryLines.push([
         {
-          text: `总伤害 ${summary.totalDamageDealt} · 总治疗 ${summary.totalHealing} · `,
+          text: `总伤害 ${totalDealt} · 总治疗 ${totalHeal} · 暴击率 ${summary.judgment.critRate}% · `,
           classStr: 'log-text',
         },
         {
-          text: `暴击 ${summary.highestSingleDamage?.crit ? '是' : '否'}`,
+          text: `闪避 ${summary.judgment.dodges} · 抵抗 ${summary.judgment.resists}`,
           classStr: 'log-text',
         },
       ])
-      if (summary.highestSingleDamage) {
+      if (bestHit) {
         summaryLines.push([
           {
-            text: `最高单次: ${summary.highestSingleDamage.actor} — ${summary.highestSingleDamage.value}`,
+            text: `最高单次: ${bestHit.name} — ${bestHit.highestHit}`,
             classStr: 'log-friendly',
           },
         ])
       }
-      // MVP：按总伤害排序
-      let mvp = '',
-        mvpDmg = -1
-      for (const p of summary.participants) {
-        if (p.totalDamageDealt > mvpDmg) {
-          mvpDmg = p.totalDamageDealt
-          mvp = p.name
-        }
-      }
       if (mvp) {
         summaryLines.push([
-          { text: `MVP: ${mvp} — 总伤害 ${mvpDmg}`, classStr: 'log-friendly' },
+          { text: `MVP: ${mvp.name} — 总伤害 ${mvp.dealt}`, classStr: 'log-friendly' },
         ])
       }
       blocks.push({ type: NarrativeBlockType.SUMMARY, lines: summaryLines })
@@ -237,14 +246,10 @@ export class RoundNarrativeRenderer {
     return blocks
   }
 
-  /** 结果行：仅输出 sub 行没有的高亮标记（暴击/致死/击杀），数值明细由 sub 行承载 */
+  /** 结果行：仅输出 sub 行没有的高亮标记（致死）；暴击/击杀已由投影层并入 action header */
   private buildResult(meta: BattleLogMeta | undefined): LogSegment[] | undefined {
-    if (!meta || (!meta.crit && !meta.lethal && !meta.kill)) return undefined
-    const segs: LogSegment[] = []
-    if (meta.crit) segs.push({ text: '★ 暴击! ', classStr: 'log-crit' })
-    if (meta.lethal) segs.push({ text: ' — 致死!', classStr: 'log-lethal' })
-    if (meta.kill) segs.push({ text: ' ✦ 击杀!', classStr: 'log-kill' })
-    return segs
+    if (!meta || !meta.lethal) return undefined
+    return [{ text: ' — 致死!', classStr: 'log-lethal' }]
   }
 
   /** 结算行：DOT `中毒 -10HP → 303` */

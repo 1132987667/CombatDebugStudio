@@ -51,4 +51,46 @@ describe('summarizeBattle（战斗摘要统计）', () => {
     const sum = summarizeBattle(log)
     expect(Object.keys(sum.units).sort()).toEqual(['u1', 'u2'])
   })
+
+  it('七层战报：L1 胜负边际 / L2 阵营对比 / L4 判定 / L5 技能 / L7 关键事件', () => {
+    const sum = summarizeBattle(createDemoArchive())
+
+    // L1 胜负边际：胜方 ally（u1）存活 1，剩余血量 287/350
+    expect(sum.survivorCount).toBe(1)
+    expect(sum.survivorHpPct).toBe(82)
+
+    // L2 阵营对比
+    const ally = sum.teams.find((t) => t.side === 'ally')!
+    const enemy = sum.teams.find((t) => t.side === 'enemy')!
+    expect(ally.dealt).toBe(509)
+    expect(ally.kills).toBe(1)
+    expect(enemy.dealt).toBe(63)
+    expect(enemy.survivors).toBe(0)
+    expect(enemy.hpEnd).toBe(0)
+    expect(enemy.hpMax).toBe(500)
+
+    // L4 判定健康度：攻击 2（ev04/ev10）、命中 5（dot ev03 不计）、暴击 1（ev05 顶层标记）、闪避 1、抵抗 1
+    expect(sum.judgment.attacks).toBe(2)
+    expect(sum.judgment.hits).toBe(5)
+    expect(sum.judgment.crits).toBe(1)
+    expect(sum.judgment.critRate).toBe(20)
+    expect(sum.judgment.dodges).toBe(1)
+    expect(sum.judgment.resists).toBe(1)
+
+    // L5 技能（demo 无 skillName → 归"未标记技能"；5 次伤害计算，dot 不计）
+    expect(sum.skills.length).toBe(1)
+    expect(sum.skills[0].skillName).toBe('未标记技能')
+    expect(sum.skills[0].uses).toBe(5)
+    expect(sum.skills[0].damage).toBe(572)
+
+    // L7 关键事件：首杀与击杀（ev18）
+    const first = sum.keyEvents.find((e) => e.kind === 'first_blood')
+    const kill = sum.keyEvents.find((e) => e.kind === 'kill')
+    expect(first?.kind).toBe('first_blood')
+    expect(kill?.text).toContain('火护法')
+
+    // 存活标记：u2 被击杀，u1 存活
+    expect(sum.units.u2.alive).toBe(false)
+    expect(sum.units.u1.alive).toBe(true)
+  })
 })

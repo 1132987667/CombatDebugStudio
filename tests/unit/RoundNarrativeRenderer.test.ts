@@ -106,17 +106,18 @@ describe('RoundNarrativeRenderer.renderEntries', () => {
     expect(roundBlocks(blocks)[0].tag).toBe('击杀!')
   })
 
-  it('action 块 result 输出暴击/击杀高亮，普通行动无 result', () => {
+  it('action 块 result 不再输出暴击/击杀（均已并入 header），普通行动无 result', () => {
     const blocks = renderer.renderEntries([
-      entry(1, { role: 'action', crit: true, kill: true }),
+      entry(1, { role: 'action', crit: true, kill: true }, [{ text: '，★ 暴击!' }]),
       entry(1, { role: 'sub' }),
       entry(2, { role: 'action' }),
     ])
     const actions = actionBlocks(blocks)
     expect(actions).toHaveLength(2)
     const resultText = (segs?: LogSegment[]) => segs?.map((s) => s.text).join('') ?? ''
-    expect(resultText(actions[0].result)).toContain('★ 暴击!')
-    expect(resultText(actions[0].result)).toContain('✦ 击杀!')
+    expect(resultText(actions[0].header)).toContain('★ 暴击!')
+    expect(resultText(actions[0].result)).not.toContain('★ 暴击!')
+    expect(resultText(actions[0].result)).not.toContain('✦ 击杀!')
     expect(actions[1].result).toBeUndefined()
   })
 

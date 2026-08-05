@@ -37,6 +37,8 @@ import { projectSnapshotLogs } from '@/domain/battle/logs/BattleLogProjector'
 import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
 import type { NarrativeBlock } from '@/shared/types/battle-log'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
+import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 
 export interface BattleGenerationOptions {
@@ -46,10 +48,12 @@ export interface BattleGenerationOptions {
   mode?: '1v1' | '2v2' | 'random'
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
-  /** 导出格式，默认 'txt'；'record' = 保存录制给昊天镜 + 下载录制 JSON */
+  /** 导出格式，默认 'txt'；'record' = 下载录制 JSON（未压缩） */
   format?: 'txt' | 'html' | 'record'
   /** 是否保存每场战斗的回放/调试记录到本地（IndexedDB，昊天镜「战斗记录」源可加载） */
   record?: boolean
+  /** 是否下载导出文件（仅 format='record' 生效，默认 true；存入昊天镜时置 false 跳过下载） */
+  download?: boolean
 }
 
 export interface SingleBattleLog {
@@ -96,13 +100,16 @@ export class BattleDataGenerator {
     // ── 备份并隔离全局日志状态，防止 50 场战斗污染 UI 面板 ──
     const savedBattleLogs = battleLogManager.exportLogs()
     battleLogManager.setAutoCleanup(false) // 解除 200 条上限，防止长战斗日志被截断
+    // 静默：批量写入的日志不通知 UI 监听器，避免 BattleLog 逐条全量重渲染导致白屏
+    battleLogManager.setMuted(true)
     battleLogManager.clearLogs()
 
     const battleLogs: SingleBattleLog[] = []
     //  录制格式时收集本场 RecordedBattle（须在 resetBattle 清除内存录制之前取值）
     const recordings: RecordedBattle[] = []
-    //  'record' 格式隐式开启录制保存（保存给昊天镜）
-    const shouldRecord = options.record || options.format === 'record'
+    //  是否保存到昊天镜（IndexedDB）：由显式 record 开关控制，'record' 格式不再隐式存库
+    //   （"生成记录"只下载、"存入昊天镜"才存库，两者独立）
+    const shouldRecord = options.record === true
     const dg = getDebugGate()
     const prevDebugEnabled = dg?.enabled ?? false
     if (dg) dg.enabled = false
@@ -165,10 +172,13 @@ export class BattleDataGenerator {
           continue
         }
 
-        //  headless 下 BATTLE_ENDED 不广播，战报生成器不会自动 onBattleEnd：
-        //   手动触发以恢复导出中的"战报摘要"块（与面板导出格式一致），顺带释放累加器
         const winner = battleData.winner
-        if (winner) BattleSummaryGenerator.instance.onBattleEnd(winner)
+
+        //  写入最新战报（叙事渲染器 TXT/HTML 导出末尾的"战报摘要"块数据源）
+        const rec = this.battleSystem.getBattleRecording(battleId)
+        const archive = rec ? fromRecordedBattle(rec) : null
+        const sum = archive ? summarizeBattle(archive) : null
+        if (sum) BattleSummaryGenerator.instance.setSummary(sum)
 
         const narrativeBlocks = this.collectNarrativeBlocks()
 
@@ -220,7 +230,8 @@ export class BattleDataGenerator {
       const dgRestore = getDebugGate()
       if (dgRestore) dgRestore.enabled = prevDebugEnabled
       battleLogManager.setAutoCleanup(true)
-      // 恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
+      // 解除静默（补发一次通知），随后恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
+      battleLogManager.setMuted(false)
       battleLogManager.importLogs(savedBattleLogs)
       // 清理最后一场参与者残留
       this.cleanupPrevBuffSystemEntries()
@@ -234,10 +245,10 @@ export class BattleDataGenerator {
 
     if (!this._cancelled && battleLogs.length > 0) {
       const format = options.format ?? 'txt'
-      if (format === 'record') {
+      if (format === 'record' && options.download !== false) {
         const json = this.mergeRecordings(recordings)
         if (json !== null) {
-          await this.downloadGzipJson(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json.gz`)
+          await this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
         }
       } else if (format === 'html') {
         const mergedHtml = this.mergeLogsHtml(battleLogs)
@@ -422,11 +433,10 @@ export class BattleDataGenerator {
       }),
     }
     try {
-      // NOTE: 导出文件已 gzip 压缩（downloadGzipJson），这里不再保留缩进，
-      //       否则压缩前体积多约 46% 纯空白。
+      // NOTE: 导出为标准未压缩 JSON；不保留缩进，省去约 46% 纯空白（gzip 压缩已移除，按需求改为明文）。
       return JSON.stringify(payload)
     } catch (e) {
-      LoggerProvider.logger.addDebugLog('序列化战斗录制失败，跳过下载（昊天镜保存不受影响）', {
+      LoggerProvider.logger.addDebugLog('序列化战斗录制失败，跳过下载', {
         level: LogLevel.ERROR,
       })
       return null
@@ -448,22 +458,6 @@ export class BattleDataGenerator {
 
   private downloadFile(content: string, filename: string, mime: string = 'text/plain;charset=utf-8'): void {
     this.triggerDownload(new Blob([content], { type: mime }), filename)
-  }
-
-  /**
-   * 下载 gzip 压缩的 JSON（CompressionStream 原生 API，无新依赖）
-   * NOTE: 录制 JSON 重复度高，gzip 后体积约剩 4%（11MB → ~460KB）；
-   *       文件名带 .gz，解压后方可阅读。无 CompressionStream 的老浏览器降级为未压缩 JSON。
-   */
-  private async downloadGzipJson(content: string, filename: string): Promise<void> {
-    if (typeof CompressionStream === 'undefined') {
-      this.downloadFile(content, filename.replace(/\.gz$/, ''), 'application/json;charset=utf-8')
-      return
-    }
-    const compressed = new Blob([content])
-      .stream()
-      .pipeThrough(new CompressionStream('gzip'))
-    this.triggerDownload(await new Response(compressed).blob(), filename)
   }
 
   /** 触发浏览器下载（创建临时 <a> 并清理） */

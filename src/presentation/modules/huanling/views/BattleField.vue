@@ -67,7 +67,7 @@ import { useBattleStore } from '@/presentation/stores/battleStore';
 import BattleLog from "./BattleLog.vue";
 import BattleSummaryDialog from "../components/BattleSummaryDialog.vue";
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing';
-import type { BattleSummary } from '@/shared/types/battle-summary';
+import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary';
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper';
 import { computed, onUnmounted, ref, watch } from "vue";
 

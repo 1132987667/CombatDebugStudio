@@ -44,13 +44,23 @@
           <span class="log-gen-label">场次:</span>
           <NumericStepper v-model="genCount" :min="1" :max="50" :steps="[1, 10, 50]" />
         </div>
-        <Button variant="energy"
-          :disabled="battleStore.generationProgress.isGenerating"
-          @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount)">
-          {{ battleStore.generationProgress.isGenerating
-            ? `生成中 ${battleStore.generationProgress.percent}%`
-            : `生成数据（${genCount}场）` }}
-        </Button>
+        <div class="log-gen-buttons">
+          <Button variant="energy"
+            :disabled="battleStore.generationProgress.isGenerating"
+            @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount)">
+            {{ battleStore.generationProgress.isGenerating
+              ? `生成中 ${battleStore.generationProgress.percent}%`
+              : `生成数据（${genCount}场）` }}
+          </Button>
+          <Button variant="secondary"
+            :disabled="battleStore.generationProgress.isGenerating"
+            @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', 'record', genCount, false, true)"
+            title="生成录制数据并存入昊天镜「战斗记录」，不下载文件">
+            {{ battleStore.generationProgress.isGenerating
+              ? `生成中 ${battleStore.generationProgress.percent}%`
+              : '存入昊天镜' }}
+          </Button>
+        </div>
       </div>
     </div>
   </Dialog>
@@ -285,5 +295,12 @@ const handleButtonClick = (action: string) => {
   display: flex;
   gap: var(--space-1);
   flex-wrap: wrap;
+}
+
+/* 生成按钮行：生成记录 + 存入昊天镜 并排 */
+.log-gen-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
 }
 </style>

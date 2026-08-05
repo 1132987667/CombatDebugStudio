@@ -9,7 +9,7 @@ import { ParticipantSide, ActionTypes } from '@/domain/battle/type/types'
 import { BaseBattleAI } from '@/domain/battle/ai/BattleAI'
 import { createParticipantFromEnemy } from '@tests/fixtures/participants'
 import { getSkillConfig } from '@tests/fixtures/loadTestData'
-import type { ExtendedSkillStep } from '@/domain/skill/types'
+import type { CustomStepParams, ExtendedSkillStep } from '@/domain/skill/types'
 
 vi.mock('@/main', () => ({
   eventBus: { emit: () => {}, on: () => {}, off: () => {} },
@@ -93,7 +93,7 @@ describe('轮转 buff custom step', () => {
       'test_passive_control_rotator',
     )?.steps[0] as ExtendedSkillStep
     expect(step).toBeTruthy()
-    const buffIds = (step.parameters as any).buffIds as string[]
+    const buffIds = (step.parameters as CustomStepParams).buffIds
     expect(buffIds.length).toBeGreaterThan(1)
 
     const action = { effects: [] } as any
@@ -127,7 +127,7 @@ describe('轮转 buff custom step', () => {
       'test_passive_dot_rotator',
     )?.steps[0] as ExtendedSkillStep
     expect(step).toBeTruthy()
-    const buffIds = (step.parameters as any).buffIds as string[]
+    const buffIds = (step.parameters as CustomStepParams).buffIds
     expect(step.stacks).toBe(3)
 
     const action = { effects: [] } as any

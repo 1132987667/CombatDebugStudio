@@ -140,6 +140,9 @@ export class HealCalculator {
             sourceId: source.id,
             targetId: target.id,
             stepId: skillStep.id,
+            // 治疗技能名：由执行器写入 CombatRecord.skillName（selectAndExecuteSkill 路径）；
+            // executeAction 路径 record 为 undefined 时缺省（归"未标记技能"，与伤害路径同口径）
+            skillName: context.record?.skillName,
             base: baseBeforeModifiers,
             final: heal,
             overflow,

@@ -85,7 +85,6 @@ export interface DamageBreakdown {
   /** 暴击后伤害（暴击后、来源方加成前） */
   postCritDamage: number
   /** 原始伤害：来源方全部产出（暴击 + 伤害提升 + 条件加成），目标方减免前
-   *  可选兼容：旧 localStorage 记录加载后该字段为 undefined。
    *  读取时请使用 `breakdown.rawDamage ?? breakdown.postCritDamage` 回退。 */
   rawDamage?: number
   /** 防御相关 */

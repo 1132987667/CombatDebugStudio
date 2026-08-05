@@ -78,7 +78,7 @@ export class FieldEffectManager {
           const dmg = p.isPercent
             ? floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
             : p.value
-          buffSystem.requestDamage(target.id, dmg)
+          buffSystem.requestDamage(target.id, dmg, undefined, undefined, 'trigger')
         } else if (p.effect === 'heal') {
           const heal = p.isPercent
             ? floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)

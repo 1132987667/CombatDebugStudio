@@ -99,6 +99,8 @@ export class BattleLogManager implements IBattleLogManager {
 
   /** 是否启用自动清理 */
   private autoCleanup: boolean = true
+  /** 是否静默（静默期间 emitLogUpdate 不通知监听器，用于批量数据生成等写日志但不希望 UI 重渲染的场景） */
+  private muted: boolean = false
   /** 日志过滤器配置 */
   private filters: LogFilters
   /** 当前调试日志级别，默认INFO */
@@ -437,6 +439,18 @@ export class BattleLogManager implements IBattleLogManager {
   }
 
   /**
+   * 启用/禁用日志更新通知
+   *
+   * 批量数据生成（BattleDataGenerator）会向共享日志管理器写入数十场战斗的日志，
+   * 每次写入都会触发 UI 监听器全量重渲染（BattleLog 的 renderEntries + v-for），
+   * 数千次写入会让界面白屏/冻结。生成期间置 muted=true 抑制通知，结束后置 false 并补发一次。
+   */
+  setMuted(muted: boolean): void {
+    this.muted = muted
+    if (!muted) this.emitLogUpdate()
+  }
+
+  /**
    * 判断日志是否应该显示
    */
   private shouldDisplayLog(log: LogEntry): boolean {
@@ -479,7 +493,7 @@ export class BattleLogManager implements IBattleLogManager {
    * 触发日志更新通知
    */
   private emitLogUpdate(): void {
-    if (this.listeners.size === 0) {
+    if (this.muted || this.listeners.size === 0) {
       return
     }
     const filteredLogs = this.getFilteredLogs()

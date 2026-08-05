@@ -36,7 +36,9 @@ export interface BuffConfigLookup {
  * 技能/被动配置查找接口（工厂不依赖具体的 SkillManager）
  */
 export interface SkillConfigLookup {
-  getSkillConfig(skillId: string): { name: string; description?: string } | undefined
+  getSkillConfig(
+    skillId: string,
+  ): { name: string; description?: string; skillType?: string } | undefined
 }
 
 // ==================== 工厂函数 ====================
@@ -55,8 +57,14 @@ export function skillSegment(
   const config = lookup.getSkillConfig(skillId)
   const name = config?.name ?? skillId
   const hover: LogSegmentHover = { kind: 'skill', id: skillId }
-
-  return { text: `【${name}】`, classStr: 'log-skill', hover, kind: 'skill' }
+  // NOTE: 大技能（ultimate）金色区分于小技能（log-skill 琥珀）
+  const isUltimate = config?.skillType === 'ultimate'
+  return {
+    text: `【${name}】`,
+    classStr: isUltimate ? 'log-ultimate' : 'log-skill',
+    hover,
+    kind: 'skill',
+  }
 }
 
 /**
@@ -214,6 +222,7 @@ body { margin:0; background:var(--color-bg-primary); color:var(--color-text-prim
 .log-debuff { color:var(--color-debuff); font-weight:var(--font-weight-medium); }
 .log-control { color:var(--color-debuff); font-weight:var(--font-weight-bold); }
 .log-skill { color:var(--color-warning); font-weight:var(--font-weight-medium); }
+.log-ultimate { color:#ffd700; font-weight:var(--font-weight-bold); }
 .log-passive { color:var(--color-info); font-weight:var(--font-weight-medium); }
 .log-energy { color:var(--color-energy); font-weight:var(--font-weight-bold); }
 .log-shield { color:var(--color-info); font-weight:var(--font-weight-bold); }
@@ -229,6 +238,7 @@ body { margin:0; background:var(--color-bg-primary); color:var(--color-text-prim
 .chip--ally { color:var(--color-heal); background:var(--color-success-bg); }
 .chip--enemy { color:var(--color-danger); background:var(--color-danger-bg); }
 .chip--skill { color:var(--color-warning); }
+.chip--ultimate { color:#ffd700; }
 .chip--buff { color:var(--color-energy); }
 .chip--passive { color:var(--color-info); }
 .hoverable { outline:2px solid var(--color-info-bg); outline-offset:-2px;
@@ -275,7 +285,11 @@ function segToHtml(seg: LogSegment): string {
   if (seg.kind === 'hp-after') return `<span class="hp-after">${text}</span>`
   if (seg.kind && ['buff', 'skill', 'passive'].includes(seg.kind)) {
     const hoverable = seg.hover ? ' hoverable' : ''
-    return `<span class="chip chip--${seg.kind}${hoverable}">${text}</span>`
+    const chipKind =
+      seg.kind === 'skill' && seg.classStr === 'log-ultimate'
+        ? 'ultimate'
+        : seg.kind
+    return `<span class="chip chip--${chipKind}${hoverable}">${text}</span>`
   }
   if (seg.classStr) return `<span class="${escapeHtml(seg.classStr)}">${text}</span>`
   return text

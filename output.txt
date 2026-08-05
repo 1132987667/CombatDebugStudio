@@ -1,7 +1,9 @@
 项目文件夹架构:
 CombatDebugStudio/
 scripts/
+    balance-check.cjs
     generate-attributes.cjs
+    rebalance-enemies.cjs
 src/
     application/
         facade/
@@ -178,6 +180,29 @@ src/
             KeybindManager.ts
         task/
     presentation/
+        assets/
+            icons/
+                Close.svg
+                drag.svg
+                grid.svg
+                html-text.svg
+                lightning.svg
+                node-tree.svg
+                rate-field.svg
+                redo.svg
+                switch-field.svg
+                tab.svg
+                undo.svg
+                上一个_svg.svg
+                上一帧_svg.svg
+                下一个_svg.svg
+                下一帧_svg.svg
+                导入_svg.svg
+                播放_svg.svg
+                最后一帧_svg.svg
+                标签_svg.svg
+                起始帧_svg.svg
+                通知_svg.svg
         components/
             AttributeTooltip.vue
             BattleVisualEffects.vue
@@ -301,7 +326,6 @@ src/
         types/
             battle-commands.ts
             battle-log.ts
-            battle-summary.ts
             buff-classification.ts
             buff-display.ts
             buffs-json.ts
@@ -559,6 +583,117 @@ export default [
   }
 }
 
+--- scripts/balance-check.cjs ---
+/**
+ * balance-check.cjs — 战斗节奏平衡验证脚本（攻击浮动模型）
+ *
+ * 模拟「attack × (1 ± 15%) 浮动 + 减法防御」下的核心对局，输出 TTK（回合数）与破防悬崖检查。
+ * 数值调整（scripts/rebalance-enemies.cjs）后运行本脚本验证战斗节奏。
+ *
+ * 平衡目标：
+ * - guardian 1v1 普攻 TTK ≈ 6~12 回合
+ * - 我方 4v4（guardian）vs 场景敌方 ≈ 4~10 回合分出胜负，前期胜、后期有挑战
+ * - 任何敌方防御 < 我方最低攻击 × 0.85（杜绝破防卡 1 点）
+ *
+ * 用法：node scripts/balance-check.cjs
+ */
+const fs = require('fs')
+const path = require('path')
+const enemies = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '..', 'configs', 'enemies', 'enemies.json'), 'utf8'),
+)
+const byId = Object.fromEntries(enemies.map((e) => [e.id, e]))
+const GUARD = {
+  guardian_fire: { hp: 350, atk: 70, def: 12, spd: 35 },
+  guardian_gold: { hp: 430, atk: 58, def: 18, spd: 24 },
+  guardian_water: { hp: 390, atk: 48, def: 14, spd: 30 },
+  guardian_wood: { hp: 410, atk: 52, def: 16, spd: 26 },
+  guardian_earth: { hp: 520, atk: 40, def: 25, spd: 16 },
+}
+function mkGuard(id) {
+  const g = GUARD[id]
+  return { id, lv: 10, hp: g.hp, max: g.hp, atk: g.atk, def: g.def, spd: g.spd, alive: true }
+}
+function mk(e) {
+  return {
+    id: e.id,
+    lv: e.level,
+    hp: e.stats.currentHealth,
+    max: e.stats.currentHealth,
+    atk: e.stats.attack,
+    def: e.stats.defense,
+    spd: e.stats.speed,
+    alive: true,
+  }
+}
+/** 确定性回合制模拟：按速度先后普攻，目标选择血量最低 */
+function sim(foes, allies, seed = 1) {
+  let s = seed
+  const rnd = () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff
+    return s / 0x7fffffff
+  }
+  const dmg = (src, tgt) => {
+    const base = src.atk * (0.85 + rnd() * 0.3)
+    return Math.max(1, Math.floor(base - tgt.def))
+  }
+  let turn = 0
+  while (turn < 200) {
+    turn++
+    const all = [...allies.filter((a) => a.alive), ...foes.filter((f) => f.alive)].sort(
+      (a, b) => b.spd - a.spd,
+    )
+    if (!allies.some((a) => a.alive) || !foes.some((f) => f.alive)) break
+    for (const u of all) {
+      if (!u.alive) continue
+      const targets = (allies.includes(u) ? foes : allies)
+        .filter((t) => t.alive)
+        .sort((a, b) => a.hp - b.hp)
+      if (!targets.length) break
+      const t = targets[0]
+      t.hp -= dmg(u, t)
+      if (t.hp <= 0) t.alive = false
+    }
+  }
+  const aL = allies.filter((a) => a.alive).length
+  const fL = foes.filter((f) => f.alive).length
+  return {
+    turns: turn,
+    result: aL > 0 && fL === 0 ? '左侧胜' : fL > 0 && aL === 0 ? '右侧胜' : '平',
+    allyLeft: aL,
+    foesLeft: fL,
+  }
+}
+console.log('=== guardian 1v1 ===')
+const pairs = [
+  ['guardian_fire', 'guardian_gold'],
+  ['guardian_gold', 'guardian_fire'],
+  ['guardian_fire', 'guardian_earth'],
+  ['guardian_water', 'guardian_wood'],
+]
+for (const [a, b] of pairs) {
+  const r = sim([mkGuard(b)], [mkGuard(a)])
+  console.log(`${a} vs ${b}: ${r.turns} 回合 ${r.result}`)
+}
+console.log('=== 4v4 guardian(fire/gold/water/wood) vs 场景 ===')
+const scenes = [
+  ['scene_001 easy L1', ['enemy_001', 'enemy_002', 'enemy_003']],
+  ['scene_001 hard L7', ['enemy_007', 'enemy_008', 'boss_001']],
+  ['scene_005 hard L9', ['enemy_039', 'enemy_040', 'boss_005']],
+  ['scene_008 hard L15', ['enemy_063', 'enemy_064', 'boss_008']],
+  ['scene_010 hard L19', ['enemy_079', 'enemy_080', 'boss_010']],
+]
+const squad = ['guardian_fire', 'guardian_gold', 'guardian_wood', 'guardian_water']
+for (const [label, ids] of scenes) {
+  const foes = ids.map((id) => mk(byId[id]))
+  const allies = squad.map((id) => ({ ...mkGuard(id), hp: GUARD[id].hp, alive: true }))
+  const r = sim(foes, allies)
+  console.log(`${label}: ${r.turns} 回合 ${r.result} 剩我${r.allyLeft}/敌${r.foesLeft}`)
+}
+console.log('=== 破防悬崖检查（guardian 最低攻 earth atk40×0.85=34）===')
+const highDef = enemies.filter((e) => e.stats.defense > 30).map((e) => `${e.id}(def${e.stats.defense})`)
+console.log(highDef.length ? `def>30 的敌人: ${highDef.join(', ')}` : '无，全部可破防')
+
 --- scripts/generate-attributes.cjs ---
 /**
  * generate-attributes.cjs — 属性元数据生成器（Schema-Driven）
@@ -689,6 +824,80 @@ function main() {
   console.log(`[generate-attributes] 已生成 ${attributes.length} 个属性 -> ${path.relative(PROJECT_ROOT, OUTPUT)}`)
 }
 main()
+
+--- scripts/rebalance-enemies.cjs ---
+/**
+ * rebalance-enemies.cjs — 敌人数值重平衡脚本（攻击浮动模型）
+ *
+ * 背景：攻击模型从「min/max 区间随机 + 百分比防御」迁移为「attack × (1±15%) + 减法防御」后，
+ *       原 enemies.json 数值（按旧模型调校）导致战斗节奏崩塌（前期无伤、后期必败）。
+ *       本脚本按新模型重调整条曲线，保留同等级内"精英/普通"的相对差异。
+ *
+ * 曲线（线性，低成长，确保我方 L10 守护者全程可破防且后期有挑战）：
+ *   HP  = 80  + 11×(L−1)      → L1:80   L10:179  L19:278  L27:366
+ *   ATK = 10  + 1.9×(L−1)     → L1:10   L10:27   L19:44   L27:59
+ *   DEF = 1   + 0.9×(L−1)     → L1:1    L10:9    L19:17   L27:24   （低于我方最低攻击 44×0.85≈37，杜绝破防悬崖）
+ *   SPD = 10  + 1.2×(L−1)     → L1:10   L10:21   L19:32   L27:41   （不全面压过我方守护者，保留先手博弈）
+ *
+ * guardian_*（我方核心角色，同时可被选入敌方）单独手写，高于野怪曲线（主角团定位）。
+ *
+ * 用法：node scripts/rebalance-enemies.cjs
+ */
+const fs = require('fs')
+const path = require('path')
+const FILE = path.resolve(__dirname, '..', 'configs', 'enemies', 'enemies.json')
+const enemies = JSON.parse(fs.readFileSync(FILE, 'utf8'))
+/** 野怪曲线（按等级） */
+const curve = (L) => ({
+  hp: 80 + 11 * (L - 1),
+  atk: 10 + 2.0 * (L - 1),
+  def: 1 + 0.9 * (L - 1),
+  spd: 10 + 1.2 * (L - 1),
+})
+/** guardian_* 手写数值（火/金/水/木/土，主角团定位，高于野怪曲线约 1.5~2 倍） */
+const GUARDIAN = {
+  guardian_fire: { hp: 350, atk: 70, def: 12, spd: 35 },
+  guardian_gold: { hp: 430, atk: 58, def: 18, spd: 24 },
+  guardian_water: { hp: 390, atk: 48, def: 14, spd: 30 },
+  guardian_wood: { hp: 410, atk: 52, def: 16, spd: 26 },
+  guardian_earth: { hp: 520, atk: 40, def: 25, spd: 16 },
+}
+/** 按等级分组（排除 guardian） */
+const groups = new Map()
+for (const e of enemies) {
+  if (GUARDIAN[e.id]) continue
+  if (!groups.has(e.level)) groups.set(e.level, [])
+  groups.get(e.level).push(e)
+}
+// 野怪：映射到新曲线，保留同等级相对差异
+for (const [lv, group] of groups) {
+  const t = curve(Number(lv))
+  // 预计算组均值（先于任何写入，避免循环内被新值污染导致序列相关）
+  const mean = (k) => group.reduce((s, e) => s + (e.stats[k] ?? 0), 0) / group.length || 1
+  const m = {
+    hp: mean('currentHealth'),
+    atk: mean('attack'),
+    def: mean('defense'),
+    spd: mean('speed'),
+  }
+  for (const e of group) {
+    e.stats.currentHealth = Math.max(50, Math.round(t.hp * ((e.stats.currentHealth ?? 0) / m.hp)))
+    e.stats.attack = Math.max(1, Math.round(t.atk * ((e.stats.attack ?? 0) / m.atk)))
+    e.stats.defense = Math.max(0, Math.round(t.def * ((e.stats.defense ?? 0) / m.def)))
+    e.stats.speed = Math.max(5, Math.round(t.spd * ((e.stats.speed ?? 0) / m.spd)))
+  }
+}
+// guardian 覆盖
+for (const e of enemies) {
+  const g = GUARDIAN[e.id]
+  if (!g) continue
+  e.stats.currentHealth = g.hp
+  e.stats.attack = g.atk
+  e.stats.defense = g.def
+  e.stats.speed = g.spd
+}
+fs.writeFileSync(FILE, JSON.stringify(enemies, null, 2) + '\n', 'utf8')
+console.log(`[rebalance-enemies] 完成，共调整 ${enemies.length} 个敌人`)
 
 --- src/application/facade/BattleFacade.ts ---
 import { BattleManager } from '@/domain/battle/BattleManager'
@@ -1496,6 +1705,8 @@ import { projectSnapshotLogs } from '@/domain/battle/logs/BattleLogProjector'
 import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
 import type { NarrativeBlock } from '@/shared/types/battle-log'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
+import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 export interface BattleGenerationOptions {
   /** 总场次数（默认 50） */
@@ -1504,10 +1715,12 @@ export interface BattleGenerationOptions {
   mode?: '1v1' | '2v2' | 'random'
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
-  /** 导出格式，默认 'txt'；'record' = 保存录制给昊天镜 + 下载录制 JSON */
+  /** 导出格式，默认 'txt'；'record' = 下载录制 JSON（未压缩） */
   format?: 'txt' | 'html' | 'record'
   /** 是否保存每场战斗的回放/调试记录到本地（IndexedDB，昊天镜「战斗记录」源可加载） */
   record?: boolean
+  /** 是否下载导出文件（仅 format='record' 生效，默认 true；存入昊天镜时置 false 跳过下载） */
+  download?: boolean
 }
 export interface SingleBattleLog {
   battleIndex: number
@@ -1547,12 +1760,15 @@ export class BattleDataGenerator {
     // ── 备份并隔离全局日志状态，防止 50 场战斗污染 UI 面板 ──
     const savedBattleLogs = battleLogManager.exportLogs()
     battleLogManager.setAutoCleanup(false) // 解除 200 条上限，防止长战斗日志被截断
+    // 静默：批量写入的日志不通知 UI 监听器，避免 BattleLog 逐条全量重渲染导致白屏
+    battleLogManager.setMuted(true)
     battleLogManager.clearLogs()
     const battleLogs: SingleBattleLog[] = []
     //  录制格式时收集本场 RecordedBattle（须在 resetBattle 清除内存录制之前取值）
     const recordings: RecordedBattle[] = []
-    //  'record' 格式隐式开启录制保存（保存给昊天镜）
-    const shouldRecord = options.record || options.format === 'record'
+    //  是否保存到昊天镜（IndexedDB）：由显式 record 开关控制，'record' 格式不再隐式存库
+    //   （"生成记录"只下载、"存入昊天镜"才存库，两者独立）
+    const shouldRecord = options.record === true
     const dg = getDebugGate()
     const prevDebugEnabled = dg?.enabled ?? false
     if (dg) dg.enabled = false
@@ -1604,10 +1820,12 @@ export class BattleDataGenerator {
           this.battleSystem.resetBattle()
           continue
         }
-        //  headless 下 BATTLE_ENDED 不广播，战报生成器不会自动 onBattleEnd：
-        //   手动触发以恢复导出中的"战报摘要"块（与面板导出格式一致），顺带释放累加器
         const winner = battleData.winner
-        if (winner) BattleSummaryGenerator.instance.onBattleEnd(winner)
+        //  写入最新战报（叙事渲染器 TXT/HTML 导出末尾的"战报摘要"块数据源）
+        const rec = this.battleSystem.getBattleRecording(battleId)
+        const archive = rec ? fromRecordedBattle(rec) : null
+        const sum = archive ? summarizeBattle(archive) : null
+        if (sum) BattleSummaryGenerator.instance.setSummary(sum)
         const narrativeBlocks = this.collectNarrativeBlocks()
         battleLogs.push({
           battleIndex: i + 1,
@@ -1654,7 +1872,8 @@ export class BattleDataGenerator {
       const dgRestore = getDebugGate()
       if (dgRestore) dgRestore.enabled = prevDebugEnabled
       battleLogManager.setAutoCleanup(true)
-      // 恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
+      // 解除静默（补发一次通知），随后恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
+      battleLogManager.setMuted(false)
       battleLogManager.importLogs(savedBattleLogs)
       // 清理最后一场参与者残留
       this.cleanupPrevBuffSystemEntries()
@@ -1666,10 +1885,10 @@ export class BattleDataGenerator {
     options.onProgress?.(1, total, total)
     if (!this._cancelled && battleLogs.length > 0) {
       const format = options.format ?? 'txt'
-      if (format === 'record') {
+      if (format === 'record' && options.download !== false) {
         const json = this.mergeRecordings(recordings)
         if (json !== null) {
-          this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
+          await this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
         }
       } else if (format === 'html') {
         const mergedHtml = this.mergeLogsHtml(battleLogs)
@@ -1838,9 +2057,10 @@ export class BattleDataGenerator {
       }),
     }
     try {
-      return JSON.stringify(payload, null, 2)
+      // NOTE: 导出为标准未压缩 JSON；不保留缩进，省去约 46% 纯空白（gzip 压缩已移除，按需求改为明文）。
+      return JSON.stringify(payload)
     } catch (e) {
-      LoggerProvider.logger.addDebugLog('序列化战斗录制失败，跳过下载（昊天镜保存不受影响）', {
+      LoggerProvider.logger.addDebugLog('序列化战斗录制失败，跳过下载', {
         level: LogLevel.ERROR,
       })
       return null
@@ -1859,7 +2079,10 @@ export class BattleDataGenerator {
     }
   }
   private downloadFile(content: string, filename: string, mime: string = 'text/plain;charset=utf-8'): void {
-    const blob = new Blob([content], { type: mime })
+    this.triggerDownload(new Blob([content], { type: mime }), filename)
+  }
+  /** 触发浏览器下载（创建临时 <a> 并清理） */
+  private triggerDownload(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -2705,6 +2928,7 @@ export function fromRecordedBattle(rec: RecordedBattle | undefined | null): Unif
     hp: p.currentHealth,
     maxEnergy: p.maxEnergy,
     energy: p.currentEnergy,
+    side: p.team,
     buffs: [],
   }))
   // HP 游标（从 initialState 出发，按伤害/治疗累减）
@@ -2826,7 +3050,7 @@ export class UnifiedArchiveService {
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-08-05T02:12:50.209Z
+// 生成时间: 2026-08-05T07:28:43.896Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -5790,7 +6014,7 @@ import {
   ParticipantSideName,
   RoundStatus,
 } from '@/domain/battle/type/types'
-import { BuffSystem, type SummonRequest } from '@/domain/buff/BuffSystem'
+import { BuffSystem, type SummonRequest, type DamageOrigin } from '@/domain/buff/BuffSystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 import type { TriggerEventContext } from '@/domain/buff/types'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
@@ -6171,7 +6395,7 @@ export class BattleSystem {
     const MAX_DAMAGE_CALLBACK_DEPTH = 3
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback(
-      (targetId: string, damage: number, rawDamage?: number, damagePercent?: number) => {
+      (targetId: string, damage: number, rawDamage?: number, damagePercent?: number, origin?: DamageOrigin) => {
         // ponytail: 递归守卫 — 深度计数器替代布尔标志，允许有限嵌套
         if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
           throw new Error(
@@ -6183,6 +6407,25 @@ export class BattleSystem {
         try {
           const target = battleData.participants.get(targetId)
           if (!target?.isAlive()) return
+          // 补发 dot 伤害 trace 事件：DOT 不走 TraceDamageLogger（无 CombatRecord 链路），
+          // 否则真实录制的战报（承伤/HP 模拟）完全缺失持续伤害。
+          // 仅标记 origin='dot' 的请求补发，反伤/平摊等触发器脚本不误标（战报口径见 unified-summary.ts）。
+          const emitDotTrace = (dmg: number): void => {
+            if (this.traceCollector.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+              this.traceCollector.emit(
+                createTraceEvent({
+                  correlationId: `dot_${battleData.currentTurn ?? 1}_${targetId}`,
+                  phase: TracePhase.DAMAGE_CALCULATION,
+                  battleId: battleData.battleId,
+                  turn: battleData.currentTurn ?? 1,
+                  targetId,
+                  level: TraceLevel.DEBUG,
+                  summary: `${target.name} 受到持续伤害 ${dmg}`,
+                  payload: { result: dmg, dot: true },
+                }),
+              )
+            }
+          }
           let actualDamage = damage
           let isHeal = false
           // Defect 2 修复：固定伤害走 settleDamage 后不再重复发射事件/被动
@@ -6194,6 +6437,7 @@ export class BattleSystem {
               Math.floor(target.currentHealth * damagePercent),
             )
             target.takeDamage(actualDamage)
+            if (origin === 'dot') emitDotTrace(actualDamage)
           } else if (damagePercent && damagePercent < 0) {
             // 负百分比 = 按最大气血百分比治疗
             actualDamage = Math.floor(
@@ -6211,6 +6455,7 @@ export class BattleSystem {
             settledViaExecutor = true
             // DOT 特有逻辑（DOT CombatRecord、叙事日志）
             if (actualDamage > 0) {
+              if (origin === 'dot') emitDotTrace(actualDamage)
               const hpAfter = target.currentHealth
               const dotRecord = createEmptyRecord(
                 battleData.battleId,
@@ -6581,8 +6826,14 @@ export class BattleSystem {
       aliveParticipants.forEach((participant) => {
         participant.resetEnergyHitCount()
       })
-      // 为所有存活角色增加回合开始能量
+      // 为所有存活角色增加回合开始能量（按 阵营:实际到账 分组，同组角色合并为一行，敌我分开）
       const combatRules = this.ruleManager.getCombatRules()
+      const energyGains: Array<{
+        participant: BattleEntity
+        actualGain: number
+        energyBefore: number
+        energyAfter: number
+      }> = []
       aliveParticipants.forEach((participant) => {
         const gain = combatRules.energyGainPerTurn
         // NOTE: 记录实际到账（gainEnergy 有上限封顶），并携带 before/after 快照（B2）
@@ -6591,11 +6842,33 @@ export class BattleSystem {
         const energyAfter = participant.currentEnergy
         const actualGain = energyAfter - energyBefore
         if (actualGain > 0) {
-          const segs: LogSegment[] = [
-            entitySegment(participant),
+          energyGains.push({ participant, actualGain, energyBefore, energyAfter })
+        }
+      })
+      if (energyGains.length > 0) {
+        const groups = new Map<string, typeof energyGains>()
+        for (const item of energyGains) {
+          const key = `${item.participant.team}:${item.actualGain}`
+          const group = groups.get(key) ?? []
+          group.push(item)
+          groups.set(key, group)
+        }
+        // 我方在前，敌方在后（与态势快照同口径）
+        const sortedGroups = [...groups.values()].sort((a, b) => {
+          const aSide = a[0].participant.team === ParticipantSide.ALLY ? 0 : 1
+          const bSide = b[0].participant.team === ParticipantSide.ALLY ? 0 : 1
+          return aSide - bSide
+        })
+        for (const items of sortedGroups) {
+          const segs: LogSegment[] = []
+          items.forEach((item, i) => {
+            if (i > 0) segs.push({ text: '、' })
+            segs.push(entitySegment(item.participant))
+          })
+          segs.push(
             { text: ` 获得回合开始能量 `, classStr: 'log-info' },
-            { text: `+${actualGain}`, classStr: 'log-heal' },
-          ]
+            { text: `+${items[0].actualGain}`, classStr: 'log-heal' },
+          )
           LoggerProvider.logger.addBattleLog({
             turn: battle.currentTurn,
             message: segs.map((s) => s.text).join(''),
@@ -6603,12 +6876,16 @@ export class BattleSystem {
             category: BATTLE_LOG_CATEGORIES.STATUS,
             meta: {
               role: 'sub',
-              energyBefore,
-              energyAfter,
+              energyChanges: items.map((g) => ({
+                entityId: g.participant.id,
+                name: g.participant.name,
+                energyBefore: g.energyBefore,
+                energyAfter: g.energyAfter,
+              })),
             },
           })
         }
-      })
+      }
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
         if (
@@ -6622,9 +6899,15 @@ export class BattleSystem {
       const currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
       battle.turnOrder = currentTurnOrder
       // 发送回合开始事件到 UI 层（此时拥有正确的出手顺序）
-      const firstActorId =
-        currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
-      this.uiEventPort.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
+      // NOTE: headless（批量数据生成）下不发射 — 这些是驱动 Vue 重新渲染的 UI 状态事件，
+      //       批量生成时发射会让整个战场每回合重渲染数千次，导致界面白屏/冻结
+      if (!battle.headless) {
+        const firstActorId =
+          currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
+        this.uiEventPort.emit(BattleEventCodes.TURN_START, {
+          actorId: firstActorId,
+        })
+      }
       // ponytail: 调试模式 — 回合开始事件已派发后暂停
       await this.debugGate.waitIfNeeded('TURN_START')
       const battleId = battle.battleId
@@ -6643,9 +6926,12 @@ export class BattleSystem {
         // 设置行动顺序号（1-based）
         this.executor.setActionOrder(i + 1)
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
-        this.uiEventPort.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, {
-          actorId: participantId,
-        })
+        // NOTE: headless 下不发射（同上，避免批量生成驱动 UI 重渲染风暴）
+        if (!battle.headless) {
+          this.uiEventPort.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, {
+            actorId: participantId,
+          })
+        }
         try {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
@@ -6678,7 +6964,10 @@ export class BattleSystem {
         return
       }
       // 发送回合结束事件到 UI 层
-      this.uiEventPort.emit(BattleEventCodes.TURN_END)
+      // NOTE: headless 下不发射（同上，避免批量生成驱动 UI 重渲染风暴）
+      if (!battle.headless) {
+        this.uiEventPort.emit(BattleEventCodes.TURN_END)
+      }
       // ponytail: 调试模式 — 回合结束事件已派发后暂停
       await this.debugGate.waitIfNeeded('TURN_END')
       // P2-8：回合末统一 buff 结算（原"行动后逐角色结算" → 回合末全量统一，
@@ -6826,6 +7115,24 @@ export class BattleSystem {
       const dead = battle.participants.get(deadId)
       const killer = battle.participants.get(killerId)
       if (dead && !dead.isAlive()) {
+        // 最终确认死亡 → 补发击杀 trace（供战报击杀/存活统计）
+        // NOTE: lethalMark 事件 result=0，仅作死亡标记；伤害已由 TraceDamageLogger 的
+        //       damage_calculation 事件统计，避免双算。phase 未开启时零开销。
+        if (this.traceCollector.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+          this.traceCollector.emit(
+            createTraceEvent({
+              correlationId: `kill_${battle.currentTurn ?? 1}_${deadId}`,
+              phase: TracePhase.DAMAGE_CALCULATION,
+              battleId: battle.battleId,
+              turn: battle.currentTurn ?? 1,
+              sourceId: killerId,
+              targetId: deadId,
+              level: TraceLevel.INFO,
+              summary: `${killer?.name ?? '未知'} 击败 ${dead.name}`,
+              payload: { result: 0, death: true, lethalMark: true },
+            }),
+          )
+        }
         // 仍然死亡 → 触发死亡被动
         this.passiveSkillManager.triggerPassives(
           dead,
@@ -7292,7 +7599,6 @@ export interface DamageBreakdown {
   /** 暴击后伤害（暴击后、来源方加成前） */
   postCritDamage: number
   /** 原始伤害：来源方全部产出（暴击 + 伤害提升 + 条件加成），目标方减免前
-   *  可选兼容：旧 localStorage 记录加载后该字段为 undefined。
    *  读取时请使用 `breakdown.rawDamage ?? breakdown.postCritDamage` 回退。 */
   rawDamage?: number
   /** 防御相关 */
@@ -9030,11 +9336,17 @@ export function projectAttackLog(
     }
   }
   const r = results[0]
+  // NOTE: 「造成」显示减免前原始伤害（rawDamage），「受到」sub 显示最终承伤 ——
+  //       设计口径见 BattleExecutor.TargetResult.rawDamage 注释；rawDamage 缺失时回退最终值
+  const shownDamage = r.rawDamage ?? r.damage
   const hitSegs: LogSegment[] = [
     entitySegment(source),
     { text: ' 对 ' },
     entitySegment(target),
-    { text: ` 发起「普通攻击」，造成 ${r.damage} 点伤害` },
+    { text: ' 发起「普通攻击」' },
+    ...(isCrit ? [{ text: '，★ 暴击!', classStr: 'log-crit' }] : []),
+    { text: `，造成 ${shownDamage} 点伤害` },
+    ...(!target.isAlive() ? [{ text: '，✦ 击杀!', classStr: 'log-kill' }] : []),
   ]
   const dmgSegs: LogSegment[] = [
     entitySegment(target),
@@ -9053,6 +9365,7 @@ export function projectAttackLog(
         hpBefore: r.hpBefore,
         hpAfter: r.hpAfter,
         damage: r.damage,
+        rawDamage: r.rawDamage,
         crit: isCrit,
         kill: !target.isAlive(),
         skillName: input.skillName,
@@ -9084,8 +9397,14 @@ export function projectSkillLog(
 ): ProjectedActionLogs {
   const { source, targets, results, totalDamage, totalHeal, isCrit } = input
   const primary = results[0]
-  const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
+  // NOTE: 「造成」显示减免前原始伤害总和，「受到」sub 显示最终承伤 —— 与普通攻击同口径
+  const totalRawDamage = results.reduce(
+    (sum, r) => sum + (r.rawDamage ?? r.damage),
+    0,
+  )
+  const damageText = totalRawDamage > 0 ? `，造成 ${totalRawDamage} 点伤害` : ''
   const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
+  const isKill = primary ? !primary.target.isAlive() : false
   const targetSegs: LogSegment[] = []
   targets.forEach((t, i) => {
     if (i > 0) targetSegs.push({ text: ', ' })
@@ -9114,7 +9433,9 @@ export function projectSkillLog(
     ...targetSegs,
     { text: ' 使用 ' },
     skillSeg,
+    ...(isCrit ? [{ text: '，★ 暴击!', classStr: 'log-crit' }] : []),
     { text: `${damageText}${healText}` },
+    ...(isKill ? [{ text: '，✦ 击杀!', classStr: 'log-kill' }] : []),
   ]
   let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
   if (totalDamage > 0) logCategory = BATTLE_LOG_CATEGORIES.DAMAGE
@@ -9174,8 +9495,9 @@ export function projectSkillLog(
         hpBefore: primary?.hpBefore,
         hpAfter: primary?.hpAfter,
         damage: totalDamage,
+        rawDamage: totalRawDamage,
         crit: isCrit,
-        kill: primary ? !primary.target.isAlive() : false,
+        kill: isKill,
         skillName: input.skillName,
       },
     },
@@ -9253,6 +9575,7 @@ export function projectReplayActionLog(
     { text: ' 对 ' },
     targetSeg,
     ...actionSegs,
+    ...(action.isCrit ? [{ text: '，★ 暴击!', classStr: 'log-crit' }] : []),
     ...(valueText ? [{ text: valueText }] : []),
   ]
   let category: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
@@ -9336,31 +9659,22 @@ export function projectTurnEndLog(turn: number): ProjectedLog {
 --- src/domain/battle/logs/BattleSummaryGenerator.ts ---
 /**
  * 文件: BattleSummaryGenerator.ts
- * 功能: 战报生成器 — 战斗过程中累积数据，战斗结束时生成 BattleSummary
- * 描述: 通过 onAction 接收 CombatRecord 增量更新累加器，
- *      通过 onBattleEnd 生成最终战报。
- *      集成点：BattleRecorder.recordCombatRecord()（onAction）、
- *      battleStore.handleBattleEndEvent()（onBattleEnd + 发射 battle-summary 事件）。
- * 版本: 1.0.0
+ * 功能: 最新战报持有者（薄封装）
+ * 描述: 战报统计已统一到 unified-summary.ts（summarizeBattle，从事件流派生），
+ *       本类仅保存"最新一场战斗的战报"，供叙事渲染器（RoundNarrativeRenderer）在
+ *       TXT/HTML 导出末尾追加"战报摘要"块。
+ *       写入方：battleStore.buildBattleSummary（实时）、BattleDataGenerator（批量生成）。
+ * 版本: 2.0.0
  */
-import type { CombatRecord } from '@/domain/battle/combat-record'
-import type { BattleSummary, BattleSummaryAccumulator } from '@/shared/types/battle-summary'
-import { createAccumulator } from '@/shared/types/battle-summary'
-import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
+import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary'
 /**
- * 战报生成器
- * 单例模式，全系统共享同一个实例。
- * ponytail: 仅存储最新一场战斗的战报。如果需要多场历史战报，
- * 升级路径：改为 Map<string, BattleSummary> 或持久化到 localStorage。
+ * 最新战报持有者
+ * 单例模式，全系统共享同一个实例。仅存最新一场，覆盖式更新。
  */
 export class BattleSummaryGenerator {
   private static _instance: BattleSummaryGenerator | null = null
-  /** 当前战斗的累加器 */
-  private accumulator: BattleSummaryAccumulator | null = null
   /** 最新生成的战报 */
   private _lastSummary: BattleSummary | null = null
-  /** id → 阵营映射（startBattle 时由参与者建立，用于时间线/最高记录的敌我前缀） */
-  private idToTeam = new Map<string, string>()
   static get instance(): BattleSummaryGenerator {
     if (!this._instance) {
       this._instance = new BattleSummaryGenerator()
@@ -9371,134 +9685,13 @@ export class BattleSummaryGenerator {
   get lastSummary(): BattleSummary | null {
     return this._lastSummary
   }
-  /**
-   * 战斗开始时初始化累加器
-   * @param participants 参战者（含 id/team），用于时间线敌我前缀；缺省时时间线不标阵营
-   */
-  startBattle(
-    battleId: string,
-    participants?: Array<{ id: string; team: string }>,
-  ): void {
-    this.accumulator = createAccumulator(battleId)
-    this._lastSummary = null
-    this.idToTeam = new Map()
-    for (const p of participants ?? []) {
-      this.idToTeam.set(p.id, p.team)
-    }
-  }
-  /** 敌我前缀（与日志口径一致）：id 反查到阵营时输出 [友方]/[敌方] + 名字，否则原样 */
-  private prefixedName(id: string, name: string): string {
-    const team = this.idToTeam.get(id)
-    if (team !== 'ally' && team !== 'enemy') return name
-    return `[${ParticipantSideName[team]}]${name}`
-  }
-  /**
-   * 接收一条 CombatRecord，更新累加器
-   * 在 BattleRecorder.recordCombatRecord() 中调用
-   */
-  onAction(record: CombatRecord): void {
-    const acc = this.accumulator
-    if (!acc) return
-    // 回合
-    if (record.turn > 0) acc.totalRounds.add(record.turn)
-    // 伤害
-    if (record.damage > 0) {
-      acc.totalDamageDealt += record.damage
-      const actorTotal = acc.perActorDamage.get(record.actorId) ?? 0
-      acc.perActorDamage.set(record.actorId, actorTotal + record.damage)
-      // 受击方
-      const takenTotal = acc.perActorTaken.get(record.targetId) ?? 0
-      acc.perActorTaken.set(record.targetId, takenTotal + record.damage)
-      // 最高单次伤害
-      if (!acc.highestDamage || record.damage > acc.highestDamage.value) {
-        acc.highestDamage = {
-          actor: this.prefixedName(record.actorId, record.actorName),
-          value: record.damage,
-          crit: record.damageBreakdown?.isCritical ?? false,
-        }
-      }
-      // 受击总伤害
-      acc.totalDamageTaken += record.damage
-    }
-    // 治疗
-    if (record.heal > 0) {
-      acc.totalHealing += record.heal
-      const healTotal = acc.perActorHeal.get(record.actorId) ?? 0
-      acc.perActorHeal.set(record.actorId, healTotal + record.heal)
-      if (!acc.highestHeal || record.heal > acc.highestHeal.value) {
-        acc.highestHeal = {
-          actor: this.prefixedName(record.actorId, record.actorName),
-          value: record.heal,
-        }
-      }
-    }
-    // 时间线
-    acc.timeline.push({
-      turn: record.turn,
-      actor: this.prefixedName(record.actorId, record.actorName),
-      action: record.actionType,
-      target: record.targetName
-        ? this.prefixedName(record.targetId, record.targetName)
-        : '',
-      damage: record.damage > 0 ? record.damage : undefined,
-      heal: record.heal > 0 ? record.heal : undefined,
-      crit: record.damageBreakdown?.isCritical,
-    })
-  }
-  /**
-   * 战斗结束时生成战报
-   * @param winner 胜利方阵营
-   * @param participants 参与者最终状态列表（可选）
-   */
-  onBattleEnd(
-    winner: ParticipantSide,
-    participants?: Array<{
-      id: string
-      name: string
-      team: string
-      hpEnd: number
-      hpMax: number
-    }>,
-  ): BattleSummary | null {
-    const acc = this.accumulator
-    if (!acc) return null
-    const duration = Date.now() - acc.startTime
-    const totalRounds = acc.totalRounds.size
-    // 构建参与者数组
-    const participantList = (participants ?? []).map((p) => ({
-      id: p.id,
-      name: this.prefixedName(p.id, p.name),
-      team: p.team,
-      hpEnd: p.hpEnd,
-      hpMax: p.hpMax,
-      totalDamageDealt: acc.perActorDamage.get(p.id) ?? 0,
-      totalDamageTaken: acc.perActorTaken.get(p.id) ?? 0,
-      totalHealingReceived: acc.perActorHeal.get(p.id) ?? 0,
-    }))
-    const summary: BattleSummary = {
-      battleId: acc.battleId,
-      totalRounds,
-      winner: ParticipantSideName[winner],
-      duration,
-      totalDamageDealt: acc.totalDamageDealt,
-      totalDamageTaken: acc.totalDamageTaken,
-      highestSingleDamage: acc.highestDamage,
-      totalHealing: acc.totalHealing,
-      highestSingleHeal: acc.highestHeal,
-      passiveTriggers: [],
-      participants: participantList,
-      actionTimeline: acc.timeline,
-    }
+  /** 设置最新战报（实时/批量生成完成时写入，供叙事渲染器取摘要块） */
+  setSummary(summary: BattleSummary): void {
     this._lastSummary = summary
-    this.accumulator = null // 释放累加器
-    this.idToTeam = new Map() // 清阵营映射，防 headless 路径（无 startBattle）继承上一场
-    return summary
   }
   /** 手动清空 */
   reset(): void {
-    this.accumulator = null
     this._lastSummary = null
-    this.idToTeam = new Map()
   }
 }
 
@@ -9737,7 +9930,7 @@ export class EffectRenderer {
         return this.renderReflect(effect, ctx, snapshot)
       case EffectType.BUFF:
       case EffectType.DEBUFF:
-        return this.renderBuff(effect, targetName)
+        return this.renderBuff(effect, targetName, effect.targetId === ctx.source.id)
       case EffectType.SHIELD:
         return this.renderShield(effect, targetName)
       case EffectType.MISS:
@@ -9758,7 +9951,8 @@ export class EffectRenderer {
     name: string,
     snap?: { before: number; after: number },
   ): LogSegment[] {
-    const dmg = Math.round(e.damage ?? e.value ?? 0)
+    // NOTE: 「造成」显示减免前原始伤害（rawDamage），HP 箭头显示最终承伤 —— 与 action 日志同口径
+    const dmg = Math.round(e.rawDamage ?? e.damage ?? e.value ?? 0)
     const segs: LogSegment[] = [
       { text: `对 ${name} 造成 ` },
       { text: `${dmg}`, classStr: 'log-damage' },
@@ -9837,11 +10031,14 @@ export class EffectRenderer {
   }
   /**
    * 渲染 Buff：附加【{buffName}】
+   * NOTE: 目标非触发者时必须显示目标名（如控制轮转施加给敌人），否则日志看起来像触发者给自己上控制
    */
-  private renderBuff(e: BattleEffect, _name: string): LogSegment[] {
+  private renderBuff(e: BattleEffect, name: string, isSelf: boolean): LogSegment[] {
     const displayName = e.buffName ?? e.buffId ?? '未知效果'
     const segs: LogSegment[] = [
-      { text: `获得 `, classStr: 'log-info' },
+      ...(isSelf
+        ? [{ text: `获得 `, classStr: 'log-info' }]
+        : [{ text: `${name} 获得 `, classStr: 'log-info' }]),
       {
         text: `【${displayName}】`,
         classStr: 'log-buff',
@@ -10069,60 +10266,65 @@ export class RoundNarrativeRenderer {
     }
     flushAll()
     flushRound()
-    // 战报摘要：战斗结束后追加 summary 块
+    // 战报摘要：战斗结束后追加 summary 块（统一战报模型，见 unified-summary.ts）
     const summary = BattleSummaryGenerator.instance.lastSummary
     if (summary) {
+      const units = Object.values(summary.units)
+      const totalDealt = units.reduce((s, u) => s + u.dealt, 0)
+      const totalHeal = units.reduce((s, u) => s + u.healed, 0)
+      const mvp = units.reduce<(typeof units)[number] | null>(
+        (best, u) => (u.dealt > (best?.dealt ?? -1) && u.dealt > 0 ? u : best),
+        null,
+      )
+      const bestHit = units.reduce<(typeof units)[number] | null>(
+        (best, u) => (u.highestHit > (best?.highestHit ?? -1) ? u : best),
+        null,
+      )
+      // winner 可能是单位 id（demo）或阵营 side（真实录制），统一显示为可读名称
+      const SIDE_LABEL: Record<string, string> = { ally: '友方', enemy: '敌方' }
+      const winnerLabel = summary.winner
+        ? SIDE_LABEL[summary.winner] ??
+          summary.units[summary.winner]?.name ??
+          summary.winner
+        : '未知'
       const summaryLines: LogSegment[][] = []
       summaryLines.push([
         {
-          text: `战斗结束 · ${summary.winner}胜利 · ${summary.totalRounds}回合`,
+          text: `战斗结束 · ${winnerLabel}胜利 · ${summary.rounds}回合 · 剩余血量 ${summary.survivorHpPct}%`,
           classStr: 'log-system',
         },
       ])
       summaryLines.push([
         {
-          text: `总伤害 ${summary.totalDamageDealt} · 总治疗 ${summary.totalHealing} · `,
+          text: `总伤害 ${totalDealt} · 总治疗 ${totalHeal} · 暴击率 ${summary.judgment.critRate}% · `,
           classStr: 'log-text',
         },
         {
-          text: `暴击 ${summary.highestSingleDamage?.crit ? '是' : '否'}`,
+          text: `闪避 ${summary.judgment.dodges} · 抵抗 ${summary.judgment.resists}`,
           classStr: 'log-text',
         },
       ])
-      if (summary.highestSingleDamage) {
+      if (bestHit) {
         summaryLines.push([
           {
-            text: `最高单次: ${summary.highestSingleDamage.actor} — ${summary.highestSingleDamage.value}`,
+            text: `最高单次: ${bestHit.name} — ${bestHit.highestHit}`,
             classStr: 'log-friendly',
           },
         ])
       }
-      // MVP：按总伤害排序
-      let mvp = '',
-        mvpDmg = -1
-      for (const p of summary.participants) {
-        if (p.totalDamageDealt > mvpDmg) {
-          mvpDmg = p.totalDamageDealt
-          mvp = p.name
-        }
-      }
       if (mvp) {
         summaryLines.push([
-          { text: `MVP: ${mvp} — 总伤害 ${mvpDmg}`, classStr: 'log-friendly' },
+          { text: `MVP: ${mvp.name} — 总伤害 ${mvp.dealt}`, classStr: 'log-friendly' },
         ])
       }
       blocks.push({ type: NarrativeBlockType.SUMMARY, lines: summaryLines })
     }
     return blocks
   }
-  /** 结果行：仅输出 sub 行没有的高亮标记（暴击/致死/击杀），数值明细由 sub 行承载 */
+  /** 结果行：仅输出 sub 行没有的高亮标记（致死）；暴击/击杀已由投影层并入 action header */
   private buildResult(meta: BattleLogMeta | undefined): LogSegment[] | undefined {
-    if (!meta || (!meta.crit && !meta.lethal && !meta.kill)) return undefined
-    const segs: LogSegment[] = []
-    if (meta.crit) segs.push({ text: '★ 暴击! ', classStr: 'log-crit' })
-    if (meta.lethal) segs.push({ text: ' — 致死!', classStr: 'log-lethal' })
-    if (meta.kill) segs.push({ text: ' ✦ 击杀!', classStr: 'log-kill' })
-    return segs
+    if (!meta || !meta.lethal) return undefined
+    return [{ text: ' — 致死!', classStr: 'log-lethal' }]
   }
   /** 结算行：DOT `中毒 -10HP → 303` */
   private buildSettlementLine(
@@ -12868,13 +13070,27 @@ export function describeSrc(src: string): string | null {
 --- src/domain/battle/replay/unified/unified-summary.ts ---
 /**
  * 文件: unified-summary.ts
- * 功能: 战斗摘要统计（纯函数）：按事件流汇总每单位输出/承伤/治疗/暴击/闪避/抵抗/Buff/击杀
- * 描述: 供「战斗摘要」面板与 Markdown/CSV 导出使用，指标从统一事件流派生，不改动存档数据。
- *       dot（持续伤害）事件常无 sourceId，故「承伤」按 targetId 统计，不要求与「输出」对账相等。
+ * 功能: 战斗战报统计（纯函数）：按统一事件流汇总全维度指标
+ * 描述: 实时战报（BattleSummaryDialog）与昊天镜摘要（SummaryDialog）共用同一统计源，不维护第二套口径。
+ *       七层模型：
+ *         L1 结果（胜负/回合/耗时/胜负边际）——胜方剩余血量%
+ *         L2 阵营对比（双阵营输出/治疗/承伤/击杀/剩余血量）
+ *         L3 单位贡献排名（含效率/MVP 标记数据）
+ *         L4 判定健康度（攻击/命中/暴击率/闪避/抵抗）
+ *         L5 技能使用（次数/输出占比）
+ *         L6 被动触发统计
+ *         L7 关键事件（首杀/击杀/最高单次）
+ *       数据约定：
+ *       - 闪避（dodge）、击杀（death）由 BattleExecutor 在运行时补发 DAMAGE_CALCULATION 事件；
+ *       - dot 持续伤害常无 sourceId，故「承伤」按 targetId 统计，不要求与「输出」对账相等；
+ *       - HP 为事件流近似模拟（护盾/过量未计），存活以 death 事件为准。
  */
 import type { UnifiedArchive } from './unified-archive'
+/** 单单位战报指标 */
 export interface UnitSummary {
   id: string
+  name: string
+  side: string
   /** 主动行动次数（action_execution 发起） */
   attacks: number
   /** 造成伤害合计（damage_calculation result，闪避不计） */
@@ -12885,6 +13101,10 @@ export interface UnitSummary {
   healed: number
   /** 暴击次数（sourceId 归属） */
   crits: number
+  /** 命中次数（非闪避的伤害计算，sourceId 归属） */
+  hits: number
+  /** 最高单次输出 */
+  highestHit: number
   /** 闪避次数（targetId 归属） */
   dodges: number
   /** Buff 施加被抵抗次数 */
@@ -12893,42 +13113,155 @@ export interface UnitSummary {
   buffsApplied: number
   /** 击杀次数（致死事件归属 sourceId） */
   kills: number
+  /** 战斗结束时是否存活（以死亡事件判定） */
+  alive: boolean
+  /** 结束时 HP（事件流近似） */
+  hpEnd: number
+  /** 最大 HP */
+  hpMax: number
 }
+/** L2 阵营汇总 */
+export interface TeamSummary {
+  side: string
+  name: string
+  dealt: number
+  taken: number
+  healed: number
+  kills: number
+  survivors: number
+  total: number
+  hpEnd: number
+  hpMax: number
+}
+/** L5 技能使用汇总 */
+export interface SkillSummary {
+  skillName: string
+  /** 产生伤害/治疗计算的次数（近似使用次数） */
+  uses: number
+  damage: number
+  heal: number
+  crits: number
+  /** 输出占全部技能伤害的比例（0~100） */
+  pct: number
+}
+/** L6 被动触发汇总 */
+export interface PassiveSummary {
+  passiveId: string
+  /** 被动中文名（TRIGGERED 事件 payload.passiveName；缺失回退 passiveId） */
+  name: string
+  owner: string
+  triggered: number
+}
+/** L7 关键事件 */
+export interface KeyEvent {
+  turn: number
+  kind: 'kill' | 'first_blood' | 'highest_hit'
+  text: string
+}
+/** 战斗战报（七层模型） */
 export interface BattleSummary {
   battleId: string
   rounds: number
   durationMs: number
   winner?: string
+  /** L1 胜负边际：胜方存活单位数 */
+  survivorCount: number
+  /** L1 胜负边际：胜方剩余血量 / 胜方最大血量（0~100） */
+  survivorHpPct: number
+  /** L2 阵营对比 */
+  teams: TeamSummary[]
+  /** L3 单位贡献（key = id） */
   units: Record<string, UnitSummary>
-}
-function empty(id: string): UnitSummary {
-  return {
-    id,
-    attacks: 0,
-    dealt: 0,
-    taken: 0,
-    healed: 0,
-    crits: 0,
-    dodges: 0,
-    resists: 0,
-    buffsApplied: 0,
-    kills: 0,
+  /** L4 判定健康度 */
+  judgment: {
+    attacks: number
+    hits: number
+    crits: number
+    critRate: number
+    dodges: number
+    resists: number
   }
+  /** L5 技能使用 */
+  skills: SkillSummary[]
+  /** L6 被动触发 */
+  passives: PassiveSummary[]
+  /** L7 关键事件 */
+  keyEvents: KeyEvent[]
 }
-/** 从统一存档汇总战斗指标（单次遍历）；maxTimestamp 传入时仅统计截止该时间点之前的事件（时间切面） */
+/** 胜方阵营解析：winner 为 unit id 时取其 side，否则视为 side 本身 */
+function resolveWinnerSide(winner: string | undefined, units: Record<string, UnitSummary>): string | undefined {
+  if (!winner) return undefined
+  if (units[winner]?.side) return units[winner].side
+  return winner
+}
+/**
+ * 暴击标记判定：兼容两种形态
+ * - 布尔：demo 存档的 `crit: true`
+ * - 对象：真实录制 TraceDamageLogger 的 `crit: { rate, multiplier, triggered }`，
+ *   normalizeTraceEvent 转 rolls 时保留原对象，仅 `triggered === true` 视为暴击
+ */
+function critFlag(c: unknown): boolean {
+  if (c === true) return true
+  if (c && typeof c === 'object') {
+    return (c as { triggered?: unknown }).triggered === true
+  }
+  return false
+}
+/** 从统一存档汇总战斗战报（单次遍历）；maxTimestamp 传入时仅统计截止该时间点之前的事件（时间切面） */
 export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number): BattleSummary {
   const units: Record<string, UnitSummary> = {}
-  const get = (id?: string): UnitSummary => {
-    if (!id) return empty('')
-    if (!units[id]) units[id] = empty(id)
-    return units[id]
-  }
+  const hpSim = new Map<string, { cur: number; max: number }>()
+  const known = new Set<string>()
   // 预置全部参战单位，保证摘要表始终覆盖无行动者
   for (const p of archive.initialState.participants) {
-    if (!units[p.id]) units[p.id] = empty(p.id)
+    if (units[p.id]) continue
+    units[p.id] = {
+      id: p.id,
+      name: p.name,
+      side: p.side ?? '',
+      attacks: 0,
+      dealt: 0,
+      taken: 0,
+      healed: 0,
+      crits: 0,
+      hits: 0,
+      highestHit: 0,
+      dodges: 0,
+      resists: 0,
+      buffsApplied: 0,
+      kills: 0,
+      alive: true,
+      hpEnd: p.hp,
+      hpMax: p.maxHp,
+    }
+    hpSim.set(p.id, { cur: p.hp, max: p.maxHp })
+    known.add(p.id)
   }
+  const skills = new Map<string, SkillSummary>()
+  const passives = new Map<string, PassiveSummary>()
+  const keyEvents: KeyEvent[] = []
+  const judgment = { attacks: 0, hits: 0, crits: 0, dodges: 0, resists: 0 }
+  const bestHits = new Map<string, { value: number; turn: number }>()
   let rounds = 0
   let reachedEnd = true
+  let firstBlood = false
+  const skillGet = (name?: string): SkillSummary => {
+    const key = name && name.trim() ? name : '未标记技能'
+    let s = skills.get(key)
+    if (!s) {
+      s = { skillName: key, uses: 0, damage: 0, heal: 0, crits: 0, pct: 0 }
+      skills.set(key, s)
+    }
+    return s
+  }
+  const applyHp = (id: string, delta: number): void => {
+    const h = hpSim.get(id)
+    if (!h) return
+    h.cur = Math.max(0, Math.min(h.max, h.cur + delta))
+    const u = units[id]
+    if (u) u.hpEnd = Math.round(h.cur)
+  }
+  const nameOf = (id?: string): string => (id ? units[id]?.name ?? id : '未知')
   for (const e of archive.events) {
     if (maxTimestamp !== undefined && e.timestamp > maxTimestamp) {
       reachedEnd = false
@@ -12940,31 +13273,109 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
       continue
     }
     switch (e.phase) {
-      case 'action_execution':
-        get(e.sourceId).attacks++
+      case 'action_execution': {
+        judgment.attacks++
+        const attacker = e.sourceId ? units[e.sourceId] : undefined
+        if (attacker) attacker.attacks++
         break
+      }
       case 'damage_calculation': {
         const result = typeof pl.result === 'number' ? pl.result : 0
-        if (pl.dodge) {
-          get(e.targetId).dodges++
-        } else {
-          if (e.sourceId) get(e.sourceId).dealt += result
-          if (e.targetId) get(e.targetId).taken += result
+        // 击杀标记事件（BattleSystem.runEndConditionCheck 补发，最终死亡确认）：
+        // 仅做击杀/存活标记，不统计伤害——伤害已由 TraceDamageLogger 的 damage_calculation 事件统计，避免双算。
+        if (pl.lethalMark) {
+          const tgt = e.targetId ? units[e.targetId] : undefined
+          if (tgt) tgt.alive = false
+          const killer = e.sourceId ? units[e.sourceId] : undefined
+          if (killer) killer.kills++
+          const turn = e.turn ?? 0
+          if (!firstBlood) {
+            firstBlood = true
+            keyEvents.push({ turn, kind: 'first_blood', text: `${nameOf(e.targetId)} 被击杀（首杀）` })
+          }
+          keyEvents.push({ turn, kind: 'kill', text: `${nameOf(e.sourceId)} 击败 ${nameOf(e.targetId)}` })
+          break
         }
-        if (pl.crit && e.sourceId) get(e.sourceId).crits++
-        if (pl.death && e.sourceId) get(e.sourceId).kills++
+        const isDot = !!pl.dot
+        const isCrit = critFlag(pl.crit)
+        const skill = skillGet(typeof pl.skillName === 'string' ? pl.skillName : undefined)
+        if (pl.dodge) {
+          judgment.dodges++
+          const tgt = units[e.targetId!]
+          if (tgt) tgt.dodges++
+        } else {
+          // dot 是持续伤害而非攻击命中，不计入命中/暴击率分母与技能使用
+          if (!isDot) judgment.hits++
+          if (isCrit) judgment.crits++
+          const src = e.sourceId ? units[e.sourceId] : undefined
+          const tgt = e.targetId ? units[e.targetId] : undefined
+          if (src) {
+            src.dealt += result
+            if (!isDot) src.hits++
+            if (result > src.highestHit) src.highestHit = result
+            if (result > (bestHits.get(src.id)?.value ?? 0)) {
+              bestHits.set(src.id, { value: result, turn: e.turn ?? 0 })
+            }
+            if (isCrit) src.crits++
+          }
+          if (tgt) {
+            tgt.taken += result
+            applyHp(tgt.id, -result)
+          }
+          if (!isDot) {
+            skill.uses++
+            skill.damage += result
+            if (isCrit) skill.crits++
+          }
+        }
+        // 兼容旧形态：带伤害的死亡事件（demo 存档；真实路径由 lethalMark 事件处理）
+        if (pl.death) {
+          const tgt = units[e.targetId!]
+          if (tgt) tgt.alive = false
+          const killer = e.sourceId ? units[e.sourceId] : undefined
+          if (killer) killer.kills++
+          const turn = e.turn ?? 0
+          if (!firstBlood) {
+            firstBlood = true
+            keyEvents.push({ turn, kind: 'first_blood', text: `${nameOf(e.targetId)} 被击杀（首杀）` })
+          }
+          keyEvents.push({ turn, kind: 'kill', text: `${nameOf(e.sourceId)} 击败 ${nameOf(e.targetId)}` })
+        }
         break
       }
       case 'heal_calculation': {
         const result = typeof pl.result === 'number' ? pl.result : 0
-        if (e.sourceId) get(e.sourceId).healed += result
+        const src = e.sourceId ? units[e.sourceId] : undefined
+        if (src) src.healed += result
+        if (e.targetId) applyHp(e.targetId, result)
+        const skill = skillGet(typeof pl.skillName === 'string' ? pl.skillName : undefined)
+        skill.uses++
+        skill.heal += result
         break
       }
       case 'buff_lifecycle': {
-        const tgt = get(e.targetId)
-        if (pl.action === 'apply') {
-          if (pl.resisted) tgt.resists++
-          else tgt.buffsApplied++
+        // action 兼容大小写：真实路径 BuffTraceLogger 发 BuffAction.APPLY（'APPLY'），
+        // demo 存档用小写 'apply'——按小写归一后统一匹配
+        const action = typeof pl.action === 'string' ? pl.action.toLowerCase() : ''
+        const tgt = e.targetId ? units[e.targetId] : undefined
+        if (tgt && action === 'apply') {
+          if (pl.resisted) {
+            judgment.resists++
+            tgt.resists++
+          } else {
+            tgt.buffsApplied++
+          }
+        }
+        break
+      }
+      case 'passive_trigger': {
+        if (pl.verdict === 'TRIGGERED' && typeof pl.passiveId === 'string') {
+          const owner = typeof pl.owner === 'string' ? pl.owner : (e.sourceId ?? '')
+          const name = typeof pl.passiveName === 'string' && pl.passiveName ? pl.passiveName : pl.passiveId
+          const key = `${pl.passiveId}|${owner}`
+          const p = passives.get(key)
+          if (p) p.triggered++
+          else passives.set(key, { passiveId: pl.passiveId, name, owner, triggered: 1 })
         }
         break
       }
@@ -12972,11 +13383,71 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
         break
     }
   }
+  // 最高单次事件
+  for (const u of Object.values(units)) {
+    if (u.highestHit > 0) {
+      keyEvents.push({ turn: bestHits.get(u.id)?.turn ?? 0, kind: 'highest_hit', text: `${u.name} 单次造成 ${u.highestHit}` })
+    }
+  }
   // 截止时间：显式传入用截断点，否则用事件流尾部；截断未到战斗结束则胜方未知
   const last =
-    maxTimestamp !== undefined ? Math.min(maxTimestamp, archive.events.length ? archive.events[archive.events.length - 1].timestamp : maxTimestamp) : archive.events.length ? archive.events[archive.events.length - 1].timestamp : 0
+    maxTimestamp !== undefined
+      ? Math.min(maxTimestamp, archive.events.length ? archive.events[archive.events.length - 1].timestamp : maxTimestamp)
+      : archive.events.length
+        ? archive.events[archive.events.length - 1].timestamp
+        : 0
   const winner = reachedEnd ? archive.winner : undefined
-  return { battleId: archive.battleId, rounds, durationMs: last, winner, units }
+  const winnerSide = resolveWinnerSide(winner, units)
+  // L2 阵营对比
+  const teamMap = new Map<string, TeamSummary>()
+  const teamOf = (side: string): TeamSummary => {
+    let t = teamMap.get(side)
+    if (!t) {
+      t = { side, name: side, dealt: 0, taken: 0, healed: 0, kills: 0, survivors: 0, total: 0, hpEnd: 0, hpMax: 0 }
+      teamMap.set(side, t)
+    }
+    return t
+  }
+  for (const u of Object.values(units)) {
+    const t = teamOf(u.side || 'unknown')
+    t.dealt += u.dealt
+    t.taken += u.taken
+    t.healed += u.healed
+    t.kills += u.kills
+    t.total++
+    if (u.alive) t.survivors++
+    t.hpEnd += u.hpEnd
+    t.hpMax += u.hpMax
+  }
+  const teams = Array.from(teamMap.values()).sort((a) => (a.side === 'ally' ? -1 : a.side === 'enemy' ? 1 : 0))
+  // L1 胜负边际：胜方阵营存活数 + 剩余血量%
+  let survivorCount = 0
+  let survivorHpPct = 0
+  if (winnerSide) {
+    const t = teamMap.get(winnerSide)
+    survivorCount = t?.survivors ?? 0
+    survivorHpPct = t && t.hpMax > 0 ? Math.round((t.hpEnd / t.hpMax) * 100) : 0
+  }
+  // L5 技能占比：damage / 全部技能伤害
+  const skillList = Array.from(skills.values()).sort((a, b) => b.damage + b.heal - (a.damage + a.heal))
+  const totalSkillDmg = skillList.reduce((s, k) => s + k.damage, 0)
+  for (const k of skillList) {
+    k.pct = totalSkillDmg > 0 ? Math.round((k.damage / totalSkillDmg) * 100) : 0
+  }
+  return {
+    battleId: archive.battleId,
+    rounds,
+    durationMs: last,
+    winner,
+    survivorCount,
+    survivorHpPct,
+    teams,
+    units,
+    judgment: { ...judgment, critRate: judgment.hits > 0 ? Math.round((judgment.crits / judgment.hits) * 100) : 0 },
+    skills: skillList,
+    passives: Array.from(passives.values()).sort((a, b) => b.triggered - a.triggered),
+    keyEvents: keyEvents.sort((a, b) => a.turn - b.turn),
+  }
 }
 
 --- src/domain/battle/replay/unified/unified-validator.ts ---
@@ -13950,6 +14421,8 @@ export class BattleExecutor {
       this.triggerHitPassives(source, target, actualDamage, battle)
     }
     // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
+    // NOTE: 击杀 trace 不在此发出——pendingDeaths 延迟结算，目标可能被复活（ReviveTracker）；
+    //       最终确认死亡在 BattleSystem.runEndConditionCheck 统一补发（见 battle 死亡分支）。
     if (!target.isAlive()) {
       this.skillManager.getExecutor().cleanupComboState(target.id)
       this.skillManager.getExecutor().cleanupRotatingState(target.id)
@@ -14025,6 +14498,22 @@ export class BattleExecutor {
       totalHeal: 0,
       results: [],
     })
+    // 闪避事件（供战报判定统计；phase 未开启时零开销）
+    if (this.tracePort?.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+      this.tracePort.emit(
+        createTraceEvent({
+          correlationId: `dodge_${battle.currentTurn ?? 1}_${target.id}`,
+          phase: TracePhase.DAMAGE_CALCULATION,
+          battleId: battle.battleId,
+          turn: battle.currentTurn ?? 1,
+          sourceId: source.id,
+          targetId: target.id,
+          level: TraceLevel.DEBUG,
+          summary: `${target.name} 闪避了 ${source.name} 的攻击`,
+          payload: { result: 0, dodge: true },
+        }),
+      )
+    }
     // 闪避后触发 DODGE 被动技能（闪避者作为触发者）
     this.passiveSkillManager.triggerPassives(
       target,
@@ -14965,6 +15454,20 @@ export class BattleRecorder {
   ) {
     const seed = randomSeed || this.generateRandomSeed()
     this.randomSeeds.set(battleId, seed)
+    // NOTE: participants 是活的 BattleEntity 引用，战斗中 currentHealth/currentEnergy
+    //       会被扣血/耗能/治疗持续改写。若不冻结快照，战斗结束后 initialState 将不再是
+    //       "初始状态"，统一战报（fromRecordedBattle + summarizeBattle）会以结束血量当起点
+    //       再次累减事件流伤害，HP 模拟双重扣血失真（见 unified-summary.ts HP 约定）。
+    //       此处按 RecordedBattle 白名单字段冻结纯数据快照。
+    const participants = initialState.participants.map((p) => ({
+      id: p.id,
+      name: p.name,
+      team: p.team,
+      maxHealth: p.maxHealth,
+      currentHealth: p.currentHealth,
+      maxEnergy: p.maxEnergy,
+      currentEnergy: p.currentEnergy,
+    }))
     const recording: RecordedBattle = {
       battleId,
       replayId: generateReplayId(),
@@ -14972,7 +15475,7 @@ export class BattleRecorder {
       randomSeed: seed,
       startTime: Date.now(),
       events: [],
-      initialState,
+      initialState: { participants },
       rounds: [],
       combatRecords: [],
     }
@@ -14983,7 +15486,7 @@ export class BattleRecorder {
       BattleEventType.BATTLE_START,
       {
         timestamp: Date.now(),
-        participants: initialState.participants,
+        participants,
       },
       0,
       0,
@@ -14992,11 +15495,8 @@ export class BattleRecorder {
       level: LogLevel.INFO,
       message: `开始记录战斗: ${battleId}`,
     })
-    // ponytail: 战报累加器初始化（传入参与者以支持时间线敌我前缀）
-    BattleSummaryGenerator.instance.startBattle(
-      battleId,
-      initialState.participants,
-    )
+    //  新战斗开始：清空上一场战报，防止日志面板导出/叙事渲染器误用上一场摘要
+    BattleSummaryGenerator.instance.reset()
     this.scheduleCleanup()
   }
   public recordAction(battleId: string, action: BattleAction, turn: number) {
@@ -15020,8 +15520,6 @@ export class BattleRecorder {
     if (recording) {
       recording.combatRecords.push(record)
     }
-    // ponytail: 战报数据累积
-    BattleSummaryGenerator.instance.onAction(record)
   }
   /** 记录结构化调试追踪事件（由 TraceEventCollector 在战斗结束时导出） */
   public recordTraceEvents(battleId: string, entries: TraceEvent[]): void {
@@ -16388,7 +16886,7 @@ import type {
   DamageCategory,
 } from '@/domain/skill/types';
 import type { BattleLogEntry } from '@/shared/types/battle-log';
-import type { BattleSummary } from '@/shared/types/battle-summary';
+import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary';
 /**
  * 动画数据基础接口
  * 所有动画数据的公共属性
@@ -17049,6 +17547,8 @@ export interface BattleEffect {
   value?: number
   /** 伤害值别名，与 value 同语义（规范要求的显式字段名） */
   damage?: number
+  /** 减免前原始伤害（展示「造成 X 点伤害」用；damage 保持最终承伤值） */
+  rawDamage?: number
   /** 治疗值（heal/drain 类型时有效，与 value/damage 分离以便渲染层区分） */
   heal?: number
   /** 治疗/吸血溢出量 */
@@ -17776,12 +18276,12 @@ export class DotEffect implements IAtomicEffect {
     const buffSystem = ctx.getBuffSystem()
     if (!buffSystem) return
     if (damageType === 'percent') {
-      // 百分比伤害随层数缩放（3 层 = 3 倍百分比），与 flat 模式的 value × stacks 语义一致
+      // 百分比伤害随层数缩放（−3 层 = 3 倍百分比），与 flat 模式的 value × stacks 语义一致
       const stacks = ctx.getVariable<number>('_stacks') ?? 1
-      buffSystem.requestDamage(ctx.characterId, 0, undefined, (value / 100) * stacks)
+      buffSystem.requestDamage(ctx.characterId, 0, undefined, (value / 100) * stacks, 'dot')
     } else {
       const stacks = ctx.getVariable<number>('_stacks') ?? 1
-      buffSystem.requestDamage(ctx.characterId, value * stacks)
+      buffSystem.requestDamage(ctx.characterId, value * stacks, undefined, undefined, 'dot')
     }
   }
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {
@@ -18804,6 +19304,11 @@ export interface TriggerExecutionContext extends TriggerEventContext {
 }
 /** 角色解析器：characterId → BattleEntity */
 export type CharacterResolver = (characterId: string) => BattleEntity | undefined
+/**
+ * 伤害请求来源标记：区分 dot 持续伤害与触发器脚本伤害。
+ * 供 BattleSystem 在补发 DAMAGE_CALCULATION 事件时判断是否带 dot 标记（战报承伤统计）。
+ */
+export type DamageOrigin = 'dot'
 /** 召唤配置（最小定义，供回调传递） */
 export interface SummonRequest {
   /** 召唤物模板 ID（对应 enemies.json 中的 id） */
@@ -18834,6 +19339,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     damage: number,
     rawDamage?: number,
     damagePercent?: number,
+    origin?: DamageOrigin,
   ) => void
   private onHealRequest?: (targetId: string, amount: number) => void
   private onEnergyRequest?: (targetId: string, amount: number) => void
@@ -18953,8 +19459,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     damage: number,
     rawDamage?: number,
     damagePercent?: number,
+    origin?: DamageOrigin,
   ): void {
-    this.dealDirectDamage(targetId, damage, rawDamage, damagePercent)
+    this.dealDirectDamage(targetId, damage, rawDamage, damagePercent, origin)
   }
   /**
    * 请求治疗目标（供触发器脚本调用）
@@ -18983,9 +19490,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     damage: number,
     rawDamage?: number,
     damagePercent?: number,
+    origin?: DamageOrigin,
   ): void {
     if (this.onDamageRequest) {
-      this.onDamageRequest(targetId, damage, rawDamage, damagePercent)
+      this.onDamageRequest(targetId, damage, rawDamage, damagePercent, origin)
     }
   }
   private healTarget(targetId: string, amount: number): void {
@@ -19010,6 +19518,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       damage: number,
       rawDamage?: number,
       damagePercent?: number,
+      origin?: DamageOrigin,
     ) => void,
   ): void {
     this.onDamageRequest = callback
@@ -23603,10 +24112,11 @@ export class DamageCalculator {
       baseDamage = skillStep.calculation.baseValue
       // ponytail: extraValues 在主循环 calculateDamage 中通过 getAttrVal 处理，不在基础伤害阶段重复
     } else {
-      // NOTE: v2.1.0 攻击模型扁平化 — 基础伤害直接取单一 attack 属性，不再做 min/max 区间随机
+      // NOTE: 攻击浮动模型 — 基础伤害 = attack × (1 ± 15%)，替代原 min/max 区间随机语义。
+      //       浮动走确定性随机源 rng（this.random），保证战斗回放与实况一致。
       const atk = this.getAttributeSafe(source, ATTRIBUTE_CODE.attack)
-      const levelBonus = (source.level || 1) * 2
-      baseDamage = Math.floor(atk + levelBonus)
+      const VARIANCE = 0.15
+      baseDamage = Math.floor(atk * (1 - VARIANCE + this.random() * VARIANCE * 2))
     }
     this.logCalculation('base', baseDamage, `基础伤害: ${baseDamage}`)
     if (context?.record) {
@@ -24162,14 +24672,14 @@ export class PassiveSkillManager {
     skipReason: PassiveSkipReasonType,
     checks: Record<string, unknown>,
   ): void {
-    // NOTE: B3 — 有信息量的跳过（概率/冷却/次数/条件）写入调试日志，
-    //       使"为什么没触发"可复现；PHASE_MISMATCH 每回合每个被动都会发生，排除防噪音。
-    if (skipReason !== PassiveSkipReason.PHASE_MISMATCH) {
-      LoggerProvider.logger.addDebugLog(
-        `被动未触发 [${entity.name}] ${config.name || config.skillId}：${skipReason}`,
-        { level: LogLevel.DEBUG, context: checks },
-      )
-    }
+    // NOTE: B3 — PHASE_MISMATCH 是"该被动本就不在该时机运行"的设计事实（由 trigger 配置决定），
+    //       既无决策信息也不可复现问题，与调试日志同级直接降噪：不写日志、不进 trace、不计跳过数。
+    //       仅记录有信息量的跳过（概率/冷却/次数/条件），使"为什么没触发"可复现。
+    if (skipReason === PassiveSkipReason.PHASE_MISMATCH) return
+    LoggerProvider.logger.addDebugLog(
+      `被动未触发 [${entity.name}] ${config.name || config.skillId}：${skipReason}`,
+      { level: LogLevel.DEBUG, context: checks },
+    )
     if (!this.tracePort || !this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) return
     this.turnSkippedCount++
     this.tracePort.emit(
@@ -24287,6 +24797,7 @@ export class PassiveSkillManager {
               summary: `${entity.name} 触发 【${configName}】`,
               payload: {
                 passiveId: config.skillId,
+                passiveName: configName,
                 owner: entity.name,
                 trigger: context?.phase,
                 verdict: PassiveVerdict.TRIGGERED,
@@ -24659,7 +25170,12 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
-import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
+import type {
+  CustomStepParams,
+  ExtendedSkillStep,
+  GainEnergyStepParams,
+  ReviveStepParams,
+} from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
@@ -24667,6 +25183,7 @@ import {
   syncBonusAttribute,
   syncReverseBonusAttribute,
 } from '@/shared/utils/attributeSync'
+import { entitySegment } from '@/domain/battle/logs/BattleLogProjector'
 /** 追踪同一攻击者的连续命中目标和计数 */
 interface ComboState {
   /** 最后攻击的目标 ID */
@@ -24804,6 +25321,7 @@ export class SkillExecutor {
           sourceId: source.id,
           targetId: target.id,
           value: result.damage,
+          rawDamage: result.rawDamage,
           description: `${source.name} deals ${result.damage} damage`,
           isCritical: result.isCritical,
         })
@@ -24818,6 +25336,7 @@ export class SkillExecutor {
           sourceId: source.id,
           targetId: target.id,
           value: actualDamage,
+          rawDamage: result.rawDamage,
           description: `${source.name} deals ${actualDamage} damage`,
           isCritical: result.isCritical,
         })
@@ -24912,7 +25431,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
-      parameters: skillStep.parameters || skillStep.effectParams || {},
     }
     const instanceId = this.buffSystem.addBuff(
       buffTarget.id,
@@ -24954,15 +25472,17 @@ export class SkillExecutor {
       }
       LoggerProvider.logger.addBattleLog({
         turn: action?.turn || 1,
-        message: `${buffName}  ${effectSummary}`,
+        message: `${entitySegment(buffTarget).text} 获得 【${buffName}】${effectSummary}`,
         segments: [
+          entitySegment(buffTarget),
+          { text: ' 获得 ', classStr: 'log-info' },
           {
-            text: buffName,
+            text: `【${buffName}】`,
             classStr: 'log-buff',
             kind: 'buff',
             hover: { kind: 'buff', id: buffId },
           },
-          { text: `  ${effectSummary}` },
+          ...(effectSummary ? [{ text: ` ${effectSummary}` }] : []),
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
         meta: { role: 'sub' },
@@ -25010,11 +25530,8 @@ export class SkillExecutor {
       }
     }
     modTarget.recalcAll()
-    action.effects.push({
-      type: EffectType.STATUS,
-      targetId: modTarget.id,
-      description: `modify_attribute: ${modifiers.length} 个属性已修改`,
-    })
+    // NOTE: 属性微调是静默机制，效果已由被动名（chip）承载，不产 STATUS effect——
+    //       否则日志会输出 `modify_attribute: N 个属性已修改` 这类内部调试文本
   }
   /** 净化/移除减益（cleanse / remove_debuff 步骤） */
   private executeCleanse(
@@ -25121,8 +25638,9 @@ export class SkillExecutor {
     target: BattleEntity,
     context?: StepExecutionContext,
   ): void {
-    const customType = skillStep.parameters?.customType as string | undefined
-    const desc = (skillStep.parameters?.description as string) || ''
+    const customParams = skillStep.parameters as CustomStepParams | undefined
+    const customType = customParams?.customType
+    const desc = customParams?.description || ''
     // 根据 customType 分发
     if (customType === 'third_strike') {
       this.handleThirdStrike(action, source)
@@ -25132,8 +25650,7 @@ export class SkillExecutor {
       customType === 'burn_detonate' ||
       customType === 'burn_detonate_full'
     ) {
-      const burnPct =
-        (skillStep.parameters?.burnDamagePercent as number) ?? 0.05
+      const burnPct = customParams?.burnDamagePercent ?? 0.05
       this.handleBurnDetonate(
         action,
         source,
@@ -25227,7 +25744,8 @@ export class SkillExecutor {
     target: BattleEntity,
     context?: StepExecutionContext,
   ): void {
-    const buffIds = (skillStep.parameters?.buffIds as string[] | undefined) ?? []
+    const buffIds =
+      (skillStep.parameters as CustomStepParams | undefined)?.buffIds ?? []
     if (buffIds.length === 0) return
     const index = this.rotatingBuffIndex.get(source.id) ?? 0
     const buffId = buffIds[index % buffIds.length]
@@ -25253,7 +25771,6 @@ export class SkillExecutor {
         cooldown: 0,
         stackRule: StackRule.LIMITED,
         controlType: ControlType.NONE,
-        parameters: skillStep.parameters || skillStep.effectParams || {},
       }
       for (let i = 1; i < stacks; i++) {
         this.buffSystem.addBuff(
@@ -25400,7 +25917,8 @@ export class SkillExecutor {
   ): void {
     const modTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
-    const value = skillStep.parameters?.value ?? 0
+    const value =
+      (skillStep.parameters as GainEnergyStepParams | undefined)?.value ?? 0
     if (value <= 0) return
     modTarget.gainEnergy(value)
     action.effects.push({
@@ -25479,7 +25997,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.REFRESH,
       controlType,
-      parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config, action.turn ?? 0)
     if (!instanceId) {
@@ -25507,7 +26024,8 @@ export class SkillExecutor {
     target: BattleEntity,
     context?: StepExecutionContext,
   ): void {
-    const params = (skillStep.parameters ?? {}) as ReviveStepParams
+    const params: ReviveStepParams =
+      (skillStep.parameters as ReviveStepParams | undefined) ?? {}
     const hpPercent = params.hpPercent ?? 30
     // 前置校验：目标必须已死亡
     if (target.isAlive()) {
@@ -26562,17 +27080,17 @@ export interface SkillStep {
    */
   condition?: string
   /**
-   * 效果参数（旧版扩展字段）
-   */
-  effectParams?: Record<string, any>
-  /**
    * 资源消耗类型
    */
   costType?: CostType
   /**
-   * 自定义参数
+   * 步骤参数
+   * 按步骤类型区分：
+   * - gain_energy: GainEnergyStepParams
+   * - custom: CustomStepParams
+   * - revive: ReviveStepParams
    */
-  parameters?: Record<string, any>
+  parameters?: SkillStepParameters
   /**
    * 优先级
    */
@@ -26714,10 +27232,31 @@ export function convertSkillConfigToSkill(
   }
   return skill
 }
+/** gain_energy 步骤参数 */
+export interface GainEnergyStepParams {
+  /** 能量获得量 */
+  value: number
+}
+/** custom 步骤参数（按 customType 分发） */
+export interface CustomStepParams {
+  /** 自定义步骤类型标识 */
+  customType: string
+  /** 自定义步骤描述（未实现时用于报错信息） */
+  description?: string
+  /** burn_detonate 每层灼烧伤害百分比（默认 5%） */
+  burnDamagePercent?: number
+  /** rotating_apply_buff 轮转施加的 buff 列表 */
+  buffIds?: string[]
+}
+/** 步骤参数：按步骤类型判别，业务参数全部显式类型化 */
+export type SkillStepParameters =
+  | GainEnergyStepParams
+  | CustomStepParams
+  | ReviveStepParams
 /** 复活步骤参数 */
 export interface ReviveStepParams {
   /** 复活后气血百分比（默认 30） */
-  hpPercent: number
+  hpPercent?: number
   /** 最大复活次数限制 */
   maxRevives?: number
   /** 复活冷却回合数 */
@@ -27119,6 +27658,8 @@ export class BattleLogManager implements IBattleLogManager {
   private indexCounter = new Counter()
   /** 是否启用自动清理 */
   private autoCleanup: boolean = true
+  /** 是否静默（静默期间 emitLogUpdate 不通知监听器，用于批量数据生成等写日志但不希望 UI 重渲染的场景） */
+  private muted: boolean = false
   /** 日志过滤器配置 */
   private filters: LogFilters
   /** 当前调试日志级别，默认INFO */
@@ -27414,6 +27955,17 @@ export class BattleLogManager implements IBattleLogManager {
     this.autoCleanup = enabled
   }
   /**
+   * 启用/禁用日志更新通知
+   *
+   * 批量数据生成（BattleDataGenerator）会向共享日志管理器写入数十场战斗的日志，
+   * 每次写入都会触发 UI 监听器全量重渲染（BattleLog 的 renderEntries + v-for），
+   * 数千次写入会让界面白屏/冻结。生成期间置 muted=true 抑制通知，结束后置 false 并补发一次。
+   */
+  setMuted(muted: boolean): void {
+    this.muted = muted
+    if (!muted) this.emitLogUpdate()
+  }
+  /**
    * 判断日志是否应该显示
    */
   private shouldDisplayLog(log: LogEntry): boolean {
@@ -27451,7 +28003,7 @@ export class BattleLogManager implements IBattleLogManager {
    * 触发日志更新通知
    */
   private emitLogUpdate(): void {
-    if (this.listeners.size === 0) {
+    if (this.muted || this.listeners.size === 0) {
       return
     }
     const filteredLogs = this.getFilteredLogs()
@@ -27793,7 +28345,6 @@ export class IndexedDbStorage implements IPersistentStorage {
 /**
  * migration.ts — localStorage → IndexedDB 数据迁移
  *
- * 将旧 localStorage 中的战斗录像和状态快照迁移到 IndexedDB。
  * 幂等：首次迁移完成后设置标记 `cds:idb-migration-v1`，后续跳过。
  *
  * 迁移内容：
@@ -27893,7 +28444,8 @@ import formationsDataRaw from '@configs/formations/formations.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import materialsDataRaw from '@configs/materials/materials.json'
 import effectsDataRaw from '@configs/effects/effects.json'
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v2'
+// NOTE: v4 — 敌人数值重平衡（攻击浮动模型：enemies.json 全量曲线重调），升级版本号让已 seed 的浏览器重导最新 configs
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v4'
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
   ...buffsData,
@@ -28797,6 +29349,229 @@ document.addEventListener('DOMContentLoaded', async () => {
     app.mount(appElement)
   }
 })
+
+--- src/presentation/assets/icons/Close.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m12 13.4l-4.9 4.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.9-4.9l-4.9-4.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l4.9 4.9l4.9-4.9q.275-.275.7-.275t.7.275t.275.7t-.275.7L13.4 12l4.9 4.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275z"/></svg>
+
+--- src/presentation/assets/icons/drag.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615186378215" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6349" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M574.958 267.016h-63.454 204.649L511.213 63.655 307.85 267.016h141.191V456.68H258.688v125.917H449.04V772.95h125.917V582.596h188.875V456.679H574.958V267.016z m-63.704 693.33l189.62-187.396H323.126l188.129 187.395zM71.292 518.891l187.395 189.62v-377.75L71.292 518.892z m692.54-188.13v377.75L952.708 518.89 763.833 330.762z" p-id="6350"></path></svg>
+
+--- src/presentation/assets/icons/grid.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615196195559" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8472" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M819.3536 921.6h102.4v-102.4h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4v-102.4a102.4 102.4 0 0 0-102.4-102.4z m-460.8 204.8h102.4v-102.4h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4v-102.4a102.4 102.4 0 0 0-102.4-102.4z m-460.8 204.8h102.4v-102.4h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4v-102.4a102.4 102.4 0 0 0-102.4-102.4z m614.4-153.6h102.4V460.8h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4V460.8a102.4 102.4 0 0 0-102.4-102.4z m-460.8 204.8h102.4V460.8h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4V460.8a102.4 102.4 0 0 0-102.4-102.4z m-460.8 204.8h102.4V460.8h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4V460.8a102.4 102.4 0 0 0-102.4-102.4z m614.4-153.6h102.4V102.4h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4V102.4a102.4 102.4 0 0 0-102.4-102.4z m-460.8 204.8h102.4V102.4h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4V102.4a102.4 102.4 0 0 0-102.4-102.4z m-460.8 204.8h102.4V102.4h-102.4v102.4z m102.4-204.8h-102.4a102.4 102.4 0 0 0-102.4 102.4v102.4a102.4 102.4 0 0 0 102.4 102.4h102.4a102.4 102.4 0 0 0 102.4-102.4V102.4a102.4 102.4 0 0 0-102.4-102.4z" p-id="8473"></path></svg>
+
+--- src/presentation/assets/icons/html-text.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615349493614" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="56263" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M137.6 512l204.8-204.8c12.8-12.8 12.8-32 0-44.8-12.8-12.8-32-12.8-44.8 0L70.4 489.6c-6.4 6.4-9.6 12.8-9.6 22.4 0 9.6 3.2 16 9.6 22.4l227.2 227.2c12.8 12.8 32 12.8 44.8 0 12.8-12.8 12.8-32 0-44.8L137.6 512z m464-339.2c-16-3.2-35.2 6.4-38.4 22.4L396.8 812.8c-3.2 16 6.4 35.2 22.4 38.4 16 3.2 35.2-6.4 38.4-22.4L624 211.2c6.4-16-3.2-35.2-22.4-38.4z m352 316.8L726.4 262.4c-12.8-12.8-32-12.8-44.8 0-12.8 12.8-12.8 32 0 44.8L886.4 512 681.6 716.8c-12.8 12.8-12.8 32 0 44.8 12.8 12.8 32 12.8 44.8 0l227.2-227.2c6.4-6.4 9.6-16 9.6-22.4 0-9.6-3.2-16-9.6-22.4z" p-id="56264"></path></svg>
+
+--- src/presentation/assets/icons/lightning.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 8-10h-7z"/></svg>
+
+--- src/presentation/assets/icons/node-tree.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1637920503900" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4875" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M332.48 500.864a25.6 25.6 0 1 0 0-51.2H192.384v-184.96a115.2 115.2 0 0 0 89.6-112.128c0-63.488-51.712-115.2-115.2-115.2s-115.2 51.712-115.2 115.2a115.2 115.2 0 0 0 89.6 112.128v696.192a25.6 25.6 0 1 0 51.2 0v-141.12c2.304 0.192 4.48 0.512 6.912 0.512h133.184a25.6 25.6 0 1 0 0-51.2H199.296c-3.456 0-5.504-0.448-6.08-0.256a29.184 29.184 0 0 1-0.896-8.576V500.8h140.16zM102.784 152.64c0-35.264 28.736-64 64-64s64 28.736 64 64-28.736 64-64 64-64-28.736-64-64zM921.216 360.064h-486.4c-28.224 0-51.2 22.976-51.2 51.2v128c0 28.224 22.976 51.2 51.2 51.2h486.4c28.224 0 51.2-22.976 51.2-51.2v-128c0-28.224-22.976-51.2-51.2-51.2z m-486.336 179.2v-128h486.4v128h-486.4zM921.216 679.616h-486.4c-28.224 0-51.2 22.976-51.2 51.2v128c0 28.224 22.976 51.2 51.2 51.2h486.4c28.224 0 51.2-22.976 51.2-51.2v-128c0-28.224-22.976-51.2-51.2-51.2z m-486.336 179.2v-128h486.4v128h-486.4z" p-id="4876"></path></svg>
+
+--- src/presentation/assets/icons/rate-field.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615349207874" class="icon" viewBox="0 0 1069 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="49626" xmlns:xlink="http://www.w3.org/1999/xlink" width="208.7890625" height="200"><defs><style type="text/css"></style></defs><path d="M633.73 378.02l9.498 18.688 20.78 2.798 206.616 27.332a11.465 11.465 0 0 1 6.61 19.473L729.966 593.665l-14.893 14.893 3.8 20.683 37.847 204.89a11.465 11.465 0 0 1-16.481 12.296l-185.55-94.58-18.687-9.493-18.487 9.992-183.24 99.35a11.465 11.465 0 0 1-16.784-11.867l32.543-205.796 3.297-20.786-15.192-14.492-151.033-143.484a11.465 11.465 0 0 1 6.1-19.64L399 402.998l20.786-3.296 9.092-18.98 89.713-188.078a11.465 11.465 0 0 1 20.569-0.263l94.568 185.635zM496.647 85.52L374.89 340.501l-279.126 44.26a34.395 34.395 0 0 0-18.303 58.908l204.873 194.663-44.169 279.115a34.395 34.395 0 0 0 50.366 35.616l248.4-134.679L788.776 946.66a34.395 34.395 0 0 0 49.437-36.894l-51.306-277.854 199.731-199.909a34.395 34.395 0 0 0-19.828-58.408l-280.118-37.032L558.33 84.713a34.395 34.395 0 0 0-61.682 0.802z" p-id="49627"></path></svg>
+
+--- src/presentation/assets/icons/redo.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615176655087" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3521" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M412.081 346.3h443.415l-215.328-212.429c-18.973-18.973-18.973-46.064 0-65.038s44.325-19.884 63.381-0.83l291.385 284.591c18.973 18.973 18.973 44.159 0 63.132l-291.385 284.923c-18.973 18.973-44.325 18.973-63.381-0.083-18.973-18.973-18.973-43.91 0-62.883l215.328-208.534h-443.415c-177.3 0-314.335 138.359-314.335 309.364v44.325c0 25.354-16.074 44.325-41.425 44.325s-41.425-18.973-41.425-44.325v-44.325c0-221.709 169.181-392.213 397.185-392.213z" p-id="3522"></path></svg>
+
+--- src/presentation/assets/icons/switch-field.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615349165848" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="48563" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M692 792H332C182 792 62 672 62 522s120-270 270-270h360c150 0 270 120 270 270 0 147-120 270-270 270zM332 312c-117 0-210 93-210 210s93 210 210 210h360c117 0 210-93 210-210s-93-210-210-210H332z" p-id="48564"></path><path d="M191 522a150 150 0 1 0 300 0 150 150 0 1 0-300 0z" p-id="48565"></path></svg>
+
+--- src/presentation/assets/icons/tab.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615196217184" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9209" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M908.8 1005.44H115.2a101.76 101.76 0 0 1-101.12-101.76V110.72A101.76 101.76 0 0 1 115.2 8.96h296.96a32.64 32.64 0 0 1 32 32V262.4a32 32 0 0 1-32 32 32 32 0 0 1-32-32v-192H115.2a37.76 37.76 0 0 0-37.12 37.76v795.52a37.76 37.76 0 0 0 37.12 37.76h793.6a37.76 37.76 0 0 0 37.12-37.76V267.52a32 32 0 0 1 32-32 32 32 0 0 1 32 32v636.16a101.76 101.76 0 0 1-101.12 101.76z" p-id="9210"></path><path d="M977.92 299.52a32.64 32.64 0 0 1-32-32V180.48a37.12 37.12 0 0 0-37.12-37.76H421.12a32 32 0 0 1-32-32 32 32 0 0 1 32-32h487.68a101.76 101.76 0 0 1 101.12 101.76v87.04a32 32 0 0 1-32 32z" p-id="9211"></path><path d="M977.92 299.52H64a32 32 0 0 1-32-32 32 32 0 0 1 32-32h913.92a32 32 0 0 1 32 32 32 32 0 0 1-32 32z" p-id="9212"></path><path d="M699.52 299.52a32 32 0 0 1-32-32V110.72a32 32 0 0 1 64 0v156.8a32 32 0 0 1-32 32z" p-id="9213"></path></svg>
+
+--- src/presentation/assets/icons/undo.svg ---
+<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg t="1615176644441" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3382" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M609.206 396.656h-415.702l201.87-199.152c17.787-17.787 17.787-43.185 0-60.973s-41.555-18.641-59.42-0.778l-273.097 266.804c-17.787 17.787-17.787 41.399 0 59.186l273.173 267.115c17.787 17.787 41.555 17.787 59.42-0.078 17.787-17.787 17.787-41.166 0-58.953l-201.948-195.501h415.702c166.219 0 311.155 129.712 311.155 290.029v41.555c0 23.769 15.069 41.555 38.836 41.555s38.836-17.787 38.836-41.555v-41.555c0-207.852-175.073-367.7-388.828-367.7z" p-id="3383"></path></svg>
+
+--- src/presentation/assets/icons/上一个_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1134_3223)">
+<path d="M3.27539 2.6001C2.94411 2.6001 2.67495 2.86846 2.6748 3.19971V6.80029C2.67498 7.13151 2.94413 7.3999 3.27539 7.3999C3.6065 7.39972 3.87482 7.1314 3.875 6.80029V6.59508C3.875 6.05769 3.875 5.789 3.95293 5.72895C3.97798 5.70965 3.99582 5.70101 4.0265 5.69335C4.12194 5.66949 4.34204 5.84362 4.78223 6.19189L5.2998 6.60205C5.92152 7.09394 6.23295 7.34055 6.49316 7.35107C6.75995 7.3617 7.01468 7.23779 7.17188 7.02197C7.3251 6.81143 7.3252 6.41514 7.3252 5.62256V4.37744C7.3252 3.58487 7.32509 3.18857 7.17188 2.97803C7.01468 2.76221 6.75995 2.6383 6.49316 2.64893C6.23295 2.65945 5.92152 2.90606 5.2998 3.39795L4.78223 3.80811C4.34189 4.15649 4.12172 4.33068 4.02607 4.30655C3.99575 4.2989 3.97809 4.29035 3.95328 4.27132C3.875 4.21128 3.875 3.9424 3.875 3.40463V3.19971C3.87486 2.86857 3.60652 2.60028 3.27539 2.6001Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1134_3223" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1134_3223"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/上一帧_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1173_162)">
+<path d="M7.15591 2.6001C6.82463 2.6001 6.55547 2.86846 6.55533 3.19971V6.80029C6.5555 7.13152 6.82465 7.3999 7.15591 7.3999C7.487 7.39969 7.75535 7.13139 7.75552 6.80029V3.19971C7.75538 2.86859 7.48701 2.60031 7.15591 2.6001ZM4.9733 2.64893C4.71309 2.65945 4.40165 2.90606 3.77994 3.39795L3.26236 3.80811C2.60695 4.32666 2.27864 4.58604 2.24771 4.92822C2.24341 4.97596 2.24341 5.02404 2.24771 5.07178C2.27864 5.41396 2.60695 5.67334 3.26236 6.19189L3.77994 6.60205C4.40165 7.09394 4.71309 7.34055 4.9733 7.35107C5.24008 7.3617 5.49481 7.23779 5.65201 7.02197C5.80523 6.81143 5.80533 6.41514 5.80533 5.62256V4.37744C5.80533 3.58487 5.80522 3.18857 5.65201 2.97803C5.49481 2.76221 5.24008 2.6383 4.9733 2.64893Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1173_162" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1173_162"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/下一个_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1134_3227)">
+<path d="M6.72461 2.6001C7.05589 2.6001 7.32505 2.86846 7.3252 3.19971V6.80029C7.32502 7.13151 7.05587 7.3999 6.72461 7.3999C6.3935 7.39972 6.12518 7.1314 6.125 6.80029V6.59508C6.125 6.05769 6.125 5.789 6.04707 5.72895C6.02202 5.70965 6.00418 5.70101 5.9735 5.69335C5.87806 5.66949 5.65796 5.84362 5.21777 6.19189L4.7002 6.60205C4.07848 7.09394 3.76705 7.34055 3.50684 7.35107C3.24005 7.3617 2.98532 7.23779 2.82812 7.02197C2.6749 6.81143 2.6748 6.41514 2.6748 5.62256V4.37744C2.6748 3.58487 2.67491 3.18857 2.82812 2.97803C2.98532 2.76221 3.24005 2.6383 3.50684 2.64893C3.76705 2.65945 4.07848 2.90606 4.7002 3.39795L5.21777 3.80811C5.65811 4.15649 5.87828 4.33068 5.97393 4.30655C6.00425 4.2989 6.02191 4.29035 6.04672 4.27132C6.125 4.21128 6.125 3.9424 6.125 3.40463V3.19971C6.12514 2.86857 6.39348 2.60028 6.72461 2.6001Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1134_3227" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1134_3227"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/下一帧_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1173_172)">
+<path d="M2.84409 2.6001C3.17537 2.6001 3.44453 2.86846 3.44467 3.19971V6.80029C3.4445 7.13152 3.17535 7.3999 2.84409 7.3999C2.513 7.39969 2.24465 7.13139 2.24448 6.80029V3.19971C2.24462 2.86859 2.51299 2.60031 2.84409 2.6001ZM5.0267 2.64893C5.28691 2.65945 5.59835 2.90606 6.22006 3.39795L6.73764 3.80811C7.39305 4.32666 7.72136 4.58604 7.75229 4.92822C7.75659 4.97596 7.75659 5.02404 7.75229 5.07178C7.72136 5.41396 7.39305 5.67334 6.73764 6.19189L6.22006 6.60205C5.59835 7.09394 5.28691 7.34055 5.0267 7.35107C4.75992 7.3617 4.50519 7.23779 4.34799 7.02197C4.19477 6.81143 4.19467 6.41514 4.19467 5.62256V4.37744C4.19467 3.58487 4.19478 3.18857 4.34799 2.97803C4.50519 2.76221 4.75992 2.6383 5.0267 2.64893Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1173_172" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1173_172"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/导入_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1191_5276)">
+<path d="M2.99951 6.46533C2.99951 6.6987 2.99951 6.81539 3.04671 6.90373C3.08401 6.97355 3.1412 7.03073 3.21102 7.06804C3.29936 7.11523 3.41604 7.11523 3.64941 7.11523H6.34961C6.58298 7.11523 6.69967 7.11523 6.788 7.06804C6.85783 7.03073 6.91501 6.97355 6.95232 6.90373C6.99951 6.81539 6.99951 6.6987 6.99951 6.46533V6.41553C6.99951 6.22906 6.99951 6.13582 7.02999 6.06229C7.07059 5.96433 7.14841 5.8865 7.24637 5.84591C7.31991 5.81543 7.41314 5.81543 7.59961 5.81543C7.78608 5.81543 7.87931 5.81543 7.95285 5.84591C8.05081 5.8865 8.12863 5.96433 8.16923 6.06229C8.19971 6.13582 8.19971 6.22906 8.19971 6.41553V7.51562C8.1996 7.95732 7.84161 8.31536 7.3999 8.31543H2.6001C2.15833 8.31543 1.8004 7.95736 1.80029 7.51562V6.41504C1.80029 6.22903 1.80029 6.13602 1.83062 6.06264C1.87123 5.9644 1.94926 5.88636 2.0475 5.84576C2.12089 5.81543 2.21389 5.81543 2.3999 5.81543C2.58591 5.81543 2.67892 5.81543 2.7523 5.84576C2.85054 5.88636 2.92858 5.9644 2.96918 6.06264C2.99951 6.13602 2.99951 6.22903 2.99951 6.41504V6.46533ZM5.19678 1.68457C5.528 1.68457 5.79713 1.95301 5.79736 2.28418V2.34509C5.79736 2.66245 5.79736 2.82113 5.88045 2.92902C5.89322 2.94561 5.90422 2.95792 5.91927 2.97248C6.01715 3.06715 6.19681 3.08745 6.55612 3.12804C6.74502 3.14938 6.87136 3.19005 6.95361 3.26758C7.06737 3.37487 7.13446 3.52248 7.14111 3.67871C7.15122 3.91679 6.90964 4.19576 6.42627 4.75391L5.85889 5.40918C5.48053 5.84607 5.29102 6.06509 5.04834 6.08594C5.01432 6.08883 4.97982 6.08886 4.9458 6.08594C4.70319 6.06497 4.5136 5.84605 4.13525 5.40918L3.56885 4.75391C3.0854 4.19567 2.84292 3.91681 2.85303 3.67871C2.85967 3.52247 2.92774 3.37487 3.0415 3.26758C3.12366 3.19024 3.2497 3.14958 3.43805 3.12819C3.79745 3.08738 3.97715 3.06698 4.07496 2.97232C4.09001 2.95776 4.10098 2.94546 4.11376 2.92886C4.19678 2.821 4.19678 2.66237 4.19678 2.3451V2.28418C4.19701 1.95301 4.46614 1.68457 4.79736 1.68457H5.19678Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1191_5276" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1191_5276"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/播放_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1204_239)">
+<path d="M6.25925 3.6287C7.05468 4.22127 7.4524 4.51756 7.48962 4.91637C7.49481 4.972 7.49481 5.028 7.48962 5.08363C7.4524 5.48244 7.05468 5.77873 6.25925 6.3713L5.77501 6.73205C5.01262 7.3 4.63143 7.58398 4.31216 7.57055C4.05461 7.55971 3.81407 7.43895 3.65151 7.23889C3.45001 6.99089 3.45001 6.51554 3.45001 5.56486V5V4.43514C3.45001 3.48446 3.45001 3.00911 3.65151 2.76111C3.81407 2.56105 4.05461 2.44029 4.31216 2.42945C4.63143 2.41602 5.01262 2.7 5.77501 3.26795L6.25925 3.6287Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1204_239" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1204_239"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/最后一帧_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1191_5325)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M4.24911 2.72656C4.44451 2.75507 4.67574 2.9841 5.13779 3.4414C5.31218 3.61404 5.39937 3.70036 5.47756 3.68477C5.4891 3.68247 5.49779 3.67973 5.50856 3.675C5.58156 3.64294 5.60584 3.50935 5.6544 3.24218C5.66684 3.17374 5.68437 3.12055 5.70908 3.0791C5.84706 2.84788 6.12216 2.73688 6.38193 2.80761C6.54147 2.85119 6.73606 3.05277 7.12411 3.45605L7.86337 4.22461C8.20317 4.57773 8.37325 4.75489 8.38974 4.96972C8.39206 5.00016 8.39208 5.03109 8.38974 5.06152C8.37307 5.27618 8.20296 5.45275 7.86337 5.80566L7.12411 6.57422C6.736 6.97756 6.54148 7.17908 6.38193 7.22265C6.12215 7.29341 5.84707 7.1824 5.70908 6.95117C5.68097 6.90396 5.66216 6.84156 5.64956 6.75876C5.60862 6.4896 5.58814 6.35502 5.51441 6.32131C5.5037 6.31641 5.49463 6.31342 5.48311 6.31098C5.40379 6.29419 5.31513 6.38232 5.13779 6.55859C4.67569 7.01595 4.44452 7.24496 4.24911 7.27344C4.03024 7.30524 3.81118 7.21403 3.67978 7.03613C3.56249 6.87725 3.56259 6.55166 3.56259 5.90137V4.09765C3.56259 3.44786 3.56263 3.12277 3.67978 2.96386C3.81117 2.78589 4.03019 2.69475 4.24911 2.72656ZM2.2081 2.78711C2.5394 2.78719 2.80771 3.0554 2.80771 3.38672V6.58691C2.80756 6.91811 2.53931 7.18644 2.2081 7.18652C1.87682 7.18652 1.60864 6.91816 1.60849 6.58691V3.38672C1.60849 3.05535 1.87673 2.78711 2.2081 2.78711Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1191_5325" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1191_5325"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/标签_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1191_5311)">
+<path d="M6.06598 2.33612C6.86262 2.23221 7.26151 2.18049 7.51334 2.38998C7.54843 2.41919 7.58081 2.45157 7.61002 2.48666C7.81951 2.73848 7.76779 3.13738 7.66388 3.93401L7.56255 4.70914C7.52327 5.00959 7.50363 5.15981 7.44239 5.29514C7.43338 5.31505 7.42373 5.33465 7.41343 5.35393C7.34346 5.48496 7.23634 5.59209 7.02208 5.80635L5.99389 6.83453C5.39572 7.43271 5.09663 7.7318 4.72885 7.76074C4.67662 7.76485 4.62415 7.76485 4.57193 7.76074C4.20415 7.7318 3.90506 7.43271 3.30688 6.83453L3.16546 6.69311C2.56729 6.09494 2.2682 5.79585 2.23926 5.42807C2.23515 5.37584 2.23515 5.32338 2.23926 5.27115C2.2682 4.90337 2.56729 4.60428 3.16546 4.00611L4.19365 2.97792C4.40791 2.76366 4.51504 2.65653 4.64607 2.58656C4.66534 2.57627 4.68495 2.56661 4.70485 2.55761C4.84019 2.49637 4.99041 2.47673 5.29086 2.43745L6.06598 2.33612ZM5.28706 3.58184C4.97464 3.89426 4.97464 4.40052 5.28706 4.71294C5.59948 5.02534 6.10574 5.02535 6.41815 4.71294C6.73043 4.40051 6.73051 3.89422 6.41815 3.58184C6.10578 3.26947 5.59949 3.26956 5.28706 3.58184Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1191_5311" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1191_5311"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/起始帧_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1191_5332)">
+<path d="M3.77522 2.70081C3.57726 2.72261 3.34666 2.96186 2.88557 3.44104L2.08284 4.27502C1.7715 4.59857 1.61566 4.76083 1.60042 4.95764C1.59828 4.98551 1.5983 5.01375 1.60042 5.04163C1.61554 5.23855 1.77139 5.40057 2.08284 5.72424L2.88557 6.5592C3.34658 7.03829 3.57728 7.27763 3.77522 7.29944C3.95848 7.3196 4.13956 7.24669 4.25764 7.1051C4.31879 7.03175 4.35073 6.91712 4.3674 6.74436C4.39367 6.47225 4.4068 6.33619 4.48158 6.2992C4.49213 6.29398 4.50188 6.29046 4.51334 6.28773C4.59449 6.2684 4.68696 6.36013 4.8719 6.54358C5.334 7.00094 5.56517 7.22997 5.76057 7.25842C5.9795 7.29024 6.19852 7.19812 6.32991 7.02014C6.44692 6.86114 6.4471 6.53608 6.4471 5.88635V4.08264C6.4471 3.43289 6.44697 3.10782 6.32991 2.94885C6.19852 2.77087 5.9795 2.67974 5.76057 2.71155C5.5652 2.74008 5.33387 2.96819 4.8719 3.42542C4.68839 3.60746 4.59663 3.69848 4.516 3.67987C4.50453 3.67722 4.49496 3.67385 4.48437 3.66872C4.40989 3.63265 4.39467 3.49683 4.36422 3.22519C4.34676 3.06942 4.31509 2.96408 4.25764 2.89514C4.13955 2.75349 3.95854 2.68063 3.77522 2.70081ZM7.80159 2.77209C7.47029 2.77218 7.20198 3.04039 7.20198 3.3717V6.5719C7.20228 6.90296 7.47048 7.17142 7.80159 7.17151C8.13277 7.17151 8.4009 6.90301 8.4012 6.5719V3.3717C8.4012 3.04033 8.13296 2.77209 7.80159 2.77209Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1191_5332" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1191_5332"/>
+</filter>
+</defs>
+</svg>
+
+--- src/presentation/assets/icons/通知_svg.svg ---
+<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_i_1079_204)">
+<path d="M5.034 2.1499C5.29603 2.14998 5.52058 2.30218 5.6289 2.52238C5.6596 2.58478 5.7115 2.63653 5.77734 2.65894C6.99569 3.07376 6.42545 4.5893 7.38654 5.54639C7.45878 5.61831 7.53345 5.69506 7.57404 5.78857C7.85466 6.43569 7.08536 6.83654 6.05827 6.99529C5.9643 7.00982 5.89357 7.08707 5.86952 7.17906C5.76859 7.56512 5.41858 7.84991 5.00079 7.8501C4.58279 7.8501 4.23137 7.56526 4.13015 7.17903C4.10605 7.08707 4.03534 7.00981 3.94139 6.99527C2.91486 6.83638 2.14612 6.43543 2.42657 5.78857C2.46716 5.69506 2.54183 5.61831 2.61407 5.54639C3.57522 4.58934 3.00506 3.07384 4.22327 2.65895C4.2891 2.63653 4.34101 2.58477 4.37173 2.52238C4.48021 2.30209 4.70543 2.1499 4.96759 2.1499H5.034Z" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_i_1079_204" x="0" y="0" width="10" height="10" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.942 0 0 0 0 0.94 0 0 0 0 1 0 0 0 0.1 0"/>
+<feBlend mode="hard-light" in2="shape" result="effect1_innerShadow_1079_204"/>
+</filter>
+</defs>
+</svg>
 
 --- src/presentation/components/AttributeTooltip.vue ---
 <!--
@@ -31942,12 +32717,18 @@ const confirm = () => {
           'dialog-overlay--placement-right': placement === 'right',
         }"
         role="dialog" aria-modal="true" :aria-label="title" tabindex="-1" @click.self="onOverlayClick">
-        <div class="dialog-container" :style="{ width: width, height: height }">
+        <div class="dialog-container" ref="containerRef" :style="{ width: width, height: height }">
           <div class="dialog-header">
               <span class="dialog-title">{{ title }}</span>
               <div class="dialog-header-actions flex items-center gap-2">
               <slot name="header-actions"></slot>
-              <button class="dialog-close" aria-label="关闭弹窗" @click="close">×</button>
+              <button type="button" class="dialog-header-btn dialog-header-btn--drag" aria-label="拖动弹窗" title="拖动弹窗"
+                @mousedown.prevent="startDrag">
+                <span class="dialog-header-btn__icon" aria-hidden="true" v-html="dragIcon"></span>
+              </button>
+              <button type="button" class="dialog-header-btn dialog-header-btn--close" aria-label="关闭弹窗" @click="close">
+                <span class="dialog-header-btn__icon" aria-hidden="true" v-html="closeIcon"></span>
+              </button>
             </div>
           </div>
           <div class="dialog-content" :class="contentClass">
@@ -31968,6 +32749,11 @@ const openDialogKeys: symbol[] = [];
 </script>
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import dragIconRaw from "@/presentation/assets/icons/drag.svg?raw";
+import closeIconRaw from "@/presentation/assets/icons/Close.svg?raw";
+// drag.svg 自带 XML 声明与 DOCTYPE，仅保留 <svg> 部分，避免 v-html 插入非法文档头
+const dragIcon = dragIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
+const closeIcon = closeIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
 interface Props {
   modelValue: boolean;
   title: string;
@@ -31997,6 +32783,38 @@ const emit = defineEmits<{
 const close = () => {
   emit("update:modelValue", false);
   emit("close");
+};
+/* ═══ 拖拽：按住标题栏拖拽按钮移动弹窗 ═══
+   用 transform: translate 平移容器——overlay 仍负责居中定位，拖拽只是相对位移，
+   不影响打开/关闭过渡动画（过渡作用于 overlay 整体）。 */
+const containerRef = ref<HTMLElement | null>(null);
+let dragStartX = 0;
+let dragStartY = 0;
+let offsetX = 0;
+let offsetY = 0;
+let dragging = false;
+const startDrag = (e: MouseEvent) => {
+  // 仅左键拖拽；右键/中键不拦截
+  if (e.button !== 0) return;
+  dragging = true;
+  dragStartX = e.clientX - offsetX;
+  dragStartY = e.clientY - offsetY;
+  window.addEventListener("mousemove", onDragMove);
+  window.addEventListener("mouseup", onDragEnd);
+};
+const onDragMove = (e: MouseEvent) => {
+  if (!dragging) return;
+  offsetX = e.clientX - dragStartX;
+  offsetY = e.clientY - dragStartY;
+  const el = containerRef.value;
+  if (el) {
+    el.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  }
+};
+const onDragEnd = () => {
+  dragging = false;
+  window.removeEventListener("mousemove", onDragMove);
+  window.removeEventListener("mouseup", onDragEnd);
 };
 /* ═══ 无障碍：ESC 关闭 + Tab 焦点陷阱 + 打开聚焦/关闭还原 ═══
    嵌套弹窗（如确认弹窗叠在对话框上）：只有栈顶实例响应 ESC/Tab */
@@ -32077,6 +32895,8 @@ watch(
 onBeforeUnmount(() => {
   // 卸载兜底：若弹窗仍开着（父级 v-if 移除），清理监听与滚动锁
   window.removeEventListener("keydown", handleKeydown);
+  window.removeEventListener("mousemove", onDragMove);
+  window.removeEventListener("mouseup", onDragEnd);
   const idx = openDialogKeys.indexOf(instanceKey);
   if (idx !== -1) {
     openDialogKeys.splice(idx, 1);
@@ -33022,7 +33842,7 @@ const formatEffectValue = (value: number): string => {
   <span v-else-if="seg.kind === 'hp-before'" class="hp-before">{{ seg.text }}</span>
   <span v-else-if="seg.kind === 'hp-after'" class="hp-after">{{ seg.text }}</span>
   <span v-else-if="seg.kind && ['buff', 'skill', 'passive'].includes(seg.kind)" class="chip"
-    :class="['chip--' + seg.kind, { hoverable: !!seg.hover }]"
+    :class="[seg.kind === 'skill' && seg.classStr === 'log-ultimate' ? 'chip--ultimate' : 'chip--' + seg.kind, { hoverable: !!seg.hover }]"
     @mouseenter="seg.hover ? $emit('hover', $event, seg.hover) : undefined" @mouseleave="$emit('leave')">{{ seg.text
     }}</span>
   <span v-else :class="seg.classStr">{{ seg.text }}</span>
@@ -39146,6 +39966,7 @@ async function onBranchFile(e: Event): Promise<void> {
         <template v-if="store.summaryCut === 'playback'">至 {{ formatTime(store.playback.t) }}</template>
         <template v-else>时长 {{ formatTime(summary?.durationMs ?? 0) }}</template>
         <template v-if="winnerText"> · 胜方 <b class="ht-st-ok">{{ winnerText }}</b></template>
+        <template v-if="summary"> · 剩余血量 {{ summary.survivorHpPct }}%（存活 {{ summary.survivorCount }}）</template>
       </span>
       <span class="ht-sum-spacer"></span>
       <Button size="tiny" :active="store.summaryCut === 'playback'"
@@ -39156,11 +39977,36 @@ async function onBranchFile(e: Event): Promise<void> {
       <Button title="导出战斗摘要为 CSV（带 BOM，Excel 直接打开）" @click="store.exportSummaryCsv()">CSV</Button>
     </div>
     <div class="ht-sum-body">
+      <table v-if="teams.length" class="ht-sum-table ht-team-table">
+        <thead>
+          <tr>
+            <th class="l">阵营</th>
+            <th>输出</th>
+            <th>承伤</th>
+            <th>治疗</th>
+            <th>击杀</th>
+            <th>存活</th>
+            <th>剩余血量</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="t in teams" :key="t.side">
+            <td class="l nm">{{ teamLabel(t.side) }}</td>
+            <td class="num">{{ t.dealt }}</td>
+            <td class="num">{{ t.taken }}</td>
+            <td class="num heal">{{ t.healed }}</td>
+            <td class="num">{{ t.kills }}</td>
+            <td class="num">{{ t.survivors }}/{{ t.total }}</td>
+            <td class="num">{{ t.hpEnd }}/{{ t.hpMax }}</td>
+          </tr>
+        </tbody>
+      </table>
       <table v-if="rows.length" class="ht-sum-table">
         <thead>
           <tr>
             <th class="l">参战单位</th>
             <th>攻击</th>
+            <th>命中</th>
             <th>输出</th>
             <th>承伤</th>
             <th>治疗</th>
@@ -39169,12 +40015,14 @@ async function onBranchFile(e: Event): Promise<void> {
             <th>抵抗</th>
             <th>Buff 施加</th>
             <th>击杀</th>
+            <th>状态</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="r in rows" :key="r.id">
             <td class="l nm">{{ store.pnameSide(r.id) }}</td>
             <td>{{ r.s.attacks }}</td>
+            <td>{{ r.s.hits }}</td>
             <td class="num">{{ r.s.dealt }}</td>
             <td class="num">{{ r.s.taken }}</td>
             <td class="num heal">{{ r.s.healed }}</td>
@@ -39183,10 +40031,11 @@ async function onBranchFile(e: Event): Promise<void> {
             <td class="num">{{ r.s.resists }}</td>
             <td class="num">{{ r.s.buffsApplied }}</td>
             <td class="num">{{ r.s.kills }}</td>
+            <td class="num" :class="r.s.alive ? 'ht-st-ok' : 'ht-st-bad'">{{ r.s.alive ? `存活 ${r.s.hpEnd}` : '阵亡' }}</td>
           </tr>
         </tbody>
       </table>
-      <div v-else class="ht-empty">存档未加载</div>
+      <div v-else-if="!teams.length" class="ht-empty">存档未加载</div>
       <div v-if="dotHint" class="ht-sum-note">{{ dotHint }}</div>
     </div>
     <template #footer>
@@ -39219,6 +40068,9 @@ const winnerText = computed(() => {
   if (!sum?.winner) return ''
   return store.pnameSide(sum.winner)
 })
+/** L2 阵营对比行 */
+const teams = computed(() => summary.value?.teams ?? [])
+const teamLabel = (side: string): string => (side === 'ally' ? '友方' : side === 'enemy' ? '敌方' : side)
 /** dot 伤害无 sourceId，提示承伤与输出无需对账 */
 const dotHint = computed(() => {
   const sum = summary.value
@@ -41623,6 +42475,9 @@ export const useHaotianStore = defineStore('haotian', () => {
 .ht-st-ok {
   color: var(--ht-green);
 }
+.ht-st-bad {
+  color: var(--ht-red);
+}
 .ht-st-dot {
   display: inline-block;
   width: 8px;
@@ -42353,7 +43208,8 @@ import { computed, ref, watch } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { PHASE_META, type TracePhase } from '@/domain/battle/replay/unified/unified-archive'
+import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
+import type { TracePhase } from '@/shared/types/trace-event'
 import BreakpointDialog from '../components/BreakpointDialog.vue'
 import Button from '@/presentation/components/Button.vue'
 import DiffDialog from '../components/DiffDialog.vue'
@@ -43625,74 +44481,150 @@ const updateCustomSpeed = () => {
 --- src/presentation/modules/huanling/components/BattleSummaryDialog.vue ---
 <!--
  * 文件: BattleSummaryDialog.vue
- * 功能: 战斗战报弹窗
- * 描述: 战斗结束后展示多维度统计数据，支持复制摘要和导出 JSON。
- *       纯中文排版，无图标/Emoji，信息密度优先。
+ * 功能: 战斗战报弹窗（七层模型）
+ * 描述: 战斗结束后展示统一战报（unified-summary.ts 从事件流派生）：
+ *       L1 结果+胜负边际 / L2 阵营对比 / L3 单位贡献排名 / L4 判定健康度 /
+ *       L5 技能使用 / L6 被动触发 / L7 关键事件。
+ *       纯中文排版，无图标/Emoji，信息密度优先。支持复制摘要与导出 JSON。
 -->
 <template>
-  <Dialog :model-value="modelValue" @update:model-value="emitModelValue" title="战斗战报" width="650px">
+  <Dialog :model-value="modelValue" @update:model-value="emitModelValue" title="战斗战报" width="760px">
     <div v-if="summary" class="summary-container">
-      <!-- 头部 -->
+      <!-- L1 头部：结果 + 胜负边际 -->
       <div class="summary-header">
-        <span class="winner-badge" :class="summary.winner === '友方' ? 'win' : 'lose'">
-          {{ summary.winner === '友方' ? '胜利' : '败北' }}
+        <span class="winner-badge" :class="verdict === 'win' ? 'win' : verdict === 'lose' ? 'lose' : 'unknown'">
+          {{ verdict === 'win' ? '胜利' : verdict === 'lose' ? '败北' : '未分胜负' }}
         </span>
         <span class="summary-meta">
-          {{ summary.totalRounds }} 回合 · {{ formatDuration(summary.duration) }}
+          {{ summary.rounds }} 回合 · {{ formatDuration(summary.durationMs) }} ·
+          剩余血量 {{ summary.survivorHpPct }}%（存活 {{ summary.survivorCount }}）
         </span>
       </div>
-      <!-- 数据总览 -->
-      <div class="summary-stats">
-        <div class="stat-card">
-          <div class="stat-value damage">{{ summary.totalDamageDealt }}</div>
-          <div class="stat-label">总伤害</div>
+      <!-- L2 阵营对比 -->
+      <div v-if="teams.length" class="section">
+        <div class="section-title">阵营对比</div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">阵营</th>
+              <th>输出</th>
+              <th>承伤</th>
+              <th>治疗</th>
+              <th>击杀</th>
+              <th>存活</th>
+              <th>剩余血量</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="t in teams" :key="t.side" :class="{ 'row-win': t.side === winnerSide }">
+              <td class="l">{{ teamLabel(t.side) }}</td>
+              <td class="num dmg">{{ t.dealt }}</td>
+              <td class="num">{{ t.taken }}</td>
+              <td class="num heal">{{ t.healed }}</td>
+              <td class="num">{{ t.kills }}</td>
+              <td class="num">{{ t.survivors }}/{{ t.total }}</td>
+              <td class="num">{{ t.hpEnd }}/{{ t.hpMax }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- L3 单位贡献排名（输出降序 + MVP） -->
+      <div v-if="rankedUnits.length" class="section">
+        <div class="section-title">单位贡献 <span v-if="mvp" class="mvp-tag">MVP: {{ nameText(mvp.id) }}</span></div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">单位</th>
+              <th>输出</th>
+              <th>承伤</th>
+              <th>治疗</th>
+              <th>攻击</th>
+              <th>暴击</th>
+              <th>击杀</th>
+              <th>每击</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="u in rankedUnits" :key="u.id" :class="{ 'row-mvp': mvp && mvp.id === u.id }">
+              <td class="l nm">{{ nameText(u.id) }}</td>
+              <td class="num dmg">{{ u.dealt }}</td>
+              <td class="num">{{ u.taken }}</td>
+              <td class="num heal">{{ u.healed }}</td>
+              <td class="num">{{ u.attacks }}</td>
+              <td class="num">{{ u.crits }}</td>
+              <td class="num">{{ u.kills }}</td>
+              <td class="num">{{ u.hits > 0 ? Math.round(u.dealt / u.hits) : '-' }}</td>
+              <td class="num" :class="u.alive ? 'ok' : 'dead'">{{ u.alive ? `存活 ${u.hpEnd}` : '阵亡' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- L4 判定健康度 -->
+      <div class="section">
+        <div class="section-title">判定健康度</div>
+        <div class="judge-row">
+          <span class="judge-item">攻击 {{ summary.judgment.attacks }}</span>
+          <span class="judge-item">命中 {{ summary.judgment.hits }}</span>
+          <span class="judge-item">暴击 {{ summary.judgment.crits }}（{{ summary.judgment.critRate }}%）</span>
+          <span class="judge-item">闪避 {{ summary.judgment.dodges }}</span>
+          <span class="judge-item">抵抗 {{ summary.judgment.resists }}</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-value heal">{{ summary.totalHealing }}</div>
-          <div class="stat-label">总治疗</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" :class="summary.totalDamageTaken > 0 ? 'damage' : ''">
-            {{ summary.totalDamageTaken }}
+      </div>
+      <!-- L5 技能使用 -->
+      <div v-if="summary.skills.length" class="section">
+        <div class="section-title">技能使用</div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">技能</th>
+              <th>次数</th>
+              <th>输出</th>
+              <th>占比</th>
+              <th>治疗</th>
+              <th>暴击</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(s, i) in summary.skills" :key="i">
+              <td class="l nm">{{ s.skillName }}</td>
+              <td class="num">{{ s.uses }}</td>
+              <td class="num dmg">{{ s.damage }}</td>
+              <td class="num">{{ s.pct }}%</td>
+              <td class="num heal">{{ s.heal }}</td>
+              <td class="num">{{ s.crits }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- L6 被动触发 -->
+      <div v-if="summary.passives.length" class="section">
+        <div class="section-title">被动触发</div>
+        <table class="sum-table">
+          <thead>
+            <tr>
+              <th class="l">被动</th>
+              <th class="l">拥有者</th>
+              <th>触发次数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(p, i) in summary.passives" :key="i">
+              <td class="l nm">{{ p.name }}</td>
+              <td class="l">{{ p.owner }}</td>
+              <td class="num">{{ p.triggered }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- L7 关键事件 -->
+      <div v-if="summary.keyEvents.length" class="section">
+        <div class="section-title">关键事件</div>
+        <div class="key-events">
+          <div v-for="(ev, i) in summary.keyEvents" :key="i" class="ke-line">
+            <span class="ke-turn">T{{ ev.turn }}</span>
+            <span :class="`ke-${ev.kind}`">{{ ev.text }}</span>
           </div>
-          <div class="stat-label">受击伤害</div>
-        </div>
-      </div>
-      <!-- 最高单次 -->
-      <div v-if="summary.highestSingleDamage || summary.highestSingleHeal" class="summary-records">
-        <div v-if="summary.highestSingleDamage" class="record-line">
-          最高伤害: <strong>{{ summary.highestSingleDamage.actor }}</strong> —
-          {{ summary.highestSingleDamage.value }} 点{{ summary.highestSingleDamage.crit ? '（暴击）' : '' }}
-        </div>
-        <div v-if="summary.highestSingleHeal" class="record-line">
-          最高治疗: <strong>{{ summary.highestSingleHeal.actor }}</strong> —
-          {{ summary.highestSingleHeal.value }} 点
-        </div>
-      </div>
-      <!-- 参与者列表 -->
-      <div v-if="summary.participants.length > 0" class="summary-participants">
-        <div class="section-title">参与者状态</div>
-        <div class="participant-row" v-for="p in summary.participants" :key="p.id">
-          <span class="p-name">{{ p.name }}</span>
-          <span class="p-hp">{{ p.hpEnd }}/{{ p.hpMax }}</span>
-          <span class="p-stat damage" title="造成伤害">{{ p.totalDamageDealt }}</span>
-          <span class="p-stat" title="承受伤害">{{ p.totalDamageTaken }}</span>
-          <span class="p-stat heal" title="获得治疗">{{ p.totalHealingReceived }}</span>
-        </div>
-      </div>
-      <!-- 动作时间线摘要 -->
-      <div v-if="summary.actionTimeline.length > 0" class="summary-timeline">
-        <div class="section-title">动作时间线</div>
-        <div class="timeline-entry" v-for="(a, i) in trimmedTimeline" :key="i">
-          <span class="tl-turn">T{{ a.turn }}</span>
-          <span class="tl-actor">{{ a.actor }}</span>
-          <span class="tl-action">{{ a.action }}</span>
-          <span class="tl-target" v-if="a.target">→ {{ a.target }}</span>
-          <span class="tl-value damage" v-if="a.damage"> {{ a.damage }}{{ a.crit ? ' 暴击' : '' }}</span>
-          <span class="tl-value heal" v-if="a.heal"> +{{ a.heal }}</span>
-        </div>
-        <div v-if="summary.actionTimeline.length > 10" class="timeline-more">
-          ... 共 {{ summary.actionTimeline.length }} 条动作
         </div>
       </div>
     </div>
@@ -43712,7 +44644,7 @@ const updateCustomSpeed = () => {
 import { computed } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
-import type { BattleSummary } from '@/shared/types/battle-summary'
+import type { BattleSummary, UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 interface Props {
   modelValue: boolean
   summary: BattleSummary | null
@@ -43726,33 +44658,68 @@ const emit = defineEmits<{
 }>()
 const emitModelValue = (v: boolean) => emit('update:modelValue', v)
 const closeDialog = () => emit('update:modelValue', false)
-// 格式化耗时
+const teamLabel = (side: string): string => (side === 'ally' ? '友方' : side === 'enemy' ? '敌方' : side)
+/** 阵营前缀名：与日志口径一致 [友方]/[敌方] */
+const nameText = (id: string): string => {
+  const u = props.summary?.units[id]
+  if (!u) return id
+  return `${teamLabel(u.side)}·${u.name}`
+}
+const verdict = computed<'win' | 'lose' | 'unknown'>(() => {
+  const s = props.summary
+  if (!s?.winner) return 'unknown'
+  if (s.winner === 'ally') return 'win'
+  if (s.winner === 'enemy') return 'lose'
+  const side = s.units[s.winner]?.side
+  if (side === 'ally') return 'win'
+  if (side === 'enemy') return 'lose'
+  return 'unknown'
+})
+const winnerSide = computed(() => {
+  const s = props.summary
+  if (!s?.winner) return ''
+  if (s.winner === 'ally' || s.winner === 'enemy') return s.winner
+  return s.units[s.winner]?.side ?? ''
+})
+const teams = computed(() => props.summary?.teams ?? [])
+/** 单位按输出降序 */
+const rankedUnits = computed(() => {
+  if (!props.summary) return []
+  return Object.values(props.summary.units).sort((a, b) => b.dealt - a.dealt || b.healed - a.healed)
+})
+const mvp = computed<UnitSummary | null>(() => {
+  if (!props.summary) return null
+  const best = Object.values(props.summary.units).reduce<UnitSummary | null>(
+    (acc, u) => (u.dealt > (acc?.dealt ?? -1) && u.dealt > 0 ? u : acc),
+    null,
+  )
+  return best
+})
 const formatDuration = (ms: number): string => {
   if (ms < 1000) return `${ms}ms`
   return `${(ms / 1000).toFixed(1)}s`
 }
-// 时间线仅显示前 10 条
-const trimmedTimeline = computed(() => {
-  return props.summary?.actionTimeline.slice(0, 10) ?? []
-})
 // 复制纯文本摘要
 const copySummary = () => {
   const s = props.summary
   if (!s) return
   const lines = [
-    `战斗战报 — ${s.winner === '友方' ? '胜利' : '败北'}`,
-    `${s.totalRounds} 回合 · ${formatDuration(s.duration)}`,
-    `─── 数据统计 ───`,
-    `总伤害: ${s.totalDamageDealt}  |  总治疗: ${s.totalHealing}  |  受击: ${s.totalDamageTaken}`,
+    `战斗战报 — ${verdict.value === 'win' ? '胜利' : verdict.value === 'lose' ? '败北' : '未分胜负'}`,
+    `${s.rounds} 回合 · ${formatDuration(s.durationMs)} · 胜方剩余血量 ${s.survivorHpPct}%`,
+    `─── 阵营对比 ───`,
   ]
-  if (s.highestSingleDamage) {
-    lines.push(`最高伤害: ${s.highestSingleDamage.actor} — ${s.highestSingleDamage.value} 点${s.highestSingleDamage.crit ? '（暴击）' : ''}`)
+  for (const t of s.teams) {
+    lines.push(`${teamLabel(t.side)}: 输出 ${t.dealt} | 承伤 ${t.taken} | 治疗 ${t.healed} | 击杀 ${t.kills} | 存活 ${t.survivors}/${t.total}`)
   }
-  if (s.highestSingleHeal) {
-    lines.push(`最高治疗: ${s.highestSingleHeal.actor} — ${s.highestSingleHeal.value} 点`)
+  lines.push(`─── 判定 ───`)
+  lines.push(`攻击 ${s.judgment.attacks} | 命中 ${s.judgment.hits} | 暴击 ${s.judgment.crits}(${s.judgment.critRate}%) | 闪避 ${s.judgment.dodges} | 抵抗 ${s.judgment.resists}`)
+  if (mvp.value) lines.push(`MVP: ${nameText(mvp.value.id)} — 输出 ${mvp.value.dealt}`)
+  if (s.keyEvents.length) {
+    lines.push(`─── 关键事件 ───`)
+    for (const ev of s.keyEvents) lines.push(`T${ev.turn} ${ev.text}`)
   }
   navigator.clipboard.writeText(lines.join('\n')).catch(() => {
-    // ponytail: 静默失败，剪贴板不可用时不做处理
+    // HACK: 剪贴板不可用时静默失败（旧实现同口径）
   })
 }
 // 导出 JSON
@@ -43772,7 +44739,7 @@ const exportJson = () => {
 <style scoped>
 .summary-container {
   padding: var(--space-2);
-  max-height: 60vh;
+  max-height: 62vh;
   overflow-y: auto;
 }
 .summary-header {
@@ -43792,75 +44759,73 @@ const exportJson = () => {
 .summary-meta {
   color: var(--color-text-secondary);
 }
-.summary-stats {
-  display: flex;
-  gap: var(--space-3);
+.section {
   margin-bottom: var(--space-3);
-}
-.stat-card {
-  flex: 1;
-  text-align: center;
-  padding: var(--space-2);
-  background: var(--color-bg-tertiary);
-  border-radius: 6px;
-  border: 1px solid var(--color-border-default);
-}
-.stat-value {
-  font-size: 1.5em;
-  font-weight: bold;
-}
-.stat-value.damage { color: var(--color-damage, #f44336); }
-.stat-value.heal { color: var(--color-heal, #4caf50); }
-.stat-label {
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-.summary-records {
-  margin-bottom: var(--space-3);
-  padding: var(--space-2);
-  background: var(--color-bg-tertiary);
-  border-radius: 6px;
-}
-.record-line {
-  margin: 4px 0;
 }
 .section-title {
   font-weight: bold;
   margin-bottom: var(--space-1);
   color: var(--color-text-secondary);
 }
-.summary-participants {
-  margin-bottom: var(--space-3);
+.mvp-tag {
+  color: var(--color-heal, #4caf50);
+  font-weight: bold;
+  margin-left: var(--space-2);
 }
-.participant-row {
-  display: flex;
-  gap: var(--space-2);
-  padding: 4px 0;
+.sum-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-md);
+}
+.sum-table th {
+  text-align: right;
+  padding: 4px 6px;
+  color: var(--color-text-tertiary);
+  font-weight: normal;
   border-bottom: 1px solid var(--color-border-hairline);
 }
-.p-name { flex: 0 0 80px; font-weight: bold; }
-.p-hp { flex: 0 0 70px; }
-.p-stat { flex: 0 0 60px; text-align: right; }
-.p-stat.damage { color: var(--color-damage, #f44336); }
-.p-stat.heal { color: var(--color-heal, #4caf50); }
-.summary-timeline {
-  margin-bottom: var(--space-2);
+.sum-table th.l,
+.sum-table td.l {
+  text-align: left;
 }
-.timeline-entry {
+.sum-table td {
+  text-align: right;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+.sum-table td.nm {
+  font-weight: bold;
+}
+.row-win td { background: rgba(76, 175, 80, 0.06); }
+.row-mvp td { background: rgba(76, 175, 80, 0.1); }
+.num.dmg { color: var(--color-damage, #f44336); }
+.num.heal { color: var(--color-heal, #4caf50); }
+.num.ok { color: var(--color-heal, #4caf50); }
+.num.dead { color: var(--color-damage, #f44336); }
+.judge-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.judge-item {
+  color: var(--color-text-secondary);
+}
+.key-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ke-line {
   display: flex;
   gap: var(--space-2);
   padding: 2px 0;
 }
-.tl-turn { flex: 0 0 30px; color: var(--color-text-tertiary); }
-.tl-actor { flex: 0 0 60px; font-weight: bold; }
-.tl-action { flex: 0 0 50px; color: var(--color-text-secondary); }
-.tl-target { flex: 1; color: var(--color-text-secondary); }
-.tl-value.damage { color: var(--color-damage, #f44336); }
-.tl-value.heal { color: var(--color-heal, #4caf50); }
-.timeline-more {
+.ke-turn {
+  flex: 0 0 40px;
   color: var(--color-text-tertiary);
-  font-style: italic;
 }
+.ke-kill, .ke-first_blood { color: var(--color-damage, #f44336); }
+.ke-highest_hit { color: var(--color-heal, #4caf50); }
 .summary-empty {
   padding: var(--space-4);
   text-align: center;
@@ -44533,13 +45498,23 @@ watch(() => props.modelValue, (visible) => {
           <span class="log-gen-label">场次:</span>
           <NumericStepper v-model="genCount" :min="1" :max="50" :steps="[1, 10, 50]" />
         </div>
-        <Button variant="energy"
-          :disabled="battleStore.generationProgress.isGenerating"
-          @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount)">
-          {{ battleStore.generationProgress.isGenerating
-            ? `生成中 ${battleStore.generationProgress.percent}%`
-            : `生成数据（${genCount}场）` }}
-        </Button>
+        <div class="log-gen-buttons">
+          <Button variant="energy"
+            :disabled="battleStore.generationProgress.isGenerating"
+            @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount)">
+            {{ battleStore.generationProgress.isGenerating
+              ? `生成中 ${battleStore.generationProgress.percent}%`
+              : `生成数据（${genCount}场）` }}
+          </Button>
+          <Button variant="secondary"
+            :disabled="battleStore.generationProgress.isGenerating"
+            @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', 'record', genCount, false, true)"
+            title="生成录制数据并存入昊天镜「战斗记录」，不下载文件">
+            {{ battleStore.generationProgress.isGenerating
+              ? `生成中 ${battleStore.generationProgress.percent}%`
+              : '存入昊天镜' }}
+          </Button>
+        </div>
       </div>
     </div>
   </Dialog>
@@ -44748,6 +45723,12 @@ const handleButtonClick = (action: string) => {
   display: flex;
   gap: var(--space-1);
   flex-wrap: wrap;
+}
+/* 生成按钮行：生成记录 + 存入昊天镜 并排 */
+.log-gen-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
 }
 </style>
 
@@ -46424,7 +47405,7 @@ import { useBattleStore } from '@/presentation/stores/battleStore';
 import BattleLog from "./BattleLog.vue";
 import BattleSummaryDialog from "../components/BattleSummaryDialog.vue";
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing';
-import type { BattleSummary } from '@/shared/types/battle-summary';
+import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary';
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper';
 import { computed, onUnmounted, ref, watch } from "vue";
 const store = useBattleStore()
@@ -48418,6 +49399,8 @@ import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
+import { summarizeBattle, type BattleSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import type { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
@@ -48611,6 +49594,17 @@ export const useBattleStore = defineStore('battle', () => {
   }
   // 所有事件订阅在 events Map 创建后统一注册（见下方  3. 事件订阅管理器）
   //  4. 事件处理器（仅负责同步业务数据到响应式状态）
+  /** 从当前战斗录制生成统一战报（与昊天镜摘要共用 fromRecordedBattle + summarizeBattle 统计源） */
+  const buildBattleSummary = (): BattleSummary | null => {
+    if (!battleService.value || !currentBattleId.value) return null
+    const bs = battleService.value.getBattleManager().getBattleSystem()
+    const rec = bs.getBattleRecording(currentBattleId.value)
+    if (!rec) return null
+    const archive = fromRecordedBattle(rec)
+    const summary = archive ? summarizeBattle(archive) : null
+    if (summary) BattleSummaryGenerator.instance.setSummary(summary)
+    return summary
+  }
   /** 处理战斗结束事件（重置战斗状态，记录胜负结果） */
   const handleBattleEndEvent = (data: BattleEndedEventData) => {
     isBattleActive.value = false
@@ -48632,9 +49626,9 @@ export const useBattleStore = defineStore('battle', () => {
         category: BATTLE_LOG_CATEGORIES.STATUS,
         meta: { role: 'battle' },
       })
-      // NOTE: 生成战报并发射事件（原 BattleEventManager 死代码逻辑迁移至此 —
-      //       BattleEventManager.startListening 无调用方，BATTLE_ENDED 唯一活跃订阅者是本 handler）
-      const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
+      // NOTE: 战报统一从录制事件流派生（fromRecordedBattle + summarizeBattle），
+      //       与昊天镜摘要共用同一统计源，不维护第二套累加口径。
+      const summary = buildBattleSummary()
       if (summary) {
         container
           .resolve<UIEventBus>('UIEventBus')
@@ -49124,6 +50118,7 @@ export const useBattleStore = defineStore('battle', () => {
     format: 'txt' | 'html' | 'record' = 'txt',
     count: number = 50,
     record: boolean = false,
+    store: boolean = false,
   ) => {
     if (!battleService.value) return
     if (generationProgress.isGenerating) return
@@ -49143,18 +50138,23 @@ export const useBattleStore = defineStore('battle', () => {
       const safeCount = Number.isFinite(count) && Math.floor(count) >= 1
         ? Math.min(Math.floor(count), 50)
         : 50
+      // NOTE: store=true（存入昊天镜）时只入库不下载；format 强制 'record' 以走录制保存管线
+      const effFormat = store ? 'record' : format
       await generator.generate({
         totalBattles: safeCount,
         mode,
-        format,
-        record,
+        format: effFormat,
+        record: store || record,
+        download: store ? false : undefined,
         onProgress: (_progress: number, current: number, total: number) => {
           generationProgress.current = current
           generationProgress.total = total
           generationProgress.percent = Math.round((current / total) * 100)
         },
       })
-      battleLogManager.addSystemLog({ message: `战斗数据生成完成（${mode}×${count}场），文件已下载` })
+      battleLogManager.addSystemLog({ message: store
+        ? `战斗数据生成完成（${mode}×${count}场），已存入昊天镜`
+        : `战斗数据生成完成（${mode}×${count}场），文件已下载` })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setError(msg)
@@ -50146,10 +51146,15 @@ html {
   color: var(--color-debuff);
   font-weight: var(--font-weight-bold);
 }
-/* 技能名 — 金色 */
+/* 技能名 — 金色（小技能） */
 .log-skill {
   color: var(--color-warning);
   font-weight: var(--font-weight-medium);
+}
+/* 大技能名 — 亮金（ultimate，与小技能区分） */
+.log-ultimate {
+  color: #ffd700;
+  font-weight: var(--font-weight-bold);
 }
 /* 被动技能名 — 蓝色 */
 .log-passive {
@@ -50190,6 +51195,9 @@ html {
 }
 .chip--skill {
   color: var(--color-warning);
+}
+.chip--ultimate {
+  color: #ffd700;
 }
 .chip--buff {
   color: var(--color-energy);
@@ -50719,8 +51727,8 @@ html {
 }
 .monitor-subtitle {
   color: var(--color-info);
-  margin-bottom: var(--space-1);
-  padding-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
   border-bottom: 1px dashed var(--color-border-default);
 }
 .monitor-grid {
@@ -50785,18 +51793,44 @@ html {
   color: var(--color-info);
   text-shadow: 0 0 5px rgba(var(--rgb-info), var(--alpha-glow));
 }
-.dialog-close {
+/* ----- 头部图标按钮（关闭 / 拖拽 共用） ----- */
+.dialog-header-btn {
   background: none;
   border: none;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xl);
   cursor: pointer;
   padding: 0;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
   transition: color var(--transition-fast);
 }
-.dialog-close:hover {
+.dialog-header-btn:hover {
+  color: var(--color-info);
+}
+.dialog-header-btn--close:hover {
   color: var(--color-brand-red);
+}
+.dialog-header-btn--drag {
+  cursor: grab;
+}
+.dialog-header-btn--drag:active {
+  cursor: grabbing;
+}
+.dialog-header-btn__icon {
+  display: inline-flex;
+  width: calc(var(--font-size-md) * 1.5);
+  height: calc(var(--font-size-md) * 1.5);
+}
+.dialog-header-btn__icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+/* 拖拽过程中禁用过渡动画，避免 transform 被 transition 拖慢产生滞后感 */
+.dialog-container.is-dragging {
+  transition: transform 0s !important;
+  user-select: none;
 }
 .dialog-content {
   border-bottom-left-radius: var(--radius-lg);
@@ -52291,6 +53325,8 @@ export interface BattleLogMeta {
   hpBefore?: number
   hpAfter?: number
   damage?: number
+  /** 减免前原始伤害（action header「造成 X 点伤害」口径） */
+  rawDamage?: number
   heal?: number
   crit?: boolean
   kill?: boolean
@@ -52303,6 +53339,13 @@ export interface BattleLogMeta {
   /** 能量变化快照（能量类日志） */
   energyBefore?: number
   energyAfter?: number
+  /** 回合开始能量（合并日志）：角色级到账明细 */
+  energyChanges?: Array<{
+    entityId: string
+    name?: string
+    energyBefore: number
+    energyAfter: number
+  }>
 }
 export const LogLevelLabel: Record<LogLevel, string> = {
   [LogLevel.ERROR]: '错误',
@@ -52748,100 +53791,6 @@ export interface DebugLogParams {
   context?: Record<string, unknown>
   /** 错误对象 */
   error?: Error
-}
-
---- src/shared/types/battle-summary.ts ---
-/**
- * 文件: battle-summary.ts
- * 功能: 战斗战报核心类型定义
- * 描述: 定义 BattleSummary 接口，用于战斗结束后生成的多维度统计数据。
- *       对应设计文档第6节"顶层：战报与复盘"。
- * 版本: 1.0.0
- */
-/**
- * 战斗摘要
- * 战斗结束时由 BattleSummaryGenerator 生成
- */
-export interface BattleSummary {
-  battleId: string
-  totalRounds: number
-  winner: string
-  duration: number // 毫秒
-  /** 伤害统计 */
-  totalDamageDealt: number
-  totalDamageTaken: number
-  highestSingleDamage: { actor: string; value: number; crit: boolean } | null
-  totalHealing: number
-  highestSingleHeal: { actor: string; value: number } | null
-  /** 被动/Buff 触发统计 */
-  passiveTriggers: Array<{
-    passiveId: string
-    passiveName: string
-    owner: string
-    triggerCount: number
-  }>
-  /** 参与者最终状态 */
-  participants: Array<{
-    id: string
-    name: string
-    team: string
-    hpEnd: number
-    hpMax: number
-    totalDamageDealt: number
-    totalDamageTaken: number
-    totalHealingReceived: number
-  }>
-  /** 精简动作时间线 */
-  actionTimeline: Array<{
-    turn: number
-    actor: string
-    action: string
-    target: string
-    damage?: number
-    heal?: number
-    crit?: boolean
-  }>
-}
-/** 战报累加器（内部使用，战斗过程中持续更新） */
-export interface BattleSummaryAccumulator {
-  battleId: string
-  startTime: number
-  totalRounds: Set<number>
-  totalDamageDealt: number
-  /** 受击总伤害数值 */
-  totalDamageTaken: number
-  highestDamage: { actor: string; value: number; crit: boolean } | null
-  totalHealing: number
-  highestHeal: { actor: string; value: number } | null
-  perActorDamage: Map<string, number> // actorId → total damage dealt
-  perActorHeal: Map<string, number> // actorId → total healing done
-  perActorTaken: Map<string, number> // actorId → total damage taken
-  timeline: Array<{
-    turn: number
-    actor: string
-    action: string
-    target: string
-    damage?: number
-    heal?: number
-    crit?: boolean
-  }>
-}
-/** 创建初始累加器 */
-export function createAccumulator(battleId: string): BattleSummaryAccumulator {
-  return {
-    battleId,
-    startTime: Date.now(),
-    totalRounds: new Set(),
-    totalDamageDealt: 0,
-    totalDamageTaken: 0,
-    highestDamage: null,
-    totalHealing: 0,
-    highestHeal: null,
-    perActorDamage: new Map(),
-    perActorHeal: new Map(),
-    perActorTaken: new Map(),
-    timeline: [],
-  }
 }
 
 --- src/shared/types/buff-classification.ts ---
@@ -55558,7 +56507,9 @@ export interface BuffConfigLookup {
  * 技能/被动配置查找接口（工厂不依赖具体的 SkillManager）
  */
 export interface SkillConfigLookup {
-  getSkillConfig(skillId: string): { name: string; description?: string } | undefined
+  getSkillConfig(
+    skillId: string,
+  ): { name: string; description?: string; skillType?: string } | undefined
 }
 // ==================== 工厂函数 ====================
 /**
@@ -55575,7 +56526,14 @@ export function skillSegment(
   const config = lookup.getSkillConfig(skillId)
   const name = config?.name ?? skillId
   const hover: LogSegmentHover = { kind: 'skill', id: skillId }
-  return { text: `【${name}】`, classStr: 'log-skill', hover, kind: 'skill' }
+  // NOTE: 大技能（ultimate）金色区分于小技能（log-skill 琥珀）
+  const isUltimate = config?.skillType === 'ultimate'
+  return {
+    text: `【${name}】`,
+    classStr: isUltimate ? 'log-ultimate' : 'log-skill',
+    hover,
+    kind: 'skill',
+  }
 }
 /**
  * 生成被动技能名称的 LogSegment
@@ -55725,6 +56683,7 @@ body { margin:0; background:var(--color-bg-primary); color:var(--color-text-prim
 .log-debuff { color:var(--color-debuff); font-weight:var(--font-weight-medium); }
 .log-control { color:var(--color-debuff); font-weight:var(--font-weight-bold); }
 .log-skill { color:var(--color-warning); font-weight:var(--font-weight-medium); }
+.log-ultimate { color:#ffd700; font-weight:var(--font-weight-bold); }
 .log-passive { color:var(--color-info); font-weight:var(--font-weight-medium); }
 .log-energy { color:var(--color-energy); font-weight:var(--font-weight-bold); }
 .log-shield { color:var(--color-info); font-weight:var(--font-weight-bold); }
@@ -55740,6 +56699,7 @@ body { margin:0; background:var(--color-bg-primary); color:var(--color-text-prim
 .chip--ally { color:var(--color-heal); background:var(--color-success-bg); }
 .chip--enemy { color:var(--color-danger); background:var(--color-danger-bg); }
 .chip--skill { color:var(--color-warning); }
+.chip--ultimate { color:#ffd700; }
 .chip--buff { color:var(--color-energy); }
 .chip--passive { color:var(--color-info); }
 .hoverable { outline:2px solid var(--color-info-bg); outline-offset:-2px;
@@ -55785,7 +56745,11 @@ function segToHtml(seg: LogSegment): string {
   if (seg.kind === 'hp-after') return `<span class="hp-after">${text}</span>`
   if (seg.kind && ['buff', 'skill', 'passive'].includes(seg.kind)) {
     const hoverable = seg.hover ? ' hoverable' : ''
-    return `<span class="chip chip--${seg.kind}${hoverable}">${text}</span>`
+    const chipKind =
+      seg.kind === 'skill' && seg.classStr === 'log-ultimate'
+        ? 'ultimate'
+        : seg.kind
+    return `<span class="chip chip--${chipKind}${hoverable}">${text}</span>`
   }
   if (seg.classStr) return `<span class="${escapeHtml(seg.classStr)}">${text}</span>`
   return text

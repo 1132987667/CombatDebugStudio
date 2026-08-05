@@ -1,7 +1,6 @@
 /**
  * migration.ts — localStorage → IndexedDB 数据迁移
  *
- * 将旧 localStorage 中的战斗录像和状态快照迁移到 IndexedDB。
  * 幂等：首次迁移完成后设置标记 `cds:idb-migration-v1`，后续跳过。
  *
  * 迁移内容：

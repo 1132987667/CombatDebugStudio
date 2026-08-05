@@ -101,10 +101,16 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* 技能名 — 金色 */
+/* 技能名 — 金色（小技能） */
 .log-skill {
   color: var(--color-warning);
   font-weight: var(--font-weight-medium);
+}
+
+/* 大技能名 — 亮金（ultimate，与小技能区分） */
+.log-ultimate {
+  color: #ffd700;
+  font-weight: var(--font-weight-bold);
 }
 
 /* 被动技能名 — 蓝色 */
@@ -153,6 +159,10 @@
 
 .chip--skill {
   color: var(--color-warning);
+}
+
+.chip--ultimate {
+  color: #ffd700;
 }
 
 .chip--buff {

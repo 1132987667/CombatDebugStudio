@@ -8,6 +8,7 @@ import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { StepExecutionContext } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
+import { SeededRandom } from '@/shared/utils/SeededRandom'
 
 vi.mock('@/infrastructure/adapters/logging', () => ({
   battleLogManager: { addDebugLog: () => {}, addSystemLog: () => {} },
@@ -55,27 +56,32 @@ describe('DamageCalculator', () => {
       expect(result.damage).toBeLessThanOrEqual(300)
     })
 
-    it('v2.1.0: 无 calculation 时基础伤害 = attack + level×2，且确定无区间随机', () => {
-      // 攻击模型扁平化：无 calculation 的 skillStep 走 calculateBaseDamage 默认分支，
-      // 直接取单一 attack（不再用 min/max 区间 + Math.random）
+    it('无 calculation 时基础伤害 = attack × (1 ± 15%)，去掉等级加成', () => {
+      // 攻击浮动模型：无 calculation 的 skillStep 走 calculateBaseDamage 默认分支，
+      // 基础伤害 = attack × (1 ± 15%)，与等级解耦
       const source = createMockEntity() // attack=63, level=50
       const target = createMockEntity()
       calculator = new DamageCalculator({ minDamageThreshold: 0, maxDamageThreshold: 99999 })
+      calculator.setRng(new SeededRandom(42))
 
       const step = createSkillStep({ calculation: undefined })
       const context: StepExecutionContext = { record: { effects: [] } as unknown as CombatRecord }
       calculator.calculateDamage(step, source, target, context)
 
-      // floor(63 + 50×2) = 163 —— 精确值，覆盖等级加成项（levelBonus=100）
-      expect(context.record!.damageBreakdown!.baseDamage).toBe(163)
+      // floor(63 × 0.85) = 53 ≤ baseDamage ≤ ceil(63 × 1.15) = 73
+      const base = context.record!.damageBreakdown!.baseDamage
+      expect(base).toBeGreaterThanOrEqual(53)
+      expect(base).toBeLessThanOrEqual(73)
 
-      // 确定性：多次调用结果一致（扁平化后不再依赖随机伤害区间）
+      // 确定性：同一种子 + 相同起始随机状态时多次调用结果一致（回放一致性）
+      calculator.setRng(new SeededRandom(42))
       const r1 = calculator.calculateDamage(step, source, target)
+      calculator.setRng(new SeededRandom(42))
       const r2 = calculator.calculateDamage(step, source, target)
       expect(r1.damage).toBe(r2.damage)
     })
 
-    it('v2.1.0: 基础伤害随 attack 线性变化（单一数据源）', () => {
+    it('基础伤害落在 attack ±15% 浮动区间内（attack 变化、等级不变）', () => {
       const target = createMockEntity()
       const step = createSkillStep({ calculation: undefined })
 
@@ -91,10 +97,14 @@ describe('DamageCalculator', () => {
         return ctx.record!.damageBreakdown!.baseDamage
       }
 
-      // level=50 → levelBonus=100；attack 63→163、100→200、0→100（仅剩等级加成）
-      expect(baseOf(63)).toBe(163)
-      expect(baseOf(100)).toBe(200)
-      expect(baseOf(0)).toBe(100)
+      // 多采样验证浮动区间：floor(atk×0.85) ≤ base ≤ ceil(atk×1.15)
+      for (const atk of [63, 100, 200]) {
+        for (let i = 0; i < 50; i++) {
+          const base = baseOf(atk)
+          expect(base).toBeGreaterThanOrEqual(Math.floor(atk * 0.85))
+          expect(base).toBeLessThanOrEqual(Math.ceil(atk * 1.15))
+        }
+      }
     })
 
     it('should apply dodge when target has max dodge rate', () => {

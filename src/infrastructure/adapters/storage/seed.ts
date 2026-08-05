@@ -33,7 +33,8 @@ import lineupsDataRaw from '@configs/lineups/lineups.json'
 import materialsDataRaw from '@configs/materials/materials.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v2'
+// NOTE: v4 — 敌人数值重平衡（攻击浮动模型：enemies.json 全量曲线重调），升级版本号让已 seed 的浏览器重导最新 configs
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v4'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [

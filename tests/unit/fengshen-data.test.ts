@@ -111,6 +111,26 @@ describe('种子导入 seedFengshenData', () => {
     expect(second.imported).toBe(false)
   })
 
+  it('种子导入包含 scene_test（测试场景），且其引用的敌人全部在库', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+
+    const scene = await storage.get<SceneData>(FENGSHEN_STORE.SCENES, 'scene_test')
+    expect(scene).not.toBeNull()
+    expect(scene?.name).toBe('测试场景')
+
+    const sceneEnemyIds = new Set([
+      ...(scene!.difficulties.easy.enemyIds ?? []),
+      ...(scene!.difficulties.normal.enemyIds ?? []),
+      ...(scene!.difficulties.hard.enemyIds ?? []),
+    ])
+    const enemyKeys = await storage.keys(FENGSHEN_STORE.ENEMIES)
+    expect(sceneEnemyIds.size).toBeGreaterThan(0)
+    for (const id of sceneEnemyIds) {
+      expect(enemyKeys).toContain(id)
+    }
+  })
+
   it('种子数据自洽：导入后健康检查无断裂引用', async () => {
     const storage = new MemoryStorage()
     await seedFengshenData(storage)

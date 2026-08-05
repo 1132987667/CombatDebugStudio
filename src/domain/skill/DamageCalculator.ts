@@ -610,10 +610,11 @@ export class DamageCalculator {
       baseDamage = skillStep.calculation.baseValue
       // ponytail: extraValues 在主循环 calculateDamage 中通过 getAttrVal 处理，不在基础伤害阶段重复
     } else {
-      // NOTE: v2.1.0 攻击模型扁平化 — 基础伤害直接取单一 attack 属性，不再做 min/max 区间随机
+      // NOTE: 攻击浮动模型 — 基础伤害 = attack × (1 ± 15%)，替代原 min/max 区间随机语义。
+      //       浮动走确定性随机源 rng（this.random），保证战斗回放与实况一致。
       const atk = this.getAttributeSafe(source, ATTRIBUTE_CODE.attack)
-      const levelBonus = (source.level || 1) * 2
-      baseDamage = Math.floor(atk + levelBonus)
+      const VARIANCE = 0.15
+      baseDamage = Math.floor(atk * (1 - VARIANCE + this.random() * VARIANCE * 2))
     }
 
     this.logCalculation('base', baseDamage, `基础伤害: ${baseDamage}`)

@@ -16,12 +16,18 @@
           'dialog-overlay--placement-right': placement === 'right',
         }"
         role="dialog" aria-modal="true" :aria-label="title" tabindex="-1" @click.self="onOverlayClick">
-        <div class="dialog-container" :style="{ width: width, height: height }">
+        <div class="dialog-container" ref="containerRef" :style="{ width: width, height: height }">
           <div class="dialog-header">
               <span class="dialog-title">{{ title }}</span>
               <div class="dialog-header-actions flex items-center gap-2">
               <slot name="header-actions"></slot>
-              <button class="dialog-close" aria-label="关闭弹窗" @click="close">×</button>
+              <button type="button" class="dialog-header-btn dialog-header-btn--drag" aria-label="拖动弹窗" title="拖动弹窗"
+                @mousedown.prevent="startDrag">
+                <span class="dialog-header-btn__icon" aria-hidden="true" v-html="dragIcon"></span>
+              </button>
+              <button type="button" class="dialog-header-btn dialog-header-btn--close" aria-label="关闭弹窗" @click="close">
+                <span class="dialog-header-btn__icon" aria-hidden="true" v-html="closeIcon"></span>
+              </button>
             </div>
           </div>
           <div class="dialog-content" :class="contentClass">
@@ -44,6 +50,12 @@ const openDialogKeys: symbol[] = [];
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import dragIconRaw from "@/presentation/assets/icons/drag.svg?raw";
+import closeIconRaw from "@/presentation/assets/icons/Close.svg?raw";
+
+// drag.svg 自带 XML 声明与 DOCTYPE，仅保留 <svg> 部分，避免 v-html 插入非法文档头
+const dragIcon = dragIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
+const closeIcon = closeIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
 
 interface Props {
   modelValue: boolean;
@@ -77,6 +89,42 @@ const emit = defineEmits<{
 const close = () => {
   emit("update:modelValue", false);
   emit("close");
+};
+
+/* ═══ 拖拽：按住标题栏拖拽按钮移动弹窗 ═══
+   用 transform: translate 平移容器——overlay 仍负责居中定位，拖拽只是相对位移，
+   不影响打开/关闭过渡动画（过渡作用于 overlay 整体）。 */
+const containerRef = ref<HTMLElement | null>(null);
+let dragStartX = 0;
+let dragStartY = 0;
+let offsetX = 0;
+let offsetY = 0;
+let dragging = false;
+
+const startDrag = (e: MouseEvent) => {
+  // 仅左键拖拽；右键/中键不拦截
+  if (e.button !== 0) return;
+  dragging = true;
+  dragStartX = e.clientX - offsetX;
+  dragStartY = e.clientY - offsetY;
+  window.addEventListener("mousemove", onDragMove);
+  window.addEventListener("mouseup", onDragEnd);
+};
+
+const onDragMove = (e: MouseEvent) => {
+  if (!dragging) return;
+  offsetX = e.clientX - dragStartX;
+  offsetY = e.clientY - dragStartY;
+  const el = containerRef.value;
+  if (el) {
+    el.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  }
+};
+
+const onDragEnd = () => {
+  dragging = false;
+  window.removeEventListener("mousemove", onDragMove);
+  window.removeEventListener("mouseup", onDragEnd);
 };
 
 /* ═══ 无障碍：ESC 关闭 + Tab 焦点陷阱 + 打开聚焦/关闭还原 ═══
@@ -164,6 +212,8 @@ watch(
 onBeforeUnmount(() => {
   // 卸载兜底：若弹窗仍开着（父级 v-if 移除），清理监听与滚动锁
   window.removeEventListener("keydown", handleKeydown);
+  window.removeEventListener("mousemove", onDragMove);
+  window.removeEventListener("mouseup", onDragEnd);
   const idx = openDialogKeys.indexOf(instanceKey);
   if (idx !== -1) {
     openDialogKeys.splice(idx, 1);

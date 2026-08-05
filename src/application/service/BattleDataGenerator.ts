@@ -237,7 +237,7 @@ export class BattleDataGenerator {
       if (format === 'record') {
         const json = this.mergeRecordings(recordings)
         if (json !== null) {
-          this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
+          await this.downloadGzipJson(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json.gz`)
         }
       } else if (format === 'html') {
         const mergedHtml = this.mergeLogsHtml(battleLogs)
@@ -422,7 +422,9 @@ export class BattleDataGenerator {
       }),
     }
     try {
-      return JSON.stringify(payload, null, 2)
+      // NOTE: 导出文件已 gzip 压缩（downloadGzipJson），这里不再保留缩进，
+      //       否则压缩前体积多约 46% 纯空白。
+      return JSON.stringify(payload)
     } catch (e) {
       LoggerProvider.logger.addDebugLog('序列化战斗录制失败，跳过下载（昊天镜保存不受影响）', {
         level: LogLevel.ERROR,
@@ -445,7 +447,27 @@ export class BattleDataGenerator {
   }
 
   private downloadFile(content: string, filename: string, mime: string = 'text/plain;charset=utf-8'): void {
-    const blob = new Blob([content], { type: mime })
+    this.triggerDownload(new Blob([content], { type: mime }), filename)
+  }
+
+  /**
+   * 下载 gzip 压缩的 JSON（CompressionStream 原生 API，无新依赖）
+   * NOTE: 录制 JSON 重复度高，gzip 后体积约剩 4%（11MB → ~460KB）；
+   *       文件名带 .gz，解压后方可阅读。无 CompressionStream 的老浏览器降级为未压缩 JSON。
+   */
+  private async downloadGzipJson(content: string, filename: string): Promise<void> {
+    if (typeof CompressionStream === 'undefined') {
+      this.downloadFile(content, filename.replace(/\.gz$/, ''), 'application/json;charset=utf-8')
+      return
+    }
+    const compressed = new Blob([content])
+      .stream()
+      .pipeThrough(new CompressionStream('gzip'))
+    this.triggerDownload(await new Response(compressed).blob(), filename)
+  }
+
+  /** 触发浏览器下载（创建临时 <a> 并清理） */
+  private triggerDownload(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

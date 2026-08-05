@@ -281,14 +281,14 @@ export class PassiveSkillManager {
     skipReason: PassiveSkipReasonType,
     checks: Record<string, unknown>,
   ): void {
-    // NOTE: B3 — 有信息量的跳过（概率/冷却/次数/条件）写入调试日志，
-    //       使"为什么没触发"可复现；PHASE_MISMATCH 每回合每个被动都会发生，排除防噪音。
-    if (skipReason !== PassiveSkipReason.PHASE_MISMATCH) {
-      LoggerProvider.logger.addDebugLog(
-        `被动未触发 [${entity.name}] ${config.name || config.skillId}：${skipReason}`,
-        { level: LogLevel.DEBUG, context: checks },
-      )
-    }
+    // NOTE: B3 — PHASE_MISMATCH 是"该被动本就不在该时机运行"的设计事实（由 trigger 配置决定），
+    //       既无决策信息也不可复现问题，与调试日志同级直接降噪：不写日志、不进 trace、不计跳过数。
+    //       仅记录有信息量的跳过（概率/冷却/次数/条件），使"为什么没触发"可复现。
+    if (skipReason === PassiveSkipReason.PHASE_MISMATCH) return
+    LoggerProvider.logger.addDebugLog(
+      `被动未触发 [${entity.name}] ${config.name || config.skillId}：${skipReason}`,
+      { level: LogLevel.DEBUG, context: checks },
+    )
     if (!this.tracePort || !this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) return
     this.turnSkippedCount++
     this.tracePort.emit(

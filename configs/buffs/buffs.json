@@ -2100,21 +2100,8 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
-    "effects": [
-      {
-        "type": "modifier",
-        "params": {
-          "attributes": {
-            "damageBoost": {
-              "value": 0,
-              "type": "PERCENTAGE"
-            }
-          },
-          "perStack": true
-        }
-      }
-    ],
     "polarity": "positive",
+    "executionMode": "marker",
     "description": "每比目标快1点速度，伤害提升0.5%（上限30%）"
   },
   {

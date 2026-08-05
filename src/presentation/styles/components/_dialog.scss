@@ -36,19 +36,51 @@
   text-shadow: 0 0 5px rgba(var(--rgb-info), var(--alpha-glow));
 }
 
-.dialog-close {
+/* ----- 头部图标按钮（关闭 / 拖拽 共用） ----- */
+.dialog-header-btn {
   background: none;
   border: none;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xl);
   cursor: pointer;
   padding: 0;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
   transition: color var(--transition-fast);
 }
 
-.dialog-close:hover {
+.dialog-header-btn:hover {
+  color: var(--color-info);
+}
+
+.dialog-header-btn--close:hover {
   color: var(--color-brand-red);
+}
+
+.dialog-header-btn--drag {
+  cursor: grab;
+}
+
+.dialog-header-btn--drag:active {
+  cursor: grabbing;
+}
+
+.dialog-header-btn__icon {
+  display: inline-flex;
+  width: calc(var(--font-size-md) * 1.5);
+  height: calc(var(--font-size-md) * 1.5);
+}
+
+.dialog-header-btn__icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+/* 拖拽过程中禁用过渡动画，避免 transform 被 transition 拖慢产生滞后感 */
+.dialog-container.is-dragging {
+  transition: transform 0s !important;
+  user-select: none;
 }
 
 .dialog-content {

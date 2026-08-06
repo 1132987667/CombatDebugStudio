@@ -473,13 +473,6 @@ export class BattleManager {
   }
 
   /**
-   * 更新回合数
-   */
-  updateTurn(turn: number) {
-    this.battleStateManager.updateTurn(turn)
-  }
-
-  /**
    * 查找参与者
    */
   private findParticipant(characterId: string): BattleEntity | undefined {
@@ -622,13 +615,6 @@ export class BattleManager {
     this.autoBattleManager.resetState()
     LoggerProvider.logger.clearLogs()
     this.emitTeamChanged()
-  }
-
-  /**
-   * 执行单个回合
-   */
-  async executeSingleTurn() {
-    await this.autoBattleManager.executeSingleTurn()
   }
 
   /**

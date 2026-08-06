@@ -196,7 +196,7 @@ export class BattleSystem {
     private readonly uiEventPort: IUIEventPort,
     private readonly debugGate: DebugGate,
   ) {
-    this.battleData = this.getDefBattleData()
+    this.battleData = createDefaultBattleData(this.generateBattleId(), this.skillManager)
     this.animationManager = new BattleAnimationManager(
       this.rafTimer,
       () => this.battleData?.participants,
@@ -349,14 +349,6 @@ export class BattleSystem {
    */
   public getBuffSystem(): BuffSystem {
     return this.buffSystem
-  }
-
-  /**
-   * 获取默认战斗数据对象
-   * @returns 初始化的战斗数据对象
-   */
-  public getDefBattleData(): BattleData {
-    return createDefaultBattleData(this.generateBattleId(), this.skillManager)
   }
 
   /**
@@ -1655,13 +1647,6 @@ export class BattleSystem {
    */
   public clearAllBattleRecordings() {
     this.battleRecorder.clearRecordings()
-  }
-
-  /**
-   * 回合执行事件
-   */
-  public onTurnExecuted(turnNumber: number): void {
-    // TODO(P1): TURN_FLOW 事件（文档 §5 示例 5）落地后覆盖回合流转信息
   }
 
   /**

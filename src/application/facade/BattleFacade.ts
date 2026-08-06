@@ -1,9 +1,5 @@
 import { BattleManager } from '@/domain/battle/BattleManager'
-import type {
-  BattleEntity,
-  BattleState,
-  BattleReplay,
-} from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { type ParticipantSide } from '@/domain/battle/type/types'
 import type {
   BattleEventName,
@@ -46,10 +42,9 @@ export class BattleService {
     this.battleManager.resetBattle()
   }
 
-  /** 执行单步回合 + 自动同步状态 */
+  /** 执行单步回合（状态同步由 Store 显式调用，避免双重同步） */
   async processSingleTurn(): Promise<void> {
     await this.battleManager.processSingleTurn()
-    this.battleManager.syncBattleState()
   }
 
   /** 启动自动战斗 */
@@ -62,11 +57,6 @@ export class BattleService {
     return this.battleManager.stopAutoBattle()
   }
 
-  /** 执行单步自动回合 */
-  async executeSingleTurn(): Promise<void> {
-    await this.battleManager.executeSingleTurn()
-  }
-
   // ==================== 事件管理 ====================
 
   on<T extends BattleEventName>(event: T, callback: BattleEventCallback<T>) {
@@ -77,18 +67,10 @@ export class BattleService {
     this.battleManager.off(event)
   }
 
-  clearAllListeners(): void {
-    this.battleManager.clearAllListeners()
-  }
-
   // ==================== 状态同步 ====================
 
   syncBattleState(): void {
     this.battleManager.syncBattleState()
-  }
-
-  async syncBattleLogs(battleState: BattleState): Promise<void> {
-    await this.battleManager.syncBattleLogs(battleState)
   }
 
   // ==================== 队伍/角色管理 ====================
@@ -154,10 +136,6 @@ export class BattleService {
     return this.battleManager.getSelectedCharacter()
   }
 
-  getSelectedCharacterId(): string | null {
-    return this.battleManager.getSelectedCharacterId()
-  }
-
   /** 获取当前战斗回合数（从 BattleStateManager 读取） */
   getCurrentTurn(): number {
     return this.battleManager.getCurrentTurn()
@@ -165,10 +143,6 @@ export class BattleService {
 
   getMaxTurns(): number {
     return this.battleManager.getMaxTurns()
-  }
-
-  getBattleState(): BattleState | undefined {
-    return this.battleManager.getBattleState()
   }
 
   getAutoBattle(): boolean {
@@ -197,24 +171,6 @@ export class BattleService {
     return this.battleManager.getTurn()
   }
 
-  getTeamCounts(): { ally: number; enemy: number } {
-    return this.battleManager.getTeamCounts()
-  }
-
-  // ==================== 回放 ====================
-
-  startReplay(recording: BattleReplay): void {
-    this.battleManager.getBattleReplayManager().startReplay(recording)
-  }
-
-  stopReplay(): void {
-    this.battleManager.getBattleReplayManager().stopReplay()
-  }
-
-  pauseReplay(): void {
-    this.battleManager.getBattleReplayManager().pauseReplay()
-  }
-
   // ==================== 配置 ====================
 
   setBattleSpeed(speed: number): void {
@@ -224,11 +180,6 @@ export class BattleService {
   /**  切换快速战斗模式 */
   setQuickMode(enabled: boolean): void {
     this.battleManager.setQuickMode(enabled)
-  }
-
-  /**  获取快速战斗模式 */
-  getQuickMode(): boolean {
-    return this.battleManager.getQuickMode()
   }
 
   // ==================== 降级通道 ====================

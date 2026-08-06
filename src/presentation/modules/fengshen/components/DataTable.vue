@@ -25,7 +25,7 @@
               @change="emit('toggle-select', String(row.id))" :aria-label="`选择 ${row.id}`" />
           </td>
           <td v-for="col in columns" :key="col" :class="cellClass(row, col)"
-            :title="previewOf(row, col) ?? undefined">
+            :title="cellTitle(row, col) ?? undefined">
             <template v-if="tagInfo(row, col)">
               <span class="fs-tag" :class="tagInfo(row, col)!.cls">{{ tagInfo(row, col)!.text }}</span>
             </template>
@@ -54,18 +54,24 @@
 import { computed } from 'vue'
 import Button from '@/presentation/components/Button.vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
+import { resolveRefName, resolveRefNames } from '@/domain/fengshen/refNames'
 
-const props = defineProps<{
-  schema: TableSchema
-  rows: Record<string, unknown>[]
-  selectedIds: string[]
-  loading?: boolean
-  /** 右侧详情面板当前选中的行 id（用于行高亮） */
-  detailId?: string | null
-  /** 当前排序列（表头点击切换） */
-  sortKey?: string
-  sortDir?: 'asc' | 'desc'
-}>()
+const props = withDefaults(
+  defineProps<{
+    schema: TableSchema
+    rows: Record<string, unknown>[]
+    selectedIds: string[]
+    loading?: boolean
+    /** 右侧详情面板当前选中的行 id（用于行高亮） */
+    detailId?: string | null
+    /** 当前排序列（表头点击切换） */
+    sortKey?: string
+    sortDir?: 'asc' | 'desc'
+    /** 全表引用字典（id → 中文名）：refTable 列优先显示中文，缺省回退原始 id */
+    refIndex?: Record<string, string>
+  }>(),
+  { refIndex: () => ({}) },
+)
 
 const emit = defineEmits<{
   'toggle-select': [id: string]
@@ -107,12 +113,40 @@ function fieldLabel(col: string): string {
   return props.schema.fields.find((f) => f.key === col)?.label ?? col
 }
 
+function fieldOf(col: string) {
+  return props.schema.fields.find((f) => f.key === col)
+}
+
 function cellText(row: Record<string, unknown>, col: string): string {
   const v = row[col]
   if (v === undefined || v === null) return '—'
+  // 引用字段优先中文（skillIds → 技能名、formationId → 阵型名）；数组取前 3 项 + 计数
+  if (fieldOf(col)?.refTable) {
+    if (Array.isArray(v)) {
+      const names = resolveRefNames(v.filter((x): x is string => typeof x === 'string'), props.refIndex)
+      if (!names.length) return '—'
+      return names.length > 3 ? `${names.slice(0, 3).join('、')}… ×${names.length}` : names.join('、')
+    }
+    return resolveRefName(String(v), props.refIndex)
+  }
   if (Array.isArray(v)) return v.length > 0 ? `×${v.length}` : '—'
   if (typeof v === 'object') return '···'
   return String(v)
+}
+
+/** 单元格悬浮：引用字段 title 保留原始英文 id（不丢调试语义），其余为内容预览 */
+function cellTitle(row: Record<string, unknown>, col: string): string | null {
+  const field = fieldOf(col)
+  const v = row[col]
+  if (field?.refTable) {
+    if (Array.isArray(v)) {
+      const ids = v.filter((x): x is string => typeof x === 'string')
+      return ids.length ? `id: ${ids.join('、')}` : null
+    }
+    if (v === undefined || v === null || v === '') return null
+    return `id: ${String(v)}`
+  }
+  return previewOf(row, col)
 }
 
 /** 数组/对象单元格的悬浮预览：展示前几项，帮助用户不用点开就能了解内容 */

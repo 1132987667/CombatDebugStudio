@@ -46,7 +46,8 @@
     </div>
 
     <DataTable :schema="schema" :rows="pagedRows" :selected-ids="store.selectedIds" :loading="store.loading"
-      :detail-id="detailId" :sort-key="sortKey" :sort-dir="sortDir" @toggle-select="store.toggleSelect"
+      :detail-id="detailId" :sort-key="sortKey" :sort-dir="sortDir" :ref-index="store.refIndex"
+      @toggle-select="store.toggleSelect"
       @edit="store.openEdit" @copy="onCopy" @remove="requestRemove" @detail="onDetail" @sort="onSort" />
 
     <div v-if="totalPages > 1" class="fs-pagination" role="navigation" aria-label="分页">
@@ -269,6 +270,8 @@ watch(
     sortKey.value = ''
     sortDir.value = 'asc'
     detailId.value = null
+    // 首次进入加载全表引用字典（懒加载单次；写操作后 store 失效重建）
+    void store.loadRefIndex()
     for (const f of schema.value.filters ?? []) {
       if (f.refTable && !optionsCache.value[f.refTable]) {
         void store.loadOptions(f.refTable).then((items) => {

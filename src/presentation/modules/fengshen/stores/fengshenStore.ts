@@ -54,6 +54,10 @@ export const useFengshenStore = defineStore('fengshen', () => {
   // 引用选项缓存（下拉：技能/阵型/元素/成长曲线等）
   const optionsCache = ref<Record<string, OptionItem[]>>({})
 
+  // 全表引用字典（id → 中文名）：列表列 / 详情 / 悬浮预览的"优先中文"翻译底表，写操作后失效重建
+  const refIndex = ref<Record<string, string>>({})
+  let refIndexLoaded = false
+
   // 详情面板：当前实体的反向引用（谁引用了它）与跨表定位待办
   const references = ref<Array<{ sourceTable: FengshenTableName; ids: string[] }>>([])
   const pendingDetailId = ref<string | null>(null)
@@ -94,14 +98,32 @@ export const useFengshenStore = defineStore('fengshen', () => {
 
   async function loadOptions(table: FengshenTableName): Promise<OptionItem[]> {
     if (optionsCache.value[table]) return optionsCache.value[table]
-    const rows = await api.listByTable<Record<string, unknown>>(table, { limit: 500 })
-    const items = rows.map((r) => ({ id: String(r.id), name: String(r.name ?? r.id) }))
+    // NOTE: elements 为单文档，元素定义在 elements[].id/name，行级 id='elements' 无选项意义
+    const items: OptionItem[] =
+      table === 'elements'
+        ? (await api.listElementDefs()).map((e) => ({ id: e.id, name: e.name }))
+        : (await api.listByTable<Record<string, unknown>>(table, { limit: 500 })).map((r) => ({
+            id: String(r.id),
+            name: String(r.name ?? r.id),
+          }))
     optionsCache.value[table] = items
     return items
   }
 
   function invalidateOptions(): void {
     optionsCache.value = {}
+  }
+
+  /** 懒加载全局引用字典（只拉一次；写操作后失效重建） */
+  async function loadRefIndex(): Promise<void> {
+    if (refIndexLoaded) return
+    refIndex.value = await api.loadRefNameIndex()
+    refIndexLoaded = true
+  }
+
+  function invalidateRefIndex(): void {
+    refIndexLoaded = false
+    refIndex.value = {}
   }
 
   function setTable(table: FengshenTableName): void {
@@ -186,6 +208,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     }
     closeDrawer()
     invalidateOptions()
+    invalidateRefIndex()
     await refreshList()
     await refreshVersion()
     return true
@@ -197,6 +220,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
       return result.errors ?? []
     }
     invalidateOptions()
+    invalidateRefIndex()
     await refreshList()
     await refreshVersion()
     return null
@@ -214,6 +238,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     }
     selectedIds.value = []
     invalidateOptions()
+    invalidateRefIndex()
     await refreshList()
     await refreshVersion()
   }
@@ -248,6 +273,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     logs,
     params,
     optionsCache,
+    refIndex,
     references,
     pendingDetailId,
     currentSchema,
@@ -255,6 +281,8 @@ export const useFengshenStore = defineStore('fengshen', () => {
     refreshList,
     loadOptions,
     invalidateOptions,
+    loadRefIndex,
+    invalidateRefIndex,
     setTable,
     navigateTo,
     loadReferences,

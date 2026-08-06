@@ -24,6 +24,9 @@ import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { FormationConfig } from '@/shared/types/formation'
+import type { ElementDef } from '@/domain/fengshen/types'
+import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
+import { buildElementIndex, buildNameIndex } from '@/domain/fengshen/refNames'
 
 export interface ListQuery {
   /** 按 name 模糊搜索 */
@@ -136,6 +139,29 @@ export class GameDataApi {
   }
 
   // ── 元数据 ──────────────────────────────────────────────────
+
+  /** 阵营元素定义选项（elements 单文档，元素在 elements[].id/name；编辑下拉数据源） */
+  async listElementDefs(): Promise<ElementDef[]> {
+    const doc = await this.getElementMatrix()
+    return doc?.elements ?? []
+  }
+
+  /**
+   * 全表引用字典：id → 中文名（列表 / 详情 / 悬浮预览的"优先中文"翻译底表）。
+   * 全局合并各表，天然覆盖跨表引用（roles[].roleId → actors+enemies）；
+   * elements 取元素定义（elements[].name），不参与行级 id。
+   */
+  async loadRefNameIndex(): Promise<Record<string, string>> {
+    const index: Record<string, string> = {}
+    for (const table of Object.keys(TABLE_SCHEMAS) as FengshenTableName[]) {
+      if (table === 'elements') {
+        Object.assign(index, buildElementIndex(await this.getElementMatrix()))
+        continue
+      }
+      Object.assign(index, buildNameIndex(await this.listByTable<{ id?: unknown; name?: unknown }>(table, { limit: 1000 })))
+    }
+    return index
+  }
 
   async getDataVersion(): Promise<number> {
     const meta = await this.storage.get<MetaDataVersion>(FENGSHEN_STORE.META, 'dataVersion')

@@ -2,7 +2,7 @@
   <div class="ht-pane" style="--pc: var(--color-warning)">
     <div class="ht-pane-hd">
       <span class="t">战斗时间线</span>
-      <span style="display: flex; gap: 8px; align-items: center">
+      <span style="display: flex; gap: var(--space-2); align-items: center">
         <Button size="tiny" :active="store.focusMode" title="聚焦选中事件的因果链，淡化无关分支"
           @click="store.toggleFocus()">聚焦</Button>
         <span class="s">{{ roundCount }} 个回合</span>

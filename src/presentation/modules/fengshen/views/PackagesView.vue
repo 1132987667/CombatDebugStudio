@@ -20,7 +20,7 @@
             {{ t.label }}
           </label>
         </div>
-        <div class="fs-toolbar" style="margin: 12px 0 0;">
+        <div class="fs-toolbar" style="margin: var(--space-3) 0 0;">
           <Button variant="primary" @click="doExport">导出所选 JSON</Button>
           <span class="fs-form-hint">包含 meta：dataVersion + 导出时间 + 表清单</span>
         </div>

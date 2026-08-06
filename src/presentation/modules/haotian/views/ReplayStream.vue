@@ -2,7 +2,7 @@
   <div class="ht-pane" style="--pc: var(--color-energy)">
     <div class="ht-pane-hd">
       <span class="t">事件流 · 时间序</span>
-      <span style="display: flex; gap: 8px; align-items: center">
+      <span style="display: flex; gap: var(--space-2); align-items: center">
         <Button size="tiny" :active="store.showDbg" title="显示/隐藏调试专属事件（AI 决策 / 属性重算 / 配置）" @click="store.toggleDbg()">
           {{ store.showDbg ? '调试专属 · 显示' : '调试专属 · 隐藏' }}
         </Button>

@@ -828,6 +828,7 @@ input[type='checkbox'] {
 .fs-th {
   cursor: pointer;
   user-select: none;
+  transition: color var(--transition-fast);
 
   &:hover {
     color: var(--color-text-primary);

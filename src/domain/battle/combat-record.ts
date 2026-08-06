@@ -41,6 +41,7 @@ export interface DamageStep {
    * 最大嵌套深度 3：顶层步骤可以作为父节点包含 children，子节点不再嵌套。
    * 当前管线是线性的，children 为未来被动触发产生的子链路预留。
    */
+  // TODO(P2): children 目前无写入方（管线线性），被动触发生成子链路后再启用。
   children?: DamageStep[]
 }
 

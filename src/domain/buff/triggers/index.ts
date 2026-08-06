@@ -75,6 +75,9 @@ export function healAllAllies(ctx: TriggerExecutionContext): void {
 }
 
 /** heal_on_fire_damage — 受火焰伤害时按比例治疗（预留占位，待价值系统接入） */
+// TODO(P2): 本触发器依赖战斗系统在火焰伤害事件中把 damage 传入 extra.damage，
+//           目前无任何 buff 配置引用（configs/buffs/buffs.json 无 heal_on_fire_damage）。
+//           价值系统接入或火焰伤害事件携带 damage 后再启用。
 export function healOnFireDamage(ctx: TriggerExecutionContext): void {
   // ponytail: 需要战斗系统在火焰伤害事件中传递 damage 值到 extra 字段
   const damageValue = (ctx.extra?.damage as number) ?? 0

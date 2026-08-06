@@ -1,0 +1,524 @@
+{
+  "levels": [
+    {
+      "id": 1,
+      "name": "花果山外围",
+      "description": "花果山脚下，草木葱茏，时有小妖出没。",
+      "enemies": [
+        {
+          "id": 1,
+          "name": "花妖",
+          "level": 1,
+          "hp": 50,
+          "maxHp": 50,
+          "attackMin": 3,
+          "attackMax": 5,
+          "defense": 2,
+          "speed": 8,
+          "drops": [
+            { "item": "桃木", "quantity": 2, "chance": 80 },
+            { "item": "疗伤丹药", "quantity": 1, "chance": 20 }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "石精",
+          "level": 2,
+          "hp": 80,
+          "maxHp": 80,
+          "attackMin": 4,
+          "attackMax": 7,
+          "defense": 5,
+          "speed": 6,
+          "drops": [
+            { "item": "粗石", "quantity": 2, "chance": 70 },
+            { "item": "铜精", "quantity": 1, "chance": 30 }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "山魈",
+          "level": 3,
+          "hp": 120,
+          "maxHp": 120,
+          "attackMin": 6,
+          "attackMax": 9,
+          "defense": 3,
+          "speed": 10,
+          "drops": [
+            { "item": "桃木", "quantity": 3, "chance": 60 },
+            { "item": "金石晶球", "quantity": 1, "chance": 5 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "水帘洞前",
+      "description": "水帘洞前，瀑布飞泻，水气弥漫，洞内外布满奇异的石头。",
+      "enemies": [
+        {
+          "id": 4,
+          "name": "虾兵",
+          "level": 4,
+          "hp": 150,
+          "maxHp": 150,
+          "attackMin": 8,
+          "attackMax": 12,
+          "defense": 4,
+          "speed": 12,
+          "drops": [
+            { "item": "淡水玉", "quantity": 2, "chance": 75 },
+            { "item": "贝壳", "quantity": 1, "chance": 25 }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "蟹将",
+          "level": 5,
+          "hp": 200,
+          "maxHp": 200,
+          "attackMin": 10,
+          "attackMax": 14,
+          "defense": 8,
+          "speed": 9,
+          "drops": [
+            { "item": "贝壳", "quantity": 3, "chance": 70 },
+            { "item": "水灵晶球", "quantity": 1, "chance": 5 }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "鱼精",
+          "level": 6,
+          "hp": 180,
+          "maxHp": 180,
+          "attackMin": 12,
+          "attackMax": 16,
+          "defense": 6,
+          "speed": 14,
+          "drops": [
+            { "item": "防御丹药", "quantity": 1, "chance": 60 },
+            { "item": "淡水玉", "quantity": 3, "chance": 40 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "五行山脚",
+      "description": "五行山脚，山体陡峭，岩石嶙峋，弥漫着神秘的气息。",
+      "enemies": [
+        {
+          "id": 7,
+          "name": "岩妖",
+          "level": 7,
+          "hp": 250,
+          "maxHp": 250,
+          "attackMin": 15,
+          "attackMax": 20,
+          "defense": 12,
+          "speed": 8,
+          "drops": [
+            { "item": "松木", "quantity": 2, "chance": 70 },
+            { "item": "粗石", "quantity": 3, "chance": 30 }
+          ]
+        },
+        {
+          "id": 8,
+          "name": "金精",
+          "level": 8,
+          "hp": 220,
+          "maxHp": 220,
+          "attackMin": 17,
+          "attackMax": 22,
+          "defense": 10,
+          "speed": 10,
+          "drops": [
+            { "item": "铜精", "quantity": 2, "chance": 65 },
+            { "item": "元气晶球", "quantity": 1, "chance": 5 }
+          ]
+        },
+        {
+          "id": 9,
+          "name": "山鬼",
+          "level": 9,
+          "hp": 280,
+          "maxHp": 280,
+          "attackMin": 14,
+          "attackMax": 18,
+          "defense": 8,
+          "speed": 16,
+          "drops": [
+            { "item": "速度丹药", "quantity": 1, "chance": 55 },
+            { "item": "松木", "quantity": 3, "chance": 45 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "高老庄外",
+      "description": "高老庄外，田园风光，村落宁静，但似乎隐藏着不寻常的气息。",
+      "enemies": [
+        {
+          "id": 10,
+          "name": "野猪精",
+          "level": 10,
+          "hp": 320,
+          "maxHp": 320,
+          "attackMin": 20,
+          "attackMax": 25,
+          "defense": 10,
+          "speed": 9,
+          "drops": [
+            { "item": "鹿皮", "quantity": 2, "chance": 75 },
+            { "item": "金石晶球", "quantity": 1, "chance": 5 }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "家仆妖",
+          "level": 11,
+          "hp": 300,
+          "maxHp": 300,
+          "attackMin": 18,
+          "attackMax": 22,
+          "defense": 15,
+          "speed": 12,
+          "drops": [
+            { "item": "宣纸", "quantity": 2, "chance": 70 },
+            { "item": "攻击丹药", "quantity": 1, "chance": 30 }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "管家妖",
+          "level": 12,
+          "hp": 350,
+          "maxHp": 350,
+          "attackMin": 22,
+          "attackMax": 28,
+          "defense": 12,
+          "speed": 11,
+          "drops": [
+            { "item": "青花瓷", "quantity": 1, "chance": 60 },
+            { "item": "鹿皮", "quantity": 3, "chance": 40 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "流沙河岸",
+      "description": "流沙河岸，河水浑浊，沙滩广阔，时有沙妖出没。",
+      "enemies": [
+        {
+          "id": 13,
+          "name": "沙妖",
+          "level": 13,
+          "hp": 380,
+          "maxHp": 380,
+          "attackMin": 25,
+          "attackMax": 30,
+          "defense": 15,
+          "speed": 10,
+          "drops": [
+            { "item": "深水玉", "quantity": 2, "chance": 65 },
+            { "item": "粗石", "quantity": 3, "chance": 35 }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "水蛇精",
+          "level": 14,
+          "hp": 360,
+          "maxHp": 360,
+          "attackMin": 22,
+          "attackMax": 26,
+          "defense": 12,
+          "speed": 18,
+          "drops": [
+            { "item": "清泉", "quantity": 1, "chance": 60 },
+            { "item": "水灵晶球", "quantity": 1, "chance": 5 }
+          ]
+        },
+        {
+          "id": 15,
+          "name": "河伯",
+          "level": 15,
+          "hp": 420,
+          "maxHp": 420,
+          "attackMin": 24,
+          "attackMax": 32,
+          "defense": 20,
+          "speed": 14,
+          "drops": [
+            { "item": "全属性丹药", "quantity": 1, "chance": 50 },
+            { "item": "深水玉", "quantity": 3, "chance": 50 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "火焰山脚",
+      "description": "火焰山脚，热浪滚滚，岩石通红，充满了火元素的力量。",
+      "enemies": [
+        {
+          "id": 16,
+          "name": "火蜥蜴",
+          "level": 13,
+          "hp": 400,
+          "maxHp": 400,
+          "attackMin": 26,
+          "attackMax": 32,
+          "defense": 10,
+          "speed": 15,
+          "drops": [
+            { "item": "铁木", "quantity": 2, "chance": 70 },
+            { "item": "铁精", "quantity": 1, "chance": 30 }
+          ]
+        },
+        {
+          "id": 17,
+          "name": "熔岩精",
+          "level": 14,
+          "hp": 450,
+          "maxHp": 450,
+          "attackMin": 28,
+          "attackMax": 35,
+          "defense": 22,
+          "speed": 8,
+          "drops": [
+            { "item": "铁焰矿", "quantity": 1, "chance": 5 },
+            { "item": "金石晶球", "quantity": 1, "chance": 10 }
+          ]
+        },
+        {
+          "id": 18,
+          "name": "火童子",
+          "level": 15,
+          "hp": 430,
+          "maxHp": 430,
+          "attackMin": 30,
+          "attackMax": 38,
+          "defense": 15,
+          "speed": 12,
+          "drops": [
+            { "item": "古铜镜", "quantity": 1, "chance": 55 },
+            { "item": "铁木", "quantity": 3, "chance": 45 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "盘丝洞口",
+      "description": "盘丝洞口，蛛丝密布，树木缠绕，充满了神秘的气息。",
+      "enemies": [
+        {
+          "id": 19,
+          "name": "蜘蛛精",
+          "level": 12,
+          "hp": 400,
+          "maxHp": 400,
+          "attackMin": 24,
+          "attackMax": 30,
+          "defense": 14,
+          "speed": 16,
+          "drops": [
+            { "item": "熊皮", "quantity": 2, "chance": 75 },
+            { "item": "毒液", "quantity": 1, "chance": 25 }
+          ]
+        },
+        {
+          "id": 20,
+          "name": "毒蛾",
+          "level": 13,
+          "hp": 380,
+          "maxHp": 380,
+          "attackMin": 22,
+          "attackMax": 28,
+          "defense": 10,
+          "speed": 20,
+          "drops": [
+            { "item": "寒潭", "quantity": 1, "chance": 5 },
+            { "item": "水灵晶球", "quantity": 1, "chance": 10 }
+          ]
+        },
+        {
+          "id": 21,
+          "name": "蛛后",
+          "level": 15,
+          "hp": 480,
+          "maxHp": 480,
+          "attackMin": 28,
+          "attackMax": 36,
+          "defense": 18,
+          "speed": 14,
+          "drops": [
+            { "item": "翡翠玉镯", "quantity": 1, "chance": 60 },
+            { "item": "熊皮", "quantity": 3, "chance": 40 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "狮驼岭",
+      "description": "狮驼岭，山峰险峻，妖魔横行，是一处危险之地。",
+      "enemies": [
+        {
+          "id": 22,
+          "name": "狮兵",
+          "level": 13,
+          "hp": 420,
+          "maxHp": 420,
+          "attackMin": 26,
+          "attackMax": 32,
+          "defense": 18,
+          "speed": 12,
+          "drops": [
+            { "item": "虎皮", "quantity": 2, "chance": 65 },
+            { "item": "金精", "quantity": 1, "chance": 35 }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "象妖",
+          "level": 14,
+          "hp": 500,
+          "maxHp": 500,
+          "attackMin": 24,
+          "attackMax": 30,
+          "defense": 25,
+          "speed": 8,
+          "drops": [
+            { "item": "金阳矿", "quantity": 1, "chance": 5 },
+            { "item": "金石晶球", "quantity": 1, "chance": 10 }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "鹏怪",
+          "level": 15,
+          "hp": 450,
+          "maxHp": 450,
+          "attackMin": 28,
+          "attackMax": 36,
+          "defense": 15,
+          "speed": 18,
+          "drops": [
+            { "item": "神泉", "quantity": 1, "chance": 5 },
+            { "item": "水灵晶球", "quantity": 1, "chance": 10 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "雷音寺外",
+      "description": "雷音寺外，佛光普照，庄严肃穆，但似乎隐藏着不为人知的秘密。",
+      "enemies": [
+        {
+          "id": 25,
+          "name": "金刚",
+          "level": 14,
+          "hp": 480,
+          "maxHp": 480,
+          "attackMin": 30,
+          "attackMax": 38,
+          "defense": 28,
+          "speed": 10,
+          "drops": [
+            { "item": "仙云皮", "quantity": 2, "chance": 70 },
+            { "item": "元气晶球", "quantity": 1, "chance": 10 }
+          ]
+        },
+        {
+          "id": 26,
+          "name": "罗汉",
+          "level": 15,
+          "hp": 450,
+          "maxHp": 450,
+          "attackMin": 32,
+          "attackMax": 40,
+          "defense": 20,
+          "speed": 14,
+          "drops": [
+            { "item": "圣水玉", "quantity": 2, "chance": 65 },
+            { "item": "地脉灵气", "quantity": 1, "chance": 5 }
+          ]
+        },
+        {
+          "id": 27,
+          "name": "护法",
+          "level": 15,
+          "hp": 500,
+          "maxHp": 500,
+          "attackMin": 28,
+          "attackMax": 35,
+          "defense": 25,
+          "speed": 12,
+          "drops": [
+            { "item": "玉佛像", "quantity": 1, "chance": 60 },
+            { "item": "仙云皮", "quantity": 3, "chance": 40 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "灵山之巅",
+      "description": "灵山之巅，云雾缭绕，神圣庄严，是最终决战之地。",
+      "enemies": [
+        {
+          "id": 28,
+          "name": "佛门叛徒",
+          "level": 15,
+          "hp": 520,
+          "maxHp": 520,
+          "attackMin": 35,
+          "attackMax": 42,
+          "defense": 22,
+          "speed": 16,
+          "drops": [
+            { "item": "天罡灵气", "quantity": 1, "chance": 5 },
+            { "item": "元气晶球", "quantity": 1, "chance": 10 }
+          ]
+        },
+        {
+          "id": 29,
+          "name": "金刚护法",
+          "level": 15,
+          "hp": 480,
+          "maxHp": 480,
+          "attackMin": 30,
+          "attackMax": 38,
+          "defense": 30,
+          "speed": 12,
+          "drops": [
+            { "item": "混元灵气", "quantity": 1, "chance": 3 },
+            { "item": "圣水玉", "quantity": 3, "chance": 67 }
+          ]
+        },
+        {
+          "id": 30,
+          "name": "罗汉使者",
+          "level": 15,
+          "hp": 460,
+          "maxHp": 460,
+          "attackMin": 32,
+          "attackMax": 40,
+          "defense": 25,
+          "speed": 14,
+          "drops": [
+            { "item": "九转金丹", "quantity": 1, "chance": 5 },
+            { "item": "地脉灵气", "quantity": 2, "chance": 15 }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -206,21 +206,6 @@ function asStatusCategory(raw: string | undefined | null): StatusCategory | unde
 // ==================== 日志/显示工具函数 ====================
 
 /**
- * 获取 Buff 的日志 CSS 类名
- * 根据 facet + polarity 决定：
- *   - 有 control facet → 'log-control'
- *   - negative → 'log-debuff'
- *   - positive → 'log-buff'
- */
-export function getBuffLogClass(
-  classification: BuffClassificationResult,
-): string {
-  if (classification.facets.includes(StatusCategory.CONTROL)) return 'log-control'
-  if (classification.isNegative) return 'log-debuff'
-  return 'log-buff'
-}
-
-/**
  * 获取 Buff 的类型徽章文本（用于 Tooltip 卡片）
  *
  * 规则：

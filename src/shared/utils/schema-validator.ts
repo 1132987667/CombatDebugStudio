@@ -197,33 +197,3 @@ export function validateSkillConfigs(
   }
 }
 
-/**
- * 批量验证Effect配置
- * @param effectConfigs Effect配置数组
- * @returns 验证结果
- */
-export function validateEffectConfigs(
-  effectConfigs: Record<string, unknown>[],
-): ValidationResult {
-  const errors: string[] = []
-  let validCount = 0
-
-  effectConfigs.forEach((config, index) => {
-    const result = validateEffectConfig(config)
-    if (result.valid) {
-      validCount++
-    } else {
-      errors.push(
-        `Effect ${index} (${config.id || 'unknown'}): ${result.errors.join(', ')}`,
-      )
-    }
-  })
-
-  return {
-    valid: errors.length === 0,
-    errors: [
-      `Validation summary: ${validCount}/${effectConfigs.length} effects are valid`,
-      ...errors,
-    ],
-  }
-}

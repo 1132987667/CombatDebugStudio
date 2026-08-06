@@ -35,22 +35,6 @@ export const TracePhase = {
 
 export type TracePhase = (typeof TracePhase)[keyof typeof TracePhase]
 
-/** TracePhase 中文标签 — 仅供 UI 展示（下拉框/徽章），过滤与导出仍使用英文枚举值 */
-export const TracePhaseLabel: Record<TracePhase, string> = {
-  [TracePhase.BATTLE_LIFECYCLE]: '战斗流程',
-  [TracePhase.TURN_FLOW]: '回合流转',
-  [TracePhase.ACTION_EXECUTION]: '行动执行',
-  [TracePhase.DAMAGE_CALCULATION]: '伤害计算',
-  [TracePhase.HEAL_CALCULATION]: '治疗计算',
-  [TracePhase.ATTRIBUTE_RECALC]: '属性重算',
-  [TracePhase.BUFF_LIFECYCLE]: 'Buff 生命周期',
-  [TracePhase.BUFF_TRIGGER]: 'Buff 触发',
-  [TracePhase.PASSIVE_TRIGGER]: '被动触发',
-  [TracePhase.AI_DECISION]: 'AI 决策',
-  [TracePhase.CONFIG_LOAD]: '配置加载',
-  [TracePhase.CONFIG_VALIDATION]: '配置校验',
-}
-
 /** 追踪事件级别 — 独立于数值型 LogLevel，字符串值便于 JSON 序列化与 UI 过滤 */
 export const TraceLevel = {
   TRACE: 'trace',

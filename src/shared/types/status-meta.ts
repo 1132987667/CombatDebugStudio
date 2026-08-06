@@ -797,41 +797,9 @@ export const STATUS_META: Record<StatusCode, StatusMeta> = {
 
 // ==================== 辅助查询函数 ====================
 
-/** 根据状态代码获取元数据 */
-export function getStatusMeta(code: StatusCode): StatusMeta {
-  return STATUS_META[code]
-}
-
-/** 获取指定分类下的所有状态元数据 */
-export function getStatusByCategory(category: StatusCategory): StatusMeta[] {
-  return Object.values(STATUS_META).filter((m) => m.category === category)
-}
-
-/** 判断状态是否为控制类且阻止行动 */
-export function isActionBlockingControl(code: StatusCode): boolean {
-  const meta = STATUS_META[code]
-  return meta.category === StatusCategory.CONTROL && meta.blocksAction === true
-}
-
-/** 判断状态是否为控制类且阻止技能 */
-export function isSkillBlockingControl(code: StatusCode): boolean {
-  const meta = STATUS_META[code]
-  return meta.category === StatusCategory.CONTROL && meta.blocksSkill === true
-}
-
 /** 获取控制类状态的优先级（非控制类返回 0） */
 export function getControlPriority(code: StatusCode): number {
   return STATUS_META[code].controlPriority ?? 0
-}
-
-/** 判断状态是否可被净化 */
-export function isCleanseable(code: StatusCode): boolean {
-  return STATUS_META[code].cleanseable
-}
-
-/** 判断状态是否可被驱散 */
-export function isDispellable(code: StatusCode): boolean {
-  return STATUS_META[code].dispellable
 }
 
 export const StatusNames: Record<StatusCode, string> = Object.fromEntries(
@@ -842,9 +810,3 @@ export const ControlKind: StatusCode[] = Object.values(STATUS_META)
   .filter((m) => m.category === StatusCategory.CONTROL)
   .map((m) => m.code)
 export type ControlKind = (typeof ControlKind)[number]
-export const ControlKindNames = Object.values(STATUS_META)
-  .filter((m) => m.category === StatusCategory.CONTROL)
-  .map((m) => m.name)
-export const ControlKindOrder = ControlKind.map(
-  (code) => STATUS_META[code].controlPriority ?? 0,
-)

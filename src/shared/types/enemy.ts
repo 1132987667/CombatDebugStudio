@@ -33,24 +33,4 @@ export interface Enemy {
   noAttack?: boolean
 }
 
-export interface EnemyInstance extends Enemy {
-  currentHealth: number
-  buffs: string[]
-  activeSkills: Set<string>
-  lastActionTime: number
-  isDefeated: boolean
 
-  // Character-like interface for battle compatibility
-  getAttribute(attribute: string): number
-  setAttribute(attribute: string, value: number): void
-  addBuff(buffInstanceId: string): void
-  removeBuff(buffInstanceId: string): void
-  hasBuff(buffId: string): boolean
-}
-
-export interface EnemyManager {
-  getEnemy(enemyId: string): Enemy | undefined
-  createEnemyInstance(enemyId: string): EnemyInstance
-  removeEnemyInstance(enemyInstanceId: string): void
-  getAllEnemyInstances(): EnemyInstance[]
-}

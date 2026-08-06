@@ -332,14 +332,6 @@ export function useBuffDisplay(
 }
 
 /**
- * 格式化属性值：正数带 + 前缀
- */
-export function formatBuffPercent(value: number): string {
-  const prefix = value > 0 ? '+' : ''
-  return `${prefix}${Math.round(value)}%`
-}
-
-/**
  * 格式化回合数
  */
 export function formatRemainingTurns(turns: number): string {

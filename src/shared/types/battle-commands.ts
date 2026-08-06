@@ -192,24 +192,3 @@ export type BattleCommand =
   | ParticipantDeathCommand
 
 // ===================== 辅助类型 =====================
-
-/**
- * 命令执行上下文
- * 传递给 reducer 的额外信息
- */
-export interface CommandContext {
-  /** 当前回合数 */
-  round: number
-  /** 当前行动索引 */
-  turn: number
-}
-
-/**
- * 命令执行结果
- */
-export interface CommandResult {
-  /** 是否成功执行 */
-  success: boolean
-  /** 错误信息（可选） */
-  error?: string
-}

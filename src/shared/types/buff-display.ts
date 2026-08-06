@@ -111,12 +111,6 @@ export const ConditionStateNames = {
   [ConditionState.NONE]: '无条件，普通计时',
 }
 
-/**
- * 条件状态名称
- */
-export type ConditionStateName =
-  (typeof ConditionStateNames)[keyof typeof ConditionStateNames]
-
 /** 修饰符（来源追溯用） */
 export interface BuffModifier {
   sourceName: string

@@ -164,5 +164,3 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     stopAllAnimations,
   }
 }
-
-export type UseBattleAnimationReturn = ReturnType<typeof useBattleAnimation>

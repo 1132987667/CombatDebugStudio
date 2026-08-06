@@ -104,7 +104,9 @@ export interface BattleParamData {
   description?: string
 }
 
-/** 预设阵容（lineups 表）—— 对齐 configs/lineups/lineups.json 结构 */
+/** 预设阵容（lineups 表）—— 对齐 configs/lineups/lineups.json 结构。
+ * 阵容本身不标阵营（我方/敌方由使用场景决定：场景引用按敌方展开，唤灵台布阵按角色类型归队）。
+ */
 export interface LineupRole {
   seatIndex: number
   roleId: string
@@ -113,7 +115,6 @@ export interface LineupData {
   id: string
   name: string
   description?: string
-  side: 'ally' | 'enemy'
   /** 绑定阵型 ID（引用 formations 表） */
   formationId: string
   roles: LineupRole[]
@@ -139,9 +140,6 @@ export interface OperationLogEntry {
   detail?: string
   updatedAt: string
 }
-
-/** 统一存储条目：领域实体 + updatedAt */
-export type FengshenRecord<T> = T & { updatedAt: string }
 
 /** 封神榜全表映射（表名 → 实体类型），供校验/API/界面按表取类型 */
 export interface FengshenTables {

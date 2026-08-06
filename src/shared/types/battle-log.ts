@@ -128,14 +128,6 @@ export const LogType = {
 
 export type LogType = (typeof LogType)[keyof typeof LogType]
 
-export const LogTypeLabel: Record<LogType, string> = {
-  [LogType.BATTLE]: '战斗',
-  [LogType.SYSTEM]: '系统',
-  [LogType.ITEM]: '物品',
-  [LogType.ACTION]: '动作',
-  [LogType.DEBUG]: '调试',
-}
-
 /**
  * 战斗日志类别常量
  * 统一的日志类别定义，供全项目使用
@@ -160,38 +152,6 @@ export const BATTLE_LOG_CATEGORIES = {
  */
 export type BattleLogCategory =
   (typeof BATTLE_LOG_CATEGORIES)[keyof typeof BATTLE_LOG_CATEGORIES]
-
-/**
- * 统一日志消息类型 - 合并级别和类别
- * 用于需要同时表示级别和业务类别的场景
- */
-export type BattleLogMessageType = LogType | BattleLogCategory
-
-/**
- * 战斗动作类型定义 - 统一所有动作类型
- */
-export const DetailActionType = {
-  NORMAL_ATTACK: 'normal_attack',
-  SKILL_ATTACK: 'skill_attack',
-  HEAL_SKILL: 'heal_skill',
-  BUFF_SKILL: 'buff_skill',
-  DEBUFF_SKILL: 'debuff_skill',
-  STATUS_EFFECT: 'status_effect',
-  CONTROL_EFFECT: 'control_effect',
-  CRITICAL_HIT: 'critical_hit',
-  MISSED_ATTACK: 'missed_attack',
-  BLOCKED_ATTACK: 'blocked_attack',
-  DEFENSE_ACTION: 'defense_action',
-  CHARGE_ACTION: 'charge_action',
-  UNIT_DEATH: 'unit_death',
-  BATTLE_VICTORY: 'battle_victory',
-  BATTLE_DEFEAT: 'battle_defeat',
-  BATTLE_START: 'battle_start',
-  BATTLE_END: 'battle_end',
-} as const
-
-export type DetailActionType =
-  (typeof DetailActionType)[keyof typeof DetailActionType]
 
 /**
  * 通用日志条目接口 - 用于框架日志系统
@@ -354,15 +314,6 @@ export function newLogSegment(
 }
 
 /**
- * HTML格式化选项扩展 - 包含HTML特定属性
- */
-export interface HTMLFormatOptions {
-  forceCritical?: boolean
-  sourceIsAlly?: boolean
-  targetIsAlly?: boolean
-}
-
-/**
  * 日志过滤器配置 - 控制各类战斗日志在界面上的显示状态
  */
 export interface LogFilters {
@@ -409,145 +360,6 @@ export interface BattleLogManagerOptions {
   handlers?: LogHandler[]
   /** 日志来源标识 */
   source?: string
-}
-
-/**
- * 日志颜色映射 - 统一所有UI颜色定义
- */
-export const LogLevelColors: Record<BattleLogCategory, string> = {
-  system: '#9e9e9e',
-  action: '#4fc3f7',
-  damage: '#f44336',
-  heal: '#4caf50',
-  crit: '#ff9800',
-  status: '#2196f3',
-  battle: '#9c27b0',
-  item: '#8bc34a',
-  debug: '#607d8b',
-  info: '#2196f3',
-  warning: '#ff9800',
-  error: '#f44336',
-}
-
-/**
- * 获取日志颜色 - 统一颜色获取方法
- */
-export function getLogLevelColor(level: BattleLogCategory): string {
-  return LogLevelColors[level] || '#9e9e9e'
-}
-
-/**
- * 动作类型映射 - 统一动作类型到显示名称的映射
- */
-export const ActionTypeDisplayNames: Record<DetailActionType, string> = {
-  [DetailActionType.NORMAL_ATTACK]: '普通攻击',
-  [DetailActionType.SKILL_ATTACK]: '技能攻击',
-  [DetailActionType.HEAL_SKILL]: '治疗技能',
-  [DetailActionType.BUFF_SKILL]: '增益技能',
-  [DetailActionType.DEBUFF_SKILL]: '减益技能',
-  [DetailActionType.STATUS_EFFECT]: '状态生效',
-  [DetailActionType.CONTROL_EFFECT]: '控制效果',
-  [DetailActionType.CRITICAL_HIT]: '暴击',
-  [DetailActionType.MISSED_ATTACK]: '未命中',
-  [DetailActionType.BLOCKED_ATTACK]: '格挡',
-  [DetailActionType.DEFENSE_ACTION]: '防御动作',
-  [DetailActionType.CHARGE_ACTION]: '蓄力动作',
-  [DetailActionType.UNIT_DEATH]: '单位死亡',
-  [DetailActionType.BATTLE_VICTORY]: '战斗胜利',
-  [DetailActionType.BATTLE_DEFEAT]: '战斗失败',
-  [DetailActionType.BATTLE_START]: '战斗开始',
-  [DetailActionType.BATTLE_END]: '战斗结束',
-}
-
-/**
- * 默认日志过滤器配置
- */
-export const DefaultLogFilters: LogFilters = {
-  battle: true,
-  system: true,
-  item: true,
-  action: true,
-  debug: false,
-}
-
-/**
- * 格式化日志时间戳
- */
-export function formatLogTimestamp(timestamp: number): string {
-  return new Date(timestamp).toISOString()
-}
-
-/**
- * 日志系统工具函数集合
- */
-export const LogUtils = {
-  /**
-   * 检查日志级别是否有效
-   */
-  isValidLogLevel(level: string): boolean {
-    const validLevels: string[] = ['debug', 'info', 'warning', 'error']
-    return validLevels.includes(level)
-  },
-
-  isValidLogCategory(category: string): boolean {
-    const validCategories = Object.values(BATTLE_LOG_CATEGORIES)
-    return validCategories.includes(category as BattleLogCategory)
-  },
-
-  /**
-   * 获取日志级别的显示名称
-   * @param level - 日志级别或类别
-   */
-  getLevelDisplayName(level: BattleLogMessageType): string {
-    const displayNames: Partial<Record<LogType | BattleLogCategory, string>> = {
-      damage: '伤害',
-      heal: '治疗',
-      crit: '暴击',
-      status: '状态',
-      info: '信息',
-      debug: '调试',
-      warning: '警告',
-      error: '错误',
-      system: '系统',
-      action: '动作',
-    }
-    return displayNames[level] || '未知'
-  },
-}
-
-/**
- * 计算日志接口 - 统一所有计算日志定义
- */
-export interface CalculationLog {
-  /** 时间戳 */
-  timestamp: number
-
-  /** 计算类型 */
-  type: ActionResultType
-
-  /** 来源ID */
-  sourceId: string
-
-  /** 目标ID */
-  targetId: string
-
-  /** 技能ID（可选） */
-  skillId?: string
-
-  /** 基础值（兼容原有系统） */
-  baseValue?: number
-
-  /** 额外值列表（兼容原有系统） */
-  extraValues?: Array<{ attribute: string; value: number; ratio: number }>
-
-  /** 最终值（兼容原有系统） */
-  finalValue?: number
-
-  /** 是否暴击（兼容原有系统） */
-  critical?: boolean
-
-  /** 修正系数（兼容原有系统） */
-  modifiers?: Record<string, number>
 }
 
 /**

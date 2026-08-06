@@ -108,21 +108,3 @@ export interface Item {
   /** 物品数量（默认1） */
   quantity?: number
 }
-
-/**
- * 类型守卫：判断是否为装备
- */
-export function isEquipment(
-  item: Item,
-): item is Item & { slot: EquipmentSlot; stats: EquipmentStats } {
-  return item.type === ItemType.EQUIPMENT && !!item.slot
-}
-
-/**
- * 类型守卫：判断是否为消耗品
- */
-export function isConsumable(
-  item: Item,
-): item is Item & { effects: ItemEffect[] } {
-  return item.type === ItemType.CONSUMABLE && !!item.effects
-}

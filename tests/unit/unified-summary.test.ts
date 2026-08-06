@@ -113,4 +113,31 @@ describe('summarizeBattle（战斗摘要统计）', () => {
     expect(highest[0].text).toContain('火护法')
     expect(highest[0].text).toContain('306')
   })
+
+  it('maxTimestamp 时间切面：未到战斗结束则胜方未知，只统计截止前事件', () => {
+    const sum = summarizeBattle(createDemoArchive(), 2000)
+    // 截止 ts=2000 在 battle_end(3600) 前 → 胜方未知，时长即截断点
+    expect(sum.winner).toBeUndefined()
+    expect(sum.durationMs).toBe(2000)
+    // 回合数只统计已进入的回合（turn 2 在 ts=3000，截断后）
+    expect(sum.rounds).toBe(1)
+    // 承伤到 ev07(1400) 为止：dot 15 + 113 + 58 = 186（ev18 的 306 在截断后）
+    expect(sum.units.u2.taken).toBe(186)
+    // 尚未击杀 → 双方存活（修复点：截断语义不可误标胜方/死亡）
+    expect(sum.units.u1.alive).toBe(true)
+    expect(sum.units.u2.alive).toBe(true)
+    // 胜负边际随胜方未知归零
+    expect(sum.survivorCount).toBe(0)
+    expect(sum.survivorHpPct).toBe(0)
+  })
+
+  it('maxTimestamp 覆盖事件流尾部时与整场统计一致', () => {
+    const full = summarizeBattle(createDemoArchive())
+    const cut = summarizeBattle(createDemoArchive(), full.durationMs)
+    expect(cut.winner).toBe(full.winner)
+    expect(cut.rounds).toBe(full.rounds)
+    expect(cut.durationMs).toBe(full.durationMs)
+    expect(cut.units.u2.taken).toBe(full.units.u2.taken)
+    expect(cut.keyEvents).toEqual(full.keyEvents)
+  })
 })

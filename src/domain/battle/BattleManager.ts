@@ -604,6 +604,9 @@ export class BattleManager {
     if (battleId) {
       this.autoBattleManager.stopAutoBattle()
     }
+    // 手动结束路径补齐 trace 收尾（battle_end 事件 + traceEvents 落盘），
+    // 与自然结束（BattleSystem.endBattle）共用，保证实时战报从录制派生时有数据
+    this.battleSystem.finalizeBattleTrace(winner as ParticipantSide)
     // 触发战斗结束事件
     const eventData: BattleEndedEventData = { winner: winner as ParticipantSide }
     this.emit(BattleEventCodes.BATTLE_ENDED, eventData)

@@ -1369,17 +1369,46 @@ export class BattleSystem {
   }
 
   /**
+   * 战斗结束前的 trace 收尾：补发 battle_lifecycle action='battle_end' 生命周期事件
+   * + 将 traceEvents 落盘到录制。自然结束（runEndConditionCheck→endBattle）与手动结束
+   * （BattleManager.endBattle）共用，保证两条路径录制/战报一致：
+   * - 此前无任何发射端发 battle_end，LiveBattleStream.isBattleEnd 恒 false，
+   *   实时战斗结束后不收尾、摘要无胜方；补发后实时流与回放都有结束标记
+   * - 手动结束此前不落盘 traceEvents，实时战报（buildBattleSummary 从录制派生）恒空
+   * phase 未开启时零开销（契约 §3.6 补发型事件模式）
+   */
+  public finalizeBattleTrace(winner: ParticipantSide): void {
+    if (!this.battleData) return
+    if (this.traceCollector.isEnabled(TracePhase.BATTLE_LIFECYCLE)) {
+      this.traceCollector.emit(
+        createTraceEvent({
+          correlationId: `end_${this.battleData.battleId}`,
+          phase: TracePhase.BATTLE_LIFECYCLE,
+          battleId: this.battleData.battleId,
+          turn: this.battleData.currentTurn ?? 1,
+          level: TraceLevel.INFO,
+          summary: `战斗结束 · 胜利者：${ParticipantSideName[winner]}`,
+          payload: { action: 'battle_end', winner },
+        }),
+      )
+    }
+    // 手动结束路径（BattleManager.endBattle）不调 endRecording，录制 winner 恒空 →
+    // 战报（archive.winner）无胜方；这里补齐（自然结束路径由后续 endRecording 覆盖，值一致）
+    const rec = this.battleRecorder.getRecording(this.battleData.battleId)
+    if (rec && !rec.winner) rec.winner = winner
+    this.battleRecorder.recordTraceEvents(
+      this.battleData.battleId,
+      this.traceCollector.exportAll(),
+    )
+  }
+
+  /**
    * 结束战斗
    * @param winner - 胜利者类型
    */
   public async endBattle(winner: ParticipantSide): Promise<void> {
-    // 战斗结束前将结构化调试追踪事件写入 BattleRecorder
-    if (this.battleData) {
-      this.battleRecorder.recordTraceEvents(
-        this.battleData.battleId,
-        this.traceCollector.exportAll(),
-      )
-    }
+    // 战斗结束前将结构化调试追踪事件写入 BattleRecorder（含 battle_end 收尾事件）
+    this.finalizeBattleTrace(winner)
     //  补偿可能缺失的回合末态势快照（战斗在回合中途结束时）
     this.ensureFinalSnapshot()
     return this.lifecycleManager.endBattle(winner)

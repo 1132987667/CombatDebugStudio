@@ -78,7 +78,7 @@
   font-size: var(--font-size-md);
   padding: 6px 14px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
   white-space: nowrap;
 }
 
@@ -119,6 +119,7 @@
   z-index: 50;
   min-width: 260px;
   padding: 12px 14px;
+  animation: ht-popIn var(--transition-base) var(--ease-in-out);
   background: var(--color-bg-secondary);
   border: 1px solid var(--ht-bd);
   border-radius: var(--radius-md);
@@ -365,7 +366,7 @@
   border-radius: var(--radius-lg);
   background: var(--color-bg-tertiary);
   padding: 8px 10px;
-  transition: transform 0.2s;
+  transition: transform var(--transition-fast);
 }
 
 .ht-unit.acting {
@@ -418,7 +419,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: var(--radius-full);
-  transition: width 0.25s;
+  transition: width var(--transition-base);
 }
 
 .ht-bar.hp i { background: var(--ht-red); }
@@ -529,7 +530,7 @@
   height: 14px;
   border-radius: 2px;
   cursor: pointer;
-  transition: height 0.1s;
+  transition: height var(--transition-fast);
 }
 
 .ht-seek .ht-tick:hover {
@@ -566,7 +567,7 @@
   cursor: pointer;
   font-family: var(--ht-mono);
   font-size: var(--font-size-md);
-  transition: background 0.12s;
+  transition: background var(--transition-fast);
 }
 
 .ht-srow:hover {
@@ -645,7 +646,7 @@
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: var(--font-size-md);
-  transition: background 0.12s;
+  transition: background var(--transition-fast);
 }
 
 .ht-t-row:hover {
@@ -660,7 +661,7 @@
   width: 16px;
   text-align: center;
   color: var(--color-text-tertiary);
-  transition: transform 0.15s;
+  transition: transform var(--transition-fast);
 }
 
 .ht-t-tgl.open {
@@ -739,7 +740,7 @@
   background: var(--color-bg-primary);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .ht-ev:hover {
@@ -922,7 +923,7 @@
 
 .ht-sec-toggle .ht-sec-caret {
   display: inline-block;
-  transition: transform 0.15s ease;
+  transition: transform var(--transition-fast) var(--ease-in-out);
   color: var(--color-text-tertiary);
 }
 
@@ -1079,7 +1080,7 @@
   top: 0;
   bottom: 0;
   border-radius: var(--radius-full);
-  transition: width 0.4s;
+  transition: width var(--transition-slow);
 }
 
 .ht-rng-fill.pass { background: var(--ht-green); }
@@ -1148,7 +1149,7 @@
   display: block;
   height: 100%;
   border-radius: var(--radius-full);
-  transition: width 0.4s;
+  transition: width var(--transition-slow);
 }
 
 .ht-dbar i.hp { background: var(--ht-red); }
@@ -1326,6 +1327,7 @@
 
 .ht-diag.open {
   display: flex;
+  animation: ht-popIn var(--transition-base) var(--ease-in-out);
 }
 
 .ht-diag-hd {
@@ -1654,7 +1656,7 @@
   width: 6px;
   cursor: col-resize;
   background: transparent;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .ht-resizer:hover,
@@ -1685,7 +1687,7 @@
   color: var(--color-text-primary);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .ht-empty-card:hover {
@@ -1788,7 +1790,7 @@
   padding: 0 2px;
   cursor: pointer;
   opacity: 0.45;
-  transition: opacity 0.15s, color 0.15s;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
 }
 
 .ht-srow:hover .ht-bm-btn,
@@ -1939,6 +1941,7 @@
   z-index: 50;
   min-width: 180px;
   padding: 6px;
+  animation: ht-popIn var(--transition-base) var(--ease-in-out);
   background: var(--color-bg-secondary);
   border: 1px solid var(--ht-bd);
   border-radius: var(--radius-md);
@@ -2048,5 +2051,17 @@
 @keyframes ht-diffFlash {
   0%, 100% { background: transparent; }
   20%, 60% { background: rgba(var(--rgb-warning), 0.18); }
+}
+
+/* ───────────── 弹层入场（提示 / 运维 / 校验报告）───────────── */
+@keyframes ht-popIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 

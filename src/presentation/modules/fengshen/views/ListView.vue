@@ -63,6 +63,7 @@
       <!-- 右：实体详情（6/24 栅格，预留扩展） -->
       <aside class="fs-list-detail" role="region" aria-label="实体详情">
         <EntityDetailPanel v-if="detailEntity" :schema="schema" :entity="detailEntity" :references="store.references"
+          :ref-index="store.refIndex"
           @edit="store.openEdit(detailEntity)" @goto="onGotoTable" />
         <div v-else class="fs-detail-empty">
           <span class="fs-detail-empty-title">实体详情</span>

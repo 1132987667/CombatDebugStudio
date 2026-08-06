@@ -2,7 +2,8 @@
 * 文件: EntityDetailPanel.vue
 * 功能: 封神榜列表右侧详情面板（只读）
 * 描述: 点击列表中的名称等可点击字段后，在右侧（6/24 栅格）展示该实体的全部字段值。
-*       数组 / Map 做格式化展示；引用字段显示原始值（保留数据语义，不做翻译）。
+*       数组 / Map 做格式化展示；引用字段（REFERENCE_RULES 声明的 path 叶子键）优先显示
+*       中文名（如 skillIds → 技能名、roles[].roleId → 角色/敌人名），原始 id 保留在 title 悬浮。
 * 依赖: tokens.scss 设计令牌；无额外 JS 依赖
 -->
 <template>
@@ -27,11 +28,14 @@
                     <dl class="fs-detail-map">
                       <div v-for="(v, k) in item as Record<string, unknown>" :key="k" class="fs-detail-map-row">
                         <dt class="fs-detail-map-key">{{ k }}</dt>
-                        <dd class="fs-detail-map-val">{{ renderScalar(v) }}</dd>
+                        <dd class="fs-detail-map-val" :title="refTitle(k, v)">{{ refVal(k, v) }}</dd>
                       </div>
                     </dl>
                   </template>
-                  <template v-else>{{ renderScalar(item) }}</template>
+                  <template v-else>
+                    <span v-if="isRefKey(field.key)" :title="`id: ${String(item)}`">{{ refName(item) }}</span>
+                    <template v-else>{{ renderScalar(item) }}</template>
+                  </template>
                 </li>
               </ul>
             </template>
@@ -47,11 +51,14 @@
               <dl class="fs-detail-map">
                 <div v-for="(v, k) in entity[field.key] as Record<string, unknown>" :key="k" class="fs-detail-map-row">
                   <dt class="fs-detail-map-key">{{ k }}</dt>
-                  <dd class="fs-detail-map-val">{{ renderScalar(v) }}</dd>
+                  <dd class="fs-detail-map-val" :title="refTitle(k, v)">{{ refVal(k, v) }}</dd>
                 </div>
               </dl>
             </template>
-            <template v-else>{{ String(entity[field.key]) }}</template>
+            <template v-else>
+              <span v-if="isRefKey(field.key)" :title="`id: ${String(entity[field.key])}`">{{ refName(entity[field.key]) }}</span>
+              <template v-else>{{ String(entity[field.key]) }}</template>
+            </template>
           </dd>
         </div>
       </template>
@@ -71,16 +78,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
-import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
+import { TABLE_SCHEMAS, REFERENCE_RULES } from '@/domain/fengshen/schema'
+import { resolveRefName } from '@/domain/fengshen/refNames'
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import Button from '@/presentation/components/Button.vue'
 
-const props = defineProps<{
-  schema: TableSchema
-  entity: Record<string, unknown>
-  /** 反向引用：哪些表的哪些实体引用了当前实体 */
-  references?: Array<{ sourceTable: string; ids: string[] }>
-}>()
+const props = withDefaults(
+  defineProps<{
+    schema: TableSchema
+    entity: Record<string, unknown>
+    /** 反向引用：哪些表的哪些实体引用了当前实体 */
+    references?: Array<{ sourceTable: string; ids: string[] }>
+    /** 全表引用字典（id → 中文名）：引用字段优先中文，缺省回退原始 id */
+    refIndex?: Record<string, string>
+  }>(),
+  { refIndex: () => ({}) },
+)
 
 const emit = defineEmits<{
   edit: []
@@ -89,6 +102,41 @@ const emit = defineEmits<{
 }>()
 
 const detailName = computed(() => String(props.entity.name ?? props.entity.id ?? '未命名'))
+
+/**
+ * 引用叶子键集合：REFERENCE_RULES 中 sourceTable = 当前表的规则的 path 末段（去 []）。
+ * 供嵌套字段（roles[].roleId / steps[].effectId / drops[].itemId / matrix[].attackerId 等）
+ * 与顶层引用字段（skillIds / growth / faction / formationId）共用翻译判定。
+ */
+const refLeafKeys = computed(() => {
+  const keys = new Set<string>()
+  for (const rule of REFERENCE_RULES) {
+    if (rule.sourceTable !== props.schema.table) continue
+    const segs = rule.path.split('.')
+    keys.add(segs[segs.length - 1].replace('[]', ''))
+  }
+  return keys
+})
+
+function isRefKey(key: string): boolean {
+  return refLeafKeys.value.has(key)
+}
+
+/** 引用值 → 中文名（未命中回退原 id，保留调试语义） */
+function refName(v: unknown): string {
+  return resolveRefName(String(v), props.refIndex)
+}
+
+/** 嵌套键值对值渲染：引用键优先中文，否则保持原有标量/对象渲染 */
+function refVal(key: string, v: unknown): string {
+  return isRefKey(key) ? refName(v) : renderScalar(v)
+}
+
+/** 嵌套引用键的 title：保留原始 id（单值） */
+function refTitle(key: string, v: unknown): string | undefined {
+  if (!isRefKey(key) || v === undefined || v === null) return undefined
+  return `id: ${String(v)}`
+}
 
 /** stats 字段 = 属性统计对象（actors/enemies 的 `{ attrCode: number }`），走友好属性面板渲染 */
 function isStatsField(field: TableSchema['fields'][number]): boolean {

@@ -97,6 +97,11 @@ describe('LiveBattleStream', () => {
     bus.emit(TRACE_EVENT_ADDED, mk('e2', 3000, 'battle_lifecycle', { payload: { action: 'battle_end', winner: 'u1' }, summary: '结束' }))
     expect(onEnd).toHaveBeenCalledTimes(1)
     expect(stream.isActive()).toBe(false)
+    // winner 从 battle_end 事件提取（修复前 currentArchive().winner 恒 undefined，
+    // 实时源战报摘要胜方恒"未分胜负"，与实时弹窗/录制路径口径不一致）
+    expect(stream.currentArchive().winner).toBe('u1')
+    // 战报胜方经统一统计源可见
+    expect(summarizeBattle(stream.currentArchive()).winner).toBe('u1')
     // 收尾后再 emit 不再追加
     bus.emit(TRACE_EVENT_ADDED, mk('e3', 3100, 'turn_flow', { summary: '多余' }))
     expect(stream.currentArchive().events.some((e) => e.id === 'e3')).toBe(false)

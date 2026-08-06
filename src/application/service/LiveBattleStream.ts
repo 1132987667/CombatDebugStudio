@@ -117,6 +117,15 @@ export class LiveBattleStream {
 
   /** 当前累计的统一存档（含合成 battle_start 根事件；战斗结束由真实事件表达） */
   currentArchive(): UnifiedArchive {
+    // winner 从 battle_end 生命周期事件提取（真实发射端 finalizeBattleTrace 发 payload.winner）；
+    // 否则实时源战报摘要胜方恒"未分胜负"，与实时弹窗/录制路径（rec.winner 补齐）口径不一致。
+    let winner: string | undefined
+    for (const e of this.events) {
+      if (e.phase === 'battle_lifecycle' && (e.payload as Record<string, unknown>)?.action === 'battle_end') {
+        const w = (e.payload as Record<string, unknown>)?.winner
+        if (typeof w === 'string') winner = w
+      }
+    }
     const events: UnifiedEvent[] = [
       {
         id: 'evt_live_start',
@@ -137,7 +146,7 @@ export class LiveBattleStream {
       version: '2.0.0',
       randomSeed: 'live',
       startTime: Date.now(),
-      winner: undefined,
+      winner,
       initialState: {
         participants: this.initialParticipants.map((p) => ({
           id: p.id,

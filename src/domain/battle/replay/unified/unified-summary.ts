@@ -196,12 +196,20 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
     return s
   }
 
+  /** 设置某单位 HP 绝对值（clamp 到 [0, max]）并同步 hpEnd */
+  const setHp = (id: string, cur: number): void => {
+    const h = hpSim.get(id)
+    if (!h) return
+    h.cur = Math.max(0, Math.min(h.max, cur))
+    const u = units[id]
+    if (u) u.hpEnd = Math.round(h.cur)
+  }
+
+  /** 对某单位 HP 应用增量（伤害为负、治疗为正） */
   const applyHp = (id: string, delta: number): void => {
     const h = hpSim.get(id)
     if (!h) return
-    h.cur = Math.max(0, Math.min(h.max, h.cur + delta))
-    const u = units[id]
-    if (u) u.hpEnd = Math.round(h.cur)
+    setHp(id, h.cur + delta)
   }
 
   const nameOf = (id?: string): string => (id ? units[id]?.name ?? id : '未知')
@@ -218,13 +226,15 @@ export function summarizeBattle(archive: UnifiedArchive, maxTimestamp?: number):
     }
     switch (e.phase) {
       case 'battle_lifecycle': {
-        // 复活：lethalMark 已把目标 alive 标死，复活事件恢复存活与 HP（胜负边际依赖）
+        // 复活：lethalMark 已把目标 alive 标死，复活事件恢复存活与 HP（胜负边际依赖）。
+        // NOTE: 发射端（BattleExecutor）payload.hp 是复活后绝对血量，须 setHp 设置绝对值
+        //       ——加法在"复活前必死亡(HP clamp 0)"时数值等价，但残留/未来数据会分叉。
         if (pl.action === 'revive' && e.targetId) {
           const tgt = units[e.targetId]
           if (tgt) {
             tgt.alive = true
             const hp = typeof pl.hp === 'number' ? pl.hp : 0
-            applyHp(tgt.id, hp)
+            setHp(tgt.id, hp)
           }
         }
         break

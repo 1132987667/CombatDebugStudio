@@ -238,3 +238,55 @@ describe('战报口径：复活 / 触发器伤害 / HOT / 治疗技能名', () =
     expect(sum.keyEvents.filter((e) => e.kind === 'kill').length).toBe(1)
   })
 })
+
+/**
+ * 复活 hp 语义契约：发射端（BattleExecutor）发的是复活后绝对血量（revived.currentHealth），
+ * 统计层必须按"绝对值设置"恢复 HP，而非增量加法。正常流程"复活前必死亡→HP 模拟已 clamp 0"
+ * 两者数值等价，但异常/未来数据（死亡后残留治疗）会分叉——此场景用于锁定绝对值语义。
+ */
+function buildReviveAfterHealArchive(): UnifiedArchive {
+  const ev = (e: { phase: string; correlationId: string; timestamp: number; sourceId?: string; targetId?: string; payload: Record<string, unknown>; summary: string }): UnifiedArchive['events'][number] => ({
+    id: `evt_${e.timestamp}`,
+    phase: e.phase as UnifiedArchive['events'][number]['phase'],
+    correlationId: e.correlationId,
+    timestamp: e.timestamp,
+    level: TraceLevel.INFO,
+    sourceId: e.sourceId,
+    targetId: e.targetId,
+    payload: e.payload,
+    summary: e.summary,
+  })
+  return {
+    battleId: 'bt_revive_heal',
+    replayId: 'rp_revive_heal',
+    version: '2.0.0',
+    randomSeed: 'seed',
+    startTime: 0,
+    winner: 'ally',
+    initialState: {
+      participants: [
+        { id: 'a1', name: '剑客', maxHp: 100, hp: 100, maxEnergy: 100, energy: 100, side: 'ally' },
+        { id: 'e1', name: '史莱姆', maxHp: 100, hp: 100, maxEnergy: 100, energy: 100, side: 'enemy' },
+      ],
+    },
+    events: [
+      ev({ phase: 'damage_calculation', correlationId: 'c1', timestamp: 100, sourceId: 'a1', targetId: 'e1', payload: { result: 60, skillName: '重斩' }, summary: '60' }),
+      ev({ phase: 'damage_calculation', correlationId: 'c1', timestamp: 150, sourceId: 'a1', targetId: 'e1', payload: { result: 40, skillName: '重斩' }, summary: '40' }),
+      ev({ phase: 'damage_calculation', correlationId: 'c2', timestamp: 200, sourceId: 'a1', targetId: 'e1', payload: { result: 0, death: true, lethalMark: true }, summary: '击杀' }),
+      // 异常/未来数据：死亡后 HP 模拟残留治疗（正常引擎不会发生，用于锁定复活绝对值语义）
+      ev({ phase: 'heal_calculation', correlationId: 'c3', timestamp: 250, targetId: 'e1', payload: { result: 50, hot: true }, summary: 'hot 50' }),
+      // 复活：payload.hp = 复活后绝对血量 40
+      ev({ phase: 'battle_lifecycle', correlationId: 'c4', timestamp: 300, targetId: 'e1', payload: { action: 'revive', hp: 40 }, summary: '复活' }),
+    ],
+  }
+}
+
+describe('复活 hp 语义：绝对值而非增量加法', () => {
+  it('复活前 HP 模拟残留治疗时，复活仍按 payload.hp 绝对值恢复', () => {
+    const sum = summarizeBattle(buildReviveAfterHealArchive())
+    const e1 = sum.units.e1
+    // 加法语义（旧实现）会得 50 + 40 = 90；绝对值语义应为 40
+    expect(e1.hpEnd).toBe(40)
+    expect(e1.alive).toBe(true)
+  })
+})

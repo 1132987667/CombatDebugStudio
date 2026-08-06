@@ -4,7 +4,6 @@
  */
 
 import {
-  ActionResultType,
   ParticipantSide,
 } from '@/domain/battle/type/types'
 

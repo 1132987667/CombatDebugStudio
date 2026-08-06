@@ -10,6 +10,7 @@ import { TRACE_EVENT_ADDED } from '@/domain/battle/logs/TraceEventCollector'
 import { validateUnified } from '@/domain/battle/replay/unified/unified-validator'
 import { buildArchiveIndices } from '@/domain/battle/replay/unified/unified-indices'
 import { deriveDebugTree, allNodesFlat } from '@/domain/battle/replay/unified/unified-debug-tree'
+import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
 
 /** 伪领域事件总线 */
 function makeBus(): IDomainEventBus {
@@ -121,5 +122,43 @@ describe('LiveBattleStream', () => {
     const flat = allNodesFlat(entries)
     const covered = new Set(flat.flatMap((n) => n.events.map((e) => e.id)))
     for (const e of idx.evs) expect(covered.has(e.id)).toBe(true)
+  })
+
+  it('真实发射形态（final 而非 result）归一化后战报数值正确', () => {
+    // 真实 TraceDamageLogger / HealCalculator 发 final 字段；录制路径由
+    // normalizeTraceEvent 归一化，实时流必须同样归一化，否则战报输出/治疗恒为 0。
+    const bus = makeBus()
+    const participants = { value: PARTICIPANTS }
+    const stream = new LiveBattleStream({
+      eventBus: bus,
+      collector: null,
+      getParticipants: () => participants.value,
+    })
+    stream.start()
+    bus.emit(TRACE_EVENT_ADDED, mk('d1', 100, 'action_execution', { sourceId: 'u1', summary: '行动' }))
+    bus.emit(TRACE_EVENT_ADDED, mk('d2', 200, 'damage_calculation', {
+      sourceId: 'u1', targetId: 'u2',
+      payload: { final: 120, crit: { rate: 0.3, multiplier: 1.5, triggered: true } },
+      summary: '暴击 120',
+    }))
+    bus.emit(TRACE_EVENT_ADDED, mk('h1', 300, 'heal_calculation', {
+      sourceId: 'u1', targetId: 'u1',
+      payload: { final: 30, skillName: '治疗术' },
+      summary: '治疗 30',
+    }))
+
+    const sum = summarizeBattle(stream.currentArchive())
+    // final → result 归一化：输出/治疗/最高单次可信
+    expect(sum.units.u1.dealt).toBe(120)
+    expect(sum.units.u1.healed).toBe(30)
+    expect(sum.units.u2.taken).toBe(120)
+    expect(sum.units.u1.highestHit).toBe(120)
+    expect(sum.judgment.crits).toBe(1)
+    expect(sum.judgment.hits).toBe(1)
+    // 技能表：damage 120、治疗术 heal 30 均从归一化 result 派生
+    const dmgSkill = sum.skills.find((s) => s.damage > 0)!
+    expect(dmgSkill.damage).toBe(120)
+    const healSkill = sum.skills.find((s) => s.skillName === '治疗术')!
+    expect(healSkill.heal).toBe(30)
   })
 })

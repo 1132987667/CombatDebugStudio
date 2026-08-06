@@ -78,6 +78,12 @@ export class LiveBattleStream {
   }
 
   private append(te: TraceEvent, observeSnapshot: boolean): void {
+    // 真实发射端（TraceDamageLogger / HealCalculator）发 final 字段，与录制路径
+    // normalizeTraceEvent 的 final→result 归一化同口径——否则 summarizeBattle 读
+    // result 时实时源战报输出/治疗恒为 0（实时与录制必须同一统计源）。
+    // 浅拷贝后再归一化，避免改动 TraceEvent 原引用。
+    const payload: Record<string, unknown> = { ...(te.payload ?? {}) }
+    if (typeof payload.final === 'number' && payload.result == null) payload.result = payload.final
     const ev: UnifiedEvent = {
       id: te.id,
       phase: te.phase,
@@ -88,7 +94,7 @@ export class LiveBattleStream {
       turn: te.turn,
       sourceId: te.sourceId,
       targetId: te.targetId,
-      payload: te.payload ?? {},
+      payload,
       summary: te.summary,
     }
     if (observeSnapshot && te.phase !== 'battle_lifecycle') {

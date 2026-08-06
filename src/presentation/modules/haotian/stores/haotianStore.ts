@@ -779,7 +779,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     const head = ['参战单位', '攻击', '输出', '承伤', '治疗', '暴击', '闪避', '抵抗', 'Buff 施加', '击杀']
     const line = (r: { id: string; s: UnitSummary }): string =>
       `| ${escMdCell(nm(r.id))} | ${r.s.attacks} | ${r.s.dealt} | ${r.s.taken} | ${r.s.healed} | ${r.s.crits} | ${r.s.dodges} | ${r.s.resists} | ${r.s.buffsApplied} | ${r.s.kills} |`
-    return [
+    const lines = [
       `## 战斗摘要 · ${escMdCell(sum.battleId)}`,
       '',
       `- 回合数：${sum.rounds}`,
@@ -789,8 +789,36 @@ export const useHaotianStore = defineStore('haotian', () => {
       `| ${head.join(' | ')} |`,
       `| ${head.map(() => '---').join(' | ')} |`,
       ...rows.map(line),
-      '',
-    ].join('\n')
+    ]
+    // L5 技能使用（无事件则省略，避免空表）
+    if (sum.skills.length) {
+      lines.push(
+        '',
+        '### 技能使用',
+        '',
+        '| 技能 | 次数 | 输出 | 占比 | 治疗 | 暴击 |',
+        '| --- | --- | --- | --- | --- | --- |',
+        ...sum.skills.map((s) => `| ${escMdCell(s.skillName)} | ${s.uses} | ${s.damage} | ${s.pct}% | ${s.heal} | ${s.crits} |`),
+      )
+    }
+    // L6 被动触发
+    if (sum.passives.length) {
+      lines.push(
+        '',
+        '### 被动触发',
+        '',
+        '| 被动 | 拥有者 | 触发次数 |',
+        '| --- | --- | --- |',
+        ...sum.passives.map((p) => `| ${escMdCell(p.name)} | ${escMdCell(p.owner)} | ${p.triggered} |`),
+      )
+    }
+    // L7 关键事件
+    if (sum.keyEvents.length) {
+      lines.push('', '### 关键事件', '')
+      for (const e of sum.keyEvents) lines.push(`- T${e.turn} ${escMdCell(e.text)}`)
+    }
+    lines.push('')
+    return lines.join('\n')
   }
 
   function summaryCsv(): string {

@@ -153,4 +153,19 @@ describe('winnerLabel（胜方翻译 — 与实时战报弹窗口径一致，修
     await s.loadDemo()
     expect(s.summaryMarkdown()).toContain('- 胜方：[友方]火护法')
   })
+
+  it('summaryMarkdown 导出：含 L5 技能 / L6 被动 / L7 关键事件（完整七层报告）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    const md = s.summaryMarkdown()
+    // L5 技能：demo 无 skillName 归"未标记技能"，5 次伤害 572
+    expect(md).toContain('### 技能使用')
+    expect(md).toContain('| 未标记技能 | 5 | 572 |')
+    // L6 被动：复仇怒火触发 1 次
+    expect(md).toContain('### 被动触发')
+    expect(md).toContain('| 复仇怒火 | 火护法 | 1 |')
+    // L7 关键事件：最高单次 306
+    expect(md).toContain('### 关键事件')
+    expect(md).toContain('306')
+  })
 })

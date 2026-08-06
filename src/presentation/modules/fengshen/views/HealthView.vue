@@ -23,7 +23,7 @@
             <td class="fs-cell-id">{{ issue.sourceId }}</td>
             <td>{{ issue.field }}</td>
             <td class="fs-cell-missing">{{ issue.missingId }}</td>
-            <td>{{ issue.targetTable }}</td>
+            <td :title="`表名：${issue.targetTable}`">{{ tableLabel(issue.targetTable) }}</td>
             <td class="fs-col-actions">
               <Button size="small" :title="`跳转到「${tableLabel(issue.sourceTable)}」表并定位该实体`"
                 @click="store.navigateTo(issue.sourceTable, issue.sourceId)">定位引用方</Button>

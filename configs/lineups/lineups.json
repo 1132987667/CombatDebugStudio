@@ -3,7 +3,6 @@
     "id": "lineup_001",
     "name": "五行试炼阵",
     "description": "五系护法齐整的均衡阵容，攻守兼备，适合 1~10 级关卡开荒。",
-    "side": "ally",
     "formationId": "crane_wing",
     "roles": [
       { "seatIndex": 0, "roleId": "guardian_fire" },
@@ -17,7 +16,6 @@
     "id": "lineup_002",
     "name": "铁壁坚守阵",
     "description": "土金双护法前排承伤，水护法续航辅助，主打防守反击。",
-    "side": "ally",
     "formationId": "iron_wall",
     "roles": [
       { "seatIndex": 0, "roleId": "guardian_earth" },
@@ -31,7 +29,6 @@
     "id": "lineup_003",
     "name": "花妖先锋阵",
     "description": "小花山试炼敌方编组：花妖王率众花妖精锐，供场景 hard 难度引用。",
-    "side": "enemy",
     "formationId": "crane_wing",
     "roles": [
       { "seatIndex": 0, "roleId": "enemy_007" },
@@ -45,7 +42,6 @@
     "id": "lineup_004",
     "name": "浅水涧巡守阵",
     "description": "浅水涧试炼敌方编组：金甲蟹将统领虾兵蟹将，供场景 hard 难度引用。",
-    "side": "enemy",
     "formationId": "iron_wall",
     "roles": [
       { "seatIndex": 0, "roleId": "enemy_016" },

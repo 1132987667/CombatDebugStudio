@@ -336,7 +336,6 @@ describe('数据源切换（GameDataProcessor）', () => {
     const lineup = {
       id: 'lineup_t',
       name: '测试阵容',
-      side: 'enemy' as const,
       formationId: 'crane_wing',
       roles: [
         { seatIndex: 1, roleId: 'enemy_missing' },
@@ -354,7 +353,7 @@ describe('数据源切换（GameDataProcessor）', () => {
       getSkills: () => [] as SkillConfig[],
       getScenes: () => [] as SceneData[],
       getLineups: () => [
-        { id: 'lineup_1', name: '阵容1', side: 'ally', formationId: 'f1', roles: [] },
+        { id: 'lineup_1', name: '阵容1', formationId: 'f1', roles: [] },
       ],
     }
     GameDataProcessor.setDataSource(source)

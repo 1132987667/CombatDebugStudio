@@ -187,7 +187,6 @@ const KIND_LABEL: Record<string, Record<string, string>> = {
     attribute: '属性修正', aura: '光环', dot: '持续伤害', hot: '持续治疗',
     shield: '护盾', control: '控制', immunity: '免疫', trigger: '触发',
   },
-  side: { ally: '我方', enemy: '敌方' },
   type: { small: '小技能', ultimate: '大技能', passive: '被动', material: '材料', consumable: '消耗品' },
   slot: { weapon: '武器', armor: '防具', accessory: '饰品' },
 }
@@ -195,7 +194,6 @@ const KIND_LABEL: Record<string, Record<string, string>> = {
 const KIND_CLS: Record<string, (v: string) => string> = {
   polarity: (v) => (v === 'positive' ? 'fs-tag-buff' : 'fs-tag-danger'),
   category: (v) => (v === 'control' || v === 'dot' ? 'fs-tag-danger' : v === 'aura' || v === 'immunity' ? 'fs-tag-aura' : v === 'shield' || v === 'hot' || v === 'trigger' ? 'fs-tag-aura' : 'fs-tag-buff'),
-  side: (v) => (v === 'ally' ? 'fs-tag-ok' : 'fs-tag-danger'),
   type: (v) => (v === 'passive' || v === 'material' ? 'fs-tag-muted' : v === 'consumable' ? 'fs-tag-buff' : 'fs-tag-aura'),
   slot: (v) => (v === 'accessory' ? 'fs-tag-buff' : 'fs-tag-aura'),
   neutral: () => 'fs-tag-aura',

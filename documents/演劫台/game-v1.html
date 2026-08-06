@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>西游斗战 · 水墨降妖录</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --jiao: #1a1a1a; --nong: #333333; --dan: #666666; --qing: #999999;
+  --xuan: #F8F5F0; --mi: #FAF0E6; --xiang: #FFFFF0;
+  --zhu: #C41E3A; --qinglv: #2E8B57; --jin: #D4AF37;
+}
+body {
+  font-family: "KaiTi", "STKaiti", "楷体", serif;
+  background: var(--xuan);
+  color: var(--nong);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(51,51,51,.05); }
+::-webkit-scrollbar-thumb { background: rgba(51,51,51,.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(51,51,51,.5); }
+
+/* ===== 主布局 ===== */
+#app { display: flex; height: 100vh; }
+.panel-left { width: 220px; min-width: 220px; border-right: 1px solid rgba(51,51,51,.15); display: flex; flex-direction: column; }
+.panel-center { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.panel-right { width: 280px; min-width: 280px; border-left: 1px solid rgba(51,51,51,.15); display: flex; flex-direction: column; }
+.panel-menu { width: 52px; min-width: 52px; border-left: 1px solid rgba(51,51,51,.15); display: flex; flex-direction: column; background: var(--mi); }
+
+.panel-title {
+  padding: 8px 12px;
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--jiao);
+  border-bottom: 2px solid var(--jiao);
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-title::after {
+  content: '';
+  width: 8px; height: 8px;
+  background: var(--zhu);
+  border-radius: 2px;
+  opacity: .6;
+}
+
+/* ===== 场景列表 ===== */
+#sceneList { flex: 1; overflow-y: auto; padding: 8px; }
+.scene-card {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(51,51,51,.2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .2s;
+  background: rgba(255,255,255,.5);
+  position: relative;
+}
+.scene-card:hover { border-color: var(--dan); box-shadow: 0 2px 8px rgba(51,51,51,.1); transform: translateX(2px); }
+.scene-card.active { border-color: var(--zhu); background: rgba(196,30,58,.03); }
+.scene-card.locked { opacity: .45; cursor: not-allowed; }
+.scene-card .scene-name { font-size: 14px; font-weight: bold; color: var(--jiao); }
+.scene-card .scene-info { font-size: 11px; color: var(--dan); margin-top: 2px; }
+.scene-card .scene-story { font-size: 11px; color: var(--qing); margin-top: 3px; font-style: italic; }
+.scene-card .scene-lock { position: absolute; right: 8px; top: 8px; font-size: 10px; color: var(--qing); }
+
+/* ===== 战斗区域 ===== */
+.battle-header {
+  padding: 10px 16px;
+  text-align: center;
+  border-bottom: 1px solid rgba(51,51,51,.1);
+}
+.battle-scene-name { font-size: 20px; font-weight: bold; color: var(--jiao); letter-spacing: 3px; }
+.battle-difficulty { font-size: 12px; color: var(--dan); margin-top: 2px; }
+.enemy-bubbles { display: flex; justify-content: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.enemy-bubble {
+  padding: 3px 10px;
+  background: rgba(51,51,51,.05);
+  border: 1px solid rgba(51,51,51,.15);
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.enemy-bubble:hover { background: rgba(196,30,58,.08); border-color: var(--zhu); }
+.enemy-bubble .eb-name { color: var(--jiao); }
+.enemy-bubble .eb-lv { color: var(--zhu); margin-left: 3px; font-size: 11px; }
+
+.battle-field {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  padding: 12px 20px;
+  gap: 16px;
+  min-height: 0;
+}
+.combatant {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px;
+  border: 1px solid rgba(51,51,51,.1);
+  border-radius: 8px;
+  background: rgba(255,255,255,.3);
+}
+.combatant.player-side { border-left: 3px solid var(--qinglv); }
+.combatant.enemy-side { border-right: 3px solid var(--zhu); }
+.combatant-name { font-size: 15px; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.combatant-name .tag { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: rgba(51,51,51,.1); color: var(--dan); }
+
+.bar-container { margin-bottom: 8px; }
+.bar-label { font-size: 11px; color: var(--dan); display: flex; justify-content: space-between; margin-bottom: 2px; }
+.bar-track { height: 14px; background: rgba(51,51,51,.08); border-radius: 7px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; border-radius: 7px; transition: width .4s ease; }
+.bar-hp { background: linear-gradient(90deg, var(--zhu), #e87a8a); }
+.bar-en { background: linear-gradient(90deg, var(--jin), #f0d890); }
+.bar-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; text-shadow: 0 0 2px rgba(0,0,0,.5); }
+
+.battle-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: rgba(51,51,51,.15);
+  font-weight: bold;
+  width: 40px;
+}
+
+.skill-bar {
+  padding: 10px 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  border-top: 1px solid rgba(51,51,51,.1);
+}
+.skill-btn {
+  padding: 8px 18px;
+  border: 1px solid rgba(51,51,51,.3);
+  background: rgba(255,255,255,.7);
+  color: var(--nong);
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  transition: all .2s;
+  position: relative;
+}
+.skill-btn:hover:not(:disabled) { border-color: var(--zhu); color: var(--zhu); box-shadow: 0 2px 8px rgba(196,30,58,.15); }
+.skill-btn:disabled { opacity: .4; cursor: not-allowed; }
+.skill-btn.auto-btn { border-radius: 50%; width: 42px; height: 42px; padding: 0; font-size: 11px; }
+.skill-btn.auto-btn.on { background: var(--jin); color: #fff; border-color: var(--jin); }
+.skill-btn .cost { display: block; font-size: 10px; color: var(--qing); }
+.skill-btn.ult { border-color: var(--zhu); color: var(--zhu); }
+.skill-btn.ult:hover:not(:disabled) { background: rgba(196,30,58,.08); }
+
+.battle-log {
+  height: 120px;
+  border-top: 1px solid rgba(51,51,51,.1);
+  padding: 8px 16px;
+  overflow-y: auto;
+  font-size: 12px;
+  background: rgba(255,255,255,.4);
+}
+.log-title { font-size: 13px; font-weight: bold; color: var(--jiao); margin-bottom: 4px; }
+.log-item { padding: 2px 0; color: var(--dan); border-bottom: 1px dashed rgba(51,51,51,.05); }
+.log-item .highlight { color: var(--zhu); font-weight: bold; }
+.log-item .heal { color: var(--qinglv); }
+
+/* ===== 右侧功能面板 ===== */
+.func-tabs { display: flex; flex-direction: column; gap: 4px; padding: 8px 4px; }
+.func-tab {
+  padding: 10px 4px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all .2s;
+  font-size: 12px;
+  color: var(--dan);
+}
+.func-tab:hover { background: rgba(51,51,51,.05); color: var(--nong); }
+.func-tab.active { background: var(--zhu); color: #fff; border-color: var(--zhu); }
+.func-tab .tab-icon { display: block; font-size: 14px; margin-bottom: 2px; opacity: .7; }
+
+.func-content { flex: 1; overflow-y: auto; padding: 10px; }
+
+/* 背包 */
+.inv-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.inv-tab {
+  flex: 1;
+  padding: 5px;
+  text-align: center;
+  border: 1px solid rgba(51,51,51,.2);
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 3px;
+  transition: all .2s;
+}
+.inv-tab:hover { border-color: var(--dan); }
+.inv-tab.active { background: var(--nong); color: var(--xiang); border-color: var(--nong); }
+
+.inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.inv-item {
+  aspect-ratio: 1;
+  border: 1px solid rgba(51,51,51,.15);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: rgba(255,255,255,.6);
+  padding: 2px;
+  position: relative;
+  font-size: 10px;
+  text-align: center;
+}
+.inv-item:hover { border-color: var(--zhu); transform: translateY(-2px); box-shadow: 0 3px 8px rgba(51,51,51,.1); }
+.inv-item .item-name { font-size: 10px; color: var(--nong); line-height: 1.2; }
+.inv-item .item-count { position: absolute; bottom: 2px; right: 3px; font-size: 9px; color: var(--qing); }
+.inv-item.rarity-common { border-bottom: 2px solid var(--dan); }
+.inv-item.rarity-rare { border-bottom: 2px solid var(--qinglv); }
+.inv-item.rarity-legendary { border-bottom: 2px solid var(--jin); }
+
+/* 技艺 */
+.craft-item {
+  padding: 8px;
+  border: 1px solid rgba(51,51,51,.1);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,.5);
+}
+.craft-item .craft-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.craft-item .craft-name { font-weight: bold; color: var(--jiao); }
+.craft-item .craft-lv { font-size: 11px; color: var(--zhu); }
+.progress-bar { height: 6px; background: rgba(51,51,51,.1); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--qinglv); border-radius: 3px; }
+.craft-item .craft-effect { font-size: 11px; color: var(--dan); margin-top: 4px; }
+
+/* 角色属性 */
+.char-header { text-align: center; padding: 10px; border-bottom: 1px solid rgba(51,51,51,.1); margin-bottom: 10px; }
+.char-name { font-size: 18px; font-weight: bold; color: var(--jiao); }
+.char-lv { font-size: 12px; color: var(--zhu); margin-top: 2px; }
+.attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.attr-item {
+  padding: 6px 8px;
+  background: rgba(255,255,255,.5);
+  border: 1px solid rgba(51,51,51,.1);
+  border-radius: 4px;
+  font-size: 12px;
+}
+.attr-item .attr-label { color: var(--dan); font-size: 11px; }
+.attr-item .attr-value { color: var(--jiao); font-weight: bold; font-size: 13px; }
+
+/* 流派技能 */
+.dao-section { margin-bottom: 12px; }
+.dao-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--jiao);
+  padding: 6px 10px;
+  background: rgba(51,51,51,.05);
+  border-left: 3px solid var(--zhu);
+  margin-bottom: 6px;
+}
+.skill-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.skill-card {
+  aspect-ratio: 1;
+  border: 2px solid rgba(51,51,51,.2);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: rgba(255,255,255,.6);
+  padding: 4px;
+  text-align: center;
+}
+.skill-card:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(51,51,51,.12); }
+.skill-card.selected { border-color: var(--jin); background: rgba(212,175,55,.08); }
+.skill-card.viewing { border-color: #4a90d9; background: rgba(74,144,217,.06); }
+.skill-card.locked { opacity: .4; }
+.skill-card .sk-name { font-size: 11px; font-weight: bold; color: var(--jiao); }
+.skill-card .sk-type { font-size: 10px; color: var(--qing); margin-top: 2px; }
+.skill-card .sk-cost { font-size: 9px; color: var(--dan); margin-top: 2px; }
+
+.skill-points {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px;
+  background: rgba(51,51,51,.03);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.skill-points span { color: var(--zhu); font-weight: bold; }
+
+.dao-actions { display: flex; gap: 8px; margin-top: 10px; }
+.dao-actions button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid rgba(51,51,51,.3);
+  background: rgba(255,255,255,.7);
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  transition: all .2s;
+}
+.dao-actions button:hover { border-color: var(--zhu); color: var(--zhu); }
+.dao-actions button.primary { background: var(--zhu); color: #fff; border-color: var(--zhu); }
+.dao-actions button.primary:hover { background: #a51830; }
+
+/* 洞府 */
+.craft-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.craft-action-btn {
+  padding: 16px 8px;
+  border: 1px solid rgba(51,51,51,.2);
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: rgba(255,255,255,.5);
+}
+.craft-action-btn:hover { border-color: var(--jin); background: rgba(212,175,55,.05); transform: translateY(-2px); }
+.craft-action-btn .ca-icon { font-size: 20px; margin-bottom: 4px; opacity: .8; }
+.craft-action-btn .ca-name { font-size: 13px; font-weight: bold; color: var(--jiao); }
+.craft-action-btn .ca-desc { font-size: 11px; color: var(--qing); margin-top: 2px; }
+
+/* ===== 弹窗 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,26,.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--xuan);
+  border: 2px solid var(--nong);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 720px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(26,26,26,.3);
+  animation: modalIn .25s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-header {
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--nong);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-title { font-size: 16px; font-weight: bold; color: var(--jiao); letter-spacing: 2px; }
+.modal-close {
+  width: 26px; height: 26px;
+  border: 1px solid var(--dan);
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--dan);
+  transition: all .2s;
+}
+.modal-close:hover { border-color: var(--zhu); color: var(--zhu); }
+.modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 12px 16px; border-top: 1px solid rgba(51,51,51,.1); display: flex; justify-content: flex-end; gap: 8px; }
+
+.btn {
+  padding: 8px 20px;
+  border: 1px solid rgba(51,51,51,.3);
+  background: rgba(255,255,255,.7);
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  transition: all .2s;
+}
+.btn:hover { border-color: var(--zhu); color: var(--zhu); }
+.btn-primary { background: var(--zhu); color: #fff; border-color: var(--zhu); }
+.btn-primary:hover { background: #a51830; color: #fff; }
+.btn-gold { background: var(--jin); color: #fff; border-color: var(--jin); }
+.btn-gold:hover { background: #b8962e; color: #fff; }
+
+/* 详情面板 */
+.detail-section { margin-bottom: 12px; }
+.detail-label { font-size: 12px; color: var(--dan); margin-bottom: 3px; }
+.detail-value { font-size: 13px; color: var(--jiao); line-height: 1.6; }
+.detail-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.tag-badge {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  border: 1px solid;
+}
+.tag-common { color: var(--dan); border-color: var(--dan); background: rgba(102,102,102,.05); }
+.tag-rare { color: var(--qinglv); border-color: var(--qinglv); background: rgba(46,139,87,.05); }
+.tag-legendary { color: var(--jin); border-color: var(--jin); background: rgba(212,175,55,.08); }
+.tag-type { color: var(--nong); border-color: var(--nong); background: rgba(51,51,51,.05); }
+
+/* 配方/列表 */
+.recipe-list { display: flex; flex-direction: column; gap: 8px; }
+.recipe-card {
+  border: 1px solid rgba(51,51,51,.15);
+  border-radius: 6px;
+  padding: 10px;
+  background: rgba(255,255,255,.5);
+  cursor: pointer;
+  transition: all .2s;
+}
+.recipe-card:hover { border-color: var(--dan); box-shadow: 0 2px 8px rgba(51,51,51,.08); }
+.recipe-card.selected { border-color: var(--zhu); background: rgba(196,30,58,.03); }
+.recipe-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.recipe-name { font-weight: bold; color: var(--jiao); font-size: 14px; }
+.recipe-tier { font-size: 11px; color: var(--zhu); }
+.recipe-mats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.mat-chip {
+  padding: 2px 8px;
+  background: rgba(51,51,51,.05);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--dan);
+}
+.mat-chip.enough { color: var(--qinglv); }
+.mat-chip.not-enough { color: var(--zhu); }
+.recipe-desc { font-size: 12px; color: var(--dan); line-height: 1.5; }
+.recipe-cost { font-size: 12px; color: var(--jin); margin-top: 4px; }
+
+/* 表格 */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th, .data-table td {
+  padding: 6px 8px;
+  border: 1px solid rgba(51,51,51,.1);
+  text-align: left;
+}
+.data-table th { background: rgba(51,51,51,.05); color: var(--jiao); font-weight: bold; }
+.data-table tr:hover td { background: rgba(51,51,51,.02); }
+
+/* 词条 */
+.affix-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.affix-item { font-size: 12px; color: var(--dan); padding: 3px 8px; background: rgba(51,51,51,.03); border-radius: 3px; }
+
+/* 任务 */
+.quest-item {
+  padding: 10px;
+  border: 1px solid rgba(51,51,51,.1);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,.5);
+}
+.quest-item.completed { opacity: .6; }
+.quest-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.quest-name { font-weight: bold; color: var(--jiao); }
+.quest-status { font-size: 11px; padding: 1px 6px; border-radius: 3px; }
+.quest-status.done { background: rgba(46,139,87,.1); color: var(--qinglv); }
+.quest-status.doing { background: rgba(212,175,55,.1); color: var(--jin); }
+.quest-desc { font-size: 12px; color: var(--dan); margin-bottom: 4px; }
+.quest-reward { font-size: 11px; color: var(--qinglv); }
+
+/* 存档 */
+.save-info { font-size: 12px; color: var(--dan); line-height: 1.8; }
+.save-info pre { background: rgba(51,51,51,.03); padding: 10px; border-radius: 4px; font-size: 11px; overflow-x: auto; margin-top: 8px; }
+
+/* 提示 */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--nong);
+  color: var(--xiang);
+  padding: 10px 24px;
+  border-radius: 4px;
+  font-size: 13px;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* 战斗结果 */
+.result-panel { text-align: center; padding: 20px; }
+.result-title { font-size: 24px; font-weight: bold; margin-bottom: 12px; }
+.result-title.win { color: var(--qinglv); }
+.result-title.lose { color: var(--zhu); }
+.result-rewards { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.result-reward { font-size: 13px; color: var(--dan); }
+
+/* 设置 */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(51,51,51,.08);
+}
+.setting-label { font-size: 13px; color: var(--nong); }
+.toggle {
+  width: 44px; height: 22px;
+  background: rgba(51,51,51,.15);
+  border-radius: 11px;
+  position: relative;
+  cursor: pointer;
+  transition: background .2s;
+}
+.toggle.on { background: var(--qinglv); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform .2s;
+}
+.toggle.on::after { transform: translateX(22px); }
+
+select {
+  padding: 6px 10px;
+  border: 1px solid rgba(51,51,51,.2);
+  border-radius: 4px;
+  background: rgba(255,255,255,.8);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--nong);
+  cursor: pointer;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .panel-left { width: 180px; min-width: 180px; }
+  .panel-right { width: 240px; min-width: 240px; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- 左侧：场景 -->
+  <div class="panel-left">
+    <div class="panel-title">降妖路引</div>
+    <div id="sceneList"></div>
+  </div>
+
+  <!-- 中间：战斗 -->
+  <div class="panel-center">
+    <div class="battle-header">
+      <div class="battle-scene-name" id="currentSceneName">小花山</div>
+      <div class="battle-difficulty" id="currentDifficulty">难度：简单 ｜ 敌人等级：1-3</div>
+      <div class="enemy-bubbles" id="enemyBubbles"></div>
+    </div>
+
+    <div class="battle-field">
+      <div class="combatant player-side">
+        <div class="combatant-name">
+          <span>天命人</span>
+          <span class="tag" id="playerLvTag">Lv.1</span>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label"><span>气血</span><span id="playerHpText">100/100</span></div>
+          <div class="bar-track"><div class="bar-fill bar-hp" id="playerHpBar" style="width:100%"></div></div>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label"><span>能量</span><span id="playerEnText">25/150</span></div>
+          <div class="bar-track"><div class="bar-fill bar-en" id="playerEnBar" style="width:16.7%"></div></div>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:var(--dan);">
+          <div>攻击：<span id="pAtk">5-8</span> ｜ 防御：<span id="pDef">3</span></div>
+          <div>速度：<span id="pSpd">10</span> ｜ 暴击：<span id="pCrit">5%</span></div>
+        </div>
+      </div>
+
+      <div class="battle-vs">对</div>
+
+      <div class="combatant enemy-side">
+        <div class="combatant-name">
+          <span id="enemyName">花妖</span>
+          <span class="tag" id="enemyLvTag">Lv.1</span>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label"><span>气血</span><span id="enemyHpText">50/50</span></div>
+          <div class="bar-track"><div class="bar-fill bar-hp" id="enemyHpBar" style="width:100%"></div></div>
+        </div>
+        <div class="bar-container">
+          <div class="bar-label"><span>能量</span><span id="enemyEnText">0/150</span></div>
+          <div class="bar-track"><div class="bar-fill bar-en" id="enemyEnBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:var(--dan);">
+          <div>攻击：<span id="eAtk">3-5</span> ｜ 防御：<span id="eDef">2</span></div>
+          <div>速度：<span id="eSpd">8</span> ｜ 掉落：桃木×2 (80%)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="skill-bar">
+      <button class="skill-btn auto-btn" id="autoBtn" onclick="toggleAuto()">自动</button>
+      <button class="skill-btn" onclick="useSkill('normal')">普攻<span class="cost">无消耗</span></button>
+      <button class="skill-btn" id="skill1Btn" onclick="useSkill('skill1')">破甲斩<span class="cost">50能量</span></button>
+      <button class="skill-btn" id="skill2Btn" onclick="useSkill('skill2')">治疗术<span class="cost">50能量</span></button>
+      <button class="skill-btn ult" id="ultBtn" onclick="useSkill('ult')">金刚怒<span class="cost">150能量</span></button>
+    </div>
+
+    <div class="battle-log">
+      <div class="log-title">战斗心经</div>
+      <div id="logContent">
+        <div class="log-item">战斗开始！选择场景中的敌人开始战斗。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧：功能 -->
+  <div class="panel-right">
+    <div class="panel-title" id="funcPanelTitle">乾坤袋</div>
+    <div class="func-content" id="funcContent"></div>
+  </div>
+
+  <!-- 最右侧：菜单 -->
+  <div class="panel-menu">
+    <div class="func-tabs">
+      <div class="func-tab active" data-func="bag" onclick="switchFunc('bag')"><span class="tab-icon">袋</span>背包</div>
+      <div class="func-tab" data-func="craft" onclick="switchFunc('craft')"><span class="tab-icon">艺</span>技艺</div>
+      <div class="func-tab" data-func="char" onclick="switchFunc('char')"><span class="tab-icon">角</span>角色</div>
+      <div class="func-tab" data-func="dao" onclick="switchFunc('dao')"><span class="tab-icon">流</span>流派</div>
+      <div class="func-tab" data-func="home" onclick="switchFunc('home')"><span class="tab-icon">洞</span>洞府</div>
+      <div class="func-tab" data-func="quest" onclick="switchFunc('quest')"><span class="tab-icon">志</span>任务</div>
+      <div class="func-tab" data-func="save" onclick="switchFunc('save')"><span class="tab-icon">存</span>存档</div>
+      <div class="func-tab" data-func="setting" onclick="openModal('settingModal')"><span class="tab-icon">设</span>设置</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 物品详情弹窗 ===== -->
+<div class="modal-overlay" id="itemDetailModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="itemDetailName">物品名称</div>
+      <button class="modal-close" onclick="closeModal('itemDetailModal')">××</button>
+    </div>
+    <div class="modal-body" id="itemDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('itemDetailModal')">关闭</button>
+      <button class="btn btn-primary" id="itemUseBtn" style="display:none">使用</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 装备打造弹窗 ===== -->
+<div class="modal-overlay" id="craftModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">打造装备</div>
+      <button class="modal-close" onclick="closeModal('craftModal')">××</button>
+    </div>
+    <div class="modal-body">
+      <div class="inv-tabs" style="margin-bottom:12px">
+        <div class="inv-tab active" data-ctype="weapon" onclick="switchCraftType('weapon')">武器</div>
+        <div class="inv-tab" data-ctype="armor" onclick="switchCraftType('armor')">衣服</div>
+        <div class="inv-tab" data-ctype="accessory" onclick="switchCraftType('accessory')">饰品</div>
+      </div>
+      <div class="recipe-list" id="craftRecipeList"></div>
+    </div>
+    <div class="modal-footer">
+      <span style="margin-right:auto;font-size:12px;color:var(--dan)" id="craftMoneyText">金钱：1000</span>
+      <button class="btn" onclick="closeModal('craftModal')">关闭</button>
+      <button class="btn btn-primary" onclick="doCraft()">打造</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 强化装备弹窗 ===== -->
+<div class="modal-overlay" id="enhanceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">强化装备</div>
+      <button class="modal-close" onclick="closeModal('enhanceModal')">××</button>
+    </div>
+    <div class="modal-body" id="enhanceBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('enhanceModal')">关闭</button>
+      <button class="btn btn-primary" onclick="doEnhance()">强化</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 装备升星弹窗 ===== -->
+<div class="modal-overlay" id="starModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">装备升星</div>
+      <button class="modal-close" onclick="closeModal('starModal')">××</button>
+    </div>
+    <div class="modal-body" id="starBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('starModal')">关闭</button>
+      <button class="btn btn-gold" onclick="doStar()">升星</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 炼丹弹窗 ===== -->
+<div class="modal-overlay" id="alchemyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">炼制丹药</div>
+      <button class="modal-close" onclick="closeModal('alchemyModal')">××</button>
+    </div>
+    <div class="modal-body" id="alchemyBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('alchemyModal')">关闭</button>
+      <button class="btn btn-primary" onclick="doAlchemy()">炼制</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 技能修炼弹窗 ===== -->
+<div class="modal-overlay" id="skillModal">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-header">
+      <div class="modal-title">技能修炼</div>
+      <button class="modal-close" onclick="closeModal('skillModal')">××</button>
+    </div>
+    <div class="modal-body">
+      <div class="skill-points">
+        技能点数：被动 <span id="spPassive">1</span> ｜ 小技能 <span id="spSmall">2</span> ｜ 大招 <span id="spUlt">1</span>
+      </div>
+      <div id="skillTreeBody"></div>
+      <div style="margin-top:10px;padding:10px;background:rgba(51,51,51,.03);border-radius:4px;font-size:12px;color:var(--dan)" id="skillPreview">
+        选择一个技能查看详情
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="resetSkills()">重置</button>
+      <button class="btn btn-primary" onclick="confirmSkills()">确认选择</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 敌人详情弹窗 ===== -->
+<div class="modal-overlay" id="enemyDetailModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title" id="enemyDetailName">敌人详情</div>
+      <button class="modal-close" onclick="closeModal('enemyDetailModal')">××</button>
+    </div>
+    <div class="modal-body" id="enemyDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('enemyDetailModal')">关闭</button>
+      <button class="btn btn-primary" onclick="fightSelectedEnemy()">挑战</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOSS详情弹窗 ===== -->
+<div class="modal-overlay" id="bossModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">妖王名录</div>
+      <button class="modal-close" onclick="closeModal('bossModal')">××</button>
+    </div>
+    <div class="modal-body" id="bossBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('bossModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 战斗结果弹窗 ===== -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">战斗结算</div>
+      <button class="modal-close" onclick="closeModal('resultModal')">××</button>
+    </div>
+    <div class="modal-body result-panel" id="resultBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('resultModal')">继续</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 设置弹窗 ===== -->
+<div class="modal-overlay" id="settingModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">游戏设置</div>
+      <button class="modal-close" onclick="closeModal('settingModal')">××</button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <span class="setting-label">音效</span>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">音乐</span>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">自动战斗</span>
+        <div class="toggle" id="settingAuto" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">游戏难度</span>
+        <select>
+          <option>简单</option>
+          <option selected>普通</option>
+          <option>困难</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('settingModal')">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 存档弹窗 ===== -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">存档管理</div>
+      <button class="modal-close" onclick="closeModal('saveModal')">××</button>
+    </div>
+    <div class="modal-body" id="saveBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="exportSave()">导出存档</button>
+      <button class="btn" onclick="importSave()">导入存档</button>
+      <button class="btn btn-primary" onclick="manualSave()">手动存档</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== 数据定义 ====================
+const ITEMS = {
+  materials: [
+    {id:'mat_001',name:'桃木',type:'木材',rarity:'普通',desc:'普通桃树的木材，质地轻盈坚韧，适合制作轻型武器和木甲。',use:'制作一阶装备的基础材料',sell:5,buy:10,count:12},
+    {id:'mat_002',name:'粗石',type:'矿石',rarity:'普通',desc:'粗糙的石块，蕴含微弱的地脉灵气，可用于基础装备制作。',use:'制作一阶装备和饰品的基础材料',sell:3,buy:6,count:8},
+    {id:'mat_003',name:'铜精',type:'金属',rarity:'普通',desc:'经过初步提炼的铜矿石精华，具有较好的延展性和韧性。',use:'制作一阶装备和饰品的主要金属材料',sell:8,buy:16,count:6},
+    {id:'mat_004',name:'淡水玉',type:'玉石',rarity:'普通',desc:'产自淡水河流中的玉石，蕴含温和的水属性灵气。',use:'制作一阶饰品护符和手镯',sell:10,buy:20,count:4},
+    {id:'mat_005',name:'贝壳',type:'水产',rarity:'普通',desc:'河滩上常见的贝壳，可用于制作简单的装饰品。',use:'制作一阶饰品戒指和手镯',sell:4,buy:8,count:10},
+    {id:'mat_006',name:'松木',type:'木材',rarity:'普通',desc:'松树的木材，质地比桃木更坚硬，适合制作中型武器。',use:'制作二阶装备的基础材料',sell:12,buy:24,count:5},
+    {id:'mat_007',name:'铁精',type:'金属',rarity:'普通',desc:'精炼过的铁矿石，硬度高且耐磨，适合制作中级装备。',use:'制作二阶装备和饰品的主要金属材料',sell:15,buy:30,count:3},
+    {id:'mat_008',name:'深水玉',type:'玉石',rarity:'普通',desc:'产自深水区域的玉石，蕴含更浓郁的水属性灵气。',use:'制作二阶饰品护符和手镯',sell:18,buy:36,count:2},
+    {id:'mat_009',name:'鹿皮',type:'皮革',rarity:'普通',desc:'鹿的皮革，柔软且坚韧，适合制作轻型护甲。',use:'制作一阶皮甲的基础材料',sell:7,buy:14,count:4},
+    {id:'mat_010',name:'宣纸',type:'织物',rarity:'普通',desc:'传统制作的宣纸，轻盈且有韧性，可用于制作饰品。',use:'制作一阶饰品腰带',sell:6,buy:12,count:6},
+    {id:'mat_011',name:'青花瓷',type:'陶瓷',rarity:'普通',desc:'精美的青花瓷器碎片，具有艺术价值和灵气。',use:'制作二阶饰品戒指和腰带',sell:20,buy:40,count:1},
+    {id:'mat_012',name:'熊皮',type:'皮革',rarity:'普通',desc:'熊的皮革，厚实耐磨，适合制作中级皮甲。',use:'制作二阶皮甲的基础材料',sell:25,buy:50,count:2},
+    {id:'mat_013',name:'铁木',type:'木材',rarity:'稀有',desc:'质地坚硬如铁的木材，极为稀有，适合制作高级装备。',use:'制作三阶装备的基础材料',sell:40,buy:80,count:1},
+    {id:'mat_014',name:'铁焰矿',type:'矿石',rarity:'普通',desc:'在火焰山附近找到的特殊矿石，蕴含火属性灵气。',use:'制作特殊装备的材料',sell:25,buy:50,count:0},
+    {id:'mat_015',name:'古铜镜',type:'古董',rarity:'稀有',desc:'古老的铜镜，蕴含着神秘的灵气，可用于制作高级饰品。',use:'制作三阶饰品腰带',sell:60,buy:120,count:0},
+    {id:'mat_016',name:'金精',type:'金属',rarity:'稀有',desc:'提炼出的黄金精华，极其珍贵，适合制作顶级装备。',use:'制作三阶装备和饰品的主要金属材料',sell:80,buy:160,count:0},
+    {id:'mat_017',name:'圣水玉',type:'玉石',rarity:'稀有',desc:'蕴含神圣水属性的玉石，极为纯净，适合制作顶级饰品。',use:'制作三阶饰品护符和手镯',sell:70,buy:140,count:0},
+    {id:'mat_018',name:'翡翠玉镯',type:'玉石',rarity:'稀有',desc:'翡翠制成的玉镯，蕴含强大的灵气，可大幅提升属性。',use:'制作三阶饰品戒指和手镯',sell:90,buy:180,count:0},
+    {id:'mat_019',name:'仙云皮',type:'皮革',rarity:'稀有',desc:'仙兽的皮革，轻盈如云却坚韧无比，适合制作顶级皮甲。',use:'制作三阶皮甲的基础材料',sell:100,buy:200,count:0},
+    {id:'mat_020',name:'虎皮',type:'皮革',rarity:'普通',desc:'猛虎的皮革，极具威严和力量，适合制作高级皮甲。',use:'制作三阶皮甲的基础材料',sell:50,buy:100,count:0},
+    {id:'mat_021',name:'珍珠',type:'水产',rarity:'普通',desc:'河蚌中孕育的珍珠，散发着温和的光芒，可用于制作饰品。',use:'制作特殊饰品',sell:30,buy:60,count:1},
+    {id:'mat_022',name:'寒潭水',type:'液体',rarity:'普通',desc:'取自寒潭的冰水，蕴含冰属性灵气，可用于特殊丹药炼制。',use:'炼制特殊丹药的材料',sell:15,buy:30,count:2},
+    {id:'mat_023',name:'毒液',type:'毒物',rarity:'普通',desc:'蜘蛛精的毒液，可炼制毒属性丹药或涂抹在武器上。',use:'炼制毒属性丹药或制作毒属性武器',sell:20,buy:40,count:1},
+    {id:'mat_024',name:'金阳矿',type:'矿石',rarity:'稀有',desc:'在狮驼岭发现的金色矿石，蕴含太阳灵气。',use:'制作特殊装备的材料',sell:55,buy:110,count:0},
+    {id:'mat_025',name:'神泉水',type:'液体',rarity:'稀有',desc:'神鸟栖息之地的泉水，蕴含风属性灵气。',use:'炼制高级丹药的材料',sell:45,buy:90,count:0},
+    {id:'mat_026',name:'玉佛像',type:'古董',rarity:'稀有',desc:'雕刻精美的玉佛像，蕴含强大的佛门灵气。',use:'制作顶级饰品或特殊装备',sell:150,buy:300,count:0}
+  ],
+  essences: [
+    {id:'ess_001',name:'地脉灵气',type:'灵气',rarity:'稀有',desc:'大地脉动中提取的纯净灵气，蕴含土属性力量。',use:'用于装备强化和高级丹药炼制',sell:100,buy:200,count:1},
+    {id:'ess_002',name:'天罡灵气',type:'灵气',rarity:'传说',desc:'来自天罡星辰的灵气，蕴含强大的星辰之力。',use:'用于顶级装备强化和传说丹药炼制',sell:300,buy:600,count:0},
+    {id:'ess_003',name:'混元灵气',type:'灵气',rarity:'传说',desc:'混沌初开时存在的原始灵气，蕴含创世之力。',use:'用于传说装备的最终强化',sell:500,buy:1000,count:0}
+  ],
+  crystals: [
+    {id:'crys_001',name:'一阶灿金晶球',type:'晶球',rarity:'普通',desc:'蕴含金属性灵气的晶球，可用于强化一阶武器。',use:'强化一阶武器，每级提升攻击力5%',sell:50,buy:100,count:2},
+    {id:'crys_002',name:'二阶灿金晶球',type:'晶球',rarity:'普通',desc:'蕴含更浓郁金属性灵气的晶球，可用于强化二阶武器。',use:'强化二阶武器，每级提升攻击力5%',sell:100,buy:200,count:1},
+    {id:'crys_003',name:'三阶灿金晶球',type:'晶球',rarity:'稀有',desc:'蕴含纯粹金属性灵气的晶球，可用于强化三阶武器。',use:'强化三阶武器，每级提升攻击力5%',sell:200,buy:400,count:0},
+    {id:'crys_004',name:'一阶清辉晶球',type:'晶球',rarity:'普通',desc:'蕴含木属性灵气的晶球，可用于强化一阶衣服。',use:'强化一阶衣服，每级提升防御力5%',sell:40,buy:80,count:1},
+    {id:'crys_005',name:'二阶清辉晶球',type:'晶球',rarity:'普通',desc:'蕴含更浓郁木属性灵气的晶球，可用于强化二阶衣服。',use:'强化二阶衣服，每级提升防御力5%',sell:80,buy:160,count:0},
+    {id:'crys_006',name:'三阶清辉晶球',type:'晶球',rarity:'稀有',desc:'蕴含纯粹木属性灵气的晶球，可用于强化三阶衣服。',use:'强化三阶衣服，每级提升防御力5%',sell:160,buy:320,count:0},
+    {id:'crys_007',name:'一阶玲珑晶球',type:'晶球',rarity:'普通',desc:'蕴含水属性灵气的晶球，可用于强化一阶饰品。',use:'强化一阶饰品，每级提升属性加成3%',sell:60,buy:120,count:1},
+    {id:'crys_008',name:'二阶玲珑晶球',type:'晶球',rarity:'普通',desc:'蕴含更浓郁水属性灵气的晶球，可用于强化二阶饰品。',use:'强化二阶饰品，每级提升属性加成3%',sell:120,buy:240,count:0},
+    {id:'crys_009',name:'三阶玲珑晶球',type:'晶球',rarity:'稀有',desc:'蕴含纯粹水属性灵气的晶球，可用于强化三阶饰品。',use:'强化三阶饰品，每级提升属性加成3%',sell:240,buy:480,count:0}
+  ],
+  elixirs: [
+    {id:'elix_001',name:'疗伤丹药',type:'丹药',rarity:'普通',desc:'用普通草药炼制的基础疗伤药，可恢复气血。',use:'恢复100点气血',effect:'战斗中或战斗外使用，立即恢复100点气血',sell:10,buy:20,count:5},
+    {id:'elix_002',name:'元气丹',type:'丹药',rarity:'普通',desc:'蕴含天地元气的丹药，可恢复能量。',use:'恢复50点能量',effect:'战斗中或战斗外使用，立即恢复50点能量',sell:15,buy:30,count:3},
+    {id:'elix_003',name:'防御丹药',type:'丹药',rarity:'普通',desc:'增强体魄的丹药，临时提升防御力。',use:'提升20%防御力，持续3回合',effect:'战斗中可使用，提升20%防御力，持续3回合',sell:20,buy:40,count:2},
+    {id:'elix_004',name:'攻击丹药',type:'丹药',rarity:'普通',desc:'激发潜能的丹药，临时提升攻击力。',use:'提升20%攻击力，持续3回合',effect:'战斗中可使用，提升20%攻击力，持续3回合',sell:25,buy:50,count:2},
+    {id:'elix_005',name:'速度丹药',type:'丹药',rarity:'普通',desc:'轻身提气的丹药，临时提升速度。',use:'提升20%速度，持续3回合',effect:'战斗中可使用，提升20%速度，持续3回合',sell:20,buy:40,count:1},
+    {id:'elix_006',name:'全属性丹药',type:'丹药',rarity:'稀有',desc:'全面提升能力的丹药，但效果较为温和。',use:'提升10%全属性，持续3回合',effect:'战斗中可使用，提升10%攻击、防御、速度、暴击率，持续3回合',sell:50,buy:100,count:1},
+    {id:'elix_007',name:'九转金丹',type:'丹药',rarity:'传说',desc:'传说中的仙丹，历经九转炼制而成，具有逆天功效。',use:'永久提升1点全属性，并恢复全部气血和能量',effect:'战斗外使用，永久提升1点攻击、防御、速度、暴击率，并立即恢复全部气血和能量',sell:1000,buy:2000,count:0}
+  ],
+  fragments: [
+    {id:'frag_001',name:'天罡灵气碎片',type:'碎片',rarity:'稀有',desc:'天罡灵气的碎片，收集一定数量可合成完整的天罡灵气。',use:'10个碎片可合成1个天罡灵气',sell:30,buy:60,count:3},
+    {id:'frag_002',name:'混元灵气碎片',type:'碎片',rarity:'稀有',desc:'混元灵气的碎片，收集一定数量可合成完整的混元灵气。',use:'10个碎片可合成1个混元灵气',sell:50,buy:100,count:1},
+    {id:'frag_003',name:'九转金丹碎片',type:'碎片',rarity:'传说',desc:'九转金丹的碎片，收集一定数量可合成完整的九转金丹。',use:'5个碎片可合成1个九转金丹',sell:200,buy:400,count:2},
+    {id:'frag_004',name:'玉佛像碎片',type:'碎片',rarity:'稀有',desc:'玉佛像的碎片，收集一定数量可合成完整的玉佛像。',use:'5个碎片可合成1个玉佛像',sell:30,buy:60,count:1}
+  ],
+  equipment: [
+    {id:'eq_w1',name:'竹剑',type:'轻型武器',tier:1,rarity:'普通',desc:'以桃木制成的轻型剑，轻盈顺手。',atk:'8-12',spd:'+20%',sell:25,buy:50,count:1},
+    {id:'eq_w2',name:'铜棍',type:'中型武器',tier:1,rarity:'普通',desc:'铜精包裹的木棍，攻守兼备。',atk:'10-15',sell:40,buy:80,count:0},
+    {id:'eq_w3',name:'铜锤',type:'重型武器',tier:1,rarity:'普通',desc:'沉重的铜锤，威力巨大但笨重。',atk:'12-18',spd:'-20%',sell:50,buy:100,count:0},
+    {id:'eq_a1',name:'鹿皮甲',type:'皮甲',tier:1,rarity:'普通',desc:'鹿皮制成的轻甲，不妨碍行动。',def:6,spd:'+20%',sell:15,buy:30,count:1},
+    {id:'eq_a2',name:'铜木甲',type:'木甲',tier:1,rarity:'普通',desc:'桃木与铜片复合的护甲。',def:8,sell:30,buy:60,count:0},
+    {id:'eq_a3',name:'轻铜甲',type:'铠甲',tier:1,rarity:'普通',desc:'铜片打造的铠甲，防护出色。',def:10,spd:'-20%',sell:50,buy:100,count:0},
+    {id:'eq_s1',name:'淡水玉护符',type:'护符',tier:1,rarity:'普通',desc:'淡水玉雕琢的护符，温润养人。',hp:'+5%',sell:20,buy:40,count:1},
+    {id:'eq_s2',name:'贝壳戒指',type:'戒指',tier:1,rarity:'普通',desc:'贝壳打磨的戒指，增添臂力。',atk:'+5%',sell:15,buy:30,count:0},
+    {id:'eq_s3',name:'粗石项链',type:'项链',tier:1,rarity:'普通',desc:'粗石串成的项链，稳固身躯。',def:'+5%',sell:18,buy:36,count:0},
+    {id:'eq_s4',name:'宣纸腰带',type:'腰带',tier:1,rarity:'普通',desc:'宣纸编织的腰带，轻身提气。',spd:'+5%',sell:12,buy:24,count:0},
+    {id:'eq_s5',name:'贝壳手镯',type:'手镯',tier:1,rarity:'普通',desc:'贝壳与玉石制成的手镯，明察弱点。',crit:'+3%',sell:22,buy:44,count:0},
+    {id:'eq_s6',name:'铜石冠冕',type:'冠冕',tier:1,rarity:'普通',desc:'铜精与粗石打造的冠冕，全面提升。',all:'+2%',sell:40,buy:80,count:0}
+  ]
+};
+
+const RECIPES = {
+  weapon: [
+    {tier:1,type:'轻型',name:'竹剑',atk:'8-12',spd:'+20%',mats:[['桃木',4],['铜精',2]],money:50,desc:'轻型武器，攻击速度+20%'},
+    {tier:1,type:'中型',name:'铜棍',atk:'10-15',mats:[['桃木',6],['铜精',4]],money:80,desc:'中型武器，均衡之选'},
+    {tier:1,type:'重型',name:'铜锤',atk:'12-18',spd:'-20%',mats:[['铜精',6],['粗石',4]],money:100,desc:'重型武器，攻击速度-20%'},
+    {tier:2,type:'轻型',name:'迅风剑',atk:'15-22',spd:'+20%',mats:[['松木',6],['铁精',3]],money:200,desc:'二阶轻型武器'},
+    {tier:2,type:'中型',name:'铁棒',atk:'18-27',mats:[['松木',8],['铁精',5]],money:300,desc:'二阶中型武器'},
+    {tier:2,type:'重型',name:'铁锤',atk:'22-32',spd:'-20%',mats:[['铁精',8],['深水玉',4]],money:400,desc:'二阶重型武器'},
+    {tier:3,type:'轻型',name:'流云剑',atk:'25-35',spd:'+20%',mats:[['铁木',9],['金精',4]],money:500,desc:'三阶轻型武器'},
+    {tier:3,type:'中型',name:'伏魔杖',atk:'30-42',mats:[['铁木',12],['金精',7]],money:800,desc:'三阶中型武器'},
+    {tier:3,type:'重型',name:'撼地锤',atk:'35-50',spd:'-20%',mats:[['金精',10],['圣水玉',6]],money:1000,desc:'三阶重型武器'}
+  ],
+  armor: [
+    {tier:1,type:'皮甲',name:'鹿皮甲',def:6,spd:'+20%',mats:[['鹿皮',4]],money:30,desc:'轻型护甲'},
+    {tier:1,type:'木甲',name:'铜木甲',def:8,mats:[['桃木',3],['铜精',3]],money:60,desc:'中型护甲'},
+    {tier:1,type:'铠甲',name:'轻铜甲',def:10,spd:'-20%',mats:[['铜精',5],['粗石',3]],money:100,desc:'重型护甲'},
+    {tier:2,type:'皮甲',name:'熊皮甲',def:12,spd:'+20%',mats:[['熊皮',6]],money:150,desc:'二阶轻型护甲'},
+    {tier:2,type:'木甲',name:'铁木甲',def:16,mats:[['松木',5],['铁精',6]],money:250,desc:'二阶中型护甲'},
+    {tier:2,type:'铠甲',name:'重铁甲',def:20,spd:'-20%',mats:[['铁精',10],['深水玉',5]],money:400,desc:'二阶重型护甲'},
+    {tier:3,type:'皮甲',name:'虎威甲',def:20,spd:'+20%',mats:[['虎皮',9]],money:400,desc:'三阶轻型护甲'},
+    {tier:3,type:'木甲',name:'金木甲',def:26,mats:[['铁木',8],['金精',8]],money:600,desc:'三阶中型护甲'},
+    {tier:3,type:'铠甲',name:'神金甲',def:32,spd:'-20%',mats:[['金精',15],['圣水玉',8]],money:1000,desc:'三阶重型护甲'}
+  ],
+  accessory: [
+    {tier:1,slot:'护符',name:'淡水玉护符',hp:'+5%',mats:[['淡水玉',3],['贝壳',2]],money:40,desc:'气血+5%'},
+    {tier:1,slot:'戒指',name:'贝壳戒指',atk:'+5%',mats:[['贝壳',4],['铜精',1]],money:35,desc:'攻击+5%'},
+    {tier:1,slot:'项链',name:'粗石项链',def:'+5%',mats:[['粗石',5],['铜精',2]],money:38,desc:'防御+5%'},
+    {tier:1,slot:'腰带',name:'宣纸腰带',spd:'+5%',mats:[['宣纸',6]],money:30,desc:'速度+5%'},
+    {tier:1,slot:'手镯',name:'贝壳手镯',crit:'+3%',mats:[['贝壳',3],['淡水玉',2]],money:42,desc:'暴击率+3%'},
+    {tier:1,slot:'冠冕',name:'铜石冠冕',all:'+2%',mats:[['铜精',4],['粗石',4],['淡水玉',2]],money:55,desc:'全属性+2%'},
+    {tier:2,slot:'护符',name:'深水玉护符',hp:'+8%',mats:[['深水玉',5],['青花瓷',2]],money:120,desc:'气血+8%'},
+    {tier:2,slot:'戒指',name:'青花瓷戒指',atk:'+8%',mats:[['青花瓷',4],['铁精',2]],money:110,desc:'攻击+8%'},
+    {tier:2,slot:'项链',name:'铁精项链',def:'+8%',mats:[['铁精',7],['松木',4]],money:115,desc:'防御+8%'},
+    {tier:2,slot:'腰带',name:'青花瓷腰带',spd:'+8%',mats:[['青花瓷',8]],money:100,desc:'速度+8%'},
+    {tier:2,slot:'手镯',name:'深水玉手镯',crit:'+5%',mats:[['深水玉',7],['青花瓷',3]],money:130,desc:'暴击率+5%'},
+    {tier:2,slot:'冠冕',name:'铁精冠冕',all:'+4%',mats:[['铁精',8],['松木',6],['深水玉',4]],money:160,desc:'全属性+4%'},
+    {tier:3,slot:'护符',name:'圣水玉护符',hp:'+12%',mats:[['圣水玉',8],['翡翠玉镯',3]],money:300,desc:'气血+12%'},
+    {tier:3,slot:'戒指',name:'翡翠玉镯戒指',atk:'+12%',mats:[['翡翠玉镯',10],['金精',3]],money:280,desc:'攻击+12%'},
+    {tier:3,slot:'项链',name:'金精项链',def:'+12%',mats:[['金精',12],['仙云皮',5]],money:290,desc:'防御+12%'},
+    {tier:3,slot:'腰带',name:'古铜镜腰带',spd:'+12%',mats:[['古铜镜',12],['圣水玉',4]],money:270,desc:'速度+12%'},
+    {tier:3,slot:'手镯',name:'翡翠玉镯手镯',crit:'+8%',mats:[['翡翠玉镯',12],['圣水玉',6]],money:320,desc:'暴击率+8%'},
+    {tier:3,slot:'冠冕',name:'金精冠冕',all:'+6%',mats:[['金精',15],['铁木',10],['圣水玉',8]],money:400,desc:'全属性+6%'}
+  ]
+};
+
+const SKILLS = {
+  linghou: {
+    name: '灵猴道',
+    desc: '轻型 · 高攻速连击',
+    passive: [{name:'迅捷连击',type:'被动',desc:'攻击时30%概率追加一次50%伤害的攻击。新增保底：若连续2次未触发，第3次攻击必触发。'}],
+    small: [
+      {name:'分身斩',cost:'50能量',desc:'召唤分身共同攻击，造成80%×2伤害。分身持续2回合，每回合攻击一次。'},
+      {name:'疾风步',cost:'50能量',desc:'速度+40%，持续3回合。持续期间，连击触发率+15%。'},
+      {name:'乱舞',cost:'50能量',desc:'3次快速攻击，每次60%伤害。每次攻击独立计算连击。'}
+    ],
+    ult: [
+      {name:'千影绝杀',cost:'150能量',desc:'5次攻击，每次70%伤害，最后一击必暴。总伤害350%，适合爆发。'},
+      {name:'神行百变',cost:'150能量',desc:'闪避率+50%，持续3回合，期间攻击必连击。生存向选择。'}
+    ]
+  },
+  jinxing: {
+    name: '金行道',
+    desc: '中型 · 暴击伤害',
+    passive: [{name:'致命精准',type:'被动',desc:'暴击伤害提升至150%（基础125%）。新增效果：暴击时恢复10能量。'}],
+    small: [
+      {name:'弱点打击',cost:'50能量',desc:'130%伤害，本次暴击率+30%。稳定触发被动的技能。'},
+      {name:'破甲斩',cost:'50能量',desc:'120%伤害，无视40%防御。对高防敌人特化。'},
+      {name:'蓄势一击',cost:'50能量',desc:'本回合不行动，下回合攻击造成200%伤害。蓄力期间防御+30%。'}
+    ],
+    ult: [
+      {name:'天诛地灭',cost:'150能量',desc:'250%伤害，若暴击则追加100%伤害。高爆发，但依赖暴击。'},
+      {name:'战神降临',cost:'150能量',desc:'暴击率+40%，攻击力+30%，持续5回合。持续强化型大招。'}
+    ]
+  },
+  panshi: {
+    name: '磐石道',
+    desc: '重型 · 控制生存',
+    passive: [{name:'不动如山',type:'被动',desc:'受到伤害时，20%概率格挡50%伤害。格挡成功时，反击30%攻击力的伤害。'}],
+    small: [
+      {name:'撼地击',cost:'50能量',desc:'140%伤害，30%概率眩晕1回合。核心控制技能。'},
+      {name:'铜墙铁壁',cost:'50能量',desc:'防御+50%，持续3回合。持续期间，每回合恢复5%最大气血。'},
+      {name:'以伤换伤',cost:'50能量',desc:'损失10%当前气血，造成损失气血×2的固定伤害。无视防御的真实伤害。'}
+    ],
+    ult: [
+      {name:'泰山压顶',cost:'150能量',desc:'220%伤害，100%眩晕1回合。新增递减抗性：对同一目标连续使用，成功率降低。'},
+      {name:'金刚不坏',cost:'150能量',desc:'获得最大气血30%的护盾，持续3回合，期间反弹30%伤害。生存向大招。'}
+    ]
+  }
+};
+
+const SCENES = [
+  {id:1,name:'小花山',sub:'花果山外围',story:'花果山外围，花妖草精出没。',unlock:true,
+   enemies:{easy:[{name:'花妖',lv:1,hp:50,atk:'3-5',def:2,spd:8,drops:'桃木×2 (80%)，疗伤丹药 (20%)'},{name:'草精',lv:2,hp:60,atk:'4-6',def:3,spd:7,drops:'桃木×1 (70%)，粗石×1 (30%)'},{name:'幼年山魈',lv:3,hp:80,atk:'5-7',def:4,spd:9,drops:'桃木×2 (60%)，淡水玉×1 (40%)'}],
+   normal:[{name:'食人花妖',lv:4,hp:120,atk:'8-12',def:5,spd:10,drops:'桃木×3 (75%)，铜精×1 (25%)'},{name:'巨石精',lv:5,hp:150,atk:'10-14',def:8,spd:6,drops:'粗石×3 (70%)，防御丹药 (30%)'},{name:'成年山魈',lv:6,hp:180,atk:'12-16',def:6,spd:12,drops:'桃木×4 (65%)，一阶灿金晶球 (5%)'}],
+   hard:[{name:'花妖王',lv:7,hp:250,atk:'15-20',def:10,spd:13,drops:'桃木×5 (70%)，攻击丹药 (30%)'},{name:'山魈首领',lv:8,hp:280,atk:'18-22',def:12,spd:15,drops:'粗石×5 (65%)，铜精×2 (35%)'},{name:'小花山守护者',lv:9,hp:320,atk:'20-25',def:15,spd:11,drops:'淡水玉×3 (60%)，一阶玲珑晶球 (5%)'}]}},
+  {id:2,name:'浅水涧',sub:'水帘洞前',story:'水帘洞前，虾兵蟹将巡守。',unlock:true,
+   enemies:{easy:[{name:'小虾兵',lv:1,hp:55,atk:'4-6',def:3,spd:8,drops:'贝壳×2 (80%)，淡水玉×1 (20%)'},{name:'幼年蟹将',lv:2,hp:70,atk:'5-8',def:5,spd:6,drops:'贝壳×1 (70%)，疗伤丹药 (30%)'},{name:'小青鱼精',lv:3,hp:90,atk:'6-10',def:4,spd:10,drops:'淡水玉×2 (60%)，速度丹药 (40%)'}],normal:[],hard:[]}},
+  {id:3,name:'碎石坡',sub:'五行山脚',story:'五行山脚，岩妖石精盘踞。',unlock:true,enemies:{easy:[],normal:[],hard:[]}},
+  {id:4,name:'迷雾林',sub:'高老庄外',story:'高老庄外，迷雾重重。',unlock:false,enemies:{easy:[],normal:[],hard:[]}},
+  {id:5,name:'浊浪滩',sub:'流沙河岸',story:'流沙河岸，浊浪滔天。',unlock:false,enemies:{easy:[],normal:[],hard:[]}},
+  {id:6,name:'熔岩洞',sub:'火焰山脚',story:'火焰山脚，烈焰熊熊。',unlock:false,enemies:{easy:[],normal:[],hard:[]}},
+  {id:7,name:'蛛丝谷',sub:'盘丝洞口',story:'盘丝洞口，蛛网密布。',unlock:false,enemies:{easy:[],normal:[],hard:[]}},
+  {id:8,name:'狂风岭',sub:'狮驼岭',story:'狮驼岭上，狂风呼啸。',unlock:false,enemies:{easy:[],normal:[],hard:[]}},
+  {id:9,name:'禅音崖',sub:'雷音寺外',story:'雷音寺外，禅音袅袅。',unlock:false,enemies:{easy:[],normal:[],hard:[]}},
+  {id:10,name:'灵霄台',sub:'灵山之巅',story:'灵山之巅，最终试炼。',unlock:false,enemies:{easy:[],normal:[],hard:[]}}
+];
+
+const BOSSES = [
+  {scene:'小花山',name:'花妖王·灵根',lv:16,hp:800,atk:'60-75',def:45,spd:20,crit:'10%',passive:'根须缠绕：每次攻击有20%概率使目标速度降低20%，持续2回合',skills:['毒花粉弥漫（50能量）：100%伤害+中毒3%最大气血/回合，持续3回合','藤蔓护盾（50能量）：吸收最大气血15%伤害的护盾，持续3回合','百花齐放（150能量）：180%伤害+召唤2个小花妖助战3回合']},
+  {scene:'浅水涧',name:'河伯·沧浪',lv:18,hp:950,atk:'65-80',def:50,spd:22,crit:'12%',passive:'水流涌动：每回合结束30%概率清除自身1个负面状态',skills:['水龙冲击（50能量）：110%伤害，30%概率击退行动条','恢复之雨（50能量）：恢复15%最大气血，清除持续伤害','洪水滔天（150能量）：200%伤害+浸湿状态（受电/火伤害+30%）3回合']},
+  {scene:'碎石坡',name:'山神·岩坚',lv:20,hp:1100,atk:'70-85',def:60,spd:18,crit:'8%',passive:'岩石肌肤：受到的物理伤害减少20%，但法术伤害增加10%',skills:['落石轰击（50能量）：120%伤害，25%概率眩晕1回合','地裂术（50能量）：90%伤害，降低目标30%防御3回合','山崩地裂（150能量）：220%伤害，全场速度降低20% 2回合']},
+  {scene:'迷雾林',name:'迷雾妖主·幻影',lv:22,hp:1250,atk:'75-90',def:55,spd:25,crit:'15%',passive:'迷雾笼罩：每回合25%概率闪避敌人的攻击',skills:['幻影分身（50能量）：制造分身200气血，BOSS闪避+10%','毒雾喷射（50能量）：100%伤害+中毒4%最大气血/回合','迷雾迷阵（150能量）：混乱2回合+180%伤害']},
+  {scene:'浊浪滩',name:'浊浪龙王·混江',lv:24,hp:1400,atk:'80-100',def:58,spd:23,crit:'12%',passive:'浊浪护体：受到攻击时20%概率反弹30%伤害',skills:['浊浪冲击（50能量）：130%伤害，降低目标20%攻击2回合','泥沼束缚（50能量）：降低敌人40%速度3回合+80%伤害','混元水爆（150能量）：240%伤害，清除敌人所有正面状态']},
+  {scene:'熔岩洞',name:'火焰领主·熔心',lv:26,hp:1600,atk:'90-110',def:65,spd:21,crit:'18%',passive:'熔岩核心：每回合对攻击者造成攻击力10%的反伤（无视防御）',skills:['烈焰喷吐（50能量）：140%伤害，30%概率灼烧2回合','熔岩护甲（50能量）：防御+40%，反伤提高至20% 3回合','火山爆发（150能量）：260%伤害+灼烧5%最大气血/回合3回合']},
+  {scene:'蛛丝谷',name:'盘丝大仙·织影',lv:27,hp:1750,atk:'95-115',def:60,spd:28,crit:'20%',passive:'蛛网感应：闪避率+15%，成功闪避时恢复10%最大气血',skills:['致命毒牙（50能量）：150%伤害+中毒5%最大气血/回合3回合','蛛网束缚（50能量）：降低敌人50%速度，30%概率无法行动1回合','千丝万缕（150能量）：220%伤害+召唤3个小蜘蛛4回合']},
+  {scene:'狂风岭',name:'风暴领主·啸天',lv:28,hp:1900,atk:'100-120',def:62,spd:32,crit:'22%',passive:'风之迅捷：每回合开始40%概率获得额外1次行动机会',skills:['飓风斩（50能量）：160%伤害，25%概率降低目标30%攻击2回合','风暴之眼（50能量）：清除负面状态，速度+30% 3回合','毁灭风暴（150能量）：280%伤害，敌人速度-40% 2回合']},
+  {scene:'禅音崖',name:'罗汉尊者·金刚',lv:29,hp:2100,atk:'105-125',def:75,spd:24,crit:'15%',passive:'金刚不坏：受到伤害减少25%，但控制抵抗降低20%',skills:['金刚掌（50能量）：170%伤害，无视20%防御','佛光护体（50能量）：恢复20%最大气血+护盾10%最大气血','罗汉降世（150能量）：300%伤害，自身防御+50% 3回合']},
+  {scene:'灵霄台',name:'？？？',lv:30,hp:2500,atk:'120-150',def:85,spd:30,crit:'25%',passive:'未知：最终BOSS，等待挑战',skills:['未知技能1','未知技能2','未知技能3']}
+];
+
+const QUESTS = [
+  {id:1,name:'初出茅庐',desc:'在小花山击败5只花妖',status:'doing',progress:'3/5',reward:'经验×100，金钱×200'},
+  {id:2,name:'采集桃木',desc:'收集10个桃木',status:'done',progress:'10/10',reward:'金钱×150，疗伤丹药×2'},
+  {id:3,name:'首件装备',desc:'制作任意一件一阶装备',status:'doing',progress:'0/1',reward:'经验×200，铜精×3'},
+  {id:4,name:'精良品质',desc:'制作一件精良（2词条）及以上品质的装备',status:'doing',progress:'0/1',reward:'金钱×500，一阶灿金晶球×2'},
+  {id:5,name:'技能入门',desc:'在技能修炼中选择一个流派的小技能',status:'done',progress:'1/1',reward:'经验×150'},
+  {id:6,name:'妖王初现',desc:'挑战并击败小花山BOSS花妖王·灵根',status:'doing',progress:'0/1',reward:'经验×500，金钱×800，淡水玉×3'},
+  {id:7,name:'西行之路',desc:'解锁全部10个场景',status:'doing',progress:'3/10',reward:'称号「西行者」'}
+];
+
+// ==================== 游戏状态 ====================
+let gameState = {
+  player: {lv:1, hp:100, maxHp:100, en:25, maxEn:150, atkMin:5, atkMax:8, def:3, spd:10, crit:5, critDmg:125},
+  currentScene: 0,
+  currentDifficulty: 'easy',
+  currentEnemy: null,
+  money: 1000,
+  craftLevels: {weapon:0, armor:0, accessory:0},
+  craftExp: {weapon:0, armor:0, accessory:0},
+  selectedSkills: {passive:[], small:[], ult:[]},
+  autoBattle: false
+};
+
+// ==================== 工具函数 ====================
+function $(id){ return document.getElementById(id); }
+function showToast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+function openModal(id){ $(id).classList.add('show'); }
+function closeModal(id){ $(id).classList.remove('show'); }
+function getRarityClass(r){ return r==='传说'?'rarity-legendary':r==='稀有'?'rarity-rare':'rarity-common'; }
+function getRarityTag(r){ return r==='传说'?'tag-legendary':r==='稀有'?'tag-rare':'tag-common'; }
+function findItem(name){
+  const all = [...ITEMS.materials,...ITEMS.essences,...ITEMS.crystals,...ITEMS.elixirs,...ITEMS.fragments,...ITEMS.equipment];
+  return all.find(i=>i.name===name);
+}
+
+// ==================== 场景渲染 ====================
+function renderScenes(){
+  const el = $('sceneList');
+  el.innerHTML = SCENES.map((s,i)=>`
+    <div class="scene-card ${i===gameState.currentScene?'active':''} ${s.unlock?'':'locked'}" onclick="${s.unlock?`selectScene(${i})`:''}">
+      ${s.unlock?'':'<span class="scene-lock">未解锁</span>'}
+      <div class="scene-name">${s.name}</div>
+      <div class="scene-info">${s.sub} ｜ 等级 1-15</div>
+      <div class="scene-story">${s.story}</div>
+    </div>
+  `).join('') + `
+    <div class="scene-card" onclick="openModal('bossModal')" style="border-color:var(--zhu)">
+      <div class="scene-name" style="color:var(--zhu)">妖王名录</div>
+      <div class="scene-info">查看全部BOSS信息</div>
+    </div>
+  `;
+}
+
+function selectScene(idx){
+  gameState.currentScene = idx;
+  renderScenes();
+  updateBattleHeader();
+  addLog(`进入场景：${SCENES[idx].name}`);
+}
+
+function updateBattleHeader(){
+  const s = SCENES[gameState.currentScene];
+  $('currentSceneName').textContent = s.name;
+  const diffNames = {easy:'简单 ｜ 敌人等级：1-3', normal:'普通 ｜ 敌人等级：4-6', hard:'困难 ｜ 敌人等级：7-9'};
+  $('currentDifficulty').textContent = `难度：${diffNames[gameState.currentDifficulty]}`;
+  
+  const enemies = s.enemies[gameState.currentDifficulty] || [];
+  $('enemyBubbles').innerHTML = enemies.map((e,i)=>`
+    <div class="enemy-bubble" onclick="showEnemyDetail(${i})">
+      <span class="eb-name">${e.name}</span><span class="eb-lv">[${e.lv}]</span>
+    </div>
+  `).join('') || '<span style="color:var(--qing);font-size:12px">该难度暂无敌人数据</span>';
+  
+  if(enemies.length > 0) selectEnemy(0);
+}
+
+function selectEnemy(idx){
+  const s = SCENES[gameState.currentScene];
+  const enemies = s.enemies[gameState.currentDifficulty];
+  if(!enemies || !enemies[idx]) return;
+  gameState.currentEnemy = enemies[idx];
+  const e = enemies[idx];
+  $('enemyName').textContent = e.name;
+  $('enemyLvTag').textContent = `Lv.${e.lv}`;
+  $('enemyHpText').textContent = `${e.hp}/${e.hp}`;
+  $('enemyHpBar').style.width = '100%';
+  $('enemyEnText').textContent = '0/150';
+  $('enemyEnBar').style.width = '0%';
+  $('eAtk').textContent = e.atk;
+  $('eDef').textContent = e.def;
+  $('eSpd').textContent = e.spd;
+}
+
+function showEnemyDetail(idx){
+  const s = SCENES[gameState.currentScene];
+  const enemies = s.enemies[gameState.currentDifficulty];
+  if(!enemies || !enemies[idx]) return;
+  const e = enemies[idx];
+  gameState.currentEnemy = e;
+  $('enemyDetailName').textContent = `${e.name} · Lv.${e.lv}`;
+  $('enemyDetailBody').innerHTML = `
+    <div class="detail-section"><div class="detail-label">气血</div><div class="detail-value">${e.hp}</div></div>
+    <div class="detail-section"><div class="detail-label">攻击</div><div class="detail-value">${e.atk}</div></div>
+    <div class="detail-section"><div class="detail-label">防御</div><div class="detail-value">${e.def}</div></div>
+    <div class="detail-section"><div class="detail-label">速度</div><div class="detail-value">${e.spd}</div></div>
+    <div class="detail-section"><div class="detail-label">掉落</div><div class="detail-value">${e.drops}</div></div>
+    <div class="detail-section"><div class="detail-label">所属场景</div><div class="detail-value">${s.name} · ${s.sub}</div></div>
+  `;
+  openModal('enemyDetailModal');
+}
+
+function fightSelectedEnemy(){
+  closeModal('enemyDetailModal');
+  addLog(`向 ${gameState.currentEnemy.name} 发起挑战！`);
+}
+
+// ==================== BOSS列表 ====================
+function renderBosses(){
+  $('bossBody').innerHTML = BOSSES.map(b=>`
+    <div class="recipe-card" style="margin-bottom:10px;cursor:default">
+      <div class="recipe-head">
+        <span class="recipe-name">${b.name}</span>
+        <span class="recipe-tier">${b.scene} ｜ Lv.${b.lv}</span>
+      </div>
+      <div class="recipe-desc">
+        气血 ${b.hp} ｜ 攻击 ${b.atk} ｜ 防御 ${b.def} ｜ 速度 ${b.spd} ｜ 暴击 ${b.crit}
+      </div>
+      <div class="recipe-desc" style="margin-top:6px"><b style="color:var(--qinglv)">被动：</b>${b.passive}</div>
+      <div class="affix-list">${b.skills.map(s=>`<div class="affix-item">${s}</div>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+// ==================== 右侧功能面板 ====================
+let currentFunc = 'bag';
+let currentInvTab = 'all';
+let currentCraftType = 'weapon';
+
+function switchFunc(func){
+  currentFunc = func;
+  document.querySelectorAll('.func-tab[data-func]').forEach(t=>{
+    t.classList.toggle('active', t.dataset.func===func);
+  });
+  const titles = {bag:'乾坤袋',craft:'修行录',char:'降妖录',dao:'流派',home:'修炼洞',quest:'西行志',save:'存档管理'};
+  $('funcPanelTitle').textContent = titles[func] || '功能';
+  renderFuncContent();
+}
+
+function renderFuncContent(){
+  const el = $('funcContent');
+  switch(currentFunc){
+    case 'bag': renderBag(el); break;
+    case 'craft': renderCraftLevels(el); break;
+    case 'char': renderChar(el); break;
+    case 'dao': renderDao(el); break;
+    case 'home': renderHome(el); break;
+    case 'quest': renderQuests(el); break;
+    case 'save': renderSavePanel(el); break;
+  }
+}
+
+// 背包
+function renderBag(el){
+  const tabs = [
+    {key:'all',name:'全部'},
+    {key:'materials',name:'材料'},
+    {key:'equipment',name:'装备'},
+    {key:'elixirs',name:'丹药'},
+    {key:'crystals',name:'晶球'},
+    {key:'fragments',name:'碎片'}
+  ];
+  el.innerHTML = `
+    <div class="inv-tabs">
+      ${tabs.map(t=>`<div class="inv-tab ${currentInvTab===t.key?'active':''}" onclick="switchInvTab('${t.key}')">${t.name}</div>`).join('')}
+    </div>
+    <div class="inv-grid" id="invGrid"></div>
+  `;
+  renderInvGrid();
+}
+
+function switchInvTab(tab){
+  currentInvTab = tab;
+  renderBag($('funcContent'));
+}
+
+function renderInvGrid(){
+  const grid = $('invGrid');
+  let items = [];
+  if(currentInvTab==='all'){
+    items = [...ITEMS.materials,...ITEMS.elixirs,...ITEMS.crystals,...ITEMS.fragments,...ITEMS.equipment].filter(i=>i.count>0);
+  } else if(ITEMS[currentInvTab]){
+    items = ITEMS[currentInvTab].filter(i=>i.count>0);
+  }
+  
+  grid.innerHTML = items.map(item=>`
+    <div class="inv-item ${getRarityClass(item.rarity)}" onclick="showItemDetail('${item.id}','${currentInvTab==='all'?findItemCategory(item):currentInvTab}')">
+      <div class="item-name">${item.name}</div>
+      <div class="item-count">×${item.count}</div>
+    </div>
+  `).join('') || '<div style="grid-column:1/-1;text-align:center;color:var(--qing);padding:20px;font-size:12px">空空如也</div>';
+}
+
+function findItemCategory(item){
+  if(ITEMS.materials.includes(item)) return 'materials';
+  if(ITEMS.elixirs.includes(item)) return 'elixirs';
+  if(ITEMS.crystals.includes(item)) return 'crystals';
+  if(ITEMS.fragments.includes(item)) return 'fragments';
+  if(ITEMS.equipment.includes(item)) return 'equipment';
+  if(ITEMS.essences.includes(item)) return 'essences';
+  return 'materials';
+}
+
+function showItemDetail(id, category){
+  const pool = ITEMS[category] || [];
+  const item = pool.find(i=>i.id===id);
+  if(!item) return;
+  
+  $('itemDetailName').textContent = item.name;
+  let html = `
+    <div class="detail-section">
+      <div class="detail-label">类型 / 稀有度</div>
+      <div class="detail-tags">
+        <span class="tag-badge tag-type">${item.type}</span>
+        <span class="tag-badge ${getRarityTag(item.rarity)}">${item.rarity}</span>
+        ${item.tier?`<span class="tag-badge tag-type">第${item.tier}阶</span>`:''}
+      </div>
+    </div>
+    <div class="detail-section"><div class="detail-label">描述</div><div class="detail-value">${item.desc}</div></div>
+    <div class="detail-section"><div class="detail-label">用途</div><div class="detail-value">${item.use}</div></div>
+  `;
+  
+  if(item.effect) html += `<div class="detail-section"><div class="detail-label">效果</div><div class="detail-value">${item.effect}</div></div>`;
+  
+  // 装备属性
+  if(item.atk || item.def || item.hp || item.all || item.crit || item.spd){
+    html += `<div class="detail-section"><div class="detail-label">属性</div><div class="detail-value">`;
+    if(item.atk) html += `攻击：${item.atk}<br>`;
+    if(item.def) html += `防御：${item.def}<br>`;
+    if(item.hp) html += `气血：${item.hp}<br>`;
+    if(item.crit) html += `暴击率：${item.crit}<br>`;
+    if(item.spd) html += `速度：${item.spd}<br>`;
+    if(item.all) html += `全属性：${item.all}<br>`;
+    html += `</div></div>`;
+  }
+  
+  html += `
+    <div class="detail-section">
+      <div class="detail-label">交易</div>
+      <div class="detail-value">出售价：${item.sell} 金钱 ｜ 购买价：${item.buy} 金钱</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">持有数量</div>
+      <div class="detail-value">${item.count} / ${item.max_stack || 99}</div>
+    </div>
+  `;
+  
+  $('itemDetailBody').innerHTML = html;
+  
+  const useBtn = $('itemUseBtn');
+  if(category==='elixirs'){
+    useBtn.style.display = 'inline-block';
+    useBtn.onclick = ()=>{ showToast(`使用了 ${item.name}`); };
+  } else {
+    useBtn.style.display = 'none';
+  }
+  
+  openModal('itemDetailModal');
+}
+
+// 技艺
+function renderCraftLevels(el){
+  const crafts = [
+    {key:'weapon',name:'武器制作',desc:'提升武器属性加成'},
+    {key:'armor',name:'衣服制作',desc:'提升衣服属性加成'},
+    {key:'accessory',name:'饰品制作',desc:'提升饰品属性加成'}
+  ];
+  const expReq = [2,3,5,8,12,17,23,30,38,47];
+  
+  el.innerHTML = crafts.map(c=>{
+    const lv = gameState.craftLevels[c.key];
+    const exp = gameState.craftExp[c.key];
+    const need = lv < 10 ? expReq[lv] : 'MAX';
+    const percent = lv < 10 ? Math.min(100, exp/need*100) : 100;
+    const bonus = lv * 5;
+    return `
+      <div class="craft-item">
+        <div class="craft-head">
+          <span class="craft-name">${c.name}</span>
+          <span class="craft-lv">Lv.${lv}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
+        <div class="craft-effect">经验：${exp}/${need} ｜ 装备属性加成 +${bonus}%</div>
+        <div class="craft-effect" style="color:var(--qing)">${c.desc}，每级提升5%最大属性</div>
+      </div>
+    `;
+  }).join('') + `
+    <div style="margin-top:12px;padding:10px;background:rgba(51,51,51,.03);border-radius:4px;font-size:12px;color:var(--dan)">
+      装备属性 = 基础属性 × 品质系数 × (1 + 技艺等级 × 5%)<br><br>
+      品质系数：<br>
+      破损（0词条）：90%<br>
+      普通（1词条）：100%<br>
+      精良（2词条）：110%<br>
+      极品（3词条）：120%
+    </div>
+  `;
+}
+
+// 角色
+function renderChar(el){
+  const p = gameState.player;
+  el.innerHTML = `
+    <div class="char-header">
+      <div class="char-name">天命人</div>
+      <div class="char-lv">等级 ${p.lv} ｜ 经验 0/${300*p.lv}</div>
+    </div>
+    <div class="attr-grid">
+      <div class="attr-item"><div class="attr-label">气血</div><div class="attr-value">${p.hp}/${p.maxHp}</div></div>
+      <div class="attr-item"><div class="attr-label">能量</div><div class="attr-value">${p.en}/${p.maxEn}</div></div>
+      <div class="attr-item"><div class="attr-label">攻击</div><div class="attr-value">${p.atkMin}-${p.atkMax}</div></div>
+      <div class="attr-item"><div class="attr-label">防御</div><div class="attr-value">${p.def}</div></div>
+      <div class="attr-item"><div class="attr-label">速度</div><div class="attr-value">${p.spd}</div></div>
+      <div class="attr-item"><div class="attr-label">暴击率</div><div class="attr-value">${p.crit}%</div></div>
+      <div class="attr-item"><div class="attr-label">暴击伤害</div><div class="attr-value">${p.critDmg}%</div></div>
+      <div class="attr-item"><div class="attr-label">金钱</div><div class="attr-value" style="color:var(--jin)">${gameState.money}</div></div>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:rgba(51,51,51,.03);border-radius:4px;font-size:12px;color:var(--dan)">
+      <b>升级机制：</b>击败敌人获得经验，每场战斗基础经验 = 敌人等级 × 10<br>
+      经验需求：1-10级为 300 × 当前等级<br><br>
+      <b>能量机制：</b>每回合自动获得25能量，受到攻击获得15能量。50能量释放小技能，100能量释放大招。
+    </div>
+  `;
+}
+
+// 流派
+let selectedDao = 'linghou';
+let viewedSkill = null;
+
+function renderDao(el){
+  el.innerHTML = `
+    <div class="skill-points">
+      被动 <span>1</span> ｜ 小技能 <span>2</span> ｜ 大招 <span>1</span>
+    </div>
+    ${Object.keys(SKILLS).map(key=>{
+      const dao = SKILLS[key];
+      return `
+        <div class="dao-section">
+          <div class="dao-title" style="cursor:pointer" onclick="toggleDaoExpand('${key}')">
+            ${dao.name} <span style="font-size:11px;color:var(--dan);font-weight:normal">${dao.desc}</span>
+          </div>
+          <div class="skill-cards" id="dao-${key}">
+            ${dao.passive.map(s=>skillCardHTML(key,'passive',s)).join('')}
+            ${dao.small.map(s=>skillCardHTML(key,'small',s)).join('')}
+            ${dao.ult.map(s=>skillCardHTML(key,'ult',s)).join('')}
+          </div>
+        </div>
+      `;
+    }).join('')}
+    <div style="margin-top:10px;padding:10px;background:rgba(51,51,51,.03);border-radius:4px;font-size:12px;color:var(--dan)" id="daoSkillPreview">
+      点击技能卡片查看详情。当前已选择：被动 0/1，小技能 0/2，大招 0/1
+    </div>
+    <div class="dao-actions">
+      <button onclick="resetDaoSkills()">重置</button>
+      <button class="primary" onclick="confirmDaoSkills()">确认选择</button>
+    </div>
+  `;
+}
+
+function skillCardHTML(daoKey, type, skill){
+  const isSelected = gameState.selectedSkills[type].includes(skill.name);
+  const isViewing = viewedSkill === skill.name;
+  return `
+    <div class="skill-card ${isSelected?'selected':''} ${isViewing?'viewing':''}" 
+         onclick="viewSkill('${daoKey}','${type}','${skill.name}')"
+         ondblclick="toggleSkillSelect('${type}','${skill.name}')">
+      <div class="sk-name">${skill.name}</div>
+      <div class="sk-type">${type==='passive'?'被动':type==='small'?'小技能':'大招'}</div>
+      ${skill.cost?`<div class="sk-cost">${skill.cost}</div>`:''}
+    </div>
+  `;
+}
+
+function viewSkill(daoKey, type, name){
+  viewedSkill = name;
+  const dao = SKILLS[daoKey];
+  let skill;
+  if(type==='passive') skill = dao.passive.find(s=>s.name===name);
+  else if(type==='small') skill = dao.small.find(s=>s.name===name);
+  else skill = dao.ult.find(s=>s.name===name);
+  
+  if(skill){
+    $('daoSkillPreview').innerHTML = `
+      <b style="color:var(--jiao)">${skill.name}</b>（${type==='passive'?'被动':type==='small'?'小技能':'大招'}）${skill.cost?` ｜ 消耗：${skill.cost}`:''}<br>
+      <span style="color:var(--dan)">${skill.desc}</span>
+    `;
+  }
+  renderDao($('funcContent'));
+}
+
+function toggleSkillSelect(type, name){
+  const max = type==='passive'?1:type==='small'?2:1;
+  const arr = gameState.selectedSkills[type];
+  const idx = arr.indexOf(name);
+  if(idx>=0){
+    arr.splice(idx,1);
+  } else {
+    if(arr.length >= max){
+      showToast(`最多选择${max}个${type==='passive'?'被动':type==='small'?'小技能':'大招'}`);
+      return;
+    }
+    arr.push(name);
+  }
+  renderDao($('funcContent'));
+}
+
+function resetDaoSkills(){
+  gameState.selectedSkills = {passive:[],small:[],ult:[]};
+  renderDao($('funcContent'));
+  showToast('技能已重置');
+}
+
+function confirmDaoSkills(){
+  showToast('技能选择已确认');
+}
+
+// 洞府
+function renderHome(el){
+  el.innerHTML = `
+    <div class="craft-actions">
+      <div class="craft-action-btn" onclick="openCraftModal()">
+        <div class="ca-icon">炉</div>
+        <div class="ca-name">打造装备</div>
+        <div class="ca-desc">消耗材料制作装备</div>
+      </div>
+      <div class="craft-action-btn" onclick="openAlchemyModal()">
+        <div class="ca-icon">丹</div>
+        <div class="ca-name">炼制丹药</div>
+        <div class="ca-desc">炼制各类丹药</div>
+      </div>
+      <div class="craft-action-btn" onclick="openEnhanceModal()">
+        <div class="ca-icon">强</div>
+        <div class="ca-name">强化装备</div>
+        <div class="ca-desc">提升装备基础属性</div>
+      </div>
+      <div class="craft-action-btn" onclick="openStarModal()">
+        <div class="ca-icon">星</div>
+        <div class="ca-name">装备升星</div>
+        <div class="ca-desc">消耗相同装备升星</div>
+      </div>
+      <div class="craft-action-btn" onclick="openModal('skillModal');renderSkillTree()">
+        <div class="ca-icon">修</div>
+        <div class="ca-name">技能修炼</div>
+        <div class="ca-desc">选择流派技能</div>
+      </div>
+      <div class="craft-action-btn" onclick="showToast('合成功能暂未开放')">
+        <div class="ca-icon">合</div>
+        <div class="ca-name">碎片合成</div>
+        <div class="ca-desc">合成稀有物品</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:rgba(51,51,51,.03);border-radius:4px;font-size:12px;color:var(--dan)">
+      <b>强化规则：</b>消耗对应晶球提升装备基础属性。一阶上限+5，二阶+10，三阶+15。强化有50%几率失败，失败不降级，仅消耗材料。<br><br>
+      <b>升星规则：</b>默认0星，最高3星。升星需要相同装备，数量分别为3、6、9。每星提升10%基础属性。
+    </div>
+  `;
+}
+
+// 任务
+function renderQuests(el){
+  el.innerHTML = QUESTS.map(q=>`
+    <div class="quest-item ${q.status==='done'?'completed':''}">
+      <div class="quest-head">
+        <span class="quest-name">${q.name}</span>
+        <span class="quest-status ${q.status}">${q.status==='done'?'已完成':'进行中'}</span>
+      </div>
+      <div class="quest-desc">${q.desc}（${q.progress}）</div>
+      <div class="quest-reward">奖励：${q.reward}</div>
+    </div>
+  `).join('');
+}
+
+// 存档面板
+function renderSavePanel(el){
+  el.innerHTML = `
+    <div class="craft-actions" style="margin-bottom:12px">
+      <div class="craft-action-btn" onclick="manualSave()">
+        <div class="ca-name">手动存档</div>
+        <div class="ca-desc">保存当前进度</div>
+      </div>
+      <div class="craft-action-btn" onclick="openModal('saveModal');renderSaveDetail()">
+        <div class="ca-name">存档详情</div>
+        <div class="ca-desc">查看/导出存档</div>
+      </div>
+      <div class="craft-action-btn" onclick="autoSave()">
+        <div class="ca-name">自动存档</div>
+        <div class="ca-desc">立即自动保存</div>
+      </div>
+      <div class="craft-action-btn" onclick="showToast('读档功能暂未开放')">
+        <div class="ca-name">读取存档</div>
+        <div class="ca-desc">加载已有进度</div>
+      </div>
+    </div>
+    <div style="padding:10px;background:rgba(51,51,51,.03);border-radius:4px;font-size:12px;color:var(--dan)">
+      存档数据存储于浏览器 localStorage 中，包含：<br>
+      玩家属性、当前场景与难度、背包物品、已穿戴装备、技能选择与流派、技艺等级与经验、任务进度、战斗统计。
+    </div>
+  `;
+}
+
+function renderSaveDetail(){
+  const saveData = {
+    player: gameState.player,
+    currentScene: SCENES[gameState.currentScene].name,
+    money: gameState.money,
+    craftLevels: gameState.craftLevels,
+    selectedSkills: gameState.selectedSkills,
+    battleStats: {total:12, win:10, lose:2},
+    timestamp: new Date().toLocaleString()
+  };
+  $('saveBody').innerHTML = `
+    <div class="save-info">
+      <div><b>存档时间：</b>${saveData.timestamp}</div>
+      <div><b>玩家等级：</b>${saveData.player.lv}</div>
+      <div><b>当前场景：</b>${saveData.currentScene}</div>
+      <div><b>金钱：</b>${saveData.money}</div>
+      <div><b>战斗统计：</b>总${saveData.battleStats.total}场，胜${saveData.battleStats.win}，负${saveData.battleStats.lose}</div>
+      <pre>${JSON.stringify(saveData, null, 2)}</pre>
+    </div>
+  `;
+}
+
+function manualSave(){
+  localStorage.setItem('xiyou_save', JSON.stringify(gameState));
+  showToast('存档成功');
+}
+
+function autoSave(){
+  localStorage.setItem('xiyou_save_auto', JSON.stringify(gameState));
+  showToast('自动存档完成');
+}
+
+function exportSave(){
+  const data = JSON.stringify(gameState);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'xiyou_save.json';
+  a.click();
+  showToast('存档已导出');
+}
+
+function importSave(){
+  showToast('导入功能暂未开放');
+}
+
+// ==================== 打造装备 ====================
+function openCraftModal(){
+  currentCraftType = 'weapon';
+  renderCraftRecipes();
+  openModal('craftModal');
+}
+
+function switchCraftType(type){
+  currentCraftType = type;
+  document.querySelectorAll('[data-ctype]').forEach(t=>{
+    t.classList.toggle('active', t.dataset.ctype===type);
+  });
+  renderCraftRecipes();
+}
+
+function renderCraftRecipes(){
+  const list = RECIPES[currentCraftType];
+  $('craftRecipeList').innerHTML = list.map((r,i)=>{
+    const matsHTML = r.mats.map(([name,need])=>{
+      const item = findItem(name);
+      const have = item ? item.count : 0;
+      const cls = have >= need ? 'enough' : 'not-enough';
+      return `<span class="mat-chip ${cls}">${name} ${have}/${need}</span>`;
+    }).join('');
+    
+    const stats = [];
+    if(r.atk) stats.push(`攻击 ${r.atk}`);
+    if(r.def) stats.push(`防御 ${r.def}`);
+    if(r.spd) stats.push(`速度 ${r.spd}`);
+    if(r.hp) stats.push(`气血 ${r.hp}`);
+    if(r.crit) stats.push(`暴击 ${r.crit}`);
+    if(r.all) stats.push(`全属性 ${r.all}`);
+    
+    return `
+      <div class="recipe-card" onclick="selectRecipe(this)">
+        <div class="recipe-head">
+          <span class="recipe-name">${r.name}</span>
+          <span class="recipe-tier">第${r.tier}阶 ${r.type||r.slot||''}</span>
+        </div>
+        <div class="recipe-desc">${stats.join(' ｜ ')}</div>
+        <div class="recipe-mats">${matsHTML}</div>
+        <div class="recipe-cost">金钱：${r.money}</div>
+        <div class="recipe-desc" style="margin-top:4px;color:var(--qing)">${r.desc}</div>
+      </div>
+    `;
+  }).join('');
+  $('craftMoneyText').textContent = `金钱：${gameState.money}`;
+}
+
+function selectRecipe(el){
+  document.querySelectorAll('.recipe-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function doCraft(){
+  showToast('打造功能演示：实际项目中将检查材料并生成装备');
+}
+
+// ==================== 强化装备 ====================
+function openEnhanceModal(){
+  $('enhanceBody').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-label">选择装备</div>
+      <div class="recipe-card selected" style="cursor:default">
+        <div class="recipe-head"><span class="recipe-name">竹剑</span><span class="recipe-tier">+0 / +5</span></div>
+        <div class="recipe-desc">轻型武器 ｜ 攻击 8-12 ｜ 速度 +20%</div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">强化材料</div>
+      <div class="recipe-mats">
+        <span class="mat-chip enough">一阶灿金晶球 ×1（持有2）</span>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">强化效果</div>
+      <div class="detail-value">攻击力 +5%（每级）</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">成功率</div>
+      <div class="detail-value">50% ｜ 失败不降级，仅消耗材料</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">强化上限</div>
+      <div class="detail-value">一阶 +5 ｜ 二阶 +10 ｜ 三阶 +15</div>
+    </div>
+  `;
+  openModal('enhanceModal');
+}
+
+function doEnhance(){
+  showToast('强化功能演示：50%成功率');
+}
+
+// ==================== 装备升星 ====================
+function openStarModal(){
+  $('starBody').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-label">选择装备</div>
+      <div class="recipe-card selected" style="cursor:default">
+        <div class="recipe-head"><span class="recipe-name">竹剑</span><span class="recipe-tier">0星 / 3星</span></div>
+        <div class="recipe-desc">轻型武器 ｜ 攻击 8-12 ｜ 速度 +20%</div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">升星材料</div>
+      <div class="recipe-mats">
+        <span class="mat-chip not-enough">竹剑 ×3（持有1）</span>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">升星效果</div>
+      <div class="detail-value">每星提升10%基础属性</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-label">升星消耗</div>
+      <div class="detail-value">0→1星：3件 ｜ 1→2星：6件 ｜ 2→3星：9件</div>
+    </div>
+  `;
+  openModal('starModal');
+}
+
+function doStar(){
+  showToast('升星功能演示：需要相同装备作为材料');
+}
+
+// ==================== 炼丹 ====================
+function openAlchemyModal(){
+  $('alchemyBody').innerHTML = `
+    <div class="recipe-list">
+      <div class="recipe-card">
+        <div class="recipe-head"><span class="recipe-name">疗伤丹药</span><span class="recipe-tier">普通</span></div>
+        <div class="recipe-desc">恢复100点气血</div>
+        <div class="recipe-mats"><span class="mat-chip enough">寒潭水 ×1</span></div>
+      </div>
+      <div class="recipe-card">
+        <div class="recipe-head"><span class="recipe-name">元气丹</span><span class="recipe-tier">普通</span></div>
+        <div class="recipe-desc">恢复50点能量</div>
+        <div class="recipe-mats"><span class="mat-chip enough">神泉水 ×1</span></div>
+      </div>
+      <div class="recipe-card">
+        <div class="recipe-head"><span class="recipe-name">攻击丹药</span><span class="recipe-tier">普通</span></div>
+        <div class="recipe-desc">提升20%攻击力，持续3回合</div>
+        <div class="recipe-mats"><span class="mat-chip enough">毒液 ×1</span><span class="mat-chip enough">寒潭水 ×1</span></div>
+      </div>
+      <div class="recipe-card">
+        <div class="recipe-head"><span class="recipe-name">全属性丹药</span><span class="recipe-tier">稀有</span></div>
+        <div class="recipe-desc">提升10%全属性，持续3回合</div>
+        <div class="recipe-mats"><span class="mat-chip not-enough">神泉水 ×2</span><span class="mat-chip not-enough">地脉灵气 ×1</span></div>
+      </div>
+    </div>
+  `;
+  openModal('alchemyModal');
+}
+
+function doAlchemy(){
+  showToast('炼丹功能演示');
+}
+
+// ==================== 技能修炼弹窗 ====================
+function renderSkillTree(){
+  $('skillTreeBody').innerHTML = Object.keys(SKILLS).map(key=>{
+    const dao = SKILLS[key];
+    return `
+      <div class="dao-section">
+        <div class="dao-title">${dao.name} <span style="font-size:11px;color:var(--dan);font-weight:normal">${dao.desc}</span></div>
+        <div class="skill-cards">
+          ${dao.passive.map(s=>skillModalCard(key,'passive',s)).join('')}
+          ${dao.small.map(s=>skillModalCard(key,'small',s)).join('')}
+          ${dao.ult.map(s=>skillModalCard(key,'ult',s)).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function skillModalCard(daoKey, type, skill){
+  const isSelected = gameState.selectedSkills[type].includes(skill.name);
+  return `
+    <div class="skill-card ${isSelected?'selected':''}" onclick="viewModalSkill('${daoKey}','${type}','${skill.name}')">
+      <div class="sk-name">${skill.name}</div>
+      <div class="sk-type">${type==='passive'?'被动':type==='small'?'小技能':'大招'}</div>
+      ${skill.cost?`<div class="sk-cost">${skill.cost}</div>`:''}
+    </div>
+  `;
+}
+
+function viewModalSkill(daoKey, type, name){
+  const dao = SKILLS[daoKey];
+  let skill;
+  if(type==='passive') skill = dao.passive.find(s=>s.name===name);
+  else if(type==='small') skill = dao.small.find(s=>s.name===name);
+  else skill = dao.ult.find(s=>s.name===name);
+  if(skill){
+    $('skillPreview').innerHTML = `<b>${skill.name}</b>（${type==='passive'?'被动':type==='small'?'小技能':'大招'}）${skill.cost?` ｜ ${skill.cost}`:''}<br>${skill.desc}`;
+  }
+}
+
+function resetSkills(){
+  gameState.selectedSkills = {passive:[],small:[],ult:[]};
+  renderSkillTree();
+  showToast('技能已重置');
+}
+
+function confirmSkills(){
+  showToast('技能选择已确认');
+  closeModal('skillModal');
+}
+
+// ==================== 战斗逻辑（简化演示） ====================
+function toggleAuto(){
+  gameState.autoBattle = !gameState.autoBattle;
+  $('autoBtn').classList.toggle('on', gameState.autoBattle);
+  addLog(gameState.autoBattle ? '自动战斗已开启' : '自动战斗已关闭');
+}
+
+function useSkill(type){
+  const costs = {normal:0, skill1:50, skill2:50, ult:150};
+  const names = {normal:'普攻', skill1:'破甲斩', skill2:'治疗术', ult:'金刚怒'};
+  
+  if(gameState.player.en < costs[type]){
+    showToast('能量不足');
+    return;
+  }
+  
+  gameState.player.en -= costs[type];
+  updateBars();
+  
+  if(type==='skill2'){
+    const heal = 50 + gameState.player.lv * 5;
+    gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + heal);
+    addLog(`玩家使用「${names[type]}」，恢复 <span class="heal">${heal}</span> 点气血`);
+  } else {
+    const atk = Math.floor(Math.random()*(gameState.player.atkMax-gameState.player.atkMin+1))+gameState.player.atkMin;
+    const def = gameState.currentEnemy ? parseInt(gameState.currentEnemy.def) : 2;
+    let dmg = Math.max(1, atk - def);
+    const isCrit = Math.random()*100 < gameState.player.crit;
+    if(isCrit) dmg = Math.floor(dmg * gameState.player.critDmg / 100);
+    
+    addLog(`玩家使用「${names[type]}」，造成 <span class="highlight">${dmg}</span> 点伤害${isCrit?'（暴击）':''}`);
+    
+    // 简化：直接扣敌人血
+    const e = gameState.currentEnemy;
+    if(e){
+      const eHpBar = $('enemyHpBar');
+      const curWidth = parseFloat(eHpBar.style.width);
+      const newWidth = Math.max(0, curWidth - (dmg/e.hp*100));
+      eHpBar.style.width = newWidth + '%';
+      $('enemyHpText').textContent = `${Math.max(0,Math.floor(e.hp*newWidth/100))}/${e.hp}`;
+      
+      if(newWidth <= 0){
+        addLog(`${e.name} 气血归零，战斗结束！`);
+        setTimeout(()=>showResult(true), 600);
+        return;
+      }
+    }
+  }
+  
+  // 回合能量恢复
+  gameState.player.en = Math.min(gameState.player.maxEn, gameState.player.en + 25);
+  
+  // 敌人反击（简化）
+  setTimeout(enemyTurn, 800);
+  updateBars();
+}
+
+function enemyTurn(){
+  const e = gameState.currentEnemy;
+  if(!e) return;
+  const atkArr = e.atk.split('-').map(Number);
+  const atk = Math.floor(Math.random()*(atkArr[1]-atkArr[0]+1))+atkArr[0];
+  const dmg = Math.max(1, atk - gameState.player.def);
+  
+  gameState.player.hp = Math.max(0, gameState.player.hp - dmg);
+  gameState.player.en = Math.min(gameState.player.maxEn, gameState.player.en + 15);
+  
+  addLog(`${e.name} 发起攻击，造成 <span class="highlight">${dmg}</span> 点伤害`);
+  updateBars();
+  
+  if(gameState.player.hp <= 0){
+    addLog('玩家气血归零，战斗失败...');
+    setTimeout(()=>showResult(false), 600);
+  }
+}
+
+function updateBars(){
+  const p = gameState.player;
+  $('playerHpText').textContent = `${p.hp}/${p.maxHp}`;
+  $('playerHpBar').style.width = (p.hp/p.maxHp*100) + '%';
+  $('playerEnText').textContent = `${p.en}/${p.maxEn}`;
+  $('playerEnBar').style.width = (p.en/p.maxEn*100) + '%';
+  $('playerLvTag').textContent = `Lv.${p.lv}`;
+  $('pAtk').textContent = `${p.atkMin}-${p.atkMax}`;
+  $('pDef').textContent = p.def;
+  $('pSpd').textContent = p.spd;
+  $('pCrit').textContent = p.crit + '%';
+  
+  // 技能按钮状态
+  $('skill1Btn').disabled = p.en < 50;
+  $('skill2Btn').disabled = p.en < 50;
+  $('ultBtn').disabled = p.en < 150;
+}
+
+function showResult(win){
+  const exp = win ? (gameState.currentEnemy ? gameState.currentEnemy.lv * 10 : 10) : 0;
+  const money = win ? Math.floor(Math.random()*50)+20 : 0;
+  $('resultBody').innerHTML = `
+    <div class="result-title ${win?'win':'lose'}">${win?'战斗胜利':'战斗失败'}</div>
+    ${win?`
+      <div class="result-rewards">
+        <div class="result-reward">获得经验：${exp} 点</div>
+        <div class="result-reward">获得金钱：${money}</div>
+        <div class="result-reward">获得物品：桃木×1（80%）</div>
+      </div>
+    `:`<div style="color:var(--dan);margin:12px 0">胜败乃兵家常事，少侠请重新来过。</div>`}
+  `;
+  openModal('resultModal');
+  
+  if(win){
+    gameState.money += money;
+    gameState.player.hp = gameState.player.maxHp;
+    gameState.player.en = 25;
+  } else {
+    gameState.player.hp = gameState.player.maxHp;
+    gameState.player.en = 25;
+  }
+  updateBars();
+}
+
+function addLog(html){
+  const el = $('logContent');
+  const div = document.createElement('div');
+  div.className = 'log-item';
+  div.innerHTML = `• 回合${Math.floor(Math.random()*10)+1}：${html}`;
+  el.appendChild(div);
+  el.parentElement.scrollTop = el.parentElement.scrollHeight;
+}
+
+// ==================== 初始化 ====================
+function init(){
+  renderScenes();
+  updateBattleHeader();
+  renderBosses();
+  switchFunc('bag');
+  updateBars();
+  
+  // 自动读取存档
+  const save = localStorage.getItem('xiyou_save');
+  if(save){
+    try{
+      const data = JSON.parse(save);
+      Object.assign(gameState, data);
+      showToast('已自动加载存档');
+    }catch(e){}
+  }
+  
+  // 定时自动存档
+  setInterval(()=>{
+    localStorage.setItem('xiyou_save_auto', JSON.stringify(gameState));
+  }, 30000);
+}
+
+// 点击遮罩关闭弹窗
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click', function(e){
+    if(e.target === this){
+      this.classList.remove('show');
+    }
+  });
+});
+
+init();
+</script>
+</body>
+</html>

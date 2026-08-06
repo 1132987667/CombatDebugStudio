@@ -389,18 +389,10 @@ interface PresetGroupItem {
 
 const presetGroups = computed(() => {
   const groups: Array<{ label: string; items: PresetGroupItem[] }> = []
-  const allyLineups = lineups.value.filter((l) => l.side === 'ally')
-  const enemyLineups = lineups.value.filter((l) => l.side === 'enemy')
-  if (allyLineups.length) {
+  if (lineups.value.length) {
     groups.push({
-      label: '封神榜阵容 · 我方',
-      items: allyLineups.map((l) => ({ id: l.id, name: l.name, description: l.description ?? '封神榜预设阵容', source: 'lineup' as const })),
-    })
-  }
-  if (enemyLineups.length) {
-    groups.push({
-      label: '封神榜阵容 · 敌方',
-      items: enemyLineups.map((l) => ({ id: l.id, name: l.name, description: l.description ?? '封神榜预设阵容', source: 'lineup' as const })),
+      label: '封神榜阵容',
+      items: lineups.value.map((l) => ({ id: l.id, name: l.name, description: l.description ?? '封神榜预设阵容', source: 'lineup' as const })),
     })
   }
   groups.push(
@@ -427,21 +419,20 @@ const currentPresetDesc = computed(() => {
   return presets.find(p => p.id === selectedPreset.value)?.description ?? ''
 })
 
-/** 封神榜阵容 → 参战者（roles 按 seatIndex 排序；roleId 优先角色、其次敌人） */
+/** 封神榜阵容 → 参战者（roles 按 seatIndex 排序；角色归我方、敌人归敌方） */
 function applyLineup(lineup: LineupData): void {
-  const side = lineup.side === 'ally' ? ParticipantSide.ALLY : ParticipantSide.ENEMY
   const roles = [...lineup.roles].sort((a, b) => a.seatIndex - b.seatIndex)
   for (const role of roles) {
     const actor = actors.value.find((a) => a.id === role.roleId)
     if (actor) {
-      const entity = GameDataProcessor.actorToParticipant(actor, side, role.seatIndex)
-      battleService.addCharacterToTeam(entity, side)
+      const entity = GameDataProcessor.actorToParticipant(actor, ParticipantSide.ALLY, role.seatIndex)
+      battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
       continue
     }
     const enemy = GameDataProcessor.findEnemyById(role.roleId)
     if (enemy) {
-      const entity = GameDataProcessor.enemyToParticipant(enemy, side, role.seatIndex)
-      battleService.addCharacterToTeam(entity, side)
+      const entity = GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, role.seatIndex)
+      battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
     }
   }
 }

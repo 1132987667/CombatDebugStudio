@@ -150,10 +150,13 @@ function onClick(e: MouseEvent) {
 
   &:hover:not(:disabled):not(.is-loading) {
     background: var(--color-brand-red-hover);
+    box-shadow: 0 3px 0 0 var(--color-brand-red-active);
+    transform: translateY(1px);
   }
 
   &:active:not(:disabled):not(.is-loading) {
-    box-shadow: 0 1px 0 0 var(--color-brand-red-active);
+    box-shadow: 0 0px 0 0 var(--color-brand-red-active);
+    transform: translateY(4px);
   }
 }
 

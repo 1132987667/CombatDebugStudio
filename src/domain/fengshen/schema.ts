@@ -26,7 +26,7 @@ export interface FieldSchema {
     width?: number
     format?: 'id' | 'number' | 'tag'
     /** 标签着色依据（Demo 多色标签）：值 → 标签语义色 */
-    tagKind?: 'polarity' | 'category' | 'side' | 'type' | 'slot' | 'rarity' | 'neutral'
+    tagKind?: 'polarity' | 'category' | 'type' | 'slot' | 'rarity' | 'neutral'
     /** 列表单元格可点击（点击后在右侧详情面板显示该行；name 字段默认可点击） */
     clickable?: boolean
   }
@@ -195,19 +195,15 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   lineups: {
     table: 'lineups',
     label: '预设阵容',
-    columns: ['id', 'name', 'side', 'formationId', 'tags'],
+    columns: ['id', 'name', 'formationId', 'tags'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'side', label: '阵营', type: 'select', enum: ['ally', 'enemy'], column: { tagKind: 'side' } },
       { key: 'formationId', label: '绑定阵型', type: 'select', refTable: 'formations' },
       { key: 'roles', label: '角色编组', type: 'array' },
       { key: 'tags', label: '用途标签', type: 'multi' },
       { key: 'description', label: '用途说明', type: 'text' },
     ],
     uniqueFields: ['name'],
-    filters: [
-      { key: 'side', label: '阵营', type: 'select', options: ['ally', 'enemy'] },
-    ],
   },
   materials: {
     table: 'materials',

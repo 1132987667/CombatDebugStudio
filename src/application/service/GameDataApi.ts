@@ -108,9 +108,8 @@ export class GameDataApi {
     return this.loadByIds<Enemy>(FENGSHEN_STORE.ENEMIES, ids)
   }
 
-  async listLineups(filter?: { side?: LineupData['side'] }): Promise<LineupData[]> {
-    const all = sortById(await this.listAll<LineupData>(FENGSHEN_STORE.LINEUPS))
-    return filter?.side ? all.filter((l) => l.side === filter.side) : all
+  async listLineups(): Promise<LineupData[]> {
+    return sortById(await this.listAll<LineupData>(FENGSHEN_STORE.LINEUPS))
   }
 
   async listEquipment(filter?: { slot?: EquipmentData['slot'] }): Promise<EquipmentData[]> {

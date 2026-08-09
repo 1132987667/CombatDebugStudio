@@ -1,7 +1,7 @@
 <template>
-  <div class="battle-log-section">
+  <div class="battle-log-section bg-dual-dots">
     <!-- ═══ 头部：标题 + 搜索 + 导出（页签由下方 Tabs 组件接管） ═══ -->
-    <div class="log-header">
+    <div class="log-header bg-hatch">
       <span class="log-title">日志</span>
 
       <div class="log-tools">
@@ -426,14 +426,7 @@ onUnmounted(() => {
 }
 
 /* ─────────── 头部 ─────────── */
-.log-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-bg-tertiary);
-  flex-wrap: wrap;
-}
+
 
 .log-title {
   color: var(--color-info);

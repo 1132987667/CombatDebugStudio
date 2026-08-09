@@ -121,8 +121,60 @@ function createSkillArchive(): UnifiedArchive {
     events: [
       ev({ id: 's0', phase: 'battle_lifecycle', correlationId: 'c0', timestamp: 0, level: 'info', payload: { action: 'battle_start' }, summary: 'x' }),
       ev({ id: 's1', phase: 'turn_flow', correlationId: 'c1', timestamp: 100, level: 'info', turn: 1, payload: { action: 'start', turn: 1 }, summary: 'x' }),
-      ev({ id: 's2', phase: 'action_execution', correlationId: 'c2', timestamp: 200, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { controlMode: 'ai', actionType: 'skill', energyCost: 30 }, summary: 'x' }),
+      ev({ id: 's2', phase: 'action_execution', correlationId: 'c2', timestamp: 200, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { controlMode: 'ai', actionType: 'skill', energyCost: 30 }, snapshot: { turn: 1, participants: [{ id: 'u1', energy: 70 }] }, summary: 'x' }),
       ev({ id: 's3', phase: 'damage_calculation', correlationId: 'c2', parentId: 's2', timestamp: 300, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { result: 50, skillName: '烈焰斩', skillType: 'ultimate' }, summary: 'x' }),
+    ],
+  }
+}
+
+/** 条渲染存档：同一行动链内目标受伤(u2)、目标受治疗+回能量(u3)，验证气血/能量条四态 */
+function createBarsArchive(): UnifiedArchive {
+  const ev = (e: Omit<UnifiedEvent, '_delta'>): UnifiedEvent => e
+  return {
+    battleId: 'BT-BARS',
+    replayId: 'rp-bars',
+    version: '2.0.0',
+    randomSeed: '1',
+    startTime: 0,
+    winner: 'u1',
+    initialState: {
+      participants: [
+        { id: 'u1', name: '火护法', maxHp: 350, hp: 350, maxEnergy: 100, energy: 100, side: 'ally', buffs: [] },
+        { id: 'u2', name: '金护法', maxHp: 500, hp: 500, maxEnergy: 100, energy: 60, side: 'enemy', buffs: [] },
+        { id: 'u3', name: '水护法', maxHp: 400, hp: 300, maxEnergy: 100, energy: 40, side: 'ally', buffs: [] },
+      ],
+    },
+    events: [
+      ev({ id: 'b0', phase: 'battle_lifecycle', correlationId: 'c0', timestamp: 0, level: 'info', payload: { action: 'battle_start' }, summary: 'x' }),
+      ev({ id: 'b1', phase: 'turn_flow', correlationId: 'c1', timestamp: 100, level: 'info', turn: 1, payload: { action: 'start', turn: 1 }, summary: 'x' }),
+      ev({ id: 'b2', phase: 'action_execution', correlationId: 'c2', timestamp: 200, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { controlMode: 'ai', actionType: 'attack' }, summary: 'x' }),
+      ev({ id: 'b3', phase: 'damage_calculation', correlationId: 'c2', parentId: 'b2', timestamp: 300, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { result: 70, skillName: '普通攻击' }, snapshot: { turn: 1, participants: [{ id: 'u2', hp: 430 }] }, summary: 'x' }),
+      ev({ id: 'b4', phase: 'heal_calculation', correlationId: 'c2', parentId: 'b2', timestamp: 400, level: 'info', sourceId: 'u1', targetId: 'u3', payload: { result: 20, skillName: '甘霖' }, snapshot: { turn: 1, participants: [{ id: 'u3', hp: 320, energy: 60 }] }, summary: 'x' }),
+    ],
+  }
+}
+
+/** 技能描述存档：技能行动技能名"吸血"（skill_passive_test.json 配置，description 非空） */
+function createSkillDescArchive(): UnifiedArchive {
+  const ev = (e: Omit<UnifiedEvent, '_delta'>): UnifiedEvent => e
+  return {
+    battleId: 'BT-DESC',
+    replayId: 'rp-desc',
+    version: '2.0.0',
+    randomSeed: '1',
+    startTime: 0,
+    winner: 'u1',
+    initialState: {
+      participants: [
+        { id: 'u1', name: '火护法', maxHp: 350, hp: 350, maxEnergy: 100, energy: 100, side: 'ally', buffs: [] },
+        { id: 'u2', name: '金护法', maxHp: 500, hp: 500, maxEnergy: 100, energy: 60, side: 'enemy', buffs: [] },
+      ],
+    },
+    events: [
+      ev({ id: 'd0', phase: 'battle_lifecycle', correlationId: 'c0', timestamp: 0, level: 'info', payload: { action: 'battle_start' }, summary: 'x' }),
+      ev({ id: 'd1', phase: 'turn_flow', correlationId: 'c1', timestamp: 100, level: 'info', turn: 1, payload: { action: 'start', turn: 1 }, summary: 'x' }),
+      ev({ id: 'd2', phase: 'action_execution', correlationId: 'c2', timestamp: 200, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { controlMode: 'ai', actionType: 'skill', skill: '吸血' }, summary: 'x' }),
+      ev({ id: 'd3', phase: 'damage_calculation', correlationId: 'c2', parentId: 'd2', timestamp: 300, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { result: 80, skillName: '吸血', skillType: 'ultimate' }, snapshot: { turn: 1, participants: [{ id: 'u2', hp: 420 }] }, summary: 'x' }),
     ],
   }
 }
@@ -197,6 +249,8 @@ describe('DebugCards 行动卡片标题', () => {
     expect(text).toContain('技能')
     expect(text).toContain('消耗')
     expect(text).toContain('30能量')
+    // 消耗行同侧显示行动者剩余能量（action_execution 快照 EN 末态 100→70）
+    expect(text).toContain('剩余 70能量')
     // 普攻行动（demo 首个节点）：无消耗行
     await store.loadDemo()
     await new Promise((r) => setTimeout(r, 30))
@@ -204,5 +258,53 @@ describe('DebugCards 行动卡片标题', () => {
     if (node) store.selectDebugNode(node.id)
     await new Promise((r) => setTimeout(r, 30))
     expect(host!.textContent ?? '').not.toContain('消耗')
+  })
+
+  it('目标行气血/能量条：伤害红段、治疗亮绿段、回能亮蓝段，按 HP/EN 前后值渲染', async () => {
+    await mountCards()
+    const store = useHaotianStore()
+    await store.loadArchiveFile(new File([JSON.stringify(createBarsArchive())], 'bars.json'))
+    await new Promise((r) => setTimeout(r, 30))
+    const node = store.debugNodes.find((n) => n.action)
+    if (node) store.selectDebugNode(node.id)
+    await new Promise((r) => setTimeout(r, 30))
+    const tgts = [...host!.querySelectorAll<HTMLElement>('.ht-sh-tgt')]
+    const tgtOf = (name: string): HTMLElement => tgts.find((t) => t.querySelector('b')?.textContent === name)!
+    // 受伤目标 u2：气血条 剩余86%（430/500）+ 扣减红段14%（70/500），无能量条
+    const u2 = tgtOf('金护法')
+    expect(u2.querySelector('.ht-bar-hp .keep')?.getAttribute('style')).toContain('86%')
+    const u2Change = u2.querySelector('.ht-bar-hp .change')
+    expect(u2Change?.classList.contains('damage')).toBe(true)
+    expect(u2Change?.getAttribute('style')).toContain('14%')
+    expect(u2.querySelector('.ht-bar-en')).toBeNull()
+    // 受治疗+回能目标 u3：气血条 原有75% + 治疗亮绿5%；能量条 原有40% + 回复亮蓝20%
+    const u3 = tgtOf('水护法')
+    expect(u3.querySelector('.ht-bar-hp .keep')?.getAttribute('style')).toContain('75%')
+    const healSeg = u3.querySelector('.ht-bar-hp .change')
+    expect(healSeg?.classList.contains('heal')).toBe(true)
+    expect(healSeg?.getAttribute('style')).toContain('5%')
+    expect(u3.querySelector('.ht-bar-en .keep')?.getAttribute('style')).toContain('40%')
+    const gainSeg = u3.querySelector('.ht-bar-en .change')
+    expect(gainSeg?.classList.contains('gain')).toBe(true)
+    expect(gainSeg?.getAttribute('style')).toContain('20%')
+    // 条内文字：当前/最大 ± 变化量
+    expect(u2.querySelector('.ht-bar-hp .ht-bar-text')?.textContent).toBe('430/500 - 70')
+    expect(u3.querySelector('.ht-bar-hp .ht-bar-text')?.textContent).toBe('320/400 + 20')
+    expect(u3.querySelector('.ht-bar-en .ht-bar-text')?.textContent).toBe('60/100 + 20')
+  })
+
+  it('技能描述：技能类行动（小/大/被动归通用 skill）在头部下方显示配置 description', async () => {
+    await mountCards()
+    const store = useHaotianStore()
+    // 普攻行动无技能描述
+    expect(host!.querySelector('.ht-sh-skill-desc')).toBeNull()
+    // 技能行动：技能名"吸血"（skill_passive_test.json 配置），描述来自配置
+    await store.loadArchiveFile(new File([JSON.stringify(createSkillDescArchive())], 'desc.json'))
+    await new Promise((r) => setTimeout(r, 30))
+    const node = store.debugNodes.find((n) => n.action)
+    if (node) store.selectDebugNode(node.id)
+    await new Promise((r) => setTimeout(r, 30))
+    const desc = host!.querySelector('.ht-sh-skill-desc')
+    expect(desc?.textContent).toContain('恢复伤害')
   })
 })

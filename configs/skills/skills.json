@@ -462,7 +462,7 @@
   {
     "id": "skill_enemy_010_small",
     "name": "钳击",
-    "description": "对单个敌人造成95%攻击力的普通伤害",
+    "description": "对单个敌人造成110%攻击力的普通伤害",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -477,7 +477,7 @@
           "baseValue": 0,
           "extraValues": [
             {
-              "ratio": 0.95,
+              "ratio": 1.1,
               "attribute": "attack"
             }
           ]
@@ -1414,7 +1414,7 @@
   {
     "id": "skill_enemy_027_small",
     "name": "野猪冲撞",
-    "description": "对单个敌人造成100%攻击力的普通伤害",
+    "description": "对单个敌人造成110%攻击力的普通伤害",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -1429,7 +1429,7 @@
           "baseValue": 0,
           "extraValues": [
             {
-              "ratio": 1,
+              "ratio": 1.1,
               "attribute": "attack"
             }
           ]
@@ -1826,7 +1826,7 @@
   {
     "id": "skill_enemy_035_small",
     "name": "水波冲击",
-    "description": "对单个敌人造成85%攻击力的普通伤害,并有50%概率对随机相邻敌人造成50%攻击力的溅射伤害",
+    "description": "对单个敌人造成100%攻击力的普通伤害,并有50%概率对随机相邻敌人造成50%攻击力的溅射伤害",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -1841,7 +1841,7 @@
           "baseValue": 0,
           "extraValues": [
             {
-              "ratio": 0.85,
+              "ratio": 1.0,
               "attribute": "attack"
             }
           ]
@@ -1851,6 +1851,7 @@
         "type": "deal_damage",
         "attackType": "normal",
         "targetType": "random_adjacent",
+        "probability": 0.5,
         "calculation": {
           "baseValue": 0,
           "extraValues": [
@@ -2255,6 +2256,7 @@
         "type": "deal_damage",
         "attackType": "normal",
         "targetType": "random_adjacent",
+        "probability": 0.5,
         "calculation": {
           "baseValue": 0,
           "extraValues": [
@@ -2272,7 +2274,7 @@
   {
     "id": "skill_enemy_043_small",
     "name": "火球术",
-    "description": "对单个敌人造成100%攻击力的普通伤害",
+    "description": "对单个敌人造成110%攻击力的普通伤害",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -2287,7 +2289,7 @@
           "baseValue": 0,
           "extraValues": [
             {
-              "ratio": 1,
+              "ratio": 1.1,
               "attribute": "attack"
             }
           ]
@@ -3697,7 +3699,7 @@
   {
     "id": "skill_enemy_073_small",
     "name": "叛徒之击",
-    "description": "对单个敌人造成100%攻击力的普通伤害",
+    "description": "对单个敌人造成110%攻击力的普通伤害",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -3712,7 +3714,7 @@
           "baseValue": 0,
           "extraValues": [
             {
-              "ratio": 1,
+              "ratio": 1.1,
               "attribute": "attack"
             }
           ]

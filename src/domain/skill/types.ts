@@ -370,6 +370,13 @@ export interface SkillStep {
   targetType?: TargetStrategy
 
   /**
+   * 步骤触发概率（0-1，可选）
+   * 设置后该步骤按此概率判定是否执行（如 50% 概率溅射）；
+   * 未设置时该步骤 100% 执行
+   */
+  probability?: number
+
+  /**
    * 伤害大类
    * 用于 deal_damage 步骤，决定防御公式（physical/elemental/true）
    */

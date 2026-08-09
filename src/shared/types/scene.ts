@@ -62,4 +62,15 @@ export interface SceneData {
   }
   /** 场地效果列表 */
   fieldEffects?: FieldEffectConfig[]
+  /** 通关后解锁的关卡 id（线性关卡链） */
+  unlocks?: string
+  /** 隐藏 BOSS（通关特定难度后出现） */
+  hiddenBoss?: {
+    enemyId: string
+    /** 解锁条件：通关的难度档位（easy/normal/hard） */
+    unlockDifficulty: 'easy' | 'normal' | 'hard'
+    description?: string
+  }
+  /** 通关奖励掉落组（引用 drops 表） */
+  rewardDrops?: string[]
 }

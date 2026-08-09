@@ -35,8 +35,8 @@ export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): Unif
   const p1 = { id: 'u1', name: '火护法', maxHp: 350, side: 'ally' as const }
   const p2 = { id: 'u2', name: '金护法', maxHp: 500, side: 'enemy' as const }
   const participants = [
-    { ...p1, hp: p1.maxHp, maxEnergy: 100, energy: 100, buffs: [] as Array<{ name: string; stacks: number; turns: number }> },
-    { ...p2, hp: p2.maxHp, maxEnergy: 100, energy: 60, buffs: [] as Array<{ name: string; stacks: number; turns: number }> },
+    { ...p1, hp: p1.maxHp, maxEnergy: 100, energy: 100, buffs: [] as Array<{ name: string; stacks: number; turns: number }>, attributes: { attack: 65, defense: 20, speed: 90, critRate: 25, critDamage: 150, damageReduction: 5, dodge: 8, hit: 90 } },
+    { ...p2, hp: p2.maxHp, maxEnergy: 100, energy: 60, buffs: [] as Array<{ name: string; stacks: number; turns: number }>, attributes: { attack: 58, defense: 32, speed: 70, critRate: 10, critDamage: 125, damageReduction: 12, dodge: 10, hit: 90 } },
   ]
 
   const events: UnifiedEvent[] = []

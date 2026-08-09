@@ -7,7 +7,6 @@ import {
   entitySegment,
   projectAttackLog,
   projectSkillLog,
-  valueSegment,
 } from '@/domain/battle/logs/BattleLogProjector'
 import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import type { SkillManager } from '@/domain/skill/SkillManager'
@@ -65,7 +64,6 @@ import type {
   BattleData,
   BattleEntity,
   BattleEffect,
-  PassiveTriggerContext,
   TriggerEventContext,
 } from '@/domain/battle/type/types'
 import {
@@ -284,7 +282,7 @@ export class BattleExecutor {
       : decision
         ? { actionType: decision.type === 'skill' ? 'skill' : 'attack' }
         : undefined
-    actionScope = this.emitActionExecution(battle, participant, baseScope, execPayload)
+    actionScope = this.emitActionExecution(battle, participant, baseScope, execPayload, decision?.targetId)
 
     switch (participant.controlMode) {
       case 'AI': {
@@ -346,12 +344,15 @@ export class BattleExecutor {
   /**
    * 发射 action_execution 根事件并派生 action scope（一次行动一个因果链）
    * @param extra 附加 payload（行动类型标记等）；AUTO/MANUAL 未决策时为 undefined
+   * @param targetId 行动目标（AI 决策时已知即携带；AUTO/MANUAL 执行时才选目标，发射时缺省，
+   *                 由投影/属性面板从同链 damage/heal 推断兜底）
    */
   private emitActionExecution(
     battle: BattleData,
     participant: BattleEntity,
     baseScope: TraceScope | undefined,
     extra?: Record<string, unknown>,
+    targetId?: string,
   ): TraceScope | undefined {
     if (!this.tracePort || !baseScope) return undefined
     const execId = this.tracePort.isEnabled(TracePhase.ACTION_EXECUTION)
@@ -363,6 +364,7 @@ export class BattleExecutor {
             battleId: battle.battleId,
             turn: battle.currentTurn ?? 1,
             sourceId: participant.id,
+            ...(targetId ? { targetId } : {}),
             level: TraceLevel.DEBUG,
             summary: `${participant.name} 执行行动`,
             payload: { controlMode: participant.controlMode, ...extra },
@@ -566,6 +568,7 @@ export class BattleExecutor {
             this.resolveStepTargets(battleData, mainTarget, stepTargetType),
           damageToken,
           scope,
+          battleData.rng,
         )
         if (!skillAction.success) {
           LoggerProvider.logger.addDebugLog(
@@ -830,18 +833,7 @@ export class BattleExecutor {
   }
 
   /**
-   * 根据技能配置选择单个目标 ID（快捷入口，内部调用 getSkillTargets）
-   */
-  selectTargetForSkill(
-    battle: BattleData,
-    source: BattleEntity,
-    skill: SkillConfig,
-  ): string {
-    const targets = this.getSkillTargets(battle, source, skill)
-    return targets.length > 0 ? targets[0].id : ''
-  }
-
-  /**  识别「伪装成技能的普通攻击」
+   * 识别「伪装成技能的普通攻击」
    *  数据契约：技能配置显式声明 isNormalAttack，替代名称/结构启发式猜测
    */
   private isNormalAttackSkill(skill: SkillConfig): boolean {
@@ -900,16 +892,6 @@ export class BattleExecutor {
     isSelf: boolean = false,
   ): LogSegment {
     return entitySegment(entity, isSelf)
-  }
-
-  /**
-   * 构建带颜色的数值片段（伤害/治疗）（委托 BattleLogProjector 单一实现）
-   */
-  private buildValueSegment(
-    value: number,
-    type: 'damage' | 'heal',
-  ): LogSegment {
-    return valueSegment(value, type)
   }
 
   /**
@@ -1470,6 +1452,7 @@ export class BattleExecutor {
           undefined,
           damageToken,
           scope,
+          battle.rng,
         )
         if (!skillAction.success) {
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件

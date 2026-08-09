@@ -1,0 +1,499 @@
+[
+  {
+    "id": "skill_xiyou_basic_attack",
+    "name": "普攻",
+    "description": "造成 100% 攻击力伤害",
+    "energyCost": 0,
+    "cooldown": 0,
+    "skillType": "small",
+    "isNormalAttack": true,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_armor_break",
+    "name": "破甲斩",
+    "description": "造成 120% 攻击力伤害，无视 40% 防御",
+    "energyCost": 50,
+    "cooldown": 2,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        },
+        "targetModifiers": { "defense": -0.4 }
+      },
+      {
+        "type": "apply_buff",
+        "duration": 2,
+        "effectId": "xiyou_armor_break",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_heal",
+    "name": "治疗术",
+    "description": "恢复 (50 + 等级×5) 气血",
+    "energyCost": 50,
+    "cooldown": 3,
+    "skillType": "small",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 50,
+          "extraValues": [{ "ratio": 5, "attribute": "level" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_swift_step",
+    "name": "疾风步",
+    "description": "提升 30% 速度，持续 3 回合",
+    "energyCost": 50,
+    "cooldown": 4,
+    "skillType": "small",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "xiyou_swift_speed",
+            "sourceName": "疾风步",
+            "sourceType": "skill",
+            "targetAttribute": "speed",
+            "type": "PERCENTAGE",
+            "value": 30
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_golden_fury",
+    "name": "金刚怒",
+    "description": "造成 200% 攻击力伤害，30% 几率眩晕 1 回合",
+    "energyCost": 150,
+    "cooldown": 5,
+    "skillType": "ultimate",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "probability": 0.3,
+        "duration": 1,
+        "effectId": "buff_stun",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_buddha_light",
+    "name": "佛光普照",
+    "description": "恢复 (150 + 等级×10) 气血，驱散所有负面状态",
+    "energyCost": 150,
+    "cooldown": 6,
+    "skillType": "ultimate",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 150,
+          "extraValues": [{ "ratio": 10, "attribute": "level" }]
+        }
+      },
+      {
+        "type": "cleanse",
+        "count": 99
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_qitian",
+    "name": "齐天战意",
+    "description": "提升 50% 攻击力和 30% 暴击率，持续 5 回合",
+    "energyCost": 150,
+    "cooldown": 6,
+    "skillType": "ultimate",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "duration": 5,
+        "effectId": "xiyou_crit_up",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_swift_combo",
+    "name": "迅捷连击",
+    "description": "被动：攻击时 30% 概率追加一次 50% 伤害的攻击",
+    "energyCost": 0,
+    "cooldown": 0,
+    "skillType": "passive",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "passiveCategory": ["trigger"],
+    "triggerTimes": ["ON_ATTACK"],
+    "triggerProbability": 0.3,
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "probability": 0.3,
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.5, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_shadow_slash",
+    "name": "分身斩",
+    "description": "召唤分身共同攻击，造成 80%×2 伤害",
+    "energyCost": 50,
+    "cooldown": 2,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "repeat": 2,
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.8, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_whirlwind",
+    "name": "乱舞",
+    "description": "3 次快速攻击，每次 60% 伤害",
+    "energyCost": 50,
+    "cooldown": 2,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "repeat": 3,
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.6, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_thousand_shadow",
+    "name": "千影绝杀",
+    "description": "5 次攻击，每次 70% 伤害，最后一击必暴",
+    "energyCost": 150,
+    "cooldown": 5,
+    "skillType": "ultimate",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "repeat": 5,
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.7, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_phantom_evade",
+    "name": "神行百变",
+    "description": "闪避率 +50%，持续 3 回合，期间攻击必连击",
+    "energyCost": 150,
+    "cooldown": 5,
+    "skillType": "ultimate",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "duration": 3,
+        "effectId": "xiyou_dodge_up",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_deadly_aim",
+    "name": "致命精准",
+    "description": "被动：暴击伤害提升至 150%",
+    "energyCost": 0,
+    "cooldown": 0,
+    "skillType": "passive",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "passiveCategory": ["modifier"],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "xiyou_deadly_crit",
+            "sourceName": "致命精准",
+            "sourceType": "skill",
+            "targetAttribute": "critDamage",
+            "type": "PERCENTAGE",
+            "value": 25
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_weak_point",
+    "name": "弱点打击",
+    "description": "造成 130% 伤害，本次暴击率 +30%",
+    "energyCost": 50,
+    "cooldown": 2,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "criticalConfig": { "rate": 0.3, "multiplier": 1 },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_armor_pierce",
+    "name": "破甲斩",
+    "description": "造成 120% 伤害，无视 40% 防御",
+    "energyCost": 50,
+    "cooldown": 2,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "targetModifiers": { "defense": -0.4 },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_gathering_strike",
+    "name": "蓄势一击",
+    "description": "本回合不行动，下回合攻击造成 200% 伤害",
+    "energyCost": 50,
+    "cooldown": 3,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_heaven_destroy",
+    "name": "天诛地灭",
+    "description": "造成 250% 伤害，若暴击则追加 100% 伤害",
+    "energyCost": 150,
+    "cooldown": 5,
+    "skillType": "ultimate",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.5, "attribute": "attack" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_god_war",
+    "name": "战神降临",
+    "description": "暴击率 +40%，攻击力 +30%，持续 5 回合",
+    "energyCost": 150,
+    "cooldown": 6,
+    "skillType": "ultimate",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "duration": 5,
+        "effectId": "xiyou_precision",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_stone_unshakable",
+    "name": "不动如山",
+    "description": "被动：受到伤害时 20% 概率格挡 50% 伤害",
+    "energyCost": 0,
+    "cooldown": 0,
+    "skillType": "passive",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "passiveCategory": ["trigger"],
+    "triggerTimes": ["ON_DAMAGE_TAKEN"],
+    "triggerProbability": 0.2,
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": { "customType": "block_damage", "description": "格挡 50% 伤害" }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_earthquake",
+    "name": "撼地击",
+    "description": "造成 140% 伤害，30% 概率眩晕 1 回合",
+    "energyCost": 50,
+    "cooldown": 2,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "probability": 0.3,
+        "duration": 1,
+        "effectId": "buff_stun",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_iron_wall",
+    "name": "铜墙铁壁",
+    "description": "防御 +50%，持续 3 回合",
+    "energyCost": 50,
+    "cooldown": 4,
+    "skillType": "small",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "duration": 3,
+        "effectId": "xiyou_iron_wall",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_blood_swap",
+    "name": "以伤换伤",
+    "description": "损失 10% 当前气血，造成损失气血×2 的固定伤害",
+    "energyCost": 50,
+    "cooldown": 3,
+    "skillType": "small",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.2, "attribute": "maxHealth" }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_mountain_crush",
+    "name": "泰山压顶",
+    "description": "造成 220% 伤害，100% 眩晕 1 回合",
+    "energyCost": 150,
+    "cooldown": 5,
+    "skillType": "ultimate",
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "skill",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "duration": 1,
+        "effectId": "buff_stun",
+        "calculation": { "baseValue": 1, "extraValues": [] }
+      }
+    ]
+  },
+  {
+    "id": "skill_xiyou_diamond_body",
+    "name": "金刚不坏",
+    "description": "获得最大气血 30% 的护盾，持续 3 回合，期间反弹 30% 伤害",
+    "energyCost": 150,
+    "cooldown": 6,
+    "skillType": "ultimate",
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "shield",
+        "parameters": { "value": 0.3, "valueType": "percent" }
+      },
+      {
+        "type": "custom",
+        "parameters": { "customType": "reflect_damage", "description": "反弹 30% 伤害" }
+      }
+    ]
+  }
+]

@@ -63,7 +63,7 @@ describe('GameDataApi 引用字典 / 元素选项', () => {
     expect(idx['enemy_001']).toBe('花妖')
     expect(idx['fire']).toBe('火')
     expect(idx['buff_hit_reduction']).toBeDefined()
-    expect(idx['mat_001']).toBe('灵草')
+    expect(idx['mat_001']).toBe('桃木')
     expect(idx['lineup_001']).toBe('五行试炼阵')
   })
 

@@ -2880,5 +2880,262 @@
     ],
     "polarity": "negative",
     "description": "使目标沉默，无法释放技能"
+  },
+  {
+    "id": "xiyou_freeze",
+    "name": "冰冻",
+    "category": "control",
+    "maxStacks": 1,
+    "duration": 1,
+    "controlType": "freeze",
+    "effects": [
+      {
+        "type": "control",
+        "params": {
+          "controlType": "freeze",
+          "skipChance": 0.3
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "30% 几率跳过下一回合"
+  },
+  {
+    "id": "xiyou_weak",
+    "name": "虚弱",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "attack": { "value": -30, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "降低 30% 攻击力"
+  },
+  {
+    "id": "xiyou_armor_break",
+    "name": "破甲",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "defense": { "value": -30, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "降低 30% 防御力"
+  },
+  {
+    "id": "xiyou_slow",
+    "name": "迟缓",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speed": { "value": -30, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "降低 30% 速度"
+  },
+  {
+    "id": "xiyou_poison",
+    "name": "中毒",
+    "category": "dot",
+    "maxStacks": 3,
+    "duration": 3,
+    "effects": [
+      {
+        "type": "dot",
+        "params": {
+          "damageType": "percent",
+          "value": 2
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每回合损失 2% 最大气血"
+  },
+  {
+    "id": "xiyou_rage",
+    "name": "激怒",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 3,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "attack": { "value": 30, "type": "PERCENTAGE" },
+            "defense": { "value": -15, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "提升 30% 攻击力，降低 15% 防御"
+  },
+  {
+    "id": "xiyou_iron_wall",
+    "name": "铁壁",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 3,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "defense": { "value": 30, "type": "PERCENTAGE" },
+            "speed": { "value": -15, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "提升 30% 防御，降低 15% 速度"
+  },
+  {
+    "id": "xiyou_agile",
+    "name": "灵巧",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 3,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speed": { "value": 30, "type": "PERCENTAGE" },
+            "defense": { "value": -15, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "提升 30% 速度，降低 15% 防御"
+  },
+  {
+    "id": "xiyou_precision",
+    "name": "精准",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 3,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "critRate": { "value": 30, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "提升 30% 暴击率"
+  },
+  {
+    "id": "xiyou_toughness",
+    "name": "坚韧",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 3,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "maxHealth": { "value": 30, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "提升 30% 最大气血"
+  },
+  {
+    "id": "xiyou_zeal",
+    "name": "狂热",
+    "category": "trigger",
+    "maxStacks": 1,
+    "duration": 3,
+    "triggers": [
+      {
+        "phase": "ON_ATTACK",
+        "scriptId": "gain_energy",
+        "params": { "value": 10 }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每次攻击额外获得 10 能量"
+  },
+  {
+    "id": "xiyou_dodge_up",
+    "name": "闪避提升",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 3,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "dodge": { "value": 50, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "提升 50% 闪避率"
+  },
+  {
+    "id": "xiyou_crit_up",
+    "name": "暴击强化",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 5,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "attack": { "value": 50, "type": "PERCENTAGE" },
+            "critRate": { "value": 30, "type": "PERCENTAGE" }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "提升 50% 攻击力和 30% 暴击率"
   }
 ]

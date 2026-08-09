@@ -1,0 +1,203 @@
+[
+  {
+    "id": "boss_hidden_001",
+    "name": "山鬼·幽",
+    "level": 5,
+    "stats": {
+      "currentHealth": 160,
+      "defense": 6,
+      "speed": 14,
+      "attack": 20
+    },
+    "drops": [
+      { "itemId": "crys_007", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_004", "quantity": 2, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_001_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_001_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_002",
+    "name": "龟丞相·沉",
+    "level": 7,
+    "stats": {
+      "currentHealth": 220,
+      "defense": 10,
+      "speed": 10,
+      "attack": 24
+    },
+    "drops": [
+      { "itemId": "crys_008", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_021", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_002_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_002_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_003",
+    "name": "镇山神兽·岩",
+    "level": 9,
+    "stats": {
+      "currentHealth": 300,
+      "defense": 14,
+      "speed": 9,
+      "attack": 28
+    },
+    "drops": [
+      { "itemId": "crys_001", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_007", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_003_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_003_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_004",
+    "name": "野猪王·獠",
+    "level": 11,
+    "stats": {
+      "currentHealth": 360,
+      "defense": 16,
+      "speed": 11,
+      "attack": 32
+    },
+    "drops": [
+      { "itemId": "crys_002", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_012", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_004_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_004_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_005",
+    "name": "河神·滔",
+    "level": 13,
+    "stats": {
+      "currentHealth": 430,
+      "defense": 18,
+      "speed": 14,
+      "attack": 36
+    },
+    "drops": [
+      { "itemId": "crys_008", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_017", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_005_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_005_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_006",
+    "name": "火灵老祖·炎",
+    "level": 15,
+    "stats": {
+      "currentHealth": 500,
+      "defense": 20,
+      "speed": 13,
+      "attack": 42
+    },
+    "drops": [
+      { "itemId": "crys_003", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_015", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_006_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_006_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_007",
+    "name": "白蛛娘娘·丝",
+    "level": 17,
+    "stats": {
+      "currentHealth": 560,
+      "defense": 22,
+      "speed": 18,
+      "attack": 46
+    },
+    "drops": [
+      { "itemId": "crys_009", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_019", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_007_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_007_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_008",
+    "name": "狮驼王·啸",
+    "level": 19,
+    "stats": {
+      "currentHealth": 640,
+      "defense": 26,
+      "speed": 15,
+      "attack": 50
+    },
+    "drops": [
+      { "itemId": "crys_003", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_024", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_008_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_008_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_009",
+    "name": "金身罗汉·印",
+    "level": 21,
+    "stats": {
+      "currentHealth": 720,
+      "defense": 30,
+      "speed": 16,
+      "attack": 54
+    },
+    "drops": [
+      { "itemId": "crys_006", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_026", "quantity": 1, "chance": 0.6 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_009_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_009_ultimate"]
+    }
+  },
+  {
+    "id": "boss_hidden_010",
+    "name": "大妖王·灭",
+    "level": 23,
+    "stats": {
+      "currentHealth": 820,
+      "defense": 34,
+      "speed": 20,
+      "attack": 60
+    },
+    "drops": [
+      { "itemId": "elix_007", "quantity": 1, "chance": 0.2 },
+      { "itemId": "ess_003", "quantity": 1, "chance": 0.3 },
+      { "itemId": "crys_003", "quantity": 1, "chance": 0.4 }
+    ],
+    "skills": {
+      "small": ["skill_hidden_boss_010_small"],
+      "passive": [],
+      "ultimate": ["skill_hidden_boss_010_ultimate"]
+    }
+  }
+]

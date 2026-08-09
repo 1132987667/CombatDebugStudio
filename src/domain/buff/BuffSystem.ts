@@ -1,5 +1,4 @@
 import {
-  ATTRIBUTE_CODE,
   ModifierSourceType,
   ModifierType,
   type IModifierProvider,
@@ -37,6 +36,7 @@ import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/s
 import { Counter } from '@/shared/utils/Counter'
 import { ConditionState } from '@/shared/types/buff-display'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
+import { nextRandom } from '@/shared/utils/SeededRandom'
 
 export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
@@ -110,11 +110,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   /** 读取确定性随机源（供触发器脚本等共享实例消费；未注入时返回 undefined） */
   getRng(): SeededRandom | undefined {
     return this.rng
-  }
-
-  /** 读取当前随机源（未注入时回退全局 Math.random） */
-  private random(): number {
-    return this.rng ? this.rng.next() : Math.random()
   }
 
   /** 角色免疫标签注册表（初始化时由被动技能填充，运行时可查询） */
@@ -389,7 +384,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         if (
           trigger.probability !== undefined &&
           trigger.probability < 1 &&
-          this.random() > trigger.probability
+          nextRandom(this.rng) > trigger.probability
         )
           return
         // 触发次数检查

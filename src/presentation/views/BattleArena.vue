@@ -1,7 +1,8 @@
 ﻿<template>
   <div class="battle-test-tool">
-    <!-- 公共顶部栏：太初道枢 + 模块 Tab + 按模块收敛的操作按钮（9.3） -->
-    <ModuleHeader v-model:active-module="activeModule">
+    <!-- 公共顶部栏：太初道枢 + 模块 Tab + 按模块收敛的操作按钮（9.3）
+         NOTE: 进入演劫台游戏后隐藏，避免与游戏自身顶部栏（xy-topbar）叠加 -->
+    <ModuleHeader v-show="!inYanjieGame" v-model:active-module="activeModule">
       <template #actions>
         <template v-if="activeModule === 'huanling'">
           <Button @click="huanlingRef?.openRulesDialog()">战斗规则</Button>
@@ -31,13 +32,12 @@
       <Fengshen />
     </div>
 
-    <!-- 演劫台：游戏模块（规划中） -->
-    <div v-show="activeModule === 'yanjie'" class="module-layout" :id="modulePanelId('yanjie')"
-      role="tabpanel" :aria-labelledby="moduleTabId('yanjie')">
-      <div class="module-placeholder">
-        <h2 class="module-placeholder-title">演劫台</h2>
-        <p class="module-placeholder-desc">游戏对局模块（规划中）</p>
-      </div>
+    <!-- 演劫台：游戏模块（多游戏容器，斗战西游为首个落地游戏）
+         NOTE: 进入游戏后面板切换为全屏（隐藏 ModuleHeader 时去掉 60px 顶部预留） -->
+    <div v-show="activeModule === 'yanjie'"
+      :class="['module-layout', inYanjieGame ? 'module-layout--immersive' : 'module-layout--full']"
+      :id="modulePanelId('yanjie')" role="tabpanel" :aria-labelledby="moduleTabId('yanjie')">
+      <Yanjie ref="yanjieRef" />
     </div>
 
     <!-- 全局图鉴 -->
@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import Button from "@/presentation/components/Button.vue";
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import GlobalNotifications from "@/presentation/components/GlobalNotifications.vue";
@@ -57,6 +57,7 @@ import ModuleHeader, { modulePanelId, moduleTabId, type ModuleId } from "@/prese
 import Fengshen from "@/presentation/modules/fengshen/Fengshen.vue";
 import HaotianMirror from "@/presentation/modules/haotian/HaotianMirror.vue";
 import Huanling from "@/presentation/modules/huanling/Huanling.vue";
+import Yanjie from "@/presentation/modules/yanjie/Yanjie.vue";
 
 const showCompendiumDialog = ref(false);
 
@@ -70,4 +71,14 @@ interface HuanlingExposed {
   saveRecording: () => Promise<void>
 }
 const huanlingRef = ref<HuanlingExposed | null>(null);
+
+// 演劫台实例：暴露进入游戏状态，用于隐藏全局 ModuleHeader + 面板全屏
+interface YanjieExposed {
+  entered: ''
+  | 'xiyou'
+}
+const yanjieRef = ref<YanjieExposed | null>(null);
+
+/** 是否处于演劫台游戏内（进入游戏 = 隐藏全局顶栏，面板切换全屏） */
+const inYanjieGame = computed(() => activeModule.value === 'yanjie' && !!yanjieRef.value?.entered);
 </script>

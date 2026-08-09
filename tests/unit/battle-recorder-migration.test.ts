@@ -153,7 +153,7 @@ describe('BattleRecorder 旧数据迁移', () => {
 
     recorder.startRecording('b_list', {
       participants: [
-        { id: 'p1', name: '甲', team: 'ally', maxHealth: 100, currentHealth: 100, maxEnergy: 50, currentEnergy: 50 },
+        { id: 'p1', name: '甲', team: 'ally', maxHealth: 100, currentHealth: 100, maxEnergy: 50, currentEnergy: 50, getAttribute: () => 0 },
       ],
     } as never)
     // 真实战斗路径：combatRecords 中普遍存在缺 overkill/actionOrder 的条目

@@ -18,7 +18,16 @@
                 <span class="s">事件详情</span>
               </div>
               <div class="ht-pane-bd">
-                <Inspector />
+                <div class="ht-insp-grid">
+                  <div class="ht-insp-col">
+                    <div class="ht-insp-col-t cur">当前事件</div>
+                    <Inspector />
+                  </div>
+                  <div class="ht-insp-col">
+                    <div class="ht-insp-col-t next">角色属性</div>
+                    <RoleAttrsPanel />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -28,7 +37,7 @@
       <!-- 调试系统 · 投影 2 -->
       <div class="ht-mode" :class="{ on: store.mode === 'debug' }" role="tabpanel">
         <div class="ht-grid">
-          <DebugTimeline :style="colStyle('debugA')" />
+          <DebugTimeline :active="props.active" :style="colStyle('debugA')" />
           <div class="ht-resizer" role="separator" tabindex="0" aria-orientation="vertical" aria-label="调整时间线宽度"
             @pointerdown="startResize('debugA', $event)"
             @keydown.left.prevent="nudge('debugA', -20)" @keydown.right.prevent="nudge('debugA', 20)"></div>
@@ -43,7 +52,16 @@
                 <span class="s">{{ store.selectedEvent ? '事件详情' : '—' }}</span>
               </div>
               <div class="ht-pane-bd">
-                <Inspector />
+                <div class="ht-insp-grid">
+                  <div class="ht-insp-col">
+                    <div class="ht-insp-col-t cur">当前事件</div>
+                    <Inspector />
+                  </div>
+                  <div class="ht-insp-col">
+                    <div class="ht-insp-col-t next">角色属性</div>
+                    <RoleAttrsPanel />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -59,11 +77,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import CommandBar from './views/CommandBar.vue'
 import ReplayStage from './views/ReplayStage.vue'
 import ReplayStream from './views/ReplayStream.vue'
 import Inspector from './views/Inspector.vue'
+import RoleAttrsPanel from './views/RoleAttrsPanel.vue'
 import DebugTimeline from './views/DebugTimeline.vue'
 import DebugCards from './views/DebugCards.vue'
 import StatusBar from './views/StatusBar.vue'
@@ -127,12 +146,6 @@ function nudge(key: keyof typeof DEFAULT_WIDTHS, d: number): void {
   saveWidths()
 }
 
-const currentDebugNodeEvents = computed(() => {
-  if (!store.debugNodeId) return []
-  const node = store.debugNodes.find((n) => n.id === store.debugNodeId)
-  return node?.events ?? []
-})
-
 useHaotianHotkeys({
   isActive: () => props.active,
   mode: () => store.mode,
@@ -146,7 +159,7 @@ useHaotianHotkeys({
     store.diagOpen = false
   },
   navCards: (dir) => {
-    const list = currentDebugNodeEvents.value
+    const list = store.debugNodeEvents
     if (!list.length) return null
     const i = list.findIndex((x) => x.id === store.selectedId)
     const next = dir === 1 ? Math.min(list.length - 1, i + 1) : Math.max(0, i < 0 ? 0 : i - 1)

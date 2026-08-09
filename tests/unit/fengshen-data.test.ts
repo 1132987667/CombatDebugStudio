@@ -20,6 +20,7 @@ import type { IDataSource } from '@/domain/port/IDataSource'
 import { extractReferenceIds, REFERENCE_RULES } from '@/domain/fengshen/schema'
 import { resolveElementCoefficient } from '@/domain/fengshen/elementMatrix'
 import { nextEntityId } from '@/domain/fengshen/types'
+import { AffixId } from '@/shared/constants/affix'
 import type { ActorData } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig } from '@/domain/skill/types'
@@ -98,11 +99,26 @@ describe('种子导入 seedFengshenData', () => {
     expect(actorKeys).toContain('guardian_fire')
     expect(actorKeys).toContain('guardian_gold')
 
-    // 装备从材料剥离
+    // 装备独立成表（configs/equipment），材料域不再含装备条目
     const materialKeys = await storage.keys(FENGSHEN_STORE.MATERIALS)
-    expect(materialKeys).not.toContain('weapon_001')
+    expect(materialKeys).not.toContain('eq_w001')
     const equipKeys = await storage.keys(FENGSHEN_STORE.EQUIPMENT)
-    expect(equipKeys).toContain('weapon_001')
+    expect(equipKeys).toContain('eq_w001')
+
+    // 词缀表：55 种种子词缀齐全（减益一档 8 + 增益一至四档 8/12/15/12）
+    const affixKeys = await storage.keys(FENGSHEN_STORE.AFFIXES)
+    expect(affixKeys).toHaveLength(55)
+    expect(affixKeys).toContain('affix_debuff_attack')
+    expect(affixKeys).toContain('affix_buff_attack')
+    expect(affixKeys).toContain('affix_buff4_critdmg')
+
+    // 词缀只含属性修正（statModifiers），不带能力效果（能力交给 Buff）；档位含传说 buff_4
+    const buff3 = await storage.get<{ statModifiers?: unknown[]; effects?: unknown[] }>(FENGSHEN_STORE.AFFIXES, 'affix_buff3_attack')
+    expect(buff3?.statModifiers?.length).toBeGreaterThan(0)
+    expect(buff3?.effects).toBeUndefined()
+    const buff4 = await storage.get<{ rarity?: number; tier?: string }>(FENGSHEN_STORE.AFFIXES, 'affix_buff4_defense')
+    expect(buff4?.rarity).toBe(4)
+    expect(buff4?.tier).toBe('buff_4')
 
     const version = await new GameDataApi(storage).getDataVersion()
     expect(version).toBe(1)
@@ -162,6 +178,63 @@ describe('DataIntegrityService 校验', () => {
     const result = await integrity.validateOnSave('actors', { ...validActor, id: 'hero_002' })
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.includes('重复'))).toBe(true)
+  })
+
+  it('词缀：必填名称 + 档位枚举校验，同名词缀保存失败', async () => {
+    const { integrity, write, storage } = makeServices()
+    await seedFengshenData(storage)
+    // 缺名称被拦截
+    const noName = await integrity.validateOnSave('affixes', {
+      id: 'affix_test_1',
+      tier: 'buff_1',
+      target: 'enemy',
+      statModifiers: [{ attribute: 'attack', percent: 20 }],
+    })
+    expect(noName.valid).toBe(false)
+    expect(noName.errors.some((e) => e.includes('名称'))).toBe(true)
+
+    // 同名词缀（已存在 affix_debuff_attack 的「摄魂」）被拦截
+    const dup = await integrity.validateOnSave('affixes', {
+      id: 'affix_test_3',
+      name: '摄魂',
+      tier: 'buff_1',
+      target: 'enemy',
+      statModifiers: [],
+    })
+    expect(dup.valid).toBe(false)
+    expect(dup.errors.some((e) => e.includes('重复'))).toBe(true)
+
+    // 合法词缀可保存
+    const ok = await write.save('affixes', {
+      id: 'affix_test_ok',
+      name: '测试蛮力',
+      tier: 'buff_1',
+      target: 'enemy',
+      statModifiers: [{ attribute: 'attack', percent: 20 }],
+      description: '测试',
+    })
+    expect(ok.ok).toBe(true)
+  })
+
+  it('删除保护：词缀被敌人引用时无法删除', async () => {
+    const { storage } = makeServices()
+    await seedFengshenData(storage)
+    // 给一个敌人附加词缀引用
+    await storage.set(FENGSHEN_STORE.ENEMIES, 'enemy_affix_test', {
+      id: 'enemy_affix_test',
+      name: '词缀测试敌',
+      level: 1,
+      stats: {},
+      drops: [],
+      skills: {},
+      affixes: ['affix_buff_attack'],
+      updatedAt: new Date().toISOString(),
+    })
+    const integrity = new DataIntegrityService(storage)
+    const write2 = new FengshenDataService(storage, integrity)
+    const result = await write2.remove('affixes', 'affix_buff_attack')
+    expect(result.ok).toBe(false)
+    expect(result.errors?.[0]).toContain('被以下数据引用')
   })
 
   it('删除保护：被预设阵容引用的阵型无法删除', async () => {
@@ -410,9 +483,20 @@ describe('纯函数', () => {
     expect(keys).toContain('lineups.formationId')
     expect(keys).toContain('lineups.roles[].roleId')
     expect(keys).toContain('enemies.drops[].itemId')
+    expect(keys).toContain('enemies.affixes')
     expect(keys).toContain('equipment.factionRestriction')
     expect(keys).toContain('actors.growth')
     expect(keys).toContain('drops.entries[].itemId')
+  })
+
+  it('词缀数据与 AffixId 常量一一对应（防漂移）', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+    const api = new GameDataApi(storage)
+    const dataIds = (await api.listByTable<{ id: string }>('affixes', { limit: 1000 })).map((a) => a.id)
+    const constIds = Object.values(AffixId)
+    expect(new Set(dataIds)).toEqual(new Set(constIds))
+    expect(dataIds.length).toBe(constIds.length)
   })
 })
 

@@ -1,0 +1,380 @@
+[
+  {
+    "id": "eq_w001",
+    "name": "竹剑",
+    "slot": "weapon",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 10 },
+      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+    ],
+    "description": "一阶轻型武器。以桃木为骨、铜精为刃，轻盈迅捷。攻击力 8-12，攻速 +20%。"
+  },
+  {
+    "id": "eq_w002",
+    "name": "铜棍",
+    "slot": "weapon",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 12 }
+    ],
+    "description": "一阶中型武器。通体铜铸，势大力沉。攻击力 10-15。"
+  },
+  {
+    "id": "eq_w003",
+    "name": "铜锤",
+    "slot": "weapon",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 15 },
+      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+    ],
+    "description": "一阶重型武器。铜柄巨锤，一击破防。攻击力 12-18，攻速 -20%。"
+  },
+  {
+    "id": "eq_w004",
+    "name": "迅风剑",
+    "slot": "weapon",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 18 },
+      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+    ],
+    "description": "二阶轻型武器。剑过留风，迅捷难防。攻击力 15-22，攻速 +20%。"
+  },
+  {
+    "id": "eq_w005",
+    "name": "铁棒",
+    "slot": "weapon",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 22 }
+    ],
+    "description": "二阶中型武器。精铁锻造，刚猛无匹。攻击力 18-27。"
+  },
+  {
+    "id": "eq_w006",
+    "name": "铁锤",
+    "slot": "weapon",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 27 },
+      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+    ],
+    "description": "二阶重型武器。铁铸重锤，碎石裂地。攻击力 22-32，攻速 -20%。"
+  },
+  {
+    "id": "eq_w007",
+    "name": "流云剑",
+    "slot": "weapon",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 30 },
+      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+    ],
+    "description": "三阶轻型武器。剑走流云，快若惊鸿。攻击力 25-35，攻速 +20%。"
+  },
+  {
+    "id": "eq_w008",
+    "name": "伏魔杖",
+    "slot": "weapon",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 36 }
+    ],
+    "description": "三阶中型武器。杖镇群魔，佛光凛然。攻击力 30-42。"
+  },
+  {
+    "id": "eq_w009",
+    "name": "撼地锤",
+    "slot": "weapon",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "attack", "modifierType": "flat", "value": 42 },
+      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+    ],
+    "description": "三阶重型武器。一锤撼地，万军辟易。攻击力 35-50，攻速 -20%。"
+  },
+  {
+    "id": "eq_a001",
+    "name": "鹿皮甲",
+    "slot": "armor",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 6 },
+      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+    ],
+    "description": "一阶皮甲。鹿皮鞣制，轻软护身。防御力 6，攻速 +20%。"
+  },
+  {
+    "id": "eq_a002",
+    "name": "铜木甲",
+    "slot": "armor",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 8 }
+    ],
+    "description": "一阶木甲。铜木叠层，坚固耐用。防御力 8。"
+  },
+  {
+    "id": "eq_a003",
+    "name": "轻铜甲",
+    "slot": "armor",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 10 },
+      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+    ],
+    "description": "一阶铠甲。铜甲护身，重而不拙。防御力 10，攻速 -20%。"
+  },
+  {
+    "id": "eq_a004",
+    "name": "熊皮甲",
+    "slot": "armor",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 12 },
+      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+    ],
+    "description": "二阶皮甲。熊皮厚韧，刀枪难入。防御力 12，攻速 +20%。"
+  },
+  {
+    "id": "eq_a005",
+    "name": "铁木甲",
+    "slot": "armor",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 16 }
+    ],
+    "description": "二阶木甲。铁木为骨，坚逾精钢。防御力 16。"
+  },
+  {
+    "id": "eq_a006",
+    "name": "重铁甲",
+    "slot": "armor",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 20 },
+      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+    ],
+    "description": "二阶铠甲。重铁板甲，固若金汤。防御力 20，攻速 -20%。"
+  },
+  {
+    "id": "eq_a007",
+    "name": "虎威甲",
+    "slot": "armor",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 20 },
+      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+    ],
+    "description": "三阶皮甲。虎皮为衬，威震山林。防御力 20，攻速 +20%。"
+  },
+  {
+    "id": "eq_a008",
+    "name": "金木甲",
+    "slot": "armor",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 26 }
+    ],
+    "description": "三阶木甲。金丝缠木，刚柔并济。防御力 26。"
+  },
+  {
+    "id": "eq_a009",
+    "name": "神金甲",
+    "slot": "armor",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "defense", "modifierType": "flat", "value": 32 },
+      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+    ],
+    "description": "三阶铠甲。神金铸就，万法不侵。防御力 32，攻速 -20%。"
+  },
+  {
+    "id": "eq_c001",
+    "name": "淡水玉护符",
+    "slot": "accessory",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "maxHealth", "modifierType": "percent", "value": 5 }
+    ],
+    "description": "一阶护符。淡水玉养人，气血 +5%。"
+  },
+  {
+    "id": "eq_c002",
+    "name": "贝壳戒指",
+    "slot": "accessory",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "attack", "modifierType": "percent", "value": 5 }
+    ],
+    "description": "一阶戒指。贝纹含灵，攻击 +5%。"
+  },
+  {
+    "id": "eq_c003",
+    "name": "粗石项链",
+    "slot": "accessory",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "defense", "modifierType": "percent", "value": 5 }
+    ],
+    "description": "一阶项链。粗石沉稳，防御 +5%。"
+  },
+  {
+    "id": "eq_c004",
+    "name": "宣纸腰带",
+    "slot": "accessory",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "speed", "modifierType": "percent", "value": 5 }
+    ],
+    "description": "一阶腰带。宣纸轻韧，速度 +5%。"
+  },
+  {
+    "id": "eq_c005",
+    "name": "淡水玉手镯",
+    "slot": "accessory",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "critRate", "modifierType": "percent", "value": 3 }
+    ],
+    "description": "一阶手镯。玉润含光，暴击率 +3%。"
+  },
+  {
+    "id": "eq_c006",
+    "name": "铜精冠冕",
+    "slot": "accessory",
+    "rarity": 1,
+    "stats": [
+      { "attribute": "maxHealth", "modifierType": "percent", "value": 2 },
+      { "attribute": "attack", "modifierType": "percent", "value": 2 },
+      { "attribute": "defense", "modifierType": "percent", "value": 2 }
+    ],
+    "description": "一阶冠冕。铜精聚灵，全属性 +2%。"
+  },
+  {
+    "id": "eq_c007",
+    "name": "深水玉护符",
+    "slot": "accessory",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "maxHealth", "modifierType": "percent", "value": 8 }
+    ],
+    "description": "二阶护符。深水玉凝魂，气血 +8%。"
+  },
+  {
+    "id": "eq_c008",
+    "name": "青花瓷戒指",
+    "slot": "accessory",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "attack", "modifierType": "percent", "value": 8 }
+    ],
+    "description": "二阶戒指。青花蕴力，攻击 +8%。"
+  },
+  {
+    "id": "eq_c009",
+    "name": "铁精项链",
+    "slot": "accessory",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "defense", "modifierType": "percent", "value": 8 }
+    ],
+    "description": "二阶项链。铁精锻心，防御 +8%。"
+  },
+  {
+    "id": "eq_c010",
+    "name": "青花瓷腰带",
+    "slot": "accessory",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "speed", "modifierType": "percent", "value": 8 }
+    ],
+    "description": "二阶腰带。瓷纹流转，速度 +8%。"
+  },
+  {
+    "id": "eq_c011",
+    "name": "深水玉手镯",
+    "slot": "accessory",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "critRate", "modifierType": "percent", "value": 5 }
+    ],
+    "description": "二阶手镯。水玉生辉，暴击率 +5%。"
+  },
+  {
+    "id": "eq_c012",
+    "name": "铁精冠冕",
+    "slot": "accessory",
+    "rarity": 2,
+    "stats": [
+      { "attribute": "maxHealth", "modifierType": "percent", "value": 4 },
+      { "attribute": "attack", "modifierType": "percent", "value": 4 },
+      { "attribute": "defense", "modifierType": "percent", "value": 4 }
+    ],
+    "description": "二阶冠冕。铁精冠顶，全属性 +4%。"
+  },
+  {
+    "id": "eq_c013",
+    "name": "圣水玉护符",
+    "slot": "accessory",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "maxHealth", "modifierType": "percent", "value": 12 }
+    ],
+    "description": "三阶护符。圣水玉润泽，气血 +12%。"
+  },
+  {
+    "id": "eq_c014",
+    "name": "翡翠玉镯戒指",
+    "slot": "accessory",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "attack", "modifierType": "percent", "value": 12 }
+    ],
+    "description": "三阶戒指。翡翠吐芒，攻击 +12%。"
+  },
+  {
+    "id": "eq_c015",
+    "name": "金精项链",
+    "slot": "accessory",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "defense", "modifierType": "percent", "value": 12 }
+    ],
+    "description": "三阶项链。金精护体，防御 +12%。"
+  },
+  {
+    "id": "eq_c016",
+    "name": "古铜镜腰带",
+    "slot": "accessory",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "speed", "modifierType": "percent", "value": 12 }
+    ],
+    "description": "三阶腰带。古镜映身，速度 +12%。"
+  },
+  {
+    "id": "eq_c017",
+    "name": "翡翠玉镯手镯",
+    "slot": "accessory",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "critRate", "modifierType": "percent", "value": 8 }
+    ],
+    "description": "三阶手镯。翡翠生辉，暴击率 +8%。"
+  },
+  {
+    "id": "eq_c018",
+    "name": "金精冠冕",
+    "slot": "accessory",
+    "rarity": 3,
+    "stats": [
+      { "attribute": "maxHealth", "modifierType": "percent", "value": 6 },
+      { "attribute": "attack", "modifierType": "percent", "value": 6 },
+      { "attribute": "defense", "modifierType": "percent", "value": 6 }
+    ],
+    "description": "三阶冠冕。金精加冕，全属性 +6%。"
+  }
+]

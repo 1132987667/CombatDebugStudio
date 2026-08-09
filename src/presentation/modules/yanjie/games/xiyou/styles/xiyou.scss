@@ -1,0 +1,422 @@
+/* ==========================================================================
+   斗战西游 · 主题样式（xiyou.scss）
+   - 整体采用系统暗色主题令牌（--color-* / rgba(var(--rgb-*))），
+     保留印章、卷轴、墨韵等水墨元素形态作为视觉语言
+   - 图标一律内联 SVG 线条（项目禁 emoji / 图片，见 AGENTS.md）
+   ========================================================================== */
+
+.xy-game {
+  /* ── 色板（映射系统暗色令牌） ── */
+  --xy-ink-1: var(--color-text-primary); /* 主文字 */
+  --xy-ink-2: var(--color-text-secondary); /* 次要文字 */
+  --xy-ink-3: var(--color-text-tertiary); /* 弱文字 */
+  --xy-ink-4: var(--color-text-disabled); /* 禁用文字 */
+  --xy-ink-line: var(--color-border-default); /* 描线 */
+  --xy-paper: var(--color-bg-primary); /* 主背景 */
+  --xy-paper-warm: var(--color-bg-secondary); /* 次背景 */
+  --xy-paper-light: var(--color-bg-tertiary); /* 强调背景 */
+  --xy-seal: var(--color-brand-red); /* 朱印 = 品牌红 */
+  --xy-seal-soft: rgba(var(--rgb-brand-red), var(--alpha-wash));
+  --xy-jade: var(--color-success); /* 青绿 = 成功绿 */
+  --xy-jade-soft: rgba(var(--rgb-success), var(--alpha-wash));
+  --xy-gold: var(--color-warning); /* 鎏金 = 警示金 */
+  --xy-gold-soft: rgba(var(--rgb-warning), var(--alpha-wash));
+  --xy-font-title: 'KaiTi', 'STKaiti', 'Kaiti SC', var(--font-family-serif);
+  --xy-font-body: var(--font-family-base);
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--xy-paper);
+  color: var(--xy-ink-1);
+  font-family: var(--xy-font-body);
+  font-size: var(--font-size-md);
+}
+
+/* 游戏顶部导航栏（与太初道枢 ModuleHeader 视觉规范一致：60px / 渐变 / 2px 底边 / 品牌字效） */
+.xy-topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  height: 60px;
+  box-sizing: border-box;
+  padding: 0 var(--space-6);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-primary) 100%
+  );
+  border-bottom: 2px solid var(--color-border-default);
+}
+
+.xy-topbar-brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.xy-topbar-title {
+  margin: 0;
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 4px;
+  color: var(--color-brand-red);
+  text-shadow: 0 0 12px rgba(var(--rgb-brand-red), 0.35);
+}
+
+.xy-topbar-sub {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  letter-spacing: 2px;
+}
+
+.xy-topbar-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.xy-topbar-chip {
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+}
+
+/* 主体三栏（左：战斗禅台 / 中：功能宝阁 / 右：四象栏） */
+.xy-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px 72px;
+  grid-template-areas: 'zen cabinet aspect';
+  overflow: hidden;
+}
+
+/* 通用水墨组件形态 */
+.xy-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--xy-paper-light);
+  border: 1px solid var(--xy-ink-line);
+  box-shadow: 0 1px 2px rgba(var(--rgb-black), 0.3);
+}
+
+.xy-seal-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-1) 0 var(--space-2);
+  border-bottom: 2px solid var(--xy-ink-line);
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 3px;
+  color: var(--xy-ink-1);
+}
+
+/* 印章方块（标题右侧朱红小印） */
+.xy-seal-title::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background: var(--xy-seal);
+  border-radius: 2px;
+}
+
+/* 技能卡片四态：查看（青）、未选择（灰）、已选择（金） */
+.xy-card {
+  border: 1px solid var(--xy-ink-line);
+  background: var(--xy-paper);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &.xy-card--view {
+    border-color: var(--xy-jade);
+    background: var(--xy-jade-soft);
+  }
+
+  &.xy-card--none {
+    border-color: var(--xy-ink-line);
+    background: var(--xy-paper);
+    color: var(--xy-ink-3);
+  }
+
+  &.xy-card--select {
+    border-color: var(--xy-gold);
+    background: var(--xy-gold-soft);
+  }
+}
+
+/* 墨韵悬停：按钮/卡片悬停时光晕扩散 */
+.xy-ink-hover {
+  position: relative;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 50% 50%, var(--color-bg-hover), transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    pointer-events: none;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   养成面板通用组件（各分组 Panel 复用）
+   ══════════════════════════════════════════════════════════════════ */
+
+/* 子系统页签条（宝阁内二级导航） */
+.xy-panel-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--space-1);
+  padding: 2px;
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.xy-panel-tab {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--xy-ink-3);
+  cursor: pointer;
+  font-family: var(--xy-font-body);
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    color: var(--xy-ink-1);
+  }
+
+  &.active {
+    background: var(--xy-seal-soft);
+    color: var(--xy-seal);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+/* 小节标题 */
+.xy-sec-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--xy-seal);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--xy-ink-2);
+}
+
+.xy-sec-title .xy-sec-count {
+  margin-left: auto;
+  font-weight: var(--font-weight-regular);
+  color: var(--xy-ink-4);
+}
+
+/* 通用小标签 */
+.xy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+
+  &.xy-chip--jade {
+    color: var(--xy-jade);
+  }
+
+  &.xy-chip--gold {
+    color: var(--xy-gold);
+  }
+
+  &.xy-chip--seal {
+    color: var(--xy-seal);
+  }
+
+  &.xy-chip--muted {
+    color: var(--xy-ink-4);
+  }
+}
+
+/* 通用进度条 */
+.xy-progress {
+  position: relative;
+  height: 8px;
+  border: 1px solid var(--xy-ink-line);
+  background: var(--color-bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xy-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--xy-jade), var(--xy-jade));
+  border-radius: 4px;
+  transition: width var(--transition-base);
+}
+
+.xy-progress--gold .xy-progress-fill {
+  background: linear-gradient(90deg, var(--xy-gold), var(--xy-gold));
+}
+
+.xy-progress--seal .xy-progress-fill {
+  background: linear-gradient(90deg, var(--xy-seal), var(--xy-seal));
+}
+
+.xy-progress--line .xy-progress-fill {
+  background: linear-gradient(90deg, var(--color-skill-active), var(--color-skill-active));
+}
+
+.xy-progress-text {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-4);
+}
+
+/* 品质色（凡 / 玄 / 地 / 天 / 仙） */
+.xy-q--凡品 {
+  color: var(--xy-ink-4);
+}
+
+.xy-q--玄品 {
+  color: var(--xy-jade);
+}
+
+.xy-q--地品 {
+  color: var(--color-skill-active);
+}
+
+.xy-q--天品 {
+  color: var(--color-debuff);
+}
+
+.xy-q--仙品 {
+  color: var(--xy-gold);
+}
+
+/* 通用条目行卡 */
+.xy-row-card {
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  background: var(--xy-paper);
+  border-radius: 2px;
+}
+
+.xy-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.xy-row-name {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-1);
+}
+
+.xy-row-side {
+  margin-left: auto;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-row-desc {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-row-desc--key {
+  color: var(--xy-seal);
+}
+
+/* 双列卡片网格 */
+.xy-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+/* 货币徽章 */
+.xy-coin {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+  white-space: nowrap;
+
+  &--gold {
+    color: var(--xy-gold);
+    border-color: rgba(var(--rgb-warning), var(--alpha-border));
+  }
+
+  &--jade {
+    color: var(--xy-jade);
+    border-color: rgba(var(--rgb-success), var(--alpha-border));
+  }
+}
+
+.xy-coin::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}

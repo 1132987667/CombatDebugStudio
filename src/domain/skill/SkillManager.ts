@@ -17,6 +17,7 @@ import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { LogLevel } from '@/shared/types/battle-log'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
+import type { SeededRandom } from '@/shared/utils/SeededRandom'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { createStepContext } from '@/domain/battle/type/types'
@@ -156,6 +157,8 @@ export class SkillManager {
     token?: DeferredDamageToken,
     /** 因果链作用域（文档 §4.5）— 贯穿到 DamageCalculator/HealCalculator/BuffSystem */
     trace?: TraceScope,
+    /** 确定性随机源 — 用于步骤触发概率判定（如溅射），保证回放一致；未传回退 Math.random */
+    rng?: SeededRandom,
   ): BattleAction {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
@@ -330,18 +333,17 @@ export class SkillManager {
       }
     }
     for (const step of steps) {
-      const ctx: CalculationContext = {
-        skillStep: step,
-        action,
-        source,
-        targets: [target],
-        record,
-        token,
-        trace,
+      // 步骤触发概率判定（如 50% 概率溅射）——未命中则跳过整个步骤
+      const stepProbability = (step as ExtendedSkillStep).probability
+      if (stepProbability != null) {
+        const hit = rng
+          ? rng.nextBoolean(stepProbability)
+          : Math.random() < stepProbability
+        if (!hit) continue
       }
-      this.executeStep(ctx)
 
       // 处理步骤级 targetType（如 random_adjacent 溅射伤害）
+      // NOTE: 带 targetType 的步骤只作用于额外目标，不再对主目标重复执行（如溅射只打相邻）
       const stepTargetType = step.targetType as string | undefined
       if (stepTargetType && resolveExtraTargets) {
         const extraTargets = resolveExtraTargets(stepTargetType, target)
@@ -358,7 +360,19 @@ export class SkillManager {
           }
           this.executeStep(extraCtx)
         }
+        continue
       }
+
+      const ctx: CalculationContext = {
+        skillStep: step,
+        action,
+        source,
+        targets: [target],
+        record,
+        token,
+        trace,
+      }
+      this.executeStep(ctx)
     }
 
     // ponytail: 技能执行成功后设置冷却（如果配置了冷却回合数）

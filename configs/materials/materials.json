@@ -1,420 +1,373 @@
 [
   {
     "id": "mat_001",
-    "name": "灵草",
-    "type": "material",
-    "description": "生长在灵山深处的普通药草，具有基本的灵气",
-    "rarity": 1
+    "name": "桃木",
+    "type": "木材",
+    "rarity": 1,
+    "description": "普通桃树的木材，质地轻盈坚韧，适合制作轻型武器和木甲。用途：制作一阶装备的基础材料。"
   },
   {
     "id": "mat_002",
-    "name": "铁矿石",
-    "type": "material",
-    "description": "蕴含少量灵气的矿石，可用于锻造基础武器",
-    "rarity": 1
+    "name": "粗石",
+    "type": "矿石",
+    "rarity": 1,
+    "description": "粗糙的石块，蕴含微弱的地脉灵气，可用于基础装备制作。用途：制作一阶装备和饰品的基础材料。"
   },
   {
     "id": "mat_003",
-    "name": "毒液囊",
-    "type": "material",
-    "description": "从毒物体内提取的毒液，可用于炼制毒药",
-    "rarity": 2
+    "name": "铜精",
+    "type": "金属",
+    "rarity": 1,
+    "description": "经过初步提炼的铜矿石精华，具有较好的延展性和韧性。用途：制作一阶装备和饰品的主要金属材料。"
   },
   {
     "id": "mat_004",
-    "name": "羽毛",
-    "type": "material",
-    "description": "鸟类妖物的羽毛，可用于制作羽扇和箭矢",
-    "rarity": 1
+    "name": "淡水玉",
+    "type": "玉石",
+    "rarity": 1,
+    "description": "产自淡水河流中的玉石，蕴含温和的水属性灵气。用途：制作一阶饰品护符和手镯。"
+  },
+  {
+    "id": "mat_005",
+    "name": "贝壳",
+    "type": "水产",
+    "rarity": 1,
+    "description": "河滩上常见的贝壳，可用于制作简单的装饰品。用途：制作一阶饰品戒指和手镯。"
+  },
+  {
+    "id": "mat_006",
+    "name": "松木",
+    "type": "木材",
+    "rarity": 1,
+    "description": "松树的木材，质地比桃木更坚硬，适合制作中型武器。用途：制作二阶装备的基础材料。"
+  },
+  {
+    "id": "mat_007",
+    "name": "铁精",
+    "type": "金属",
+    "rarity": 1,
+    "description": "精炼过的铁矿石，硬度高且耐磨，适合制作中级装备。用途：制作二阶装备和饰品的主要金属材料。"
+  },
+  {
+    "id": "mat_008",
+    "name": "深水玉",
+    "type": "玉石",
+    "rarity": 1,
+    "description": "产自深水区域的玉石，蕴含更浓郁的水属性灵气。用途：制作二阶饰品护符和手镯。"
+  },
+  {
+    "id": "mat_009",
+    "name": "鹿皮",
+    "type": "皮革",
+    "rarity": 1,
+    "description": "鹿的皮革，柔软且坚韧，适合制作轻型护甲。用途：制作一阶皮甲的基础材料。"
+  },
+  {
+    "id": "mat_010",
+    "name": "宣纸",
+    "type": "织物",
+    "rarity": 1,
+    "description": "传统制作的宣纸，轻盈且有韧性，可用于制作饰品。用途：制作一阶饰品腰带。"
+  },
+  {
+    "id": "mat_011",
+    "name": "青花瓷",
+    "type": "陶瓷",
+    "rarity": 1,
+    "description": "精美的青花瓷器碎片，具有艺术价值和灵气。用途：制作二阶饰品戒指和腰带。"
+  },
+  {
+    "id": "mat_012",
+    "name": "熊皮",
+    "type": "皮革",
+    "rarity": 1,
+    "description": "熊的皮革，厚实耐磨，适合制作中级皮甲。用途：制作二阶皮甲的基础材料。"
+  },
+  {
+    "id": "mat_013",
+    "name": "铁木",
+    "type": "木材",
+    "rarity": 2,
+    "description": "质地坚硬如铁的木材，极为稀有，适合制作高级装备。用途：制作三阶装备的基础材料。"
+  },
+  {
+    "id": "mat_014",
+    "name": "铁焰矿",
+    "type": "矿石",
+    "rarity": 1,
+    "description": "在火焰山附近找到的特殊矿石，蕴含火属性灵气。用途：制作特殊装备的材料。"
+  },
+  {
+    "id": "mat_015",
+    "name": "古铜镜",
+    "type": "古董",
+    "rarity": 2,
+    "description": "古老的铜镜，蕴含着神秘的灵气，可用于制作高级饰品。用途：制作三阶饰品腰带。"
+  },
+  {
+    "id": "mat_016",
+    "name": "金精",
+    "type": "金属",
+    "rarity": 2,
+    "description": "提炼出的黄金精华，极其珍贵，适合制作顶级装备。用途：制作三阶装备和饰品的主要金属材料。"
+  },
+  {
+    "id": "mat_017",
+    "name": "圣水玉",
+    "type": "玉石",
+    "rarity": 2,
+    "description": "蕴含神圣水属性的玉石，极为纯净，适合制作顶级饰品。用途：制作三阶饰品护符和手镯。"
+  },
+  {
+    "id": "mat_018",
+    "name": "翡翠玉镯",
+    "type": "玉石",
+    "rarity": 2,
+    "description": "翡翠制成的玉镯，蕴含强大的灵气，可大幅提升属性。用途：制作三阶饰品戒指和手镯。"
+  },
+  {
+    "id": "mat_019",
+    "name": "仙云皮",
+    "type": "皮革",
+    "rarity": 2,
+    "description": "仙兽的皮革，轻盈如云却坚韧无比，适合制作顶级皮甲。用途：制作三阶皮甲的基础材料。"
+  },
+  {
+    "id": "mat_020",
+    "name": "虎皮",
+    "type": "皮革",
+    "rarity": 1,
+    "description": "猛虎的皮革，极具威严和力量，适合制作高级皮甲。用途：制作三阶皮甲的基础材料。"
+  },
+  {
+    "id": "mat_021",
+    "name": "珍珠",
+    "type": "水产",
+    "rarity": 1,
+    "description": "河蚌中孕育的珍珠，散发着温和的光芒，可用于制作饰品。用途：制作特殊饰品。"
+  },
+  {
+    "id": "mat_022",
+    "name": "寒潭水",
+    "type": "液体",
+    "rarity": 1,
+    "description": "取自寒潭的冰水，蕴含冰属性灵气，可用于特殊丹药炼制。用途：炼制特殊丹药的材料。"
+  },
+  {
+    "id": "mat_023",
+    "name": "毒液",
+    "type": "毒物",
+    "rarity": 1,
+    "description": "蜘蛛精的毒液，可炼制毒属性丹药或涂抹在武器上。用途：炼制毒属性丹药或制作毒属性武器。"
+  },
+  {
+    "id": "mat_024",
+    "name": "金阳矿",
+    "type": "矿石",
+    "rarity": 2,
+    "description": "在狮驼岭发现的金色矿石，蕴含太阳灵气。用途：制作特殊装备的材料。"
+  },
+  {
+    "id": "mat_025",
+    "name": "神泉水",
+    "type": "液体",
+    "rarity": 2,
+    "description": "神鸟栖息之地的泉水，蕴含风属性灵气。用途：炼制高级丹药的材料。"
+  },
+  {
+    "id": "mat_026",
+    "name": "玉佛像",
+    "type": "古董",
+    "rarity": 2,
+    "description": "雕刻精美的玉佛像，蕴含强大的佛门灵气。用途：制作顶级饰品或特殊装备。"
+  },
+  {
+    "id": "ess_001",
+    "name": "地脉灵气",
+    "type": "灵气",
+    "rarity": 2,
+    "description": "大地脉动中提取的纯净灵气，蕴含土属性力量。用途：用于装备强化和高级丹药炼制。"
+  },
+  {
+    "id": "ess_002",
+    "name": "天罡灵气",
+    "type": "灵气",
+    "rarity": 3,
+    "description": "来自天罡星辰的灵气，蕴含强大的星辰之力。用途：用于顶级装备强化和传说丹药炼制。"
+  },
+  {
+    "id": "ess_003",
+    "name": "混元灵气",
+    "type": "灵气",
+    "rarity": 3,
+    "description": "混沌初开时存在的原始灵气，蕴含创世之力。用途：用于传说装备的最终强化。"
+  },
+  {
+    "id": "crys_001",
+    "name": "一阶灿金晶球",
+    "type": "晶球",
+    "rarity": 1,
+    "description": "蕴含金属性灵气的晶球，可用于强化一阶武器。开启后获得异矿。用途：强化一阶武器，每级提升攻击力5%。"
+  },
+  {
+    "id": "crys_002",
+    "name": "二阶灿金晶球",
+    "type": "晶球",
+    "rarity": 1,
+    "description": "蕴含更浓郁金属性灵气的晶球，可用于强化二阶武器。开启后获得异矿。用途：强化二阶武器，每级提升攻击力5%。"
+  },
+  {
+    "id": "crys_003",
+    "name": "三阶灿金晶球",
+    "type": "晶球",
+    "rarity": 2,
+    "description": "蕴含纯粹金属性灵气的晶球，可用于强化三阶武器。开启后获得异矿。用途：强化三阶武器，每级提升攻击力5%。"
+  },
+  {
+    "id": "crys_004",
+    "name": "一阶清辉晶球",
+    "type": "晶球",
+    "rarity": 1,
+    "description": "蕴含木属性灵气的晶球，可用于强化一阶衣服。开启后获得灵水。用途：强化一阶衣服，每级提升防御力5%。"
+  },
+  {
+    "id": "crys_005",
+    "name": "二阶清辉晶球",
+    "type": "晶球",
+    "rarity": 1,
+    "description": "蕴含更浓郁木属性灵气的晶球，可用于强化二阶衣服。开启后获得灵水。用途：强化二阶衣服，每级提升防御力5%。"
+  },
+  {
+    "id": "crys_006",
+    "name": "三阶清辉晶球",
+    "type": "晶球",
+    "rarity": 2,
+    "description": "蕴含纯粹木属性灵气的晶球，可用于强化三阶衣服。开启后获得灵水。用途：强化三阶衣服，每级提升防御力5%。"
+  },
+  {
+    "id": "crys_007",
+    "name": "一阶玲珑晶球",
+    "type": "晶球",
+    "rarity": 1,
+    "description": "蕴含水属性灵气的晶球，可用于强化一阶饰品。开启后获得灵气。用途：强化一阶饰品，每级提升属性加成3%。"
+  },
+  {
+    "id": "crys_008",
+    "name": "二阶玲珑晶球",
+    "type": "晶球",
+    "rarity": 1,
+    "description": "蕴含更浓郁水属性灵气的晶球，可用于强化二阶饰品。开启后获得灵气。用途：强化二阶饰品，每级提升属性加成3%。"
+  },
+  {
+    "id": "crys_009",
+    "name": "三阶玲珑晶球",
+    "type": "晶球",
+    "rarity": 2,
+    "description": "蕴含纯粹水属性灵气的晶球，可用于强化三阶饰品。开启后获得灵气。用途：强化三阶饰品，每级提升属性加成3%。"
   },
   {
     "id": "elix_001",
-    "name": "小还丹",
-    "type": "consumable",
-    "description": "基础的恢复丹药，可恢复少量气血值",
+    "name": "疗伤丹药",
+    "type": "丹药",
     "rarity": 1,
+    "description": "用普通草药炼制的基础疗伤药，可恢复气血。用途：战斗中或战斗外使用，立即恢复100点气血。",
     "effects": [
-      {
-        "type": "heal",
-        "value": 30
-      }
+      { "type": "heal", "value": 100 }
     ]
   },
   {
     "id": "elix_002",
-    "name": "中还丹",
-    "type": "consumable",
-    "description": "中级的恢复丹药，可恢复中等气血值",
-    "rarity": 2,
+    "name": "元气丹",
+    "type": "丹药",
+    "rarity": 1,
+    "description": "蕴含天地元气的丹药，可恢复能量。用途：战斗中或战斗外使用，立即恢复50点能量。",
     "effects": [
-      {
-        "type": "heal",
-        "value": 60
-      }
+      { "type": "energy", "value": 50 }
     ]
   },
   {
     "id": "elix_003",
-    "name": "大还丹",
-    "type": "consumable",
-    "description": "高级的恢复丹药，可恢复大量气血值",
-    "rarity": 3,
+    "name": "防御丹药",
+    "type": "丹药",
+    "rarity": 1,
+    "description": "增强体魄的丹药，临时提升防御力。用途：战斗中可使用，提升20%防御力，持续3回合。",
     "effects": [
-      {
-        "type": "heal",
-        "value": 100
-      }
+      { "type": "buff", "value": 0, "buffId": "buff_defense_up" }
     ]
   },
   {
-    "id": "weapon_001",
-    "name": "铁剑",
-    "type": "equipment",
-    "description": "普通的铁制长剑，适合初学者使用",
-    "rarity": 1,
-    "slot": "weapon",
-    "stats": {
-      "attack": 7
-    }
-  },
-  {
-    "id": "armor_001",
-    "name": "皮甲",
-    "type": "equipment",
-    "description": "简单的皮制护甲，提供基础防护",
-    "rarity": 1,
-    "slot": "armor",
-    "stats": {
-      "defense": 3
-    }
-  },
-  {
-    "id": "accessory_001",
-    "name": "速度之符",
-    "type": "equipment",
-    "description": "刻有加速阵法的符咒，可提升穿戴者速度",
-    "rarity": 2,
-    "slot": "accessory",
-    "stats": {
-      "speed": 5
-    }
-  },
-  {
-    "id": "mat_005",
-    "name": "水族鳞片",
-    "type": "material",
-    "description": "虾兵蟹将身上脱落的鳞甲，蕴含浅水灵气",
-    "rarity": 1
-  },
-  {
-    "id": "mat_006",
-    "name": "岩核",
-    "type": "material",
-    "description": "岩妖石精体内凝结的岩石核心，可锻造坚硬器具",
-    "rarity": 1
-  },
-  {
-    "id": "mat_007",
-    "name": "岩石结晶",
-    "type": "material",
-    "description": "岩妖首领掉落的精纯结晶，是炼制高级矿石的基础",
-    "rarity": 1
-  },
-  {
-    "id": "mat_008",
-    "name": "灵木枝",
-    "type": "material",
-    "description": "树精妖物身上折下的灵木枝，带淡淡草木清香",
-    "rarity": 1
-  },
-  {
-    "id": "mat_009",
-    "name": "野猪獠牙",
-    "type": "material",
-    "description": "野猪精的锋利獠牙，可作骨制武器材料",
-    "rarity": 1
-  },
-  {
-    "id": "mat_010",
-    "name": "家仆信物",
-    "type": "material",
-    "description": "家仆妖随身携带的信物，记录着主人的密令",
-    "rarity": 1
-  },
-  {
-    "id": "mat_011",
-    "name": "千年木心",
-    "type": "material",
-    "description": "千年树妖凝结的木心，蕴含磅礴生机",
-    "rarity": 2
-  },
-  {
-    "id": "mat_012",
-    "name": "蛛丝",
-    "type": "material",
-    "description": "蜘蛛精吐出的坚韧蛛丝，可织成护甲",
-    "rarity": 1
-  },
-  {
-    "id": "mat_013",
-    "name": "火蜥蜴鳞片",
-    "type": "material",
-    "description": "火蜥蜴的灼热鳞片，接触便微微发烫",
-    "rarity": 1
-  },
-  {
-    "id": "mat_014",
-    "name": "熔岩矿渣",
-    "type": "material",
-    "description": "熔岩精体内残留的矿渣，仍带高温余烬",
-    "rarity": 1
-  },
-  {
-    "id": "mat_015",
-    "name": "火童符纸",
-    "type": "material",
-    "description": "火童侍者使用的符纸，画着赤红的火焰纹",
-    "rarity": 1
-  },
-  {
-    "id": "mat_016",
-    "name": "兽王鬃毛",
-    "type": "material",
-    "description": "狮王象妖褪下的鬃毛，粗硬如铁",
-    "rarity": 2
-  },
-  {
-    "id": "mat_017",
-    "name": "浊浪水珠",
-    "type": "material",
-    "description": "浊浪中凝结的水珠，澄澈而沉重",
-    "rarity": 2
-  },
-  {
-    "id": "mat_018",
-    "name": "毒蛾鳞粉",
-    "type": "material",
-    "description": "毒蛾振翅抖落的鳞粉，沾之即麻",
-    "rarity": 1
-  },
-  {
-    "id": "mat_019",
-    "name": "金刚石粉",
-    "type": "material",
-    "description": "金刚罗汉周身散落的石粉，坚不可摧",
-    "rarity": 2
-  },
-  {
-    "id": "mat_020",
-    "name": "狮王爪",
-    "type": "material",
-    "description": "狮兵统领锋利的利爪，适合磨制成武器",
-    "rarity": 1
-  },
-  {
-    "id": "mat_021",
-    "name": "水灵珠",
-    "type": "material",
-    "description": "浅水涧孕育的灵珠，内含一汪清泉",
-    "rarity": 2
-  },
-  {
-    "id": "mat_022",
-    "name": "毒蛾翅膜",
-    "type": "material",
-    "description": "毒蛾的薄膜翅翼，薄如蝉翼却带剧毒",
-    "rarity": 1
-  },
-  {
-    "id": "mat_023",
-    "name": "蛛网丝",
-    "type": "material",
-    "description": "幼蛛织出的初生蛛丝，柔韧细密",
-    "rarity": 1
-  },
-  {
-    "id": "mat_024",
-    "name": "象妖象牙",
-    "type": "material",
-    "description": "象妖将军的象牙，是极好的雕刻与炼器材料",
-    "rarity": 2
-  },
-  {
-    "id": "mat_025",
-    "name": "鹏羽",
-    "type": "material",
-    "description": "大鹏怪脱落的羽毛，根根如铁",
-    "rarity": 1
-  },
-  {
-    "id": "mat_026",
-    "name": "金刚舍利",
-    "type": "material",
-    "description": "护法金刚体内凝结的舍利，佛光流转",
-    "rarity": 2
-  },
-  {
-    "id": "crys_001",
-    "name": "结晶灵石",
-    "type": "material",
-    "description": "山野精怪体内凝结的灵石，是炼器的通用核心",
-    "rarity": 3
-  },
-  {
-    "id": "crys_002",
-    "name": "青木灵晶",
-    "type": "material",
-    "description": "迷雾林中蕴生的青色灵晶，木气盎然",
-    "rarity": 3
-  },
-  {
-    "id": "crys_003",
-    "name": "赤火灵晶",
-    "type": "material",
-    "description": "熔岩火脉中凝出的赤红灵晶，灼热逼人",
-    "rarity": 3
-  },
-  {
-    "id": "crys_004",
-    "name": "碧水灵晶",
-    "type": "material",
-    "description": "深水之下的碧色灵晶，水光潋滟",
-    "rarity": 3
-  },
-  {
-    "id": "crys_005",
-    "name": "迷雾灵晶",
-    "type": "material",
-    "description": "迷雾林深处的神秘灵晶，雾影缭绕",
-    "rarity": 2
-  },
-  {
-    "id": "crys_006",
-    "name": "熔岩灵晶",
-    "type": "material",
-    "description": "熔岩核心处的结晶，仍泛着暗红火光",
-    "rarity": 3
-  },
-  {
-    "id": "crys_007",
-    "name": "白玉灵晶",
-    "type": "material",
-    "description": "山门重地凝出的白玉灵晶，温润如脂",
-    "rarity": 3
-  },
-  {
-    "id": "crys_008",
-    "name": "灵泉晶石",
-    "type": "material",
-    "description": "河伯府邸灵泉中凝出的晶石，清澈透亮",
-    "rarity": 2
-  },
-  {
-    "id": "crys_009",
-    "name": "玄铁灵晶",
-    "type": "material",
-    "description": "铁砂风暴中淬出的玄色灵晶，坚硬沉重",
-    "rarity": 3
-  },
-  {
-    "id": "frag_001",
-    "name": "叛徒令牌碎片",
-    "type": "material",
-    "description": "佛门叛徒佩戴的令牌碎片，记载着反叛的印记",
-    "rarity": 2
-  },
-  {
-    "id": "frag_002",
-    "name": "金刚护符碎片",
-    "type": "material",
-    "description": "金刚护法随从的护符残片，仍存一丝护体佛光",
-    "rarity": 2
-  },
-  {
-    "id": "frag_003",
-    "name": "罗汉袈裟碎片",
-    "type": "material",
-    "description": "罗汉使者所着袈裟的碎片，金线仍熠熠生辉",
-    "rarity": 2
-  },
-  {
-    "id": "frag_004",
-    "name": "护法经文碎片",
-    "type": "material",
-    "description": "护法学徒背诵的经文残页，字迹模糊而庄严",
-    "rarity": 2
-  },
-  {
-    "id": "ess_001",
-    "name": "降龙罗汉精华",
-    "type": "material",
-    "description": "降龙罗汉之力凝成的精华，蕴含降妖伏魔的真意",
-    "rarity": 3
-  },
-  {
-    "id": "ess_002",
-    "name": "佛光精华",
-    "type": "material",
-    "description": "禅音崖上汇聚的佛光精华，柔和而庄严",
-    "rarity": 3
-  },
-  {
-    "id": "ess_003",
-    "name": "金刚护法精华",
-    "type": "material",
-    "description": "金刚护法将帅凝出的精华，坚如磐石",
-    "rarity": 3
-  },
-  {
     "id": "elix_004",
-    "name": "还灵丹",
-    "type": "consumable",
-    "description": "中阶恢复丹药，可恢复中等偏多的气血值",
-    "rarity": 2,
+    "name": "攻击丹药",
+    "type": "丹药",
+    "rarity": 1,
+    "description": "激发潜能的丹药，临时提升攻击力。用途：战斗中可使用，提升20%攻击力，持续3回合。",
     "effects": [
-      {
-        "type": "heal",
-        "value": 120
-      }
+      { "type": "buff", "value": 0, "buffId": "buff_attack_up" }
     ]
   },
   {
     "id": "elix_005",
-    "name": "聚力丹",
-    "type": "consumable",
-    "description": "聚气丹药，服用后短暂凝聚力量",
-    "rarity": 2,
+    "name": "速度丹药",
+    "type": "丹药",
+    "rarity": 1,
+    "description": "轻身提气的丹药，临时提升速度。用途：战斗中可使用，提升20%速度，持续3回合。",
     "effects": [
-      {
-        "type": "heal",
-        "value": 60
-      }
+      { "type": "buff", "value": 0, "buffId": "buff_speed_up" }
     ]
   },
   {
     "id": "elix_006",
-    "name": "凝元丹",
-    "type": "consumable",
-    "description": "凝聚元气的高阶丹药，可恢复大量气血值",
-    "rarity": 3,
+    "name": "全属性丹药",
+    "type": "丹药",
+    "rarity": 2,
+    "description": "全面提升能力的丹药，但效果较为温和。用途：战斗中可使用，提升10%攻击、防御、速度、暴击率，持续3回合。",
     "effects": [
-      {
-        "type": "heal",
-        "value": 160
-      }
+      { "type": "buff", "value": 0, "buffId": "buff_all_stats" }
     ]
   },
   {
     "id": "elix_007",
-    "name": "九转还魂丹",
-    "type": "consumable",
-    "description": "传说级别的还魂丹药，危急时刻起死回生",
+    "name": "九转金丹",
+    "type": "丹药",
     "rarity": 3,
+    "description": "传说中的仙丹，历经九转炼制而成，具有逆天功效。用途：战斗外使用，永久提升属性并立即恢复全部气血和能量。",
     "effects": [
-      {
-        "type": "heal",
-        "value": 200
-      }
+      { "type": "heal", "value": 9999 }
     ]
+  },
+  {
+    "id": "frag_001",
+    "name": "天罡灵气碎片",
+    "type": "碎片",
+    "rarity": 2,
+    "description": "天罡灵气的碎片，收集一定数量可合成完整的天罡灵气。用途：10个碎片可合成1个天罡灵气。"
+  },
+  {
+    "id": "frag_002",
+    "name": "混元灵气碎片",
+    "type": "碎片",
+    "rarity": 2,
+    "description": "混元灵气的碎片，收集一定数量可合成完整的混元灵气。用途：10个碎片可合成1个混元灵气。"
+  },
+  {
+    "id": "frag_003",
+    "name": "九转金丹碎片",
+    "type": "碎片",
+    "rarity": 3,
+    "description": "九转金丹的碎片，收集一定数量可合成完整的九转金丹。用途：5个碎片可合成1个九转金丹。"
+  },
+  {
+    "id": "frag_004",
+    "name": "玉佛像碎片",
+    "type": "碎片",
+    "rarity": 2,
+    "description": "玉佛像的碎片，收集一定数量可合成完整的玉佛像。用途：5个碎片可合成1个玉佛像。"
+  },
+  {
+    "id": "curr_001",
+    "name": "金钱",
+    "type": "货币",
+    "rarity": 1,
+    "description": "游戏中的通用货币，可用于购买物品、制作装备等。用途：购买与制作消耗。"
   }
 ]

@@ -75,3 +75,16 @@ export function ceil(number: number | string, precision = 0): number {
 export function percentage(value: number): number {
   return round(value * 100, 2)
 }
+
+/**
+ * 将数值限制在 [lo, hi] 范围内
+ * @param n - 原始数值
+ * @param lo - 下界（可省略）
+ * @param hi - 上界（可省略）
+ * @returns 限制后的数值
+ */
+export function clamp(n: number, lo?: number, hi?: number): number {
+  if (lo !== undefined && n < lo) return lo
+  if (hi !== undefined && n > hi) return hi
+  return n
+}

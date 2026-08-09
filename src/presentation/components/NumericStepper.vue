@@ -22,6 +22,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { clamp } from '@/shared/utils/math'
 
 interface Props {
   modelValue: number
@@ -87,10 +88,6 @@ function onBlur() {
     innerValue.value = clamped
     emit('update:modelValue', clamped)
   }
-}
-
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(hi, v))
 }
 </script>
 

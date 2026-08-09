@@ -51,6 +51,8 @@ import { useHaotianStore } from '../stores/haotianStore'
 import Button from '@/presentation/components/Button.vue'
 import { useVirtualList } from '../composables/useVirtualList'
 
+const props = defineProps<{ active?: boolean }>()
+
 const store = useHaotianStore()
 
 function tagTextOf(t: ActionTypeTag): string {
@@ -162,9 +164,10 @@ function nextTickSync(): void {
   })
 }
 
-// 容器从隐藏变为可见（昊天镜 tab 激活 / 切到调试模式）时重测视口
+// 容器从隐藏变为可见（昊天镜 tab 激活 / 切到调试模式）时重测视口与行高，
+// 避免 v-show 隐藏期 offsetHeight=0 被忽略后 totalHeight 全部用 estimate 撑大
 watch(
-  () => store.mode,
+  [() => props.active, () => store.mode],
   () => nextTickSync(),
 )
 

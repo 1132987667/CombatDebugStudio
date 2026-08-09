@@ -6,6 +6,14 @@
  * 描述: 用于战斗回放的确定性随机数生成，确保回放结果与原始战斗完全一致
  */
 
+/**
+ * 从可选随机源取 [0,1) 随机数；未注入时回退全局 Math.random
+ * NOTE: DamageCalculator / PassiveSkillManager / BuffSystem 共用此回退逻辑
+ */
+export function nextRandom(rng?: SeededRandom): number {
+  return rng ? rng.next() : Math.random()
+}
+
 export class SeededRandom {
   private seed: number
 

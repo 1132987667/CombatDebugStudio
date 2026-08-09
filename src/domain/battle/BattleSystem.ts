@@ -36,7 +36,6 @@ import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { TurnManager } from '@/domain/battle/service/TurnManager'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
-  BattleAction,
   BattleData,
   BattleEntity,
   BattleState,
@@ -1045,7 +1044,10 @@ export class BattleSystem {
       })
 
       // 计算出手顺序（必须在属性刷新之后，以使用最新的速度值）
-      const currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
+      const currentTurnOrder = this.turnManager.createTurnOrder(
+        Array.from(battle.participants.values()),
+        battle.rng,
+      )
       battle.turnOrder = currentTurnOrder
 
       // 发送回合开始事件到 UI 层（此时拥有正确的出手顺序）
@@ -1711,7 +1713,10 @@ export class BattleSystem {
     }
 
     // ponytail: 回合递增已由调用方通过 advanceRound() 提前完成
-    const turnOrder = this.turnManager.recalculateTurnOrder(battle)
+    const turnOrder = this.turnManager.createTurnOrder(
+      Array.from(battle.participants.values()),
+      battle.rng,
+    )
 
     commands.push({
       type: 'NEXT_TURN',

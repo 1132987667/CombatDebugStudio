@@ -12,6 +12,7 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { FormationConfig } from '@/shared/types/formation'
 import type { Item } from '@/shared/types/Item'
+import type { AffixTier, AffixTarget } from '@/shared/constants/affix'
 
 /** 角色（actors 表）—— 对齐规格说明书 3.1 */
 export interface ActorData {
@@ -104,6 +105,32 @@ export interface BattleParamData {
   description?: string
 }
 
+/** 词缀属性修正条目 —— 单个属性按百分比修正 */
+export interface AffixStatModifier {
+  /** 目标属性代码（ATTRIBUTE_CODE，如 attack/defense/speed/critRate） */
+  attribute: string
+  /** 修正百分比（20 表示 +20%，-20 表示 -20%） */
+  percent: number
+}
+
+/** 词缀（affixes 表）—— 敌人/角色的常驻属性标签，按档位对属性做百分比修正。
+ * 词缀只做属性修正；能力型效果（吸血/反伤/格挡/中毒等）交给 Buff 系统实现，不与词缀混淆。
+ * 减益档位作用于玩家（target=player），增益档位作用于敌人自身（target=enemy）。
+ */
+export interface AffixData {
+  id: string
+  name: string
+  /** 档位（AffixTier：debuff_1 / buff_1 / buff_2 / buff_3 / buff_4） */
+  tier: AffixTier
+  /** 作用目标（AffixTarget：player 减益 / enemy 增益） */
+  target: AffixTarget
+  /** 属性修正列表 */
+  statModifiers: AffixStatModifier[]
+  /** 稀有度（1 普通 ~ 5 传说，用于 UI 高亮） */
+  rarity?: number
+  description?: string
+}
+
 /** 预设阵容（lineups 表）—— 对齐 configs/lineups/lineups.json 结构。
  * 阵容本身不标阵营（我方/敌方由使用场景决定：场景引用按敌方展开，唤灵台布阵按角色类型归队）。
  */
@@ -156,6 +183,7 @@ export interface FengshenTables {
   growth: GrowthCurveData
   drops: DropGroupData
   params: BattleParamData
+  affixes: AffixData
 }
 export type FengshenTableName = keyof FengshenTables
 

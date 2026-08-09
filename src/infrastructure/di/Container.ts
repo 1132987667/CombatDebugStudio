@@ -95,7 +95,6 @@ import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { BattleManager } from '@/domain/battle/BattleManager'
 import { BattleSystem } from '@/domain/battle/BattleSystem'
 import { DebugGate } from '@/domain/battle/debug/DebugGate'
-import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { TurnManager } from '@/domain/battle/service/TurnManager'
@@ -221,10 +220,6 @@ export function initializeContainer(): void {
     return new AutoBattleManager(battleSystem, battleStateManager)
   }, true)
 
-  container.registerFactory('BattleReplayManager', () => {
-    return new BattleReplayManager(triggerEventBus)
-  }, true)
-
   // 注册 BattleManager（从容器解析子管理器依赖）
   container.registerFactory(
     'BattleManager',
@@ -232,13 +227,11 @@ export function initializeContainer(): void {
       const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
       const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
       const autoBattleManager = container.resolve<AutoBattleManager>('AutoBattleManager')
-      const battleReplayManager = container.resolve<BattleReplayManager>('BattleReplayManager')
 
       const battleManager = new BattleManager(
         battleSystem,
         battleStateManager,
         autoBattleManager,
-        battleReplayManager,
         uiEventBus,
         uiEventBus.getEmitter(),
       )

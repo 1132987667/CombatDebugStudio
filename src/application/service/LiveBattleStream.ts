@@ -24,6 +24,8 @@ export interface LiveParticipant {
   energy: number
   /** 阵营（来自 UIParticipantSnapshot.team），用于回放舞台按阵营布局 */
   side?: 'ally' | 'enemy'
+  /** 核心属性（UIParticipantSnapshot 提供），进入存档 attributes 供角色属性面板消费 */
+  attributes?: Record<string, number>
 }
 
 export interface LiveBattleStreamDeps {
@@ -163,6 +165,7 @@ export class LiveBattleStream {
           energy: p.energy,
           buffs: [],
           side: p.side,
+          attributes: p.attributes,
         })),
       },
       events,

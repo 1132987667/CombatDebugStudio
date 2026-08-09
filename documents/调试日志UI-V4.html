@@ -1129,7 +1129,7 @@ function secRng(rolls) {
 }
 function secDelta(ev) {
   var wrap = el('div');
-  wrap.innerHTML = '<div class="sec-t">状态增量 · SNAPSHOT（变更后绝对值）</div>';
+  wrap.innerHTML = '<div class="sec-t">状态变化 · SNAPSHOT</div>';
   var box = el('div', 'dbox');
   ev._delta.forEach(function (d) {
     box.appendChild(el('div', 'd-tgt', 'PARTICIPANT · <b>' + pname(d.id) + '</b>'));

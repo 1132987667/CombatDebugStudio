@@ -10,17 +10,23 @@
     <div class="panel-section">
       <div class="section-header">
         <span>参战管理</span>
-        <Button @click="confirmClear = true"
-          :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
-          <span class="icon mr-2">[−]</span>清空
-        </Button>
+        <div class="section-header-actions">
+          <Button variant="primary" :disabled="totalTeamCount === 0" title="为所有参战角色随机附加词缀"
+            @click="applyRandomAffixesToTeam">
+            <span class="icon mr-2">[~]</span>随机词缀
+          </Button>
+          <Button @click="confirmClear = true"
+            :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
+            <span class="icon mr-2">[−]</span>清空
+          </Button>
+        </div>
       </div>
       <div class="section-content">
         <div class="character-field">
           <div class="character-party our-party">
             <div class="party-header">我方 ({{ allyTeamCount }}人)</div>
             <div class="party-members">
-              <div v-for="char in allyTeam" :key="char.id" class="character-item"
+              <div v-for="char in allyTeam" :key="char.id" class="character-item bg-dots"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
                 role="button" tabindex="0" @click="selectCharacter(char.id)"
                 @keydown.enter="onCharKeydown($event, char.id)"
@@ -48,7 +54,7 @@
           <div class="character-party enemy-party">
             <div class="party-header">敌方 ({{ enemyTeamCount }}人)</div>
             <div class="party-members">
-              <div v-for="char in enemyTeam" :key="char.id" class="character-item"
+              <div v-for="char in enemyTeam" :key="char.id" class="character-item bg-dots"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
                 role="button" tabindex="0" @click="selectCharacter(char.id)"
                 @keydown.enter="onCharKeydown($event, char.id)"
@@ -110,7 +116,7 @@
           </div>
           <div class="roster-char-list">
             <template v-if="activeRosterKey === ROSTER_KEY.ACTORS">
-              <div v-for="actor in visibleActors" :key="actor.id" class="character-item"
+              <div v-for="actor in visibleActors" :key="actor.id" class="character-item bg-dots"
                 :class="{ selected: isActorSelected(actor.id) }" role="button" tabindex="0"
                 @click="previewActor(actor)" @keydown.enter.prevent="previewActor(actor)"
                 @keydown.space.prevent="previewActor(actor)">
@@ -124,7 +130,7 @@
               <EmptyState v-if="visibleActors.length === 0">未找到匹配的角色</EmptyState>
             </template>
             <template v-else>
-              <div v-for="enemy in visibleEnemies" :key="enemy.id" class="character-item"
+              <div v-for="enemy in visibleEnemies" :key="enemy.id" class="character-item bg-dots"
                 :class="{ selected: isRosterCharSelected(enemy.id) }" role="button" tabindex="0"
                 @click="previewRosterCharacter(enemy)" @keydown.enter.prevent="previewRosterCharacter(enemy)"
                 @keydown.space.prevent="previewRosterCharacter(enemy)">
@@ -154,15 +160,17 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from "vue";
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
+import { applyRandomAffixes } from "@/shared/utils/affix";
 import { container } from '@/infrastructure/di/Container';
 import { GameDataApi } from '@/application/service/GameDataApi';
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
-import type { ActorData, LineupData } from '@/domain/fengshen/types';
+import type { ActorData, AffixData, LineupData } from '@/domain/fengshen/types';
 import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore';
+import { useNotificationStore } from '@/presentation/stores/notificationStore';
 import EmptyState from '@/presentation/components/EmptyState.vue'
 import Button from '@/presentation/components/Button.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
@@ -179,6 +187,7 @@ const battleService = container.resolve<BattleService>('BattleService');
 const battleStore = useBattleStore();
 const gameDataApi = container.resolve<GameDataApi>('GameDataApi');
 const fengshenStore = useFengshenStore();
+const notification = useNotificationStore();
 
 // 初始化 GameDataProcessor（敌人/场景经数据源切换反映封神榜最新数据）
 const rosterSearch = ref("");
@@ -628,6 +637,35 @@ const clearParticipants = () => {
   battleService.clearParticipants();
 };
 
+/** 参战总人数（我方+敌方，含未启用的占位） */
+const totalTeamCount = computed(
+  () => allyTeam.value.length + enemyTeam.value.length,
+);
+
+/**
+ * 随机词缀：为所有参战角色随机附加 1-3 个词缀（封神榜 affixes 表）。
+ * 词缀属性修正以 PERCENTAGE 修饰符注入，属性拆解可见「词缀·xxx」来源。
+ */
+const applyRandomAffixesToTeam = async () => {
+  const all = [...allyTeam.value, ...enemyTeam.value];
+  if (all.length === 0) return;
+  try {
+    const affixes = await gameDataApi.listByTable<AffixData>('affixes', {
+      limit: 1000,
+    });
+    if (affixes.length === 0) {
+      notification.notify('提示', '词缀库为空，请先在封神榜配置词缀', 'warning');
+      return;
+    }
+    const applied = applyRandomAffixes(all, affixes);
+    let count = 0;
+    for (const ids of applied.values()) count += ids.length;
+    notification.notify('成功', `已为 ${applied.size} 个参战角色随机附加 ${count} 个词缀`, 'success');
+  } catch (e) {
+    notification.notify('错误', `随机词缀失败: ${(e as Error).message}`, 'error');
+  }
+};
+
 const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   battleService.setCharacterEnabled(characterId, enabled);
 };
@@ -759,6 +797,13 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   background: var(--color-bg-tertiary);
   border-bottom: 2px solid var(--color-border-default);
   flex-wrap: wrap;
+}
+
+/* 参战管理头部右侧按钮组（随机词缀 + 清空） */
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .preset-label {

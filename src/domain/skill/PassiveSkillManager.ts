@@ -32,6 +32,7 @@ import { EffectType } from '@/domain/skill/types'
 import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { DamageCategory } from '@/domain/skill/types'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
+import { nextRandom } from '@/shared/utils/SeededRandom'
 
 export interface PassiveSkillConfig {
   id: string
@@ -74,11 +75,6 @@ export class PassiveSkillManager {
   /** 注入确定性随机源（被动触发概率判定走此实例） */
   setRng(rng: SeededRandom): void {
     this.rng = rng
-  }
-
-  /** 读取当前随机源（未注入时回退全局 Math.random） */
-  private random(): number {
-    return this.rng ? this.rng.next() : Math.random()
   }
 
   /** 可选的 IDebugTracePort */
@@ -218,7 +214,7 @@ export class PassiveSkillManager {
       return false
     }
     // 检查触发概率是否命中
-    if (config.triggerProbability && this.random() > config.triggerProbability) {
+    if (config.triggerProbability && nextRandom(this.rng) > config.triggerProbability) {
       this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.PROBABILITY, {
         probability: { required: config.triggerProbability, passed: false },
       })

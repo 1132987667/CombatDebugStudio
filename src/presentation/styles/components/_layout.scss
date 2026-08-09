@@ -156,6 +156,12 @@
   height: calc(100vh - 60px);
 }
 
+/* 演劫台游戏沉浸态：ModuleHeader 隐藏时占满整个视口（无 60px 顶部预留） */
+.module-layout--immersive {
+  height: 100vh;
+  margin-top: 0;
+}
+
 .module-placeholder {
   text-align: center;
   padding: var(--space-6);
@@ -339,4 +345,292 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* ----- 7. 点阵背景（多层错落点阵） -----
+   默认：暗色主题下底色即 --color-bg-tertiary（= #16213e），配白色点阵。
+   多种样式通过覆盖 CSS 变量实现，无需改类：
+     .panel { --bd-grid: 24px; --bd-main-color: rgba(120,200,255,.3); }
+   注意：点颜色变量需字面色值（rgba/#hex）；改 grid 时按需同步覆盖
+   background-position 偏移，避免错位。 */
+.bg-dots {
+  --bd-base: var(--color-bg-tertiary);
+  --bd-main-color: rgba(255, 255, 255, 0.06);
+  --bd-main-size: 2px;
+  --bd-sub-color: rgba(255, 255, 255, 0.03);
+  --bd-sub-size: 1.2px;
+  --bd-grid: 20px;
+
+  background-color: var(--bd-base) !important;
+  background-image:
+    radial-gradient(var(--bd-main-color) var(--bd-main-size), transparent calc(var(--bd-main-size) + 0.1px)),
+    radial-gradient(var(--bd-sub-color) var(--bd-sub-size), transparent calc(var(--bd-sub-size) + 0.1px)),
+    radial-gradient(var(--bd-sub-color) var(--bd-sub-size), transparent calc(var(--bd-sub-size) + 0.1px)),
+    radial-gradient(var(--bd-sub-color) var(--bd-sub-size), transparent calc(var(--bd-sub-size) + 0.1px)),
+    radial-gradient(var(--bd-sub-color) var(--bd-sub-size), transparent calc(var(--bd-sub-size) + 0.1px)) !important;
+  background-size: var(--bd-grid) var(--bd-grid) !important;
+  background-position: 10px 10px, 10px 4px, 10px 16px, 4px 10px, 16px 10px !important;
+}
+
+/* ----- 8. 斜纹网格背景（四个方向交叉条带） -----
+   默认：--color-bg-tertiary 底色 + 白色交叉斜纹（14px 网格）。
+   定制方式同 .bg-dots，覆盖 CSS 变量即可：
+     .panel { --bh-color: rgba(34,211,238,.15); --bh-size: 20px; } */
+.bg-hatch {
+  --bh-base: var(--color-bg-tertiary);
+  --bh-color: rgba(255, 255, 255, 0.1);
+  --bh-size: 14px;
+
+  background-color: var(--bh-base) !important;
+  background-image:
+    linear-gradient(135deg, var(--bh-color) 12.5%, transparent 12.5%),
+    linear-gradient(225deg, var(--bh-color) 12.5%, transparent 12.5%),
+    linear-gradient(45deg, var(--bh-color) 12.5%, transparent 12.5%),
+    linear-gradient(315deg, var(--bh-color) 12.5%, transparent 12.5%) !important;
+  background-size: var(--bh-size) var(--bh-size) !important;
+}
+
+.bg-hatch-1 {
+  --bh-base: var(--color-bg-tertiary);
+  --bh-color-1: rgba(255, 255, 255, 0.04);
+  --bh-color-2: rgba(255, 255, 255, 0.08);
+  --bh-color-3: rgba(255, 255, 255, 0.08);
+  --bh-color-4: rgba(255, 255, 255, 0.12);
+  --bh-size: 14px;
+
+  background-color: var(--bh-base) !important;
+  background-image:
+    linear-gradient(135deg, var(--bh-color-1) 12.5%, transparent 12.5%),
+    linear-gradient(225deg, var(--bh-color-2) 12.5%, transparent 12.5%),
+    linear-gradient(45deg, var(--bh-color-3) 12.5%, transparent 12.5%),
+    linear-gradient(315deg, var(--bh-color-4) 12.5%, transparent 12.5%) !important;
+  background-size: var(--bh-size) var(--bh-size) !important;
+}
+
+/* ----- 9. 细斜条纹背景（单方向重复斜纹） -----
+   默认：--color-bg-tertiary 底色 + 暖色细斜条纹（1px 条带 / 9px 间距）。
+   定制方式同 .bg-dots，覆盖 CSS 变量即可：
+     .panel { --bs-color: rgba(34,211,238,.15); --bs-angle: -45deg; } */
+.bg-stripes {
+  --bs-base: var(--color-bg-tertiary);
+  --bs-color: rgba(255, 255, 255, 0.08);
+  --bs-angle: 45deg;
+  --bs-width: 4px;
+  --bs-gap: 10px;
+
+  background-color: var(--bs-base) !important;
+  background-image: repeating-linear-gradient(
+    var(--bs-angle),
+    var(--bs-color) 0 var(--bs-width),
+    transparent var(--bs-width) var(--bs-gap)
+  ) !important;
+}
+
+/* ----- 10. 双层星光点阵背景（蓝白点 + 暖点，带闪烁动画） -----
+   默认：--color-bg-tertiary 底色 + 双层错位点阵，整体闪烁。
+   定制方式同 .bg-dots，覆盖 CSS 变量即可：
+     .panel { --st-duration: 2s; --st-color-a: rgba(34,211,238,.5); } */
+.bg-stars {
+  --st-base: var(--color-bg-tertiary);
+  --st-color-a: rgba(11, 69, 150, 0.5);
+  --st-size-a: 1.6px;
+  --st-fade-a: 2px;
+  --st-grid-a: 30px;
+  --st-pos-a: 24px 12px;
+  --st-color-b: rgba(136, 98, 11, 0.42);
+  --st-size-b: 0.9px;
+  --st-fade-b: 1.3px;
+  --st-grid-b: 36px;
+  --st-pos-b: 5px 27px;
+  --st-duration: 3.2s;
+
+  background-color: var(--st-base) !important;
+  background-image:
+    radial-gradient(var(--st-color-a) var(--st-size-a), transparent var(--st-fade-a)),
+    radial-gradient(var(--st-color-b) var(--st-size-b), transparent var(--st-fade-b)) !important;
+  background-size: var(--st-grid-a) var(--st-grid-a), var(--st-grid-b) var(--st-grid-b) !important;
+  background-position: var(--st-pos-a), var(--st-pos-b) !important;
+  animation: twinkleB var(--st-duration) ease-in-out infinite;
+}
+
+@keyframes twinkleB {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ----- 顶部光晕渐变背景（能量青光晕 + 深蓝夜空渐变） -----
+   由"天空蓝渐变"改造为契合系统暗色主题：顶部能量青光晕，
+   渐变自 --color-bg-tertiary 过渡到亮蓝。
+   定制方式同 .bg-dots，覆盖 CSS 变量即可：
+     .panel { --grad-top: #000; --glow-color: rgba(79,195,247,.4); } */
+.bg-glow {
+  --glow-color: rgba(var(--rgb-energy), 0.32);
+  --grad-top: var(--color-bg-tertiary);
+  --grad-mid: #1e3a5f;
+  --grad-bottom: #274b78;
+
+  background-color: var(--grad-bottom) !important;
+  background-image:
+    radial-gradient(60% 40% at 50% 0%, var(--glow-color), transparent 65%),
+    linear-gradient(180deg, var(--grad-top) 0%, var(--grad-mid) 55%, var(--grad-bottom) 100%) !important;
+}
+
+/* ----- 纸纹 · 墨晕（宣纸纤维纹理，色板取自系统 token） -----
+   晕斑为 info 蓝弱化、细纤维线为 white 弱化；渐变 tertiary → primary。
+   定制：.panel { --pp-stain-a: rgba(var(--rgb-info),.12); } */
+.bg-paper {
+  --pp-base: var(--color-bg-tertiary);
+  --pp-stain-a: rgba(var(--rgb-info), 0.05);
+  --pp-stain-b: rgba(var(--rgb-info), 0.04);
+  --pp-fiber-a: rgba(var(--rgb-white), 0.04);
+  --pp-fiber-b: rgba(var(--rgb-white), 0.03);
+  --pp-grad-top: var(--color-bg-tertiary);
+  --pp-grad-bottom: var(--color-bg-primary);
+
+  background-color: var(--pp-base) !important;
+  background-image:
+    radial-gradient(circle at 16% 80%, var(--pp-stain-a), transparent 36%),
+    radial-gradient(circle at 85% 18%, var(--pp-stain-b), transparent 32%),
+    repeating-linear-gradient(88deg, var(--pp-fiber-a) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(2deg, var(--pp-fiber-b) 0 1px, transparent 1px 13px),
+    linear-gradient(180deg, var(--pp-grad-top), var(--pp-grad-bottom)) !important;
+}
+
+/* ----- 青瓷 · 冰裂（三组角度冰裂纹 + 釉光，色板取自系统 token） -----
+   12°/78°/132° 细线交错成开片，釉光一角能量青；渐变 tertiary → primary。
+   定制：.panel { --cr-line-a: rgba(var(--rgb-energy),.16); } */
+.bg-crackle {
+  --cr-base: var(--color-bg-tertiary);
+  --cr-glaze: rgba(var(--rgb-energy), 0.18);
+  --cr-line-a: rgba(var(--rgb-info), 0.09);
+  --cr-line-b: rgba(var(--rgb-info), 0.07);
+  --cr-line-c: rgba(var(--rgb-info), 0.05);
+  --cr-grad-top: var(--color-bg-tertiary);
+  --cr-grad-bottom: var(--color-bg-primary);
+
+  background-color: var(--cr-base) !important;
+  background-image:
+    radial-gradient(circle at 30% 22%, var(--cr-glaze), transparent 46%),
+    repeating-linear-gradient(12deg, var(--cr-line-a) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(78deg, var(--cr-line-b) 0 1px, transparent 1px 41px),
+    repeating-linear-gradient(132deg, var(--cr-line-c) 0 1px, transparent 1px 29px),
+    linear-gradient(180deg, var(--cr-grad-top), var(--cr-grad-bottom)) !important;
+}
+
+/* ----- 织锦 · 暗花（45° 斜纹 + 反向浮线提花，色板取自系统 token） -----
+   经线为能量青、纬线为 info 蓝反向浮线，柔光一道；渐变 tertiary → primary。
+   定制：.panel { --br-warp: rgba(var(--rgb-energy),.16); } */
+.bg-brocade {
+  --br-base: var(--color-bg-tertiary);
+  --br-sheen: rgba(var(--rgb-energy), 0.12);
+  --br-warp: rgba(var(--rgb-energy), 0.10);
+  --br-warp-shadow: rgba(var(--rgb-black), 0.20);
+  --br-weft: rgba(var(--rgb-info), 0.06);
+  --br-grad-top: var(--color-bg-tertiary);
+  --br-grad-bottom: var(--color-bg-primary);
+
+  background-color: var(--br-base) !important;
+  background-image:
+    radial-gradient(circle at 50% 28%, var(--br-sheen), transparent 55%),
+    repeating-linear-gradient(45deg, var(--br-warp) 0 3px, var(--br-warp-shadow) 3px 6px),
+    repeating-linear-gradient(-45deg, var(--br-weft) 0 3px, transparent 3px 6px),
+    linear-gradient(180deg, var(--br-grad-top), var(--br-grad-bottom)) !important;
+}
+
+/* ----- 纯墨 · 玄色（玄黑微芒 + 细点，色板取自系统 token） -----
+   玄黑取最暗的 bg-secondary；微芒 info 蓝、细点 white；渐变 tertiary → secondary。
+   定制：.panel { --ik-haze: rgba(var(--rgb-info),.2); } */
+.bg-ink {
+  --ik-base: var(--color-bg-secondary);
+  --ik-haze: rgba(var(--rgb-info), 0.14);
+  --ik-grain: rgba(var(--rgb-white), 0.035);
+  --ik-grad-top: var(--color-bg-tertiary);
+  --ik-grad-bottom: var(--color-bg-secondary);
+
+  background-color: var(--ik-base) !important;
+  background-image:
+    radial-gradient(circle at 50% 42%, var(--ik-haze), transparent 60%),
+    radial-gradient(var(--ik-grain) 1px, transparent 1.3px),
+    linear-gradient(180deg, var(--ik-grad-top), var(--ik-grad-bottom)) !important;
+  background-size: auto, 9px 11px, auto !important;
+}
+
+/* ----- 双色点阵背景（暖橙 + 冷蓝，各自主副 5 层错落） -----
+   每色 1 主点 + 4 副点，两组横向错位半格，呈双色星空。
+   定制：.panel { --dd-color-a: rgba(255,180,120,.3); --dd-grid: 30px; } */
+.bg-dual-dots {
+  --dd-base: var(--color-bg-secondary);
+  --dd-color-a: rgba(255, 180, 120, 0.04);
+  --dd-color-a-sub: rgba(255, 180, 120, 0.06);
+  --dd-color-b: rgba(130, 180, 255, 0.04);
+  --dd-color-b-sub: rgba(130, 180, 255, 0.06);
+  --dd-main-size: 2.2px;
+  --dd-main-fade: 2.3px;
+  --dd-sub-size: 1px;
+  --dd-sub-fade: 1.1px;
+  --dd-grid: 32px;
+
+  background-color: var(--dd-base) !important;
+  background-image:
+    radial-gradient(var(--dd-color-a) var(--dd-main-size), transparent var(--dd-main-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b) var(--dd-main-size), transparent var(--dd-main-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)) !important;
+  background-size: var(--dd-grid) var(--dd-grid) !important;
+  background-position:
+    0px 0px, 0px -5px, 0px 5px, -5px 0px, 5px 0px,
+    12px 12px, 12px 7px, 12px 17px, 7px 12px, 17px 12px !important;
+}
+
+/* ----- 窑变 · 钧窑（多色窑变釉斑，色板取自系统 token） -----
+   中心微光 + 四处窑变色斑（蓝/紫/青/玫红），渐变 tertiary → primary。
+   定制：.panel { --mt-blue: rgba(var(--rgb-info),.35); } */
+.bg-mottled {
+  --mt-base: var(--color-bg-tertiary);
+  --mt-center: rgba(var(--rgb-white), 0.06);
+  --mt-blue: rgba(var(--rgb-info), 0.22);
+  --mt-purple: rgba(var(--rgb-debuff), 0.20);
+  --mt-teal: rgba(var(--rgb-energy), 0.18);
+  --mt-rose: rgba(var(--rgb-brand-red), 0.14);
+  --mt-grad-top: var(--color-bg-tertiary);
+  --mt-grad-bottom: var(--color-bg-primary);
+
+  background-color: var(--mt-base) !important;
+  background-image:
+    radial-gradient(circle at 50% 45%, var(--mt-center), transparent 50%),
+    radial-gradient(circle at 20% 30%, var(--mt-blue), transparent 46%),
+    radial-gradient(circle at 78% 24%, var(--mt-purple), transparent 42%),
+    radial-gradient(circle at 68% 78%, var(--mt-teal), transparent 48%),
+    radial-gradient(circle at 28% 82%, var(--mt-rose), transparent 44%),
+    linear-gradient(180deg, var(--mt-grad-top), var(--mt-grad-bottom)) !important;
+}
+
+/* ----- 金箔（斜光 + 细斜纹，色板取自系统 token） -----
+   金光以 warning 橙金表达，盖于系统暗底；渐变 tertiary → secondary。
+   定制：.panel { --fl-center: rgba(var(--rgb-warning),.3); } */
+.bg-foil {
+  --fl-base: var(--color-bg-secondary);
+  --fl-sheen: rgba(var(--rgb-warning), 0.12);
+  --fl-line-a: rgba(var(--rgb-warning), 0.08);
+  --fl-line-b: rgba(var(--rgb-warning), 0.06);
+  --fl-center: rgba(var(--rgb-warning), 0.16);
+  --fl-grad-top: var(--color-bg-tertiary);
+  --fl-grad-bottom: var(--color-bg-secondary);
+
+  background-color: var(--fl-base) !important;
+  background-image:
+    linear-gradient(115deg, var(--fl-sheen), transparent 40%),
+    repeating-linear-gradient(35deg, var(--fl-line-a) 0 1px, transparent 1px 47px),
+    repeating-linear-gradient(115deg, var(--fl-line-b) 0 1px, transparent 1px 61px),
+    radial-gradient(circle at 50% 45%, var(--fl-center), transparent 80%) !important;
 }

@@ -46,6 +46,7 @@ import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId, verifyChecksum } from '@/shared/utils/Checksum'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
+import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import type { TraceEvent } from '@/shared/types/trace-event'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
@@ -96,6 +97,8 @@ export interface RecordedBattle {
       maxEnergy: number
       /** 当前能量值 */
       currentEnergy: number
+      /** 初始属性快照（键为 ATTRIBUTE_CODE，省略 0 值；老档无此字段） */
+      attributes?: Record<string, number>
     }>
   }
   /** 回合记录列表 */
@@ -166,6 +169,17 @@ export class BattleRecorder {
     return SeededRandom.generateSeed()
   }
 
+  /** 冻结全量非运行时属性（键为 ATTRIBUTE_CODE），供存档"角色属性"面板消费；省略 0 值精简体积 */
+  private snapshotAttributes(p: BattleEntity): Record<string, number> {
+    const attrs: Record<string, number> = {}
+    for (const code of Object.values(ATTRIBUTE_CODE)) {
+      if (getAttrMeta(code)?.isRuntimeState) continue
+      const v = p.getAttribute(code)
+      if (v !== 0) attrs[code] = v
+    }
+    return attrs
+  }
+
   /**
    * 开始记录战斗事件
    */
@@ -192,6 +206,8 @@ export class BattleRecorder {
       currentHealth: p.currentHealth,
       maxEnergy: p.maxEnergy,
       currentEnergy: p.currentEnergy,
+      // 初始属性快照（省略 0 值与运行时状态），供昊天镜"角色属性"面板消费
+      attributes: this.snapshotAttributes(p),
     }))
 
     const recording: RecordedBattle = {

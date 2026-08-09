@@ -98,6 +98,42 @@ describe('haotianStore（演示存档装配）', () => {
     s.streamText = '不存在的关键词zz'
     expect(s.filteredEvents).toHaveLength(0)
   })
+
+  it('selectedTarget / selectedActor：选中事件的 目标/行动 角色（初始参与者快照）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    // ev05：火护法(u1) 攻击 金护法(u2)
+    s.selectEvent('ev05')
+    expect(s.selectedActor?.id).toBe('u1')
+    expect(s.selectedTarget?.id).toBe('u2')
+    expect(s.selectedActor?.attributes).toMatchObject({ attack: 65 })
+    // 无 sourceId/targetId 的事件 → 对应角色为 null
+    s.selectEvent('ev02') // turn_flow
+    expect(s.selectedActor).toBeNull()
+    expect(s.selectedTarget).toBeNull()
+  })
+
+  it('selectedTarget：事件无 targetId 时从同链 damage/heal 推断目标（真实录制 action_execution 兜底）', async () => {
+    const s = useHaotianStore()
+    const archive = {
+      battleId: 't', replayId: 'r', version: '2.0.0', randomSeed: '0', startTime: 0,
+      initialState: {
+        participants: [
+          { id: 'a', name: '甲', maxHp: 100, hp: 100, maxEnergy: 100, energy: 100, attributes: { attack: 10 } },
+          { id: 'b', name: '乙', maxHp: 100, hp: 100, maxEnergy: 100, energy: 100, attributes: { attack: 20 } },
+        ],
+      },
+      events: [
+        { id: 'e1', phase: 'action_execution', correlationId: 'c1', timestamp: 0, sourceId: 'a', payload: { actionType: 'attack' }, summary: '甲 执行行动' },
+        { id: 'e2', phase: 'damage_calculation', correlationId: 'c1', parentId: 'e1', timestamp: 10, sourceId: 'a', targetId: 'b', payload: { result: 30 }, summary: 'x' },
+      ],
+    }
+    await s.loadArchiveFile(new File([JSON.stringify(archive)], 't.json', { type: 'application/json' }))
+    s.selectEvent('e1') // action_execution 无 targetId → 从同链 e2 推断目标乙
+    expect(s.selectedTarget?.id).toBe('b')
+    expect(s.selectedTarget?.name).toBe('乙')
+    expect(s.selectedActor?.id).toBe('a')
+  })
 })
 
 describe('pnameSide（摘要导出/面板单位名 — 带阵营前缀，与日志口径一致）', () => {
@@ -271,5 +307,108 @@ describe('数据源显示（底部状态栏 source 与顶部下拉回显）', ()
     expect(s.source).toBe('词牌·斩妖')
     expect(s.sourceKey).toBe('recordings')
     expect(s.curRecordKey).toBe('rec_001')
+  })
+})
+
+describe('回放播放状态机（rAF 手动驱动）', () => {
+  /** 接管 rAF 与时钟：advance(ms) 手动推进一帧，restore() 还原全局 */
+  function drivePlayback(): { advance: (ms: number) => void; restore: () => void } {
+    let cb: FrameRequestCallback | null = null
+    let now = 1000
+    const raf = globalThis.requestAnimationFrame.bind(globalThis)
+    const nowFn = performance.now.bind(performance)
+    globalThis.requestAnimationFrame = ((fn: FrameRequestCallback): number => {
+      cb = fn
+      return 1
+    }) as typeof requestAnimationFrame
+    performance.now = (() => now) as typeof performance.now
+    return {
+      advance(ms: number): void {
+        now += ms
+        const f = cb
+        cb = null
+        if (f) f(now)
+      },
+      restore(): void {
+        globalThis.requestAnimationFrame = raf
+        performance.now = nowFn
+      },
+    }
+  }
+
+  it('togglePlay 后时间随帧推进，播到末尾自动暂停', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    const d = drivePlayback()
+    try {
+      s.togglePlay()
+      expect(s.playback.playing).toBe(true)
+      const t0 = s.playback.t
+      d.advance(500)
+      expect(s.playback.t).toBeGreaterThan(t0)
+      expect(s.playback.playing).toBe(true)
+      let guard = 0
+      while (s.playback.playing && guard < 300) {
+        d.advance(100)
+        guard++
+      }
+      expect(s.playback.playing).toBe(false)
+      expect(s.playback.t).toBe(s.duration)
+    } finally {
+      d.restore()
+    }
+  })
+
+  it('播放中把进度条拖到最右端（seekTo duration + keepPlay）：应停在结尾而非回跳开头', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    const d = drivePlayback()
+    try {
+      s.togglePlay()
+      d.advance(300)
+      expect(s.playback.playing).toBe(true)
+      s.seekTo(s.duration, { keepPlay: true })
+      // 期望：t 停在结尾（下一帧即自动暂停），绝不回跳 0
+      expect(s.playback.t).toBe(s.duration)
+    } finally {
+      d.restore()
+    }
+  })
+
+  it('seekTo 到中间位置并保持播放：从该位置继续，不重置', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    const d = drivePlayback()
+    try {
+      s.togglePlay()
+      d.advance(200)
+      const mid = s.playback.t + 800
+      s.seekTo(mid, { keepPlay: true })
+      expect(s.playback.t).toBe(mid)
+      expect(s.playback.playing).toBe(true)
+    } finally {
+      d.restore()
+    }
+  })
+
+  it('播放到结尾后再次点击播放：从开头重播', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    const d = drivePlayback()
+    try {
+      s.togglePlay()
+      let guard = 0
+      while (s.playback.playing && guard < 300) {
+        d.advance(100)
+        guard++
+      }
+      expect(s.playback.playing).toBe(false)
+      expect(s.playback.t).toBe(s.duration)
+      s.togglePlay() // 播完再播 → 从头
+      expect(s.playback.playing).toBe(true)
+      expect(s.playback.t).toBe(0)
+    } finally {
+      d.restore()
+    }
   })
 })

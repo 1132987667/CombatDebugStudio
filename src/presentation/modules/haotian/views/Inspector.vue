@@ -7,7 +7,7 @@
       </div>
       <div class="ht-insp-kicker">
         {{ meta(ev).label }} · 时间 {{ formatTime(ev.timestamp) }}
-        <span class="ht-insp-corr" :title="`事件 ${ev.id} · 因果链 ${ev.correlationId}`">{{ ev.summary }}</span>
+        <span class="ht-insp-corr" :title="`事件 ${ev.id} · 因果链 ${ev.correlationId}`">{{ inspSub }}</span>
       </div>
       <div class="ht-insp-actions">
         <Button title="切换到回放系统，并从该事件时间点开始播放" @click="playFromHere">从此回放</Button>
@@ -36,14 +36,13 @@
     <div class="ht-sec" v-if="pl.rolls">
       <div class="ht-sec-t">
         随机判定凭证
-        <span class="ht-steps-hint">余量越小越敏感 · 重掷仅模拟，不改存档数据</span>
       </div>
       <div v-for="(c, i) in pl.rolls as RngRoll[]" :key="i" class="ht-rng">
         <div class="ht-rng-top">
           <span class="ht-rng-name">{{ rollName(c.kind) }}</span>
           <span v-if="rerolled(i)" class="ht-rng-sim" title="当前显示为重掷模拟结果，未写入存档数据">模拟</span>
           <span v-if="c.buff" class="ht-rng-note">· {{ c.buff }}</span>
-          <span v-if="(c as { derived?: boolean }).derived" class="ht-rng-note" title="真实录制未记录随机值，此值由判定结果反推">· 由结果推导</span>
+          <span v-if="derivedOf(c)" class="ht-rng-note" title="真实录制未记录随机值，此值由判定结果反推">· 由结果推导</span>
           <span class="ht-rng-idx">随机 #{{ String(c.idx ?? 0).padStart(4, '0') }}</span>
         </div>
         <div class="ht-rng-bar">
@@ -70,7 +69,7 @@
     </div>
 
     <div class="ht-sec" v-if="ev._delta?.length">
-      <div class="ht-sec-t">状态增量 · 快照（变更后绝对值）</div>
+      <div class="ht-sec-t">状态变化</div>
       <template v-for="(d, di) in ev._delta" :key="di">
         <div class="ht-d-tgt">参战单位 · <b>{{ store.pname(d.id) }}</b></div>
         <div v-for="(f, fi) in d.fields" :key="fi" class="ht-drow">
@@ -173,6 +172,9 @@
 import { computed, reactive, watch } from 'vue'
 import type { CalcStep, ChainNode, RngRoll, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
+import { ACTION_TAG_TEXT } from '@/domain/battle/replay/unified/unified-debug-tree'
+import { DamageCategoryName, SkillTypeName } from '@/domain/skill/types'
+import type { TracePhase } from '@/shared/types/trace-event'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import {
   accumulateSteps,
@@ -198,17 +200,29 @@ interface FieldChange {
   to: number
 }
 
+/**
+ * 检视器：默认显示 store 选中事件；也可由父级传入显式事件（组件测试注入等）。
+ * event 为 undefined（未传）时回退 store.selectedEvent，为 null 时显示空态。
+ */
+const props = withDefaults(defineProps<{ event?: UnifiedEvent | null }>(), { event: undefined })
+
 const store = useHaotianStore()
 
-const ev = computed<UnifiedEvent | null>(() => store.selectedEvent)
+const ev = computed<UnifiedEvent | null>(() => (props.event === undefined ? store.selectedEvent : props.event))
 const meta = (e: UnifiedEvent) => PHASE_META[e.phase]
 const pl = computed<Record<string, unknown>>(() => (ev.value?.payload ?? {}) as Record<string, unknown>)
 
 /**
  * 检视器主标题：action_execution 显示"名字 · 技能名"（从调试树节点解析，
  * 真实录制技能名由 deriveDebugTree 从同链 damage/heal 推断），替换引擎占位 summary；
- * 其余事件用自身 summary。
+ * 结算类（伤害/治疗）显示完整阶段名"伤害计算/治疗计算"，其余事件显示阶段标签；
+ * 具体描述交给次级行 inspSub。
  */
+const CALC_TITLE: Partial<Record<TracePhase, string>> = {
+  damage_calculation: '伤害计算',
+  heal_calculation: '治疗计算',
+}
+
 const inspTitle = computed<string>(() => {
   const e = ev.value
   if (!e) return ''
@@ -216,7 +230,14 @@ const inspTitle = computed<string>(() => {
     const node = store.debugNodes.find((n) => n.action && n.events.some((x) => x.id === e.id))
     if (node?.name) return node.name
   }
-  return e.summary
+  return CALC_TITLE[e.phase] ?? meta(e).label
+})
+
+/** 检视器次级行：事件具体描述，剥离与主标题阶段标签重复的"伤害计算 / 治疗计算 "前缀 */
+const inspSub = computed<string>(() => {
+  const e = ev.value
+  if (!e) return ''
+  return e.summary.replace(/^(伤害计算|治疗计算) /, '')
 })
 
 // 高级区折叠态（载荷字段 / 因果链 / AI 候选 / 属性重算 / 子事件默认收起，减少信息轰炸）
@@ -304,6 +325,8 @@ const ROLL_NAME: Record<string, string> = {
 const KV_LABEL: Record<string, string> = {
   skill: '技能',
   skillName: '技能名',
+  skillType: '技能类型',
+  category: '伤害类型',
   hits: '段数',
   controlMode: '控制模式',
   buff: 'Buff',
@@ -321,7 +344,9 @@ const KV_LABEL: Record<string, string> = {
   winner: '胜方',
   rounds: '总回合',
   action: '动作',
+  actionType: '行动类型',
   engine: '引擎',
+  energyCost: '能量消耗',
   seg: '段序号',
   dodge: '闪避',
   crit: '暴击',
@@ -357,6 +382,8 @@ const KV_LABEL: Record<string, string> = {
 const SKIP_KEYS = ['steps', 'rolls', 'chain', 'candidates', 'fields', 'anchor', 'result']
 
 const rollName = (kind: string): string => ROLL_NAME[kind] ?? kind
+/** 真实录制未记录随机值、由判定结果反推的标记（rolls 可选扩展字段，非 RngRoll 基础成员） */
+const derivedOf = (c: RngRoll): boolean => Boolean((c as { derived?: boolean }).derived)
 
 const opClass = (op: string): string => (op === '×' ? 'mul' : op === '−' ? 'sub' : 'add')
 const valClass = (op: string, v: number): string => (op === '×' ? 'mul' : op === '−' || v < 0 ? 'neg' : 'pos')
@@ -403,14 +430,27 @@ function doReroll(i: number): void {
 /** 载荷中值为单位 id 的字段：显示名字而非内部 id（真实录制 payload 含 sourceId/targetId 等） */
 const ID_KEYS = new Set(['sourceId', 'targetId', 'actorId', 'chosen'])
 
+/** 枚举值 → 中文文本（category 普攻为 physical 等原始值；skillType 技能为 small/ultimate） */
+const ENUM_TEXT: Record<string, Record<string, string>> = {
+  category: DamageCategoryName,
+  skillType: SkillTypeName,
+  // NOTE: 复用 ACTION_TAG_TEXT，行动类型标签与时间线/行动卡片同源，避免文案漂移
+  actionType: ACTION_TAG_TEXT,
+}
+
 const kvRows = computed<Array<[string, string]>>(() => {
   const rows: Array<[string, string]> = []
   const payload = pl.value
   for (const k of Object.keys(payload)) {
     if (SKIP_KEYS.includes(k)) continue
     const v = payload[k]
-    if (v === null || typeof v === 'object') continue
-    rows.push([KV_LABEL[k] ?? k, ID_KEYS.has(k) ? store.pname(String(v)) : String(v)])
+    // NOTE: 普通攻击路径无技能对象，payload.skillType 为 undefined，不渲染该行
+    if (v === undefined || v === null || typeof v === 'object') continue
+    if (ID_KEYS.has(k)) {
+      rows.push([KV_LABEL[k] ?? k, store.pname(String(v))])
+      continue
+    }
+    rows.push([KV_LABEL[k] ?? k, ENUM_TEXT[k]?.[String(v)] ?? String(v)])
   }
   return rows
 })

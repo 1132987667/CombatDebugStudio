@@ -8,7 +8,6 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
-import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import {
   ParticipantSide,
   BattleEntity,
@@ -58,7 +57,6 @@ export class BattleManager {
     private battleSystem: BattleSystem,
     private battleStateManager: BattleStateManager,
     private autoBattleManager: AutoBattleManager,
-    private battleReplayManager: BattleReplayManager,
     private readonly uiEventPort: IUIEventPort,
     private readonly emitter: Emitter<BattleEvents>,
   ) {}
@@ -183,13 +181,6 @@ export class BattleManager {
    */
   getAutoBattleManager() {
     return this.autoBattleManager
-  }
-
-  /**
-   * 获取战斗回放管理器
-   */
-  getBattleReplayManager() {
-    return this.battleReplayManager
   }
 
   validateTeams(allyTeam: BattleEntity[], enemyTeam: BattleEntity[]) {

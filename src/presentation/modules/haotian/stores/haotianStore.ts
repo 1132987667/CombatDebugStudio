@@ -12,7 +12,7 @@ import { container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import type { UnifiedArchive, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
+import type { UnifiedArchive, UnifiedEvent, ArchiveParticipant } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { buildArchiveIndices, type ArchiveIndices } from '@/domain/battle/replay/unified/unified-indices'
 import {
@@ -176,6 +176,37 @@ export const useHaotianStore = defineStore('haotian', () => {
   const selectedEvent = computed<UnifiedEvent | null>(() =>
     selectedId.value ? byId.value.get(selectedId.value) ?? null : null,
   )
+  /** 当前调试节点的卡片事件列表（与 DebugCards 同一数据源） */
+  const debugNodeEvents = computed<UnifiedEvent[]>(() => {
+    const n = debugNodeId.value ? debugNodes.value.find((x) => x.id === debugNodeId.value) : undefined
+    return n?.events ?? []
+  })
+  /** 初始参与者快照（含 attributes）按 id 定位；无存档/未命中返回 null */
+  const participantOf = (id: string | undefined): ArchiveParticipant | null => {
+    if (!id) return null
+    return archive.value?.initialState.participants.find((p) => p.id === id) ?? null
+  }
+  /** 从同因果链的 damage/heal 子事件推断行动目标（AUTO/MANUAL 发射时目标未定、旧档缺 targetId 的兜底） */
+  const inferTargetFromChain = (e: UnifiedEvent): string | undefined => {
+    const kids = indices.value?.children.get(e.id) ?? []
+    for (const c of kids) {
+      if (c.phase !== 'damage_calculation' && c.phase !== 'heal_calculation') continue
+      if (c.targetId) return c.targetId
+    }
+    return undefined
+  }
+  /**
+   * 当前选中事件的目标角色：优先事件 targetId；仅 action_execution 缺失时从同链 damage/heal 推断
+   * （真实录制 AUTO/MANUAL 发射时目标未定）。turn_flow/buff 等链根不推断——其子事件不属于"行动目标"语义。
+   */
+  const selectedTarget = computed<ArchiveParticipant | null>(() => {
+    const e = selectedEvent.value
+    if (!e) return null
+    const tid = e.targetId ?? (e.phase === 'action_execution' ? inferTargetFromChain(e) : undefined)
+    return participantOf(tid)
+  })
+  /** 当前选中事件的行动角色（sourceId 初始快照），供"角色属性"面板行动 tab */
+  const selectedActor = computed<ArchiveParticipant | null>(() => participantOf(selectedEvent.value?.sourceId))
   const currentTurn = computed(() => currentTurnAt(evs.value, playback.value.t))
   const lastEvent = computed(() => lastEventAt(evs.value, playback.value.t))
   const bookmarkCount = computed(() => bookmarks.value.size)
@@ -384,6 +415,8 @@ export const useHaotianStore = defineStore('haotian', () => {
         maxEnergy: p.maxEnergy,
         energy: p.currentEnergy,
         side: p.team,
+        // UIParticipantSnapshot 仅暴露 5 个核心属性，进入存档供"角色属性"面板消费
+        attributes: { attack: p.attack, defense: p.defense, speed: p.speed, critRate: p.critRate, critDamage: p.critDamage },
       })
     }
     return out
@@ -545,9 +578,10 @@ export const useHaotianStore = defineStore('haotian', () => {
     playback.value.firedIdx = advanceSimTo(cur.value, evs.value, playback.value.t, cp.idx)
   }
 
-  function play(): void {
+  function play(opts: { restartAtEnd?: boolean } = {}): void {
     if (!archive.value) return
-    if (playback.value.t >= duration.value) rebuildState(0)
+    // 仅"显式点击播放按钮"播到结尾时从头重播；seekTo 保持播放（拖动到结尾）不应回跳
+    if (opts.restartAtEnd && playback.value.t >= duration.value) rebuildState(0)
     if (playback.value.playing) return
     playback.value.playing = true
     playback.value.last = performance.now()
@@ -562,7 +596,7 @@ export const useHaotianStore = defineStore('haotian', () => {
 
   function togglePlay(): void {
     if (playback.value.playing) pause()
-    else play()
+    else play({ restartAtEnd: true })
   }
 
   function checkBreakpoint(ev: UnifiedEvent): boolean {
@@ -1115,6 +1149,8 @@ export const useHaotianStore = defineStore('haotian', () => {
     mode,
     selectedId,
     selectedEvent,
+    selectedTarget,
+    selectedActor,
     showDbg,
     diagOpen,
     playback,

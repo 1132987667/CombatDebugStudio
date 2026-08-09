@@ -1,5 +1,5 @@
 <template>
-  <header class="module-header">
+  <header class="module-header bg-crackle">
     <div class="brand">
       <span class="brand-name">太初道枢</span>
     </div>

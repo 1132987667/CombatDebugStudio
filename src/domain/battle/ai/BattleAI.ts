@@ -61,8 +61,8 @@ export interface BattleAI {
   /** 判断是否应该使用技能 */
   shouldUseSkill(participant: BattleEntity): boolean
 
-  /** 选择普通攻击 */
-  selectAttack(participant: BattleEntity): BattleAction
+  /** 选择普通攻击（battleState 用于选择目标；可为 null——决策上下文缺失时无目标） */
+  selectAttack(battleState: BattleState | null, participant: BattleEntity): BattleAction
 }
 
 /** 技能配置加载器接口 */
@@ -165,7 +165,7 @@ export class BaseBattleAI implements BattleAI {
 
       if (!battleState || !participant) {
         LoggerProvider.logger.addDebugLog('AI决策参数无效', { level: LogLevel.WARN })
-        return this.selectAttack(participant)
+        return this.selectAttack(battleState, participant)
       }
 
       const battleAnalysis = this.analyzeBattleState(battleState, participant)
@@ -198,20 +198,20 @@ export class BaseBattleAI implements BattleAI {
             LoggerProvider.logger.addDebugLog(`技能执行出错: ${String(skillError)}`, {
               level: LogLevel.ERROR,
             })
-            return this.selectAttack(participant)
+            return this.selectAttack(battleState, participant)
           }
         }
       }
 
       // 普攻回退：也留下决策痕迹（weights 为空）
       this.emitAiDecision(trace, participant, battleAnalysis, [], null)
-      return this.selectAttack(participant)
+      return this.selectAttack(battleState, participant)
     } catch (error) {
       LoggerProvider.logger.addDebugLog(`AI决策出错: ${String(error)}`, {
         level: LogLevel.ERROR,
       })
       try {
-        return this.selectAttack(participant)
+        return this.selectAttack(battleState, participant)
       } catch (attackError) {
         LoggerProvider.logger.addDebugLog(`攻击执行出错: ${String(attackError)}`, {
           level: LogLevel.ERROR,
@@ -219,7 +219,7 @@ export class BaseBattleAI implements BattleAI {
       }
     }
 
-    return this.selectAttack(participant)
+    return this.selectAttack(battleState, participant)
   }
 
   /**
@@ -426,11 +426,13 @@ export class BaseBattleAI implements BattleAI {
   }
 
   /** 选择普通攻击 */
-  public selectAttack(participant: BattleEntity): BattleAction {
+  public selectAttack(battleState: BattleState | null, participant: BattleEntity): BattleAction {
     const atk = participant.getAttribute(ATTRIBUTE_CODE.attack)
+    // NOTE: battleState.participants 缺失（决策上下文不完整，如单测 mock）时不选目标
+    const targetId = battleState?.participants ? this.selectTarget(battleState, participant) : ''
     return BattleActionHelper.createAttack({
       sourceId: participant.id,
-      targetId: '',
+      targetId,
       damage: atk,
       turn: 0,
       effects: [

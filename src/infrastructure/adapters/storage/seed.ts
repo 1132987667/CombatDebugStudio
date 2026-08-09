@@ -16,6 +16,7 @@ import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersis
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
+  AffixData,
   BattleParamData,
   DropGroupData,
   ElementsData,
@@ -31,10 +32,15 @@ import type { EffectsJsonEntry } from '@/shared/types/effects-json'
 import formationsDataRaw from '@configs/formations/formations.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import materialsDataRaw from '@configs/materials/materials.json'
+import equipmentDataRaw from '@configs/equipment/equipment.json'
+import dropsDataRaw from '@configs/drops/drops.json'
 import effectsDataRaw from '@configs/effects/effects.json'
+import affixesDataRaw from '@configs/affixes/affixes.json'
 
-// NOTE: v4 — 敌人数值重平衡（攻击浮动模型：enemies.json 全量曲线重调），升级版本号让已 seed 的浏览器重导最新 configs
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v4'
+// NOTE: v8 — 斗战西游完善：12 核心 buff（xiyou_*）+ 玩家 3 流派技能（skill_player_xiyou）+ 
+//       10 隐藏 BOSS（enemies_xiyou_hidden + skill_hidden_boss）+ 场景解锁链/地形效果/隐藏BOSS位。
+//       升级版本号让已 seed 的浏览器重导最新 configs。
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v8'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -78,34 +84,6 @@ function deriveActors(enemies: Enemy[]): ActorData[] {
         description: `由敌人「${e.name}」派生，作为可操作角色模板。`,
       }
     })
-}
-
-/** 从 materials 剥离装备条目，并补全 slot/stats/requiredLevel */
-function splitMaterials(): { materials: unknown[]; equipment: EquipmentData[] } {
-  const materials: unknown[] = []
-  const equipment: EquipmentData[] = []
-  for (const raw of materialsDataRaw as Array<Record<string, unknown>>) {
-    if (raw.type === 'equipment') {
-      const id = String(raw.id)
-      const statsRaw = (raw.stats ?? {}) as Record<string, number>
-      equipment.push({
-        id,
-        name: String(raw.name),
-        slot: String(raw.slot) as EquipmentData['slot'],
-        rarity: Number(raw.rarity ?? 1),
-        stats: Object.entries(statsRaw).map(([attribute, value]) => ({
-          attribute,
-          modifierType: 'flat',
-          value: Number(value),
-        })),
-        requiredLevel: 1,
-        description: String(raw.description ?? ''),
-      })
-    } else {
-      materials.push(raw)
-    }
-  }
-  return { materials, equipment }
 }
 
 function buildElements(): ElementsData {
@@ -171,27 +149,6 @@ function buildGrowth(): GrowthCurveData[] {
   ]
 }
 
-function buildDrops(): DropGroupData[] {
-  return [
-    {
-      id: 'drop_flora',
-      name: '花草系掉落',
-      entries: [
-        { itemId: 'mat_001', probability: 80 },
-        { itemId: 'mat_003', probability: 60 },
-      ],
-    },
-    {
-      id: 'drop_boss',
-      name: '首领掉落',
-      entries: [
-        { itemId: 'mat_004', probability: 30 },
-        { itemId: 'elix_003', probability: 50 },
-      ],
-    },
-  ]
-}
-
 function buildParams(): BattleParamData[] {
   return [
     { id: 'damage_multiplier', name: '伤害倍率', value: 1.0, range: { min: 0.1, max: 5.0 }, description: '全局伤害修正' },
@@ -216,7 +173,6 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
     const config = new ConfigDataSource()
     const enemies = config.getEnemies()
     const skills = config.getSkills() as SkillConfig[]
-    const { materials, equipment } = splitMaterials()
 
     const tables: Array<[StorageStoreName, readonly unknown[]]> = [
       [FENGSHEN_STORE.ENEMIES, enemies],
@@ -225,12 +181,13 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.BUFFS, buffsWithEffects],
       [FENGSHEN_STORE.FORMATIONS, formationsDataRaw],
       [FENGSHEN_STORE.LINEUPS, lineupsDataRaw as LineupData[]],
-      [FENGSHEN_STORE.MATERIALS, materials],
-      [FENGSHEN_STORE.EQUIPMENT, equipment],
+      [FENGSHEN_STORE.MATERIALS, materialsDataRaw],
+      [FENGSHEN_STORE.EQUIPMENT, equipmentDataRaw as EquipmentData[]],
       [FENGSHEN_STORE.ACTORS, deriveActors(enemies)],
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
-      [FENGSHEN_STORE.DROPS, buildDrops()],
+      [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
       [FENGSHEN_STORE.PARAMS, buildParams()],
+      [FENGSHEN_STORE.AFFIXES, affixesDataRaw as AffixData[]],
     ]
 
     for (const [store, rows] of tables) {

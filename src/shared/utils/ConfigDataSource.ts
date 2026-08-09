@@ -12,16 +12,20 @@ import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData } from '@/domain/fengshen/types'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
+import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
 import scenesData from '@configs/scenes/scenes.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
 import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import skillsData from '@configs/skills/skills.json'
+import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
+import hiddenBossSkillsData from '@configs/skills/skill_hidden_boss.json'
 
 const enemies = [
   ...(enemiesDataRaw as Enemy[]),
   ...(enemiesTestDataRaw as Enemy[]),
+  ...(enemiesXiyouHiddenDataRaw as Enemy[]),
 ]
 
 const skills = [
@@ -29,6 +33,8 @@ const skills = [
   ...passiveSkillsData,
   ...guardianPassiveSkillsData,
   ...passiveTestSkillsData,
+  ...(playerXiyouSkillsData as SkillConfig[]),
+  ...(hiddenBossSkillsData as SkillConfig[]),
 ] as SkillConfig[]
 
 export class ConfigDataSource implements IDataSource {

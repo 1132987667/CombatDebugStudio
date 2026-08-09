@@ -18,7 +18,25 @@
     "rewards": {
       "exp": 100,
       "gold": 200
-    }
+    },
+    "unlocks": "scene_002",
+    "rewardDrops": ["drop_level1_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_001",
+      "unlockDifficulty": "hard",
+      "description": "通关小花山困难难度后，水帘洞深处的山鬼现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene001_breeze",
+        "name": "山间清风",
+        "description": "轻风拂面，双方速度小幅提升",
+        "type": "modifier",
+        "duration": -1,
+        "faction": "all",
+        "modifiers": [{ "attribute": "speed", "value": 10, "type": "PERCENTAGE" }]
+      }
+    ]
   },
   {
     "id": "scene_002",
@@ -39,7 +57,25 @@
     "rewards": {
       "exp": 150,
       "gold": 300
-    }
+    },
+    "unlocks": "scene_003",
+    "rewardDrops": ["drop_level2_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_002",
+      "unlockDifficulty": "hard",
+      "description": "通关浅水涧困难难度后，水帘洞深处的龟丞相现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene002_tide",
+        "name": "水汽弥漫",
+        "description": "潮湿水气降低火属性伤害",
+        "type": "elemental",
+        "duration": -1,
+        "faction": "all",
+        "elemental": { "resistElements": ["HUO"], "percent": 20 }
+      }
+    ]
   },
   {
     "id": "scene_003",
@@ -60,7 +96,25 @@
     "rewards": {
       "exp": 200,
       "gold": 400
-    }
+    },
+    "unlocks": "scene_004",
+    "rewardDrops": ["drop_level3_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_003",
+      "unlockDifficulty": "hard",
+      "description": "通关碎石坡困难难度后，五行山内部的镇山神兽现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene003_rock",
+        "name": "落石",
+        "description": "每回合对双方造成最大气血 2% 的物理伤害",
+        "type": "periodic",
+        "duration": -1,
+        "faction": "all",
+        "periodic": { "phase": "turn_end", "effect": "damage", "value": 2, "isPercent": true }
+      }
+    ]
   },
   {
     "id": "scene_004",
@@ -81,7 +135,25 @@
     "rewards": {
       "exp": 250,
       "gold": 500
-    }
+    },
+    "unlocks": "scene_005",
+    "rewardDrops": ["drop_level4_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_004",
+      "unlockDifficulty": "hard",
+      "description": "通关迷雾林困难难度后，高老庄地窖的野猪王现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene004_fog",
+        "name": "浓雾",
+        "description": "雾气遮蔽视线，双方命中率降低 15%",
+        "type": "modifier",
+        "duration": -1,
+        "faction": "all",
+        "modifiers": [{ "attribute": "hit", "value": -15, "type": "PERCENTAGE" }]
+      }
+    ]
   },
   {
     "id": "scene_005",
@@ -102,7 +174,20 @@
     "rewards": {
       "exp": 300,
       "gold": 600
-    }
+    },
+    "unlocks": "scene_006",
+    "rewardDrops": ["drop_level5_hard"],
+    "fieldEffects": [
+      {
+        "id": "field_scene005_sand",
+        "name": "流沙",
+        "description": "流沙下陷，双方速度降低 10%",
+        "type": "modifier",
+        "duration": -1,
+        "faction": "all",
+        "modifiers": [{ "attribute": "speed", "value": -10, "type": "PERCENTAGE" }]
+      }
+    ]
   },
   {
     "id": "scene_006",
@@ -123,7 +208,34 @@
     "rewards": {
       "exp": 350,
       "gold": 700
-    }
+    },
+    "unlocks": "scene_007",
+    "rewardDrops": ["drop_level6_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_006",
+      "unlockDifficulty": "hard",
+      "description": "通关熔岩洞困难难度后，火焰山腹地的火灵老祖现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene006_heat",
+        "name": "灼热",
+        "description": "洞内灼热，每回合对双方造成最大气血 3% 的火属性伤害",
+        "type": "periodic",
+        "duration": -1,
+        "faction": "all",
+        "periodic": { "phase": "turn_end", "effect": "damage", "value": 3, "isPercent": true }
+      },
+      {
+        "id": "field_scene006_fire",
+        "name": "火元素充沛",
+        "description": "火属性伤害提升 20%",
+        "type": "elemental",
+        "duration": -1,
+        "faction": "all",
+        "elemental": { "bonusElements": ["HUO"], "percent": 20 }
+      }
+    ]
   },
   {
     "id": "scene_007",
@@ -144,7 +256,25 @@
     "rewards": {
       "exp": 400,
       "gold": 800
-    }
+    },
+    "unlocks": "scene_008",
+    "rewardDrops": ["drop_level7_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_007",
+      "unlockDifficulty": "hard",
+      "description": "通关蛛丝谷困难难度后，盘丝洞密室的白蛛娘娘现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene007_web",
+        "name": "蛛网",
+        "description": "蛛网密布，双方速度降低 15%",
+        "type": "modifier",
+        "duration": -1,
+        "faction": "all",
+        "modifiers": [{ "attribute": "speed", "value": -15, "type": "PERCENTAGE" }]
+      }
+    ]
   },
   {
     "id": "scene_008",
@@ -165,7 +295,25 @@
     "rewards": {
       "exp": 450,
       "gold": 900
-    }
+    },
+    "unlocks": "scene_009",
+    "rewardDrops": ["drop_level8_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_008",
+      "unlockDifficulty": "hard",
+      "description": "通关狂风岭困难难度后，狮驼岭祭坛的狮驼王现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene008_wind",
+        "name": "狂风",
+        "description": "狂风呼啸，双方命中率降低 10%",
+        "type": "modifier",
+        "duration": -1,
+        "faction": "all",
+        "modifiers": [{ "attribute": "hit", "value": -10, "type": "PERCENTAGE" }]
+      }
+    ]
   },
   {
     "id": "scene_009",
@@ -186,7 +334,25 @@
     "rewards": {
       "exp": 500,
       "gold": 1000
-    }
+    },
+    "unlocks": "scene_010",
+    "rewardDrops": ["drop_level9_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_009",
+      "unlockDifficulty": "hard",
+      "description": "通关禅音崖困难难度后，雷音寺藏经阁的金身罗汉现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene009_prayer",
+        "name": "佛音",
+        "description": "梵音回荡，双方治疗效果提升 15%",
+        "type": "modifier",
+        "duration": -1,
+        "faction": "all",
+        "modifiers": [{ "attribute": "healReceived", "value": 15, "type": "PERCENTAGE" }]
+      }
+    ]
   },
   {
     "id": "scene_010",
@@ -207,7 +373,24 @@
     "rewards": {
       "exp": 600,
       "gold": 1200
-    }
+    },
+    "rewardDrops": ["drop_level10_hard"],
+    "hiddenBoss": {
+      "enemyId": "boss_hidden_010",
+      "unlockDifficulty": "hard",
+      "description": "通关灵霄台困难难度后，灵山之巅的大妖王现形"
+    },
+    "fieldEffects": [
+      {
+        "id": "field_scene010_cloud",
+        "name": "祥云",
+        "description": "云端灵力充盈，双方每回合恢复最大气血 2%",
+        "type": "periodic",
+        "duration": -1,
+        "faction": "all",
+        "periodic": { "phase": "turn_start", "effect": "heal", "value": 2, "isPercent": true }
+      }
+    ]
   },
   {
     "id": "scene_test",

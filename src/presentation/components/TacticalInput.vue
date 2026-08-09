@@ -46,6 +46,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { clamp } from '@/shared/utils/math'
 
 type TInputSize = 'sm' | 'md'
 
@@ -128,12 +129,6 @@ function parseNumber(raw: string): number | null {
   if (raw === '' || raw === '-' || raw === '-.') return null
   const n = Number(raw)
   return Number.isNaN(n) ? null : n
-}
-
-function clamp(n: number, lo: number | undefined, hi: number | undefined): number {
-  if (lo !== undefined && n < lo) return lo
-  if (hi !== undefined && n > hi) return hi
-  return n
 }
 
 function rangeText(): string {

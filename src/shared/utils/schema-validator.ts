@@ -103,6 +103,16 @@ export function validateSkillConfig(
           `Step ${index}: Missing required field: effectId for ${step.type} type`,
         )
       }
+
+      // 检查步骤触发概率范围（可选字段，0-1）
+      if (
+        step.probability !== undefined &&
+        (step.probability < 0 || step.probability > 1)
+      ) {
+        errors.push(
+          `Step ${index}: probability must be between 0 and 1, got ${step.probability}`,
+        )
+      }
     })
   }
 

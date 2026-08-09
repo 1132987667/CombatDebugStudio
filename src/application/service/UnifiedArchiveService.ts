@@ -120,6 +120,7 @@ export function fromRecordedBattle(rec: RecordedBattle | undefined | null): Unif
     energy: p.currentEnergy,
     side: p.team,
     buffs: [],
+    attributes: p.attributes,
   }))
 
   // HP 游标（从 initialState 出发，按伤害/治疗累减）

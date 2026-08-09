@@ -262,7 +262,7 @@
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
-      "defense": 0,
+      "defense": 10,
       "speed": 95,
       "critRate": 50,
       "critDamage": 100,

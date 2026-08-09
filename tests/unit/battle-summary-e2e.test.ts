@@ -68,6 +68,16 @@ describe('真实战斗端到端战报（七层自洽与数值合理）', () => {
     const archive = fromRecordedBattle(rec)!
     const sum = summarizeBattle(archive)
 
+    // 0. 发射端契约：正常行动（非被控制/跳过）的 action_execution 必须携带 targetId，
+    //    否则"角色属性"面板目标 tab 无法定位目标（属性面板依赖存档 sourceId/targetId）
+    const execs = (rec.traceEvents ?? []).filter((e) => e.phase === 'action_execution')
+    const normalExecs = execs.filter(
+      (e) => (e.payload as Record<string, unknown>)?.actionType !== 'status'
+        && (e.payload as Record<string, unknown>)?.actionType !== 'skip',
+    )
+    expect(normalExecs.length).toBeGreaterThan(0)
+    expect(normalExecs.every((e) => !!e.targetId)).toBe(true)
+
     // 1. L3 单位表覆盖全部参战者（含无行动者）
     for (const p of [...allies, ...enemies]) {
       expect(sum.units[p.id]).toBeDefined()

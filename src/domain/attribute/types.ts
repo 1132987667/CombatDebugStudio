@@ -34,6 +34,7 @@ export const ModifierSourceType = {
   FORMATION: 'formation',
   BASE: 'base',
   TALENT: 'talent',
+  AFFIX: 'affix',
 } as const
 /** 修饰符来源类型 */
 export type ModifierSourceType =
@@ -48,6 +49,7 @@ export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
   formation: '阵型',
   base: '基础',
   talent: '天赋',
+  affix: '词缀',
 }
 
 /** 属性值类型 */

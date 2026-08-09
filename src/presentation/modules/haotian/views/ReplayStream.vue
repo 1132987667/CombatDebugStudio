@@ -13,7 +13,7 @@
       <TacticalInput size="md" :model-value="store.streamText" placeholder="过滤关键词 / 数值…" aria-label="过滤关键词"
         @update:model-value="store.streamText = String($event ?? '')" />
     </div>
-    <div class="ht-pane-bd" ref="scrollRef" @scroll.passive="onScroll">
+    <div class="ht-pane-bd ht-vscroll" ref="scrollRef" @scroll.passive="onScroll">
       <div v-if="store.archive" class="ht-vlist" :style="{ height: totalHeight + 'px' }">
         <div v-for="ev in visible" :key="ev.id" class="ht-vitem" :data-vid="ev.id"
           :ref="(el) => measure(ev.id, el as HTMLElement | null)"

@@ -11,7 +11,7 @@
  * 运行: npx vitest run tests/unit/presentation/DebugTimeline.test.ts
  */
 import { describe, it, expect, afterEach } from 'vitest'
-import { createApp, h, type App } from 'vue'
+import { createApp, h, ref, type App } from 'vue'
 import { createPinia } from 'pinia'
 
 import DebugTimeline from '@/presentation/modules/haotian/views/DebugTimeline.vue'
@@ -93,5 +93,25 @@ describe('DebugTimeline 虚拟化', () => {
     // 非行动节点（回合头/结算）无标签
     const roundRow = [...root.querySelectorAll<HTMLElement>('.ht-t-row')].find((el) => el.textContent?.includes('第 1 回合'))
     expect(roundRow!.querySelector('.ht-t-tag')).toBeNull()
+  })
+
+  it('active 从隐藏切到可见时重测视口（v-show 场景，行仍正常渲染）', async () => {
+    // 昊天镜 tab 隐藏期 mount 后切回：DebugTimeline 需监听 active 触发 viewH/行高重测，
+    // 否则 totalHeight 会用 estimate 撑大（未填满就出现滚动条）。
+    const active = ref(false)
+    host = document.createElement('div')
+    host.style.height = '600px'
+    document.body.appendChild(host)
+    const pinia = createPinia()
+    app = createApp({ render: () => h(DebugTimeline, { active: active.value }) })
+    app.use(pinia)
+    app.mount(host)
+    const store = useHaotianStore()
+    await store.loadDemo()
+    await new Promise((r) => setTimeout(r, 30))
+    active.value = true
+    await new Promise((r) => setTimeout(r, 30))
+    const rows = host.querySelectorAll('.ht-t-row').length
+    expect(rows).toBeGreaterThan(0)
   })
 })

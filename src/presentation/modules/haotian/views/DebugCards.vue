@@ -14,15 +14,32 @@
           <em>行动类型</em>
           <b class="ht-sh-tag" :class="actionType">{{ actionTagText }}</b>
         </div>
+        <div v-if="skillDescription" class="ht-sh-skill-desc">{{ skillDescription }}</div>
         <div v-if="energyCost" class="ht-sh-row">
           <em>消耗</em>
           <b>{{ energyCost }}能量</b>
+          <template v-if="actorEnergy != null">
+            <span class="ht-sh-arrow">·</span>
+            <span>剩余 {{ actorEnergy }}能量</span>
+          </template>
         </div>
-        <div v-for="t in targetRows" :key="t.targetId || 'unknown'" class="ht-sh-row">
-          <em>目标</em>
-          <b>{{ t.name }}</b>
-          <span class="ht-sh-arrow">→</span>
-          <span class="ht-sh-result">{{ t.result }}</span>
+        <div v-for="t in targetRows" :key="t.targetId || 'unknown'" class="ht-sh-tgt">
+          <div class="ht-sh-row">
+            <em>目标</em>
+            <b>{{ t.name }}</b>
+            <span class="ht-sh-arrow">→</span>
+            <span class="ht-sh-result">{{ t.result }}</span>
+          </div>
+          <div v-if="t.hp" class="ht-bar ht-bar-hp" :title="`气血 ${t.hp.before} → ${t.hp.after}`" aria-hidden="true">
+            <i class="seg keep" :style="{ width: hpKeepWidth(t) }"></i>
+            <i class="seg change" :class="t.hp.kind" :style="{ width: hpChangeWidth(t) }"></i>
+            <span class="ht-bar-text">{{ hpText(t) }}</span>
+          </div>
+          <div v-if="t.en" class="ht-bar ht-bar-en" :title="`能量 ${t.en.before} → ${t.en.after}`" aria-hidden="true">
+            <i class="seg keep" :style="{ width: enKeepWidth(t) }"></i>
+            <i class="seg change" :class="t.en.kind" :style="{ width: enChangeWidth(t) }"></i>
+            <span class="ht-bar-text">{{ enText(t) }}</span>
+          </div>
         </div>
       </div>
       <div v-else class="ht-sh-sub">{{ nodeSub }}</div>
@@ -71,6 +88,7 @@ import { buildSegResults } from '@/domain/battle/replay/unified/unified-debug-tr
 import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import Button from '@/presentation/components/Button.vue'
+import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 import { useHaotianStore } from '../stores/haotianStore'
 import { useVirtualList } from '../composables/useVirtualList'
 
@@ -166,11 +184,91 @@ const energyCost = computed<number | undefined>(() => {
   return n.energyCost
 })
 
+/** 行动者剩余能量：行动链内该角色 EN 末态（action_execution 扣费后快照；真实录制无 EN 快照时不显示） */
+const actorEnergy = computed<number | undefined>(() => {
+  const n = currentNode.value
+  if (!n?.action || !n.actor) return undefined
+  let last: number | undefined
+  for (const e of n.events) {
+    for (const d of e._delta ?? []) {
+      if (d.id !== n.actor) continue
+      for (const f of d.fields) {
+        if (f.k === 'EN') last = f.after
+      }
+    }
+  }
+  return last
+})
+
+/** 技能配置（静态 JSON 源，模块级单例；按技能名查描述） */
+const skillConfigs = new ConfigDataSource().getSkills()
+
+/** 节点技能名：从行动节点名"名字 · 技能名"解析（deriveDebugTree 已补全技能名） */
+function skillNameOfNode(n: DebugNode): string {
+  const sep = ' · '
+  const i = n.name.lastIndexOf(sep)
+  return i >= 0 ? n.name.slice(i + sep.length) : ''
+}
+
+/** 技能描述：技能类行动（小/大/通用技能；被动技能 actionType 归通用 skill）在头部下方展示配置 description */
+const skillDescription = computed<string>(() => {
+  const n = currentNode.value
+  if (!n?.action || !actionType.value) return ''
+  if (!SKILL_TAGS.includes(actionType.value)) return ''
+  const name = skillNameOfNode(n)
+  if (!name) return ''
+  return skillConfigs.find((s) => s.name === name)?.description ?? ''
+})
+
 /** 目标结果行：遍历节点事件的每个目标，聚合伤害/治疗/状态结果（目标可多个，结果可不同） */
+interface HpBar { kind: 'damage' | 'heal'; before: number; after: number; max: number }
+interface EnBar { kind: 'cost' | 'gain'; before: number; after: number; max: number }
+
 interface TargetRow {
   targetId: string
   name: string
   result: string
+  /** 气血条：本次行动该目标 HP 前后值（max 为上限，条上绿=剩余、红=扣减/亮绿=治疗） */
+  hp?: HpBar
+  /** 能量条：本次行动该目标 EN 前后值（仅目标行；施法者自身扣能量不走此条） */
+  en?: EnBar
+}
+
+/** 条段宽度百分比（clamp 0~100，max 兜底除零） */
+function barPct(v: number, max: number): string {
+  const m = max > 0 ? max : 1
+  return `${Math.round(Math.min(100, Math.max(0, (v / m) * 100)) * 10) / 10}%`
+}
+/** 气血条"剩余/原有"段宽度：伤害取行动后剩余，治疗取行动前原有 */
+function hpKeepWidth(t: TargetRow): string {
+  const h = t.hp!
+  return barPct(h.kind === 'damage' ? h.after : h.before, h.max)
+}
+/** 气血条"本次变化"段宽度：扣血量或治疗量 */
+function hpChangeWidth(t: TargetRow): string {
+  const h = t.hp!
+  return barPct(h.kind === 'damage' ? h.before - h.after : h.after - h.before, h.max)
+}
+/** 能量条"剩余/原有"段宽度 */
+function enKeepWidth(t: TargetRow): string {
+  const e = t.en!
+  return barPct(e.kind === 'cost' ? e.after : e.before, e.max)
+}
+/** 能量条"本次变化"段宽度：扣除量或回复量 */
+function enChangeWidth(t: TargetRow): string {
+  const e = t.en!
+  return barPct(e.kind === 'cost' ? e.before - e.after : e.after - e.before, e.max)
+}
+/** 条内文字：当前/最大 - 扣减量（伤害/扣能量）或 + 变化量（治疗/回能量） */
+function hpText(t: TargetRow): string {
+  const h = t.hp!
+  const d = h.kind === 'damage' ? h.before - h.after : h.after - h.before
+  return `${h.after}/${h.max} ${h.kind === 'damage' ? '-' : '+'} ${d}`
+}
+function enText(t: TargetRow): string {
+  const e = t.en!
+  const d = e.kind === 'cost' ? e.before - e.after : e.after - e.before
+  return `${e.after}/${e.max} ${e.kind === 'cost' ? '-' : '+'} ${d}`
 }
 
 const targetRows = computed<TargetRow[]>(() => {
@@ -221,6 +319,25 @@ const targetRows = computed<TargetRow[]>(() => {
       else if (act === 'update') a.parts.push(`更新 ${buff}`)
     }
   }
+  // HP/EN 前后值：从事件链 _delta 聚合（首个 delta 的 before 视为行动前，末个 delta 的 after 视为行动后；
+  // 链内多段伤害/治疗的快照是游标连续的，首尾即本次行动的起点与终点）
+  const hpDelta = new Map<string, { before: number; after: number }>()
+  const enDelta = new Map<string, { before: number; after: number }>()
+  for (const e of n.events) {
+    for (const d of e._delta ?? []) {
+      for (const f of d.fields) {
+        if (f.k === 'HP') {
+          const cur = hpDelta.get(d.id)
+          if (cur) cur.after = f.after
+          else hpDelta.set(d.id, { before: f.before, after: f.after })
+        } else if (f.k === 'EN') {
+          const cur = enDelta.get(d.id)
+          if (cur) cur.after = f.after
+          else enDelta.set(d.id, { before: f.before, after: f.after })
+        }
+      }
+    }
+  }
   return order
     .filter((tid) => {
       const a = acc.get(tid)!
@@ -235,7 +352,17 @@ const targetRows = computed<TargetRow[]>(() => {
         if (a.heal > 0) res.push(`治疗 ${a.heal}`)
       }
       res.push(...a.parts)
-      return { targetId: tid, name: tid ? store.pname(tid) : '未知', result: res.join('；') }
+      const row: TargetRow = { targetId: tid, name: tid ? store.pname(tid) : '未知', result: res.join('；') }
+      const p = store.archive?.initialState.participants.find((x) => x.id === tid)
+      const hd = hpDelta.get(tid)
+      if (p && hd && hd.before !== hd.after) {
+        row.hp = { kind: hd.after < hd.before ? 'damage' : 'heal', before: hd.before, after: hd.after, max: p.maxHp }
+      }
+      const ed = enDelta.get(tid)
+      if (p && ed && ed.before !== ed.after) {
+        row.en = { kind: ed.after < ed.before ? 'cost' : 'gain', before: ed.before, after: ed.after, max: p.maxEnergy }
+      }
+      return row
     })
 })
 

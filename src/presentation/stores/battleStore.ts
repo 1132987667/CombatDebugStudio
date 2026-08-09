@@ -1,9 +1,5 @@
 import type { BattleService } from '@/application/facade/BattleFacade'
-import type {
-  BattleAction,
-  BattleEntity,
-  BattleState,
-} from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'

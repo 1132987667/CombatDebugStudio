@@ -1,0 +1,38 @@
+{
+  "alchemyRecipes": [
+    { "name": "疗伤丹药", "level": 1, "materials": "桃木×2 + 粗石×1", "effect": "恢复 50 点气血", "count": 5 },
+    { "name": "攻击丹药", "level": 3, "materials": "淡水玉×1 + 贝壳×2", "effect": "攻击 +20% · 3 回合", "count": 2 },
+    { "name": "防御丹药", "level": 3, "materials": "松木×1 + 铜精×1", "effect": "防御 +20% · 3 回合", "count": 1 },
+    { "name": "速度丹药", "level": 5, "materials": "玄铁×1 + 淡水玉×1", "effect": "速度 +20% · 3 回合", "count": 0 },
+    { "name": "洗髓丹", "level": 8, "materials": "妖丹×1 + 玄铁×2", "effect": "重置经脉点数", "count": 0 }
+  ],
+  "forgeRecipes": [
+    { "name": "竹剑", "level": 1, "materials": "桃木×3 + 铜精×1", "effect": "攻击 +12 · 一阶武器", "count": 1 },
+    { "name": "鹿皮甲", "level": 1, "materials": "鹿皮×3", "effect": "防御 +8 · 一阶衣服", "count": 1 },
+    { "name": "藤蔓箍", "level": 2, "materials": "贝壳×2 + 桃木×2", "effect": "气血 +60 · 一阶头盔", "count": 1 },
+    { "name": "松木棍", "level": 3, "materials": "松木×3 + 铜精×2", "effect": "攻击 +20 · 二阶武器", "count": 1 },
+    { "name": "淡水玉护符", "level": 4, "materials": "淡水玉×2 + 贝壳×1", "effect": "气血 +3% · 一阶护符", "count": 0 }
+  ],
+  "retreats": [
+    { "name": "静坐吐纳", "time": "1 小时", "desc": "心无旁骛，纳天地灵气", "reward": "经验 ×120 / 小时" },
+    { "name": "参悟功法", "time": "4 小时", "desc": "研习装配功法，加深领悟", "reward": "功法熟练度 +80" },
+    { "name": "入定悟道", "time": "8 小时", "desc": "神游太虚，偶得顿悟", "reward": "经验 ×1200 + 概率顿悟一次" },
+    { "name": "闭关突破", "time": "24 小时", "desc": "冲击当前境界壁垒", "reward": "突破成功率 +10%" }
+  ],
+  "crops": [
+    { "name": "灵芝", "growth": 1, "time": "8 小时", "reward": "灵芝 ×3", "status": "已成熟" },
+    { "name": "朱果", "growth": 0.6, "time": "12 小时", "reward": "朱果 ×2", "status": "生长中" },
+    { "name": "仙桃", "growth": 0.2, "time": "24 小时", "reward": "仙桃 ×1", "status": "生长中" },
+    { "name": "空置", "growth": 0, "time": "—", "reward": "—", "status": "空置" },
+    { "name": "空置", "growth": 0, "time": "—", "reward": "—", "status": "空置" },
+    { "name": "空置", "growth": 0, "time": "—", "reward": "—", "status": "空置" }
+  ],
+  "crafts": [
+    { "name": "武器制作", "level": 3, "maxLevel": 10, "progress": 0.42, "effect": "每级提升武器基础属性 5%" },
+    { "name": "衣服制作", "level": 2, "maxLevel": 10, "progress": 0.18, "effect": "每级提升衣服基础属性 5%" },
+    { "name": "饰品制作", "level": 1, "maxLevel": 10, "progress": 0.05, "effect": "每级提升饰品基础属性 5%" },
+    { "name": "炼丹术", "level": 4, "maxLevel": 10, "progress": 0.62, "effect": "每级提升丹药品质与成功率" },
+    { "name": "炼器术", "level": 2, "maxLevel": 10, "progress": 0.31, "effect": "每级提升装备强化上限" },
+    { "name": "种植术", "level": 1, "maxLevel": 10, "progress": 0.08, "effect": "每级缩短药园作物生长时间 5%" }
+  ]
+}

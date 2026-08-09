@@ -5,7 +5,7 @@
  * 描述: 负责管理战斗回合的初始化、推进和查询，实现了ITurnManager接口，处理回合顺序和回合计数
  */
 
-import type { BattleEntity, BattleData } from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
@@ -49,32 +49,6 @@ export class TurnManager {
         }
 
         return rng ? (rng.nextBoolean() ? -1 : 1) : Math.random() - 0.5
-      })
-      .map((p) => p.id)
-  }
-
-  /**
-   * 重新计算回合顺序
-   * 考虑所有角色的实际属性值（包括Buff效果）后重新排序
-   * 速度高的参与者排在前面，相同速度时随机排序（走 battle.rng）
-   * @param battle 战斗数据
-   * @returns 按实际速度排序的参与者ID数组
-   */
-  public recalculateTurnOrder(battle: BattleData): string[] {
-    const participants = Array.from(battle.participants.values()).filter((p) =>
-      p.isAlive(),
-    )
-
-    return participants
-      .sort((a, b) => {
-        const speedA = this.calculateEffectiveSpeed(a)
-        const speedB = this.calculateEffectiveSpeed(b)
-
-        if (speedA !== speedB) {
-          return speedB - speedA
-        }
-
-        return battle.rng.nextBoolean() ? -1 : 1
       })
       .map((p) => p.id)
   }

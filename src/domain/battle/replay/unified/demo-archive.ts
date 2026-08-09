@@ -22,8 +22,14 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
   checksum: 'a3f8c2e1',
   initialState: {
     participants: [
-      { id: 'u1', name: '火护法', maxHp: 350, hp: 350, maxEnergy: 100, energy: 100, side: 'ally', buffs: [{ name: '复仇怒火', stacks: 1, turns: -1 }] },
-      { id: 'u2', name: '金护法', maxHp: 500, hp: 500, maxEnergy: 100, energy: 60, side: 'enemy', buffs: [] },
+      {
+        id: 'u1', name: '火护法', maxHp: 350, hp: 350, maxEnergy: 100, energy: 100, side: 'ally', buffs: [{ name: '复仇怒火', stacks: 1, turns: -1 }],
+        attributes: { attack: 65, defense: 20, speed: 90, critRate: 25, critDamage: 150, damageReduction: 5, dodge: 8, hit: 90, comboRate: 35 },
+      },
+      {
+        id: 'u2', name: '金护法', maxHp: 500, hp: 500, maxEnergy: 100, energy: 60, side: 'enemy', buffs: [],
+        attributes: { attack: 58, defense: 32, speed: 70, critRate: 10, critDamage: 125, damageReduction: 12, dodge: 10, hit: 90, trueDamageRate: 20, reflectDamagePercent: 15 },
+      },
     ],
   },
   events: [

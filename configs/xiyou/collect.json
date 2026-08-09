@@ -1,0 +1,56 @@
+{
+  "codexChapters": [
+    {
+      "name": "花果山妖录",
+      "entries": [
+        { "name": "花妖", "level": 1, "captured": true },
+        { "name": "石精", "level": 2, "captured": true },
+        { "name": "山魈", "level": 3, "captured": true },
+        { "name": "通臂猿", "level": 4, "captured": true }
+      ]
+    },
+    {
+      "name": "水府河妖录",
+      "entries": [
+        { "name": "虾兵", "level": 1, "captured": true },
+        { "name": "蟹将", "level": 2, "captured": true },
+        { "name": "鱼精", "level": 3, "captured": true },
+        { "name": "水蛇精", "level": 8, "captured": false }
+      ]
+    },
+    {
+      "name": "五行山精怪录",
+      "entries": [
+        { "name": "岩妖", "level": 4, "captured": true },
+        { "name": "金精", "level": 5, "captured": false },
+        { "name": "山鬼", "level": 6, "captured": false }
+      ]
+    },
+    {
+      "name": "高老庄妖录",
+      "entries": [
+        { "name": "野猪精", "level": 4, "captured": false },
+        { "name": "家仆妖", "level": 5, "captured": false },
+        { "name": "管家妖", "level": 6, "captured": false }
+      ]
+    }
+  ],
+  "achievements": [
+    { "name": "初出茅庐", "desc": "完成第一章主线剧情", "progress": 1, "target": 1, "reward": "铜钱×500", "done": true },
+    { "name": "百妖斩", "desc": "击败 100 只妖怪", "progress": 34, "target": 100, "reward": "灵石×10", "done": false },
+    { "name": "百炼成钢", "desc": "任意装备强化至 +10", "progress": 6, "target": 10, "reward": "玄铁×5", "done": false },
+    { "name": "丹道入门", "desc": "炼制 10 次丹药", "progress": 4, "target": 10, "reward": "洗髓丹×1", "done": false },
+    { "name": "三宝归位", "desc": "收集三件天品及以上法宝", "progress": 1, "target": 3, "reward": "称号·法宝显圣", "done": false },
+    { "name": "结伴同行", "desc": "同时上阵 3 名伙伴", "progress": 3, "target": 3, "reward": "灵石×5", "done": true },
+    { "name": "问道长生", "desc": "境界突破至金丹", "progress": 1, "target": 1, "reward": "称号·金丹真人", "done": false },
+    { "name": "富甲一方", "desc": "累计获得 10 万铜钱", "progress": 12880, "target": 100000, "reward": "铜钱×2000", "done": false }
+  ],
+  "titles": [
+    { "name": "降妖者", "bonus": "攻击 +2", "desc": "最初的称号，人人可得", "owned": true, "equipped": true },
+    { "name": "金丹真人", "bonus": "全属性 +3%", "desc": "境界突破至金丹时解锁", "owned": false, "equipped": false },
+    { "name": "法宝显圣", "bonus": "法宝技能 +1 级", "desc": "集齐三件天品法宝解锁", "owned": false, "equipped": false },
+    { "name": "百妖斩·魁", "bonus": "攻击 +5", "desc": "累计击败 500 只妖怪", "owned": false, "equipped": false },
+    { "name": "丹圣", "bonus": "炼丹成功率 +10%", "desc": "炼丹技艺达到 10 级", "owned": false, "equipped": false },
+    { "name": "齐天大圣", "bonus": "全属性 +8%", "desc": "通关全部主线章节", "owned": false, "equipped": false }
+  ]
+}

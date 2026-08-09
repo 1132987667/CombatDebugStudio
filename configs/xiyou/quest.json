@@ -1,0 +1,49 @@
+{
+  "quests": [
+    { "type": "主线", "name": "初探花果山", "desc": "击败花妖王，救出被擒的巡山小猴", "progress": 1, "target": 1, "reward": "经验 300 · 桃木×5" },
+    { "type": "主线", "name": "水帘洞之谜", "desc": "深入水帘洞，取回九节灵藤", "progress": 0, "target": 1, "reward": "经验 500 · 淡水玉×2" },
+    { "type": "日常", "name": "斩妖除魔", "desc": "完成任意战斗 3 次", "progress": 2, "target": 3, "reward": "铜钱×300" },
+    { "type": "日常", "name": "勤修苦练", "desc": "在洞府闭关累计 1 小时", "progress": 0.5, "target": 1, "reward": "经验 200" },
+    { "type": "日常", "name": "坊市采买", "desc": "在坊市购买 1 件商品", "progress": 1, "target": 1, "reward": "铜钱×100" },
+    { "type": "周常", "name": "百妖斩·周", "desc": "本周击败 50 只妖怪", "progress": 21, "target": 50, "reward": "灵石×5 · 玄铁×1" },
+    { "type": "周常", "name": "丹炉不辍", "desc": "本周炼制丹药 5 次", "progress": 2, "target": 5, "reward": "银两×2" }
+  ],
+  "checkinDays": [
+    { "day": 1, "reward": "铜钱×100", "state": "done" },
+    { "day": 2, "reward": "疗伤丹药×2", "state": "done" },
+    { "day": 3, "reward": "桃木×5", "state": "done" },
+    { "day": 4, "reward": "铜钱×200", "state": "done" },
+    { "day": 5, "reward": "引路香×1", "state": "done" },
+    { "day": 6, "reward": "铜钱×300", "state": "done" },
+    { "day": 7, "reward": "灵石×1", "state": "done" },
+    { "day": 8, "reward": "铜钱×150", "state": "today" },
+    { "day": 9, "reward": "攻击丹药×1", "state": "future" },
+    { "day": 10, "reward": "玄铁×1", "state": "future" },
+    { "day": 11, "reward": "铜钱×250", "state": "future" },
+    { "day": 12, "reward": "防御丹药×1", "state": "future" },
+    { "day": 13, "reward": "铜钱×300", "state": "future" },
+    { "day": 14, "reward": "灵石×2", "state": "future" },
+    { "day": 15, "reward": "洗髓丹×1", "state": "future" },
+    { "day": 16, "reward": "铜钱×200", "state": "future" },
+    { "day": 17, "reward": "速度丹药×1", "state": "future" },
+    { "day": 18, "reward": "铜钱×300", "state": "future" },
+    { "day": 19, "reward": "淡水玉×2", "state": "future" },
+    { "day": 20, "reward": "铜钱×400", "state": "future" },
+    { "day": 21, "reward": "灵石×3", "state": "future" },
+    { "day": 22, "reward": "玄铁×2", "state": "future" },
+    { "day": 23, "reward": "铜钱×300", "state": "future" },
+    { "day": 24, "reward": "疗伤丹药×3", "state": "future" },
+    { "day": 25, "reward": "铜钱×500", "state": "future" },
+    { "day": 26, "reward": "妖丹×1", "state": "future" },
+    { "day": 27, "reward": "铜钱×400", "state": "future" },
+    { "day": 28, "reward": "洗髓丹×1", "state": "future" },
+    { "day": 29, "reward": "铜钱×500", "state": "future" },
+    { "day": 30, "reward": "灵石×10", "state": "future" }
+  ],
+  "events": [
+    { "name": "蟠桃盛会", "time": "今日 12:00 - 24:00", "desc": "食蟠桃得仙力，击败邀战的天兵天将", "reward": "灵石×5 · 经验×800", "status": "进行中" },
+    { "name": "降妖奇遇", "time": "7 月 20 日 - 8 月 10 日", "desc": "野外遭遇概率提升，掉落双倍妖丹", "reward": "妖丹掉落 ×2", "status": "进行中" },
+    { "name": "法宝显圣", "time": "8 月 12 日开启", "desc": "法宝洗练消耗减半，冲榜可得仙品法宝", "reward": "仙品法宝自选箱", "status": "预告" },
+    { "name": "正月灯会", "time": "已结束", "desc": "集花灯换元宵丹药", "reward": "元宵丹药×10", "status": "已结束" }
+  ]
+}

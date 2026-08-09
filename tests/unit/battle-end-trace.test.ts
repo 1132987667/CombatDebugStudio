@@ -123,13 +123,12 @@ describe('战斗结束 trace 收尾（battle_end 事件补发 + 落盘）', () =
       {
         stopAutoBattle: vi.fn(),
       } as unknown as Parameters<ConstructorParameters<typeof BattleManager>[2]>,
-      {} as Parameters<ConstructorParameters<typeof BattleManager>[3]>,
-      { emit: vi.fn() } as unknown as Parameters<ConstructorParameters<typeof BattleManager>[4]>,
+      { emit: vi.fn() } as unknown as Parameters<ConstructorParameters<typeof BattleManager>[3]>,
       {
         emit: vi.fn(),
         on: vi.fn(),
         off: vi.fn(),
-      } as unknown as Parameters<ConstructorParameters<typeof BattleManager>[5]>,
+      } as unknown as Parameters<ConstructorParameters<typeof BattleManager>[4]>,
     )
     manager.endBattle(ParticipantSide.ALLY)
 

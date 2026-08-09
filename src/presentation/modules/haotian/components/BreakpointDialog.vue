@@ -35,7 +35,7 @@
           <TacticalSelect v-model="value" size="md" :options="actorOptions" />
         </div>
         <div v-if="type === 'actor' && !actorOptions.length" class="ht-bp-note">需先加载一份战斗数据（顶部选择数据源）才能按单位设置断点。</div>
-        <div class="ht-bp-note">示例：伤害 ≥ 150 → 命中结算即暂停；级别 warn → 命中「阵亡」。可添加多条，任一命中即暂停。</div>
+        <div class="ht-bp-note">示例：伤害 ≥ 150 → 命中结算即暂停；级别 warn/error → 命中警告或错误事件。可添加多条，任一命中即暂停。</div>
       </div>
     </div>
     <template #footer>
@@ -68,7 +68,7 @@ const typeOptions: TSelectOption[] = [
   { value: 'damage', label: '伤害 ≥ 阈值' },
   { value: 'level', label: '级别 = warn / error' },
   { value: 'roll', label: '随机值 > 阈值' },
-  { value: 'actor', label: '单位行动（ID）' },
+  { value: 'actor', label: '单位行动' },
 ]
 const levelOptions: TSelectOption[] = [
   { value: 'warn', label: 'warn' },

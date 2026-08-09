@@ -1,7 +1,7 @@
 <template>
   <div class="ht-pane" style="--pc: var(--color-energy)">
     <div class="ht-pane-hd">
-      <span class="t">行动卡片 · 因果序</span>
+      <span class="t">行动卡片</span>
       <span style="display: flex; gap: 6px; align-items: center">
         <Button class="ht-tbtn" title="上一事件（←）" @click="store.stepEvent(-1)">上一事件</Button>
         <Button class="ht-tbtn" title="下一事件（空格/→）" @click="store.stepEvent(1)">下一事件</Button>
@@ -9,7 +9,23 @@
     </div>
     <div class="ht-stream-hd">
       <div class="ht-sh-title">{{ nodeTitle }}</div>
-      <div class="ht-sh-sub" v-html="nodeSub"></div>
+      <div v-if="isAction" class="ht-sh-meta">
+        <div v-if="actionType" class="ht-sh-row">
+          <em>行动类型</em>
+          <b class="ht-sh-tag" :class="actionType">{{ actionTagText }}</b>
+        </div>
+        <div v-if="energyCost" class="ht-sh-row">
+          <em>消耗</em>
+          <b>{{ energyCost }}能量</b>
+        </div>
+        <div v-for="t in targetRows" :key="t.targetId || 'unknown'" class="ht-sh-row">
+          <em>目标</em>
+          <b>{{ t.name }}</b>
+          <span class="ht-sh-arrow">→</span>
+          <span class="ht-sh-result">{{ t.result }}</span>
+        </div>
+      </div>
+      <div v-else class="ht-sh-sub">{{ nodeSub }}</div>
     </div>
     <div class="ht-pane-bd ht-vscroll" ref="scrollRef" @scroll.passive="onScroll">
       <div v-if="items.length" class="ht-vlist" :style="{ height: totalHeight + 'px' }">
@@ -19,14 +35,14 @@
           <div class="ht-ev" :title="`${item.summary}（点击检视，右键切换书签）`"
             role="button" tabindex="0"
             :aria-label="`${item.summary}${store.isBookmarked(item.id) ? ' · 已书签' : ''}`"
-            :class="[toneClass(item), { on: item.id === store.selectedId, 'dbg-dim': meta(item).debugOnly, bm: store.isBookmarked(item.id), dim: isDim(item.id) }]"
+            :class="[toneClass(item), { on: item.id === store.selectedId, 'dbg-dim': meta(item).debugOnly, bm: store.isBookmarked(item.id), dim: isDim(item.id), chain: isChain(item.id) }]"
             @click="store.focusEvent(item.id, { seek: true })"
             @keydown.enter.prevent="store.focusEvent(item.id, { seek: true })"
             @keydown.space.prevent="store.focusEvent(item.id, { seek: true })"
             @contextmenu.prevent="store.toggleBookmark(item.id)">
             <div class="ht-ev-hd">
               <span v-if="item.payload?.seg" class="ht-ev-step">段 {{ item.payload.seg }}</span>
-              <span class="ht-ev-title">{{ item.summary }}</span>
+              <span class="ht-ev-title" :title="item.summary">{{ cardTitle(item) }}</span>
               <button type="button" class="ht-bm-btn ht-ev-bm" :class="{ on: store.isBookmarked(item.id) }"
                 :title="store.isBookmarked(item.id) ? '移除书签' : '添加书签'"
                 :aria-label="store.isBookmarked(item.id) ? '移除书签' : '添加书签'"
@@ -36,7 +52,6 @@
             <div class="ht-ev-meta">
               <template v-if="item.sourceId">{{ store.pname(item.sourceId) }}</template>
               <template v-if="item.targetId">{{ item.sourceId ? ' → ' : '' }}{{ store.pname(item.targetId) }}</template>
-              <template v-if="turnOf(item)"> · 第 {{ turnOf(item) }} 回合</template>
             </div>
             <div v-if="segIndicators.length" class="ht-ev-multi">
               <i v-for="(m, j) in segIndicators" :key="j" :class="[m, curSeg === j + 1 ? 'cur' : '']"></i>
@@ -51,11 +66,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, watch } from 'vue'
-import type { DebugNode } from '@/domain/battle/replay/unified/unified-debug-tree'
+import { ACTION_TAG_TEXT, type ActionTypeTag, type DebugNode } from '@/domain/battle/replay/unified/unified-debug-tree'
 import { buildSegResults } from '@/domain/battle/replay/unified/unified-debug-tree'
 import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
-import { escapeHtml } from '@/shared/utils/log-segment-factory'
 import Button from '@/presentation/components/Button.vue'
 import { useHaotianStore } from '../stores/haotianStore'
 import { useVirtualList } from '../composables/useVirtualList'
@@ -105,6 +119,8 @@ watch(
 // ───────────── 卡片内容 ─────────────
 
 const isDim = (id: string): boolean => store.focusMode && !!store.selectedEvent && !store.isRelated(id)
+/** 当前选中事件的同 correlationId 事件（链导航标记：一次行动的完整链路高亮） */
+const isChain = (id: string): boolean => !!store.selectedEvent && store.chainEvents.some((c) => c.id === id)
 
 const currentNode = computed<DebugNode | null>(() => {
   if (!store.debugNodeId) return null
@@ -113,20 +129,143 @@ const currentNode = computed<DebugNode | null>(() => {
 
 const nodeTitle = computed(() => {
   const n = currentNode.value
-  return n ? `${n.name}${n.action ? ' · 行动日志' : ' · 阶段结算'}` : '等待载入…'
+  if (!n) return '等待载入…'
+  // 行动节点标题 = 当前回合数 + 行动人角色名（居中）；非行动节点沿用节点名
+  if (n.action) {
+    const name = n.actor ? store.pname(n.actor) : n.name
+    return nodeTurn.value ? `第 ${nodeTurn.value} 回合 · ${name}` : name
+  }
+  return n.name
+})
+
+/** 节点发生回合：从节点事件取首个回合号（事件自带 turn 或快照 turn） */
+const nodeTurn = computed<number | undefined>(() => {
+  const n = currentNode.value
+  if (!n) return undefined
+  for (const e of n.events) {
+    const t = turnOf(e)
+    if (typeof t === 'number') return t
+  }
+  return undefined
+})
+
+/** 行动类型标签：与时间线一致（普通攻击 / 小技能 / 大技能 / 被控制 / 跳过） */
+const isAction = computed(() => !!currentNode.value?.action)
+const actionType = computed<ActionTypeTag | undefined>(() => currentNode.value?.actionType)
+const actionTagText = computed<string>(() =>
+  actionType.value ? ACTION_TAG_TEXT[actionType.value] : '',
+)
+
+/** 技能行动标签：仅技能（含小/大技能）显示能量消耗，普攻/被控制/跳过无消耗 */
+const SKILL_TAGS: readonly ActionTypeTag[] = ['skill', 'skill_small', 'skill_ultimate']
+/** 能量消耗：技能行动由 action_execution payload.energyCost 携带；无数据时不显示 */
+const energyCost = computed<number | undefined>(() => {
+  const n = currentNode.value
+  if (!n?.action || !actionType.value) return undefined
+  if (!SKILL_TAGS.includes(actionType.value)) return undefined
+  return n.energyCost
+})
+
+/** 目标结果行：遍历节点事件的每个目标，聚合伤害/治疗/状态结果（目标可多个，结果可不同） */
+interface TargetRow {
+  targetId: string
+  name: string
+  result: string
+}
+
+const targetRows = computed<TargetRow[]>(() => {
+  const n = currentNode.value
+  if (!n?.action) return []
+  type Acc = {
+    damage: number
+    heal: number
+    crit: boolean
+    death: boolean
+    dodgeSegs: number
+    parts: string[]
+  }
+  const acc = new Map<string, Acc>()
+  const order: string[] = []
+  const accOf = (tid: string): Acc => {
+    const key = tid || ''
+    let a = acc.get(key)
+    if (!a) {
+      a = { damage: 0, heal: 0, crit: false, death: false, dodgeSegs: 0, parts: [] }
+      acc.set(key, a)
+      order.push(key)
+    }
+    return a
+  }
+  for (const e of n.events) {
+    const pl = (e.payload ?? {}) as Record<string, unknown>
+    if (e.phase === 'damage_calculation') {
+      const a = accOf(e.targetId ?? '')
+      if (pl.dodge) a.dodgeSegs++
+      else a.damage += typeof pl.result === 'number' ? pl.result : 0
+      if (pl.crit) a.crit = true
+      if (pl.death) a.death = true
+    } else if (e.phase === 'heal_calculation') {
+      const a = accOf(e.targetId ?? '')
+      a.heal += typeof pl.result === 'number' ? pl.result : 0
+    } else if (e.phase === 'buff_lifecycle') {
+      const tid = e.targetId ?? (pl.targetId as string | undefined) ?? ''
+      const a = accOf(tid)
+      // 真实 BuffTraceLogger 用 buffName；demo 存档用 buff。兼容两者，缺省归"状态"
+      const buff =
+        (typeof pl.buffName === 'string' && pl.buffName) ||
+        (typeof pl.buff === 'string' && pl.buff) ||
+        '状态'
+      const act = pl.action
+      if (act === 'apply') a.parts.push(pl.resisted ? `施加 ${buff}（被抵抗）` : `施加 ${buff}`)
+      else if (act === 'remove') a.parts.push(`移除 ${buff}`)
+      else if (act === 'update') a.parts.push(`更新 ${buff}`)
+    }
+  }
+  return order
+    .filter((tid) => {
+      const a = acc.get(tid)!
+      return a.damage > 0 || a.heal > 0 || a.dodgeSegs > 0 || a.parts.length > 0
+    })
+    .map((tid) => {
+      const a = acc.get(tid)!
+      const res: string[] = []
+      if (a.damage === 0 && a.heal === 0 && a.dodgeSegs > 0) res.push('闪避')
+      else {
+        if (a.damage > 0) res.push(`造成 ${a.damage} 伤害${a.crit ? ' · 暴击' : ''}${a.death ? ' · 击杀' : ''}`)
+        if (a.heal > 0) res.push(`治疗 ${a.heal}`)
+      }
+      res.push(...a.parts)
+      return { targetId: tid, name: tid ? store.pname(tid) : '未知', result: res.join('；') }
+    })
 })
 
 const nodeSub = computed(() => {
   const n = currentNode.value
   if (!n) return '—'
-  if (n.action) {
-    // NOTE: v-html 渲染，角色名先转义（存档可来自外部导入）
-    const actor = escapeHtml(n.actor ? store.pname(n.actor) : '')
-    const target = escapeHtml(n.target ? store.pname(n.target) : '')
-    return `行动方 <b>${actor}</b> → 目标 <b>${target}</b> · ${n.events.length} 个事件`
-  }
   return `系统阶段 · ${n.events.length} 个事件`
 })
+
+/** 结算卡片标题剥离"伤害计算 源→目标 "角色段（meta 行已展示角色，避免重复） */
+function stripCalcActor(summary: string): string {
+  return summary.replace(/^(伤害计算|治疗计算) \S+→\S+ /, '$1 ')
+}
+
+/**
+ * 卡片标题：action_execution 行显示节点已解析的操作名（"名字 · 技能名"，真实录制
+ * 由 deriveDebugTree 从同链 damage/heal 推断），替换引擎占位 summary "X 执行行动"；
+ * 结算行（伤害/治疗）剥离 summary 中的"源→目标"角色段（meta 行已展示，见 ht-ev-meta）；
+ * 其余事件仍用自身 summary。原始 summary 保留在 title 悬浮提示中。
+ */
+function cardTitle(item: UnifiedEvent): string {
+  if (item.phase === 'action_execution') {
+    const n = currentNode.value
+    if (n?.action && n.name) return n.name
+  }
+  if (item.phase === 'damage_calculation' || item.phase === 'heal_calculation') {
+    return stripCalcActor(item.summary)
+  }
+  return item.summary
+}
 
 const segIndicators = computed<Array<'c' | 'm' | 'h'>>(() => {
   const n = currentNode.value

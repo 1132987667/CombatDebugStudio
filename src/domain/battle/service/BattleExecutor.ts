@@ -198,32 +198,19 @@ export class BattleExecutor {
     let baseScope: TraceScope | undefined
     let actionScope: TraceScope | undefined
     if (this.tracePort) {
-      const base = this.tracePort.beginScope(
+      baseScope = this.tracePort.beginScope(
         `corr_${battle.currentTurn ?? 1}_${++this.scopeSeq}`,
         TracePhase.ACTION_EXECUTION,
         { battleId: battle.battleId, turn: battle.currentTurn ?? 1 },
       )
-      baseScope = base
-      const execId = this.tracePort.isEnabled(TracePhase.ACTION_EXECUTION)
-        ? this.tracePort.emit(
-            createTraceEvent({
-              correlationId: base.correlationId,
-              parentId: base.parentId,
-              phase: TracePhase.ACTION_EXECUTION,
-              battleId: battle.battleId,
-              turn: battle.currentTurn ?? 1,
-              sourceId: participant.id,
-              level: TraceLevel.DEBUG,
-              summary: `${participant.name} 执行行动`,
-              payload: { controlMode: participant.controlMode },
-            }),
-          )
-        : undefined
-      actionScope = base.child(TracePhase.ACTION_EXECUTION, execId)
     }
 
-    // 检查参与者是否被控制
+    // 被控制检查提前：先于 action_execution 发射，使时间线能标注"被控制"
+    // （原实现发射后才检查，被控制/跳过节点无子事件、仅事件流无法区分）
     if (this.isParticipantControlled(participant)) {
+      actionScope = this.emitActionExecution(battle, participant, baseScope, {
+        actionType: 'status',
+      })
       const action = BattleActionHelper.createStatus({
         sourceId: participant.id,
         targetId: participant.id,
@@ -250,54 +237,79 @@ export class BattleExecutor {
       return
     }
 
+    // AI 决策前置：SKIP / 技能 / 普攻在 action_execution 发射前确定，
+    // 使行动节点能携带 actionType（AI_DECISION 先于行动发射，与 demo 存档顺序一致）
+    let decision: BattleAction | null = null
+    if (participant.controlMode === 'AI') {
+      const aiInstance = battle.aiInstances?.get(participant.id)
+      if (aiInstance) {
+        decision = aiInstance.makeDecision(
+          convertToBattleState(battle),
+          participant,
+          baseScope,
+        )
+        //  木人/训练靶子：noAttack 跳过行动（AI 返回 skip 决策）
+        if (decision.type === ActionTypes.SKIP) {
+          actionScope = this.emitActionExecution(battle, participant, baseScope, {
+            actionType: 'skip',
+          })
+          const idleSegs = [
+            this.buildEntitySegment(participant),
+            { text: ' 未行动' },
+          ]
+          LoggerProvider.logger.addBattleLog({
+            turn: battle.currentTurn || 1,
+            message: idleSegs.map((s) => s.text).join(''),
+            segments: idleSegs,
+            category: BATTLE_LOG_CATEGORIES.STATUS,
+          })
+          return
+        }
+      }
+    }
+
+    // 发射 action_execution：AI 决策已知时标注 attack/skill（含 skillType）；
+    // AUTO/MANUAL 发射时尚未选择技能，actionType 留空由投影从同链子事件推断
+    const aiSkill =
+      decision?.type === 'skill' && decision.skillId
+        ? this.skillManager.getSkillConfig(decision.skillId)
+        : null
+    const execPayload = aiSkill
+      ? {
+          actionType: this.isNormalAttackSkill(aiSkill) ? 'attack' : 'skill',
+          ...(aiSkill.skillType ? { skillType: aiSkill.skillType } : {}),
+          // 能量消耗：AI 决策时技能已选定，energyCost 随 action_execution 携带（行动卡片头部展示）
+          ...(aiSkill.energyCost ? { energyCost: aiSkill.energyCost } : {}),
+        }
+      : decision
+        ? { actionType: decision.type === 'skill' ? 'skill' : 'attack' }
+        : undefined
+    actionScope = this.emitActionExecution(battle, participant, baseScope, execPayload)
+
     switch (participant.controlMode) {
       case 'AI': {
-        const aiInstance = battle.aiInstances?.get(participant.id)
-        if (aiInstance) {
-          const decision = aiInstance.makeDecision(
-            convertToBattleState(battle),
-            participant,
-            baseScope,
-          )
-          //  木人/训练靶子：noAttack 跳过行动（AI 返回 skip 决策）
-          if (decision.type === ActionTypes.SKIP) {
-            const idleSegs = [
-              this.buildEntitySegment(participant),
-              { text: ' 未行动' },
-            ]
-            LoggerProvider.logger.addBattleLog({
-              turn: battle.currentTurn || 1,
-              message: idleSegs.map((s) => s.text).join(''),
-              segments: idleSegs,
-              category: BATTLE_LOG_CATEGORIES.STATUS,
-            })
-            return
-          }
-          const suggestedTargetId = decision.targetId
-          if (decision.type === 'skill' && decision.skillId) {
-            const skill = this.skillManager.getSkillConfig(decision.skillId)
-            if (skill) {
-              //  拦截普通攻击，强制走普攻路径，避免日志格式不一致
-              if (this.isNormalAttackSkill(skill)) {
-                await this.selectAndExecuteAttack(
-                  battle,
-                  participant,
-                  suggestedTargetId,
-                  actionScope,
-                )
-              } else {
-                await this.selectAndExecuteSkill(
-                  battle,
-                  participant,
-                  skill,
-                  suggestedTargetId,
-                  actionScope,
-                )
-              }
-            } else {
+        if (!decision) {
+          // ponytail: 有 AI 标志但无实例，降级为 AUTO
+          await this.autoDecision(battle, participant, actionScope)
+          break
+        }
+        const suggestedTargetId = decision.targetId
+        if (decision.type === 'skill' && decision.skillId) {
+          const skill = this.skillManager.getSkillConfig(decision.skillId)
+          if (skill) {
+            //  拦截普通攻击，强制走普攻路径，避免日志格式不一致
+            if (this.isNormalAttackSkill(skill)) {
               await this.selectAndExecuteAttack(
                 battle,
                 participant,
+                suggestedTargetId,
+                actionScope,
+              )
+            } else {
+              await this.selectAndExecuteSkill(
+                battle,
+                participant,
+                skill,
                 suggestedTargetId,
                 actionScope,
               )
@@ -311,8 +323,12 @@ export class BattleExecutor {
             )
           }
         } else {
-          // ponytail: 有 AI 标志但无实例，降级为 AUTO
-        await this.autoDecision(battle, participant, actionScope)
+          await this.selectAndExecuteAttack(
+            battle,
+            participant,
+            suggestedTargetId,
+            actionScope,
+          )
         }
         break
       }
@@ -325,6 +341,35 @@ export class BattleExecutor {
     }
 
     participant.afterAction()
+  }
+
+  /**
+   * 发射 action_execution 根事件并派生 action scope（一次行动一个因果链）
+   * @param extra 附加 payload（行动类型标记等）；AUTO/MANUAL 未决策时为 undefined
+   */
+  private emitActionExecution(
+    battle: BattleData,
+    participant: BattleEntity,
+    baseScope: TraceScope | undefined,
+    extra?: Record<string, unknown>,
+  ): TraceScope | undefined {
+    if (!this.tracePort || !baseScope) return undefined
+    const execId = this.tracePort.isEnabled(TracePhase.ACTION_EXECUTION)
+      ? this.tracePort.emit(
+          createTraceEvent({
+            correlationId: baseScope.correlationId,
+            parentId: baseScope.parentId,
+            phase: TracePhase.ACTION_EXECUTION,
+            battleId: battle.battleId,
+            turn: battle.currentTurn ?? 1,
+            sourceId: participant.id,
+            level: TraceLevel.DEBUG,
+            summary: `${participant.name} 执行行动`,
+            payload: { controlMode: participant.controlMode, ...extra },
+          }),
+        )
+      : undefined
+    return baseScope.child(TracePhase.ACTION_EXECUTION, execId)
   }
 
   /**
@@ -504,6 +549,8 @@ export class BattleExecutor {
           skill.id,
         )
         record.skillName = skill.name
+        // 技能类型（小/大招）供追踪事件标注行动类型（TraceDamageLogger / HealCalculator 带出）
+        record.skillType = skill.skillType
         // 填充 BEFORE_ATTACK 被动触发上下文
         if (prePassiveRecords.length > 0) {
           record.actionContext = { prePassives: prePassiveRecords }
@@ -1202,6 +1249,9 @@ export class BattleExecutor {
       target.name,
       currentTurn ?? 1,
     )
+    // 普攻也带技能名：TraceDamageLogger 靠 record.skillName 发射，
+    // 缺失则回放/调试 UI 无法显示"普通攻击"（此前普攻 damage 事件无 skillName）
+    record.skillName = '普通攻击'
     // 填充 BEFORE_ATTACK 被动触发上下文
     if (prePassiveRecords.length > 0) {
       record.actionContext = { prePassives: prePassiveRecords }

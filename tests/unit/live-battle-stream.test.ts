@@ -129,6 +129,34 @@ describe('LiveBattleStream', () => {
     for (const e of idx.evs) expect(covered.has(e.id)).toBe(true)
   })
 
+  it('真实发射形态 turn_flow（TURN_START/TURN_END 枚举值）归一化为 start/end，时间线有回合分组', () => {
+    // 真实发射端 BattleSystem 用 TurnFlowAction.TURN_START（值 'TURN_START'），
+    // 而 deriveDebugTree/currentTurnAt 按契约 'start'/'end' 建回合——不归一化则
+    // 实时时间线建不出回合分组（所有节点平铺顶层，与演示存档不一致）。
+    const bus = makeBus()
+    const participants = { value: PARTICIPANTS }
+    const stream = new LiveBattleStream({
+      eventBus: bus,
+      collector: null,
+      getParticipants: () => participants.value,
+    })
+    stream.start()
+    bus.emit(TRACE_EVENT_ADDED, mk('t0', 0, 'battle_lifecycle', { payload: { action: 'battle_start' }, summary: '开始' }))
+    bus.emit(TRACE_EVENT_ADDED, mk('t1', 100, 'turn_flow', { turn: 1, payload: { action: 'TURN_START' }, summary: '回合' }))
+    bus.emit(TRACE_EVENT_ADDED, mk('a1', 200, 'action_execution', { sourceId: 'u1', targetId: 'u2', payload: { controlMode: 'ai' }, summary: '行动' }))
+    bus.emit(TRACE_EVENT_ADDED, mk('t2', 300, 'turn_flow', { turn: 1, payload: { action: 'TURN_END' }, summary: '结束' }))
+
+    const arch = stream.currentArchive()
+    const idx = buildArchiveIndices(arch)
+    const entries = deriveDebugTree(idx.evs, idx.byId, (id: string) => id)
+    // 归一化后 action 契约一致，回合分组存在且行动节点归属回合内
+    const rounds = entries.filter((e) => e.kind === 'round')
+    expect(rounds).toHaveLength(1)
+    const r1 = rounds[0]
+    if (r1.kind !== 'round') throw new Error('expected round')
+    expect(r1.nodes.some((n) => n.action)).toBe(true)
+  })
+
   it('真实发射形态（final 而非 result）归一化后战报数值正确', () => {
     // 真实 TraceDamageLogger / HealCalculator 发 final 字段；录制路径由
     // normalizeTraceEvent 归一化，实时流必须同样归一化，否则战报输出/治疗恒为 0。

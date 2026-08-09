@@ -101,9 +101,9 @@ function onClick(e: MouseEvent) {
   }
 
   &.is-active {
-    background: rgba(var(--rgb-active-color), var(--alpha-wash-strong));
-    color: var(--color-selected);
-    border-color: var(--color-selected);
+    /** background: rgba(var(--rgb-active-color), var(--alpha-wash-strong)); */
+    color: rgb(var(--rgb-active-color)); /** --color-selected */
+    border-color: rgb(var(--rgb-active-color));
   }
 }
 

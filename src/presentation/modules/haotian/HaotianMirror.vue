@@ -152,6 +152,7 @@ useHaotianHotkeys({
     const next = dir === 1 ? Math.min(list.length - 1, i + 1) : Math.max(0, i < 0 ? 0 : i - 1)
     return list[next]?.id ?? null
   },
+  stepInChain: (dir) => store.stepInChain(dir),
   selectEvent: (id, opts) => store.focusEvent(id, opts),
   openBreakpoint: () => {
     store.bpOpen = true
@@ -166,11 +167,12 @@ useHaotianHotkeys({
 })
 
 onMounted(async () => {
-  // NOTE: 首载不自动灌演示存档——保持空态让用户主动选数据源（深链定位除外）
-  // applyDeepLink 依赖已加载存档的事件索引（byId），深链需先载入一份存档再定位
+  // NOTE: 首载不自动灌演示存档——保持空态让用户主动选数据源（深链定位除外）。
+  // applyDeepLink 负责：深链携带 s/b 时加载对应来源存档（demo/stress/live/recordings），
+  // 随后按 e 定位事件；无来源段时若只有事件链接则载入演示存档后定位。
   const hasEventLink = /e=/.test(location.hash)
-  if (hasEventLink) await store.loadDemo()
-  store.applyDeepLink()
+  if (hasEventLink && !/s=/.test(location.hash)) await store.loadDemo()
+  await store.applyDeepLink()
 })
 </script>
 

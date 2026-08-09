@@ -18,6 +18,7 @@ import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { RecordedBattle } from '@/domain/battle/service/BattleRecorder'
+import type { UnifiedArchive } from '@/domain/battle/replay/unified/unified-archive'
 import { ParticipantSide, ParticipantSideName, BattleStatus, BattleEventType } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
@@ -48,8 +49,8 @@ export interface BattleGenerationOptions {
   mode?: '1v1' | '2v2' | 'random'
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
-  /** 导出格式，默认 'txt'；'record' = 下载录制 JSON（未压缩） */
-  format?: 'txt' | 'html' | 'record'
+  /** 导出格式，默认 'txt'；'record' = 下载录制 JSON（未压缩）；'json' = 下载统一存档（昊天镜可导入） */
+  format?: 'txt' | 'html' | 'record' | 'json'
   /** 是否保存每场战斗的回放/调试记录到本地（IndexedDB，昊天镜「战斗记录」源可加载） */
   record?: boolean
   /** 是否下载导出文件（仅 format='record' 生效，默认 true；存入昊天镜时置 false 跳过下载） */
@@ -107,6 +108,8 @@ export class BattleDataGenerator {
     const battleLogs: SingleBattleLog[] = []
     //  录制格式时收集本场 RecordedBattle（须在 resetBattle 清除内存录制之前取值）
     const recordings: RecordedBattle[] = []
+    //  json 格式时收集每场统一存档（昊天镜可直接导入）
+    const archives: UnifiedArchive[] = []
     //  是否保存到昊天镜（IndexedDB）：由显式 record 开关控制，'record' 格式不再隐式存库
     //   （"生成记录"只下载、"存入昊天镜"才存库，两者独立）
     const shouldRecord = options.record === true
@@ -177,6 +180,7 @@ export class BattleDataGenerator {
         //  写入最新战报（叙事渲染器 TXT/HTML 导出末尾的"战报摘要"块数据源）
         const rec = this.battleSystem.getBattleRecording(battleId)
         const archive = rec ? fromRecordedBattle(rec) : null
+        if (archive) archives.push(archive)
         const sum = archive ? summarizeBattle(archive) : null
         if (sum) BattleSummaryGenerator.instance.setSummary(sum)
 
@@ -245,10 +249,22 @@ export class BattleDataGenerator {
 
     if (!this._cancelled && battleLogs.length > 0) {
       const format = options.format ?? 'txt'
-      if (format === 'record' && options.download !== false) {
-        const json = this.mergeRecordings(recordings)
-        if (json !== null) {
-          await this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
+      if (format === 'json') {
+        //  统一存档 JSON：单场为单个 UnifiedArchive（昊天镜可直接导入），多场为数组（导入第一场）
+        if (archives.length === 1) {
+          const a = archives[0]
+          this.downloadFile(JSON.stringify(a), `battle-archive-${a.battleId}.json`, 'application/json;charset=utf-8')
+        } else if (archives.length > 1) {
+          this.downloadFile(JSON.stringify(archives), `battle-archives-${archives.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
+        }
+      } else if (format === 'record') {
+        // 存入昊天镜（download=false）时只入库不下载：record 分支独立处理，
+        // 否则会落入下方 else 误下载 txt 文件
+        if (options.download !== false) {
+          const json = this.mergeRecordings(recordings)
+          if (json !== null) {
+            await this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
+          }
         }
       } else if (format === 'html') {
         const mergedHtml = this.mergeLogsHtml(battleLogs)

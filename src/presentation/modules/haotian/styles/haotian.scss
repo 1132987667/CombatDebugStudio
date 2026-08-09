@@ -358,107 +358,11 @@
   text-shadow: 0 0 14px rgba(var(--rgb-brand-red), 0.5);
 }
 
+/* 回放舞台单位卡片：复用唤灵台演武台同款 ParticipantCard（member-card 布局由 _cards.scss 提供），此处仅控尺寸 */
 .ht-unit {
-  position: relative;
-  width: 200px;
-  min-width: 150px;
-  border: 1px solid var(--ht-bd);
-  border-radius: var(--radius-lg);
-  background: var(--color-bg-tertiary);
-  padding: var(--space-2) 10px;
-  transition: transform var(--transition-fast);
-}
-
-.ht-unit.acting {
-  transform: translateY(-3px);
-  border-color: var(--ht-blue);
-  box-shadow: 0 0 14px rgba(var(--rgb-skill-active), 0.5);
-}
-
-.ht-unit.dead {
-  opacity: 0.55;
-  filter: grayscale(0.8);
-}
-
-.ht-u-top {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.ht-u-name {
-  font-weight: var(--font-weight-bold);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ht-u-dead {
-  display: none;
-  margin-left: auto;
-  color: var(--ht-red);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 1px;
-}
-
-.ht-unit.dead .ht-u-dead {
-  display: inline;
-}
-
-.ht-bar {
-  position: relative;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: rgba(var(--rgb-white), 0.1);
-  overflow: hidden;
-  margin: var(--space-1) 0;
-}
-
-.ht-bar i {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: var(--radius-full);
-  transition: width var(--transition-base);
-}
-
-.ht-bar.hp i { background: var(--ht-red); }
-.ht-bar.hp.warn i { background: var(--ht-amber); }
-.ht-bar.hp.low i { background: var(--ht-red); }
-.ht-bar.en i { background: linear-gradient(90deg, var(--ht-blue), var(--ht-cyan)); }
-
-.ht-bar .txt {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: var(--ht-mono);
-  font-size: var(--font-size-md);
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.ht-u-en {
-  font-family: var(--ht-mono);
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-md);
-}
-
-.ht-u-buffs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-top: 6px;
-  min-height: 20px;
-}
-
-.ht-bf {
-  border-radius: var(--radius-md);
-  background: rgba(var(--rgb-success), 0.2);
-  border: 1px solid rgba(var(--rgb-success), 0.3);
-  color: var(--ht-green);
-  font-size: var(--font-size-md);
-  padding: 0 7px;
+  width: 220px;
+  min-width: 200px;
+  flex: 0 0 auto;
 }
 
 .ht-overlay {
@@ -624,18 +528,22 @@
   background: rgba(var(--rgb-warning), 0.1);
 }
 
-/* ───────────── 调试时间线树 ───────────── */
-.ht-tree {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* 同链事件标记：当前选中事件的完整因果链高亮（区别于选中琥珀，用青色竖条） */
+.ht-srow.chain,
+.ht-ev.chain {
+  border-left-color: var(--ht-cyan);
+  background: rgba(var(--rgb-energy), 0.06);
 }
 
-.ht-t-round {
-  border: 1px solid var(--ht-bd);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--space-2);
-  overflow: hidden;
+/* ───────────── 调试时间线树（虚拟列表：行 absolute 定位，间距由 useVirtualList 管理） ───────────── */
+.ht-tree {
+  position: relative;
+}
+
+/* 时间线虚拟行：贴左渲染（共享 .ht-vitem 的 12px 缩进只用于卡片流），行内 padding 承担内容边距 */
+.ht-tree .ht-vitem {
+  left: 0;
+  right: 0;
 }
 
 .ht-t-row {
@@ -644,6 +552,7 @@
   gap: var(--space-2);
   padding: 7px 10px;
   border-radius: var(--radius-md);
+  border-left: 2px solid transparent;
   cursor: pointer;
   font-size: var(--font-size-md);
   transition: background var(--transition-fast);
@@ -655,6 +564,21 @@
 
 .ht-t-row.on {
   background: rgba(var(--rgb-energy), 0.1);
+  border-left-color: var(--ht-amber);
+}
+
+/* 回合头行：加粗 + 字距，与行动/结算节点视觉区分（V4 .t-round>.t-row） */
+.ht-t-round-row {
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 1px;
+  color: var(--color-text-primary);
+}
+
+/* 回合内子节点行：缩进 + 左侧虚线引导线（V4 .t-kids border-left dashed） */
+.ht-t-kid {
+  padding-left: 22px;
+  border-left: 2px solid var(--ht-bd);
+  border-radius: 0;
 }
 
 .ht-t-tgl {
@@ -671,6 +595,7 @@
 .ht-t-ico {
   width: 18px;
   text-align: center;
+  color: var(--color-text-tertiary);
 }
 
 .ht-t-lab {
@@ -688,20 +613,37 @@
   white-space: nowrap;
 }
 
+/* 行动类型标签（时间线行动节点） */
+.ht-t-tag {
+  flex-shrink: 0;
+  height: 18px;
+  line-height: 16px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--ht-bd);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.ht-t-tag.skill_small {
+  color: var(--color-success);
+  border-color: rgba(var(--rgb-success), 0.35);
+}
+.ht-t-tag.skill_ultimate {
+  color: var(--color-warning);
+  border-color: rgba(var(--rgb-warning), 0.4);
+}
+.ht-t-tag.status,
+.ht-t-tag.skip {
+  color: var(--color-danger);
+  border-color: rgba(var(--rgb-danger), 0.35);
+}
+
 .ht-t-dot {
   width: 8px;
   height: 8px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
-}
-
-.ht-t-kids {
-  display: none;
-  padding-left: 22px;
-}
-
-.ht-t-kids.open {
-  display: block;
 }
 
 /* ───────────── 调试卡片流 ───────────── */
@@ -721,6 +663,7 @@
 
 .ht-sh-title {
   font-weight: var(--font-weight-bold);
+  text-align: center;
 }
 
 .ht-sh-sub {
@@ -731,6 +674,57 @@
 
 .ht-sh-sub b {
   color: var(--color-text-secondary);
+}
+
+/* 行动头部元信息：行动类型 + 目标结果行（目标可多个） */
+.ht-sh-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  font-family: var(--ht-mono);
+  font-size: var(--font-size-md);
+}
+
+.ht-sh-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--color-text-tertiary);
+}
+
+.ht-sh-row em {
+  font-style: normal;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.ht-sh-row b {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ht-sh-arrow {
+  color: var(--color-text-tertiary);
+}
+
+.ht-sh-result {
+  color: var(--color-warning);
+}
+
+.ht-sh-tag {
+  color: var(--color-text-secondary);
+}
+.ht-sh-tag.skill_small {
+  color: var(--color-success);
+}
+.ht-sh-tag.skill_ultimate {
+  color: var(--color-warning);
+}
+.ht-sh-tag.status,
+.ht-sh-tag.skip {
+  color: var(--color-danger);
 }
 
 .ht-ev {
@@ -748,8 +742,10 @@
 }
 
 .ht-ev.on {
-  border-color: var(--color-energy);
-  box-shadow: 0 0 0 1px var(--color-energy);
+  /* 选中态改用能量青点阵背景标识，不再用能量色描边/阴影 */
+  background-color: rgba(0,0,0, 0.3);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 2px, transparent 2px);
+  background-size: 10px 10px;
 }
 
 .ht-ev.t-action { border-left-color: var(--ht-blue); }
@@ -874,6 +870,13 @@
 .ht-insp-actions {
   display: flex;
   gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* 关联链信息：summary 作次级行，悬浮可查看事件 ID / 因果链 */
+.ht-insp-corr {
+  color: var(--color-text-tertiary);
+  cursor: help;
 }
 
 .ht-sec {
@@ -985,6 +988,31 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
+  cursor: help;
+}
+
+/* 结算步骤来源释义 tooltip（跟随鼠标，fixed 定位在 Inspector 视口坐标） */
+.ht-step-tip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  max-width: 240px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-overlay-panel);
+  border: 1px solid var(--ht-bd);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+}
+
+.ht-step-tip-title {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.ht-step-tip-detail {
+  margin-top: 2px;
+  color: var(--color-text-tertiary);
+  word-break: break-all;
 }
 
 .ht-fval {
@@ -1655,7 +1683,7 @@
   flex-shrink: 0;
   width: 6px;
   cursor: col-resize;
-  background: transparent;
+  background: var(--ht-bd);
   transition: background var(--transition-fast);
 }
 
@@ -1757,6 +1785,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* 检视器主标题文本（action_execution 为"名字 · 技能名"，其余为 summary） */
+.ht-insp-main {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ht-insp-phase {

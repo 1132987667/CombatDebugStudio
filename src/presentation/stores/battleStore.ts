@@ -37,6 +37,7 @@ import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
+import type { UnifiedArchive } from '@/domain/battle/replay/unified/unified-archive'
 import { summarizeBattle, type BattleSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import type { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
@@ -250,6 +251,9 @@ export const useBattleStore = defineStore('battle', () => {
 
   //  4. 事件处理器（仅负责同步业务数据到响应式状态）
 
+  /** 最近一场战斗的统一存档（战报弹窗「导出 JSON」导出完整存档，供昊天镜导入回放） */
+  const lastArchive = ref<UnifiedArchive | null>(null)
+
   /** 从当前战斗录制生成统一战报（与昊天镜摘要共用 fromRecordedBattle + summarizeBattle 统计源） */
   const buildBattleSummary = (): BattleSummary | null => {
     if (!battleService.value || !currentBattleId.value) return null
@@ -257,6 +261,7 @@ export const useBattleStore = defineStore('battle', () => {
     const rec = bs.getBattleRecording(currentBattleId.value)
     if (!rec) return null
     const archive = fromRecordedBattle(rec)
+    lastArchive.value = archive
     const summary = archive ? summarizeBattle(archive) : null
     if (summary) BattleSummaryGenerator.instance.setSummary(summary)
     return summary
@@ -805,7 +810,7 @@ export const useBattleStore = defineStore('battle', () => {
   /**  执行战斗数据生成 */
   const generateBattleData = async (
     mode: '1v1' | '2v2' | 'random' = 'random',
-    format: 'txt' | 'html' | 'record' = 'txt',
+    format: 'txt' | 'html' | 'record' | 'json' = 'txt',
     count: number = 50,
     record: boolean = false,
     store: boolean = false,
@@ -1034,6 +1039,7 @@ export const useBattleStore = defineStore('battle', () => {
     setShowDebug, // 设置显示调试信息状态
 
     // ========== 战斗流程控制 ==========
+    lastArchive, // 最近一场战斗的统一存档（战报弹窗导出用）
     startBattle, // 开始战斗
     endBattle, // 结束战斗
     resetBattle, // 重置战斗

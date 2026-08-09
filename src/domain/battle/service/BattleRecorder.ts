@@ -12,6 +12,21 @@ const MAX_EVENT_LOG = 1000
 /** 过期记录清理检查间隔（毫秒） */
 const CLEANUP_INTERVAL = 60000
 
+/** 10 个中文词牌名：战斗记录随机命名词库 */
+const CI_PAI_NAMES = [
+  '临江仙', '念奴娇', '满江红', '水调歌头', '沁园春',
+  '蝶恋花', '清平乐', '如梦令', '鹧鸪天', '浣溪沙',
+] as const
+
+/** 默认命名格式（词牌名 + 三位序号），供序号解析与合法性识别 */
+const CI_PAI_RE = new RegExp(`^(?:${CI_PAI_NAMES.join('|')})(\\d{3})$`)
+
+/** 默认记录名：随机词牌名 + 三位序号（序号 = 已存记录名中最大序号 + 1，删除后不复用） */
+function buildDefaultRecordingName(maxSeq: number): string {
+  const ciPai = CI_PAI_NAMES[Math.floor(Math.random() * CI_PAI_NAMES.length)]
+  return `${ciPai}${String(maxSeq + 1).padStart(3, '0')}`
+}
+
 import type { IPersistentStorage } from '@/domain/port/IPersistentStorage'
 import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
 import {
@@ -343,11 +358,16 @@ export class BattleRecorder {
       return null
     }
 
+    // 默认名：随机词牌名 + 序号（序号 = 已存记录名中最大序号 + 1，删除中间记录后不复用）
+    const maxSeq = await this.maxRecordingSeq()
+    const displayName = name || buildDefaultRecordingName(maxSeq)
+    // 写回内存记录，供调用方在保存成功后读取名称（如唤灵台提示"已保存「满江红001」"）
+    recording.name = displayName
     const { checksum, ...dataWithoutChecksum } = recording
     const dataToSave = {
       ...dataWithoutChecksum,
       savedAt: Date.now(),
-      name: name || `战斗记录_${new Date().toLocaleString()}`,
+      name: displayName,
     }
 
     const checksumValue = calculateChecksum(dataToSave)
@@ -358,13 +378,20 @@ export class BattleRecorder {
 
     const saveKey = `battle_recording_${battleId}_${Date.now()}`
     try {
-      await this.storage.set(STORAGE_STORE.RECORDINGS, saveKey, saveData)
+      const ok = await this.storage.set(STORAGE_STORE.RECORDINGS, saveKey, saveData)
+      if (!ok) {
+        LoggerProvider.logger.addDebugLog('保存战斗记录失败: 存储写入未确认', {
+          level: LogLevel.ERROR,
+          context: { saveKey },
+        })
+        return null
+      }
     } catch (e) {
       LoggerProvider.logger.addDebugLog(`保存战斗记录失败: 存储异常`, {
         level: LogLevel.ERROR,
         context: { saveKey, error: e },
       })
-      return saveKey
+      return null
     }
 
     // 在内存记录中保存持久化键名（供删除和清理使用）
@@ -375,6 +402,22 @@ export class BattleRecorder {
     await this.trimPersistedRecordings()
 
     return saveKey
+  }
+
+  /** 已存记录名中的最大词牌序号（默认命名序号用；读取失败回退 0） */
+  private async maxRecordingSeq(): Promise<number> {
+    let max = 0
+    try {
+      const keys = await this.storage.keys(STORAGE_STORE.RECORDINGS)
+      for (const key of keys) {
+        const data = await this.storage.get<{ name?: unknown }>(STORAGE_STORE.RECORDINGS, key)
+        const m = CI_PAI_RE.exec(typeof data?.name === 'string' ? data.name : '')
+        if (m) max = Math.max(max, Number(m[1]))
+      }
+    } catch {
+      /* 读取失败回退 0 */
+    }
+    return max
   }
 
   /**
@@ -408,13 +451,9 @@ export class BattleRecorder {
     try {
       const recording = savedData
 
-      //  旧数据一次性迁移：补充缺失字段
-      recording.combatRecords ??= []
-      for (const record of recording.combatRecords) {
-        if (record.actionOrder === undefined) record.actionOrder = 0
-        if (record.overkill === undefined) record.overkill = 0
-      }
-
+      //  校验必须先于迁移：checksum 由 saveRecording 对原始数据计算，
+      //  先补字段（actionOrder/overkill）再校验会因 JSON 变化必然失败，
+      //  导致所有真实录制被拒（昊天镜数据源列表为空）。
       if (recording.checksum) {
         const { checksum, ...dataWithoutChecksum } = recording
         if (!verifyChecksum(dataWithoutChecksum, checksum)) {
@@ -423,6 +462,13 @@ export class BattleRecorder {
           })
           return null
         }
+      }
+
+      //  旧数据一次性迁移：补充缺失字段（校验通过后仅改内存对象，不影响已存校验和）
+      recording.combatRecords ??= []
+      for (const record of recording.combatRecords) {
+        if (record.actionOrder === undefined) record.actionOrder = 0
+        if (record.overkill === undefined) record.overkill = 0
       }
 
       //  旧持久化数据中的 traceLogs 字段（旧 TraceLogEntry 结构）不迁移：

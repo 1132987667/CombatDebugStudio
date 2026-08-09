@@ -8,58 +8,54 @@
         <span class="s">{{ roundCount }} 个回合</span>
       </span>
     </div>
-    <div class="ht-pane-bd">
-      <div v-if="store.archive" class="ht-tree">
-        <template v-for="entry in store.debugEntries" :key="entry.id">
-          <div v-if="entry.kind === 'round'" class="ht-t-round">
-            <div class="ht-t-row" role="button" tabindex="0" :aria-label="`${entry.name}，${expanded.has(entry.id) ? '已展开' : '已折叠'}，${entry.nodes.length} 个节点`"
-              title="点击折叠/展开本回合" @click="toggleRound(entry.id)"
-              @keydown.enter.prevent="toggleRound(entry.id)" @keydown.space.prevent="toggleRound(entry.id)">
-              <span class="ht-t-tgl" :class="{ open: expanded.has(entry.id) }">▸</span>
-              <span class="ht-t-ico">◈</span>
-              <span class="ht-t-lab">{{ entry.name }}</span>
-              <span class="ht-t-meta">{{ entry.nodes.length }} 节点</span>
-            </div>
-            <div v-if="expanded.has(entry.id)" class="ht-t-kids open">
-              <div v-for="n in entry.nodes" :key="n.id" class="ht-t-row" role="button" tabindex="0"
-                :aria-label="`${n.name}${dotLabelOf(n) ? '，' + dotLabelOf(n) : ''}`"
-                title="点击检视该节点的事件卡片"
-                :class="[{ on: store.debugNodeId === n.id }, dimClass(n)]" :data-nid="n.id"
-                @click="store.selectDebugNode(n.id)"
-                @keydown.enter.prevent="store.selectDebugNode(n.id)" @keydown.space.prevent="store.selectDebugNode(n.id)">
-                <span class="ht-t-ico">{{ n.icon }}</span>
-                <span class="ht-t-lab">{{ n.name }}</span>
-                <span v-if="n.meta" class="ht-t-meta">{{ n.meta }}</span>
-                <span v-if="dotOf(n)" class="ht-t-dot" :title="dotLabelOf(n) ?? undefined"
-                  :style="{ background: dotOf(n)!, boxShadow: `0 0 6px ${dotOf(n)}` }"></span>
-              </div>
-            </div>
+    <div class="ht-pane-bd ht-vscroll" ref="scrollRef" @scroll.passive="onScroll">
+      <div v-if="rows.length" class="ht-tree ht-vlist" :style="{ height: totalHeight + 'px' }">
+        <div v-for="row in visible" :key="row.id" class="ht-vitem" :data-vid="row.id"
+          :ref="(el) => measure(row.id, el as HTMLElement | null)"
+          :style="{ transform: `translateY(${offsetOf(row.id)}px)` }">
+          <!-- 回合头行 -->
+          <div v-if="row.kind === 'round'" class="ht-t-row ht-t-round-row" role="button" tabindex="0"
+            :aria-label="`${row.label}，${row.expanded ? '已展开' : '已折叠'}，${row.meta} 个节点`"
+            title="点击折叠/展开本回合" @click="toggleRound(row.roundId)"
+            @keydown.enter.prevent="toggleRound(row.roundId)" @keydown.space.prevent="toggleRound(row.roundId)">
+            <span class="ht-t-tgl" :class="{ open: row.expanded }">▸</span>
+            <span class="ht-t-ico">{{ row.icon }}</span>
+            <span class="ht-t-lab">{{ row.label }}</span>
+            <span class="ht-t-meta">{{ row.meta }} 节点</span>
           </div>
-          <div v-else class="ht-t-row" role="button" tabindex="0"
-            :aria-label="`${entry.name}${dotLabelOf(entry) ? '，' + dotLabelOf(entry) : ''}`"
-            title="点击检视该节点的事件卡片" :class="[{ on: store.debugNodeId === entry.id }, dimClass(entry)]" :data-nid="entry.id"
-            @click="store.selectDebugNode(entry.id)"
-            @keydown.enter.prevent="store.selectDebugNode(entry.id)" @keydown.space.prevent="store.selectDebugNode(entry.id)">
-            <span class="ht-t-ico">{{ entry.icon }}</span>
-            <span class="ht-t-lab">{{ entry.name }}</span>
-            <span v-if="entry.meta" class="ht-t-meta">{{ entry.meta }}</span>
-            <span v-if="dotOf(entry)" class="ht-t-dot" :title="dotLabelOf(entry) ?? undefined"
-              :style="{ background: dotOf(entry)!, boxShadow: `0 0 6px ${dotOf(entry)}` }"></span>
+          <!-- 行动/结算节点行（回合内 kid 带缩进引导线，顶层 plain 无） -->
+          <div v-else class="ht-t-row" :class="[row.kind === 'kid' ? 'ht-t-kid' : '', { on: row.nodeId === store.debugNodeId }, dimClass(row.node)]"
+            role="button" tabindex="0" :aria-label="`${row.label}${dotLabelOf(row.node) ? '，' + dotLabelOf(row.node) : ''}`"
+            title="点击检视该节点的事件卡片" :data-nid="row.nodeId"
+            @click="store.selectDebugNode(row.nodeId)"
+            @keydown.enter.prevent="store.selectDebugNode(row.nodeId)" @keydown.space.prevent="store.selectDebugNode(row.nodeId)">
+            <span class="ht-t-ico">{{ row.icon }}</span>
+            <span v-if="row.actionType" class="ht-t-tag" :class="row.actionType">{{ tagTextOf(row.actionType) }}</span>
+            <span class="ht-t-lab">{{ row.label }}</span>
+            <span v-if="row.meta" class="ht-t-meta">{{ row.meta }}</span>
+            <span v-if="dotOf(row.node)" class="ht-t-dot" :title="dotLabelOf(row.node) ?? undefined"
+              :style="{ background: dotOf(row.node)!, boxShadow: `0 0 6px ${dotOf(row.node)}` }"></span>
           </div>
-        </template>
+        </div>
       </div>
-      <div v-else class="ht-empty">存档未加载</div>
+      <div v-else class="ht-empty">{{ store.archive ? '存档无时间线节点' : '存档未加载' }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import type { DebugNode } from '@/domain/battle/replay/unified/unified-debug-tree'
+import { ACTION_TAG_TEXT, type ActionTypeTag, type DebugNode, type DebugTreeEntry } from '@/domain/battle/replay/unified/unified-debug-tree'
+import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { useHaotianStore } from '../stores/haotianStore'
 import Button from '@/presentation/components/Button.vue'
+import { useVirtualList } from '../composables/useVirtualList'
 
 const store = useHaotianStore()
+
+function tagTextOf(t: ActionTypeTag): string {
+  return ACTION_TAG_TEXT[t]
+}
 
 const expanded = reactive(new Set<string>())
 
@@ -74,15 +70,109 @@ watch(
   { immediate: true },
 )
 
-const roundCount = computed(() => store.debugEntries.filter((e) => e.kind === 'round').length)
-
 function toggleRound(id: string): void {
   if (expanded.has(id)) expanded.delete(id)
   else expanded.add(id)
 }
 
+// ───────────── 树 → 可见行拍平（round 头 + 展开节点 + 顶层节点）─────────────
+
+interface TreeRow {
+  id: string
+  kind: 'round' | 'kid' | 'plain'
+  /** round 行的回合 id（toggle 用） */
+  roundId: string
+  /** 节点行目标 node id（select 用） */
+  nodeId: string
+  label: string
+  icon: string
+  meta?: string
+  /** 行动类型标签（仅行动节点；round/结算节点为空） */
+  actionType?: ActionTypeTag
+  expanded: boolean
+  /** 节点行对应 DebugNode（dot/dim 计算），round 行为 null */
+  node: DebugNode | null
+}
+
+const rows = computed<TreeRow[]>(() => {
+  const out: TreeRow[] = []
+  const pushEntry = (e: DebugTreeEntry, kind: 'round' | 'kid' | 'plain'): void => {
+    if (e.kind === 'round') return
+    out.push({
+      id: `${kind}:${e.id}`,
+      kind,
+      roundId: '',
+      nodeId: e.id,
+      label: e.name,
+      icon: e.icon,
+      meta: e.meta,
+      actionType: e.actionType,
+      expanded: false,
+      node: e,
+    })
+  }
+  for (const entry of store.debugEntries) {
+    if (entry.kind === 'round') {
+      out.push({
+        id: `round:${entry.id}`,
+        kind: 'round',
+        roundId: entry.id,
+        nodeId: entry.id,
+        label: entry.name,
+        icon: PHASE_META.turn_flow.icon,
+        meta: String(entry.nodes.length),
+        expanded: expanded.has(entry.id),
+        node: null,
+      })
+      if (expanded.has(entry.id)) {
+        for (const n of entry.nodes) pushEntry(n, 'kid')
+      }
+    } else {
+      pushEntry(entry, 'plain')
+    }
+  }
+  return out
+})
+
+const roundCount = computed(() => rows.value.filter((r) => r.kind === 'round').length)
+
+// ───────────── 虚拟列表（复用 useVirtualList）─────────────
+
+const { scrollRef, onScroll, updateView, remeasure, resetScroll, measure, offsetOf, totalHeight, visible } =
+  useVirtualList<TreeRow>({
+    items: () => rows.value,
+    estimate: 34,
+    gap: 2,
+    padding: 2,
+    rowQuery: '.ht-vitem',
+    attr: 'data-vid',
+  })
+
+// 切换存档 / 展开折叠导致行集变化时修正视口
+watch(
+  () => [store.debugEntries, rows.value.length] as const,
+  () => {
+    nextTickSync()
+  },
+)
+function nextTickSync(): void {
+  void Promise.resolve().then(() => {
+    updateView()
+    remeasure()
+  })
+}
+
+// 容器从隐藏变为可见（昊天镜 tab 激活 / 切到调试模式）时重测视口
+watch(
+  () => store.mode,
+  () => nextTickSync(),
+)
+
+// ───────────── 节点标记（阵亡 > 暴击 > 闪避）─────────────
+
 /** 节点标记文本（阵亡 > 暴击 > 闪避），供无障碍与悬浮说明 */
-function dotLabelOf(n: DebugNode): string | null {
+function dotLabelOf(n: DebugNode | null): string | null {
+  if (!n) return null
   const hasDeath = n.events.some(
     (e) =>
       (e.payload as Record<string, unknown>)?.death ||
@@ -95,7 +185,8 @@ function dotLabelOf(n: DebugNode): string | null {
 }
 
 /** 节点标记：阵亡 > 暴击 > 闪避 */
-function dotOf(n: DebugNode): string | null {
+function dotOf(n: DebugNode | null): string | null {
+  if (!n) return null
   const hasDeath = n.events.some(
     (e) =>
       (e.payload as Record<string, unknown>)?.death ||
@@ -108,8 +199,8 @@ function dotOf(n: DebugNode): string | null {
 }
 
 /** 聚焦模式下淡化与选中事件因果链无关的节点 */
-function dimClass(n: DebugNode): Record<string, boolean> {
-  if (!store.focusMode || !store.selectedEvent) return {}
+function dimClass(n: DebugNode | null): Record<string, boolean> {
+  if (!n || !store.focusMode || !store.selectedEvent) return {}
   const related = n.events.some((e) => store.isRelated(e.id))
   return { dim: !related }
 }

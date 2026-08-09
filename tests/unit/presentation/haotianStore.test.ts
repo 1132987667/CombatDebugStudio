@@ -169,3 +169,107 @@ describe('winnerLabel（胜方翻译 — 与实时战报弹窗口径一致，修
     expect(md).toContain('306')
   })
 })
+
+describe('链内导航（chainEvents / stepInChain — 同 correlationId 事件穿梭）', () => {
+  it('chainEvents 返回同链全部事件（含根与子事件，按时间排序）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.selectEvent('ev05') // corr_1_1（火护法普通攻击：行动→3 段伤害→buff）
+    const chain = s.chainEvents
+    expect(chain.map((c) => c.id)).toEqual(['ev04', 'ev05', 'ev06', 'ev07', 'ev08'])
+    // 全部同 correlationId
+    expect(chain.every((c) => c.correlationId === 'corr_1_1')).toBe(true)
+  })
+
+  it('stepInChain 在同链事件间循环移动', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.selectEvent('ev05')
+    s.stepInChain(1) // 后一条
+    expect(s.selectedId).toBe('ev06')
+    s.stepInChain(1)
+    expect(s.selectedId).toBe('ev07')
+    s.stepInChain(-1) // 前一条
+    expect(s.selectedId).toBe('ev06')
+    // 链尾循环到链首
+    s.selectEvent('ev08')
+    s.stepInChain(1)
+    expect(s.selectedId).toBe('ev04')
+  })
+
+  it('单事件链 stepInChain 不抛错且不改变选中', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.selectEvent('ev00') // corr_root 仅 1 个事件
+    s.stepInChain(1)
+    expect(s.selectedId).toBe('ev00')
+    // 不存在的事件 selectEvent 无效，选中保持
+    s.selectEvent('ghost')
+    expect(s.selectedId).toBe('ev00')
+    expect(s.chainEvents.map((c) => c.id)).toEqual(['ev00'])
+  })
+})
+
+describe('深链增强（#m=&s=&b=&e=：携带来源/战斗，打开时按来源加载存档）', () => {
+  it('syncHash 携带来源与 battleId（s/b/e 三段）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    const hash = s.syncHash()
+    expect(hash).toContain('#m=debug')
+    expect(hash).toContain('&s=demo')
+    expect(hash).toContain('&b=BT-9527')
+  })
+
+  it('applyDeepLink：深链指定 s=demo 且未加载时自动载入演示存档', async () => {
+    const s = useHaotianStore()
+    location.hash = '#m=debug&s=demo&b=BT-9527&e=ev05'
+    const ok = await s.applyDeepLink()
+    expect(ok).toBe(true)
+    expect(s.archive?.battleId).toBe('BT-9527')
+    expect(s.selectedId).toBe('ev05')
+    expect(s.sourceKey).toBe('demo')
+    location.hash = ''
+  })
+
+  it('applyDeepLink：深链指定 s=demo 但当前已加载同一来源时不再重复加载', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    location.hash = '#m=debug&s=demo&b=BT-9527&e=ev07'
+    const ok = await s.applyDeepLink()
+    expect(ok).toBe(true)
+    expect(s.selectedId).toBe('ev07')
+    location.hash = ''
+  })
+
+  it('applyDeepLink：无深链时快速返回 false 且不加载存档', async () => {
+    const s = useHaotianStore()
+    location.hash = ''
+    const ok = await s.applyDeepLink()
+    expect(ok).toBe(false)
+    expect(s.archive).toBeNull()
+  })
+})
+
+describe('数据源显示（底部状态栏 source 与顶部下拉回显）', () => {
+  it('loadRecording 后底部数据源显示所选录制的名称（而非笼统的"战斗记录"）', async () => {
+    const s = useHaotianStore()
+    const rec = {
+      battleId: 'bt-r1',
+      replayId: 'rp-1',
+      version: '2.0.0',
+      randomSeed: '7',
+      startTime: 0,
+      initialState: { participants: [] },
+      events: [],
+      traceEvents: [],
+    }
+    const bs = { loadBattleRecording: async () => rec } as unknown as Parameters<typeof s.loadRecording>[0]
+    s.recordings.push({ saveKey: 'rec_001', battleId: 'bt-r1', name: '词牌·斩妖', startTime: 0, eventCount: 0 })
+
+    await s.loadRecording(bs, 'rec_001')
+
+    expect(s.source).toBe('词牌·斩妖')
+    expect(s.sourceKey).toBe('recordings')
+    expect(s.curRecordKey).toBe('rec_001')
+  })
+})

@@ -121,7 +121,7 @@ export const PHASE_META: Record<
 > = {
   battle_lifecycle: { label: '生命周期', icon: '◉', cls: 'c-amber', tick: 'tc-amber' },
   turn_flow: { label: '回合流转', icon: '◇', cls: 'c-slate', tick: 'tc-slate' },
-  action_execution: { label: '行动', icon: '战', cls: 'c-blue', tick: 'tc-blue' },
+  action_execution: { label: '行动', icon: '行', cls: 'c-blue', tick: 'tc-blue' },
   damage_calculation: { label: '伤害', icon: '✦', cls: 'c-red', tick: 'tc-red' },
   heal_calculation: { label: '治疗', icon: '✚', cls: 'c-green', tick: 'tc-green' },
   buff_lifecycle: { label: 'Buff', icon: '❖', cls: 'c-orange', tick: 'tc-orange' },

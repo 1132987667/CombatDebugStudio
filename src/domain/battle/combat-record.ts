@@ -11,7 +11,7 @@ import type { BattleEffect } from '@/domain/battle/type/types'
 import type { CalculationStep } from '@/domain/attribute/types'
 import type { ActionTypes } from '@/domain/battle/type/types'
 import { DamageSource } from '@/domain/battle/type/types'
-import { DamageCategory } from '@/domain/skill/types'
+import { DamageCategory, type SkillType } from '@/domain/skill/types'
 
 /**
  * 计算详情 - 调试模式开启时填充
@@ -139,6 +139,8 @@ export interface CombatRecord {
   actionType: ActionTypes
   skillId?: string
   skillName?: string
+  /** 技能类型（小技能/大招），selectAndExecuteSkill 写入，供追踪事件标注行动类型 */
+  skillType?: SkillType
   targetId: string
   targetName?: string
 

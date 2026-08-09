@@ -9,7 +9,7 @@
  *       - battle_end 自动收尾
  */
 
-import type { TraceEvent } from '@/shared/types/trace-event'
+import { TracePhase, type TraceEvent } from '@/shared/types/trace-event'
 import { TRACE_EVENT_ADDED } from '@/domain/battle/logs/TraceEventCollector'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import type { UnifiedArchive, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
@@ -84,6 +84,12 @@ export class LiveBattleStream {
     // 浅拷贝后再归一化，避免改动 TraceEvent 原引用。
     const payload: Record<string, unknown> = { ...(te.payload ?? {}) }
     if (typeof payload.final === 'number' && payload.result == null) payload.result = payload.final
+    // turn_flow action 归一化：真实发射端 TURN_START/TURN_END → 统一契约 start/end
+    //（与录制路径 normalizeTraceEvent 同口径，否则实时时间线无回合分组）
+    if (te.phase === TracePhase.TURN_FLOW) {
+      if (payload.action === 'TURN_START') payload.action = 'start'
+      else if (payload.action === 'TURN_END') payload.action = 'end'
+    }
     const ev: UnifiedEvent = {
       id: te.id,
       phase: te.phase,

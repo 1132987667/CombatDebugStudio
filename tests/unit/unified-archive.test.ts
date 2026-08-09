@@ -29,6 +29,8 @@ import {
   accumulateSteps,
   describeSrc,
   normalizeOp,
+  roundStepVal,
+  stepNameCN,
 } from '@/domain/battle/replay/unified/unified-steps'
 
 const pname = (id: string): string => {
@@ -128,6 +130,108 @@ describe('deriveDebugTree', () => {
     const node = nodeOfEvent(entries, 'ev05')
     expect(node).not.toBeNull()
     expect(node!.id).toBe('n_ev04')
+  })
+
+  it('行动节点：name = 名字 · 技能名（无"战"图标），controlMode 正确映射', () => {
+    const log = createDemoArchive()
+    const idx = buildArchiveIndices(log)
+    const entries = deriveDebugTree(idx.evs, idx.byId, pname)
+    const flat = allNodesFlat(entries)
+    const actions = flat.filter((n) => n.action)
+    // demo：火护法 普通攻击(player)、金护法 普通攻击(ai)
+    const u1 = actions.find((n) => n.actor === 'u1')!
+    const u2 = actions.find((n) => n.actor === 'u2')!
+    expect(u1.name).toBe('火护法 · 普通攻击')
+    expect(u1.icon).toBe('')
+    expect(u1.meta).toBe('') // 'player' 不是合法 ControlMode，不显示
+    expect(u2.name).toBe('金护法 · 普通攻击')
+    expect(u2.meta).toBe('AI') // 'ai' 归一为 AI
+  })
+
+  it('行动节点：action_execution 无 skill 时，从同链 damage/heal 事件推断技能名（真实录制契约）', () => {
+    const log = createDemoArchive()
+    const idx = buildArchiveIndices(log)
+    // 构造：克隆 demo 后，把某 action_execution 的 payload.skill 抹掉（模拟真实录制），
+    // 保留同链 damage 的 skillName → 节点仍应显示"名字 · 技能名"
+    const log2 = JSON.parse(JSON.stringify(log)) as typeof log
+    const ev = log2.events.find((e) => e.id === 'ev04')!
+    ;(ev.payload as Record<string, unknown>).skill = undefined
+    const evs2 = buildArchiveIndices(log2).evs
+    const byId2 = new Map(evs2.map((e) => [e.id, e]))
+    const entries = deriveDebugTree(evs2, byId2, pname)
+    const flat = allNodesFlat(entries)
+    const u1 = flat.find((n) => n.action && n.actor === 'u1')!
+    // demo 同链 ev05(seg1,skillName 缺失)… 实际 demo damage 事件无 skillName 字段 → 回退仅名字
+    // 该路径的真实来源是 TraceDamageLogger 的 skillName；此处验证无 skillName 时优雅回退
+    expect(u1.name).toBe('火护法')
+    // 显式构造带 skillName 的同链事件，验证推断生效
+    const ev05 = log2.events.find((e) => e.id === 'ev05')!
+    ;(ev05.payload as Record<string, unknown>).skillName = '普通攻击'
+    const evs3 = buildArchiveIndices(log2).evs
+    const byId3 = new Map(evs3.map((e) => [e.id, e]))
+    const entries3 = deriveDebugTree(evs3, byId3, pname)
+    const u1b = allNodesFlat(entries3).find((n) => n.action && n.actor === 'u1')!
+    expect(u1b.name).toBe('火护法 · 普通攻击')
+  })
+
+  it('行动节点 actionType：demo 普攻推断为 attack，无子事件节点无标签', () => {
+    const log = createDemoArchive()
+    const idx = buildArchiveIndices(log)
+    const entries = deriveDebugTree(idx.evs, idx.byId, pname)
+    const actions = allNodesFlat(entries).filter((n) => n.action)
+    // demo 两个行动都是普通攻击（payload.skill='普通攻击'），旧存档推断 → attack
+    expect(actions.every((n) => n.actionType === 'attack')).toBe(true)
+    // 回合开始·结算等非行动节点不标行动类型
+    const phase = allNodesFlat(entries).find((n) => n.phase)!
+    expect(phase.actionType).toBeUndefined()
+  })
+
+  it('行动节点 actionType：action_execution payload.actionType 优先（被控制/跳过/技能类型）', () => {
+    const log = createDemoArchive()
+    const mk = (
+      id: string,
+      payload: Record<string, unknown>,
+      phase: string,
+      parentId?: string,
+    ): (typeof log.events)[number] => ({
+      id,
+      phase: phase as never,
+      correlationId: 'corr_x',
+      parentId,
+      timestamp: 1,
+      level: 'info',
+      sourceId: 'u1',
+      payload,
+      summary: 'x',
+    })
+    // 被控制 / 跳过：无子事件，仅事件流无法区分，必须由引擎 actionType 标记
+    const statusEv = mk('s1', { controlMode: 'ai', actionType: 'status' }, 'action_execution')
+    const skipEv = mk('s2', { controlMode: 'ai', actionType: 'skip' }, 'action_execution')
+    // 大招：action_execution 标记 skill + skillType
+    const skillEv = mk('s3', { controlMode: 'ai', actionType: 'skill', skillType: 'ultimate' }, 'action_execution')
+    const dmg = mk('d1', { skillName: '雷霆一击', skillType: 'ultimate' }, 'damage_calculation', 's3')
+    const byId = new Map([statusEv, skipEv, skillEv, dmg].map((e) => [e.id, e]))
+    const entries = deriveDebugTree([statusEv, skipEv, skillEv, dmg], byId, (id: string) => id)
+    const flat = allNodesFlat(entries)
+    expect(flat.find((n) => n.id === 'n_s1')!.actionType).toBe('status')
+    expect(flat.find((n) => n.id === 'n_s2')!.actionType).toBe('skip')
+    // 大招：action_execution 标记优先（即使子事件也带 skillType）
+    expect(flat.find((n) => n.id === 'n_s3')!.actionType).toBe('skill_ultimate')
+  })
+
+  it('行动节点 actionType：旧存档子事件 skillType 推断（小技能）', () => {
+    const log = createDemoArchive()
+    const log2 = JSON.parse(JSON.stringify(log)) as typeof log
+    // 把 ev10（金护法普攻）改成无 payload.actionType 的旧存档，同链 damage 带 skillType: small
+    const exec = log2.events.find((e) => e.id === 'ev10')!
+    delete (exec.payload as Record<string, unknown>).skill
+    const dmg = log2.events.find((e) => e.id === 'ev11')!
+    ;(dmg.payload as Record<string, unknown>).skillType = 'small'
+    ;(dmg.payload as Record<string, unknown>).skillName = '流火诀'
+    const idx = buildArchiveIndices(log2)
+    const entries = deriveDebugTree(idx.evs, idx.byId, pname)
+    const u2 = allNodesFlat(entries).find((n) => n.action && n.actor === 'u2')!
+    expect(u2.actionType).toBe('skill_small')
   })
 })
 
@@ -276,6 +380,13 @@ describe('unified-steps（结算步骤展示辅助）', () => {
     expect(normalizeOp('+')).toBe('+')
   })
 
+  it('roundStepVal：消除浮点尾差（extraValues 累加产生的 50.830000000000005）', () => {
+    expect(roundStepVal(50.830000000000005)).toBe(50.83)
+    expect(roundStepVal(0.30000000000000004)).toBe(0.3)
+    expect(roundStepVal(50)).toBe(50)
+    expect(roundStepVal(1.5)).toBe(1.5)
+  })
+
   it('src 释义：精确命中 + 前缀归类 + 未命中', () => {
     expect(describeSrc('skill_cfg.base')).toBe('技能基础值')
     expect(describeSrc('unit.atk')).toBe('攻击者攻击力')
@@ -284,6 +395,16 @@ describe('unified-steps（结算步骤展示辅助）', () => {
     expect(describeSrc('unit.spd')).toBe('攻击者属性 · spd')
     expect(describeSrc('passive.combo_heart')).toBe('连击之心被动')
     expect(describeSrc('foo.bar')).toBeNull()
+  })
+
+  it('stepNameCN：引擎英文标识映射中文，未命中原样返回', () => {
+    expect(stepNameCN('base')).toBe('基础值')
+    expect(stepNameCN('defense')).toBe('防御')
+    expect(stepNameCN('crit')).toBe('暴击')
+    expect(stepNameCN('fireSkillDmgBonus')).toBe('火系增伤')
+    // demo 已中文 / 未知来源不误改
+    expect(stepNameCN('技能基础值')).toBe('技能基础值')
+    expect(stepNameCN('whatever')).toBe('whatever')
   })
 
   it('demo 全部 steps 链：累计终值与 result 偏差 ≤1（链式假设自检）', () => {

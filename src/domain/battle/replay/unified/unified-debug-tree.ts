@@ -12,6 +12,25 @@
 import type { UnifiedEvent } from './unified-archive'
 import { PHASE_META } from './unified-archive'
 
+/** 时间线行动类型标签（UI 展示的行动类型语义：普攻 / 小技能 / 大技能 / 被控制 / 跳过） */
+export type ActionTypeTag =
+  | 'attack'
+  | 'skill_small'
+  | 'skill_ultimate'
+  | 'skill'
+  | 'status'
+  | 'skip'
+
+/** 行动类型 → 标签文案（时间线 / 行动卡片头部共用，避免文案漂移） */
+export const ACTION_TAG_TEXT: Record<ActionTypeTag, string> = {
+  attack: '普通攻击',
+  skill_small: '小技能',
+  skill_ultimate: '大技能',
+  skill: '技能',
+  status: '被控制',
+  skip: '跳过',
+}
+
 export interface DebugNode {
   kind: 'node'
   id: string
@@ -25,6 +44,10 @@ export interface DebugNode {
   actor?: string
   target?: string
   hits?: number
+  /** 行动类型标签：新引擎由 action_execution payload.actionType 标记；旧存档从同链子事件推断 */
+  actionType?: ActionTypeTag
+  /** 技能能量消耗：action_execution payload.energyCost（技能行动发射端携带） */
+  energyCost?: number
   events: UnifiedEvent[]
 }
 
@@ -104,16 +127,28 @@ export function deriveDebugTree(
       let an = actionNodes.get(root.id)
       if (!an) {
         const pl = payloadOf(root)
+        const skillName = typeof pl.skill === 'string' && pl.skill ? pl.skill : ''
         an = {
           kind: 'node',
           id: `n_${root.id}`,
-          name: pname(root.sourceId ?? ''),
+          // 行动节点标签：名字 · 技能名。技能名取 payload.skill（demo）；
+          // 真实录制 action_execution 不携带 skill，同链 damage/heal 事件的 skillName 是其可靠来源（见下方 skillOf 解析）。
+          name: skillName ? `${pname(root.sourceId ?? '')} · ${skillName}` : pname(root.sourceId ?? ''),
           action: true,
-          icon: root.sourceId && root.sourceId.length > 0 ? '战' : '亡',
-          meta: `${String(pl.skill ?? '')} · ${pl.controlMode === 'ai' ? 'AI' : '玩家'}`,
+          // 时间线行动节点不设图标（V4 参考的 ⚔/☠ 因 AGENTS 禁 emoji 已弃，直接用名字+技能名表达）
+          icon: '',
+          // 控制模式：真实引擎为大写枚举（AI/AUTO/MANUAL）；demo 曾用小写 'ai'。仅映射已知值，未知不显示
+          meta: pl.controlMode === 'ai' || pl.controlMode === 'AI'
+            ? 'AI'
+            : pl.controlMode === 'AUTO'
+              ? '自动'
+              : pl.controlMode === 'MANUAL'
+                ? '手动'
+                : '',
           actor: root.sourceId,
           target: root.targetId,
           hits: typeof pl.hits === 'number' ? pl.hits : 1,
+          energyCost: energyCostOfPayload(pl),
           events: [],
         }
         actionNodes.set(root.id, an)
@@ -121,6 +156,22 @@ export function deriveDebugTree(
         else entries.push(an) // 回合前/无回合的行动（实时流先行动后回合）不丢弃，挂顶层
       }
       an.events.push(ev)
+      // 行动节点事件归集完成后补全缺失信息：
+      // ① 技能名：action_execution 无 skill 时，从同链 damage/heal 事件解析（普攻/技能路径均可）
+      if (!skillNameOf(an)) {
+        const s = resolveActionSkill(an.events)
+        if (s) an.name = `${pname(an.actor ?? '')} · ${s}`
+      }
+      // ② 目标：真实录制 action_execution 不带 targetId，从同链 damage/heal 的 targetId 补
+      if (!an.target) {
+        const t = resolveActionTarget(an.events)
+        if (t) an.target = t
+      }
+      // ③ 行动类型：新引擎标记（status/skip 无子事件，仅事件流无法区分）；旧存档回退推断
+      if (!an.actionType) {
+        const t = resolveActionType(an)
+        if (t) an.actionType = t
+      }
     } else if (root.phase === 'turn_flow') {
       const pn = phaseNodes.get(root.id)
       if (pn) pn.events.push(ev)
@@ -146,6 +197,85 @@ export function allNodesFlat(entries: DebugTreeEntry[]): DebugNode[] {
 /** 定位事件所属节点（未命中返回 null） */
 export function nodeOfEvent(entries: DebugTreeEntry[], eventId: string): DebugNode | null {
   return allNodesFlat(entries).find((n) => n.events.some((e) => e.id === eventId)) ?? null
+}
+
+/** 行动能量消耗：action_execution payload.energyCost（技能行动发射端携带，普攻/0 视为无消耗） */
+function energyCostOfPayload(pl: Record<string, unknown>): number | undefined {
+  const c = pl.energyCost
+  return typeof c === 'number' && c > 0 ? c : undefined
+}
+
+/** 节点当前已解析的技能名（payload.skill 或经 resolveActionSkill 补全） */
+function skillNameOf(n: DebugNode): string {
+  const sep = ' · '
+  const i = n.name.lastIndexOf(sep)
+  return i >= 0 ? n.name.slice(i + sep.length) : ''
+}
+
+/**
+ * 从行动链事件推断技能名：真实录制 action_execution 不带 skill，
+ * 但同链 damage_calculation / heal_calculation 事件的 payload.skillName（TraceDamageLogger 发射）携带。
+ * 取首个命中；无则返回 ''（时间线仅显示名字）。
+ */
+function resolveActionSkill(events: UnifiedEvent[]): string {
+  for (const e of events) {
+    if (e.phase !== 'damage_calculation' && e.phase !== 'heal_calculation') continue
+    const s = (e.payload as Record<string, unknown>)?.skillName
+    if (typeof s === 'string' && s) return s
+  }
+  return ''
+}
+
+/**
+ * 从行动链事件推断目标：真实录制 action_execution 不带 targetId，
+ * 同链 damage/heal 事件的 targetId 是其可靠来源。取首个命中；无则返回 undefined。
+ */
+function resolveActionTarget(events: UnifiedEvent[]): string | undefined {
+  for (const e of events) {
+    if (e.phase !== 'damage_calculation' && e.phase !== 'heal_calculation') continue
+    if (e.targetId) return e.targetId
+  }
+  return undefined
+}
+
+/** 技能类型 → 行动类型标签（small/ultimate 细分小/大技能，其余归通用技能） */
+function skillTag(st: string): ActionTypeTag {
+  if (st === 'small') return 'skill_small'
+  if (st === 'ultimate') return 'skill_ultimate'
+  return 'skill'
+}
+
+/** 从同链 damage/heal 事件取技能类型（新引擎 TraceDamageLogger/HealCalculator 携带） */
+function resolveChildSkillType(events: UnifiedEvent[]): string | undefined {
+  for (const e of events) {
+    if (e.phase !== 'damage_calculation' && e.phase !== 'heal_calculation') continue
+    const st = (e.payload as Record<string, unknown>)?.skillType
+    if (typeof st === 'string' && st) return st
+  }
+  return undefined
+}
+
+/**
+ * 解析行动节点类型标签。优先读 action_execution payload.actionType（新引擎标记，
+ * 含 status/skip 这两个无子事件、仅事件流无法区分的分支）；旧存档回退同链子事件推断
+ * （skillName==='普通攻击' → 普攻；skillType → 小/大技能；其他技能名 → 通用技能）。
+ */
+function resolveActionType(n: DebugNode): ActionTypeTag | undefined {
+  const root = n.events.find((e) => e.phase === 'action_execution')
+  const pl = root ? (root.payload as Record<string, unknown>) : undefined
+  const at = typeof pl?.actionType === 'string' ? pl.actionType : ''
+  if (at === 'status' || at === 'skip' || at === 'attack') return at
+  if (at === 'skill') {
+    const st = typeof pl?.skillType === 'string' ? pl.skillType : ''
+    return skillTag(st)
+  }
+  // 旧存档：从同链子事件推断
+  const skillName = skillNameOf(n)
+  if (skillName === '普通攻击') return 'attack'
+  const st = resolveChildSkillType(n.events)
+  if (st) return skillTag(st)
+  if (skillName) return 'skill'
+  return undefined
 }
 
 /**

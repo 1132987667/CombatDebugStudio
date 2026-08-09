@@ -172,6 +172,8 @@
 import { computed } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
+import { useBattleStore } from '@/presentation/stores/battleStore'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import type { BattleSummary, UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 
 interface Props {
@@ -236,7 +238,7 @@ const mvp = computed<UnitSummary | null>(() => {
 })
 
 const formatDuration = (ms: number): string => {
-  if (ms < 1000) return `${ms}ms`
+  if (ms < 1000) return `${Math.round(ms)}ms`
   return `${(ms / 1000).toFixed(1)}s`
 }
 
@@ -266,18 +268,24 @@ const copySummary = () => {
   })
 }
 
-// 导出 JSON
+// 导出 JSON：优先导出完整统一存档（UnifiedArchive，含事件流），可在昊天镜「导入存档」回放/调试；
+// 无存档时回退导出战报摘要（统计快照，昊天镜不可回放）
 const exportJson = () => {
-  if (!props.summary) return
-  const blob = new Blob([JSON.stringify(props.summary, null, 2)], { type: 'application/json' })
+  const archive = useBattleStore().lastArchive
+  const data = archive ?? props.summary
+  if (!data) return
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `battle-summary-${props.summary.battleId}.json`
+  a.download = archive ? `battle-archive-${archive.battleId}.json` : `battle-summary-${props.summary!.battleId}.json`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+  if (archive) {
+    useNotificationStore().notify('成功', '已导出完整存档，可在昊天镜「导入存档」中回放/调试', 'success')
+  }
 }
 </script>
 

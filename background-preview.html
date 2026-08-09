@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>战斗背景质感参考 — 纯 CSS</title>
+<style>
+/* ============ 布局 ============ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: #0b0b10;
+  color: #c9c9d4;
+  padding: 40px 24px 90px;
+}
+header { max-width: 1320px; margin: 0 auto 34px; }
+h1 { font-size: 26px; color: #fff; letter-spacing: 1px; }
+header p {
+  margin-top: 12px; font-size: 13px; line-height: 2; color: #8f8fa3;
+  max-width: 780px;
+}
+header p b { color: #d8d8e6; font-weight: 600; }
+.grid {
+  max-width: 1320px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 26px;
+}
+.card {
+  background: #15151d; border: 1px solid #262633; border-radius: 14px;
+  overflow: hidden; cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #3a3a4d;
+  box-shadow: 0 14px 40px rgba(0,0,0,.5);
+}
+.card .scene { height: 250px; position: relative; overflow: hidden; }
+.card .meta { padding: 14px 18px 16px; }
+.card h2 { font-size: 15px; color: #fff; font-weight: 600; }
+.card .tech {
+  margin-top: 8px; font-size: 12px; line-height: 1.8; color: #8f8fa3;
+  font-family: Consolas, "Courier New", monospace;
+}
+.card .hint { margin-top: 10px; font-size: 11px; color: #5c5c70; }
+
+/* ============ 质感三件套：噪点 / 暗角 ============ */
+.fx { position: absolute; inset: 0; pointer-events: none; }
+.fx.grain {
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='240'%20height='240'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='240'%20height='240'%20filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: .07; mix-blend-mode: overlay;
+}
+.fx.vignette { background: radial-gradient(120% 95% at 50% 38%, transparent 55%, rgba(0,0,0,.55) 100%); }
+.fx.glow-line { background: linear-gradient(180deg, transparent, rgba(255,255,255,.05), transparent); background-size: 100% 120px; background-repeat: no-repeat; }
+
+/* ============ 1. 夜穹星光 ============ */
+.scene.sky {
+  background-image:
+    radial-gradient(1.5px 1.5px at 25px 35px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 75px 90px, #cdd9ff 50%, transparent 51%),
+    radial-gradient(2px 2px at 120px 55px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 40px 130px, #aab8ff 50%, transparent 51%),
+    radial-gradient(2.5px 2.5px at 150px 120px, #eaf0ff 50%, transparent 51%),
+    radial-gradient(120% 70% at 50% 0%, rgba(130,150,255,.30), transparent 60%),
+    radial-gradient(150% 110% at 50% 115%, rgba(60,80,170,.45), transparent 62%),
+    linear-gradient(180deg, #070b1c 0%, #10162e 48%, #1c2744 100%);
+  background-size: 160px 150px, 200px 180px, 230px 190px, 180px 160px, 260px 210px, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat;
+}
+
+/* ============ 2. 熔岩地脉 ============ */
+.scene.lava {
+  background-image:
+    radial-gradient(60% 45% at 50% 20%, rgba(255,140,50,.5), transparent 60%),
+    radial-gradient(40% 32% at 24% 34%, rgba(255,80,20,.38), transparent 65%),
+    radial-gradient(50% 42% at 78% 46%, rgba(255,180,60,.32), transparent 60%),
+    radial-gradient(120% 85% at 50% 118%, rgba(255,60,10,.65), transparent 62%),
+    linear-gradient(180deg, #180807 0%, #2c0f07 55%, #47190a 100%);
+}
+.lava::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(97deg, transparent 0 46px, rgba(255,120,30,.3) 46px 49px, transparent 49px 120px),
+    repeating-linear-gradient(8deg, transparent 0 80px, rgba(255,180,60,.22) 80px 82px, transparent 82px 150px);
+  filter: blur(2px); mix-blend-mode: screen;
+  animation: lavaPulse 9s ease-in-out infinite alternate;
+}
+@keyframes lavaPulse { from { transform: translateY(-6px); opacity: .8; } to { transform: translateY(6px); opacity: 1; } }
+
+/* ============ 3. 幽蓝深海 ============ */
+.scene.ocean {
+  background-image:
+    radial-gradient(80% 55% at 50% -5%, rgba(90,200,255,.32), transparent 65%),
+    radial-gradient(100% 70% at 50% 108%, rgba(8,28,55,.9), transparent 72%),
+    linear-gradient(180deg, #031322 0%, #05263e 55%, #0a3a55 100%);
+}
+.ocean::after {
+  content: ""; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(175deg, transparent 0 52px, rgba(140,220,255,.10) 52px 56px, transparent 56px 120px);
+  filter: blur(3px);
+  animation: oceanWaves 14s ease-in-out infinite alternate;
+}
+@keyframes oceanWaves { from { transform: translateY(-10px); } to { transform: translateY(12px); } }
+
+/* ============ 4. 机械网格 ============ */
+.scene.cyber {
+  background-image:
+    linear-gradient(rgba(0,255,220,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,220,.06) 1px, transparent 1px),
+    linear-gradient(rgba(255,0,180,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,0,180,.05) 1px, transparent 1px),
+    radial-gradient(70% 60% at 75% 15%, rgba(255,0,180,.22), transparent 60%),
+    radial-gradient(80% 70% at 20% 90%, rgba(0,255,220,.2), transparent 60%),
+    linear-gradient(180deg, #070a0f 0%, #0c111a 60%, #101a24 100%);
+  background-size: 46px 46px, 46px 46px, 230px 230px, 230px 230px, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat;
+}
+.cyber::after {
+  content: ""; position: absolute; left: 0; right: 0; top: -15%; height: 90px;
+  background: linear-gradient(180deg, transparent, rgba(0,255,220,.14), transparent);
+  animation: scanLine 6s linear infinite;
+}
+@keyframes scanLine { from { top: -15%; } to { top: 115%; } }
+
+/* ============ 5. 极光冰原 ============ */
+.scene.aurora {
+  background-image:
+    radial-gradient(120% 90% at 50% 120%, rgba(8,16,38,.95), transparent 70%),
+    linear-gradient(180deg, #03050c 0%, #07101f 60%, #0c1b33 100%);
+}
+.aurora::before {
+  content: ""; position: absolute; inset: -15%;
+  background-image:
+    radial-gradient(40% 28% at 30% 30%, rgba(80,255,170,.4), transparent 70%),
+    radial-gradient(35% 24% at 66% 22%, rgba(130,90,255,.36), transparent 70%),
+    radial-gradient(48% 32% at 50% 16%, rgba(60,255,200,.28), transparent 70%);
+  filter: blur(26px); mix-blend-mode: screen;
+  animation: auroraDrift 18s ease-in-out infinite alternate;
+}
+.aurora::after {
+  content: ""; position: absolute; inset: -10%;
+  background: linear-gradient(105deg, transparent 25%, rgba(80,255,170,.18) 42%, rgba(150,100,255,.16) 55%, rgba(60,220,255,.10) 66%, transparent 80%);
+  filter: blur(30px); mix-blend-mode: screen;
+  animation: auroraBand 22s ease-in-out infinite alternate;
+}
+@keyframes auroraDrift { from { transform: translateX(-5%); } to { transform: translateX(5%); } }
+@keyframes auroraBand { from { transform: translateX(-3%) rotate(0deg); } to { transform: translateX(4%) rotate(1.5deg); } }
+
+/* ============ 6. 羊皮纸 ============ */
+.scene.parchment {
+  background-image:
+    radial-gradient(90% 70% at 30% 20%, rgba(90,60,20,.12), transparent 60%),
+    radial-gradient(80% 60% at 75% 78%, rgba(70,45,15,.15), transparent 65%),
+    radial-gradient(20% 14% at 22% 38%, rgba(120,85,30,.10), transparent 70%),
+    radial-gradient(14% 10% at 68% 26%, rgba(120,85,30,.08), transparent 70%),
+    linear-gradient(180deg, #efe2c4 0%, #e5d3ac 55%, #d6be90 100%);
+}
+.scene.parchment { box-shadow: inset 0 0 60px rgba(90,60,20,.35); }
+
+/* ============ 7. 像素复古 ============ */
+.scene.pixel {
+  background-color: #140b26;
+  background-image:
+    radial-gradient(2px 2px at 30px 40px, rgba(255,255,255,.28) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 90px 130px, rgba(255,255,255,.18) 50%, transparent 51%),
+    linear-gradient(180deg,
+      #140b26 0%,
+      #2a1747 20%,
+      #3a1f5e 31%,
+      #140b26 31.5%,
+      #3a1f5e 37%,
+      #4a2a72 45%,
+      #2a1747 45.5%,
+      #4a2a72 54%,
+      transparent 54%),
+    linear-gradient(180deg, transparent 54%, #1a1030 54.2%, #2a1a4a 62%, #221438 62.2%, #2a1a4a 70%, transparent 70.2%),
+    linear-gradient(180deg, #0d0718 0%, #1a1030 100%);
+  background-size: 120px 110px, 170px 150px, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat;
+}
+.pixel::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 46%;
+  background-image:
+    linear-gradient(180deg, transparent, rgba(0,0,0,.35)),
+    repeating-linear-gradient(0deg, rgba(120,80,220,.14) 0 3px, transparent 3px 5px);
+}
+
+/* ============ 8. 森林迷雾 ============ */
+.scene.forest {
+  background-image:
+    radial-gradient(70% 45% at 62% 86%, rgba(70,110,60,.4), transparent 70%),
+    radial-gradient(55% 40% at 30% 70%, rgba(30,60,30,.35), transparent 70%),
+    linear-gradient(180deg, #0c180e 0%, #16281a 55%, #1f3524 100%);
+}
+.forest::before {
+  content: ""; position: absolute; inset: -30% -10%;
+  background-image:
+    radial-gradient(45% 60% at 30% 50%, rgba(220,240,230,.22), transparent 70%),
+    radial-gradient(55% 50% at 75% 40%, rgba(210,235,225,.17), transparent 70%);
+  filter: blur(18px); mix-blend-mode: screen;
+  animation: fogDrift 26s ease-in-out infinite alternate;
+}
+.forest::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(94deg, transparent 0 40px, rgba(0,0,0,.22) 40px 46px, transparent 46px 88px),
+    repeating-linear-gradient(87deg, transparent 0 64px, rgba(0,0,0,.14) 64px 70px, transparent 70px 150px);
+  filter: blur(4px);
+}
+@keyframes fogDrift { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
+
+/* ============ 9. 黄昏沙漠 ============ */
+.scene.dunes {
+  background-image:
+    radial-gradient(13% 22% at 50% 58%, #ffd98a 42%, rgba(255,170,90,.55) 55%, transparent 68%),
+    radial-gradient(45% 32% at 50% 38%, rgba(255,160,90,.35), transparent 65%),
+    radial-gradient(60% 55% at 16% 112%, #b9702e 58%, transparent 60%),
+    radial-gradient(72% 60% at 90% 116%, #a55f26 60%, transparent 62%),
+    radial-gradient(55% 48% at 70% 118%, #c87e38 58%, transparent 60%),
+    linear-gradient(180deg, #241a3d 0%, #6b3a4a 32%, #c96f3a 62%, #e0a05a 100%);
+}
+
+/* ============ 10. 魔法符文 ============ */
+.scene.arcane {
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 88px, rgba(120,80,255,.09) 88px 90px, transparent 90px 176px),
+    repeating-linear-gradient(0deg, transparent 0 88px, rgba(120,80,255,.09) 88px 90px, transparent 90px 176px),
+    radial-gradient(60% 60% at 50% 50%, rgba(120,80,255,.2), transparent 65%),
+    radial-gradient(130% 95% at 50% 112%, rgba(40,10,90,.85), transparent 65%),
+    linear-gradient(180deg, #0a0518 0%, #120a26 55%, #1a1038 100%);
+}
+.arcane::before {
+  content: ""; position: absolute; inset: -40%;
+  background: conic-gradient(from 0deg,
+    transparent 0deg 40deg, rgba(150,110,255,.22) 48deg 54deg, transparent 62deg 120deg,
+    rgba(90,200,255,.16) 130deg 138deg, transparent 146deg 240deg,
+    rgba(150,110,255,.20) 250deg 258deg, transparent 266deg 360deg);
+  filter: blur(2px);
+  animation: arcaneSpin 30s linear infinite;
+}
+.arcane::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 15% 25%, rgba(190,150,255,.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 62% 18%, rgba(150,220,255,.7) 50%, transparent 51%),
+    radial-gradient(2px 2px at 80% 55%, rgba(200,160,255,.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 70%, rgba(150,220,255,.6) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 55% 85%, rgba(190,150,255,.6) 50%, transparent 51%);
+  background-size: 220px 210px, 260px 240px, 300px 280px, 240px 230px, 200px 200px;
+  animation: sparkleFloat 8s ease-in-out infinite alternate;
+}
+@keyframes arcaneSpin { to { transform: rotate(360deg); } }
+@keyframes sparkleFloat { from { transform: translateY(0); opacity: .7; } to { transform: translateY(-14px); opacity: 1; } }
+
+/* ============ 11. 深渊虚空 ============ */
+.scene.void {
+  background-image:
+    radial-gradient(26% 26% at 50% 50%, #000 45%, rgba(20,10,40,.9) 55%, transparent 65%),
+    radial-gradient(120% 90% at 50% 115%, rgba(30,10,60,.9), transparent 65%),
+    linear-gradient(180deg, #070312 0%, #100824 60%, #160c30 100%);
+}
+.void::before {
+  content: ""; position: absolute; inset: -50%;
+  background: conic-gradient(from 0deg,
+    transparent 0deg 30deg, rgba(130,80,255,.25) 40deg 55deg, transparent 65deg 120deg,
+    rgba(80,200,255,.18) 130deg 145deg, transparent 155deg 210deg,
+    rgba(180,90,255,.2) 220deg 235deg, transparent 245deg 360deg);
+  filter: blur(20px); mix-blend-mode: screen;
+  animation: voidSpin 40s linear infinite;
+}
+@keyframes voidSpin { to { transform: rotate(360deg); } }
+
+/* ============ 12. 冰封雪山 ============ */
+.scene.frozen {
+  background-image:
+    radial-gradient(1px 1px at 30px 50px, rgba(255,255,255,.55) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 90px 120px, rgba(220,240,255,.45) 50%, transparent 51%),
+    radial-gradient(60% 45% at 80% 15%, rgba(200,235,255,.35), transparent 65%),
+    radial-gradient(70% 55% at 20% 20%, rgba(160,210,255,.22), transparent 65%),
+    linear-gradient(180deg, #dfeefc 0%, #b8d6ef 35%, #6f97c4 75%, #38517a 100%);
+  background-size: 140px 130px, 190px 170px, 100% 100%, 100% 100%, 100% 100%;
+}
+.frozen::after {
+  content: ""; position: absolute; inset: -20%;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.5) 48%, transparent 60%);
+  filter: blur(16px); mix-blend-mode: screen;
+  animation: auroraBand 16s ease-in-out infinite alternate;
+}
+
+/* ============ 13. 霓虹雨夜 ============ */
+.scene.rain {
+  background-image:
+    radial-gradient(60% 50% at 20% 25%, rgba(255,60,180,.28), transparent 65%),
+    radial-gradient(70% 60% at 85% 75%, rgba(40,200,255,.25), transparent 65%),
+    linear-gradient(180deg, #070d1f 0%, #0a1230 55%, #0d1838 100%);
+}
+.rain::after {
+  content: ""; position: absolute; inset: -10%;
+  background-image: repeating-linear-gradient(89deg, transparent 0 3px, rgba(150,220,255,.06) 3px 3.8px, transparent 3.8px 7px);
+  animation: rainFall .8s linear infinite;
+}
+@keyframes rainFall { from { transform: translateY(0); } to { transform: translateY(7px); } }
+
+/* ============ 14. 晨曦金殿 ============ */
+.scene.golden {
+  background-image:
+    radial-gradient(50% 40% at 50% 30%, rgba(255,230,170,.45), transparent 60%),
+    repeating-linear-gradient(90deg, transparent 0 60px, rgba(180,130,40,.14) 60px 64px, transparent 64px 120px),
+    radial-gradient(120% 90% at 50% 118%, rgba(80,45,10,.85), transparent 65%),
+    linear-gradient(180deg, #2a1a08 0%, #4a2f10 45%, #6b4a1c 100%);
+}
+.golden::before {
+  content: ""; position: absolute; inset: -15%;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,235,190,.28) 48%, transparent 66%);
+  filter: blur(18px); mix-blend-mode: screen;
+  animation: auroraBand 14s ease-in-out infinite alternate;
+}
+
+/* ============ 15. 水墨山水 ============ */
+.scene.ink {
+  background-image:
+    radial-gradient(55% 45% at 20% 78%, rgba(40,40,50,.5), transparent 65%),
+    radial-gradient(48% 40% at 62% 85%, rgba(35,35,45,.45), transparent 65%),
+    radial-gradient(38% 30% at 45% 90%, rgba(50,50,60,.4), transparent 60%),
+    linear-gradient(180deg, #f4f1e8 0%, #eae5d8 65%, #d8d0c0 100%);
+}
+.ink::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(40% 55% at 80% 20%, rgba(60,60,70,.25), transparent 70%),
+    radial-gradient(30% 40% at 30% 30%, rgba(50,50,60,.18), transparent 70%),
+    radial-gradient(8% 6% at 22% 62%, rgba(45,45,55,.5), transparent 70%),
+    radial-gradient(5% 4% at 60% 55%, rgba(45,45,55,.4), transparent 70%);
+  filter: blur(6px);
+}
+
+/* ============ 16. 血色危城 ============ */
+.scene.blood {
+  background-image:
+    radial-gradient(55% 40% at 50% 12%, rgba(255,60,40,.28), transparent 65%),
+    radial-gradient(130% 100% at 50% 120%, rgba(30,2,4,.92), transparent 65%),
+    linear-gradient(180deg, #1a0404 0%, #2e0808 45%, #40100c 100%);
+}
+.blood::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(2deg, transparent 0 70px, rgba(140,10,10,.14) 70px 72px, transparent 72px 150px);
+  filter: blur(3px); mix-blend-mode: screen;
+  animation: lavaPulse 7s ease-in-out infinite alternate;
+}
+
+/* ============ 17. 云海之巅 ============ */
+.scene.clouds {
+  background-image:
+    radial-gradient(60% 40% at 50% 0%, rgba(160,210,255,.4), transparent 65%),
+    linear-gradient(180deg, #7fb6e8 0%, #a8cff0 55%, #cfe6f8 100%);
+}
+.clouds::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(60% 50% at 25% 96%, rgba(255,255,255,.85), transparent 70%),
+    radial-gradient(70% 55% at 60% 102%, rgba(255,255,255,.9), transparent 70%),
+    radial-gradient(55% 45% at 85% 92%, rgba(255,255,255,.75), transparent 70%);
+  filter: blur(14px);
+}
+.clouds::after {
+  content: ""; position: absolute; inset: -20% -10% 0;
+  background-image:
+    radial-gradient(40% 55% at 35% 20%, rgba(255,255,255,.75), transparent 70%),
+    radial-gradient(50% 60% at 70% 30%, rgba(255,255,255,.65), transparent 70%);
+  filter: blur(16px);
+  animation: fogDrift 24s ease-in-out infinite alternate;
+}
+
+/* ============ 18. 水晶洞窟 ============ */
+.scene.crystal {
+  background-image:
+    radial-gradient(2px 2px at 40px 30px, rgba(255,255,255,.5) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 120px 90px, rgba(200,255,240,.4) 50%, transparent 51%),
+    radial-gradient(45% 35% at 25% 25%, rgba(90,255,210,.25), transparent 65%),
+    radial-gradient(40% 30% at 75% 40%, rgba(60,160,255,.22), transparent 65%),
+    radial-gradient(120% 95% at 50% 118%, rgba(8,40,45,.95), transparent 65%),
+    linear-gradient(180deg, #0a1a20 0%, #0e2430 55%, #143a40 100%);
+  background-size: 140px 130px, 190px 170px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+}
+.crystal::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(115deg, transparent 25%, rgba(120,255,220,.14) 38%, transparent 50%),
+    linear-gradient(70deg, transparent 40%, rgba(80,180,255,.12) 52%, transparent 65%);
+  filter: blur(6px); mix-blend-mode: screen;
+  animation: sparkleFloat 10s ease-in-out infinite alternate;
+}
+
+/* ============ 19. 星轨长曝 ============ */
+.scene.stars {
+  background-image:
+    radial-gradient(1px 1px at 50px 80px, rgba(255,255,255,.8) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 130px 30px, rgba(255,255,255,.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90px 140px, rgba(200,220,255,.6) 50%, transparent 51%),
+    radial-gradient(120% 90% at 50% 110%, rgba(20,20,50,.9), transparent 65%),
+    linear-gradient(180deg, #05070f 0%, #0a0f22 60%, #101832 100%);
+  background-size: 170px 160px, 210px 190px, 240px 200px, 100% 100%, 100% 100%;
+}
+.stars::before {
+  content: ""; position: absolute; inset: -60% -20%;
+  background: conic-gradient(from 0deg,
+    transparent 0deg 15%, rgba(150,180,255,.09) 18% 22%, transparent 25% 55%,
+    rgba(150,180,255,.07) 58% 62%, transparent 65% 100%);
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  animation: starTrail 60s linear infinite;
+}
+@keyframes starTrail { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ============ 全屏预览 ============ */
+.modal {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,.88);
+  display: none; align-items: center; justify-content: center;
+  padding: 4vh 4vw;
+}
+.modal.open { display: flex; }
+.modal .scene { width: 100%; height: 88vh; border-radius: 10px; box-shadow: 0 20px 80px rgba(0,0,0,.8); position: relative; overflow: hidden; }
+.modal .tip {
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: rgba(255,255,255,.75); background: rgba(0,0,0,.5);
+  padding: 6px 14px; border-radius: 999px; pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>战斗背景质感参考</h1>
+  <p>
+    全部为纯 CSS 实现，不依赖图片资源。质感三要素：<b>1) 多层渐变定调</b>（径向 + 线性叠出空间感）、<b>2) 噪点颗粒覆层</b>（SVG feTurbulence 压膜，去"塑料感"）、<b>3) 光晕与暗角</b>（聚焦视线 + 增加纵深）。点击任意卡片全屏预览。
+  </p>
+</header>
+
+<main class="grid">
+  <section class="card">
+    <div class="scene sky"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>01 夜穹星光</h2>
+      <p class="tech">radial-gradient 1~2.5px 点阵×5 层平铺星群；顶部蓝紫光晕 + 底部深色渐变收底</p>
+      <p class="hint">适合：战斗结算 / 秘境入口 / 剧情过场</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene lava"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>02 熔岩地脉</h2>
+      <p class="tech">repeating-linear-gradient 斜向裂纹 + blur + screen 混合；底部炽红径向渐变 + 脉动动画</p>
+      <p class="hint">适合：副本入口 / BOSS 战前</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene ocean"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>03 幽蓝深海</h2>
+      <p class="tech">浅蓝顶部天光 + 深色底部；repeating-linear-gradient 斜波纹 + blur 缓慢起伏</p>
+      <p class="hint">适合：水战地图 / 水底洞窟</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene cyber"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>04 机械网格</h2>
+      <p class="tech">双层 1px 细网格（大格 + 小格）叠色光晕；扫描亮线上下循环</p>
+      <p class="hint">适合：科技城 / 测试场 / 数据分析台</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene aurora"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>05 极光冰原</h2>
+      <p class="tech">多层大 blur 色带 + screen 混合 + 缓慢漂移；绿/紫/青三色光幕</p>
+      <p class="hint">适合：北境 / 天空地图 / 圣洁氛围</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene parchment"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>06 羊皮纸卷</h2>
+      <p class="tech">米黄色渐变 + 不规则浅斑（radial hard-stop）+ 噪点压膜 + inset 暗角</p>
+      <p class="hint">适合：技能图鉴 / 古籍 / 商贩面板</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene pixel"><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>07 像素复古</h2>
+      <p class="tech">linear-gradient 阶梯硬边造像素云山；1.5~2px 点阵模拟 dither 颗粒</p>
+      <p class="hint">适合：复古模式 / 怀旧副本 / 彩蛋关卡</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene forest"><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>08 森林迷雾</h2>
+      <p class="tech">多层大 blur 白色雾气 + screen 混合缓慢横移；树干暗影用斜向条纹 + blur</p>
+      <p class="hint">适合：野外 / 密林 / 副本第一层</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene dunes"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>09 黄昏沙漠</h2>
+      <p class="tech">紫→橙天空渐变 + radial 椭圆太阳；底部多弧 hard-stop 沙丘叠层</p>
+      <p class="hint">适合：沙漠地图 / 边境 / 落日余晖</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene arcane"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>10 魔法符文</h2>
+      <p class="tech">细网格符文底纹 + conic-gradient 旋转法阵光 + 漂浮光点微光</p>
+      <p class="hint">适合：法师场景 / 召唤阵 / 高塔顶端</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene void"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>11 深渊虚空</h2>
+      <p class="tech">中心黑洞 + conic-gradient 光带 blur 后缓慢自旋，模拟时空漩涡</p>
+      <p class="hint">适合：BOSS 位面 / 传送门 / 最终决战</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene frozen"><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>12 冰封雪山</h2>
+      <p class="tech">亮色天空渐变 + 雪花点阵 + 侧扫天光（唯一偏白的场景，供对比）</p>
+      <p class="hint">适合：山顶 / 雪地关卡 / 圣洁之地</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene rain"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>13 霓虹雨夜</h2>
+      <p class="tech">粉/青双色霓虹光晕 + 细斜雨丝按纹路周期平移动画，雨感循环无缝</p>
+      <p class="hint">适合：雨夜城 / 暗巷 / 氛围紧张时刻</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene golden"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>14 晨曦金殿</h2>
+      <p class="tech">金色圣光 + repeating-linear-gradient 竖条纹模拟廊柱 + 缓慢光扫</p>
+      <p class="hint">适合：神殿 / 王城 / 圣殿战斗</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene ink"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>15 水墨山水</h2>
+      <p class="tech">米白纸底 + 大 blur 灰墨晕染成远山近峦，加墨点营造笔触</p>
+      <p class="hint">适合：武侠 / 仙侠 / 诗画意境关卡</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene blood"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>16 血色危城</h2>
+      <p class="tech">深红渐变 + 微斜暗色条纹 + 顶部应急红光，脉动式警戒感</p>
+      <p class="hint">适合：战争 / 危机 / 血腥副本</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene clouds"><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>17 云海之巅</h2>
+      <p class="tech">亮蓝天 + 底部大 blur 白云成海 + 上层浮云缓慢漂移</p>
+      <p class="hint">适合：天空城 / 登顶时刻 / 自由开阔场景</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene crystal"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>18 水晶洞窟</h2>
+      <p class="tech">青绿 + 蓝色双辉光棱柱（斜向亮线 blur）+ 微光点</p>
+      <p class="hint">适合：矿洞 / 晶石秘境 / 精灵居所</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="scene stars"><div class="fx grain"></div><div class="fx vignette"></div></div>
+    <div class="meta">
+      <h2>19 星轨长曝</h2>
+      <p class="tech">conic-gradient 低透明度圆弧缓慢旋转，模拟相机长曝星轨</p>
+      <p class="hint">适合：观星台 / 时间流逝 / 旅途终章</p>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="scene" id="modalScene"></div>
+  <div class="tip">点击空白处或按 ESC 关闭</div>
+</div>
+
+<script>
+  var cards = document.querySelectorAll('.card');
+  var modal = document.getElementById('modal');
+  var modalScene = document.getElementById('modalScene');
+
+  cards.forEach(function (card) {
+    card.addEventListener('click', function () {
+      var clone = card.querySelector('.scene').cloneNode(true);
+      modalScene.replaceChildren(clone);
+      modal.classList.add('open');
+    });
+  });
+
+  modal.addEventListener('click', function () { modal.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') modal.classList.remove('open');
+  });
+</script>
+</body>
+</html>

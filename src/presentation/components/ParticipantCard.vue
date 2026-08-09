@@ -8,7 +8,7 @@
     <div class="member-info">
       <!-- 名称和行动标识 -->
       <div class="member-name">
-        Lv.{{ participant.level }} {{ participant.name }} {{ hpText }}
+        <template v-if="displayLevel > 0">Lv.{{ displayLevel }} </template>{{ displayName }} {{ hpText }}
         <div class="member-action" v-if="isActive">
           <span :class="['acting-badge', { 'enemy-acting': isEnemy }]">←操作中</span>
         </div>
@@ -59,10 +59,11 @@
 
       <!-- Buff 列表：纯文本展示 -->
       <BuffTextBar :control-labels="buffDisplay.controlLabels" :merged-labels="buffDisplay.mergedLabels"
-        :visible-attr-labels="buffDisplay.visibleAttrLabels" :collapsed-count="buffDisplay.collapsedCount"
+        :visible-attr-labels="buffDisplay.visibleAttrLabels" :plain-labels="plainBuffLabels"
+        :collapsed-count="buffDisplay.collapsedCount"
         :expanded="panelVisible" @toggle="panelVisible = !panelVisible" @hover-attr="handleAttrHover"
         @hover-buff="handleBuffHover" @leave="handleBuffLeave" />
-      <BuffTextPanel :visible="panelVisible" :participant-name="participant.name" :groups="buffDisplay.groups"
+      <BuffTextPanel :visible="panelVisible" :participant-name="displayName" :groups="buffDisplay.groups"
         :long-duration-items="buffDisplay.longDurationItems" :merged-labels="buffDisplay.mergedLabels"
         :debug-mode="showDebug" @close="panelVisible = false" />
       <!-- 属性/Buff 悬停追溯浮层 -->
@@ -106,6 +107,29 @@
   </div>
 </template>
 
+<script lang="ts">
+import type { BuffRawItem } from '@/shared/types/buff-display'
+
+/**
+ * 纯数据注入（回放/静态场景）：ParticipantCard 在无领域实体与 battleStore 快照时的展示数据契约。
+ * 提供 displayData 时优先于 participant 实体与投影快照；缺省字段（level/shield/isAlive）走默认值。
+ */
+export interface ParticipantDisplayData {
+  id: string
+  name: string
+  level?: number
+  maxHp: number
+  hp: number
+  maxEnergy: number
+  energy: number
+  shield?: number
+  buffs: BuffRawItem[]
+  isAlive?: boolean
+  /** 战斗倍速（HP 条过渡时长跟随；缺省按 1× 预算） */
+  speed?: number
+}
+</script>
+
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
@@ -120,8 +144,10 @@ import { getActionBudget } from '@/shared/constants/animation-timing'
 import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 const props = defineProps<{
-  /** 战斗参与者实例 */
-  participant: BattleEntity
+  /** 战斗参与者实例（displayData 注入时可为空） */
+  participant?: BattleEntity
+  /** 纯数据注入（回放/静态场景）；提供时优先于 participant 与 battleStore 快照 */
+  displayData?: ParticipantDisplayData
   /** 是否当前行动者 */
   isActive?: boolean
   /** 是否选中 */
@@ -138,31 +164,47 @@ const emit = defineEmits<{
   click: [participantId: string]
 }>()
 
-// 从 store 中获取显示调试信息状态
-const battleStore = useBattleStore()
-const showDebug = computed(() => battleStore.showDebug)
+// displayData 注入时无需 battleStore（回放舞台无活战场，纯数据驱动）
+const battleStore = props.displayData ? null : useBattleStore()
+const showDebug = computed(() => battleStore?.showDebug ?? false)
 
-// 从投影层快照读取核心数值
-const snap = computed(() => battleStore.participants.get(props.participant.id))
+// 纯数据注入模式（回放/静态）：displayData 提供时优先，跳过实体与 battleStore 快照
+const display = computed(() => props.displayData ?? null)
+const entityId = computed(() => display.value?.id ?? props.participant?.id ?? '')
+
+// 从投影层快照读取核心数值（displayData 注入时跳过 store 查询）
+const snap = computed(() =>
+  display.value ? null : props.participant ? (battleStore?.participants.get(props.participant.id) ?? null) : null,
+)
+
+const displayLevel = computed(() => display.value?.level ?? props.participant?.level ?? 0)
+const displayName = computed(() => display.value?.name ?? props.participant?.name ?? '')
 
 // 从快照派生 isAlive/hpPercent/energyPercent（回退到从实体直接读取）
-const isAlive = computed(() => snap.value?.isAlive ?? props.participant.isAlive())
+const isAlive = computed(() => {
+  if (display.value) return display.value.isAlive ?? display.value.hp > 0
+  return snap.value?.isAlive ?? props.participant?.isAlive() ?? true
+})
 const hpPercent = computed(() => {
+  if (display.value) return display.value.maxHp > 0 ? (display.value.hp / display.value.maxHp) * 100 : 0
   if (snap.value) return snap.value.healthPercent
   const p = props.participant
+  if (!p) return 0
   const maxHp = p.maxHealth
   return maxHp > 0 ? (p.currentHealth / maxHp) * 100 : 0
 })
 const energyPercent = computed(() => {
+  if (display.value) return display.value.maxEnergy > 0 ? (display.value.energy / display.value.maxEnergy) * 100 : 0
   if (snap.value) return snap.value.energyPercent
   const p = props.participant
+  if (!p) return 0
   const maxEnergy = p.maxEnergy
   return maxEnergy > 0 ? (p.currentEnergy / maxEnergy) * 100 : 0
 })
 
-/** 气血 条过渡时长 = 50% 预算（匹配命中阶段 50%→100%T） */
+/** 气血 条过渡时长 = 50% 预算（匹配命中阶段 50%→100%T）；displayData 带 speed 时跟随回放倍速 */
 const hpTransitionDuration = computed(() => {
-  const budget = getActionBudget(battleStore.battleSpeed)
+  const budget = getActionBudget(display.value?.speed ?? battleStore?.battleSpeed ?? 1)
   return `${budget * 0.5}ms`
 })
 
@@ -208,6 +250,12 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
+  // 纯数据注入优先
+  if (display.value) {
+    const cur = Math.max(0, Math.floor(display.value.hp))
+    const max = Math.max(0, Math.floor(display.value.maxHp))
+    return `${cur}/${max}`
+  }
   // 优先使用投影层快照数据
   if (snap.value) {
     const cur = Math.max(0, Math.floor(snap.value.currentHealth))
@@ -216,6 +264,7 @@ const hpText = computed(() => {
   }
   // 回退到直接从 participant 实体读取
   const data = props.participant
+  if (!data) return `0/0`
   const currentHealth = Math.max(0, Math.floor(data.currentHealth || 0))
   const maxHealth = Math.max(0, Math.floor(data.maxHealth || 0))
   return `${currentHealth}/${maxHealth}`
@@ -229,12 +278,18 @@ const hpColorClass = computed(() => {
 })
 
 const energyText = computed(() => {
+  if (display.value) {
+    const curEnergy = Math.floor(display.value.energy)
+    const maxEnergy = Math.floor(display.value.maxEnergy)
+    return `${curEnergy}/${maxEnergy}`
+  }
   if (snap.value) {
     const curEnergy = Math.floor(snap.value.currentEnergy)
     const maxEnergy = Math.floor(snap.value.maxEnergy)
     return `${curEnergy}/${maxEnergy}`
   }
   const data = props.participant
+  if (!data) return `0/0`
   const energy = Math.floor(data.currentEnergy || 0)
   const maxEnergy = Math.floor(data.maxEnergy || 0)
   return `${energy}/${maxEnergy}`
@@ -247,24 +302,25 @@ const energyColorClass = computed(() => {
   return 'low'
 })
 
-/** 护盾值（来自投影层快照，源头是 BuffSystem.shieldValues） */
-const shieldValue = computed(() => snap.value?.shield ?? 0)
+/** 护盾值（displayData 注入优先，其次投影层快照，源头是 BuffSystem.shieldValues） */
+const shieldValue = computed(() => (display.value ? (display.value.shield ?? 0) : snap.value?.shield ?? 0))
 
 /** 护盾占最大气血值的百分比（护盾无天然上限，以 maxHealth 为参照） */
 const shieldPercent = computed(() => {
-  const maxHp = snap.value?.maxHealth ?? 0
+  const maxHp = display.value ? display.value.maxHp : (snap.value?.maxHealth ?? 0)
   return maxHp > 0 ? Math.min(100, (shieldValue.value / maxHp) * 100) : 0
 })
 
 const shieldText = computed(() => `${Math.floor(shieldValue.value)}`)
 
-const buffListItems = computed((): BuffRawItem[] => snap.value?.buffs ?? [])
+const buffListItems = computed((): BuffRawItem[] => (display.value ? display.value.buffs : (snap.value?.buffs ?? [])))
 
 // === 纯文本 Buff 显示模式 ===
 const panelVisible = ref(false)
 
 const baseAttributes = computed(() => {
   const entity = props.participant
+  if (!entity) return {}
   const map: Record<string, number> = {}
   for (const code of Object.values(ATTRIBUTE_CODE)) {
     const attrValue = entity.getAttrVal(code)
@@ -276,11 +332,16 @@ const baseAttributes = computed(() => {
 })
 
 // ponytail: 参与者 ID 在气血周期内不变，直接读取
-const buffDisplay = useBuffDisplay(buffListItems, props.participant.id, 5, baseAttributes)
+const buffDisplay = useBuffDisplay(buffListItems, entityId.value, 5, baseAttributes)
+
+/** 无属性修饰且非控制的普通 Buff：纯名字标签（回放存档仅 name/stacks/turns，仍须在卡片上可见） */
+const plainBuffLabels = computed<BuffTextItem[]>(() =>
+  buffDisplay.value.items.filter((i) => !i.controlType && i.modifiers.length === 0),
+)
 
 // 情境属性 — 根据当前选中的目标动态计算激活的情境属性
 const situationalAttrs = useSituationalAttributes(
-  computed(() => props.participant),
+  computed(() => props.participant ?? null),
   computed(() => props.targetEntity ?? null),
   ref(null), // ponytail: skill 上下文暂未接入，未来从技能选中状态传递
   computed(() => snap.value?.version ?? 0), // 版本戳变化时重新求值
@@ -352,7 +413,7 @@ const showBreakdown = ref(false)
 
 // 事件处理
 const handleClick = () => {
-  emit('click', props.participant.id)
+  if (entityId.value) emit('click', entityId.value)
 }
 
 // 暴露卡片引用给父组件（用于动画）

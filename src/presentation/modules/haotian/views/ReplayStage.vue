@@ -34,22 +34,9 @@
 
     <div class="ht-arena" v-show="!!store.archive">
       <div v-for="(side, si) in sides" :key="si" class="ht-arena-side" :class="{ right: si === 1 }">
-        <div v-for="p in side" :key="p.id" class="ht-unit" :data-uid="p.id" :ref="(el) => registerUnit(p.id, el)"
-          :class="{ dead: hpOf(p) <= 0, acting: actingId === p.id }">
-          <div class="ht-u-top">
-            <span class="ht-u-name">{{ p.name }}</span>
-            <span class="ht-u-dead">阵亡</span>
-          </div>
-          <div class="ht-bar hp" :class="hpTone(p)">
-            <i :style="{ width: hpPct(p) + '%' }"></i>
-            <span class="txt">{{ Math.max(0, hpOf(p)) }} / {{ p.maxHp }}</span>
-          </div>
-          <div class="ht-bar en"><i :style="{ width: enPct(p) + '%' }"></i></div>
-          <div class="ht-u-en">能量 {{ Math.max(0, enOf(p)) }} / {{ p.maxEnergy }}</div>
-          <div class="ht-u-buffs">
-            <span v-for="b in buffsOf(p)" :key="b.name" class="ht-bf">{{ b.name }}{{ b.stacks > 1 ? ' ×' + b.stacks : '' }}</span>
-          </div>
-        </div>
+        <ParticipantCard v-for="p in side" :key="p.id" class="ht-unit" :data-uid="p.id"
+          :ref="(el) => registerUnit(p.id, el)" :display-data="displayDataOf(p)"
+          :is-active="actingId === p.id" :is-enemy="si === 1" />
       </div>
       <div class="ht-arena-mid"><span class="ht-vs">VS</span></div>
       <div class="ht-overlay" :class="{ show: overlayShow }">
@@ -89,14 +76,18 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { ArchiveParticipant, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
+import type { ArchiveParticipant, ArchiveBuff, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
 import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
 import Button from '@/presentation/components/Button.vue'
+import ParticipantCard, { type ParticipantDisplayData } from '@/presentation/components/ParticipantCard.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import { getActionBudget } from '@/shared/constants/animation-timing'
+import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation'
+import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing'
+import type { BuffRawItem } from '@/shared/types/buff-display'
+import { ActionResultType } from '@/domain/battle/type/types'
 
 const speedOptions: TSelectOption[] = [0.5, 1, 2, 4].map((s) => ({ value: s, label: `${s}×` }))
 
@@ -132,16 +123,37 @@ const sides = computed<ArchiveParticipant[][]>(() => {
 })
 
 const unitOf = (id: string) => store.cur[id] ?? { hp: 0, en: 0, buffs: [] }
-const hpOf = (p: ArchiveParticipant): number => unitOf(p.id).hp
-const enOf = (p: ArchiveParticipant): number => unitOf(p.id).en
-const buffsOf = (p: ArchiveParticipant) => unitOf(p.id).buffs ?? []
-const hpPct = (p: ArchiveParticipant): number => Math.max(0, Math.min(100, (hpOf(p) / p.maxHp) * 100))
-const enPct = (p: ArchiveParticipant): number => Math.max(0, Math.min(100, (enOf(p) / p.maxEnergy) * 100))
-const hpTone = (p: ArchiveParticipant): string => {
-  const pct = hpPct(p)
-  if (pct <= 25) return 'low'
-  if (pct <= 50) return 'warn'
-  return ''
+
+/**
+ * ArchiveBuff → BuffRawItem：存档仅含 name/stacks/turns，属性明细与正负标记缺省。
+ * BuffTextBar 展示名字 + 层数，属性标签/悬停追溯无数据源（HACK：与演武台的信息差源于存档契约）。
+ */
+function toBuffRawItem(b: ArchiveBuff): BuffRawItem {
+  return {
+    id: b.name,
+    buffId: b.name,
+    name: b.name,
+    currentStacks: b.stacks,
+    remainingTurns: b.turns,
+    isAura: false,
+  }
+}
+
+/** ArchiveParticipant + 模拟状态 → ParticipantDisplayData（回放舞台卡片数据源，与演武台同款 ParticipantCard） */
+function displayDataOf(p: ArchiveParticipant): ParticipantDisplayData {
+  const u = unitOf(p.id)
+  return {
+    id: p.id,
+    name: p.name,
+    maxHp: p.maxHp,
+    hp: Math.max(0, u.hp),
+    maxEnergy: p.maxEnergy,
+    energy: Math.max(0, u.en),
+    shield: 0,
+    buffs: u.buffs.map(toBuffRawItem),
+    isAlive: u.hp > 0,
+    speed: store.playback.speed,
+  }
 }
 
 const phaseChipLabel = computed(() => {
@@ -193,20 +205,30 @@ function onSeekClick(e: MouseEvent): void {
   store.seekTo(((e.clientX - rect.left) / rect.width) * store.duration, { keepPlay: true })
 }
 
-// ───────────── 特效（fx · 复用唤灵台 BattleVisualEffects）─────────────
+// ───────────── 特效与卡片动画（与唤灵台演武台同款：ParticipantCard 状态动画 + BattleVisualEffects + GSAP 突进）─────────────
 
 const actingId = ref<string | null>(null)
 const vfRef = ref<InstanceType<typeof BattleVisualEffects> | null>(null)
+const unitCards = new Map<string, InstanceType<typeof ParticipantCard>>()
 const unitEls = new Map<string, HTMLElement>()
+const { registerElement, unregisterElement, playAttackAnimation, playHitAnimation, playBuffAnimation, setBattleSpeed } =
+  useBattleAnimation()
 
-/** 注册单位 DOM 供 BattleVisualEffects 定位（坐标按视口计算，与唤灵台 BattleField 同模式） */
-function registerUnit(id: string, el: HTMLElement | null): void {
-  if (el) {
-    unitEls.set(id, el)
-    vfRef.value?.registerCard(id, el)
+/** 注册单位卡片：cardRef 供 BattleVisualEffects 定位 + GSAP 动画（与唤灵台 BattleField 同模式） */
+function registerUnit(id: string, card: InstanceType<typeof ParticipantCard> | null): void {
+  if (card) {
+    unitCards.set(id, card)
+    const root = card.cardRef as HTMLElement | null
+    if (root) {
+      unitEls.set(id, root)
+      vfRef.value?.registerCard(id, root)
+      registerElement(id, root)
+    }
   } else {
+    unitCards.delete(id)
     unitEls.delete(id)
     vfRef.value?.unregisterCard(id)
+    unregisterElement(id)
   }
 }
 
@@ -216,6 +238,9 @@ watch(vfRef, (vf) => {
   for (const [id, el] of unitEls) vf.registerCard(id, el)
 }, { immediate: true })
 
+// 倍速同步到 GSAP（与唤灵台 setBattleSpeed 同口径）
+watch(() => store.playback.speed, (s) => setBattleSpeed(s), { immediate: true })
+
 function sideOf(id: string): 'left' | 'right' {
   return sides.value[0].some((p) => p.id === id) ? 'left' : 'right'
 }
@@ -223,7 +248,8 @@ function sideOf(id: string): 'left' | 'right' {
 function fx(ev: UnifiedEvent): void {
   const pl = (ev.payload ?? {}) as Record<string, unknown>
   const vf = vfRef.value
-  const budget = getActionBudget(1)
+  const budget = getActionBudget(store.playback.speed)
+  const cardOf = (id: string) => unitCards.get(id)
   if (ev.phase === 'action_execution') {
     const src = ev.sourceId
     if (src) {
@@ -231,7 +257,9 @@ function fx(ev: UnifiedEvent): void {
       setTimeout(() => {
         if (actingId.value === src) actingId.value = null
       }, 750)
-      // 技能名 + 光弹飞行（唤灵台同款特效，替代自造浮字）
+      // casting 蓄力 + GSAP 突进 + 技能名/光弹飞行（演武台同款三件套）
+      cardOf(src)?.triggerVisualState('casting', budget * BATTLE_ANIMATION_TIMING.PHASES.windup.end)
+      void playAttackAnimation(src, sideOf(src), undefined, budget)
       if (vf && ev.targetId) {
         vf.playFlightSequence(src, ev.targetId, String(pl.skill ?? ev.summary), sideOf(src), 'fire', budget)
       }
@@ -241,7 +269,9 @@ function fx(ev: UnifiedEvent): void {
     if (!target || !vf) return
     if (pl.dodge) {
       vf.showMissText(target, budget)
+      void playHitAnimation(target, { hitEffect: ActionResultType.MISS })
     } else {
+      cardOf(target)?.triggerVisualState('hurt', budget * 0.4)
       vf.showImpact(target, 'fire', budget)
       vf.showDamageNum(target, Number(pl.result ?? 0), !!pl.crit, budget)
       if (pl.crit) vf.showScreenShake()
@@ -249,8 +279,16 @@ function fx(ev: UnifiedEvent): void {
   } else if (ev.phase === 'heal_calculation') {
     const target = ev.targetId
     if (!target || !vf) return
+    cardOf(target)?.triggerVisualState('healed', budget * 0.4)
+    cardOf(target)?.flashHpBar(budget)
     vf.showHealAura(target, budget)
     vf.showHealNum(target, Number(pl.result ?? 0), budget)
+  } else if (ev.phase === 'buff_lifecycle') {
+    const target = ev.targetId
+    if (!target || pl.action !== 'apply') return
+    // HACK: 存档无 buff 正负标记，统一按正向（shielded + 辉光）；数据源契约补齐后再细分正负
+    cardOf(target)?.triggerVisualState('shielded', budget * BATTLE_ANIMATION_TIMING.PHASES.settle.start)
+    void playBuffAnimation(target, true)
   }
 }
 

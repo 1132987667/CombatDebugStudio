@@ -224,11 +224,11 @@ describe('fromRecordedBattle（录制映射）', () => {
             final: 420,
             crit: { rate: 0.25, multiplier: 1.5, triggered: true },
             steps: [
-              { stepName: '技能基础值', value: 200, description: '基础', before: 200, after: 200, sourceType: 'base' },
-              { stepName: '攻击力', value: 220, description: '加成', before: 200, after: 420, sourceType: 'system' },
+              { stepName: '技能基础值', value: 200, description: '基础', before: 0, after: 200, sourceType: 'base' },
+              { stepName: '攻击力', value: 420, description: '加成', before: 200, after: 420, sourceType: 'system' },
             ],
           },
-          summary: '伤害计算 剑士→骷髅 200→420 ★暴击',
+          summary: '伤害计算 剑士→骷髅 最终伤害 420 ★暴击',
         },
       ],
     } as unknown as Parameters<typeof fromRecordedBattle>[0]
@@ -240,10 +240,100 @@ describe('fromRecordedBattle（录制映射）', () => {
     const rolls = dmg.payload.rolls as Array<{ kind: string; rate: number; derived?: boolean }>
     expect(rolls[0]).toMatchObject({ kind: 'crit', rate: 0.25, derived: true })
     const steps = dmg.payload.steps as Array<{ n: string; op: string; v: number }>
-    expect(steps[0]).toEqual({ n: '技能基础值', op: '+', v: 200, src: 'base' })
+    expect(steps[0]).toEqual({ n: '技能基础值', op: '', v: 200, src: 'base' })
     expect(steps[1]).toEqual({ n: '攻击力', op: '+', v: 220, src: 'system' })
     // HP 快照：1500 - 420 = 1080
     expect(dmg.snapshot?.participants[0]).toEqual({ id: 'u2', hp: 1080 })
+    expect(validateUnified(arch).errors).toEqual([])
+  })
+
+  it('DamageStep 累计值语义：value 是每步后绝对值，转增量链后累计终值 == result', () => {
+    // 真实 TraceDamageLogger 的 DamageStep.value = after（每一步之后的累计伤害），
+    // 不是单步增量。若把 value 当增量直转，防御会显示成 +50 且累计 170 ≠ 最终 50（用户报障）。
+    // 断言：转换后的 CalcStep 为增量链（+0 → +60 → −10），累计终值与 result 一致，防御 op 为 −。
+    const rec = {
+      battleId: 'bt-acc',
+      replayId: 'rp-acc',
+      version: '2.0.0',
+      randomSeed: '7',
+      startTime: 0,
+      initialState: {
+        participants: [
+          { id: 'u1', name: '佛门叛徒首领', team: 'ally', maxHealth: 3200, currentHealth: 3200, maxEnergy: 100, currentEnergy: 100 },
+          { id: 'u2', name: '熔岩小精', team: 'enemy', maxHealth: 1500, currentHealth: 1500, maxEnergy: 100, currentEnergy: 60 },
+        ],
+      },
+      events: [],
+      rounds: [],
+      combatRecords: [],
+      traceEvents: [
+        {
+          id: 'a1', phase: 'action_execution', correlationId: 'c1', timestamp: 100, level: 'info', sourceId: 'u1', targetId: 'u2', payload: { actionType: 'attack', controlMode: 'AI' }, summary: 'x',
+        },
+        {
+          id: 'a2', phase: 'damage_calculation', correlationId: 'c1', parentId: 'a1', timestamp: 200, level: 'debug', sourceId: 'u1', targetId: 'u2',
+          payload: {
+            final: 50,
+            crit: { rate: 0.25, multiplier: 1.5, triggered: true },
+            steps: [
+              { stepName: 'base', value: 0, description: '基础威力: 0', before: 0, after: 0, sourceType: 'base' },
+              { stepName: 'extra', value: 60.830000000000005, description: '攻击力 额外加成: +60.83 → 60.83', before: 0, after: 60.83, sourceType: 'skill' },
+              { stepName: 'preCrit', value: 60.83, description: '加成后伤害: 60.83', before: 0, after: 60.83, sourceType: 'skill' },
+              { stepName: 'defense', value: 50, description: '防御减免(-10.83): 60.83 → 50', before: 60.83, after: 50, sourceType: 'system' },
+            ],
+          },
+          summary: '伤害计算 佛门叛徒首领→熔岩小精 最终伤害 50 ★暴击',
+        },
+      ],
+    } as unknown as Parameters<typeof fromRecordedBattle>[0]
+
+    const arch = fromRecordedBattle(rec)!
+    const dmg = arch.events.find((e) => e.id === 'a2')!
+    const steps = dmg.payload.steps as Array<{ n: string; op: string; v: number }>
+    expect(steps).toEqual([
+      { n: 'base', op: '', v: 0, src: 'base' },
+      { n: 'extra', op: '+', v: 60.83, src: 'skill' },
+      { n: 'preCrit', op: '+', v: 0, src: 'skill' },
+      { n: 'defense', op: '−', v: 10.83, src: 'system' },
+    ])
+    // 累计终值 = 最终伤害（Inspector resultMismatch 判定 ≤1）——尾差不得累计进链条
+    const running = steps.reduce((acc, s) => (s.op === '−' ? acc - s.v : acc + s.v), 0)
+    expect(running).toBeCloseTo(dmg.payload.result, 2)
+  })
+
+  it('真实链路百分比暴击率（rate=25）归一化后 roll 不越界', () => {
+    // TraceDamageLogger 发射 crit.rate = breakdown.critRate（百分比，如 25=25%），
+    // normalize 应归一化为 0~1 后再回推 roll，否则 roll > 1 触发"随机值越界"
+    const rec = {
+      battleId: 'bt-pct',
+      replayId: 'rp-pct',
+      version: '2.0.0',
+      randomSeed: '99',
+      startTime: 0,
+      initialState: {
+        participants: [
+          { id: 'u1', name: '剑士', team: 'ally', maxHealth: 3200, currentHealth: 3200, maxEnergy: 100, currentEnergy: 100 },
+          { id: 'u2', name: '骷髅', team: 'enemy', maxHealth: 1500, currentHealth: 1500, maxEnergy: 100, currentEnergy: 60 },
+        ],
+      },
+      events: [],
+      rounds: [],
+      combatRecords: [],
+      traceEvents: [
+        {
+          id: 't2', phase: 'damage_calculation', correlationId: 'c1', timestamp: 10, level: 'debug', sourceId: 'u1', targetId: 'u2',
+          payload: { final: 420, crit: { rate: 25, multiplier: 1.5, triggered: true } },
+          summary: '伤害计算 ★暴击',
+        },
+      ],
+    } as unknown as Parameters<typeof fromRecordedBattle>[0]
+
+    const arch = fromRecordedBattle(rec)!
+    const dmg = arch.events.find((e) => e.id === 't2')!
+    const rolls = dmg.payload.rolls as Array<{ kind: string; rate: number; roll: number; derived?: boolean }>
+    expect(rolls[0].rate).toBe(0.25)
+    expect(rolls[0].roll).toBeGreaterThanOrEqual(0)
+    expect(rolls[0].roll).toBeLessThanOrEqual(0.999)
     expect(validateUnified(arch).errors).toEqual([])
   })
 })

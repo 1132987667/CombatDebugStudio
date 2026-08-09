@@ -9,6 +9,11 @@
       <BuffTextTag v-for="ctrl in displayControlLabels" :key="ctrl.instanceId" :text="ctrl.name" type="control"
         :turns-left="ctrl.remainingTurns" @hover.stop="onTagHover($event, ctrl)" @leave="onTagLeave" />
 
+      <!-- 纯名字标签（无属性修饰、非控制的普通 Buff，如回放存档仅有 name/stacks/turns） -->
+      <BuffTextTag v-for="plain in displayPlainLabels" :key="plain.instanceId" :text="plain.name"
+        :type="plain.isNegative ? 'debuff' : 'buff'" :stacks="plain.stacks"
+        @hover.stop="onTagHover($event, plain)" @leave="onTagLeave" />
+
       <!-- 合并属性标签 -->
       <BuffTextTag v-for="attr in visibleAttrLabels" :key="attr.attribute" :text="formatAttrLine(attr)"
         :type="attr.totalPercent > 0 ? 'buff' : 'debuff'" @hover.stop="onAttrHover($event, attr)" @leave="onTagLeave" />
@@ -38,12 +43,15 @@ const props = withDefaults(defineProps<{
   mergedLabels: MergedAttributeLine[]
   /** 可见的属性标签（受折叠阈值控制，由 useBuffDisplay 计算） */
   visibleAttrLabels: MergedAttributeLine[]
+  /** 纯名字标签：无属性修饰且非控制的普通 Buff（如回放存档仅有 name/stacks/turns） */
+  plainLabels?: BuffTextItem[]
   /** 折叠后隐藏的标签数 */
   collapsedCount: number
   /** 是否展开状态 */
   expanded?: boolean
 }>(), {
   expanded: false,
+  plainLabels: () => [],
 })
 
 const emit = defineEmits<{
@@ -58,11 +66,14 @@ const emit = defineEmits<{
 }>()
 
 const isEmpty = computed(() =>
-  props.controlLabels.length === 0 && props.mergedLabels.length === 0,
+  props.controlLabels.length === 0 && props.mergedLabels.length === 0 && props.plainLabels.length === 0,
 )
 
 /** 控制标签：全部显示（不折叠） */
 const displayControlLabels = computed(() => props.controlLabels)
+
+/** 纯名字标签：全部显示（不折叠） */
+const displayPlainLabels = computed(() => props.plainLabels)
 
 /** 属性标签：由 useBuffDisplay 计算 visibleAttrLabels，直接消费 */
 // ponytail: 折叠逻辑已集中到 useBuffDisplay 的 collapseThreshold 参数，两边共用同一阈值

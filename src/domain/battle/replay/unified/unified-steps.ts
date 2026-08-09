@@ -54,6 +54,11 @@ export function fmtRunning(n: number): string {
   return Number.isInteger(r) ? String(r) : r.toFixed(2)
 }
 
+/** 步骤值规整：消除浮点尾差（如 145×0.35 累加出 50.830000000000005 → 50.83）。展示/转换共用 */
+export function roundStepVal(v: number): number {
+  return Math.round(v * 100) / 100
+}
+
 /** src 常见来源的精确释义（覆盖 demo / 录制高频值） */
 const EXPLICIT_SRC: Record<string, string> = {
   'skill_cfg.base': '技能基础值',
@@ -66,6 +71,37 @@ const EXPLICIT_SRC: Record<string, string> = {
   'buff_gold_shield': '金甲护体',
   'buff_guardian_revenge_rage': '复仇怒火',
   'buff_yishang': '易伤加成',
+}
+
+/**
+ * 引擎 DamageStep.stepName 英文标识 → 中文展示名（DamageCalculator.ts 生成的固定集合）。
+ * 结算步骤行 / 事件流等展示处统一走 stepNameCN，不改引擎语义标识，也不动存档数据。
+ */
+const STEP_NAME_CN: Record<string, string> = {
+  base: '基础值',
+  extra: '额外加成',
+  preCrit: '暴击前值',
+  crit: '暴击',
+  damageBoost: '伤害加成',
+  fireSkillDmgBonus: '火系增伤',
+  physicalSkillDmgBonus: '物理增伤',
+  damageToLowHp: '对低血量增伤',
+  critDmgTakenReduction: '受暴击减伤',
+  defense: '防御',
+  normalAtkReduction: '普攻减伤',
+  skillDmgReduction: '技能减伤',
+  elementalResistance: '元素抗性',
+  fieldElemental: '场地元素',
+  damageReduction: '减伤',
+  dmgTakenIncrease: '受伤害增加',
+  targetModifier: '目标修正',
+  elementMatrix: '元素矩阵',
+  clamp: '钳制',
+}
+
+/** 步骤名展示：引擎英文标识 → 中文；未命中（demo 已中文 / 未知来源）原样返回 */
+export function stepNameCN(name: string): string {
+  return STEP_NAME_CN[name] ?? name
 }
 
 /** src 释义解析：先查精确表，再按前缀归类；未命中返回 null */

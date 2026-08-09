@@ -577,17 +577,24 @@ const endBattle = async () => {
       // P1: 战斗结束自动持久化录制，供昊天镜「战斗记录」调用
       const battleId = battleStore.currentBattleId;
       let saved = false;
+      let savedName: string | undefined;
       if (battleId) {
         try {
           const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString());
-          saved = !!(await battleSystem.saveBattleRecording(battleId));
+          const saveKey = await battleSystem.saveBattleRecording(battleId);
+          saved = !!saveKey;
+          if (saveKey) savedName = battleSystem.getBattleRecording(battleId)?.name;
         } catch {
           saved = false;
         }
       }
       notification.notify(
         "成功",
-        saved ? "战斗已结束，记录已保存，可在昊天镜回放" : "战斗已结束",
+        saved
+          ? savedName
+            ? `战斗已结束，记录「${savedName}」已保存，可在昊天镜回放`
+            : "战斗已结束，记录已保存，可在昊天镜回放"
+          : "战斗已结束",
         "success",
       );
     } else {
@@ -666,8 +673,13 @@ const saveRecording = async () => {
     const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString());
     const saveKey = await battleSystem.saveBattleRecording(battleId);
     if (saveKey) {
-      battleLogManager.addSystemLog({ message: `战斗记录已保存: ${battleId}` });
-      notification.notify("成功", "战斗记录已保存到本地，可在昊天镜回放", "success");
+      const savedName = battleSystem.getBattleRecording(battleId)?.name;
+      battleLogManager.addSystemLog({ message: `战斗记录已保存: ${savedName ?? battleId}` });
+      notification.notify(
+        "成功",
+        savedName ? `战斗记录已保存「${savedName}」，可在昊天镜回放` : "战斗记录已保存到本地，可在昊天镜回放",
+        "success",
+      );
     } else {
       notification.notify("错误", "保存失败：未找到该战斗的录制数据", "error");
     }

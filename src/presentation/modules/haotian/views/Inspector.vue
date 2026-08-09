@@ -3,10 +3,11 @@
     <div class="ht-insp-hd">
       <div class="ht-insp-title">
         <span class="ht-insp-phase" :class="'ht-' + meta(ev).cls" :title="'阶段分类：' + meta(ev).label">{{ meta(ev).icon }}</span>
-        {{ ev.summary }}
+        <span class="ht-insp-main">{{ inspTitle }}</span>
       </div>
       <div class="ht-insp-kicker">
-        事件 {{ ev.id }} · {{ meta(ev).label }} · 关联 {{ ev.correlationId }} · 时间 {{ formatTime(ev.timestamp) }}
+        {{ meta(ev).label }} · 时间 {{ formatTime(ev.timestamp) }}
+        <span class="ht-insp-corr" :title="`事件 ${ev.id} · 因果链 ${ev.correlationId}`">{{ ev.summary }}</span>
       </div>
       <div class="ht-insp-actions">
         <Button title="切换到回放系统，并从该事件时间点开始播放" @click="playFromHere">从此回放</Button>
@@ -21,7 +22,8 @@
       </div>
       <div v-for="(m, i) in steps" :key="i" class="ht-frow">
         <span class="ht-fop" :class="opClass(m.op)">{{ m.op || '＝' }}</span>
-        <span class="ht-flab" :title="srcTitle(m.step.src)">{{ m.step.n }}</span>
+        <span class="ht-flab" @mouseenter="onStepEnter($event, m.step)" @mousemove="onStepMove"
+          @mouseleave="onStepLeave">{{ stepNameCN(m.step.n) }}</span>
         <span class="ht-fval" :class="valClass(m.op, m.step.v)">{{ fmtVal(m.op, m.step.v) }}</span>
         <span class="ht-facc">{{ fmtRunning(m.running) }}</span>
       </div>
@@ -158,6 +160,13 @@
     点击任意事件以检视底层数据<br />
     回放系统按时间序检视每一秒 · 调试系统按因果链审查每一次行动 —— 两者共享同一数据源
   </div>
+
+  <Teleport to="body">
+    <div v-if="stepTip.visible" class="ht-step-tip" :style="{ left: stepTip.x + 'px', top: stepTip.y + 'px' }">
+      <div class="ht-step-tip-title">{{ stepTip.title }}</div>
+      <div class="ht-step-tip-detail">{{ stepTip.detail }}</div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -169,6 +178,8 @@ import {
   accumulateSteps,
   describeSrc,
   fmtRunning,
+  roundStepVal,
+  stepNameCN,
   type StepAccum,
 } from '@/domain/battle/replay/unified/unified-steps'
 import { useHaotianStore } from '../stores/haotianStore'
@@ -192,6 +203,21 @@ const store = useHaotianStore()
 const ev = computed<UnifiedEvent | null>(() => store.selectedEvent)
 const meta = (e: UnifiedEvent) => PHASE_META[e.phase]
 const pl = computed<Record<string, unknown>>(() => (ev.value?.payload ?? {}) as Record<string, unknown>)
+
+/**
+ * 检视器主标题：action_execution 显示"名字 · 技能名"（从调试树节点解析，
+ * 真实录制技能名由 deriveDebugTree 从同链 damage/heal 推断），替换引擎占位 summary；
+ * 其余事件用自身 summary。
+ */
+const inspTitle = computed<string>(() => {
+  const e = ev.value
+  if (!e) return ''
+  if (e.phase === 'action_execution') {
+    const node = store.debugNodes.find((n) => n.action && n.events.some((x) => x.id === e.id))
+    if (node?.name) return node.name
+  }
+  return e.summary
+})
 
 // 高级区折叠态（载荷字段 / 因果链 / AI 候选 / 属性重算 / 子事件默认收起，减少信息轰炸）
 // NOTE: 折叠偏好按 localStorage 持久化，跨事件 / 跨会话记忆，避免每次展开期望的区
@@ -234,9 +260,25 @@ const steps = computed<StepAccum[]>(() => {
   return list ? accumulateSteps(list) : []
 })
 
-const srcTitle = (src: string): string => {
-  const hint = describeSrc(src)
-  return hint ? `${hint}（${src}）` : src
+// ── 结算步骤来源释义：跟随鼠标的自定义 tooltip（原生 title 对 src 为空的真实录制无提示） ──
+const stepTip = reactive({ visible: false, x: 0, y: 0, title: '', detail: '' })
+function onStepEnter(e: MouseEvent, step: CalcStep): void {
+  const hint = describeSrc(step.src)
+  stepTip.title = step.n
+  stepTip.detail = hint ? `${hint} · 来源 ${step.src}` : `来源 ${step.src || '未记录'}`
+  stepTip.visible = true
+  positionStepTip(e)
+}
+function onStepMove(e: MouseEvent): void {
+  if (stepTip.visible) positionStepTip(e)
+}
+function onStepLeave(): void {
+  stepTip.visible = false
+}
+function positionStepTip(e: MouseEvent): void {
+  const pad = 14
+  stepTip.x = Math.min(e.clientX + pad, window.innerWidth - 240)
+  stepTip.y = e.clientY + pad
 }
 
 const resultMismatch = computed(() => {
@@ -319,10 +361,13 @@ const rollName = (kind: string): string => ROLL_NAME[kind] ?? kind
 const opClass = (op: string): string => (op === '×' ? 'mul' : op === '−' ? 'sub' : 'add')
 const valClass = (op: string, v: number): string => (op === '×' ? 'mul' : op === '−' || v < 0 ? 'neg' : 'pos')
 const fmtVal = (op: string, v: number): string => {
-  if (op === '×') return `× ${v}`
-  if (op === '−') return `− ${Math.abs(v)}`
-  if (op === '+') return `+ ${v}`
-  return String(v)
+  // NOTE: 步骤值先 round 消除浮点尾差（extraValues 累加如 50.830000000000005），
+  //       与累计列 fmtRunning 同口径，避免一行 50.83 一行 50.830000000000005。
+  const r = roundStepVal(v)
+  if (op === '×') return `× ${r}`
+  if (op === '−') return `− ${Math.abs(r)}`
+  if (op === '+') return `+ ${r}`
+  return String(r)
 }
 
 const children = computed<UnifiedEvent[]>(() => {

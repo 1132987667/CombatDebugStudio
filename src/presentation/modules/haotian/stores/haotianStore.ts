@@ -163,6 +163,8 @@ export const useHaotianStore = defineStore('haotian', () => {
   const liveMode = ref(false)
   const liveFollowArmed = ref(false)
   const recordings = ref<RecordingMeta[]>([])
+  /** 当前已加载的录制 saveKey（CommandBar 下拉回显；非记录源加载时为空） */
+  const curRecordKey = ref('')
 
   const service = new UnifiedArchiveService()
 
@@ -239,6 +241,26 @@ export const useHaotianStore = defineStore('haotian', () => {
   })
   const isRelated = (id: string): boolean => relatedEventIds.value.has(id)
 
+  // ── 链内导航：选中事件的同 correlationId 事件（按时间排序，含根与全部子事件）──
+  const chainEvents = computed<UnifiedEvent[]>(() => {
+    const sel = selectedEvent.value
+    if (!sel) return []
+    return evs.value
+      .filter((e) => e.correlationId === sel.correlationId)
+      .sort((a, b) => a.timestamp - b.timestamp)
+  })
+
+  /** 在同链事件间移动：dir=1 后一条 / -1 前一条（链首尾循环到另一端） */
+  function stepInChain(dir: 1 | -1): void {
+    const list = chainEvents.value
+    const sel = selectedEvent.value
+    if (!sel || list.length < 2) return
+    const i = list.findIndex((e) => e.id === sel.id)
+    if (i < 0) return
+    const next = dir === 1 ? (i + 1) % list.length : (i - 1 + list.length) % list.length
+    selectEvent(list[next].id, { seek: true })
+  }
+
   // ───────────── 偏好持久化 ─────────────
 
   function persistPrefs(): void {
@@ -285,6 +307,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     simCheckpoints.value = buildSimCheckpoints(next, idx.evs)
     selectedId.value = null
     debugNodeId.value = null
+    curRecordKey.value = '' // 非记录源加载（demo/stress/live/导入）时无记录 key 可回显
     playback.value = { t: 0, playing: false, speed: playback.value.speed, follow: playback.value.follow, firedIdx: 0, last: 0 }
     if (opts.label !== undefined) {
       source.value = opts.label
@@ -315,11 +338,25 @@ export const useHaotianStore = defineStore('haotian', () => {
     }
   }
 
+  /** 删除一条已保存的录制（IndexedDB），删除后刷新列表；删除当前回显记录时清空回显 */
+  async function deleteRecording(battleSystem: BattleSystem, saveKey: string): Promise<void> {
+    await battleSystem.deleteBattleRecording(saveKey)
+    if (curRecordKey.value === saveKey) curRecordKey.value = ''
+    await refreshRecordings(battleSystem)
+  }
+
   /** 按 saveKey 加载指定录制 */
   async function loadRecording(battleSystem: BattleSystem, saveKey: string): Promise<void> {
     const arch = await service.loadRecording(battleSystem, saveKey)
-    if (arch) await loadArchive(arch, { label: '战斗记录' })
-    else toast('战斗记录加载失败')
+    if (arch) {
+      const meta = recordings.value.find((r) => r.saveKey === saveKey)
+      // 底部数据源显示所选录制的名称（词牌名），而非笼统的"战斗记录"
+      await loadArchive(arch, { label: meta?.name || '战斗记录' })
+      sourceKey.value = 'recordings'
+      curRecordKey.value = saveKey
+    } else {
+      toast('战斗记录加载失败')
+    }
   }
 
   async function loadStress(count = 2000): Promise<void> {
@@ -465,23 +502,32 @@ export const useHaotianStore = defineStore('haotian', () => {
 
   /** 顶部下拉数据源分发（CommandBar select 唯一入口；loader 内部回写 sourceKey 保证回显一致） */
   function setSourceKey(key: HaotianSourceKey): void {
-    if (key === sourceKey.value) return
     switch (key) {
       case 'demo':
+        if (key === sourceKey.value) return
         void loadDemo()
         break
       case 'stress':
+        if (key === sourceKey.value) return
         void loadStress()
         break
       case 'live':
+        if (key === sourceKey.value) return
         void attachLive()
         break
       case 'recordings': {
         const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
-        void refreshRecordings(battleSystem)
+        // 选中"战斗记录"即加载最新保存的记录（与 demo/stress/live 选中即生效一致）；
+        // 列表同步刷新，可在"选择记录…"下拉中切换其他记录
+        void (async () => {
+          await refreshRecordings(battleSystem)
+          const first = recordings.value[0]
+          if (first) await loadRecording(battleSystem, first.saveKey)
+        })()
         break
       }
       case '':
+        if (key === sourceKey.value) return
         stopLive()
         break
     }
@@ -663,21 +709,61 @@ export const useHaotianStore = defineStore('haotian', () => {
     selectEvent(id, opts)
   }
 
-  function syncHash(): void {
-    if (!archive.value) return
+  function syncHash(): string {
+    if (!archive.value) return ''
     let h = `#m=${mode.value}`
+    if (sourceKey.value) h += `&s=${sourceKey.value}`
+    h += `&b=${archive.value.battleId}`
     if (selectedId.value) h += `&e=${selectedId.value}`
     try {
       history.replaceState(null, '', h)
     } catch {
       /* hash 写入失败静默 */
     }
+    return h
   }
 
-  function applyDeepLink(): boolean {
+  /** 深链来源解析：`s`（demo/stress/live/recordings）+ 可选 `b`（battleId）。无来源段返回 '' */
+  function deeplinkSource(): HaotianSourceKey {
+    const ms = location.hash.match(/s=(demo|recordings|stress|live)/)
+    return (ms?.[1] as HaotianSourceKey) ?? ''
+  }
+
+  /**
+   * 应用深链 `#m=&s=&b=&e=`：
+   * - `m` 切模式；`e` 定位事件（需已加载存档）。
+   * - `s`/`b` 用于打开时加载对应来源的存档（demo/stress 直接载入；recordings 按 battleId
+   *   匹配已存录制加载），与当前存档不一致时才重载——`s` 缺失时沿用已加载存档。
+   * 返回 true 表示深链已定位到事件（调用方无需再灌演示存档）。
+   */
+  async function applyDeepLink(): Promise<boolean> {
     const mm = location.hash.match(/m=(replay|debug)/)
     const me = location.hash.match(/e=([\w]+)/)
     if (mm) setMode(mm[1] as HaotianMode, true)
+
+    const wantSource = deeplinkSource()
+    if (wantSource && wantSource !== sourceKey.value) {
+      switch (wantSource) {
+        case 'demo':
+          await loadDemo()
+          break
+        case 'stress':
+          await loadStress()
+          break
+        case 'live':
+          await attachLive()
+          break
+        case 'recordings': {
+          const mb = location.hash.match(/b=([\w-]+)/)
+          const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+          await refreshRecordings(battleSystem)
+          const rec = recordings.value.find((r) => r.battleId === mb?.[1])
+          if (rec) await loadRecording(battleSystem, rec.saveKey)
+          break
+        }
+      }
+    }
+
     if (me && me[1] && byId.value.has(me[1])) {
       selectEvent(me[1], { seek: true })
       return true
@@ -689,7 +775,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     const url = location.href.split('#')[0] + location.hash
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(url).then(
-        () => toast('深链已复制 — 含模式与事件定位'),
+        () => toast('深链已复制 — 含来源/战斗/模式/事件定位'),
         () => toast('深链复制失败'),
       )
     } else {
@@ -922,6 +1008,38 @@ export const useHaotianStore = defineStore('haotian', () => {
     }
   }
 
+  /** 导入统一存档 JSON 作为主视图（回放/调试双工作台）——与唤灵台战报弹窗「导出 JSON」联通；多场生成的文件为数组，导入第一场 */
+  async function loadArchiveFile(file: File): Promise<void> {
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text) as UnifiedArchive | UnifiedArchive[]
+      if (Array.isArray(parsed)) {
+        if (!parsed.length) {
+          toast('存档文件为空')
+          return
+        }
+        const first = parsed[0]
+        if (!Array.isArray(first?.events)) {
+          toast('存档文件格式不合法（缺少 events 事件流）')
+          return
+        }
+        await loadArchive(first, { label: '导入存档' })
+        toast(parsed.length > 1
+          ? `已导入存档 ${first.battleId}（文件含 ${parsed.length} 场，已导入第一场）`
+          : `已导入存档 ${first.battleId}，可在回放/调试工作台使用`)
+        return
+      }
+      if (!Array.isArray(parsed?.events)) {
+        toast('存档文件格式不合法（缺少 events 事件流）')
+        return
+      }
+      await loadArchive(parsed, { label: '导入存档' })
+      toast(`已导入存档 ${parsed.battleId}，可在回放/调试工作台使用`)
+    } catch {
+      toast('存档导入失败')
+    }
+  }
+
   /** 从已保存录制载入分支（分支对比） */
   async function loadBranchRecording(battleSystem: BattleSystem, saveKey: string): Promise<void> {
     const arch = await service.loadRecording(battleSystem, saveKey)
@@ -1051,6 +1169,8 @@ export const useHaotianStore = defineStore('haotian', () => {
     focusMode,
     toggleFocus,
     isRelated,
+    chainEvents,
+    stepInChain,
     toast,
     loadDemo,
     loadLatest,
@@ -1061,7 +1181,9 @@ export const useHaotianStore = defineStore('haotian', () => {
     liveFollowArmed,
     recordings,
     refreshRecordings,
+    deleteRecording,
     loadRecording,
+    curRecordKey,
     startLive,
     stopLive,
     armLiveFollow,
@@ -1077,6 +1199,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     applyDeepLink,
     copyDeepLink,
     exportArchive,
+    loadArchiveFile,
     exportSession,
     importSession,
     setMode,

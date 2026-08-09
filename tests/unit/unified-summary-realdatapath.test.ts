@@ -12,6 +12,8 @@ import type { RecordedBattle } from '@/domain/battle/service/BattleRecorder'
 import { TracePhase, TraceLevel, type TraceEvent } from '@/shared/types/trace-event'
 import type { UnifiedArchive } from '@/domain/battle/replay/unified/unified-archive'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
+import { buildArchiveIndices } from '@/domain/battle/replay/unified/unified-indices'
+import { deriveDebugTree } from '@/domain/battle/replay/unified/unified-debug-tree'
 import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
 import { ParticipantSide } from '@/domain/battle/type/types'
 
@@ -88,6 +90,48 @@ function buildRecording(): RecordedBattle {
     winner: ParticipantSide.ALLY,
   }
 }
+
+describe('真实录制路径 turn_flow 契约归一化（对抗：时间线无回合分组）', () => {
+  it('TURN_START/TURN_END 枚举值归一化为 start/end，deriveDebugTree 建出回合分组', () => {
+    // 真实发射端 BattleSystem 用 TurnFlowAction.TURN_START（值 'TURN_START'），
+    // 而 deriveDebugTree 按契约 'start' 建回合——不归一化则真实录制时间线
+    // 所有节点平铺顶层、无回合分组，与演示存档结构不一致（用户报告的现象）。
+    const rec: RecordedBattle = {
+      battleId: 'bt_turn',
+      replayId: 'rp_turn',
+      version: '2.0.0',
+      randomSeed: 'seed',
+      startTime: 0,
+      events: [],
+      rounds: [],
+      combatRecords: [],
+      initialState: {
+        participants: [
+          { id: 'a1', name: '剑客', team: ParticipantSide.ALLY, maxHealth: 100, currentHealth: 100, maxEnergy: 100, currentEnergy: 100 },
+          { id: 'e1', name: '史莱姆', team: ParticipantSide.ENEMY, maxHealth: 100, currentHealth: 100, maxEnergy: 100, currentEnergy: 100 },
+        ],
+      },
+      traceEvents: [
+        ev({ timestamp: 0, phase: TracePhase.BATTLE_LIFECYCLE, payload: { action: 'battle_start' }, summary: '开始' }),
+        ev({ timestamp: 100, phase: TracePhase.TURN_FLOW, turn: 1, payload: { action: 'TURN_START', turnOrder: ['a1'] }, summary: '回合 1 开始' }),
+        ev({ timestamp: 200, phase: TracePhase.ACTION_EXECUTION, sourceId: 'a1', targetId: 'e1', payload: { controlMode: 'ai' }, summary: 'a1 行动' }),
+        ev({ timestamp: 300, phase: TracePhase.TURN_FLOW, turn: 1, payload: { action: 'TURN_END' }, summary: '回合 1 结束' }),
+        ev({ timestamp: 400, phase: TracePhase.BATTLE_LIFECYCLE, payload: { action: 'battle_end' }, summary: '结束' }),
+      ],
+      winner: ParticipantSide.ALLY,
+    }
+    const arch = fromRecordedBattle(rec)!
+    const idx = buildArchiveIndices(arch)
+    const entries = deriveDebugTree(idx.evs, idx.byId, (id: string) => id)
+    const rounds = entries.filter((e) => e.kind === 'round')
+    expect(rounds).toHaveLength(1)
+    const r1 = rounds[0]
+    if (r1.kind !== 'round') throw new Error('expected round')
+    expect(r1.nodes.some((n) => n.action)).toBe(true)
+    // 行动节点归入回合内而非顶层平铺
+    expect(entries.filter((e) => e.kind !== 'round' && (e as { action?: boolean }).action)).toHaveLength(0)
+  })
+})
 
 describe('真实录制路径战报统计（对抗评审修复回归）', () => {
   const archive = fromRecordedBattle(buildRecording())!

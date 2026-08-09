@@ -19,8 +19,8 @@
       <span class="t-select__value" :class="{ 'is-placeholder': !selected }">
         <template v-if="selected">
           <span v-if="selected.icon" class="t-select__value-icon">{{ selected.icon }}</span>
-          <span class="t-select__value-label">{{ selected.label }}</span>
-          <span v-if="selected.hint" class="t-select__value-hint">{{ selected.hint }}</span>
+          <span class="t-select__value-label" :title="selected.label">{{ selected.label }}</span>
+          <span v-if="selected.hint" class="t-select__value-hint" :title="selected.hint">{{ selected.hint }}</span>
         </template>
         <template v-else>{{ placeholder }}</template>
       </span>
@@ -416,7 +416,7 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
 .t-select {
   position: relative;
   display: inline-flex;
-  width: 8rem;
+  width: 10rem;
   font-family: var(--font-family-base);
   --accent: var(--color-energy);
   --accent-rgb: var(--rgb-energy);
@@ -519,6 +519,8 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
 }
 
 .t-select__value-label {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -530,6 +532,10 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
 
 .t-select__value-hint {
   flex-shrink: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--color-text-tertiary);
 }
 
@@ -793,6 +799,10 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
 
 .t-select__option-hint {
   flex-shrink: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--color-text-tertiary);
 }
 

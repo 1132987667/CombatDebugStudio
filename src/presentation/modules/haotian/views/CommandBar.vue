@@ -37,14 +37,12 @@
       </div>
     </div>
 
-    <!-- 加载：数据源 -->
+    <!-- 加载：数据源 / 战斗记录（记录直接列在下拉中，展开自动刷新） -->
     <div class="ht-cmd-group">
-      <TacticalSelect :model-value="store.sourceKey" size="md" :options="sourceOptions"
-        title="数据源：演示存档 / 战斗记录 / 压测合成 / 实时战斗"
-        @update:model-value="onSourceChange" />
-      <TacticalSelect v-if="store.sourceKey === 'recordings'" v-model="recKey" size="md" searchable
-        placeholder="选择记录…" :options="recOptions"
-        title="选择已保存到本地的战斗记录（唤灵台「保存战斗记录」）" />
+      <TacticalSelect :model-value="pickVal" size="md" searchable :options="combinedOptions"
+        placeholder="选择战斗记录"
+        title="数据源：演示存档 / 压测合成 / 实时战斗；下方列出唤灵台保存的词牌名战斗记录"
+        @visible-change="onPickOpen" @update:model-value="onPick" />
     </div>
 
     <!-- 分析：断点 / 对比 / 摘要 / 书签 -->
@@ -57,8 +55,11 @@
       </Button>
     </div>
 
-    <!-- 运维：导出 / 会话 / 深链 -->
+    <!-- 运维：记录管理 / 导入 / 导出 / 会话 / 深链 -->
     <div class="ht-cmd-group">
+      <Button title="管理 IndexedDB 中已保存的战斗记录（查看 / 刷新 / 删除）" @click="recMgrOpen = true">记录管理</Button>
+      <Button title="导入统一存档 JSON（唤灵台战报「导出 JSON」的完整存档，回放/调试双工作台可用）"
+        @click="archiveInput?.click()">导入存档</Button>
       <Button variant="energy" title="导出统一存档 JSON（一份文件，回放与调试两种能力）" @click="store.exportArchive()">导出存档</Button>
       <Button :active="opsOpen" title="导出/导入调试会话、复制事件定位链接" @click="opsOpen = !opsOpen">会话 ▾</Button>
       <div v-if="opsOpen" class="ht-ops-pop">
@@ -74,10 +75,12 @@
       </div>
     </div>
 
+    <input ref="archiveInput" type="file" accept="application/json" hidden @change="onArchiveFile" />
     <input ref="sessionInput" type="file" accept="application/json" hidden @change="onSessionFile" />
     <BreakpointDialog v-model:open="store.bpOpen" />
     <DiffDialog v-model:open="store.diffOpen" />
     <SummaryDialog v-model:open="store.sumOpen" />
+    <RecordManagerDialog v-model="recMgrOpen" />
   </div>
 </template>
 
@@ -91,17 +94,20 @@ import type { TracePhase } from '@/shared/types/trace-event'
 import BreakpointDialog from '../components/BreakpointDialog.vue'
 import Button from '@/presentation/components/Button.vue'
 import DiffDialog from '../components/DiffDialog.vue'
+import RecordManagerDialog from '../components/RecordManagerDialog.vue'
 import SummaryDialog from '../components/SummaryDialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import { useHaotianStore, type HaotianSourceKey } from '../stores/haotianStore'
 
 const store = useHaotianStore()
 
-const recKey = ref('')
+const pickVal = ref<string | number>('')
 const hintOpen = ref(false)
 const legendOpen = ref(false)
 const opsOpen = ref(false)
 const sessionInput = ref<HTMLInputElement | null>(null)
+const archiveInput = ref<HTMLInputElement | null>(null)
+const recMgrOpen = ref(false)
 
 /** 快捷键 / 图例弹层互斥，避免同侧两个 popover 叠放 */
 function toggleHint(): void {
@@ -142,6 +148,7 @@ const hintRows: Array<{ keys: string; desc: string }> = [
   { keys: '1 / 2', desc: '切换回放 / 调试工作台' },
   { keys: '空格', desc: '回放：播放/暂停 · 调试：下一事件' },
   { keys: '← / →', desc: '上一 / 下一事件' },
+  { keys: '[ / ]', desc: '链内上一 / 下一事件（同一次行动）' },
   { keys: '↑ / ↓', desc: '调试卡片导航' },
   { keys: 'F', desc: '播放时跟随事件流' },
   { keys: 'B', desc: '断点配置' },
@@ -170,29 +177,46 @@ const resolveBattleSystem = (): BattleSystem => container.resolve<BattleSystem>(
 
 const fmtTime = (t: number): string => (t ? new Date(t).toLocaleString() : '—')
 
-const sourceOptions: TSelectOption[] = [
-  { value: '', label: '选择数据源…' },
-  { value: 'demo', label: '演示存档' },
-  { value: 'recordings', label: '战斗记录' },
-  { value: 'stress', label: '压测 · 2000+ 事件' },
-  { value: 'live', label: '实时战斗' },
-]
+/** 数据源 + 已保存战斗记录合并下拉：记录分组展示，展开时自动刷新 */
+const combinedOptions = computed<TSelectOption[]>(() => [
+  { value: 'demo', label: '演示存档', group: '数据源' },
+  { value: 'recordings', label: '战斗记录', group: '数据源' },
+  { value: 'stress', label: '压测 · 2000+ 事件', group: '数据源' },
+  { value: 'live', label: '实时战斗', group: '数据源' },
+  ...store.recordings.map((r) => ({
+    value: r.saveKey,
+    label: r.name,
+    hint: `${fmtTime(r.startTime)} · ${r.eventCount} 事件`,
+    group: '已保存的战斗记录',
+  })),
+])
 
-const recOptions = computed<TSelectOption[]>(() =>
-  store.recordings.map((r) => ({ value: r.saveKey, label: `${r.name} · ${fmtTime(r.startTime)} · ${r.eventCount} 事件` })),
-)
-
-/** 顶部数据源下拉：分发到 store 统一入口（空态 CTA 加载后回显一致，R3） */
-function onSourceChange(v: string | number | null): void {
-  const key = String(v ?? '') as HaotianSourceKey
-  if (key === 'recordings') recKey.value = ''
-  store.setSourceKey(key)
+/** 数据源或记录选中分发：数据源类型走 store.setSourceKey，记录 saveKey 直接加载 */
+function onPick(v: string | number | null): void {
+  const key = String(v ?? '')
+  if (!key) return
+  pickVal.value = key
+  if (key === 'demo' || key === 'recordings' || key === 'stress' || key === 'live') {
+    store.setSourceKey(key as HaotianSourceKey)
+  } else {
+    void store.loadRecording(resolveBattleSystem(), key)
+  }
 }
 
-watch(recKey, async (key) => {
-  if (!key) return
-  await store.loadRecording(resolveBattleSystem(), key)
-})
+/** 下拉展开时刷新记录列表：唤灵台刚保存的记录切回昊天镜即可见 */
+function onPickOpen(open: boolean): void {
+  if (open) void store.refreshRecordings(resolveBattleSystem())
+}
+
+/** 下拉回显：store 状态（空态 CTA 加载 / 记录加载 / 记录管理删除）变化同步到选中项 */
+watch(
+  () => [store.sourceKey, store.curRecordKey] as const,
+  ([sk, key]) => {
+    if (sk === 'recordings' && key) pickVal.value = key
+    else if (sk === 'recordings' || sk === 'demo' || sk === 'stress' || sk === 'live') pickVal.value = sk
+    else pickVal.value = ''
+  },
+)
 
 // 实时流收尾（battle_end）后保留最终存档，用户可继续回放；切换档案源即触发 stopLive
 
@@ -201,6 +225,14 @@ async function onSessionFile(e: Event): Promise<void> {
   const file = input.files?.[0]
   if (!file) return
   await store.importSession(file)
+  input.value = ''
+}
+
+async function onArchiveFile(e: Event): Promise<void> {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  await store.loadArchiveFile(file)
   input.value = ''
 }
 </script>

@@ -61,12 +61,13 @@ export class TraceDamageLogger {
           targetId: record.targetId,
           level: TraceLevel.DEBUG,
           summary:
-            `伤害计算 ${source}→${target} ${breakdown.baseDamage}→${final}` +
+            `伤害计算 ${source}→${target} 最终伤害 ${final}` +
             `${breakdown.isCritical ? ' ★暴击' : ''}`,
           payload: {
             sourceId: record.actorId,
             targetId: record.targetId,
             skillName: record.skillName,
+            skillType: record.skillType,
             base: breakdown.baseDamage,
             raw: breakdown.rawDamage ?? breakdown.postCritDamage,
             final,

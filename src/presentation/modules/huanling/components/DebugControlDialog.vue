@@ -81,7 +81,7 @@ const battleStore = useBattleStore()
 // ==================== 战斗数据生成 ====================
 // NOTE: 战术下拉 v-model 值为 string | number | null，故放宽为 string；调用处按已知选项断言
 const genMode = ref<string>('random')
-const genFormat = ref<'txt' | 'html' | 'record'>('txt')
+const genFormat = ref<'txt' | 'html' | 'record' | 'json'>('txt')
 const genCount = ref(50)
 const modeOptions = [
   { value: '1v1' as const, label: '1v1' },
@@ -91,6 +91,7 @@ const modeOptions = [
 const formatOptions = [
   { value: 'txt' as const, label: 'TXT' },
   { value: 'html' as const, label: 'HTML' },
+  { value: 'json' as const, label: 'JSON' },
   { value: 'record' as const, label: '记录' },
 ]
 const impactStyles = [

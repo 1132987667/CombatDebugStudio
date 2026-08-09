@@ -107,7 +107,15 @@ export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): Unif
       const actorName = attacker === 'u1' ? p1.name : p2.name
       const actionId = nextId()
 
-      // 行动事件（因果链根，无 parentId）
+      // 行动事件（因果链根，无 parentId）；技能行动携带 actionType+energyCost，供行动卡片头部展示
+      const isAttack = skill === '普通攻击'
+      const actionPayload: Record<string, unknown> = {
+        skill,
+        hits: 1,
+        controlMode: rng() < 0.5 ? 'player' : 'ai',
+        actionType: isAttack ? 'attack' : 'skill',
+      }
+      if (!isAttack) actionPayload.energyCost = 20 + Math.floor(rng() * 31)
       push({
         id: actionId,
         phase: 'action_execution',
@@ -116,7 +124,7 @@ export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): Unif
         level: 'info',
         sourceId: attacker,
         targetId: defender,
-        payload: { skill, hits: 1, controlMode: rng() < 0.5 ? 'player' : 'ai' },
+        payload: actionPayload,
         summary: `${actorName} 使用 [${skill}] → ${defender === 'u1' ? p1.name : p2.name}`,
       })
       ts += 30

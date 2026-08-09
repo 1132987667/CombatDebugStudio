@@ -22,14 +22,14 @@
             :title="`${ev.summary}（点击定位，右键切换书签）`"
             role="button" tabindex="0"
             :aria-label="`${formatTime(ev.timestamp)} · ${ev.summary}${store.isBookmarked(ev.id) ? ' · 已书签' : ''}`"
-            :class="[sepClass(ev), rootClass(ev), { past: isPast(ev), cur: isCur(ev), sel: ev.id === store.selectedId, bm: store.isBookmarked(ev.id), dim: isDim(ev.id) }]"
+            :class="[sepClass(ev), rootClass(ev), { past: isPast(ev), cur: isCur(ev), sel: ev.id === store.selectedId, bm: store.isBookmarked(ev.id), dim: isDim(ev.id), chain: isChain(ev.id) }]"
             @click="store.focusEvent(ev.id, { seek: true, fx: true })"
             @keydown.enter.prevent="store.focusEvent(ev.id, { seek: true, fx: true })"
             @keydown.space.prevent="store.focusEvent(ev.id, { seek: true, fx: true })"
             @contextmenu.prevent="store.toggleBookmark(ev.id)">
             <span class="ht-s-time">{{ formatTime(ev.timestamp) }}</span>
             <span class="ht-s-ico" :class="'ht-' + meta(ev).cls">{{ meta(ev).icon }}</span>
-            <span class="ht-s-sum">{{ ev.summary }}</span>
+            <span class="ht-s-sum" :title="ev.summary">{{ rowTitle(ev) }}</span>
             <span v-if="meta(ev).debugOnly" class="ht-s-dbg">调试</span>
             <button type="button" class="ht-bm-btn" :class="{ on: store.isBookmarked(ev.id) }"
               :title="store.isBookmarked(ev.id) ? '移除书签' : '添加书签'"
@@ -66,11 +66,25 @@ const { scrollRef, onScroll, updateView, remeasure, measure, offsetOf, totalHeig
   })
 
 const meta = (ev: UnifiedEvent) => PHASE_META[ev.phase]
+/**
+ * 事件流行标题：action_execution 显示"名字 · 技能名"（从调试树节点解析，真实录制
+ * 技能名由 deriveDebugTree 从同链 damage/heal 推断），替换引擎占位 summary"X 执行行动"；
+ * 其余事件用自身 summary。原始 summary 保留在 title 悬浮提示中。
+ */
+function rowTitle(ev: UnifiedEvent): string {
+  if (ev.phase === 'action_execution') {
+    const node = store.debugNodes.find((n) => n.action && n.events.some((x) => x.id === ev.id))
+    if (node?.name) return node.name
+  }
+  return ev.summary
+}
 const isPast = (ev: UnifiedEvent): boolean => ev.timestamp <= store.playback.t
 const isCur = (ev: UnifiedEvent): boolean => store.lastEvent?.id === ev.id
 const sepClass = (ev: UnifiedEvent): Record<string, boolean> => ({ sep: ev.phase === 'turn_flow' })
 const rootClass = (ev: UnifiedEvent): Record<string, boolean> => ({ root: ev.phase === 'battle_lifecycle' })
 const isDim = (id: string): boolean => store.focusMode && !!store.selectedEvent && !store.isRelated(id)
+/** 当前选中事件的同 correlationId 事件（链导航标记：一次行动的完整链路高亮） */
+const isChain = (id: string): boolean => !!store.selectedEvent && store.chainEvents.some((c) => c.id === id)
 
 const shownCount = computed(() => store.filteredEvents.length)
 

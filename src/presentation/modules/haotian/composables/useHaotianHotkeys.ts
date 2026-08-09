@@ -20,6 +20,8 @@ export interface HaotianHotkeyContext {
   closeDiag: () => void
   /** 调试卡片导航：当前选中 id，dir=1 下移 / -1 上移，返回目标 id 或 null */
   navCards: (dir: 1 | -1) => string | null
+  /** 同链事件导航：dir=1 后一条 / -1 前一条（一次行动的完整链路内跳转） */
+  stepInChain: (dir: 1 | -1) => void
   selectEvent: (id: string, opts?: { seek?: boolean; fx?: boolean }) => void
   /** B 打开断点配置 */
   openBreakpoint: () => void
@@ -77,6 +79,12 @@ export function useHaotianHotkeys(ctx: HaotianHotkeyContext): void {
     } else if (e.key === 'k' || e.key === 'K') {
       e.preventDefault()
       ctx.toggleBookmarkPanel()
+    } else if (e.key === '[') {
+      e.preventDefault()
+      ctx.stepInChain(-1)
+    } else if (e.key === ']') {
+      e.preventDefault()
+      ctx.stepInChain(1)
     } else if (e.key === 'Escape') {
       ctx.closeDiag()
     }

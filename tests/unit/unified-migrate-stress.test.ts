@@ -9,7 +9,7 @@ import { validateUnified, type ValidationResult } from '@/domain/battle/replay/u
 import { buildArchiveIndices } from '@/domain/battle/replay/unified/unified-indices'
 import { deriveDebugTree, allNodesFlat } from '@/domain/battle/replay/unified/unified-debug-tree'
 import { createDemoArchive } from '@/domain/battle/replay/unified/demo-archive'
-import { diffArchives, createRateVariant, diffSummary } from '@/domain/battle/replay/unified/unified-diff'
+import { diffArchives, createRateVariant, createRollVariant, diffSummary } from '@/domain/battle/replay/unified/unified-diff'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
 
 /** v0.9 旧格式日志（file2 RAW_LOG 缩影） */
@@ -146,7 +146,7 @@ describe('diffArchives（分支对比）', () => {
     const changed = rows.filter((r) => r.changed)
     expect(changed).toHaveLength(1)
     expect(changed[0].eventId).toBe('ev05')
-    expect(changed[0].fields.some((f) => f.kind === 'roll' && f.before === '阈值 0.25' && f.after === '阈值 0.3')).toBe(true)
+    expect(changed[0].fields.some((f) => f.kind === 'roll' && f.before === '阈值 0.25 / 随机 0.12' && f.after === '阈值 0.3 / 随机 0.12')).toBe(true)
 
     const stats = diffSummary(rows)
     expect(stats.changed).toBe(1)
@@ -164,6 +164,21 @@ describe('diffArchives（分支对比）', () => {
     const extra = rows.filter((r) => r.side === 'branch-only')
     expect(extra).toHaveLength(1)
     expect(extra[0].eventId).toBe('ev_extra')
+  })
+
+  it('createRollVariant：改写判定 roll 生成分支，diff 标注随机值变化', () => {
+    const base = createDemoArchive()
+    // ev05 第 1 个判定（hit，roll 0.642）改为 0.9
+    const branch = createRollVariant(base, 'ev05', 0, 0.9)
+    const rows = diffArchives(base, branch)
+
+    const changed = rows.filter((r) => r.changed)
+    expect(changed).toHaveLength(1)
+    expect(changed[0].eventId).toBe('ev05')
+    expect(changed[0].fields.some((f) => f.kind === 'roll' && f.before === '阈值 0.875 / 随机 0.642' && f.after === '阈值 0.875 / 随机 0.9')).toBe(true)
+    // 原存档不被污染
+    const baseRolls = (base.events.find((e) => e.id === 'ev05')!.payload as { rolls: Array<{ roll: number }> }).rolls
+    expect(baseRolls[0].roll).toBe(0.642)
   })
 })
 
@@ -244,6 +259,44 @@ describe('fromRecordedBattle（录制映射）', () => {
     expect(steps[1]).toEqual({ n: '攻击力', op: '+', v: 220, src: 'system' })
     // HP 快照：1500 - 420 = 1080
     expect(dmg.snapshot?.participants[0]).toEqual({ id: 'u2', hp: 1080 })
+    expect(validateUnified(arch).errors).toEqual([])
+  })
+
+  it('HP 累减 clamp：治疗不超过 maxHp（过量治疗），伤害不低于 0', () => {
+    // 问题 4：录制路径 HP 累减此前未 clamp 上限，治疗会突破 maxHp（回放气血虚高）
+    const rec = {
+      battleId: 'bt-clamp',
+      replayId: 'rp-1',
+      version: '2.0.0',
+      randomSeed: '1',
+      startTime: 0,
+      initialState: {
+        participants: [
+          { id: 'u1', name: '医者', team: 'ally', maxHealth: 100, currentHealth: 60, maxEnergy: 100, currentEnergy: 50 },
+        ],
+      },
+      events: [],
+      rounds: [],
+      combatRecords: [],
+      traceEvents: [
+        {
+          id: 'h1', phase: 'heal_calculation', correlationId: 'c1', timestamp: 100, level: 'debug', sourceId: 'u1', targetId: 'u1',
+          payload: { final: 999 }, summary: '治疗 999',
+        },
+        {
+          id: 'd1', phase: 'damage_calculation', correlationId: 'c2', timestamp: 200, level: 'debug', sourceId: 'u1', targetId: 'u1',
+          payload: { final: 50 }, summary: '受伤 50',
+        },
+      ],
+    } as unknown as Parameters<typeof fromRecordedBattle>[0]
+
+    const arch = fromRecordedBattle(rec)!
+    const heal = arch.events[1]
+    const dmg = arch.events[2]
+    // 治疗 999 被 clamp 到 maxHp=100，而非 60+999=1059
+    expect(heal.snapshot?.participants[0]).toEqual({ id: 'u1', hp: 100 })
+    // 后续伤害从 clamp 后的 100 起算：100 - 50 = 50
+    expect(dmg.snapshot?.participants[0]).toEqual({ id: 'u1', hp: 50 })
     expect(validateUnified(arch).errors).toEqual([])
   })
 

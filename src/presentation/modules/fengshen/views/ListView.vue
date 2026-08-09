@@ -41,6 +41,8 @@
       <Button variant="primary" size="small" @click="store.openCreate">＋ 新增{{ schema.label }}</Button>
       <Button size="small" title="复制选中数据为模板" :disabled="!store.selectedIds.length"
         @click="duplicateFirst">复制为模板</Button>
+      <Button size="small" title="批量修改选中记录的同一字段" :disabled="!store.selectedIds.length"
+        @click="batchDialogOpen = true">批量编辑</Button>
       <Button v-if="store.selectedIds.length" variant="danger" size="small" @click="requestRemoveSelected">删除所选（{{
         store.selectedIds.length }}）</Button>
     </div>
@@ -73,7 +75,11 @@
     </div>
 
     <EntityDrawer :open="store.drawerOpen" :schema="schema" :entity="store.editingEntity" :is-new="store.isNew"
-      :errors="store.formErrors" :load-options="store.loadOptions" @save="onSave" @close="store.closeDrawer" />
+      :errors="store.formErrors" :load-options="store.loadOptions" @save="onSave" @close="store.closeDrawer"
+      @validate="store.validateEntity" />
+
+    <BatchEditDialog :open="batchDialogOpen" :schema="schema" :count="store.selectedIds.length"
+      :load-options="store.loadOptions" @close="batchDialogOpen = false" @apply="onBatchApply" />
 
     <!-- 危险操作二次确认 + 统一提示 -->
     <ConfirmDialog v-model="confirmRemove" :title="`删除${schema.label}`" :message="removeMessage"
@@ -89,6 +95,7 @@ import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshen
 import DataTable from '@/presentation/modules/fengshen/components/DataTable.vue'
 import Button from '@/presentation/components/Button.vue'
 import EntityDrawer from '@/presentation/modules/fengshen/components/EntityDrawer.vue'
+import BatchEditDialog from '@/presentation/modules/fengshen/components/BatchEditDialog.vue'
 import EntityDetailPanel from '@/presentation/modules/fengshen/components/EntityDetailPanel.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
@@ -139,18 +146,13 @@ const tableHint = computed(() => {
     elements: '阵营元素定义 · 克制矩阵驱动伤害修正',
     growth: '每级属性增量 · 经验表',
     drops: '物品组 + 概率 · 供敌人引用',
-    params: '伤害倍率 / 暴击概率 / Buff 上限',
   }
   return hints[store.currentTable] ?? ''
 })
 
-/** 客户端过滤：name 搜索 + select 精确 + range 范围（搜索与筛选同节奏，输入即见） */
+/** 客户端过滤：select 精确 + range 范围（搜索已在 API 层按 name/id + searchable 字段过滤，此处仅叠加列级筛选） */
 const filteredRows = computed(() => {
   let rows = store.rows
-  if (store.search) {
-    const kw = store.search.toLowerCase()
-    rows = rows.filter((r) => String(r.name ?? r.id ?? '').toLowerCase().includes(kw))
-  }
   for (const f of schema.value.filters ?? []) {
     if (f.type === 'select') {
       const v = filterState[f.key]
@@ -165,6 +167,16 @@ const filteredRows = computed(() => {
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / PAGE_SIZE)))
+
+// 搜索输入防抖后下沉 API 层过滤（IDB 本地读取，往返开销小）
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(() => store.search, () => {
+  page.value = 1
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    void store.refreshList()
+  }, 250)
+})
 
 // 过滤条件（搜索/筛选）变化导致结果收缩时，当前页可能超出范围——自动回到有效页
 watch(totalPages, (total) => {
@@ -255,6 +267,22 @@ async function onSave(): Promise<void> {
   const ok = await store.save()
   if (ok) {
     notification.notify('已保存', `已保存「${name}」 · 数据版本 v${store.dataVersion}`, 'success')
+  }
+}
+
+/** 批量编辑弹窗 */
+const batchDialogOpen = ref(false)
+
+/** 批量应用字段值：成功通知 + 失败列出 ID */
+async function onBatchApply(field: string, value: unknown): Promise<void> {
+  const fieldLabel = schema.value.fields.find((f) => f.key === field)?.label ?? field
+  const result = await store.batchUpdate(field, value)
+  batchDialogOpen.value = false
+  if (result.ok > 0) {
+    notification.notify('批量已保存', `已更新 ${result.ok} 条「${fieldLabel}」 · 数据版本 v${store.dataVersion}`, 'success')
+  }
+  if (result.failed.length) {
+    notification.notify('批量部分失败', `${result.failed.length} 条未通过校验：${result.failed.join(', ')}`, 'error')
   }
 }
 

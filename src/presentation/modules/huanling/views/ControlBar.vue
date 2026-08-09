@@ -11,11 +11,12 @@
 
     <div class="control-group">
       <Button @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</Button>
-      <!-- 暂停/继续按钮 -->
-      <Button @click="$emit('toggle-pause')" :disabled="!isBattleActive">
+      <!-- 暂停/继续按钮（仅自动战斗模式可用；手动模式战斗本就暂停，点它会进入"激活但静止"中间态） -->
+      <Button @click="$emit('toggle-pause')" :disabled="!isBattleActive || !isAutoPlaying">
         {{ isPaused ? '继 续' : '暂 停' }}
       </Button>
       <Button @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</Button>
+      <Button @click="$emit('manual-turn')" :disabled="!isBattleActive || isAutoPlaying">手动单回合</Button>
       <Button @click="$emit('reset-battle')"
         :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</Button>
 
@@ -88,6 +89,7 @@ const emit = defineEmits<{
   "reset-battle": [];
   "toggle-pause": [];
   "toggle-auto-play": [];
+  "manual-turn": [];
   "battle-speed-change": [speed: number];
 }>();
 
@@ -104,14 +106,12 @@ const handleAutoPlayModeChange = (mode: string) => {
   emit('toggle-auto-play');
 };
 
-// 战斗速度控制 - 使用传入的 props.battleSpeed
-const speedLevels = [1, 2, 3, 5]; // 支持1倍、2倍、3倍、5倍四个速度档位
-
-// 切换战斗速度
+// 战斗速度控制 - 档位来自领域层 availableSpeeds（含 0.5×，与规则对话框 SpeedSelector 一致）
 const toggleBattleSpeed = () => {
-  const currentIndex = speedLevels.indexOf(props.battleSpeed ?? 1);
-  const nextIndex = (currentIndex + 1) % speedLevels.length;
-  emit('battle-speed-change', speedLevels[nextIndex]);
+  const levels = store.availableSpeeds
+  const currentIndex = levels.indexOf(props.battleSpeed ?? 1)
+  const nextIndex = (currentIndex + 1 + levels.length) % levels.length
+  emit('battle-speed-change', levels[nextIndex]);
 };
 
 

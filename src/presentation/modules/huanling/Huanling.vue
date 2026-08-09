@@ -13,9 +13,9 @@
     </div>
 
     <!-- 错误提示 -->
-    <div v-if="battleStore.error.hasError" class="error-toast" role="alert" @click="battleStore.clearError()">
+    <div v-if="battleStore.error.hasError" class="error-toast" role="alert">
       <span class="error-message">{{ battleStore.error.message }}</span>
-      <button class="error-close" aria-label="关闭错误提示">&times;</button>
+      <button class="error-close" aria-label="关闭错误提示" @click="battleStore.clearError()">&times;</button>
     </div>
 
     <!-- 三栏主布局（panel-left / panel-center / panel-right 由 _layout.scss 的 main-layout grid 排布） -->
@@ -50,7 +50,8 @@
     <!-- 底部控制栏（唤灵台专属） -->
     <ControlBar :is-battle-active="battleStore.isBattleActive" :is-auto-playing="battleStore.autoPlayMode"
       :is-paused="battleStore.isPaused" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
-      @end-battle="endBattle" @reset-battle="requestResetBattle" @toggle-auto-play="toggleAutoPlay"
+      @end-battle="endBattle" @reset-battle="requestResetBattle" @toggle-pause="togglePause"
+      @toggle-auto-play="toggleAutoPlay" @manual-turn="manualTurn"
       @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 重置战斗二次确认 -->
@@ -110,65 +111,39 @@ const handleDebugAction = async (action: string) => {
   console.log('Debug action:', action)
   switch (action) {
     case 'win_battle':
-      battleLogManager.addSystemLog({
-        message: '调试: 立即胜利',
-      })
+      await battleStore.endBattle(ParticipantSide.ALLY)
+      battleLogManager.addSystemLog({ message: '调试: 立即胜利' })
       break
     case 'lose_battle':
-      battleLogManager.addSystemLog({
-        message: '调试: 立即失败',
-      })
-      break
-    case 'skip_turn':
-      battleLogManager.addSystemLog({
-        message: '调试: 跳过回合',
-      })
+      await battleStore.endBattle(ParticipantSide.ENEMY)
+      battleLogManager.addSystemLog({ message: '调试: 立即失败' })
       break
     case 'end_battle':
-      battleLogManager.addSystemLog({
-        message: '调试: 强制结束战斗',
-      })
+      await battleStore.endBattle(getLeadingSide())
+      battleLogManager.addSystemLog({ message: '调试: 强制结束战斗' })
       break
     case 'full_health':
-      battleLogManager.addSystemLog({
-        message: '调试: 满血',
-      })
+      for (const p of getAllParticipants()) p.currentHealth = p.maxHealth
+      battleStore.syncTeams()
+      battleLogManager.addSystemLog({ message: '调试: 满血' })
       break
     case 'full_energy':
-      battleLogManager.addSystemLog({
-        message: '调试: 满能量',
-      })
+      for (const p of getAllParticipants()) p.currentEnergy = p.maxEnergy
+      battleStore.syncTeams()
+      battleLogManager.addSystemLog({ message: '调试: 满能量' })
       break
-    case 'kill_selected':
-      battleLogManager.addSystemLog({
-        message: '调试: 杀死选中',
-      })
+    case 'kill_selected': {
+      const selectedId = battleStore.selectedCharacterId
+      const target = selectedId ? getAllParticipants().find(p => p.id === selectedId) : undefined
+      if (target) {
+        target.currentHealth = 0
+        battleStore.syncTeams()
+        battleLogManager.addSystemLog({ message: `调试: 已杀死 [${selectedId}]` })
+      } else {
+        battleLogManager.addSystemLog({ message: '调试: 未选中角色' })
+      }
       break
-    case 'max_skill_cd':
-      battleLogManager.addSystemLog({
-        message: '调试: 满技能CD',
-      })
-      break
-    case 'force_crit':
-      battleLogManager.addSystemLog({
-        message: '调试: 触发暴击',
-      })
-      break
-    case 'force_dodge':
-      battleLogManager.addSystemLog({
-        message: '调试: 触发闪避',
-      })
-      break
-    case 'force_block':
-      battleLogManager.addSystemLog({
-        message: '调试: 触发格挡',
-      })
-      break
-    case 'add_buff':
-      battleLogManager.addSystemLog({
-        message: '调试: 添加Buff',
-      })
-      break
+    }
     case 'dump_logs':
       console.log('Current logs:', battleLogManager.getAllLogs())
       battleLogManager.addSystemLog({
@@ -176,19 +151,13 @@ const handleDebugAction = async (action: string) => {
       })
       break
     case 'export_state':
-      battleLogManager.addSystemLog({
-        message: '调试: 导出状态',
-      })
+      await battleStore.exportState(battleStore.currentTurn)
       break
     case 'import_state':
-      battleLogManager.addSystemLog({
-        message: '调试: 导入状态',
-      })
+      await battleStore.importState()
       break
     case 'reset_battle':
-      battleLogManager.addSystemLog({
-        message: '调试: 重置战斗',
-      })
+      await battleStore.resetBattle()
       break
     case 'reload_buffs': {
       const loader = container.resolve<BuffScriptLoader>('BuffScriptLoader')
@@ -284,7 +253,30 @@ const handleDebugAction = async (action: string) => {
 };
 
 const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
-const savedScenes = ref<string[]>([]);
+
+// ==================== 场景管理（localStorage 持久化） ====================
+const SCENE_STORAGE_KEY = 'huanling.scenes.v1'
+/** 场景名列表（UI 下拉展示；内容实体在 sceneStorage 中） */
+const savedScenes = ref<string[]>([])
+/** 场景内容：名称 → { 我方/敌方角色 id 快照 } */
+const sceneStorage = ref<Record<string, { allyIds: string[]; enemyIds: string[] }>>({})
+
+/** 从 localStorage 恢复场景列表 */
+const loadScenes = () => {
+  try {
+    const raw = localStorage.getItem(SCENE_STORAGE_KEY)
+    sceneStorage.value = raw ? JSON.parse(raw) : {}
+    savedScenes.value = Object.keys(sceneStorage.value)
+  } catch {
+    sceneStorage.value = {}
+    savedScenes.value = []
+  }
+}
+
+/** 场景列表写回 localStorage */
+const persistScenes = () => {
+  localStorage.setItem(SCENE_STORAGE_KEY, JSON.stringify(sceneStorage.value))
+}
 
 // ==================== 为角色编辑弹窗提供数据 ====================
 
@@ -343,18 +335,15 @@ const enemyTeam = computed(() => {
 
 // 初始化战斗
 function initBattle() {
-  // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
-  const allyIds = ["guardian_fire"]; // "enemy_005", "boss_003", "boss_001", "enemy_004", 
-  const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["guardian_gold"]; // "enemy_008", "boss_002", "enemy_007", "enemy_003", 
-  const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
-  console.log('allyList', allyList)
-  console.log('enemyList', enemyList)
+  // NOTE: 默认阵容从数据源动态派生（取前两个可用敌人各作我方/敌方演示单位），
+  //       不硬编码角色 id —— 配置数据更换后默认阵容自动跟随，避免"换版本就失真"
+  const enemies = GameDataProcessor.getEnemiesData()
+  const pool = enemies.length >= 2 ? enemies : []
+  const allyList = pool[0] ? [pool[0]] : []
+  const enemyList = pool[1] ? [pool[1]] : []
 
   const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, ParticipantSide.ALLY, index));
   const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, index));
-  console.log('allyTeamData', allyTeamData)
-  console.log('enemyTeamData', enemyTeamData)
   // 使用BattleService初始化队伍数据
   battleService.initializeTeams(allyTeamData, enemyTeamData);
 
@@ -369,6 +358,8 @@ onMounted(() => {
   // 初始化战斗管理器
   battleStore.initializeBattleService(battleService);
   battleService.loadSkillConfigs();
+  // 恢复持久化场景列表
+  loadScenes();
   // 初始化队伍数据
   initBattle();
 });
@@ -401,27 +392,62 @@ const handleRuleChange = (key: string, value: boolean) => {
 };
 
 // 场景管理组件事件处理
+/** 保存场景：记录当前参战阵容（我方/敌方角色 id）为场景快照并持久化 */
 const handleSaveScene = (sceneNameValue: string) => {
-  savedScenes.value.push(sceneNameValue);
+  const allyIds = battleService.getAllyTeam().map(p => p.id)
+  const enemyIds = battleService.getEnemyTeam().map(p => p.id)
+  sceneStorage.value[sceneNameValue] = { allyIds, enemyIds }
+  persistScenes()
+  savedScenes.value = Object.keys(sceneStorage.value)
   battleLogManager.addSystemLog({
-    message: `保存场景: ${sceneNameValue}`,
+    message: `保存场景: ${sceneNameValue}（我方${allyIds.length} / 敌方${enemyIds.length}）`,
   });
 };
 
-const handleLoadScene = (sceneNameValue: string) => {
+/** 加载场景：按阵容快照重建双方队伍 */
+const handleLoadScene = async (sceneNameValue: string) => {
+  const scene = sceneStorage.value[sceneNameValue]
+  if (!scene) {
+    battleLogManager.addSystemLog({ message: `加载场景失败: ${sceneNameValue} 不存在` })
+    return
+  }
+  // 先停掉可能进行中的战斗并清空当前编成
+  if (battleStore.isBattleActive) await battleStore.endBattle(ParticipantSide.ALLY)
+  battleStore.resetBattle()
+  battleService.clearParticipants()
+  scene.allyIds.forEach((id, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(id)
+    if (enemyData) {
+      battleService.addCharacterToTeam(
+        GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index),
+        ParticipantSide.ALLY,
+      )
+    }
+  })
+  scene.enemyIds.forEach((id, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(id)
+    if (enemyData) {
+      battleService.addCharacterToTeam(
+        GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index),
+        ParticipantSide.ENEMY,
+      )
+    }
+  })
+  battleStore.syncTeams()
+  const firstAlly = battleService.getAllyTeam()[0]
+  if (firstAlly) battleStore.selectCharacter(firstAlly.id)
   battleLogManager.addSystemLog({
-    message: `加载场景: ${sceneNameValue}`,
+    message: `加载场景: ${sceneNameValue}（我方${scene.allyIds.length} / 敌方${scene.enemyIds.length}）`,
   });
 };
 
 const handleDeleteScene = (sceneNameValue: string) => {
-  const index = savedScenes.value.indexOf(sceneNameValue);
-  if (index > -1) {
-    savedScenes.value.splice(index, 1);
-    battleLogManager.addSystemLog({
-      message: `删除场景: ${sceneNameValue}`,
-    });
-  }
+  delete sceneStorage.value[sceneNameValue]
+  persistScenes()
+  savedScenes.value = Object.keys(sceneStorage.value)
+  battleLogManager.addSystemLog({
+    message: `删除场景: ${sceneNameValue}`,
+  });
 };
 
 // ==================== 角色编辑事件处理 ====================
@@ -662,6 +688,32 @@ const handleBattleSpeedChange = (speed: number) => {
   battleStore.setBattleSpeed(speed);
 };
 
+// 暂停 / 继续战斗
+const togglePause = () => {
+  battleStore.togglePause();
+};
+
+// 手动单回合：在手动模式（战斗已暂停）下推进一个回合
+const manualTurn = async () => {
+  await battleStore.processSingleTurn();
+};
+
+// 全部参战实体（含未启用占位，供调试动作遍历）
+const getAllParticipants = () => [
+  ...(battleService.getAllyTeam() ?? []),
+  ...(battleService.getEnemyTeam() ?? []),
+];
+
+/** 按剩余生命比例判定当前优势方（调试"强制结束"的结算方） */
+const getLeadingSide = () => {
+  const all = getAllParticipants()
+  const ratio = (list: typeof all) =>
+    list.reduce((sum, p) => sum + p.currentHealth / Math.max(1, p.maxHealth), 0)
+  const allyRatio = ratio(all.filter(p => p.team === ParticipantSide.ALLY && p.isAlive()))
+  const enemyRatio = ratio(all.filter(p => p.team === ParticipantSide.ENEMY && p.isAlive()))
+  return allyRatio >= enemyRatio ? ParticipantSide.ALLY : ParticipantSide.ENEMY
+};
+
 /** 将当前战斗录制持久化到 IndexedDB，供昊天镜「最新战斗录制」源调用 */
 const saveRecording = async () => {
   const battleId = battleStore.currentBattleId;
@@ -694,10 +746,12 @@ const selectCharacter = (characterId: string) => {
   battleStore.selectCharacter(characterId);
 };
 
-// NOTE: 顶部模块栏唤灵台专属操作（战斗规则/调试面板/保存战斗记录）经此暴露给容器层 ModuleHeader actions slot
+// NOTE: 顶部模块栏唤灵台专属操作（战斗规则/调试面板/角色编辑/场景管理/保存战斗记录）经此暴露给容器层 ModuleHeader actions slot
 defineExpose({
   openRulesDialog: () => { showRulesDialog.value = true },
   openDebugDialog: () => { showDebugControlDialog.value = true },
+  openStatusDialog: () => { showStatusDialog.value = true },
+  openSceneDialog: () => { showSceneDialog.value = true },
   saveRecording,
 })
 
@@ -780,7 +834,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   z-index: 999;
-  cursor: pointer;
   transition: var(--transition-base);
   backdrop-filter: blur(2px);
 

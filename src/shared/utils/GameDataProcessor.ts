@@ -26,6 +26,8 @@ import { SkillType } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { LineupData, ActorData } from '@/domain/fengshen/types'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { Item } from '@/shared/types/Item'
 import { Counter } from '@/shared/utils/Counter'
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import { toArray } from '@/shared/utils/Utils'
@@ -100,6 +102,16 @@ export class GameDataProcessor {
 
   static getSkillsData(): SkillConfig[] {
     return dataSource.getSkills()
+  }
+
+  /** 获取所有 Buff 定义（统一 BuffJsonEntry 格式，与 BuffScriptRegistry 配置层同源） */
+  static getBuffsData(): BuffJsonEntry[] {
+    return dataSource.getBuffs()
+  }
+
+  /** 获取所有材料（materials 表，图鉴等消费方读取） */
+  static getMaterialsData(): Item[] {
+    return dataSource.getMaterials()
   }
 
   /**

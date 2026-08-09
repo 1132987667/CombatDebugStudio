@@ -318,7 +318,7 @@ export class BattleAnimationService {
       color: ${colorMap[type]};
       text-shadow: 0 0 10px ${colorMap[type]};
       pointer-events: none;
-      z-index: 100;
+      z-index: var(--z-float);
     `
     textElement.textContent = `${prefix}${Math.abs(damage)}${suffix}`
 
@@ -369,7 +369,7 @@ export class BattleAnimationService {
       color: var(--color-debuff);
       text-shadow: 0 0 10px rgba(var(--rgb-debuff), 0.8);
       pointer-events: none;
-      z-index: 100;
+      z-index: var(--z-float);
     `
     textElement.textContent = passiveName
 

@@ -36,7 +36,7 @@ export interface ValidationResult {
  */
 export function validateUnified(
   log: UnifiedArchive,
-  debugPhases: readonly string[] = ['ai_decision', 'attribute_recalc', 'config_load'],
+  debugPhases: readonly string[] = ['ai_decision', 'attribute_recalc', 'config_load', 'config_validation'],
 ): ValidationResult {
   const errors: string[] = []
   const warnings: string[] = []

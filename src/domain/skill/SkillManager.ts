@@ -4,7 +4,6 @@ import {
   BattleActionHelper,
   type BattleAction,
   type BattleEntity,
-  SkillBlockReason,
 } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
@@ -80,22 +79,6 @@ export class SkillManager {
 
   getExecutor(): SkillExecutor {
     return this.executor
-  }
-
-  /** 获取伤害计算日志 */
-  getDamageCalculationLogs() {
-    return this.damageCalculator.getCalculationLogs()
-  }
-
-  /** 获取治疗计算日志 */
-  getHealCalculationLogs() {
-    return this.healCalculator.getCalculationLogs()
-  }
-
-  /** 清空所有计算日志 */
-  clearCalculationLogs(): void {
-    this.damageCalculator.clearCalculationLogs()
-    this.healCalculator.clearCalculationLogs()
   }
 
   loadSkillConfigs(configs: SkillConfig[]): void {

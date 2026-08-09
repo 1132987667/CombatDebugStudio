@@ -6,6 +6,7 @@
  */
 
 import type { CalcStep } from './unified-archive'
+import { round } from '@/shared/utils/math'
 
 /** 运算符归一：半角 / 异体符号 → 全角统一展示符 */
 export function normalizeOp(op: string): string {
@@ -50,13 +51,13 @@ export function accumulateSteps(steps: CalcStep[]): StepAccum[] {
 
 /** 精确到 2 位小数的展示（整数省略小数位） */
 export function fmtRunning(n: number): string {
-  const r = Math.round(n * 100) / 100
+  const r = round(n, 2)
   return Number.isInteger(r) ? String(r) : r.toFixed(2)
 }
 
 /** 步骤值规整：消除浮点尾差（如 145×0.35 累加出 50.830000000000005 → 50.83）。展示/转换共用 */
 export function roundStepVal(v: number): number {
-  return Math.round(v * 100) / 100
+  return round(v, 2)
 }
 
 /** src 常见来源的精确释义（覆盖 demo / 录制高频值） */

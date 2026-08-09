@@ -17,7 +17,7 @@ export interface ValidationPipelineResult {
 /** Worker 源码：内联 DEBUG_PHASES + 校验函数 + 消息处理（parse → validate → post） */
 function buildWorkerSource(validateSource: string): string {
   return [
-    `var DEBUG_PHASES = ["ai_decision","attribute_recalc","config_load"];`,
+    `var DEBUG_PHASES = ["ai_decision","attribute_recalc","config_load","config_validation"];`,
     `var validate = ${validateSource};`,
     `self.onmessage = function (e) {`,
     `  try {`,

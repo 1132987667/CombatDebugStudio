@@ -10,6 +10,11 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData } from '@/domain/fengshen/types'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { Item } from '@/shared/types/Item'
+import { buffsData } from '@/shared/types/buffs-json'
+import type { EffectsJsonEntry } from '@/shared/types/effects-json'
+import { normalizeBuffEntries } from '@/shared/types/effects-json'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
 import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
@@ -21,6 +26,8 @@ import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import skillsData from '@configs/skills/skills.json'
 import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
 import hiddenBossSkillsData from '@configs/skills/skill_hidden_boss.json'
+import materialsData from '@configs/materials/materials.json'
+import effectsDataRaw from '@configs/effects/effects.json'
 
 const enemies = [
   ...(enemiesDataRaw as Enemy[]),
@@ -37,6 +44,12 @@ const skills = [
   ...(hiddenBossSkillsData as SkillConfig[]),
 ] as SkillConfig[]
 
+/** 兜底 Buff 定义：buffs.json + effects.json 归一化（与 seed 写入 IDB 的混合格式同源） */
+const buffs = normalizeBuffEntries([
+  ...buffsData,
+  ...((effectsDataRaw as { effects: EffectsJsonEntry[] }).effects ?? []),
+])
+
 export class ConfigDataSource implements IDataSource {
   getEnemies(): Enemy[] {
     return enemies
@@ -52,5 +65,13 @@ export class ConfigDataSource implements IDataSource {
 
   getLineups(): LineupData[] {
     return lineupsDataRaw as LineupData[]
+  }
+
+  getBuffs(): BuffJsonEntry[] {
+    return buffs
+  }
+
+  getMaterials(): Item[] {
+    return materialsData as Item[]
   }
 }

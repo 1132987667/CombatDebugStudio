@@ -50,7 +50,7 @@ export class BattleLifecycleManager {
     }
 
     this.stopAutoBattle()
-    this.cleanupTimers()
+    this.clearTimer()
 
     battle.participants.forEach((participant) => {
       this.buffSystem.clearAllBuffs(participant.id)
@@ -115,7 +115,7 @@ export class BattleLifecycleManager {
     if (!battle) return
 
     this.stopAutoBattle()
-    this.cleanupTimers()
+    this.clearTimer()
 
     battle.winner = undefined
     battle.endTime = undefined
@@ -216,10 +216,7 @@ export class BattleLifecycleManager {
     battle.battleState = BattleStatus.PAUSED
     this.autoBattleLoop = undefined
 
-    if (this.autoBattleTimerId) {
-      this.rafTimer.clear(this.autoBattleTimerId)
-      this.autoBattleTimerId = undefined
-    }
+    this.clearTimer()
   }
 
   togglePause(): void {
@@ -232,7 +229,7 @@ export class BattleLifecycleManager {
         : BattleStatus.PAUSED
 
     if (this.getIsPaused()) {
-      this.pause()
+      this.clearTimer()
     } else {
       this.resume()
     }
@@ -240,13 +237,6 @@ export class BattleLifecycleManager {
 
   getIsPaused(): boolean {
     return this.getBattleData()?.battleState === BattleStatus.PAUSED
-  }
-
-  private pause(): void {
-    if (this.autoBattleTimerId) {
-      this.rafTimer.clear(this.autoBattleTimerId)
-      this.autoBattleTimerId = undefined
-    }
   }
 
   private resume(): void {
@@ -267,7 +257,8 @@ export class BattleLifecycleManager {
     }
   }
 
-  private cleanupTimers(): void {
+  /** 清除自动战斗定时器 */
+  private clearTimer(): void {
     if (this.autoBattleTimerId) {
       this.rafTimer.clear(this.autoBattleTimerId)
       this.autoBattleTimerId = undefined

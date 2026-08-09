@@ -4,6 +4,7 @@ import {
 } from '@/domain/buff/types'
 import { buffsData } from '@/shared/types/buffs-json'
 import effectsData from '@configs/effects/effects.json'
+import { effectsEntryToBuffConfig } from '@/shared/types/effects-json'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { LogLevel } from '@/shared/types/battle-log'
@@ -13,7 +14,6 @@ import {
   type ResolvedBuffConfig,
 } from '@/domain/buff/atomic/BuffConfigResolver'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
-import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { EffectsJsonData } from '@/shared/types/effects-json'
 // NOTE: 仅引用静态脚本清单（映射键 = 脚本类 BUFF_ID），用于构造时校验。
 //       BuffScriptLoader.loadScripts 是异步的、晚于 registry 构造，此时 this.registry 尚为空，
@@ -209,40 +209,10 @@ export class BuffScriptRegistry {
     try {
       const raw = effectsData as EffectsJsonData
       if (!raw?.effects) return
-      let count = 0
       for (const effect of raw.effects) {
         if (!effect.id) continue
         if (this.buffConfigs.has(effect.id)) continue // buffs.json 优先
-        const params = effect.params || {}
-        const attributes = (params.attributes ??
-          {}) as Record<string, AttributeValueConfig>
-        // polarity 由配置显式声明（type: "buff" | "debuff"）
-        const polarity =
-          effect.type === 'debuff'
-            ? 'negative'
-            : effect.type === 'buff'
-              ? 'positive'
-              : undefined
-        const config: BuffJsonEntry = {
-          id: effect.id,
-          name: effect.id,
-          polarity,
-          description: effect.description ?? '',
-          duration: (params.duration as number) ?? 1,
-          maxStacks: (params.maxStacks as number) ?? 1,
-          effects: [{
-            type: 'modifier',
-            params: {
-              attributes,
-              perStack: true,
-            },
-          }],
-        }
-        this.buffConfigs.set(effect.id, config)
-        count++
-      }
-      if (count > 0) {
-        // TODO(P1): CONFIG_LOAD 事件落地后覆盖配置加载信息
+        this.buffConfigs.set(effect.id, effectsEntryToBuffConfig(effect))
       }
     } catch (error) {
       LoggerProvider.logger.addDebugLog('加载效果配置失败:', {
@@ -305,6 +275,15 @@ export class BuffScriptRegistry {
         this.buffConfigs.set(buff.id, buff)
         this.clearResolvedCache() // 清除缓存以便下次重新解析
       }
+    }
+  }
+
+  /** 用外部数据（封神榜 IDB buffs 表）整体替换配置：清空静态兜底 + 覆盖 + 清除解析缓存 */
+  public replaceBuffConfigsFromArray(configs: BuffJsonEntry[]): void {
+    this.buffConfigs.clear()
+    this.clearResolvedCache()
+    for (const buff of configs) {
+      if (buff?.id) this.buffConfigs.set(buff.id, buff)
     }
   }
 

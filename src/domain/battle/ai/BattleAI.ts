@@ -65,9 +65,6 @@ export interface BattleAI {
   selectAttack(battleState: BattleState | null, participant: BattleEntity): BattleAction
 }
 
-/** 技能配置加载器接口 */
-export type SkillConfigLoader = (skillIds: string[]) => Skill[]
-
 /** 战场分析结果接口 */
 export interface BattleAnalysis {
   allies: BattleEntity[]
@@ -84,7 +81,6 @@ export interface BattleAnalysis {
 /** 基础AI策略类 */
 export class BaseBattleAI implements BattleAI {
   protected skills: Map<string, Skill> = new Map()
-  protected skillConfigLoader?: SkillConfigLoader
   protected buffSystem?: BuffSystem
   protected skillManager?: SkillManager
   protected priorityStrategy: AIPriorityStrategy
@@ -98,18 +94,11 @@ export class BaseBattleAI implements BattleAI {
     this.rng = rng
   }
 
-  constructor(
-    skillIds?: string[],
-    strategyName: string = AI_STRATEGY.BALANCED,
-  ) {
+  constructor(strategyName: string = AI_STRATEGY.BALANCED) {
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
 
-    if (skillIds && skillIds.length > 0) {
-      this.loadSkillsFromConfig(skillIds)
-    } else {
-      this.initializeSkills()
-    }
+    this.initializeSkills()
   }
 
   /** 设置优先级策略 */
@@ -121,28 +110,6 @@ export class BaseBattleAI implements BattleAI {
   /** 设置追踪端口（BattleSystem 创建 AI 实例后注入） */
   public setTracePort(port: IDebugTracePort | null): void {
     this.tracePort = port ?? undefined
-  }
-
-  /** 获取当前优先级策略 */
-  public getPriorityStrategy(): AIPriorityStrategy {
-    return this.priorityStrategy
-  }
-
-  /** 从外部配置加载技能 */
-  protected loadSkillsFromConfig(skillIds: string[]): void {
-    if (this.skillConfigLoader) {
-      const loadedSkills = this.skillConfigLoader(skillIds)
-      loadedSkills.forEach((skill: Skill) => {
-        if (skill && skill.id) {
-          this.skills.set(skill.id, skill)
-        }
-      })
-    }
-  }
-
-  /** 设置鎶€鑳介厤缃姞杞藉櫒 */
-  public setSkillConfigLoader(loader: SkillConfigLoader): void {
-    this.skillConfigLoader = loader
   }
 
   /** 初始化技能（子类可重写） */

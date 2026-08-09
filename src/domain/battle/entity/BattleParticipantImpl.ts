@@ -24,8 +24,6 @@ import {
   Modifier,
   AttributeValue,
   ATTRIBUTE_CODE,
-  getAttrMeta,
-  ModifierType,
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
@@ -682,10 +680,6 @@ export class BattleParticipantImpl implements BattleEntity {
     this._energyHitCountThisRound = 0
   }
 
-  getSkills(): SkillSet {
-    return this.skillManager.getSkills()
-  }
-
   getSkillList(): SkillConfig[] {
     return this.skillManager.getSkillList()
   }
@@ -751,133 +745,5 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   reduceSkillCooldowns(): void {
     this.skillManager.reduceSkillCooldowns()
-  }
-
-  /**
-   * 获取技能剩余冷却回合数
-   * @param skillId - 技能ID
-   * @returns 剩余冷却回合数，0表示无冷却
-   */
-  getSkillCooldown(skillId: string): number {
-    return this.skillManager.getSkillCooldown(skillId)
-  }
-
-  /**
-   * 重置所有技能冷却
-   */
-  resetSkillCooldowns(): void {
-    this.skillManager.resetSkillCooldowns()
-  }
-
-  /**
-   * 导出所有属性详情（含基础值、最终值、修饰符、计算公式）
-   * @returns 属性详情列表
-   */
-  exportAttributes(): Array<{
-    code: string
-    name: string
-    displayName: string
-    description: string
-    range: string
-    impact: string
-    isPercentage: boolean
-    baseValue: number
-    finalValue: number
-    modifiers: Array<{
-      source: string
-      sourceType: string
-      value: number
-      type: string
-      description?: string
-    }>
-    formula: string
-    breakdown?: {
-      base: number
-      additive: number
-      percentMultiplier: number
-      independentMultiplier: number
-      finalMultiplier: number
-    }
-  }> {
-    this.recalcAll()
-    const result: Array<{
-
-      code: string
-      name: string
-      displayName: string
-      description: string
-      range: string
-      impact: string
-      isPercentage: boolean
-      baseValue: number
-      finalValue: number
-      modifiers: Array<{
-        source: string
-        sourceType: string
-        value: number
-        type: string
-        description?: string
-      }>
-      formula: string
-      breakdown?: {
-        base: number
-        additive: number
-        percentMultiplier: number
-        independentMultiplier: number
-        finalMultiplier: number
-      }
-    }> = []
-
-    for (const attrCode of Object.values(ATTRIBUTE_CODE)) {
-      const attrValue = this.stats.reCalAttributeValue(attrCode)
-      if (!attrValue) continue
-
-      const meta = getAttrMeta(attrCode)
-      const isPercentage = meta?.isPercentage ?? attrValue.isPercentage
-      const parts: string[] = [`基础值(${attrValue.base})`]
-      for (const mod of attrValue.modifiers) {
-        const sign = mod.value >= 0 ? '+' : '-'
-        const absVal = Math.abs(mod.value)
-        const valStr = isPercentage ? `${absVal}%` : `${absVal}`
-        switch (mod.type) {
-          case ModifierType.ADDITIVE:
-            parts.push(`${sign}${valStr}[${mod.sourceKey}]`)
-            break
-          case ModifierType.PERCENTAGE:
-            parts.push(`${sign}${valStr}%[${mod.sourceKey}]`)
-            break
-          case ModifierType.MULTIPLICATIVE:
-            parts.push(`×${1 + mod.value}[${mod.sourceKey}]`)
-            break
-          case ModifierType.FINAL:
-            parts.push(`×${1 + mod.value}(最终)[${mod.sourceKey}]`)
-            break
-          default:
-            parts.push(`${sign}${valStr}[${mod.sourceKey}]`)
-        }
-      }
-
-      result.push({
-        code: attrCode,
-        name: meta?.name ?? attrCode,
-        displayName: meta?.displayName ?? attrCode,
-        description: meta?.description ?? '',
-        range: meta?.range ?? '',
-        impact: meta?.impact ?? '',
-        isPercentage,
-        baseValue: attrValue.base,
-        finalValue: attrValue.value,
-        modifiers: attrValue.modifiers.map((m: Modifier) => ({
-          source: m.sourceKey,
-          sourceType: m.sourceType,
-          value: m.value,
-          type: m.type,
-          description: m.description,
-        })),
-        formula: parts.join(' → '),
-        breakdown: attrValue.breakdown,
-      })
-    }
-    return result
   }
 }

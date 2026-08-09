@@ -32,14 +32,17 @@ export class TurnManager {
    * 速度高的参与者排在前面，相同速度时随机排序（走 rng，未注入时回退 Math.random）
    * @param participants 参与者数组
    * @param rng 确定性随机源（战斗路径由 BattleSystem 传入 battleData.rng）
+   * @param speedFirst 是否按速度优先（false=按注册顺序固定出手，对应规则开关 speedFirst）
    * @returns 按速度排序的参与者ID数组
    */
   public createTurnOrder(
     participants: BattleEntity[],
     rng?: SeededRandom,
+    speedFirst: boolean = true,
   ): string[] {
-    return participants
-      .filter((p) => p.isAlive())
+    const alive = participants.filter((p) => p.isAlive())
+    if (!speedFirst) return alive.map((p) => p.id)
+    return alive
       .sort((a, b) => {
         const speedA = this.calculateEffectiveSpeed(a)
         const speedB = this.calculateEffectiveSpeed(b)

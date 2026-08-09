@@ -65,6 +65,7 @@ const value = ref<string | number>('')
 const actorOptions = ref<TSelectOption[]>([])
 
 const typeOptions: TSelectOption[] = [
+  { value: 'none', label: '手动暂停（无条件）' },
   { value: 'damage', label: '伤害 ≥ 阈值' },
   { value: 'level', label: '级别 = warn / error' },
   { value: 'roll', label: '随机值 > 阈值' },

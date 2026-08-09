@@ -29,7 +29,8 @@ import {
 import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { defineStore } from 'pinia'
-import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
+import { onScopeDispose, reactive, ref, shallowRef, shallowReactive, computed } from 'vue'
+import { SPEED_OPTIONS } from '@/shared/constants/speed'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
@@ -52,6 +53,8 @@ export interface BattleRules {
   critEnabled: boolean
   /** 是否启用闪避机制 */
   dodgeEnabled: boolean
+  /** 每回合自动回复的能量值（同步领域层 BattleRuleManager.combat.energyGainPerTurn） */
+  energyGainPerTurn: number
 }
 
 /** 动画步骤类型（与 AnimationState key 一一对应） */
@@ -104,6 +107,7 @@ export const useBattleStore = defineStore('battle', () => {
     fixedTurns: false,
     critEnabled: true,
     dodgeEnabled: false,
+    energyGainPerTurn: 15,
   })
   /** 当前行动者角色ID（用于高亮显示当前行动方） */
   const currentActorId = ref<string | null>(null)
@@ -135,8 +139,19 @@ export const useBattleStore = defineStore('battle', () => {
   const currentBattleId = ref<string | null>(null)
   /** 回合行动顺序队列（按速度排序后的角色ID列表） */
   const turnOrder = ref<string[]>([])
-  /** 战斗动画播放速度倍率（1x/2x/3x/5x 可选，影响动画持续时间） */
+  /** 战斗动画播放速度倍率（可选档位见 availableSpeeds） */
   const battleSpeed = ref(1)
+  /** 可选战斗速度档位（以领域层 BattleRuleManager.availableSpeeds 为准，容器未就绪时回退共享常量） */
+  const availableSpeeds = computed(() => {
+    try {
+      const ruleManager = container.resolve<BattleRuleManager>(
+        BATTLE_RULE_MANAGER_TOKEN.toString(),
+      )
+      return ruleManager.getAutoBattleRules().availableSpeeds
+    } catch {
+      return [...SPEED_OPTIONS]
+    }
+  })
   /** 日志过滤器配置（按类别控制日志面板的显示范围） */
   const filters = reactive<LogFilters>({
     battle: true,
@@ -492,7 +507,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const updateRules = (newRules: Partial<BattleRules>) => {
     Object.assign(rules.value, newRules)
-    //  同步暴击/闪避开关到领域层规则管理器，下一场战斗 initialize 时生效
+    // 同步全部规则字段到领域层规则管理器，下一场战斗 initialize 时生效
     try {
       const ruleManager = container.resolve<BattleRuleManager>(
         BATTLE_RULE_MANAGER_TOKEN.toString(),
@@ -501,10 +516,16 @@ export const useBattleStore = defineStore('battle', () => {
       ruleManager.updateConfig({
         rules: {
           ...config.rules,
+          turnSystem: {
+            ...config.rules.turnSystem,
+            speedFirst: rules.value.speedFirst,
+            fixedTurns: rules.value.fixedTurns,
+          },
           combat: {
             ...config.rules.combat,
             critEnabled: rules.value.critEnabled,
             dodgeEnabled: rules.value.dodgeEnabled,
+            energyGainPerTurn: rules.value.energyGainPerTurn,
           },
         },
       })
@@ -666,6 +687,34 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /**
+   * 手动干预：让指定参战者立即对指定目标执行一次指定行动（技能或普攻）
+   * @returns Promise<string | null> 失败原因字符串；成功返回 null
+   * @description 调试沙盒手动验证技能连招：指定施法者 → 技能（null=普攻） → 目标
+   */
+  const executeManualAction = async (
+    participantId: string,
+    skillId: string | null,
+    targetId: string,
+  ): Promise<string | null> => {
+    setLoading(true, '手动施放')
+    clearError()
+    try {
+      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      const error = await battleService.value.executeManualAction(participantId, skillId, targetId)
+      if (error === null) battleService.value.syncBattleState()
+      return error
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      setError(errorMsg, err instanceof Error ? err.stack : null)
+      battleLogManager.addDebugLog(`手动施放失败: ${errorMsg}`)
+      return errorMsg
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /**
    * 切换自动播放模式
    * @returns Promise<boolean> 操作是否成功
    * @description 在自动战斗和手动模式之间切换，失败时自动恢复原状态
@@ -723,23 +772,78 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /**
-   * 导入战斗状态（从 IndexedDB 恢复）
+   * 导入队伍配置（从 IndexedDB 恢复队伍编成与规则）
    * @returns Promise<boolean> 操作是否成功
-   * @description 从持久化存储读取之前保存的战斗状态数据
+   * @description 读取之前导出的队伍配置存档，重建双方队伍并恢复规则配置（不恢复战斗中的回合/血量现场）
    */
   const importState = async () => {
-    setLoading(true)
+    setLoading(true, '导入配置')
     clearError()
     try {
-      const savedState = await persistentStorage.get(STORAGE_STORE.SNAPSHOTS, 'battleStateExport')
-      if (savedState) {
-        battleLogManager.addSystemLog({ message: '战斗状态已导入' })
-        return true
+      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      const savedState = await persistentStorage.get<{
+        version?: number
+        allyIds?: string[]
+        enemyIds?: string[]
+        battleCharacters?: { id: string }[]
+        enemyParty?: { id: string }[]
+        rules?: Partial<BattleRules>
+      }>(STORAGE_STORE.SNAPSHOTS, 'battleStateExport')
+      if (!savedState) throw new Error('没有找到保存的战斗状态')
+
+      // 兼容 v1 存档（battleCharacters/enemyParty 为实体数组，仅取 id）
+      let allyIds = savedState.allyIds
+      let enemyIds = savedState.enemyIds
+      if (!allyIds && Array.isArray(savedState.battleCharacters)) {
+        allyIds = savedState.battleCharacters.map(p => p.id)
+        enemyIds = savedState.enemyParty?.map(p => p.id) ?? []
       }
-      throw new Error('没有找到保存的战斗状态')
+      if (!allyIds?.length || !enemyIds?.length) throw new Error('存档缺少队伍数据')
+
+      // 停掉可能进行中的战斗并清空当前编成
+      if (battleService.value.getIsBattleActive()) {
+        battleService.value.endBattle(ParticipantSide.ALLY)
+      }
+      battleService.value.reset()
+      battleService.value.clearParticipants()
+
+      // 重建双方队伍
+      allyIds.forEach((id, index) => {
+        const enemyData = GameDataProcessor.findEnemyById(id)
+        if (enemyData) {
+          battleService.value!.addCharacterToTeam(
+            GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index),
+            ParticipantSide.ALLY,
+          )
+        }
+      })
+      enemyIds.forEach((id, index) => {
+        const enemyData = GameDataProcessor.findEnemyById(id)
+        if (enemyData) {
+          battleService.value!.addCharacterToTeam(
+            GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index),
+            ParticipantSide.ENEMY,
+          )
+        }
+      })
+
+      // 恢复规则（同步到领域层）
+      if (savedState.rules && typeof savedState.rules === 'object') {
+        Object.assign(rules.value, savedState.rules)
+        updateRules(savedState.rules)
+      }
+
+      syncTeams()
+      // 选中第一个我方角色，避免导入后角色监控面板为空
+      const firstAlly = battleService.getAllyTeam()[0]
+      if (firstAlly) selectCharacter(firstAlly.id)
+      battleLogManager.addSystemLog({ message: '队伍配置已导入：编成与规则已恢复' })
+      return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       setError(errorMsg, err instanceof Error ? err.stack : null)
+      battleLogManager.addDebugLog(`导入队伍配置失败: ${errorMsg}`)
       return false
     } finally {
       setLoading(false)
@@ -747,10 +851,10 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /**
-   * 导出战斗状态（保存到 IndexedDB）
+   * 导出队伍配置（保存到 IndexedDB）
    * @param currentTurn 当前回合数
    * @returns boolean 操作是否成功
-   * @description 将当前战斗状态（队伍、回合数、规则等）序列化后保存到持久化存储
+   * @description 将当前队伍编成（角色 id）与规则配置序列化保存，供"导入配置"恢复
    */
   const exportState = async (currentTurn: number) => {
     try {
@@ -986,6 +1090,7 @@ export const useBattleStore = defineStore('battle', () => {
     currentBattleId, // 当前战斗ID
     turnOrder, // 回合行动顺序
     battleSpeed, // 战斗速度
+    availableSpeeds, // 可选速度档位（领域层 availableSpeeds）
     filters, // 日志过滤器
     battleService, // 战斗应用服务
     selectedCharacterId, // 选中角色ID
@@ -1040,6 +1145,7 @@ export const useBattleStore = defineStore('battle', () => {
     endBattle, // 结束战斗
     resetBattle, // 重置战斗
     processSingleTurn, // 执行单回合
+    executeManualAction, // 手动施放指定行动（技能/普攻）
     toggleAutoPlay, // 切换自动播放
     togglePause, // 切换暂停
 

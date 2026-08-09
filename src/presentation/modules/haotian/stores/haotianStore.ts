@@ -14,6 +14,7 @@ import { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { UnifiedArchive, UnifiedEvent, ArchiveParticipant } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
+import type { TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { buildArchiveIndices, type ArchiveIndices } from '@/domain/battle/replay/unified/unified-indices'
 import {
   allNodesFlat,
@@ -34,9 +35,10 @@ import {
   type SimCheckpoint,
 } from '@/domain/battle/replay/unified/unified-sim'
 import { createStressArchive } from '@/domain/battle/replay/unified/stress-archive'
-import { diffArchives, createRateVariant, diffSummary, type DiffRow } from '@/domain/battle/replay/unified/unified-diff'
+import { diffArchives, createRateVariant, createRollVariant, diffSummary, type DiffRow } from '@/domain/battle/replay/unified/unified-diff'
 import { checkAnyBreakpointHit, createBreakpoint, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { summarizeBattle, type BattleSummary, type UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
+import { deriveAttrsAt } from '@/domain/battle/replay/unified/unified-attrs'
 import { runValidationPipeline } from '@/shared/utils/unified-worker'
 import { UnifiedArchiveService, type RecordingMeta } from '@/application/service/UnifiedArchiveService'
 import { LiveBattleStream, type LiveParticipant } from '@/application/service/LiveBattleStream'
@@ -76,6 +78,46 @@ export interface DebugSession {
 const PREF_KEY = 'haotian.prefs.v1'
 const PREF_VERSION = 2
 
+/** 结果类型过滤值：与事件 payload 形态映射（空串 = 全部） */
+export type ResultFilterKind = '' | 'damage' | 'heal' | 'dodge' | 'crit' | 'resist' | 'death' | 'buff' | 'passive'
+
+export const RESULT_FILTER_OPTIONS: Array<{ value: ResultFilterKind; label: string }> = [
+  { value: '', label: '全部结果' },
+  { value: 'damage', label: '造成伤害' },
+  { value: 'heal', label: '治疗' },
+  { value: 'dodge', label: '闪避' },
+  { value: 'crit', label: '暴击' },
+  { value: 'resist', label: '被抵抗' },
+  { value: 'death', label: '击杀 / 阵亡' },
+  { value: 'buff', label: 'Buff 事件' },
+  { value: 'passive', label: '被动触发' },
+]
+
+/** 事件是否命中指定结果类型过滤 */
+export function matchResultKind(ev: UnifiedEvent, kind: string): boolean {
+  const pl = ev.payload ?? {}
+  switch (kind) {
+    case 'damage':
+      return ev.phase === 'damage_calculation' && !pl.dodge && typeof pl.result === 'number'
+    case 'heal':
+      return ev.phase === 'heal_calculation'
+    case 'dodge':
+      return pl.dodge === true
+    case 'crit':
+      return pl.crit === true || (typeof pl.crit === 'object' && (pl.crit as { triggered?: unknown })?.triggered === true)
+    case 'resist':
+      return pl.resisted === true
+    case 'death':
+      return pl.death === true || pl.lethalMark === true
+    case 'buff':
+      return ev.phase === 'buff_lifecycle' || ev.phase === 'buff_trigger'
+    case 'passive':
+      return ev.phase === 'passive_trigger'
+    default:
+      return true
+  }
+}
+
 interface PersistedPrefs {
   version: number
   showDbg: boolean
@@ -84,6 +126,11 @@ interface PersistedPrefs {
   breakpoints: BreakpointConfig[]
   /** 强制显示无数据源的战报指标列（默认按存档完整性动态渲染） */
   showEmptyStats: boolean
+  /** 事件流组合过滤（空字符串 = 全部） */
+  filterPhase: string
+  filterLevel: string
+  filterActor: string
+  filterKind: string
 }
 
 function loadPrefs(): Partial<PersistedPrefs> {
@@ -147,6 +194,11 @@ export const useHaotianStore = defineStore('haotian', () => {
   const bookmarkOpen = ref(false)
   const breakpoints = ref<BreakpointConfig[]>([])
   const streamText = ref('')
+  /** 事件流组合过滤：phase / level / 单位 / 结果类型（空串 = 全部） */
+  const filterPhase = ref('')
+  const filterLevel = ref('')
+  const filterActor = ref('')
+  const filterKind = ref('')
 
   // ── UI 面板开关（命令栏 / 快捷键 / 组件共享）──
   const bpOpen = ref(false)
@@ -207,6 +259,8 @@ export const useHaotianStore = defineStore('haotian', () => {
   })
   /** 当前选中事件的行动角色（sourceId 初始快照），供"角色属性"面板行动 tab */
   const selectedActor = computed<ArchiveParticipant | null>(() => participantOf(selectedEvent.value?.sourceId))
+  /** 当前回放时刻的属性快照（id → attributes，沿 attribute_recalc 事件推演） */
+  const attrsAt = computed(() => (archive.value ? deriveAttrsAt(archive.value, evs.value, playback.value.t) : new Map<string, Record<string, number>>()))
   const currentTurn = computed(() => currentTurnAt(evs.value, playback.value.t))
   const lastEvent = computed(() => lastEventAt(evs.value, playback.value.t))
   const bookmarkCount = computed(() => bookmarks.value.size)
@@ -228,6 +282,13 @@ export const useHaotianStore = defineStore('haotian', () => {
   const filteredEvents = computed(() => {
     let list = evs.value
     if (!showDbg.value) list = list.filter((e) => !PHASE_META[e.phase].debugOnly)
+    if (filterPhase.value) list = list.filter((e) => e.phase === filterPhase.value)
+    if (filterLevel.value) list = list.filter((e) => e.level === filterLevel.value)
+    if (filterActor.value) {
+      const id = filterActor.value
+      list = list.filter((e) => e.sourceId === id || e.targetId === id)
+    }
+    if (filterKind.value) list = list.filter((e) => matchResultKind(e, filterKind.value))
     if (streamText.value) {
       const kw = streamText.value.toLowerCase()
       list = list.filter((e) => `${e.summary} ${e.correlationId}`.toLowerCase().includes(kw))
@@ -303,6 +364,10 @@ export const useHaotianStore = defineStore('haotian', () => {
         bookmarks: [...bookmarks.value],
         breakpoints: breakpoints.value,
         showEmptyStats: showEmptyStats.value,
+        filterPhase: filterPhase.value,
+        filterLevel: filterLevel.value,
+        filterActor: filterActor.value,
+        filterKind: filterKind.value,
       }
       localStorage.setItem(PREF_KEY, JSON.stringify(prefs))
     } catch {
@@ -706,6 +771,9 @@ export const useHaotianStore = defineStore('haotian', () => {
 
   function addBreakpoint(type: BreakpointConfig['type'], value: number | string | undefined): void {
     breakpoints.value.push(createBreakpoint(type, value))
+    // none = 手动暂停：配置即暂停（参考 HTML setPaused(true,'手动暂停') 语义，
+    // 不参与自动命中检测——checkBreakpointHit 对 none 恒 false）
+    if (type === 'none') pause()
     persistPrefs()
   }
 
@@ -986,11 +1054,13 @@ export const useHaotianStore = defineStore('haotian', () => {
         toast('会话文件格式不合法')
         return
       }
-      if (!archive.value || s.battleId !== archive.value.battleId) {
-        toast(`会话属于 ${s.battleId}，与当前存档 ${archive.value?.battleId ?? '—'} 不匹配，已拒绝应用`)
-        return
+      // NOTE: 跨战斗导入不再整包拒绝——断点是条件式（phase/level/阈值，与事件 id 无关），
+      //       换一场战斗仍有意义；书签/选中事件是战斗专属 id，只应用当前存档中存在的。
+      const sameBattle = archive.value?.battleId === s.battleId
+      if (Array.isArray(s.bookmarks)) {
+        const valid = s.bookmarks.filter((id) => byId.value.has(id))
+        bookmarks.value = new Set(valid)
       }
-      if (Array.isArray(s.bookmarks)) bookmarks.value = new Set(s.bookmarks)
       if (s.version === 2 && Array.isArray(s.breakpoints)) {
         breakpoints.value = s.breakpoints
       } else if (s.version === 1 && s.breakpoint) {
@@ -1002,7 +1072,7 @@ export const useHaotianStore = defineStore('haotian', () => {
       if (s.mode) setMode(s.mode, true)
       if (s.selectedId && byId.value.has(s.selectedId)) selectEvent(s.selectedId, { seek: true })
       persistPrefs()
-      toast('调试会话已应用')
+      toast(sameBattle ? '调试会话已应用' : `会话已应用（断点/过滤通用；书签按当前存档过滤，原属 ${s.battleId}）`)
     } catch {
       toast('会话导入失败')
     }
@@ -1026,6 +1096,20 @@ export const useHaotianStore = defineStore('haotian', () => {
     }
     const variant = createRateVariant(archive.value, target.id, 0, 0.3)
     setBranch(variant)
+  }
+
+  /** 重掷判定 → 生成真实分支：把新 roll 写入分支存档并载入分支对比（替代检视器本地假模拟） */
+  function rerollIntoBranch(eventId: string, rollIndex: number, roll: number): void {
+    if (!archive.value) return
+    const ev = archive.value.events.find((e) => e.id === eventId)
+    const rolls = (ev?.payload as Record<string, unknown>)?.rolls
+    if (!Array.isArray(rolls) || !rolls[rollIndex]) {
+      toast('该判定无可重掷的随机值')
+      return
+    }
+    const variant = createRollVariant(archive.value, eventId, rollIndex, roll)
+    setBranch(variant)
+    toast(`重掷已生成分支：判定随机值 → ${roll}，可在分支对比中查看翻转差异`)
   }
 
   async function loadBranchFromFile(file: File): Promise<void> {
@@ -1130,6 +1214,10 @@ export const useHaotianStore = defineStore('haotian', () => {
     if (Array.isArray(prefs.bookmarks)) bookmarks.value = new Set(prefs.bookmarks)
     if (Array.isArray(prefs.breakpoints) && prefs.breakpoints.length) breakpoints.value = prefs.breakpoints
     if (prefs.showEmptyStats !== undefined) showEmptyStats.value = prefs.showEmptyStats
+    if (typeof prefs.filterPhase === 'string') filterPhase.value = prefs.filterPhase
+    if (typeof prefs.filterLevel === 'string') filterLevel.value = prefs.filterLevel
+    if (typeof prefs.filterActor === 'string') filterActor.value = prefs.filterActor
+    if (typeof prefs.filterKind === 'string') filterKind.value = prefs.filterKind
   }
 
   return {
@@ -1151,6 +1239,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     selectedEvent,
     selectedTarget,
     selectedActor,
+    attrsAt,
     showDbg,
     diagOpen,
     playback,
@@ -1194,11 +1283,16 @@ export const useHaotianStore = defineStore('haotian', () => {
     sumOpen,
     diffOpen,
     streamText,
+    filterPhase,
+    filterLevel,
+    filterActor,
+    filterKind,
     branch,
     diffRows,
     diffStats,
     setBranch,
     loadSampleBranch,
+    rerollIntoBranch,
     loadBranchFromFile,
     loadBranchRecording,
     clearBranch,

@@ -8,9 +8,6 @@
  */
 
 import { ref, computed } from 'vue'
-import enemiesData from '@configs/enemies/enemies.json'
-import { buffsData } from '@/shared/types/buffs-json'
-import materialsData from '@configs/materials/materials.json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
@@ -45,7 +42,8 @@ export interface CompendiumBuff {
   name: string
   maxStacks: number
   duration: number
-  attributes?: Record<string, string>
+  /** 属性修正：标准 {value,type} 对象或旧字符串格式（"+10%"） */
+  attributes?: Record<string, unknown>
   description?: string
   category?: string
   polarity?: string
@@ -75,13 +73,24 @@ export interface CompendiumItem {
 export type CompendiumTabType = 'enemy' | 'buff' | 'item'
 
 export function useCompendium() {
-  // ponytail: JSON 推断类型与 CompendiumXxx 接口有结构差异，用 `as BuffJsonEntry[] as T` 绕过后依赖运行时形态兼容
-  const enemies = ref<CompendiumEnemy[]>(enemiesData as unknown as CompendiumEnemy[])
-  const buffs = ref<CompendiumBuff[]>(buffsData as BuffJsonEntry[] as CompendiumBuff[])
-  const skills = ref<CompendiumSkill[]>(GameDataProcessor.getSkillsData() as unknown as CompendiumSkill[])
-  const items = ref<CompendiumItem[]>(materialsData as CompendiumItem[])
+  // NOTE: 数据源经 GameDataProcessor 出口读取（封神榜 IDB 写入后 BattleDataLoader 切换/刷新），
+  //       图鉴与战斗引擎、封神榜编辑共享同一份数据，不再读静态 configs。
+  const enemies = ref<CompendiumEnemy[]>([])
+  const buffs = ref<CompendiumBuff[]>([])
+  const skills = ref<CompendiumSkill[]>([])
+  const items = ref<CompendiumItem[]>([])
 
   const isLoading = ref(false)
+
+  /** 从引擎数据源重新装载（封神榜写操作后数据源已刷新，图鉴打开时调用） */
+  function refresh(): void {
+    enemies.value = GameDataProcessor.getEnemiesData() as unknown as CompendiumEnemy[]
+    buffs.value = GameDataProcessor.getBuffsData() as unknown as CompendiumBuff[]
+    skills.value = GameDataProcessor.getSkillsData() as unknown as CompendiumSkill[]
+    items.value = GameDataProcessor.getMaterialsData() as unknown as CompendiumItem[]
+  }
+
+  refresh()
 
   const getEnemyById = (id: string): CompendiumEnemy | undefined => {
     return enemies.value.find((e) => e.id === id)
@@ -119,6 +128,7 @@ export function useCompendium() {
     skills,
     items,
     isLoading,
+    refresh,
     getEnemyById,
     getBuffById,
     getItemById,

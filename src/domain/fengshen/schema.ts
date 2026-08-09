@@ -7,7 +7,7 @@
 
 import type { FengshenTableName } from '@/domain/fengshen/types'
 
-export type FieldType = 'text' | 'number' | 'select' | 'multi' | 'map' | 'array' | 'boolean'
+export type FieldType = 'text' | 'number' | 'select' | 'multi' | 'map' | 'array' | 'object' | 'boolean'
 
 export interface FieldSchema {
   key: string
@@ -31,6 +31,12 @@ export interface FieldSchema {
     clickable?: boolean
   }
   description?: string
+  /** 参与列表搜索的字段（除默认 name/id 外；map 字段按「键:值」匹配，如 stats 搜属性值） */
+  searchable?: boolean
+  /** array 字段的结构示例模板（FieldEditor「填入示例」按钮写入，供对照结构编辑） */
+  arrayTemplate?: unknown[]
+  /** object 字段的结构示例模板（FieldEditor「填入示例」按钮写入，供对照结构编辑） */
+  objectTemplate?: Record<string, unknown>
 }
 
 /** 列表筛选器（对齐 Demo 工具条：select 下拉 / range 范围输入） */
@@ -103,10 +109,10 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'level', label: '等级', type: 'number', required: true, min: 1, max: 99, column: { format: 'number' } },
       { key: 'growth', label: '成长曲线', type: 'select', refTable: 'growth' },
-      { key: 'skillIds', label: '可用技能', type: 'multi', refTable: 'skills' },
+      { key: 'skillIds', label: '可用技能', type: 'multi', refTable: 'skills', searchable: true },
       { key: 'energyInit', label: '初始能量', type: 'number', min: 0, max: 200 },
-      { key: 'stats', label: '基础属性', type: 'map' },
-      { key: 'description', label: '描述', type: 'text' },
+      { key: 'stats', label: '基础属性', type: 'map', searchable: true },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
     filters: [
@@ -119,12 +125,18 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['id', 'name', 'skillType', 'energyCost', 'cooldown'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'skillType', label: '类型', type: 'select', enum: ['small', 'ultimate', 'passive'], column: { tagKind: 'type' } },
+      { key: 'skillType', label: '类型', type: 'select', enum: ['small', 'ultimate', 'passive'], column: { tagKind: 'type' }, searchable: true },
       { key: 'energyCost', label: '能量消耗', type: 'number', min: 0, max: 200, column: { format: 'number' } },
       { key: 'cooldown', label: '冷却回合', type: 'number', min: 0, max: 20, column: { format: 'number' } },
-      { key: 'description', label: '描述', type: 'text' },
-      { key: 'selector', label: '目标规则', type: 'array' },
-      { key: 'steps', label: '步骤编排', type: 'array' },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
+      { key: 'selector', label: '目标规则', type: 'object',
+        description: '阵营/策略/数量',
+        objectTemplate: { faction: 'enemy', strategy: 'first', count: 1 } },
+      { key: 'steps', label: '步骤编排', type: 'array', description: '技能步骤类型 + 伤害/效果参数', searchable: true,
+        arrayTemplate: [
+          { type: 'deal_damage', attackType: 'normal', calculation: { baseValue: 0, extraValues: [{ ratio: 0.8, attribute: 'attack' }] } },
+          { type: 'apply_buff', duration: 1, effectId: 'buff_xxx', calculation: { baseValue: 0.3, extraValues: [] } },
+        ] },
     ],
     uniqueFields: ['name'],
     filters: [
@@ -138,14 +150,18 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['id', 'name', 'polarity', 'category', 'duration'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'polarity', label: '极性', type: 'select', enum: ['positive', 'negative'], column: { tagKind: 'polarity' } },
-      { key: 'category', label: '类别', type: 'select', enum: ['attribute', 'aura', 'dot', 'hot', 'shield', 'control', 'immunity', 'trigger'], column: { tagKind: 'category' } },
+      { key: 'polarity', label: '极性', type: 'select', enum: ['positive', 'negative'], column: { tagKind: 'polarity' }, searchable: true },
+      { key: 'category', label: '类别', type: 'select', enum: ['attribute', 'aura', 'dot', 'hot', 'shield', 'control', 'immunity', 'trigger'], column: { tagKind: 'category' }, searchable: true },
       { key: 'duration', label: '持续回合', type: 'number', min: -1, max: 99, description: '-1 为永久', column: { format: 'number' } },
       { key: 'maxStacks', label: '最大叠加', type: 'number', min: 1, max: 99 },
       { key: 'stackRule', label: '叠加规则', type: 'select', enum: ['replace', 'stack', 'independent'] },
-      { key: 'effects', label: '效果列表', type: 'array' },
+      { key: 'effects', label: '效果列表', type: 'array', searchable: true,
+        description: '原子效果类型 + params（modifier/aura/...）',
+        arrayTemplate: [
+          { type: 'modifier', params: { attributes: { attack: { value: 10, type: 'PERCENTAGE' } }, perStack: true } },
+        ] },
       { key: 'chain', label: '效果链', type: 'array' },
-      { key: 'description', label: '描述', type: 'text' },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
     filters: [
@@ -161,8 +177,11 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'level', label: '等级', type: 'number', required: true, min: 1, max: 99, column: { format: 'number' } },
       { key: 'stats', label: '属性', type: 'map' },
-      { key: 'skills', label: '技能组', type: 'array' },
-      { key: 'drops', label: '掉落', type: 'array' },
+      { key: 'skills', label: '技能组', type: 'object', searchable: true,
+        description: 'small/passive/ultimate 技能 ID 数组',
+        objectTemplate: { small: ['skill_xxx'], passive: [], ultimate: [] } },
+      { key: 'drops', label: '掉落', type: 'array', description: '掉落物 + 数量 + 概率', searchable: true,
+        arrayTemplate: [{ itemId: 'mat_001', quantity: 1, chance: 0.5 }] },
     ],
     uniqueFields: ['name'],
     filters: [
@@ -175,14 +194,24 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['id', 'name', 'requiredLevel'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'background', label: '背景描述', type: 'text' },
+      { key: 'background', label: '背景描述', type: 'text', searchable: true },
       { key: 'requiredLevel', label: '所需等级', type: 'number', min: 1, max: 99, column: { format: 'number' } },
-      { key: 'rewards', label: '通关奖励', type: 'array' },
-      { key: 'difficulties', label: '难度编组', type: 'array' },
+      { key: 'rewards', label: '通关奖励', type: 'object',
+        description: '经验/金币',
+        objectTemplate: { exp: 100, gold: 200 } },
+      { key: 'difficulties', label: '难度编组', type: 'object',
+        description: 'easy/normal/hard 的 enemyIds 数组',
+        objectTemplate: { easy: { enemyIds: ['enemy_001'] }, normal: { enemyIds: [] }, hard: { enemyIds: [] } } },
       { key: 'unlocks', label: '解锁下一关', type: 'select', refTable: 'scenes' },
       { key: 'rewardDrops', label: '通关掉落组', type: 'multi', refTable: 'drops' },
-      { key: 'fieldEffects', label: '地形效果', type: 'array' },
-      { key: 'hiddenBoss', label: '隐藏 BOSS', type: 'array' },
+      { key: 'fieldEffects', label: '地形效果', type: 'array',
+        description: '地形 modifier：对指定阵营属性修正',
+        arrayTemplate: [
+          { id: 'field_xxx', name: '地形效果', description: '描述', type: 'modifier', duration: -1, faction: 'all', modifiers: [{ attribute: 'speed', value: 10, type: 'PERCENTAGE' }] },
+        ] },
+      { key: 'hiddenBoss', label: '隐藏 BOSS', type: 'object',
+        description: 'BOSS 敌人 ID + 解锁难度',
+        objectTemplate: { enemyId: 'boss_xxx', unlockDifficulty: 'hard', description: '描述' } },
     ],
     uniqueFields: ['name'],
   },
@@ -193,10 +222,14 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'maxSlots', label: '最大站位', type: 'number', min: 1, max: 8, column: { format: 'number' } },
-      { key: 'slots', label: '站位布局', type: 'array' },
-      { key: 'effects', label: '阵型增益', type: 'array' },
+      { key: 'slots', label: '站位布局', type: 'array',
+        description: '站位 index + 排位（front/back）',
+        arrayTemplate: [{ index: 0, row: 'front' }, { index: 1, row: 'back' }] },
+      { key: 'effects', label: '阵型增益', type: 'array',
+        description: '条件 + 绑定的阵型 Buff',
+        arrayTemplate: [{ id: 'front_def', condition: 'front', buffId: 'buff_xxx' }] },
       { key: 'frontProtection', label: '前排保护', type: 'boolean' },
-      { key: 'description', label: '描述', type: 'text' },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
   },
@@ -207,9 +240,11 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'formationId', label: '绑定阵型', type: 'select', refTable: 'formations' },
-      { key: 'roles', label: '角色编组', type: 'array' },
-      { key: 'tags', label: '用途标签', type: 'multi' },
-      { key: 'description', label: '用途说明', type: 'text' },
+      { key: 'roles', label: '角色编组', type: 'array',
+        description: '站位序号 + 角色/敌人 ID',
+        arrayTemplate: [{ seatIndex: 0, roleId: 'guardian_fire' }] },
+      { key: 'tags', label: '用途标签', type: 'multi', searchable: true },
+      { key: 'description', label: '用途说明', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
   },
@@ -219,10 +254,12 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['id', 'name', 'type', 'rarity'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'type', label: '类型', type: 'select', enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '丹药', '碎片', '货币'], column: { tagKind: 'type' } },
+      { key: 'type', label: '类型', type: 'select', enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '丹药', '碎片', '货币'], column: { tagKind: 'type' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
-      { key: 'effects', label: '使用效果', type: 'array' },
-      { key: 'description', label: '描述', type: 'text' },
+      { key: 'effects', label: '使用效果', type: 'array',
+        description: '效果类型 + 数值（heal/buff/...）',
+        arrayTemplate: [{ type: 'heal', value: 50 }] },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
     filters: [
@@ -236,12 +273,14 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['id', 'name', 'slot', 'rarity', 'requiredLevel'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'accessory'], column: { tagKind: 'slot' } },
+      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'accessory'], column: { tagKind: 'slot' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
-      { key: 'stats', label: '属性加成', type: 'array' },
+      { key: 'stats', label: '属性加成', type: 'array',
+        description: '属性 + 修正类型（flat/percent）+ 数值',
+        arrayTemplate: [{ attribute: 'attack', modifierType: 'flat', value: 10 }] },
       { key: 'requiredLevel', label: '穿戴等级门槛', type: 'number', min: 1, max: 99, column: { format: 'number' } },
       { key: 'factionRestriction', label: '阵营限制', type: 'select', refTable: 'elements' },
-      { key: 'description', label: '描述', type: 'text' },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
     filters: [
@@ -254,8 +293,12 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     label: '阵营元素',
     columns: ['id', 'name'],
     fields: [
-      { key: 'elements', label: '元素定义', type: 'array' },
-      { key: 'matrix', label: '克制矩阵', type: 'array' },
+      { key: 'elements', label: '元素定义', type: 'array', searchable: true,
+        description: '元素 id + 名称',
+        arrayTemplate: [{ id: 'fire', name: '火' }] },
+      { key: 'matrix', label: '克制矩阵', type: 'array', searchable: true,
+        description: '攻击方 → 防御方 伤害系数',
+        arrayTemplate: [{ attackerId: 'fire', defenderId: 'wood', coefficient: 1.5 }] },
       { key: 'defaultCoefficient', label: '默认系数', type: 'number', min: 0.5, max: 3 },
     ],
   },
@@ -266,7 +309,9 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'perLevel', label: '每级增量', type: 'map' },
-      { key: 'expTable', label: '经验表', type: 'array' },
+      { key: 'expTable', label: '经验表', type: 'array',
+        description: '等级 + 所需经验',
+        arrayTemplate: [{ level: 2, expRequired: 100 }] },
     ],
     uniqueFields: ['name'],
   },
@@ -276,19 +321,9 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['id', 'name', 'entries'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'entries', label: '掉落条目', type: 'array' },
-    ],
-    uniqueFields: ['name'],
-  },
-  params: {
-    table: 'params',
-    label: '战斗规则参数',
-    columns: ['id', 'name', 'value'],
-    fields: [
-      { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'value', label: '当前值', type: 'number', column: { format: 'number' } },
-      { key: 'range', label: '合法范围', type: 'array' },
-      { key: 'description', label: '用途说明', type: 'text' },
+      { key: 'entries', label: '掉落条目', type: 'array',
+        description: '物品 + 概率（0-100）',
+        arrayTemplate: [{ itemId: 'mat_001', probability: 80 }] },
     ],
     uniqueFields: ['name'],
   },
@@ -298,11 +333,13 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['id', 'name', 'tier', 'target', 'rarity'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'tier', label: '档位', type: 'select', enum: ['debuff_1', 'buff_1', 'buff_2', 'buff_3', 'buff_4'], column: { tagKind: 'neutral' } },
-      { key: 'target', label: '作用目标', type: 'select', enum: ['player', 'enemy'], column: { tagKind: 'neutral' } },
+      { key: 'tier', label: '档位', type: 'select', enum: ['debuff_1', 'buff_1', 'buff_2', 'buff_3', 'buff_4'], column: { tagKind: 'neutral' }, searchable: true },
+      { key: 'target', label: '作用目标', type: 'select', enum: ['player', 'enemy'], column: { tagKind: 'neutral' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
-      { key: 'statModifiers', label: '属性修正', type: 'array' },
-      { key: 'description', label: '描述', type: 'text' },
+      { key: 'statModifiers', label: '属性修正', type: 'array',
+        description: '属性 + 修正百分比（20=+20%，-20=-20%）',
+        arrayTemplate: [{ attribute: 'attack', percent: -20 }] },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
     filters: [

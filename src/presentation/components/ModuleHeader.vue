@@ -32,12 +32,13 @@
 </template>
 
 <script lang="ts">
-/** 四大模块元数据（顺序与《太初道枢总体设计.md》9.3 一致） */
+/** 四大模块元数据（顺序 = 顶部 Tab 顺序，与 tab1-4 约定一致）：
+ *  tab1 唤灵台 huanling · tab2 昊天镜 haotian · tab3 封神榜 fengshen · tab4 演劫台 yanjie */
 export const MODULES = [
-  { id: 'fengshen', label: '封神榜', subtitle: '数据根源' },
   { id: 'huanling', label: '唤灵台', subtitle: '阵容战斗' },
-  { id: 'yanjie', label: '演劫台', subtitle: '游戏模块' },
   { id: 'haotian', label: '昊天镜', subtitle: '战斗分析' },
+  { id: 'fengshen', label: '封神榜', subtitle: '数据根源' },
+  { id: 'yanjie', label: '演劫台', subtitle: '游戏模块' },
 ] as const
 
 export type ModuleId = (typeof MODULES)[number]['id']

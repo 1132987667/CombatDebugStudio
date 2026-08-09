@@ -80,6 +80,74 @@
           </tr>
         </tbody>
       </table>
+
+      <div class="ht-sum-sec">
+        <div class="ht-sum-sec-t">判定健康度</div>
+        <div class="ht-sum-judge">
+          <span class="ht-sum-judge-item">攻击 {{ judgment.attacks }}</span>
+          <span class="ht-sum-judge-item">命中 {{ judgment.hits }}</span>
+          <span class="ht-sum-judge-item">暴击 {{ judgment.crits }}（{{ judgment.critRate }}%）</span>
+          <span class="ht-sum-judge-item">闪避 {{ judgment.dodges }}</span>
+          <span class="ht-sum-judge-item">抵抗 {{ judgment.resists }}</span>
+        </div>
+      </div>
+
+      <div v-if="summary && summary.skills.length" class="ht-sum-sec">
+        <div class="ht-sum-sec-t">技能使用</div>
+        <table class="ht-sum-table">
+          <thead>
+            <tr>
+              <th class="l">技能</th>
+              <th>次数</th>
+              <th>输出</th>
+              <th>占比</th>
+              <th>治疗</th>
+              <th>暴击</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(s, i) in summary.skills" :key="i">
+              <td class="l nm">{{ s.skillName }}</td>
+              <td>{{ s.uses }}</td>
+              <td class="num">{{ s.damage }}</td>
+              <td>{{ s.pct }}%</td>
+              <td class="num heal">{{ s.heal }}</td>
+              <td>{{ s.crits }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="summary && summary.passives.length" class="ht-sum-sec">
+        <div class="ht-sum-sec-t">被动触发</div>
+        <table class="ht-sum-table">
+          <thead>
+            <tr>
+              <th class="l">被动</th>
+              <th class="l">拥有者</th>
+              <th>触发次数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(p, i) in summary.passives" :key="i">
+              <td class="l nm">{{ p.name }}</td>
+              <td class="l">{{ p.owner }}</td>
+              <td>{{ p.triggered }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="summary && summary.keyEvents.length" class="ht-sum-sec">
+        <div class="ht-sum-sec-t">关键事件</div>
+        <div class="ht-sum-events">
+          <div v-for="(ev, i) in summary.keyEvents" :key="i" class="ht-sum-ev">
+            <span class="ht-sum-ev-turn">T{{ ev.turn }}</span>
+            <span :class="'ht-sum-ev-' + ev.kind">{{ ev.text }}</span>
+          </div>
+        </div>
+      </div>
+
       <div v-else-if="!teams.length" class="ht-empty">存档未加载</div>
       <div v-if="dotHint" class="ht-sum-note">{{ dotHint }}</div>
     </div>
@@ -103,6 +171,9 @@ const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 const store = useHaotianStore()
 
 const summary = computed(() => store.summary)
+
+/** L4 判定健康度（无 summary 时回退空对象，避免模板读取 undefined） */
+const judgment = computed(() => summary.value?.judgment ?? { attacks: 0, hits: 0, crits: 0, critRate: 0, dodges: 0, resists: 0 })
 
 const rows = computed<Array<{ id: string; s: UnitSummary }>>(() => {
   const sum = summary.value

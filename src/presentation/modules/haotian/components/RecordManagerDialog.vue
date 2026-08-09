@@ -10,14 +10,17 @@
   <Dialog :model-value="modelValue" title="战斗记录管理" width="620px" @update:model-value="onModelValue">
     <div class="rm-toolbar">
       <Button @click="refresh">刷新</Button>
-      <span class="rm-total">共 {{ store.recordings.length }} 条记录</span>
+      <TacticalInput size="sm" :model-value="query" placeholder="搜索词牌名 / battleId…" aria-label="搜索战斗记录"
+        @update:model-value="query = String($event ?? '')" />
+      <TacticalSelect v-model="sortKey" size="sm" :options="sortOptions" title="排序方式" />
+      <span class="rm-total">共 {{ store.recordings.length }} 条记录 · 显示 {{ visible.length }}</span>
     </div>
 
-    <div v-if="store.recordings.length" class="rm-list">
-      <div v-for="(r, i) in store.recordings" :key="r.saveKey" class="rm-row">
+    <div v-if="visible.length" class="rm-list">
+      <div v-for="(r, i) in visible" :key="r.saveKey" class="rm-row">
         <div class="rm-main">
           <div class="rm-name" :title="r.name">{{ i + 1 }}. {{ r.name }}</div>
-          <div class="rm-meta">{{ r.battleId }} · {{ fmtTime(r.startTime) }} · {{ r.eventCount }} 事件</div>
+          <div class="rm-meta">{{ r.battleId }} · {{ formatTimestamp(r.startTime) }} · {{ r.eventCount }} 事件</div>
         </div>
         <div class="rm-actions">
           <Button title="导出该记录为统一存档 JSON（可在昊天镜导入回放 / 调试）" @click="onExport(r)">导出</Button>
@@ -25,7 +28,7 @@
         </div>
       </div>
     </div>
-    <div v-else class="rm-empty">暂无保存的战斗记录（唤灵台战斗结束后保存）</div>
+    <div v-else class="rm-empty">{{ store.recordings.length ? '无匹配的记录' : '暂无保存的战斗记录（唤灵台战斗结束后保存）' }}</div>
 
     <label class="rm-foot-check" :title="'勾选后点删除直接删除，不再弹确认框'">
       <input type="checkbox" v-model="noConfirm" />
@@ -38,7 +41,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { formatTimestamp } from '@/shared/utils/format'
 import { container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
@@ -48,6 +52,8 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
@@ -58,12 +64,34 @@ const notify = useNotificationStore()
 const noConfirm = ref(false)
 const confirmDelete = ref(false)
 const pending = ref<RecordingMeta | null>(null)
+/** 搜索关键词（词牌名 / battleId 模糊匹配） */
+const query = ref('')
+/** 排序方式：按保存时间 倒序/正序，或按词牌名 */
+const sortKey = ref<'time_desc' | 'time_asc' | 'name'>('time_desc')
+
+const sortOptions: TSelectOption[] = [
+  { value: 'time_desc', label: '最新在前' },
+  { value: 'time_asc', label: '最早在前' },
+  { value: 'name', label: '按名称' },
+]
+
+/** 搜索 + 排序后的展示列表 */
+const visible = computed<RecordingMeta[]>(() => {
+  const kw = query.value.trim().toLowerCase()
+  let list = store.recordings
+  if (kw) list = list.filter((r) => `${r.name} ${r.battleId}`.toLowerCase().includes(kw))
+  const sorted = [...list]
+  if (sortKey.value === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+  else {
+    const desc = sortKey.value === 'time_desc'
+    sorted.sort((a, b) => (desc ? b.startTime - a.startTime : a.startTime - b.startTime))
+  }
+  return sorted
+})
 
 const archiveService = new UnifiedArchiveService()
 
 const resolveBattleSystem = (): BattleSystem => container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
-
-const fmtTime = (t: number): string => (t ? new Date(t).toLocaleString() : '—')
 
 async function refresh(): Promise<void> {
   await store.refreshRecordings(resolveBattleSystem())
@@ -121,6 +149,9 @@ async function doDelete(): Promise<void> {
   justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-3);
+}
+.rm-toolbar .t-select {
+  flex-shrink: 0;
 }
 .rm-total {
   color: var(--color-text-secondary);

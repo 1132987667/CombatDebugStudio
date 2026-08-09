@@ -16,10 +16,10 @@ import { DataPackageService } from '@/application/service/DataPackageService'
 import { DataIntegrityService, type HealthCheckReport } from '@/application/service/DataIntegrityService'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { nextEntityId, type FengshenTableName } from '@/domain/fengshen/types'
-import type { OperationLogEntry, BattleParamData } from '@/domain/fengshen/types'
+import type { OperationLogEntry } from '@/domain/fengshen/types'
 import { useBattleStore } from '@/presentation/stores'
 
-export type FengshenView = 'domain' | 'formulas' | 'rules' | 'packages' | 'health' | 'logs'
+export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs'
 
 export interface OptionItem {
   id: string
@@ -49,7 +49,6 @@ export const useFengshenStore = defineStore('fengshen', () => {
   // 系统视图数据
   const healthReport = ref<HealthCheckReport | null>(null)
   const logs = ref<OperationLogEntry[]>([])
-  const params = ref<BattleParamData[]>([])
 
   // 引用选项缓存（下拉：技能/阵型/元素/成长曲线等）
   const optionsCache = ref<Record<string, OptionItem[]>>({})
@@ -86,13 +85,18 @@ export const useFengshenStore = defineStore('fengshen', () => {
     }
   }
 
+  let listReqSeq = 0
   async function refreshList(): Promise<void> {
+    const seq = ++listReqSeq
     loading.value = true
     try {
-      // 全量拉取：搜索/筛选统一在界面层客户端完成（数据量级为几十~几百条，输入即见无需服务端往返）
-      rows.value = await api.listByTable<Record<string, unknown>>(currentTable.value)
+      // NOTE: 搜索下沉到 API 层（listByTable 匹配 name/id + searchable 字段），
+      //       数据量级几十~几百条，select/range 筛选留在客户端即时叠加；limit/offset 为大数据量预留。
+      const result = await api.listByTable<Record<string, unknown>>(currentTable.value, search.value ? { search: search.value } : undefined)
+      // 仅接受最新一次请求的结果，防止搜索/表切换并发刷新时旧结果后到覆盖新结果
+      if (seq === listReqSeq) rows.value = result
     } finally {
-      loading.value = false
+      if (seq === listReqSeq) loading.value = false
     }
   }
 
@@ -165,13 +169,6 @@ export const useFengshenStore = defineStore('fengshen', () => {
 
   function setView(view: FengshenView): void {
     activeView.value = view
-    if (view === 'rules') {
-      // 战斗规则参数复用数据域 params 的列表/编辑
-      currentTable.value = 'params'
-      selectedIds.value = []
-      search.value = ''
-      void refreshList()
-    }
     if (view === 'health') void runHealth()
     if (view === 'logs') void loadLogs()
   }
@@ -214,6 +211,13 @@ export const useFengshenStore = defineStore('fengshen', () => {
     return true
   }
 
+  /** 编辑过程实时校验：与保存共用 validateOnSave（必填/范围/唯一/引用），防抖后由 EntityDrawer 触发 */
+  async function validateEntity(): Promise<void> {
+    if (!editingEntity.value) return
+    const result = await integrity.validateOnSave(currentTable.value, editingEntity.value)
+    formErrors.value = result.errors
+  }
+
   async function remove(id: string): Promise<string[] | null> {
     const result = await write.remove(currentTable.value, id)
     if (!result.ok) {
@@ -243,6 +247,27 @@ export const useFengshenStore = defineStore('fengshen', () => {
     await refreshVersion()
   }
 
+  /** 批量改字段：对选中行应用同一值（逐条走保存校验），返回成功数与失败 ID 列表 */
+  async function batchUpdate(field: string, value: unknown): Promise<{ ok: number; failed: string[] }> {
+    const ids = [...selectedIds.value]
+    let ok = 0
+    const failed: string[] = []
+    for (const id of ids) {
+      const row = rows.value.find((r) => String(r.id) === id)
+      if (!row) continue
+      const result = await write.save(currentTable.value, { ...row, [field]: value })
+      if (result.ok) ok++
+      else failed.push(id)
+    }
+    if (ok > 0) {
+      invalidateOptions()
+      invalidateRefIndex()
+      await refreshList()
+      await refreshVersion()
+    }
+    return { ok, failed }
+  }
+
   // ── 系统视图数据装载 ──
 
   async function runHealth(): Promise<void> {
@@ -251,10 +276,6 @@ export const useFengshenStore = defineStore('fengshen', () => {
 
   async function loadLogs(): Promise<void> {
     logs.value = await api.listOperationLogs(200)
-  }
-
-  async function loadParams(): Promise<void> {
-    params.value = await api.listBattleParams()
   }
 
   return {
@@ -271,7 +292,6 @@ export const useFengshenStore = defineStore('fengshen', () => {
     formErrors,
     healthReport,
     logs,
-    params,
     optionsCache,
     refIndex,
     references,
@@ -292,11 +312,12 @@ export const useFengshenStore = defineStore('fengshen', () => {
     duplicateAsTemplate,
     closeDrawer,
     save,
+    validateEntity,
     remove,
     toggleSelect,
     removeSelected,
+    batchUpdate,
     runHealth,
     loadLogs,
-    loadParams,
   }
 })

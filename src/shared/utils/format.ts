@@ -41,3 +41,12 @@ export function formatBonusValue(value: number | { value: number }): string {
   const roundedValue = round(numValue, 2)
   return roundedValue > 0 ? `+${roundedValue}%` : `${roundedValue}%`
 }
+
+/**
+ * 格式化时间戳为本地可读时间
+ * @param timestamp 毫秒时间戳（0/undefined 时显示占位符）
+ * @returns 本地时间字符串，无有效时间戳时返回 '—'
+ */
+export function formatTimestamp(timestamp?: number): string {
+  return timestamp ? new Date(timestamp).toLocaleString() : '—'
+}

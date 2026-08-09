@@ -33,6 +33,7 @@ import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-e
 import { DamageCategory } from '@/domain/skill/types'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
 import { nextRandom } from '@/shared/utils/SeededRandom'
+import { round } from '@/shared/utils/math'
 
 export interface PassiveSkillConfig {
   id: string
@@ -232,7 +233,7 @@ export class PassiveSkillManager {
           condition: {
             expr: `HP_LOWER_THAN ${config.hpThreshold}%`,
             passed: false,
-            hpPercent: Math.round(hpPercent * 100) / 100,
+            hpPercent: round(hpPercent, 2),
           },
         })
         return false

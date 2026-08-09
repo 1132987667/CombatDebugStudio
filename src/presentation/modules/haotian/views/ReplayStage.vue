@@ -57,7 +57,9 @@
       <TacticalSelect v-model="speedModel" size="md" class="ht-speed-select"
         :options="speedOptions" placeholder="速度" />
 
-      <div class="ht-seek" @click="onSeekClick">
+      <div class="ht-seek" role="slider" aria-label="回放进度条" tabindex="0"
+        :aria-valuemin="0" :aria-valuemax="100" :aria-valuenow="seekPct" :aria-valuetext="store.timeRead"
+        @click="onSeekClick" @keydown="onSeekKeydown">
         <div class="ht-seek-track"></div>
         <span v-for="ev in seekMarks" :key="ev.id" class="ht-tick" :class="'ht-' + meta(ev).tick"
           :style="{ left: tsPct(ev) + '%' }" :title="`${formatTime(ev.timestamp)} · ${ev.summary}`"
@@ -87,6 +89,7 @@ import TacticalSelect, { type TSelectOption } from '@/presentation/components/Ta
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation'
 import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing'
 import type { BuffRawItem } from '@/shared/types/buff-display'
+import { resolveBuffMeta } from '@/shared/utils/buff-meta'
 import { ActionResultType } from '@/domain/battle/type/types'
 
 const speedOptions: TSelectOption[] = [0.5, 1, 2, 4].map((s) => ({ value: s, label: `${s}×` }))
@@ -125,10 +128,12 @@ const sides = computed<ArchiveParticipant[][]>(() => {
 const unitOf = (id: string) => store.cur[id] ?? { hp: 0, en: 0, buffs: [] }
 
 /**
- * ArchiveBuff → BuffRawItem：存档仅含 name/stacks/turns，属性明细与正负标记缺省。
- * BuffTextBar 展示名字 + 层数，属性标签/悬停追溯无数据源（HACK：与演武台的信息差源于存档契约）。
+ * ArchiveBuff → BuffRawItem：存档仅含 name/stacks/turns，
+ * 正负与属性明细由 resolveBuffMeta 按名字反查 buffs.json 配置补全
+ * （匹配失败时退化为纯名字展示，未记录进存档的脚本自定义 buff 亦可显示）。
  */
 function toBuffRawItem(b: ArchiveBuff): BuffRawItem {
+  const meta = resolveBuffMeta(b.name)
   return {
     id: b.name,
     buffId: b.name,
@@ -136,6 +141,9 @@ function toBuffRawItem(b: ArchiveBuff): BuffRawItem {
     currentStacks: b.stacks,
     remainingTurns: b.turns,
     isAura: false,
+    isNegative: meta.isNegative,
+    attributes: meta.attributes,
+    description: meta.description,
   }
 }
 
@@ -163,6 +171,7 @@ const phaseChipLabel = computed(() => {
 
 const tsPct = (ev: UnifiedEvent): number => (store.duration ? (ev.timestamp / store.duration) * 100 : 0)
 const curPct = computed(() => (store.duration ? (store.playback.t / store.duration) * 100 : 0))
+const seekPct = computed(() => Math.round(curPct.value))
 
 // seek 刻度聚簇：默认只标 回合开始 与 战斗根事件（生命周期），避免千级事件刻度重叠
 // 缩放级别放大时逐级加入更多事件类型
@@ -203,6 +212,22 @@ function onSeekClick(e: MouseEvent): void {
   const el = e.currentTarget as HTMLElement
   const rect = el.getBoundingClientRect()
   store.seekTo(((e.clientX - rect.left) / rect.width) * store.duration, { keepPlay: true })
+}
+
+function onSeekKeydown(e: KeyboardEvent): void {
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    store.stepEvent(-1)
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    store.stepEvent(1)
+  } else if (e.key === 'Home') {
+    e.preventDefault()
+    store.seekTo(0)
+  } else if (e.key === 'End') {
+    e.preventDefault()
+    store.seekTo(store.duration)
+  }
 }
 
 // ───────────── 特效与卡片动画（与唤灵台演武台同款：ParticipantCard 状态动画 + BattleVisualEffects + GSAP 突进）─────────────
@@ -286,9 +311,10 @@ function fx(ev: UnifiedEvent): void {
   } else if (ev.phase === 'buff_lifecycle') {
     const target = ev.targetId
     if (!target || pl.action !== 'apply') return
-    // HACK: 存档无 buff 正负标记，统一按正向（shielded + 辉光）；数据源契约补齐后再细分正负
+    // 正负由 payload.buff / buffName 反查 buffs.json 配置；未命中默认正向
+    const isNegative = resolveBuffMeta(String(pl.buff ?? pl.buffName ?? '')).isNegative === true
     cardOf(target)?.triggerVisualState('shielded', budget * BATTLE_ANIMATION_TIMING.PHASES.settle.start)
-    void playBuffAnimation(target, true)
+    void playBuffAnimation(target, !isNegative)
   }
 }
 

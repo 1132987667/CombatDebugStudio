@@ -58,6 +58,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   save: []
   close: []
+  validate: []
 }>()
 
 const saving = ref(false)
@@ -130,6 +131,18 @@ const onModelValue = (val: boolean): void => {
 }
 
 const close = (): void => emit('close')
+
+// 编辑过程实时校验：字段变化防抖 300ms 后触发（必填/范围/唯一/引用，保存时仍作权威校验）
+let validateTimer: ReturnType<typeof setTimeout> | null = null
+watch(
+  () => props.entity,
+  () => {
+    if (!props.open || !props.entity) return
+    if (validateTimer) clearTimeout(validateTimer)
+    validateTimer = setTimeout(() => emit('validate'), 300)
+  },
+  { deep: true },
+)
 
 async function onSave(): Promise<void> {
   saving.value = true

@@ -8,6 +8,8 @@
           <Button @click="huanlingRef?.openRulesDialog()">战斗规则</Button>
           <!-- NOTE: 调试控制操作活战场（battleStore/BattleField 动画），归属唤灵台而非分析模块 -->
           <Button @click="huanlingRef?.openDebugDialog()">调试面板</Button>
+          <Button @click="huanlingRef?.openStatusDialog()">角色编辑</Button>
+          <Button @click="huanlingRef?.openSceneDialog()">场景管理</Button>
           <Button @click="huanlingRef?.saveRecording()">保存战斗记录</Button>
         </template>
         <!-- NOTE: 封神榜数据管理已内聚到模块内（Fengshen.vue），顶部不再暴露弹窗入口 -->
@@ -68,6 +70,8 @@ const activeModule = ref<ModuleId>('huanling');
 interface HuanlingExposed {
   openRulesDialog: () => void
   openDebugDialog: () => void
+  openStatusDialog: () => void
+  openSceneDialog: () => void
   saveRecording: () => Promise<void>
 }
 const huanlingRef = ref<HuanlingExposed | null>(null);

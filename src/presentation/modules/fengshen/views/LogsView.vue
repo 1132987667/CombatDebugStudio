@@ -17,8 +17,25 @@
       <div v-for="log in paged" :key="log.id" class="fs-tl-item" :class="`op-${log.op}`">
         <div class="fs-tl-time">{{ formatTime(log.timestamp) }}</div>
         <div class="fs-tl-body">
-          <span class="fs-tag" :class="opTagClass(log.op)">{{ opLabel(log.op) }}</span>
-          <span class="fs-tl-desc">{{ tableLabel(log.table) }} · <b>{{ log.entityName ?? log.entityId }}</b></span>
+          <button type="button" class="fs-tl-main" :disabled="!log.detail" :aria-expanded="expandedId === log.id"
+            @click="toggleDetail(log.id)">
+            <span class="fs-tag" :class="opTagClass(log.op)">{{ opLabel(log.op) }}</span>
+            <span class="fs-tl-desc">{{ tableLabel(log.table) }} · <b>{{ log.entityName ?? log.entityId }}</b></span>
+          </button>
+          <div v-if="expandedId === log.id && diffOf(log).length" class="fs-tl-diff" role="region">
+            <table class="fs-diff-table">
+              <thead>
+                <tr><th>字段</th><th>原值</th><th>新值</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="d in diffOf(log)" :key="d.key">
+                  <td class="fs-diff-key">{{ d.key }}</td>
+                  <td class="fs-diff-val fs-diff-before">{{ d.before }}</td>
+                  <td class="fs-diff-val fs-diff-after">{{ d.after }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -37,7 +54,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import Button from '@/presentation/components/Button.vue'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
-import type { OperationKind } from '@/domain/fengshen/types'
+import type { OperationKind, OperationLogEntry } from '@/domain/fengshen/types'
+import type { FieldDiff } from '@/shared/utils/entity-diff'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const PAGE_SIZE = 50
@@ -46,6 +64,23 @@ const store = useFengshenStore()
 const tableFilter = ref('')
 const opFilter = ref('')
 const page = ref(1)
+const expandedId = ref<string | null>(null)
+
+/** 展开/收起日志条目（无 diff 的 create/delete 不可展开） */
+function toggleDetail(id: string): void {
+  expandedId.value = expandedId.value === id ? null : id
+}
+
+/** 解析日志 detail（update 的字段级 diff JSON） */
+function diffOf(log: OperationLogEntry): FieldDiff[] {
+  if (!log.detail) return []
+  try {
+    const parsed = JSON.parse(log.detail) as FieldDiff[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
 
 onMounted(() => {
   void store.loadLogs()

@@ -1523,10 +1523,16 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  width: 100%;
   padding: 5px 0;
+  border: none;
   border-bottom: 1px dashed var(--ht-bd);
+  background: none;
   cursor: pointer;
+  font: inherit;
   font-size: var(--font-size-md);
+  text-align: left;
+  color: inherit;
 }
 
 .ht-childrow:last-child {
@@ -1641,6 +1647,10 @@
 .ht-st-item {
   color: var(--color-text-tertiary);
   white-space: nowrap;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
 }
 
 .ht-st-item b {
@@ -1771,6 +1781,19 @@
   padding: 6px var(--space-3);
   border-bottom: 1px solid var(--ht-bd);
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ht-stream-filter-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ht-stream-filter-grid .t-select {
+  flex: 0 1 150px;
 }
 
 /* 书签标记 */
@@ -2030,6 +2053,55 @@
   color: var(--color-text-tertiary);
   font-size: var(--font-size-md);
   line-height: 1.6;
+}
+
+.ht-sum-sec {
+  margin-top: 14px;
+}
+
+.ht-sum-sec-t {
+  margin-bottom: 6px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.ht-sum-judge {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ht-sum-judge-item {
+  color: var(--color-text-secondary);
+  font-family: var(--ht-mono);
+}
+
+.ht-sum-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ht-sum-ev {
+  display: flex;
+  gap: var(--space-2);
+  padding: 2px 0;
+}
+
+.ht-sum-ev-turn {
+  flex: 0 0 40px;
+  color: var(--color-text-tertiary);
+  font-family: var(--ht-mono);
+}
+
+.ht-sum-ev-kill,
+.ht-sum-ev-first_blood {
+  color: var(--ht-red);
+}
+
+.ht-sum-ev-highest_hit {
+  color: var(--ht-green);
 }
 
 /* ───────────── 面板可拖拽分隔条 ───────────── */

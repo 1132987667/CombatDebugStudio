@@ -1,8 +1,6 @@
 import type { BattleEntity } from '@/domain/battle/type/types'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ParticipantSide } from '@/domain/battle/type/types'
-import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import { getEnemyConfig } from '@tests/fixtures/loadTestData'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export const defaultAttrs = {
   [ATTRIBUTE_CODE.attack]: {
@@ -122,23 +120,4 @@ export function createMockEntity(
     getSkillIds: () => [],
     hasSkill: () => false,
   } as unknown as BattleEntity
-}
-
-// ═══════════════════════════════════════════════
-//  基于真实 JSON 配置的 Mock 创建函数（新增）
-// ═══════════════════════════════════════════════
-
-/**
- * 从真实敌人配置创建 Mock 实体。
- * 使用 GameDataProcessor.enemyToParticipant 生成完整 BattleParticipantImpl，
- * 再提取结构给调用方。返回 { participant, ...attrs } 以便测试同时访问实体和属性值。
- */
-export function createMockEntityFromConfig(
-  enemyId: string,
-  side: ParticipantSide = ParticipantSide.ALLY,
-) {
-  const enemy = getEnemyConfig(enemyId)
-  if (!enemy) return undefined
-  const participant = GameDataProcessor.enemyToParticipant(enemy, side)
-  return { participant, id: enemy.id, name: enemy.name, level: enemy.level }
 }

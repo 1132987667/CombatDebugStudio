@@ -45,6 +45,7 @@ import {
   ParticipantSide,
   ParticipantSideName,
   RoundStatus,
+  SkillBlockReason,
 } from '@/domain/battle/type/types'
 import { BuffSystem, type SummonRequest, type DamageOrigin } from '@/domain/buff/BuffSystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
@@ -97,6 +98,14 @@ import { percentage } from '@/shared/utils/math'
 
 /** 动作日志保留上限 */
 const MAX_ACTION_HISTORY = 100
+
+/** 手动行动技能不可用原因的中文标签 */
+const MANUAL_ACTION_BLOCK_LABELS: Record<string, string> = {
+  [SkillBlockReason.ENERGY_SHORT]: '能量不足',
+  [SkillBlockReason.COOLDOWN]: '冷却中',
+  [SkillBlockReason.CONTROLLED]: '被控制',
+  [SkillBlockReason.SILENCED]: '被沉默',
+}
 
 export class BattleSystem {
   /**
@@ -159,16 +168,6 @@ export class BattleSystem {
   getFormationManager(): FormationManager {
     return this.formationManager
   }
-
-  /**
-   * 自动战斗定时器标识，用于取消自动战斗
-   */
-  private autoBattleTimerId?: symbol
-
-  /**
-   * 自动战斗循环函数引用
-   */
-  private autoBattleLoop?: () => Promise<void>
 
   /**
    * 私有构造函数，防止外部直接实例化
@@ -374,6 +373,7 @@ export class BattleSystem {
       fieldElementalModifier: (elementType: string) =>
         this.fieldEffectManager.getElementalModifier(elementType),
     })
+    const turnSystemRules = this.ruleManager.getTurnSystemRules()
 
     // 仇恨系统配置
     if (combatRules.threat) {
@@ -751,6 +751,7 @@ export class BattleSystem {
     battleData.turnOrder = this.turnManager.createTurnOrder(
       Array.from(participants.values()),
       battleData.rng,
+      turnSystemRules.speedFirst,
     )
 
     // ponytail: 光环在 applyPassiveSkills 中已通过 addBuff 添加到源参与者，
@@ -767,6 +768,7 @@ export class BattleSystem {
         battleData.turnOrder = this.turnManager.createTurnOrder(
           Array.from(participants.values()),
           battleData.rng,
+          turnSystemRules.speedFirst,
         )
       }
     }
@@ -790,6 +792,7 @@ export class BattleSystem {
       battleData.turnOrder = this.turnManager.createTurnOrder(
         Array.from(participants.values()),
         battleData.rng,
+        turnSystemRules.speedFirst,
       )
     }
 
@@ -1047,6 +1050,7 @@ export class BattleSystem {
       const currentTurnOrder = this.turnManager.createTurnOrder(
         Array.from(battle.participants.values()),
         battle.rng,
+        this.ruleManager.getTurnSystemRules().speedFirst,
       )
       battle.turnOrder = currentTurnOrder
 
@@ -1575,24 +1579,6 @@ export class BattleSystem {
     this.skillManager.loadSkillConfigs(skillConfigs)
   }
 
-  /**
-   * 获取伤害计算日志
-   */
-  public getDamageCalculationLogs() {
-    return this.skillManager.getDamageCalculationLogs()
-  }
-
-  public getHealCalculationLogs() {
-    return this.skillManager.getHealCalculationLogs()
-  }
-
-  /**
-   * 清空所有计算日志
-   */
-  public clearCalculationLogs(): void {
-    this.skillManager.clearCalculationLogs()
-  }
-
   // 战斗记录相关方法（从原始版本继承）
 
   /**
@@ -1716,6 +1702,7 @@ export class BattleSystem {
     const turnOrder = this.turnManager.createTurnOrder(
       Array.from(battle.participants.values()),
       battle.rng,
+      this.ruleManager.getTurnSystemRules().speedFirst,
     )
 
     commands.push({
@@ -1769,6 +1756,66 @@ export class BattleSystem {
     }
 
     return commands
+  }
+
+  /**
+   * 手动干预：让指定存活参战者立即对指定目标执行一次指定行动（技能或普攻）。
+   * 走完整执行管线（被动/伤害/日志/动画），不经过 AI 决策。
+   * 用于调试沙盒手动验证技能连招（配合手动模式在暂停状态下使用）。
+   * @param participantId 施法者 id
+   * @param skillId 技能 id；null 表示普攻
+   * @param targetId 目标 id
+   */
+  /** 手动行动并发锁（防快速连点） */
+  private manualActionLock = false
+
+  /**
+   * 手动干预：让指定存活参战者立即对指定目标执行一次指定行动（技能或普攻）。
+   * 走完整执行管线（被动/伤害/日志/动画），不经过 AI 决策。
+   * 用于调试沙盒手动验证技能连招（配合手动模式在暂停状态下使用）。
+   * @param participantId 施法者 id
+   * @param skillId 技能 id；null 表示普攻
+   * @param targetId 目标 id
+   * @returns 失败原因字符串；成功返回 null
+   */
+  public async executeManualAction(
+    participantId: string,
+    skillId: string | null,
+    targetId: string,
+  ): Promise<string | null> {
+    if (this.manualActionLock) return '已有手动行动执行中'
+    const battle = this.battleData
+    const source = battle?.participants.get(participantId)
+    if (!battle || !source) return '施法者不存在'
+    if (!source.isAlive()) return '施法者已阵亡'
+    const target = battle.participants.get(targetId)
+    if (!target) return '目标不存在'
+    if (!target.isAlive()) return '目标已阵亡'
+
+    this.manualActionLock = true
+    try {
+      if (skillId) {
+        const skill = this.skillManager.getSkillConfig(skillId)
+        if (!skill) return '技能不存在'
+        const energy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
+        const availability = source.canExecuteSkill(
+          source.id,
+          skill.id,
+          energy,
+          this.buffSystem,
+        )
+        if (!availability.can) {
+          return `技能不可用：${MANUAL_ACTION_BLOCK_LABELS[availability.reason] ?? availability.reason}`
+        }
+        await this.executor.selectAndExecuteSkill(battle, source, skill, targetId)
+      } else {
+        await this.executor.selectAndExecuteAttack(battle, source, targetId)
+      }
+      source.afterAction()
+      return null
+    } finally {
+      this.manualActionLock = false
+    }
   }
 
   /**

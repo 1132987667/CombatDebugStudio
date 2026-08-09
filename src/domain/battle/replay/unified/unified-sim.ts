@@ -124,16 +124,28 @@ export function applyEventToSim(sim: SimTable, ev: UnifiedEvent): void {
   if (ev.phase === 'buff_lifecycle') {
     const s = sim[ev.targetId ?? '']
     if (!s) return
-    if (pl.action === 'update' && pl.buff) {
-      const b = s.buffs.find((x) => x.name === pl.buff)
+    // NOTE: action/buff 字段双形态兼容——demo 用 action:'apply'+buff，真实录制
+    //       BuffTraceLogger 发 BuffAction.APPLY('APPLY')+buffName+duration。
+    const action = String(pl.action ?? '').toLowerCase()
+    const buffName = String(pl.buff ?? pl.buffName ?? '')
+    if (!buffName) return
+    if (action === 'update') {
+      const b = s.buffs.find((x) => x.name === buffName)
       if (b) {
-        if (typeof pl.stacks === 'number') b.stacks = pl.stacks
-        if (typeof pl.turns === 'number') b.turns = pl.turns
+        // demo 用 stacks/turns；真实 BuffTraceLogger.onUpdate 发 newStacks/remainingTurns
+        const stacks = typeof pl.stacks === 'number' ? pl.stacks : typeof pl.newStacks === 'number' ? pl.newStacks : undefined
+        const turns = typeof pl.turns === 'number' ? pl.turns : typeof pl.remainingTurns === 'number' ? pl.remainingTurns : undefined
+        if (stacks !== undefined) b.stacks = stacks
+        if (turns !== undefined) b.turns = turns
       }
     }
-    if (pl.action === 'apply' && !pl.resisted && pl.buff) {
-      if (!s.buffs.some((x) => x.name === pl.buff)) {
-        s.buffs.push({ name: String(pl.buff), stacks: 1, turns: typeof pl.turns === 'number' ? pl.turns : 2 })
+    if (action === 'apply' && !pl.resisted) {
+      if (!s.buffs.some((x) => x.name === buffName)) {
+        s.buffs.push({
+          name: buffName,
+          stacks: typeof pl.stacks === 'number' ? pl.stacks : 1,
+          turns: typeof pl.turns === 'number' ? pl.turns : typeof pl.duration === 'number' ? pl.duration : 2,
+        })
       }
     }
   }

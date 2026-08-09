@@ -9,7 +9,6 @@ import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersis
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
-  BattleParamData,
   DropGroupData,
   ElementsData,
   EquipmentData,
@@ -47,6 +46,18 @@ function sortById<T>(rows: T[]): T[] {
   return rows.sort((a, b) =>
     idCollator.compare(String((a as { id?: unknown }).id ?? ''), String((b as { id?: unknown }).id ?? '')),
   )
+}
+
+/** 字段值搜索文本：map 按「键:值」拼接、数组 JSON 序列化、其余字符串化 */
+function fieldSearchText(value: unknown): string {
+  if (value == null) return ''
+  if (typeof value === 'object') {
+    if (Array.isArray(value)) return JSON.stringify(value)
+    return Object.entries(value as Record<string, unknown>)
+      .map(([k, v]) => `${k}:${v}`)
+      .join(' ')
+  }
+  return String(value)
 }
 
 export class GameDataApi {
@@ -90,10 +101,6 @@ export class GameDataApi {
     return this.storage.get<DropGroupData>(FENGSHEN_STORE.DROPS, id)
   }
 
-  async getBattleParam(id: string): Promise<BattleParamData | null> {
-    return this.storage.get<BattleParamData>(FENGSHEN_STORE.PARAMS, id)
-  }
-
   async getElementMatrix(): Promise<ElementsData | null> {
     return this.storage.get<ElementsData>(FENGSHEN_STORE.ELEMENTS, 'elements')
   }
@@ -117,10 +124,6 @@ export class GameDataApi {
     return filter?.slot ? all.filter((e) => e.slot === filter.slot) : all
   }
 
-  async listBattleParams(): Promise<BattleParamData[]> {
-    return sortById(await this.listAll<BattleParamData>(FENGSHEN_STORE.PARAMS))
-  }
-
   /** 通用分页 / 搜索查询（辅助功能用） */
   async listByTable<T>(table: FengshenTableName, query?: ListQuery): Promise<T[]> {
     // NOTE: 表名与 store 名一致（FENGSHEN_STORE 值），直接用表名作 store
@@ -128,7 +131,18 @@ export class GameDataApi {
     let rows = await this.listAll<T>(store)
     if (query?.search) {
       const kw = query.search.toLowerCase()
-      rows = rows.filter((r) => String((r as { name?: unknown }).name ?? '').toLowerCase().includes(kw))
+      // 搜索覆盖 name/id + schema 标注的 searchable 字段（含 map「键:值」/ 数组 JSON）
+      const searchableKeys = TABLE_SCHEMAS[table]?.fields
+        .filter((f) => f.searchable)
+        .map((f) => f.key) ?? []
+      rows = rows.filter((r) => {
+        const row = r as Record<string, unknown>
+        const haystack = [
+          String(row.name ?? row.id ?? ''),
+          ...searchableKeys.map((k) => fieldSearchText(row[k])),
+        ].join(' ').toLowerCase()
+        return haystack.includes(kw)
+      })
     }
     // 按 id 升序（自然排序）：列表 / 下拉选项 / 自增 id 计算共用同一稳定顺序
     sortById(rows)

@@ -139,4 +139,4 @@ export const PHASE_META: Record<
 }
 
 /** 回放投影默认隐藏的调试专属阶段（调试系统始终可见） */
-export const DEBUG_PHASES: readonly TracePhase[] = ['ai_decision', 'attribute_recalc', 'config_load']
+export const DEBUG_PHASES: readonly TracePhase[] = ['ai_decision', 'attribute_recalc', 'config_load', 'config_validation']

@@ -10,6 +10,8 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { TABLE_SCHEMAS, REFERENCE_RULES, extractReferenceIds } from '@/domain/fengshen/schema'
 import type { FengshenTableName } from '@/domain/fengshen/types'
 import type { ElementsData } from '@/domain/fengshen/types'
+import { validateBuffConfigShape } from '@/domain/buff/buffConfigValidation'
+import { normalizeBuffEntries } from '@/shared/types/effects-json'
 
 export interface ValidationResult {
   valid: boolean
@@ -74,6 +76,13 @@ export class DataIntegrityService {
           errors.push(`字段「${uf}」与现有记录「${dup.id}」重复（唯一性检测）`)
         }
       }
+    }
+
+    // Buff 结构校验：buffs 表混合格式（BuffJsonEntry / effects 条目），先归一化再校验，
+    // 拦截引擎运行期会抛错的坏数据（未知效果类型 / polarity 缺失 / 非法触发阶段）
+    if (table === 'buffs') {
+      const [normalized] = normalizeBuffEntries([entity as unknown])
+      if (normalized) errors.push(...validateBuffConfigShape(normalized as unknown as Record<string, unknown>))
     }
 
     for (const rule of REFERENCE_RULES.filter((r) => r.sourceTable === table)) {

@@ -144,8 +144,7 @@ const debugModules: DebugModule[] = [
     buttons: [
       { label: '立即胜利', action: 'win_battle', description: '直接判定我方胜利', variant: 'success' },
       { label: '立即失败', action: 'lose_battle', description: '直接判定敌方胜利', variant: 'danger' },
-      { label: '跳过回合', action: 'skip_turn', description: '跳过当前回合', variant: 'warning' },
-      { label: '强制结束', action: 'end_battle', description: '强制结束当前战斗', variant: 'danger' }
+      { label: '强制结束', action: 'end_battle', description: '按当前优势方结算并结束战斗', variant: 'danger' }
     ]
   },
   {
@@ -153,25 +152,15 @@ const debugModules: DebugModule[] = [
     buttons: [
       { label: '满血', action: 'full_health', description: '恢复所有角色气血', variant: 'success' },
       { label: '满能量', action: 'full_energy', description: '恢复所有角色能量', variant: 'secondary' },
-      { label: '杀死选中', action: 'kill_selected', description: '将选中角色血量设为0', variant: 'danger' },
-      { label: '满技能CD', action: 'max_skill_cd', description: '设置所有技能冷却', variant: 'warning' }
-    ]
-  },
-  {
-    name: '战斗事件',
-    buttons: [
-      { label: '触发暴击', action: 'force_crit', description: '下次攻击必定暴击', variant: 'secondary' },
-      { label: '触发闪避', action: 'force_dodge', description: '下次攻击必定闪避', variant: 'secondary' },
-      { label: '触发格挡', action: 'force_block', description: '下次攻击必定格挡', variant: 'secondary' },
-      { label: '添加Buff', action: 'add_buff', description: '给选中角色添加Buff', variant: 'secondary' }
+      { label: '杀死选中', action: 'kill_selected', description: '将选中角色血量设为0', variant: 'danger' }
     ]
   },
   {
     name: '系统调试',
     buttons: [
       { label: '输出日志', action: 'dump_logs', description: '输出当前日志到控制台', variant: 'secondary' },
-      { label: '导出状态', action: 'export_state', description: '导出战斗状态', variant: 'secondary' },
-      { label: '导入状态', action: 'import_state', description: '导入战斗状态', variant: 'secondary' },
+      { label: '导出配置', action: 'export_state', description: '将当前队伍编成与规则存档', variant: 'secondary' },
+      { label: '导入配置', action: 'import_state', description: '恢复存档中的队伍编成与规则', variant: 'secondary' },
       { label: '重置战斗', action: 'reset_battle', description: '重置战斗数据', variant: 'warning' },
       { label: 'Buff热重载', action: 'reload_buffs', description: '重新加载所有Buff脚本', variant: 'secondary' },
     ]

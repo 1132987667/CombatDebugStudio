@@ -5,6 +5,10 @@
       <label class="preset-label">阵容预设：</label>
       <TacticalSelect v-model="selectedPreset" class="preset-select-slot" :options="presetOptions"
         @change="applyPreset" />
+      <div class="preset-actions">
+        <Button size="tiny" @click="showSavePreset = true" title="将当前参战阵容保存为自定义预设">存为预设</Button>
+        <Button v-if="selectedCustomPreset" size="tiny" variant="danger" @click="removePreset">删除预设</Button>
+      </div>
       <span v-if="currentPresetDesc" class="preset-desc">{{ currentPresetDesc }}</span>
     </div>
     <div class="panel-section">
@@ -154,6 +158,17 @@
       confirm-text="清空" danger @confirm="clearParticipants" />
     <ConfirmDialog v-model="confirmRemove" title="移除角色" message="确定要移除当前选中的角色吗？"
       confirm-text="移除" danger @confirm="removeSelectedCharacter" />
+
+    <!-- 将当前阵容存为自定义预设 -->
+    <Dialog v-model="showSavePreset" title="存为预设" width="400px">
+      <div class="save-preset-form">
+        <TacticalInput v-model="presetName" placeholder="预设名称" aria-label="预设名称" />
+        <TacticalInput v-model="presetDesc" placeholder="描述（可选）" aria-label="预设描述" />
+        <div class="save-preset-actions">
+          <Button variant="primary" :disabled="!presetName.trim()" @click="saveCurrentAsPreset">保存</Button>
+        </div>
+      </div>
+    </Dialog>
   </div>
 </template>
 
@@ -169,11 +184,13 @@ import type { ActorData, AffixData, LineupData } from '@/domain/fengshen/types';
 import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
+import { useBattlePresetStore } from '@/presentation/stores/battlePresetStore';
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore';
 import { useNotificationStore } from '@/presentation/stores/notificationStore';
 import EmptyState from '@/presentation/components/EmptyState.vue'
 import Button from '@/presentation/components/Button.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
+import Dialog from '@/presentation/components/Dialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
@@ -247,146 +264,13 @@ onMounted(() => {
   )
 })
 
-// 阵容预设
-interface Preset {
-  id: string
-  name: string
-  description: string
-  ally: string[]
-  enemy: string[]
-}
-
-const presets: Preset[] = [
-  // ═══ 第一组：已有角色基线测试 ═══
-  {
-    id: 'baseline_fire_vs_gold',
-    name: '火护法 vs 金护法',
-    description: '基线测试：速度递增 vs 攻击递增的消耗战',
-    ally: ['guardian_fire'],
-    enemy: ['guardian_gold'],
-  },
-  {
-    id: 'baseline_2v1_boss',
-    name: '双护法 vs Boss',
-    description: '2v1 多目标选择、Boss 技能释放',
-    ally: ['guardian_fire', 'guardian_gold'],
-    enemy: ['boss_007'],
-  },
-  {
-    id: 'baseline_multi_boss',
-    name: '双护法 vs 双Boss',
-    description: '高压多目标战斗稳定性',
-    ally: ['guardian_fire', 'guardian_gold'],
-    enemy: ['boss_001', 'boss_002'],
-  },
-  {
-    id: 'baseline_full_roster',
-    name: '全角色混战',
-    description: '所有已有角色参战，验证系统上限',
-    ally: ['guardian_fire', 'enemy_003', 'enemy_004'],
-    enemy: ['guardian_gold', 'enemy_005', 'boss_003'],
-  },
-
-  // ═══ 第二组：基础机制验证（测试角色） ═══
-  {
-    id: 'test_basic_damage',
-    name: '基础伤害',
-    description: 'ATK=20 vs DEF=0，验证基础伤害公式',
-    ally: ['test_warrior'],
-    enemy: ['test_warrior'],
-  },
-  {
-    id: 'test_defense',
-    name: '防御减伤',
-    description: 'ATK=20 vs DEF=20，验证减法公式和最小伤害阈值',
-    ally: ['test_warrior'],
-    enemy: ['test_tank'],
-  },
-  {
-    id: 'test_crit_vs_anti_crit',
-    name: '暴击 vs 抗暴',
-    description: '100%暴击+150%暴伤 vs 100%暴击承伤减免',
-    ally: ['test_assassin'],
-    enemy: ['test_anti_crit'],
-  },
-
-  // ═══ 第三组：被动技能验证 ═══
-  {
-    id: 'test_dodge_chain',
-    name: '闪避连锁',
-    description: '80%闪避 → 闪避回血 + 闪避必暴',
-    ally: ['test_warrior'],
-    enemy: ['test_dodge_master'],
-  },
-  {
-    id: 'test_lifesteal_vs_shield',
-    name: '吸血 vs 护盾',
-    description: '20%吸血 vs 每回合+10护盾',
-    ally: ['test_vampire'],
-    enemy: ['test_shield_guard'],
-  },
-  {
-    id: 'test_thorns',
-    name: '荆棘反伤',
-    description: 'ATK=20 攻击 → 反弹30%伤害，验证递归守卫',
-    ally: ['test_warrior'],
-    enemy: ['test_thorns'],
-  },
-  {
-    id: 'test_combo_vs_thorns',
-    name: '连击 vs 反伤',
-    description: '25%额外行动 + 每次攻击触发反弹',
-    ally: ['test_combo'],
-    enemy: ['test_thorns'],
-  },
-
-  // ═══ 第四组：Buff/Debuff 验证 ═══
-  {
-    id: 'test_control',
-    name: '控制链',
-    description: '眩晕打击 → 跳过行动 → Buff 过期',
-    ally: ['test_controller'],
-    enemy: ['test_warrior'],
-  },
-  {
-    id: 'test_dot_poison',
-    name: 'DOT 毒伤',
-    description: '毒液喷射 → 每回合10%最大气血伤害，最多3层',
-    ally: ['test_poisoner'],
-    enemy: ['test_tank'],
-  },
-  {
-    id: 'test_buff_stack',
-    name: '增益叠加',
-    description: '战斗鼓舞(开场+10%) + 鼓舞技能(全队+20%)',
-    ally: ['test_bard'],
-    enemy: ['test_warrior'],
-  },
-
-  // ═══ 第五组：已有角色 + 测试角色混合 ═══
-  {
-    id: 'mixed_fire_vs_dodge',
-    name: '火护法 vs 闪避大师',
-    description: '真实角色的连击被动 vs 测试角色的闪避被动',
-    ally: ['guardian_fire'],
-    enemy: ['test_dodge_master'],
-  },
-  {
-    id: 'mixed_gold_vs_vampire',
-    name: '金护法 vs 吸血鬼',
-    description: '复仇怒火(越挨打越强) vs 吸血(越打越回血)',
-    ally: ['guardian_gold'],
-    enemy: ['test_vampire'],
-  },
-  {
-    id: 'mixed_full_battle',
-    name: '全面混战',
-    description: '3v3 多被动并发、多Buff交互',
-    ally: ['guardian_fire', 'test_vampire', 'test_bard'],
-    enemy: ['guardian_gold', 'test_dodge_master', 'test_thorns'],
-  },
-]
+// 阵容预设（内置调试用例 + 用户自定义，见 battlePresetStore）
+const presetStore = useBattlePresetStore()
 const selectedPreset = ref('')
+// 自定义预设管理对话框
+const showSavePreset = ref(false)
+const presetName = ref('')
+const presetDesc = ref('')
 
 /** 预设下拉：封神榜阵容（可管理）+ 内置调试预设（测试用例） */
 interface PresetGroupItem {
@@ -404,13 +288,20 @@ const presetGroups = computed(() => {
       items: lineups.value.map((l) => ({ id: l.id, name: l.name, description: l.description ?? '封神榜预设阵容', source: 'lineup' as const })),
     })
   }
+  const builtin = presetStore.allPresets.filter(p => !p.custom)
   groups.push(
-    { label: '调试 · 已有角色基线', items: presets.filter(p => p.id.startsWith('baseline_')) },
-    { label: '调试 · 基础机制', items: presets.filter(p => ['test_basic_damage', 'test_defense', 'test_crit_vs_anti_crit'].includes(p.id)) },
-    { label: '调试 · 被动技能', items: presets.filter(p => ['test_dodge_chain', 'test_lifesteal_vs_shield', 'test_thorns', 'test_combo_vs_thorns'].includes(p.id)) },
-    { label: '调试 · Buff/Debuff', items: presets.filter(p => ['test_control', 'test_dot_poison', 'test_buff_stack'].includes(p.id)) },
-    { label: '调试 · 混合对抗', items: presets.filter(p => p.id.startsWith('mixed_')) },
+    { label: '调试 · 已有角色基线', items: builtin.filter(p => p.id.startsWith('baseline_')) },
+    { label: '调试 · 基础机制', items: builtin.filter(p => ['test_basic_damage', 'test_defense', 'test_crit_vs_anti_crit'].includes(p.id)) },
+    { label: '调试 · 被动技能', items: builtin.filter(p => ['test_dodge_chain', 'test_lifesteal_vs_shield', 'test_thorns', 'test_combo_vs_thorns'].includes(p.id)) },
+    { label: '调试 · Buff/Debuff', items: builtin.filter(p => ['test_control', 'test_dot_poison', 'test_buff_stack'].includes(p.id)) },
+    { label: '调试 · 混合对抗', items: builtin.filter(p => p.id.startsWith('mixed_')) },
   )
+  if (presetStore.customPresets.length) {
+    groups.push({
+      label: '我的预设',
+      items: presetStore.customPresets.map((p) => ({ id: p.id, name: p.name, description: p.description, source: 'builtin' as const })),
+    })
+  }
   return groups
 })
 
@@ -425,8 +316,39 @@ const presetOptions = computed<TSelectOption[]>(() => [
 const currentPresetDesc = computed(() => {
   const lineup = lineups.value.find((l) => l.id === selectedPreset.value)
   if (lineup) return lineup.description ?? '封神榜预设阵容'
-  return presets.find(p => p.id === selectedPreset.value)?.description ?? ''
+  return presetStore.allPresets.find(p => p.id === selectedPreset.value)?.description ?? ''
 })
+
+/** 当前选中的预设是否用户自定义（用于显示"删除预设"） */
+const selectedCustomPreset = computed(() => {
+  return presetStore.customPresets.find(p => p.id === selectedPreset.value) ?? null
+})
+
+/** 将当前参战阵容保存为自定义预设 */
+const saveCurrentAsPreset = () => {
+  const allyIds = allyTeam.value.filter(c => c.enabled).map(c => c.id)
+  const enemyIds = enemyTeam.value.filter(c => c.enabled).map(c => c.id)
+  const preset = presetStore.addPreset(presetName.value, presetDesc.value, allyIds, enemyIds)
+  if (preset) {
+    notification.notify('成功', `预设「${preset.name}」已保存`, 'success')
+    selectedPreset.value = preset.id
+    applyPreset()
+    presetName.value = ''
+    presetDesc.value = ''
+  } else {
+    notification.notify('提示', '保存失败：请确认已填名称且双方各有至少一个参战角色', 'warning')
+  }
+  showSavePreset.value = false
+}
+
+/** 删除选中的自定义预设 */
+const removePreset = () => {
+  const id = selectedPreset.value
+  if (!id) return
+  presetStore.deletePreset(id)
+  selectedPreset.value = ''
+  notification.notify('成功', '预设已删除', 'success')
+}
 
 /** 封神榜阵容 → 参战者（roles 按 seatIndex 排序；角色归我方、敌人归敌方） */
 function applyLineup(lineup: LineupData): void {
@@ -466,7 +388,7 @@ const applyPreset = () => {
     return
   }
 
-  const preset = presets.find(p => p.id === id)
+  const preset = presetStore.allPresets.find(p => p.id === id)
   if (!preset) return
 
   // 构建我方
@@ -821,5 +743,22 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   width: 100%;
   color: var(--color-text-tertiary);
   padding-top: var(--space-1);
+}
+
+.preset-actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.save-preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.save-preset-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

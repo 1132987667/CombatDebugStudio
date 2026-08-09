@@ -37,7 +37,7 @@ const tabs = [
   { id: 'actor', label: '行动角色' },
 ]
 
-/** 当前激活 tab 对应的角色（初始参与者快照） */
+/** 当前激活 tab 对应的角色（初始参与者快照，仅用于名字/id 展示） */
 const participant = computed<ArchiveParticipant | null>(() =>
   active.value === 'actor' ? store.selectedActor : store.selectedTarget,
 )
@@ -51,14 +51,25 @@ interface AttrRow {
 }
 
 /**
+ * 当前属性：初始快照 + 沿 attribute_recalc 事件推演到当前回放时刻的覆盖值。
+ * 回放到任意时刻（如第 50 回合）面板反映该时刻属性，而非开战那一刻。
+ */
+const currentAttrs = computed<Record<string, number> | undefined>(() => {
+  const p = participant.value
+  if (!p) return undefined
+  return store.attrsAt.get(p.id) ?? p.attributes
+})
+
+/**
  * 属性列表：core 层级全显示；advanced/situational 仅显示非 0 值（省噪音）；
  * hidden（hp/energy/shield）由存档契约排除，此处双保险跳过。
  */
 const rows = computed<AttrRow[]>(() => {
   const p = participant.value
-  if (!p?.attributes) return []
+  const attrs = currentAttrs.value
+  if (!p || !attrs) return []
   const out: AttrRow[] = []
-  for (const [code, value] of Object.entries(p.attributes)) {
+  for (const [code, value] of Object.entries(attrs)) {
     const cfg = getAttributeDisplayConfig(code)
     if (cfg.displayTier === 'hidden') continue
     if (cfg.displayTier !== 'core' && value === 0) continue

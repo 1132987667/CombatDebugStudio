@@ -95,16 +95,6 @@ export interface DropGroupData {
   entries: DropEntry[]
 }
 
-/** 战斗规则参数（params 表）—— 对齐规格说明书 3.10 */
-export interface BattleParamData {
-  id: string
-  name: string
-  value: number
-  /** 合法范围（对应数值范围约束） */
-  range?: { min: number; max: number }
-  description?: string
-}
-
 /** 词缀属性修正条目 —— 单个属性按百分比修正 */
 export interface AffixStatModifier {
   /** 目标属性代码（ATTRIBUTE_CODE，如 attack/defense/speed/critRate） */
@@ -182,7 +172,6 @@ export interface FengshenTables {
   elements: ElementsData
   growth: GrowthCurveData
   drops: DropGroupData
-  params: BattleParamData
   affixes: AffixData
 }
 export type FengshenTableName = keyof FengshenTables

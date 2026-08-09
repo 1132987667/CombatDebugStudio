@@ -12,6 +12,12 @@
     <div class="ht-stream-filter">
       <TacticalInput size="md" :model-value="store.streamText" placeholder="过滤关键词 / 数值…" aria-label="过滤关键词"
         @update:model-value="store.streamText = String($event ?? '')" />
+      <div class="ht-stream-filter-grid">
+        <TacticalSelect v-model="store.filterPhase" size="sm" clearable placeholder="阶段…" :options="phaseOptions" />
+        <TacticalSelect v-model="store.filterLevel" size="sm" clearable placeholder="级别…" :options="levelOptions" />
+        <TacticalSelect v-model="store.filterActor" size="sm" clearable searchable placeholder="单位…" :options="actorOptions" />
+        <TacticalSelect v-model="store.filterKind" size="sm" :options="kindOptions" />
+      </div>
     </div>
     <div class="ht-pane-bd ht-vscroll" ref="scrollRef" @scroll.passive="onScroll">
       <div v-if="store.archive" class="ht-vlist" :style="{ height: totalHeight + 'px' }">
@@ -47,10 +53,12 @@
 import { computed, nextTick, watch } from 'vue'
 import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
+import { TraceLevel } from '@/shared/types/trace-event'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
-import { useHaotianStore } from '../stores/haotianStore'
+import { useHaotianStore, RESULT_FILTER_OPTIONS } from '../stores/haotianStore'
 import { useVirtualList } from '../composables/useVirtualList'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import Button from '@/presentation/components/Button.vue'
 
 const store = useHaotianStore()
@@ -66,6 +74,29 @@ const { scrollRef, onScroll, updateView, remeasure, measure, offsetOf, totalHeig
   })
 
 const meta = (ev: UnifiedEvent) => PHASE_META[ev.phase]
+
+/** 阶段过滤选项（跳过 config_validation 外的全部 phase；按 PHASE_META 顺序） */
+const phaseOptions = computed<TSelectOption[]>(() =>
+  (Object.keys(PHASE_META) as Array<keyof typeof PHASE_META>).map((p) => ({
+    value: p,
+    label: `${PHASE_META[p].icon} ${PHASE_META[p].label}`,
+  })),
+)
+
+const levelOptions: TSelectOption[] = [
+  { value: TraceLevel.TRACE, label: 'trace' },
+  { value: TraceLevel.DEBUG, label: 'debug' },
+  { value: TraceLevel.INFO, label: 'info' },
+  { value: TraceLevel.WARN, label: 'warn' },
+  { value: TraceLevel.ERROR, label: 'error' },
+]
+
+const actorOptions = computed<TSelectOption[]>(() =>
+  (store.archive?.initialState.participants ?? []).map((p) => ({ value: p.id, label: `${p.name}（${p.id}）` })),
+)
+
+const kindOptions: TSelectOption[] = RESULT_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))
+
 /**
  * 事件流行标题：action_execution 显示"名字 · 技能名"（从调试树节点解析，真实录制
  * 技能名由 deriveDebugTree 从同链 damage/heal 推断），替换引擎占位 summary"X 执行行动"；

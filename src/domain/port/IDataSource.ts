@@ -10,6 +10,8 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData } from '@/domain/fengshen/types'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { Item } from '@/shared/types/Item'
 
 export interface IDataSource {
   getEnemies(): Enemy[]
@@ -17,4 +19,8 @@ export interface IDataSource {
   getScenes(): SceneData[]
   /** 预设阵容（lineups 表）；我方阵容引用的角色暂以 IDB 数据为准，configs 兜底为空 */
   getLineups(): LineupData[]
+  /** Buff 定义（统一 BuffJsonEntry 格式；数据源侧完成 effects 条目归一化） */
+  getBuffs(): BuffJsonEntry[]
+  /** 材料（materials 表，图鉴等消费方读取） */
+  getMaterials(): Item[]
 }

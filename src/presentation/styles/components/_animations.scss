@@ -214,18 +214,6 @@
   }
 }
 
-@keyframes slideOut {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
 /* ----- 进出场（内容切入 / 回合宣告 / 徽章弹跳） ----- */
 @keyframes content-in {
   from {

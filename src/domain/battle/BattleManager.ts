@@ -15,7 +15,6 @@ import {
   BattleStatus,
 } from '@/domain/battle/type/types'
 import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
-import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
   BattleEvents,
   BattleEventName,
@@ -67,15 +66,6 @@ export class BattleManager {
   /** 阵型配置 */
   private allyFormation?: import('@/shared/types/formation').FormationConfig
   private enemyFormation?: import('@/shared/types/formation').FormationConfig
-
-  /** 设置阵型配置 */
-  setFormations(
-    ally?: import('@/shared/types/formation').FormationConfig,
-    enemy?: import('@/shared/types/formation').FormationConfig,
-  ): void {
-    this.allyFormation = ally
-    this.enemyFormation = enemy
-  }
 
   /**
    * 获取当前回合数
@@ -133,40 +123,11 @@ export class BattleManager {
     }
   }
 
-  /** 清除所有已注册的监听器 */
-  clearAllListeners(): void {
-    for (const [event, set] of this.handlers) {
-      for (const cb of set) {
-        this.emitter.off(event, cb)
-      }
-    }
-    this.handlers.clear()
-  }
-
   /**
    * 获取战斗系统实例
    */
   getBattleSystem(): BattleSystem {
     return this.battleSystem
-  }
-
-  /**
-   * 通过命令流处理回合（第三阶段）
-   * 生成 BattleCommand[] 供 Store 执行，不直接修改状态
-   * @returns BattleCommand[] 命令序列
-   */
-  async processTurnAsCommands(): Promise<BattleCommand[]> {
-    if (!this.battleSystem) {
-      return []
-    }
-
-    // ponytail: 先推进回合，再生成命令 — 消除 generateCommandsForTurn 的副作用
-    this.battleSystem.advanceRound()
-    const commands = this.battleSystem.generateCommandsForTurn()
-    if (commands.length > 0) {
-      this.syncBattleState()
-    }
-    return commands
   }
 
   /**
@@ -454,16 +415,6 @@ export class BattleManager {
   }
 
   /**
-   * 获取队伍成员数量
-   */
-  getTeamCounts(): { ally: number; enemy: number } {
-    const allyCount = this.allyTeam.filter((p) => p.enabled).length
-    const enemyCount = this.enemyTeam.filter((p) => p.enabled).length
-
-    return { ally: allyCount, enemy: enemyCount }
-  }
-
-  /**
    * 查找参与者
    */
   private findParticipant(characterId: string): BattleEntity | undefined {
@@ -486,14 +437,6 @@ export class BattleManager {
    */
   syncBattleState() {
     this.battleStateManager.syncBattleState()
-  }
-
-  /**
-   * 同步战斗日志
-   * @param battleState 战斗状态
-   */
-  async syncBattleLogs(battleState: unknown) {
-    await LoggerProvider.logger.syncBattleLogs(battleState)
   }
 
   /**
@@ -618,6 +561,20 @@ export class BattleManager {
   }
 
   /**
+   * 手动干预：让指定参战者立即对指定目标执行一次指定行动（技能或普攻）
+   * @returns 失败原因字符串；成功返回 null
+   */
+  async executeManualAction(
+    participantId: string,
+    skillId: string | null,
+    targetId: string,
+  ): Promise<string | null> {
+    const error = await this.battleSystem.executeManualAction(participantId, skillId, targetId)
+    if (error === null) this.emitTeamChanged()
+    return error
+  }
+
+  /**
    * 设置战斗速度
    * @param speed 速度倍率
    */
@@ -664,14 +621,6 @@ export class BattleManager {
   }
 
   /**
-   * 获取当前战斗状态
-   * @returns 战斗状态对象
-   */
-  getBattleState() {
-    return this.battleSystem.getBattleState()
-  }
-
-  /**
    * 获取战斗是否活跃
    */
   getIsBattleActive(): boolean {
@@ -684,33 +633,5 @@ export class BattleManager {
    */
   getBattleId(): string | null {
     return this.battleStateManager.getBattleId() ?? null
-  }
-
-  /**
-   * 导出战斗记录
-   * @returns 战斗记录JSON字符串
-   */
-  exportBattleRecord(): string {
-    const battleState = this.getBattleState()
-    return JSON.stringify(battleState, null, 2)
-  }
-
-  /**
-   * 获取战斗统计信息
-   * @returns 战斗统计对象
-   */
-  getBattleStats() {
-    const battleState = this.getBattleState()
-    if (!battleState) {
-      return null
-    }
-
-    return {
-      turn: this.getTurn(),
-      participants: battleState.participants?.size || 0,
-      autoBattle: this.battleSystem.getAutoBattle(),
-      isPaused: this.isPaused(),
-      battleSpeed: this.getBattleSpeed(),
-    }
   }
 }

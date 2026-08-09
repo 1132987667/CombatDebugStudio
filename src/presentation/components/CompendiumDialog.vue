@@ -83,6 +83,7 @@ const {
   buffs,
   items,
   isLoading: isCompendiumLoading,
+  refresh,
   getEnemyById,
   getBuffById,
   getItemById,
@@ -169,8 +170,12 @@ const onClose = () => {
 
 // NOTE: 打开时默认选中第一项，Dialog 基座已托管 body 滚动锁
 watch(() => props.modelValue, (val) => {
-  if (val && currentList.value.length > 0 && !selectedId.value) {
-    selectItem(currentList.value[0].id)
+  if (val) {
+    // 封神榜写操作后数据源已刷新，打开时重新装载保证图鉴与编辑结果一致
+    refresh()
+    if (currentList.value.length > 0 && !selectedId.value) {
+      selectItem(currentList.value[0].id)
+    }
   }
 })
 

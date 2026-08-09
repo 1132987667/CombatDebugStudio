@@ -45,7 +45,7 @@ describe('validateUnified（演示存档应通过全部结构校验）', () => {
     expect(v.errors).toEqual([])
     // 演示存档含 3 个调试专属事件 → 按分类表产生一条警告（回放投影默认隐藏）
     expect(v.warnings).toEqual([
-      '3 个调试专属事件（ai_decision/attribute_recalc/config_load）— 回放投影默认隐藏，调试投影始终可见（按分类表）',
+      '3 个调试专属事件（ai_decision/attribute_recalc/config_load/config_validation）— 回放投影默认隐藏，调试投影始终可见（按分类表）',
     ])
     expect(v.stats.events).toBe(20)
     expect(v.stats.chains).toBe(8)
@@ -266,6 +266,31 @@ describe('unified-sim（回放投影状态推演）', () => {
     expect(sim.u2.buffs.some((b) => b.name === '破甲打击')).toBe(false)
     advanceSimTo(sim, idx.evs, 2760) // ev16 update 复仇怒火 1→2
     expect(sim.u1.buffs.find((b) => b.name === '复仇怒火')!.stacks).toBe(2)
+  })
+
+  it('真实录制形态：apply 大写 action+buffName+duration、update 用 newStacks/remainingTurns', () => {
+    // 问题 3 根因：BuffTraceLogger 发 BuffAction.APPLY('APPLY')+buffName、onUpdate 发 newStacks/remainingTurns，
+    // 此前 applyEventToSim 只认小写 apply+buff，真实录制 buff 事件完全进不了 sim。
+    const log = createDemoArchive()
+    const sim = freshSim(log)
+    // 施加：大写 action + buffName + duration
+    applyEventToSim(sim, {
+      id: 'b1', phase: 'buff_lifecycle', correlationId: 'c', timestamp: 100, targetId: 'u2',
+      payload: { action: 'APPLY', buffName: '破甲打击', stacks: 1, duration: 2 },
+      summary: 'x',
+    })
+    const applied = sim.u2.buffs.find((b) => b.name === '破甲打击')
+    expect(applied).toBeDefined()
+    expect(applied!.stacks).toBe(1)
+    expect(applied!.turns).toBe(2)
+    // 更新：大写 UPDATE + newStacks + remainingTurns
+    applyEventToSim(sim, {
+      id: 'b2', phase: 'buff_lifecycle', correlationId: 'c', timestamp: 200, targetId: 'u2',
+      payload: { action: 'UPDATE', buffName: '破甲打击', newStacks: 2, remainingTurns: 1 },
+      summary: 'x',
+    })
+    expect(applied!.stacks).toBe(2)
+    expect(applied!.turns).toBe(1)
   })
 
   it('currentTurnAt / lastEventAt / formatTime', () => {

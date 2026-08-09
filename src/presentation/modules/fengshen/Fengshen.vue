@@ -38,7 +38,7 @@
 
     <!-- 主内容 -->
     <main class="fs-content">
-      <ListView v-if="store.activeView === 'domain' || store.activeView === 'rules'" />
+      <ListView v-if="store.activeView === 'domain'" />
       <FormulasView v-else-if="store.activeView === 'formulas'" />
       <HealthView v-else-if="store.activeView === 'health'" />
       <LogsView v-else-if="store.activeView === 'logs'" />
@@ -63,9 +63,8 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
   {
     label: '战斗核心',
     items: [
-      // NOTE: 当前阶段角色与敌人是一体（无阵营之分），enemies 数据表保留供战斗引擎/引用使用，
-      //       数据域 UI 统一经 actors 入口管理；后续需要拆分时恢复 enemies 侧栏项即可。
-      { table: 'actors', label: '角色/敌人' },
+      { table: 'actors', label: '角色' },
+      { table: 'enemies', label: '敌人' },
       { table: 'skills', label: '技能' },
       { table: 'buffs', label: '状态与 Buff' },
     ],
@@ -98,7 +97,6 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
 
 const SYSTEM_VIEWS: Array<{ view: FengshenView; label: string }> = [
   { view: 'formulas', label: '属性与公式' },
-  { view: 'rules', label: '战斗规则参数' },
   { view: 'packages', label: '数据包管理' },
   { view: 'health', label: '健康检查' },
   { view: 'logs', label: '操作日志' },

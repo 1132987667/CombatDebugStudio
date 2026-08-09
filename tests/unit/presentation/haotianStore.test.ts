@@ -49,6 +49,21 @@ describe('haotianStore（演示存档装配）', () => {
     expect(s.bpArmed).toBe(false)
   })
 
+  it('none 断点（手动暂停）：可添加、暂停播放、不视为条件断点武装（问题 7）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.play()
+    expect(s.playback.playing).toBe(true)
+    // 手动暂停断点：配置即暂停（参考 HTML setPaused 语义）
+    s.addBreakpoint('none', undefined)
+    expect(s.breakpoints).toHaveLength(1)
+    expect(s.breakpoints[0].type).toBe('none')
+    expect(s.playback.playing).toBe(false)
+    // 不视为条件断点武装（bpArmed 只统计条件类）
+    expect(s.bpArmed).toBe(false)
+    s.clearBreakpoints()
+  })
+
   it('会话导入往返（书签/断点/模式/过滤）', async () => {
     const s = useHaotianStore()
     await s.loadDemo()
@@ -86,6 +101,36 @@ describe('haotianStore（演示存档装配）', () => {
     const file = new File([JSON.stringify({ app: 'evil' })], 'bad.json', { type: 'application/json' })
     await s.importSession(file)
     expect(s.bookmarkCount).toBe(0)
+  })
+
+  it('跨战斗会话导入：不再整包拒绝，断点/过滤应用，书签按当前存档过滤（问题 9）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    const session = {
+      app: 'haotian',
+      version: 2,
+      battleId: 'OTHER_BATTLE', // 与当前存档 BT-9527 不匹配
+      mode: 'replay',
+      selectedId: 'ev05', // 存在 → 应应用
+      bookmarks: ['ev05', 'ghost_id'], // ev05 有效，ghost_id 被过滤
+      breakpoints: [{ id: 'bp_x', type: 'damage', value: 100, enabled: true }],
+      showDbg: true,
+      streamText: '暴击',
+    }
+    const file = new File([JSON.stringify(session)], 'session.json', { type: 'application/json' })
+    await s.importSession(file)
+
+    // 断点 / 过滤 / 模式跨战斗仍应用
+    expect(s.breakpoints).toHaveLength(1)
+    expect(s.breakpoints[0].value).toBe(100)
+    expect(s.showDbg).toBe(true)
+    expect(s.streamText).toBe('暴击')
+    expect(s.mode).toBe('replay')
+    // 书签只保留当前存档存在的 id
+    expect(s.isBookmarked('ev05')).toBe(true)
+    expect(s.isBookmarked('ghost_id')).toBe(false)
+    // 选中事件有效则定位
+    expect(s.selectedId).toBe('ev05')
   })
 
   it('流搜索过滤', async () => {

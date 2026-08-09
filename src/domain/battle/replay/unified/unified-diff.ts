@@ -65,11 +65,13 @@ function diffPair(base: UnifiedEvent, branch: UnifiedEvent): DiffRow {
     const br = bRolls[i]
     const ar = aRolls[i]
     if (!br || !ar || br.rate !== ar.rate || br.roll !== ar.roll) {
+      const fmt = (r: { kind: string; rate: number; roll: number } | undefined): string =>
+        r ? `阈值 ${r.rate} / 随机 ${r.roll}` : '—'
       fields.push({
         kind: 'roll',
         key: `判定 ${i + 1}（${ar?.kind ?? br?.kind ?? '—'}）`,
-        before: br ? `阈值 ${br.rate}` : '—',
-        after: ar ? `阈值 ${ar.rate}` : '—',
+        before: fmt(br),
+        after: fmt(ar),
       })
     }
   }
@@ -148,6 +150,21 @@ export function createRateVariant(archive: UnifiedArchive, eventId: string, roll
   const rolls = (ev?.payload as Record<string, unknown>)?.rolls
   if (ev && Array.isArray(rolls) && rolls[rollIndex]) {
     ;(rolls[rollIndex] as { rate: number }).rate = rate
+  }
+  return next
+}
+
+/**
+ * 生成分支变体：改写指定事件的随机判定结果（roll）。
+ * 用于检视器"重掷该判定"——把重掷后的 roll 写入一个真实分支，
+ * 载入分支对比即可看到该判定翻转与否，而非本地假模拟。
+ */
+export function createRollVariant(archive: UnifiedArchive, eventId: string, rollIndex: number, roll: number): UnifiedArchive {
+  const next = structuredClone(archive)
+  const ev = next.events.find((e) => e.id === eventId)
+  const rolls = (ev?.payload as Record<string, unknown>)?.rolls
+  if (ev && Array.isArray(rolls) && rolls[rollIndex]) {
+    ;(rolls[rollIndex] as { roll: number }).roll = roll
   }
   return next
 }

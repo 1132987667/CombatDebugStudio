@@ -81,4 +81,16 @@ describe('RoleAttrsPanel 角色属性面板', () => {
     const root = await mountPanel('ev02') // turn_flow 无 source/target
     expect(root.textContent ?? '').toContain('该事件无目标角色')
   })
+
+  it('回放推进到 attribute_recalc 之后：面板属性反映当前时刻而非开战快照（问题 6）', async () => {
+    const root = await mountPanel('ev14') // u1 属性重算 ATK 65 → 72（timestamp 2440）
+    const store = useHaotianStore()
+    store.seekTo(2500) // 推进到 ev14 之后
+    await new Promise((r) => setTimeout(r, 20))
+    const tabs = root.querySelectorAll('.tabs-tab')
+    ;(tabs[1] as HTMLButtonElement).click() // 行动 tab（ev14 无 targetId）
+    await new Promise((r) => setTimeout(r, 20))
+    expect(root.querySelector('.ht-attrs-name')?.textContent).toBe('火护法')
+    expect(root.textContent ?? '').toContain('72')
+  })
 })

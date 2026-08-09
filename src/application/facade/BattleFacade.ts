@@ -47,6 +47,15 @@ export class BattleService {
     await this.battleManager.processSingleTurn()
   }
 
+  /** 手动干预：指定参战者立即对指定目标执行一次指定行动（技能/普攻） */
+  async executeManualAction(
+    participantId: string,
+    skillId: string | null,
+    targetId: string,
+  ): Promise<string | null> {
+    return this.battleManager.executeManualAction(participantId, skillId, targetId)
+  }
+
   /** 启动自动战斗 */
   async startAutoBattle(): Promise<boolean> {
     return this.battleManager.startAutoBattle()

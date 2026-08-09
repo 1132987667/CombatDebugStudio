@@ -18,7 +18,7 @@ import { TracePhase, type TraceEvent } from '@/shared/types/trace-event'
 import type { RecordedBattle } from '@/domain/battle/service/BattleRecorder'
 
 /** 真实 TraceEvent → 统一事件：字段归一化 + HP 快照累减 */
-function normalizeTraceEvent(te: TraceEvent, hpSim: Map<string, number>): UnifiedEvent {
+function normalizeTraceEvent(te: TraceEvent, hpSim: Map<string, { cur: number; max: number }>): UnifiedEvent {
   const payload: Record<string, unknown> = { ...(te.payload ?? {}) }
 
   // ⓪ turn_flow action 归一化：真实发射端用枚举 TURN_START/TURN_END，
@@ -94,14 +94,21 @@ function normalizeTraceEvent(te: TraceEvent, hpSim: Map<string, number>): Unifie
     summary: te.summary,
   }
 
-  // ④ HP 快照：伤害/治疗按 target 累减（近似：未计护盾/过量/多层，HACK）
+  // ④ HP 快照：伤害/治疗按 target 累减，clamp 到 [0, maxHp]
+  // NOTE: 近似值——真实录制仅能从事件流恢复"伤害/治疗净变化"，护盾吸收、
+  //       多层减伤不在事件中（TraceDamageLogger 只发 breakdown.final），
+  //       回放气血与实况可能存在偏差。精确修复需发射端补发实际扣血快照
+  //       （LiveBattleStream 观察式快照已走此路径，录制路径是唯一近似源）。
   const isDamage = te.phase === TracePhase.DAMAGE_CALCULATION
   const isHeal = te.phase === TracePhase.HEAL_CALCULATION
   if (te.targetId && (isDamage || isHeal) && typeof payload.final === 'number') {
-    const cur = hpSim.get(te.targetId) ?? 0
-    const next = Math.max(0, Math.round(cur + (isHeal ? payload.final : -payload.final)))
-    hpSim.set(te.targetId, next)
-    ev.snapshot = { participants: [{ id: te.targetId, hp: next }] }
+    const h = hpSim.get(te.targetId)
+    if (h) {
+      const delta = isHeal ? payload.final : -payload.final
+      const next = Math.max(0, Math.min(h.max, Math.round(h.cur + delta)))
+      h.cur = next
+      ev.snapshot = { participants: [{ id: te.targetId, hp: next }] }
+    }
   }
 
   return ev
@@ -123,9 +130,9 @@ export function fromRecordedBattle(rec: RecordedBattle | undefined | null): Unif
     attributes: p.attributes,
   }))
 
-  // HP 游标（从 initialState 出发，按伤害/治疗累减）
-  const hpSim = new Map<string, number>()
-  for (const p of initialParticipants) hpSim.set(p.id, p.hp)
+  // HP 游标（从 initialState 出发，按伤害/治疗累减，携带 max 供 clamp）
+  const hpSim = new Map<string, { cur: number; max: number }>()
+  for (const p of initialParticipants) hpSim.set(p.id, { cur: p.hp, max: p.maxHp })
 
   const raw = (rec.traceEvents ?? []).map((te) => ({
     ...te,

@@ -82,25 +82,33 @@ const attributes = computed((): AttributeDisplay[] => {
   if (!props.buff.attributes) return []
 
   return Object.entries(props.buff.attributes).map(([key, value]) => {
-    let displayValue = value
+    // 标准格式：{ value, type }（buffs.json / 数据源 AttributeValueConfig）
+    if (value && typeof value === 'object') {
+      const cfg = value as { value?: number; type?: string }
+      const isPct = cfg.type === 'PERCENTAGE'
+      return {
+        key: getAttrName(key as ATTRIBUTE_CODE) || key,
+        value: isPct ? `${cfg.value ?? 0}%` : String(cfg.value ?? 0),
+        valueType: isPct ? 'percent' : 'numeric',
+      }
+    }
+    // 旧字符串格式（"+10%"）兼容
+    let displayValue = String(value)
     let valueType = 'numeric'
-
-    if (value.startsWith('+') || value.startsWith('-')) {
-      if (value.includes('%')) {
-        displayValue = value
+    if (displayValue.startsWith('+') || displayValue.startsWith('-')) {
+      if (displayValue.includes('%')) {
         valueType = 'percent'
       } else {
-        displayValue = value
         valueType = 'numeric'
       }
-    } else if (value.includes('%')) {
+    } else if (displayValue.includes('%')) {
       valueType = 'percent'
     }
 
     return {
       key: getAttrName(key as ATTRIBUTE_CODE) || key,
       value: displayValue,
-      valueType
+      valueType,
     }
   })
 })

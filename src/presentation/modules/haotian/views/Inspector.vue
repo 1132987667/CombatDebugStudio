@@ -40,7 +40,7 @@
       <div v-for="(c, i) in pl.rolls as RngRoll[]" :key="i" class="ht-rng">
         <div class="ht-rng-top">
           <span class="ht-rng-name">{{ rollName(c.kind) }}</span>
-          <span v-if="rerolled(i)" class="ht-rng-sim" title="当前显示为重掷模拟结果，未写入存档数据">模拟</span>
+          <span v-if="rerolled(i)" class="ht-rng-sim" title="重掷结果同时写入分支存档，可在分支对比中核验">重掷分支</span>
           <span v-if="c.buff" class="ht-rng-note">· {{ c.buff }}</span>
           <span v-if="derivedOf(c)" class="ht-rng-note" title="真实录制未记录随机值，此值由判定结果反推">· 由结果推导</span>
           <span class="ht-rng-idx">随机 #{{ String(c.idx ?? 0).padStart(4, '0') }}</span>
@@ -60,7 +60,7 @@
           <span class="ht-rng-margin" :class="{ fragile: marginOf(i) < 10 }">
             余量 {{ marginOf(i).toFixed(1) }}%<template v-if="marginOf(i) < 10"> · 敏感</template>
           </span>
-          <Button size="tiny" title="仅模拟重掷，不改变存档数据" @click="doReroll(i)">重掷该判定（仅模拟）</Button>
+          <Button size="tiny" title="重掷该判定：新随机值写入分支存档，载入分支对比核验翻转" @click="doReroll(i)">重掷该判定</Button>
           <span v-if="rerolled(i)" class="ht-rng-reroll" :class="rerollFlip(i) ? 'v-fail' : 'v-pass'">
             {{ rerollFlip(i) ? '重掷翻转！' : '重掷未翻转' }}
           </span>
@@ -146,11 +146,11 @@
         <span class="ht-sec-caret">▸</span> 子事件（{{ children.length }}）
       </button>
       <div v-show="showAdvanced.children" class="ht-sec-body">
-        <div v-for="c in children" :key="c.id" class="ht-childrow" @click="store.focusEvent(c.id, { seek: true })">
+        <button v-for="c in children" :key="c.id" type="button" class="ht-childrow" @click="store.focusEvent(c.id, { seek: true })">
           <span class="ci" :class="'ht-' + meta(c).cls">{{ meta(c).icon }}</span>
           <span class="cs">{{ c.summary }}</span>
           <span class="ctm">{{ formatTime(c.timestamp) }}</span>
-        </div>
+        </button>
       </div>
     </div>
   </div>
@@ -312,7 +312,7 @@ const resultDiff = computed(() => {
   const r = pl.value.result
   if (typeof r !== 'number' || !steps.value.length) return '—'
   const diff = steps.value[steps.value.length - 1].running - r
-  return `${diff > 0 ? '+' : ''}${Math.round(diff * 100) / 100}`
+  return `${diff > 0 ? '+' : ''}${roundStepVal(diff)}`
 })
 
 const ROLL_NAME: Record<string, string> = {
@@ -424,7 +424,11 @@ const rerollFlip = (i: number): boolean => {
   return passOf(i) !== list[i].roll < list[i].rate
 }
 function doReroll(i: number): void {
-  rerolls.set(rerollKey(i), Math.round(Math.random() * 1000) / 1000)
+  const newRoll = Math.round(Math.random() * 1000) / 1000
+  // 本地模拟仍即时展示翻转；同时把新 roll 写入真实分支并载入分支对比，
+  // 让"重掷"从假模拟变为可核验的分支（不再只存在于检视器本地）
+  rerolls.set(rerollKey(i), newRoll)
+  if (ev.value) store.rerollIntoBranch(ev.value.id, i, newRoll)
 }
 
 /** 载荷中值为单位 id 的字段：显示名字而非内部 id（真实录制 payload 含 sourceId/targetId 等） */

@@ -91,6 +91,7 @@ import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import type { TracePhase } from '@/shared/types/trace-event'
+import { formatTimestamp } from '@/shared/utils/format'
 import BreakpointDialog from '../components/BreakpointDialog.vue'
 import Button from '@/presentation/components/Button.vue'
 import DiffDialog from '../components/DiffDialog.vue'
@@ -175,8 +176,6 @@ watch(hintOpen, (v) => {
 
 const resolveBattleSystem = (): BattleSystem => container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
 
-const fmtTime = (t: number): string => (t ? new Date(t).toLocaleString() : '—')
-
 /** 数据源 + 已保存战斗记录合并下拉：记录分组展示，展开时自动刷新 */
 const combinedOptions = computed<TSelectOption[]>(() => [
   { value: 'demo', label: '演示存档', group: '数据源' },
@@ -186,7 +185,7 @@ const combinedOptions = computed<TSelectOption[]>(() => [
   ...store.recordings.map((r) => ({
     value: r.saveKey,
     label: r.name,
-    hint: `${fmtTime(r.startTime)} · ${r.eventCount} 事件`,
+    hint: `${formatTimestamp(r.startTime)} · ${r.eventCount} 事件`,
     group: '已保存的战斗记录',
   })),
 ])

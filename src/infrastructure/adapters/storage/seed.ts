@@ -8,7 +8,7 @@
  * - skills/buffs/enemies/scenes/formations/lineups 直接落表；
  * - materials 剥离 3 件装备（weapon/armor/accessory）至独立 equipment 域并补全字段；
  * - actors 从 guardian_* 敌人派生（id 保持一致，供预设阵容 roleId 引用）；
- * - elements/growth/drops/params 为新建种子；
+ * - elements/growth/drops 为新建种子；
  * - meta 写 dataVersion（初值 1）+ 种子标记。
  */
 
@@ -17,7 +17,6 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
   AffixData,
-  BattleParamData,
   DropGroupData,
   ElementsData,
   EquipmentData,
@@ -149,16 +148,6 @@ function buildGrowth(): GrowthCurveData[] {
   ]
 }
 
-function buildParams(): BattleParamData[] {
-  return [
-    { id: 'damage_multiplier', name: '伤害倍率', value: 1.0, range: { min: 0.1, max: 5.0 }, description: '全局伤害修正' },
-    { id: 'crit_chance', name: '暴击概率', value: 10, range: { min: 0, max: 100 }, description: '基础暴击率（%）' },
-    { id: 'max_buffs_per_character', name: 'Buff 上限', value: 20, range: { min: 1, max: 99 }, description: '单角色最大 Buff 数' },
-    { id: 'default_cooldown', name: '默认冷却', value: 2, range: { min: 0, max: 20 }, description: '未指定冷却时的兜底' },
-    { id: 'stack_multiplier', name: '叠加衰减', value: 0.8, range: { min: 0.1, max: 1.0 }, description: 'Buff 叠加效果衰减系数' },
-  ]
-}
-
 /**
  * 执行种子导入（幂等）。
  * 底层 storage 不可用时（如无 IndexedDB 环境）由调用方容错，此处不预检。
@@ -186,7 +175,6 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.ACTORS, deriveActors(enemies)],
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
       [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
-      [FENGSHEN_STORE.PARAMS, buildParams()],
       [FENGSHEN_STORE.AFFIXES, affixesDataRaw as AffixData[]],
     ]
 

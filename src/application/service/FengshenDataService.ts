@@ -10,6 +10,7 @@ import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersis
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type { DataIntegrityService } from '@/application/service/DataIntegrityService'
 import type { FengshenTableName, MetaDataVersion, OperationKind, OperationLogEntry } from '@/domain/fengshen/types'
+import { computeFieldDiff, type FieldDiff } from '@/shared/utils/entity-diff'
 
 export interface SaveResult {
   ok: boolean
@@ -42,7 +43,13 @@ export class FengshenDataService {
       updatedAt: now,
     })
     await this.bumpVersion()
-    await this.logOp(existed ? 'update' : 'create', table, entity.id, (entity as { name?: string }).name)
+    const diffs: FieldDiff[] = existed
+      ? computeFieldDiff(
+          existed as unknown as Record<string, unknown>,
+          entity as unknown as Record<string, unknown>,
+        )
+      : []
+    await this.logOp(existed ? 'update' : 'create', table, entity.id, (entity as { name?: string }).name, diffs)
     return { ok: true }
   }
 
@@ -72,7 +79,13 @@ export class FengshenDataService {
     return next
   }
 
-  private async logOp(op: OperationKind, table: string, entityId: string, entityName?: string): Promise<void> {
+  private async logOp(
+    op: OperationKind,
+    table: string,
+    entityId: string,
+    entityName?: string,
+    diffs: FieldDiff[] = [],
+  ): Promise<void> {
     const now = new Date().toISOString()
     const entry: OperationLogEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -81,6 +94,8 @@ export class FengshenDataService {
       entityId,
       entityName,
       timestamp: now,
+      // update 记录字段级 diff（JSON 序列化），create/delete 无对比对象
+      detail: diffs.length ? JSON.stringify(diffs) : undefined,
       updatedAt: now,
     }
     await this.storage.set(FENGSHEN_STORE.META, entry.id, entry)

@@ -1209,12 +1209,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return this.getHighestPriorityControlEffect(characterId) === ControlType.NONE
   }
 
-  public canAct(characterId: string): boolean {
-    return (
-      this.getHighestPriorityControlEffect(characterId) === ControlType.NONE
-    )
-  }
-
   // ─── 护盾值管理 ────────────────────────────────────────
 
   getShieldValue(characterId: string): number {

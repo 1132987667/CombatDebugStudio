@@ -12,22 +12,6 @@
   align-items: $align;
 }
 
-// ── 输入字段 ──
-@mixin field {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  padding: var(--space-1) var(--space-2);
-  &:focus {
-    outline: none;
-    border-color: var(--color-info);
-  }
-  &:disabled {
-    color: var(--color-text-disabled);
-  }
-}
-
 // ── 面板头部 ──
 @mixin panel-header {
   @include flex-layout;

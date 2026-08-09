@@ -136,6 +136,19 @@ tests/               # 测试（unit / e2e / factories / fixtures / mocks）
   - `edit_file` / `multi_edit` 保留原文件编码；**`write_file` 覆盖已有文件前先读前 3 字节确认原 BOM 状态**，有 BOM 必须带 BOM 写回；新建 `documents/` 下的 `.md` 一律带 BOM
   - 写完文档验证：文件头 3 字节应为 `EF BB BF`（`[System.IO.File]::ReadAllBytes(path)[0..2]`），再交付
 
+## 模块 tab 约定
+
+顶部四大模块 Tab（`src/presentation/components/ModuleHeader.vue` 的 `MODULES` 数组）顺序即 tab1-4：
+
+| tab | 模块 | id | 目录 |
+|-----|------|----|------|
+| tab1 | 唤灵台 | `huanling` | `src/presentation/modules/huanling/` |
+| tab2 | 昊天镜 | `haotian` | `src/presentation/modules/haotian/` |
+| tab3 | 封神榜 | `fengshen` | `src/presentation/modules/fengshen/` |
+| tab4 | 演劫台 | `yanjie` | `src/presentation/modules/yanjie/` |
+
+用户说「tab1~4」时按上表理解。改顺序只动 `MODULES` 数组（键盘导航/默认模块均跟随）。
+
 ## 当前状态
 
 - 技能系统：已完成 P0/P1 批次重构（差异计算器、步骤类型、战斗文本显示）

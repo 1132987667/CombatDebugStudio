@@ -55,21 +55,22 @@
       <Button size="small" @click="addMapRow">＋ 添加属性</Button>
     </div>
 
-    <!-- 数组（JSON 文本编辑 + 实时合法性提示 + 格式化） -->
-    <div v-else-if="field.type === 'array'" class="fs-array">
+    <!-- 数组 / 对象（JSON 文本编辑 + 实时合法性提示 + 格式化） -->
+    <div v-else-if="field.type === 'array' || field.type === 'object'" class="fs-array">
       <div class="fs-array-hd">
-        <span class="fs-array-state" :class="arrayState.cls">{{ arrayState.text }}</span>
+        <span class="fs-array-state" :class="jsonState.cls">{{ jsonState.text }}</span>
         <span class="fs-array-spacer"></span>
-        <Button size="tiny" title="格式化 JSON" :disabled="!arrayCanFormat" @click="formatArray">格式化</Button>
-        <Button size="tiny" title="清空数组" :disabled="!arrayHasValue" @click="clearArray">清空</Button>
+        <Button size="tiny" title="填入结构示例" :disabled="jsonTemplate === undefined" @click="fillTemplate">示例</Button>
+        <Button size="tiny" title="格式化 JSON" :disabled="!jsonCanFormat" @click="formatJson">格式化</Button>
+        <Button size="tiny" title="清空" :disabled="!jsonHasValue" @click="clearJson">清空</Button>
       </div>
       <textarea class="fs-input fs-textarea" rows="4"
-        :value="arrayDraft" :aria-label="field.label"
-        @input="onArrayInput" :placeholder="arrayPlaceholder" />
+        :value="jsonDraft" :aria-label="field.label"
+        @input="onJsonInput" :placeholder="jsonPlaceholder" />
     </div>
 
-    <!-- description 提示：number/text/array 在各自控件内显示，其余在此统一显示 -->
-    <div v-if="field.description && !['number', 'text', 'array'].includes(field.type)" class="fs-field-hint">{{ field.description }}</div>
+    <!-- description 提示：number/text/array/object 在各自控件内显示，其余在此统一显示 -->
+    <div v-if="field.description && !['number', 'text', 'array', 'object'].includes(field.type)" class="fs-field-hint">{{ field.description }}</div>
 
     <div v-if="error" class="fs-field-error" role="alert">{{ error }}</div>
   </div>
@@ -180,27 +181,30 @@ function updateMap(fn: (prev: Record<string, number>) => Record<string, number>)
   emit('update:modelValue', fn(prev))
 }
 
-// ── array 编辑（JSON 文本 + 合法性提示 + 格式化）──
-const arrayJson = computed(() => {
+// ── array / object 编辑（JSON 文本 + 合法性提示 + 格式化）──
+const isJsonArray = computed(() => props.field.type === 'array')
+
+const jsonValue = computed(() => {
   const v = props.modelValue
-  return Array.isArray(v) ? JSON.stringify(v, null, 2) : ''
+  if (isJsonArray.value) return Array.isArray(v) ? JSON.stringify(v, null, 2) : ''
+  return isPlainObject(v) ? JSON.stringify(v, null, 2) : ''
 })
 
 /** 本地草稿：输入中的中间态（含非法 JSON）不回弹，仅提交合法值 */
-const arrayDraft = ref('')
+const jsonDraft = ref('')
 watch(
-  () => arrayJson.value,
+  () => jsonValue.value,
   (v) => {
-    if (arrayDraft.value !== v) arrayDraft.value = v
+    if (jsonDraft.value !== v) jsonDraft.value = v
   },
   { immediate: true },
 )
 
-const arrayHasValue = computed(() => arrayDraft.value.trim() !== '')
+const jsonHasValue = computed(() => jsonDraft.value.trim() !== '')
 
 /** 顶层解析结果：合法 JSON 时返回解析值，否则 undefined（基于草稿实时判断） */
-const arrayParsed = computed<unknown>(() => {
-  const t = arrayDraft.value.trim()
+const jsonParsed = computed<unknown>(() => {
+  const t = jsonDraft.value.trim()
   if (!t) return undefined
   try {
     return JSON.parse(t)
@@ -209,29 +213,41 @@ const arrayParsed = computed<unknown>(() => {
   }
 })
 
-const arrayState = computed<{ cls: string; text: string }>(() => {
-  const t = arrayDraft.value.trim()
-  if (!t) return { cls: 'empty', text: '空数组' }
-  const parsed = arrayParsed.value
+const jsonState = computed<{ cls: string; text: string }>(() => {
+  const t = jsonDraft.value.trim()
+  if (!t) return { cls: 'empty', text: isJsonArray.value ? '空数组' : '空对象' }
+  const parsed = jsonParsed.value
   if (parsed === undefined) return { cls: 'err', text: 'JSON 语法错误' }
-  if (Array.isArray(parsed)) return { cls: 'ok', text: `合法数组 · ${parsed.length} 项` }
-  return { cls: 'warn', text: '顶层应为数组' }
+  if (isJsonArray.value) {
+    return Array.isArray(parsed)
+      ? { cls: 'ok', text: `合法数组 · ${parsed.length} 项` }
+      : { cls: 'warn', text: '顶层应为数组' }
+  }
+  return isPlainObject(parsed)
+    ? { cls: 'ok', text: `合法对象 · ${Object.keys(parsed).length} 个键` }
+    : { cls: 'warn', text: '顶层应为对象' }
 })
 
-const arrayCanFormat = computed(() => {
-  const parsed = arrayParsed.value
-  return typeof parsed === 'object' && parsed !== null && arrayDraft.value !== JSON.stringify(parsed, null, 2)
+const jsonCanFormat = computed(() => {
+  const parsed = jsonParsed.value
+  return typeof parsed === 'object' && parsed !== null && jsonDraft.value !== JSON.stringify(parsed, null, 2)
 })
 
-/** 数组示例：优先字段描述，否则通用占位（供用户对照结构） */
-const arrayPlaceholder = computed(() => {
-  if (props.field.description) return `示例（${props.field.description}）：\n[{"key":"value"}]`
-  return 'JSON 数组，如 [{"key":"value"}]'
+/** 结构示例：array 用 arrayTemplate，object 用 objectTemplate */
+const jsonTemplate = computed<unknown>(() =>
+  isJsonArray.value ? props.field.arrayTemplate : props.field.objectTemplate,
+)
+
+/** 占位示例：优先字段描述，否则通用占位（供用户对照结构） */
+const jsonPlaceholder = computed(() => {
+  const sample = isJsonArray.value ? '[{"key":"value"}]' : '{"key":"value"}'
+  if (props.field.description) return `示例（${props.field.description}）：\n${sample}`
+  return isJsonArray.value ? 'JSON 数组，如 [{"key":"value"}]' : 'JSON 对象，如 {"key":"value"}'
 })
 
-function onArrayInput(e: Event): void {
+function onJsonInput(e: Event): void {
   const v = (e.target as HTMLTextAreaElement).value
-  arrayDraft.value = v
+  jsonDraft.value = v
   if (!v.trim()) {
     emit('update:modelValue', undefined)
     return
@@ -249,11 +265,20 @@ function tryParse(v: string): unknown {
   }
 }
 
-function formatArray(): void {
-  if (arrayParsed.value !== undefined) emit('update:modelValue', arrayParsed.value)
+function formatJson(): void {
+  if (jsonParsed.value !== undefined) emit('update:modelValue', jsonParsed.value)
 }
 
-function clearArray(): void {
+/** 填入 schema 声明的结构示例（供对照编辑，覆盖当前值） */
+function fillTemplate(): void {
+  if (jsonTemplate.value !== undefined) emit('update:modelValue', jsonTemplate.value)
+}
+
+function clearJson(): void {
   emit('update:modelValue', undefined)
+}
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
 }
 </script>

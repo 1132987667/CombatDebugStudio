@@ -25,7 +25,6 @@ export const FENGSHEN_STORE = {
   ELEMENTS: 'elements',
   GROWTH: 'growth',
   DROPS: 'drops',
-  PARAMS: 'params',
   AFFIXES: 'affixes',
   META: 'meta',
 } as const

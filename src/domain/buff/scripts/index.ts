@@ -1,6 +1,5 @@
 // 导出所有Buff 脚本
 export * from '@/domain/buff/scripts/templates/BaseBuffScript'
-export * from '@/domain/buff/scripts/templates/BuffTemplate'
 
 // 单独导出类，避免 BUFF_ID 冲突
 export { MountainGodBuff } from '@/domain/buff/scripts/MountainGodBuff'

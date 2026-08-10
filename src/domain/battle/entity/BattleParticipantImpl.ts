@@ -448,62 +448,6 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获取气血加成
-   */
-  get healthBonus(): number {
-    return 0
-  }
-
-  /**
-   * 设置气血加成
-   */
-  set healthBonus(value: number) {
-    // 保留兼容性
-  }
-
-  /**
-   * 获取攻击加成
-   */
-  get attackBonus(): number {
-    return 0
-  }
-
-  /**
-   * 设置攻击加成
-   */
-  set attackBonus(value: number) {
-    // 保留兼容性
-  }
-
-  /**
-   * 获取防御加成
-   */
-  get defenseBonus(): number {
-    return 0
-  }
-
-  /**
-   * 设置防御加成
-   */
-  set defenseBonus(value: number) {
-    // 保留兼容性
-  }
-
-  /**
-   * 获取速度加成
-   */
-  get speedBonus(): number {
-    return 0
-  }
-
-  /**
-   * 设置速度加成
-   */
-  set speedBonus(value: number) {
-    // 保留兼容性
-  }
-
-  /**
    * 设置属性值
    * @param attribute - 属性名称
    * @param value - 属性值

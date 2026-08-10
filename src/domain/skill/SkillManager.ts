@@ -39,7 +39,6 @@ export class SkillManager {
   private damageCalculator: DamageCalculator
   private healCalculator: HealCalculator
   private executor: SkillExecutor
-  private calculators: Map<string, unknown> = new Map()
 
   constructor(
     buffSystem: BuffSystem,
@@ -382,14 +381,6 @@ export class SkillManager {
       ctx.targets[0],
       createStepContext(ctx.record, ctx.token, false, undefined, ctx.trace),
     )
-  }
-
-  registerCalculator(name: string, calculator: unknown): void {
-    this.calculators.set(name, calculator)
-  }
-
-  getCalculator(name: string): unknown | undefined {
-    return this.calculators.get(name)
   }
 
   loadSkillConfigsFromData(data: SkillConfig[]): SkillConfig[] {

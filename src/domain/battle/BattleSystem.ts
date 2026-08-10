@@ -48,7 +48,6 @@ import {
   SkillBlockReason,
 } from '@/domain/battle/type/types'
 import { BuffSystem, type SummonRequest, type DamageOrigin } from '@/domain/buff/BuffSystem'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 import type { TriggerEventContext } from '@/domain/buff/types'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
@@ -56,7 +55,6 @@ import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import type { Container } from '@/infrastructure/di/Container'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
-import type { BattleCommand } from '@/shared/types/battle-commands'
 
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
@@ -74,7 +72,6 @@ import { ThreatManager } from '@/domain/battle/service/ThreatManager'
 import { FieldEffectManager } from '@/domain/battle/service/FieldEffectManager'
 import { FormationManager } from '@/domain/battle/service/FormationManager'
 import type { FormationConfig } from '@/shared/types/formation'
-import { percentage } from '@/shared/utils/math'
 /**
  * 战斗系统核心管理类
  *
@@ -1644,128 +1641,8 @@ export class BattleSystem {
     return this.battleData
   }
 
-  // ===================== 命令生成器（第三阶段） =====================
+  // ===================== 手动行动 =====================
 
-  /**
-   * 推进到下一回合（递增回合计数器）
-   * ponytail: 从 generateCommandsForTurn 中抽取，消除命令生成器的副作用
-   */
-  public advanceRound(): void {
-    if (this.battleData) {
-      this.battleData.currentTurn++
-    }
-  }
-
-  /**
-   * 从当前战斗状态生成命令序列
-   * 这是第三阶段核心方法：将 BattleSystem 从"状态修改器"转变为"命令生成器"
-   * 调用方须在调用前先调用 advanceRound() 推进回合
-   * @returns BattleCommand[] 命令序列，由调用方（Store）负责执行
-   */
-  public generateCommandsForTurn(): BattleCommand[] {
-    const battle = this.battleData
-    if (
-      !battle ||
-      battle.battleState === BattleStatus.PAUSED ||
-      battle.battleState !== BattleStatus.ACTIVE
-    ) {
-      return []
-    }
-
-    const commands: BattleCommand[] = []
-    const aliveParticipants = Array.from(battle.participants.values()).filter(
-      (p) => p.isAlive(),
-    )
-
-    if (aliveParticipants.length === 0) {
-      // 战斗已在 runEndConditionCheck 中结束，此处不再重复触发
-      // 仅当 battleState 仍为 ACTIVE 时才生成 SET_WINNER（兜底保护）
-      if (battle.battleState === BattleStatus.ACTIVE) {
-        const result = this.ruleManager.checkBattleEndCondition(
-          battle.participants,
-          battle.currentTurn,
-        )
-        if (result.winner) {
-          commands.push({
-            type: 'SET_WINNER',
-            payload: {
-              winner:
-                result.winner,
-            },
-          })
-        }
-      }
-      return commands
-    }
-
-    // ponytail: 回合递增已由调用方通过 advanceRound() 提前完成
-    const turnOrder = this.turnManager.createTurnOrder(
-      Array.from(battle.participants.values()),
-      battle.rng,
-      this.ruleManager.getTurnSystemRules().speedFirst,
-    )
-
-    commands.push({
-      type: 'NEXT_TURN',
-      payload: {
-        actorId: turnOrder[0] || '',
-        round: battle.currentTurn,
-        turnOrder,
-      },
-    })
-
-    // 重置所有存活角色的受击能量计数器
-    for (const p of aliveParticipants) {
-      commands.push({
-        type: 'RESET_ENERGY_HIT_COUNT',
-        payload: { targetId: p.id },
-      })
-    }
-
-    // 为存活角色生成能量增加命令
-    const combatRules = this.ruleManager.getCombatRules()
-    for (const p of aliveParticipants) {
-      commands.push({
-        type: 'GAIN_ENERGY',
-        payload: { targetId: p.id, amount: combatRules.energyGainPerTurn },
-      })
-    }
-
-    // 为每个参与者生成行动命令
-    for (const participantId of turnOrder) {
-      const participant = battle.participants.get(participantId)
-      if (!participant || !participant.isAlive()) continue
-
-      // 检查是否被控制
-      if (participant.hasBuff(STUN_BUFF_ID)) continue
-
-      // 默认攻击（AI 决策后续扩展）
-      const targetId = this.selectCommandTarget(battle, participant)
-      if (targetId) {
-        const damage = participant.getAttribute(ATTRIBUTE_CODE.attack)
-        commands.push({
-          type: 'APPLY_DAMAGE',
-          payload: {
-            targetId,
-            amount: damage,
-            sourceId: participantId,
-          },
-        })
-        // ponytail: 简化版 — 仅生成基础伤害命令，技能/Buff命令后续扩展
-      }
-    }
-
-    return commands
-  }
-
-  /**
-   * 手动干预：让指定存活参战者立即对指定目标执行一次指定行动（技能或普攻）。
-   * 走完整执行管线（被动/伤害/日志/动画），不经过 AI 决策。
-   * 用于调试沙盒手动验证技能连招（配合手动模式在暂停状态下使用）。
-   * @param participantId 施法者 id
-   * @param skillId 技能 id；null 表示普攻
-   * @param targetId 目标 id
-   */
   /** 手动行动并发锁（防快速连点） */
   private manualActionLock = false
 
@@ -1816,19 +1693,5 @@ export class BattleSystem {
     } finally {
       this.manualActionLock = false
     }
-  }
-
-  /**
-   * 选择一个攻击目标
-   */
-  private selectCommandTarget(
-    battle: BattleData,
-    source: BattleEntity,
-  ): string | null {
-    const enemies = Array.from(battle.participants.values()).filter(
-      (p) => p.team !== source.team && p.isAlive(),
-    )
-    if (enemies.length === 0) return null
-    return enemies[battle.rng.nextInt(0, enemies.length - 1)].id
   }
 }

@@ -3,7 +3,6 @@
  * 功能: 迁移器（v0.9 → v2.0.0）与压测存档合成器自检测试
  */
 import { describe, it, expect } from 'vitest'
-import { migrateUnifiedLog } from '@/domain/battle/replay/unified/unified-migrate'
 import { createStressArchive } from '@/domain/battle/replay/unified/stress-archive'
 import { validateUnified, type ValidationResult } from '@/domain/battle/replay/unified/unified-validator'
 import { buildArchiveIndices } from '@/domain/battle/replay/unified/unified-indices'
@@ -11,86 +10,6 @@ import { deriveDebugTree, allNodesFlat } from '@/domain/battle/replay/unified/un
 import { createDemoArchive } from '@/domain/battle/replay/unified/demo-archive'
 import { diffArchives, createRateVariant, createRollVariant, diffSummary } from '@/domain/battle/replay/unified/unified-diff'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
-
-/** v0.9 旧格式日志（file2 RAW_LOG 缩影） */
-function legacyLog() {
-  return {
-    schema: '0.9',
-    meta: { battleId: 'BT-9527', seed: 88237419, rng: 'xorshift32', engine: 'Aegis 2.4.1', recordedAt: '2026-07-31 08:14:22 UTC' },
-    units: [
-      { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200 },
-      { id: 'u2', name: '骷髅战士', maxHp: 1500 },
-    ],
-    timeline: [
-      {
-        type: 'round', id: 'r1', name: '第 1 回合',
-        children: [
-          {
-            type: 'action', id: 'r1_a1', name: '剑士',
-            events: [
-              {
-                id: 'e1', type: 'crit', title: '多段攻击 · 誓约胜利之剑',
-                calc: { base: 200, atk: 450, def: 150, crit: 1.5, final: 900 },
-                rolls: [{ kind: 'hit', rate: 0.875, roll: 0.642 }, { kind: 'crit', rate: 0.25, roll: 0.12 }],
-                hp: { target: 'u2', before: 1380, after: 480 },
-                chain: [{ t: '受到攻击', d: '剑士 → 骷髅战士' }],
-              },
-              {
-                id: 'e2', type: 'damage', title: '多段攻击 · 誓约胜利之剑',
-                calc: { base: 200, atk: 450, def: 150, final: 420 },
-                hp: { target: 'u2', before: 480, after: 60 },
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  }
-}
-
-describe('migrateUnifiedLog（v0.9 → v2.0.0）', () => {
-  it('迁移结构并保留富 payload', () => {
-    const { archive, report } = migrateUnifiedLog(legacyLog())
-    expect(archive).not.toBeNull()
-    expect(report.errors).toEqual([])
-    expect(report.from).toBe('0.9')
-    expect(report.converted).toBe(2)
-
-    const a = archive!
-    expect(a.version).toBe('2.0.0')
-    expect(a.events[0].phase).toBe('battle_lifecycle')
-    expect(a.events[0].payload.action).toBe('battle_start')
-    expect(a.events[a.events.length - 1].payload.action).toBe('battle_end')
-
-    const ev1 = a.events.find((e) => e.id === 'e1')!
-    expect(ev1.phase).toBe('damage_calculation')
-    expect((ev1.payload.steps as Array<{ n: string }>)[2].n).toBe('防御减免')
-    expect((ev1.payload.rolls as Array<{ kind: string }>)[1].kind).toBe('crit')
-    expect(ev1.snapshot?.participants[0]).toEqual({ id: 'u2', hp: 480 })
-    expect((ev1.payload.chain as Array<{ t: string }>)[0].t).toBe('受到攻击')
-    // 同行动共享 correlationId
-    const ev2 = a.events.find((e) => e.id === 'e2')!
-    expect(ev2.correlationId).toBe(ev1.correlationId)
-    expect(ev2.parentId).toBe('e1')
-  })
-
-  it('迁移结果通过结构校验', () => {
-    const { archive } = migrateUnifiedLog(legacyLog())
-    const v = validateUnified(archive!)
-    expect(v.errors).toEqual([])
-  })
-
-  it('v2.0.0 原样返回；未知 schema 报错', () => {
-    const ok = { version: '2.0.0', battleId: 'x', replayId: 'x', randomSeed: '1', startTime: 0, initialState: { participants: [] }, events: [] }
-    const r1 = migrateUnifiedLog(ok)
-    expect(r1.report.from).toBe('2.0.0')
-    expect(r1.archive).toBe(ok)
-
-    const r2 = migrateUnifiedLog({ version: '9.9' })
-    expect(r2.report.errors.length).toBeGreaterThan(0)
-    expect(r2.archive).toBeNull()
-  })
-})
 
 describe('createStressArchive', () => {
   it('生成指定事件数且结构合法', () => {

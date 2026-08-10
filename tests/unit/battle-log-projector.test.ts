@@ -5,13 +5,10 @@
  * - entitySegment：唯一实体段拼装入口（[友方]/[敌方] 前缀 + 着色 + faction）
  * - entityDisplayText：渲染层兜底，entity 段缺前缀且阵营明确时自动补
  * - entityFaction：chip 着色的阵营解析（faction 优先，classStr 反推兜底）
- * - projectReplayActionLog(entityMap)：回放日志从 initialState 反查阵营，
- *   实体段升级为带前缀名字（与实时口径对齐）；查不到时退回 id
  */
 import { describe, it, expect } from 'vitest'
 import {
   entitySegment,
-  projectReplayActionLog,
   projectSnapshotLogs,
   projectTurnEndLog,
 } from '@/domain/battle/logs/BattleLogProjector'
@@ -105,62 +102,6 @@ describe('entityFaction（chip 着色阵营解析）', () => {
 
   it('两者皆无 → undefined', () => {
     expect(entityFaction({ text: 'x' })).toBeUndefined()
-  })
-})
-
-describe('projectReplayActionLog（回放动作日志）', () => {
-  const entityMap = new Map([
-    ['u1', { name: '火护法', team: ParticipantSide.ALLY }],
-    ['u2', { name: '金护法', team: ParticipantSide.ENEMY }],
-  ])
-  const action = {
-    sourceId: 'u1',
-    targetId: 'u2',
-    type: 'skill',
-    skillId: 'skill_fireball',
-    skillName: '火球术',
-    damage: 30,
-    heal: 0,
-    isCrit: false,
-  }
-
-  it('有 entityMap：实体段带前缀+名字+着色+faction，与实时口径一致', () => {
-    const { message, segments } = projectReplayActionLog(action, 1, entityMap)
-    expect(message).toBe(
-      '[友方]火护法 对 [敌方]金护法 使用 【火球术】，造成 30 点伤害',
-    )
-    expect(segments[0]).toMatchObject({
-      text: '[友方]火护法',
-      kind: 'entity',
-      faction: 'ally',
-      classStr: 'log-friendly',
-    })
-    expect(segments[2]).toMatchObject({
-      text: '[敌方]金护法',
-      kind: 'entity',
-      faction: 'enemy',
-      classStr: 'log-hostile',
-    })
-  })
-
-  it('无 entityMap：退回 id + 默认着色（不误标阵营）', () => {
-    const { message, segments } = projectReplayActionLog(action, 1)
-    expect(message).toBe('u1 对 u2 使用 【火球术】，造成 30 点伤害')
-    expect(segments[0]).toMatchObject({
-      text: 'u1',
-      classStr: 'log-friendly',
-      kind: 'entity',
-    })
-    expect(segments[0].faction).toBeUndefined()
-  })
-
-  it('entityMap 查不到 id：该段退回 id，其余正常', () => {
-    const { message } = projectReplayActionLog(
-      { ...action, sourceId: 'ghost' },
-      1,
-      entityMap,
-    )
-    expect(message).toBe('ghost 对 [敌方]金护法 使用 【火球术】，造成 30 点伤害')
   })
 })
 

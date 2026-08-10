@@ -1,5 +1,4 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import type { BattleEntity } from '@/domain/battle/type/types'
 import { BattleStatus } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { LogLevel } from '@/shared/types/battle-log'
@@ -125,17 +124,6 @@ export class BattleStateManager {
   }
 
   /**
-   * 查找参与者
-   * @param participantId 参与者 ID
-   * @returns BattleEntity 或 undefined
-   */
-  private findParticipant(participantId: string): BattleEntity | undefined {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) return undefined
-    return battleState.participants.get(participantId)
-  }
-
-  /**
    * 处理战斗结束
    */
   private handleBattleEnd() {
@@ -150,32 +138,5 @@ export class BattleStateManager {
     this.currentTurn = 1
     this.isBattleActive = false
     this.selectedCharacterId = null
-  }
-
-  /**
-   * 增加回合数
-   */
-  incrementTurn() {
-    this.currentTurn++
-  }
-
-  /**
-   * 更新回合数
-   */
-  updateTurn(turn: number) {
-    this.currentTurn = turn
-  }
-
-  /**
-   * 手动更新角色状态
-   * @param characterId 角色 ID
-   * @param updates 更新内容
-   */
-  updateCharacterManually(characterId: string, updates: Partial<BattleEntity>) {
-    const participant = this.findParticipant(characterId)
-    if (participant) {
-      // 更新参与者属性
-      Object.assign(participant, updates)
-    }
   }
 }

@@ -155,11 +155,11 @@
         "attributes": {
           "critRate": {
             "value": 5,
-            "type": "PERCENTAGE"
+            "type": "ADDITIVE"
           },
           "critDamage": {
             "value": 10,
-            "type": "PERCENTAGE"
+            "type": "ADDITIVE"
           }
         }
       },
@@ -258,7 +258,7 @@
           },
           "controlDurationReduction": {
             "value": 50,
-            "type": "PERCENTAGE"
+            "type": "ADDITIVE"
           }
         }
       },
@@ -273,7 +273,7 @@
         "attributes": {
           "hpRegenPercent": {
             "value": 3,
-            "type": "PERCENTAGE"
+            "type": "ADDITIVE"
           },
           "maxHealth": {
             "value": 30,

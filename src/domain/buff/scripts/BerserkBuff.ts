@@ -47,10 +47,10 @@ export class BerserkBuff extends BaseBuffScript {
     selfDamagePercent: 0.05,
     selfDamageInterval: 2, // 每 N 回合触发一次自残
     refreshAttackBonus: 20,
-    refreshCritRateBonus: 0.05,
-    defensePenalty: 0.3,
-    critRateBonus: 0.2,
-    critDamageBonus: 0.5,
+    refreshCritRateBonus: 5,
+    defensePenalty: 30,
+    critRateBonus: 20,
+    critDamageBonus: 50,
   }
 
   // ==================== 气血周期 ====================
@@ -78,7 +78,7 @@ export class BerserkBuff extends BaseBuffScript {
       params.critDamageBonus,
       ModifierType.ADDITIVE,
     )
-    // ponytail: 防御削弱用 MULTIPLICATIVE，value 为 -0.3 → 最终防御 *= 0.7
+    // ponytail: 防御削弱用 MULTIPLICATIVE，value 为 -30 → 最终防御 *= 0.7
     this.addModifier(
       context,
       ATTRIBUTE_CODE.defense,
@@ -159,7 +159,7 @@ export class BerserkBuff extends BaseBuffScript {
 
     this.log(
       context,
-      `攻击力额外 +${params.refreshAttackBonus}，暴击率 +${(params.refreshCritRateBonus * 100).toFixed(0)}%`,
+      `攻击力额外 +${params.refreshAttackBonus}，暴击率 +${params.refreshCritRateBonus}%`,
     )
   }
 

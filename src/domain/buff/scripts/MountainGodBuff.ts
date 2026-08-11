@@ -29,7 +29,7 @@ export class MountainGodBuff extends BaseBuffScript {
     this.addModifier(
       context,
       ATTRIBUTE_CODE.critRate,
-      0.1,
+      10,
       ModifierType.ADDITIVE,
     )
 

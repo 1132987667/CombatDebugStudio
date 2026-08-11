@@ -19,7 +19,19 @@ import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import { normalizeBuffEntries } from '@/shared/types/effects-json'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BattleRuleManager, type BattleRulesConfig } from '@/domain/battle/service/BattleRuleManager'
+import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleParamData } from '@/domain/fengshen/types'
 import { container } from '@/infrastructure/di/Container'
+
+/** 引擎规则参数路径映射：params 表 id → BattleRulesConfig 路径（规格说明书 §3.10 收拢引擎调参） */
+const PARAM_RULE_PATHS: Record<string, { section: 'combat' | 'turnSystem'; key: string }> = {
+  energy_gain_per_turn: { section: 'combat', key: 'energyGainPerTurn' },
+  energy_gain_on_hit: { section: 'combat', key: 'energyGainOnHit' },
+  min_damage: { section: 'combat', key: 'minDamage' },
+  max_damage: { section: 'combat', key: 'maxDamage' },
+  max_turns: { section: 'turnSystem', key: 'maxTurns' },
+}
 
 export class BattleDataLoader {
   constructor(private readonly storage: IPersistentStorage) {}
@@ -52,10 +64,35 @@ export class BattleDataLoader {
         const registry = container.resolve<BuffScriptRegistry>('BuffScriptRegistry')
         registry.replaceBuffConfigsFromArray(buffs)
       }
+
+      // 封神榜 params 表 → BattleRuleManager 战斗规则默认值（封神榜改参数 → reload → 引擎生效）
+      this.applyParams(await this.loadAll<BattleParamData>(FENGSHEN_STORE.PARAMS))
       return true
     } catch {
       return false
     }
+  }
+
+  /** 将 params 表已识别的参数应用到 BattleRuleManager（updateConfig 深度合并，未映射的 id 忽略） */
+  private applyParams(params: BattleParamData[]): void {
+    if (params.length === 0) return
+    const combat: Record<string, number> = {}
+    const turnSystem: Record<string, number> = {}
+    for (const p of params) {
+      const rule = PARAM_RULE_PATHS[p.id]
+      if (!rule) continue
+      if (rule.section === 'combat') combat[rule.key] = p.value
+      else turnSystem[rule.key] = p.value
+    }
+    const ruleManager = container.resolve<BattleRuleManager>(BATTLE_RULE_MANAGER_TOKEN.toString())
+    const cfg = ruleManager.getConfig()
+    if (Object.keys(combat).length > 0) {
+      cfg.rules.combat = { ...cfg.rules.combat, ...combat } as BattleRulesConfig['rules']['combat']
+    }
+    if (Object.keys(turnSystem).length > 0) {
+      cfg.rules.turnSystem = { ...cfg.rules.turnSystem, ...turnSystem } as BattleRulesConfig['rules']['turnSystem']
+    }
+    ruleManager.updateConfig(cfg)
   }
 
   private async loadAll<T extends { id: string }>(store: StorageStoreName): Promise<T[]> {

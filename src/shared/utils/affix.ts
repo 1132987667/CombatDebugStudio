@@ -31,7 +31,9 @@ export function applyAffixToParticipant(
       sourceType: ModifierSourceType.AFFIX,
       attribute: mod.attribute as never,
       value: mod.percent,
-      type: ModifierType.PERCENTAGE,
+      // NOTE: base=0 的比率/加成型属性（如 damageBoost/damageReduction）相对缩放无效，
+      //       词缀配置通过 type: 'ADDITIVE' 显式声明为百分点加成。
+      type: mod.type ?? ModifierType.PERCENTAGE,
       description: `词缀·${affix.name}（${affix.description ?? ''}）`,
     })
     applied = true

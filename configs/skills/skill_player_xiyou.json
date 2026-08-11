@@ -270,7 +270,7 @@
             "sourceName": "致命精准",
             "sourceType": "skill",
             "targetAttribute": "critDamage",
-            "type": "PERCENTAGE",
+            "type": "ADDITIVE",
             "value": 25
           }
         ]

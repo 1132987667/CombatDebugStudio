@@ -155,7 +155,7 @@
           "attributes": {
             "critRate": {
               "value": 15,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -228,7 +228,7 @@
           "attributes": {
             "critDamage": {
               "value": 20,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -358,7 +358,7 @@
           "attributes": {
             "critRate": {
               "value": 10,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -593,7 +593,7 @@
           "attributes": {
             "critDamageTaken": {
               "value": 25,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -762,7 +762,7 @@
           "attributes": {
             "damageReduction": {
               "value": 15,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -785,7 +785,7 @@
           "attributes": {
             "waterDamageTaken": {
               "value": 30,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -1042,7 +1042,7 @@
           "attributes": {
             "fireDamageTaken": {
               "value": 30,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -1083,7 +1083,7 @@
           "attributes": {
             "webSuccessRate": {
               "value": 10,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -1438,7 +1438,7 @@
           "attributes": {
             "critRate": {
               "value": 15,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -1478,7 +1478,7 @@
           "attributes": {
             "lightningDamageTaken": {
               "value": 30,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2163,7 +2163,7 @@
           "attributes": {
             "critRate": {
               "value": 100,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2247,7 +2247,7 @@
           "attributes": {
             "trueDamageRate": {
               "value": 1,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2303,7 +2303,7 @@
           "attributes": {
             "healReceived": {
               "value": -40,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2392,7 +2392,7 @@
           "attributes": {
             "comboRate": {
               "value": 4,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2420,7 +2420,7 @@
           "attributes": {
             "counterRate": {
               "value": 4,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2533,7 +2533,7 @@
           "attributes": {
             "dodge": {
               "value": -3,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2561,7 +2561,7 @@
           "attributes": {
             "hit": {
               "value": -3,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2645,7 +2645,7 @@
           "attributes": {
             "debuffImmunityRate": {
               "value": 8,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2673,7 +2673,7 @@
           "attributes": {
             "critRate": {
               "value": 4,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2701,7 +2701,7 @@
           "attributes": {
             "dodge": {
               "value": 4,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -2781,7 +2781,7 @@
           "attributes": {
             "critRate": {
               "value": 0,
-              "type": "PERCENTAGE"
+              "type": "ADDITIVE"
             }
           },
           "perStack": true
@@ -3052,7 +3052,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "critRate": { "value": 30, "type": "PERCENTAGE" }
+            "critRate": { "value": 30, "type": "ADDITIVE" }
           },
           "perStack": false
         }
@@ -3108,7 +3108,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "dodge": { "value": 50, "type": "PERCENTAGE" }
+            "dodge": { "value": 50, "type": "ADDITIVE" }
           },
           "perStack": false
         }
@@ -3129,7 +3129,7 @@
         "params": {
           "attributes": {
             "attack": { "value": 50, "type": "PERCENTAGE" },
-            "critRate": { "value": 30, "type": "PERCENTAGE" }
+            "critRate": { "value": 30, "type": "ADDITIVE" }
           },
           "perStack": false
         }

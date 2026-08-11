@@ -17,6 +17,7 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
   AffixData,
+  BattleParamData,
   DropGroupData,
   ElementsData,
   EquipmentData,
@@ -36,10 +37,9 @@ import dropsDataRaw from '@configs/drops/drops.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
 
-// NOTE: v8 — 斗战西游完善：12 核心 buff（xiyou_*）+ 玩家 3 流派技能（skill_player_xiyou）+ 
-//       10 隐藏 BOSS（enemies_xiyou_hidden + skill_hidden_boss）+ 场景解锁链/地形效果/隐藏BOSS位。
+// NOTE: v9 — 新增 params 战斗规则参数表（对齐 BattleRuleManager 默认配置数值，供引擎消费）。
 //       升级版本号让已 seed 的浏览器重导最新 configs。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v8'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v9'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -104,6 +104,17 @@ function buildElements(): ElementsData {
     ],
     defaultCoefficient: 1.0,
   }
+}
+
+/** 战斗规则参数种子（对齐 BattleRuleManager 默认配置数值，引擎经 BattleDataLoader 消费） */
+function buildParams(): BattleParamData[] {
+  return [
+    { id: 'energy_gain_per_turn', name: '每回合能量回复', value: 15, range: { min: 0, max: 200 }, description: '战斗规则·每回合自动回复能量（combat.energyGainPerTurn）', updatedAt: nowIso() },
+    { id: 'energy_gain_on_hit', name: '受击能量获取', value: 12, range: { min: 0, max: 100 }, description: '战斗规则·受到攻击获得能量（combat.energyGainOnHit）', updatedAt: nowIso() },
+    { id: 'min_damage', name: '最小伤害', value: 1, range: { min: 1, max: 9999 }, description: '战斗规则·单次攻击最低伤害（combat.minDamage）', updatedAt: nowIso() },
+    { id: 'max_damage', name: '最大伤害', value: 9999, range: { min: 1, max: 99999 }, description: '战斗规则·单次攻击最高伤害（combat.maxDamage）', updatedAt: nowIso() },
+    { id: 'max_turns', name: '最大回合数', value: 99, range: { min: 1, max: 999 }, description: '战斗规则·固定回合上限（turnSystem.maxTurns）', updatedAt: nowIso() },
+  ]
 }
 
 function buildGrowth(): GrowthCurveData[] {
@@ -176,6 +187,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
       [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
       [FENGSHEN_STORE.AFFIXES, affixesDataRaw as AffixData[]],
+      [FENGSHEN_STORE.PARAMS, buildParams()],
     ]
 
     for (const [store, rows] of tables) {

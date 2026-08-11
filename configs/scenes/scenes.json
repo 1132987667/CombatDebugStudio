@@ -151,7 +151,7 @@
         "type": "modifier",
         "duration": -1,
         "faction": "all",
-        "modifiers": [{ "attribute": "hit", "value": -15, "type": "PERCENTAGE" }]
+        "modifiers": [{ "attribute": "hit", "value": -15, "type": "ADDITIVE" }]
       }
     ]
   },
@@ -311,7 +311,7 @@
         "type": "modifier",
         "duration": -1,
         "faction": "all",
-        "modifiers": [{ "attribute": "hit", "value": -10, "type": "PERCENTAGE" }]
+        "modifiers": [{ "attribute": "hit", "value": -10, "type": "ADDITIVE" }]
       }
     ]
   },
@@ -350,7 +350,7 @@
         "type": "modifier",
         "duration": -1,
         "faction": "all",
-        "modifiers": [{ "attribute": "healReceived", "value": 15, "type": "PERCENTAGE" }]
+        "modifiers": [{ "attribute": "healReceived", "value": 15, "type": "ADDITIVE" }]
       }
     ]
   },

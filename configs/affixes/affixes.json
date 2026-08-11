@@ -38,10 +38,10 @@
     "tier": "debuff_1",
     "target": "player",
     "statModifiers": [
-      { "attribute": "critRate", "percent": -20 }
+      { "attribute": "critRate", "percent": -20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
-    "description": "减益：玩家暴击率-20%（乘算）"
+    "description": "减益：玩家暴击率-20%"
   },
   {
     "id": "affix_debuff_hit",
@@ -49,7 +49,7 @@
     "tier": "debuff_1",
     "target": "player",
     "statModifiers": [
-      { "attribute": "hit", "percent": -20 }
+      { "attribute": "hit", "percent": -20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
     "description": "减益：玩家命中-20%"
@@ -60,7 +60,7 @@
     "tier": "debuff_1",
     "target": "player",
     "statModifiers": [
-      { "attribute": "dodge", "percent": -20 }
+      { "attribute": "dodge", "percent": -20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
     "description": "减益：玩家闪避-20%"
@@ -82,7 +82,7 @@
     "tier": "debuff_1",
     "target": "player",
     "statModifiers": [
-      { "attribute": "hpRegenPercent", "percent": -20 }
+      { "attribute": "hpRegenPercent", "percent": -20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
     "description": "减益：玩家气血回复-20%"
@@ -126,10 +126,10 @@
     "tier": "buff_1",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "critRate", "percent": 20 }
+      { "attribute": "critRate", "percent": 20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
-    "description": "增益：敌人暴击率+20%（乘算）"
+    "description": "增益：敌人暴击率+20%"
   },
   {
     "id": "affix_buff_hit",
@@ -137,7 +137,7 @@
     "tier": "buff_1",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "hit", "percent": 20 }
+      { "attribute": "hit", "percent": 20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
     "description": "增益：敌人命中+20%"
@@ -148,7 +148,7 @@
     "tier": "buff_1",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "dodge", "percent": 20 }
+      { "attribute": "dodge", "percent": 20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
     "description": "增益：敌人闪避+20%"
@@ -170,7 +170,7 @@
     "tier": "buff_1",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "hpRegenPercent", "percent": 20 }
+      { "attribute": "hpRegenPercent", "percent": 20, "type": "ADDITIVE" }
     ],
     "rarity": 1,
     "description": "增益：敌人气血回复+20%"
@@ -214,7 +214,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "critDamage", "percent": 40 }
+      { "attribute": "critDamage", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人暴击伤害+40%"
@@ -236,7 +236,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "dodge", "percent": 40 }
+      { "attribute": "dodge", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人闪避+40%"
@@ -247,7 +247,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "damageBoost", "percent": 40 }
+      { "attribute": "damageBoost", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人伤害提升+40%"
@@ -258,7 +258,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "trueDamageRate", "percent": 40 }
+      { "attribute": "trueDamageRate", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人真实伤害率+40%"
@@ -269,7 +269,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "damageToLowHp", "percent": 40 }
+      { "attribute": "damageToLowHp", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人对低血量目标伤害+40%"
@@ -280,7 +280,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "comboRate", "percent": 40 }
+      { "attribute": "comboRate", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人连击率+40%"
@@ -291,7 +291,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "counterRate", "percent": 40 }
+      { "attribute": "counterRate", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人反击率+40%"
@@ -302,7 +302,7 @@
     "tier": "buff_2",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "reflectDamagePercent", "percent": 40 }
+      { "attribute": "reflectDamagePercent", "percent": 40, "type": "ADDITIVE" }
     ],
     "rarity": 2,
     "description": "增益：敌人伤害反弹+40%"
@@ -346,10 +346,10 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "critRate", "percent": 60 }
+      { "attribute": "critRate", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
-    "description": "增益：敌人暴击率+60%（乘算）"
+    "description": "增益：敌人暴击率+60%"
   },
   {
     "id": "affix_buff3_regen",
@@ -357,7 +357,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "hpRegenPercent", "percent": 60 }
+      { "attribute": "hpRegenPercent", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人气血回复+60%"
@@ -368,7 +368,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "damageBoost", "percent": 60 }
+      { "attribute": "damageBoost", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人伤害提升+60%"
@@ -379,7 +379,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "damageReduction", "percent": 60 }
+      { "attribute": "damageReduction", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人免伤率+60%"
@@ -390,7 +390,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "healReceived", "percent": 60 }
+      { "attribute": "healReceived", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人受到治疗加成+60%"
@@ -401,7 +401,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "controlSuccessRate", "percent": 60 }
+      { "attribute": "controlSuccessRate", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人控制成功率+60%"
@@ -412,7 +412,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "stunResist", "percent": 60 }
+      { "attribute": "stunResist", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人眩晕抗性+60%"
@@ -423,7 +423,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "fireAtk", "percent": 60 }
+      { "attribute": "fireAtk", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人火属性攻击+60%"
@@ -434,7 +434,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "waterAtk", "percent": 60 }
+      { "attribute": "waterAtk", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人水属性攻击+60%"
@@ -445,7 +445,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "woodAtk", "percent": 60 }
+      { "attribute": "woodAtk", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人木属性攻击+60%"
@@ -456,7 +456,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "metalAtk", "percent": 60 }
+      { "attribute": "metalAtk", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人金属性攻击+60%"
@@ -467,7 +467,7 @@
     "tier": "buff_3",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "earthAtk", "percent": 60 }
+      { "attribute": "earthAtk", "percent": 60, "type": "ADDITIVE" }
     ],
     "rarity": 3,
     "description": "增益：敌人土属性攻击+60%"
@@ -511,7 +511,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "critDamage", "percent": 80 }
+      { "attribute": "critDamage", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人暴击伤害+80%"
@@ -522,7 +522,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "damageReduction", "percent": 80 }
+      { "attribute": "damageReduction", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人免伤率+80%"
@@ -544,7 +544,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "comboRate", "percent": 80 }
+      { "attribute": "comboRate", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人连击率+80%"
@@ -555,7 +555,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "counterRate", "percent": 80 }
+      { "attribute": "counterRate", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人反击率+80%"
@@ -566,7 +566,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "reflectDamagePercent", "percent": 80 }
+      { "attribute": "reflectDamagePercent", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人伤害反弹+80%"
@@ -577,7 +577,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "trueDamageRate", "percent": 80 }
+      { "attribute": "trueDamageRate", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人真实伤害率+80%"
@@ -588,7 +588,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "controlSuccessRate", "percent": 80 }
+      { "attribute": "controlSuccessRate", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人控制成功率+80%"
@@ -599,7 +599,7 @@
     "tier": "buff_4",
     "target": "enemy",
     "statModifiers": [
-      { "attribute": "healReceived", "percent": 80 }
+      { "attribute": "healReceived", "percent": 80, "type": "ADDITIVE" }
     ],
     "rarity": 4,
     "description": "增益（传说）：敌人受到治疗加成+80%"

@@ -91,6 +91,7 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
       { table: 'elements', label: '阵营克制' },
       { table: 'growth', label: '成长曲线' },
       { table: 'affixes', label: '词缀' },
+      { table: 'params', label: '战斗规则参数' },
     ],
   },
 ]

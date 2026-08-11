@@ -43,6 +43,7 @@ import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManage
 import { getActionBudget } from '@/shared/constants/animation-timing'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
+import { DataPackageService } from '@/application/service/DataPackageService'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -590,6 +591,11 @@ export const useBattleStore = defineStore('battle', () => {
       const battleId = await battleService.value.startBattle()
       if (!battleId) throw new Error('战斗创建失败，请检查参战队伍的配置')
       currentBattleId.value = battleId
+      // NOTE: 战斗数据快照（规格说明书 §6.3）——战斗开始即冻结封神榜全量数据 + dataVersion，
+      //       供昊天镜一致回放；buildSnapshot 内部容错，失败不阻塞战斗。
+      void container
+        .resolve<DataPackageService>('DataPackageService')
+        .buildSnapshot(battleId)
       battleService.value.syncBattleState()
       setBattleActive(true)
       autoPlayMode.value = battleService.value.getAutoBattle()

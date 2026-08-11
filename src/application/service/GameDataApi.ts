@@ -9,6 +9,7 @@ import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersis
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
+  BattleParamData,
   DropGroupData,
   ElementsData,
   EquipmentData,
@@ -99,6 +100,20 @@ export class GameDataApi {
 
   async getDropGroup(id: string): Promise<DropGroupData | null> {
     return this.storage.get<DropGroupData>(FENGSHEN_STORE.DROPS, id)
+  }
+
+  async getBattleParam(id: string): Promise<BattleParamData | null> {
+    return this.storage.get<BattleParamData>(FENGSHEN_STORE.PARAMS, id)
+  }
+
+  async listBattleParams(): Promise<BattleParamData[]> {
+    const keys = await this.storage.keys(FENGSHEN_STORE.PARAMS)
+    const out: BattleParamData[] = []
+    for (const key of keys) {
+      const rec = await this.storage.get<BattleParamData>(FENGSHEN_STORE.PARAMS, key)
+      if (rec) out.push(rec)
+    }
+    return sortById(out)
   }
 
   async getElementMatrix(): Promise<ElementsData | null> {

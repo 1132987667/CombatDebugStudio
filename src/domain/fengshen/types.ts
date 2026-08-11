@@ -101,6 +101,8 @@ export interface AffixStatModifier {
   attribute: string
   /** 修正百分比（20 表示 +20%，-20 表示 -20%） */
   percent: number
+  /** 修正类型：缺省 PERCENTAGE（相对乘区）；对 base=0 的比率/加成型属性用 ADDITIVE（百分点） */
+  type?: 'PERCENTAGE' | 'ADDITIVE'
 }
 
 /** 词缀（affixes 表）—— 敌人/角色的常驻属性标签，按档位对属性做百分比修正。
@@ -158,6 +160,16 @@ export interface OperationLogEntry {
   updatedAt: string
 }
 
+/** 战斗规则参数（params 表）—— 可调参数收拢为数据，供引擎 BattleRuleManager 消费（规格说明书 §3.10） */
+export interface BattleParamData {
+  id: string
+  name: string
+  value: number
+  range?: { min: number; max: number }
+  description?: string
+  updatedAt: string
+}
+
 /** 封神榜全表映射（表名 → 实体类型），供校验/API/界面按表取类型 */
 export interface FengshenTables {
   actors: ActorData
@@ -173,6 +185,7 @@ export interface FengshenTables {
   growth: GrowthCurveData
   drops: DropGroupData
   affixes: AffixData
+  params: BattleParamData
 }
 export type FengshenTableName = keyof FengshenTables
 

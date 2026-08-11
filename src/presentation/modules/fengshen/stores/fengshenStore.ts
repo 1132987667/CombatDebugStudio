@@ -18,6 +18,7 @@ import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { nextEntityId, type FengshenTableName } from '@/domain/fengshen/types'
 import type { OperationLogEntry } from '@/domain/fengshen/types'
 import { useBattleStore } from '@/presentation/stores'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs'
 
@@ -70,8 +71,14 @@ export const useFengshenStore = defineStore('fengshen', () => {
     dataVersion.value = version
     if (activeView.value === 'domain') void refreshList()
     const battleStore = useBattleStore()
+    const notif = useNotificationStore()
     if (!battleStore.isBattleActive) {
-      void new BattleDataLoader(persistentStorage).reload()
+      void new BattleDataLoader(persistentStorage)
+        .reload()
+        .then(() => notif.toast(`数据已更新（v${version}），引擎数据源已重载`, 'info', 3500))
+    } else {
+      // NOTE: 战斗中数据经快照冻结，改动本局不生效（规格说明书 §6.2）
+      notif.toast(`数据已更新（v${version}），战斗进行中，下一局生效`, 'info', 3500)
     }
   }
   write.onDataChanged = onDataChanged

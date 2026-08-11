@@ -166,7 +166,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     uniqueFields: ['name'],
     filters: [
       { key: 'polarity', label: '极性', type: 'select', options: ['positive', 'negative'] },
-      { key: 'category', label: '类别', type: 'select', options: ['attribute', 'aura', 'dot', 'shield', 'control', 'immunity', 'trigger'] },
+      { key: 'category', label: '类别', type: 'select', options: ['attribute', 'aura', 'dot', 'hot', 'shield', 'control', 'immunity', 'trigger'] },
     ],
   },
   enemies: {
@@ -345,6 +345,19 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     filters: [
       { key: 'tier', label: '档位', type: 'select', options: ['debuff_1', 'buff_1', 'buff_2', 'buff_3', 'buff_4'] },
       { key: 'target', label: '作用目标', type: 'select', options: ['player', 'enemy'] },
+    ],
+  },
+  params: {
+    table: 'params',
+    label: '战斗规则参数',
+    columns: ['id', 'name', 'value', 'description'],
+    fields: [
+      { key: 'name', label: '名称', type: 'text', required: true },
+      { key: 'value', label: '当前值', type: 'number', required: true, column: { format: 'number' } },
+      { key: 'range', label: '合法范围', type: 'object',
+        description: '{ min, max }——越界保存被拦截',
+        objectTemplate: { min: 0, max: 9999 } },
+      { key: 'description', label: '用途说明', type: 'text', searchable: true },
     ],
   },
 }

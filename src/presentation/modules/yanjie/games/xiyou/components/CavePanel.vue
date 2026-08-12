@@ -21,10 +21,25 @@
       </div>
     </div>
 
-    <!-- 炼器 -->
-    <div v-else-if="sub === 'forge'">
-      <p class="xy-panel-hint">炼器术 Lv.2 · 锻造上限二阶</p>
-      <div v-for="r in forgeRecipes" :key="r.name" class="xy-row-card" :class="{ 'xy-row-card--low': r.count === 0 }">
+    <!-- 炼器（灵炉核心背景） -->
+    <div v-else-if="sub === 'forge'" class="xy-forge">
+      <div class="xy-forge-bg" aria-hidden="true">
+        <span class="xy-forge-bg__heat-rings"></span>
+        <span class="xy-forge-bg__glow-bottom"></span>
+        <span class="xy-forge-bg__core"></span>
+        <span class="xy-forge-bg__sparks"></span>
+        <span class="xy-forge-bg__vignette"></span>
+      </div>
+
+      <div class="xy-forge-head">
+        <p class="xy-forge-hint">炼器术 Lv.2 · 锻造上限二阶</p>
+        <div class="xy-forge-status">
+          <span class="xy-chip xy-chip--gold">炉温 1840°</span>
+          <span class="xy-chip xy-chip--jade">成功率 68%</span>
+        </div>
+      </div>
+      <div v-for="r in forgeRecipes" :key="r.name" class="xy-row-card xy-forge-card"
+        :class="{ 'xy-row-card--low': r.count === 0 }">
         <div class="xy-row-top">
           <span class="xy-row-name">{{ r.name }}</span>
           <span class="xy-chip xy-chip--jade">器方 Lv.{{ r.level }}</span>
@@ -33,6 +48,7 @@
         <p class="xy-row-desc">{{ r.materials }}</p>
         <p class="xy-row-desc xy-row-desc--key">{{ r.effect }}</p>
       </div>
+      <button type="button" class="xy-forge-btn xy-ink-hover">开始锻造</button>
     </div>
 
     <!-- 闭关 -->
@@ -158,5 +174,202 @@ const SUBS = [
 .xy-farm-time {
   font-size: var(--font-size-md);
   color: var(--xy-ink-4);
+}
+
+/* ── 炼器 · 灵炉核心背景 ──
+   NOTE: 移植自《深色游戏 UI 背景十案》NEW-02 灵炉核心（锻造）
+   — 层：底 / 热辐射环 / 底部光晕 / 炉芯 / 上升火星 / 暗角 */
+.xy-forge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  overflow: hidden;
+  --forge-c1: #1a0604;
+  --forge-c2: #3a0d08;
+  --forge-accent: #ff8a3a;
+  --forge-accent2: #ffe4a0;
+}
+
+.xy-forge-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  > span {
+    position: absolute;
+    inset: 0;
+  }
+}
+
+.xy-forge-bg__heat-rings {
+  background: repeating-radial-gradient(
+    circle at 50% 100%,
+    transparent 0,
+    transparent 18px,
+    color-mix(in srgb, var(--forge-accent) 35%, transparent) 18px,
+    transparent 20px
+  );
+  mix-blend-mode: screen;
+  opacity: 0.35;
+  -webkit-mask: radial-gradient(circle at 50% 100%, #000 0%, transparent 55%);
+  mask: radial-gradient(circle at 50% 100%, #000 0%, transparent 55%);
+  animation: xy-forge-heat 6s ease-in-out infinite;
+}
+
+.xy-forge-bg__glow-bottom {
+  background: linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--forge-accent) 25%, transparent) 0%,
+    transparent 40%
+  );
+  mix-blend-mode: screen;
+}
+
+.xy-forge-bg__core {
+  background: radial-gradient(
+    circle 32% at 50% 92%,
+    #fff 0%,
+    var(--forge-accent2) 12%,
+    var(--forge-accent) 28%,
+    transparent 65%
+  );
+  mix-blend-mode: screen;
+  animation: xy-forge-core 2.5s ease-in-out infinite;
+}
+
+.xy-forge-bg__sparks {
+  background-image:
+    radial-gradient(circle 1px at 15% 80%, var(--forge-accent2), transparent 60%),
+    radial-gradient(circle 0.5px at 35% 60%, var(--forge-accent), transparent 60%),
+    radial-gradient(circle 1px at 55% 75%, var(--forge-accent2), transparent 60%),
+    radial-gradient(circle 0.5px at 75% 50%, var(--forge-accent), transparent 60%),
+    radial-gradient(circle 1px at 85% 65%, var(--forge-accent2), transparent 60%),
+    radial-gradient(circle 0.5px at 25% 40%, var(--forge-accent), transparent 60%),
+    radial-gradient(circle 1px at 65% 30%, var(--forge-accent2), transparent 60%);
+  background-size: 140px 140px;
+  animation: xy-forge-spark 12s linear infinite;
+  mix-blend-mode: screen;
+  opacity: 0.7;
+}
+
+.xy-forge-bg__vignette {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 12%, transparent 88%, rgba(0, 0, 0, 0.5) 100%),
+    radial-gradient(ellipse 110% 90% at 50% 50%, transparent 50%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+@keyframes xy-forge-heat {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1) translateY(0);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.04) translateY(-6px);
+  }
+}
+
+@keyframes xy-forge-core {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+
+  18% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+
+  35% {
+    opacity: 0.75;
+    transform: scale(0.98);
+  }
+
+  60% {
+    opacity: 0.95;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes xy-forge-spark {
+  0% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: translateY(-140px);
+    opacity: 0.3;
+  }
+}
+
+.xy-forge-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.xy-forge-hint {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-forge-status {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.xy-forge-card {
+  position: relative;
+  z-index: 1;
+  background: rgba(var(--rgb-black), 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-color: rgba(var(--rgb-warning), 0.28);
+
+  .xy-row-name {
+    color: var(--forge-accent2);
+  }
+
+  .xy-row-desc--key {
+    color: var(--forge-accent);
+  }
+}
+
+.xy-forge-btn {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  align-self: center;
+  border: 1px solid var(--forge-accent);
+  border-radius: 2px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--forge-accent) 45%, transparent), rgba(var(--rgb-black), 0.4));
+  color: var(--forge-accent2);
+  cursor: pointer;
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-md);
+  letter-spacing: 3px;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--forge-accent);
+    color: var(--forge-c1);
+  }
 }
 </style>

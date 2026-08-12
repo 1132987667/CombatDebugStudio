@@ -15,38 +15,50 @@
       </div>
     </header>
 
-    <!-- 主体三栏 -->
-    <div class="xy-body">
-      <!-- 最右：功能菜单 · 四象栏（含「路引」tab） -->
-      <FourAspectBar v-model="activeCabinet" />
+    <!-- 主体三栏（行路态：战斗+宝阁+四象栏；功能态：全屏宝阁+四象栏） -->
+    <div class="xy-body" :class="[`xy-side--${sidebarSide}`, isFeature ? 'xy-body--feature' : 'xy-body--journey']">
+      <!-- 最右/左：功能菜单 · 四象栏 -->
+      <FourAspectBar v-model="activeCabinet" @open-map="mapOpen = true" @open-settings="settingsOpen = true" />
 
-      <!-- 右：功能宝阁 -->
-      <TreasureCabinet :tab="activeCabinet" :current="currentScene"
-        @select="currentScene = $event" @open-map="mapOpen = true" @back="emit('back')" />
+      <!-- 功能宝阁（行路态 290px / 功能态全屏） -->
+      <TreasureCabinet :tab="activeCabinet" :current="currentScene" @open-map="mapOpen = true" />
 
-      <!-- 中：战斗禅台 -->
-      <BattleZen :scene="currentScene" />
+      <!-- 战斗禅台（仅行路态显示） -->
+      <BattleZen v-show="!isFeature" :scene="currentScene" />
     </div>
 
     <!-- 降妖路引：弹窗大地图 -->
     <SceneMapDialog v-model="mapOpen" :regions="regions" :scenes="scenes" :current="currentScene"
       @select="currentScene = $event" />
+
+    <!-- 设置：居中弹窗 -->
+    <SettingsDialog v-model="settingsOpen" v-model:sidebar="sidebarSide" @back="emit('back')" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import BattleZen from './components/BattleZen.vue'
 import FourAspectBar, { type GroupTab } from './components/FourAspectBar.vue'
 import SceneMapDialog from './components/SceneMapDialog.vue'
+import SettingsDialog from './components/SettingsDialog.vue'
 import TreasureCabinet from './components/TreasureCabinet.vue'
 import { currency, player, regions, scenes, loadXiyouData, type XiyouScene } from './data/mock'
 
-/** 当前选中的功能宝阁分组（对应四象栏） */
-const activeCabinet = ref<GroupTab>('pack')
+/** 当前选中的功能宝阁分组（map=行路态，其余=功能态） */
+const activeCabinet = ref<GroupTab>('map')
 
 /** 降妖路引弹窗开关 */
 const mapOpen = ref(false)
+
+/** 设置弹窗开关 */
+const settingsOpen = ref(false)
+
+/** 功能面板页签位置（四象栏在左/右） */
+const sidebarSide = ref<'left' | 'right'>('right')
+
+/** 功能态：点击装备/洞府/收集等时，宝阁全屏、战斗区隐藏 */
+const isFeature = computed(() => activeCabinet.value !== 'map')
 
 /** 当前选中关卡（由降妖路引弹窗选择） */
 const currentScene = ref<XiyouScene>(scenes.find(s => s.unlocked) ?? scenes[0])

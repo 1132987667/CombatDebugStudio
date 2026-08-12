@@ -33,19 +33,23 @@ defineProps<{
 .xy-vital {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .xy-vital-label {
   font-family: var(--xy-font-title);
-  font-size: var(--font-size-lg);
-  letter-spacing: 2px;
+  font-size: var(--font-size-md);
+  letter-spacing: 1px;
   color: var(--xy-ink-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .xy-vital-bar {
   position: relative;
-  height: 22px;
+  height: 16px;
   border: 1px solid var(--xy-ink-line);
   overflow: hidden;
   border-radius: 3px;
@@ -70,7 +74,7 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-xxs);
   color: var(--xy-ink-1);
   text-shadow: 0 0 4px var(--xy-paper), 0 0 4px var(--xy-paper);
 }

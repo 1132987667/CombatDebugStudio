@@ -63,23 +63,45 @@ export const player: XiyouPlayer = {
   expNeed: 1500,
 }
 
-/** 当前场景敌人快照（运行时状态） */
-export interface XiyouEnemy {
+/**
+ * 战斗单位快照（4v4 阵容）
+ * NOTE: 我方阵容 = 主角 + 上阵伙伴（至多 4 人）；敌方 = 场景 enemies 至多 4 个
+ */
+export interface XiyouCombatant {
+  id: string
   name: string
   level: number
   hp: number
   maxHp: number
   energy: number
   maxEnergy: number
+  speed: number
+  side: 'player' | 'enemy'
+  /** 阵亡标记（展示用） */
+  down?: boolean
 }
 
-export const enemy: XiyouEnemy = {
-  name: '花妖',
-  level: 1,
-  hp: 280,
-  maxHp: 320,
-  energy: 90,
-  maxEnergy: 150,
+/** 我方 4 人阵容（主角 + 3 上阵伙伴，对齐 mate.json active） */
+export const playerParty: XiyouCombatant[] = [
+  { id: 'player', name: '降妖者', level: 5, hp: 350, maxHp: 420, energy: 120, maxEnergy: 150, speed: 15, side: 'player' },
+  { id: 'sun', name: '孙小圣', level: 5, hp: 380, maxHp: 430, energy: 110, maxEnergy: 140, speed: 18, side: 'player' },
+  { id: 'bajie', name: '八戒', level: 4, hp: 520, maxHp: 560, energy: 70, maxEnergy: 120, speed: 9, side: 'player' },
+  { id: 'wujing', name: '悟净', level: 3, hp: 300, maxHp: 360, energy: 130, maxEnergy: 160, speed: 11, side: 'player' },
+]
+
+/** 由场景敌人构造敌方阵容（至多 4 个） */
+export function buildEnemyParty(sceneEnemies: Array<{ name: string; level: number }>): XiyouCombatant[] {
+  return sceneEnemies.slice(0, 4).map((e, i) => ({
+    id: `enemy_${i}`,
+    name: e.name,
+    level: e.level,
+    hp: 240 + e.level * 18,
+    maxHp: 240 + e.level * 18,
+    energy: 80,
+    maxEnergy: 140,
+    speed: Math.max(6, 12 - i * 2),
+    side: 'enemy' as const,
+  }))
 }
 
 /** 战斗心经日志条目（运行时状态） */

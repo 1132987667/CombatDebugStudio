@@ -36,12 +36,18 @@ defineProps<{ modelValue: GroupTab }>()
 const emit = defineEmits<{
   'update:modelValue': [tab: GroupTab]
   'open-map': []
+  'open-settings': []
 }>()
 
-/** 点击 tab：路引不再切换宝阁面板，而是弹开大地图（其余 tab 正常切换） */
+/** 点击 tab：路引切回行路态并弹大地图；设置弹居中窗；其余切功能态 */
 function onTabClick(tab: GroupTab): void {
   if (tab === 'map') {
+    emit('update:modelValue', 'map')
     emit('open-map')
+    return
+  }
+  if (tab === 'settings') {
+    emit('open-settings')
     return
   }
   emit('update:modelValue', tab)

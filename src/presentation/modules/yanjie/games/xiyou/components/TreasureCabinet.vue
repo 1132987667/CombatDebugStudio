@@ -41,46 +41,6 @@
       <CollectPanel v-else-if="tab === 'collect'" />
       <QuestPanel v-else-if="tab === 'quest'" />
       <CavePanel v-else-if="tab === 'cave'" />
-
-      <!-- 设置 -->
-      <div v-else-if="tab === 'settings'" class="xy-cabinet-scroll xy-settings">
-        <div class="xy-settings-group">
-          <h3 class="xy-cabinet-cat-title">游戏</h3>
-          <button type="button" class="xy-settings-row xy-ink-hover" @click="emit('back')">
-            <span class="xy-settings-row-label">返回演劫台</span>
-            <span class="xy-settings-row-hint">离开当前游戏，回到游戏大厅</span>
-          </button>
-        </div>
-        <div class="xy-settings-group">
-          <h3 class="xy-cabinet-cat-title">战斗</h3>
-          <div class="xy-settings-row xy-settings-row--muted">
-            <span class="xy-settings-row-label">自动战斗</span>
-            <span class="xy-settings-row-hint">默认关闭</span>
-          </div>
-          <div class="xy-settings-row xy-settings-row--muted">
-            <span class="xy-settings-row-label">战斗倍速</span>
-            <span class="xy-settings-row-hint">1× / 2×</span>
-          </div>
-        </div>
-        <div class="xy-settings-group">
-          <h3 class="xy-cabinet-cat-title">音效</h3>
-          <div class="xy-settings-row xy-settings-row--muted">
-            <span class="xy-settings-row-label">音量</span>
-            <span class="xy-settings-row-hint">框架占位，暂不可调</span>
-          </div>
-        </div>
-        <div class="xy-settings-group">
-          <h3 class="xy-cabinet-cat-title">关于</h3>
-          <div class="xy-settings-row xy-settings-row--muted">
-            <span class="xy-settings-row-label">版本</span>
-            <span class="xy-settings-row-hint">斗战西游 0.2.0 · 框架展示</span>
-          </div>
-          <div class="xy-settings-row xy-settings-row--muted">
-            <span class="xy-settings-row-label">养成系统</span>
-            <span class="xy-settings-row-hint">25 个子系统 · 全部可点选</span>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 </template>
@@ -101,7 +61,7 @@ const props = defineProps<{
   tab: GroupTab
   current: XiyouScene | null
 }>()
-const emit = defineEmits<{ back: []; select: [scene: XiyouScene]; 'open-map': [] }>()
+const emit = defineEmits<{ 'open-map': [] }>()
 
 function difficultyText(d: XiyouScene['difficulty']): string {
   return { easy: '简单', normal: '普通', hard: '困难', hell: '极难' }[d]
@@ -162,44 +122,6 @@ const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
   border-left: 3px solid var(--xy-seal);
   font-size: var(--font-size-md);
   color: var(--xy-ink-2);
-}
-
-/* ── 设置 ── */
-.xy-settings-group {
-  margin-bottom: var(--space-4);
-}
-
-.xy-settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-3);
-  margin-bottom: var(--space-2);
-  border: 1px solid var(--xy-ink-line);
-  background: var(--xy-paper);
-  border-radius: 2px;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-  color: var(--xy-ink-1);
-}
-
-.xy-settings-row--muted {
-  cursor: default;
-  opacity: 0.75;
-}
-
-.xy-settings-row-label {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-1);
-  flex-shrink: 0;
-}
-
-.xy-settings-row-hint {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
 }
 
 /* ── 路引简报（map tab） ── */

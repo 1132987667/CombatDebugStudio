@@ -6,7 +6,34 @@
     </header>
 
     <div class="xy-cabinet-body">
-      <SceneMapPanel v-if="tab === 'map'" :regions="regions" :scenes="scenes" :current="current" @select="emit('select', $event)" />
+      <div v-if="tab === 'map'" class="xy-cabinet-scroll">
+        <template v-if="current">
+          <div class="xy-map-brief">
+            <div class="xy-map-brief-top">
+              <span class="xy-map-brief-name">{{ current.name }}</span>
+              <span class="xy-map-brief-stars" aria-label="关卡星级">
+                <svg v-for="i in current.maxStars" :key="i" viewBox="0 0 24 24" class="xy-star"
+                  :class="{ on: i <= current.stars }" aria-hidden="true">
+                  <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
+                </svg>
+              </span>
+            </div>
+            <div class="xy-map-brief-meta">
+              <span class="xy-chip" :class="difficultyChip(current.difficulty)">{{ difficultyText(current.difficulty) }}</span>
+              <span class="xy-map-brief-range">{{ current.range }}</span>
+            </div>
+            <p class="xy-map-brief-desc">{{ current.desc }}</p>
+          </div>
+        </template>
+        <button type="button" class="xy-map-brief-open xy-ink-hover" @click="emit('open-map')">
+          <svg viewBox="0 0 24 24" class="xy-map-brief-open-icon" aria-hidden="true">
+            <path d="M5 3l7-2 7 2v18l-7 2-7-2V3zM12 1v20M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="xy-map-brief-open-text">展开降妖路引</span>
+          <span class="xy-map-brief-open-sub">四域十六关 · 弹窗大地图</span>
+        </button>
+      </div>
+
       <PackPanel v-else-if="tab === 'pack'" />
       <CultivatePanel v-else-if="tab === 'cultivate'" />
       <EquipPanel v-else-if="tab === 'equip'" />
@@ -61,7 +88,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { GroupTab } from './FourAspectBar.vue'
-import type { XiyouRegion, XiyouScene } from '../data/mock'
+import type { XiyouScene } from '../data/mock'
 import CavePanel from './CavePanel.vue'
 import CollectPanel from './CollectPanel.vue'
 import CultivatePanel from './CultivatePanel.vue'
@@ -69,15 +96,20 @@ import EquipPanel from './EquipPanel.vue'
 import MatePanel from './MatePanel.vue'
 import PackPanel from './PackPanel.vue'
 import QuestPanel from './QuestPanel.vue'
-import SceneMapPanel from './SceneMapPanel.vue'
 
 const props = defineProps<{
   tab: GroupTab
-  regions: XiyouRegion[]
-  scenes: XiyouScene[]
   current: XiyouScene | null
 }>()
-const emit = defineEmits<{ back: []; select: [scene: XiyouScene] }>()
+const emit = defineEmits<{ back: []; select: [scene: XiyouScene]; 'open-map': [] }>()
+
+function difficultyText(d: XiyouScene['difficulty']): string {
+  return { easy: '简单', normal: '普通', hard: '困难', hell: '极难' }[d]
+}
+
+function difficultyChip(d: XiyouScene['difficulty']): string {
+  return { easy: 'xy-chip--jade', normal: 'xy-chip--muted', hard: 'xy-chip--seal', hell: 'xy-chip--gold' }[d]
+}
 
 const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
   const map: Record<GroupTab, { label: string; sub: string }> = {
@@ -168,5 +200,105 @@ const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
 .xy-settings-row-hint {
   font-size: var(--font-size-md);
   color: var(--xy-ink-3);
+}
+
+/* ── 路引简报（map tab） ── */
+.xy-map-brief {
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  background: var(--xy-paper);
+  border-radius: 2px;
+}
+
+.xy-map-brief-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.xy-map-brief-name {
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-lg);
+  letter-spacing: 2px;
+  color: var(--xy-ink-1);
+}
+
+.xy-map-brief-stars {
+  display: inline-flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.xy-map-brief-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.xy-map-brief-range {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-map-brief-desc {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-map-brief-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--xy-seal);
+  border-radius: 2px;
+  background: var(--xy-seal-soft);
+  color: var(--xy-seal);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--xy-seal);
+    color: #fff;
+  }
+}
+
+.xy-map-brief-open-icon {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 2px;
+}
+
+.xy-map-brief-open-text {
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+}
+
+.xy-map-brief-open-sub {
+  font-size: var(--font-size-xxs);
+  letter-spacing: 1px;
+  opacity: 0.75;
+}
+
+.xy-star {
+  width: 12px;
+  height: 12px;
+  color: var(--xy-ink-4);
+  opacity: 0.4;
+
+  &.on {
+    color: var(--xy-gold);
+    opacity: 1;
+  }
 }
 </style>

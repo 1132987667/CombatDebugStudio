@@ -23,6 +23,7 @@ import type {
   EquipmentData,
   GrowthCurveData,
   LineupData,
+  XiyouData,
 } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig } from '@/domain/skill/types'
@@ -36,6 +37,16 @@ import equipmentDataRaw from '@configs/equipment/equipment.json'
 import dropsDataRaw from '@configs/drops/drops.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
+import xiyouRegionsJson from '@configs/xiyou/regions.json'
+import xiyouScenesJson from '@configs/xiyou/scenes.json'
+import xiyouSchoolsJson from '@configs/xiyou/schools.json'
+import xiyouPackJson from '@configs/xiyou/pack.json'
+import xiyouCultivateJson from '@configs/xiyou/cultivate.json'
+import xiyouEquipJson from '@configs/xiyou/equip.json'
+import xiyouMateJson from '@configs/xiyou/mate.json'
+import xiyouCollectJson from '@configs/xiyou/collect.json'
+import xiyouQuestJson from '@configs/xiyou/quest.json'
+import xiyouCaveJson from '@configs/xiyou/cave.json'
 
 // NOTE: v9 — 新增 params 战斗规则参数表（对齐 BattleRuleManager 默认配置数值，供引擎消费）。
 //       升级版本号让已 seed 的浏览器重导最新 configs。
@@ -117,6 +128,23 @@ function buildParams(): BattleParamData[] {
   ]
 }
 
+/** 西游数据种子：configs/xiyou/*.json 单文档导入（演劫台经封神榜读取，需求说明 §5.1 方案 B） */
+function buildXiyou(): XiyouData[] {
+  const now = nowIso()
+  return [
+    { id: 'regions', name: '区域', description: '西游·章节大地图', data: xiyouRegionsJson, updatedAt: now },
+    { id: 'scenes', name: '场景', description: '西游·关卡卡片', data: xiyouScenesJson, updatedAt: now },
+    { id: 'schools', name: '流派', description: '西游·三流派技能', data: xiyouSchoolsJson, updatedAt: now },
+    { id: 'pack', name: '背包', description: '西游·乾坤袋/坊市/仓库', data: xiyouPackJson, updatedAt: now },
+    { id: 'cultivate', name: '养成', description: '西游·境界/功法/经脉/神通', data: xiyouCultivateJson, updatedAt: now },
+    { id: 'equip', name: '装备', description: '西游·装备槽/法宝/坐骑', data: xiyouEquipJson, updatedAt: now },
+    { id: 'mate', name: '伙伴', description: '西游·伙伴/灵宠/缘分', data: xiyouMateJson, updatedAt: now },
+    { id: 'collect', name: '图鉴', description: '西游·图鉴/成就/称号', data: xiyouCollectJson, updatedAt: now },
+    { id: 'quest', name: '任务', description: '西游·任务/签到/活动', data: xiyouQuestJson, updatedAt: now },
+    { id: 'cave', name: '洞府', description: '西游·炼丹/炼器/闭关/药园/百艺', data: xiyouCaveJson, updatedAt: now },
+  ]
+}
+
 function buildGrowth(): GrowthCurveData[] {
   return [
     {
@@ -188,6 +216,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
       [FENGSHEN_STORE.AFFIXES, affixesDataRaw as AffixData[]],
       [FENGSHEN_STORE.PARAMS, buildParams()],
+      [FENGSHEN_STORE.XIYOU, buildXiyou()],
     ]
 
     for (const [store, rows] of tables) {

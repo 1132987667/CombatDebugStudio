@@ -12,7 +12,7 @@ import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
 import { processExtraValues, processTargetModifiers, resolveAttributeValue } from '@/domain/skill/calculation-utils'
 import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
-import { floor } from '@/shared/utils/math'
+import { clamp, floor } from '@/shared/utils/math'
 import { resolveElementCoefficient, type ElementMatrixLike } from '@/domain/fengshen/elementMatrix'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
 import { nextRandom } from '@/shared/utils/SeededRandom'
@@ -130,15 +130,18 @@ export class DamageCalculator {
     //  检测必暴标记：必暴意味着必中+必暴
     const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff('buff_guaranteed_crit')
 
-    // 命中/闪避判定 — 默认命中率100%，减去目标闪避率
+    // 命中/闪避判定 — 默认命中率由攻防命中值/闪避值对抗，命中率/闪避率作为修正项
     // 闪避门控：仅当 enableDodge 为 true 时执行闪避判定
     if (!hasGuaranteedCrit && this.config.enableDodge) {
+      const hitValue = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hitValue)
+      const dodgeValue = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodgeValue)
+      // 计算命中率 = 命中值 / (命中值 + 闪避值) × 100%；分母为 0 时按 0 处理（无对抗基础）
+      const denominator = hitValue + dodgeValue
+      const baseHitRate = denominator > 0 ? (hitValue / denominator) * 100 : 0
       const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit)
       const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge)
-      let actualHitRate = hitRate - dodgeRate
-      if (actualHitRate < 0) {
-        actualHitRate = 0
-      }
+      // 命中公式 = 计算命中率 + 命中率 − 闪避率，最小 10%，最高 95%
+      const actualHitRate = clamp(baseHitRate + hitRate - dodgeRate, 10, 95)
       if (nextRandom(this.rng) * 100 > actualHitRate) {
         isMiss = true
         damageResult.isMiss = true

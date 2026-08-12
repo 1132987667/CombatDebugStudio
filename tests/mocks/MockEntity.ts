@@ -69,6 +69,18 @@ export const defaultAttrs = {
     modifiers: [],
     cachedVersion: 0,
   },
+  [ATTRIBUTE_CODE.hitValue]: {
+    value: 100,
+    base: 100,
+    modifiers: [],
+    cachedVersion: 0,
+  },
+  [ATTRIBUTE_CODE.dodgeValue]: {
+    value: 0,
+    base: 0,
+    modifiers: [],
+    cachedVersion: 0,
+  },
 }
 
 export function createMockEntity(

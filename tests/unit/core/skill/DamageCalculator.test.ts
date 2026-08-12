@@ -107,19 +107,16 @@ describe('DamageCalculator', () => {
       }
     })
 
-    it('should apply dodge when target has max dodge rate', () => {
+    it('should apply dodge when target has high dodge value', () => {
       const source = createMockEntity()
       const target = createMockEntity()
       // 启用闪避门控，否则闪避判定被跳过
       calculator.setConfig({ enableDodge: true })
-      target.getAttrVal = (attr: string) => {
-        if (attr === 'dodgeRate' || attr === ATTRIBUTE_CODE.dodge) {
-          return { value: 100, base: 100, modifiers: [], dirty: false }
-        }
-        return defaultAttrs[attr as ATTRIBUTE_CODE]
-      }
+      // 高闪避值拉低计算命中率（baseHitRate = 100/(100+900) = 10%），
+      // 叠加闪避率修正后实际命中率 = 10 + 100 − 100 = 10%
       target.getAttribute = (attr: string) => {
-        if (attr === 'dodgeRate' || attr === ATTRIBUTE_CODE.dodge) return 100
+        if (attr === ATTRIBUTE_CODE.dodgeValue) return 900
+        if (attr === ATTRIBUTE_CODE.dodge) return 100
         return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
       }
 
@@ -130,6 +127,29 @@ describe('DamageCalculator', () => {
 
       expect(result.isMiss).toBe(true)
       expect(result.damage).toBe(0)
+      rand.mockRestore()
+    })
+
+    it('实际命中率夹在 [10, 95] 区间', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      calculator.setConfig({ enableDodge: true })
+      const rand = vi.spyOn(Math, 'random').mockReturnValue(0.5)
+      const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 1 }] } })
+
+      // 命中值远大于闪避值 → 计算命中率接近 100%，上限钳制 95%，仍应命中（50 > 95 为否）
+      let result = calculator.calculateDamage(step, source, target)
+      expect(result.isMiss).toBe(false)
+
+      // 闪避值远大于命中值 → 下限钳制 10%，0.5×100=50 > 10 → 闪避
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.dodgeValue) return 99999
+        if (attr === ATTRIBUTE_CODE.dodge) return 100
+        return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
+      }
+      result = calculator.calculateDamage(step, source, target)
+      expect(result.isMiss).toBe(true)
+
       rand.mockRestore()
     })
 

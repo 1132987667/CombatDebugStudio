@@ -21,30 +21,45 @@
       <FourAspectBar v-model="activeCabinet" />
 
       <!-- 右：功能宝阁 -->
-      <TreasureCabinet :tab="activeCabinet" :regions="regions" :scenes="scenes" :current="currentScene"
-        @select="currentScene = $event" @back="emit('back')" />
+      <TreasureCabinet :tab="activeCabinet" :current="currentScene"
+        @select="currentScene = $event" @open-map="mapOpen = true" @back="emit('back')" />
 
       <!-- 中：战斗禅台 -->
       <BattleZen :scene="currentScene" />
     </div>
+
+    <!-- 降妖路引：弹窗大地图 -->
+    <SceneMapDialog v-model="mapOpen" :regions="regions" :scenes="scenes" :current="currentScene"
+      @select="currentScene = $event" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import BattleZen from './components/BattleZen.vue'
 import FourAspectBar, { type GroupTab } from './components/FourAspectBar.vue'
+import SceneMapDialog from './components/SceneMapDialog.vue'
 import TreasureCabinet from './components/TreasureCabinet.vue'
-import { currency, player, regions, scenes, type XiyouScene } from './data/mock'
+import { currency, player, regions, scenes, loadXiyouData, type XiyouScene } from './data/mock'
 
 /** 当前选中的功能宝阁分组（对应四象栏） */
-const activeCabinet = ref<GroupTab>('map')
+const activeCabinet = ref<GroupTab>('pack')
 
-/** 当前选中关卡（由降妖路引大地图选择） */
+/** 降妖路引弹窗开关 */
+const mapOpen = ref(false)
+
+/** 当前选中关卡（由降妖路引弹窗选择） */
 const currentScene = ref<XiyouScene>(scenes.find(s => s.unlocked) ?? scenes[0])
 
 /** 返回演劫台（由设置面板「返回演劫台」触发） */
 const emit = defineEmits<{ back: [] }>()
+
+// NOTE: 封神榜数据源接线（需求说明 §5.1 方案 B）——数据先以 configs 兜底渲染，
+//       封神榜 IDB 有西游数据则加载后原地更新（reactive），并重选当前关卡。
+onMounted(async () => {
+  await loadXiyouData()
+  currentScene.value = scenes.find(s => s.unlocked) ?? scenes[0]
+})
 </script>
 
 <style lang="scss">

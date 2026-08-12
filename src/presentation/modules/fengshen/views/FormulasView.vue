@@ -50,15 +50,17 @@ const ATTRIBUTES = [
   { name: '攻击（最小–最大）', tier: 'primary', desc: '决定伤害波动' },
   { name: '防御', tier: 'primary', desc: '减伤 = 防御 × 0.01' },
   { name: '速度', tier: 'primary', desc: '决定行动顺序' },
+  { name: '命中值 / 闪避值', tier: 'primary', desc: '对抗基础，决定基础命中率' },
   { name: '暴击率', tier: 'secondary', desc: '0–100%，攻击产生暴击的概率' },
   { name: '暴击伤害', tier: 'secondary', desc: '暴击时伤害倍率' },
-  { name: '命中率 / 闪避率', tier: 'secondary', desc: '实际命中 = 命中 − 闪避' },
+  { name: '命中率 / 闪避率', tier: 'secondary', desc: '进阶属性，命中公式修正项' },
 ] as const
 
 const FORMULAS = [
   { name: '基础伤害', formula: 'rand(攻击最小, 攻击最大) × Σ修正系数', source: 'DamageCalculator' },
   { name: '防御减免', formula: '最终伤害 = 基础伤害 × (1 − 防御 × 0.01)', source: 'DamageCalculator' },
   { name: '暴击', formula: '暴击伤害 = 最终伤害 × 暴击伤害倍率', source: 'DamageCalculator' },
-  { name: '实际命中', formula: '命中概率 = 命中率 − 目标闪避率', source: 'HitCalculator' },
+  { name: '计算命中率', formula: '命中值 ÷ (命中值 + 闪避值) × 100%', source: 'DamageCalculator' },
+  { name: '实际命中', formula: 'clamp(计算命中率 + 命中率 − 闪避率, 10%, 95%)', source: 'DamageCalculator' },
 ] as const
 </script>

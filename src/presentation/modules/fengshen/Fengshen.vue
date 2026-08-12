@@ -94,6 +94,12 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
       { table: 'params', label: '战斗规则参数' },
     ],
   },
+  {
+    label: '演劫台',
+    items: [
+      { table: 'xiyou', label: '西游数据' },
+    ],
+  },
 ]
 
 const SYSTEM_VIEWS: Array<{ view: FengshenView; label: string }> = [

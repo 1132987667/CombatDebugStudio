@@ -18,6 +18,7 @@ import type {
   MetaDataVersion,
   OperationLogEntry,
   FengshenTableName,
+  XiyouData,
 } from '@/domain/fengshen/types'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
@@ -111,6 +112,20 @@ export class GameDataApi {
     const out: BattleParamData[] = []
     for (const key of keys) {
       const rec = await this.storage.get<BattleParamData>(FENGSHEN_STORE.PARAMS, key)
+      if (rec) out.push(rec)
+    }
+    return sortById(out)
+  }
+
+  async getXiyouData(id: string): Promise<XiyouData | null> {
+    return this.storage.get<XiyouData>(FENGSHEN_STORE.XIYOU, id)
+  }
+
+  async listXiyouData(): Promise<XiyouData[]> {
+    const keys = await this.storage.keys(FENGSHEN_STORE.XIYOU)
+    const out: XiyouData[] = []
+    for (const key of keys) {
+      const rec = await this.storage.get<XiyouData>(FENGSHEN_STORE.XIYOU, key)
       if (rec) out.push(rec)
     }
     return sortById(out)

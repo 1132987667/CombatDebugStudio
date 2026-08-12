@@ -96,6 +96,7 @@
       "critRate": 0,
       "critDamage": 100,
       "dodge": 80,
+      "dodgeValue": 900,
       "attack": 10
     },
     "drops": [],

@@ -170,6 +170,16 @@ export interface BattleParamData {
   updatedAt: string
 }
 
+/** 西游数据域（xiyou 表）—— configs/xiyou/*.json 单文档种子，供演劫台经封神榜读取（需求说明 §5.1 方案 B） */
+export interface XiyouData {
+  id: string
+  name: string
+  description?: string
+  /** 原始配置 JSON（数组或对象，演劫台侧按结构 cast 消费） */
+  data: unknown
+  updatedAt: string
+}
+
 /** 封神榜全表映射（表名 → 实体类型），供校验/API/界面按表取类型 */
 export interface FengshenTables {
   actors: ActorData
@@ -186,6 +196,7 @@ export interface FengshenTables {
   drops: DropGroupData
   affixes: AffixData
   params: BattleParamData
+  xiyou: XiyouData
 }
 export type FengshenTableName = keyof FengshenTables
 

@@ -14,6 +14,10 @@ import questJson from '@configs/xiyou/quest.json'
 import regionsJson from '@configs/xiyou/regions.json'
 import scenesJson from '@configs/xiyou/scenes.json'
 import schoolsJson from '@configs/xiyou/schools.json'
+import { reactive } from 'vue'
+import { container } from '@/infrastructure/di/Container'
+import { GameDataApi } from '@/application/service/GameDataApi'
+import type { XiyouData } from '@/domain/fengshen/types'
 
 /** 玩家货币（运行时状态） */
 export interface XiyouCurrency {
@@ -373,42 +377,111 @@ export interface XiyouCraft {
 
 /* ══════════════════════════════════════════════════════════════════
    配置数据（实体见 configs/xiyou/ 下 JSON 文件）
+   说明：reactive 初始化自 configs（同步兜底，组件渲染不依赖异步）；
+         loadXiyouData() 从封神榜 IDB 读取西游数据并原地更新（需求说明 §5.1 方案 B）。
    ══════════════════════════════════════════════════════════════════ */
 
-export const regions: XiyouRegion[] = regionsJson as unknown as XiyouRegion[]
-export const scenes: XiyouScene[] = scenesJson as unknown as XiyouScene[]
-export const schools: XiyouSchool[] = schoolsJson as unknown as XiyouSchool[]
+export const regions: XiyouRegion[] = reactive<XiyouRegion[]>(regionsJson as unknown as XiyouRegion[])
+export const scenes: XiyouScene[] = reactive<XiyouScene[]>(scenesJson as unknown as XiyouScene[])
+export const schools: XiyouSchool[] = reactive<XiyouSchool[]>(schoolsJson as unknown as XiyouSchool[])
 
-export const materials: XiyouItem[] = packJson.materials as unknown as XiyouItem[]
-export const equipment: XiyouItem[] = packJson.equipment as unknown as XiyouItem[]
-export const pills: XiyouItem[] = packJson.pills as unknown as XiyouItem[]
-export const consumables: XiyouItem[] = packJson.consumables as unknown as XiyouItem[]
-export const shopGoods: XiyouShopGood[] = packJson.shopGoods as unknown as XiyouShopGood[]
-export const storageCells: XiyouStorageCell[] = packJson.storageCells as unknown as XiyouStorageCell[]
+export const materials: XiyouItem[] = reactive<XiyouItem[]>(packJson.materials as unknown as XiyouItem[])
+export const equipment: XiyouItem[] = reactive<XiyouItem[]>(packJson.equipment as unknown as XiyouItem[])
+export const pills: XiyouItem[] = reactive<XiyouItem[]>(packJson.pills as unknown as XiyouItem[])
+export const consumables: XiyouItem[] = reactive<XiyouItem[]>(packJson.consumables as unknown as XiyouItem[])
+export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.shopGoods as unknown as XiyouShopGood[])
+export const storageCells: XiyouStorageCell[] = reactive<XiyouStorageCell[]>(packJson.storageCells as unknown as XiyouStorageCell[])
 
-export const realms: XiyouRealm[] = cultivateJson.realms as unknown as XiyouRealm[]
-export const martialArts: XiyouMartial[] = cultivateJson.martialArts as unknown as XiyouMartial[]
-export const meridians: XiyouMeridian[] = cultivateJson.meridians as unknown as XiyouMeridian[]
-export const dharmas: XiyouDharma[] = cultivateJson.dharmas as unknown as XiyouDharma[]
+export const realms: XiyouRealm[] = reactive<XiyouRealm[]>(cultivateJson.realms as unknown as XiyouRealm[])
+export const martialArts: XiyouMartial[] = reactive<XiyouMartial[]>(cultivateJson.martialArts as unknown as XiyouMartial[])
+export const meridians: XiyouMeridian[] = reactive<XiyouMeridian[]>(cultivateJson.meridians as unknown as XiyouMeridian[])
+export const dharmas: XiyouDharma[] = reactive<XiyouDharma[]>(cultivateJson.dharmas as unknown as XiyouDharma[])
 
-export const gearSlots: XiyouGearSlot[] = equipJson.gearSlots as unknown as XiyouGearSlot[]
-export const treasures: XiyouTreasure[] = equipJson.treasures as unknown as XiyouTreasure[]
-export const mounts: XiyouMount[] = equipJson.mounts as unknown as XiyouMount[]
+export const gearSlots: XiyouGearSlot[] = reactive<XiyouGearSlot[]>(equipJson.gearSlots as unknown as XiyouGearSlot[])
+export const treasures: XiyouTreasure[] = reactive<XiyouTreasure[]>(equipJson.treasures as unknown as XiyouTreasure[])
+export const mounts: XiyouMount[] = reactive<XiyouMount[]>(equipJson.mounts as unknown as XiyouMount[])
 
-export const mates: XiyouMate[] = mateJson.mates as unknown as XiyouMate[]
-export const pets: XiyouPet[] = mateJson.pets as unknown as XiyouPet[]
-export const affinities: XiyouAffinity[] = mateJson.affinities as unknown as XiyouAffinity[]
+export const mates: XiyouMate[] = reactive<XiyouMate[]>(mateJson.mates as unknown as XiyouMate[])
+export const pets: XiyouPet[] = reactive<XiyouPet[]>(mateJson.pets as unknown as XiyouPet[])
+export const affinities: XiyouAffinity[] = reactive<XiyouAffinity[]>(mateJson.affinities as unknown as XiyouAffinity[])
 
-export const codexChapters: XiyouCodexChapter[] = collectJson.codexChapters as unknown as XiyouCodexChapter[]
-export const achievements: XiyouAchievement[] = collectJson.achievements as unknown as XiyouAchievement[]
-export const titles: XiyouTitle[] = collectJson.titles as unknown as XiyouTitle[]
+export const codexChapters: XiyouCodexChapter[] = reactive<XiyouCodexChapter[]>(collectJson.codexChapters as unknown as XiyouCodexChapter[])
+export const achievements: XiyouAchievement[] = reactive<XiyouAchievement[]>(collectJson.achievements as unknown as XiyouAchievement[])
+export const titles: XiyouTitle[] = reactive<XiyouTitle[]>(collectJson.titles as unknown as XiyouTitle[])
 
-export const quests: XiyouQuest[] = questJson.quests as unknown as XiyouQuest[]
-export const checkinDays: XiyouCheckinDay[] = questJson.checkinDays as unknown as XiyouCheckinDay[]
-export const events: XiyouEvent[] = questJson.events as unknown as XiyouEvent[]
+export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(questJson.quests as unknown as XiyouQuest[])
+export const checkinDays: XiyouCheckinDay[] = reactive<XiyouCheckinDay[]>(questJson.checkinDays as unknown as XiyouCheckinDay[])
+export const events: XiyouEvent[] = reactive<XiyouEvent[]>(questJson.events as unknown as XiyouEvent[])
 
-export const alchemyRecipes: XiyouRecipe[] = caveJson.alchemyRecipes as unknown as XiyouRecipe[]
-export const forgeRecipes: XiyouRecipe[] = caveJson.forgeRecipes as unknown as XiyouRecipe[]
-export const retreats: XiyouRetreat[] = caveJson.retreats as unknown as XiyouRetreat[]
-export const crops: XiyouCrop[] = caveJson.crops as unknown as XiyouCrop[]
-export const crafts: XiyouCraft[] = caveJson.crafts as unknown as XiyouCraft[]
+export const alchemyRecipes: XiyouRecipe[] = reactive<XiyouRecipe[]>(caveJson.alchemyRecipes as unknown as XiyouRecipe[])
+export const forgeRecipes: XiyouRecipe[] = reactive<XiyouRecipe[]>(caveJson.forgeRecipes as unknown as XiyouRecipe[])
+export const retreats: XiyouRetreat[] = reactive<XiyouRetreat[]>(caveJson.retreats as unknown as XiyouRetreat[])
+export const crops: XiyouCrop[] = reactive<XiyouCrop[]>(caveJson.crops as unknown as XiyouCrop[])
+export const crafts: XiyouCraft[] = reactive<XiyouCraft[]>(caveJson.crafts as unknown as XiyouCraft[])
+
+/** 原地替换 reactive 数组内容（触发响应式更新） */
+function syncArray(target: unknown[], src: unknown): void {
+  if (!Array.isArray(src)) return
+  target.splice(0, target.length, ...src)
+}
+
+/** 从封神榜 IDB 载入西游配置（需求说明 §5.1 方案 B）：成功原地更新 reactive 导出；失败/无数据保持 configs 兜底 */
+export async function loadXiyouData(): Promise<boolean> {
+  try {
+    const api = container.resolve<GameDataApi>('GameDataApi')
+    const rows = await api.listXiyouData()
+    if (rows.length === 0) return false
+    const map = new Map(rows.map((r: XiyouData) => [r.id, r.data as Record<string, unknown>]))
+    applyXiyou(map)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function applyXiyou(map: Map<string, Record<string, unknown>>): void {
+  const arr = (key: string): unknown[] | null => {
+    const v = map.get(key)
+    return Array.isArray(v) ? (v as unknown[]) : null
+  }
+  const obj = (key: string): Record<string, unknown> | null => map.get(key) ?? null
+  const a = (target: unknown[], key: string): void => {
+    const src = arr(key)
+    if (src) syncArray(target, src)
+  }
+  const aIn = (target: unknown[], key: string, field: string): void => {
+    const o = obj(key)
+    if (o) syncArray(target, o[field])
+  }
+
+  a(regions, 'regions')
+  a(scenes, 'scenes')
+  a(schools, 'schools')
+  aIn(materials, 'pack', 'materials')
+  aIn(equipment, 'pack', 'equipment')
+  aIn(pills, 'pack', 'pills')
+  aIn(consumables, 'pack', 'consumables')
+  aIn(shopGoods, 'pack', 'shopGoods')
+  aIn(storageCells, 'pack', 'storageCells')
+  aIn(realms, 'cultivate', 'realms')
+  aIn(martialArts, 'cultivate', 'martialArts')
+  aIn(meridians, 'cultivate', 'meridians')
+  aIn(dharmas, 'cultivate', 'dharmas')
+  aIn(gearSlots, 'equip', 'gearSlots')
+  aIn(treasures, 'equip', 'treasures')
+  aIn(mounts, 'equip', 'mounts')
+  aIn(mates, 'mate', 'mates')
+  aIn(pets, 'mate', 'pets')
+  aIn(affinities, 'mate', 'affinities')
+  aIn(codexChapters, 'collect', 'codexChapters')
+  aIn(achievements, 'collect', 'achievements')
+  aIn(titles, 'collect', 'titles')
+  aIn(quests, 'quest', 'quests')
+  aIn(checkinDays, 'quest', 'checkinDays')
+  aIn(events, 'quest', 'events')
+  aIn(alchemyRecipes, 'cave', 'alchemyRecipes')
+  aIn(forgeRecipes, 'cave', 'forgeRecipes')
+  aIn(retreats, 'cave', 'retreats')
+  aIn(crops, 'cave', 'crops')
+  aIn(crafts, 'cave', 'crafts')
+}

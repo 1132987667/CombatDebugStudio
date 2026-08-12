@@ -360,6 +360,18 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'description', label: '用途说明', type: 'text', searchable: true },
     ],
   },
+  xiyou: {
+    table: 'xiyou',
+    label: '西游数据',
+    columns: ['id', 'name', 'description'],
+    fields: [
+      { key: 'name', label: '名称', type: 'text', required: true },
+      { key: 'description', label: '说明', type: 'text', searchable: true },
+      { key: 'data', label: '数据（JSON）', type: 'object', required: true,
+        description: 'configs/xiyou/*.json 原始配置；演劫台经 GameDataApi 读取',
+        objectTemplate: { key: 'value' } },
+    ],
+  },
 }
 
 /**

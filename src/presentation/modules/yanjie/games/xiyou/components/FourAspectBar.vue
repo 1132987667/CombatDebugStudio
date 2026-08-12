@@ -7,7 +7,7 @@
       class="xy-aspect-tab xy-ink-hover"
       :class="{ active: tab.id === modelValue }"
       :aria-pressed="tab.id === modelValue"
-      @click="emit('update:modelValue', tab.id)"
+      @click="onTabClick(tab.id)"
     >
       <span class="xy-aspect-icon-wrap">
         <svg viewBox="0 0 24 24" class="xy-aspect-icon" aria-hidden="true">
@@ -33,7 +33,19 @@ export type GroupTab =
   | 'settings'
 
 defineProps<{ modelValue: GroupTab }>()
-const emit = defineEmits<{ 'update:modelValue': [tab: GroupTab] }>()
+const emit = defineEmits<{
+  'update:modelValue': [tab: GroupTab]
+  'open-map': []
+}>()
+
+/** 点击 tab：路引不再切换宝阁面板，而是弹开大地图（其余 tab 正常切换） */
+function onTabClick(tab: GroupTab): void {
+  if (tab === 'map') {
+    emit('open-map')
+    return
+  }
+  emit('update:modelValue', tab)
+}
 
 /** 四象栏一级分组（墨线简笔画 + 文字，禁 emoji） */
 const TABS: Array<{ id: GroupTab; label: string; badge?: string; path: string }> = [

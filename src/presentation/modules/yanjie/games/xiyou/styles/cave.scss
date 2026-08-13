@@ -1,0 +1,1029 @@
+/* ==========================================================================
+   斗战西游 · 洞府样式（cave.scss）
+   - 设计语言：工笔水墨（与 xiyou.scss 暗色令牌一致；宣纸/墨线/朱印/鎏金/玉色）
+   - 布局：顶部货币条 + 左侧纵向导航 + 右侧内容区 + 底部状态栏
+   - 交互：悬停上浮、按下缩放、禁用置灰、成功墨晕、失败抖动
+   - 约束：禁 emoji；字号不小于 --font-size-md（14px）
+   ========================================================================== */
+
+.xy-cave {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--xy-paper);
+  border: 1px solid var(--xy-ink-line);
+  overflow: hidden;
+}
+
+/* ── 顶部货币条 ── */
+.xy-cave-top {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--xy-ink-line);
+  background: var(--xy-paper-warm);
+}
+
+.xy-cave-top-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 3px;
+  color: var(--xy-ink-1);
+}
+
+.xy-cave-top-sub {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+  letter-spacing: 1px;
+}
+
+.xy-cave-top-coins {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.xy-cave-coin {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+  white-space: nowrap;
+
+  &--gold {
+    color: var(--xy-gold);
+    border-color: rgba(var(--rgb-warning), var(--alpha-border));
+  }
+
+  &--jade {
+    color: var(--xy-jade);
+    border-color: rgba(var(--rgb-success), var(--alpha-border));
+  }
+}
+
+.xy-cave-coin::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+/* ── 主体：左导航 + 右内容 ── */
+.xy-cave-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+/* 左侧纵向导航 */
+.xy-cave-nav {
+  flex-shrink: 0;
+  width: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+}
+
+.xy-cave-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: var(--xy-paper);
+  color: var(--xy-ink-3);
+  cursor: pointer;
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+  text-align: left;
+  transition:
+    transform var(--transition-fast),
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: -2px;
+  }
+
+  &:hover:not(.active) {
+    transform: translateY(-2px);
+    color: var(--xy-ink-1);
+    border-color: var(--xy-ink-2);
+
+    .xy-cave-nav-icon {
+      color: var(--xy-seal);
+    }
+  }
+
+  &.active {
+    background: var(--xy-seal-soft);
+    border-color: var(--xy-seal);
+    color: var(--xy-seal);
+    font-weight: var(--font-weight-bold);
+
+    .xy-cave-nav-icon {
+      color: var(--xy-gold);
+    }
+  }
+
+  /* 激活态左侧朱红竖条指示 */
+  &.active::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    background: var(--xy-seal);
+  }
+}
+
+.xy-cave-nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.xy-cave-nav-label {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 右侧内容区 */
+.xy-cave-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--xy-ink-line);
+  background: var(--xy-paper-warm);
+  overflow: hidden;
+}
+
+.xy-cave-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  border-bottom: 1px solid var(--xy-ink-line);
+}
+
+.xy-cave-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 3px;
+  color: var(--xy-ink-1);
+}
+
+.xy-cave-title::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background: var(--xy-seal);
+  border-radius: 2px;
+}
+
+.xy-cave-head-sub {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+/* 面板切换：淡入 + 上滑 */
+.xy-cave-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3);
+  animation: xy-cave-enter 200ms ease-out;
+}
+
+@keyframes xy-cave-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 底部状态栏 */
+.xy-cave-status {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--xy-ink-line);
+  background: var(--xy-paper-warm);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.xy-cave-status-item strong {
+  color: var(--xy-ink-2);
+  font-weight: var(--font-weight-semibold);
+}
+
+.xy-cave-hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-4);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   通用组件
+   ══════════════════════════════════════════════════════════════════ */
+
+/* 小节标题（带朱红竖线，与 xiyou .xy-sec-title 同族） */
+.xy-cave-sec {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--xy-seal);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--xy-ink-2);
+}
+
+/* 可点卡片（配方/丹方/装备）：悬停上浮、选中朱红描边、禁用置灰 */
+.xy-cave-card {
+  padding: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+  color: var(--xy-ink-1);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(:disabled):not(.is-selected) {
+    transform: translateY(-2px);
+    border-color: var(--xy-ink-2);
+  }
+
+  &.is-selected {
+    transform: scale(1.02);
+    border-color: var(--xy-seal);
+    box-shadow:
+      0 0 0 1px var(--xy-seal),
+      0 2px 8px rgba(var(--rgb-brand-red), 0.25);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.xy-cave-card__top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.xy-cave-card__name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--xy-ink-1);
+}
+
+.xy-cave-card__side {
+  margin-left: auto;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-card__desc {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-card__key {
+  color: var(--xy-seal);
+}
+
+.xy-cave-card__mats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+/* 材料标签 */
+.xy-cave-mat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+
+  &.is-low {
+    color: var(--xy-ink-4);
+    opacity: 0.7;
+  }
+}
+
+.xy-cave-mat__tag {
+  color: var(--color-debuff);
+  font-size: var(--font-size-md);
+}
+
+.xy-cave-mat--empty {
+  color: var(--xy-ink-4);
+  border-style: dashed;
+}
+
+/* 通用小标签 */
+.xy-cave-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+
+  &--jade {
+    color: var(--xy-jade);
+  }
+
+  &--gold {
+    color: var(--xy-gold);
+  }
+
+  &--seal {
+    color: var(--xy-seal);
+  }
+
+  &--muted {
+    color: var(--xy-ink-4);
+  }
+}
+
+/* 核心行动按钮（朱红底 + 墨字标题风） */
+.xy-cave-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid var(--xy-seal);
+  border-radius: 2px;
+  background: var(--xy-seal);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-md);
+  letter-spacing: 4px;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(var(--rgb-brand-red), 0.5);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* 次行动按钮（墨线描边） */
+.xy-cave-action--ghost {
+  background: transparent;
+  border-color: var(--xy-ink-2);
+  color: var(--xy-ink-2);
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+  }
+}
+
+/* 成功墨晕扩散（操作成功后触发一次） */
+.xy-cave-ripple {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--xy-gold);
+    opacity: 1;
+    animation: xy-cave-ripple 600ms ease-out forwards;
+    pointer-events: none;
+  }
+}
+
+@keyframes xy-cave-ripple {
+  from {
+    box-shadow:
+      0 0 0 2px var(--xy-gold),
+      0 0 0 6px rgba(var(--rgb-warning), 0.35);
+    opacity: 1;
+  }
+
+  to {
+    box-shadow:
+      0 0 0 4px transparent,
+      0 0 0 18px transparent;
+    opacity: 0;
+  }
+}
+
+/* 失败抖动 */
+.xy-cave-shake {
+  animation: xy-cave-shake 400ms ease-in-out;
+}
+
+@keyframes xy-cave-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   打造装备 Forge
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-cave-forge-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.xy-cave-forge-detail {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.xy-cave-forge-detail__info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.xy-cave-forge-detail__effect {
+  margin: var(--space-1) 0;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+}
+
+.xy-cave-forge-detail__mats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.xy-cave-forge-detail__action {
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   炼制丹药 Alchemy
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-cave-alc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+/* 丹炉区 */
+.xy-cave-alc-hearth {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background:
+    radial-gradient(circle at 50% 20%, var(--xy-seal-soft), transparent 70%),
+    var(--xy-paper);
+  overflow: hidden;
+}
+
+.xy-cave-alc-kettle-wrap {
+  position: relative;
+  width: 110px;
+  height: 84px;
+}
+
+.xy-cave-alc-kettle {
+  width: 110px;
+  height: 84px;
+  color: var(--xy-ink-2);
+}
+
+.xy-cave-alc-hearth--brew .xy-cave-alc-kettle {
+  color: var(--xy-seal);
+}
+
+/* 炉口火焰（CSS 光晕，叠于炉体容器内） */
+.xy-cave-alc-flame {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 42px;
+  border-radius: 50% 50% 42% 42%;
+  background: linear-gradient(180deg, var(--xy-gold) 0%, var(--xy-seal) 60%, transparent 100%);
+  opacity: 0.45;
+  filter: blur(7px);
+  pointer-events: none;
+  animation: xy-cave-flame 1.6s ease-in-out infinite;
+}
+
+.xy-cave-alc-hearth--brew .xy-cave-alc-flame {
+  opacity: 0.85;
+  animation-duration: 0.7s;
+}
+
+@keyframes xy-cave-flame {
+  0%,
+  100% {
+    transform: translateX(-50%) scaleY(1);
+  }
+
+  50% {
+    transform: translateX(-50%) scaleY(1.15);
+  }
+}
+
+.xy-cave-alc-ingrids {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-2);
+  min-height: 1.5em;
+}
+
+.xy-cave-alc-state {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+  letter-spacing: 2px;
+}
+
+.xy-cave-alc-hearth--brew .xy-cave-alc-state {
+  color: var(--xy-gold);
+}
+
+.xy-cave-alc-action {
+  position: relative;
+  z-index: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   强化装备 Enhance
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-cave-enh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+
+.xy-cave-enh-slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.xy-cave-enh-slot__meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.xy-cave-enh-slot__item {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--xy-ink-1);
+}
+
+.xy-cave-enh-slot__lv {
+  margin-left: auto;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-enh-slot__effect {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+}
+
+/* 强化面板中部：属性对比 */
+.xy-cave-enh-compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+}
+
+.xy-cave-enh-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--font-size-md);
+}
+
+.xy-cave-enh-row__name {
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-enh-row__cur {
+  color: var(--xy-ink-2);
+}
+
+.xy-cave-enh-row__arrow {
+  color: var(--xy-ink-4);
+}
+
+.xy-cave-enh-row__next {
+  color: var(--xy-gold);
+  font-weight: var(--font-weight-bold);
+}
+
+.xy-cave-enh-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+}
+
+.xy-cave-enh-success {
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+}
+
+.xy-cave-enh-success strong {
+  color: var(--xy-seal);
+  font-weight: var(--font-weight-bold);
+}
+
+.xy-cave-enh-risk {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-4);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   装备升星 Star
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-cave-star-stars {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.xy-cave-star-star {
+  width: 16px;
+  height: 16px;
+  color: var(--xy-ink-4);
+  opacity: 0.35;
+
+  &.on {
+    color: var(--xy-gold);
+    opacity: 1;
+  }
+}
+
+.xy-cave-star-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+}
+
+.xy-cave-star-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   技能修炼 Skill
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-cave-skill-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+}
+
+.xy-cave-skill-bar strong {
+  color: var(--xy-seal);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.xy-cave-skill-schools {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.xy-cave-skill-school {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: var(--xy-paper);
+  color: var(--xy-ink-3);
+  cursor: pointer;
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  &.active {
+    border-color: var(--xy-seal);
+    background: var(--xy-seal-soft);
+    color: var(--xy-seal);
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+.xy-cave-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.xy-cave-skill-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+  font-family: inherit;
+  text-align: left;
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    opacity var(--transition-fast);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  .xy-cave-skill-card__name {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--xy-ink-1);
+  }
+
+  .xy-cave-skill-card__desc {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+    color: var(--xy-ink-3);
+  }
+
+  /* 已学习：金框 + 淡金光晕 */
+  &.is-learned {
+    border-color: var(--xy-gold);
+    background: var(--xy-gold-soft);
+    cursor: default;
+
+    .xy-cave-skill-card__name {
+      color: var(--xy-gold);
+    }
+  }
+
+  /* 可学习：墨框宣纸，悬停上浮 */
+  &.is-available {
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--xy-ink-2);
+    }
+  }
+
+  /* 未解锁：置灰 + 锁 */
+  &.is-locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+
+    .xy-cave-skill-card__desc {
+      color: var(--xy-ink-4);
+    }
+  }
+
+  &.is-choosing {
+    transform: scale(1.02);
+    border-color: var(--xy-seal);
+    box-shadow:
+      0 0 0 1px var(--xy-seal),
+      0 2px 8px rgba(var(--rgb-brand-red), 0.25);
+  }
+}
+
+.xy-cave-skill-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.xy-cave-skill-card__tier {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-skill-lock {
+  width: 14px;
+  height: 14px;
+  color: var(--xy-ink-4);
+}
+
+.xy-cave-skill-card__cost {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-skill-card__learn {
+  margin-top: var(--space-2);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   碎片合成 Fragment
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-cave-frag-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+  flex-wrap: wrap;
+}
+
+.xy-cave-frag-row__info {
+  flex: 1;
+  min-width: 180px;
+}
+
+.xy-cave-frag-row__count {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+}
+
+.xy-cave-frag-row__count strong {
+  font-size: var(--font-size-lg);
+  color: var(--xy-seal);
+  font-weight: var(--font-weight-bold);
+}
+
+.xy-cave-frag-row__progress {
+  min-width: 160px;
+  flex: 0 1 200px;
+}
+
+/* 减动效降级 */
+@media (prefers-reduced-motion: reduce) {
+  .xy-cave *,
+  .xy-cave *::before,
+  .xy-cave *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

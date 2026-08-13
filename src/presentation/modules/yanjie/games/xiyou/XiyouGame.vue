@@ -21,7 +21,8 @@
       <FourAspectBar v-model="activeCabinet" @open-map="mapOpen = true" @open-settings="settingsOpen = true" />
 
       <!-- 功能宝阁（行路态 290px / 功能态全屏） -->
-      <TreasureCabinet :tab="activeCabinet" :current="currentScene" @open-map="mapOpen = true" />
+      <TreasureCabinet :tab="activeCabinet" :current="currentScene" @open-map="mapOpen = true"
+        @open-equip="activeCabinet = 'equip'" />
 
       <!-- 战斗禅台（仅行路态显示） -->
       <BattleZen v-show="!isFeature" :scene="currentScene" />
@@ -37,16 +38,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import BattleZen from './components/BattleZen.vue'
 import FourAspectBar, { type GroupTab } from './components/FourAspectBar.vue'
 import SceneMapDialog from './components/SceneMapDialog.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
 import TreasureCabinet from './components/TreasureCabinet.vue'
 import { currency, player, regions, scenes, loadXiyouData, type XiyouScene } from './data/mock'
+import { usePackStore } from '@/presentation/stores/packStore'
 
-/** 当前选中的功能宝阁分组（map=行路态，其余=功能态） */
-const activeCabinet = ref<GroupTab>('map')
+/** 当前选中的功能宝阁分组（battle=战斗禅台/行路态，其余功能 tab 切功能态） */
+const activeCabinet = ref<GroupTab>('battle')
 
 /** 降妖路引弹窗开关 */
 const mapOpen = ref(false)
@@ -57,8 +59,8 @@ const settingsOpen = ref(false)
 /** 功能面板页签位置（四象栏在左/右） */
 const sidebarSide = ref<'left' | 'right'>('right')
 
-/** 功能态：点击装备/洞府/收集等时，宝阁全屏、战斗区隐藏 */
-const isFeature = computed(() => activeCabinet.value !== 'map')
+/** 功能态：点击装备/洞府/收集等时，宝阁全屏、战斗区隐藏（battle/map 属行路态，战斗区常驻） */
+const isFeature = computed(() => activeCabinet.value !== 'battle' && activeCabinet.value !== 'map')
 
 /** 当前选中关卡（由降妖路引弹窗选择） */
 const currentScene = ref<XiyouScene>(scenes.find(s => s.unlocked) ?? scenes[0])
@@ -71,6 +73,11 @@ const emit = defineEmits<{ back: [] }>()
 onMounted(async () => {
   await loadXiyouData()
   currentScene.value = scenes.find(s => s.unlocked) ?? scenes[0]
+})
+
+// NOTE: 行囊运行时落盘（方案二 5.2「离开演劫台强制同步写入」）——flush 内部对未 init 状态空转
+onUnmounted(() => {
+  void usePackStore().flush()
 })
 </script>
 

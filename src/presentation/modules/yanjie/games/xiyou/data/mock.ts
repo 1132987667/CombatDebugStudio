@@ -8,16 +8,23 @@ import caveJson from '@configs/xiyou/cave.json'
 import collectJson from '@configs/xiyou/collect.json'
 import cultivateJson from '@configs/xiyou/cultivate.json'
 import equipJson from '@configs/xiyou/equip.json'
+import itemsJson from '@configs/xiyou/items.json'
 import mateJson from '@configs/xiyou/mate.json'
 import packJson from '@configs/xiyou/pack.json'
 import questJson from '@configs/xiyou/quest.json'
 import regionsJson from '@configs/xiyou/regions.json'
 import scenesJson from '@configs/xiyou/scenes.json'
 import schoolsJson from '@configs/xiyou/schools.json'
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
+import type { Enemy, EnemyDrop } from '@/shared/types/enemy'
+import type { ItemEffect } from '@/shared/types/Item'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { XiyouData } from '@/domain/fengshen/types'
+import { computeStatBonuses, createPlayerProfile, playerConfig } from './playerProfile'
 
 /** 玩家货币（运行时状态） */
 export interface XiyouCurrency {
@@ -32,6 +39,7 @@ export const currency: XiyouCurrency = { copper: 12880, silver: 36, jade: 520 }
 export interface XiyouPlayer {
   level: number
   name: string
+  title: string
   hp: number
   maxHp: number
   energy: number
@@ -42,26 +50,50 @@ export interface XiyouPlayer {
   speed: number
   critRate: number
   critDamage: number
+  hitRate: number
+  dodgeRate: number
   exp: number
   expNeed: number
 }
 
-export const player: XiyouPlayer = {
-  level: 5,
-  name: '降妖者',
-  hp: 350,
-  maxHp: 420,
-  energy: 120,
-  maxEnergy: 150,
-  attackMin: 12,
-  attackMax: 20,
-  defense: 8,
-  speed: 15,
-  critRate: 7.5,
-  critDamage: 125,
-  exp: 360,
-  expNeed: 1500,
+export const player: XiyouPlayer = reactive(createPlayerProfile({ level: 5, exp: 360 }))
+
+/** 角色加点（运行时状态 · 展示态，暂未回灌战斗属性） */
+export interface XiyouStatPoints {
+  available: number
+  strength: number
+  vitality: number
+  agility: number
+  spirit: number
 }
+
+export const statPoints: XiyouStatPoints = reactive<XiyouStatPoints>({
+  available: 3,
+  strength: 0,
+  vitality: 0,
+  agility: 0,
+  spirit: 0,
+})
+
+/** 玩家属性值快照（实时计算：player 基础 + 等级成长 + 加点加成；缺省走领域默认值 getAttrDv） */
+export const playerAttributes = computed<Partial<Record<ATTRIBUTE_CODE, number>>>(() => {
+  const bonus = computeStatBonuses(statPoints)
+  return {
+    [ATTRIBUTE_CODE.currentHealth]: player.hp,
+    [ATTRIBUTE_CODE.maxHealth]: player.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0),
+    [ATTRIBUTE_CODE.currentEnergy]: player.energy,
+    [ATTRIBUTE_CODE.maxEnergy]: player.maxEnergy + (bonus[ATTRIBUTE_CODE.maxEnergy] ?? 0),
+    [ATTRIBUTE_CODE.attack]: player.attackMax + (bonus[ATTRIBUTE_CODE.attack] ?? 0),
+    [ATTRIBUTE_CODE.defense]: player.defense + (bonus[ATTRIBUTE_CODE.defense] ?? 0),
+    [ATTRIBUTE_CODE.speed]: player.speed + (bonus[ATTRIBUTE_CODE.speed] ?? 0),
+    [ATTRIBUTE_CODE.critRate]: player.critRate,
+    [ATTRIBUTE_CODE.critDamage]: player.critDamage,
+    [ATTRIBUTE_CODE.hit]: player.hitRate,
+    [ATTRIBUTE_CODE.dodge]: player.dodgeRate,
+    [ATTRIBUTE_CODE.hitValue]: playerConfig.base.hitValue,
+    [ATTRIBUTE_CODE.dodgeValue]: playerConfig.base.dodgeValue,
+  }
+})
 
 /**
  * 战斗单位快照（4v4 阵容）
@@ -76,6 +108,8 @@ export interface XiyouCombatant {
   energy: number
   maxEnergy: number
   speed: number
+  attack: number
+  defense: number
   side: 'player' | 'enemy'
   /** 阵亡标记（展示用） */
   down?: boolean
@@ -83,10 +117,10 @@ export interface XiyouCombatant {
 
 /** 我方 4 人阵容（主角 + 3 上阵伙伴，对齐 mate.json active） */
 export const playerParty: XiyouCombatant[] = [
-  { id: 'player', name: '降妖者', level: 5, hp: 350, maxHp: 420, energy: 120, maxEnergy: 150, speed: 15, side: 'player' },
-  { id: 'sun', name: '孙小圣', level: 5, hp: 380, maxHp: 430, energy: 110, maxEnergy: 140, speed: 18, side: 'player' },
-  { id: 'bajie', name: '八戒', level: 4, hp: 520, maxHp: 560, energy: 70, maxEnergy: 120, speed: 9, side: 'player' },
-  { id: 'wujing', name: '悟净', level: 3, hp: 300, maxHp: 360, energy: 130, maxEnergy: 160, speed: 11, side: 'player' },
+  { id: 'player', name: '降妖者', level: 5, hp: 350, maxHp: 420, energy: 120, maxEnergy: 150, speed: 15, attack: 18, defense: 8, side: 'player' },
+  { id: 'sun', name: '孙小圣', level: 5, hp: 380, maxHp: 430, energy: 110, maxEnergy: 140, speed: 18, attack: 22, defense: 6, side: 'player' },
+  { id: 'bajie', name: '八戒', level: 4, hp: 520, maxHp: 560, energy: 70, maxEnergy: 120, speed: 9, attack: 15, defense: 14, side: 'player' },
+  { id: 'wujing', name: '悟净', level: 3, hp: 300, maxHp: 360, energy: 130, maxEnergy: 160, speed: 11, attack: 13, defense: 10, side: 'player' },
 ]
 
 /** 由场景敌人构造敌方阵容（至多 4 个） */
@@ -100,25 +134,72 @@ export function buildEnemyParty(sceneEnemies: Array<{ name: string; level: numbe
     energy: 80,
     maxEnergy: 140,
     speed: Math.max(6, 12 - i * 2),
+    attack: 10 + e.level * 2,
+    defense: 3 + e.level,
     side: 'enemy' as const,
   }))
 }
 
-/** 战斗心经日志条目（运行时状态） */
-export interface XiyouLog {
-  round: number
-  text: string
-  emphasis?: boolean
+/**
+ * 敌人掉落表（敌人名 → 掉落条目）
+ * NOTE: 数据暂收拢于此常量，后续可下沉 configs/xiyou（如 drops.json）；物品 id 必须存在于 items.json
+ */
+const XIYOU_DROPS: Record<string, EnemyDrop[]> = {
+  花妖: [{ itemId: 'mat_001', quantity: 1, chance: 1 }],
+  石精: [{ itemId: 'mat_002', quantity: 1, chance: 0.8 }],
+  山魈: [{ itemId: 'mat_003', quantity: 1, chance: 0.5 }],
+  虾兵: [{ itemId: 'mat_005', quantity: 1, chance: 1 }],
+  蟹将: [{ itemId: 'mat_004', quantity: 1, chance: 0.8 }],
+  鱼精: [{ itemId: 'mat_005', quantity: 1, chance: 0.5 }],
+  痞猴: [{ itemId: 'mat_001', quantity: 1, chance: 0.6 }],
+  货郎精: [{ itemId: 'mat_003', quantity: 1, chance: 0.5 }],
+  老狐: [{ itemId: 'mat_004', quantity: 1, chance: 0.4 }],
+  礁蟹: [{ itemId: 'mat_005', quantity: 1, chance: 0.6 }],
+  小蛟龙: [{ itemId: 'mat_sp_02', quantity: 1, chance: 0.3 }],
 }
 
-export const battleLogs: XiyouLog[] = [
-  { round: 1, text: '你使用「破甲斩」，造成 58 点伤害' },
-  { round: 1, text: '花妖使用「藤蔓缠绕」，造成 12 点伤害' },
-  { round: 2, text: '你触发「迅捷连击」，追加攻击造成 29 点伤害' },
-  { round: 2, text: '花妖气血归零，战斗结束！', emphasis: true },
-  { round: 2, text: '获得经验 30 点 | 获得物品 桃木×2' },
-  { round: 2, text: '升级！当前等级 5 → 气血+10 攻击+1-2 防御+1 速度+1', emphasis: true },
-]
+/** 战斗胜利掉落：聚合场景全部敌人的掉落条目（供 BattleZen 结算入包） */
+export function dropsForScene(scene: XiyouScene): EnemyDrop[] {
+  const out: EnemyDrop[] = []
+  for (const e of scene.enemies) {
+    const drops = XIYOU_DROPS[e.name]
+    if (drops) out.push(...drops)
+  }
+  return out
+}
+
+/**
+ * 将斗战西游阵容转换为战斗引擎参与者（真实参战）
+ * NOTE: 经 GameDataProcessor.enemyToParticipant 构造 BattleEntity，消费引擎而非直接 new 领域实现，
+ *       与唤灵台演武台同数据源；技能留空（引擎普攻兜底），后续技能接入随 configs/skills 扩展。
+ */
+export function buildBattleTeams(scene: XiyouScene): { ally: BattleEntity[]; enemy: BattleEntity[] } {
+  const toEnemy = (c: XiyouCombatant): Enemy => ({
+    id: c.id,
+    name: c.name,
+    level: c.level,
+    stats: {
+      [ATTRIBUTE_CODE.currentHealth]: c.maxHp,
+      [ATTRIBUTE_CODE.maxHealth]: c.maxHp,
+      [ATTRIBUTE_CODE.currentEnergy]: c.maxEnergy,
+      [ATTRIBUTE_CODE.maxEnergy]: c.maxEnergy,
+      [ATTRIBUTE_CODE.attack]: c.attack,
+      [ATTRIBUTE_CODE.defense]: c.defense,
+      [ATTRIBUTE_CODE.speed]: c.speed,
+      [ATTRIBUTE_CODE.critRate]: 10,
+      [ATTRIBUTE_CODE.critDamage]: 1.5,
+    },
+    drops: XIYOU_DROPS[c.name] ?? [],
+    skills: { small: [], passive: [], ultimate: [] },
+  })
+  const ally = playerParty.map((c, i) =>
+    GameDataProcessor.enemyToParticipant(toEnemy(c), ParticipantSide.ALLY, i),
+  )
+  const enemy = buildEnemyParty(scene.enemies).map((c, i) =>
+    GameDataProcessor.enemyToParticipant(toEnemy(c), ParticipantSide.ENEMY, i),
+  )
+  return { ally, enemy }
+}
 
 /* ══════════════════════════════════════════════════════════════════
    类型定义（组件仅引用类型，数据实体见 configs/xiyou/*.json）
@@ -136,6 +217,11 @@ export interface XiyouSkill {
   type: 'passive' | 'skill' | 'ultimate'
   cost: number
   desc: string
+  /** 技能树加点（运行时字段，configs 未含 · 展示态） */
+  tier?: 1 | 2 | 3
+  levelReq?: number
+  currentPoints?: number
+  maxPoints?: number
 }
 
 /** 区域（章节）· 对应一张大地图 */
@@ -170,6 +256,9 @@ export interface XiyouSchool {
   motto: string
   skills: XiyouSkill[]
   selected?: boolean
+  /** 技能点（运行时字段，configs 未含 · 展示态） */
+  totalPoints?: number
+  maxPoints?: number
 }
 
 /** 乾坤袋物品（背包子系统） */
@@ -178,6 +267,18 @@ export interface XiyouItem {
   count: number
   rarity: '普通' | '稀有' | '珍品' | '仙品'
   desc: string
+}
+
+/** 物品目录条目（items.json 主键索引 · 行囊默认全量展示） */
+export interface XiyouCatalogItem {
+  id: string
+  name: string
+  type: string
+  rarity: number
+  source?: string
+  description?: string
+  /** 使用效果（仅丹药/符箓/晶球类，来自 items.json effects） */
+  effects?: ItemEffect[]
 }
 
 /** 坊市商品（商店子系统） */
@@ -205,6 +306,10 @@ export interface XiyouRealm {
   progress: number
   unlocked: boolean
   desc: string
+  /** 突破需求（configs 补充字段，IDB 旧数据可能缺失） */
+  levelReq?: number
+  materialName?: string
+  materialCount?: number
 }
 
 /** 功法（功法子系统） */
@@ -246,6 +351,7 @@ export interface XiyouDharma {
 export interface XiyouGearSlot {
   slot: string
   item: string
+  quality: XiyouQuality
   enhance: number
   maxEnhance: number
   star: number
@@ -413,6 +519,7 @@ export const pills: XiyouItem[] = reactive<XiyouItem[]>(packJson.pills as unknow
 export const consumables: XiyouItem[] = reactive<XiyouItem[]>(packJson.consumables as unknown as XiyouItem[])
 export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.shopGoods as unknown as XiyouShopGood[])
 export const storageCells: XiyouStorageCell[] = reactive<XiyouStorageCell[]>(packJson.storageCells as unknown as XiyouStorageCell[])
+export const packItems: XiyouCatalogItem[] = itemsJson.items as unknown as XiyouCatalogItem[]
 
 export const realms: XiyouRealm[] = reactive<XiyouRealm[]>(cultivateJson.realms as unknown as XiyouRealm[])
 export const martialArts: XiyouMartial[] = reactive<XiyouMartial[]>(cultivateJson.martialArts as unknown as XiyouMartial[])

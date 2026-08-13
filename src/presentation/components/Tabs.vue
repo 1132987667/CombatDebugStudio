@@ -135,7 +135,7 @@ defineExpose({ updateIndicator })
 
 <template>
   <div class="tabs-root" :class="[`tabs-root--${size}`, { 'tabs-root--equal': equalWidth }]">
-    <div ref="headerRef" class="tabs-header" role="tablist">
+    <div ref="headerRef" class="tabs-header bg-foil" role="tablist">
       <button v-for="tab in tabs" :key="tab.id" :ref="(el) => setTabRef(tab.id, el as HTMLButtonElement | null)"
         :id="tabButtonId(tab.id)" class="tabs-tab" :class="{ 'is-active': tab.id === activeId }" role="tab"
         :aria-selected="tab.id === activeId" :aria-controls="panelId(tab.id)" :tabindex="tab.id === activeId ? 0 : -1"
@@ -176,11 +176,12 @@ defineExpose({ updateIndicator })
   z-index: 0;
   /* 建立层叠上下文：胶囊(0) 在轨道上，页签文字(1) 在胶囊上 */
   display: flex;
+  justify-content: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-2);
   background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border-default);
   flex-shrink: 0;
+  margin-bottom: var(--space-2);
 }
 
 .tabs-tab {

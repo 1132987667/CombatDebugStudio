@@ -18,7 +18,7 @@
         role="dialog" aria-modal="true" :aria-label="title" tabindex="-1" @click.self="onOverlayClick">
         <div class="dialog-container" ref="containerRef" :style="{ width: width, height: height }">
           <div class="dialog-header">
-              <span class="dialog-title">{{ title }}</span>
+              <span class="dialog-title" :style="titleColor ? { color: titleColor } : undefined">{{ title }}</span>
               <div class="dialog-header-actions flex items-center gap-2">
               <slot name="header-actions"></slot>
               <button type="button" class="dialog-header-btn dialog-header-btn--drag" aria-label="拖动弹窗" title="拖动弹窗"
@@ -62,6 +62,8 @@ interface Props {
   title: string;
   width?: string;
   height?: string;
+  /** 标题颜色（CSS color 值；如物品详情按品阶着色） */
+  titleColor?: string;
   /** 是否显示遮罩背景，默认 true */
   showMask?: boolean;
   /** 点击遮罩时是否关闭弹窗，默认 true。设为 false 时点击遮罩不关闭 */

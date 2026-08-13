@@ -1,78 +1,72 @@
 <template>
   <div class="xy-panel-scroll">
-    <div class="xy-panel-tabs" role="tablist" aria-label="历练子系统">
-      <button v-for="s in SUBS" :key="s.id" type="button" role="tab" class="xy-panel-tab"
-        :class="{ active: sub === s.id }" :aria-selected="sub === s.id" @click="sub = s.id">
-        {{ s.label }}
-      </button>
-    </div>
+    <Tabs v-model="sub" :tabs="SUBS" destroy-inactive class="xy-tabs--seal">
+      <template #quest>
+        <div v-for="cat in questCats" :key="cat.label" class="xy-quest-cat">
+          <h4 class="xy-sec-title">
+            {{ cat.label }}
+            <span class="xy-sec-count">{{ cat.done }}/{{ cat.items.length }}</span>
+          </h4>
+          <div v-for="q in cat.items" :key="q.name" class="xy-row-card" :class="{ done: q.progress >= q.target }">
+            <div class="xy-row-top">
+              <span class="xy-row-name">{{ q.name }}</span>
+              <span class="xy-chip" :class="q.progress >= q.target ? 'xy-chip--gold' : 'xy-chip--jade'">
+                {{ q.progress >= q.target ? '可领取' : '进行中' }}
+              </span>
+              <span class="xy-row-side">{{ q.progress }}/{{ q.target }}</span>
+            </div>
+            <p class="xy-row-desc">{{ q.desc }}</p>
+            <div class="xy-progress">
+              <div class="xy-progress-fill" :style="{ width: (Math.min(q.progress, q.target) / q.target) * 100 + '%' }"></div>
+            </div>
+            <p class="xy-row-desc xy-row-desc--key">奖励 {{ q.reward }}</p>
+          </div>
+        </div>
+      </template>
 
-    <!-- 任务 -->
-    <div v-if="sub === 'quest'">
-      <div v-for="cat in questCats" :key="cat.label" class="xy-quest-cat">
-        <h4 class="xy-sec-title">
-          {{ cat.label }}
-          <span class="xy-sec-count">{{ cat.done }}/{{ cat.items.length }}</span>
-        </h4>
-        <div v-for="q in cat.items" :key="q.name" class="xy-row-card" :class="{ done: q.progress >= q.target }">
+      <template #checkin>
+        <div class="xy-checkin-head">
+          <span class="xy-checkin-streak">已连续签到 {{ checkinDays.filter(d => d.state === 'done').length }} 天</span>
+          <button type="button" class="xy-checkin-btn xy-ink-hover" :disabled="!todayReady">立即签到</button>
+        </div>
+        <div class="xy-checkin-grid">
+          <div v-for="d in checkinDays" :key="d.day" class="xy-checkin-cell"
+            :class="{ done: d.state === 'done', today: d.state === 'today', future: d.state === 'future' }">
+            <span class="xy-checkin-day">{{ d.day }}</span>
+            <span class="xy-checkin-reward">{{ d.reward }}</span>
+          </div>
+        </div>
+        <p class="xy-panel-hint">满 30 天领取「仙品自选箱」，断签后重新累计</p>
+      </template>
+
+      <template #event>
+        <div v-for="e in events" :key="e.name" class="xy-row-card">
           <div class="xy-row-top">
-            <span class="xy-row-name">{{ q.name }}</span>
-            <span class="xy-chip" :class="q.progress >= q.target ? 'xy-chip--gold' : 'xy-chip--jade'">
-              {{ q.progress >= q.target ? '可领取' : '进行中' }}
-            </span>
-            <span class="xy-row-side">{{ q.progress }}/{{ q.target }}</span>
+            <span class="xy-row-name">{{ e.name }}</span>
+            <span class="xy-chip" :class="eventChip(e.status)">{{ e.status }}</span>
+            <span class="xy-row-side">{{ e.time }}</span>
           </div>
-          <p class="xy-row-desc">{{ q.desc }}</p>
-          <div class="xy-progress">
-            <div class="xy-progress-fill" :style="{ width: (Math.min(q.progress, q.target) / q.target) * 100 + '%' }"></div>
-          </div>
-          <p class="xy-row-desc xy-row-desc--key">奖励 {{ q.reward }}</p>
+          <p class="xy-row-desc">{{ e.desc }}</p>
+          <p class="xy-row-desc xy-row-desc--key">奖励 {{ e.reward }}</p>
         </div>
-      </div>
-    </div>
-
-    <!-- 签到 -->
-    <div v-else-if="sub === 'checkin'">
-      <div class="xy-checkin-head">
-        <span class="xy-checkin-streak">已连续签到 {{ checkinDays.filter(d => d.state === 'done').length }} 天</span>
-        <button type="button" class="xy-checkin-btn xy-ink-hover" :disabled="!todayReady">立即签到</button>
-      </div>
-      <div class="xy-checkin-grid">
-        <div v-for="d in checkinDays" :key="d.day" class="xy-checkin-cell"
-          :class="{ done: d.state === 'done', today: d.state === 'today', future: d.state === 'future' }">
-          <span class="xy-checkin-day">{{ d.day }}</span>
-          <span class="xy-checkin-reward">{{ d.reward }}</span>
-        </div>
-      </div>
-      <p class="xy-panel-hint">满 30 天领取「仙品自选箱」，断签后重新累计</p>
-    </div>
-
-    <!-- 活动 -->
-    <div v-else>
-      <div v-for="e in events" :key="e.name" class="xy-row-card">
-        <div class="xy-row-top">
-          <span class="xy-row-name">{{ e.name }}</span>
-          <span class="xy-chip" :class="eventChip(e.status)">{{ e.status }}</span>
-          <span class="xy-row-side">{{ e.time }}</span>
-        </div>
-        <p class="xy-row-desc">{{ e.desc }}</p>
-        <p class="xy-row-desc xy-row-desc--key">奖励 {{ e.reward }}</p>
-      </div>
-    </div>
+      </template>
+    </Tabs>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import Tabs from '@/presentation/components/Tabs.vue'
+import type { TabItem } from '@/presentation/components/Tabs.vue'
 import { checkinDays, events, quests, type XiyouQuest } from '../data/mock'
 
 const sub = ref<'quest' | 'checkin' | 'event'>('quest')
 
-const SUBS = [
+const SUBS: TabItem[] = [
   { id: 'quest', label: '任务' },
   { id: 'checkin', label: '签到' },
   { id: 'event', label: '活动' },
-] as const
+]
 
 const questCats = computed(() => {
   const order: Array<XiyouQuest['type']> = ['主线', '日常', '周常']
@@ -90,12 +84,6 @@ function eventChip(status: string): string {
 </script>
 
 <style scoped lang="scss">
-.xy-panel-scroll {
-  height: 100%;
-  overflow-y: auto;
-  padding-right: var(--space-2);
-}
-
 .xy-panel-hint {
   margin: 0 0 var(--space-3);
   font-size: var(--font-size-md);

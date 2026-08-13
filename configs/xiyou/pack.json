@@ -7,7 +7,12 @@
     { "name": "贝壳", "count": 15, "rarity": "普通", "desc": "河滩常见的贝壳，可制装饰品" },
     { "name": "松木", "count": 3, "rarity": "稀有", "desc": "深山老松，二阶装备材料" },
     { "name": "玄铁", "count": 2, "rarity": "珍品", "desc": "千锤百炼的寒铁，三阶锻造主材" },
-    { "name": "妖丹", "count": 1, "rarity": "仙品", "desc": "大妖凝结内丹，炼药与法宝的至宝" }
+    { "name": "妖丹", "count": 1, "rarity": "仙品", "desc": "大妖凝结内丹，炼药与法宝的至宝" },
+    { "name": "鹿皮", "count": 5, "rarity": "普通", "desc": "鹿的皮革，柔软坚韧，可制一阶皮甲" },
+    { "name": "异矿", "count": 6, "rarity": "稀有", "desc": "晶球开启所得，强化武器的基础材料" },
+    { "name": "灵气·强化", "count": 6, "rarity": "稀有", "desc": "晶球开启所得，强化衣服的基础材料" },
+    { "name": "灵水", "count": 6, "rarity": "稀有", "desc": "晶球开启所得，强化饰品的材料" },
+    { "name": "小魂玉", "count": 6, "rarity": "稀有", "desc": "装备升星所需，蕴含魂力" }
   ],
   "equipment": [
     { "name": "竹剑", "count": 1, "rarity": "稀有", "desc": "一阶轻型武器 · 桃木×3 + 铜精×1" },

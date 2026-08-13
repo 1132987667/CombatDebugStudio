@@ -6,7 +6,35 @@
     </header>
 
     <div class="xy-cabinet-body">
-      <div v-if="tab === 'map'" class="xy-cabinet-scroll">
+      <div v-if="tab === 'battle'" class="xy-cabinet-scroll">
+        <template v-if="current">
+          <div class="xy-map-brief">
+            <div class="xy-map-brief-top">
+              <span class="xy-map-brief-name">{{ current.name }}</span>
+              <span class="xy-map-brief-stars" aria-label="关卡星级">
+                <svg v-for="i in current.maxStars" :key="i" viewBox="0 0 24 24" class="xy-star"
+                  :class="{ on: i <= current.stars }" aria-hidden="true">
+                  <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
+                </svg>
+              </span>
+            </div>
+            <div class="xy-map-brief-meta">
+              <span class="xy-chip" :class="difficultyChip(current.difficulty)">{{ difficultyText(current.difficulty) }}</span>
+              <span class="xy-map-brief-range">{{ current.range }}</span>
+            </div>
+            <p class="xy-map-brief-desc">{{ current.desc }}</p>
+          </div>
+        </template>
+        <button type="button" class="xy-map-brief-open xy-ink-hover" @click="emit('open-map')">
+          <svg viewBox="0 0 24 24" class="xy-map-brief-open-icon" aria-hidden="true">
+            <path d="M5 3l7-2 7 2v18l-7 2-7-2V3zM12 1v20M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="xy-map-brief-open-text">展开降妖路引</span>
+          <span class="xy-map-brief-open-sub">四域十六关 · 弹窗大地图</span>
+        </button>
+      </div>
+
+      <div v-else-if="tab === 'map'" class="xy-cabinet-scroll">
         <template v-if="current">
           <div class="xy-map-brief">
             <div class="xy-map-brief-top">
@@ -35,7 +63,7 @@
       </div>
 
       <PackPanel v-else-if="tab === 'pack'" />
-      <CultivatePanel v-else-if="tab === 'cultivate'" />
+      <CultivatePanel v-else-if="tab === 'cultivate'" @open-equip="emit('open-equip')" />
       <EquipPanel v-else-if="tab === 'equip'" />
       <MatePanel v-else-if="tab === 'mate'" />
       <CollectPanel v-else-if="tab === 'collect'" />
@@ -49,7 +77,7 @@
 import { computed } from 'vue'
 import type { GroupTab } from './FourAspectBar.vue'
 import type { XiyouScene } from '../data/mock'
-import CavePanel from './CavePanel.vue'
+import CavePanel from './cave/CavePanel.vue'
 import CollectPanel from './CollectPanel.vue'
 import CultivatePanel from './CultivatePanel.vue'
 import EquipPanel from './EquipPanel.vue'
@@ -61,7 +89,7 @@ const props = defineProps<{
   tab: GroupTab
   current: XiyouScene | null
 }>()
-const emit = defineEmits<{ 'open-map': [] }>()
+const emit = defineEmits<{ 'open-map': []; 'open-equip': [] }>()
 
 function difficultyText(d: XiyouScene['difficulty']): string {
   return { easy: '简单', normal: '普通', hard: '困难', hell: '极难' }[d]
@@ -73,14 +101,15 @@ function difficultyChip(d: XiyouScene['difficulty']): string {
 
 const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
   const map: Record<GroupTab, { label: string; sub: string }> = {
+    battle: { label: '战斗', sub: '演武台 · 当前场景对战' },
     map: { label: '降妖路引', sub: '西游大地图 · 四域十六关' },
     pack: { label: '行囊', sub: '乾坤袋 · 背包 / 仓库 / 坊市' },
-    cultivate: { label: '修行', sub: '问道长生 · 修为 / 功法 / 经脉 / 流派 / 神通' },
+    cultivate: { label: '修行', sub: '问道长生 · 角色 / 境界 / 流派 / 功法 / 经脉 / 神通' },
     equip: { label: '装备', sub: '兵器法宝 · 装备 / 法宝 / 坐骑' },
     mate: { label: '伙伴', sub: '结伴同行 · 伙伴 / 灵宠 / 缘分' },
     collect: { label: '收集', sub: '志怪录 · 图鉴 / 成就 / 称号' },
     quest: { label: '历练', sub: '云游四海 · 任务 / 签到 / 活动' },
-    cave: { label: '洞府', sub: '修炼洞 · 炼丹 / 炼器 / 闭关 / 药园 / 百艺' },
+    cave: { label: '洞府', sub: '修炼洞 · 打造 / 炼制 / 强化 / 升星 / 修炼 / 合成' },
     settings: { label: '设置', sub: '游戏 · 战斗 · 音效 · 关于' },
   }
   return map[props.tab]
@@ -96,10 +125,27 @@ const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
 
 .xy-cabinet-head {
   flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--xy-ink-line);
+
+  .xy-seal-title {
+    margin: 0;
+    padding: 0;
+    border-bottom: none;
+
+    /* 副标题同行后不再需要印章方块 */
+    &::after {
+      display: none;
+    }
+  }
 }
 
 .xy-cabinet-sub {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-size: var(--font-size-md);
   color: var(--xy-ink-3);
 }

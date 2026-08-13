@@ -16,9 +16,10 @@
         @mouseenter="onTooltipEnter" @mouseleave="onTooltipLeave">
         <!-- 标题行：名称 + 类型徽章 + 时长徽章 -->
         <div class="tooltip-header">
-          <span class="tooltip-name">{{ data.name }}</span>
+          <span class="tooltip-name" :style="data.nameColor ? { color: data.nameColor } : undefined">{{ data.name }}</span>
           <span class="tooltip-badges">
-            <span class="badge badge-type">{{ data.badge }}</span>
+            <span class="badge badge-type"
+              :style="data.badgeColor ? { color: data.badgeColor, background: `color-mix(in srgb, ${data.badgeColor} 14%, transparent)` } : undefined">{{ data.badge }}</span>
             <span v-if="data.durationLabel" class="badge badge-duration">{{ data.durationLabel }}</span>
           </span>
         </div>
@@ -49,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 
 interface Props {
@@ -85,14 +86,6 @@ const onTooltipLeave = () => {
   hideTimer = setTimeout(() => {
     emit('hide')
   }, 200) // 200ms 延迟
-}
-
-/** 清除隐藏计时器（供父组件在触发元素 mouseenter 时调用） */
-const cancelHide = () => {
-  if (hideTimer) {
-    clearTimeout(hideTimer)
-    hideTimer = null
-  }
 }
 
 // ===================== 定位 =====================

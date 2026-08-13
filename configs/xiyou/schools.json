@@ -4,12 +4,12 @@
     "name": "灵猴道",
     "motto": "轻捷如猿，迅影连击",
     "skills": [
-      { "name": "迅捷连击", "type": "passive", "cost": 0, "desc": "攻击时 30% 概率追加一次 50% 伤害的攻击" },
-      { "name": "分身斩", "type": "skill", "cost": 50, "desc": "召唤分身共同攻击，造成 80%×2 伤害" },
-      { "name": "疾风步", "type": "skill", "cost": 50, "desc": "速度 +40%，持续 3 回合" },
-      { "name": "乱舞", "type": "skill", "cost": 50, "desc": "3 次快速攻击，每次 60% 伤害" },
-      { "name": "千影绝杀", "type": "ultimate", "cost": 150, "desc": "5 次攻击，每次 70% 伤害，最后一击必暴" },
-      { "name": "神行百变", "type": "ultimate", "cost": 150, "desc": "闪避率 +50%，持续 3 回合，期间攻击必连击" }
+      { "name": "迅捷连击", "type": "passive", "cost": 0, "desc": "攻击时 30% 概率追加一次 50% 伤害的攻击", "tier": 1, "levelReq": 1 },
+      { "name": "分身斩", "type": "skill", "cost": 50, "desc": "召唤分身共同攻击，造成 80%×2 伤害", "tier": 2, "levelReq": 3 },
+      { "name": "疾风步", "type": "skill", "cost": 50, "desc": "速度 +40%，持续 3 回合", "tier": 2, "levelReq": 3 },
+      { "name": "乱舞", "type": "skill", "cost": 50, "desc": "3 次快速攻击，每次 60% 伤害", "tier": 2, "levelReq": 3 },
+      { "name": "千影绝杀", "type": "ultimate", "cost": 150, "desc": "5 次攻击，每次 70% 伤害，最后一击必暴", "tier": 3, "levelReq": 6 },
+      { "name": "神行百变", "type": "ultimate", "cost": 150, "desc": "闪避率 +50%，持续 3 回合，期间攻击必连击", "tier": 3, "levelReq": 6 }
     ],
     "selected": true
   },
@@ -18,12 +18,12 @@
     "name": "金行道",
     "motto": "一击必中，锋芒毕露",
     "skills": [
-      { "name": "致命精准", "type": "passive", "cost": 0, "desc": "暴击伤害提升至 150%" },
-      { "name": "弱点打击", "type": "skill", "cost": 50, "desc": "130% 伤害，本次暴击率 +30%" },
-      { "name": "破甲斩", "type": "skill", "cost": 50, "desc": "120% 伤害，无视 40% 防御" },
-      { "name": "蓄势一击", "type": "skill", "cost": 50, "desc": "本回合蓄力，下回合攻击造成 200% 伤害" },
-      { "name": "天诛地灭", "type": "ultimate", "cost": 150, "desc": "250% 伤害，若暴击则追加 100% 伤害" },
-      { "name": "战神降临", "type": "ultimate", "cost": 150, "desc": "暴击率 +40%，攻击力 +30%，持续 5 回合" }
+      { "name": "致命精准", "type": "passive", "cost": 0, "desc": "暴击伤害提升至 150%", "tier": 1, "levelReq": 1 },
+      { "name": "弱点打击", "type": "skill", "cost": 50, "desc": "130% 伤害，本次暴击率 +30%", "tier": 2, "levelReq": 3 },
+      { "name": "破甲斩", "type": "skill", "cost": 50, "desc": "120% 伤害，无视 40% 防御", "tier": 2, "levelReq": 3 },
+      { "name": "蓄势一击", "type": "skill", "cost": 50, "desc": "本回合蓄力，下回合攻击造成 200% 伤害", "tier": 2, "levelReq": 3 },
+      { "name": "天诛地灭", "type": "ultimate", "cost": 150, "desc": "250% 伤害，若暴击则追加 100% 伤害", "tier": 3, "levelReq": 6 },
+      { "name": "战神降临", "type": "ultimate", "cost": 150, "desc": "暴击率 +40%，攻击力 +30%，持续 5 回合", "tier": 3, "levelReq": 6 }
     ]
   },
   {
@@ -31,12 +31,12 @@
     "name": "磐石道",
     "motto": "不动如山，以守为攻",
     "skills": [
-      { "name": "不动如山", "type": "passive", "cost": 0, "desc": "受到伤害时 20% 概率格挡 50% 伤害" },
-      { "name": "撼地击", "type": "skill", "cost": 50, "desc": "140% 伤害，30% 概率眩晕 1 回合" },
-      { "name": "铜墙铁壁", "type": "skill", "cost": 50, "desc": "防御 +50%，持续 3 回合" },
-      { "name": "以伤换伤", "type": "skill", "cost": 50, "desc": "损失 10% 当前气血，造成损失×2 固定伤害" },
-      { "name": "泰山压顶", "type": "ultimate", "cost": 150, "desc": "220% 伤害，100% 眩晕 1 回合" },
-      { "name": "金刚不坏", "type": "ultimate", "cost": 150, "desc": "获得最大气血 30% 护盾，反弹 30% 伤害" }
+      { "name": "不动如山", "type": "passive", "cost": 0, "desc": "受到伤害时 20% 概率格挡 50% 伤害", "tier": 1, "levelReq": 1 },
+      { "name": "撼地击", "type": "skill", "cost": 50, "desc": "140% 伤害，30% 概率眩晕 1 回合", "tier": 2, "levelReq": 3 },
+      { "name": "铜墙铁壁", "type": "skill", "cost": 50, "desc": "防御 +50%，持续 3 回合", "tier": 2, "levelReq": 3 },
+      { "name": "以伤换伤", "type": "skill", "cost": 50, "desc": "损失 10% 当前气血，造成损失×2 固定伤害", "tier": 2, "levelReq": 3 },
+      { "name": "泰山压顶", "type": "ultimate", "cost": 150, "desc": "220% 伤害，100% 眩晕 1 回合", "tier": 3, "levelReq": 6 },
+      { "name": "金刚不坏", "type": "ultimate", "cost": 150, "desc": "获得最大气血 30% 护盾，反弹 30% 伤害", "tier": 3, "levelReq": 6 }
     ]
   }
 ]

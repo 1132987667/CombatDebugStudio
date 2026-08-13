@@ -167,6 +167,17 @@
   }
 }
 
+/* ----- 悬停呼吸（纯缩放，hover 放大缩小） ----- */
+@keyframes hover-breath {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.22);
+  }
+}
+
 /* ----- 脉冲缩放（施法蓄力 / 选择指示点 / 霓虹点） ----- */
 @keyframes cast-pulse {
   0%,

@@ -131,79 +131,97 @@
       margin: var(--space-3);
     }
 
-    /* 全屏面板宽屏适配：内容多列自适应，卡片不因变宽而拉大失真 */
+    /* 全屏面板宽屏适配：内容多列自适应，卡片不因变宽而拉大失真
+       NOTE: 面板内容已统一包在系统 Tabs 组件内（.tabs-root > .flex-col-fill > [role=tabpanel]），
+             直接子级选择器需穿透到 Tabs 面板内容层。
+             用 :not(.tabs-root) 排除嵌套 Tabs 根（如行囊二级分类 tab），
+             否则内层 tab 头会被 grid 化而与内容并排（左右布局）。 */
     .xy-cabinet-body > .xy-panel-scroll {
-      > div:not(.xy-panel-tabs) {
+      > .tabs-root {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      /* 任意层级 tabpanel 的直接内容层做多列自适应（跳过嵌套 Tabs 根） */
+      .tabs-root
+        .flex-col-fill
+        > [role='tabpanel']
+        > div:not(.tabs-root):not(.xy-panel-tabs) {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: var(--space-3);
         align-items: start;
-      }
 
-      /* 整块信息 / 标题 / 分组容器通栏 */
-      .xy-sec-title,
-      .xy-panel-hint,
-      .xy-realm-now,
-      .xy-checkin-head,
-      .xy-gear-actions,
-      .xy-cabinet-cat,
-      .xy-quest-cat,
-      .xy-codex-chapter,
-      .xy-school-block,
-      .xy-meridian,
-      .xy-card-grid,
-      .xy-gear-grid,
-      .xy-codex-grid,
-      .xy-farm-grid,
-      .xy-storage-grid,
-      .xy-skill-grid,
-      .xy-checkin-grid {
-        grid-column: 1 / -1;
-      }
-
-      .xy-row-card {
-        margin-bottom: 0;
-      }
-
-      /* 内嵌网格容器：列数自适应 */
-      .xy-card-grid,
-      .xy-gear-grid,
-      .xy-codex-grid,
-      .xy-farm-grid,
-      .xy-storage-grid,
-      .xy-skill-grid,
-      .xy-checkin-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      }
-
-      .xy-gear-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      }
-
-      .xy-gear-actions {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      }
-
-      /* 任务分类 / 经脉：分组内部列表也多列 */
-      .xy-quest-cat,
-      .xy-meridian {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: var(--space-2);
-        align-items: start;
-
+        /* 整块信息 / 标题 / 分组容器通栏 */
         .xy-sec-title,
-        .xy-meridian-chain {
+        .xy-panel-hint,
+        .xy-realm-now,
+        .xy-checkin-head,
+        .xy-gear-actions,
+        .xy-cabinet-cat,
+        .xy-quest-cat,
+        .xy-codex-chapter,
+        .xy-school-block,
+        .xy-meridian,
+        .xy-card-grid,
+        .xy-gear-grid,
+        .xy-codex-grid,
+        .xy-farm-grid,
+        .xy-storage-grid,
+        .xy-skill-grid,
+        .xy-checkin-grid,
+        .xy-character-panel,
+        .xy-realm-panel,
+        .xy-school-panel,
+        .xy-pending {
           grid-column: 1 / -1;
         }
-      }
 
-      /* 炼器 · 灵炉核心背景：容器保持纵向 flex（背景层依赖单列），卡片叠于背景之上 */
-      .xy-forge {
-        grid-column: 1 / -1;
-        display: flex;
-        flex-direction: column;
-        min-height: 100%;
+        .xy-row-card {
+          margin-bottom: 0;
+        }
+
+        /* 内嵌网格容器：列数自适应 */
+        .xy-card-grid,
+        .xy-gear-grid,
+        .xy-codex-grid,
+        .xy-farm-grid,
+        .xy-storage-grid,
+        .xy-skill-grid,
+        .xy-checkin-grid {
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+
+        .xy-gear-grid {
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        }
+
+        .xy-gear-actions {
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+
+        /* 任务分类 / 经脉：分组内部列表也多列 */
+        .xy-quest-cat,
+        .xy-meridian {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: var(--space-2);
+          align-items: start;
+
+          .xy-sec-title,
+          .xy-meridian-chain {
+            grid-column: 1 / -1;
+          }
+        }
+
+        /* 炼器 · 灵炉核心背景：容器保持纵向 flex（背景层依赖单列），卡片叠于背景之上 */
+        .xy-forge {
+          grid-column: 1 / -1;
+          display: flex;
+          flex-direction: column;
+          min-height: 100%;
+        }
       }
     }
   }
@@ -218,6 +236,31 @@
   background: var(--xy-paper-light);
   border: 1px solid var(--xy-ink-line);
   box-shadow: 0 1px 2px rgba(var(--rgb-black), 0.3);
+}
+
+/* 功能面板统一滚动容器（各 Panel 组件复用，勿在各组件内重复定义） */
+.xy-panel-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+  padding-left: var(--space-2);
+}
+
+/* 有内部 Tabs 的功能面板（修行/装备/伙伴/收集/历练等 SUB 导航）：Tab 头固定、内容区内部滚动。
+   行囊（.xy-pack-host）为双层 Tabs 结构，已自行处理，此处排除。 */
+.xy-panel-scroll:not(.xy-pack-host) > .tabs-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.xy-panel-scroll:not(.xy-pack-host) > .tabs-root .flex-col-fill > [role='tabpanel'] {
+  /* 覆盖 .flex-col-fill 的 flex column：内容块走普通流超高才溢出滚动（flex 容器会压缩子级而非滚动） */
+  display: block;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: var(--space-2);
 }
 
 .xy-seal-title {
@@ -287,7 +330,11 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: radial-gradient(circle at 50% 50%, var(--color-bg-hover), transparent 70%);
+    background: radial-gradient(
+      circle at 50% 50%,
+      var(--color-bg-hover),
+      transparent 70%
+    );
     opacity: 0;
     transition: opacity var(--transition-base);
     pointer-events: none;
@@ -302,42 +349,14 @@
    养成面板通用组件（各分组 Panel 复用）
    ══════════════════════════════════════════════════════════════════ */
 
-/* 子系统页签条（宝阁内二级导航） */
-.xy-panel-tabs {
-  flex-shrink: 0;
-  display: flex;
-  gap: var(--space-1);
-  padding: 2px;
-  margin-bottom: var(--space-3);
-  border: 1px solid var(--xy-ink-line);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-}
+/* 系统 Tabs 融入水墨主题（宝阁内二级导航）：
+   朱印为激活色 + 页签头居中，各 Panel 复用同一类，避免重复样式 */
+.xy-tabs--seal {
+  --tabs-accent: var(--xy-seal);
+  --tabs-accent-glow: rgba(var(--rgb-brand-red), var(--alpha-glow));
 
-.xy-panel-tab {
-  flex: 1;
-  min-width: 0;
-  padding: var(--space-1) var(--space-2);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--xy-ink-3);
-  cursor: pointer;
-  font-family: var(--xy-font-body);
-  font-size: var(--font-size-md);
-  white-space: nowrap;
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
-
-  &:hover {
-    color: var(--xy-ink-1);
-  }
-
-  &.active {
-    background: var(--xy-seal-soft);
-    color: var(--xy-seal);
-    font-weight: var(--font-weight-medium);
+  :deep(.tabs-header) {
+    justify-content: center;
   }
 }
 
@@ -414,7 +433,11 @@
 }
 
 .xy-progress--line .xy-progress-fill {
-  background: linear-gradient(90deg, var(--color-skill-active), var(--color-skill-active));
+  background: linear-gradient(
+    90deg,
+    var(--color-skill-active),
+    var(--color-skill-active)
+  );
 }
 
 .xy-progress-text {
@@ -488,7 +511,7 @@
 .xy-card-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
+  gap: var(--space-4);
 }
 
 /* 货币徽章 */

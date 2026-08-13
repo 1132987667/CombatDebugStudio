@@ -22,6 +22,7 @@
 
 <script setup lang="ts">
 export type GroupTab =
+  | 'battle'
   | 'map'
   | 'pack'
   | 'cultivate'
@@ -55,6 +56,7 @@ function onTabClick(tab: GroupTab): void {
 
 /** 四象栏一级分组（墨线简笔画 + 文字，禁 emoji） */
 const TABS: Array<{ id: GroupTab; label: string; badge?: string; path: string }> = [
+  { id: 'battle', label: '战斗', path: 'M4 20L20 4M20 4H8M20 4v12' },
   { id: 'map', label: '路引', path: 'M5 3l7-2 7 2v18l-7 2-7-2V3zM12 1v20M5 7h14M5 12h14M5 17h14' },
   { id: 'pack', label: '行囊', path: 'M4 7l8-4 8 4v10l-8 4-8-4V7zM4 7l8 4M20 7l-8 4M12 11v10' },
   { id: 'cultivate', label: '修行', path: 'M12 5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM12 10v4M8 21c1-3.5 2-5 4-5s3 1.5 4 5M5 18c.8-2.2 1.8-3.4 3-4M19 18c-.8-2.2-1.8-3.4-3-4' },

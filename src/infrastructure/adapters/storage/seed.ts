@@ -54,7 +54,7 @@ import xiyouEquipmentJson from '@configs/xiyou/equipment.json'
 
 // NOTE: v10 — 新增 items（物品主键索引）/ gears（装备详情）表，种子源为 configs/xiyou/items.json、equipment.json。
 //       升级版本号让已 seed 的浏览器重导最新 configs。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v10'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v11'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [

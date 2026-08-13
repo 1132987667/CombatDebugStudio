@@ -1,8 +1,8 @@
 <template>
   <div class="xy-altar">
-    <!-- 自动战斗开关 -->
-    <button type="button" class="xy-altar-auto xy-ink-hover" :class="{ on: autoOn }"
-      :aria-pressed="autoOn" @click="autoOn = !autoOn">
+    <!-- 自动战斗开关（联动 battleStore 真实引擎） -->
+    <button type="button" class="xy-altar-auto xy-ink-hover" :class="{ on: store.autoPlayMode }"
+      :aria-pressed="store.autoPlayMode" @click="toggleAuto">
       <svg viewBox="0 0 24 24" class="xy-altar-auto-icon" aria-hidden="true">
         <path d="M6 4l14 8-14 8V4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
       </svg>
@@ -23,9 +23,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
-const autoOn = ref(false)
+const store = useBattleStore()
+
+/** 切换自动战斗：真实引擎 autoPlay 开关 */
+function toggleAuto(): void {
+  void store.toggleAutoPlay()
+}
 
 /** 框架展示用技能按钮（能量充足与否由 ready 表达样式） */
 const skills = [

@@ -629,8 +629,36 @@
 
   background-color: var(--fl-base) !important;
   background-image:
-    linear-gradient(115deg, var(--fl-sheen), transparent 40%),
+    radial-gradient(circle at 50% 45%, var(--fl-sheen), var(--color-bg-secondary) 90%),
     repeating-linear-gradient(35deg, var(--fl-line-a) 0 1px, transparent 1px 47px),
     repeating-linear-gradient(115deg, var(--fl-line-b) 0 1px, transparent 1px 61px),
-    radial-gradient(circle at 50% 45%, var(--fl-center), transparent 80%) !important;
+    radial-gradient(circle at 50% 45%, var(--fl-sheen), var(--color-bg-secondary) 90%) !important;
 }
+
+/* ----- 同心环 · 涟漪（大环 + 小环 + 中心实点，三层错落） -----
+   默认：--color-bg-tertiary 底色 + 白色同心圆环点阵（32px 网格）。
+   点位于网格中心，position 随 grid 联动，无需手动改偏移。
+   定制：.panel { --rg-ring-outer: rgba(255,255,255,.15); --rg-grid: 40px; }
+
+   NOTE: 已迁移为 _mixins.scss 的 @mixin bg-rings($dark, $ring)，此 class 保留作参考。 */
+/* .bg-rings {
+  --rg-base: var(--color-bg-tertiary);
+  --rg-ring-outer: rgba(255, 255, 255, 0.15);
+  --rg-ring-inner: rgba(255, 255, 255, 0.08);
+  --rg-dot: rgba(255, 255, 255, 0.20);
+  --rg-ring-size: 4px;
+  --rg-ring-width: 0.5px;
+  --rg-inner-size: 9px;
+  --rg-dot-size: 1.5px;
+  --rg-dot-fade: 0.2px;
+  --rg-grid: 32px;
+
+  background-color: var(--rg-base) !important;
+  background-image:
+    radial-gradient(circle, transparent var(--rg-ring-size), var(--rg-ring-outer) var(--rg-ring-size), var(--rg-ring-outer) calc(var(--rg-ring-size) + var(--rg-ring-width)), transparent calc(var(--rg-ring-size) + var(--rg-ring-width))),
+    radial-gradient(circle, transparent var(--rg-inner-size), var(--rg-ring-inner) var(--rg-inner-size), var(--rg-ring-inner) calc(var(--rg-inner-size) + var(--rg-ring-width)), transparent calc(var(--rg-inner-size) + var(--rg-ring-width))),
+    radial-gradient(circle, var(--rg-dot) var(--rg-dot-size), transparent calc(var(--rg-dot-size) + var(--rg-dot-fade))) !important;
+  background-size: var(--rg-grid) var(--rg-grid) !important;
+  background-position: 0 0, 0 0, calc(var(--rg-grid) / 2) calc(var(--rg-grid) / 2) !important;
+} */
+

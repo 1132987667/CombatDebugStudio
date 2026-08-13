@@ -1,0 +1,43 @@
+{
+  "name": "降妖者",
+  "title": "斗气充盈 · 踏碎虚空",
+  "initialLevel": 5,
+  "base": {
+    "maxHealth": 300,
+    "attackMin": 8,
+    "attackMax": 16,
+    "defense": 4,
+    "speed": 11,
+    "critRate": 7.5,
+    "critDamage": 125,
+    "maxEnergy": 150,
+    "hit": 90,
+    "dodge": 10,
+    "hitValue": 90,
+    "dodgeValue": 10
+  },
+  "growth": {
+    "maxHealth": 30,
+    "attack": 1,
+    "defense": 1,
+    "speed": 1
+  },
+  "expTable": [
+    { "level": 1, "expRequired": 300 },
+    { "level": 2, "expRequired": 600 },
+    { "level": 3, "expRequired": 900 },
+    { "level": 4, "expRequired": 1200 },
+    { "level": 5, "expRequired": 1500 },
+    { "level": 6, "expRequired": 1900 },
+    { "level": 7, "expRequired": 2400 },
+    { "level": 8, "expRequired": 3000 },
+    { "level": 9, "expRequired": 3700 },
+    { "level": 10, "expRequired": 4500 }
+  ],
+  "statBonuses": {
+    "strength": { "attack": 1 },
+    "vitality": { "maxHealth": 10 },
+    "agility": { "speed": 1 },
+    "spirit": { "maxEnergy": 5 }
+  }
+}

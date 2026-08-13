@@ -4,6 +4,7 @@
 // .vue 文件 → @use '@/presentation/styles/mixins' as *;
 // .scss 文件 → @use 'mixins' as *;
 // ==========================================================================
+@use 'sass:color';
 
 // ── Flex 布局容器 ──
 @mixin flex-layout($justify: space-between, $align: center) {
@@ -72,4 +73,134 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// ── 鎏金 · 斜光（金色 45° 光带 + 白色 135° 光带 + 细斜纹 + 点阵） ──
+// 默认深灰蓝底 #2a2a3a；$dark 决定底色基调，$light 为横向渐变中带（默认 lighten 8%）。
+// 品阶/状态色用法：传入同色系深底 + 品阶色即可（如 bg-gilt(#1f3026, #4caf50)）。
+@mixin bg-gilt($dark: #2a2a3a, $light: null) {
+  @if $light == null {
+    $light: color.adjust($dark, $lightness: 20%);
+  }
+
+  --gt-base: #{$dark};
+  --gt-mid: #{$light};
+  --gt-sheen-white: rgba(255, 255, 255, 0.12);
+  --gt-gold: rgba(255, 215, 0, 0.15);
+  --gt-line: rgba(255, 255, 255, 0.04);
+  --gt-line-grid: 24px;
+  --gt-dot: rgba(255, 255, 255, 0.15);
+  --gt-dot-size: 1px;
+  --gt-dot-fade: 0.2px;
+  --gt-dot-grid: 28px;
+
+  background-color: var(--gt-base) !important;
+  background-image:
+    linear-gradient(
+      135deg,
+      var(--gt-sheen-white) 0%,
+      transparent 30%,
+      transparent 70%,
+      var(--gt-sheen-white) 100%
+    ),
+    // linear-gradient(
+    //   45deg,
+    //   var(--gt-gold) 0%,
+    //   transparent 50%,
+    //   var(--gt-gold) 100%
+    // ),
+    linear-gradient(45deg, rgba(255, 0, 150, 0.1) 0%, transparent 40%, transparent 60%, rgba(0, 200, 255, 0.1) 100%),
+    repeating-linear-gradient(45deg, var(--gt-line) 0 1px, transparent 1px 6px),
+    radial-gradient(
+      circle,
+      var(--gt-dot) var(--gt-dot-size),
+      transparent calc(var(--gt-dot-size) + var(--gt-dot-fade))
+    ),
+    linear-gradient(
+      to right,
+      var(--gt-base) 0%,
+      var(--gt-mid) 50%,
+      var(--gt-base) 100%
+    );
+
+  isolation: isolate;
+  background-size:
+    100% 100%,
+    100% 100%,
+    var(--gt-line-grid) var(--gt-line-grid),
+    var(--gt-dot-grid) var(--gt-dot-grid),
+    100% 100% !important;
+
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    calc(var(--gt-dot-grid) / 2) calc(var(--gt-dot-grid) / 2),
+    0 0 !important;
+}
+// ── 同心环 · 涟漪（大环 + 小环 + 中心实点，三层错落） ──
+// 默认深蓝底 #16213e；$dark 决定底色基调，$light 为环/点主题色（默认白色）。
+// 中间横向渐变色由 $dark 自动加深 8% 生成，与 bg-gilt 保持一致。
+// 品阶/状态色用法：传入品阶色即可（如 bg-rings(#16213e, #4caf50)）。
+@mixin bg-rings($dark: #16213e, $light: null) {
+  @if $light == null {
+    $light: #ffffff;
+  }
+
+  --rg-base: #{$dark};
+  --rg-mid: #{color.adjust($dark, $lightness: 8%)};
+  --rg-ring-outer: #{color.change($light, $alpha: 0.15)};
+  --rg-ring-inner: #{color.change($light, $alpha: 0.08)};
+  --rg-dot: #{color.change($light, $alpha: 0.20)};
+  --rg-ring-size: 4px;
+  --rg-ring-width: 0.5px;
+  --rg-inner-size: 9px;
+  --rg-dot-size: 1.5px;
+  --rg-dot-fade: 0.2px;
+  --rg-grid: 32px;
+
+  background-color: var(--rg-base) !important;
+  background-image:
+    // 大环
+    radial-gradient(
+      circle,
+      transparent var(--rg-ring-size),
+      var(--rg-ring-outer) var(--rg-ring-size),
+      var(--rg-ring-outer) calc(var(--rg-ring-size) + var(--rg-ring-width)),
+      transparent calc(var(--rg-ring-size) + var(--rg-ring-width))
+    ),
+    // 小环
+    radial-gradient(
+      circle,
+      transparent var(--rg-inner-size),
+      var(--rg-ring-inner) var(--rg-inner-size),
+      var(--rg-ring-inner) calc(var(--rg-inner-size) + var(--rg-ring-width)),
+      transparent calc(var(--rg-inner-size) + var(--rg-ring-width))
+    ),
+    // 中心实点
+    radial-gradient(
+      circle,
+      var(--rg-dot) var(--rg-dot-size),
+      transparent calc(var(--rg-dot-size) + var(--rg-dot-fade))
+    ),
+    // 横向渐变底层（左右深、中间略浅）
+    linear-gradient(
+      to right,
+      var(--rg-base) 0%,
+      var(--rg-mid) 50%,
+      var(--rg-base) 100%
+    );
+
+  isolation: isolate;
+  background-size:
+    var(--rg-grid) var(--rg-grid),
+    var(--rg-grid) var(--rg-grid),
+    var(--rg-grid) var(--rg-grid),
+    100% 100% !important;
+
+  background-position:
+    0 0,
+    0 0,
+    calc(var(--rg-grid) / 2) calc(var(--rg-grid) / 2),
+    0 0 !important;
 }

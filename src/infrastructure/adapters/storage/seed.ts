@@ -21,18 +21,20 @@ import type {
   DropGroupData,
   ElementsData,
   EquipmentData,
+  GearData,
   GrowthCurveData,
+  ItemData,
   LineupData,
   XiyouData,
 } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig } from '@/domain/skill/types'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
+import { deriveMaterials } from '@/domain/fengshen/derive-materials'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { EffectsJsonEntry } from '@/shared/types/effects-json'
 import formationsDataRaw from '@configs/formations/formations.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
-import materialsDataRaw from '@configs/materials/materials.json'
 import equipmentDataRaw from '@configs/equipment/equipment.json'
 import dropsDataRaw from '@configs/drops/drops.json'
 import effectsDataRaw from '@configs/effects/effects.json'
@@ -47,10 +49,12 @@ import xiyouMateJson from '@configs/xiyou/mate.json'
 import xiyouCollectJson from '@configs/xiyou/collect.json'
 import xiyouQuestJson from '@configs/xiyou/quest.json'
 import xiyouCaveJson from '@configs/xiyou/cave.json'
+import itemsDataRaw from '@configs/xiyou/items.json'
+import xiyouEquipmentJson from '@configs/xiyou/equipment.json'
 
-// NOTE: v9 — 新增 params 战斗规则参数表（对齐 BattleRuleManager 默认配置数值，供引擎消费）。
+// NOTE: v10 — 新增 items（物品主键索引）/ gears（装备详情）表，种子源为 configs/xiyou/items.json、equipment.json。
 //       升级版本号让已 seed 的浏览器重导最新 configs。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v9'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v10'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -209,7 +213,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.BUFFS, buffsWithEffects],
       [FENGSHEN_STORE.FORMATIONS, formationsDataRaw],
       [FENGSHEN_STORE.LINEUPS, lineupsDataRaw as LineupData[]],
-      [FENGSHEN_STORE.MATERIALS, materialsDataRaw],
+      [FENGSHEN_STORE.MATERIALS, deriveMaterials((itemsDataRaw as { items: ItemData[] }).items)],
       [FENGSHEN_STORE.EQUIPMENT, equipmentDataRaw as EquipmentData[]],
       [FENGSHEN_STORE.ACTORS, deriveActors(enemies)],
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
@@ -217,6 +221,8 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.AFFIXES, affixesDataRaw as AffixData[]],
       [FENGSHEN_STORE.PARAMS, buildParams()],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
+      [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
+      [FENGSHEN_STORE.GEARS, xiyouEquipmentJson as GearData[]],
     ]
 
     for (const [store, rows] of tables) {

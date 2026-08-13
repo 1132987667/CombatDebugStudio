@@ -105,6 +105,18 @@ describe('种子导入 seedFengshenData', () => {
     const equipKeys = await storage.keys(FENGSHEN_STORE.EQUIPMENT)
     expect(equipKeys).toContain('eq_w001')
 
+    // 物品主键索引（items 表）：全量注册，新装备（wp_/ar_/ac_）+ 旧装备（eq_）ID 均在内
+    const itemKeys = await storage.keys(FENGSHEN_STORE.ITEMS)
+    expect(itemKeys).toContain('mat_001')
+    expect(itemKeys).toContain('wp_t1_light_01')
+    expect(itemKeys).toContain('ar_t1_light_01')
+    expect(itemKeys).toContain('eq_w001')
+
+    // 装备详情（gears 表）：凡品 12 件新装备
+    const gearKeys = await storage.keys(FENGSHEN_STORE.GEARS)
+    expect(gearKeys).toHaveLength(12)
+    expect(gearKeys).toContain('ac_t1_charm_01')
+
     // 词缀表：55 种种子词缀齐全（减益一档 8 + 增益一至四档 8/12/15/12）
     const affixKeys = await storage.keys(FENGSHEN_STORE.AFFIXES)
     expect(affixKeys).toHaveLength(55)

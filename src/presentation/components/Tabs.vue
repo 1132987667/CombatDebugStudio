@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
 // NOTE: 类型导出必须放在独立 script 块 —— <script setup> 内的 export 需要
-// Vue 3.3+ 编译器才稳定，而 package.json 声明的下限是 ^3.2.47。
+// Vue 3.3+ 编译器才稳定（依赖声明 ^3.5.x，已满足）。
 export interface TabItem {
   /** 页签唯一标识，同时作为内容插槽名 */
   id: string
@@ -22,7 +22,7 @@ export interface TabItem {
   disabled?: boolean
 }
 
-/** 模块级实例序号（Vue 3.2 无 useId，用于 ARIA id 关联） */
+/** 模块级实例序号（Vue 3.5 已提供 useId，此处用自增 seq 保持无环境假设） */
 let instanceSeq = 0
 </script>
 

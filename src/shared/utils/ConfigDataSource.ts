@@ -15,6 +15,9 @@ import type { Item } from '@/shared/types/Item'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { EffectsJsonEntry } from '@/shared/types/effects-json'
 import { normalizeBuffEntries } from '@/shared/types/effects-json'
+import type { ItemData } from '@/domain/fengshen/types'
+import { deriveMaterials } from '@/domain/fengshen/derive-materials'
+import itemsDataRaw from '@configs/xiyou/items.json'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
 import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
@@ -26,7 +29,6 @@ import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import skillsData from '@configs/skills/skills.json'
 import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
 import hiddenBossSkillsData from '@configs/skills/skill_hidden_boss.json'
-import materialsData from '@configs/materials/materials.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 
 const enemies = [
@@ -50,6 +52,9 @@ const buffs = normalizeBuffEntries([
   ...((effectsDataRaw as { effects: EffectsJsonEntry[] }).effects ?? []),
 ])
 
+/** 材料域兜底数据：从物品主键索引（items 表）派生（materials.json 已合并入 items.json） */
+const materials = deriveMaterials((itemsDataRaw as { items: ItemData[] }).items)
+
 export class ConfigDataSource implements IDataSource {
   getEnemies(): Enemy[] {
     return enemies
@@ -72,6 +77,6 @@ export class ConfigDataSource implements IDataSource {
   }
 
   getMaterials(): Item[] {
-    return materialsData as Item[]
+    return materials
   }
 }

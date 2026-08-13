@@ -51,7 +51,7 @@ const openDialogKeys: symbol[] = [];
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import dragIconRaw from "@/presentation/assets/icons/drag.svg?raw";
-import closeIconRaw from "@/presentation/assets/icons/Close.svg?raw";
+import closeIconRaw from "@/presentation/assets/icons/close.svg?raw";
 
 // drag.svg 自带 XML 声明与 DOCTYPE，仅保留 <svg> 部分，避免 v-html 插入非法文档头
 const dragIcon = dragIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");

@@ -24,10 +24,10 @@ coverage
 build/
 
 # json数据
-configs/
+# configs/
 
 docs/
-documents/
+# documents/
 prompts/
 tests/
 

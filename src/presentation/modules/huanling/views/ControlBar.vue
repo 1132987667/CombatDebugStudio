@@ -2,9 +2,7 @@
   <div class="control-bar">
     <!-- 自动战斗状态指示器 -->
     <div v-if="isAutoPlaying" class="auto-battle-indicator">
-      <span class="auto-indicator-icon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 8-10h-7z"/></svg>
-      </span>
+      <span class="auto-indicator-icon" aria-hidden="true" v-html="lightningIcon"></span>
       <span class="auto-indicator-text">自动战斗中</span>
       <span class="auto-indicator-speed">x{{ props.battleSpeed ?? 1 }}</span>
     </div>
@@ -69,6 +67,9 @@ import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import type { DebugGate as DebugGateType } from '@/domain/battle/debug/DebugGate'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import lightningIconRaw from "@/presentation/assets/icons/lightning.svg?raw";
+
+const lightningIcon = lightningIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
 
 const emitter = container.resolve<UIEventBus>('UIEventBus').getEmitter()
 let debugGate: DebugGateType | undefined
@@ -179,6 +180,12 @@ onUnmounted(() => {
 .auto-indicator-icon {
   font-size: var(--font-size-xl);
   animation: spin 1s linear infinite;
+  display: inline-flex;
+}
+
+.auto-indicator-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .auto-indicator-text {

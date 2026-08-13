@@ -11,7 +11,7 @@ import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { FormationConfig } from '@/shared/types/formation'
-import type { Item } from '@/shared/types/Item'
+import type { Item, ItemEffect } from '@/shared/types/Item'
 import type { AffixTier, AffixTarget } from '@/shared/constants/affix'
 
 /** 角色（actors 表）—— 对齐规格说明书 3.1 */
@@ -48,6 +48,46 @@ export interface EquipmentData {
   requiredLevel?: number
   /** 阵营限制（引用 elements 表） */
   factionRestriction?: string
+  description?: string
+}
+
+/** 物品（items 表）—— 全量物品主键索引（configs/xiyou/items.json）。所有掉落表 / 制造表的 itemId 均须在此注册 */
+export interface ItemData {
+  id: string
+  name: string
+  /** 功能大类（木材/矿石/丹药/图纸/武器/饰品...，枚举见 schema items 表） */
+  type: string
+  /** 稀有度（1 普通 ~ 5 仙品） */
+  rarity: number
+  /** 获取来源 */
+  source?: string
+  /** 物品描述（材料/丹药等来自原 materials.json 的条目含描述） */
+  description?: string
+  /** 使用效果（仅消耗品/丹药类） */
+  effects?: ItemEffect[]
+}
+
+/** 装备制造条目（gears 表）—— configs/xiyou/equipment.json（西游新装备体系 wp_ / ar_ / ac_ 前缀，与旧 eq_ 并存） */
+export interface GearMaterialEntry {
+  /** 材料物品 ID（引用 items 表） */
+  itemId: string
+  count: number
+}
+export interface GearData {
+  id: string
+  name: string
+  slot: 'weapon' | 'armor' | 'accessory'
+  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/项链/腰带/手镯/冠冕） */
+  subType?: string
+  /** 阶位（t1 凡品 ~ t5 仙品） */
+  tier: 't1' | 't2' | 't3' | 't4' | 't5'
+  rarity: number
+  requiredLevel?: number
+  stats: EquipmentStatEntry[]
+  materials: GearMaterialEntry[]
+  /** 制造金钱消耗 */
+  cost: number
+  source?: string
   description?: string
 }
 
@@ -197,6 +237,8 @@ export interface FengshenTables {
   affixes: AffixData
   params: BattleParamData
   xiyou: XiyouData
+  items: ItemData
+  gears: GearData
 }
 export type FengshenTableName = keyof FengshenTables
 

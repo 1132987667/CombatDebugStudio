@@ -11,7 +11,7 @@
 
 import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { XiyouCatalogItem, XiyouCurrency, XiyouPlayer, XiyouShopGood } from '@/presentation/modules/yanjie/games/xiyou/data/mock'
+import type { XiyouCatalogItem, XiyouCurrency, XiyouPlayer, XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/data/mock'
 import {
   currency as mockCurrency,
   materials,
@@ -21,7 +21,7 @@ import {
   consumables,
   player as mockPlayer,
   storageCells,
-} from '@/presentation/modules/yanjie/games/xiyou/data/mock'
+} from '@/presentation/modules/yanjie/xiyou/data/mock'
 import type { XiyouData } from '@/domain/fengshen/types'
 import type { EnemyDrop } from '@/shared/types/enemy'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'

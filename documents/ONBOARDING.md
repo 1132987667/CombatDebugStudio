@@ -60,7 +60,7 @@ npm run build        # 构建生产版本 → build/dist/
 
 - **应用入口**: `src/main.ts` — 初始化 DI 容器 → 加载 Buff 脚本 → 挂载 Vue 应用
 - **根组件**: `src/presentation/views/BattleArena.vue` — 主布局，挂载四大模块 Tab（唤灵台/昊天镜/封神榜/演劫台），`v-show` 保活
-- **四大模块**（产品化「太初道枢」）：`src/presentation/modules/` 下的 `huanling`（唤灵台 · 阵容战斗）、`fengshen`（封神榜 · 后台数据管理）、`haotian`（昊天镜 · 战斗分析/回放/调试）、`yanjie`（演劫台 · 游戏模块）
+- **四大模块**（产品化「太初道枢」）：`src/presentation/modules/` 下的 `huanling`（唤灵台 · 阵容战斗）、`fengshen`（封神榜 · 后台数据管理）、`haotian`（昊天镜 · 战斗分析/回放/调试）、`yanjie`（演劫台 · 斗战西游）
 
 ---
 
@@ -142,7 +142,7 @@ CombatDebugStudio/
 │       │   ├── huanling/   #     阵容战斗（原 views 主力界面迁入）
 │       │   ├── fengshen/   #     后台数据管理（IndexedDB + 十二数据域 CRUD）
 │       │   ├── haotian/    #     战斗分析（回放 ⇄ 调试双工作台，统一事件流）
-│       │   └── yanjie/     #     游戏模块（斗战西游等，按游戏独立目录）
+│       │   └── yanjie/     #     演劫台（斗战西游）
 │       ├── views/          #   页面级组件（BattleArena 等模块容器）
 │       ├── components/     #   可复用组件
 │       ├── stores/         #   Pinia Store（battleStore, debugStore）

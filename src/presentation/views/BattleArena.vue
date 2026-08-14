@@ -34,12 +34,12 @@
       <Fengshen />
     </div>
 
-    <!-- 演劫台：游戏模块（多游戏容器，斗战西游为首个落地游戏）
-         NOTE: 进入游戏后面板切换为全屏（隐藏 ModuleHeader 时去掉 60px 顶部预留） -->
+    <!-- 演劫台：斗战西游（唯一项目）。进入即游戏全屏态，
+         NOTE: 面板切换为全屏（隐藏 ModuleHeader 时去掉 60px 顶部预留） -->
     <div v-show="activeModule === 'yanjie'"
-      :class="['module-layout', inYanjieGame ? 'module-layout--immersive' : 'module-layout--full']"
+      class="module-layout module-layout--immersive"
       :id="modulePanelId('yanjie')" role="tabpanel" :aria-labelledby="moduleTabId('yanjie')">
-      <Yanjie ref="yanjieRef" />
+      <Yanjie @back="activeModule = 'huanling'" />
     </div>
 
     <!-- 全局图鉴 -->
@@ -76,13 +76,7 @@ interface HuanlingExposed {
 }
 const huanlingRef = ref<HuanlingExposed | null>(null);
 
-// 演劫台实例：暴露进入游戏状态，用于隐藏全局 ModuleHeader + 面板全屏
-interface YanjieExposed {
-  entered: ''
-  | 'xiyou'
-}
-const yanjieRef = ref<YanjieExposed | null>(null);
-
-/** 是否处于演劫台游戏内（进入游戏 = 隐藏全局顶栏，面板切换全屏） */
-const inYanjieGame = computed(() => activeModule.value === 'yanjie' && !!yanjieRef.value?.entered);
+// 演劫台进入即游戏态，无大厅/选择逻辑，无需 ref；back 事件由模板内联切回唤灵台
+// NOTE: 进入演劫台 = 隐藏全局 ModuleHeader，面板沉浸全屏
+const inYanjieGame = computed(() => activeModule.value === 'yanjie');
 </script>

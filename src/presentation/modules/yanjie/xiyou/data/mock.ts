@@ -211,17 +211,29 @@ export type XiyouDifficulty = 'easy' | 'normal' | 'hard' | 'hell'
 /** 物品品质（凡 / 玄 / 地 / 天 / 仙） */
 export type XiyouQuality = '凡品' | '玄品' | '地品' | '天品' | '仙品'
 
-/** 技能卡片 */
-export interface XiyouSkill {
+/** 技能树节点类型（v3.0） */
+export type XiyouNodeType = 'attribute' | 'passive' | 'skill' | 'ultimate' | 'enhance'
+
+/** 技能树节点（v3.0：3 分支 × 4 层，逐层点亮，消耗技能点） */
+export interface XiyouSkillNode {
+  id: string
+  branch: string
+  tier: 1 | 2 | 3 | 4
   name: string
-  type: 'passive' | 'skill' | 'ultimate'
-  cost: number
+  type: XiyouNodeType
+  /** 点亮消耗技能点（1-5） */
+  points: number
+  /** 战斗中能量消耗（属性/被动/强化为 0） */
+  energyCost: number
   desc: string
-  /** 技能树加点（运行时字段，configs 未含 · 展示态） */
-  tier?: 1 | 2 | 3
-  levelReq?: number
-  currentPoints?: number
-  maxPoints?: number
+  /** 运行时：已点亮（configs 未含 · 展示态） */
+  learned?: boolean
+}
+
+/** 流派技能点（v3.0：全局 40 点，跨流派共享） */
+export interface XiyouSkillPoints {
+  max: number
+  spent: number
 }
 
 /** 区域（章节）· 对应一张大地图 */
@@ -249,16 +261,14 @@ export interface XiyouScene {
   pos: { x: number; y: number }
 }
 
-/** 流派（对应修行「流派」子系统） */
+/** 流派（对应修行「流派」子系统 · v3.0 技能树） */
 export interface XiyouSchool {
   id: string
   name: string
   motto: string
-  skills: XiyouSkill[]
+  branches: string[]
+  nodes: XiyouSkillNode[]
   selected?: boolean
-  /** 技能点（运行时字段，configs 未含 · 展示态） */
-  totalPoints?: number
-  maxPoints?: number
 }
 
 /** 乾坤袋物品（背包子系统） */
@@ -512,6 +522,9 @@ export interface XiyouCraft {
 export const regions: XiyouRegion[] = reactive<XiyouRegion[]>(regionsJson as unknown as XiyouRegion[])
 export const scenes: XiyouScene[] = reactive<XiyouScene[]>(scenesJson as unknown as XiyouScene[])
 export const schools: XiyouSchool[] = reactive<XiyouSchool[]>(schoolsJson as unknown as XiyouSchool[])
+
+/** 流派技能点（v3.0：全局 40 点，跨流派共享；等级 30 + 悟道丹 10） */
+export const skillPoints: XiyouSkillPoints = reactive<XiyouSkillPoints>({ max: 40, spent: 0 })
 
 export const materials: XiyouItem[] = reactive<XiyouItem[]>(packJson.materials as unknown as XiyouItem[])
 export const equipment: XiyouItem[] = reactive<XiyouItem[]>(packJson.equipment as unknown as XiyouItem[])

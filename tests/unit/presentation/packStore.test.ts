@@ -6,9 +6,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { player as mockPlayer } from '@/presentation/modules/yanjie/games/xiyou/data/mock'
-import { currency as mockCurrency } from '@/presentation/modules/yanjie/games/xiyou/data/mock'
-import type { XiyouShopGood } from '@/presentation/modules/yanjie/games/xiyou/data/mock'
+import { player as mockPlayer } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { currency as mockCurrency } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import type { XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/data/mock'
 
 /** 内存版持久化（代替 IndexedDB，供 flush/load 往返断言） */
 const { __mem, __storage } = vi.hoisted(() => {

@@ -14,7 +14,7 @@ import {
   parseMaterials,
   qualityOf,
   starCost,
-} from '@/presentation/modules/yanjie/games/xiyou/data/caveLogic'
+} from '@/presentation/modules/yanjie/xiyou/data/caveLogic'
 
 describe('材料解析 parseMaterials', () => {
   it('解析 "桃木×3 + 铜精×1" 为结构化列表', () => {

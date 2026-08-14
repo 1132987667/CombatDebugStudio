@@ -2,7 +2,7 @@
   <div>
     <div class="xy-cave-skill-bar">
       <span>可用技能点</span>
-      <strong>{{ statPoints.available }}</strong>
+      <strong>{{ skillPoints.max - skillPoints.spent }}</strong>
     </div>
 
     <!-- 流派切换 -->
@@ -22,7 +22,7 @@
     <div class="xy-cave-skill-grid">
       <div
         v-for="sk in currentSkills"
-        :key="sk.name"
+        :key="sk.id"
         class="xy-cave-skill-card"
         :class="cardClass(sk)"
         role="button"
@@ -38,20 +38,20 @@
             <svg v-if="locked(sk)" viewBox="0 0 24 24" class="xy-cave-skill-lock" aria-hidden="true">
               <path d="M7 11V7a5 5 0 0 1 10 0v4M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            {{ tierText(sk) }} · {{ typeText(sk.type) }}
+            {{ typeText(sk.type) }} · {{ sk.points }} 技能点
           </span>
         </span>
         <p class="xy-cave-skill-card__desc">{{ sk.desc }}</p>
-        <span v-if="sk.cost > 0" class="xy-cave-skill-card__cost">消耗能量 {{ sk.cost }}</span>
-        <span v-if="!learned(sk)" class="xy-cave-skill-card__cost">需角色等级 {{ sk.levelReq ?? 0 }}</span>
+        <span v-if="sk.energyCost > 0" class="xy-cave-skill-card__cost">消耗能量 {{ sk.energyCost }}</span>
+        <span v-if="!learned(sk) && !prereqMet(sk)" class="xy-cave-skill-card__cost">需先点亮同分支上一阶</span>
         <div v-if="isChoosing(sk)" class="xy-cave-skill-card__learn">
           <button
             type="button"
             class="xy-cave-action xy-cave-action--ghost"
-            :disabled="statPoints.available <= 0"
+            :disabled="availablePoints <= 0"
             @click.stop="learn(sk)"
           >
-            {{ statPoints.available <= 0 ? '技能点不足' : '学 习（1 技能点）' }}
+            {{ availablePoints < sk.points ? '技能点不足' : `学 习（${sk.points} 技能点）` }}
           </button>
         </div>
       </div>
@@ -62,35 +62,42 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { XiyouSkill } from '../../data/mock'
-import { player, schools, statPoints } from '../../data/mock'
+import type { XiyouSkillNode, XiyouNodeType } from '../../data/mock'
+import { schools, skillPoints } from '../../data/mock'
 
 const notification = useNotificationStore()
 
 const defaultSchool = schools.find((s) => s.selected) ?? schools[0]
 const schoolId = ref(defaultSchool.id)
-const learnedSet = ref<Set<string>>(new Set())
-const choosingName = ref<string | null>(null)
+const choosingId = ref<string | null>(null)
 
-const currentSkills = computed<XiyouSkill[]>(() => schools.find((s) => s.id === schoolId.value)?.skills ?? [])
+const currentSkills = computed<XiyouSkillNode[]>(() => schools.find((s) => s.id === schoolId.value)?.nodes ?? [])
 
-function learned(sk: XiyouSkill): boolean {
-  return learnedSet.value.has(sk.name)
+const availablePoints = computed(() => skillPoints.max - skillPoints.spent)
+
+function schoolOf(): XiyouSkillNode[] {
+  return schools.find((s) => s.id === schoolId.value)?.nodes ?? []
 }
 
-function levelEnough(sk: XiyouSkill): boolean {
-  return player.level >= (sk.levelReq ?? 0)
+function learned(sk: XiyouSkillNode): boolean {
+  return sk.learned === true
 }
 
-function locked(sk: XiyouSkill): boolean {
-  return !learned(sk) && !levelEnough(sk)
+function prereqMet(sk: XiyouSkillNode): boolean {
+  if (sk.tier === 1) return true
+  const prev = schoolOf().find((p) => p.branch === sk.branch && p.tier === sk.tier - 1)
+  return prev ? prev.learned === true : false
 }
 
-function learnable(sk: XiyouSkill): boolean {
-  return !learned(sk) && levelEnough(sk)
+function locked(sk: XiyouSkillNode): boolean {
+  return !learned(sk) && !prereqMet(sk)
 }
 
-function cardClass(sk: XiyouSkill): Record<string, boolean> {
+function learnable(sk: XiyouSkillNode): boolean {
+  return !learned(sk) && prereqMet(sk)
+}
+
+function cardClass(sk: XiyouSkillNode): Record<string, boolean> {
   return {
     'is-learned': learned(sk),
     'is-locked': locked(sk),
@@ -99,34 +106,30 @@ function cardClass(sk: XiyouSkill): Record<string, boolean> {
   }
 }
 
-function isChoosing(sk: XiyouSkill): boolean {
-  return learnable(sk) && choosingName.value === sk.name
+function isChoosing(sk: XiyouSkillNode): boolean {
+  return learnable(sk) && choosingId.value === sk.id
 }
 
-function choose(sk: XiyouSkill): void {
+function choose(sk: XiyouSkillNode): void {
   if (!learnable(sk)) return
-  choosingName.value = choosingName.value === sk.name ? null : sk.name
+  choosingId.value = choosingId.value === sk.id ? null : sk.id
 }
 
 /** 仅卡片自身回车响应（内层学习按钮的回车由其 click 处理，避免冒泡竞态） */
-function onCardEnter(sk: XiyouSkill, e: KeyboardEvent): void {
+function onCardEnter(sk: XiyouSkillNode, e: KeyboardEvent): void {
   if (e.target !== e.currentTarget) return
   choose(sk)
 }
 
-function tierText(sk: XiyouSkill): string {
-  return { 1: '一重', 2: '二重', 3: '三重' }[sk.tier ?? 1]
+function typeText(t: XiyouNodeType): string {
+  return { attribute: '属性', passive: '被动', skill: '小技', ultimate: '大招', enhance: '强化' }[t]
 }
 
-function typeText(t: XiyouSkill['type']): string {
-  return { passive: '被动', skill: '小技', ultimate: '大招' }[t]
-}
-
-function learn(sk: XiyouSkill): void {
-  if (statPoints.available <= 0 || !learnable(sk)) return
-  statPoints.available -= 1
-  learnedSet.value.add(sk.name)
-  choosingName.value = null
-  notification.toast(`习得「${sk.name}」，剩余技能点 ${statPoints.available}`, 'success')
+function learn(sk: XiyouSkillNode): void {
+  if (availablePoints.value < sk.points || !learnable(sk)) return
+  sk.learned = true
+  skillPoints.spent += sk.points
+  choosingId.value = null
+  notification.toast(`习得「${sk.name}」，剩余技能点 ${skillPoints.max - skillPoints.spent}`, 'success')
 }
 </script>

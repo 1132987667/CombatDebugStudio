@@ -65,7 +65,7 @@ const isFeature = computed(() => activeCabinet.value !== 'battle' && activeCabin
 /** 当前选中关卡（由降妖路引弹窗选择） */
 const currentScene = ref<XiyouScene>(scenes.find(s => s.unlocked) ?? scenes[0])
 
-/** 返回演劫台（由设置面板「返回演劫台」触发） */
+/** 退出演劫台（由设置面板「退出演劫台」触发，父级切回唤灵台） */
 const emit = defineEmits<{ back: [] }>()
 
 // NOTE: 封神榜数据源接线（需求说明 §5.1 方案 B）——数据先以 configs 兜底渲染，

@@ -9,8 +9,8 @@ import {
   computeStatBonuses,
   createPlayerProfile,
   expNeedForLevel,
-} from '@/presentation/modules/yanjie/games/xiyou/data/playerProfile'
-import { player, playerAttributes, statPoints } from '@/presentation/modules/yanjie/games/xiyou/data/mock'
+} from '@/presentation/modules/yanjie/xiyou/data/playerProfile'
+import { player, playerAttributes, statPoints } from '@/presentation/modules/yanjie/xiyou/data/mock'
 
 describe('playerProfile 玩家属性创建', () => {
   it('level 5 档位对齐演示数值', () => {

@@ -36,8 +36,8 @@
           <section class="xy-settings-dlg__group">
             <h3 class="xy-settings-dlg__cat">游戏</h3>
             <button type="button" class="xy-settings-dlg__row xy-settings-dlg__row--btn xy-ink-hover" @click="emit('back')">
-              <span class="xy-settings-dlg__label">返回演劫台</span>
-              <span class="xy-settings-dlg__hint">离开当前游戏，回到游戏大厅</span>
+              <span class="xy-settings-dlg__label">退出演劫台</span>
+              <span class="xy-settings-dlg__hint">离开斗战西游，返回唤灵台</span>
             </button>
           </section>
 

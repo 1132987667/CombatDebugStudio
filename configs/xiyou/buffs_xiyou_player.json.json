@@ -1,0 +1,267 @@
+[
+  {
+    "id": "buff_lh_gale_speed",
+    "name": "疾风步",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 3,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["speed", "combo", "linghou"],
+    "attributes": {
+      "speed": { "value": 40, "type": "PERCENTAGE" }
+    },
+    "triggers": [
+      {
+        "type": "combo_rate_bonus",
+        "value": 15,
+        "desc": "连击触发率 +15%"
+      }
+    ],
+    "description": "速度 +40%，持续 3 回合，期间连击触发率 +15%。",
+    "sourceSkillId": "skill_lh_gale_step"
+  },
+  // ═══════════════════════════════════════════
+  // 金行道 Buff
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_jx_precision",
+    "name": "致命精准",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["crit", "passive", "jinxing"],
+    "attributes": {
+      "critDamage": { "value": 150, "type": "SET" }
+    },
+    "description": "暴击伤害提升至 150%（永久）。",
+    "sourceSkillId": "passive_jx_precision"
+  },
+  {
+    "id": "buff_jx_crit_boost",
+    "name": "弱点洞察",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["crit", "temporary", "jinxing"],
+    "attributes": {
+      "critRate": { "value": 30, "type": "ADDITIVE" }
+    },
+    "description": "暴击率 +30%，持续 1 回合。",
+    "sourceSkillId": "skill_jx_weakpoint"
+  },
+  {
+    "id": "buff_jx_armor_debuff",
+    "name": "破甲",
+    "polarity": "negative",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["debuff", "armor", "jinxing"],
+    "attributes": {
+      "defense": { "value": -40, "type": "PERCENTAGE" }
+    },
+    "description": "防御 -40%，持续 2 回合。",
+    "sourceSkillId": "skill_jx_armor_break"
+  },
+  {
+    "id": "buff_jx_armor_pen",
+    "name": "破军之势",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["armor_pen", "passive", "jinxing"],
+    "effects": [
+      {
+        "type": "armor_ignore",
+        "ignorePercent": 10,
+        "desc": "所有攻击无视目标 10% 防御"
+      }
+    ],
+    "description": "所有攻击无视目标 10% 防御（永久）。",
+    "sourceSkillId": "passive_jx_army_break"
+  },
+  {
+    "id": "buff_jx_charge_def",
+    "name": "蓄势·守",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["defense", "charge", "jinxing"],
+    "attributes": {
+      "defense": { "value": 80, "type": "PERCENTAGE" }
+    },
+    "description": "本回合防御 +80%。",
+    "sourceSkillId": "skill_jx_charge"
+  },
+  {
+    "id": "buff_jx_charge_atk",
+    "name": "蓄势·攻",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["attack", "charge", "jinxing"],
+    "effects": [
+      {
+        "type": "next_attack_multiplier",
+        "multiplier": 1.5,
+        "consumable": true,
+        "desc": "下回合首次攻击伤害 ×1.5（消耗后移除）"
+      }
+    ],
+    "description": "下回合首次攻击 ×1.5（使用后消耗）。",
+    "sourceSkillId": "skill_jx_charge"
+  },
+  // ═══════════════════════════════════════════
+  // 磐石道 Buff
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_ps_block",
+    "name": "磐石格挡",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 0,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["block", "panshi"],
+    "effects": [
+      {
+        "type": "damage_reduction",
+        "reductionPercent": 50,
+        "desc": "本次伤害减免 50%"
+      }
+    ],
+    "description": "格挡成功，减免 50% 伤害（即时生效）。",
+    "sourceSkillId": "passive_ps_block"
+  },
+  {
+    "id": "buff_ps_iron_wall",
+    "name": "铜墙铁壁",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 3,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["defense", "energy", "panshi"],
+    "attributes": {
+      "defense": { "value": 50, "type": "PERCENTAGE" }
+    },
+    "triggers": [
+      {
+        "type": "on_hit_energy_gain",
+        "value": 10,
+        "desc": "受击时额外获得 10 能量"
+      }
+    ],
+    "description": "防御 +50%，持续 3 回合，期间受击能量 +10。",
+    "sourceSkillId": "skill_ps_iron_wall"
+  },
+  {
+    "id": "buff_ps_stun_small",
+    "name": "撼地·眩晕",
+    "polarity": "negative",
+    "category": "control",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "controlType": "stun",
+    "controlPriority": 10,
+    "tags": ["control", "stun", "panshi"],
+    "description": "无法行动 1 回合。",
+    "sourceSkillId": "skill_ps_quake"
+  },
+  {
+    "id": "buff_ps_stun_ult",
+    "name": "泰山压顶·眩晕",
+    "polarity": "negative",
+    "category": "control",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "controlType": "stun",
+    "controlPriority": 10,
+    "tags": ["control", "stun", "panshi"],
+    "description": "无法行动 1 回合。",
+    "sourceSkillId": "skill_ps_mountain_ult"
+  },
+  {
+    "id": "buff_ps_counter",
+    "name": "以守为攻",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["energy", "reflect", "passive", "panshi"],
+    "effects": [
+      {
+        "type": "hit_taken_energy_bonus",
+        "bonusPercent": 20,
+        "desc": "受击能量获取 +20%"
+      },
+      {
+        "type": "block_reflect",
+        "reflectPercent": 10,
+        "desc": "格挡时反弹 10% 伤害"
+      }
+    ],
+    "description": "受击能量获取 +20%；格挡时反弹 10% 伤害（永久）。",
+    "sourceSkillId": "passive_ps_counter"
+  },
+  {
+    "id": "buff_ps_diamond_shield",
+    "name": "金刚不坏",
+    "polarity": "positive",
+    "category": "shield",
+    "duration": 3,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["shield", "reflect", "panshi"],
+    "shield": {
+      "valuePercent": 30,
+      "baseAttribute": "maxHealth"
+    },
+    "reflect": {
+      "percent": 30
+    },
+    "description": "获得最大气血 30% 护盾，持续 3 回合，反弹 30% 伤害。",
+    "sourceSkillId": "skill_ps_diamond_ult"
+  }
+]

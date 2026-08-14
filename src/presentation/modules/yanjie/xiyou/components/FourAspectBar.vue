@@ -131,7 +131,7 @@ const TABS: Array<{ id: GroupTab; label: string; badge?: string; path: string }>
   background: var(--xy-gold);
   color: var(--color-bg-primary);
   font-family: var(--font-family-base);
-  font-size: var(--font-size-xxs);
+  font-size: var(--font-size-md);
   line-height: 1;
 }
 

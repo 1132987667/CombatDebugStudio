@@ -1,0 +1,664 @@
+// configs/xiyou/enemy-buffs.json
+// 总条目数：35（DOT×3 + 控制×4 + 属性修正×6 + 特殊机制×6 + BOSS阶段×16）
+[
+  // ═══════════════════════════════════════════
+  // DOT 类
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_dot_poison",
+    "name": "中毒",
+    "polarity": "negative",
+    "category": "dot",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["poison", "dot"],
+    "effects": [
+      {
+        "type": "dot",
+        "damagePercent": 0.03,
+        "damageBase": "maxHealth",
+        "perStack": true
+      }
+    ],
+    "description": "每回合损失3%最大气血，最多3层。"
+  },
+  {
+    "id": "buff_dot_burn",
+    "name": "灼烧",
+    "polarity": "negative",
+    "category": "dot",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["burn", "dot", "fire"],
+    "effects": [
+      {
+        "type": "dot",
+        "damagePercent": 0.03,
+        "damageBase": "maxHealth",
+        "perStack": true
+      }
+    ],
+    "description": "每回合损失3%最大气血，最多3层。"
+  },
+  {
+    "id": "buff_dot_bleed",
+    "name": "流血",
+    "polarity": "negative",
+    "category": "dot",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["bleed", "dot"],
+    "effects": [
+      {
+        "type": "dot",
+        "damagePercent": 0.03,
+        "damageBase": "maxHealth",
+        "perStack": true
+      }
+    ],
+    "description": "每回合损失3%最大气血，最多3层。"
+  },
+  // ═══════════════════════════════════════════
+  // 控制类
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_ctrl_stun",
+    "name": "眩晕",
+    "polarity": "negative",
+    "category": "control",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "controlType": "stun",
+    "controlPriority": 10,
+    "tags": ["control", "stun"],
+    "description": "无法行动1回合。"
+  },
+  {
+    "id": "buff_ctrl_bind",
+    "name": "束缚",
+    "polarity": "negative",
+    "category": "control",
+    "duration": 2,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": true,
+    "controlType": "bind",
+    "controlPriority": 8,
+    "tags": ["control", "bind"],
+    "description": "无法行动2回合。"
+  },
+  {
+    "id": "buff_ctrl_silence",
+    "name": "沉默",
+    "polarity": "negative",
+    "category": "control",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": true,
+    "controlType": "silence",
+    "controlPriority": 6,
+    "tags": ["control", "silence"],
+    "description": "无法使用技能1回合。"
+  },
+  {
+    "id": "buff_ctrl_slow",
+    "name": "减速",
+    "polarity": "negative",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["debuff", "slow"],
+    "attributes": {
+      "speed": { "value": -30, "type": "PERCENTAGE" }
+    },
+    "description": "速度-30%，持续2回合。"
+  },
+  // ═══════════════════════════════════════════
+  // 属性修正类
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_mod_atk_up",
+    "name": "攻击强化",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": false,
+    "tags": ["modifier", "attack"],
+    "attributes": {
+      "attack": { "value": 15, "type": "PERCENTAGE" }
+    },
+    "description": "攻击+15%，最多3层。"
+  },
+  {
+    "id": "buff_mod_atk_down",
+    "name": "攻击削弱",
+    "polarity": "negative",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["modifier", "attack", "debuff"],
+    "attributes": {
+      "attack": { "value": -15, "type": "PERCENTAGE" }
+    },
+    "description": "攻击-15%，最多3层。"
+  },
+  {
+    "id": "buff_mod_def_up",
+    "name": "防御强化",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": false,
+    "tags": ["modifier", "defense"],
+    "attributes": {
+      "defense": { "value": 20, "type": "PERCENTAGE" }
+    },
+    "description": "防御+20%，最多3层。"
+  },
+  {
+    "id": "buff_mod_def_down",
+    "name": "防御削弱",
+    "polarity": "negative",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["modifier", "defense", "debuff"],
+    "attributes": {
+      "defense": { "value": -20, "type": "PERCENTAGE" }
+    },
+    "description": "防御-20%，最多3层。"
+  },
+  {
+    "id": "buff_mod_spd_up",
+    "name": "速度强化",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": false,
+    "tags": ["modifier", "speed"],
+    "attributes": {
+      "speed": { "value": 20, "type": "PERCENTAGE" }
+    },
+    "description": "速度+20%，最多3层。"
+  },
+  {
+    "id": "buff_mod_spd_down",
+    "name": "速度削弱",
+    "polarity": "negative",
+    "category": "modifier",
+    "duration": 2,
+    "maxStacks": 3,
+    "stackRule": "LIMITED",
+    "dispellable": true,
+    "cleanseable": true,
+    "tags": ["modifier", "speed", "debuff"],
+    "attributes": {
+      "speed": { "value": -20, "type": "PERCENTAGE" }
+    },
+    "description": "速度-20%，最多3层。"
+  },
+  // ═══════════════════════════════════════════
+  // 特殊机制类
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_berserk",
+    "name": "狂暴",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["modifier", "berserk"],
+    "attributes": {
+      "attack": { "value": 50, "type": "PERCENTAGE" },
+      "defense": { "value": -20, "type": "PERCENTAGE" }
+    },
+    "description": "攻击+50%，防御-20%。"
+  },
+  {
+    "id": "buff_shield_basic",
+    "name": "护盾",
+    "polarity": "positive",
+    "category": "shield",
+    "duration": 2,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": true,
+    "cleanseable": false,
+    "tags": ["shield", "defense"],
+    "effects": [
+      {
+        "type": "shield",
+        "shieldPercent": 0.15,
+        "shieldBase": "maxHealth"
+      }
+    ],
+    "description": "获得最大气血15%的护盾，吸收伤害。"
+  },
+  {
+    "id": "buff_thorns",
+    "name": "反伤",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": true,
+    "cleanseable": false,
+    "tags": ["thorns", "reflect"],
+    "effects": [
+      {
+        "type": "reflect",
+        "reflectPercent": 0.1
+      }
+    ],
+    "description": "反弹10%受到的伤害。"
+  },
+  {
+    "id": "buff_hot_heal",
+    "name": "持续治疗",
+    "polarity": "positive",
+    "category": "hot",
+    "duration": 2,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": true,
+    "cleanseable": false,
+    "tags": ["hot", "heal"],
+    "effects": [
+      {
+        "type": "hot",
+        "healPercent": 0.03,
+        "healBase": "maxHealth",
+        "perStack": false
+      }
+    ],
+    "description": "每回合恢复3%最大气血。"
+  },
+  {
+    "id": "buff_heal_instant",
+    "name": "即时治疗",
+    "polarity": "positive",
+    "category": "heal",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["heal", "instant"],
+    "effects": [
+      {
+        "type": "heal",
+        "healPercent": 0.1,
+        "healBase": "maxHealth"
+      }
+    ],
+    "description": "立即恢复10%最大气血。"
+  },
+  {
+    "id": "buff_energy_drain",
+    "name": "能量吸取",
+    "polarity": "negative",
+    "category": "modifier",
+    "duration": 1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": true,
+    "tags": ["energy", "drain"],
+    "effects": [
+      {
+        "type": "energy_drain",
+        "drainAmount": 25
+      }
+    ],
+    "description": "被吸取25点能量。"
+  },
+  // ═══════════════════════════════════════════
+  // BOSS 阶段 Buff · 小头目
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_boss_minor_phase2_atk",
+    "name": "狂暴觉醒",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier"],
+    "attributes": {
+      "attack": { "value": 30, "type": "PERCENTAGE" },
+      "speed": { "value": 10, "type": "PERCENTAGE" }
+    },
+    "description": "小头目阶段转换：攻击+30%，速度+10%。"
+  },
+  // ═══════════════════════════════════════════
+  // BOSS 阶段 Buff · 大头目
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_boss_major_phase2_atk",
+    "name": "怒意升腾",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier"],
+    "attributes": {
+      "attack": { "value": 35, "type": "PERCENTAGE" },
+      "speed": { "value": 15, "type": "PERCENTAGE" }
+    },
+    "description": "大头目阶段转换：攻击+35%，速度+15%。"
+  },
+  {
+    "id": "buff_boss_major_phase3_berserk",
+    "name": "狂暴失控",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "berserk"],
+    "attributes": {
+      "attack": { "value": 50, "type": "PERCENTAGE" },
+      "defense": { "value": -15, "type": "PERCENTAGE" },
+      "speed": { "value": 20, "type": "PERCENTAGE" }
+    },
+    "description": "大头目狂暴状态：攻击+50%，防御-15%，速度+20%。"
+  },
+  // ═══════════════════════════════════════════
+  // BOSS 阶段 Buff · 大成就领主
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_boss_achieve_phase2_atk",
+    "name": "真身觉醒",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier"],
+    "attributes": {
+      "attack": { "value": 40, "type": "PERCENTAGE" },
+      "speed": { "value": 15, "type": "PERCENTAGE" }
+    },
+    "description": "大成就领主阶段转换：攻击+40%，速度+15%。"
+  },
+  {
+    "id": "buff_boss_achieve_phase3_berserk",
+    "name": "执念爆发",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "berserk"],
+    "attributes": {
+      "attack": { "value": 60, "type": "PERCENTAGE" },
+      "defense": { "value": -20, "type": "PERCENTAGE" },
+      "speed": { "value": 25, "type": "PERCENTAGE" }
+    },
+    "description": "大成就领主狂暴状态：攻击+60%，防御-20%，速度+25%。"
+  },
+  {
+    "id": "buff_boss_achieve_phase4_ult",
+    "name": "终极形态",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "ultimate"],
+    "attributes": {
+      "attack": { "value": 80, "type": "PERCENTAGE" },
+      "speed": { "value": 30, "type": "PERCENTAGE" },
+      "critRate": { "value": 15, "type": "ADDITIVE" }
+    },
+    "description": "大成就领主终极形态：攻击+80%，速度+30%，暴击率+15%。"
+  },
+  // ═══════════════════════════════════════════
+  // BOSS 阶段 Buff · 隐藏BOSS
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_boss_hidden_phase2_atk",
+    "name": "残影苏醒",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier"],
+    "attributes": {
+      "attack": { "value": 40, "type": "PERCENTAGE" },
+      "speed": { "value": 20, "type": "PERCENTAGE" }
+    },
+    "description": "隐藏BOSS阶段转换：攻击+40%，速度+20%。"
+  },
+  {
+    "id": "buff_boss_hidden_phase3_berserk",
+    "name": "怨念爆发",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "berserk"],
+    "attributes": {
+      "attack": { "value": 65, "type": "PERCENTAGE" },
+      "defense": { "value": -20, "type": "PERCENTAGE" },
+      "speed": { "value": 30, "type": "PERCENTAGE" }
+    },
+    "description": "隐藏BOSS狂暴状态：攻击+65%，防御-20%，速度+30%。"
+  },
+  {
+    "id": "buff_boss_hidden_phase4_ult",
+    "name": "残魂觉醒",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "ultimate"],
+    "attributes": {
+      "attack": { "value": 90, "type": "PERCENTAGE" },
+      "speed": { "value": 35, "type": "PERCENTAGE" },
+      "critRate": { "value": 20, "type": "ADDITIVE" },
+      "critDamage": { "value": 30, "type": "ADDITIVE" }
+    },
+    "description": "隐藏BOSS终极形态：攻击+90%，速度+35%，暴击率+20%，暴击伤害+30%。"
+  },
+  // ═══════════════════════════════════════════
+  // BOSS 阶段 Buff · 三大BOSS
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_boss_king_phase2_atk",
+    "name": "执念燃起",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier"],
+    "attributes": {
+      "attack": { "value": 50, "type": "PERCENTAGE" },
+      "speed": { "value": 20, "type": "PERCENTAGE" }
+    },
+    "description": "三大BOSS阶段转换：攻击+50%，速度+20%。"
+  },
+  {
+    "id": "buff_boss_king_phase3_berserk",
+    "name": "执念失控",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "berserk"],
+    "attributes": {
+      "attack": { "value": 75, "type": "PERCENTAGE" },
+      "defense": { "value": -25, "type": "PERCENTAGE" },
+      "speed": { "value": 35, "type": "PERCENTAGE" }
+    },
+    "description": "三大BOSS狂暴状态：攻击+75%，防御-25%，速度+35%。"
+  },
+  {
+    "id": "buff_boss_king_phase4_ult",
+    "name": "三尸归一",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "ultimate"],
+    "attributes": {
+      "attack": { "value": 100, "type": "PERCENTAGE" },
+      "speed": { "value": 40, "type": "PERCENTAGE" },
+      "critRate": { "value": 25, "type": "ADDITIVE" },
+      "critDamage": { "value": 40, "type": "ADDITIVE" }
+    },
+    "description": "三大BOSS终极形态：攻击+100%，速度+40%，暴击率+25%，暴击伤害+40%。"
+  },
+  // ═══════════════════════════════════════════
+  // BOSS 阶段 Buff · 最终BOSS（六耳猕猴）
+  // ═══════════════════════════════════════════
+  {
+    "id": "buff_boss_final_phase2_atk",
+    "name": "六耳初醒",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier", "final"],
+    "attributes": {
+      "attack": { "value": 30, "type": "PERCENTAGE" },
+      "speed": { "value": 10, "type": "PERCENTAGE" }
+    },
+    "description": "六耳猕猴第二阶段：攻击+30%，速度+10%。"
+  },
+  {
+    "id": "buff_boss_final_phase3_spd",
+    "name": "听心加速",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier", "final"],
+    "attributes": {
+      "speed": { "value": 50, "type": "PERCENTAGE" },
+      "dodge": { "value": 15, "type": "ADDITIVE" }
+    },
+    "description": "六耳猕猴第三阶段：速度+50%，闪避+15%。"
+  },
+  {
+    "id": "buff_boss_final_phase4_berserk",
+    "name": "六耳狂怒",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "berserk", "final"],
+    "attributes": {
+      "attack": { "value": 80, "type": "PERCENTAGE" },
+      "speed": { "value": 40, "type": "PERCENTAGE" },
+      "critRate": { "value": 20, "type": "ADDITIVE" },
+      "defense": { "value": -20, "type": "PERCENTAGE" }
+    },
+    "description": "六耳猕猴第四阶段：攻击+80%，速度+40%，暴击率+20%，防御-20%。"
+  },
+  {
+    "id": "buff_boss_final_phase5_ult",
+    "name": "斗战圣佛·真",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "ultimate", "final"],
+    "attributes": {
+      "attack": { "value": 100, "type": "PERCENTAGE" },
+      "defense": { "value": 50, "type": "PERCENTAGE" },
+      "speed": { "value": 60, "type": "PERCENTAGE" },
+      "critRate": { "value": 30, "type": "ADDITIVE" },
+      "critDamage": { "value": 50, "type": "ADDITIVE" }
+    },
+    "effects": [
+      {
+        "type": "hot",
+        "healPercent": 0.02,
+        "healBase": "maxHealth",
+        "perStack": false
+      }
+    ],
+    "description": "六耳猕猴最终形态：全属性大幅提升，攻击+100%，防御+50%，速度+60%，暴击率+30%，暴击伤害+50%，每回合恢复2%气血。"
+  }
+]

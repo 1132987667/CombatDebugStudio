@@ -3,7 +3,7 @@
   "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies/drops）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册（含旧版 eq_w/eq_a/eq_c 沿用 ID，drops.json 仍引用，保留注册）。",
   "items": [
     {
-      "id": "mat_001",
+      "id": "mat_taomu",
       "name": "桃木",
       "type": "木材",
       "rarity": 1,
@@ -11,7 +11,7 @@
       "description": "普通桃树的木材，质地轻盈坚韧，适合制作轻型武器和木甲。用途：制作一阶装备的基础材料。"
     },
     {
-      "id": "mat_002",
+      "id": "mat_cushi",
       "name": "粗石",
       "type": "矿石",
       "rarity": 1,
@@ -19,7 +19,7 @@
       "description": "粗糙的石块，蕴含微弱的地脉灵气，可用于基础装备制作。用途：制作一阶装备和饰品的基础材料。"
     },
     {
-      "id": "mat_003",
+      "id": "mat_tongjing",
       "name": "铜精",
       "type": "金属",
       "rarity": 1,
@@ -27,7 +27,7 @@
       "description": "经过初步提炼的铜矿石精华，具有较好的延展性和韧性。用途：制作一阶装备和饰品的主要金属材料。"
     },
     {
-      "id": "mat_004",
+      "id": "mat_danshuiyu",
       "name": "淡水玉",
       "type": "玉石",
       "rarity": 1,
@@ -35,7 +35,7 @@
       "description": "产自淡水河流中的玉石，蕴含温和的水属性灵气。用途：制作一阶饰品护符和手镯。"
     },
     {
-      "id": "mat_005",
+      "id": "mat_beike",
       "name": "贝壳",
       "type": "水产",
       "rarity": 1,
@@ -43,7 +43,7 @@
       "description": "河滩上常见的贝壳，可用于制作简单的装饰品。用途：制作一阶饰品戒指和手镯。"
     },
     {
-      "id": "mat_006",
+      "id": "mat_songmu",
       "name": "松木",
       "type": "木材",
       "rarity": 1,
@@ -51,7 +51,7 @@
       "description": "松树的木材，质地比桃木更坚硬，适合制作中型武器。用途：制作二阶装备的基础材料。"
     },
     {
-      "id": "mat_007",
+      "id": "mat_tiejing",
       "name": "铁精",
       "type": "金属",
       "rarity": 1,
@@ -59,7 +59,7 @@
       "description": "精炼过的铁矿石，硬度高且耐磨，适合制作中级装备。用途：制作二阶装备和饰品的主要金属材料。"
     },
     {
-      "id": "mat_008",
+      "id": "mat_shenshuiyu",
       "name": "深水玉",
       "type": "玉石",
       "rarity": 1,
@@ -67,7 +67,7 @@
       "description": "产自深水区域的玉石，蕴含更浓郁的水属性灵气。用途：制作二阶饰品护符和手镯。"
     },
     {
-      "id": "mat_009",
+      "id": "mat_lupi",
       "name": "鹿皮",
       "type": "皮革",
       "rarity": 1,
@@ -75,7 +75,7 @@
       "description": "鹿的皮革，柔软且坚韧，适合制作轻型护甲。用途：制作一阶皮甲的基础材料。"
     },
     {
-      "id": "mat_010",
+      "id": "mat_xuanzhi",
       "name": "宣纸",
       "type": "织物",
       "rarity": 1,
@@ -83,7 +83,7 @@
       "description": "传统制作的宣纸，轻盈且有韧性，可用于制作饰品。用途：制作一阶饰品腰带。"
     },
     {
-      "id": "mat_011",
+      "id": "mat_qinghuaci",
       "name": "青花瓷",
       "type": "陶瓷",
       "rarity": 1,
@@ -91,7 +91,7 @@
       "description": "精美的青花瓷器碎片，具有艺术价值和灵气。用途：制作二阶饰品戒指和腰带。"
     },
     {
-      "id": "mat_012",
+      "id": "mat_xiongpi",
       "name": "熊皮",
       "type": "皮革",
       "rarity": 1,
@@ -99,7 +99,7 @@
       "description": "熊的皮革，厚实耐磨，适合制作中级皮甲。用途：制作二阶皮甲的基础材料。"
     },
     {
-      "id": "mat_013",
+      "id": "mat_tiemu",
       "name": "铁木",
       "type": "木材",
       "rarity": 2,
@@ -107,7 +107,7 @@
       "description": "质地坚硬如铁的木材，极为稀有，适合制作高级装备。用途：制作三阶装备的基础材料。"
     },
     {
-      "id": "mat_014",
+      "id": "mat_tieyan",
       "name": "铁焰矿",
       "type": "矿石",
       "rarity": 1,
@@ -115,7 +115,7 @@
       "description": "在火焰山附近找到的特殊矿石，蕴含火属性灵气。用途：制作特殊装备的材料。"
     },
     {
-      "id": "mat_015",
+      "id": "mat_gutongjing",
       "name": "古铜镜",
       "type": "古董",
       "rarity": 2,
@@ -123,7 +123,7 @@
       "description": "古老的铜镜，蕴含着神秘的灵气，可用于制作高级饰品。用途：制作三阶饰品腰带。"
     },
     {
-      "id": "mat_016",
+      "id": "mat_jinjing",
       "name": "金精",
       "type": "金属",
       "rarity": 2,
@@ -131,7 +131,7 @@
       "description": "提炼出的黄金精华，极其珍贵，适合制作顶级装备。用途：制作三阶装备和饰品的主要金属材料。"
     },
     {
-      "id": "mat_017",
+      "id": "mat_shengshui",
       "name": "圣水玉",
       "type": "玉石",
       "rarity": 2,
@@ -139,7 +139,7 @@
       "description": "蕴含神圣水属性的玉石，极为纯净，适合制作顶级饰品。用途：制作三阶饰品护符和手镯。"
     },
     {
-      "id": "mat_018",
+      "id": "mat_feicui",
       "name": "翡翠玉镯",
       "type": "玉石",
       "rarity": 2,
@@ -147,7 +147,7 @@
       "description": "翡翠制成的玉镯，蕴含强大的灵气，可大幅提升属性。用途：制作三阶饰品戒指和手镯。"
     },
     {
-      "id": "mat_019",
+      "id": "mat_xianyun",
       "name": "仙云皮",
       "type": "皮革",
       "rarity": 2,
@@ -155,7 +155,7 @@
       "description": "仙兽的皮革，轻盈如云却坚韧无比，适合制作顶级皮甲。用途：制作三阶皮甲的基础材料。"
     },
     {
-      "id": "mat_020",
+      "id": "mat_hupi",
       "name": "虎皮",
       "type": "皮革",
       "rarity": 1,
@@ -163,7 +163,7 @@
       "description": "猛虎的皮革，极具威严和力量，适合制作高级皮甲。用途：制作三阶皮甲的基础材料。"
     },
     {
-      "id": "mat_021",
+      "id": "mat_zhenzhu",
       "name": "珍珠",
       "type": "水产",
       "rarity": 1,
@@ -171,7 +171,7 @@
       "description": "河蚌中孕育的珍珠，散发着温和的光芒，可用于制作饰品。用途：制作特殊饰品。"
     },
     {
-      "id": "mat_022",
+      "id": "mat_hantan",
       "name": "寒潭水",
       "type": "液体",
       "rarity": 1,
@@ -179,7 +179,7 @@
       "description": "取自寒潭的冰水，蕴含冰属性灵气，可用于特殊丹药炼制。用途：炼制特殊丹药的材料。"
     },
     {
-      "id": "mat_023",
+      "id": "mat_duye",
       "name": "毒液",
       "type": "毒物",
       "rarity": 1,
@@ -187,7 +187,7 @@
       "description": "蜘蛛精的毒液，可炼制毒属性丹药或涂抹在武器上。用途：炼制毒属性丹药或制作毒属性武器。"
     },
     {
-      "id": "mat_024",
+      "id": "mat_jinyang",
       "name": "金阳矿",
       "type": "矿石",
       "rarity": 2,
@@ -195,7 +195,7 @@
       "description": "在狮驼岭发现的金色矿石，蕴含太阳灵气。用途：制作特殊装备的材料。"
     },
     {
-      "id": "mat_025",
+      "id": "mat_shenquan",
       "name": "神泉水",
       "type": "液体",
       "rarity": 2,
@@ -203,7 +203,7 @@
       "description": "神鸟栖息之地的泉水，蕴含风属性灵气。用途：炼制高级丹药的材料。"
     },
     {
-      "id": "mat_026",
+      "id": "mat_yufoxiang",
       "name": "玉佛像",
       "type": "古董",
       "rarity": 2,
@@ -281,7 +281,7 @@
       "source": "金翅大鹏（首杀 100%，重复 20%）"
     },
     {
-      "id": "ess_001",
+      "id": "mat_dimai",
       "name": "地脉灵气",
       "type": "灵气",
       "rarity": 2,
@@ -289,7 +289,7 @@
       "description": "大地脉动中提取的纯净灵气，蕴含土属性力量。用途：用于装备强化和高级丹药炼制。"
     },
     {
-      "id": "ess_002",
+      "id": "mat_tiangang",
       "name": "天罡灵气",
       "type": "灵气",
       "rarity": 3,
@@ -297,28 +297,28 @@
       "description": "来自天罡星辰的灵气，蕴含强大的星辰之力。用途：用于顶级装备强化和传说丹药炼制。"
     },
     {
-      "id": "ess_003",
+      "id": "mat_hunyuan",
       "name": "混元灵气",
       "type": "灵气",
       "rarity": 3,
-      "source": "最终 BOSS（首杀 100%，重复 10%）/ 碎片合成",
+      "source": "六耳猕猴（首杀 100%，重复 10%）/ 碎片合成",
       "description": "混沌初开时存在的原始灵气，蕴含创世之力。用途：用于传说装备的最终强化。"
     },
     {
-      "id": "frag_001",
+      "id": "mat_tiangang_suipian",
       "name": "天罡灵气碎片",
       "type": "碎片",
       "rarity": 2,
       "source": "关卡8-10 高难敌人（10:1 合成灵气）",
-      "description": "天罡灵气的碎片，收集一定数量可合成完整的天罡灵气。用途：10个碎片可合成1个天罡灵气。"
+      "description": "天罡灵气的碎片，收集 3 个可合成完整的天罡灵气。用途：锁词条洗练。"
     },
     {
-      "id": "frag_002",
+      "id": "mat_hunyuan_suipian",
       "name": "混元灵气碎片",
       "type": "碎片",
       "rarity": 2,
       "source": "最终 BOSS 重复 / 关卡10 守护者（10:1 合成）",
-      "description": "混元灵气的碎片，收集一定数量可合成完整的混元灵气。用途：10个碎片可合成1个混元灵气。"
+      "description": "混元灵气的碎片，收集 5 个可合成完整的混元灵气。用途：重铸、附魔封存。"
     },
     {
       "id": "frag_003",

@@ -396,6 +396,14 @@ async function initBattle() {
     if (enemy) enemyTeamData.push(GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, i))
   }
 
+  // NOTE: 异步竞态防护——initBattle 在 onMounted 后 await 封神榜 IDB（lineups/actors）查询，
+  //       若用户在此期间进入演劫台斗战西游（BattleZen 已 startBattle 激活战斗），
+  //       此处晚到的默认阵容覆盖会顶掉斗战西游自己的队伍，故战斗已激活则跳过。
+  if (battleService.getIsBattleActive()) {
+    battleLogManager.addSystemLog({ message: '跳过默认阵容初始化：战斗已由其他模块接管' })
+    return
+  }
+
   // 使用BattleService初始化队伍数据
   battleService.initializeTeams(allyTeamData, enemyTeamData);
 

@@ -1,0 +1,4800 @@
+// configs/xiyou/enemy-skills.json
+// 总条目数：232（普通敌人主动75 + 守护者主动25 + 守护者被动25 + 小头目15 + 大头目20 + 大成就领主25 + 隐藏BOSS25 + 三大BOSS15 + 最终BOSS7）
+[
+  // ═══════════════════════════════════════════
+  // 普通敌人 · 大场景1 落桃原
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s1_1_a_s1",
+    "name": "花粉喷射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.8, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "喷射花粉，造成80%攻击伤害，30%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s1_1_b_s1",
+    "name": "草叶缠绕",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以草叶缠绕攻击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_1_c_s1",
+    "name": "山魈撕咬",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以利爪撕咬，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_2_a_s1",
+    "name": "山魈猛击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以蛮力猛击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_2_b_s1",
+    "name": "石拳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以石拳轰击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_2_c_s1",
+    "name": "藤蔓抽打",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.25
+      }
+    ],
+    "description": "以藤蔓抽打，造成85%攻击伤害，25%概率减速2回合。"
+  },
+  {
+    "id": "skill_enemy_s1_3_a_s1",
+    "name": "溪水冲击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以溪水冲击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_3_b_s1",
+    "name": "岩石投掷",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "投掷碎石，造成85%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_3_c_s1",
+    "name": "蝶翼鳞粉",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.8, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.35
+      }
+    ],
+    "description": "释放鳞粉，造成80%攻击伤害，35%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s1_4_a_s1",
+    "name": "枯枝横扫",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以枯枝横扫，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_4_b_s1",
+    "name": "树皮撞击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以坚硬树皮撞击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_4_c_s1",
+    "name": "狼牙撕咬",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_bleed",
+        "duration": 2,
+        "probability": 0.25
+      }
+    ],
+    "description": "以利齿撕咬，造成110%攻击伤害，25%概率流血2回合。"
+  },
+  {
+    "id": "skill_enemy_s1_5_a_s1",
+    "name": "荆棘突刺",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以荆棘突刺，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_5_b_s1",
+    "name": "毒蜂蛰刺",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以毒针蛰刺，造成90%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s1_5_c_s1",
+    "name": "花瓣利刃",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以锋利花瓣切割，造成110%攻击伤害。"
+  },
+  // ═══════════════════════════════════════════
+  // 普通敌人 · 大场景2 断柳渡
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s2_1_a_s1",
+    "name": "三叉戟突刺",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以三叉戟突刺，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_1_b_s1",
+    "name": "蟹钳夹击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以蟹钳夹击，造成85%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_1_c_s1",
+    "name": "鱼尾拍击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以鱼尾拍击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_2_a_s1",
+    "name": "虾兵冲锋",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "虾兵队长发起冲锋，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_2_b_s1",
+    "name": "铁甲撞击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以铁甲撞击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_2_c_s1",
+    "name": "柳条鞭笞",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以柳条鞭笞，造成85%攻击伤害，30%概率减速2回合。"
+  },
+  {
+    "id": "skill_enemy_s2_3_a_s1",
+    "name": "浪花翻涌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "掀起浪花攻击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_3_b_s1",
+    "name": "毒蛇噬咬",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.35
+      }
+    ],
+    "description": "以毒牙噬咬，造成90%攻击伤害，35%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s2_3_c_s1",
+    "name": "水火旗击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以水火旗攻击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_4_a_s1",
+    "name": "流沙吞噬",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以流沙吞噬，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_4_b_s1",
+    "name": "水鬼拖拽",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_bind",
+        "duration": 1,
+        "probability": 0.2
+      }
+    ],
+    "description": "以水鬼之手拖拽，造成90%攻击伤害，20%概率束缚1回合。"
+  },
+  {
+    "id": "skill_enemy_s2_4_c_s1",
+    "name": "朽木撞击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以朽木撞击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_5_a_s1",
+    "name": "虾兵统领斩",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "虾兵统领挥刀斩击，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_5_b_s1",
+    "name": "金甲蟹钳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以金甲蟹钳夹击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_5_c_s1",
+    "name": "河伯亲卫击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "河伯亲卫全力一击，造成110%攻击伤害。"
+  },
+  // ═══════════════════════════════════════════
+  // 普通敌人 · 大场景3 碎石岭
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s3_1_a_s1",
+    "name": "碎石投掷",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "投掷碎石，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_1_b_s1",
+    "name": "碎石飞射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以碎石飞射，造成85%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_1_c_s1",
+    "name": "矿虫啃噬",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_bleed",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以矿虫啃噬，造成90%攻击伤害，30%概率流血2回合。"
+  },
+  {
+    "id": "skill_enemy_s3_2_a_s1",
+    "name": "铁水飞溅",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_burn",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "飞溅铁水，造成90%攻击伤害，30%概率灼烧2回合。"
+  },
+  {
+    "id": "skill_enemy_s3_2_b_s1",
+    "name": "炉渣喷射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_burn",
+        "duration": 2,
+        "probability": 0.35
+      }
+    ],
+    "description": "喷射炉渣，造成90%攻击伤害，35%概率灼烧2回合。"
+  },
+  {
+    "id": "skill_enemy_s3_2_c_s1",
+    "name": "废铺锤击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以铁锤轰击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_3_a_s1",
+    "name": "巨岩碾压",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以巨岩碾压，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_3_b_s1",
+    "name": "金刚石切割",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以金刚石切割，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_3_c_s1",
+    "name": "山魈王拳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "山魈王挥拳轰击，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_4_a_s1",
+    "name": "矿魔吞噬",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "矿魔吞噬矿石，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_4_b_s1",
+    "name": "铁甲虫撞",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "铁甲虫以甲壳撞击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_4_c_s1",
+    "name": "地底蛇噬",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "地底蛇噬咬，造成100%攻击伤害，30%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s3_5_a_s1",
+    "name": "山魈首领击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "山魈首领全力一击，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_5_b_s1",
+    "name": "岩石巨拳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "岩石巨人挥拳，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s3_5_c_s1",
+    "name": "碎石岭守护击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "碎石岭守护者残魂攻击，造成110%攻击伤害。"
+  },
+  // ═══════════════════════════════════════════
+  // 普通敌人 · 大场景4 迷雾谷
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s4_1_a_s1",
+    "name": "树精挥枝",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "小树精挥动枝条，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s4_1_b_s1",
+    "name": "雾妖迷袭",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.25
+      }
+    ],
+    "description": "雾妖以迷雾袭击，造成90%攻击伤害，25%概率减速2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_1_c_s1",
+    "name": "孢子释放",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.35
+      }
+    ],
+    "description": "释放毒孢子，造成85%攻击伤害，35%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_2_a_s1",
+    "name": "树精头目击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "树精头目挥枝攻击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s4_2_b_s1",
+    "name": "毒蘑菇喷射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "喷射毒液，造成90%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_2_c_s1",
+    "name": "幻影蝶翼",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以幻影蝶翼攻击，造成85%攻击伤害，30%概率减速2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_3_a_s1",
+    "name": "蛛丝缠绕",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以蛛丝缠绕，造成90%攻击伤害，30%概率减速2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_3_b_s1",
+    "name": "毒蛾鳞粉",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "释放毒鳞粉，造成85%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_3_c_s1",
+    "name": "蛛网束缚",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_bind",
+        "duration": 1,
+        "probability": 0.2
+      }
+    ],
+    "description": "以蛛网束缚，造成90%攻击伤害，20%概率束缚1回合。"
+  },
+  {
+    "id": "skill_enemy_s4_4_a_s1",
+    "name": "超声波冲击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以超声波冲击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s4_4_b_s1",
+    "name": "回声模仿",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以回声模仿攻击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s4_4_c_s1",
+    "name": "石壁鬼击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "石壁鬼以石壁碎片攻击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s4_5_a_s1",
+    "name": "毒丝喷射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.35
+      }
+    ],
+    "description": "喷射毒丝，造成100%攻击伤害，35%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_5_b_s1",
+    "name": "毒蛾女王鳞粉",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "释放剧毒鳞粉，造成100%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_5_c_s1",
+    "name": "蛛丝谷守护击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "蛛丝谷守护者残魂攻击，造成110%攻击伤害。"
+  },
+  // ═══════════════════════════════════════════
+  // 普通敌人 · 大场景5 灵霄台
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s5_1_a_s1",
+    "name": "金刚拳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "小金刚挥拳，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_1_b_s1",
+    "name": "罗汉侍者掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "罗汉侍者以掌击，造成90%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_1_c_s1",
+    "name": "邪法侵蚀",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_down",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以邪法侵蚀，造成90%攻击伤害，30%概率降防2回合。"
+  },
+  {
+    "id": "skill_enemy_s5_2_a_s1",
+    "name": "金刚力士击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "金刚力士全力一击，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_2_b_s1",
+    "name": "降龙侍者掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "降龙侍者以掌击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_2_c_s1",
+    "name": "叛僧邪掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "叛僧以邪法掌击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_3_a_s1",
+    "name": "堕落罗汉拳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "堕落罗汉挥拳，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_3_b_s1",
+    "name": "护法金刚击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "护法以金刚击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_3_c_s1",
+    "name": "叛徒精英邪法",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_down",
+        "duration": 2,
+        "probability": 0.25
+      }
+    ],
+    "description": "以邪法侵蚀，造成100%攻击伤害，25%概率降攻2回合。"
+  },
+  {
+    "id": "skill_enemy_s5_4_a_s1",
+    "name": "金刚将领斩",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "金刚护法将领挥刀斩击，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_4_b_s1",
+    "name": "罗汉使者掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "罗汉使者以掌击，造成100%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_4_c_s1",
+    "name": "叛徒首领邪法",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_down",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以邪法侵蚀，造成110%攻击伤害，30%概率降防2回合。"
+  },
+  {
+    "id": "skill_enemy_s5_5_a_s1",
+    "name": "金刚统帅击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "金刚护法统帅全力一击，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_5_b_s1",
+    "name": "降龙罗汉掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "降龙罗汉以堕落之掌攻击，造成110%攻击伤害。"
+  },
+  {
+    "id": "skill_enemy_s5_5_c_s1",
+    "name": "灵霄台守护击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "灵霄台守护者残魂攻击，造成110%攻击伤害。"
+  },
+  // ═══════════════════════════════════════════
+  // 守护者 · 大场景1
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s1_1_g_s1",
+    "name": "桃林守卫鞭",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以枝条鞭笞，造成120%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s1_1_g_p1",
+    "name": "荆棘之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.3,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thorns",
+        "target": "attacker",
+        "duration": 1
+      }
+    ],
+    "description": "受到攻击时30%概率反弹伤害。"
+  },
+  {
+    "id": "skill_enemy_s1_2_g_s1",
+    "name": "崖顶石猴拳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以石拳轰击，造成130%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s1_2_g_p1",
+    "name": "岩石之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时25%概率提升自身防御2回合。"
+  },
+  {
+    "id": "skill_enemy_s1_3_g_s1",
+    "name": "溪中岩精击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以溪流冲击，造成120%攻击伤害，30%概率减速2回合。"
+  },
+  {
+    "id": "passive_enemy_s1_3_g_p1",
+    "name": "流水之躯",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_enemy_s1_4_g_s1",
+    "name": "枯木王鞭",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以枯枝鞭笞，造成130%攻击伤害，30%概率中毒2回合。"
+  },
+  {
+    "id": "passive_enemy_s1_4_g_p1",
+    "name": "枯木逢春",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_enemy_s1_5_g_s1",
+    "name": "花妖近卫斩",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_bleed",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以花瓣利刃斩击，造成130%攻击伤害，30%概率流血2回合。"
+  },
+  {
+    "id": "passive_enemy_s1_5_g_p1",
+    "name": "花语守护",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时25%概率提升自身防御2回合。"
+  },
+  // ═══════════════════════════════════════════
+  // 守护者 · 大场景2
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s2_1_g_s1",
+    "name": "断桥蟹将钳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以巨钳夹击，造成120%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s2_1_g_p1",
+    "name": "蟹壳之固",
+    "skillType": "passive",
+    "trigger": "ON_BLOCK_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "格挡成功时提升自身防御2回合。"
+  },
+  {
+    "id": "skill_enemy_s2_2_g_s1",
+    "name": "柳荫铁甲蟹击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以铁甲撞击，造成130%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s2_2_g_p1",
+    "name": "铁甲之固",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率获得护盾。"
+  },
+  {
+    "id": "skill_enemy_s2_3_g_s1",
+    "name": "河心鱼精王击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以巨浪冲击，造成130%攻击伤害，30%概率减速2回合。"
+  },
+  {
+    "id": "passive_enemy_s2_3_g_p1",
+    "name": "水流涌动",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 0.3,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时30%概率提升自身速度2回合。"
+  },
+  {
+    "id": "skill_enemy_s2_4_g_s1",
+    "name": "沉船沙妖王击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以流沙吞噬，造成130%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s2_4_g_p1",
+    "name": "流沙之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thorns",
+        "target": "attacker",
+        "duration": 1
+      }
+    ],
+    "description": "受到攻击时25%概率反弹伤害。"
+  },
+  {
+    "id": "skill_enemy_s2_5_g_s1",
+    "name": "河伯祠守卫击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以三叉戟攻击，造成140%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s2_5_g_p1",
+    "name": "河伯之力",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  // ═══════════════════════════════════════════
+  // 守护者 · 大场景3
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s3_1_g_s1",
+    "name": "碎石坡岩妖击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以巨岩轰击，造成120%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s3_1_g_p1",
+    "name": "岩石之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时25%概率提升自身防御2回合。"
+  },
+  {
+    "id": "skill_enemy_s3_2_g_s1",
+    "name": "废铺铁精锤",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_burn",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以铁锤轰击，造成130%攻击伤害，30%概率灼烧2回合。"
+  },
+  {
+    "id": "passive_enemy_s3_2_g_p1",
+    "name": "铁精之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率获得护盾。"
+  },
+  {
+    "id": "skill_enemy_s3_3_g_s1",
+    "name": "崩山巨岩妖击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.2
+      }
+    ],
+    "description": "以巨岩碾压，造成130%攻击伤害，20%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_enemy_s3_3_g_p1",
+    "name": "崩山之力",
+    "skillType": "passive",
+    "trigger": "ON_ATTACK_LANDED",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "攻击命中后20%概率提升自身攻击2回合。"
+  },
+  {
+    "id": "skill_enemy_s3_4_g_s1",
+    "name": "矿脉铁甲虫王击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以铁甲撞击，造成130%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s3_4_g_p1",
+    "name": "铁甲之固",
+    "skillType": "passive",
+    "trigger": "ON_BLOCK_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "格挡成功时提升自身防御2回合。"
+  },
+  {
+    "id": "skill_enemy_s3_5_g_s1",
+    "name": "五行山脚岩石巨人击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.25
+      }
+    ],
+    "description": "以巨拳轰击，造成140%攻击伤害，25%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_enemy_s3_5_g_p1",
+    "name": "五行之力",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  // ═══════════════════════════════════════════
+  // 守护者 · 大场景4
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s4_1_g_s1",
+    "name": "雾口树精击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以枝条鞭笞，造成120%攻击伤害，30%概率中毒2回合。"
+  },
+  {
+    "id": "passive_enemy_s4_1_g_p1",
+    "name": "迷雾之躯",
+    "skillType": "passive",
+    "trigger": "ON_DODGE_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "闪避成功时提升自身速度2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_2_g_s1",
+    "name": "迷径毒蘑菇王击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "喷射毒液，造成130%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "passive_enemy_s4_2_g_p1",
+    "name": "毒蘑菇之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "target": "attacker",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时25%概率使攻击者中毒2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_3_g_s1",
+    "name": "蛛丝林蛛网精击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.35
+      }
+    ],
+    "description": "以蛛网束缚，造成130%攻击伤害，35%概率减速2回合。"
+  },
+  {
+    "id": "passive_enemy_s4_3_g_p1",
+    "name": "蛛网感应",
+    "skillType": "passive",
+    "trigger": "ON_DODGE_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "闪避成功时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_enemy_s4_4_g_s1",
+    "name": "回声洞蝙蝠王击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_silence",
+        "duration": 1,
+        "probability": 0.25
+      }
+    ],
+    "description": "以超声波冲击，造成130%攻击伤害，25%概率沉默1回合。"
+  },
+  {
+    "id": "passive_enemy_s4_4_g_p1",
+    "name": "回声之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率提升自身速度2回合。"
+  },
+  {
+    "id": "skill_enemy_s4_5_g_s1",
+    "name": "盘丝穴蛛后近卫击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.35
+      }
+    ],
+    "description": "以毒丝攻击，造成140%攻击伤害，35%概率中毒2回合。"
+  },
+  {
+    "id": "passive_enemy_s4_5_g_p1",
+    "name": "蛛后之力",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  // ═══════════════════════════════════════════
+  // 守护者 · 大场景5
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_enemy_s5_1_g_s1",
+    "name": "禅音道小金刚击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以金刚拳攻击，造成120%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s5_1_g_p1",
+    "name": "金刚不坏",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率获得护盾。"
+  },
+  {
+    "id": "skill_enemy_s5_2_g_s1",
+    "name": "金刚门力士击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.2
+      }
+    ],
+    "description": "以金刚拳轰击，造成130%攻击伤害，20%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_enemy_s5_2_g_p1",
+    "name": "金刚怒目",
+    "skillType": "passive",
+    "trigger": "ON_ATTACK_LANDED",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "攻击命中后25%概率提升自身攻击2回合。"
+  },
+  {
+    "id": "skill_enemy_s5_3_g_s1",
+    "name": "罗汉堂护法击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以护法金刚击，造成130%攻击伤害。"
+  },
+  {
+    "id": "passive_enemy_s5_3_g_p1",
+    "name": "罗汉护法",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时25%概率提升自身防御2回合。"
+  },
+  {
+    "id": "skill_enemy_s5_4_g_s1",
+    "name": "须弥阶金刚将领击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.25
+      }
+    ],
+    "description": "以金刚斩击，造成130%攻击伤害，25%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_enemy_s5_4_g_p1",
+    "name": "须弥之力",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_enemy_s5_5_g_s1",
+    "name": "灵霄顶金刚统帅击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.3
+      }
+    ],
+    "description": "以金刚统帅之力轰击，造成140%攻击伤害，30%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_enemy_s5_5_g_p1",
+    "name": "灵霄之力",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  // ═══════════════════════════════════════════
+  // 小头目
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_boss_minor_taoyao_s1",
+    "name": "毒花粉",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.5
+      }
+    ],
+    "description": "释放毒花粉，造成140%攻击伤害，50%概率中毒2回合。"
+  },
+  {
+    "id": "skill_boss_minor_taoyao_ult",
+    "name": "百花齐放",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 3,
+        "probability": 0.8
+      }
+    ],
+    "description": "百花齐放，造成200%攻击伤害，80%概率中毒3回合。"
+  },
+  {
+    "id": "passive_boss_minor_taoyao_p1",
+    "name": "根须缠绕",
+    "skillType": "passive",
+    "trigger": "ON_ATTACK_LANDED",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "target": "target",
+        "duration": 2
+      }
+    ],
+    "description": "攻击命中后20%概率使目标减速2回合。"
+  },
+  {
+    "id": "skill_boss_minor_liuyao_s1",
+    "name": "柳鞭抽击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以柳鞭抽击，造成140%攻击伤害，40%概率减速2回合。"
+  },
+  {
+    "id": "skill_boss_minor_liuyao_ult",
+    "name": "万柳缠身",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_bind",
+        "duration": 1,
+        "probability": 0.6
+      }
+    ],
+    "description": "万柳缠身，造成200%攻击伤害，60%概率束缚1回合。"
+  },
+  {
+    "id": "passive_boss_minor_liuyao_p1",
+    "name": "柳絮飘飞",
+    "skillType": "passive",
+    "trigger": "BATTLE_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": -1
+      }
+    ],
+    "description": "战斗开始时永久提升自身速度。"
+  },
+  {
+    "id": "skill_boss_minor_yanjing_s1",
+    "name": "落石轰击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.25
+      }
+    ],
+    "description": "以落石轰击，造成140%攻击伤害，25%概率眩晕1回合。"
+  },
+  {
+    "id": "skill_boss_minor_yanjing_ult",
+    "name": "山崩地裂",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.5
+      }
+    ],
+    "description": "山崩地裂，对全体造成200%攻击伤害，50%概率减速2回合。"
+  },
+  {
+    "id": "passive_boss_minor_yanjing_p1",
+    "name": "岩石肌肤",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 1
+      }
+    ],
+    "description": "受到攻击时提升自身防御1回合。"
+  },
+  {
+    "id": "skill_boss_minor_zhuyao_s1",
+    "name": "毒丝喷射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.5
+      }
+    ],
+    "description": "喷射毒丝，造成140%攻击伤害，50%概率中毒2回合。"
+  },
+  {
+    "id": "skill_boss_minor_zhuyao_ult",
+    "name": "千丝万缕",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_bind",
+        "duration": 1,
+        "probability": 0.4
+      }
+    ],
+    "description": "千丝万缕，对全体造成200%攻击伤害，40%概率束缚1回合。"
+  },
+  {
+    "id": "passive_boss_minor_zhuyao_p1",
+    "name": "蛛网感应",
+    "skillType": "passive",
+    "trigger": "ON_DODGE_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "闪避成功时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_minor_panseng_s1",
+    "name": "邪佛掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以邪佛掌攻击，造成150%攻击伤害。"
+  },
+  {
+    "id": "skill_boss_minor_panseng_ult",
+    "name": "万佛叛宗",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "万佛叛宗，造成220%攻击伤害，自身攻击提升3回合。"
+  },
+  {
+    "id": "passive_boss_minor_panseng_p1",
+    "name": "破戒之力",
+    "skillType": "passive",
+    "trigger": "BATTLE_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_berserk",
+        "target": "self",
+        "duration": -1
+      }
+    ],
+    "description": "战斗开始时进入狂暴状态：攻击提升，防御下降。"
+  },
+  // ═══════════════════════════════════════════
+  // 大头目
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_boss_major_huayaowang_s1",
+    "name": "毒雾弥漫",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "释放毒雾，对全体造成130%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_boss_major_huayaowang_s2",
+    "name": "花盾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得护盾，吸收伤害，持续3回合。"
+  },
+  {
+    "id": "skill_boss_major_huayaowang_ult",
+    "name": "万花葬",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 3,
+        "probability": 0.7
+      }
+    ],
+    "description": "万花葬，对全体造成250%攻击伤害，70%概率中毒3回合。"
+  },
+  {
+    "id": "passive_boss_major_huayaowang_p1",
+    "name": "花语",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_major_hebo_s1",
+    "name": "水龙冲击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "以水龙冲击，造成140%攻击伤害，30%概率减速2回合。"
+  },
+  {
+    "id": "skill_boss_major_hebo_s2",
+    "name": "恢复之雨",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得持续治疗效果，持续3回合。"
+  },
+  {
+    "id": "skill_boss_major_hebo_ult",
+    "name": "洪水滔天",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 3,
+        "probability": 0.6
+      }
+    ],
+    "description": "洪水滔天，对全体造成250%攻击伤害，60%概率减速3回合。"
+  },
+  {
+    "id": "passive_boss_major_hebo_p1",
+    "name": "水流涌动",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 0.3,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时30%概率提升自身速度2回合。"
+  },
+  {
+    "id": "skill_boss_major_shanshen_s1",
+    "name": "巨岩碾压",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以巨岩碾压，造成150%攻击伤害。"
+  },
+  {
+    "id": "skill_boss_major_shanshen_s2",
+    "name": "石盾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得石盾，吸收伤害，持续3回合。"
+  },
+  {
+    "id": "skill_boss_major_shanshen_ult",
+    "name": "五行崩落",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.8, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.8
+      }
+    ],
+    "description": "五行崩落，造成280%攻击伤害，80%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_boss_major_shanshen_p1",
+    "name": "不动如山",
+    "skillType": "passive",
+    "trigger": "BATTLE_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": -1
+      }
+    ],
+    "description": "战斗开始时永久提升自身防御。"
+  },
+  {
+    "id": "skill_boss_major_miwu_s1",
+    "name": "幻影分身",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "制造幻影，自身速度提升3回合。"
+  },
+  {
+    "id": "skill_boss_major_miwu_s2",
+    "name": "毒雾喷射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "喷射毒雾，对全体造成130%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_boss_major_miwu_ult",
+    "name": "迷雾迷阵",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 2.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 3,
+        "probability": 0.6
+      }
+    ],
+    "description": "迷雾迷阵，对全体造成250%攻击伤害，60%概率减速3回合。"
+  },
+  {
+    "id": "passive_boss_major_miwu_p1",
+    "name": "迷雾笼罩",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时25%概率提升自身速度2回合。"
+  },
+  {
+    "id": "skill_boss_major_rulai_s1",
+    "name": "金刚伏魔掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以金刚伏魔掌攻击，造成150%攻击伤害。"
+  },
+  {
+    "id": "skill_boss_major_rulai_s2",
+    "name": "梵音结界",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thorns",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得护盾和反伤效果，持续3回合。"
+  },
+  {
+    "id": "skill_boss_major_rulai_ult",
+    "name": "万佛朝宗",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "万佛朝宗，对全体造成300%攻击伤害，自身获得持续治疗3回合。"
+  },
+  {
+    "id": "passive_boss_major_rulai_p1",
+    "name": "无上正觉",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  // ═══════════════════════════════════════════
+  // 大成就领主
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_boss_achieve_huayaowang_s1",
+    "name": "千瓣毒雾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 3,
+        "probability": 0.5
+      }
+    ],
+    "description": "释放千瓣毒雾，对全体造成150%攻击伤害，50%概率中毒3回合。"
+  },
+  {
+    "id": "skill_boss_achieve_huayaowang_s2",
+    "name": "花葬护盾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thorns",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得花葬护盾和反伤效果，持续3回合。"
+  },
+  {
+    "id": "skill_boss_achieve_huayaowang_ult",
+    "name": "万花葬灭",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 3,
+        "probability": 0.8
+      }
+    ],
+    "description": "万花葬灭，对全体造成320%攻击伤害，80%概率中毒3回合。"
+  },
+  {
+    "id": "passive_boss_achieve_huayaowang_p1",
+    "name": "花语真身",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "passive_boss_achieve_huayaowang_p2",
+    "name": "灵根通天",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率获得护盾。"
+  },
+  {
+    "id": "skill_boss_achieve_hebo_s1",
+    "name": "沧浪冲击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以沧浪之水冲击，对全体造成150%攻击伤害，40%概率减速2回合。"
+  },
+  {
+    "id": "skill_boss_achieve_hebo_s2",
+    "name": "千年之雨",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得千年之雨持续治疗效果，持续3回合。"
+  },
+  {
+    "id": "skill_boss_achieve_hebo_ult",
+    "name": "千年海啸",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 3,
+        "probability": 0.7
+      }
+    ],
+    "description": "千年海啸，对全体造成320%攻击伤害，70%概率减速3回合。"
+  },
+  {
+    "id": "passive_boss_achieve_hebo_p1",
+    "name": "千年执念",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 0.3,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时30%概率提升自身攻击2回合。"
+  },
+  {
+    "id": "passive_boss_achieve_hebo_p2",
+    "name": "水流不灭",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率获得护盾。"
+  },
+  {
+    "id": "skill_boss_achieve_shanshen_s1",
+    "name": "五行碾压",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.3
+      }
+    ],
+    "description": "以五行之力碾压，造成160%攻击伤害，30%概率眩晕1回合。"
+  },
+  {
+    "id": "skill_boss_achieve_shanshen_s2",
+    "name": "五行护盾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得五行护盾和防御提升，持续3回合。"
+  },
+  {
+    "id": "skill_boss_achieve_shanshen_ult",
+    "name": "五行崩落灭",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.6
+      }
+    ],
+    "description": "五行崩落灭，对全体造成320%攻击伤害，60%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_boss_achieve_shanshen_p1",
+    "name": "五行残躯",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时提升自身防御2回合。"
+  },
+  {
+    "id": "passive_boss_achieve_shanshen_p2",
+    "name": "山岳不灭",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率获得护盾。"
+  },
+  {
+    "id": "skill_boss_achieve_miwu_s1",
+    "name": "千年幻影",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "释放千年幻影，对全体造成150%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_boss_achieve_miwu_s2",
+    "name": "永恒迷雾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "进入永恒迷雾，自身速度提升3回合。"
+  },
+  {
+    "id": "skill_boss_achieve_miwu_ult",
+    "name": "千年迷途灭",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 3,
+        "probability": 0.7
+      }
+    ],
+    "description": "千年迷途灭，对全体造成320%攻击伤害，70%概率减速3回合。"
+  },
+  {
+    "id": "passive_boss_achieve_miwu_p1",
+    "name": "千年迷途",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时25%概率提升自身速度2回合。"
+  },
+  {
+    "id": "passive_boss_achieve_miwu_p2",
+    "name": "幻影不灭",
+    "skillType": "passive",
+    "trigger": "ON_DODGE_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "闪避成功时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_achieve_rulai_s1",
+    "name": "六耳佛掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以六耳佛掌攻击，造成160%攻击伤害。"
+  },
+  {
+    "id": "skill_boss_achieve_rulai_s2",
+    "name": "六耳结界",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thorns",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得六耳结界护盾和反伤效果，持续3回合。"
+  },
+  {
+    "id": "skill_boss_achieve_rulai_ult",
+    "name": "六耳万佛朝宗",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "六耳万佛朝宗，对全体造成320%攻击伤害，自身获得持续治疗3回合。"
+  },
+  {
+    "id": "passive_boss_achieve_rulai_p1",
+    "name": "六耳投影",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "passive_boss_achieve_rulai_p2",
+    "name": "听心",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率提升自身防御2回合。"
+  },
+  // ═══════════════════════════════════════════
+  // 隐藏BOSS
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_boss_hidden_heifeng_s1",
+    "name": "黑风斩",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_bleed",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以黑风斩击，造成160%攻击伤害，40%概率流血2回合。"
+  },
+  {
+    "id": "skill_boss_hidden_heifeng_s2",
+    "name": "黑风护体",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得黑风护体，吸收伤害，持续3回合。"
+  },
+  {
+    "id": "skill_boss_hidden_heifeng_ult",
+    "name": "黑风葬",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_bleed",
+        "duration": 3,
+        "probability": 0.7
+      }
+    ],
+    "description": "黑风葬，对全体造成350%攻击伤害，70%概率流血3回合。"
+  },
+  {
+    "id": "passive_boss_hidden_heifeng_p1",
+    "name": "残影之躯",
+    "skillType": "passive",
+    "trigger": "ON_DODGE_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "闪避成功时提升自身速度2回合。"
+  },
+  {
+    "id": "passive_boss_hidden_heifeng_p2",
+    "name": "黑风不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_hidden_dixing_s1",
+    "name": "地裂击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.3
+      }
+    ],
+    "description": "以地裂击，造成160%攻击伤害，30%概率眩晕1回合。"
+  },
+  {
+    "id": "skill_boss_hidden_dixing_s2",
+    "name": "遁地护盾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "遁入地下获得护盾和防御提升，持续3回合。"
+  },
+  {
+    "id": "skill_boss_hidden_dixing_ult",
+    "name": "地裂葬",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_stun",
+        "duration": 1,
+        "probability": 0.6
+      }
+    ],
+    "description": "地裂葬，对全体造成350%攻击伤害，60%概率眩晕1回合。"
+  },
+  {
+    "id": "passive_boss_hidden_dixing_p1",
+    "name": "遁地之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时25%概率提升自身防御2回合。"
+  },
+  {
+    "id": "passive_boss_hidden_dixing_p2",
+    "name": "地行不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_hidden_jiuchi_s1",
+    "name": "九齿钉耙击",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_bleed",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以九齿钉耙攻击，造成160%攻击伤害，40%概率流血2回合。"
+  },
+  {
+    "id": "skill_boss_hidden_jiuchi_s2",
+    "name": "天蓬护体",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得天蓬护体，吸收伤害，持续3回合。"
+  },
+  {
+    "id": "skill_boss_hidden_jiuchi_ult",
+    "name": "九齿葬",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_bleed",
+        "duration": 3,
+        "probability": 0.7
+      }
+    ],
+    "description": "九齿葬，对全体造成350%攻击伤害，70%概率流血3回合。"
+  },
+  {
+    "id": "passive_boss_hidden_jiuchi_p1",
+    "name": "九齿之躯",
+    "skillType": "passive",
+    "trigger": "ON_ATTACK_LANDED",
+    "probability": 0.25,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "攻击命中后25%概率提升自身攻击2回合。"
+  },
+  {
+    "id": "passive_boss_hidden_jiuchi_p2",
+    "name": "天蓬不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_hidden_baiyan_s1",
+    "name": "千目射线",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_down",
+        "duration": 2,
+        "probability": 0.3
+      }
+    ],
+    "description": "释放千目射线，对全体造成140%攻击伤害，30%概率降攻2回合。"
+  },
+  {
+    "id": "skill_boss_hidden_baiyan_s2",
+    "name": "百目护盾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得百目护盾，吸收伤害，持续3回合。"
+  },
+  {
+    "id": "skill_boss_hidden_baiyan_ult",
+    "name": "万目葬",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_down",
+        "duration": 3,
+        "probability": 0.6
+      }
+    ],
+    "description": "万目葬，对全体造成350%攻击伤害，60%概率降攻3回合。"
+  },
+  {
+    "id": "passive_boss_hidden_baiyan_p1",
+    "name": "百目之躯",
+    "skillType": "passive",
+    "trigger": "ON_DODGE_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "闪避成功时提升自身速度2回合。"
+  },
+  {
+    "id": "passive_boss_hidden_baiyan_p2",
+    "name": "百目不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_hidden_jinchan_s1",
+    "name": "金蝉佛掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+        }
+      }
+    ],
+    "description": "以金蝉佛掌攻击，造成160%攻击伤害。"
+  },
+  {
+    "id": "skill_boss_hidden_jinchan_s2",
+    "name": "净坛结界",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thorns",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得净坛结界护盾和反伤效果，持续3回合。"
+  },
+  {
+    "id": "skill_boss_hidden_jinchan_ult",
+    "name": "净坛葬",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_silence",
+        "duration": 2,
+        "probability": 0.5
+      }
+    ],
+    "description": "净坛葬，对全体造成350%攻击伤害，50%概率沉默2回合。"
+  },
+  {
+    "id": "passive_boss_hidden_jinchan_p1",
+    "name": "金蝉之躯",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时20%概率获得护盾。"
+  },
+  {
+    "id": "passive_boss_hidden_jinchan_p2",
+    "name": "净坛不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  // ═══════════════════════════════════════════
+  // 三大BOSS
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_boss_king_niumo_s1",
+    "name": "赤焰拳",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.7, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_burn",
+        "duration": 2,
+        "probability": 0.5
+      }
+    ],
+    "description": "以赤焰拳攻击，造成170%攻击伤害，50%概率灼烧2回合。"
+  },
+  {
+    "id": "skill_boss_king_niumo_s2",
+    "name": "赤焰护体",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得赤焰护盾和攻击提升，持续3回合。"
+  },
+  {
+    "id": "skill_boss_king_niumo_ult",
+    "name": "赤焰焚天",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 4.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_burn",
+        "duration": 3,
+        "probability": 0.8
+      }
+    ],
+    "description": "赤焰焚天，对全体造成400%攻击伤害，80%概率灼烧3回合。"
+  },
+  {
+    "id": "passive_boss_king_niumo_p1",
+    "name": "奴役之力",
+    "skillType": "passive",
+    "trigger": "ON_ATTACK_LANDED",
+    "probability": 0.3,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "攻击命中后30%概率提升自身攻击2回合。"
+  },
+  {
+    "id": "passive_boss_king_niumo_p2",
+    "name": "赤焰不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_king_pansi_s1",
+    "name": "织梦丝线",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_bind",
+        "duration": 1,
+        "probability": 0.4
+      }
+    ],
+    "description": "以织梦丝线攻击，造成160%攻击伤害，40%概率束缚1回合。"
+  },
+  {
+    "id": "skill_boss_king_pansi_s2",
+    "name": "织梦护盾",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thorns",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得织梦护盾和反伤效果，持续3回合。"
+  },
+  {
+    "id": "skill_boss_king_pansi_ult",
+    "name": "织梦囚笼",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 3.8, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_bind",
+        "duration": 2,
+        "probability": 0.6
+      }
+    ],
+    "description": "织梦囚笼，对全体造成380%攻击伤害，60%概率束缚2回合。"
+  },
+  {
+    "id": "passive_boss_king_pansi_p1",
+    "name": "囚禁之力",
+    "skillType": "passive",
+    "trigger": "ON_DODGE_SUCCESS",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "闪避成功时获得持续治疗效果。"
+  },
+  {
+    "id": "passive_boss_king_pansi_p2",
+    "name": "织梦不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "skill_boss_king_dapeng_s1",
+    "name": "遮天之翼",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以遮天之翼攻击，对全体造成150%攻击伤害，40%概率减速2回合。"
+  },
+  {
+    "id": "skill_boss_king_dapeng_s2",
+    "name": "遮天护体",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "获得遮天护盾和速度提升，持续3回合。"
+  },
+  {
+    "id": "skill_boss_king_dapeng_ult",
+    "name": "遮天葬",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 4.0, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ctrl_slow",
+        "duration": 3,
+        "probability": 0.7
+      }
+    ],
+    "description": "遮天葬，对全体造成400%攻击伤害，70%概率减速3回合。"
+  },
+  {
+    "id": "passive_boss_king_dapeng_p1",
+    "name": "傲慢之力",
+    "skillType": "passive",
+    "trigger": "ON_CRIT_LANDED",
+    "probability": 0.3,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "暴击后30%概率提升自身攻击2回合。"
+  },
+  {
+    "id": "passive_boss_king_dapeng_p2",
+    "name": "遮天不灭",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  // ═══════════════════════════════════════════
+  // 最终BOSS · 六耳猕猴
+  // ═══════════════════════════════════════════
+  {
+    "id": "skill_boss_final_liuer_s1",
+    "name": "听心掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.8, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_down",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以听心掌攻击，造成180%攻击伤害，40%概率降防2回合。"
+  },
+  {
+    "id": "skill_boss_final_liuer_s2",
+    "name": "六耳幻象",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 3
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "制造六耳幻象，获得护盾和速度提升，持续3回合。"
+  },
+  {
+    "id": "skill_boss_final_liuer_s3",
+    "name": "残魂侵蚀",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2,
+        "probability": 0.4
+      }
+    ],
+    "description": "以残魂侵蚀，对全体造成150%攻击伤害，40%概率中毒2回合。"
+  },
+  {
+    "id": "skill_boss_final_liuer_ult",
+    "name": "斗战圣佛·伪",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "ratio": 4.5, "attribute": "attack" }]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_down",
+        "duration": 3,
+        "probability": 0.6
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_def_down",
+        "duration": 3,
+        "probability": 0.6
+      }
+    ],
+    "description": "斗战圣佛·伪，对全体造成450%攻击伤害，60%概率降攻降防3回合。"
+  },
+  {
+    "id": "passive_boss_final_liuer_p1",
+    "name": "七十二变",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.15,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shield_basic",
+        "target": "self",
+        "duration": 2
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_spd_up",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "受到攻击时15%概率获得护盾和速度提升。"
+  },
+  {
+    "id": "passive_boss_final_liuer_p2",
+    "name": "听心术",
+    "skillType": "passive",
+    "trigger": "ON_TURN_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hot_heal",
+        "target": "self",
+        "duration": 2
+      }
+    ],
+    "description": "回合开始时获得持续治疗效果。"
+  },
+  {
+    "id": "passive_boss_final_liuer_p3",
+    "name": "六耳不灭",
+    "skillType": "passive",
+    "trigger": "ON_KILL",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mod_atk_up",
+        "target": "self",
+        "duration": 3
+      }
+    ],
+    "description": "击杀目标后提升自身攻击3回合。"
+  }
+]

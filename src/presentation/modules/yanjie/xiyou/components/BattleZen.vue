@@ -68,7 +68,7 @@
     </div>
 
     <!-- 战斗快捷栏浮层 -->
-    <QuickSlotBar v-model="quickOpen" />
+    <QuickSlotBar v-model:open="quickOpen" />
 
     <!-- 底部：战斗心经（消费唤灵台同源 battleLogManager） -->
     <BattleSutra />

@@ -74,7 +74,7 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-xxs);
+  font-size: var(--font-size-md);
   color: var(--xy-ink-1);
   text-shadow: 0 0 4px var(--xy-paper), 0 0 4px var(--xy-paper);
 }

@@ -1,63 +1,103 @@
-[
-  {
-    "id": "linghou",
-    "name": "灵猴道",
-    "motto": "轻捷如猿，迅影连击",
-    "branches": ["连击", "身法", "灵能"],
-    "nodes": [
-      { "id": "lh_l1", "branch": "连击", "tier": 1, "name": "猴拳入门", "type": "attribute", "points": 1, "energyCost": 0, "desc": "攻击 +5%" },
-      { "id": "lh_l2", "branch": "连击", "tier": 2, "name": "连环手", "type": "attribute", "points": 2, "energyCost": 0, "desc": "连击率 +5%" },
-      { "id": "lh_l3", "branch": "连击", "tier": 3, "name": "迅捷连击", "type": "passive", "points": 2, "energyCost": 0, "desc": "攻击时 30% 概率追加一次 50% 伤害" },
-      { "id": "lh_l4", "branch": "连击", "tier": 4, "name": "猴王连打", "type": "enhance", "points": 2, "energyCost": 0, "desc": "连击伤害 +10%，连击率再 +3%" },
-      { "id": "lh_s1", "branch": "身法", "tier": 1, "name": "灵猴身法", "type": "attribute", "points": 1, "energyCost": 0, "desc": "速度 +5%" },
-      { "id": "lh_s2", "branch": "身法", "tier": 2, "name": "轻身术", "type": "attribute", "points": 1, "energyCost": 0, "desc": "闪避率 +3%" },
-      { "id": "lh_s3", "branch": "身法", "tier": 3, "name": "疾风步", "type": "skill", "points": 3, "energyCost": 50, "desc": "速度 +40%，3 回合，期间连击触发率 +15%" },
-      { "id": "lh_s4", "branch": "身法", "tier": 4, "name": "乱舞", "type": "skill", "points": 3, "energyCost": 50, "desc": "3 次攻击，每次 60%，每段触发连击判定" },
-      { "id": "lh_n1", "branch": "灵能", "tier": 1, "name": "吐纳术", "type": "attribute", "points": 1, "energyCost": 0, "desc": "能量获取 +5%" },
-      { "id": "lh_n2", "branch": "灵能", "tier": 2, "name": "命中回能", "type": "attribute", "points": 2, "energyCost": 0, "desc": "攻击命中时 +2 能量（每回合上限 3 次）" },
-      { "id": "lh_n3", "branch": "灵能", "tier": 3, "name": "分身斩", "type": "skill", "points": 3, "energyCost": 50, "desc": "立即 2 次攻击（各 80%），每段触发连击判定" },
-      { "id": "lh_n4", "branch": "灵能", "tier": 4, "name": "千影绝杀", "type": "ultimate", "points": 5, "energyCost": 150, "desc": "5 次攻击，每次 70%，末击必暴；击杀返还 50 能量" }
-    ],
-    "selected": true
+{
+  "schools": [
+    {
+      "id": "linghou",
+      "name": "灵猴道",
+      "motto": "快不是目的，是手段。",
+      "positioning": "高频连击、速度、能量自循环",
+      "unlockScene": "scene_1_1",
+      "unlockNarrative": "小猴子，跑得快不算本事。知道往哪跑，才是。",
+      "pureBonus": {
+        "attribute": "comboRate",
+        "value": 10,
+        "desc": "纯灵猴道加成：连击率 +10%"
+      },
+      "energyRhythm": {
+        "trigger": "连击触发时额外 +5 能量",
+        "ultFrequency": "4-5 回合"
+      },
+      "branches": ["连击", "身法", "灵能"],
+      "style": "轻型",
+      "weaponPreference": "light_weapon"
+    },
+    {
+      "id": "jinxing",
+      "name": "金行道",
+      "motto": "锐不是天赋，是千锤百炼。",
+      "positioning": "单发高伤、暴击、无视防御、蓄力爆发",
+      "unlockScene": "scene_3_2",
+      "unlockNarrative": "一块刻着「金行」的铁片。锐不是天赋，是千锤百炼。",
+      "pureBonus": {
+        "attribute": "critRate",
+        "value": 10,
+        "desc": "纯金行道加成：暴击率 +10%"
+      },
+      "energyRhythm": {
+        "trigger": "暴击时额外 +10 能量",
+        "ultFrequency": "5-6 回合"
+      },
+      "branches": ["锋锐", "破甲", "蓄力"],
+      "style": "中型",
+      "weaponPreference": "medium_weapon"
+    },
+    {
+      "id": "panshi",
+      "name": "磐石道",
+      "motto": "不躲。",
+      "positioning": "格挡、眩晕、护盾、反伤、厚积薄发",
+      "unlockScene": "scene_4_5",
+      "unlockNarrative": "河底石碑上刻着两个字：「不躲。」",
+      "pureBonus": {
+        "attribute": "blockRate",
+        "value": 10,
+        "desc": "纯磐石道加成：格挡率 +10%"
+      },
+      "energyRhythm": {
+        "trigger": "受击能量获取 +20%",
+        "ultFrequency": "前期 7-8 回合，后期 4-5 回合"
+      },
+      "branches": ["坚壁", "镇岳", "厚土"],
+      "style": "重型",
+      "weaponPreference": "heavy_weapon"
+    }
+  ],
+  "skillPointRules": {
+    "levelPoints": 30,
+    "levelRange": [1, 30],
+    "pillPoints": 10,
+    "pillName": "悟道丹",
+    "totalPoints": 40,
+    "resetCostFormula": "500 × 已分配点数",
+    "pillRefundOnReset": false
   },
-  {
-    "id": "jinxing",
-    "name": "金行道",
-    "motto": "一击必中，锋芒毕露",
-    "branches": ["锋锐", "破甲", "蓄力"],
-    "nodes": [
-      { "id": "jx_f1", "branch": "锋锐", "tier": 1, "name": "金锋初成", "type": "attribute", "points": 1, "energyCost": 0, "desc": "暴击率 +3%" },
-      { "id": "jx_f2", "branch": "锋锐", "tier": 2, "name": "暴击回能", "type": "attribute", "points": 2, "energyCost": 0, "desc": "暴击时 +5 能量（每回合上限 2 次）" },
-      { "id": "jx_f3", "branch": "锋锐", "tier": 3, "name": "致命精准", "type": "passive", "points": 2, "energyCost": 0, "desc": "暴击伤害提升至 150%" },
-      { "id": "jx_f4", "branch": "锋锐", "tier": 4, "name": "弱点打击", "type": "skill", "points": 3, "energyCost": 50, "desc": "130% 伤害，本次暴击率 +30%" },
-      { "id": "jx_p1", "branch": "破甲", "tier": 1, "name": "碎甲拳", "type": "attribute", "points": 1, "energyCost": 0, "desc": "攻击 +5%" },
-      { "id": "jx_p2", "branch": "破甲", "tier": 2, "name": "破甲之势", "type": "attribute", "points": 2, "energyCost": 0, "desc": "无视防御 +5%" },
-      { "id": "jx_p3", "branch": "破甲", "tier": 3, "name": "破甲斩", "type": "skill", "points": 3, "energyCost": 50, "desc": "120% 伤害，无视 40% 防御，持续 2 回合" },
-      { "id": "jx_p4", "branch": "破甲", "tier": 4, "name": "破军之势", "type": "passive", "points": 2, "energyCost": 0, "desc": "所有攻击无视目标 10% 防御" },
-      { "id": "jx_c1", "branch": "蓄力", "tier": 1, "name": "重击训练", "type": "attribute", "points": 1, "energyCost": 0, "desc": "暴击伤害 +10%" },
-      { "id": "jx_c2", "branch": "蓄力", "tier": 2, "name": "大招强化", "type": "attribute", "points": 2, "energyCost": 0, "desc": "大招伤害 +8%" },
-      { "id": "jx_c3", "branch": "蓄力", "tier": 3, "name": "蓄势一击", "type": "skill", "points": 3, "energyCost": 50, "desc": "本回合防御 +80%，下回合首次攻击 ×1.5" },
-      { "id": "jx_c4", "branch": "蓄力", "tier": 4, "name": "天罡斩", "type": "ultimate", "points": 5, "energyCost": 150, "desc": "250% 伤害，暴击追加 100%；无视 30% 防御；目标气血 <30% 时伤害 +50%" }
-    ]
+  "equipSlots": {
+    "passive": 2,
+    "small": 2,
+    "ultimate": 1
   },
-  {
-    "id": "panshi",
-    "name": "磐石道",
-    "motto": "不动如山，以守为攻",
-    "branches": ["坚壁", "镇岳", "厚土"],
-    "nodes": [
-      { "id": "ps_j1", "branch": "坚壁", "tier": 1, "name": "石肤术", "type": "attribute", "points": 1, "energyCost": 0, "desc": "防御 +5%" },
-      { "id": "ps_j2", "branch": "坚壁", "tier": 2, "name": "受击回能", "type": "attribute", "points": 2, "energyCost": 0, "desc": "受击能量获取 +10%" },
-      { "id": "ps_j3", "branch": "坚壁", "tier": 3, "name": "磐石格挡", "type": "passive", "points": 2, "energyCost": 0, "desc": "20% 概率格挡，减免 50% 伤害" },
-      { "id": "ps_j4", "branch": "坚壁", "tier": 4, "name": "铜墙铁壁", "type": "skill", "points": 3, "energyCost": 50, "desc": "防御 +50%，3 回合，期间受击能量 +10" },
-      { "id": "ps_z1", "branch": "镇岳", "tier": 1, "name": "厚土之躯", "type": "attribute", "points": 1, "energyCost": 0, "desc": "气血 +5%" },
-      { "id": "ps_z2", "branch": "镇岳", "tier": 2, "name": "韧性训练", "type": "attribute", "points": 1, "energyCost": 0, "desc": "韧性 +5%（控制抗性）" },
-      { "id": "ps_z3", "branch": "镇岳", "tier": 3, "name": "撼地击", "type": "skill", "points": 3, "energyCost": 50, "desc": "140% 伤害，30% 概率眩晕 1 回合" },
-      { "id": "ps_z4", "branch": "镇岳", "tier": 4, "name": "泰山压顶", "type": "ultimate", "points": 5, "energyCost": 150, "desc": "220% 伤害，100% 眩晕 1 回合" },
-      { "id": "ps_h1", "branch": "厚土", "tier": 1, "name": "铁壁功", "type": "attribute", "points": 1, "energyCost": 0, "desc": "格挡率 +3%" },
-      { "id": "ps_h2", "branch": "厚土", "tier": 2, "name": "格挡回能", "type": "attribute", "points": 2, "energyCost": 0, "desc": "格挡成功时 +3 能量（每回合上限 2 次）" },
-      { "id": "ps_h3", "branch": "厚土", "tier": 3, "name": "以守为攻", "type": "passive", "points": 2, "energyCost": 0, "desc": "受击能量获取 +20%；格挡时反弹 10% 伤害" },
-      { "id": "ps_h4", "branch": "厚土", "tier": 4, "name": "金刚不坏", "type": "ultimate", "points": 5, "energyCost": 150, "desc": "获得最大气血 30% 护盾，3 回合，反弹 30% 伤害" }
-    ]
-  }
-]
+  "pillSources": [
+    { "source": "三大 BOSS 首杀", "count": 3 },
+    { "source": "隐藏 BOSS 首杀", "count": 5 },
+    { "source": "西行志终极任务", "count": 1 },
+    { "source": "九转金丹碎片合成（10碎片=1）", "count": 1 }
+  ],
+  "pureSchoolBonusRule": {
+    "condition": "被动 + 2 小技能 + 大招全部来自同一流派",
+    "linghou": { "attribute": "comboRate", "value": 10 },
+    "jinxing": { "attribute": "critRate", "value": 10 },
+    "panshi": { "attribute": "blockRate", "value": 10 },
+    "mixed": { "desc": "混搭无额外加成" }
+  },
+  "ui": {
+    "theme": "道碑",
+    "description": "技能树界面为一块石碑。已点亮的节点为石碑上的刻痕（墨色），未点亮的节点为石碑上的空白，大招节点为石碑最深处的一道金痕。每点一个节点，主角在道碑上刻一道痕。刻满了，就悟了。",
+    "layout": "全屏覆盖模式（A 方案）",
+    "nodeStates": {
+      "locked": "灰色，不可点击，显示前置要求",
+      "available": "墨色边框，可点击，显示消耗",
+      "active": "墨色填充，已点亮",
+      "ultimate": "金色刻痕"
+    }
+  },
+  "updatedAt": "2026-08-12T00:00:00.000Z"
+}

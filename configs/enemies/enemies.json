@@ -1,2884 +1,4537 @@
+// configs/xiyou/enemies.json
+// 总条目数：124（普通敌人75 + 守护者25 + 小头目5 + 大头目5 + 大成就领主5 + 隐藏BOSS5 + 三大BOSS3 + 最终BOSS1）
 [
+  // ═══════════════════════════════════════════
+  // 大场景1 · 落桃原（1-10级）
+  // ═══════════════════════════════════════════
+  // --- 1-1 桃林小径 ---
   {
-    "id": "enemy_001",
-    "name": "花妖",
+    "id": "enemy_s1_1_a",
+    "name": "花妖幼芽",
     "level": 1,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 80,
-      "defense": 1,
-      "speed": 10,
-      "attack": 10
+      "maxHealth": 82,
+      "attack": 11,
+      "defense": 4,
+      "speed": 7,
+      "critRate": 5,
+      "critDamage": 120,
+      "hit": 10,
+      "dodge": 2,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_1_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
     "drops": [
-      {
-        "itemId": "mat_001",
-        "quantity": 2,
-        "chance": 0.8
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.2
-      }
+      { "itemId": "mat_taomu", "probability": 0.8 },
+      { "itemId": "mat_cushi", "probability": 0.5 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_001_small"
-      ]
-    }
+    "gold": [5, 15],
+    "exp": [10, 20],
+    "sceneId": "scene_1_1",
+    "description": "桃林中最弱小的妖怪，刚被妖气感染。"
   },
   {
-    "id": "enemy_002",
+    "id": "enemy_s1_1_b",
     "name": "草精",
-    "level": 2,
+    "level": 1,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 91,
-      "defense": 2,
-      "speed": 11,
-      "attack": 12
+      "maxHealth": 82,
+      "attack": 11,
+      "defense": 4,
+      "speed": 8,
+      "critRate": 5,
+      "critDamage": 120,
+      "hit": 10,
+      "dodge": 3,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_1_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
     "drops": [
-      {
-        "itemId": "mat_001",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "mat_002",
-        "quantity": 1,
-        "chance": 0.3
-      }
+      { "itemId": "mat_taomu", "probability": 0.7 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_002_small"
-      ]
-    }
+    "gold": [5, 15],
+    "exp": [10, 20],
+    "sceneId": "scene_1_1",
+    "description": "路边野草吸收灵气所化，胆小但数量众多。"
   },
   {
-    "id": "enemy_003",
+    "id": "enemy_s1_1_c",
     "name": "幼年山魈",
     "level": 2,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 91,
-      "defense": 2,
-      "speed": 11,
-      "attack": 12
+      "maxHealth": 94,
+      "attack": 14,
+      "defense": 6,
+      "speed": 9,
+      "critRate": 5,
+      "critDamage": 121,
+      "hit": 12,
+      "dodge": 3,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_1_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
     "drops": [
-      {
-        "itemId": "mat_001",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "mat_004",
-        "quantity": 1,
-        "chance": 0.4
-      }
+      { "itemId": "mat_taomu", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.5 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_003_small"
-      ]
-    }
+    "gold": [6, 18],
+    "exp": [12, 22],
+    "sceneId": "scene_1_1",
+    "description": "山魈一族的幼崽，继承了些许祖辈的蛮力。"
   },
   {
-    "id": "enemy_004",
-    "name": "食人花妖",
-    "level": 4,
+    "id": "enemy_s1_1_g",
+    "name": "桃林守卫",
+    "level": 2,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "guardian",
     "stats": {
-      "currentHealth": 104,
-      "defense": 4,
-      "speed": 13,
-      "attack": 16
-    },
-    "drops": [
-      {
-        "itemId": "mat_001",
-        "quantity": 3,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_003",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_004_small"
-      ],
-      "passive": [
-        "skill_enemy_004_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_005",
-    "name": "巨石精",
-    "level": 5,
-    "stats": {
-      "currentHealth": 124,
-      "defense": 5,
-      "speed": 15,
-      "attack": 18
-    },
-    "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_005_small"
-      ],
-      "passive": [
-        "skill_enemy_005_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_006",
-    "name": "成年山魈",
-    "level": 5,
-    "stats": {
-      "currentHealth": 124,
-      "defense": 5,
-      "speed": 15,
-      "attack": 18
-    },
-    "drops": [
-      {
-        "itemId": "mat_001",
-        "quantity": 4,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_001",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_006_small"
-      ],
-      "passive": [
-        "skill_enemy_006_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_007",
-    "name": "花妖王",
-    "level": 8,
-    "stats": {
-      "currentHealth": 160,
+      "maxHealth": 122,
+      "attack": 18,
       "defense": 8,
-      "speed": 17,
-      "attack": 25
+      "speed": 10,
+      "critRate": 5,
+      "critDamage": 121,
+      "hit": 12,
+      "dodge": 4,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_1_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s1_1_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
     "drops": [
-      {
-        "itemId": "mat_001",
-        "quantity": 5,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.2 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_007_small"
-      ],
-      "passive": [
-        "skill_enemy_007_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_007_ultimate"
-      ]
-    }
+    "gold": [15, 30],
+    "exp": [25, 40],
+    "sceneId": "scene_1_1",
+    "description": "桃林深处的守卫者，枝干坚硬如铁。"
   },
+  // --- 1-2 老猴崖 ---
   {
-    "id": "enemy_008",
-    "name": "山魈首领",
-    "level": 9,
-    "stats": {
-      "currentHealth": 168,
-      "defense": 8,
-      "speed": 20,
-      "attack": 26
-    },
-    "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 5,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_003",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_008_small"
-      ],
-      "passive": [
-        "skill_enemy_008_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_008_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_001",
-    "name": "小花山守护者",
-    "level": 9,
-    "stats": {
-      "currentHealth": 168,
-      "defense": 8,
-      "speed": 20,
-      "attack": 26
-    },
-    "drops": [
-      {
-        "itemId": "mat_004",
-        "quantity": 3,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_007",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_001_small"
-      ],
-      "passive": [
-        "skill_boss_001_passive"
-      ],
-      "ultimate": [
-        "skill_boss_001_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_009",
-    "name": "小虾兵",
+    "id": "enemy_s1_2_a",
+    "name": "山魈",
     "level": 3,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 102,
-      "defense": 3,
-      "speed": 12,
-      "attack": 14
+      "maxHealth": 106,
+      "attack": 17,
+      "defense": 8,
+      "speed": 9,
+      "critRate": 5,
+      "critDamage": 121,
+      "hit": 14,
+      "dodge": 4,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_2_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
     "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 2,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_004",
-        "quantity": 1,
-        "chance": 0.2
-      }
+      { "itemId": "mat_cushi", "probability": 0.7 },
+      { "itemId": "mat_taomu", "probability": 0.4 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_009_small"
-      ]
-    }
+    "gold": [7, 20],
+    "exp": [14, 25],
+    "sceneId": "scene_1_2",
+    "description": "成年山魈，力大无穷，常在崖间跳跃。"
   },
   {
-    "id": "enemy_010",
-    "name": "幼年蟹将",
+    "id": "enemy_s1_2_b",
+    "name": "石猴",
+    "level": 3,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 106,
+      "attack": 17,
+      "defense": 8,
+      "speed": 10,
+      "critRate": 5,
+      "critDamage": 121,
+      "hit": 14,
+      "dodge": 4,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_2_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.2 }
+    ],
+    "gold": [7, 20],
+    "exp": [14, 25],
+    "sceneId": "scene_1_2",
+    "description": "崖壁碎石凝聚而成的石猴，模仿着千年前大圣的姿态。"
+  },
+  {
+    "id": "enemy_s1_2_c",
+    "name": "藤蔓精",
     "level": 4,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 118,
-      "defense": 4,
-      "speed": 14,
-      "attack": 16
+      "maxHealth": 118,
+      "attack": 20,
+      "defense": 10,
+      "speed": 10,
+      "critRate": 5,
+      "critDamage": 122,
+      "hit": 16,
+      "dodge": 5,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_2_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
     "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.3
-      }
+      { "itemId": "mat_taomu", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_010_small"
-      ]
-    }
+    "gold": [8, 22],
+    "exp": [16, 28],
+    "sceneId": "scene_1_2",
+    "description": "缠绕崖壁的藤蔓成精，善于束缚猎物。"
   },
   {
-    "id": "enemy_011",
-    "name": "小青鱼精",
+    "id": "enemy_s1_2_g",
+    "name": "崖顶石猴",
     "level": 4,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "guardian",
     "stats": {
-      "currentHealth": 118,
-      "defense": 4,
-      "speed": 14,
-      "attack": 16
+      "maxHealth": 153,
+      "attack": 26,
+      "defense": 13,
+      "speed": 13,
+      "critRate": 5,
+      "critDamage": 122,
+      "hit": 16,
+      "dodge": 6,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_2_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s1_2_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
     "drops": [
-      {
-        "itemId": "mat_004",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_005",
-        "quantity": 1,
-        "chance": 0.4
-      }
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tongjing", "probability": 0.3 },
+      { "itemId": "mat_taomu", "probability": 0.4 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_011_small"
-      ]
-    }
+    "gold": [18, 35],
+    "exp": [30, 45],
+    "sceneId": "scene_1_2",
+    "description": "占据崖顶的石猴首领，以巨石为武器。"
   },
+  // --- 1-3 落桃溪 ---
   {
-    "id": "enemy_012",
-    "name": "虾兵队长",
-    "level": 6,
-    "stats": {
-      "currentHealth": 144,
-      "defense": 6,
-      "speed": 17,
-      "attack": 20
-    },
-    "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 3,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_003",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_012_small"
-      ],
-      "passive": [
-        "skill_enemy_012_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_013",
-    "name": "铁甲蟹将",
-    "level": 7,
-    "stats": {
-      "currentHealth": 146,
-      "defense": 6,
-      "speed": 17,
-      "attack": 22
-    },
-    "drops": [
-      {
-        "itemId": "mat_004",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_013_small"
-      ],
-      "passive": [
-        "skill_enemy_013_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_014",
-    "name": "鱼精头目",
-    "level": 7,
-    "stats": {
-      "currentHealth": 146,
-      "defense": 6,
-      "speed": 17,
-      "attack": 22
-    },
-    "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 4,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_004",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_014_small"
-      ],
-      "passive": [
-        "skill_enemy_014_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_015",
-    "name": "虾兵统领",
-    "level": 10,
-    "stats": {
-      "currentHealth": 183,
-      "defense": 9,
-      "speed": 21,
-      "attack": 29
-    },
-    "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 5,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_015_small"
-      ],
-      "passive": [
-        "skill_enemy_015_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_015_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_016",
-    "name": "金甲蟹将",
-    "level": 11,
-    "stats": {
-      "currentHealth": 190,
-      "defense": 10,
-      "speed": 22,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_004",
-        "quantity": 4,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_003",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_016_small"
-      ],
-      "passive": [
-        "skill_enemy_016_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_016_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_002",
-    "name": "浅水涧守护者",
-    "level": 11,
-    "stats": {
-      "currentHealth": 190,
-      "defense": 10,
-      "speed": 22,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_021",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_007",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_002_small"
-      ],
-      "passive": [
-        "skill_boss_002_passive"
-      ],
-      "ultimate": [
-        "skill_boss_002_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_017",
-    "name": "小岩妖",
+    "id": "enemy_s1_3_a",
+    "name": "溪妖",
     "level": 5,
+    "type": "new_born",
+    "faction": "water",
+    "role": "normal",
     "stats": {
-      "currentHealth": 124,
-      "defense": 5,
-      "speed": 15,
-      "attack": 18
+      "maxHealth": 130,
+      "attack": 23,
+      "defense": 12,
+      "speed": 11,
+      "critRate": 6,
+      "critDamage": 122,
+      "hit": 18,
+      "dodge": 6,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_3_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
     "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 2,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_006",
-        "quantity": 1,
-        "chance": 0.2
-      }
+      { "itemId": "mat_danshuiyu", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_017_small"
-      ]
-    }
+    "gold": [9, 24],
+    "exp": [18, 30],
+    "sceneId": "scene_1_3",
+    "description": "落桃溪中的水妖，以落花为食。"
   },
   {
-    "id": "enemy_018",
-    "name": "碎石精",
+    "id": "enemy_s1_3_b",
+    "name": "小岩精",
+    "level": 5,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 130,
+      "attack": 23,
+      "defense": 12,
+      "speed": 10,
+      "critRate": 6,
+      "critDamage": 122,
+      "hit": 18,
+      "dodge": 5,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_3_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.7 },
+      { "itemId": "mat_danshuiyu", "probability": 0.3 }
+    ],
+    "gold": [9, 24],
+    "exp": [18, 30],
+    "sceneId": "scene_1_3",
+    "description": "溪边卵石凝聚的小妖，行动迟缓但外壳坚硬。"
+  },
+  {
+    "id": "enemy_s1_3_c",
+    "name": "花蝶精",
     "level": 6,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 130,
-      "defense": 5,
-      "speed": 16,
-      "attack": 20
+      "maxHealth": 142,
+      "attack": 26,
+      "defense": 14,
+      "speed": 12,
+      "critRate": 6,
+      "critDamage": 123,
+      "hit": 20,
+      "dodge": 7,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
+    "skillIds": ["skill_enemy_s1_3_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
     "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "mat_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
     ],
-    "skills": {
-      "small": [
-        "skill_enemy_018_small"
-      ]
-    }
+    "gold": [10, 26],
+    "exp": [20, 32],
+    "sceneId": "scene_1_3",
+    "description": "溪畔花蝶所化，翅膀带有迷幻鳞粉。"
   },
   {
-    "id": "enemy_019",
-    "name": "土行小妖",
+    "id": "enemy_s1_3_g",
+    "name": "溪中岩精",
     "level": 6,
-    "stats": {
-      "currentHealth": 130,
-      "defense": 5,
-      "speed": 16,
-      "attack": 20
-    },
-    "drops": [
-      {
-        "itemId": "mat_006",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_019_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_020",
-    "name": "岩妖头目",
-    "level": 8,
-    "stats": {
-      "currentHealth": 160,
-      "defense": 8,
-      "speed": 17,
-      "attack": 25
-    },
-    "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 4,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_006",
-        "quantity": 2,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_020_small"
-      ],
-      "passive": [
-        "skill_enemy_020_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_021",
-    "name": "铁石精",
-    "level": 9,
-    "stats": {
-      "currentHealth": 168,
-      "defense": 8,
-      "speed": 20,
-      "attack": 26
-    },
-    "drops": [
-      {
-        "itemId": "mat_003",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_021_small"
-      ],
-      "passive": [
-        "skill_enemy_021_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_022",
-    "name": "土行妖",
-    "level": 9,
-    "stats": {
-      "currentHealth": 168,
-      "defense": 8,
-      "speed": 20,
-      "attack": 26
-    },
-    "drops": [
-      {
-        "itemId": "mat_006",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_001",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_022_small"
-      ],
-      "passive": [
-        "skill_enemy_022_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_023",
-    "name": "巨岩妖",
-    "level": 12,
-    "stats": {
-      "currentHealth": 214,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 6,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_023_small"
-      ],
-      "passive": [
-        "skill_enemy_023_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_023_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_024",
-    "name": "金刚石精",
-    "level": 13,
-    "stats": {
-      "currentHealth": 212,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "mat_003",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_006",
-        "quantity": 4,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_024_small"
-      ],
-      "passive": [
-        "skill_enemy_024_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_024_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_003",
-    "name": "碎石坡守护者",
-    "level": 13,
-    "stats": {
-      "currentHealth": 212,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "mat_007",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_004",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_003_small"
-      ],
-      "passive": [
-        "skill_boss_003_passive"
-      ],
-      "ultimate": [
-        "skill_boss_003_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_025",
-    "name": "小树精",
-    "level": 7,
-    "stats": {
-      "currentHealth": 146,
-      "defense": 6,
-      "speed": 17,
-      "attack": 22
-    },
-    "drops": [
-      {
-        "itemId": "mat_006",
-        "quantity": 2,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_009",
-        "quantity": 1,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_025_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_026",
-    "name": "迷路家仆妖",
-    "level": 8,
-    "stats": {
-      "currentHealth": 154,
-      "defense": 7,
-      "speed": 20,
-      "attack": 23
-    },
-    "drops": [
-      {
-        "itemId": "mat_010",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_026_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_027",
-    "name": "幼年野猪精",
-    "level": 8,
-    "stats": {
-      "currentHealth": 154,
-      "defense": 7,
-      "speed": 20,
-      "attack": 23
-    },
-    "drops": [
-      {
-        "itemId": "mat_009",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "mat_002",
-        "quantity": 2,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_027_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_028",
-    "name": "百年树精",
-    "level": 10,
-    "stats": {
-      "currentHealth": 183,
-      "defense": 9,
-      "speed": 21,
-      "attack": 29
-    },
-    "drops": [
-      {
-        "itemId": "mat_006",
-        "quantity": 4,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_008",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_028_small"
-      ],
-      "passive": [
-        "skill_enemy_028_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_029",
-    "name": "家仆妖头目",
-    "level": 11,
-    "stats": {
-      "currentHealth": 190,
-      "defense": 10,
-      "speed": 22,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_010",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_029_small"
-      ],
-      "passive": [
-        "skill_enemy_029_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_030",
-    "name": "野猪精头领",
-    "level": 11,
-    "stats": {
-      "currentHealth": 190,
-      "defense": 10,
-      "speed": 22,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_009",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_002",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_030_small"
-      ],
-      "passive": [
-        "skill_enemy_030_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_031",
-    "name": "千年树妖",
-    "level": 14,
-    "stats": {
-      "currentHealth": 223,
-      "defense": 13,
-      "speed": 26,
-      "attack": 36
-    },
-    "drops": [
-      {
-        "itemId": "mat_006",
-        "quantity": 5,
-        "chance": 0.7
-      },
-      {
-        "itemId": "mat_011",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_031_small"
-      ],
-      "passive": [
-        "skill_enemy_031_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_031_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_032",
-    "name": "管家妖",
-    "level": 15,
-    "stats": {
-      "currentHealth": 234,
-      "defense": 14,
-      "speed": 27,
-      "attack": 38
-    },
-    "drops": [
-      {
-        "itemId": "mat_010",
-        "quantity": 4,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_008",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_032_small"
-      ],
-      "passive": [
-        "skill_enemy_032_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_032_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_004",
-    "name": "迷雾林守护者",
-    "level": 15,
-    "stats": {
-      "currentHealth": 234,
-      "defense": 14,
-      "speed": 27,
-      "attack": 38
-    },
-    "drops": [
-      {
-        "itemId": "mat_012",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_005",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_004_small"
-      ],
-      "passive": [
-        "skill_boss_004_passive"
-      ],
-      "ultimate": [
-        "skill_boss_004_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_033",
-    "name": "小沙妖",
-    "level": 9,
-    "stats": {
-      "currentHealth": 168,
-      "defense": 8,
-      "speed": 20,
-      "attack": 26
-    },
-    "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 3,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_008",
-        "quantity": 1,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_033_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_034",
-    "name": "水蛇幼体",
-    "level": 10,
-    "stats": {
-      "currentHealth": 175,
-      "defense": 9,
-      "speed": 20,
-      "attack": 27
-    },
-    "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_005",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_034_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_035",
-    "name": "小河伯侍从",
-    "level": 10,
-    "stats": {
-      "currentHealth": 175,
-      "defense": 9,
-      "speed": 20,
-      "attack": 27
-    },
-    "drops": [
-      {
-        "itemId": "mat_008",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_035_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_036",
-    "name": "沙妖头目",
-    "level": 12,
-    "stats": {
-      "currentHealth": 214,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 5,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_007",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_036_small"
-      ],
-      "passive": [
-        "skill_enemy_036_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_037",
-    "name": "成年水蛇精",
-    "level": 13,
-    "stats": {
-      "currentHealth": 212,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 4,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_006",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_037_small"
-      ],
-      "passive": [
-        "skill_enemy_037_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_038",
-    "name": "河伯副官",
-    "level": 13,
-    "stats": {
-      "currentHealth": 212,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "mat_008",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_008",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_038_small"
-      ],
-      "passive": [
-        "skill_enemy_038_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_039",
-    "name": "沙妖王",
-    "level": 16,
-    "stats": {
-      "currentHealth": 256,
-      "defense": 15,
-      "speed": 29,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_002",
-        "quantity": 7,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_039_small"
-      ],
-      "passive": [
-        "skill_enemy_039_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_039_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_040",
-    "name": "水蛇精首领",
-    "level": 17,
-    "stats": {
-      "currentHealth": 256,
-      "defense": 15,
-      "speed": 29,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_005",
-        "quantity": 5,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_007",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_040_small"
-      ],
-      "passive": [
-        "skill_enemy_040_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_040_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_005",
-    "name": "浊浪滩守护者",
-    "level": 17,
-    "stats": {
-      "currentHealth": 256,
-      "defense": 15,
-      "speed": 29,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_017",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_002",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_005_small"
-      ],
-      "passive": [
-        "skill_boss_005_passive"
-      ],
-      "ultimate": [
-        "skill_boss_005_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_041",
-    "name": "小火蜥蜴",
-    "level": 11,
-    "stats": {
-      "currentHealth": 190,
-      "defense": 10,
-      "speed": 22,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_013",
-        "quantity": 1,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_007",
-        "quantity": 1,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_041_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_042",
-    "name": "熔岩小精",
-    "level": 12,
-    "stats": {
-      "currentHealth": 188,
-      "defense": 10,
-      "speed": 23,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_014",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_042_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_043",
-    "name": "火童侍者",
-    "level": 12,
-    "stats": {
-      "currentHealth": 188,
-      "defense": 10,
-      "speed": 23,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_013",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_043_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_044",
-    "name": "熔岩蜥蜴",
-    "level": 14,
-    "stats": {
-      "currentHealth": 223,
-      "defense": 13,
-      "speed": 26,
-      "attack": 36
-    },
-    "drops": [
-      {
-        "itemId": "mat_013",
-        "quantity": 3,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_007",
-        "quantity": 2,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_044_small"
-      ],
-      "passive": [
-        "skill_enemy_044_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_045",
-    "name": "熔岩精头目",
-    "level": 15,
-    "stats": {
-      "currentHealth": 234,
-      "defense": 14,
-      "speed": 27,
-      "attack": 38
-    },
-    "drops": [
-      {
-        "itemId": "mat_014",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "mat_011",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_045_small"
-      ],
-      "passive": [
-        "skill_enemy_045_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_046",
-    "name": "火童队长",
-    "level": 15,
-    "stats": {
-      "currentHealth": 234,
-      "defense": 14,
-      "speed": 27,
-      "attack": 38
-    },
-    "drops": [
-      {
-        "itemId": "mat_015",
-        "quantity": 1,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_003",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_046_small"
-      ],
-      "passive": [
-        "skill_enemy_046_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_047",
-    "name": "火焰蜥蜴王",
-    "level": 18,
-    "stats": {
-      "currentHealth": 279,
-      "defense": 17,
-      "speed": 31,
-      "attack": 46
-    },
-    "drops": [
-      {
-        "itemId": "mat_013",
-        "quantity": 4,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_006",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_047_small"
-      ],
-      "passive": [
-        "skill_enemy_047_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_047_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_048",
-    "name": "熔岩巨精",
-    "level": 19,
-    "stats": {
-      "currentHealth": 278,
-      "defense": 17,
-      "speed": 32,
-      "attack": 46
-    },
-    "drops": [
-      {
-        "itemId": "mat_014",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_007",
-        "quantity": 3,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_048_small"
-      ],
-      "passive": [
-        "skill_enemy_048_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_048_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_006",
-    "name": "熔岩洞守护者",
-    "level": 19,
-    "stats": {
-      "currentHealth": 278,
-      "defense": 17,
-      "speed": 32,
-      "attack": 46
-    },
-    "drops": [
-      {
-        "itemId": "mat_016",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_006",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_006_small"
-      ],
-      "passive": [
-        "skill_boss_006_passive"
-      ],
-      "ultimate": [
-        "skill_boss_006_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_049",
-    "name": "小蜘蛛精",
-    "level": 13,
-    "stats": {
-      "currentHealth": 212,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "mat_012",
-        "quantity": 1,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_023",
-        "quantity": 1,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_049_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_050",
-    "name": "幼年毒蛾",
-    "level": 14,
-    "stats": {
-      "currentHealth": 223,
-      "defense": 13,
-      "speed": 26,
-      "attack": 36
-    },
-    "drops": [
-      {
-        "itemId": "mat_022",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_005",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_050_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_051",
-    "name": "蛛后幼虫",
-    "level": 14,
-    "stats": {
-      "currentHealth": 223,
-      "defense": 13,
-      "speed": 26,
-      "attack": 36
-    },
-    "drops": [
-      {
-        "itemId": "mat_012",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_051_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_052",
-    "name": "蜘蛛精头目",
-    "level": 16,
-    "stats": {
-      "currentHealth": 256,
-      "defense": 15,
-      "speed": 29,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_012",
-        "quantity": 3,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_018",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_052_small"
-      ],
-      "passive": [
-        "skill_enemy_052_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_053",
-    "name": "成年毒蛾",
-    "level": 17,
-    "stats": {
-      "currentHealth": 256,
-      "defense": 15,
-      "speed": 29,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_022",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_006",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_053_small"
-      ],
-      "passive": [
-        "skill_enemy_053_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_054",
-    "name": "蛛后亲卫",
-    "level": 17,
-    "stats": {
-      "currentHealth": 256,
-      "defense": 15,
-      "speed": 29,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_018",
-        "quantity": 1,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_009",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_054_small"
-      ],
-      "passive": [
-        "skill_enemy_054_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_055",
-    "name": "盘丝大仙",
-    "level": 20,
-    "stats": {
-      "currentHealth": 311,
-      "defense": 19,
-      "speed": 34,
-      "attack": 52
-    },
-    "drops": [
-      {
-        "itemId": "mat_012",
-        "quantity": 4,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_055_small"
-      ],
-      "passive": [
-        "skill_enemy_055_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_055_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_056",
-    "name": "毒蛾女王",
-    "level": 21,
-    "stats": {
-      "currentHealth": 300,
-      "defense": 19,
-      "speed": 34,
-      "attack": 50
-    },
-    "drops": [
-      {
-        "itemId": "mat_022",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_018",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_056_small"
-      ],
-      "passive": [
-        "skill_enemy_056_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_056_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_007",
-    "name": "蛛丝谷守护者",
-    "level": 21,
-    "stats": {
-      "currentHealth": 300,
-      "defense": 19,
-      "speed": 34,
-      "attack": 50
-    },
-    "drops": [
-      {
-        "itemId": "mat_019",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_003",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_007_small"
-      ],
-      "passive": [
-        "skill_boss_007_passive"
-      ],
-      "ultimate": [
-        "skill_boss_007_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_057",
-    "name": "小狮兵",
-    "level": 15,
-    "stats": {
-      "currentHealth": 234,
-      "defense": 14,
-      "speed": 27,
-      "attack": 38
-    },
-    "drops": [
-      {
-        "itemId": "mat_020",
-        "quantity": 1,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_016",
-        "quantity": 1,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_057_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_058",
-    "name": "幼年象妖",
-    "level": 16,
-    "stats": {
-      "currentHealth": 234,
-      "defense": 14,
-      "speed": 27,
-      "attack": 38
-    },
-    "drops": [
-      {
-        "itemId": "mat_024",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_058_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_059",
-    "name": "小鹏怪",
-    "level": 16,
-    "stats": {
-      "currentHealth": 234,
-      "defense": 14,
-      "speed": 27,
-      "attack": 38
-    },
-    "drops": [
-      {
-        "itemId": "mat_025",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_005",
-        "quantity": 1,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_059_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_060",
-    "name": "狮兵统领",
-    "level": 18,
-    "stats": {
-      "currentHealth": 279,
-      "defense": 17,
-      "speed": 31,
-      "attack": 46
-    },
-    "drops": [
-      {
-        "itemId": "mat_020",
-        "quantity": 2,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_016",
-        "quantity": 2,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_060_small"
-      ],
-      "passive": [
-        "skill_enemy_060_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_061",
-    "name": "铁甲象妖",
-    "level": 19,
-    "stats": {
-      "currentHealth": 278,
-      "defense": 17,
-      "speed": 32,
-      "attack": 46
-    },
-    "drops": [
-      {
-        "itemId": "mat_024",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "mat_011",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_061_small"
-      ],
-      "passive": [
-        "skill_enemy_061_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_062",
-    "name": "鹏怪头目",
-    "level": 19,
-    "stats": {
-      "currentHealth": 278,
-      "defense": 17,
-      "speed": 32,
-      "attack": 46
-    },
-    "drops": [
-      {
-        "itemId": "mat_025",
-        "quantity": 2,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_006",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_062_small"
-      ],
-      "passive": [
-        "skill_enemy_062_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_063",
-    "name": "狮王近卫",
-    "level": 22,
-    "stats": {
-      "currentHealth": 311,
-      "defense": 20,
-      "speed": 35,
-      "attack": 52
-    },
-    "drops": [
-      {
-        "itemId": "mat_020",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_006",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_063_small"
-      ],
-      "passive": [
-        "skill_enemy_063_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_063_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_064",
-    "name": "象妖将军",
-    "level": 23,
-    "stats": {
-      "currentHealth": 322,
-      "defense": 21,
-      "speed": 36,
-      "attack": 54
-    },
-    "drops": [
-      {
-        "itemId": "mat_024",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_016",
-        "quantity": 3,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_064_small"
-      ],
-      "passive": [
-        "skill_enemy_064_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_064_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_008",
-    "name": "狂风岭守护者",
-    "level": 23,
-    "stats": {
-      "currentHealth": 322,
-      "defense": 21,
-      "speed": 36,
-      "attack": 54
-    },
-    "drops": [
-      {
-        "itemId": "mat_015",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_009",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_008_small"
-      ],
-      "passive": [
-        "skill_boss_008_passive"
-      ],
-      "ultimate": [
-        "skill_boss_008_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_065",
-    "name": "小金刚",
-    "level": 17,
-    "stats": {
-      "currentHealth": 256,
-      "defense": 15,
-      "speed": 29,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_019",
-        "quantity": 1,
-        "chance": 0.8
-      },
-      {
-        "itemId": "elix_002",
-        "quantity": 1,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_065_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_066",
-    "name": "罗汉侍者",
-    "level": 18,
-    "stats": {
-      "currentHealth": 255,
-      "defense": 16,
-      "speed": 30,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "mat_017",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_066_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_067",
-    "name": "护法学徒",
-    "level": 18,
-    "stats": {
-      "currentHealth": 255,
-      "defense": 16,
-      "speed": 30,
-      "attack": 42
-    },
-    "drops": [
-      {
-        "itemId": "frag_004",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_067_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_068",
-    "name": "金刚力士",
-    "level": 20,
-    "stats": {
-      "currentHealth": 311,
-      "defense": 19,
-      "speed": 34,
-      "attack": 52
-    },
-    "drops": [
-      {
-        "itemId": "mat_019",
-        "quantity": 2,
-        "chance": 0.75
-      },
-      {
-        "itemId": "ess_001",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_068_small"
-      ],
-      "passive": [
-        "skill_enemy_068_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_069",
-    "name": "罗汉尊者",
-    "level": 21,
-    "stats": {
-      "currentHealth": 300,
-      "defense": 19,
-      "speed": 34,
-      "attack": 50
-    },
-    "drops": [
-      {
-        "itemId": "mat_017",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_006",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_069_small"
-      ],
-      "passive": [
-        "skill_enemy_069_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_070",
-    "name": "护法金刚",
-    "level": 21,
-    "stats": {
-      "currentHealth": 300,
-      "defense": 19,
-      "speed": 34,
-      "attack": 50
-    },
-    "drops": [
-      {
-        "itemId": "mat_026",
-        "quantity": 1,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_003",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_070_small"
-      ],
-      "passive": [
-        "skill_enemy_070_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_071",
-    "name": "金刚罗汉",
-    "level": 24,
-    "stats": {
-      "currentHealth": 333,
-      "defense": 22,
-      "speed": 38,
-      "attack": 56
-    },
-    "drops": [
-      {
-        "itemId": "mat_019",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_071_small"
-      ],
-      "passive": [
-        "skill_enemy_071_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_071_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_072",
-    "name": "降龙罗汉",
-    "level": 25,
-    "stats": {
-      "currentHealth": 344,
-      "defense": 23,
-      "speed": 39,
-      "attack": 58
-    },
-    "drops": [
-      {
-        "itemId": "mat_017",
-        "quantity": 3,
-        "chance": 0.65
-      },
-      {
-        "itemId": "ess_001",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_072_small"
-      ],
-      "passive": [
-        "skill_enemy_072_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_072_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_009",
-    "name": "禅音崖守护者",
-    "level": 25,
-    "stats": {
-      "currentHealth": 344,
-      "defense": 23,
-      "speed": 39,
-      "attack": 58
-    },
-    "drops": [
-      {
-        "itemId": "ess_002",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_006",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_009_small"
-      ],
-      "passive": [
-        "skill_boss_009_passive"
-      ],
-      "ultimate": [
-        "skill_boss_009_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_073",
-    "name": "佛门叛徒侍从",
-    "level": 19,
-    "stats": {
-      "currentHealth": 278,
-      "defense": 17,
-      "speed": 32,
-      "attack": 46
-    },
-    "drops": [
-      {
-        "itemId": "frag_001",
-        "quantity": 1,
-        "chance": 0.8
-      },
-      {
-        "itemId": "elix_002",
-        "quantity": 2,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_073_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_074",
-    "name": "金刚护法随从",
-    "level": 20,
-    "stats": {
-      "currentHealth": 267,
-      "defense": 17,
-      "speed": 32,
-      "attack": 44
-    },
-    "drops": [
-      {
-        "itemId": "frag_002",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_074_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_075",
-    "name": "罗汉使者学徒",
-    "level": 20,
-    "stats": {
-      "currentHealth": 267,
-      "defense": 17,
-      "speed": 32,
-      "attack": 44
-    },
-    "drops": [
-      {
-        "itemId": "frag_003",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "elix_006",
-        "quantity": 1,
-        "chance": 0.4
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_075_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_076",
-    "name": "佛门叛徒精英",
-    "level": 22,
-    "stats": {
-      "currentHealth": 311,
-      "defense": 20,
-      "speed": 35,
-      "attack": 52
-    },
-    "drops": [
-      {
-        "itemId": "ess_002",
-        "quantity": 1,
-        "chance": 0.75
-      },
-      {
-        "itemId": "crys_001",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_076_small"
-      ],
-      "passive": [
-        "skill_enemy_076_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_077",
-    "name": "金刚护法将领",
-    "level": 23,
-    "stats": {
-      "currentHealth": 322,
-      "defense": 21,
-      "speed": 36,
-      "attack": 54
-    },
-    "drops": [
-      {
-        "itemId": "ess_003",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "crys_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_077_small"
-      ],
-      "passive": [
-        "skill_enemy_077_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_078",
-    "name": "罗汉使者长老",
-    "level": 23,
-    "stats": {
-      "currentHealth": 322,
-      "defense": 21,
-      "speed": 36,
-      "attack": 54
-    },
-    "drops": [
-      {
-        "itemId": "elix_007",
-        "quantity": 1,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_007",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_078_small"
-      ],
-      "passive": [
-        "skill_enemy_078_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_079",
-    "name": "佛门叛徒首领",
-    "level": 26,
-    "stats": {
-      "currentHealth": 355,
-      "defense": 24,
-      "speed": 40,
-      "attack": 60
-    },
-    "drops": [
-      {
-        "itemId": "ess_002",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "crys_001",
-        "quantity": 2,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_079_small"
-      ],
-      "passive": [
-        "skill_enemy_079_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_079_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_080",
-    "name": "金刚护法统帅",
-    "level": 27,
-    "stats": {
-      "currentHealth": 366,
-      "defense": 24,
-      "speed": 41,
-      "attack": 62
-    },
-    "drops": [
-      {
-        "itemId": "ess_003",
-        "quantity": 2,
-        "chance": 0.65
-      },
-      {
-        "itemId": "crys_004",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_080_small"
-      ],
-      "passive": [
-        "skill_enemy_080_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_080_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_010",
-    "name": "灵霄台守护者",
-    "level": 27,
-    "stats": {
-      "currentHealth": 366,
-      "defense": 24,
-      "speed": 41,
-      "attack": 62
-    },
-    "drops": [
-      {
-        "itemId": "elix_007",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
-        "itemId": "crys_003",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_010_small"
-      ],
-      "passive": [
-        "skill_boss_010_passive"
-      ],
-      "ultimate": [
-        "skill_boss_010_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "guardian_gold",
-    "name": "金护法",
-    "level": 10,
-    "stats": {
-      "currentHealth": 430,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 185,
+      "attack": 34,
       "defense": 18,
-      "speed": 24,
-      "attack": 58
+      "speed": 14,
+      "critRate": 6,
+      "critDamage": 123,
+      "hit": 20,
+      "dodge": 7,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [
-        "skill_enemy_079_passive"
-      ],
-      "ultimate": []
-    }
+    "skillIds": ["skill_enemy_s1_3_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s1_3_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_danshuiyu", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.25 }
+    ],
+    "gold": [20, 40],
+    "exp": [35, 50],
+    "sceneId": "scene_1_3",
+    "description": "落桃溪中央的巨岩成精，控制着整条溪流。"
   },
+  // --- 1-4 枯木林 ---
   {
-    "id": "guardian_wood",
-    "name": "木护法",
-    "level": 10,
+    "id": "enemy_s1_4_a",
+    "name": "枯木妖",
+    "level": 7,
+    "type": "old_soul",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 410,
+      "maxHealth": 154,
+      "attack": 29,
       "defense": 16,
-      "speed": 26,
-      "attack": 52
+      "speed": 12,
+      "critRate": 6,
+      "critDamage": 123,
+      "hit": 22,
+      "dodge": 7,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [],
-      "ultimate": []
-    }
+    "skillIds": ["skill_enemy_s1_4_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [11, 28],
+    "exp": [22, 35],
+    "sceneId": "scene_1_4",
+    "description": "千年前被封印的树妖残魂，寄宿在枯木中苏醒。"
   },
   {
-    "id": "guardian_water",
-    "name": "水护法",
-    "level": 10,
+    "id": "enemy_s1_4_b",
+    "name": "树皮精",
+    "level": 7,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
     "stats": {
-      "currentHealth": 390,
-      "defense": 14,
+      "maxHealth": 154,
+      "attack": 29,
+      "defense": 16,
+      "speed": 11,
+      "critRate": 6,
+      "critDamage": 123,
+      "hit": 22,
+      "dodge": 6,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_4_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.7 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [11, 28],
+    "exp": [22, 35],
+    "sceneId": "scene_1_4",
+    "description": "枯木树皮剥离后成精，外壳如铠甲般坚硬。"
+  },
+  {
+    "id": "enemy_s1_4_c",
+    "name": "野狼精",
+    "level": 8,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 166,
+      "attack": 32,
+      "defense": 18,
+      "speed": 14,
+      "critRate": 6,
+      "critDamage": 124,
+      "hit": 24,
+      "dodge": 8,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_4_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_taomu", "probability": 0.3 }
+    ],
+    "gold": [12, 30],
+    "exp": [24, 38],
+    "sceneId": "scene_1_4",
+    "description": "枯木林中游荡的狼妖后裔，嗜血成性。"
+  },
+  {
+    "id": "enemy_s1_4_g",
+    "name": "枯木王",
+    "level": 8,
+    "type": "old_soul",
+    "faction": "wood",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 216,
+      "attack": 42,
+      "defense": 23,
+      "speed": 17,
+      "critRate": 6,
+      "critDamage": 124,
+      "hit": 24,
+      "dodge": 9,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_4_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s1_4_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [25, 45],
+    "exp": [40, 55],
+    "sceneId": "scene_1_4",
+    "description": "枯木林深处的千年树妖王，残魂最为浓烈。"
+  },
+  // --- 1-5 花妖巢 ---
+  {
+    "id": "enemy_s1_5_a",
+    "name": "花妖护卫",
+    "level": 9,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 178,
+      "attack": 35,
+      "defense": 20,
+      "speed": 14,
+      "critRate": 6,
+      "critDamage": 124,
+      "hit": 26,
+      "dodge": 9,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_5_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.7 },
+      { "itemId": "mat_danshuiyu", "probability": 0.3 }
+    ],
+    "gold": [13, 32],
+    "exp": [26, 40],
+    "sceneId": "scene_1_5",
+    "description": "花妖巢穴的护卫，以荆棘为甲。"
+  },
+  {
+    "id": "enemy_s1_5_b",
+    "name": "毒蜂",
+    "level": 9,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 178,
+      "attack": 35,
+      "defense": 20,
+      "speed": 15,
+      "critRate": 6,
+      "critDamage": 124,
+      "hit": 26,
+      "dodge": 10,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_5_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [13, 32],
+    "exp": [26, 40],
+    "sceneId": "scene_1_5",
+    "description": "花妖巢中豢养的毒蜂，尾针带有麻痹毒素。"
+  },
+  {
+    "id": "enemy_s1_5_c",
+    "name": "花妖精英",
+    "level": 10,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 190,
+      "attack": 38,
+      "defense": 22,
+      "speed": 15,
+      "critRate": 7,
+      "critDamage": 125,
+      "hit": 28,
+      "dodge": 10,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_5_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.8 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [14, 34],
+    "exp": [28, 42],
+    "sceneId": "scene_1_5",
+    "description": "花妖巢中的精英战士，花瓣如刀刃般锋利。"
+  },
+  {
+    "id": "enemy_s1_5_g",
+    "name": "花妖近卫",
+    "level": 10,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 247,
+      "attack": 49,
+      "defense": 29,
+      "speed": 20,
+      "critRate": 7,
+      "critDamage": 125,
+      "hit": 28,
+      "dodge": 12,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s1_5_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s1_5_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_danshuiyu", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [28, 50],
+    "exp": [45, 60],
+    "sceneId": "scene_1_5",
+    "description": "花妖王的贴身近卫，以生命守护巢穴。"
+  },
+  // ═══════════════════════════════════════════
+  // 大场景2 · 断柳渡（11-20级）
+  // ═══════════════════════════════════════════
+  // --- 2-1 断桥滩 ---
+  {
+    "id": "enemy_s2_1_a",
+    "name": "小虾兵",
+    "level": 11,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 202,
+      "attack": 41,
+      "defense": 24,
+      "speed": 15,
+      "critRate": 7,
+      "critDamage": 125,
+      "hit": 30,
+      "dodge": 10,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_1_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.6 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [15, 36],
+    "exp": [30, 45],
+    "sceneId": "scene_2_1",
+    "description": "河伯麾下最底层的虾兵，手持三叉戟。"
+  },
+  {
+    "id": "enemy_s2_1_b",
+    "name": "幼年蟹将",
+    "level": 11,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 202,
+      "attack": 41,
+      "defense": 24,
+      "speed": 14,
+      "critRate": 7,
+      "critDamage": 125,
+      "hit": 30,
+      "dodge": 9,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_1_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.7 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [15, 36],
+    "exp": [30, 45],
+    "sceneId": "scene_2_1",
+    "description": "尚未长成的小蟹将，蟹壳已初具硬度。"
+  },
+  {
+    "id": "enemy_s2_1_c",
+    "name": "青鱼精",
+    "level": 12,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 214,
+      "attack": 44,
+      "defense": 26,
+      "speed": 17,
+      "critRate": 7,
+      "critDamage": 126,
+      "hit": 32,
+      "dodge": 11,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_1_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_danshuiyu", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.4 }
+    ],
+    "gold": [16, 38],
+    "exp": [32, 48],
+    "sceneId": "scene_2_1",
+    "description": "断柳渡的青鱼精，善于水中突袭。"
+  },
+  {
+    "id": "enemy_s2_1_g",
+    "name": "断桥蟹将",
+    "level": 12,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 278,
+      "attack": 57,
+      "defense": 34,
+      "speed": 21,
+      "critRate": 7,
+      "critDamage": 126,
+      "hit": 32,
+      "dodge": 13,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_1_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s2_1_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.9 },
+      { "itemId": "mat_danshuiyu", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.2 }
+    ],
+    "gold": [30, 55],
+    "exp": [50, 65],
+    "sceneId": "scene_2_1",
+    "description": "断桥滩的蟹将统领，巨钳可碎石。"
+  },
+  // --- 2-2 柳荫渡 ---
+  {
+    "id": "enemy_s2_2_a",
+    "name": "虾兵队长",
+    "level": 13,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 226,
+      "attack": 47,
+      "defense": 28,
+      "speed": 17,
+      "critRate": 7,
+      "critDamage": 126,
+      "hit": 34,
+      "dodge": 12,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_2_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.6 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [17, 40],
+    "exp": [34, 50],
+    "sceneId": "scene_2_2",
+    "description": "虾兵中的队长，指挥着柳荫渡的巡逻。"
+  },
+  {
+    "id": "enemy_s2_2_b",
+    "name": "铁甲蟹",
+    "level": 13,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 226,
+      "attack": 47,
+      "defense": 28,
+      "speed": 15,
+      "critRate": 7,
+      "critDamage": 126,
+      "hit": 34,
+      "dodge": 10,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_2_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.4 }
+    ],
+    "gold": [17, 40],
+    "exp": [34, 50],
+    "sceneId": "scene_2_2",
+    "description": "全身披覆铁甲的巨蟹，防御极高。"
+  },
+  {
+    "id": "enemy_s2_2_c",
+    "name": "柳妖侍从",
+    "level": 14,
+    "type": "old_soul",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 238,
+      "attack": 50,
+      "defense": 30,
+      "speed": 18,
+      "critRate": 7,
+      "critDamage": 127,
+      "hit": 36,
+      "dodge": 13,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_2_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [18, 42],
+    "exp": [36, 52],
+    "sceneId": "scene_2_2",
+    "description": "千年柳妖的侍从，柳条如鞭。"
+  },
+  {
+    "id": "enemy_s2_2_g",
+    "name": "柳荫铁甲蟹",
+    "level": 14,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 309,
+      "attack": 65,
+      "defense": 39,
+      "speed": 23,
+      "critRate": 7,
+      "critDamage": 127,
+      "hit": 36,
+      "dodge": 15,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_2_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s2_2_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.7 },
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [32, 58],
+    "exp": [52, 70],
+    "sceneId": "scene_2_2",
+    "description": "柳荫渡的铁甲蟹将，甲壳坚不可摧。"
+  },
+  // --- 2-3 河心洲 ---
+  {
+    "id": "enemy_s2_3_a",
+    "name": "鱼精",
+    "level": 15,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 250,
+      "attack": 53,
+      "defense": 32,
+      "speed": 19,
+      "critRate": 8,
+      "critDamage": 127,
+      "hit": 38,
+      "dodge": 14,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_3_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_danshuiyu", "probability": 0.7 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [19, 44],
+    "exp": [38, 55],
+    "sceneId": "scene_2_3",
+    "description": "河心洲的鱼精，善于兴风作浪。"
+  },
+  {
+    "id": "enemy_s2_3_b",
+    "name": "水蛇",
+    "level": 15,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 250,
+      "attack": 53,
+      "defense": 32,
+      "speed": 20,
+      "critRate": 8,
+      "critDamage": 127,
+      "hit": 38,
+      "dodge": 15,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_3_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_danshuiyu", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [19, 44],
+    "exp": [38, 55],
+    "sceneId": "scene_2_3",
+    "description": "河心洲的水蛇妖，身形灵活，毒牙致命。"
+  },
+  {
+    "id": "enemy_s2_3_c",
+    "name": "河伯侍从",
+    "level": 16,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 262,
+      "attack": 56,
+      "defense": 34,
+      "speed": 19,
+      "critRate": 8,
+      "critDamage": 128,
+      "hit": 40,
+      "dodge": 14,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_3_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_danshuiyu", "probability": 0.5 }
+    ],
+    "gold": [20, 46],
+    "exp": [40, 58],
+    "sceneId": "scene_2_3",
+    "description": "河伯的贴身侍从，手持水火旗。"
+  },
+  {
+    "id": "enemy_s2_3_g",
+    "name": "河心鱼精王",
+    "level": 16,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 341,
+      "attack": 73,
+      "defense": 44,
+      "speed": 25,
+      "critRate": 8,
+      "critDamage": 128,
+      "hit": 40,
+      "dodge": 17,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_3_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s2_3_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_danshuiyu", "probability": 0.9 },
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.25 }
+    ],
+    "gold": [35, 60],
+    "exp": [55, 75],
+    "sceneId": "scene_2_3",
+    "description": "河心洲的鱼精之王，能掀起巨浪。"
+  },
+  // --- 2-4 沉船湾 ---
+  {
+    "id": "enemy_s2_4_a",
+    "name": "沙妖",
+    "level": 17,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 274,
+      "attack": 59,
+      "defense": 36,
+      "speed": 20,
+      "critRate": 8,
+      "critDamage": 128,
+      "hit": 42,
+      "dodge": 15,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_4_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [21, 48],
+    "exp": [42, 60],
+    "sceneId": "scene_2_4",
+    "description": "沉船湾泥沙中诞生的妖怪，善于掩埋猎物。"
+  },
+  {
+    "id": "enemy_s2_4_b",
+    "name": "水鬼",
+    "level": 17,
+    "type": "old_soul",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 274,
+      "attack": 59,
+      "defense": 36,
+      "speed": 21,
+      "critRate": 8,
+      "critDamage": 128,
+      "hit": 42,
+      "dodge": 16,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_4_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_danshuiyu", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [21, 48],
+    "exp": [42, 60],
+    "sceneId": "scene_2_4",
+    "description": "千年前溺亡者的怨魂，在水中游荡寻找替身。"
+  },
+  {
+    "id": "enemy_s2_4_c",
+    "name": "沉船精",
+    "level": 18,
+    "type": "old_soul",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 286,
+      "attack": 62,
+      "defense": 38,
+      "speed": 21,
+      "critRate": 8,
+      "critDamage": 129,
+      "hit": 44,
+      "dodge": 16,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_4_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [22, 50],
+    "exp": [44, 62],
+    "sceneId": "scene_2_4",
+    "description": "沉没古船的残魂，以腐朽木板为体。"
+  },
+  {
+    "id": "enemy_s2_4_g",
+    "name": "沉船沙妖王",
+    "level": 18,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 372,
+      "attack": 81,
+      "defense": 49,
+      "speed": 27,
+      "critRate": 8,
+      "critDamage": 129,
+      "hit": 44,
+      "dodge": 19,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_4_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s2_4_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [38, 65],
+    "exp": [60, 80],
+    "sceneId": "scene_2_4",
+    "description": "沉船湾的沙妖之王，能召唤流沙吞没一切。"
+  },
+  // --- 2-5 河伯祠 ---
+  {
+    "id": "enemy_s2_5_a",
+    "name": "虾兵统领",
+    "level": 19,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 298,
+      "attack": 65,
+      "defense": 40,
+      "speed": 22,
+      "critRate": 8,
+      "critDamage": 129,
+      "hit": 46,
+      "dodge": 17,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_5_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.6 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [23, 52],
+    "exp": [46, 65],
+    "sceneId": "scene_2_5",
+    "description": "河伯祠的虾兵统领，身经百战。"
+  },
+  {
+    "id": "enemy_s2_5_b",
+    "name": "金甲蟹将",
+    "level": 19,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 298,
+      "attack": 65,
+      "defense": 40,
+      "speed": 20,
+      "critRate": 8,
+      "critDamage": 129,
+      "hit": 46,
+      "dodge": 15,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_5_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.4 }
+    ],
+    "gold": [23, 52],
+    "exp": [46, 65],
+    "sceneId": "scene_2_5",
+    "description": "身披金甲的蟹将，河伯祠的精锐。"
+  },
+  {
+    "id": "enemy_s2_5_c",
+    "name": "河伯亲卫",
+    "level": 20,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 310,
+      "attack": 68,
+      "defense": 42,
+      "speed": 23,
+      "critRate": 9,
+      "critDamage": 130,
+      "hit": 48,
+      "dodge": 18,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s2_5_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_danshuiyu", "probability": 0.5 }
+    ],
+    "gold": [24, 54],
+    "exp": [48, 68],
+    "sceneId": "scene_2_5",
+    "description": "河伯的亲卫队，誓死守护河伯祠。"
+  },
+  {
+    "id": "enemy_s2_5_g",
+    "name": "河伯祠守卫",
+    "level": 20,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 403,
+      "attack": 88,
+      "defense": 55,
       "speed": 30,
-      "attack": 48
+      "critRate": 9,
+      "critDamage": 130,
+      "hit": 48,
+      "dodge": 21,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [],
-      "ultimate": []
-    }
+    "skillIds": ["skill_enemy_s2_5_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s2_5_g_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_danshuiyu", "probability": 0.4 }
+    ],
+    "gold": [40, 70],
+    "exp": [65, 85],
+    "sceneId": "scene_2_5",
+    "description": "河伯祠的最终守卫，手持三叉戟。"
+  },
+  // ═══════════════════════════════════════════
+  // 大场景3 · 碎石岭（21-30级）
+  // ═══════════════════════════════════════════
+  // --- 3-1 碎石坡 ---
+  {
+    "id": "enemy_s3_1_a",
+    "name": "小岩妖",
+    "level": 21,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 322,
+      "attack": 71,
+      "defense": 44,
+      "speed": 23,
+      "critRate": 9,
+      "critDamage": 130,
+      "hit": 50,
+      "dodge": 18,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_1_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.7 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [25, 56],
+    "exp": [50, 70],
+    "sceneId": "scene_3_1",
+    "description": "碎石坡的小岩妖，以碎石为食。"
   },
   {
-    "id": "guardian_fire",
-    "name": "火护法",
-    "level": 10,
+    "id": "enemy_s3_1_b",
+    "name": "碎石精",
+    "level": 21,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "normal",
     "stats": {
-      "currentHealth": 350,
-      "defense": 12,
+      "maxHealth": 322,
+      "attack": 71,
+      "defense": 44,
+      "speed": 24,
+      "critRate": 9,
+      "critDamage": 130,
+      "hit": 50,
+      "dodge": 19,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_1_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.2 }
+    ],
+    "gold": [25, 56],
+    "exp": [50, 70],
+    "sceneId": "scene_3_1",
+    "description": "碎石凝聚的精怪，善于投掷石块。"
+  },
+  {
+    "id": "enemy_s3_1_c",
+    "name": "矿虫",
+    "level": 22,
+    "type": "new_born",
+    "faction": "metal",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 334,
+      "attack": 74,
+      "defense": 46,
+      "speed": 24,
+      "critRate": 9,
+      "critDamage": 131,
+      "hit": 52,
+      "dodge": 19,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_1_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [26, 58],
+    "exp": [52, 72],
+    "sceneId": "scene_3_1",
+    "description": "以矿石为食的巨虫，甲壳含有金属成分。"
+  },
+  {
+    "id": "enemy_s3_1_g",
+    "name": "碎石坡岩妖",
+    "level": 22,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 434,
+      "attack": 96,
+      "defense": 60,
+      "speed": 31,
+      "critRate": 9,
+      "critDamage": 131,
+      "hit": 52,
+      "dodge": 23,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_1_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s3_1_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.4 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [42, 75],
+    "exp": [70, 90],
+    "sceneId": "scene_3_1",
+    "description": "碎石坡的岩妖首领，身躯如小山。"
+  },
+  // --- 3-2 铁匠废铺 ---
+  {
+    "id": "enemy_s3_2_a",
+    "name": "铁精",
+    "level": 23,
+    "type": "new_born",
+    "faction": "metal",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 346,
+      "attack": 77,
+      "defense": 48,
+      "speed": 25,
+      "critRate": 9,
+      "critDamage": 131,
+      "hit": 54,
+      "dodge": 20,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_2_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.7 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [27, 60],
+    "exp": [54, 75],
+    "sceneId": "scene_3_2",
+    "description": "废弃铁匠铺中铁块成精，全身滚烫。"
+  },
+  {
+    "id": "enemy_s3_2_b",
+    "name": "炉渣妖",
+    "level": 23,
+    "type": "old_soul",
+    "faction": "fire",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 346,
+      "attack": 77,
+      "defense": 48,
+      "speed": 24,
+      "critRate": 9,
+      "critDamage": 131,
+      "hit": 54,
+      "dodge": 19,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_2_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [27, 60],
+    "exp": [54, 75],
+    "sceneId": "scene_3_2",
+    "description": "千年炉火残留的怨念所化，浑身炽热。"
+  },
+  {
+    "id": "enemy_s3_2_c",
+    "name": "废铺守卫",
+    "level": 24,
+    "type": "old_soul",
+    "faction": "metal",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 358,
+      "attack": 80,
+      "defense": 50,
+      "speed": 26,
+      "critRate": 9,
+      "critDamage": 132,
+      "hit": 56,
+      "dodge": 21,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_2_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [28, 62],
+    "exp": [56, 78],
+    "sceneId": "scene_3_2",
+    "description": "废铺中残存的守卫傀儡，忠实地执行千年前的命令。"
+  },
+  {
+    "id": "enemy_s3_2_g",
+    "name": "废铺铁精",
+    "level": 24,
+    "type": "new_born",
+    "faction": "metal",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 465,
+      "attack": 104,
+      "defense": 65,
+      "speed": 34,
+      "critRate": 9,
+      "critDamage": 132,
+      "hit": 56,
+      "dodge": 25,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_2_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s3_2_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [45, 80],
+    "exp": [75, 95],
+    "sceneId": "scene_3_2",
+    "description": "铁匠废铺的铁精之王，以铁锤为武器。"
+  },
+  // --- 3-3 崩山道 ---
+  {
+    "id": "enemy_s3_3_a",
+    "name": "巨岩妖",
+    "level": 25,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 370,
+      "attack": 83,
+      "defense": 52,
+      "speed": 27,
+      "critRate": 10,
+      "critDamage": 132,
+      "hit": 58,
+      "dodge": 22,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_3_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.7 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [29, 64],
+    "exp": [58, 80],
+    "sceneId": "scene_3_3",
+    "description": "崩山道的巨岩妖，体型庞大，行动迟缓。"
+  },
+  {
+    "id": "enemy_s3_3_b",
+    "name": "金刚石精",
+    "level": 25,
+    "type": "new_born",
+    "faction": "metal",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 370,
+      "attack": 83,
+      "defense": 52,
+      "speed": 26,
+      "critRate": 10,
+      "critDamage": 132,
+      "hit": 58,
+      "dodge": 21,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_3_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [29, 64],
+    "exp": [58, 80],
+    "sceneId": "scene_3_3",
+    "description": "金刚石凝聚的精怪，硬度极高。"
+  },
+  {
+    "id": "enemy_s3_3_c",
+    "name": "山魈王",
+    "level": 26,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 382,
+      "attack": 86,
+      "defense": 54,
+      "speed": 27,
+      "critRate": 10,
+      "critDamage": 133,
+      "hit": 60,
+      "dodge": 22,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_3_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [30, 66],
+    "exp": [60, 82],
+    "sceneId": "scene_3_3",
+    "description": "山魈一族的王者后裔，力能崩山。"
+  },
+  {
+    "id": "enemy_s3_3_g",
+    "name": "崩山巨岩妖",
+    "level": 26,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 497,
+      "attack": 112,
+      "defense": 70,
       "speed": 35,
-      "attack": 70
+      "critRate": 10,
+      "critDamage": 133,
+      "hit": 60,
+      "dodge": 26,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [
-        "guardian_revenge_rage",
-        "guardian_combo_heart",
-        "guardian_energy_overload",
-        "guardian_swift_wind"
-      ],
-      "ultimate": []
+    "skillIds": ["skill_enemy_s3_3_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s3_3_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [48, 85],
+    "exp": [80, 100],
+    "sceneId": "scene_3_3",
+    "description": "崩山道的巨岩妖王，一拳可碎山石。"
+  },
+  // --- 3-4 矿脉深处 ---
+  {
+    "id": "enemy_s3_4_a",
+    "name": "矿魔",
+    "level": 27,
+    "type": "old_soul",
+    "faction": "metal",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 394,
+      "attack": 89,
+      "defense": 56,
+      "speed": 28,
+      "critRate": 10,
+      "critDamage": 133,
+      "hit": 62,
+      "dodge": 23,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_4_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.7 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [31, 68],
+    "exp": [62, 85],
+    "sceneId": "scene_3_4",
+    "description": "矿脉深处的魔物，以金属矿石为食。"
+  },
+  {
+    "id": "enemy_s3_4_b",
+    "name": "铁甲虫",
+    "level": 27,
+    "type": "new_born",
+    "faction": "metal",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 394,
+      "attack": 89,
+      "defense": 56,
+      "speed": 27,
+      "critRate": 10,
+      "critDamage": 133,
+      "hit": 62,
+      "dodge": 22,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_4_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [31, 68],
+    "exp": [62, 85],
+    "sceneId": "scene_3_4",
+    "description": "矿脉中的铁甲虫，外壳坚硬如铁。"
+  },
+  {
+    "id": "enemy_s3_4_c",
+    "name": "地底蛇",
+    "level": 28,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 406,
+      "attack": 92,
+      "defense": 58,
+      "speed": 29,
+      "critRate": 10,
+      "critDamage": 134,
+      "hit": 64,
+      "dodge": 24,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_4_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.4 }
+    ],
+    "gold": [32, 70],
+    "exp": [64, 88],
+    "sceneId": "scene_3_4",
+    "description": "地底深处的巨蛇，在矿脉中穿行。"
+  },
+  {
+    "id": "enemy_s3_4_g",
+    "name": "矿脉铁甲虫王",
+    "level": 28,
+    "type": "new_born",
+    "faction": "metal",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 528,
+      "attack": 120,
+      "defense": 75,
+      "speed": 38,
+      "critRate": 10,
+      "critDamage": 134,
+      "hit": 64,
+      "dodge": 28,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_4_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s3_4_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [50, 90],
+    "exp": [85, 105],
+    "sceneId": "scene_3_4",
+    "description": "矿脉深处的铁甲虫王，甲壳可抵御一切物理攻击。"
+  },
+  // --- 3-5 五行山脚 ---
+  {
+    "id": "enemy_s3_5_a",
+    "name": "山魈首领",
+    "level": 29,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 418,
+      "attack": 95,
+      "defense": 60,
+      "speed": 30,
+      "critRate": 10,
+      "critDamage": 134,
+      "hit": 66,
+      "dodge": 25,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_5_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [33, 72],
+    "exp": [66, 90],
+    "sceneId": "scene_3_5",
+    "description": "五行山脚的山魈首领，继承着远古血脉。"
+  },
+  {
+    "id": "enemy_s3_5_b",
+    "name": "岩石巨人",
+    "level": 29,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 418,
+      "attack": 95,
+      "defense": 60,
+      "speed": 28,
+      "critRate": 10,
+      "critDamage": 134,
+      "hit": 66,
+      "dodge": 23,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_5_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [33, 72],
+    "exp": [66, 90],
+    "sceneId": "scene_3_5",
+    "description": "五行山脚的岩石巨人，身躯如山。"
+  },
+  {
+    "id": "enemy_s3_5_c",
+    "name": "碎石岭守护者",
+    "level": 30,
+    "type": "old_soul",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 430,
+      "attack": 98,
+      "defense": 62,
+      "speed": 31,
+      "critRate": 11,
+      "critDamage": 135,
+      "hit": 68,
+      "dodge": 26,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_5_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.4 }
+    ],
+    "gold": [34, 74],
+    "exp": [68, 92],
+    "sceneId": "scene_3_5",
+    "description": "碎石岭的古老守护者残魂，被妖气感染后敌我不分。"
+  },
+  {
+    "id": "enemy_s3_5_g",
+    "name": "五行山脚岩石巨人",
+    "level": 30,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 559,
+      "attack": 127,
+      "defense": 81,
+      "speed": 40,
+      "critRate": 11,
+      "critDamage": 135,
+      "hit": 68,
+      "dodge": 30,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s3_5_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s3_5_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [52, 95],
+    "exp": [90, 110],
+    "sceneId": "scene_3_5",
+    "description": "五行山脚的岩石巨人王，守护着通往山顶的道路。"
+  },
+  // ═══════════════════════════════════════════
+  // 大场景4 · 迷雾谷（31-40级）
+  // ═══════════════════════════════════════════
+  // --- 4-1 雾口 ---
+  {
+    "id": "enemy_s4_1_a",
+    "name": "小树精",
+    "level": 31,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 442,
+      "attack": 101,
+      "defense": 64,
+      "speed": 31,
+      "critRate": 11,
+      "critDamage": 135,
+      "hit": 70,
+      "dodge": 26,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_1_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [35, 76],
+    "exp": [70, 95],
+    "sceneId": "scene_4_1",
+    "description": "迷雾谷入口的小树精，被雾气侵蚀。"
+  },
+  {
+    "id": "enemy_s4_1_b",
+    "name": "雾妖",
+    "level": 31,
+    "type": "new_born",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 442,
+      "attack": 101,
+      "defense": 64,
+      "speed": 33,
+      "critRate": 11,
+      "critDamage": 135,
+      "hit": 70,
+      "dodge": 28,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_1_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_taomu", "probability": 0.3 }
+    ],
+    "gold": [35, 76],
+    "exp": [70, 95],
+    "sceneId": "scene_4_1",
+    "description": "迷雾中诞生的雾妖，身形飘忽不定。"
+  },
+  {
+    "id": "enemy_s4_1_c",
+    "name": "蘑菇精",
+    "level": 32,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 454,
+      "attack": 104,
+      "defense": 66,
+      "speed": 32,
+      "critRate": 11,
+      "critDamage": 136,
+      "hit": 72,
+      "dodge": 27,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_1_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [36, 78],
+    "exp": [72, 98],
+    "sceneId": "scene_4_1",
+    "description": "迷雾谷中的蘑菇精，释放致幻孢子。"
+  },
+  {
+    "id": "enemy_s4_1_g",
+    "name": "雾口树精",
+    "level": 32,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 590,
+      "attack": 135,
+      "defense": 86,
+      "speed": 42,
+      "critRate": 11,
+      "critDamage": 136,
+      "hit": 72,
+      "dodge": 32,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_1_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s4_1_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [55, 100],
+    "exp": [95, 115],
+    "sceneId": "scene_4_1",
+    "description": "迷雾谷入口的树精长老，根系深入地下。"
+  },
+  // --- 4-2 迷径 ---
+  {
+    "id": "enemy_s4_2_a",
+    "name": "树精头目",
+    "level": 33,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 466,
+      "attack": 107,
+      "defense": 68,
+      "speed": 33,
+      "critRate": 11,
+      "critDamage": 136,
+      "hit": 74,
+      "dodge": 28,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_2_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.7 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [37, 80],
+    "exp": [74, 100],
+    "sceneId": "scene_4_2",
+    "description": "迷径中的树精头目，指挥着其他树精。"
+  },
+  {
+    "id": "enemy_s4_2_b",
+    "name": "毒蘑菇",
+    "level": 33,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 466,
+      "attack": 107,
+      "defense": 68,
+      "speed": 32,
+      "critRate": 11,
+      "critDamage": 136,
+      "hit": 74,
+      "dodge": 27,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_2_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [37, 80],
+    "exp": [74, 100],
+    "sceneId": "scene_4_2",
+    "description": "剧毒的蘑菇精，孢子可致人昏迷。"
+  },
+  {
+    "id": "enemy_s4_2_c",
+    "name": "幻影蝶",
+    "level": 34,
+    "type": "new_born",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 478,
+      "attack": 110,
+      "defense": 70,
+      "speed": 35,
+      "critRate": 11,
+      "critDamage": 137,
+      "hit": 76,
+      "dodge": 30,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_2_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.4 },
+      { "itemId": "mat_danshuiyu", "probability": 0.3 }
+    ],
+    "gold": [38, 82],
+    "exp": [76, 102],
+    "sceneId": "scene_4_2",
+    "description": "迷径中的幻影蝶，翅膀上的鳞粉制造幻象。"
+  },
+  {
+    "id": "enemy_s4_2_g",
+    "name": "迷径毒蘑菇王",
+    "level": 34,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 621,
+      "attack": 143,
+      "defense": 91,
+      "speed": 44,
+      "critRate": 11,
+      "critDamage": 137,
+      "hit": 76,
+      "dodge": 34,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_2_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s4_2_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [58, 105],
+    "exp": [100, 120],
+    "sceneId": "scene_4_2",
+    "description": "迷径深处的毒蘑菇王，孢子覆盖整片区域。"
+  },
+  // --- 4-3 蛛丝林 ---
+  {
+    "id": "enemy_s4_3_a",
+    "name": "小蜘蛛",
+    "level": 35,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 490,
+      "attack": 113,
+      "defense": 72,
+      "speed": 35,
+      "critRate": 12,
+      "critDamage": 137,
+      "hit": 78,
+      "dodge": 30,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_3_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [39, 84],
+    "exp": [78, 105],
+    "sceneId": "scene_4_3",
+    "description": "蛛丝林中的小蜘蛛，善于结网捕猎。"
+  },
+  {
+    "id": "enemy_s4_3_b",
+    "name": "毒蛾",
+    "level": 35,
+    "type": "new_born",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 490,
+      "attack": 113,
+      "defense": 72,
+      "speed": 36,
+      "critRate": 12,
+      "critDamage": 137,
+      "hit": 78,
+      "dodge": 31,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_3_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.4 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [39, 84],
+    "exp": [78, 105],
+    "sceneId": "scene_4_3",
+    "description": "蛛丝林中的毒蛾，翅膀带有剧毒鳞粉。"
+  },
+  {
+    "id": "enemy_s4_3_c",
+    "name": "蛛网精",
+    "level": 36,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 502,
+      "attack": 116,
+      "defense": 74,
+      "speed": 35,
+      "critRate": 12,
+      "critDamage": 138,
+      "hit": 80,
+      "dodge": 30,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_3_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [40, 86],
+    "exp": [80, 108],
+    "sceneId": "scene_4_3",
+    "description": "蛛网成精，以丝线控制猎物。"
+  },
+  {
+    "id": "enemy_s4_3_g",
+    "name": "蛛丝林蛛网精",
+    "level": 36,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 653,
+      "attack": 151,
+      "defense": 96,
+      "speed": 46,
+      "critRate": 12,
+      "critDamage": 138,
+      "hit": 80,
+      "dodge": 36,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_3_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s4_3_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [60, 110],
+    "exp": [105, 125],
+    "sceneId": "scene_4_3",
+    "description": "蛛丝林的蛛网精王，丝线坚如钢丝。"
+  },
+  // --- 4-4 回声洞 ---
+  {
+    "id": "enemy_s4_4_a",
+    "name": "蝙蝠精",
+    "level": 37,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 514,
+      "attack": 119,
+      "defense": 76,
+      "speed": 37,
+      "critRate": 12,
+      "critDamage": 138,
+      "hit": 82,
+      "dodge": 32,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_4_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_taomu", "probability": 0.3 }
+    ],
+    "gold": [41, 88],
+    "exp": [82, 110],
+    "sceneId": "scene_4_4",
+    "description": "回声洞中的蝙蝠精，以超声波攻击。"
+  },
+  {
+    "id": "enemy_s4_4_b",
+    "name": "回声妖",
+    "level": 37,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 514,
+      "attack": 119,
+      "defense": 76,
+      "speed": 36,
+      "critRate": 12,
+      "critDamage": 138,
+      "hit": 82,
+      "dodge": 31,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_4_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.2 }
+    ],
+    "gold": [41, 88],
+    "exp": [82, 110],
+    "sceneId": "scene_4_4",
+    "description": "回声洞中的回声妖，模仿一切声音。"
+  },
+  {
+    "id": "enemy_s4_4_c",
+    "name": "石壁鬼",
+    "level": 38,
+    "type": "old_soul",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 526,
+      "attack": 122,
+      "defense": 78,
+      "speed": 37,
+      "critRate": 12,
+      "critDamage": 139,
+      "hit": 84,
+      "dodge": 32,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_4_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [42, 90],
+    "exp": [84, 112],
+    "sceneId": "scene_4_4",
+    "description": "石壁中封印的鬼魂，被妖气唤醒。"
+  },
+  {
+    "id": "enemy_s4_4_g",
+    "name": "回声洞蝙蝠王",
+    "level": 38,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 684,
+      "attack": 159,
+      "defense": 101,
+      "speed": 48,
+      "critRate": 12,
+      "critDamage": 139,
+      "hit": 84,
+      "dodge": 38,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_4_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s4_4_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [62, 115],
+    "exp": [110, 130],
+    "sceneId": "scene_4_4",
+    "description": "回声洞的蝙蝠王，超声波可震碎岩石。"
+  },
+  // --- 4-5 盘丝穴 ---
+  {
+    "id": "enemy_s4_5_a",
+    "name": "蛛后亲卫",
+    "level": 39,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 538,
+      "attack": 125,
+      "defense": 80,
+      "speed": 38,
+      "critRate": 12,
+      "critDamage": 139,
+      "hit": 86,
+      "dodge": 33,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_5_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [43, 92],
+    "exp": [86, 115],
+    "sceneId": "scene_4_5",
+    "description": "盘丝穴蛛后的亲卫，丝线带有剧毒。"
+  },
+  {
+    "id": "enemy_s4_5_b",
+    "name": "毒蛾女王",
+    "level": 39,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 538,
+      "attack": 125,
+      "defense": 80,
+      "speed": 39,
+      "critRate": 12,
+      "critDamage": 139,
+      "hit": 86,
+      "dodge": 34,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_5_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [43, 92],
+    "exp": [86, 115],
+    "sceneId": "scene_4_5",
+    "description": "毒蛾一族的女王，鳞粉可致人死地。"
+  },
+  {
+    "id": "enemy_s4_5_c",
+    "name": "蛛丝谷守护者",
+    "level": 40,
+    "type": "old_soul",
+    "faction": "wood",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 550,
+      "attack": 128,
+      "defense": 82,
+      "speed": 39,
+      "critRate": 13,
+      "critDamage": 140,
+      "hit": 88,
+      "dodge": 34,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_5_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [44, 94],
+    "exp": [88, 118],
+    "sceneId": "scene_4_5",
+    "description": "蛛丝谷的古老守护者残魂，被妖气侵蚀。"
+  },
+  {
+    "id": "enemy_s4_5_g",
+    "name": "盘丝穴蛛后近卫",
+    "level": 40,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 715,
+      "attack": 166,
+      "defense": 107,
+      "speed": 51,
+      "critRate": 13,
+      "critDamage": 140,
+      "hit": 88,
+      "dodge": 40,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s4_5_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s4_5_g_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [65, 120],
+    "exp": [115, 135],
+    "sceneId": "scene_4_5",
+    "description": "盘丝穴蛛后的近卫统领，丝线可缚仙。"
+  },
+  // ═══════════════════════════════════════════
+  // 大场景5 · 灵霄台（41-50级）
+  // ═══════════════════════════════════════════
+  // --- 5-1 禅音道 ---
+  {
+    "id": "enemy_s5_1_a",
+    "name": "小金刚",
+    "level": 41,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 562,
+      "attack": 131,
+      "defense": 84,
+      "speed": 39,
+      "critRate": 13,
+      "critDamage": 140,
+      "hit": 90,
+      "dodge": 34,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_1_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [45, 96],
+    "exp": [90, 120],
+    "sceneId": "scene_5_1",
+    "description": "灵霄台的小金刚，被妖气感染后背叛佛门。"
+  },
+  {
+    "id": "enemy_s5_1_b",
+    "name": "罗汉侍者",
+    "level": 41,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 562,
+      "attack": 131,
+      "defense": 84,
+      "speed": 40,
+      "critRate": 13,
+      "critDamage": 140,
+      "hit": 90,
+      "dodge": 35,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_1_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [45, 96],
+    "exp": [90, 120],
+    "sceneId": "scene_5_1",
+    "description": "罗汉的侍者，被妖气侵蚀后堕入邪道。"
+  },
+  {
+    "id": "enemy_s5_1_c",
+    "name": "佛门叛徒侍从",
+    "level": 42,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 574,
+      "attack": 134,
+      "defense": 86,
+      "speed": 40,
+      "critRate": 13,
+      "critDamage": 141,
+      "hit": 92,
+      "dodge": 35,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_1_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [46, 98],
+    "exp": [92, 122],
+    "sceneId": "scene_5_1",
+    "description": "佛门叛徒的侍从，以邪法修行。"
+  },
+  {
+    "id": "enemy_s5_1_g",
+    "name": "禅音道小金刚",
+    "level": 42,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 746,
+      "attack": 174,
+      "defense": 112,
+      "speed": 52,
+      "critRate": 13,
+      "critDamage": 141,
+      "hit": 92,
+      "dodge": 42,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_1_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s5_1_g_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [68, 125],
+    "exp": [120, 140],
+    "sceneId": "scene_5_1",
+    "description": "禅音道的小金刚首领，金刚不坏之身。"
+  },
+  // --- 5-2 金刚门 ---
+  {
+    "id": "enemy_s5_2_a",
+    "name": "金刚力士",
+    "level": 43,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 586,
+      "attack": 137,
+      "defense": 88,
+      "speed": 41,
+      "critRate": 13,
+      "critDamage": 141,
+      "hit": 94,
+      "dodge": 36,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_2_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.3 }
+    ],
+    "gold": [47, 100],
+    "exp": [94, 125],
+    "sceneId": "scene_5_2",
+    "description": "金刚门的力士，力大无穷。"
+  },
+  {
+    "id": "enemy_s5_2_b",
+    "name": "降龙侍者",
+    "level": 43,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 586,
+      "attack": 137,
+      "defense": 88,
+      "speed": 42,
+      "critRate": 13,
+      "critDamage": 141,
+      "hit": 94,
+      "dodge": 37,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_2_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [47, 100],
+    "exp": [94, 125],
+    "sceneId": "scene_5_2",
+    "description": "降龙罗汉的侍者，被妖气感染。"
+  },
+  {
+    "id": "enemy_s5_2_c",
+    "name": "叛僧",
+    "level": 44,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 598,
+      "attack": 140,
+      "defense": 90,
+      "speed": 42,
+      "critRate": 13,
+      "critDamage": 142,
+      "hit": 96,
+      "dodge": 37,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_2_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [48, 102],
+    "exp": [96, 128],
+    "sceneId": "scene_5_2",
+    "description": "背叛佛门的僧人，以邪法为修行。"
+  },
+  {
+    "id": "enemy_s5_2_g",
+    "name": "金刚门力士",
+    "level": 44,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 777,
+      "attack": 182,
+      "defense": 117,
+      "speed": 55,
+      "critRate": 13,
+      "critDamage": 142,
+      "hit": 96,
+      "dodge": 44,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_2_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s5_2_g_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [70, 130],
+    "exp": [125, 145],
+    "sceneId": "scene_5_2",
+    "description": "金刚门的力士统领，金刚怒目。"
+  },
+  // --- 5-3 罗汉堂 ---
+  {
+    "id": "enemy_s5_3_a",
+    "name": "罗汉",
+    "level": 45,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 610,
+      "attack": 143,
+      "defense": 92,
+      "speed": 43,
+      "critRate": 14,
+      "critDamage": 142,
+      "hit": 98,
+      "dodge": 38,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_3_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.4 }
+    ],
+    "gold": [49, 104],
+    "exp": [98, 130],
+    "sceneId": "scene_5_3",
+    "description": "堕落的罗汉，被六耳猕猴的妖气感染。"
+  },
+  {
+    "id": "enemy_s5_3_b",
+    "name": "护法",
+    "level": 45,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 610,
+      "attack": 143,
+      "defense": 92,
+      "speed": 42,
+      "critRate": 14,
+      "critDamage": 142,
+      "hit": 98,
+      "dodge": 37,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_3_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [49, 104],
+    "exp": [98, 130],
+    "sceneId": "scene_5_3",
+    "description": "罗汉堂的护法，被妖气侵蚀后敌我不分。"
+  },
+  {
+    "id": "enemy_s5_3_c",
+    "name": "佛门叛徒精英",
+    "level": 46,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 622,
+      "attack": 146,
+      "defense": 94,
+      "speed": 43,
+      "critRate": 14,
+      "critDamage": 143,
+      "hit": 100,
+      "dodge": 38,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_3_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [50, 106],
+    "exp": [100, 132],
+    "sceneId": "scene_5_3",
+    "description": "佛门叛徒中的精英，修炼邪法多年。"
+  },
+  {
+    "id": "enemy_s5_3_g",
+    "name": "罗汉堂护法",
+    "level": 46,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 809,
+      "attack": 190,
+      "defense": 122,
+      "speed": 56,
+      "critRate": 14,
+      "critDamage": 143,
+      "hit": 100,
+      "dodge": 46,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_3_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s5_3_g_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [72, 135],
+    "exp": [130, 150],
+    "sceneId": "scene_5_3",
+    "description": "罗汉堂的护法统领，金刚不坏。"
+  },
+  // --- 5-4 须弥阶 ---
+  {
+    "id": "enemy_s5_4_a",
+    "name": "金刚护法将领",
+    "level": 47,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 634,
+      "attack": 149,
+      "defense": 96,
+      "speed": 44,
+      "critRate": 14,
+      "critDamage": 143,
+      "hit": 102,
+      "dodge": 39,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_4_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.4 }
+    ],
+    "gold": [51, 108],
+    "exp": [102, 135],
+    "sceneId": "scene_5_4",
+    "description": "须弥阶的金刚护法将领，被妖气感染。"
+  },
+  {
+    "id": "enemy_s5_4_b",
+    "name": "罗汉使者",
+    "level": 47,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 634,
+      "attack": 149,
+      "defense": 96,
+      "speed": 45,
+      "critRate": 14,
+      "critDamage": 143,
+      "hit": 102,
+      "dodge": 40,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_4_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [51, 108],
+    "exp": [102, 135],
+    "sceneId": "scene_5_4",
+    "description": "罗汉的使者，被妖气侵蚀后堕入邪道。"
+  },
+  {
+    "id": "enemy_s5_4_c",
+    "name": "佛门叛徒首领",
+    "level": 48,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 646,
+      "attack": 152,
+      "defense": 98,
+      "speed": 45,
+      "critRate": 14,
+      "critDamage": 144,
+      "hit": 104,
+      "dodge": 40,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_4_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [52, 110],
+    "exp": [104, 138],
+    "sceneId": "scene_5_4",
+    "description": "佛门叛徒的首领，修炼邪法至深。"
+  },
+  {
+    "id": "enemy_s5_4_g",
+    "name": "须弥阶金刚将领",
+    "level": 48,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 840,
+      "attack": 198,
+      "defense": 127,
+      "speed": 59,
+      "critRate": 14,
+      "critDamage": 144,
+      "hit": 104,
+      "dodge": 48,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_4_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s5_4_g_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [75, 140],
+    "exp": [135, 155],
+    "sceneId": "scene_5_4",
+    "description": "须弥阶的金刚将领，金刚怒目，威震四方。"
+  },
+  // --- 5-5 灵霄顶 ---
+  {
+    "id": "enemy_s5_5_a",
+    "name": "金刚护法统帅",
+    "level": 49,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 658,
+      "attack": 155,
+      "defense": 100,
+      "speed": 46,
+      "critRate": 14,
+      "critDamage": 144,
+      "hit": 106,
+      "dodge": 41,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_5_a_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tiejing", "probability": 0.4 }
+    ],
+    "gold": [53, 112],
+    "exp": [106, 140],
+    "sceneId": "scene_5_5",
+    "description": "灵霄顶的金刚护法统帅，被妖气感染至深。"
+  },
+  {
+    "id": "enemy_s5_5_b",
+    "name": "降龙罗汉",
+    "level": 49,
+    "type": "old_blood",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 658,
+      "attack": 155,
+      "defense": 100,
+      "speed": 47,
+      "critRate": 14,
+      "critDamage": 144,
+      "hit": 106,
+      "dodge": 42,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_5_b_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [53, 112],
+    "exp": [106, 140],
+    "sceneId": "scene_5_5",
+    "description": "堕落的降龙罗汉，被六耳猕猴的妖气完全侵蚀。"
+  },
+  {
+    "id": "enemy_s5_5_c",
+    "name": "灵霄台守护者",
+    "level": 50,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "normal",
+    "stats": {
+      "maxHealth": 670,
+      "attack": 158,
+      "defense": 102,
+      "speed": 47,
+      "critRate": 15,
+      "critDamage": 145,
+      "hit": 108,
+      "dodge": 42,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_5_c_s1"],
+    "passiveSkillIds": [],
+    "affixPool": { "buffTier": 0, "count": 0 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [54, 114],
+    "exp": [108, 142],
+    "sceneId": "scene_5_5",
+    "description": "灵霄台的古老守护者残魂，被妖气侵蚀后敌我不分。"
+  },
+  {
+    "id": "enemy_s5_5_g",
+    "name": "灵霄顶金刚统帅",
+    "level": 50,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "guardian",
+    "stats": {
+      "maxHealth": 871,
+      "attack": 205,
+      "defense": 133,
+      "speed": 61,
+      "critRate": 15,
+      "critDamage": 145,
+      "hit": 108,
+      "dodge": 50,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_enemy_s5_5_g_s1"],
+    "passiveSkillIds": ["passive_enemy_s5_5_g_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [78, 145],
+    "exp": [140, 160],
+    "sceneId": "scene_5_5",
+    "description": "灵霄顶的金刚统帅，灵霄台的最终守卫。"
+  },
+  // ═══════════════════════════════════════════
+  // 小头目（minor_boss）
+  // ═══════════════════════════════════════════
+  {
+    "id": "boss_minor_taoyao",
+    "name": "桃妖·灵根",
+    "level": 6,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "minor_boss",
+    "stats": {
+      "maxHealth": 256,
+      "attack": 47,
+      "defense": 25,
+      "speed": 20,
+      "critRate": 8,
+      "critDamage": 130,
+      "hit": 22,
+      "dodge": 12,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_boss_minor_taoyao_s1", "skill_boss_minor_taoyao_ult"],
+    "passiveSkillIds": ["passive_boss_minor_taoyao_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_danshuiyu", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [50, 80],
+    "exp": [80, 120],
+    "sceneId": "scene_1_5",
+    "description": "落桃原的桃妖首领，灵根深厚，能操控桃林。",
+    "phases": [
+      {
+        "threshold": 50,
+        "trigger": "桃妖·灵根进入狂暴状态，攻击提升",
+        "buffId": "buff_boss_minor_phase2_atk"
+      }
+    ],
+    "narrative": {
+      "intro": "千年桃林，灵根未断。你踏入此地，便是我的养料。",
+      "outro": "灵根虽断，桃林犹在。来年春来，又是满山桃花。",
+      "deathQuote": "桃花……依旧笑春风……"
     }
   },
   {
-    "id": "guardian_earth",
-    "name": "土护法",
-    "level": 10,
+    "id": "boss_minor_liuyao",
+    "name": "柳妖·断桥",
+    "level": 16,
+    "type": "old_soul",
+    "faction": "wood",
+    "role": "minor_boss",
     "stats": {
-      "currentHealth": 520,
-      "defense": 25,
-      "speed": 16,
-      "attack": 40
+      "maxHealth": 472,
+      "attack": 101,
+      "defense": 61,
+      "speed": 34,
+      "critRate": 10,
+      "critDamage": 135,
+      "hit": 42,
+      "dodge": 22,
+      "maxEnergy": 150,
+      "energyInit": 25
     },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [],
-      "ultimate": []
+    "skillIds": ["skill_boss_minor_liuyao_s1", "skill_boss_minor_liuyao_ult"],
+    "passiveSkillIds": ["passive_boss_minor_liuyao_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_danshuiyu", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [80, 120],
+    "exp": [120, 160],
+    "sceneId": "scene_2_5",
+    "description": "断柳渡的柳妖，千年前被封印，如今断桥重生。",
+    "phases": [
+      {
+        "threshold": 50,
+        "trigger": "柳妖·断桥进入狂暴状态，攻击提升",
+        "buffId": "buff_boss_minor_phase2_atk"
+      }
+    ],
+    "narrative": {
+      "intro": "断桥残柳，千年一梦。你来了，正好做我的祭品。",
+      "outro": "柳条虽折，根犹在土。断桥之下，自有来者。",
+      "deathQuote": "断桥……不断……"
+    }
+  },
+  {
+    "id": "boss_minor_yanjing",
+    "name": "岩精·裂地",
+    "level": 26,
+    "type": "new_born",
+    "faction": "earth",
+    "role": "minor_boss",
+    "stats": {
+      "maxHealth": 688,
+      "attack": 155,
+      "defense": 97,
+      "speed": 49,
+      "critRate": 12,
+      "critDamage": 140,
+      "hit": 62,
+      "dodge": 32,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_boss_minor_yanjing_s1", "skill_boss_minor_yanjing_ult"],
+    "passiveSkillIds": ["passive_boss_minor_yanjing_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [110, 160],
+    "exp": [160, 200],
+    "sceneId": "scene_3_5",
+    "description": "碎石岭的岩精之王，能裂地崩山。",
+    "phases": [
+      {
+        "threshold": 50,
+        "trigger": "岩精·裂地进入狂暴状态，攻击提升",
+        "buffId": "buff_boss_minor_phase2_atk"
+      }
+    ],
+    "narrative": {
+      "intro": "碎石为骨，大地为母。你踩在我的身上，便是侵犯。",
+      "outro": "山石可碎，大地不毁。我不过是尘归尘，土归土。",
+      "deathQuote": "裂地……终归……平静……"
+    }
+  },
+  {
+    "id": "boss_minor_zhuyao",
+    "name": "蛛妖·织网",
+    "level": 36,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "minor_boss",
+    "stats": {
+      "maxHealth": 904,
+      "attack": 209,
+      "defense": 133,
+      "speed": 63,
+      "critRate": 14,
+      "critDamage": 145,
+      "hit": 82,
+      "dodge": 42,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_boss_minor_zhuyao_s1", "skill_boss_minor_zhuyao_ult"],
+    "passiveSkillIds": ["passive_boss_minor_zhuyao_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 0.9 },
+      { "itemId": "mat_tiejing", "probability": 0.5 },
+      { "itemId": "mat_cushi", "probability": 0.3 }
+    ],
+    "gold": [140, 200],
+    "exp": [200, 240],
+    "sceneId": "scene_4_5",
+    "description": "迷雾谷的蛛妖之王，织网困仙。",
+    "phases": [
+      {
+        "threshold": 50,
+        "trigger": "蛛妖·织网进入狂暴状态，攻击提升",
+        "buffId": "buff_boss_minor_phase2_atk"
+      }
+    ],
+    "narrative": {
+      "intro": "天罗地网，只为等你。入我丝线，便再无归途。",
+      "outro": "网虽破，丝犹在。下一张网，已在编织。",
+      "deathQuote": "织网……终有……断时……"
+    }
+  },
+  {
+    "id": "boss_minor_panseng",
+    "name": "叛僧·破戒",
+    "level": 46,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "minor_boss",
+    "stats": {
+      "maxHealth": 1120,
+      "attack": 263,
+      "defense": 169,
+      "speed": 77,
+      "critRate": 16,
+      "critDamage": 150,
+      "hit": 102,
+      "dodge": 52,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": ["skill_boss_minor_panseng_s1", "skill_boss_minor_panseng_ult"],
+    "passiveSkillIds": ["passive_boss_minor_panseng_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 0.9 },
+      { "itemId": "mat_cushi", "probability": 0.5 },
+      { "itemId": "mat_tongjing", "probability": 0.3 }
+    ],
+    "gold": [170, 240],
+    "exp": [240, 280],
+    "sceneId": "scene_5_5",
+    "description": "灵霄台的叛僧之首，破戒堕入邪道。",
+    "phases": [
+      {
+        "threshold": 50,
+        "trigger": "叛僧·破戒进入狂暴状态，攻击提升",
+        "buffId": "buff_boss_minor_phase2_atk"
+      }
+    ],
+    "narrative": {
+      "intro": "戒律已破，佛心已死。你若要过关，先过我这一关。",
+      "outro": "破戒容易，守戒难。你若有朝一日也破戒，便知我今日之苦。",
+      "deathQuote": "破戒……亦是……解脱……"
+    }
+  },
+  // ═══════════════════════════════════════════
+  // 大头目（major_boss）
+  // ═══════════════════════════════════════════
+  {
+    "id": "boss_major_huayaowang",
+    "name": "花妖王·千瓣",
+    "level": 10,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "major_boss",
+    "stats": {
+      "maxHealth": 418,
+      "attack": 84,
+      "defense": 48,
+      "speed": 33,
+      "critRate": 10,
+      "critDamage": 135,
+      "hit": 30,
+      "dodge": 18,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_huayaowang_s1",
+      "skill_boss_major_huayaowang_s2",
+      "skill_boss_major_huayaowang_ult"
+    ],
+    "passiveSkillIds": ["passive_boss_major_huayaowang_p1"],
+    "affixPool": { "buffTier": 1, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 1.0 },
+      { "itemId": "mat_danshuiyu", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.4 }
+    ],
+    "gold": [100, 150],
+    "exp": [150, 200],
+    "sceneId": "scene_1_5",
+    "description": "花妖一族的王者，千瓣花开，万毒归宗。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "花妖王·千瓣绽放第一层花瓣",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "花妖王·千瓣进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "千瓣花开，瓣瓣含毒。你踏入花妖巢，便是我的花肥。",
+      "outro": "花落归根，根犹在土。来年花开，又是一季繁华。",
+      "deathQuote": "千瓣……凋零……"
+    }
+  },
+  {
+    "id": "boss_major_hebo",
+    "name": "河伯·沧浪",
+    "level": 20,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "major_boss",
+    "stats": {
+      "maxHealth": 682,
+      "attack": 150,
+      "defense": 92,
+      "speed": 51,
+      "critRate": 12,
+      "critDamage": 140,
+      "hit": 50,
+      "dodge": 30,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_hebo_s1",
+      "skill_boss_major_hebo_s2",
+      "skill_boss_major_hebo_ult"
+    ],
+    "passiveSkillIds": ["passive_boss_major_hebo_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 1.0 },
+      { "itemId": "mat_danshuiyu", "probability": 0.6 },
+      { "itemId": "mat_tiejing", "probability": 0.4 }
+    ],
+    "gold": [150, 220],
+    "exp": [220, 280],
+    "sceneId": "scene_2_5",
+    "description": "断柳渡的河伯，沧浪之水，可覆万物。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "河伯·沧浪掀起巨浪",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "河伯·沧浪进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "沧浪之水清兮，可以濯吾缨。沧浪之水浊兮，可以濯吾足。你选哪个？",
+      "outro": "水可载舟，亦可覆舟。今日之败，不过潮起潮落。",
+      "deathQuote": "沧浪……归海……"
+    }
+  },
+  {
+    "id": "boss_major_shanshen",
+    "name": "山神·岩坚",
+    "level": 30,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "major_boss",
+    "stats": {
+      "maxHealth": 946,
+      "attack": 216,
+      "defense": 136,
+      "speed": 68,
+      "critRate": 14,
+      "critDamage": 145,
+      "hit": 70,
+      "dodge": 42,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_shanshen_s1",
+      "skill_boss_major_shanshen_s2",
+      "skill_boss_major_shanshen_ult"
+    ],
+    "passiveSkillIds": ["passive_boss_major_shanshen_p1"],
+    "affixPool": { "buffTier": 2, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.4 }
+    ],
+    "gold": [200, 300],
+    "exp": [300, 360],
+    "sceneId": "scene_3_5",
+    "description": "碎石岭的山神，岩坚不摧，守护五行山。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "山神·岩坚召唤岩石护盾",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "山神·岩坚进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "吾乃五行山神，岩坚不摧。你若想过山，先问吾答不答应。",
+      "outro": "山可崩，石可碎，然山神之心，永不磨灭。",
+      "deathQuote": "岩坚……终有……崩时……"
+    }
+  },
+  {
+    "id": "boss_major_miwu",
+    "name": "迷雾妖主·幻影",
+    "level": 40,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "major_boss",
+    "stats": {
+      "maxHealth": 1210,
+      "attack": 282,
+      "defense": 180,
+      "speed": 86,
+      "critRate": 16,
+      "critDamage": 150,
+      "hit": 90,
+      "dodge": 54,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_miwu_s1",
+      "skill_boss_major_miwu_s2",
+      "skill_boss_major_miwu_ult"
+    ],
+    "passiveSkillIds": ["passive_boss_major_miwu_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_cushi", "probability": 0.4 }
+    ],
+    "gold": [250, 380],
+    "exp": [380, 440],
+    "sceneId": "scene_4_5",
+    "description": "迷雾谷的妖主，幻影重重，真假难辨。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "迷雾妖主·幻影释放迷雾",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "迷雾妖主·幻影进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "你看到的我，是真是幻？你脚下的路，是实是虚？在迷雾中，一切皆不可信。",
+      "outro": "迷雾散去，真相又如何？你不过是走出了我的梦，却走不出你自己的。",
+      "deathQuote": "幻影……终归……虚无……"
+    }
+  },
+  {
+    "id": "boss_major_rulai",
+    "name": "如来法相·须弥",
+    "level": 50,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "major_boss",
+    "stats": {
+      "maxHealth": 1474,
+      "attack": 348,
+      "defense": 224,
+      "speed": 103,
+      "critRate": 18,
+      "critDamage": 155,
+      "hit": 110,
+      "dodge": 66,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_rulai_s1",
+      "skill_boss_major_rulai_s2",
+      "skill_boss_major_rulai_ult"
+    ],
+    "passiveSkillIds": ["passive_boss_major_rulai_p1"],
+    "affixPool": { "buffTier": 3, "count": 1 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.6 },
+      { "itemId": "mat_tongjing", "probability": 0.4 }
+    ],
+    "gold": [300, 450],
+    "exp": [450, 520],
+    "sceneId": "scene_5_5",
+    "description": "灵霄台的如来法相，须弥山巅，佛光普照。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "如来法相·须弥释放佛光",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "如来法相·须弥进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "须弥顶上，佛光万丈。你既已至此，便以斗战证道。",
+      "outro": "法相虽灭，佛法犹存。你今日之胜，不过是因果循环。",
+      "deathQuote": "须弥……不倒……"
+    }
+  },
+  // ═══════════════════════════════════════════
+  // 大成就领主（achievement_boss，均55级）
+  // ═══════════════════════════════════════════
+  {
+    "id": "boss_achieve_huayaowang",
+    "name": "花妖王·千瓣·真身",
+    "level": 55,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "achievement_boss",
+    "stats": {
+      "maxHealth": 1825,
+      "attack": 433,
+      "defense": 280,
+      "speed": 128,
+      "critRate": 20,
+      "critDamage": 160,
+      "hit": 120,
+      "dodge": 72,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_achieve_huayaowang_s1",
+      "skill_boss_achieve_huayaowang_s2",
+      "skill_boss_achieve_huayaowang_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_achieve_huayaowang_p1",
+      "passive_boss_achieve_huayaowang_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_danshuiyu", "probability": 0.6 }
+    ],
+    "gold": [400, 600],
+    "exp": [600, 700],
+    "sceneId": "scene_1_5",
+    "description": "花妖王·千瓣的真身，千瓣花开，万毒归宗，灵根通天。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "花妖王·千瓣·真身绽放第一层花瓣",
+        "buffId": "buff_boss_achieve_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "花妖王·千瓣·真身进入狂暴状态",
+        "buffId": "buff_boss_achieve_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "花妖王·千瓣·真身释放终极花葬",
+        "buffId": "buff_boss_achieve_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "你击败了我的化身，却不知真身在此。千瓣花开，瓣瓣致命。",
+      "outro": "真身虽灭，灵根犹在。千年之后，花妖再起。",
+      "deathQuote": "真身……凋零……灵根……犹在……"
+    }
+  },
+  {
+    "id": "boss_achieve_hebo",
+    "name": "河伯·沧浪·千年执念",
+    "level": 55,
+    "type": "old_blood",
+    "faction": "water",
+    "role": "achievement_boss",
+    "stats": {
+      "maxHealth": 1825,
+      "attack": 433,
+      "defense": 280,
+      "speed": 128,
+      "critRate": 20,
+      "critDamage": 160,
+      "hit": 120,
+      "dodge": 72,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_achieve_hebo_s1",
+      "skill_boss_achieve_hebo_s2",
+      "skill_boss_achieve_hebo_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_achieve_hebo_p1",
+      "passive_boss_achieve_hebo_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_tongjing", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_danshuiyu", "probability": 0.6 }
+    ],
+    "gold": [400, 600],
+    "exp": [600, 700],
+    "sceneId": "scene_2_5",
+    "description": "河伯·沧浪的千年执念，沧浪之水，千年不息。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "河伯·沧浪·千年执念掀起巨浪",
+        "buffId": "buff_boss_achieve_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "河伯·沧浪·千年执念进入狂暴状态",
+        "buffId": "buff_boss_achieve_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "河伯·沧浪·千年执念释放终极海啸",
+        "buffId": "buff_boss_achieve_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "千年执念，化为沧浪。你击败了我的化身，却斩不断这千年之水。",
+      "outro": "水无常形，执念无终。今日之败，不过潮起潮落。",
+      "deathQuote": "千年……执念……终归……海……"
+    }
+  },
+  {
+    "id": "boss_achieve_shanshen",
+    "name": "山神·岩坚·五行残躯",
+    "level": 55,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "achievement_boss",
+    "stats": {
+      "maxHealth": 1825,
+      "attack": 433,
+      "defense": 280,
+      "speed": 128,
+      "critRate": 20,
+      "critDamage": 160,
+      "hit": 120,
+      "dodge": 72,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_achieve_shanshen_s1",
+      "skill_boss_achieve_shanshen_s2",
+      "skill_boss_achieve_shanshen_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_achieve_shanshen_p1",
+      "passive_boss_achieve_shanshen_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 }
+    ],
+    "gold": [400, 600],
+    "exp": [600, 700],
+    "sceneId": "scene_3_5",
+    "description": "山神·岩坚的五行残躯，五行归一，山岳不摧。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "山神·岩坚·五行残躯召唤五行护盾",
+        "buffId": "buff_boss_achieve_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "山神·岩坚·五行残躯进入狂暴状态",
+        "buffId": "buff_boss_achieve_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "山神·岩坚·五行残躯释放终极山崩",
+        "buffId": "buff_boss_achieve_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "五行残躯，山岳之魂。你击败了我的化身，却撼不动这五行之躯。",
+      "outro": "五行归一，山岳不摧。今日之败，不过山石崩落。",
+      "deathQuote": "五行……归一……山岳……永存……"
+    }
+  },
+  {
+    "id": "boss_achieve_miwu",
+    "name": "迷雾妖主·幻影·千年迷途",
+    "level": 55,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "achievement_boss",
+    "stats": {
+      "maxHealth": 1825,
+      "attack": 433,
+      "defense": 280,
+      "speed": 128,
+      "critRate": 20,
+      "critDamage": 160,
+      "hit": 120,
+      "dodge": 72,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_achieve_miwu_s1",
+      "skill_boss_achieve_miwu_s2",
+      "skill_boss_achieve_miwu_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_achieve_miwu_p1",
+      "passive_boss_achieve_miwu_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_cushi", "probability": 0.6 }
+    ],
+    "gold": [400, 600],
+    "exp": [600, 700],
+    "sceneId": "scene_4_5",
+    "description": "迷雾妖主·幻影的千年迷途，幻影重重，真假难辨。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "迷雾妖主·幻影·千年迷途释放迷雾",
+        "buffId": "buff_boss_achieve_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "迷雾妖主·幻影·千年迷途进入狂暴状态",
+        "buffId": "buff_boss_achieve_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "迷雾妖主·幻影·千年迷途释放终极幻灭",
+        "buffId": "buff_boss_achieve_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "千年迷途，幻影成真。你击败了我的化身，却走不出这千年迷雾。",
+      "outro": "迷雾散去，真相又如何？你不过是走出了我的梦，却走不出你自己的。",
+      "deathQuote": "千年……迷途……终有……归时……"
+    }
+  },
+  {
+    "id": "boss_achieve_rulai",
+    "name": "如来法相·须弥·六耳投影",
+    "level": 55,
+    "type": "old_blood",
+    "faction": "earth",
+    "role": "achievement_boss",
+    "stats": {
+      "maxHealth": 1825,
+      "attack": 433,
+      "defense": 280,
+      "speed": 128,
+      "critRate": 20,
+      "critDamage": 160,
+      "hit": 120,
+      "dodge": 72,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_achieve_rulai_s1",
+      "skill_boss_achieve_rulai_s2",
+      "skill_boss_achieve_rulai_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_achieve_rulai_p1",
+      "passive_boss_achieve_rulai_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 }
+    ],
+    "gold": [400, 600],
+    "exp": [600, 700],
+    "sceneId": "scene_5_5",
+    "description": "如来法相·须弥的六耳投影，佛光之下，六耳低语。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "如来法相·须弥·六耳投影释放佛光",
+        "buffId": "buff_boss_achieve_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "如来法相·须弥·六耳投影进入狂暴状态",
+        "buffId": "buff_boss_achieve_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "如来法相·须弥·六耳投影释放终极法相",
+        "buffId": "buff_boss_achieve_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "六耳低语，法相庄严。你击败了我的化身，却不知这法相之下，是六耳的投影。",
+      "outro": "法相虽灭，六耳犹在。你今日之胜，不过是因果循环。",
+      "deathQuote": "六耳……投影……终归……虚无……"
+    }
+  },
+  // ═══════════════════════════════════════════
+  // 隐藏BOSS（hidden_boss，均60级）
+  // ═══════════════════════════════════════════
+  {
+    "id": "boss_hidden_heifeng",
+    "name": "黑风老妖·残影",
+    "level": 60,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "hidden_boss",
+    "stats": {
+      "maxHealth": 1975,
+      "attack": 470,
+      "defense": 305,
+      "speed": 138,
+      "critRate": 22,
+      "critDamage": 165,
+      "hit": 130,
+      "dodge": 78,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_hidden_heifeng_s1",
+      "skill_boss_hidden_heifeng_s2",
+      "skill_boss_hidden_heifeng_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_hidden_heifeng_p1",
+      "passive_boss_hidden_heifeng_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 1.0 },
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 }
+    ],
+    "gold": [500, 750],
+    "exp": [700, 800],
+    "sceneId": "scene_1_5",
+    "description": "黑风老妖的残影，千年前被封印，如今残影重现。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "黑风老妖·残影释放黑风",
+        "buffId": "buff_boss_hidden_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "黑风老妖·残影进入狂暴状态",
+        "buffId": "buff_boss_hidden_phase3_berserk"
+      },
+      {
+        "threshold": 20,
+        "trigger": "黑风老妖·残影释放终极黑风葬",
+        "buffId": "buff_boss_hidden_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "黑风过处，万物凋零。千年封印，不过一场梦。今日梦醒，便是你的死期。",
+      "outro": "残影虽灭，黑风犹在。千年之后，又是一场黑风。",
+      "deathQuote": "黑风……过处……万物……凋零……"
+    }
+  },
+  {
+    "id": "boss_hidden_dixing",
+    "name": "地行仙·遁地",
+    "level": 60,
+    "type": "old_soul",
+    "faction": "earth",
+    "role": "hidden_boss",
+    "stats": {
+      "maxHealth": 1975,
+      "attack": 470,
+      "defense": 305,
+      "speed": 138,
+      "critRate": 22,
+      "critDamage": 165,
+      "hit": 130,
+      "dodge": 78,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_hidden_dixing_s1",
+      "skill_boss_hidden_dixing_s2",
+      "skill_boss_hidden_dixing_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_hidden_dixing_p1",
+      "passive_boss_hidden_dixing_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 }
+    ],
+    "gold": [500, 750],
+    "exp": [700, 800],
+    "sceneId": "scene_3_5",
+    "description": "地行仙的残影，遁地千里，无迹可寻。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "地行仙·遁地释放地裂",
+        "buffId": "buff_boss_hidden_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "地行仙·遁地进入狂暴状态",
+        "buffId": "buff_boss_hidden_phase3_berserk"
+      },
+      {
+        "threshold": 20,
+        "trigger": "地行仙·遁地释放终极地裂葬",
+        "buffId": "buff_boss_hidden_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "地行千里，遁地无踪。你踩在大地上，便已在我的掌中。",
+      "outro": "地裂虽合，地脉犹动。千年之后，又是一场地裂。",
+      "deathQuote": "遁地……千里……终归……尘土……"
+    }
+  },
+  {
+    "id": "boss_hidden_jiuchi",
+    "name": "九齿残魂·朱刚鬣",
+    "level": 60,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "hidden_boss",
+    "stats": {
+      "maxHealth": 1975,
+      "attack": 470,
+      "defense": 305,
+      "speed": 138,
+      "critRate": 22,
+      "critDamage": 165,
+      "hit": 130,
+      "dodge": 78,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_hidden_jiuchi_s1",
+      "skill_boss_hidden_jiuchi_s2",
+      "skill_boss_hidden_jiuchi_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_hidden_jiuchi_p1",
+      "passive_boss_hidden_jiuchi_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 1.0 },
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 }
+    ],
+    "gold": [500, 750],
+    "exp": [700, 800],
+    "sceneId": "scene_2_5",
+    "description": "九齿钉耙的残魂，朱刚鬣的执念所化。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "九齿残魂·朱刚鬣释放九齿钉耙",
+        "buffId": "buff_boss_hidden_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "九齿残魂·朱刚鬣进入狂暴状态",
+        "buffId": "buff_boss_hidden_phase3_berserk"
+      },
+      {
+        "threshold": 20,
+        "trigger": "九齿残魂·朱刚鬣释放终极九齿葬",
+        "buffId": "buff_boss_hidden_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "九齿钉耙，天蓬元帅。千年执念，化为残魂。你既来此，便做我的祭品。",
+      "outro": "残魂虽灭，执念犹在。千年之后，又是一场执念。",
+      "deathQuote": "九齿……残魂……终归……天蓬……"
+    }
+  },
+  {
+    "id": "boss_hidden_baiyan",
+    "name": "百眼旧将·多目",
+    "level": 60,
+    "type": "old_soul",
+    "faction": "metal",
+    "role": "hidden_boss",
+    "stats": {
+      "maxHealth": 1975,
+      "attack": 470,
+      "defense": 305,
+      "speed": 138,
+      "critRate": 22,
+      "critDamage": 165,
+      "hit": 130,
+      "dodge": 78,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_hidden_baiyan_s1",
+      "skill_boss_hidden_baiyan_s2",
+      "skill_boss_hidden_baiyan_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_hidden_baiyan_p1",
+      "passive_boss_hidden_baiyan_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 1.0 },
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 }
+    ],
+    "gold": [500, 750],
+    "exp": [700, 800],
+    "sceneId": "scene_4_5",
+    "description": "百眼魔君的旧将，多目怪，千眼万目。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "百眼旧将·多目释放千眼",
+        "buffId": "buff_boss_hidden_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "百眼旧将·多目进入狂暴状态",
+        "buffId": "buff_boss_hidden_phase3_berserk"
+      },
+      {
+        "threshold": 20,
+        "trigger": "百眼旧将·多目释放终极万目葬",
+        "buffId": "buff_boss_hidden_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "千眼万目，无处可藏。你在我眼中，不过是蝼蚁。",
+      "outro": "万目虽闭，千眼犹开。千年之后，又是一场注视。",
+      "deathQuote": "百眼……千目……终归……闭合……"
+    }
+  },
+  {
+    "id": "boss_hidden_jinchan",
+    "name": "金蝉残影·净坛",
+    "level": 60,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "hidden_boss",
+    "stats": {
+      "maxHealth": 1975,
+      "attack": 470,
+      "defense": 305,
+      "speed": 138,
+      "critRate": 22,
+      "critDamage": 165,
+      "hit": 130,
+      "dodge": 78,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_hidden_jinchan_s1",
+      "skill_boss_hidden_jinchan_s2",
+      "skill_boss_hidden_jinchan_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_hidden_jinchan_p1",
+      "passive_boss_hidden_jinchan_p2"
+    ],
+    "affixPool": { "buffTier": 4, "count": 2 },
+    "drops": [
+      { "itemId": "mat_cushi", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 }
+    ],
+    "gold": [500, 750],
+    "exp": [700, 800],
+    "sceneId": "scene_5_5",
+    "description": "金蝉子的残影，净坛使者，佛光之下，残影犹存。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "金蝉残影·净坛释放佛光",
+        "buffId": "buff_boss_hidden_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "金蝉残影·净坛进入狂暴状态",
+        "buffId": "buff_boss_hidden_phase3_berserk"
+      },
+      {
+        "threshold": 20,
+        "trigger": "金蝉残影·净坛释放终极净坛葬",
+        "buffId": "buff_boss_hidden_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "金蝉脱壳，净坛成佛。千年残影，不过是一场梦。你既来此，便做我的梦中之人。",
+      "outro": "残影虽灭，金蝉犹在。千年之后，又是一场脱壳。",
+      "deathQuote": "金蝉……残影……终归……净坛……"
+    }
+  },
+  // ═══════════════════════════════════════════
+  // 三大BOSS（three_kings，均65级）
+  // ═══════════════════════════════════════════
+  {
+    "id": "boss_king_niumo",
+    "name": "牛魔·赤焰",
+    "level": 65,
+    "type": "old_blood",
+    "faction": "fire",
+    "role": "three_kings",
+    "stats": {
+      "maxHealth": 2380,
+      "attack": 568,
+      "defense": 370,
+      "speed": 165,
+      "critRate": 25,
+      "critDamage": 170,
+      "hit": 140,
+      "dodge": 84,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_king_niumo_s1",
+      "skill_boss_king_niumo_s2",
+      "skill_boss_king_niumo_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_king_niumo_p1",
+      "passive_boss_king_niumo_p2"
+    ],
+    "affixPool": { "buffTier": 5, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 1.0 },
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 },
+      { "itemId": "mat_niumojiao", "probability": 1.0 }
+    ],
+    "gold": [800, 1200],
+    "exp": [1000, 1200],
+    "sceneId": "scene_5_5",
+    "description": "三大BOSS之一，牛魔王的执念化身，赤焰焚天，奴役万物。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "牛魔·赤焰释放赤焰",
+        "buffId": "buff_boss_king_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "牛魔·赤焰进入狂暴状态",
+        "buffId": "buff_boss_king_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "牛魔·赤焰释放终极赤焰焚天",
+        "buffId": "buff_boss_king_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "赤焰焚天，奴役万物。你既来此，便做我的奴隶。",
+      "outro": "赤焰虽灭，执念犹在。千年之后，又是一场焚天。",
+      "deathQuote": "赤焰……焚天……终归……灰烬……"
+    }
+  },
+  {
+    "id": "boss_king_pansi",
+    "name": "盘丝·织梦",
+    "level": 65,
+    "type": "old_blood",
+    "faction": "wood",
+    "role": "three_kings",
+    "stats": {
+      "maxHealth": 2380,
+      "attack": 568,
+      "defense": 370,
+      "speed": 165,
+      "critRate": 25,
+      "critDamage": 170,
+      "hit": 140,
+      "dodge": 84,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_king_pansi_s1",
+      "skill_boss_king_pansi_s2",
+      "skill_boss_king_pansi_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_king_pansi_p1",
+      "passive_boss_king_pansi_p2"
+    ],
+    "affixPool": { "buffTier": 5, "count": 1 },
+    "drops": [
+      { "itemId": "mat_taomu", "probability": 1.0 },
+      { "itemId": "mat_tiejing", "probability": 0.8 },
+      { "itemId": "mat_cushi", "probability": 0.6 },
+      { "itemId": "mat_dunang", "probability": 1.0 }
+    ],
+    "gold": [800, 1200],
+    "exp": [1000, 1200],
+    "sceneId": "scene_4_5",
+    "description": "三大BOSS之一，盘丝大仙的执念化身，织梦囚禁，丝线缚仙。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "盘丝·织梦释放丝线",
+        "buffId": "buff_boss_king_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "盘丝·织梦进入狂暴状态",
+        "buffId": "buff_boss_king_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "盘丝·织梦释放终极织梦囚笼",
+        "buffId": "buff_boss_king_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "织梦为网，囚禁万物。你既入我丝线，便再无归途。",
+      "outro": "丝线虽断，织梦犹在。千年之后，又是一场囚禁。",
+      "deathQuote": "织梦……囚禁……终归……虚无……"
+    }
+  },
+  {
+    "id": "boss_king_dapeng",
+    "name": "大鹏·遮天",
+    "level": 65,
+    "type": "old_blood",
+    "faction": "metal",
+    "role": "three_kings",
+    "stats": {
+      "maxHealth": 2380,
+      "attack": 568,
+      "defense": 370,
+      "speed": 165,
+      "critRate": 25,
+      "critDamage": 170,
+      "hit": 140,
+      "dodge": 84,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_king_dapeng_s1",
+      "skill_boss_king_dapeng_s2",
+      "skill_boss_king_dapeng_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_king_dapeng_p1",
+      "passive_boss_king_dapeng_p2"
+    ],
+    "affixPool": { "buffTier": 5, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 1.0 },
+      { "itemId": "mat_cushi", "probability": 0.8 },
+      { "itemId": "mat_tongjing", "probability": 0.6 },
+      { "itemId": "mat_pengyu", "probability": 1.0 }
+    ],
+    "gold": [800, 1200],
+    "exp": [1000, 1200],
+    "sceneId": "scene_5_5",
+    "description": "三大BOSS之一，金翅大鹏的执念化身，遮天蔽日，傲慢无匹。",
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "大鹏·遮天释放遮天之翼",
+        "buffId": "buff_boss_king_phase2_atk"
+      },
+      {
+        "threshold": 50,
+        "trigger": "大鹏·遮天进入狂暴状态",
+        "buffId": "buff_boss_king_phase3_berserk"
+      },
+      {
+        "threshold": 25,
+        "trigger": "大鹏·遮天释放终极遮天葬",
+        "buffId": "buff_boss_king_phase4_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "遮天蔽日，傲慢无匹。你在我翼下，不过是蝼蚁。",
+      "outro": "遮天之翼虽折，傲慢犹在。千年之后，又是一场遮天。",
+      "deathQuote": "遮天……蔽日……终归……坠落……"
+    }
+  },
+  // ═══════════════════════════════════════════
+  // 最终BOSS（final_boss，70级）
+  // ═══════════════════════════════════════════
+  {
+    "id": "boss_final_liuer",
+    "name": "六耳猕猴",
+    "level": 70,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "final_boss",
+    "stats": {
+      "maxHealth": 8000,
+      "attack": 250,
+      "defense": 120,
+      "speed": 45,
+      "critRate": 35,
+      "critDamage": 180,
+      "hit": 150,
+      "dodge": 90,
+      "maxEnergy": 150,
+      "energyInit": 50
+    },
+    "skillIds": [
+      "skill_boss_final_liuer_s1",
+      "skill_boss_final_liuer_s2",
+      "skill_boss_final_liuer_s3",
+      "skill_boss_final_liuer_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_final_liuer_p1",
+      "passive_boss_final_liuer_p2",
+      "passive_boss_final_liuer_p3"
+    ],
+    "affixPool": { "buffTier": 5, "count": 1 },
+    "drops": [
+      { "itemId": "mat_tiejing", "probability": 1.0 },
+      { "itemId": "mat_cushi", "probability": 1.0 },
+      { "itemId": "mat_tongjing", "probability": 1.0 },
+      { "itemId": "mat_danshuiyu", "probability": 1.0 }
+    ],
+    "gold": [2000, 3000],
+    "exp": [2000, 3000],
+    "sceneId": "scene_5_5",
+    "description": "最终BOSS。六耳猕猴的残魂，千年执念，要证明我比孙悟空更像孙悟空。",
+    "phases": [
+      {
+        "threshold": 80,
+        "trigger": "六耳猕猴进入第二阶段，攻击提升",
+        "buffId": "buff_boss_final_phase2_atk"
+      },
+      {
+        "threshold": 60,
+        "trigger": "六耳猕猴进入第三阶段，速度提升",
+        "buffId": "buff_boss_final_phase3_spd"
+      },
+      {
+        "threshold": 40,
+        "trigger": "六耳猕猴进入第四阶段，狂暴状态",
+        "buffId": "buff_boss_final_phase4_berserk"
+      },
+      {
+        "threshold": 20,
+        "trigger": "六耳猕猴进入最终阶段，全属性提升",
+        "buffId": "buff_boss_final_phase5_ult"
+      }
+    ],
+    "narrative": {
+      "intro": "你来了。一千年了。我等了这一天，等了一千年。你问我为什么？因为我要证明，我比孙悟空更像孙悟空。他成佛了，而我，只能做他的影子。不，我不是影子。我是六耳猕猴。我是斗战胜佛。",
+      "outro": "你赢了。但你知道吗？你赢的不是我，是你自己。这条路上，你遇到的每一个妖怪，都是我。你击败的每一个守护者，都是我。你走过的每一步，都是我。",
+      "deathQuote": "我……比孙悟空……更像……孙悟空……"
     }
   }
 ]

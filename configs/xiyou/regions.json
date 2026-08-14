@@ -1,22 +1,56 @@
 [
   {
-    "id": "aolai",
-    "name": "傲来国",
-    "sub": "东海畔 · 花果山"
+    "id": "region_1",
+    "name": "落桃原",
+    "sub": "桃林初劫",
+    "levelRange": [1, 10],
+    "resourceTheme": ["桃木", "粗石", "铜精", "淡水玉"],
+    "schoolUnlock": {
+      "schoolId": "linghou",
+      "sceneId": "scene_1_1"
+    },
+    "narrative": "西行路的起点。一千年前孙悟空崩碎五行山时，战意溅落此地，化为一片桃林。如今桃林被妖气感染，花妖横行。主角的村庄就在桃林边缘。"
   },
   {
-    "id": "tang",
-    "name": "大唐境",
-    "sub": "西行第一程"
+    "id": "region_2",
+    "name": "断柳渡",
+    "sub": "古渡沉魂",
+    "levelRange": [11, 20],
+    "resourceTheme": ["贝壳", "深水玉", "珍珠", "青花瓷"],
+    "schoolUnlock": null,
+    "narrative": "古渡口，唐僧舍利碎片沉入河底。一千年间河水被妖气污染，水产妖怪占据渡口。柳树下埋着渡船人的白骨，他们等了一千年的船，再也不会来了。"
   },
   {
-    "id": "niliang",
-    "name": "西梁女国",
-    "sub": "毒敌山 · 火焰山"
+    "id": "region_3",
+    "name": "碎石岭",
+    "sub": "五行残骨",
+    "levelRange": [21, 30],
+    "resourceTheme": ["铁精", "金精", "粗石"],
+    "schoolUnlock": {
+      "schoolId": "jinxing",
+      "sceneId": "scene_3_2"
+    },
+    "narrative": "五行山崩裂的遗迹。碎石中埋着道碑碎片和被困千年的怨妖。一千年前五行山碎裂时，山神以自身为锚封住了最凶戾的几缕残魂，如今封印将破。"
   },
   {
-    "id": "xiniu",
-    "name": "西牛贺洲",
-    "sub": "狮驼岭 · 灵山境"
+    "id": "region_4",
+    "name": "迷雾谷",
+    "sub": "听风迷途",
+    "levelRange": [31, 40],
+    "resourceTheme": ["熊皮", "虎皮", "寒潭水", "毒液", "翡翠玉镯"],
+    "schoolUnlock": {
+      "schoolId": "panshi",
+      "sceneId": "scene_4_5"
+    },
+    "narrative": "浓雾遮蔽的深谷。六耳残魂在此布下听的陷阱，雾中回荡着一千年前取经路上的声音，迷惑行人。迷路仙人在雾中徘徊千年，盘丝一脉在此织网困人。"
+  },
+  {
+    "id": "region_5",
+    "name": "灵霄台",
+    "sub": "假佛真魔",
+    "levelRange": [41, 50],
+    "resourceTheme": ["圣水玉", "玉佛像", "天罡灵气", "混元灵气"],
+    "schoolUnlock": null,
+    "narrative": "西行路的终点，灵山脚下。佛光被六耳残魂污染为假佛音，诵经声中藏着六耳的低语。这里是六耳猕猴的巢穴，也是它证明自己比孙悟空更像孙悟空的祭坛。"
   }
 ]

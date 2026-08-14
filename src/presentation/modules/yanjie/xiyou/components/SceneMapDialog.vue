@@ -383,7 +383,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .xy-map-dlg__tab-sub {
-  font-size: var(--font-size-xxs);
+  font-size: var(--font-size-md);
   color: var(--xy-ink-4);
   letter-spacing: 1px;
 }

@@ -253,7 +253,7 @@ const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
 }
 
 .xy-map-brief-open-sub {
-  font-size: var(--font-size-xxs);
+  font-size: var(--font-size-md);
   letter-spacing: 1px;
   opacity: 0.75;
 }

@@ -1,0 +1,360 @@
+[
+  {
+    "id": "passive_lh_combo",
+    "name": "迅捷连击",
+    "schoolId": "linghou",
+    "skillType": "passive",
+    "trigger": "ON_ATTACK_LANDED",
+    "probability": 0.3,
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.5, "attribute": "attack" }] },
+        "comboTrigger": true
+      }
+    ],
+    "description": "攻击时 30% 概率追加一次 50% 伤害的攻击。",
+    "treeNodeId": "lh_node_1_3"
+  },
+  {
+    "id": "skill_lh_gale_step",
+    "name": "疾风步",
+    "schoolId": "linghou",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "self", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_lh_gale_speed",
+        "duration": 3,
+        "probability": 1.0
+      }
+    ],
+    "description": "速度 +40%，持续 3 回合，期间连击触发率 +15%。",
+    "treeNodeId": "lh_node_2_3"
+  },
+  {
+    "id": "skill_lh_dance",
+    "name": "乱舞",
+    "schoolId": "linghou",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.6, "attribute": "attack" }] }, "comboTrigger": true },
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.6, "attribute": "attack" }] }, "comboTrigger": true },
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.6, "attribute": "attack" }] }, "comboTrigger": true }
+    ],
+    "description": "3 次攻击，每次 60% 伤害，每段触发连击判定。",
+    "treeNodeId": "lh_node_2_4"
+  },
+  {
+    "id": "skill_lh_clone_slash",
+    "name": "分身斩",
+    "schoolId": "linghou",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.8, "attribute": "attack" }] }, "comboTrigger": true },
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.8, "attribute": "attack" }] }, "comboTrigger": true }
+    ],
+    "description": "立即 2 次攻击（各 80%），每段触发连击判定。",
+    "treeNodeId": "lh_node_3_3"
+  },
+  {
+    "id": "skill_lh_shadow_ult",
+    "name": "千影绝杀",
+    "schoolId": "linghou",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.7, "attribute": "attack" }] }, "comboTrigger": true },
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.7, "attribute": "attack" }] }, "comboTrigger": true },
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.7, "attribute": "attack" }] }, "comboTrigger": true },
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.7, "attribute": "attack" }] }, "comboTrigger": true },
+      { "type": "deal_damage", "attackType": "normal", "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 0.7, "attribute": "attack" }] }, "guaranteedCrit": true, "comboTrigger": true }
+    ],
+    "onKill": { "type": "gain_energy", "value": 50 },
+    "description": "5 次攻击，每次 70% 伤害，末击必暴；击杀返还 50 能量。",
+    "treeNodeId": "lh_node_3_4"
+  },
+  // ═══════════════════════════════════════════
+  // 金行道
+  // ═══════════════════════════════════════════
+  {
+    "id": "passive_jx_precision",
+    "name": "致命精准",
+    "schoolId": "jinxing",
+    "skillType": "passive",
+    "trigger": "BATTLE_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_jx_precision",
+        "target": "self",
+        "duration": -1,
+        "probability": 1.0
+      }
+    ],
+    "description": "暴击伤害提升至 150%。",
+    "treeNodeId": "jx_node_1_3"
+  },
+  {
+    "id": "skill_jx_weakpoint",
+    "name": "弱点打击",
+    "schoolId": "jinxing",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_jx_crit_boost",
+        "target": "self",
+        "duration": 1,
+        "probability": 1.0
+      },
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 1.3, "attribute": "attack" }] }
+      }
+    ],
+    "description": "130% 伤害，本次暴击率 +30%。",
+    "treeNodeId": "jx_node_1_4"
+  },
+  {
+    "id": "skill_jx_armor_break",
+    "name": "破甲斩",
+    "schoolId": "jinxing",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 1.2, "attribute": "attack" }] },
+        "armorIgnore": 0.4
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_jx_armor_debuff",
+        "target": "target",
+        "duration": 2,
+        "probability": 1.0
+      }
+    ],
+    "description": "120% 伤害，无视 40% 防御，持续 2 回合。",
+    "treeNodeId": "jx_node_2_3"
+  },
+  {
+    "id": "passive_jx_army_break",
+    "name": "破军之势",
+    "schoolId": "jinxing",
+    "skillType": "passive",
+    "trigger": "BATTLE_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_jx_armor_pen",
+        "target": "self",
+        "duration": -1,
+        "probability": 1.0
+      }
+    ],
+    "description": "所有攻击无视目标 10% 防御。",
+    "treeNodeId": "jx_node_2_4"
+  },
+  {
+    "id": "skill_jx_charge",
+    "name": "蓄势一击",
+    "schoolId": "jinxing",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "self", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_jx_charge_def",
+        "target": "self",
+        "duration": 1,
+        "probability": 1.0
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_jx_charge_atk",
+        "target": "self",
+        "duration": 2,
+        "probability": 1.0
+      }
+    ],
+    "description": "本回合防御 +80%，下回合首次攻击 ×1.5。",
+    "treeNodeId": "jx_node_3_3"
+  },
+  {
+    "id": "skill_jx_tiangang_ult",
+    "name": "天罡斩",
+    "schoolId": "jinxing",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 2.5, "attribute": "attack" }] },
+        "armorIgnore": 0.3,
+        "critBonus": { "ratio": 1.0, "condition": "on_crit" },
+        "executeBonus": { "ratio": 0.5, "condition": "target_hp_below_30" }
+      }
+    ],
+    "description": "250% 伤害，暴击追加 100%；无视 30% 防御；目标气血 <30% 时伤害 +50%。",
+    "treeNodeId": "jx_node_3_4"
+  },
+  // ═══════════════════════════════════════════
+  // 磐石道
+  // ═══════════════════════════════════════════
+  {
+    "id": "passive_ps_block",
+    "name": "磐石格挡",
+    "schoolId": "panshi",
+    "skillType": "passive",
+    "trigger": "ON_DAMAGE_TAKEN",
+    "probability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ps_block",
+        "target": "self",
+        "duration": 0,
+        "probability": 1.0
+      }
+    ],
+    "description": "20% 概率格挡，减免 50% 伤害。",
+    "treeNodeId": "ps_node_1_3"
+  },
+  {
+    "id": "skill_ps_iron_wall",
+    "name": "铜墙铁壁",
+    "schoolId": "panshi",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 3,
+    "selector": { "faction": "self", "strategy": "self", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ps_iron_wall",
+        "target": "self",
+        "duration": 3,
+        "probability": 1.0
+      }
+    ],
+    "description": "防御 +50%，3 回合，期间受击能量 +10。",
+    "treeNodeId": "ps_node_1_4"
+  },
+  {
+    "id": "skill_ps_quake",
+    "name": "撼地击",
+    "schoolId": "panshi",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 1.4, "attribute": "attack" }] }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ps_stun_small",
+        "target": "target",
+        "duration": 1,
+        "probability": 0.3
+      }
+    ],
+    "description": "140% 伤害，30% 概率眩晕 1 回合。",
+    "treeNodeId": "ps_node_2_3"
+  },
+  {
+    "id": "skill_ps_mountain_ult",
+    "name": "泰山压顶",
+    "schoolId": "panshi",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": { "baseValue": 0, "extraValues": [{ "ratio": 2.2, "attribute": "attack" }] }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ps_stun_ult",
+        "target": "target",
+        "duration": 1,
+        "probability": 1.0
+      }
+    ],
+    "description": "220% 伤害，100% 眩晕 1 回合。",
+    "treeNodeId": "ps_node_2_4"
+  },
+  {
+    "id": "passive_ps_counter",
+    "name": "以守为攻",
+    "schoolId": "panshi",
+    "skillType": "passive",
+    "trigger": "BATTLE_START",
+    "probability": 1.0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ps_counter",
+        "target": "self",
+        "duration": -1,
+        "probability": 1.0
+      }
+    ],
+    "description": "受击能量获取 +20%；格挡时反弹 10% 伤害。",
+    "treeNodeId": "ps_node_3_3"
+  },
+  {
+    "id": "skill_ps_diamond_ult",
+    "name": "金刚不坏",
+    "schoolId": "panshi",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": { "faction": "self", "strategy": "self", "count": 1 },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_ps_diamond_shield",
+        "target": "self",
+        "duration": 3,
+        "probability": 1.0
+      }
+    ],
+    "description": "获得最大气血 30% 护盾，3 回合，反弹 30% 伤害。",
+    "treeNodeId": "ps_node_3_4"
+  }
+]

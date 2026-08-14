@@ -167,7 +167,7 @@ function eventChip(status: string): string {
 }
 
 .xy-checkin-reward {
-  font-size: var(--font-size-xxs);
+  font-size: var(--font-size-md);
   color: var(--xy-ink-3);
   text-align: center;
 }

@@ -6,11 +6,11 @@
         <div class="xy-card-grid">
           <div v-for="m in matesWithUnlock" :key="m.name" class="xy-mate-card" :class="{ active: m.active, locked: !m.unlocked }">
             <div class="xy-mate-head">
-              <span class="xy-mate-name" :class="qualityClass(m.quality)">{{ m.name }}</span>
+              <span class="xy-mate-name" :class="qualityClass(m.rarity)">{{ m.name }}</span>
               <span v-if="m.active" class="xy-chip xy-chip--gold">上阵</span>
             </div>
             <span class="xy-mate-role xy-chip xy-chip--jade">{{ m.role }}</span>
-            <span class="xy-mate-level">Lv.{{ m.level }} · {{ m.quality }}</span>
+            <span class="xy-mate-level">Lv.{{ m.level }} · {{ qualityOf(m.rarity) }}</span>
             <div class="xy-mate-stars" aria-label="星级">
               <svg v-for="i in 5" :key="i" viewBox="0 0 24 24" class="xy-star" :class="{ on: i <= m.stars }" aria-hidden="true">
                 <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
@@ -24,8 +24,8 @@
       <template #pets>
         <div v-for="p in pets" :key="p.name" class="xy-row-card">
           <div class="xy-row-top">
-            <span class="xy-row-name" :class="qualityClass(p.quality)">{{ p.name }}</span>
-            <span class="xy-chip xy-chip--jade">{{ p.quality }}</span>
+            <span class="xy-row-name" :class="qualityClass(p.rarity)">{{ p.name }}</span>
+            <span class="xy-chip xy-chip--jade">{{ qualityOf(p.rarity) }}</span>
             <span v-if="p.active" class="xy-chip xy-chip--gold">伴战</span>
             <span class="xy-row-side">Lv.{{ p.level }}</span>
           </div>
@@ -64,7 +64,8 @@
 import { ref } from 'vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
-import { affinities, mates, pets, player, type XiyouMate, type XiyouQuality } from '../data/mock'
+import { affinities, mates, pets, player, type XiyouMate } from '../data/mock'
+import { qualityClass, qualityOf } from '../data/quality'
 
 const sub = ref<'mates' | 'pets' | 'affinity'>('mates')
 
@@ -76,10 +77,6 @@ const SUBS: TabItem[] = [
 
 /** 伙伴解锁状态：前 4 位已解锁，余下待剧情推进（展示用） */
 const matesWithUnlock: Array<XiyouMate & { unlocked: boolean }> = mates.map((m, i) => ({ ...m, unlocked: i < 4 }))
-
-function qualityClass(q: XiyouQuality): string {
-  return `xy-q--${q}`
-}
 </script>
 
 <style scoped lang="scss">

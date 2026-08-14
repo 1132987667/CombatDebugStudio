@@ -20,6 +20,7 @@ import type {
   BattleParamData,
   DropGroupData,
   ElementsData,
+  EquipmentAffixData,
   EquipmentData,
   GearData,
   GrowthCurveData,
@@ -36,6 +37,7 @@ import type { EffectsJsonEntry } from '@/shared/types/effects-json'
 import formationsDataRaw from '@configs/formations/formations.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import equipmentDataRaw from '@configs/equipment/equipment.json'
+import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
 import dropsDataRaw from '@configs/drops/drops.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
@@ -50,11 +52,13 @@ import xiyouCollectJson from '@configs/xiyou/collect.json'
 import xiyouQuestJson from '@configs/xiyou/quest.json'
 import xiyouCaveJson from '@configs/xiyou/cave.json'
 import itemsDataRaw from '@configs/xiyou/items.json'
-import xiyouEquipmentJson from '@configs/xiyou/equipment.json'
 
-// NOTE: v10 — 新增 items（物品主键索引）/ gears（装备详情）表，种子源为 configs/xiyou/items.json、equipment.json。
+// NOTE: v13 — 新增装备词条库 equipment_affixes（独立于敌人词缀 affixes，词条属性映射 attributes.json、
+//       部位约束 slotKey 强校验，供装备随机词条掉落/洗炼/重铸按部位抽池）。
+// NOTE: v14 — cave.json 配方材料结构化：锻造配方（forgeRecipes）不再内联 materials，经 equipmentId 引用装备 JSON 权威材料；
+//       forgeRecipes 补全为全部 43 件可打造装备（原仅 5 件，闭环完整）。
 //       升级版本号让已 seed 的浏览器重导最新 configs。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v11'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v14'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -219,10 +223,11 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
       [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
       [FENGSHEN_STORE.AFFIXES, affixesDataRaw as AffixData[]],
+      [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
       [FENGSHEN_STORE.PARAMS, buildParams()],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
-      [FENGSHEN_STORE.GEARS, xiyouEquipmentJson as GearData[]],
+      [FENGSHEN_STORE.GEARS, (equipmentDataRaw as EquipmentData[]).filter((e) => e.craftable) as GearData[]],
     ]
 
     for (const [store, rows] of tables) {

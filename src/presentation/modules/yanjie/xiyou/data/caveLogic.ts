@@ -6,6 +6,7 @@
  */
 import type { XiyouCatalogItem, XiyouQuality } from './mock'
 import itemsJson from '@configs/xiyou/items.json'
+import { qualityOf as qualityByRarity } from './quality'
 
 const ITEMS = itemsJson.items as unknown as XiyouCatalogItem[]
 
@@ -29,34 +30,9 @@ export function itemName(itemId: string): string {
   return idToItem.get(itemId)?.name ?? itemId
 }
 
-/** items.json rarity 1-5 → 品质名（凡/玄/地/天/仙），gearSlots 同口径 */
-const RARITY_QUALITY: XiyouQuality[] = ['凡品', '玄品', '地品', '天品', '仙品']
-
+/** items.json rarity 1-5 → 品质名（凡/玄/地/天/仙），映射源在 quality.ts 统一表 */
 export function qualityOf(itemId: string): XiyouQuality {
-  const rarity = idToItem.get(itemId)?.rarity ?? 1
-  return RARITY_QUALITY[Math.min(Math.max(rarity - 1, 0), RARITY_QUALITY.length - 1)]
-}
-
-/** 配方材料（结构化；itemId 可能为空 → 材料未收录，组件按不足处理） */
-export interface MaterialCost {
-  name: string
-  itemId: string | null
-  count: number
-}
-
-/** 解析配方材料文本 "桃木×3 + 铜精×1" → 结构化列表 */
-export function parseMaterials(text: string): MaterialCost[] {
-  if (!text) return []
-  return text
-    .split('+')
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => {
-      const m = /^(.*?)[×x](\d+)$/.exec(part)
-      const name = m ? m[1].trim() : part
-      const count = m ? parseInt(m[2], 10) : 1
-      return { name, itemId: nameToId.get(name) ?? null, count }
-    })
+  return qualityByRarity(idToItem.get(itemId)?.rarity ?? 1)
 }
 
 /** 装备槽位 → 强化材料（设计：武器异矿 / 衣服灵气·强化 / 饰品灵水） */

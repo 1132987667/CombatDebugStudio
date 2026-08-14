@@ -7,6 +7,7 @@
 import caveJson from '@configs/xiyou/cave.json'
 import collectJson from '@configs/xiyou/collect.json'
 import cultivateJson from '@configs/xiyou/cultivate.json'
+import equipmentJson from '@configs/equipment/equipment.json'
 import equipJson from '@configs/xiyou/equip.json'
 import itemsJson from '@configs/xiyou/items.json'
 import mateJson from '@configs/xiyou/mate.json'
@@ -23,7 +24,8 @@ import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
 import type { Enemy, EnemyDrop } from '@/shared/types/enemy'
 import type { ItemEffect } from '@/shared/types/Item'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import type { XiyouData } from '@/domain/fengshen/types'
+import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
+import { migrateRarityField } from './quality'
 import { computeStatBonuses, createPlayerProfile, playerConfig } from './playerProfile'
 
 /** 玩家货币（运行时状态） */
@@ -271,11 +273,12 @@ export interface XiyouSchool {
   selected?: boolean
 }
 
-/** 乾坤袋物品（背包子系统） */
+/** 乾坤袋物品（背包子系统 · 数据源 pack.json） */
 export interface XiyouItem {
   name: string
   count: number
-  rarity: '普通' | '稀有' | '珍品' | '仙品'
+  /** 稀有度（数字，pack.json 实际 1-4；展示层经 quality.ts 映射中文品级） */
+  rarity: number
   desc: string
 }
 
@@ -325,7 +328,7 @@ export interface XiyouRealm {
 /** 功法（功法子系统） */
 export interface XiyouMartial {
   name: string
-  quality: XiyouQuality
+  rarity: number
   level: number
   maxLevel: number
   slot: string
@@ -361,7 +364,7 @@ export interface XiyouDharma {
 export interface XiyouGearSlot {
   slot: string
   item: string
-  quality: XiyouQuality
+  rarity: number
   enhance: number
   maxEnhance: number
   star: number
@@ -372,7 +375,7 @@ export interface XiyouGearSlot {
 /** 法宝（法宝子系统） */
 export interface XiyouTreasure {
   name: string
-  tier: XiyouQuality
+  rarity: number
   level: number
   maxLevel: number
   progress: number
@@ -383,7 +386,7 @@ export interface XiyouTreasure {
 /** 坐骑（坐骑子系统） */
 export interface XiyouMount {
   name: string
-  quality: XiyouQuality
+  rarity: number
   level: number
   aptitude: number
   speed: number
@@ -395,7 +398,7 @@ export interface XiyouMount {
 export interface XiyouMate {
   name: string
   role: string
-  quality: XiyouQuality
+  rarity: number
   level: number
   stars: number
   active: boolean
@@ -405,7 +408,7 @@ export interface XiyouMate {
 /** 灵宠（灵宠子系统） */
 export interface XiyouPet {
   name: string
-  quality: XiyouQuality
+  rarity: number
   growth: number
   level: number
   skill: string
@@ -478,11 +481,21 @@ export interface XiyouEvent {
   status: '进行中' | '预告' | '已结束'
 }
 
+/** 配方材料（结构化：itemId + count，引用 items 表；锻造配方材料经 equipmentId 引用装备 JSON，权威在 equipment.json） */
+export interface XiyouRecipeMaterial {
+  itemId: string
+  count: number
+}
+
 /** 炼丹 / 炼器丹方（炼丹 · 炼器子系统） */
 export interface XiyouRecipe {
+  id?: string
+  equipmentId?: string
+  blueprintId?: string
   name: string
   level: number
-  materials: string
+  /** 材料消耗（炼丹配方内联；锻造配方由 equipmentId 指向的装备定义提供） */
+  materials?: XiyouRecipeMaterial[]
   effect: string
   count: number
 }
@@ -555,6 +568,9 @@ export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(questJson.quests as u
 export const checkinDays: XiyouCheckinDay[] = reactive<XiyouCheckinDay[]>(questJson.checkinDays as unknown as XiyouCheckinDay[])
 export const events: XiyouEvent[] = reactive<XiyouEvent[]>(questJson.events as unknown as XiyouEvent[])
 
+/** 装备定义目录（configs/equipment/equipment.json 唯一数据源 · 锻造配方按 equipmentId 引用其材料） */
+export const equipmentCatalog: EquipmentData[] = equipmentJson as unknown as EquipmentData[]
+
 export const alchemyRecipes: XiyouRecipe[] = reactive<XiyouRecipe[]>(caveJson.alchemyRecipes as unknown as XiyouRecipe[])
 export const forgeRecipes: XiyouRecipe[] = reactive<XiyouRecipe[]>(caveJson.forgeRecipes as unknown as XiyouRecipe[])
 export const retreats: XiyouRetreat[] = reactive<XiyouRetreat[]>(caveJson.retreats as unknown as XiyouRetreat[])
@@ -578,6 +594,12 @@ export async function loadXiyouData(): Promise<boolean> {
     return true
   } catch {
     return false
+  }
+}
+
+function migrateRarity(rows: unknown[]): void {
+  for (const row of rows) {
+    if (row && typeof row === 'object') migrateRarityField(row as Record<string, unknown>)
   }
 }
 
@@ -607,13 +629,19 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(storageCells, 'pack', 'storageCells')
   aIn(realms, 'cultivate', 'realms')
   aIn(martialArts, 'cultivate', 'martialArts')
+  migrateRarity(martialArts)
   aIn(meridians, 'cultivate', 'meridians')
   aIn(dharmas, 'cultivate', 'dharmas')
   aIn(gearSlots, 'equip', 'gearSlots')
+  migrateRarity(gearSlots)
   aIn(treasures, 'equip', 'treasures')
+  migrateRarity(treasures)
   aIn(mounts, 'equip', 'mounts')
+  migrateRarity(mounts)
   aIn(mates, 'mate', 'mates')
+  migrateRarity(mates)
   aIn(pets, 'mate', 'pets')
+  migrateRarity(pets)
   aIn(affinities, 'mate', 'affinities')
   aIn(codexChapters, 'collect', 'codexChapters')
   aIn(achievements, 'collect', 'achievements')

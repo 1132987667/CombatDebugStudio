@@ -32,22 +32,47 @@ export interface ActorData {
   description?: string
 }
 
-/** 装备（equipment 表）—— 对齐规格说明书 3.6 */
+/** 装备（equipment 表）—— 对齐规格说明书 3.6。
+ * 统一装备定义表：configs/equipment/equipment.json（旧 eq_* 与西游 wp_/ar_/ac_ 已合并为唯一数据源）。
+ * 可打造装备含 tier/materials/cost；无法匹配新体系的旧版 eq_* 保留原 ID（craftable 缺省 false）。 */
 export interface EquipmentStatEntry {
   attribute: string
   modifierType: 'flat' | 'percent'
   value: number
 }
+export interface EquipmentMaterialEntry {
+  /** 材料物品 ID（引用 items 表） */
+  itemId: string
+  count: number
+}
 export interface EquipmentData {
   id: string
   name: string
   slot: 'weapon' | 'armor' | 'accessory'
+  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/项链/腰带/手镯/冠冕） */
+  subType?: string
+  /** 阶位（t1 凡品 ~ t5 仙品） */
+  tier?: 't1' | 't2' | 't3' | 't4' | 't5'
   rarity: number
   stats: EquipmentStatEntry[]
   /** 穿戴等级门槛 */
   requiredLevel?: number
   /** 阵营限制（引用 elements 表） */
   factionRestriction?: string
+  /** 打造材料（可打造装备才有） */
+  materials?: EquipmentMaterialEntry[]
+  /** 打造金钱消耗 */
+  cost?: number
+  /** 是否可打造 */
+  craftable?: boolean
+  /** 对应洞府配方 ID（引用 cave.json forgeRecipes.id，图谱存在才有） */
+  recipeId?: string
+  /** 对应图谱物品 ID（引用 items.json 的 bp_* 条目） */
+  blueprintId?: string
+  /** 旧版 ID（合并前封神榜 equipment 表沿用 ID，供迁移/掉落兼容） */
+  legacyIds?: string[]
+  /** 获取来源说明 */
+  source?: string
   description?: string
 }
 
@@ -67,7 +92,7 @@ export interface ItemData {
   effects?: ItemEffect[]
 }
 
-/** 装备制造条目（gears 表）—— configs/xiyou/equipment.json（西游新装备体系 wp_ / ar_ / ac_ 前缀，与旧 eq_ 并存） */
+/** 装备制造条目（gears 表）—— 可打造装备子集（craftable），源为 configs/equipment/equipment.json（合并后唯一装备定义） */
 export interface GearMaterialEntry {
   /** 材料物品 ID（引用 items 表） */
   itemId: string
@@ -163,6 +188,35 @@ export interface AffixData {
   description?: string
 }
 
+/** 装备词条数值区间 [min,max]（掉落/洗炼在该区间内随机） */
+export interface EquipmentAffixValueRange {
+  min: number
+  max: number
+}
+
+/** 装备词条（equipment_affixes 表）—— 独立于封神榜敌人词缀（affixes 表，设计稿「词缀不与玩家装备词条混用」）。
+ * 词条属性映射 attributes.json 现有属性代码；applicableSlots 用 slotKey 表达部位约束
+ * （'*' 通配全部位 / 'weapon' 部位级 / 'weapon:轻型' 部位+子类型），装备生成词条时只能从对应 slot/subType 池抽取。 */
+export interface EquipmentAffixData {
+  id: string
+  name: string
+  /** 属性代码（必须存在于 attributes.json，由 DataIntegrityService 强校验） */
+  attribute: string
+  /** 修正类型（flat 固定值 / percent 百分比，对齐 EquipmentStatEntry.modifierType） */
+  modifierType: 'flat' | 'percent'
+  /** 数值区间，策划配置词条时必填 */
+  valueRange: EquipmentAffixValueRange
+  /** 适用部位 slotKey 数组 */
+  applicableSlots: string[]
+  /** 流派绑定（schools.json name，可选；缺省为通用词条） */
+  school?: string
+  /** 抽池权重（0 = 不参与随机） */
+  weight: number
+  /** 稀有度（1 普通 ~ 5 仙品，用于 UI 高亮） */
+  rarity?: number
+  description?: string
+}
+
 /** 预设阵容（lineups 表）—— 对齐 configs/lineups/lineups.json 结构。
  * 阵容本身不标阵营（我方/敌方由使用场景决定：场景引用按敌方展开，唤灵台布阵按角色类型归队）。
  */
@@ -235,6 +289,7 @@ export interface FengshenTables {
   growth: GrowthCurveData
   drops: DropGroupData
   affixes: AffixData
+  equipment_affixes: EquipmentAffixData
   params: BattleParamData
   xiyou: XiyouData
   items: ItemData

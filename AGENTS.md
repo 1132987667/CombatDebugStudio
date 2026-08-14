@@ -117,9 +117,19 @@ src/
     ├── composables/
     └── styles/
 configs/             # 配置数据（JSON）
+├── xiyou/           # 西游域数据
+│   ├── items.json   # 非装备物品主键索引（全部物品唯一 ID 注册表；bp_* 条目为图谱与解锁凭证；装备详情见 equipment.json）
+│   ├── cave.json    # 打造配方
+│   └── affixes.json # 词条库
+├── equipment/
+│   └── equipment.json  # 唯一装备定义
+├── attributes/
+│   └── attributes.json # 属性代码
+├── drops/
+│   └── drops.json    # 掉落组
+├── enemies/         # 敌人基础属性 + 掉落组引用（enemies.json）
 ├── skills/          # 技能配置
 ├── buffs/           # Buff 配置
-├── enemies/         # 敌人配置
 └── ...
 documents/           # 设计文档 / 迁移记录
 tests/               # 测试（unit / e2e / factories / fixtures / mocks）

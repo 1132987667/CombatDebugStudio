@@ -80,8 +80,8 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../data/mock'
-import { forgeRecipes } from '../../data/mock'
-import { catalogById, itemIdByName, parseMaterials, qualityOf } from '../../data/caveLogic'
+import { forgeRecipes, equipmentCatalog } from '../../data/mock'
+import { catalogById, itemIdByName, itemName, qualityOf } from '../../data/caveLogic'
 
 const pack = usePackStore()
 const notification = useNotificationStore()
@@ -140,10 +140,16 @@ interface MatView {
   enough: boolean
 }
 
+/** 配方对应装备（材料权威在 configs/equipment/equipment.json，forgeRecipes 不再内联） */
+function gearOf(r: XiyouRecipe) {
+  return r.equipmentId ? equipmentCatalog.find((g) => g.id === r.equipmentId) : undefined
+}
+
 function materialsOf(r: XiyouRecipe): MatView[] {
-  return parseMaterials(r.materials).map((m) => {
-    const have = m.itemId ? pack.countOf(m.itemId) : 0
-    return { name: m.name, count: m.count, have, enough: !!m.itemId && have >= m.count }
+  const mats = gearOf(r)?.materials ?? []
+  return mats.map((m) => {
+    const have = pack.countOf(m.itemId)
+    return { name: itemName(m.itemId), count: m.count, have, enough: have >= m.count }
   })
 }
 
@@ -166,9 +172,8 @@ function craft(): void {
 
   brewing.value = true
   window.setTimeout(() => {
-    for (const m of parseMaterials(r.materials)) {
-      if (m.itemId) pack.removeItem(m.itemId, m.count)
-    }
+    const mats = gearOf(r)?.materials ?? []
+    for (const m of mats) pack.removeItem(m.itemId, m.count)
     const outId = itemIdByName(r.name)
     if (outId) pack.addItem(outId, 1)
     rippling.value = true

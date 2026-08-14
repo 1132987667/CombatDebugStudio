@@ -4,8 +4,9 @@
  * 确认 items.json 中的 ID 与各掉落表 / 制造表引用零断裂：
  * - enemies/*.json  drops[].itemId
  * - drops/drops.json  entries[].itemId
- * - xiyou/equipment.json  materials[].itemId
+ * - equipment/equipment.json  materials[].itemId（装备详情统一在此）
  * - items.json 内部 ID 唯一性
+ * - equipment.json 内部 ID 唯一性 + blueprintId 引用存在
  *
  * 用法：node scripts/check-items.cjs
  */
@@ -53,15 +54,39 @@ for (const g of drops) {
   }
 }
 
-// equipment 制造材料
-const equipment = JSON.parse(fs.readFileSync(cfg('xiyou', 'equipment.json'), 'utf8'))
+// equipment 制造材料（装备详情统一数据源 configs/equipment/equipment.json）
+const equipment = JSON.parse(fs.readFileSync(cfg('equipment', 'equipment.json'), 'utf8'))
+const forgeRecipes = JSON.parse(fs.readFileSync(cfg('xiyou', 'cave.json'), 'utf8')).forgeRecipes || []
+const forgeIds = new Set(forgeRecipes.map((r) => r.id))
+const equipIds = new Set(equipment.map((e) => e.id))
+for (const f of forgeRecipes) {
+  if (f.equipmentId && !equipIds.has(f.equipmentId)) {
+    issues.push({ origin: `cave.json:${f.id}.equipmentId`, refId: f.equipmentId })
+  }
+}
 for (const eq of equipment) {
   for (const m of eq.materials || []) {
-    checkRef(`xiyou/equipment.json:${eq.id}.materials`, m.itemId)
+    checkRef(`equipment/equipment.json:${eq.id}.materials`, m.itemId)
+  }
+  if (eq.blueprintId && !itemIds.has(eq.blueprintId)) {
+    issues.push({ origin: `equipment/equipment.json:${eq.id}.blueprintId`, refId: eq.blueprintId })
+  }
+  if (eq.recipeId && !forgeIds.has(eq.recipeId)) {
+    issues.push({ origin: `equipment/equipment.json:${eq.id}.recipeId`, refId: eq.recipeId })
+  }
+  if (eq.craftable && !eq.blueprintId) {
+    issues.push({ origin: `equipment/equipment.json:${eq.id}`, refId: 'craftable 装备缺 blueprintId' })
   }
 }
 
+// 装备内部 ID 唯一性
+const eqDup = equipment.map((e) => e.id).filter((id, idx, arr) => arr.indexOf(id) !== idx)
+for (const id of new Set(eqDup)) {
+  issues.push({ origin: 'equipment.json 内部重复 ID', refId: id })
+}
+
 console.log(`物品主键索引：${itemsDoc.items.length} 条`)
+console.log(`装备定义：${equipment.length} 条`)
 console.log(`引用总数：${totalRefs} 条`)
 console.log(`断裂引用：${issues.length} 条`)
 
@@ -70,7 +95,8 @@ if (issues.length === 0) {
   console.log(`  - items.json ID 唯一 ✅`)
   console.log(`  - enemies/*.json drops 引用零断裂 ✅`)
   console.log(`  - drops.json entries 引用零断裂 ✅`)
-  console.log(`  - xiyou/equipment.json materials 引用零断裂 ✅`)
+  console.log(`  - equipment/equipment.json materials 引用零断裂 ✅`)
+  console.log(`  - equipment.json 内部 ID 唯一 + blueprintId/recipeId 引用零断裂 ✅`)
   process.exit(0)
 }
 

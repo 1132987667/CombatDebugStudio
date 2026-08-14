@@ -1,17 +1,17 @@
 {
   "mates": [
-    { "name": "孙小圣", "role": "输出", "quality": "仙品", "level": 5, "stars": 4, "active": true, "desc": "棍扫千军，越战越勇" },
-    { "name": "八戒", "role": "护卫", "quality": "天品", "level": 4, "stars": 2, "active": true, "desc": "皮糙肉厚，嘲讽护主" },
-    { "name": "悟净", "role": "辅助", "quality": "地品", "level": 3, "stars": 1, "active": true, "desc": "河魂祝福，回复气血" },
-    { "name": "小白龙", "role": "输出", "quality": "天品", "level": 0, "stars": 0, "active": false, "desc": "腾云驾雾，群体灼伤" },
-    { "name": "白毛猴王", "role": "输出", "quality": "玄品", "level": 2, "stars": 1, "active": false, "desc": "猿猴啼啸，攻速双修" },
-    { "name": "土地公", "role": "辅助", "quality": "玄品", "level": 0, "stars": 0, "active": false, "desc": "土灵守护，格挡增益" }
+    { "name": "孙小圣", "role": "输出", "rarity": 5, "level": 5, "stars": 4, "active": true, "desc": "棍扫千军，越战越勇" },
+    { "name": "八戒", "role": "护卫", "rarity": 4, "level": 4, "stars": 2, "active": true, "desc": "皮糙肉厚，嘲讽护主" },
+    { "name": "悟净", "role": "辅助", "rarity": 3, "level": 3, "stars": 1, "active": true, "desc": "河魂祝福，回复气血" },
+    { "name": "小白龙", "role": "输出", "rarity": 4, "level": 0, "stars": 0, "active": false, "desc": "腾云驾雾，群体灼伤" },
+    { "name": "白毛猴王", "role": "输出", "rarity": 2, "level": 2, "stars": 1, "active": false, "desc": "猿猴啼啸，攻速双修" },
+    { "name": "土地公", "role": "辅助", "rarity": 2, "level": 0, "stars": 0, "active": false, "desc": "土灵守护，格挡增益" }
   ],
   "pets": [
-    { "name": "通臂猿", "quality": "天品", "growth": 88, "level": 4, "skill": "伴攻 · 每回合 15% 概率追加攻击", "active": true },
-    { "name": "石猴", "quality": "玄品", "growth": 60, "level": 2, "skill": "护主 · 承伤时格挡 10%", "active": true },
-    { "name": "灵獒", "quality": "地品", "growth": 75, "level": 0, "skill": "嗅敌 · 敌人闪避率 -5%", "active": false },
-    { "name": "金丝雀", "quality": "凡品", "growth": 40, "level": 1, "skill": "鸣啼 · 战后额外经验 +5%", "active": false }
+    { "name": "通臂猿", "rarity": 4, "growth": 88, "level": 4, "skill": "伴攻 · 每回合 15% 概率追加攻击", "active": true },
+    { "name": "石猴", "rarity": 2, "growth": 60, "level": 2, "skill": "护主 · 承伤时格挡 10%", "active": true },
+    { "name": "灵獒", "rarity": 3, "growth": 75, "level": 0, "skill": "嗅敌 · 敌人闪避率 -5%", "active": false },
+    { "name": "金丝雀", "rarity": 1, "growth": 40, "level": 1, "skill": "鸣啼 · 战后额外经验 +5%", "active": false }
   ],
   "affinities": [
     { "name": "师徒同心", "members": ["孙小圣", "猪八戒", "沙悟净"], "bonus": "全队攻击 +8%", "progress": 0.66, "activated": true },

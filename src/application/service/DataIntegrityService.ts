@@ -8,8 +8,10 @@
 import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersistentStorage'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { TABLE_SCHEMAS, REFERENCE_RULES, extractReferenceIds } from '@/domain/fengshen/schema'
-import type { FengshenTableName } from '@/domain/fengshen/types'
+import type { FengshenTableName, XiyouData } from '@/domain/fengshen/types'
 import type { ElementsData } from '@/domain/fengshen/types'
+import { AttributeMetaMap } from '@/domain/attribute/types'
+import { validateSlotKey } from '@/shared/utils/equipmentAffix'
 import { validateBuffConfigShape } from '@/domain/buff/buffConfigValidation'
 import { normalizeBuffEntries } from '@/shared/types/effects-json'
 
@@ -33,7 +35,8 @@ export interface HealthCheckIssue {
   sourceId: string
   field: string
   missingId: string
-  targetTable: FengshenTableName
+  /** 权威源：封神榜表名 / attributes / schools / slot / valueRange 等外部权威 */
+  targetTable: string
 }
 
 export interface HealthCheckReport {
@@ -85,6 +88,12 @@ export class DataIntegrityService {
       if (normalized) errors.push(...validateBuffConfigShape(normalized as unknown as Record<string, unknown>))
     }
 
+    // 装备词条强校验：attribute 必须存在于 attributes.json / slotKey 合法 / school 存在于 schools.json / valueRange 完整
+    if (table === 'equipment_affixes') {
+      const schoolNames = await this.getSchoolNames()
+      errors.push(...this.equipmentAffixIssues(entity, schoolNames).map((i) => i.message))
+    }
+
     for (const rule of REFERENCE_RULES.filter((r) => r.sourceTable === table)) {
       const refIds = extractReferenceIds(entity, rule.path)
       if (refIds.length === 0 && rule.optional) continue
@@ -114,7 +123,7 @@ export class DataIntegrityService {
     return { allowed: blockers.length === 0, blockers }
   }
 
-  /** 全局健康检查：按 REFERENCE_RULES 扫描全部引用，输出断裂引用报告 */
+  /** 全局健康检查：按 REFERENCE_RULES 扫描全部引用 + 装备词条强约束，输出断裂/非法报告 */
   async runHealthCheck(): Promise<HealthCheckReport> {
     const issues: HealthCheckIssue[] = []
     let checkedEntities = 0
@@ -137,6 +146,17 @@ export class DataIntegrityService {
         }
       }
     }
+
+    // 装备词条强约束扫描（attribute / slotKey / school / valueRange）
+    const schoolNames = await this.getSchoolNames()
+    const eqAffixes = await this.listAll('equipment_affixes')
+    for (const entity of eqAffixes) {
+      checkedEntities++
+      for (const issue of this.equipmentAffixIssues(entity, schoolNames)) {
+        issues.push({ sourceTable: 'equipment_affixes', sourceId: entity.id, ...issue })
+      }
+    }
+
     return { scannedRules: REFERENCE_RULES.length, checkedEntities, issues }
   }
 
@@ -158,6 +178,77 @@ export class DataIntegrityService {
   }
 
   // ── 内部工具 ────────────────────────────────────────────────
+
+  /** 学校（流派）name 集合：读封神榜 xiyou 表 schools 文档（seed 自 configs/xiyou/schools.json） */
+  private async getSchoolNames(): Promise<Set<string>> {
+    const doc = await this.storage.get<XiyouData>(FENGSHEN_STORE.XIYOU, 'schools')
+    const data = doc?.data
+    const names = new Set<string>()
+    if (!Array.isArray(data)) return names
+    for (const s of data) {
+      if (s && typeof (s as Record<string, unknown>).name === 'string') names.add((s as { name: string }).name)
+    }
+    return names
+  }
+
+  /** 装备词条强约束检查：attribute ∈ attributes.json / modifierType ∈ {flat,percent} / valueRange 完整 /
+   *  applicableSlots 每个 slotKey 合法 / school ∈ schools.json / weight 非负。返回结构化问题列表（保存校验与健康检查共用） */
+  private equipmentAffixIssues(
+    entity: Record<string, unknown>,
+    schoolNames: Set<string>,
+  ): Array<{ field: string; missingId: string; targetTable: string; message: string }> {
+    const issues: Array<{ field: string; missingId: string; targetTable: string; message: string }> = []
+
+    const attribute = entity.attribute
+    if (typeof attribute !== 'string' || !attribute.trim()) {
+      issues.push({ field: 'attribute', missingId: '—', targetTable: 'attributes', message: '字段「属性」为必填' })
+    } else if (!Object.prototype.hasOwnProperty.call(AttributeMetaMap, attribute)) {
+      issues.push({ field: 'attribute', missingId: attribute, targetTable: 'attributes', message: `属性「${attribute}」不存在于 attributes.json` })
+    }
+
+    if (entity.modifierType !== 'flat' && entity.modifierType !== 'percent') {
+      issues.push({ field: 'modifierType', missingId: String(entity.modifierType), targetTable: 'modifierType', message: `修正类型「${String(entity.modifierType)}」非法（应为 flat/percent）` })
+    }
+
+    const vr = entity.valueRange as { min?: unknown; max?: unknown } | undefined
+    if (!vr || typeof vr !== 'object' || !Number.isFinite(vr.min as number) || !Number.isFinite(vr.max as number)) {
+      issues.push({ field: 'valueRange', missingId: JSON.stringify(vr ?? null), targetTable: 'valueRange', message: '字段「数值区间」必须为 { min, max } 数字' })
+    } else if ((vr.min as number) < 0) {
+      issues.push({ field: 'valueRange', missingId: `min=${vr.min}`, targetTable: 'valueRange', message: `数值区间非法：min 不能为负数（当前 ${vr.min}）` })
+    } else if ((vr.min as number) > (vr.max as number)) {
+      issues.push({ field: 'valueRange', missingId: `min=${vr.min},max=${vr.max}`, targetTable: 'valueRange', message: `数值区间非法：min(${vr.min}) > max(${vr.max})` })
+    }
+
+    const slots = entity.applicableSlots
+    if (!Array.isArray(slots) || slots.length === 0) {
+      issues.push({ field: 'applicableSlots', missingId: '—', targetTable: 'slot', message: '字段「适用部位」为必填（至少 1 个 slotKey）' })
+    } else {
+      for (const key of slots) {
+        if (typeof key !== 'string') {
+          issues.push({ field: 'applicableSlots', missingId: JSON.stringify(key), targetTable: 'slot', message: '「适用部位」元素必须为字符串' })
+          continue
+        }
+        const err = validateSlotKey(key)
+        if (err) issues.push({ field: 'applicableSlots', missingId: key, targetTable: 'slot', message: err })
+      }
+    }
+
+    const school = entity.school
+    if (school !== undefined && school !== null && school !== '') {
+      if (typeof school !== 'string') {
+        issues.push({ field: 'school', missingId: JSON.stringify(school), targetTable: 'schools', message: '「流派绑定」必须为字符串' })
+      } else if (!schoolNames.has(school)) {
+        issues.push({ field: 'school', missingId: school, targetTable: 'schools', message: `流派「${school}」不存在于 schools.json` })
+      }
+    }
+
+    const weight = entity.weight
+    if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) {
+      issues.push({ field: 'weight', missingId: String(weight), targetTable: 'weight', message: '字段「抽池权重」必须为非负数字' })
+    }
+
+    return issues
+  }
 
   private async listAll(table: FengshenTableName): Promise<Array<Record<string, unknown> & { id: string }>> {
     // NOTE: 表名与 store 名一致（FENGSHEN_STORE 值），直接用表名作 store

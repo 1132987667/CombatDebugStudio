@@ -9,12 +9,12 @@
       @click="$emit('open', item.id)"
       @contextmenu.prevent="openMenu($event)"
     >
-      <span class="xy-item-name" :class="rarityClass(item.rarity)">{{ item.name }}</span>
+      <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ item.name }}</span>
       <span class="xy-item-meta">
         <span class="xy-item-type">{{ item.type }}</span>
         <span class="xy-item-count">×{{ count }}</span>
       </span>
-      <span class="xy-item-rarity" :class="rarityClass(item.rarity)">{{ qualityOf(item.rarity) }}</span>
+      <span class="xy-item-rarity" :class="qualityClass(item.rarity)">{{ qualityOf(item.rarity) }}</span>
     </button>
 
     <!-- 悬浮信息卡（复用 EntityTooltip 范式：Teleport + rect 定位 + 视口翻转） -->
@@ -39,7 +39,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { qualityColor, qualityOf } from '../data/quality'
+import { qualityClass, qualityColor, qualityOf } from '../data/quality'
 import type { XiyouCatalogItem } from '../data/mock'
 
 const props = defineProps<{
@@ -130,12 +130,6 @@ function act(action: 'use' | 'storage' | 'discard' | 'open'): void {
 onBeforeUnmount(() => {
   removeDocListener?.()
 })
-
-/* ── 品质 ── */
-/** 品阶名类（.xy-game 内有效，--xy-* 令牌由 xiyou.scss 提供） */
-function rarityClass(rarity: number): string {
-  return `xy-q--${qualityOf(rarity)}`
-}
 </script>
 
 <style scoped lang="scss">

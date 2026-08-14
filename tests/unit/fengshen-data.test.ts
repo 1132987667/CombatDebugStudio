@@ -102,8 +102,11 @@ describe('种子导入 seedFengshenData', () => {
     // 装备独立成表（configs/equipment），材料域不再含装备条目
     const materialKeys = await storage.keys(FENGSHEN_STORE.MATERIALS)
     expect(materialKeys).not.toContain('eq_w001')
+    // 装备统一表：新装备（wp_/ar_/ac_）为主键，旧 eq_* 已合并（legacyIds），仅无对应新体系者保留 eq_* ID
     const equipKeys = await storage.keys(FENGSHEN_STORE.EQUIPMENT)
-    expect(equipKeys).toContain('eq_w001')
+    expect(equipKeys).toContain('wp_t1_light_01')
+    expect(equipKeys).not.toContain('eq_w001')
+    expect(equipKeys).toContain('eq_c002')
 
     // 物品主键索引（items 表）：全量注册，新装备（wp_/ar_/ac_）+ 旧装备（eq_）ID 均在内
     const itemKeys = await storage.keys(FENGSHEN_STORE.ITEMS)
@@ -112,9 +115,9 @@ describe('种子导入 seedFengshenData', () => {
     expect(itemKeys).toContain('ar_t1_light_01')
     expect(itemKeys).toContain('eq_w001')
 
-    // 装备详情（gears 表）：凡品 12 件新装备
+    // 装备详情（gears 表）：全量可打造装备 46 件（43 常规 + 3 特殊装备烈焰斩/风灵袍/地灵护符）
     const gearKeys = await storage.keys(FENGSHEN_STORE.GEARS)
-    expect(gearKeys).toHaveLength(12)
+    expect(gearKeys).toHaveLength(46)
     expect(gearKeys).toContain('ac_t1_charm_01')
 
     // 词缀表：55 种种子词缀齐全（减益一档 8 + 增益一至四档 8/12/15/12）
@@ -137,6 +140,32 @@ describe('种子导入 seedFengshenData', () => {
 
     const second = await seedFengshenData(storage)
     expect(second.imported).toBe(false)
+  })
+
+  it('装备合并自洽：craftable 装备有 blueprintId/materials，recipeId 与洞府配方一一对应，legacyIds 记录旧 ID', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+    const api = new GameDataApi(storage)
+
+    // 合并后主键为新体系 ID：竹剑 eq_w001 并入 wp_t1_light_01（legacyIds），旧 ID 不再独立存在于装备表
+    const bamboo = await api.getEquipment('wp_t1_light_01')
+    expect(bamboo?.craftable).toBe(true)
+    expect(bamboo?.blueprintId).toBe('bp_t1_wp')
+    expect(bamboo?.recipeId).toBe('forge_wp_t1_light_01')
+    expect(bamboo?.legacyIds).toEqual(['eq_w001'])
+    expect(bamboo?.materials?.length).toBeGreaterThan(0)
+
+    // 可打造装备都关联图谱，且造不出无材料的
+    const all = await api.listEquipment()
+    const craftables = all.filter((e) => e.craftable)
+    expect(craftables.length).toBeGreaterThan(0)
+    for (const c of craftables) {
+      expect(c.blueprintId).toBeTruthy()
+      expect(c.materials?.length).toBeGreaterThan(0)
+      expect(c.tier).toBeTruthy()
+      expect(c.cost).toBeGreaterThan(0)
+    }
+    expect(all.filter((e) => e.recipeId).every((e) => e.craftable)).toBe(true)
   })
 
   it('种子导入包含 scene_test（测试场景），且其引用的敌人全部在库', async () => {

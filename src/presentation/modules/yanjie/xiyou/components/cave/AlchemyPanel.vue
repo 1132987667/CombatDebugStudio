@@ -72,7 +72,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../data/mock'
 import { alchemyRecipes } from '../../data/mock'
-import { itemIdByName, parseMaterials, qualityOf } from '../../data/caveLogic'
+import { itemIdByName, itemName, qualityOf } from '../../data/caveLogic'
 
 const pack = usePackStore()
 const notification = useNotificationStore()
@@ -109,9 +109,10 @@ interface MatView {
 }
 
 function materialsOf(r: XiyouRecipe): MatView[] {
-  return parseMaterials(r.materials).map((m) => {
-    const have = m.itemId ? pack.countOf(m.itemId) : 0
-    return { name: m.name, count: m.count, have, enough: !!m.itemId && have >= m.count }
+  const mats = r.materials ?? []
+  return mats.map((m) => {
+    const have = pack.countOf(m.itemId)
+    return { name: itemName(m.itemId), count: m.count, have, enough: have >= m.count }
   })
 }
 
@@ -126,9 +127,7 @@ function brew(): void {
   if (!r || brewing.value) return
   brewing.value = true
   window.setTimeout(() => {
-    for (const m of parseMaterials(r.materials)) {
-      if (m.itemId) pack.removeItem(m.itemId, m.count)
-    }
+    for (const m of r.materials ?? []) pack.removeItem(m.itemId, m.count)
     const outId = itemIdByName(r.name)
     if (outId) pack.addItem(outId, 1)
     rippling.value = true

@@ -17,8 +17,9 @@ import { LogLevel } from '@/shared/types/battle-log'
 
 const DB_NAME = 'combat-debug-studio'
 // NOTE: v1 = recordings/snapshots；v2 = 封神榜 14 数据表；v3 = 新增 affixes 词缀表（封神榜词缀管理）；
-//       v4 = 新增 items（物品主键索引）/ gears（装备详情）表
-const DB_VERSION = 4
+//       v4 = 新增 items（物品主键索引）/ gears（装备详情）表；
+//       v5 = 新增 equipment_affixes（装备词条库，独立于敌人词缀）
+const DB_VERSION = 5
 
 /** 存储迁移历史（PackagesView「版本迁移记录」读取；新增迁移在此追加即可，UI 自动更新） */
 export const STORAGE_MIGRATIONS: Array<{ version: number; note: string }> = [
@@ -26,6 +27,7 @@ export const STORAGE_MIGRATIONS: Array<{ version: number; note: string }> = [
   { version: 2, note: '新增封神榜数据表（14 store + meta）' },
   { version: 3, note: '新增 affixes 词缀数据表' },
   { version: 4, note: '新增 items（物品主键索引）/ gears（装备详情）数据表' },
+  { version: 5, note: '新增 equipment_affixes（装备词条库）数据表' },
 ]
 
 export class IndexedDbStorage implements IPersistentStorage {

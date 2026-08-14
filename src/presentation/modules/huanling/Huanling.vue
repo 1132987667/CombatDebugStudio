@@ -63,9 +63,12 @@
 
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
+import { GameDataApi } from '@/application/service/GameDataApi';
 import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
+import type { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl';
 import { ParticipantSide } from "@/domain/battle/type/types.ts";
 import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader';
+import type { ActorData } from '@/domain/fengshen/types';
 import { BuffSystem } from '@/domain/buff/BuffSystem';
 import { DamageCategory } from '@/domain/skill/types';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
@@ -334,16 +337,64 @@ const enemyTeam = computed(() => {
 });
 
 // 初始化战斗
-function initBattle() {
-  // NOTE: 默认阵容从数据源动态派生（取前两个可用敌人各作我方/敌方演示单位），
-  //       不硬编码角色 id —— 配置数据更换后默认阵容自动跟随，避免"换版本就失真"
-  const enemies = GameDataProcessor.getEnemiesData()
-  const pool = enemies.length >= 2 ? enemies : []
-  const allyList = pool[0] ? [pool[0]] : []
-  const enemyList = pool[1] ? [pool[1]] : []
+async function initBattle() {
+  // NOTE: 默认阵容从封神榜预设阵容（lineups 表）读取——roles 中 roleId 匹配 actors 的归我方、
+  //       匹配 enemies 的归敌方（与 ParticipantPanel.applyLineup 同判据），封神榜编辑阵容后默认阵容自动跟随。
+  //       无可用阵容时回退：取前两个可用敌人各作我方/敌方演示单位。
+  const gameDataApi = container.resolve<GameDataApi>('GameDataApi')
+  let allyIds: string[] = []
+  let enemyIds: string[] = []
+  let actors: ActorData[] = []
 
-  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, ParticipantSide.ALLY, index));
-  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, index));
+  try {
+    const [lineups, loadedActors] = await Promise.all([
+      gameDataApi.listLineups(),
+      gameDataApi.listByTable<ActorData>('actors', { limit: 1000 }),
+    ])
+    actors = loadedActors
+    const seen = new Set<string>()
+    for (const lineup of lineups) {
+      const roles = [...lineup.roles].sort((a, b) => a.seatIndex - b.seatIndex)
+      for (const role of roles) {
+        if (seen.has(role.roleId)) continue
+        seen.add(role.roleId)
+        if (actors.some((a) => a.id === role.roleId)) {
+          allyIds.push(role.roleId)
+        } else if (GameDataProcessor.findEnemyById(role.roleId)) {
+          enemyIds.push(role.roleId)
+        }
+      }
+    }
+  } catch {
+    allyIds = []
+    enemyIds = []
+  }
+
+  if (allyIds.length === 0 && enemyIds.length === 0) {
+    const enemies = GameDataProcessor.getEnemiesData()
+    const pool = enemies.length >= 2 ? enemies : []
+    allyIds = pool[0] ? [pool[0].id] : []
+    enemyIds = pool[1] ? [pool[1].id] : []
+  }
+
+  const allyTeamData: BattleParticipantImpl[] = []
+  for (let i = 0; i < allyIds.length; i++) {
+    const id = allyIds[i]
+    const actor = actors.find((a) => a.id === id)
+    if (actor) {
+      allyTeamData.push(GameDataProcessor.actorToParticipant(actor, ParticipantSide.ALLY, i))
+      continue
+    }
+    const enemy = GameDataProcessor.findEnemyById(id)
+    if (enemy) allyTeamData.push(GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ALLY, i))
+  }
+
+  const enemyTeamData: BattleParticipantImpl[] = []
+  for (let i = 0; i < enemyIds.length; i++) {
+    const enemy = GameDataProcessor.findEnemyById(enemyIds[i])
+    if (enemy) enemyTeamData.push(GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, i))
+  }
+
   // 使用BattleService初始化队伍数据
   battleService.initializeTeams(allyTeamData, enemyTeamData);
 
@@ -361,7 +412,7 @@ onMounted(() => {
   // 恢复持久化场景列表
   loadScenes();
   // 初始化队伍数据
-  initBattle();
+  void initBattle();
 });
 
 // 监听战斗活跃状态变化

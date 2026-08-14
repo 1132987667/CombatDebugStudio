@@ -1,23 +1,23 @@
 {
   "gearSlots": [
-    { "slot": "武器", "item": "松木棍", "quality": "凡品", "enhance": 6, "maxEnhance": 10, "star": 1, "effect": "攻击 +24", "equipped": true },
-    { "slot": "衣服", "item": "鹿皮甲", "quality": "玄品", "enhance": 4, "maxEnhance": 10, "star": 0, "effect": "防御 +12", "equipped": true },
-    { "slot": "头盔", "item": "藤蔓箍", "quality": "地品", "enhance": 2, "maxEnhance": 10, "star": 0, "effect": "气血 +60", "equipped": true },
-    { "slot": "靴子", "item": "草编履", "quality": "天品", "enhance": 3, "maxEnhance": 10, "star": 0, "effect": "速度 +5", "equipped": true },
-    { "slot": "护符", "item": "淡水玉护符", "quality": "仙品", "enhance": 5, "maxEnhance": 10, "star": 1, "effect": "气血 +3%", "equipped": true },
-    { "slot": "戒指", "item": "空位", "quality": "凡品", "enhance": 0, "maxEnhance": 10, "star": 0, "effect": "未装备", "equipped": false }
+    { "slot": "武器", "item": "松木棍", "rarity": 1, "enhance": 6, "maxEnhance": 10, "star": 1, "effect": "攻击 +24", "equipped": true },
+    { "slot": "衣服", "item": "鹿皮甲", "rarity": 2, "enhance": 4, "maxEnhance": 10, "star": 0, "effect": "防御 +12", "equipped": true },
+    { "slot": "头盔", "item": "藤蔓箍", "rarity": 3, "enhance": 2, "maxEnhance": 10, "star": 0, "effect": "气血 +60", "equipped": true },
+    { "slot": "靴子", "item": "草编履", "rarity": 4, "enhance": 3, "maxEnhance": 10, "star": 0, "effect": "速度 +5", "equipped": true },
+    { "slot": "护符", "item": "淡水玉护符", "rarity": 5, "enhance": 5, "maxEnhance": 10, "star": 1, "effect": "气血 +3%", "equipped": true },
+    { "slot": "戒指", "item": "空位", "rarity": 1, "enhance": 0, "maxEnhance": 10, "star": 0, "effect": "未装备", "equipped": false }
   ],
   "treasures": [
-    { "name": "如意金箍棒", "tier": "仙品", "level": 8, "maxLevel": 20, "progress": 0.4, "skill": "每次攻击后提升 3% 攻击，可叠 5 层", "active": true },
-    { "name": "九齿钉耙", "tier": "天品", "level": 0, "maxLevel": 15, "progress": 0, "skill": "群体攻击时附带击退效果", "active": false },
-    { "name": "降妖宝杖", "tier": "天品", "level": 0, "maxLevel": 15, "progress": 0, "skill": "对妖魔额外造成 15% 伤害", "active": false },
-    { "name": "芭蕉扇", "tier": "地品", "level": 2, "maxLevel": 12, "progress": 0.15, "skill": "有 20% 概率吹散敌方增益", "active": false },
-    { "name": "紫金红葫芦", "tier": "玄品", "level": 1, "maxLevel": 10, "progress": 0.5, "skill": "收纳低于 10% 气血的敌人", "active": false }
+    { "name": "如意金箍棒", "rarity": 5, "level": 8, "maxLevel": 20, "progress": 0.4, "skill": "每次攻击后提升 3% 攻击，可叠 5 层", "active": true },
+    { "name": "九齿钉耙", "rarity": 4, "level": 0, "maxLevel": 15, "progress": 0, "skill": "群体攻击时附带击退效果", "active": false },
+    { "name": "降妖宝杖", "rarity": 4, "level": 0, "maxLevel": 15, "progress": 0, "skill": "对妖魔额外造成 15% 伤害", "active": false },
+    { "name": "芭蕉扇", "rarity": 3, "level": 2, "maxLevel": 12, "progress": 0.15, "skill": "有 20% 概率吹散敌方增益", "active": false },
+    { "name": "紫金红葫芦", "rarity": 2, "level": 1, "maxLevel": 10, "progress": 0.5, "skill": "收纳低于 10% 气血的敌人", "active": false }
   ],
   "mounts": [
-    { "name": "筋斗云", "quality": "仙品", "level": 5, "aptitude": 95, "speed": 60, "skill": "首回合必定先手", "active": true },
-    { "name": "白龙马", "quality": "天品", "level": 2, "aptitude": 82, "speed": 25, "skill": "移动至宝图点额外获得收益", "active": false },
-    { "name": "青牛", "quality": "地品", "level": 0, "aptitude": 70, "speed": 15, "skill": "载重量 +50", "active": false },
-    { "name": "灰驴", "quality": "凡品", "level": 3, "aptitude": 55, "speed": 10, "skill": "无", "active": false }
+    { "name": "筋斗云", "rarity": 5, "level": 5, "aptitude": 95, "speed": 60, "skill": "首回合必定先手", "active": true },
+    { "name": "白龙马", "rarity": 4, "level": 2, "aptitude": 82, "speed": 25, "skill": "移动至宝图点额外获得收益", "active": false },
+    { "name": "青牛", "rarity": 3, "level": 0, "aptitude": 70, "speed": 15, "skill": "载重量 +50", "active": false },
+    { "name": "灰驴", "rarity": 1, "level": 3, "aptitude": 55, "speed": 10, "skill": "无", "active": false }
   ]
 }

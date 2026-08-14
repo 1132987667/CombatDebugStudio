@@ -99,7 +99,7 @@
         <div class="xy-equip-row" v-for="g in equippedGear" :key="g.slot">
           <span class="xy-equip-slot">{{ g.slot }}</span>
           <span class="xy-equip-name">{{ g.item }}<em v-if="g.enhance > 0">+{{ g.enhance }}</em></span>
-          <span class="xy-chip" :class="qualityClass(g.quality)">{{ g.quality }}</span>
+          <span class="xy-chip" :class="qualityClass(g.rarity)">{{ qualityOf(g.rarity) }}</span>
         </div>
       </div>
       <button type="button" class="xy-link-btn" @click="emit('goEquip')">前往装备面板</button>
@@ -118,6 +118,7 @@ import AttributeTooltip from '@/presentation/components/AttributeTooltip.vue'
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, ATTRIBUTE_DISPLAY_CONFIG } from '@/presentation/config/attributeDisplay'
 import { gearSlots, player, playerAttributes, statPoints } from '../../data/mock'
+import { qualityClass, qualityOf } from '../../data/quality'
 
 defineEmits<{ goEquip: [] }>()
 
@@ -275,10 +276,6 @@ function resetStats() {
 }
 
 const equippedGear = gearSlots.filter((g) => g.equipped)
-
-function qualityClass(q: string): string {
-  return `xy-q--${q}`
-}
 </script>
 
 <style scoped lang="scss">

@@ -11,36 +11,9 @@ import {
   formatEffect,
   fragmentRuleViews,
   itemIdByName,
-  parseMaterials,
   qualityOf,
   starCost,
 } from '@/presentation/modules/yanjie/xiyou/data/caveLogic'
-
-describe('材料解析 parseMaterials', () => {
-  it('解析 "桃木×3 + 铜精×1" 为结构化列表', () => {
-    const list = parseMaterials('桃木×3 + 铜精×1')
-    expect(list).toEqual([
-      { name: '桃木', itemId: 'mat_001', count: 3 },
-      { name: '铜精', itemId: 'mat_003', count: 1 },
-    ])
-  })
-
-  it('容忍西文乘号与空格差异', () => {
-    expect(parseMaterials('淡水玉x2+贝壳×1')).toEqual([
-      { name: '淡水玉', itemId: 'mat_004', count: 2 },
-      { name: '贝壳', itemId: 'mat_005', count: 1 },
-    ])
-  })
-
-  it('未收录材料 itemId 为 null（组件按不足处理，不崩溃）', () => {
-    const list = parseMaterials('九尾狐尾×1')
-    expect(list).toEqual([{ name: '九尾狐尾', itemId: null, count: 1 }])
-  })
-
-  it('空串返回空列表', () => {
-    expect(parseMaterials('')).toEqual([])
-  })
-})
 
 describe('物品索引与品质', () => {
   it('name → id 同名取首注册（竹剑 → 制造产出 wp_t1_light_01）', () => {

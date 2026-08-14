@@ -15,7 +15,7 @@
           <span class="xy-cave-enh-slot__item">{{ g.item }}</span>
           <span class="xy-cave-enh-slot__lv">强化 {{ g.enhance }}/{{ g.maxEnhance }}</span>
         </span>
-        <p class="xy-cave-enh-slot__effect">{{ g.quality }} · {{ g.slot }}</p>
+        <p class="xy-cave-enh-slot__effect">{{ qualityOf(g.rarity) }} · {{ g.slot }}</p>
       </button>
     </div>
 
@@ -59,6 +59,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouGearSlot } from '../../data/mock'
 import { gearSlots } from '../../data/mock'
+import { qualityOf } from '../../data/quality'
 import {
   enhanceCost,
   enhanceMaterialOf,

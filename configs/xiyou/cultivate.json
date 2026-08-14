@@ -8,12 +8,12 @@
     { "name": "渡劫", "level": 0, "bonus": "气血 +5000 · 免疫一次致死", "progress": 0, "unlocked": false, "desc": "雷劫临身，渡过则飞升上界", "levelReq": 45, "materialName": "渡劫符", "materialCount": 1 }
   ],
   "martialArts": [
-    { "name": "大品天仙诀", "quality": "仙品", "level": 3, "maxLevel": 20, "slot": "主修", "effect": "气血 +12% · 能量上限 +10%", "equipped": true },
-    { "name": "八九玄功", "quality": "天品", "level": 5, "maxLevel": 15, "slot": "辅修一", "effect": "防御 +15% · 格挡率 +5%", "equipped": true },
-    { "name": "筋斗云心法", "quality": "地品", "level": 4, "maxLevel": 12, "slot": "辅修二", "effect": "速度 +18% · 闪避 +6%", "equipped": true },
-    { "name": "菩提静心经", "quality": "地品", "level": 2, "maxLevel": 12, "slot": "心法", "effect": "每回合回复 2% 最大能量", "equipped": true },
-    { "name": "火灵淬体诀", "quality": "玄品", "level": 0, "maxLevel": 10, "slot": "未装配", "effect": "攻击 +8% · 抗灼烧 +20%", "equipped": false },
-    { "name": "太乙真言", "quality": "凡品", "level": 0, "maxLevel": 8, "slot": "未装配", "effect": "法术伤害 +5%", "equipped": false }
+    { "name": "大品天仙诀", "rarity": 5, "level": 3, "maxLevel": 20, "slot": "主修", "effect": "气血 +12% · 能量上限 +10%", "equipped": true },
+    { "name": "八九玄功", "rarity": 4, "level": 5, "maxLevel": 15, "slot": "辅修一", "effect": "防御 +15% · 格挡率 +5%", "equipped": true },
+    { "name": "筋斗云心法", "rarity": 3, "level": 4, "maxLevel": 12, "slot": "辅修二", "effect": "速度 +18% · 闪避 +6%", "equipped": true },
+    { "name": "菩提静心经", "rarity": 3, "level": 2, "maxLevel": 12, "slot": "心法", "effect": "每回合回复 2% 最大能量", "equipped": true },
+    { "name": "火灵淬体诀", "rarity": 2, "level": 0, "maxLevel": 10, "slot": "未装配", "effect": "攻击 +8% · 抗灼烧 +20%", "equipped": false },
+    { "name": "太乙真言", "rarity": 1, "level": 0, "maxLevel": 8, "slot": "未装配", "effect": "法术伤害 +5%", "equipped": false }
   ],
   "meridians": [
     {

@@ -63,11 +63,7 @@ function canSynthesize(v: FragmentRuleView): boolean {
 }
 
 function qualityChip(q: XiyouQuality): string {
-  if (q === '凡品') return 'xy-q--凡品'
-  if (q === '玄品') return 'xy-q--玄品'
-  if (q === '地品') return 'xy-q--地品'
-  if (q === '天品') return 'xy-q--天品'
-  return 'xy-q--仙品'
+  return `xy-q--${q}`
 }
 
 function synthesize(v: FragmentRuleView): void {

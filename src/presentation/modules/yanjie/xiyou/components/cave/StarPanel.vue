@@ -21,7 +21,7 @@
           </span>
           <span class="xy-cave-enh-slot__lv">{{ g.slot }}</span>
         </span>
-        <p class="xy-cave-enh-slot__effect">{{ g.quality }} · {{ g.effect }}</p>
+        <p class="xy-cave-enh-slot__effect">{{ qualityOf(g.rarity) }} · {{ g.effect }}</p>
       </button>
     </div>
 
@@ -62,6 +62,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouGearSlot } from '../../data/mock'
 import { gearSlots } from '../../data/mock'
+import { qualityOf } from '../../data/quality'
 import { itemIdByName, STAR_MAX, starCost } from '../../data/caveLogic'
 
 const pack = usePackStore()

@@ -4,7 +4,7 @@
       <template #gear>
         <div class="xy-gear-grid">
           <div v-for="g in gearSlots" :key="g.slot" class="xy-gear-slot"
-            :class="[{ empty: !g.equipped }, `xy-gear-slot--${g.quality ?? '凡品'}`]">
+            :class="{ empty: !g.equipped }">
             <span class="xy-gear-slot-name">{{ g.slot }}</span>
             <span class="xy-gear-slot-item">{{ g.item }}</span>
             <span v-if="g.equipped" class="xy-gear-slot-enhance">+{{ g.enhance }}</span>
@@ -25,8 +25,8 @@
         <p class="xy-panel-hint">喂养法宝提升等级 · 觉醒解锁本源神通</p>
         <div v-for="t in treasures" :key="t.name" class="xy-row-card">
           <div class="xy-row-top">
-            <span class="xy-row-name" :class="qualityClass(t.tier)">{{ t.name }}</span>
-            <span class="xy-chip xy-chip--jade">{{ t.tier }}</span>
+            <span class="xy-row-name" :class="qualityClass(t.rarity)">{{ t.name }}</span>
+            <span class="xy-chip xy-chip--jade">{{ qualityOf(t.rarity) }}</span>
             <span v-if="t.active" class="xy-chip xy-chip--gold">已装备</span>
             <span class="xy-row-side">Lv.{{ t.level }}/{{ t.maxLevel }}</span>
           </div>
@@ -40,8 +40,8 @@
       <template #mount>
         <div v-for="m in mounts" :key="m.name" class="xy-row-card">
           <div class="xy-row-top">
-            <span class="xy-row-name" :class="qualityClass(m.quality)">{{ m.name }}</span>
-            <span class="xy-chip" :class="mountQualityChip(m.quality)">{{ m.quality }}</span>
+            <span class="xy-row-name" :class="qualityClass(m.rarity)">{{ m.name }}</span>
+            <span class="xy-chip" :class="mountQualityChip(m.rarity)">{{ qualityOf(m.rarity) }}</span>
             <span v-if="m.active" class="xy-chip xy-chip--gold">当前</span>
             <span class="xy-row-side">Lv.{{ m.level }}</span>
           </div>
@@ -64,7 +64,8 @@
 import { ref } from 'vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
-import { gearSlots, mounts, treasures, type XiyouQuality } from '../data/mock'
+import { gearSlots, mounts, treasures } from '../data/mock'
+import { qualityClass, qualityOf } from '../data/quality'
 
 const sub = ref<'gear' | 'treasure' | 'mount'>('gear')
 
@@ -81,12 +82,17 @@ const gearActions = [
   { name: '替换', cost: '从背包更换' },
 ]
 
-function qualityClass(q: XiyouQuality): string {
-  return `xy-q--${q}`
+/** 坐骑品级 → chip 类（EquipPanel 专属，不入统一映射表） */
+const MOUNT_CHIP_BY_RARITY: Record<number, string> = {
+  1: 'xy-chip--muted',
+  2: 'xy-chip--jade',
+  3: 'xy-chip--jade',
+  4: 'xy-chip--seal',
+  5: 'xy-chip--gold',
 }
 
-function mountQualityChip(q: XiyouQuality): string {
-  return { 凡品: 'xy-chip--muted', 玄品: 'xy-chip--jade', 地品: 'xy-chip--jade', 天品: 'xy-chip--seal', 仙品: 'xy-chip--gold' }[q]
+function mountQualityChip(rarity: number): string {
+  return MOUNT_CHIP_BY_RARITY[rarity] ?? 'xy-chip--muted'
 }
 </script>
 

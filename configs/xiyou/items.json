@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies/drops）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品）。旧版装备（eq_w/eq_a/eq_c）为封神榜 equipment 表沿用 ID，drops.json 仍在引用，保留注册不迁移。",
+  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies/drops）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册（含旧版 eq_w/eq_a/eq_c 沿用 ID，drops.json 仍引用，保留注册）。",
   "items": [
     {
       "id": "mat_001",
@@ -1319,6 +1319,13 @@
       "source": "最终 BOSS（仙品合成）"
     },
     {
+      "id": "wp_sp_01",
+      "name": "烈焰斩",
+      "type": "武器",
+      "rarity": 3,
+      "source": "隐藏 BOSS（特殊装备制造）"
+    },
+    {
       "id": "ar_t1_light_01",
       "name": "鹿皮甲",
       "type": "衣服",
@@ -1387,6 +1394,13 @@
       "type": "衣服",
       "rarity": 5,
       "source": "最终 BOSS（仙品合成）"
+    },
+    {
+      "id": "ar_sp_01",
+      "name": "风灵袍",
+      "type": "衣服",
+      "rarity": 3,
+      "source": "隐藏 BOSS（特殊装备制造）"
     },
     {
       "id": "ac_t1_charm_01",
@@ -1541,6 +1555,13 @@
       "type": "饰品",
       "rarity": 5,
       "source": "最终 BOSS（仙品合成）"
+    },
+    {
+      "id": "ac_sp_01",
+      "name": "地灵护符",
+      "type": "饰品",
+      "rarity": 3,
+      "source": "隐藏 BOSS（特殊装备制造）"
     },
     {
       "id": "eq_w001",

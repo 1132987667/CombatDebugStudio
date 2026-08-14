@@ -24,7 +24,7 @@
           <div class="xy-qs-items" role="list" aria-label="背包消耗品">
             <button v-for="it in consumables" :key="it.id" type="button" class="xy-qs-item"
               @click="fillSlot(it.id)">
-              <span class="xy-qs-item-name" :class="qualityClass(it.rarity)">{{ it.name }}</span>
+              <span class="xy-qs-item-name" :class="qsColorClass(it.rarity)">{{ it.name }}</span>
               <span class="xy-qs-item-count">×{{ pack.countOf(it.id) }}</span>
             </button>
             <p v-if="!consumables.length" class="xy-qs-none">背包中没有可用的消耗品</p>
@@ -56,7 +56,8 @@ function nameOf(itemId: string): string {
   return pack.catalogById(itemId)?.name ?? itemId
 }
 
-function qualityClass(rarity: number): string {
+/** 快捷栏品级色类（px-qs-q1..q5，数字类；色值对齐 quality.ts QUALITY_COLORS） */
+function qsColorClass(rarity: number): string {
   return `px-qs-q${rarity}`
 }
 
@@ -244,9 +245,9 @@ function fillSlot(itemId: string): void {
   color: var(--color-text-disabled);
 }
 
-/* 品质色 */
+/* 品质色（对齐 QUALITY_COLORS：text-disabled/success/skill-active/debuff/warning） */
 .px-qs-q1 {
-  color: var(--color-text-secondary);
+  color: var(--color-text-disabled);
 }
 
 .px-qs-q2 {

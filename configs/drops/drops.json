@@ -207,9 +207,9 @@
     "id": "drop_equipment_t1",
     "name": "一阶装备掉落",
     "entries": [
-      { "itemId": "eq_w001", "probability": 20 },
-      { "itemId": "eq_a001", "probability": 20 },
-      { "itemId": "eq_c001", "probability": 15 },
+      { "itemId": "wp_t1_light_01", "probability": 20 },
+      { "itemId": "ar_t1_light_01", "probability": 20 },
+      { "itemId": "ac_t1_charm_01", "probability": 15 },
       { "itemId": "eq_c002", "probability": 15 }
     ]
   },
@@ -217,19 +217,19 @@
     "id": "drop_equipment_t2",
     "name": "二阶装备掉落",
     "entries": [
-      { "itemId": "eq_w004", "probability": 15 },
-      { "itemId": "eq_a004", "probability": 15 },
-      { "itemId": "eq_c007", "probability": 10 },
-      { "itemId": "eq_c008", "probability": 10 }
+      { "itemId": "wp_t2_light_01", "probability": 15 },
+      { "itemId": "ar_t2_light_01", "probability": 15 },
+      { "itemId": "ac_t2_charm_01", "probability": 10 },
+      { "itemId": "ac_t2_ring_01", "probability": 10 }
     ]
   },
   {
     "id": "drop_equipment_t3",
     "name": "三阶装备掉落",
     "entries": [
-      { "itemId": "eq_w007", "probability": 10 },
-      { "itemId": "eq_a007", "probability": 10 },
-      { "itemId": "eq_c013", "probability": 8 },
+      { "itemId": "wp_t3_light_01", "probability": 10 },
+      { "itemId": "ar_t3_light_01", "probability": 10 },
+      { "itemId": "ac_t3_charm_01", "probability": 8 },
       { "itemId": "eq_c014", "probability": 8 }
     ]
   }

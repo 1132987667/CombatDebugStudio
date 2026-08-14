@@ -22,6 +22,8 @@ function makeEntity(id: string): BattleEntity {
     [ATTRIBUTE_CODE.maxHealth]: { value: 350, base: 350, modifiers: [], cachedVersion: 0 },
     [ATTRIBUTE_CODE.currentHealth]: { value: 350, base: 350, modifiers: [], cachedVersion: 0 },
     [ATTRIBUTE_CODE.speed]: { value: 35, base: 35, modifiers: [], cachedVersion: 0 },
+    [ATTRIBUTE_CODE.fireRes]: { value: 0, base: 0, modifiers: [], cachedVersion: 0 },
+    [ATTRIBUTE_CODE.earthRes]: { value: 0, base: 0, modifiers: [], cachedVersion: 0 },
   }
   return {
     id,
@@ -60,27 +62,27 @@ function makeEntity(id: string): BattleEntity {
 }
 
 const affixAttack: AffixData = {
-  id: 'affix_buff_attack',
+  id: 'affix_yao_1_001',
   name: '蛮力',
-  tier: 'buff_1',
+  tier: 'yao_1',
   target: 'enemy',
   statModifiers: [{ attribute: 'attack', percent: 20 }],
   description: '敌人攻击力+20%',
 }
 
 const affixDefense: AffixData = {
-  id: 'affix_buff_defense',
+  id: 'affix_yao_1_002',
   name: '铁躯',
-  tier: 'buff_1',
+  tier: 'yao_1',
   target: 'enemy',
   statModifiers: [{ attribute: 'defense', percent: 40 }],
   description: '敌人防御力+40%',
 }
 
 const affixMulti: AffixData = {
-  id: 'affix_buff2_multi',
-  name: '复合',
-  tier: 'buff_2',
+  id: 'affix_yao_2_006',
+  name: '蛮力·烈',
+  tier: 'yao_2',
   target: 'enemy',
   statModifiers: [
     { attribute: 'attack', percent: 10 },
@@ -105,7 +107,7 @@ describe('applyAffixToParticipant', () => {
     const attackVal = entity.getAttrValue(ATTRIBUTE_CODE.attack)
     expect(attackVal?.modifiers.length).toBe(1)
     expect(attackVal?.modifiers[0]).toMatchObject({
-      sourceKey: 'affix:affix_buff_attack',
+      sourceKey: 'affix:affix_yao_1_001',
       sourceType: 'affix',
       attribute: 'attack',
       value: 20,
@@ -133,7 +135,7 @@ describe('applyAffixToParticipant', () => {
     const affixBad: AffixData = {
       id: 'affix_bad',
       name: '不存在属性',
-      tier: 'buff_1',
+      tier: 'yao_1',
       target: 'enemy',
       statModifiers: [{ attribute: 'notExistAttr', percent: 20 }],
     }
@@ -189,5 +191,30 @@ describe('applyRandomAffixes', () => {
     const result = applyRandomAffixes([e1], affixes, [1, 5], highRng)
     const ids = result.get(e1.id) ?? []
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('同一 conflict_group 的词缀不共存（五行单抗互斥）', () => {
+    const wuxingPool: AffixData[] = [
+      { id: 'affix_yao_3_011', name: '火灵护体', tier: 'yao_3', target: 'enemy',
+        conflict_group: 'wuxing_single', statModifiers: [{ attribute: 'fireRes', percent: 60 }] },
+      { id: 'affix_yao_3_015', name: '土灵护体', tier: 'yao_3', target: 'enemy',
+        conflict_group: 'wuxing_single', statModifiers: [{ attribute: 'earthRes', percent: 60 }] },
+      { id: 'affix_yao_3_016', name: '五行轮转', tier: 'yao_3', target: 'enemy',
+        conflict_group: 'wuxing_all', statModifiers: [{ attribute: 'fireRes', percent: 30 }] },
+      { id: 'affix_yao_3_001', name: '天罚', tier: 'yao_3', target: 'enemy',
+        statModifiers: [{ attribute: 'attack', percent: 60 }] },
+    ]
+    // rng 接近 1 → 附加 5 个，但池仅 4 个；且 3 个五行词缀分属两个互斥组，实际最多 3 条（2 单抗互斥 + 1 全抗互斥 + 天罚）
+    const highRng = () => 0.99
+    const e = makeEntity('wuxing')
+    const result = applyRandomAffixes([e], wuxingPool, [1, 5], highRng)
+    const ids = result.get(e.id) ?? []
+    const selected = wuxingPool.filter((a) => ids.includes(a.id))
+    const selectedGroups = new Set(selected.map((a) => a.conflict_group).filter(Boolean))
+    // 同组词缀最多一条
+    for (const g of ['wuxing_single', 'wuxing_all']) {
+      expect(selected.filter((a) => a.conflict_group === g).length).toBeLessThanOrEqual(1)
+    }
+    expect(selectedGroups.size).toBeGreaterThan(0)
   })
 })

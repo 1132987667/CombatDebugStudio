@@ -107,7 +107,7 @@
             @click="selectScene(group.scene.id)" @keydown.enter.prevent="selectScene(group.scene.id)"
             @keydown.space.prevent="selectScene(group.scene.id)">
             <span class="scene-item-name">{{ group.scene.name }}</span>
-            <span class="scene-item-level">Lv.{{ group.scene.requiredLevel }}</span>
+            <span class="scene-item-level" v-if="group.scene.levelRange">Lv.{{ group.scene.levelRange[0] }}</span>
             <span class="scene-item-count">{{ group.enemies.length }}人</span>
           </div>
           <EmptyState v-if="sceneGroups.length === 0">暂无场景</EmptyState>
@@ -224,9 +224,8 @@ const ROSTER_KEY = { ACTORS: '__actors__' } as const;
 function firstPopulatedSceneId(): string {
   for (const scene of scenesData.value) {
     const sceneEnemyIds = new Set([
-      ...(scene.difficulties.easy.enemyIds ?? []),
-      ...(scene.difficulties.normal.enemyIds ?? []),
-      ...(scene.difficulties.hard.enemyIds ?? []),
+      ...(scene.enemies ?? []).map((e) => e.id),
+      ...(scene.guardian?.id ? [scene.guardian.id] : []),
     ]);
     if (enemiesData.value.some((enemy) => sceneEnemyIds.has(enemy.id))) {
       return scene.id;
@@ -435,9 +434,8 @@ const sceneGroups = computed<GroupedEnemies[]>(() => {
   return allScenes
     .map((scene) => {
       const sceneEnemyIds = new Set([
-        ...(scene.difficulties.easy.enemyIds ?? []),
-        ...(scene.difficulties.normal.enemyIds ?? []),
-        ...(scene.difficulties.hard.enemyIds ?? []),
+        ...(scene.enemies ?? []).map((e) => e.id),
+        ...(scene.guardian?.id ? [scene.guardian.id] : []),
       ]);
 
       const sceneEnemies = allEnemies.filter((enemy) =>

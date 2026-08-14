@@ -11,7 +11,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_001",
+        "itemId": "mat_taomu",
         "quantity": 2,
         "chance": 0.8
       },
@@ -39,12 +39,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_001",
+        "itemId": "mat_taomu",
         "quantity": 1,
         "chance": 0.7
       },
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 1,
         "chance": 0.3
       }
@@ -67,12 +67,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_001",
+        "itemId": "mat_taomu",
         "quantity": 2,
         "chance": 0.6
       },
       {
-        "itemId": "mat_004",
+        "itemId": "mat_danshuiyu",
         "quantity": 1,
         "chance": 0.4
       }
@@ -95,12 +95,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_001",
+        "itemId": "mat_taomu",
         "quantity": 3,
         "chance": 0.75
       },
       {
-        "itemId": "mat_003",
+        "itemId": "mat_tongjing",
         "quantity": 1,
         "chance": 0.25
       }
@@ -126,7 +126,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 3,
         "chance": 0.7
       },
@@ -157,7 +157,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_001",
+        "itemId": "mat_taomu",
         "quantity": 4,
         "chance": 0.65
       },
@@ -188,7 +188,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_001",
+        "itemId": "mat_taomu",
         "quantity": 5,
         "chance": 0.7
       },
@@ -222,12 +222,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 5,
         "chance": 0.65
       },
       {
-        "itemId": "mat_003",
+        "itemId": "mat_tongjing",
         "quantity": 2,
         "chance": 0.35
       }
@@ -256,7 +256,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_004",
+        "itemId": "mat_danshuiyu",
         "quantity": 3,
         "chance": 0.6
       },
@@ -290,12 +290,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 2,
         "chance": 0.8
       },
       {
-        "itemId": "mat_004",
+        "itemId": "mat_danshuiyu",
         "quantity": 1,
         "chance": 0.2
       }
@@ -318,7 +318,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 1,
         "chance": 0.7
       },
@@ -346,7 +346,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_004",
+        "itemId": "mat_danshuiyu",
         "quantity": 2,
         "chance": 0.6
       },
@@ -374,12 +374,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 3,
         "chance": 0.75
       },
       {
-        "itemId": "mat_003",
+        "itemId": "mat_tongjing",
         "quantity": 1,
         "chance": 0.25
       }
@@ -405,7 +405,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_004",
+        "itemId": "mat_danshuiyu",
         "quantity": 3,
         "chance": 0.7
       },
@@ -436,7 +436,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 4,
         "chance": 0.65
       },
@@ -467,7 +467,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 5,
         "chance": 0.7
       },
@@ -501,12 +501,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_004",
+        "itemId": "mat_danshuiyu",
         "quantity": 4,
         "chance": 0.65
       },
       {
-        "itemId": "mat_003",
+        "itemId": "mat_tongjing",
         "quantity": 2,
         "chance": 0.35
       }
@@ -535,7 +535,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_021",
+        "itemId": "mat_zhenzhu",
         "quantity": 1,
         "chance": 0.6
       },
@@ -569,12 +569,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 2,
         "chance": 0.8
       },
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 1,
         "chance": 0.2
       }
@@ -597,12 +597,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 1,
         "chance": 0.7
       },
       {
-        "itemId": "mat_003",
+        "itemId": "mat_tongjing",
         "quantity": 1,
         "chance": 0.3
       }
@@ -625,7 +625,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 2,
         "chance": 0.6
       },
@@ -653,12 +653,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 4,
         "chance": 0.75
       },
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 2,
         "chance": 0.25
       }
@@ -684,7 +684,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_003",
+        "itemId": "mat_tongjing",
         "quantity": 2,
         "chance": 0.7
       },
@@ -715,7 +715,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 3,
         "chance": 0.65
       },
@@ -746,7 +746,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 6,
         "chance": 0.7
       },
@@ -780,12 +780,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_003",
+        "itemId": "mat_tongjing",
         "quantity": 3,
         "chance": 0.65
       },
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 4,
         "chance": 0.35
       }
@@ -814,7 +814,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_007",
+        "itemId": "mat_tiejing",
         "quantity": 1,
         "chance": 0.6
       },
@@ -848,12 +848,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 2,
         "chance": 0.8
       },
       {
-        "itemId": "mat_009",
+        "itemId": "mat_lupi",
         "quantity": 1,
         "chance": 0.2
       }
@@ -876,7 +876,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_010",
+        "itemId": "mat_xuanzhi",
         "quantity": 2,
         "chance": 0.7
       },
@@ -904,12 +904,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_009",
+        "itemId": "mat_lupi",
         "quantity": 2,
         "chance": 0.6
       },
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 2,
         "chance": 0.4
       }
@@ -932,12 +932,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 4,
         "chance": 0.75
       },
       {
-        "itemId": "mat_008",
+        "itemId": "mat_shenshuiyu",
         "quantity": 1,
         "chance": 0.25
       }
@@ -963,7 +963,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_010",
+        "itemId": "mat_xuanzhi",
         "quantity": 3,
         "chance": 0.7
       },
@@ -994,7 +994,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_009",
+        "itemId": "mat_lupi",
         "quantity": 3,
         "chance": 0.65
       },
@@ -1025,12 +1025,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_006",
+        "itemId": "mat_songmu",
         "quantity": 5,
         "chance": 0.7
       },
       {
-        "itemId": "mat_011",
+        "itemId": "mat_qinghuaci",
         "quantity": 1,
         "chance": 0.3
       }
@@ -1059,12 +1059,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_010",
+        "itemId": "mat_xuanzhi",
         "quantity": 4,
         "chance": 0.65
       },
       {
-        "itemId": "mat_008",
+        "itemId": "mat_shenshuiyu",
         "quantity": 2,
         "chance": 0.35
       }
@@ -1093,7 +1093,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_012",
+        "itemId": "mat_xiongpi",
         "quantity": 1,
         "chance": 0.6
       },
@@ -1127,12 +1127,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 3,
         "chance": 0.8
       },
       {
-        "itemId": "mat_008",
+        "itemId": "mat_shenshuiyu",
         "quantity": 1,
         "chance": 0.2
       }
@@ -1155,7 +1155,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 3,
         "chance": 0.7
       },
@@ -1183,7 +1183,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_008",
+        "itemId": "mat_shenshuiyu",
         "quantity": 2,
         "chance": 0.6
       },
@@ -1211,12 +1211,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 5,
         "chance": 0.75
       },
       {
-        "itemId": "mat_007",
+        "itemId": "mat_tiejing",
         "quantity": 1,
         "chance": 0.25
       }
@@ -1242,7 +1242,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 4,
         "chance": 0.7
       },
@@ -1273,7 +1273,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_008",
+        "itemId": "mat_shenshuiyu",
         "quantity": 3,
         "chance": 0.65
       },
@@ -1304,7 +1304,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_002",
+        "itemId": "mat_cushi",
         "quantity": 7,
         "chance": 0.7
       },
@@ -1338,12 +1338,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_005",
+        "itemId": "mat_beike",
         "quantity": 5,
         "chance": 0.65
       },
       {
-        "itemId": "mat_007",
+        "itemId": "mat_tiejing",
         "quantity": 2,
         "chance": 0.35
       }
@@ -1372,7 +1372,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_017",
+        "itemId": "mat_shengshui",
         "quantity": 1,
         "chance": 0.6
       },
@@ -1406,12 +1406,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_013",
+        "itemId": "mat_tiemu",
         "quantity": 1,
         "chance": 0.8
       },
       {
-        "itemId": "mat_007",
+        "itemId": "mat_tiejing",
         "quantity": 1,
         "chance": 0.2
       }
@@ -1434,7 +1434,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_014",
+        "itemId": "mat_tieyan",
         "quantity": 1,
         "chance": 0.7
       },
@@ -1462,7 +1462,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_013",
+        "itemId": "mat_tiemu",
         "quantity": 2,
         "chance": 0.6
       },
@@ -1490,12 +1490,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_013",
+        "itemId": "mat_tiemu",
         "quantity": 3,
         "chance": 0.75
       },
       {
-        "itemId": "mat_007",
+        "itemId": "mat_tiejing",
         "quantity": 2,
         "chance": 0.25
       }
@@ -1521,12 +1521,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_014",
+        "itemId": "mat_tieyan",
         "quantity": 2,
         "chance": 0.7
       },
       {
-        "itemId": "mat_011",
+        "itemId": "mat_qinghuaci",
         "quantity": 1,
         "chance": 0.3
       }
@@ -1552,7 +1552,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_015",
+        "itemId": "mat_gutongjing",
         "quantity": 1,
         "chance": 0.65
       },
@@ -1583,7 +1583,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_013",
+        "itemId": "mat_tiemu",
         "quantity": 4,
         "chance": 0.7
       },
@@ -1617,12 +1617,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_014",
+        "itemId": "mat_tieyan",
         "quantity": 3,
         "chance": 0.65
       },
       {
-        "itemId": "mat_007",
+        "itemId": "mat_tiejing",
         "quantity": 3,
         "chance": 0.35
       }
@@ -1651,7 +1651,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_016",
+        "itemId": "mat_jinjing",
         "quantity": 1,
         "chance": 0.6
       },
@@ -1685,12 +1685,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_012",
+        "itemId": "mat_xiongpi",
         "quantity": 1,
         "chance": 0.8
       },
       {
-        "itemId": "mat_023",
+        "itemId": "mat_duye",
         "quantity": 1,
         "chance": 0.2
       }
@@ -1713,7 +1713,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_022",
+        "itemId": "mat_hantan",
         "quantity": 1,
         "chance": 0.7
       },
@@ -1741,7 +1741,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_012",
+        "itemId": "mat_xiongpi",
         "quantity": 2,
         "chance": 0.6
       },
@@ -1769,12 +1769,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_012",
+        "itemId": "mat_xiongpi",
         "quantity": 3,
         "chance": 0.75
       },
       {
-        "itemId": "mat_018",
+        "itemId": "mat_feicui",
         "quantity": 1,
         "chance": 0.25
       }
@@ -1800,7 +1800,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_022",
+        "itemId": "mat_hantan",
         "quantity": 2,
         "chance": 0.7
       },
@@ -1831,7 +1831,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_018",
+        "itemId": "mat_feicui",
         "quantity": 1,
         "chance": 0.65
       },
@@ -1862,7 +1862,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_012",
+        "itemId": "mat_xiongpi",
         "quantity": 4,
         "chance": 0.7
       },
@@ -1896,12 +1896,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_022",
+        "itemId": "mat_hantan",
         "quantity": 3,
         "chance": 0.65
       },
       {
-        "itemId": "mat_018",
+        "itemId": "mat_feicui",
         "quantity": 2,
         "chance": 0.35
       }
@@ -1930,7 +1930,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_019",
+        "itemId": "mat_xianyun",
         "quantity": 1,
         "chance": 0.6
       },
@@ -1964,12 +1964,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_020",
+        "itemId": "mat_hupi",
         "quantity": 1,
         "chance": 0.8
       },
       {
-        "itemId": "mat_016",
+        "itemId": "mat_jinjing",
         "quantity": 1,
         "chance": 0.2
       }
@@ -1992,7 +1992,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_024",
+        "itemId": "mat_jinyang",
         "quantity": 1,
         "chance": 0.7
       },
@@ -2020,7 +2020,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_025",
+        "itemId": "mat_shenquan",
         "quantity": 1,
         "chance": 0.6
       },
@@ -2048,12 +2048,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_020",
+        "itemId": "mat_hupi",
         "quantity": 2,
         "chance": 0.75
       },
       {
-        "itemId": "mat_016",
+        "itemId": "mat_jinjing",
         "quantity": 2,
         "chance": 0.25
       }
@@ -2079,12 +2079,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_024",
+        "itemId": "mat_jinyang",
         "quantity": 2,
         "chance": 0.7
       },
       {
-        "itemId": "mat_011",
+        "itemId": "mat_qinghuaci",
         "quantity": 1,
         "chance": 0.3
       }
@@ -2110,7 +2110,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_025",
+        "itemId": "mat_shenquan",
         "quantity": 2,
         "chance": 0.65
       },
@@ -2141,7 +2141,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_020",
+        "itemId": "mat_hupi",
         "quantity": 3,
         "chance": 0.7
       },
@@ -2175,12 +2175,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_024",
+        "itemId": "mat_jinyang",
         "quantity": 3,
         "chance": 0.65
       },
       {
-        "itemId": "mat_016",
+        "itemId": "mat_jinjing",
         "quantity": 3,
         "chance": 0.35
       }
@@ -2209,7 +2209,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_015",
+        "itemId": "mat_gutongjing",
         "quantity": 2,
         "chance": 0.6
       },
@@ -2243,7 +2243,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_019",
+        "itemId": "mat_xianyun",
         "quantity": 1,
         "chance": 0.8
       },
@@ -2271,7 +2271,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_017",
+        "itemId": "mat_shengshui",
         "quantity": 1,
         "chance": 0.7
       },
@@ -2327,12 +2327,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_019",
+        "itemId": "mat_xianyun",
         "quantity": 2,
         "chance": 0.75
       },
       {
-        "itemId": "ess_001",
+        "itemId": "mat_dimai",
         "quantity": 1,
         "chance": 0.25
       }
@@ -2358,7 +2358,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_017",
+        "itemId": "mat_shengshui",
         "quantity": 2,
         "chance": 0.7
       },
@@ -2389,7 +2389,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_026",
+        "itemId": "mat_yufoxiang",
         "quantity": 1,
         "chance": 0.65
       },
@@ -2420,7 +2420,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_019",
+        "itemId": "mat_xianyun",
         "quantity": 3,
         "chance": 0.7
       },
@@ -2454,12 +2454,12 @@
     },
     "drops": [
       {
-        "itemId": "mat_017",
+        "itemId": "mat_shengshui",
         "quantity": 3,
         "chance": 0.65
       },
       {
-        "itemId": "ess_001",
+        "itemId": "mat_dimai",
         "quantity": 2,
         "chance": 0.35
       }
@@ -2488,7 +2488,7 @@
     },
     "drops": [
       {
-        "itemId": "ess_002",
+        "itemId": "mat_tiangang",
         "quantity": 1,
         "chance": 0.6
       },
@@ -2522,7 +2522,7 @@
     },
     "drops": [
       {
-        "itemId": "frag_001",
+        "itemId": "mat_tiangang_suipian",
         "quantity": 1,
         "chance": 0.8
       },
@@ -2550,7 +2550,7 @@
     },
     "drops": [
       {
-        "itemId": "frag_002",
+        "itemId": "mat_hunyuan_suipian",
         "quantity": 1,
         "chance": 0.7
       },
@@ -2606,7 +2606,7 @@
     },
     "drops": [
       {
-        "itemId": "ess_002",
+        "itemId": "mat_tiangang",
         "quantity": 1,
         "chance": 0.75
       },
@@ -2637,7 +2637,7 @@
     },
     "drops": [
       {
-        "itemId": "ess_003",
+        "itemId": "mat_hunyuan",
         "quantity": 1,
         "chance": 0.7
       },
@@ -2699,7 +2699,7 @@
     },
     "drops": [
       {
-        "itemId": "ess_002",
+        "itemId": "mat_tiangang",
         "quantity": 2,
         "chance": 0.7
       },
@@ -2733,7 +2733,7 @@
     },
     "drops": [
       {
-        "itemId": "ess_003",
+        "itemId": "mat_hunyuan",
         "quantity": 2,
         "chance": 0.65
       },

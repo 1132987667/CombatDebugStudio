@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies/drops）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册（含旧版 eq_w/eq_a/eq_c 沿用 ID，drops.json 仍引用，保留注册）。",
+  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies/drops）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/ring）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册（含旧版 eq_w/eq_a/eq_c 沿用 ID，drops.json 仍引用，保留注册）。",
   "items": [
     {
       "id": "mat_taomu",
@@ -309,7 +309,7 @@
       "name": "天罡灵气碎片",
       "type": "碎片",
       "rarity": 2,
-      "source": "关卡8-10 高难敌人（10:1 合成灵气）",
+      "source": "关卡8-10 高难敌人（3:1 合成灵气）",
       "description": "天罡灵气的碎片，收集 3 个可合成完整的天罡灵气。用途：锁词条洗练。"
     },
     {
@@ -317,7 +317,7 @@
       "name": "混元灵气碎片",
       "type": "碎片",
       "rarity": 2,
-      "source": "最终 BOSS 重复 / 关卡10 守护者（10:1 合成）",
+      "source": "最终 BOSS 重复 / 关卡10 守护者（5:1 合成）",
       "description": "混元灵气的碎片，收集 5 个可合成完整的混元灵气。用途：重铸、附魔封存。"
     },
     {
@@ -1250,7 +1250,7 @@
     },
     {
       "id": "wp_t1_mid_01",
-      "name": "松木棍",
+      "name": "铜棍",
       "type": "武器",
       "rarity": 1,
       "source": "制造（cave.json 已有配方）"
@@ -1405,161 +1405,161 @@
     {
       "id": "ac_t1_charm_01",
       "name": "淡水玉护符",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 1,
       "source": "制造（cave.json 已有配方）"
     },
     {
       "id": "ac_t1_ring_01",
       "name": "藤蔓箍",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 1,
       "source": "制造（cave.json 已有配方）"
     },
     {
       "id": "ac_t1_neck_01",
       "name": "贝壳链",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 1,
       "source": "制造（新增配方）"
     },
     {
       "id": "ac_t1_belt_01",
       "name": "宣纸腰带",
-      "type": "饰品",
+      "type": "靴子",
       "rarity": 1,
       "source": "制造（新增配方）"
     },
     {
       "id": "ac_t1_brace_01",
       "name": "贝壳镯",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 1,
       "source": "制造（新增配方）"
     },
     {
       "id": "ac_t1_crown_01",
       "name": "藤编冠",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 1,
       "source": "制造（新增配方）"
     },
     {
       "id": "ac_t2_charm_01",
       "name": "深水玉护符",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 2,
       "source": "关卡4-6 制造"
     },
     {
       "id": "ac_t2_ring_01",
       "name": "青花瓷戒",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 2,
       "source": "关卡4-6 制造"
     },
     {
       "id": "ac_t2_neck_01",
       "name": "铁精链",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 2,
       "source": "关卡4-6 制造"
     },
     {
       "id": "ac_t2_belt_01",
       "name": "青花瓷扣带",
-      "type": "饰品",
+      "type": "靴子",
       "rarity": 2,
       "source": "关卡4-6 制造"
     },
     {
       "id": "ac_t2_brace_01",
       "name": "深水玉镯",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 2,
       "source": "关卡4-6 制造"
     },
     {
       "id": "ac_t2_crown_01",
       "name": "铁木冠",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 2,
       "source": "关卡4-6 制造"
     },
     {
       "id": "ac_t3_charm_01",
       "name": "圣水玉护符",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 3,
       "source": "关卡7-9 制造"
     },
     {
       "id": "ac_t3_ring_01",
       "name": "金精戒",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 3,
       "source": "关卡7-9 制造"
     },
     {
       "id": "ac_t3_neck_01",
       "name": "翡翠链",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 3,
       "source": "关卡7-9 制造"
     },
     {
       "id": "ac_t3_belt_01",
       "name": "古铜镜扣带",
-      "type": "饰品",
+      "type": "靴子",
       "rarity": 3,
       "source": "关卡7-9 制造"
     },
     {
       "id": "ac_t3_brace_01",
       "name": "翡翠玉镯",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 3,
       "source": "关卡7-9 制造"
     },
     {
       "id": "ac_t3_crown_01",
       "name": "金精冠",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 3,
       "source": "关卡7-9 制造"
     },
     {
       "id": "ac_t4_01",
       "name": "万毒蚀心镯",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 4,
       "source": "蝎子精（天品合成）"
     },
     {
       "id": "ac_t4_02",
       "name": "大鹏逐日冠",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 4,
       "source": "金翅大鹏（天品合成）"
     },
     {
       "id": "ac_t5_01",
       "name": "太初道冠",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 5,
       "source": "最终 BOSS（仙品合成）"
     },
     {
       "id": "ac_t5_02",
       "name": "混元灵珠",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 5,
       "source": "最终 BOSS（仙品合成）"
     },
     {
       "id": "ac_sp_01",
       "name": "地灵护符",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 3,
       "source": "隐藏 BOSS（特殊装备制造）"
     },
@@ -1692,128 +1692,365 @@
     {
       "id": "eq_c001",
       "name": "淡水玉护符",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 1,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c002",
       "name": "贝壳戒指",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 1,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c003",
       "name": "粗石项链",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 1,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c004",
       "name": "宣纸腰带",
-      "type": "饰品",
+      "type": "靴子",
       "rarity": 1,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c005",
       "name": "淡水玉手镯",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 1,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c006",
       "name": "铜精冠冕",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 1,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c007",
       "name": "深水玉护符",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 2,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c008",
       "name": "青花瓷戒指",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 2,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c009",
       "name": "铁精项链",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 2,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c010",
       "name": "青花瓷腰带",
-      "type": "饰品",
+      "type": "靴子",
       "rarity": 2,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c011",
       "name": "深水玉手镯",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 2,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c012",
       "name": "铁精冠冕",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 2,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c013",
       "name": "圣水玉护符",
-      "type": "饰品",
+      "type": "护符",
       "rarity": 3,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c014",
       "name": "翡翠玉镯戒指",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 3,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c015",
       "name": "金精项链",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 3,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c016",
       "name": "古铜镜腰带",
-      "type": "饰品",
+      "type": "靴子",
       "rarity": 3,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c017",
       "name": "翡翠玉镯手镯",
-      "type": "饰品",
+      "type": "戒指",
       "rarity": 3,
       "source": "旧版封神榜装备表（drops 仍引用）"
     },
     {
       "id": "eq_c018",
       "name": "金精冠冕",
-      "type": "饰品",
+      "type": "头盔",
       "rarity": 3,
       "source": "旧版封神榜装备表（drops 仍引用）"
+    },
+    {
+      "id": "mat_niumojiao",
+      "name": "牛魔角",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "三大王·牛魔·赤焰（首杀 100%，重复 20%）",
+      "description": "牛魔一族最坚硬的双角，燃烧着不熄的赤焰。用途：打造神级武器与传说装备的核心材料。"
+    },
+    {
+      "id": "mat_dunang",
+      "name": "毒囊",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "三大王·盘丝·织梦（首杀 100%，重复 20%）",
+      "description": "盘丝大仙炼化的剧毒囊，凝聚千年毒力。用途：打造传说装备与特殊丹药的核心材料。"
+    },
+    {
+      "id": "mat_pengyu",
+      "name": "鹏羽",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "三大王·大鹏·遮天（首杀 100%，重复 20%）",
+      "description": "大鹏金翅雕的翎羽，锋利如刃。用途：打造传说装备与特殊饰品的核心材料。"
+    },
+    {
+      "id": "mat_qingshui_yu",
+      "name": "清水玉",
+      "type": "玉石",
+      "rarity": 1,
+      "source": "关卡2 掉落",
+      "description": "浅水区出产的玉石，清澈透亮。用途：制作二阶饰品的基础材料。"
+    },
+    {
+      "id": "mat_jiuzhuan_jindan",
+      "name": "九转金丹",
+      "type": "丹药",
+      "rarity": 5,
+      "source": "三大王/最终BOSS（首杀 100%，重复 10%）",
+      "description": "九转还丹，蕴含生死之力，服之可起死回生。用途：终极突破与传说装备炼制的核心材料。"
+    },
+    {
+      "id": "mat_wudao_dan",
+      "name": "悟道丹",
+      "type": "丹药",
+      "rarity": 5,
+      "source": "成就/隐藏BOSS 掉落",
+      "description": "参悟大道的丹药，蕴含一丝道韵。用途：悟道突破与顶级装备强化的核心材料。"
+    },
+    {
+      "id": "mat_liuer_canhun",
+      "name": "六耳残魂",
+      "type": "BOSS材料",
+      "rarity": 5,
+      "source": "最终BOSS·六耳猕猴（首杀 100%，重复 10%）",
+      "description": "六耳猕猴残留的执念残魂，蕴含千年不甘。用途：打造传说级装备与神级饰品。"
+    },
+    {
+      "id": "mat_baiyan_jin",
+      "name": "百眼金",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "隐藏BOSS·百眼旧将 掉落",
+      "description": "百眼魔君炼化的金色妖核，无数只眼睛折射着金光。用途：打造顶级装备的稀有材料。"
+    },
+    {
+      "id": "mat_dixing_tu",
+      "name": "地行土",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "隐藏BOSS·地行仙 掉落",
+      "description": "遁地千里所染的灵土，厚重而温润。用途：打造顶级装备的稀有材料。"
+    },
+    {
+      "id": "mat_heifeng_ling",
+      "name": "黑风灵",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "隐藏BOSS·黑风老妖 掉落",
+      "description": "黑风洞中凝聚的风之精华，蕴含着千年的呼啸。用途：打造顶级装备的稀有材料。"
+    },
+    {
+      "id": "mat_jinchan_canhui",
+      "name": "金蝉残灰",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "隐藏BOSS·金蝉残影 掉落",
+      "description": "金蝉脱壳时留下的残灰，带着淡淡的佛光。用途：打造顶级装备的稀有材料。"
+    },
+    {
+      "id": "mat_jiuchi_canpo",
+      "name": "九齿残魄",
+      "type": "BOSS材料",
+      "rarity": 4,
+      "source": "隐藏BOSS·九齿残魂 掉落",
+      "description": "九齿钉耙中残存的器灵魄，历经千年而不散。用途：打造顶级装备的稀有材料。"
+    },
+    {
+      "id": "mystery_chest",
+      "name": "神秘宝箱",
+      "type": "宝箱",
+      "rarity": 4,
+      "source": "隐藏BOSS 掉落",
+      "description": "蕴含着未知惊喜的神秘宝箱，打开后可获得随机稀有物品。"
+    },
+    {
+      "id": "recipe_weapon_t1",
+      "name": "一阶武器图纸",
+      "type": "图纸",
+      "rarity": 1,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_weapon_t2",
+      "name": "二阶武器图纸",
+      "type": "图纸",
+      "rarity": 2,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_weapon_t3",
+      "name": "三阶武器图纸",
+      "type": "图纸",
+      "rarity": 3,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_weapon_t4",
+      "name": "四阶武器图纸",
+      "type": "图纸",
+      "rarity": 4,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_weapon_t5",
+      "name": "五阶武器图纸",
+      "type": "图纸",
+      "rarity": 4,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_weapon_t6",
+      "name": "六阶武器图纸",
+      "type": "图纸",
+      "rarity": 5,
+      "source": "三大王 掉落"
+    },
+    {
+      "id": "recipe_weapon_t7",
+      "name": "七阶武器图纸",
+      "type": "图纸",
+      "rarity": 5,
+      "source": "最终BOSS 掉落"
+    },
+    {
+      "id": "recipe_armor_t1",
+      "name": "一阶衣服图纸",
+      "type": "图纸",
+      "rarity": 1,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_armor_t2",
+      "name": "二阶衣服图纸",
+      "type": "图纸",
+      "rarity": 2,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_armor_t3",
+      "name": "三阶衣服图纸",
+      "type": "图纸",
+      "rarity": 3,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_armor_t4",
+      "name": "四阶衣服图纸",
+      "type": "图纸",
+      "rarity": 4,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_armor_t5",
+      "name": "五阶衣服图纸",
+      "type": "图纸",
+      "rarity": 4,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_armor_t6",
+      "name": "六阶衣服图纸",
+      "type": "图纸",
+      "rarity": 5,
+      "source": "三大王 掉落"
+    },
+    {
+      "id": "recipe_armor_t7",
+      "name": "七阶衣服图纸",
+      "type": "图纸",
+      "rarity": 5,
+      "source": "最终BOSS 掉落"
+    },
+    {
+      "id": "recipe_accessory_t2",
+      "name": "二阶饰品图纸",
+      "type": "图纸",
+      "rarity": 2,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_accessory_t3",
+      "name": "三阶饰品图纸",
+      "type": "图纸",
+      "rarity": 3,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_accessory_t5",
+      "name": "五阶饰品图纸",
+      "type": "图纸",
+      "rarity": 4,
+      "source": "BOSS 掉落"
+    },
+    {
+      "id": "recipe_accessory_t6",
+      "name": "六阶饰品图纸",
+      "type": "图纸",
+      "rarity": 5,
+      "source": "三大王 掉落"
+    },
+    {
+      "id": "recipe_accessory_t7",
+      "name": "七阶饰品图纸",
+      "type": "图纸",
+      "rarity": 5,
+      "source": "最终BOSS 掉落"
     }
   ]
 }

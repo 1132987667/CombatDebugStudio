@@ -110,7 +110,7 @@ describe('种子导入 seedFengshenData', () => {
 
     // 物品主键索引（items 表）：全量注册，新装备（wp_/ar_/ac_）+ 旧装备（eq_）ID 均在内
     const itemKeys = await storage.keys(FENGSHEN_STORE.ITEMS)
-    expect(itemKeys).toContain('mat_001')
+    expect(itemKeys).toContain('mat_taomu')
     expect(itemKeys).toContain('wp_t1_light_01')
     expect(itemKeys).toContain('ar_t1_light_01')
     expect(itemKeys).toContain('eq_w001')
@@ -120,20 +120,24 @@ describe('种子导入 seedFengshenData', () => {
     expect(gearKeys).toHaveLength(46)
     expect(gearKeys).toContain('ac_t1_charm_01')
 
-    // 词缀表：55 种种子词缀齐全（减益一档 8 + 增益一至四档 8/12/15/12）
+    // 词缀表：69 种种子词缀齐全（妖气 10 + 妖性 14 + 妖道 18 + 妖圣 12 + 天命 7 + 劫数 8）
     const affixKeys = await storage.keys(FENGSHEN_STORE.AFFIXES)
-    expect(affixKeys).toHaveLength(55)
-    expect(affixKeys).toContain('affix_debuff_attack')
-    expect(affixKeys).toContain('affix_buff_attack')
-    expect(affixKeys).toContain('affix_buff4_critdmg')
+    expect(affixKeys).toHaveLength(69)
+    expect(affixKeys).toContain('affix_yao_1_001')
+    expect(affixKeys).toContain('affix_yao_1_010')
+    expect(affixKeys).toContain('affix_yao_2_014')
+    expect(affixKeys).toContain('affix_yao_3_018')
+    expect(affixKeys).toContain('affix_yao_4_012')
+    expect(affixKeys).toContain('affix_mandate_007')
+    expect(affixKeys).toContain('affix_jie_008')
 
-    // 词缀只含属性修正（statModifiers），不带能力效果（能力交给 Buff）；档位含传说 buff_4
-    const buff3 = await storage.get<{ statModifiers?: unknown[]; effects?: unknown[] }>(FENGSHEN_STORE.AFFIXES, 'affix_buff3_attack')
+    // 词缀只含属性修正（statModifiers），不带能力效果（能力交给 Buff）；档位含 yao_3 / yao_4 / mandate / jie
+    const buff3 = await storage.get<{ statModifiers?: unknown[]; effects?: unknown[] }>(FENGSHEN_STORE.AFFIXES, 'affix_yao_3_001')
     expect(buff3?.statModifiers?.length).toBeGreaterThan(0)
     expect(buff3?.effects).toBeUndefined()
-    const buff4 = await storage.get<{ rarity?: number; tier?: string }>(FENGSHEN_STORE.AFFIXES, 'affix_buff4_defense')
+    const buff4 = await storage.get<{ rarity?: number; tier?: string }>(FENGSHEN_STORE.AFFIXES, 'affix_yao_4_001')
     expect(buff4?.rarity).toBe(4)
-    expect(buff4?.tier).toBe('buff_4')
+    expect(buff4?.tier).toBe('yao_4')
 
     const version = await new GameDataApi(storage).getDataVersion()
     expect(version).toBe(1)
@@ -174,16 +178,15 @@ describe('种子导入 seedFengshenData', () => {
 
     const sceneKeys = await storage.keys(FENGSHEN_STORE.SCENES)
     expect(sceneKeys.length).toBeGreaterThan(0)
-    expect(sceneKeys).toContain('huaguo')
+    expect(sceneKeys).toContain('scene_1_1')
 
-    // 逐场景校验 difficulties 三档引用的敌人 id 都在 enemies 表（引用完整性）
+    // 逐场景校验 enemies/guardian 引用的敌人 id 都在 enemies 表（引用完整性）
     const enemyKeys = await storage.keys(FENGSHEN_STORE.ENEMIES)
     for (const key of sceneKeys) {
       const scene = await storage.get<SceneData>(FENGSHEN_STORE.SCENES, key)
       const sceneEnemyIds = new Set([
-        ...(scene!.difficulties.easy.enemyIds ?? []),
-        ...(scene!.difficulties.normal.enemyIds ?? []),
-        ...(scene!.difficulties.hard.enemyIds ?? []),
+        ...(scene!.enemies ?? []).map((e) => e.id),
+        ...(scene!.guardian?.id ? [scene!.guardian.id] : []),
       ])
       expect(sceneEnemyIds.size).toBeGreaterThan(0)
       for (const id of sceneEnemyIds) {
@@ -231,18 +234,18 @@ describe('DataIntegrityService 校验', () => {
     // 缺名称被拦截
     const noName = await integrity.validateOnSave('affixes', {
       id: 'affix_test_1',
-      tier: 'buff_1',
+      tier: 'yao_1',
       target: 'enemy',
       statModifiers: [{ attribute: 'attack', percent: 20 }],
     })
     expect(noName.valid).toBe(false)
     expect(noName.errors.some((e) => e.includes('名称'))).toBe(true)
 
-    // 同名词缀（已存在 affix_debuff_attack 的「摄魂」）被拦截
+    // 同名词缀（已存在 affix_yao_1_001 的「蛮力」）被拦截
     const dup = await integrity.validateOnSave('affixes', {
       id: 'affix_test_3',
-      name: '摄魂',
-      tier: 'buff_1',
+      name: '蛮力',
+      tier: 'yao_1',
       target: 'enemy',
       statModifiers: [],
     })
@@ -253,7 +256,7 @@ describe('DataIntegrityService 校验', () => {
     const ok = await write.save('affixes', {
       id: 'affix_test_ok',
       name: '测试蛮力',
-      tier: 'buff_1',
+      tier: 'yao_1',
       target: 'enemy',
       statModifiers: [{ attribute: 'attack', percent: 20 }],
       description: '测试',
@@ -272,12 +275,12 @@ describe('DataIntegrityService 校验', () => {
       stats: {},
       drops: [],
       skills: {},
-      affixes: ['affix_buff_attack'],
+      affixes: ['affix_yao_1_001'],
       updatedAt: new Date().toISOString(),
     })
     const integrity = new DataIntegrityService(storage)
     const write2 = new FengshenDataService(storage, integrity)
-    const result = await write2.remove('affixes', 'affix_buff_attack')
+    const result = await write2.remove('affixes', 'affix_yao_1_001')
     expect(result.ok).toBe(false)
     expect(result.errors?.[0]).toContain('被以下数据引用')
   })
@@ -516,7 +519,7 @@ describe('纯函数', () => {
     expect(
       extractReferenceIds({ steps: [{ effectId: 'x' }, { effectId: 'y' }] }, 'steps[].effectId'),
     ).toEqual(['x', 'y'])
-    expect(extractReferenceIds({ difficulties: { hard: { lineupId: 'l1' } } }, 'difficulties.hard.lineupId')).toEqual(['l1'])
+    expect(extractReferenceIds({ enemies: [{ id: 'e1' }, { id: 'e2' }] }, 'enemies[].id')).toEqual(['e1', 'e2'])
     expect(extractReferenceIds({ foo: undefined }, 'foo')).toEqual([])
   })
 
@@ -524,7 +527,9 @@ describe('纯函数', () => {
     const keys = REFERENCE_RULES.map((r) => `${r.sourceTable}.${r.path}`)
     expect(keys).toContain('actors.skillIds')
     expect(keys).toContain('skills.steps[].effectId')
-    expect(keys).toContain('scenes.difficulties.hard.lineupId')
+    expect(keys).toContain('scenes.enemies[].id')
+    expect(keys).toContain('scenes.guardian.id')
+    expect(keys).toContain('scenes.unlockCondition.sceneId')
     expect(keys).toContain('lineups.formationId')
     expect(keys).toContain('lineups.roles[].roleId')
     expect(keys).toContain('enemies.drops[].itemId')

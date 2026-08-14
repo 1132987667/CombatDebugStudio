@@ -1,607 +1,1234 @@
-[
-  {
-    "id": "affix_debuff_attack",
-    "name": "摄魂",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "attack", "percent": -20 }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家攻击力-20%"
-  },
-  {
-    "id": "affix_debuff_defense",
-    "name": "蚀骨",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "defense", "percent": -20 }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家防御力-20%"
-  },
-  {
-    "id": "affix_debuff_speed",
-    "name": "缚足",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "speed", "percent": -20 }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家速度-20%"
-  },
-  {
-    "id": "affix_debuff_crit",
-    "name": "乱神",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "critRate", "percent": -20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家暴击率-20%"
-  },
-  {
-    "id": "affix_debuff_hit",
-    "name": "夺魄",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "hit", "percent": -20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家命中-20%"
-  },
-  {
-    "id": "affix_debuff_dodge",
-    "name": "凌虚",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "dodge", "percent": -20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家闪避-20%"
-  },
-  {
-    "id": "affix_debuff_health",
-    "name": "摧元",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "maxHealth", "percent": -20 }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家最大气血-20%"
-  },
-  {
-    "id": "affix_debuff_regen",
-    "name": "绝脉",
-    "tier": "debuff_1",
-    "target": "player",
-    "statModifiers": [
-      { "attribute": "hpRegenPercent", "percent": -20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "减益：玩家气血回复-20%"
-  },
-  {
-    "id": "affix_buff_attack",
-    "name": "蛮力",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "attack", "percent": 20 }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人攻击力+20%"
-  },
-  {
-    "id": "affix_buff_defense",
-    "name": "铁躯",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "defense", "percent": 20 }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人防御力+20%"
-  },
-  {
-    "id": "affix_buff_speed",
-    "name": "疾影",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "speed", "percent": 20 }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人速度+20%"
-  },
-  {
-    "id": "affix_buff_crit",
-    "name": "凶威",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "critRate", "percent": 20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人暴击率+20%"
-  },
-  {
-    "id": "affix_buff_hit",
-    "name": "罗刹",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "hit", "percent": 20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人命中+20%"
-  },
-  {
-    "id": "affix_buff_dodge",
-    "name": "灵虚",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "dodge", "percent": 20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人闪避+20%"
-  },
-  {
-    "id": "affix_buff_health",
-    "name": "玄龟",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "maxHealth", "percent": 20 }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人最大气血+20%"
-  },
-  {
-    "id": "affix_buff_regen",
-    "name": "回春",
-    "tier": "buff_1",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "hpRegenPercent", "percent": 20, "type": "ADDITIVE" }
-    ],
-    "rarity": 1,
-    "description": "增益：敌人气血回复+20%"
-  },
-  {
-    "id": "affix_buff2_attack",
-    "name": "破军",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "attack", "percent": 40 }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人攻击力+40%"
-  },
-  {
-    "id": "affix_buff2_defense",
-    "name": "金刚",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "defense", "percent": 40 }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人防御力+40%"
-  },
-  {
-    "id": "affix_buff2_speed",
-    "name": "神行",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "speed", "percent": 40 }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人速度+40%"
-  },
-  {
-    "id": "affix_buff2_critdmg",
-    "name": "天煞",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "critDamage", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人暴击伤害+40%"
-  },
-  {
-    "id": "affix_buff2_energy",
-    "name": "魔瞳",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "maxEnergy", "percent": 40 }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人能量上限+40%"
-  },
-  {
-    "id": "affix_buff2_dodge",
-    "name": "不灭",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "dodge", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人闪避+40%"
-  },
-  {
-    "id": "affix_buff2_boost",
-    "name": "怒涛",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "damageBoost", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人伤害提升+40%"
-  },
-  {
-    "id": "affix_buff2_true",
-    "name": "破法",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "trueDamageRate", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人真实伤害率+40%"
-  },
-  {
-    "id": "affix_buff2_lowhp",
-    "name": "斩草",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "damageToLowHp", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人对低血量目标伤害+40%"
-  },
-  {
-    "id": "affix_buff2_combo",
-    "name": "连山",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "comboRate", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人连击率+40%"
-  },
-  {
-    "id": "affix_buff2_counter",
-    "name": "背水",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "counterRate", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人反击率+40%"
-  },
-  {
-    "id": "affix_buff2_reflect",
-    "name": "倒打",
-    "tier": "buff_2",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "reflectDamagePercent", "percent": 40, "type": "ADDITIVE" }
-    ],
-    "rarity": 2,
-    "description": "增益：敌人伤害反弹+40%"
-  },
-  {
-    "id": "affix_buff3_attack",
-    "name": "灭世",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "attack", "percent": 60 }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人攻击力+60%"
-  },
-  {
-    "id": "affix_buff3_defense",
-    "name": "混元",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "defense", "percent": 60 }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人防御力+60%"
-  },
-  {
-    "id": "affix_buff3_speed",
-    "name": "追电",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "speed", "percent": 60 }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人速度+60%"
-  },
-  {
-    "id": "affix_buff3_crit",
-    "name": "焚天",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "critRate", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人暴击率+60%"
-  },
-  {
-    "id": "affix_buff3_regen",
-    "name": "噬魂",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "hpRegenPercent", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人气血回复+60%"
-  },
-  {
-    "id": "affix_buff3_lifesteal",
-    "name": "冥河",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "damageBoost", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人伤害提升+60%"
-  },
-  {
-    "id": "affix_buff3_reduce",
-    "name": "金钟",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "damageReduction", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人免伤率+60%"
-  },
-  {
-    "id": "affix_buff3_heal",
-    "name": "甘露",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "healReceived", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人受到治疗加成+60%"
-  },
-  {
-    "id": "affix_buff3_control",
-    "name": "困仙",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "controlSuccessRate", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人控制成功率+60%"
-  },
-  {
-    "id": "affix_buff3_stun",
-    "name": "镇岳",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "stunResist", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人眩晕抗性+60%"
-  },
-  {
-    "id": "affix_buff3_fire",
-    "name": "离火",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "fireAtk", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人火属性攻击+60%"
-  },
-  {
-    "id": "affix_buff3_water",
-    "name": "坎水",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "waterAtk", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人水属性攻击+60%"
-  },
-  {
-    "id": "affix_buff3_wood",
-    "name": "青木",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "woodAtk", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人木属性攻击+60%"
-  },
-  {
-    "id": "affix_buff3_metal",
-    "name": "金精",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "metalAtk", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人金属性攻击+60%"
-  },
-  {
-    "id": "affix_buff3_earth",
-    "name": "坤元",
-    "tier": "buff_3",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "earthAtk", "percent": 60, "type": "ADDITIVE" }
-    ],
-    "rarity": 3,
-    "description": "增益：敌人土属性攻击+60%"
-  },
-  {
-    "id": "affix_buff4_attack",
-    "name": "太虚",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "attack", "percent": 80 }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人攻击力+80%"
-  },
-  {
-    "id": "affix_buff4_defense",
-    "name": "混沌",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "defense", "percent": 80 }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人防御力+80%"
-  },
-  {
-    "id": "affix_buff4_speed",
-    "name": "九幽",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "speed", "percent": 80 }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人速度+80%"
-  },
-  {
-    "id": "affix_buff4_critdmg",
-    "name": "紫霄",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "critDamage", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人暴击伤害+80%"
-  },
-  {
-    "id": "affix_buff4_reduce",
-    "name": "玄黄",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "damageReduction", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人免伤率+80%"
-  },
-  {
-    "id": "affix_buff4_health",
-    "name": "星辰",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "maxHealth", "percent": 80 }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人最大气血+80%"
-  },
-  {
-    "id": "affix_buff4_combo",
-    "name": "万劫",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "comboRate", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人连击率+80%"
-  },
-  {
-    "id": "affix_buff4_counter",
-    "name": "天罗",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "counterRate", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人反击率+80%"
-  },
-  {
-    "id": "affix_buff4_reflect",
-    "name": "镜反",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "reflectDamagePercent", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人伤害反弹+80%"
-  },
-  {
-    "id": "affix_buff4_true",
-    "name": "诛仙",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "trueDamageRate", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人真实伤害率+80%"
-  },
-  {
-    "id": "affix_buff4_control",
-    "name": "缚神",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "controlSuccessRate", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人控制成功率+80%"
-  },
-  {
-    "id": "affix_buff4_heal",
-    "name": "不朽",
-    "tier": "buff_4",
-    "target": "enemy",
-    "statModifiers": [
-      { "attribute": "healReceived", "percent": 80, "type": "ADDITIVE" }
-    ],
-    "rarity": 4,
-    "description": "增益（传说）：敌人受到治疗加成+80%"
-  }
-]
+{
+  "affix_library_version": "3.1.0",
+  "updated_at": "2026-08-15",
+  "affixes": [
+    {
+      "id": "affix_yao_1_001",
+      "name": "蛮力",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "attack",
+          "percent": 20
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：攻击力 +20%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_1_002",
+      "name": "铁躯",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "defense",
+          "percent": 20
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：防御力 +20%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_yao_1_003",
+      "name": "疾影",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "speed",
+          "percent": 20
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：速度 +20%",
+      "drop_hint": "speed_material"
+    },
+    {
+      "id": "affix_yao_1_004",
+      "name": "凶威",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "critRate",
+          "percent": 20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：暴击率 +20%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_1_005",
+      "name": "罗刹",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "hit",
+          "percent": 20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：命中率 +20%",
+      "drop_hint": "misc_material"
+    },
+    {
+      "id": "affix_yao_1_006",
+      "name": "灵虚",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "dodge",
+          "percent": 20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：闪避率 +20%",
+      "drop_hint": "misc_material"
+    },
+    {
+      "id": "affix_yao_1_007",
+      "name": "玄龟",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "maxHealth",
+          "percent": 20
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：最大气血值 +20%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_1_008",
+      "name": "回春",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "hpRegenPercent",
+          "percent": 20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：气血回复(%) +20%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_1_009",
+      "name": "蓄锐",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "maxEnergy",
+          "percent": 20
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：最大能量 +20%",
+      "drop_hint": "essence_material"
+    },
+    {
+      "id": "affix_yao_1_010",
+      "name": "凝息",
+      "tier": "yao_1",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "energyInit",
+          "percent": 20
+        }
+      ],
+      "rarity": 1,
+      "description": "增益：初始能量 +20%",
+      "drop_hint": "essence_material"
+    },
+    {
+      "id": "affix_yao_2_001",
+      "name": "噬血",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "lifestealRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：吸血率 +40%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_2_002",
+      "name": "猎杀",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "damageToLowHp",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：对低血量伤害加成 +40%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_2_003",
+      "name": "连山",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "comboRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：连击率 +40%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_2_004",
+      "name": "背水",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "counterRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：反击率 +40%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_2_005",
+      "name": "倒打",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "reflectDamagePercent",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：伤害反弹 +40%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_2_006",
+      "name": "蛮力·烈",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "attack",
+          "percent": 40
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：攻击力 +40%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_2_007",
+      "name": "铁躯·烈",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "defense",
+          "percent": 40
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：防御力 +40%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_yao_2_008",
+      "name": "疾影·烈",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "speed",
+          "percent": 40
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：速度 +40%",
+      "drop_hint": "speed_material"
+    },
+    {
+      "id": "affix_yao_2_009",
+      "name": "凶威·烈",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "critRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：暴击率 +40%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_2_010",
+      "name": "玄龟·烈",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "maxHealth",
+          "percent": 40
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：最大气血值 +40%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_2_011",
+      "name": "回春·烈",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "hpRegenPercent",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：气血回复(%) +40%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_2_012",
+      "name": "金钟·初",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "damageReduction",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：免伤率 +40%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_yao_2_013",
+      "name": "困仙·初",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "controlSuccessRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：控制成功率 +40%",
+      "drop_hint": "accessory_material"
+    },
+    {
+      "id": "affix_yao_2_014",
+      "name": "甘露·初",
+      "tier": "yao_2",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "healReceived",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 2,
+      "description": "增益：受到治疗加成 +40%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_3_001",
+      "name": "天罚",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "attack",
+          "percent": 60
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：攻击力 +60%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_3_002",
+      "name": "不动",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "defense",
+          "percent": 60
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：防御力 +60%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_yao_3_003",
+      "name": "瞬影",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "speed",
+          "percent": 60
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：速度 +60%",
+      "drop_hint": "speed_material"
+    },
+    {
+      "id": "affix_yao_3_004",
+      "name": "焚天",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "critRate",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：暴击率 +60%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_3_005",
+      "name": "噬魂",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "hpRegenPercent",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：气血回复(%) +60%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_3_006",
+      "name": "冥河",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "lifestealRate",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：吸血率 +60%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_3_007",
+      "name": "灭世",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "damageBoost",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：伤害提升 +60%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_3_008",
+      "name": "金钟",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "damageReduction",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：免伤率 +60%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_yao_3_009",
+      "name": "甘露",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "healReceived",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：受到治疗加成 +60%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_3_010",
+      "name": "困仙",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "controlSuccessRate",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：控制成功率 +60%",
+      "drop_hint": "accessory_material"
+    },
+    {
+      "id": "affix_yao_3_011",
+      "name": "火灵护体",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "fireRes",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：火属性抗性 +60%",
+      "drop_hint": "fire_material"
+    },
+    {
+      "id": "affix_yao_3_012",
+      "name": "水灵护体",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "waterRes",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：水属性抗性 +60%",
+      "drop_hint": "water_material"
+    },
+    {
+      "id": "affix_yao_3_013",
+      "name": "金灵护体",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "metalRes",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：金属性抗性 +60%",
+      "drop_hint": "metal_material"
+    },
+    {
+      "id": "affix_yao_3_014",
+      "name": "木灵护体",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "woodRes",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：木属性抗性 +60%",
+      "drop_hint": "wood_material"
+    },
+    {
+      "id": "affix_yao_3_015",
+      "name": "土灵护体",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "earthRes",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：土属性抗性 +60%",
+      "drop_hint": "earth_material"
+    },
+    {
+      "id": "affix_yao_3_016",
+      "name": "五行轮转",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "fireRes",
+          "percent": 30,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "waterRes",
+          "percent": 30,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "metalRes",
+          "percent": 30,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "woodRes",
+          "percent": 30,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "earthRes",
+          "percent": 30,
+          "type": "ADDITIVE"
+        }
+      ],
+      "conflict_group": "wuxing_all",
+      "rarity": 3,
+      "description": "增益：火属性抗性 +30%，水属性抗性 +30%，金属性抗性 +30%，木属性抗性 +30%，土属性抗性 +30%",
+      "drop_hint": "wuxing_material"
+    },
+    {
+      "id": "affix_yao_3_017",
+      "name": "混元归一",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "fireRes",
+          "percent": 45,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "waterRes",
+          "percent": 45,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "metalRes",
+          "percent": 45,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "woodRes",
+          "percent": 45,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "earthRes",
+          "percent": 45,
+          "type": "ADDITIVE"
+        }
+      ],
+      "conflict_group": "wuxing_all",
+      "rarity": 3,
+      "description": "增益：火属性抗性 +45%，水属性抗性 +45%，金属性抗性 +45%，木属性抗性 +45%，土属性抗性 +45%",
+      "drop_hint": "wuxing_material"
+    },
+    {
+      "id": "affix_yao_3_018",
+      "name": "星辰·初",
+      "tier": "yao_3",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "maxHealth",
+          "percent": 60
+        }
+      ],
+      "rarity": 3,
+      "description": "增益：最大气血值 +60%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_4_001",
+      "name": "太虚",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "attack",
+          "percent": 80
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：攻击力 +80%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_4_002",
+      "name": "混沌",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "defense",
+          "percent": 80
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：防御力 +80%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_yao_4_003",
+      "name": "九幽",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "speed",
+          "percent": 80
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：速度 +80%",
+      "drop_hint": "speed_material"
+    },
+    {
+      "id": "affix_yao_4_004",
+      "name": "紫霄",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "critDamage",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：暴击伤害 +80%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_4_005",
+      "name": "玄黄",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "damageReduction",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：免伤率 +80%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_yao_4_006",
+      "name": "星辰",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "maxHealth",
+          "percent": 80
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：最大气血值 +80%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_yao_4_007",
+      "name": "万劫",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "comboRate",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：连击率 +80%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_4_008",
+      "name": "天罗",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "counterRate",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：反击率 +80%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_4_009",
+      "name": "镜反",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "reflectDamagePercent",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：伤害反弹 +80%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_yao_4_010",
+      "name": "诛仙",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "trueDamageRate",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：真实伤害率 +80%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_yao_4_011",
+      "name": "缚神",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "controlSuccessRate",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：控制成功率 +80%",
+      "drop_hint": "accessory_material"
+    },
+    {
+      "id": "affix_yao_4_012",
+      "name": "不朽",
+      "tier": "yao_4",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "healReceived",
+          "percent": 80,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 4,
+      "description": "增益：受到治疗加成 +80%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_mandate_001",
+      "name": "混世魔威",
+      "tier": "mandate",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "attack",
+          "percent": 60
+        },
+        {
+          "attribute": "damageReduction",
+          "percent": 40,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "maxHealth",
+          "percent": 50
+        }
+      ],
+      "rarity": 5,
+      "description": "增益：攻击力 +60%，免伤率 +40%，最大气血值 +50%",
+      "drop_hint": "attack_material"
+    },
+    {
+      "id": "affix_mandate_002",
+      "name": "万毒归宗",
+      "tier": "mandate",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "lifestealRate",
+          "percent": 50,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "poisonRes",
+          "percent": 80,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "comboRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 5,
+      "description": "增益：吸血率 +50%，毒素抗性 +80%，连击率 +40%",
+      "drop_hint": "ring_material"
+    },
+    {
+      "id": "affix_mandate_003",
+      "name": "大鹏展翅",
+      "tier": "mandate",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "speed",
+          "percent": 80
+        },
+        {
+          "attribute": "dodge",
+          "percent": 50,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "critRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 5,
+      "description": "增益：速度 +80%，闪避率 +50%，暴击率 +40%",
+      "drop_hint": "speed_material"
+    },
+    {
+      "id": "affix_mandate_004",
+      "name": "六耳通灵",
+      "tier": "mandate",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "attack",
+          "percent": 40
+        },
+        {
+          "attribute": "defense",
+          "percent": 40
+        },
+        {
+          "attribute": "maxHealth",
+          "percent": 40
+        },
+        {
+          "attribute": "speed",
+          "percent": 40
+        },
+        {
+          "attribute": "controlSuccessRate",
+          "percent": 60,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 5,
+      "description": "增益：攻击力 +40%，防御力 +40%，最大气血值 +40%，速度 +40%，控制成功率 +60%",
+      "drop_hint": "accessory_material"
+    },
+    {
+      "id": "affix_mandate_005",
+      "name": "花妖王·灵根",
+      "tier": "mandate",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "hpRegenPercent",
+          "percent": 60,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "maxHealth",
+          "percent": 50
+        }
+      ],
+      "rarity": 5,
+      "description": "增益：气血回复(%) +60%，最大气血值 +50%",
+      "drop_hint": "hp_material"
+    },
+    {
+      "id": "affix_mandate_006",
+      "name": "河伯·沧浪",
+      "tier": "mandate",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "waterRes",
+          "percent": 80,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "defense",
+          "percent": 40
+        },
+        {
+          "attribute": "healReceived",
+          "percent": 50,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 5,
+      "description": "增益：水属性抗性 +80%，防御力 +40%，受到治疗加成 +50%",
+      "drop_hint": "water_material"
+    },
+    {
+      "id": "affix_mandate_007",
+      "name": "山神·岩坚",
+      "tier": "mandate",
+      "target": "enemy",
+      "statModifiers": [
+        {
+          "attribute": "defense",
+          "percent": 60
+        },
+        {
+          "attribute": "damageReduction",
+          "percent": 50,
+          "type": "ADDITIVE"
+        },
+        {
+          "attribute": "counterRate",
+          "percent": 40,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 5,
+      "description": "增益：防御力 +60%，免伤率 +50%，反击率 +40%",
+      "drop_hint": "defense_material"
+    },
+    {
+      "id": "affix_jie_001",
+      "name": "破军",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "attack",
+          "percent": -20
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：攻击力 -20%"
+    },
+    {
+      "id": "affix_jie_002",
+      "name": "蚀骨",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "defense",
+          "percent": -20
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：防御力 -20%"
+    },
+    {
+      "id": "affix_jie_003",
+      "name": "缚足",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "speed",
+          "percent": -20
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：速度 -20%"
+    },
+    {
+      "id": "affix_jie_004",
+      "name": "噬心",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "critRate",
+          "percent": -20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：暴击率 -20%"
+    },
+    {
+      "id": "affix_jie_005",
+      "name": "夺魄",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "hit",
+          "percent": -20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：命中率 -20%"
+    },
+    {
+      "id": "affix_jie_006",
+      "name": "凌虚",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "dodge",
+          "percent": -20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：闪避率 -20%"
+    },
+    {
+      "id": "affix_jie_007",
+      "name": "摧元",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "maxHealth",
+          "percent": -20
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：最大气血值 -20%"
+    },
+    {
+      "id": "affix_jie_008",
+      "name": "绝脉",
+      "tier": "jie",
+      "target": "player",
+      "statModifiers": [
+        {
+          "attribute": "hpRegenPercent",
+          "percent": -20,
+          "type": "ADDITIVE"
+        }
+      ],
+      "rarity": 1,
+      "description": "减益：气血回复(%) -20%"
+    }
+  ],
+  "mandate_bindings": [
+    {
+      "boss_id": "boss_king_niumo",
+      "affix_id": "affix_mandate_001"
+    },
+    {
+      "boss_id": "boss_king_pansi",
+      "affix_id": "affix_mandate_002"
+    },
+    {
+      "boss_id": "boss_king_dapeng",
+      "affix_id": "affix_mandate_003"
+    },
+    {
+      "boss_id": "boss_final_liuer",
+      "affix_id": "affix_mandate_004"
+    },
+    {
+      "boss_id": "boss_major_huayaowang",
+      "affix_id": "affix_mandate_005"
+    },
+    {
+      "boss_id": "boss_major_hebo",
+      "affix_id": "affix_mandate_006"
+    },
+    {
+      "boss_id": "boss_major_shanshen",
+      "affix_id": "affix_mandate_007"
+    }
+  ],
+  "conflict_rules": [
+    {
+      "group": "wuxing_single",
+      "max_count": 2
+    },
+    {
+      "group": "wuxing_all",
+      "max_count": 1,
+      "exclusive_with": "wuxing_single"
+    }
+  ],
+  "wuxing_res_cap": 80
+}

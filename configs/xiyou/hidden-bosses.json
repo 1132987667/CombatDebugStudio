@@ -1,6 +1,6 @@
 [
   {
-    "id": "boss_hidden_1",
+    "id": "boss_hidden_heifeng",
     "name": "黑风老妖·残影",
     "level": 60,
     "enemyType": "old_soul",
@@ -57,12 +57,12 @@
     },
     "unlockCondition": {
       "type": "clear_boss",
-      "bossId": "boss_major_2",
+      "bossId": "boss_major_huayaowang",
       "additionalCondition": "在断柳渡收集3块黑风残碑"
     }
   },
   {
-    "id": "boss_hidden_2",
+    "id": "boss_hidden_dixing",
     "name": "地行仙·遁地",
     "level": 60,
     "enemyType": "old_soul",
@@ -119,12 +119,12 @@
     },
     "unlockCondition": {
       "type": "clear_boss",
-      "bossId": "boss_major_3",
+      "bossId": "boss_major_shanshen",
       "additionalCondition": "在碎石岭使用地行术探测出隐藏矿脉"
     }
   },
   {
-    "id": "boss_hidden_3",
+    "id": "boss_hidden_jiuchi",
     "name": "九齿残魂·朱刚鬣",
     "level": 60,
     "enemyType": "old_soul",
@@ -181,12 +181,12 @@
     },
     "unlockCondition": {
       "type": "clear_boss",
-      "bossId": "boss_major_2",
+      "bossId": "boss_major_hebo",
       "additionalCondition": "在沉船河底找到高老庄的旧地契"
     }
   },
   {
-    "id": "boss_hidden_4",
+    "id": "boss_hidden_baiyan",
     "name": "百眼旧将·多目",
     "level": 60,
     "enemyType": "old_blood",
@@ -243,12 +243,12 @@
     },
     "unlockCondition": {
       "type": "clear_boss",
-      "bossId": "boss_major_4",
+      "bossId": "boss_major_miwu",
       "additionalCondition": "在迷雾谷中找到盘丝大仙的旧玉佩并净化"
     }
   },
   {
-    "id": "boss_hidden_5",
+    "id": "boss_hidden_jinchan",
     "name": "金蝉残影·净坛",
     "level": 60,
     "enemyType": "old_soul",
@@ -305,7 +305,7 @@
     },
     "unlockCondition": {
       "type": "clear_boss",
-      "bossId": "boss_major_5",
+      "bossId": "boss_major_rulai",
       "additionalCondition": "不带任何杀戮词缀通关灵霄台顶"
     }
   }

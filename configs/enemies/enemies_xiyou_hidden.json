@@ -11,7 +11,7 @@
     },
     "drops": [
       { "itemId": "crys_007", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_004", "quantity": 2, "chance": 0.6 }
+      { "itemId": "mat_danshuiyu", "quantity": 2, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_001_small"],
@@ -31,7 +31,7 @@
     },
     "drops": [
       { "itemId": "crys_008", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_021", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_zhenzhu", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_002_small"],
@@ -51,7 +51,7 @@
     },
     "drops": [
       { "itemId": "crys_001", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_007", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_tiejing", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_003_small"],
@@ -71,7 +71,7 @@
     },
     "drops": [
       { "itemId": "crys_002", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_012", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_xiongpi", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_004_small"],
@@ -91,7 +91,7 @@
     },
     "drops": [
       { "itemId": "crys_008", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_017", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_shengshui", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_005_small"],
@@ -111,7 +111,7 @@
     },
     "drops": [
       { "itemId": "crys_003", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_015", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_gutongjing", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_006_small"],
@@ -131,7 +131,7 @@
     },
     "drops": [
       { "itemId": "crys_009", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_019", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_xianyun", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_007_small"],
@@ -151,7 +151,7 @@
     },
     "drops": [
       { "itemId": "crys_003", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_024", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_jinyang", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_008_small"],
@@ -171,7 +171,7 @@
     },
     "drops": [
       { "itemId": "crys_006", "quantity": 1, "chance": 0.3 },
-      { "itemId": "mat_026", "quantity": 1, "chance": 0.6 }
+      { "itemId": "mat_yufoxiang", "quantity": 1, "chance": 0.6 }
     ],
     "skills": {
       "small": ["skill_hidden_boss_009_small"],
@@ -191,7 +191,7 @@
     },
     "drops": [
       { "itemId": "elix_007", "quantity": 1, "chance": 0.2 },
-      { "itemId": "ess_003", "quantity": 1, "chance": 0.3 },
+      { "itemId": "mat_hunyuan", "quantity": 1, "chance": 0.3 },
       { "itemId": "crys_003", "quantity": 1, "chance": 0.4 }
     ],
     "skills": {

@@ -1,0 +1,607 @@
+[
+  {
+    "id": "affix_debuff_attack",
+    "name": "摄魂",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "attack", "percent": -20 }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家攻击力-20%"
+  },
+  {
+    "id": "affix_debuff_defense",
+    "name": "蚀骨",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "defense", "percent": -20 }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家防御力-20%"
+  },
+  {
+    "id": "affix_debuff_speed",
+    "name": "缚足",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "speed", "percent": -20 }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家速度-20%"
+  },
+  {
+    "id": "affix_debuff_crit",
+    "name": "乱神",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "critRate", "percent": -20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家暴击率-20%"
+  },
+  {
+    "id": "affix_debuff_hit",
+    "name": "夺魄",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "hit", "percent": -20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家命中-20%"
+  },
+  {
+    "id": "affix_debuff_dodge",
+    "name": "凌虚",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "dodge", "percent": -20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家闪避-20%"
+  },
+  {
+    "id": "affix_debuff_health",
+    "name": "摧元",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "maxHealth", "percent": -20 }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家最大气血-20%"
+  },
+  {
+    "id": "affix_debuff_regen",
+    "name": "绝脉",
+    "tier": "debuff_1",
+    "target": "player",
+    "statModifiers": [
+      { "attribute": "hpRegenPercent", "percent": -20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "减益：玩家气血回复-20%"
+  },
+  {
+    "id": "affix_buff_attack",
+    "name": "蛮力",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "attack", "percent": 20 }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人攻击力+20%"
+  },
+  {
+    "id": "affix_buff_defense",
+    "name": "铁躯",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "defense", "percent": 20 }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人防御力+20%"
+  },
+  {
+    "id": "affix_buff_speed",
+    "name": "疾影",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "speed", "percent": 20 }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人速度+20%"
+  },
+  {
+    "id": "affix_buff_crit",
+    "name": "凶威",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "critRate", "percent": 20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人暴击率+20%"
+  },
+  {
+    "id": "affix_buff_hit",
+    "name": "罗刹",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "hit", "percent": 20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人命中+20%"
+  },
+  {
+    "id": "affix_buff_dodge",
+    "name": "灵虚",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "dodge", "percent": 20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人闪避+20%"
+  },
+  {
+    "id": "affix_buff_health",
+    "name": "玄龟",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "maxHealth", "percent": 20 }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人最大气血+20%"
+  },
+  {
+    "id": "affix_buff_regen",
+    "name": "回春",
+    "tier": "buff_1",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "hpRegenPercent", "percent": 20, "type": "ADDITIVE" }
+    ],
+    "rarity": 1,
+    "description": "增益：敌人气血回复+20%"
+  },
+  {
+    "id": "affix_buff2_attack",
+    "name": "破军",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "attack", "percent": 40 }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人攻击力+40%"
+  },
+  {
+    "id": "affix_buff2_defense",
+    "name": "金刚",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "defense", "percent": 40 }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人防御力+40%"
+  },
+  {
+    "id": "affix_buff2_speed",
+    "name": "神行",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "speed", "percent": 40 }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人速度+40%"
+  },
+  {
+    "id": "affix_buff2_critdmg",
+    "name": "天煞",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "critDamage", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人暴击伤害+40%"
+  },
+  {
+    "id": "affix_buff2_energy",
+    "name": "魔瞳",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "maxEnergy", "percent": 40 }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人能量上限+40%"
+  },
+  {
+    "id": "affix_buff2_dodge",
+    "name": "不灭",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "dodge", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人闪避+40%"
+  },
+  {
+    "id": "affix_buff2_boost",
+    "name": "怒涛",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "damageBoost", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人伤害提升+40%"
+  },
+  {
+    "id": "affix_buff2_true",
+    "name": "破法",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "trueDamageRate", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人真实伤害率+40%"
+  },
+  {
+    "id": "affix_buff2_lowhp",
+    "name": "斩草",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "damageToLowHp", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人对低血量目标伤害+40%"
+  },
+  {
+    "id": "affix_buff2_combo",
+    "name": "连山",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "comboRate", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人连击率+40%"
+  },
+  {
+    "id": "affix_buff2_counter",
+    "name": "背水",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "counterRate", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人反击率+40%"
+  },
+  {
+    "id": "affix_buff2_reflect",
+    "name": "倒打",
+    "tier": "buff_2",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "reflectDamagePercent", "percent": 40, "type": "ADDITIVE" }
+    ],
+    "rarity": 2,
+    "description": "增益：敌人伤害反弹+40%"
+  },
+  {
+    "id": "affix_buff3_attack",
+    "name": "灭世",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "attack", "percent": 60 }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人攻击力+60%"
+  },
+  {
+    "id": "affix_buff3_defense",
+    "name": "混元",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "defense", "percent": 60 }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人防御力+60%"
+  },
+  {
+    "id": "affix_buff3_speed",
+    "name": "追电",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "speed", "percent": 60 }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人速度+60%"
+  },
+  {
+    "id": "affix_buff3_crit",
+    "name": "焚天",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "critRate", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人暴击率+60%"
+  },
+  {
+    "id": "affix_buff3_regen",
+    "name": "噬魂",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "hpRegenPercent", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人气血回复+60%"
+  },
+  {
+    "id": "affix_buff3_lifesteal",
+    "name": "冥河",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "damageBoost", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人伤害提升+60%"
+  },
+  {
+    "id": "affix_buff3_reduce",
+    "name": "金钟",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "damageReduction", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人免伤率+60%"
+  },
+  {
+    "id": "affix_buff3_heal",
+    "name": "甘露",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "healReceived", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人受到治疗加成+60%"
+  },
+  {
+    "id": "affix_buff3_control",
+    "name": "困仙",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "controlSuccessRate", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人控制成功率+60%"
+  },
+  {
+    "id": "affix_buff3_stun",
+    "name": "镇岳",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "stunResist", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人眩晕抗性+60%"
+  },
+  {
+    "id": "affix_buff3_fire",
+    "name": "离火",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "fireAtk", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人火属性攻击+60%"
+  },
+  {
+    "id": "affix_buff3_water",
+    "name": "坎水",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "waterAtk", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人水属性攻击+60%"
+  },
+  {
+    "id": "affix_buff3_wood",
+    "name": "青木",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "woodAtk", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人木属性攻击+60%"
+  },
+  {
+    "id": "affix_buff3_metal",
+    "name": "金精",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "metalAtk", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人金属性攻击+60%"
+  },
+  {
+    "id": "affix_buff3_earth",
+    "name": "坤元",
+    "tier": "buff_3",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "earthAtk", "percent": 60, "type": "ADDITIVE" }
+    ],
+    "rarity": 3,
+    "description": "增益：敌人土属性攻击+60%"
+  },
+  {
+    "id": "affix_buff4_attack",
+    "name": "太虚",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "attack", "percent": 80 }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人攻击力+80%"
+  },
+  {
+    "id": "affix_buff4_defense",
+    "name": "混沌",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "defense", "percent": 80 }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人防御力+80%"
+  },
+  {
+    "id": "affix_buff4_speed",
+    "name": "九幽",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "speed", "percent": 80 }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人速度+80%"
+  },
+  {
+    "id": "affix_buff4_critdmg",
+    "name": "紫霄",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "critDamage", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人暴击伤害+80%"
+  },
+  {
+    "id": "affix_buff4_reduce",
+    "name": "玄黄",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "damageReduction", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人免伤率+80%"
+  },
+  {
+    "id": "affix_buff4_health",
+    "name": "星辰",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "maxHealth", "percent": 80 }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人最大气血+80%"
+  },
+  {
+    "id": "affix_buff4_combo",
+    "name": "万劫",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "comboRate", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人连击率+80%"
+  },
+  {
+    "id": "affix_buff4_counter",
+    "name": "天罗",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "counterRate", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人反击率+80%"
+  },
+  {
+    "id": "affix_buff4_reflect",
+    "name": "镜反",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "reflectDamagePercent", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人伤害反弹+80%"
+  },
+  {
+    "id": "affix_buff4_true",
+    "name": "诛仙",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "trueDamageRate", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人真实伤害率+80%"
+  },
+  {
+    "id": "affix_buff4_control",
+    "name": "缚神",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "controlSuccessRate", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人控制成功率+80%"
+  },
+  {
+    "id": "affix_buff4_heal",
+    "name": "不朽",
+    "tier": "buff_4",
+    "target": "enemy",
+    "statModifiers": [
+      { "attribute": "healReceived", "percent": 80, "type": "ADDITIVE" }
+    ],
+    "rarity": 4,
+    "description": "增益（传说）：敌人受到治疗加成+80%"
+  }
+]

@@ -1,6 +1,6 @@
 [
   {
-    "id": "boss_minor_1",
+    "id": "boss_minor_taoyao",
     "name": "桃妖·灵根",
     "type": "minor",
     "level": 6,
@@ -48,7 +48,7 @@
       "hasDebuff": false
     },
     "drops": {
-      "guaranteed": ["mat_taomu", "mat_danshui_yu"],
+      "guaranteed": ["mat_taomu", "mat_danshuiyu"],
       "rare": ["recipe_weapon_t1"],
       "gold": [100, 200],
       "exp": [80, 120]
@@ -58,10 +58,10 @@
       "outro": "桃妖的根须缓缓收回泥土，花瓣如雨落下。它守了这片桃林一千年，终究没能守住。",
       "deathQuote": "桃林……还会再开的。"
     },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_3" }
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_5" }
   },
   {
-    "id": "boss_minor_2",
+    "id": "boss_minor_liuyao",
     "name": "柳妖·断桥",
     "type": "minor",
     "level": 16,
@@ -119,10 +119,10 @@
       "outro": "柳丝一根根垂落，断桥上的青苔被雨水冲散。它终于可以不再等了。",
       "deathQuote": "桥断了……人也不来了。"
     },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_3" }
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_5" }
   },
   {
-    "id": "boss_minor_3",
+    "id": "boss_minor_yanjing",
     "name": "岩精·裂地",
     "type": "minor",
     "level": 26,
@@ -182,10 +182,10 @@
       "outro": "巨岩轰然倒塌，碎成无数石块。裂缝中透出一缕阳光，照在它曾经站立的地方。",
       "deathQuote": "我……只是想……站起来。"
     },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_3" }
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_5" }
   },
   {
-    "id": "boss_minor_4",
+    "id": "boss_minor_zhuyao",
     "name": "蛛妖·织网",
     "type": "minor",
     "level": 36,
@@ -246,10 +246,10 @@
       "outro": "蛛网一根根断裂，织网的蛛妖缓缓倒下。她的网困住了无数人，却困不住自己的孤独。",
       "deathQuote": "我只是……不想一个人。"
     },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_3" }
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_5" }
   },
   {
-    "id": "boss_minor_5",
+    "id": "boss_minor_panseng",
     "name": "叛僧·破戒",
     "type": "minor",
     "level": 46,
@@ -300,7 +300,7 @@
       "hasDebuff": false
     },
     "drops": {
-      "guaranteed": ["mat_shengshui_yu", "mat_yufo_xiang"],
+      "guaranteed": ["mat_shengshui", "mat_yufoxiang"],
       "rare": ["recipe_weapon_t4"],
       "gold": [580, 850],
       "exp": [480, 650]
@@ -310,10 +310,10 @@
       "outro": "叛僧倒下时，嘴角带着一丝解脱的笑。他终于不用再假装相信了。",
       "deathQuote": "佛不渡我……我便自渡。"
     },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_3" }
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_5" }
   },
   {
-    "id": "boss_major_1",
+    "id": "boss_major_huayaowang",
     "name": "花妖王·千瓣",
     "type": "major",
     "level": 10,
@@ -364,7 +364,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_taomu", "mat_danshui_yu", "mat_tongjing"],
+      "guaranteed": ["mat_taomu", "mat_danshuiyu", "mat_tongjing"],
       "rare": ["recipe_weapon_t1", "recipe_armor_t1"],
       "gold": [200, 400],
       "exp": [180, 280]
@@ -377,7 +377,7 @@
     "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_5" }
   },
   {
-    "id": "boss_major_2",
+    "id": "boss_major_hebo",
     "name": "河伯·沧浪",
     "type": "major",
     "level": 20,
@@ -428,7 +428,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshui_yu"],
+      "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshuiyu"],
       "rare": ["recipe_accessory_t2"],
       "gold": [350, 600],
       "exp": [320, 480]
@@ -441,7 +441,7 @@
     "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_5" }
   },
   {
-    "id": "boss_major_3",
+    "id": "boss_major_shanshen",
     "name": "山神·岩坚",
     "type": "major",
     "level": 30,
@@ -505,7 +505,7 @@
     "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_5" }
   },
   {
-    "id": "boss_major_4",
+    "id": "boss_major_miwu",
     "name": "迷雾妖主·幻影",
     "type": "major",
     "level": 40,
@@ -556,7 +556,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_xiongpi", "mat_duye", "mat_hantan_shui"],
+      "guaranteed": ["mat_xiongpi", "mat_duye", "mat_hantan"],
       "rare": ["recipe_accessory_t3", "recipe_weapon_t3"],
       "gold": [650, 950],
       "exp": [580, 820]
@@ -569,7 +569,7 @@
     "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_5" }
   },
   {
-    "id": "boss_major_5",
+    "id": "boss_major_rulai",
     "name": "如来法相·须弥",
     "type": "major",
     "level": 50,
@@ -622,9 +622,9 @@
     },
     "drops": {
       "guaranteed": [
-        "mat_shengshui_yu",
-        "mat_yufo_xiang",
-        "mat_hunyuan_lingqi"
+        "mat_shengshui",
+        "mat_yufoxiang",
+        "mat_hunyuan"
       ],
       "rare": ["recipe_weapon_t5", "recipe_armor_t5"],
       "gold": [800, 1200],
@@ -638,7 +638,7 @@
     "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_5" }
   },
   {
-    "id": "boss_achievement_1",
+    "id": "boss_achieve_huayaowang",
     "name": "花妖王·千瓣·真身",
     "type": "achievement",
     "level": 55,
@@ -690,7 +690,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_taomu", "mat_danshui_yu", "mat_tongjing"],
+      "guaranteed": ["mat_taomu", "mat_danshuiyu", "mat_tongjing"],
       "rare": ["recipe_weapon_t5", "mat_wudao_dan"],
       "gold": [1200, 1800],
       "exp": [1000, 1500]
@@ -703,7 +703,7 @@
     "unlockCondition": { "type": "player_level", "level": 50 }
   },
   {
-    "id": "boss_achievement_2",
+    "id": "boss_achieve_hebo",
     "name": "河伯·沧浪·千年执念",
     "type": "achievement",
     "level": 55,
@@ -761,7 +761,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshui_yu"],
+      "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshuiyu"],
       "rare": ["recipe_accessory_t5", "mat_wudao_dan"],
       "gold": [1300, 1900],
       "exp": [1100, 1600]
@@ -774,7 +774,7 @@
     "unlockCondition": { "type": "player_level", "level": 50 }
   },
   {
-    "id": "boss_achievement_3",
+    "id": "boss_achieve_shanshen",
     "name": "山神·岩坚·五行残躯",
     "type": "achievement",
     "level": 55,
@@ -839,7 +839,7 @@
     "unlockCondition": { "type": "player_level", "level": 50 }
   },
   {
-    "id": "boss_achievement_4",
+    "id": "boss_achieve_miwu",
     "name": "迷雾妖主·幻影·千年迷途",
     "type": "achievement",
     "level": 55,
@@ -891,7 +891,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_xiongpi", "mat_duye", "mat_feicui_yuzhuo"],
+      "guaranteed": ["mat_xiongpi", "mat_duye", "mat_feicui"],
       "rare": ["recipe_accessory_t5", "mat_wudao_dan"],
       "gold": [1350, 1950],
       "exp": [1150, 1650]
@@ -904,7 +904,7 @@
     "unlockCondition": { "type": "player_level", "level": 50 }
   },
   {
-    "id": "boss_achievement_5",
+    "id": "boss_achieve_rulai",
     "name": "如来法相·须弥·六耳投影",
     "type": "achievement",
     "level": 55,
@@ -960,9 +960,9 @@
     },
     "drops": {
       "guaranteed": [
-        "mat_shengshui_yu",
-        "mat_yufo_xiang",
-        "mat_tiangang_lingqi"
+        "mat_shengshui",
+        "mat_yufoxiang",
+        "mat_tiangang"
       ],
       "rare": ["recipe_weapon_t5", "mat_wudao_dan"],
       "gold": [1500, 2200],
@@ -976,7 +976,7 @@
     "unlockCondition": { "type": "player_level", "level": 50 }
   },
   {
-    "id": "boss_king_1",
+    "id": "boss_king_niumo",
     "name": "牛魔·赤焰",
     "type": "three_kings",
     "level": 65,
@@ -1028,7 +1028,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_niumo_jiao", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
+      "guaranteed": ["mat_boss_01", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
       "rare": ["recipe_weapon_t6"],
       "gold": [2500, 3500],
       "exp": [2000, 3000]
@@ -1041,7 +1041,7 @@
     "unlockCondition": { "type": "clear_all_achievement" }
   },
   {
-    "id": "boss_king_2",
+    "id": "boss_king_pansi",
     "name": "盘丝·织梦",
     "type": "three_kings",
     "level": 65,
@@ -1093,7 +1093,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_dunang", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
+      "guaranteed": ["mat_boss_02", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
       "rare": ["recipe_accessory_t6"],
       "gold": [2500, 3500],
       "exp": [2000, 3000]
@@ -1106,7 +1106,7 @@
     "unlockCondition": { "type": "clear_all_achievement" }
   },
   {
-    "id": "boss_king_3",
+    "id": "boss_king_dapeng",
     "name": "大鹏·遮天",
     "type": "three_kings",
     "level": 65,
@@ -1158,7 +1158,7 @@
       "hasDebuff": true
     },
     "drops": {
-      "guaranteed": ["mat_pengyu", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
+      "guaranteed": ["mat_boss_03", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
       "rare": ["recipe_armor_t6"],
       "gold": [2500, 3500],
       "exp": [2000, 3000]
@@ -1171,7 +1171,7 @@
     "unlockCondition": { "type": "clear_all_achievement" }
   },
   {
-    "id": "boss_final",
+    "id": "boss_final_liuer",
     "name": "六耳猕猴",
     "type": "final",
     "level": 70,

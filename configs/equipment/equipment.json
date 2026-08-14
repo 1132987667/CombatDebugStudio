@@ -8,41 +8,71 @@
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 12 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 10
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_001", "count": 3 },
-      { "itemId": "mat_003", "count": 1 }
+      {
+        "itemId": "mat_taomu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 1
+      }
     ],
-    "cost": 30,
+    "cost": 50,
     "craftable": true,
     "recipeId": "forge_wp_t1_light_01",
     "blueprintId": "bp_t1_wp",
-    "legacyIds": ["eq_w001"],
+    "legacyIds": [
+      "eq_w001"
+    ],
     "source": "cave.json 已有配方",
-    "description": "以桃木为骨、铜精为刃，轻盈迅捷。攻击 +12。"
+    "description": "以桃木为骨、铜精为刃，轻盈迅捷。攻击 +10，攻速 +10%。"
   },
   {
     "id": "wp_t1_mid_01",
-    "name": "松木棍",
+    "name": "铜棍",
     "slot": "weapon",
     "subType": "中型",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 20 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 12
+      }
     ],
     "materials": [
-      { "itemId": "mat_006", "count": 3 },
-      { "itemId": "mat_003", "count": 2 }
+      {
+        "itemId": "mat_taomu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 2
+      }
     ],
-    "cost": 50,
+    "cost": 60,
     "craftable": true,
     "recipeId": "forge_wp_t1_mid_01",
     "blueprintId": "bp_t1_wp",
-    "source": "cave.json 已有配方",
-    "description": "硬松木削成的长棍，势沉力足。攻击 +20。"
+    "legacyIds": [
+      "eq_w002"
+    ],
+    "source": "v2.0 配方（原松木棍）",
+    "description": "通体铜铸，势大力沉。攻击 +12。"
   },
   {
     "id": "wp_t1_heavy_01",
@@ -53,19 +83,35 @@
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 16 },
-      { "attribute": "speed", "modifierType": "percent", "value": -5 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 14
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -5
+      }
     ],
     "materials": [
-      { "itemId": "mat_002", "count": 3 },
-      { "itemId": "mat_003", "count": 2 }
+      {
+        "itemId": "mat_tongjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 2
+      }
     ],
-    "cost": 60,
+    "cost": 70,
     "craftable": true,
     "blueprintId": "bp_t1_wp",
-    "legacyIds": ["eq_w003"],
+    "legacyIds": [
+      "eq_w003"
+    ],
     "source": "回答.md 新增",
-    "description": "铜铸重锤，一击破防。攻击 +16，速度 -5%。"
+    "description": "铜铸重锤，一击破防。攻击 +14，速度 -5%。"
   },
   {
     "id": "wp_t2_light_01",
@@ -76,19 +122,35 @@
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 18 },
-      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 22
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_006", "count": 3 },
-      { "itemId": "mat_007", "count": 2 }
+      {
+        "itemId": "mat_songmu",
+        "count": 4
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      }
     ],
-    "cost": 90,
+    "cost": 150,
     "craftable": true,
     "blueprintId": "bp_t2_wp",
-    "legacyIds": ["eq_w004"],
+    "legacyIds": [
+      "eq_w004"
+    ],
     "source": "关卡4-6 制造",
-    "description": "剑过留风，迅捷难防。攻击 +18，速度 +20%。"
+    "description": "剑过留风，迅捷难防。攻击 +22，攻速 +10%。"
   },
   {
     "id": "wp_t2_mid_01",
@@ -99,18 +161,34 @@
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 22 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 30
+      }
     ],
     "materials": [
-      { "itemId": "mat_006", "count": 3 },
-      { "itemId": "mat_007", "count": 3 }
+      {
+        "itemId": "mat_songmu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 1
+      }
     ],
-    "cost": 110,
+    "cost": 180,
     "craftable": true,
     "blueprintId": "bp_t2_wp",
-    "legacyIds": ["eq_w005"],
+    "legacyIds": [
+      "eq_w005"
+    ],
     "source": "关卡4-6 制造",
-    "description": "精铁锻造，刚猛无匹。攻击 +22。"
+    "description": "精铁锻造，刚猛无匹。攻击 +30。"
   },
   {
     "id": "wp_t2_heavy_01",
@@ -121,19 +199,35 @@
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 27 },
-      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 35
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -8
+      }
     ],
     "materials": [
-      { "itemId": "mat_007", "count": 4 },
-      { "itemId": "mat_002", "count": 2 }
+      {
+        "itemId": "mat_tiejing",
+        "count": 4
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 3
+      }
     ],
-    "cost": 130,
+    "cost": 220,
     "craftable": true,
     "blueprintId": "bp_t2_wp",
-    "legacyIds": ["eq_w006"],
+    "legacyIds": [
+      "eq_w006"
+    ],
     "source": "关卡4-6 制造",
-    "description": "铁铸重锤，碎石裂地。攻击 +27，速度 -20%。"
+    "description": "铁铸重锤，碎石裂地。攻击 +35，速度 -8%。"
   },
   {
     "id": "wp_t3_light_01",
@@ -144,19 +238,39 @@
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 30 },
-      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 38
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 15
+      }
     ],
     "materials": [
-      { "itemId": "mat_013", "count": 3 },
-      { "itemId": "mat_016", "count": 2 }
+      {
+        "itemId": "mat_tiemu",
+        "count": 4
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_xianyun",
+        "count": 1
+      }
     ],
-    "cost": 200,
+    "cost": 400,
     "craftable": true,
     "blueprintId": "bp_t3_wp",
-    "legacyIds": ["eq_w007"],
+    "legacyIds": [
+      "eq_w007"
+    ],
     "source": "关卡7-9 制造",
-    "description": "剑走流云，快若惊鸿。攻击 +30，速度 +20%。"
+    "description": "剑走流云，快若惊鸿。攻击 +38，攻速 +15%。"
   },
   {
     "id": "wp_t3_mid_01",
@@ -167,18 +281,34 @@
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 36 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 48
+      }
     ],
     "materials": [
-      { "itemId": "mat_016", "count": 3 },
-      { "itemId": "mat_013", "count": 2 }
+      {
+        "itemId": "mat_tiemu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 1
+      }
     ],
-    "cost": 240,
+    "cost": 450,
     "craftable": true,
     "blueprintId": "bp_t3_wp",
-    "legacyIds": ["eq_w008"],
+    "legacyIds": [
+      "eq_w008"
+    ],
     "source": "关卡7-9 制造",
-    "description": "杖镇群魔，佛光凛然。攻击 +36。"
+    "description": "杖镇群魔，佛光凛然。攻击 +48。"
   },
   {
     "id": "wp_t3_heavy_01",
@@ -189,88 +319,39 @@
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 42 },
-      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 55
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -10
+      }
     ],
     "materials": [
-      { "itemId": "mat_016", "count": 4 },
-      { "itemId": "mat_014", "count": 2 }
+      {
+        "itemId": "mat_jinjing",
+        "count": 5
+      },
+      {
+        "itemId": "mat_gutongjing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 3
+      }
     ],
-    "cost": 280,
+    "cost": 520,
     "craftable": true,
     "blueprintId": "bp_t3_wp",
-    "legacyIds": ["eq_w009"],
+    "legacyIds": [
+      "eq_w009"
+    ],
     "source": "关卡7-9 制造",
-    "description": "一锤撼地，万军辟易。攻击 +42，速度 -20%。"
-  },
-  {
-    "id": "wp_t4_01",
-    "name": "牛魔撼天锤",
-    "slot": "weapon",
-    "subType": "重型",
-    "tier": "t4",
-    "rarity": 4,
-    "requiredLevel": 35,
-    "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 60 },
-      { "attribute": "speed", "modifierType": "percent", "value": -20 }
-    ],
-    "materials": [
-      { "itemId": "mat_boss_01", "count": 1 },
-      { "itemId": "mat_016", "count": 2 },
-      { "itemId": "ess_002", "count": 1 }
-    ],
-    "cost": 600,
-    "craftable": true,
-    "blueprintId": "bp_legend_01",
-    "source": "牛魔王（天品合成）",
-    "description": "以牛魔角为核、天罡灵气淬炼，撼天动地。攻击 +60，速度 -20%。"
-  },
-  {
-    "id": "wp_t5_01",
-    "name": "混元无极环",
-    "slot": "weapon",
-    "subType": "轻型",
-    "tier": "t5",
-    "rarity": 5,
-    "requiredLevel": 50,
-    "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 80 },
-      { "attribute": "critRate", "modifierType": "percent", "value": 10 },
-      { "attribute": "speed", "modifierType": "percent", "value": 15 }
-    ],
-    "materials": [
-      { "itemId": "ess_003", "count": 2 },
-      { "itemId": "ess_002", "count": 2 }
-    ],
-    "cost": 1200,
-    "craftable": true,
-    "blueprintId": "bp_immortal_01",
-    "source": "最终 BOSS（仙品合成）",
-    "description": "混沌之气所凝，无坚不摧。攻击 +80，暴击率 +10%，速度 +15%。"
-  },
-  {
-    "id": "wp_sp_01",
-    "name": "烈焰斩",
-    "slot": "weapon",
-    "subType": "轻型",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 38 },
-      { "attribute": "speed", "modifierType": "percent", "value": 10 }
-    ],
-    "materials": [
-      { "itemId": "mat_sp_03", "count": 1 },
-      { "itemId": "mat_014", "count": 2 },
-      { "itemId": "mat_016", "count": 1 }
-    ],
-    "cost": 280,
-    "craftable": true,
-    "blueprintId": "bp_sp_01",
-    "source": "隐藏 BOSS（特殊装备制造）",
-    "description": "火灵淬刃，烈焰焚身。攻击 +38，速度 +10%。"
+    "description": "一锤撼地，万军辟易。攻击 +55，速度 -10%。"
   },
   {
     "id": "ar_t1_light_01",
@@ -281,18 +362,32 @@
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 8 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 8
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 20
+      }
     ],
     "materials": [
-      { "itemId": "mat_009", "count": 3 }
+      {
+        "itemId": "mat_lupi",
+        "count": 4
+      }
     ],
-    "cost": 40,
+    "cost": 30,
     "craftable": true,
     "recipeId": "forge_ar_t1_light_01",
     "blueprintId": "bp_t1_ar",
-    "legacyIds": ["eq_a001"],
+    "legacyIds": [
+      "eq_a001"
+    ],
     "source": "cave.json 已有配方",
-    "description": "鹿皮鞣制，轻软护身。防御 +8。"
+    "description": "鹿皮鞣制，轻软护身。防御 +8，速度 +20%。"
   },
   {
     "id": "ar_t1_mid_01",
@@ -303,16 +398,28 @@
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 10 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_001", "count": 3 },
-      { "itemId": "mat_003", "count": 1 }
+      {
+        "itemId": "mat_taomu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 3
+      }
     ],
-    "cost": 50,
+    "cost": 60,
     "craftable": true,
     "blueprintId": "bp_t1_ar",
-    "legacyIds": ["eq_a002"],
+    "legacyIds": [
+      "eq_a002"
+    ],
     "source": "回答.md 新增",
     "description": "桃木为衬、铜精镶边，坚固耐用。防御 +10。"
   },
@@ -325,17 +432,33 @@
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 12 },
-      { "attribute": "speed", "modifierType": "percent", "value": -5 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 12
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -5
+      }
     ],
     "materials": [
-      { "itemId": "mat_003", "count": 4 },
-      { "itemId": "mat_002", "count": 2 }
+      {
+        "itemId": "mat_tongjing",
+        "count": 4
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 2
+      }
     ],
     "cost": 70,
     "craftable": true,
     "blueprintId": "bp_t1_ar",
-    "legacyIds": ["eq_a003"],
+    "legacyIds": [
+      "eq_a003"
+    ],
     "source": "回答.md 新增",
     "description": "铜板甲身，防御扎实。防御 +12，速度 -5%。"
   },
@@ -348,19 +471,35 @@
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 12 },
-      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 14
+      },
+      {
+        "attribute": "dodge",
+        "modifierType": "percent",
+        "value": 3
+      }
     ],
     "materials": [
-      { "itemId": "mat_012", "count": 3 },
-      { "itemId": "mat_007", "count": 1 }
+      {
+        "itemId": "mat_xiongpi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuanzhi",
+        "count": 1
+      }
     ],
-    "cost": 100,
+    "cost": 130,
     "craftable": true,
     "blueprintId": "bp_t2_ar",
-    "legacyIds": ["eq_a004"],
+    "legacyIds": [
+      "eq_a004"
+    ],
     "source": "关卡4-6 制造",
-    "description": "熊皮厚韧，刀枪难入。防御 +12，速度 +20%。"
+    "description": "熊皮厚韧，刀枪难入。防御 +14，闪避 +3%。"
   },
   {
     "id": "ar_t2_mid_01",
@@ -371,18 +510,30 @@
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 16 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 18
+      }
     ],
     "materials": [
-      { "itemId": "mat_013", "count": 3 },
-      { "itemId": "mat_003", "count": 2 }
+      {
+        "itemId": "mat_songmu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      }
     ],
-    "cost": 120,
+    "cost": 160,
     "craftable": true,
     "blueprintId": "bp_t2_ar",
-    "legacyIds": ["eq_a005"],
+    "legacyIds": [
+      "eq_a005"
+    ],
     "source": "关卡4-6 制造",
-    "description": "铁木为骨，坚逾精钢。防御 +16。"
+    "description": "铁木为骨，坚逾精钢。防御 +18。"
   },
   {
     "id": "ar_t2_heavy_01",
@@ -393,19 +544,35 @@
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 20 },
-      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 22
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -6
+      }
     ],
     "materials": [
-      { "itemId": "mat_007", "count": 4 },
-      { "itemId": "mat_002", "count": 3 }
+      {
+        "itemId": "mat_tiejing",
+        "count": 5
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 3
+      }
     ],
-    "cost": 140,
+    "cost": 200,
     "craftable": true,
     "blueprintId": "bp_t2_ar",
-    "legacyIds": ["eq_a006"],
+    "legacyIds": [
+      "eq_a006"
+    ],
     "source": "关卡4-6 制造",
-    "description": "重铁板甲，固若金汤。防御 +20，速度 -20%。"
+    "description": "重铁板甲，固若金汤。防御 +22，速度 -6%。"
   },
   {
     "id": "ar_t3_light_01",
@@ -416,19 +583,35 @@
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 20 },
-      { "attribute": "speed", "modifierType": "percent", "value": 20 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 24
+      },
+      {
+        "attribute": "dodge",
+        "modifierType": "percent",
+        "value": 5
+      }
     ],
     "materials": [
-      { "itemId": "mat_020", "count": 3 },
-      { "itemId": "mat_016", "count": 1 }
+      {
+        "itemId": "mat_hupi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xianyun",
+        "count": 1
+      }
     ],
-    "cost": 220,
+    "cost": 380,
     "craftable": true,
     "blueprintId": "bp_t3_ar",
-    "legacyIds": ["eq_a007"],
+    "legacyIds": [
+      "eq_a007"
+    ],
     "source": "关卡7-9 制造",
-    "description": "虎皮为衬，威震山林。防御 +20，速度 +20%。"
+    "description": "虎皮为衬，威震山林。防御 +24，闪避 +5%。"
   },
   {
     "id": "ar_t3_mid_01",
@@ -439,18 +622,30 @@
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 26 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 30
+      }
     ],
     "materials": [
-      { "itemId": "mat_016", "count": 3 },
-      { "itemId": "mat_013", "count": 2 }
+      {
+        "itemId": "mat_tiemu",
+        "count": 4
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 2
+      }
     ],
-    "cost": 250,
+    "cost": 420,
     "craftable": true,
     "blueprintId": "bp_t3_ar",
-    "legacyIds": ["eq_a008"],
+    "legacyIds": [
+      "eq_a008"
+    ],
     "source": "关卡7-9 制造",
-    "description": "金丝缠木，刚柔并济。防御 +26。"
+    "description": "金丝缠木，刚柔并济。防御 +30。"
   },
   {
     "id": "ar_t3_heavy_01",
@@ -461,103 +656,99 @@
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 32 },
-      { "attribute": "speed", "modifierType": "percent", "value": -20 }
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 36
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -8
+      }
     ],
     "materials": [
-      { "itemId": "mat_016", "count": 4 },
-      { "itemId": "mat_026", "count": 1 }
+      {
+        "itemId": "mat_jinjing",
+        "count": 6
+      },
+      {
+        "itemId": "mat_gutongjing",
+        "count": 1
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 1
+      }
     ],
-    "cost": 300,
+    "cost": 500,
     "craftable": true,
     "blueprintId": "bp_t3_ar",
-    "legacyIds": ["eq_a009"],
+    "legacyIds": [
+      "eq_a009"
+    ],
     "source": "关卡7-9 制造",
-    "description": "神金铸就，万法不侵。防御 +32，速度 -20%。"
-  },
-  {
-    "id": "ar_t5_01",
-    "name": "混沌天衣",
-    "slot": "armor",
-    "subType": "天衣",
-    "tier": "t5",
-    "rarity": 5,
-    "requiredLevel": 50,
-    "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 50 },
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 15 }
-    ],
-    "materials": [
-      { "itemId": "ess_003", "count": 2 },
-      { "itemId": "mat_019", "count": 2 },
-      { "itemId": "mat_026", "count": 1 }
-    ],
-    "cost": 1100,
-    "craftable": true,
-    "blueprintId": "bp_immortal_02",
-    "source": "最终 BOSS（仙品合成）",
-    "description": "混沌天丝织就，万法不侵。防御 +50，气血 +15%。"
-  },
-  {
-    "id": "ar_sp_01",
-    "name": "风灵袍",
-    "slot": "armor",
-    "subType": "皮甲",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      { "attribute": "defense", "modifierType": "flat", "value": 24 },
-      { "attribute": "speed", "modifierType": "percent", "value": 15 }
-    ],
-    "materials": [
-      { "itemId": "mat_sp_04", "count": 1 },
-      { "itemId": "mat_025", "count": 1 },
-      { "itemId": "mat_013", "count": 2 }
-    ],
-    "cost": 300,
-    "craftable": true,
-    "blueprintId": "bp_sp_01",
-    "source": "隐藏 BOSS（特殊装备制造）",
-    "description": "风灵织就，身轻如燕。防御 +24，速度 +15%。"
+    "description": "神金铸就，万法不侵。防御 +36，速度 -8%。"
   },
   {
     "id": "ac_t1_charm_01",
     "name": "淡水玉护符",
-    "slot": "accessory",
+    "slot": "charm",
     "subType": "护符",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 3 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 3
+      }
     ],
     "materials": [
-      { "itemId": "mat_004", "count": 2 },
-      { "itemId": "mat_005", "count": 1 }
+      {
+        "itemId": "mat_danshuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_beike",
+        "count": 1
+      }
     ],
     "cost": 45,
     "craftable": true,
     "recipeId": "forge_ac_t1_charm_01",
     "blueprintId": "bp_t1_ac",
-    "legacyIds": ["eq_c001"],
+    "legacyIds": [
+      "eq_c001"
+    ],
     "source": "cave.json 已有配方",
     "description": "淡水玉养人，气血 +3%。"
   },
   {
     "id": "ac_t1_ring_01",
     "name": "藤蔓箍",
-    "slot": "accessory",
+    "slot": "ring",
     "subType": "戒指",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "flat", "value": 60 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "flat",
+        "value": 60
+      }
     ],
     "materials": [
-      { "itemId": "mat_005", "count": 2 },
-      { "itemId": "mat_001", "count": 2 }
+      {
+        "itemId": "mat_beike",
+        "count": 2
+      },
+      {
+        "itemId": "mat_taomu",
+        "count": 2
+      }
     ],
     "cost": 35,
     "craftable": true,
@@ -569,463 +760,953 @@
   {
     "id": "ac_t1_neck_01",
     "name": "贝壳链",
-    "slot": "accessory",
-    "subType": "项链",
+    "slot": "helmet",
+    "subType": "头盔",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "defense", "modifierType": "percent", "value": 5 }
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 5
+      }
     ],
     "materials": [
-      { "itemId": "mat_005", "count": 3 },
-      { "itemId": "mat_010", "count": 1 }
+      {
+        "itemId": "mat_beike",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuanzhi",
+        "count": 1
+      }
     ],
     "cost": 30,
     "craftable": true,
     "blueprintId": "bp_t1_ac",
-    "source": "回答.md 新增",
+    "source": "v2.0（原项链并入头盔）",
     "description": "贝壳缀连，蕴含水灵。防御 +5%。"
   },
   {
     "id": "ac_t1_belt_01",
     "name": "宣纸腰带",
-    "slot": "accessory",
-    "subType": "腰带",
+    "slot": "boots",
+    "subType": "靴子",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "speed", "modifierType": "percent", "value": 5 }
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 5
+      }
     ],
     "materials": [
-      { "itemId": "mat_010", "count": 2 },
-      { "itemId": "mat_001", "count": 1 }
+      {
+        "itemId": "mat_xuanzhi",
+        "count": 2
+      },
+      {
+        "itemId": "mat_taomu",
+        "count": 1
+      }
     ],
     "cost": 25,
     "craftable": true,
     "blueprintId": "bp_t1_ac",
-    "legacyIds": ["eq_c004"],
-    "source": "回答.md 新增",
+    "legacyIds": [
+      "eq_c004"
+    ],
+    "source": "v2.0（原腰带并入靴子）",
     "description": "宣纸轻韧，束腰提气。速度 +5%。"
   },
   {
     "id": "ac_t1_brace_01",
     "name": "贝壳镯",
-    "slot": "accessory",
-    "subType": "手镯",
+    "slot": "ring",
+    "subType": "戒指",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "critRate", "modifierType": "percent", "value": 3 }
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 3
+      }
     ],
     "materials": [
-      { "itemId": "mat_005", "count": 2 },
-      { "itemId": "mat_004", "count": 1 }
+      {
+        "itemId": "mat_beike",
+        "count": 2
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "count": 1
+      }
     ],
     "cost": 40,
     "craftable": true,
     "blueprintId": "bp_t1_ac",
-    "source": "回答.md 新增",
+    "source": "v2.0（原手镯并入戒指）",
     "description": "玉润含光，暴击率 +3%。"
   },
   {
     "id": "ac_t1_crown_01",
     "name": "藤编冠",
-    "slot": "accessory",
+    "slot": "helmet",
     "subType": "冠冕",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 2 },
-      { "attribute": "attack", "modifierType": "percent", "value": 2 },
-      { "attribute": "defense", "modifierType": "percent", "value": 2 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 2
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 2
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 2
+      }
     ],
     "materials": [
-      { "itemId": "mat_001", "count": 3 },
-      { "itemId": "mat_010", "count": 1 }
+      {
+        "itemId": "mat_taomu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuanzhi",
+        "count": 1
+      }
     ],
     "cost": 50,
     "craftable": true,
     "blueprintId": "bp_t1_ac",
-    "source": "回答.md 新增",
+    "source": "v2.0（原冠冕并入头盔）",
     "description": "藤木编就，灵气汇聚。全属性 +2%。"
   },
   {
     "id": "ac_t2_charm_01",
     "name": "深水玉护符",
-    "slot": "accessory",
+    "slot": "charm",
     "subType": "护符",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 8 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 6
+      }
     ],
     "materials": [
-      { "itemId": "mat_008", "count": 2 },
-      { "itemId": "mat_004", "count": 1 }
+      {
+        "itemId": "mat_shenshuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_qinghuaci",
+        "count": 1
+      }
     ],
-    "cost": 90,
+    "cost": 140,
     "craftable": true,
     "blueprintId": "bp_t2_ac",
-    "legacyIds": ["eq_c007"],
+    "legacyIds": [
+      "eq_c007"
+    ],
     "source": "关卡4-6 制造",
-    "description": "深水玉凝魂，气血 +8%。"
+    "description": "深水玉凝魂，气血 +6%。"
   },
   {
     "id": "ac_t2_ring_01",
     "name": "青花瓷戒",
-    "slot": "accessory",
+    "slot": "ring",
     "subType": "戒指",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "attack", "modifierType": "percent", "value": 8 }
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 6
+      }
     ],
     "materials": [
-      { "itemId": "mat_011", "count": 2 },
-      { "itemId": "mat_003", "count": 1 }
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_qinghuaci",
+        "count": 1
+      }
     ],
-    "cost": 85,
+    "cost": 130,
     "craftable": true,
     "blueprintId": "bp_t2_ac",
-    "legacyIds": ["eq_c008"],
+    "legacyIds": [
+      "eq_c008"
+    ],
     "source": "关卡4-6 制造",
-    "description": "青花蕴力，攻击 +8%。"
+    "description": "青花蕴力，攻击 +6%。"
   },
   {
     "id": "ac_t2_neck_01",
     "name": "铁精链",
-    "slot": "accessory",
-    "subType": "项链",
+    "slot": "helmet",
+    "subType": "头盔",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "defense", "modifierType": "percent", "value": 8 }
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 6
+      }
     ],
     "materials": [
-      { "itemId": "mat_007", "count": 2 },
-      { "itemId": "mat_005", "count": 2 }
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_qinghuaci",
+        "count": 1
+      }
     ],
-    "cost": 80,
+    "cost": 120,
     "craftable": true,
     "blueprintId": "bp_t2_ac",
-    "legacyIds": ["eq_c009"],
-    "source": "关卡4-6 制造",
-    "description": "铁精锻心，防御 +8%。"
+    "legacyIds": [
+      "eq_c009"
+    ],
+    "source": "v2.0（原项链并入头盔）",
+    "description": "铁精锻心，防御 +6%。"
   },
   {
     "id": "ac_t2_belt_01",
     "name": "青花瓷扣带",
-    "slot": "accessory",
-    "subType": "腰带",
+    "slot": "boots",
+    "subType": "靴子",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "speed", "modifierType": "percent", "value": 8 }
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 6
+      }
     ],
     "materials": [
-      { "itemId": "mat_011", "count": 2 },
-      { "itemId": "mat_010", "count": 1 }
+      {
+        "itemId": "mat_qinghuaci",
+        "count": 2
+      },
+      {
+        "itemId": "mat_xiongpi",
+        "count": 1
+      }
     ],
-    "cost": 75,
+    "cost": 110,
     "craftable": true,
     "blueprintId": "bp_t2_ac",
-    "legacyIds": ["eq_c010"],
-    "source": "关卡4-6 制造",
-    "description": "瓷纹流转，速度 +8%。"
+    "legacyIds": [
+      "eq_c010"
+    ],
+    "source": "v2.0（原腰带并入靴子）",
+    "description": "瓷纹流转，速度 +6%。"
   },
   {
     "id": "ac_t2_brace_01",
     "name": "深水玉镯",
-    "slot": "accessory",
-    "subType": "手镯",
+    "slot": "ring",
+    "subType": "戒指",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "critRate", "modifierType": "percent", "value": 5 }
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 5
+      }
     ],
     "materials": [
-      { "itemId": "mat_008", "count": 2 },
-      { "itemId": "mat_021", "count": 1 }
+      {
+        "itemId": "mat_shenshuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 1
+      }
     ],
-    "cost": 95,
+    "cost": 150,
     "craftable": true,
     "blueprintId": "bp_t2_ac",
-    "legacyIds": ["eq_c011"],
-    "source": "关卡4-6 制造",
+    "legacyIds": [
+      "eq_c011"
+    ],
+    "source": "v2.0（原手镯并入戒指）",
     "description": "水玉生辉，暴击率 +5%。"
   },
   {
     "id": "ac_t2_crown_01",
     "name": "铁木冠",
-    "slot": "accessory",
+    "slot": "helmet",
     "subType": "冠冕",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 4 },
-      { "attribute": "attack", "modifierType": "percent", "value": 4 },
-      { "attribute": "defense", "modifierType": "percent", "value": 4 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 3
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 3
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 3
+      }
     ],
     "materials": [
-      { "itemId": "mat_013", "count": 2 },
-      { "itemId": "mat_007", "count": 2 }
+      {
+        "itemId": "mat_songmu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_qinghuaci",
+        "count": 1
+      }
     ],
-    "cost": 100,
+    "cost": 170,
     "craftable": true,
     "blueprintId": "bp_t2_ac",
-    "source": "关卡4-6 制造",
-    "description": "铁木冠顶，全属性 +4%。"
+    "source": "v2.0（原冠冕并入头盔）",
+    "description": "铁木冠顶，全属性 +3%。"
   },
   {
     "id": "ac_t3_charm_01",
     "name": "圣水玉护符",
-    "slot": "accessory",
+    "slot": "charm",
     "subType": "护符",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 12 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_017", "count": 2 },
-      { "itemId": "mat_008", "count": 1 }
+      {
+        "itemId": "mat_shengshui",
+        "count": 2
+      },
+      {
+        "itemId": "mat_xianyun",
+        "count": 1
+      }
     ],
-    "cost": 210,
+    "cost": 380,
     "craftable": true,
     "blueprintId": "bp_t3_ac",
-    "legacyIds": ["eq_c013"],
+    "legacyIds": [
+      "eq_c013"
+    ],
     "source": "关卡7-9 制造",
-    "description": "圣水玉润泽，气血 +12%。"
+    "description": "圣水玉润泽，气血 +10%。"
   },
   {
     "id": "ac_t3_ring_01",
     "name": "金精戒",
-    "slot": "accessory",
+    "slot": "ring",
     "subType": "戒指",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "attack", "modifierType": "percent", "value": 12 }
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_016", "count": 2 },
-      { "itemId": "mat_018", "count": 1 }
+      {
+        "itemId": "mat_jinjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_feicui",
+        "count": 1
+      }
     ],
-    "cost": 200,
+    "cost": 360,
     "craftable": true,
     "blueprintId": "bp_t3_ac",
     "source": "关卡7-9 制造",
-    "description": "金精吐芒，攻击 +12%。"
+    "description": "金精吐芒，攻击 +10%。"
   },
   {
     "id": "ac_t3_neck_01",
     "name": "翡翠链",
-    "slot": "accessory",
-    "subType": "项链",
+    "slot": "helmet",
+    "subType": "头盔",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "defense", "modifierType": "percent", "value": 12 }
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_018", "count": 2 },
-      { "itemId": "mat_021", "count": 1 }
+      {
+        "itemId": "mat_feicui",
+        "count": 2
+      },
+      {
+        "itemId": "mat_xianyun",
+        "count": 1
+      }
     ],
-    "cost": 190,
+    "cost": 350,
     "craftable": true,
     "blueprintId": "bp_t3_ac",
-    "source": "关卡7-9 制造",
-    "description": "翡翠通灵，防御 +12%。"
+    "source": "v2.0（原项链并入头盔）",
+    "description": "翡翠通灵，防御 +10%。"
   },
   {
     "id": "ac_t3_belt_01",
     "name": "古铜镜扣带",
-    "slot": "accessory",
-    "subType": "腰带",
+    "slot": "boots",
+    "subType": "靴子",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "speed", "modifierType": "percent", "value": 12 }
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_015", "count": 2 },
-      { "itemId": "mat_016", "count": 1 }
+      {
+        "itemId": "mat_gutongjing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_hupi",
+        "count": 1
+      }
     ],
-    "cost": 185,
+    "cost": 340,
     "craftable": true,
     "blueprintId": "bp_t3_ac",
-    "legacyIds": ["eq_c016"],
-    "source": "关卡7-9 制造",
-    "description": "古镜映身，速度 +12%。"
+    "legacyIds": [
+      "eq_c016"
+    ],
+    "source": "v2.0（原腰带并入靴子）",
+    "description": "古镜映身，速度 +10%。"
   },
   {
     "id": "ac_t3_brace_01",
     "name": "翡翠玉镯",
-    "slot": "accessory",
-    "subType": "手镯",
+    "slot": "ring",
+    "subType": "戒指",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "critRate", "modifierType": "percent", "value": 8 }
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 7
+      }
     ],
     "materials": [
-      { "itemId": "mat_018", "count": 2 },
-      { "itemId": "mat_017", "count": 1 }
+      {
+        "itemId": "mat_feicui",
+        "count": 2
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 1
+      }
     ],
-    "cost": 230,
+    "cost": 400,
     "craftable": true,
     "blueprintId": "bp_t3_ac",
-    "legacyIds": ["eq_c017"],
-    "source": "关卡7-9 制造",
-    "description": "翡翠生辉，暴击率 +8%。"
+    "legacyIds": [
+      "eq_c017"
+    ],
+    "source": "v2.0（原手镯并入戒指）",
+    "description": "翡翠生辉，暴击率 +7%。"
   },
   {
     "id": "ac_t3_crown_01",
     "name": "金精冠",
-    "slot": "accessory",
+    "slot": "helmet",
     "subType": "冠冕",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 6 },
-      { "attribute": "attack", "modifierType": "percent", "value": 6 },
-      { "attribute": "defense", "modifierType": "percent", "value": 6 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 5
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 5
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 5
+      }
     ],
     "materials": [
-      { "itemId": "mat_016", "count": 3 },
-      { "itemId": "mat_026", "count": 1 }
+      {
+        "itemId": "mat_jinjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xianyun",
+        "count": 2
+      }
     ],
-    "cost": 250,
+    "cost": 420,
     "craftable": true,
     "blueprintId": "bp_t3_ac",
-    "legacyIds": ["eq_c018"],
-    "source": "关卡7-9 制造",
-    "description": "金精加冕，全属性 +6%。"
+    "legacyIds": [
+      "eq_c018"
+    ],
+    "source": "v2.0（原冠冕并入头盔）",
+    "description": "金精加冕，全属性 +5%。"
+  },
+  {
+    "id": "wp_t4_01",
+    "name": "牛魔撼天锤",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 35,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 60
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -20
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_boss_01",
+        "count": 1
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 10
+      }
+    ],
+    "cost": 600,
+    "craftable": true,
+    "blueprintId": "bp_legend_01",
+    "source": "牛魔王首杀（天品合成）",
+    "description": "以牛魔角为核、金精淬炼，撼天动地。攻击 +60，速度 -20%。固定天品特效。"
   },
   {
     "id": "ac_t4_01",
     "name": "万毒蚀心镯",
-    "slot": "accessory",
-    "subType": "手镯",
+    "slot": "ring",
+    "subType": "戒指",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 35,
     "stats": [
-      { "attribute": "attack", "modifierType": "percent", "value": 15 }
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 15
+      }
     ],
     "materials": [
-      { "itemId": "mat_boss_02", "count": 1 },
-      { "itemId": "mat_023", "count": 2 },
-      { "itemId": "ess_002", "count": 1 }
+      {
+        "itemId": "mat_boss_02",
+        "count": 1
+      },
+      {
+        "itemId": "mat_feicui",
+        "count": 3
+      }
     ],
     "cost": 550,
     "craftable": true,
     "blueprintId": "bp_legend_02",
-    "source": "蝎子精（天品合成）",
-    "description": "蝎毒入魂，蚀心蚀骨。攻击 +15%。"
+    "source": "蝎子精首杀（天品合成）",
+    "description": "蝎毒入魂，蚀心蚀骨。攻击 +15%（毒伤 +20% 为固定天品特效）。固定天品特效。"
   },
   {
     "id": "ac_t4_02",
     "name": "大鹏逐日冠",
-    "slot": "accessory",
+    "slot": "helmet",
     "subType": "冠冕",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 35,
     "stats": [
-      { "attribute": "speed", "modifierType": "percent", "value": 15 },
-      { "attribute": "attack", "modifierType": "percent", "value": 10 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 8
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 8
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 8
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "mat_boss_03", "count": 1 },
-      { "itemId": "mat_024", "count": 2 },
-      { "itemId": "ess_002", "count": 1 }
+      {
+        "itemId": "mat_boss_03",
+        "count": 1
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 3
+      }
     ],
     "cost": 580,
     "craftable": true,
     "blueprintId": "bp_legend_03",
-    "source": "金翅大鹏（天品合成）",
-    "description": "大鹏展翅，逐日追光。速度 +15%，攻击 +10%。"
+    "source": "金翅大鹏首杀（天品合成）",
+    "description": "大鹏展翅，逐日追光。全属性 +8%，速度 +10%。固定天品特效。"
+  },
+  {
+    "id": "wp_t5_01",
+    "name": "混元无极环",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 50,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 80
+      },
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 10
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_hunyuan",
+        "count": 1
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 15
+      }
+    ],
+    "cost": 1200,
+    "craftable": true,
+    "blueprintId": "bp_immortal_01",
+    "source": "六耳猕猴首杀（仙品合成）",
+    "description": "混沌之气所凝，无坚不摧。攻击 +80，暴击率 +10%，速度 +15%。固定仙品特效。"
+  },
+  {
+    "id": "ar_t5_01",
+    "name": "混沌天衣",
+    "slot": "armor",
+    "subType": "天衣",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 50,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 50
+      },
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_hunyuan",
+        "count": 1
+      },
+      {
+        "itemId": "mat_xianyun",
+        "count": 10
+      }
+    ],
+    "cost": 1100,
+    "craftable": true,
+    "blueprintId": "bp_immortal_02",
+    "source": "六耳猕猴首杀（仙品合成）",
+    "description": "混沌天丝织就，万法不侵。防御 +50，气血 +15%。固定仙品特效。"
   },
   {
     "id": "ac_t5_01",
     "name": "太初道冠",
-    "slot": "accessory",
+    "slot": "helmet",
     "subType": "冠冕",
     "tier": "t5",
     "rarity": 5,
     "requiredLevel": 50,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 20 },
-      { "attribute": "attack", "modifierType": "percent", "value": 10 },
-      { "attribute": "defense", "modifierType": "percent", "value": 10 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "damageReduction",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "ess_003", "count": 2 },
-      { "itemId": "mat_017", "count": 2 }
+      {
+        "itemId": "mat_hunyuan",
+        "count": 1
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 5
+      }
     ],
     "cost": 1150,
     "craftable": true,
     "blueprintId": "bp_immortal_03",
-    "source": "最终 BOSS（仙品合成）",
-    "description": "太初之冠，道韵流转。气血 +20%，攻击 +10%，防御 +10%。"
+    "source": "六耳猕猴首杀（仙品合成）",
+    "description": "太初之冠，道韵流转。全属性 +12%，伤害减免 +10%。固定仙品特效。"
   },
   {
     "id": "ac_t5_02",
     "name": "混元灵珠",
-    "slot": "accessory",
-    "subType": "项链",
+    "slot": "charm",
+    "subType": "护符",
     "tier": "t5",
     "rarity": 5,
     "requiredLevel": 50,
     "stats": [
-      { "attribute": "critRate", "modifierType": "percent", "value": 12 },
-      { "attribute": "attack", "modifierType": "percent", "value": 12 },
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 10 }
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 10
+      }
     ],
     "materials": [
-      { "itemId": "ess_003", "count": 2 },
-      { "itemId": "mat_sp_02", "count": 1 },
-      { "itemId": "mat_021", "count": 2 }
+      {
+        "itemId": "mat_hunyuan",
+        "count": 1
+      },
+      {
+        "itemId": "mat_yufoxiang",
+        "count": 1
+      }
     ],
     "cost": 1300,
     "craftable": true,
     "blueprintId": "bp_immortal_04",
-    "source": "最终 BOSS（仙品合成）",
-    "description": "混元灵珠，气运加身。暴击率 +12%，攻击 +12%，气血 +10%。"
+    "source": "六耳猕猴首杀（仙品合成）",
+    "description": "混元灵珠，气运加身。暴击率 +12%，攻击 +12%，气血 +10%。固定仙品特效。"
+  },
+  {
+    "id": "wp_sp_01",
+    "name": "烈焰斩",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 38
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_sp_03",
+        "count": 1
+      },
+      {
+        "itemId": "mat_gutongjing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 1
+      }
+    ],
+    "cost": 280,
+    "craftable": true,
+    "blueprintId": "bp_sp_01",
+    "source": "隐藏 BOSS（特殊装备制造）",
+    "description": "火灵淬刃，烈焰焚身。攻击 +38，速度 +10%。"
+  },
+  {
+    "id": "ar_sp_01",
+    "name": "风灵袍",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 24
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_sp_04",
+        "count": 1
+      },
+      {
+        "itemId": "mat_shenquan",
+        "count": 1
+      },
+      {
+        "itemId": "mat_tiemu",
+        "count": 2
+      }
+    ],
+    "cost": 300,
+    "craftable": true,
+    "blueprintId": "bp_sp_01",
+    "source": "隐藏 BOSS（特殊装备制造）",
+    "description": "风灵织就，身轻如燕。防御 +24，速度 +15%。"
   },
   {
     "id": "ac_sp_01",
     "name": "地灵护符",
-    "slot": "accessory",
+    "slot": "charm",
     "subType": "护符",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "defense", "modifierType": "percent", "value": 12 },
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 6 }
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 6
+      }
     ],
     "materials": [
-      { "itemId": "mat_sp_05", "count": 1 },
-      { "itemId": "mat_026", "count": 1 },
-      { "itemId": "mat_017", "count": 1 }
+      {
+        "itemId": "mat_sp_05",
+        "count": 1
+      },
+      {
+        "itemId": "mat_yufoxiang",
+        "count": 1
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 1
+      }
     ],
     "cost": 260,
     "craftable": true,
@@ -1042,7 +1723,11 @@
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "attack", "modifierType": "flat", "value": 12 }
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 12
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
     "description": "一阶中型武器。通体铜铸，势大力沉。攻击力 10-15。"
@@ -1050,13 +1735,17 @@
   {
     "id": "eq_c002",
     "name": "贝壳戒指",
-    "slot": "accessory",
+    "slot": "ring",
     "subType": "戒指",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "attack", "modifierType": "percent", "value": 5 }
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 5
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
     "description": "一阶戒指。贝纹含灵，攻击 +5%。"
@@ -1064,73 +1753,109 @@
   {
     "id": "eq_c003",
     "name": "粗石项链",
-    "slot": "accessory",
-    "subType": "项链",
+    "slot": "helmet",
+    "subType": "头盔",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "defense", "modifierType": "percent", "value": 5 }
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 5
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
-    "description": "一阶项链。粗石沉稳，防御 +5%。"
+    "description": "一阶项链（并入头盔）。粗石沉稳，防御 +5%。"
   },
   {
     "id": "eq_c005",
     "name": "淡水玉手镯",
-    "slot": "accessory",
-    "subType": "手镯",
+    "slot": "ring",
+    "subType": "戒指",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "critRate", "modifierType": "percent", "value": 3 }
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 3
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
-    "description": "一阶手镯。玉润含光，暴击率 +3%。"
+    "description": "一阶手镯（并入戒指）。玉润含光，暴击率 +3%。"
   },
   {
     "id": "eq_c006",
     "name": "铜精冠冕",
-    "slot": "accessory",
+    "slot": "helmet",
     "subType": "冠冕",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 2 },
-      { "attribute": "attack", "modifierType": "percent", "value": 2 },
-      { "attribute": "defense", "modifierType": "percent", "value": 2 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 2
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 2
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 2
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
-    "description": "一阶冠冕。铜精聚灵，全属性 +2%。"
+    "description": "一阶冠冕（并入头盔）。铜精聚灵，全属性 +2%。"
   },
   {
     "id": "eq_c012",
     "name": "铁精冠冕",
-    "slot": "accessory",
+    "slot": "helmet",
     "subType": "冠冕",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
     "stats": [
-      { "attribute": "maxHealth", "modifierType": "percent", "value": 4 },
-      { "attribute": "attack", "modifierType": "percent", "value": 4 },
-      { "attribute": "defense", "modifierType": "percent", "value": 4 }
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 4
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 4
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 4
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
-    "description": "二阶冠冕。铁精冠顶，全属性 +4%。"
+    "description": "二阶冠冕（并入头盔）。铁精冠顶，全属性 +4%。"
   },
   {
     "id": "eq_c014",
     "name": "翡翠玉镯戒指",
-    "slot": "accessory",
+    "slot": "ring",
     "subType": "戒指",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "attack", "modifierType": "percent", "value": 12 }
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 12
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
     "description": "三阶戒指。翡翠吐芒，攻击 +12%。"
@@ -1138,15 +1863,19 @@
   {
     "id": "eq_c015",
     "name": "金精项链",
-    "slot": "accessory",
-    "subType": "项链",
+    "slot": "helmet",
+    "subType": "头盔",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
     "stats": [
-      { "attribute": "defense", "modifierType": "percent", "value": 12 }
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      }
     ],
     "source": "旧版封神榜装备表（掉落）",
-    "description": "三阶项链。金精护体，防御 +12%。"
+    "description": "三阶项链（并入头盔）。金精护体，防御 +12%。"
   }
 ]

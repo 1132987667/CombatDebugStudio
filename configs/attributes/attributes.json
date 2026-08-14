@@ -603,5 +603,24 @@
     "range": "0-99999",
     "impact": "作为技能公式输入",
     "isPercentage": false
+  },
+  {
+    "code": "energyInit",
+    "name": "初始能量",
+    "displayName": "初始能量",
+    "description": "战斗开始时角色拥有的能量",
+    "range": "0-200",
+    "impact": "决定首回合能否释放技能",
+    "isPercentage": false,
+    "defaultValue": 30
+  },
+  {
+    "code": "lifestealRate",
+    "name": "吸血率",
+    "displayName": "吸血率",
+    "description": "造成伤害时按比例回复气血",
+    "range": "0-100%",
+    "impact": "提高吸血能力，造成伤害时按比例恢复气血",
+    "isPercentage": true
   }
 ]

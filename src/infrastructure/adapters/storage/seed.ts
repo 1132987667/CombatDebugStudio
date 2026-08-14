@@ -17,6 +17,7 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
   AffixData,
+  AffixLibraryData,
   BattleParamData,
   DropGroupData,
   ElementsData,
@@ -57,8 +58,10 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 //       部位约束 slotKey 强校验，供装备随机词条掉落/洗炼/重铸按部位抽池）。
 // NOTE: v14 — cave.json 配方材料结构化：锻造配方（forgeRecipes）不再内联 materials，经 equipmentId 引用装备 JSON 权威材料；
 //       forgeRecipes 补全为全部 43 件可打造装备（原仅 5 件，闭环完整）。
+// NOTE: v15 — 词缀库按设计稿 v3.1 重建：affixes.json 顶层改为对象（affix_library_version/affixes/mandate_bindings/
+//       conflict_rules/wuxing_res_cap），69 条词缀（yao_1~4/mandate/jie 六档），五行词缀统一为抗性（D1b 已删五行攻击）。
 //       升级版本号让已 seed 的浏览器重导最新 configs。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v14'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v15'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -222,7 +225,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.ACTORS, deriveActors(enemies)],
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
       [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
-      [FENGSHEN_STORE.AFFIXES, affixesDataRaw as AffixData[]],
+      [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
       [FENGSHEN_STORE.PARAMS, buildParams()],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],

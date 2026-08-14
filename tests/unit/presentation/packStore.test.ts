@@ -55,10 +55,10 @@ describe('初始化', () => {
     const pack = usePackStore()
     await pack.init()
     // 桃木 ×24 / 疗伤丹药 ×5（pack.json 初始值）
-    expect(pack.countOf('mat_001')).toBe(24)
+    expect(pack.countOf('mat_taomu')).toBe(24)
     expect(pack.countOf('elix_001')).toBe(5)
     expect(pack.storage).toHaveLength(12)
-    expect(pack.storage[0]).toMatchObject({ itemId: 'mat_009', count: 12 }) // 鹿皮 ×12
+    expect(pack.storage[0]).toMatchObject({ itemId: 'mat_lupi', count: 12 }) // 鹿皮 ×12
     expect(pack.storageCapacity).toBe(12)
   })
 })
@@ -67,18 +67,18 @@ describe('数量增减', () => {
   it('addItem 累加 / removeItem 递减，归零自动移除', async () => {
     const pack = usePackStore()
     await pack.init()
-    pack.addItem('mat_001', 6)
-    expect(pack.countOf('mat_001')).toBe(30)
-    expect(pack.removeItem('mat_001', 30)).toBe(true)
-    expect(pack.countOf('mat_001')).toBe(0)
-    expect(pack.ownedItems.some((it) => it.id === 'mat_001')).toBe(false)
+    pack.addItem('mat_taomu', 6)
+    expect(pack.countOf('mat_taomu')).toBe(30)
+    expect(pack.removeItem('mat_taomu', 30)).toBe(true)
+    expect(pack.countOf('mat_taomu')).toBe(0)
+    expect(pack.ownedItems.some((it) => it.id === 'mat_taomu')).toBe(false)
   })
 
   it('removeItem 数量不足返回 false 且不扣', async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.removeItem('mat_001', 999)).toBe(false)
-    expect(pack.countOf('mat_001')).toBe(24)
+    expect(pack.removeItem('mat_taomu', 999)).toBe(false)
+    expect(pack.countOf('mat_taomu')).toBe(24)
   })
 
   it('任务物品不可丢弃', async () => {
@@ -93,8 +93,8 @@ describe('数量增减', () => {
   it('普通物品丢弃全部', async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.discardItem('mat_001')).toBe(true)
-    expect(pack.countOf('mat_001')).toBe(0)
+    expect(pack.discardItem('mat_taomu')).toBe(true)
+    expect(pack.countOf('mat_taomu')).toBe(0)
   })
 })
 
@@ -104,13 +104,13 @@ describe('仓库存取', () => {
     await pack.init()
     const emptyIdx = pack.storage.findIndex((s) => !s.itemId)
     expect(emptyIdx).toBeGreaterThanOrEqual(0)
-    expect(pack.moveToStorage('mat_001')).toBe(true)
-    expect(pack.countOf('mat_001')).toBe(0)
+    expect(pack.moveToStorage('mat_taomu')).toBe(true)
+    expect(pack.countOf('mat_taomu')).toBe(0)
     const slot = pack.storage[emptyIdx]
-    expect(slot.itemId).toBe('mat_001')
+    expect(slot.itemId).toBe('mat_taomu')
     expect(slot.count).toBe(24)
     expect(pack.moveToInventory(emptyIdx)).toBe(true)
-    expect(pack.countOf('mat_001')).toBe(24)
+    expect(pack.countOf('mat_taomu')).toBe(24)
     expect(pack.storage[emptyIdx].itemId).toBeNull()
   })
 
@@ -277,19 +277,19 @@ describe('战斗掉落', () => {
     await pack.init()
     vi.spyOn(Math, 'random').mockReturnValue(0)
     pack.applyDrops([
-      { itemId: 'mat_001', quantity: 2, chance: 0.5 },
-      { itemId: 'mat_002', quantity: 1, chance: 1 },
+      { itemId: 'mat_taomu', quantity: 2, chance: 0.5 },
+      { itemId: 'mat_cushi', quantity: 1, chance: 1 },
     ])
-    expect(pack.countOf('mat_001')).toBe(24 + 2)
-    expect(pack.countOf('mat_002')).toBe(8 + 1)
+    expect(pack.countOf('mat_taomu')).toBe(24 + 2)
+    expect(pack.countOf('mat_cushi')).toBe(8 + 1)
   })
 
   it('未命中（random >= chance）不入包', async () => {
     const pack = usePackStore()
     await pack.init()
     vi.spyOn(Math, 'random').mockReturnValue(0.99)
-    pack.applyDrops([{ itemId: 'mat_001', quantity: 1, chance: 0.5 }])
-    expect(pack.countOf('mat_001')).toBe(24)
+    pack.applyDrops([{ itemId: 'mat_taomu', quantity: 1, chance: 0.5 }])
+    expect(pack.countOf('mat_taomu')).toBe(24)
   })
 
   it('无效 itemId / 零 chance 跳过', async () => {
@@ -297,9 +297,9 @@ describe('战斗掉落', () => {
     await pack.init()
     pack.applyDrops([
       { itemId: 'ghost', quantity: 1, chance: 1 },
-      { itemId: 'mat_001', quantity: 1, chance: 0 },
+      { itemId: 'mat_taomu', quantity: 1, chance: 0 },
     ])
-    expect(pack.countOf('mat_001')).toBe(24)
+    expect(pack.countOf('mat_taomu')).toBe(24)
   })
 })
 
@@ -307,14 +307,14 @@ describe('持久化', () => {
   it('flush 写入 pack_runtime 文档，load 可恢复', async () => {
     const pack = usePackStore()
     await pack.init()
-    pack.addItem('mat_001', 5)
+    pack.addItem('mat_taomu', 5)
     pack.setQuickSlot(0, 'elix_001')
-    pack.moveToStorage('mat_003')
+    pack.moveToStorage('mat_tongjing')
     pack.purchase(makeGood(), 1)
     await pack.flush()
 
     const doc = __mem.get('xiyou')?.get('pack_runtime') as { data: { inventory: Record<string, number>; storage: unknown[]; quickSlots: (string | null)[]; currency: { copper: number } } }
-    expect(doc.data.inventory['mat_001']).toBe(29)
+    expect(doc.data.inventory['mat_taomu']).toBe(29)
     expect(doc.data.quickSlots[0]).toBe('elix_001')
     expect(doc.data.currency.copper).toBe(12880 - 50)
 
@@ -322,7 +322,7 @@ describe('持久化', () => {
     setActivePinia(createPinia())
     const pack2 = usePackStore()
     await pack2.init()
-    expect(pack2.countOf('mat_001')).toBe(29)
+    expect(pack2.countOf('mat_taomu')).toBe(29)
     expect(pack2.quickSlots[0]).toBe('elix_001')
     expect(pack2.currency.copper).toBe(12880 - 50)
   })
@@ -330,7 +330,7 @@ describe('持久化', () => {
   it('无存档时保持 configs 兜底', async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.countOf('mat_001')).toBe(24)
+    expect(pack.countOf('mat_taomu')).toBe(24)
   })
 })
 
@@ -348,14 +348,14 @@ describe("装备穿戴（背包实例化闭环）", () => {
     expect(pack.equippedGear("weapon")?.name).toBe("竹剑")
 
     const stats = pack.equippedStats()
-    expect(stats.some((s) => s.attribute === "attack" && s.value === 12 && s.modifierType === "flat")).toBe(true)
+    expect(stats.some((s) => s.attribute === "attack" && s.value === 10 && s.modifierType === "flat")).toBe(true)
   })
 
   it("穿戴非装备物品被拒绝", async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.slotKeyOf("mat_001")).toBeNull()
-    expect(pack.equip("mat_001")).toBe(false)
+    expect(pack.slotKeyOf("mat_taomu")).toBeNull()
+    expect(pack.equip("mat_taomu")).toBe(false)
   })
 
   it("同槽换装：旧装备自动回背包", async () => {

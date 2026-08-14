@@ -44,6 +44,7 @@ export function applyAffixToParticipant(
 
 /**
  * 随机为参战角色附加词缀。
+ * 同一角色不会获得同名词缀或同一 conflict_group 的两条词缀（对齐设计稿 §7 冲突规则）。
  * @param participants 参战角色列表
  * @param affixes 可用词缀池（通常来自封神榜 affixes 表）
  * @param countRange 每个角色附加词缀数量范围（[min, max]），默认 [1, 3]
@@ -61,20 +62,25 @@ export function applyRandomAffixes(
   const randInt = (min: number, max: number): number =>
     Math.floor(rng() * (max - min + 1)) + min
 
-  // Fisher-Yates 洗牌（拷贝，不改原池）：保证均匀随机，避免 sort(()=>rng()-0.5) 的稳定性陷阱
-  const shuffled = [...affixes]
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-  }
-
   for (const participant of participants) {
+    // Fisher-Yates 洗牌（拷贝，不改原池）：保证均匀随机，避免 sort(()=>rng()-0.5) 的稳定性陷阱
+    const shuffled = [...affixes]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+
     const count = randInt(countRange[0], countRange[1])
     const assigned: string[] = []
+    const usedGroups = new Set<string>()
+
     for (let i = 0; i < count && i < shuffled.length; i++) {
       const affix = shuffled[i]
+      // 冲突组过滤：同 conflict_group 不共存（同名词缀由池唯一性天然保证）
+      if (affix.conflict_group && usedGroups.has(affix.conflict_group)) continue
       if (applyAffixToParticipant(participant, affix)) {
         assigned.push(affix.id)
+        if (affix.conflict_group) usedGroups.add(affix.conflict_group)
       }
     }
     if (assigned.length > 0) result.set(participant.id, assigned)

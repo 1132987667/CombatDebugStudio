@@ -236,7 +236,7 @@
     "stars": 0,
     "maxStars": 3,
     "pos": { "x": 80, "y": 90 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_1" },
+    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_huayaowang" },
     "narrativeHook": "残桥上刻着一行字：渡人者，亦渡己。"
   },
   {
@@ -436,7 +436,7 @@
     "stars": 0,
     "maxStars": 3,
     "pos": { "x": 80, "y": 110 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_2" },
+    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_hebo" },
     "narrativeHook": "碎石中隐约可见五行山的封印纹路。"
   },
   {
@@ -636,7 +636,7 @@
     "stars": 0,
     "maxStars": 3,
     "pos": { "x": 80, "y": 100 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_3" },
+    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_shanshen" },
     "narrativeHook": "雾中传来六耳的低语：听，你听到了什么？"
   },
   {
@@ -836,7 +836,7 @@
     "stars": 0,
     "maxStars": 3,
     "pos": { "x": 80, "y": 90 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_4" },
+    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_miwu" },
     "narrativeHook": "山门上的匾额写着灵山，但字迹是反的。"
   },
   {

@@ -21,6 +21,8 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
 import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
+import enemySkillsData from '@configs/xiyou/enemy-skills.json'
+import enemyBuffsData from '@configs/xiyou/enemy-buffs.json'
 import xiyouScenesData from '@configs/xiyou/scenes.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
@@ -31,8 +33,42 @@ import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
 import hiddenBossSkillsData from '@configs/skills/skill_hidden_boss.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 
+/** 新结构敌人条目（enemies.json：skillIds/passiveSkillIds/drops.probability） */
+interface RawEnemyEntry {
+  id: string
+  name: string
+  level: number
+  stats: Record<string, number>
+  skillIds?: string[]
+  passiveSkillIds?: string[]
+  drops?: Array<{ itemId: string; probability?: number }>
+  [key: string]: unknown
+}
+
+/** 归一化新结构敌人到 Enemy 标准结构：技能按 enemy-skills.json 的 skillType 分桶，掉落 probability→chance */
+function normalizeEnemy(raw: RawEnemyEntry, skillTypeById: ReadonlyMap<string, string>): Enemy {
+  const passive = [...(raw.passiveSkillIds ?? [])]
+  const small: string[] = []
+  const ultimate: string[] = []
+  for (const id of raw.skillIds ?? []) {
+    const t = skillTypeById.get(id)
+    if (t === 'ultimate') ultimate.push(id)
+    else if (t === 'passive') passive.push(id)
+    else small.push(id)
+  }
+  return {
+    ...raw,
+    drops: (raw.drops ?? []).map((d) => ({ itemId: d.itemId, quantity: 1, chance: d.probability ?? 1 })),
+    skills: { small, passive, ultimate },
+  } as unknown as Enemy
+}
+
+const skillTypeById = new Map(
+  (enemySkillsData as Array<{ id: string; skillType?: string }>).map((s) => [s.id, s.skillType ?? 'small']),
+)
+
 const enemies = [
-  ...(enemiesDataRaw as Enemy[]),
+  ...(enemiesDataRaw as unknown as RawEnemyEntry[]).map((e) => normalizeEnemy(e, skillTypeById)),
   ...(enemiesTestDataRaw as Enemy[]),
   ...(enemiesXiyouHiddenDataRaw as Enemy[]),
 ]
@@ -44,12 +80,14 @@ const skills = [
   ...passiveTestSkillsData,
   ...(playerXiyouSkillsData as SkillConfig[]),
   ...(hiddenBossSkillsData as SkillConfig[]),
+  ...(enemySkillsData as SkillConfig[]),
 ] as SkillConfig[]
 
-/** 兜底 Buff 定义：buffs.json + effects.json 归一化（与 seed 写入 IDB 的混合格式同源） */
+/** 兜底 Buff 定义：buffs.json + effects.json + enemy-buffs.json 归一化（与 seed 写入 IDB 的混合格式同源） */
 const buffs = normalizeBuffEntries([
   ...buffsData,
   ...((effectsDataRaw as { effects: EffectsJsonEntry[] }).effects ?? []),
+  ...(enemyBuffsData as BuffJsonEntry[]),
 ])
 
 /** 材料域兜底数据：从物品主键索引（items 表）派生（materials.json 已合并入 items.json） */
@@ -66,28 +104,9 @@ export class ConfigDataSource implements IDataSource {
 
   getScenes(): SceneData[] {
     // NOTE: 场景数据已合并至 xiyou/scenes.json（L4 合并 scenes.json 与 xiyou/scenes.json）：
-    //       以西游关卡为唯一权威，desc 即 SceneData.background，difficulties/奖励/解锁链随关内置。
-    return (xiyouScenesData as unknown as Array<{
-      id: string
-      name: string
-      desc: string
-      difficulties: SceneData['difficulties']
-      requiredLevel: number
-      rewards: SceneData['rewards']
-      unlocks?: string
-      hiddenBoss?: SceneData['hiddenBoss']
-      rewardDrops?: string[]
-    }>).map((s) => ({
-      id: s.id,
-      name: s.name,
-      background: s.desc,
-      difficulties: s.difficulties,
-      requiredLevel: s.requiredLevel,
-      rewards: s.rewards,
-      ...(s.unlocks !== undefined && { unlocks: s.unlocks }),
-      ...(s.hiddenBoss !== undefined && { hiddenBoss: s.hiddenBoss }),
-      ...(s.rewardDrops !== undefined && { rewardDrops: s.rewardDrops }),
-    }))
+    //       以西游关卡为唯一权威。新结构为 25 关平铺（enemies + guardian + 单值 difficulty），
+    //       SceneData 已对齐该结构，此处直接透传。
+    return xiyouScenesData as unknown as SceneData[]
   }
 
   getLineups(): LineupData[] {

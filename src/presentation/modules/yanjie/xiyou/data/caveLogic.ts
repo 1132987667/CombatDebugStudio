@@ -97,10 +97,10 @@ export interface FragmentRule {
 }
 
 export const FRAGMENT_RULES: FragmentRule[] = [
-  { fragId: 'frag_001', outId: 'ess_002', need: 10 },
-  { fragId: 'frag_002', outId: 'ess_003', need: 10 },
+  { fragId: 'mat_tiangang_suipian', outId: 'mat_tiangang', need: 3 },
+  { fragId: 'mat_hunyuan_suipian', outId: 'mat_hunyuan', need: 5 },
   { fragId: 'frag_003', outId: 'elix_007', need: 5 },
-  { fragId: 'frag_004', outId: 'mat_026', need: 5 },
+  { fragId: 'frag_004', outId: 'mat_yufoxiang', need: 5 },
 ]
 
 /** 合成规则视图（带名称，供列表渲染；无引用断裂是 items.json 硬性约束） */

@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-08-14T09:03:47.220Z
+// 生成时间: 2026-08-14T17:00:19.484Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -75,6 +75,8 @@ export const ATTRIBUTE_CODE = {
   counterRate: 'counterRate',
   damageDealt: 'damageDealt',
   damageTaken: 'damageTaken',
+  energyInit: 'energyInit',
+  lifestealRate: 'lifestealRate',
 } as const
 
 export type ATTRIBUTE_CODE = (typeof ATTRIBUTE_CODE)[keyof typeof ATTRIBUTE_CODE]
@@ -684,5 +686,24 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: false,
     range: '0-99999',
     impact: '作为技能公式输入',
+  },
+  energyInit: {
+    code: 'energyInit',
+    name: '初始能量',
+    displayName: '初始能量',
+    description: '战斗开始时角色拥有的能量',
+    isPercentage: false,
+    defaultValue: 30,
+    range: '0-200',
+    impact: '决定首回合能否释放技能',
+  },
+  lifestealRate: {
+    code: 'lifestealRate',
+    name: '吸血率',
+    displayName: '吸血率',
+    description: '造成伤害时按比例回复气血',
+    isPercentage: true,
+    range: '0-100%',
+    impact: '提高吸血能力，造成伤害时按比例恢复气血',
   },
 } as const

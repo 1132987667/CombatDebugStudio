@@ -172,20 +172,38 @@ export interface AffixStatModifier {
 
 /** 词缀（affixes 表）—— 敌人/角色的常驻属性标签，按档位对属性做百分比修正。
  * 词缀只做属性修正；能力型效果（吸血/反伤/格挡/中毒等）交给 Buff 系统实现，不与词缀混淆。
- * 减益档位作用于玩家（target=player），增益档位作用于敌人自身（target=enemy）。
+ * 劫数档位作用于玩家（target=player），增益档位作用于敌人自身（target=enemy）。
+ * 字段对齐设计稿 v3.1：conflict_group（同组不共存）/ drop_hint（掉落倾向 UI 提示）。
  */
 export interface AffixData {
   id: string
   name: string
-  /** 档位（AffixTier：debuff_1 / buff_1 / buff_2 / buff_3 / buff_4） */
+  /** 档位（AffixTier：yao_1 / yao_2 / yao_3 / yao_4 / mandate / jie） */
   tier: AffixTier
-  /** 作用目标（AffixTarget：player 减益 / enemy 增益） */
+  /** 作用目标（AffixTarget：player 劫数 / enemy 增益） */
   target: AffixTarget
   /** 属性修正列表 */
   statModifiers: AffixStatModifier[]
+  /** 冲突组（同组词缀不共存；五行单体 wuxing_single / 全抗 wuxing_all） */
+  conflict_group?: string
   /** 稀有度（1 普通 ~ 5 传说，用于 UI 高亮） */
   rarity?: number
   description?: string
+  /** 掉落倾向提示（用于 UI 展示） */
+  drop_hint?: string
+}
+
+/** 词缀库配置文件结构（configs/affixes/affixes.json，设计稿 v3.1 §12.1） */
+export interface AffixLibraryData {
+  affix_library_version: string
+  updated_at: string
+  affixes: AffixData[]
+  /** 天命词缀与 BOSS 的绑定关系（boss_id → affix_id） */
+  mandate_bindings: Array<{ boss_id: string; affix_id: string }>
+  /** 冲突规则（conflict_group 数量上限与互斥关系） */
+  conflict_rules: Array<{ group: string; max_count: number; exclusive_with?: string }>
+  /** 五行抗性钳制上限（默认 80，保留 20% 克制穿透） */
+  wuxing_res_cap: number
 }
 
 /** 装备词条数值区间 [min,max]（掉落/洗炼在该区间内随机） */

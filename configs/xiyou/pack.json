@@ -18,7 +18,7 @@
     { "name": "竹剑", "count": 1, "rarity": 2, "desc": "一阶轻型武器 · 桃木×3 + 铜精×1" },
     { "name": "鹿皮甲", "count": 1, "rarity": 1, "desc": "一阶皮甲 · 鹿皮×3" },
     { "name": "淡水玉护符", "count": 1, "rarity": 2, "desc": "一阶护符 · 淡水玉×2，气血 +3%" },
-    { "name": "松木棍", "count": 1, "rarity": 2, "desc": "二阶棍棒 · 松木×3 + 铜精×2" }
+    { "name": "铜棍", "count": 1, "rarity": 1, "desc": "一阶中型武器 · 桃木×2 + 铜精×2" }
   ],
   "pills": [
     { "name": "疗伤丹药", "count": 5, "rarity": 1, "desc": "恢复 50 点气血" },

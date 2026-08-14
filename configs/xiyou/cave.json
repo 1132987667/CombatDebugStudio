@@ -1,79 +1,614 @@
 {
   "alchemyRecipes": [
-    { "name": "疗伤丹药", "level": 1, "materials": [ { "itemId": "mat_001", "count": 2 }, { "itemId": "mat_002", "count": 1 } ], "effect": "恢复 50 点气血", "count": 5 },
-    { "name": "攻击丹药", "level": 3, "materials": [ { "itemId": "mat_004", "count": 1 }, { "itemId": "mat_005", "count": 2 } ], "effect": "攻击 +20% · 3 回合", "count": 2 },
-    { "name": "防御丹药", "level": 3, "materials": [ { "itemId": "mat_006", "count": 1 }, { "itemId": "mat_003", "count": 1 } ], "effect": "防御 +20% · 3 回合", "count": 1 },
-    { "name": "速度丹药", "level": 5, "materials": [ { "itemId": "mat_sp_01", "count": 1 }, { "itemId": "mat_004", "count": 1 } ], "effect": "速度 +20% · 3 回合", "count": 0 },
-    { "name": "洗髓丹", "level": 8, "materials": [ { "itemId": "mat_sp_02", "count": 1 }, { "itemId": "mat_sp_01", "count": 2 } ], "effect": "重置经脉点数", "count": 0 }
+    {
+      "name": "疗伤丹药",
+      "level": 1,
+      "materials": [
+        {
+          "itemId": "mat_taomu",
+          "count": 2
+        },
+        {
+          "itemId": "mat_cushi",
+          "count": 1
+        }
+      ],
+      "effect": "恢复 50 点气血",
+      "count": 5
+    },
+    {
+      "name": "攻击丹药",
+      "level": 3,
+      "materials": [
+        {
+          "itemId": "mat_danshuiyu",
+          "count": 1
+        },
+        {
+          "itemId": "mat_beike",
+          "count": 2
+        }
+      ],
+      "effect": "攻击 +20% · 3 回合",
+      "count": 2
+    },
+    {
+      "name": "防御丹药",
+      "level": 3,
+      "materials": [
+        {
+          "itemId": "mat_songmu",
+          "count": 1
+        },
+        {
+          "itemId": "mat_tongjing",
+          "count": 1
+        }
+      ],
+      "effect": "防御 +20% · 3 回合",
+      "count": 1
+    },
+    {
+      "name": "速度丹药",
+      "level": 5,
+      "materials": [
+        {
+          "itemId": "mat_sp_01",
+          "count": 1
+        },
+        {
+          "itemId": "mat_danshuiyu",
+          "count": 1
+        }
+      ],
+      "effect": "速度 +20% · 3 回合",
+      "count": 0
+    },
+    {
+      "name": "洗髓丹",
+      "level": 8,
+      "materials": [
+        {
+          "itemId": "mat_sp_02",
+          "count": 1
+        },
+        {
+          "itemId": "mat_sp_01",
+          "count": 2
+        }
+      ],
+      "effect": "重置经脉点数",
+      "count": 0
+    }
   ],
   "forgeRecipes": [
-    { "id": "forge_wp_t1_light_01", "equipmentId": "wp_t1_light_01", "blueprintId": "bp_t1_wp", "name": "竹剑", "level": 1, "effect": "攻击+12 · 一阶武器", "count": 1 },
-    { "id": "forge_wp_t1_mid_01", "equipmentId": "wp_t1_mid_01", "blueprintId": "bp_t1_wp", "name": "松木棍", "level": 3, "effect": "攻击+20 · 一阶武器", "count": 1 },
-    { "id": "forge_wp_t1_heavy_01", "equipmentId": "wp_t1_heavy_01", "blueprintId": "bp_t1_wp", "name": "铜锤", "level": 2, "effect": "攻击+16，速度-5% · 一阶武器", "count": 1 },
-    { "id": "forge_wp_t2_light_01", "equipmentId": "wp_t2_light_01", "blueprintId": "bp_t2_wp", "name": "迅风剑", "level": 4, "effect": "攻击+18，速度+20% · 二阶武器", "count": 1 },
-    { "id": "forge_wp_t2_mid_01", "equipmentId": "wp_t2_mid_01", "blueprintId": "bp_t2_wp", "name": "铁棒", "level": 4, "effect": "攻击+22 · 二阶武器", "count": 1 },
-    { "id": "forge_wp_t2_heavy_01", "equipmentId": "wp_t2_heavy_01", "blueprintId": "bp_t2_wp", "name": "铁锤", "level": 4, "effect": "攻击+27，速度-20% · 二阶武器", "count": 1 },
-    { "id": "forge_wp_t3_light_01", "equipmentId": "wp_t3_light_01", "blueprintId": "bp_t3_wp", "name": "流云剑", "level": 6, "effect": "攻击+30，速度+20% · 三阶武器", "count": 1 },
-    { "id": "forge_wp_t3_mid_01", "equipmentId": "wp_t3_mid_01", "blueprintId": "bp_t3_wp", "name": "伏魔杖", "level": 6, "effect": "攻击+36 · 三阶武器", "count": 1 },
-    { "id": "forge_wp_t3_heavy_01", "equipmentId": "wp_t3_heavy_01", "blueprintId": "bp_t3_wp", "name": "撼地锤", "level": 6, "effect": "攻击+42，速度-20% · 三阶武器", "count": 1 },
-    { "id": "forge_wp_t4_01", "equipmentId": "wp_t4_01", "blueprintId": "bp_legend_01", "name": "牛魔撼天锤", "level": 7, "effect": "攻击+60，速度-20% · 四阶武器", "count": 1 },
-    { "id": "forge_wp_t5_01", "equipmentId": "wp_t5_01", "blueprintId": "bp_immortal_01", "name": "混元无极环", "level": 8, "effect": "攻击+80，暴击率+10%，速度+15% · 五阶武器", "count": 1 },
-    { "id": "forge_ar_t1_light_01", "equipmentId": "ar_t1_light_01", "blueprintId": "bp_t1_ar", "name": "鹿皮甲", "level": 1, "effect": "防御+8 · 一阶衣服", "count": 1 },
-    { "id": "forge_ar_t1_mid_01", "equipmentId": "ar_t1_mid_01", "blueprintId": "bp_t1_ar", "name": "铜木甲", "level": 2, "effect": "防御+10 · 一阶衣服", "count": 1 },
-    { "id": "forge_ar_t1_heavy_01", "equipmentId": "ar_t1_heavy_01", "blueprintId": "bp_t1_ar", "name": "轻铜甲", "level": 2, "effect": "防御+12，速度-5% · 一阶衣服", "count": 1 },
-    { "id": "forge_ar_t2_light_01", "equipmentId": "ar_t2_light_01", "blueprintId": "bp_t2_ar", "name": "熊皮甲", "level": 4, "effect": "防御+12，速度+20% · 二阶衣服", "count": 1 },
-    { "id": "forge_ar_t2_mid_01", "equipmentId": "ar_t2_mid_01", "blueprintId": "bp_t2_ar", "name": "铁木甲", "level": 4, "effect": "防御+16 · 二阶衣服", "count": 1 },
-    { "id": "forge_ar_t2_heavy_01", "equipmentId": "ar_t2_heavy_01", "blueprintId": "bp_t2_ar", "name": "重铁甲", "level": 4, "effect": "防御+20，速度-20% · 二阶衣服", "count": 1 },
-    { "id": "forge_ar_t3_light_01", "equipmentId": "ar_t3_light_01", "blueprintId": "bp_t3_ar", "name": "虎威甲", "level": 6, "effect": "防御+20，速度+20% · 三阶衣服", "count": 1 },
-    { "id": "forge_ar_t3_mid_01", "equipmentId": "ar_t3_mid_01", "blueprintId": "bp_t3_ar", "name": "金木甲", "level": 6, "effect": "防御+26 · 三阶衣服", "count": 1 },
-    { "id": "forge_ar_t3_heavy_01", "equipmentId": "ar_t3_heavy_01", "blueprintId": "bp_t3_ar", "name": "神金甲", "level": 6, "effect": "防御+32，速度-20% · 三阶衣服", "count": 1 },
-    { "id": "forge_ar_t5_01", "equipmentId": "ar_t5_01", "blueprintId": "bp_immortal_02", "name": "混沌天衣", "level": 8, "effect": "防御+50，气血+15% · 五阶衣服", "count": 1 },
-    { "id": "forge_ac_t1_charm_01", "equipmentId": "ac_t1_charm_01", "blueprintId": "bp_t1_ac", "name": "淡水玉护符", "level": 4, "effect": "气血+3% · 一阶饰品", "count": 1 },
-    { "id": "forge_ac_t1_ring_01", "equipmentId": "ac_t1_ring_01", "blueprintId": "bp_t1_ac", "name": "藤蔓箍", "level": 2, "effect": "气血+60 · 一阶饰品", "count": 1 },
-    { "id": "forge_ac_t1_neck_01", "equipmentId": "ac_t1_neck_01", "blueprintId": "bp_t1_ac", "name": "贝壳链", "level": 2, "effect": "防御+5% · 一阶饰品", "count": 1 },
-    { "id": "forge_ac_t1_belt_01", "equipmentId": "ac_t1_belt_01", "blueprintId": "bp_t1_ac", "name": "宣纸腰带", "level": 2, "effect": "速度+5% · 一阶饰品", "count": 1 },
-    { "id": "forge_ac_t1_brace_01", "equipmentId": "ac_t1_brace_01", "blueprintId": "bp_t1_ac", "name": "贝壳镯", "level": 2, "effect": "暴击率+3% · 一阶饰品", "count": 1 },
-    { "id": "forge_ac_t1_crown_01", "equipmentId": "ac_t1_crown_01", "blueprintId": "bp_t1_ac", "name": "藤编冠", "level": 2, "effect": "气血+2%，攻击+2%，防御+2% · 一阶饰品", "count": 1 },
-    { "id": "forge_ac_t2_charm_01", "equipmentId": "ac_t2_charm_01", "blueprintId": "bp_t2_ac", "name": "深水玉护符", "level": 4, "effect": "气血+8% · 二阶饰品", "count": 1 },
-    { "id": "forge_ac_t2_ring_01", "equipmentId": "ac_t2_ring_01", "blueprintId": "bp_t2_ac", "name": "青花瓷戒", "level": 4, "effect": "攻击+8% · 二阶饰品", "count": 1 },
-    { "id": "forge_ac_t2_neck_01", "equipmentId": "ac_t2_neck_01", "blueprintId": "bp_t2_ac", "name": "铁精链", "level": 4, "effect": "防御+8% · 二阶饰品", "count": 1 },
-    { "id": "forge_ac_t2_belt_01", "equipmentId": "ac_t2_belt_01", "blueprintId": "bp_t2_ac", "name": "青花瓷扣带", "level": 4, "effect": "速度+8% · 二阶饰品", "count": 1 },
-    { "id": "forge_ac_t2_brace_01", "equipmentId": "ac_t2_brace_01", "blueprintId": "bp_t2_ac", "name": "深水玉镯", "level": 4, "effect": "暴击率+5% · 二阶饰品", "count": 1 },
-    { "id": "forge_ac_t2_crown_01", "equipmentId": "ac_t2_crown_01", "blueprintId": "bp_t2_ac", "name": "铁木冠", "level": 4, "effect": "气血+4%，攻击+4%，防御+4% · 二阶饰品", "count": 1 },
-    { "id": "forge_ac_t3_charm_01", "equipmentId": "ac_t3_charm_01", "blueprintId": "bp_t3_ac", "name": "圣水玉护符", "level": 6, "effect": "气血+12% · 三阶饰品", "count": 1 },
-    { "id": "forge_ac_t3_ring_01", "equipmentId": "ac_t3_ring_01", "blueprintId": "bp_t3_ac", "name": "金精戒", "level": 6, "effect": "攻击+12% · 三阶饰品", "count": 1 },
-    { "id": "forge_ac_t3_neck_01", "equipmentId": "ac_t3_neck_01", "blueprintId": "bp_t3_ac", "name": "翡翠链", "level": 6, "effect": "防御+12% · 三阶饰品", "count": 1 },
-    { "id": "forge_ac_t3_belt_01", "equipmentId": "ac_t3_belt_01", "blueprintId": "bp_t3_ac", "name": "古铜镜扣带", "level": 6, "effect": "速度+12% · 三阶饰品", "count": 1 },
-    { "id": "forge_ac_t3_brace_01", "equipmentId": "ac_t3_brace_01", "blueprintId": "bp_t3_ac", "name": "翡翠玉镯", "level": 6, "effect": "暴击率+8% · 三阶饰品", "count": 1 },
-    { "id": "forge_ac_t3_crown_01", "equipmentId": "ac_t3_crown_01", "blueprintId": "bp_t3_ac", "name": "金精冠", "level": 6, "effect": "气血+6%，攻击+6%，防御+6% · 三阶饰品", "count": 1 },
-    { "id": "forge_ac_t4_01", "equipmentId": "ac_t4_01", "blueprintId": "bp_legend_02", "name": "万毒蚀心镯", "level": 7, "effect": "攻击+15% · 四阶饰品", "count": 1 },
-    { "id": "forge_ac_t4_02", "equipmentId": "ac_t4_02", "blueprintId": "bp_legend_03", "name": "大鹏逐日冠", "level": 7, "effect": "速度+15%，攻击+10% · 四阶饰品", "count": 1 },
-    { "id": "forge_ac_t5_01", "equipmentId": "ac_t5_01", "blueprintId": "bp_immortal_03", "name": "太初道冠", "level": 8, "effect": "气血+20%，攻击+10%，防御+10% · 五阶饰品", "count": 1 },
-    { "id": "forge_ac_t5_02", "equipmentId": "ac_t5_02", "blueprintId": "bp_immortal_04", "name": "混元灵珠", "level": 8, "effect": "暴击率+12%，攻击+12%，气血+10% · 五阶饰品", "count": 1 },
-    { "id": "forge_wp_sp_01", "equipmentId": "wp_sp_01", "blueprintId": "bp_sp_01", "name": "烈焰斩", "level": 6, "effect": "攻击+38，速度+10% · 特殊武器", "count": 1 },
-    { "id": "forge_ar_sp_01", "equipmentId": "ar_sp_01", "blueprintId": "bp_sp_01", "name": "风灵袍", "level": 6, "effect": "防御+24，速度+15% · 特殊衣服", "count": 1 },
-    { "id": "forge_ac_sp_01", "equipmentId": "ac_sp_01", "blueprintId": "bp_sp_01", "name": "地灵护符", "level": 6, "effect": "防御+12%，气血+6% · 特殊饰品", "count": 1 }
+    {
+      "id": "forge_wp_t1_light_01",
+      "equipmentId": "wp_t1_light_01",
+      "blueprintId": "bp_t1_wp",
+      "name": "竹剑",
+      "level": 1,
+      "effect": "攻击+10，速度+10% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t1_mid_01",
+      "equipmentId": "wp_t1_mid_01",
+      "blueprintId": "bp_t1_wp",
+      "name": "铜棍",
+      "level": 1,
+      "effect": "攻击+12 · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t1_heavy_01",
+      "equipmentId": "wp_t1_heavy_01",
+      "blueprintId": "bp_t1_wp",
+      "name": "铜锤",
+      "level": 1,
+      "effect": "攻击+14，速度+-5% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t2_light_01",
+      "equipmentId": "wp_t2_light_01",
+      "blueprintId": "bp_t2_wp",
+      "name": "迅风剑",
+      "level": 4,
+      "effect": "攻击+22，速度+10% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t2_mid_01",
+      "equipmentId": "wp_t2_mid_01",
+      "blueprintId": "bp_t2_wp",
+      "name": "铁棒",
+      "level": 4,
+      "effect": "攻击+30 · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t2_heavy_01",
+      "equipmentId": "wp_t2_heavy_01",
+      "blueprintId": "bp_t2_wp",
+      "name": "铁锤",
+      "level": 4,
+      "effect": "攻击+35，速度+-8% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t3_light_01",
+      "equipmentId": "wp_t3_light_01",
+      "blueprintId": "bp_t3_wp",
+      "name": "流云剑",
+      "level": 6,
+      "effect": "攻击+38，速度+15% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t3_mid_01",
+      "equipmentId": "wp_t3_mid_01",
+      "blueprintId": "bp_t3_wp",
+      "name": "伏魔杖",
+      "level": 6,
+      "effect": "攻击+48 · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t3_heavy_01",
+      "equipmentId": "wp_t3_heavy_01",
+      "blueprintId": "bp_t3_wp",
+      "name": "撼地锤",
+      "level": 6,
+      "effect": "攻击+55，速度+-10% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t4_01",
+      "equipmentId": "wp_t4_01",
+      "blueprintId": "bp_legend_01",
+      "name": "牛魔撼天锤",
+      "level": 7,
+      "effect": "攻击+60，速度+-20% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_t5_01",
+      "equipmentId": "wp_t5_01",
+      "blueprintId": "bp_immortal_01",
+      "name": "混元无极环",
+      "level": 8,
+      "effect": "攻击+80，暴击率+10%，速度+15% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t1_light_01",
+      "equipmentId": "ar_t1_light_01",
+      "blueprintId": "bp_t1_ar",
+      "name": "鹿皮甲",
+      "level": 1,
+      "effect": "防御+8，速度+20% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t1_mid_01",
+      "equipmentId": "ar_t1_mid_01",
+      "blueprintId": "bp_t1_ar",
+      "name": "铜木甲",
+      "level": 1,
+      "effect": "防御+10 · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t1_heavy_01",
+      "equipmentId": "ar_t1_heavy_01",
+      "blueprintId": "bp_t1_ar",
+      "name": "轻铜甲",
+      "level": 1,
+      "effect": "防御+12，速度+-5% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t2_light_01",
+      "equipmentId": "ar_t2_light_01",
+      "blueprintId": "bp_t2_ar",
+      "name": "熊皮甲",
+      "level": 4,
+      "effect": "防御+14，闪避+3% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t2_mid_01",
+      "equipmentId": "ar_t2_mid_01",
+      "blueprintId": "bp_t2_ar",
+      "name": "铁木甲",
+      "level": 4,
+      "effect": "防御+18 · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t2_heavy_01",
+      "equipmentId": "ar_t2_heavy_01",
+      "blueprintId": "bp_t2_ar",
+      "name": "重铁甲",
+      "level": 4,
+      "effect": "防御+22，速度+-6% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t3_light_01",
+      "equipmentId": "ar_t3_light_01",
+      "blueprintId": "bp_t3_ar",
+      "name": "虎威甲",
+      "level": 6,
+      "effect": "防御+24，闪避+5% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t3_mid_01",
+      "equipmentId": "ar_t3_mid_01",
+      "blueprintId": "bp_t3_ar",
+      "name": "金木甲",
+      "level": 6,
+      "effect": "防御+30 · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t3_heavy_01",
+      "equipmentId": "ar_t3_heavy_01",
+      "blueprintId": "bp_t3_ar",
+      "name": "神金甲",
+      "level": 6,
+      "effect": "防御+36，速度+-8% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_t5_01",
+      "equipmentId": "ar_t5_01",
+      "blueprintId": "bp_immortal_02",
+      "name": "混沌天衣",
+      "level": 8,
+      "effect": "防御+50，气血+15% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t1_charm_01",
+      "equipmentId": "ac_t1_charm_01",
+      "blueprintId": "bp_t1_ac",
+      "name": "淡水玉护符",
+      "level": 1,
+      "effect": "气血+3% · 护符",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t1_ring_01",
+      "equipmentId": "ac_t1_ring_01",
+      "blueprintId": "bp_t1_ac",
+      "name": "藤蔓箍",
+      "level": 1,
+      "effect": "气血+60 · 戒指",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t1_neck_01",
+      "equipmentId": "ac_t1_neck_01",
+      "blueprintId": "bp_t1_ac",
+      "name": "贝壳链",
+      "level": 1,
+      "effect": "防御+5% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t1_belt_01",
+      "equipmentId": "ac_t1_belt_01",
+      "blueprintId": "bp_t1_ac",
+      "name": "宣纸腰带",
+      "level": 1,
+      "effect": "速度+5% · 靴子",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t1_brace_01",
+      "equipmentId": "ac_t1_brace_01",
+      "blueprintId": "bp_t1_ac",
+      "name": "贝壳镯",
+      "level": 1,
+      "effect": "暴击率+3% · 戒指",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t1_crown_01",
+      "equipmentId": "ac_t1_crown_01",
+      "blueprintId": "bp_t1_ac",
+      "name": "藤编冠",
+      "level": 1,
+      "effect": "气血+2%，攻击+2%，防御+2% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t2_charm_01",
+      "equipmentId": "ac_t2_charm_01",
+      "blueprintId": "bp_t2_ac",
+      "name": "深水玉护符",
+      "level": 4,
+      "effect": "气血+6% · 护符",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t2_ring_01",
+      "equipmentId": "ac_t2_ring_01",
+      "blueprintId": "bp_t2_ac",
+      "name": "青花瓷戒",
+      "level": 4,
+      "effect": "攻击+6% · 戒指",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t2_neck_01",
+      "equipmentId": "ac_t2_neck_01",
+      "blueprintId": "bp_t2_ac",
+      "name": "铁精链",
+      "level": 4,
+      "effect": "防御+6% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t2_belt_01",
+      "equipmentId": "ac_t2_belt_01",
+      "blueprintId": "bp_t2_ac",
+      "name": "青花瓷扣带",
+      "level": 4,
+      "effect": "速度+6% · 靴子",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t2_brace_01",
+      "equipmentId": "ac_t2_brace_01",
+      "blueprintId": "bp_t2_ac",
+      "name": "深水玉镯",
+      "level": 4,
+      "effect": "暴击率+5% · 戒指",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t2_crown_01",
+      "equipmentId": "ac_t2_crown_01",
+      "blueprintId": "bp_t2_ac",
+      "name": "铁木冠",
+      "level": 4,
+      "effect": "气血+3%，攻击+3%，防御+3% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t3_charm_01",
+      "equipmentId": "ac_t3_charm_01",
+      "blueprintId": "bp_t3_ac",
+      "name": "圣水玉护符",
+      "level": 6,
+      "effect": "气血+10% · 护符",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t3_ring_01",
+      "equipmentId": "ac_t3_ring_01",
+      "blueprintId": "bp_t3_ac",
+      "name": "金精戒",
+      "level": 6,
+      "effect": "攻击+10% · 戒指",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t3_neck_01",
+      "equipmentId": "ac_t3_neck_01",
+      "blueprintId": "bp_t3_ac",
+      "name": "翡翠链",
+      "level": 6,
+      "effect": "防御+10% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t3_belt_01",
+      "equipmentId": "ac_t3_belt_01",
+      "blueprintId": "bp_t3_ac",
+      "name": "古铜镜扣带",
+      "level": 6,
+      "effect": "速度+10% · 靴子",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t3_brace_01",
+      "equipmentId": "ac_t3_brace_01",
+      "blueprintId": "bp_t3_ac",
+      "name": "翡翠玉镯",
+      "level": 6,
+      "effect": "暴击率+7% · 戒指",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t3_crown_01",
+      "equipmentId": "ac_t3_crown_01",
+      "blueprintId": "bp_t3_ac",
+      "name": "金精冠",
+      "level": 6,
+      "effect": "气血+5%，攻击+5%，防御+5% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t4_01",
+      "equipmentId": "ac_t4_01",
+      "blueprintId": "bp_legend_02",
+      "name": "万毒蚀心镯",
+      "level": 7,
+      "effect": "攻击+15% · 戒指",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t4_02",
+      "equipmentId": "ac_t4_02",
+      "blueprintId": "bp_legend_03",
+      "name": "大鹏逐日冠",
+      "level": 7,
+      "effect": "气血+8%，攻击+8%，防御+8%，速度+10% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t5_01",
+      "equipmentId": "ac_t5_01",
+      "blueprintId": "bp_immortal_03",
+      "name": "太初道冠",
+      "level": 8,
+      "effect": "气血+12%，攻击+12%，防御+12%，免伤+10% · 头盔",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_t5_02",
+      "equipmentId": "ac_t5_02",
+      "blueprintId": "bp_immortal_04",
+      "name": "混元灵珠",
+      "level": 8,
+      "effect": "暴击率+12%，攻击+12%，气血+10% · 护符",
+      "count": 1
+    },
+    {
+      "id": "forge_wp_sp_01",
+      "equipmentId": "wp_sp_01",
+      "blueprintId": "bp_sp_01",
+      "name": "烈焰斩",
+      "level": 6,
+      "effect": "攻击+38，速度+10% · 武器",
+      "count": 1
+    },
+    {
+      "id": "forge_ar_sp_01",
+      "equipmentId": "ar_sp_01",
+      "blueprintId": "bp_sp_01",
+      "name": "风灵袍",
+      "level": 6,
+      "effect": "防御+24，速度+15% · 衣服",
+      "count": 1
+    },
+    {
+      "id": "forge_ac_sp_01",
+      "equipmentId": "ac_sp_01",
+      "blueprintId": "bp_sp_01",
+      "name": "地灵护符",
+      "level": 6,
+      "effect": "防御+12%，气血+6% · 护符",
+      "count": 1
+    }
   ],
   "retreats": [
-    { "name": "静坐吐纳", "time": "1 小时", "desc": "心无旁骛，纳天地灵气", "reward": "经验 ×120 / 小时" },
-    { "name": "参悟功法", "time": "4 小时", "desc": "研习装配功法，加深领悟", "reward": "功法熟练度 +80" },
-    { "name": "入定悟道", "time": "8 小时", "desc": "神游太虚，偶得顿悟", "reward": "经验 ×1200 + 概率顿悟一次" },
-    { "name": "闭关突破", "time": "24 小时", "desc": "冲击当前境界壁垒", "reward": "突破成功率 +10%" }
+    {
+      "name": "静坐吐纳",
+      "time": "1 小时",
+      "desc": "心无旁骛，纳天地灵气",
+      "reward": "经验 ×120 / 小时"
+    },
+    {
+      "name": "参悟功法",
+      "time": "4 小时",
+      "desc": "研习装配功法，加深领悟",
+      "reward": "功法熟练度 +80"
+    },
+    {
+      "name": "入定悟道",
+      "time": "8 小时",
+      "desc": "神游太虚，偶得顿悟",
+      "reward": "经验 ×1200 + 概率顿悟一次"
+    },
+    {
+      "name": "闭关突破",
+      "time": "24 小时",
+      "desc": "冲击当前境界壁垒",
+      "reward": "突破成功率 +10%"
+    }
   ],
   "crops": [
-    { "name": "灵芝", "growth": 1, "time": "8 小时", "reward": "灵芝 ×3", "status": "已成熟" },
-    { "name": "朱果", "growth": 0.6, "time": "12 小时", "reward": "朱果 ×2", "status": "生长中" },
-    { "name": "仙桃", "growth": 0.2, "time": "24 小时", "reward": "仙桃 ×1", "status": "生长中" },
-    { "name": "空置", "growth": 0, "time": "—", "reward": "—", "status": "空置" },
-    { "name": "空置", "growth": 0, "time": "—", "reward": "—", "status": "空置" },
-    { "name": "空置", "growth": 0, "time": "—", "reward": "—", "status": "空置" }
+    {
+      "name": "灵芝",
+      "growth": 1,
+      "time": "8 小时",
+      "reward": "灵芝 ×3",
+      "status": "已成熟"
+    },
+    {
+      "name": "朱果",
+      "growth": 0.6,
+      "time": "12 小时",
+      "reward": "朱果 ×2",
+      "status": "生长中"
+    },
+    {
+      "name": "仙桃",
+      "growth": 0.2,
+      "time": "24 小时",
+      "reward": "仙桃 ×1",
+      "status": "生长中"
+    },
+    {
+      "name": "空置",
+      "growth": 0,
+      "time": "—",
+      "reward": "—",
+      "status": "空置"
+    },
+    {
+      "name": "空置",
+      "growth": 0,
+      "time": "—",
+      "reward": "—",
+      "status": "空置"
+    },
+    {
+      "name": "空置",
+      "growth": 0,
+      "time": "—",
+      "reward": "—",
+      "status": "空置"
+    }
   ],
   "crafts": [
-    { "name": "武器制作", "level": 3, "maxLevel": 10, "progress": 0.42, "effect": "每级提升武器基础属性 5%" },
-    { "name": "衣服制作", "level": 2, "maxLevel": 10, "progress": 0.18, "effect": "每级提升衣服基础属性 5%" },
-    { "name": "饰品制作", "level": 1, "maxLevel": 10, "progress": 0.05, "effect": "每级提升饰品基础属性 5%" },
-    { "name": "炼丹术", "level": 4, "maxLevel": 10, "progress": 0.62, "effect": "每级提升丹药品质与成功率" },
-    { "name": "炼器术", "level": 2, "maxLevel": 10, "progress": 0.31, "effect": "每级提升装备强化上限" },
-    { "name": "种植术", "level": 1, "maxLevel": 10, "progress": 0.08, "effect": "每级缩短药园作物生长时间 5%" }
+    {
+      "name": "武器制作",
+      "level": 3,
+      "maxLevel": 10,
+      "progress": 0.42,
+      "effect": "每级提升武器基础属性 5%"
+    },
+    {
+      "name": "衣服制作",
+      "level": 2,
+      "maxLevel": 10,
+      "progress": 0.18,
+      "effect": "每级提升衣服基础属性 5%"
+    },
+    {
+      "name": "饰品制作",
+      "level": 1,
+      "maxLevel": 10,
+      "progress": 0.05,
+      "effect": "每级提升饰品基础属性 5%"
+    },
+    {
+      "name": "炼丹术",
+      "level": 4,
+      "maxLevel": 10,
+      "progress": 0.62,
+      "effect": "每级提升丹药品质与成功率"
+    },
+    {
+      "name": "炼器术",
+      "level": 2,
+      "maxLevel": 10,
+      "progress": 0.31,
+      "effect": "每级提升装备强化上限"
+    },
+    {
+      "name": "种植术",
+      "level": 1,
+      "maxLevel": 10,
+      "progress": 0.08,
+      "effect": "每级缩短药园作物生长时间 5%"
+    }
   ]
 }

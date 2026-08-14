@@ -86,10 +86,10 @@ describe('碎片合成规则', () => {
     }
   })
 
-  it('天罡灵气碎片 10:1 合成天罡灵气，九转金丹 5:1', () => {
+  it('天罡灵气碎片 3:1 合成天罡灵气，九转金丹 5:1', () => {
     const views = fragmentRuleViews()
-    const tian = views.find((v) => v.outId === 'ess_002')
-    expect(tian).toMatchObject({ fragId: 'frag_001', need: 10, outName: '天罡灵气' })
+    const tian = views.find((v) => v.outId === 'mat_tiangang')
+    expect(tian).toMatchObject({ fragId: 'mat_tiangang_suipian', need: 3, outName: '天罡灵气' })
     const jin = views.find((v) => v.outId === 'elix_007')
     expect(jin).toMatchObject({ fragId: 'frag_003', need: 5, outName: '九转金丹' })
   })

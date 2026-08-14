@@ -20,12 +20,12 @@ import {
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { KNOWN_BUFF_IDS } from '@/domain/buff/types'
 import {
   BATTLE_LOG_CATEGORIES,
   LogLevel,
   type LogSegment,
 } from '@/shared/types/battle-log'
-import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { createTraceEvent, TraceLevel, TracePhase, type TraceScope } from '@/shared/types/trace-event'
@@ -1252,11 +1252,11 @@ export class BattleExecutor {
     //  消耗必暴标记（无论是自然暴击还是必暴强制暴击，只要暴击了就消耗）
     if (
       damageResult.isCritical &&
-      this.buffSystem.hasBuff(source.id, 'buff_guaranteed_crit')
+      this.buffSystem.hasBuff(source.id, KNOWN_BUFF_IDS.GUARANTEED_CRIT)
     ) {
       const buffInstances = this.buffSystem.getBuffInstances(source.id)
       const critBuff = buffInstances.find(
-        (b) => b.buffId === 'buff_guaranteed_crit',
+        (b) => b.buffId === KNOWN_BUFF_IDS.GUARANTEED_CRIT,
       )
       if (critBuff) this.buffSystem.removeBuff(critBuff.id)
     }
@@ -1426,7 +1426,6 @@ export class BattleExecutor {
   async executeAction(
     battle: BattleData,
     action: BattleAction,
-    scope?: TraceScope,
   ): Promise<BattleAction> {
     const source = battle.participants.get(action.sourceId)
     const target = battle.participants.get(action.targetId)
@@ -1438,205 +1437,8 @@ export class BattleExecutor {
       return action
     }
 
-    if (action.type === ActionTypes.SKILL && action.skillId) {
-      try {
-        // NOTE: 令牌模式 — 用局部 token 替代全局 toggle
-        const damageToken = new DeferredDamageToken()
-        this.buffSystem.setBuffAppliedCallbackEnabled(false)
-        const skillAction = this.skillManager.executeSkill(
-          action.skillId,
-          source,
-          target,
-          action.turn ?? 0,
-          undefined,
-          undefined,
-          damageToken,
-          scope,
-          battle.rng,
-        )
-        if (!skillAction.success) {
-          // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
-          this.buffSystem.setBuffAppliedCallbackEnabled(true)
-          LoggerProvider.logger.addDebugLog(
-            `技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`, { level: LogLevel.ERROR },
-          )
-          action.damage = 0
-          action.heal = 0
-          action.effects = skillAction.effects
-          action.success = false
-        } else {
-          action.damage = skillAction.damage
-          action.heal = skillAction.heal
-          action.effects = skillAction.effects
-
-          // ponytail: 技能释放日志
-          const hasMissEffect = skillAction.effects.some(
-            (effect) => effect.type === EffectType.MISS,
-          )
-          if (hasMissEffect) {
-            await this.animationManager.triggerMissImpactAndWait({
-              targetId: target.id,
-            })
-          }
-
-          for (const effect of skillAction.effects) {
-            if (
-              effect.type === EffectType.BUFF ||
-              effect.type === EffectType.DEBUFF
-            ) {
-              let buffTarget = target
-              if (effect.targetId === source.id) buffTarget = source
-              await this.animationManager.triggerBuffEffectAndWait({
-                targetId: buffTarget.id,
-                buffName: effect.buffId || 'unknown',
-                isPositive: effect.type === EffectType.BUFF,
-              })
-            }
-          }
-
-          // NOTE: 固定预算模型 — executeAction 技能路径：飞行→命中扣血→命中特效
-          this.buffSystem.setBuffAppliedCallbackEnabled(true)
-
-          // NOTE: 在扣血前捕获 气血 用于叙事日志
-          const hpBefore = target.currentHealth
-          let hpAfter = target.currentHealth
-          let actionRawDamage = 0
-          let actionFinalDamage = 0
-
-          if ((action.damage ?? 0) > 0) {
-            // 伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
-            const actionIsCrit = skillAction.effects.some(
-              (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
-            )
-
-            await this.animationManager.triggerFlightPhaseAndWait({
-              sourceId: source.id,
-              targetId: target.id,
-              skillName: action.skillId,
-              effectType: action.type,
-              damageCategory: DamageCategory.PHYSICAL,
-            })
-
-            // 命中瞬间（50%T）：应用延迟伤害，统一走 settleDamage
-            for (const entry of damageToken.getEntries()) {
-              if (!entry.target.isAlive()) continue
-              if (entry.damage > 0) {
-                this.settleDamage(source, entry.target, entry.damage, entry.rawDamage, actionIsCrit, battle)
-              }
-              if (entry.heal > 0) {
-                entry.target.heal(entry.heal)
-              }
-              actionRawDamage += entry.rawDamage
-              actionFinalDamage += entry.damage
-            }
-            damageToken.clear()
-            hpAfter = target.currentHealth
-
-            await this.animationManager.triggerImpactPhaseAndWait({
-              targetId: target.id,
-              damage: action.damage ?? 0,
-              damageCategory: DamageCategory.PHYSICAL,
-              isCritical: actionIsCrit,
-              isHeal: false,
-            })
-          } else if ((action.heal ?? 0) > 0) {
-            // 治疗技能 → 直接命中（无飞行，完整 T）
-            damageToken.applyAll()
-            hpAfter = target.currentHealth
-
-            await this.animationManager.triggerDirectImpactAndWait({
-              targetId: target.id,
-              damage: action.heal ?? 0,
-              damageCategory: DamageCategory.PHYSICAL,
-              isCritical: false,
-              isHeal: true,
-            })
-          } else {
-            // 无伤害/治疗 — 仍用完 T 预算
-            damageToken.applyAll()
-            hpAfter = target.currentHealth
-
-            await this.animationManager.triggerAnimationAndWait(
-              BattleEventCodes.DAMAGE_ANIMATION,
-              {
-                targetId: target.id,
-                damage: 0,
-                damageCategory: DamageCategory.PHYSICAL,
-                isCritical: false,
-                isHeal: false,
-              },
-              0, // 0 = 使用动画管理器的默认预算
-            )
-          }
-          const skillId = action.skillId
-          // NOTE: 统一投影 — 与 selectAndExecuteSkill/emitSkillLog 同口径
-          //       （C1：action 显示实际伤害与 sub 一致；技能名【】化；修复
-          //        原手写块 message 用裸 skillId / 原始伤害的不一致）
-          const projected = projectSkillLog(
-            {
-              type: 'skill',
-              source,
-              targets: [target],
-              skillName: skillId,
-              skillId,
-              isMiss: false,
-              isCrit: skillAction.isCrit ?? false,
-              totalDamage: actionFinalDamage,
-              totalHeal: action.heal ?? 0,
-              results: [
-                {
-                  target,
-                  hpBefore,
-                  hpAfter,
-                  damage: actionFinalDamage,
-                  heal: action.heal ?? 0,
-                  rawDamage: actionRawDamage,
-                },
-              ],
-              skillLookup: this.skillManager,
-            },
-            action.turn ?? 0,
-          )
-          LoggerProvider.logger.addBattleLog({
-            turn: action.turn ?? 0,
-            ...projected.action,
-          })
-          //  action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
-          LoggerProvider.logger.flushBufferedSubLogs()
-
-          //  输出 result sub 日志
-          for (const sub of projected.subs) {
-            LoggerProvider.logger.addBattleLog({
-              turn: action.turn ?? 0,
-              ...sub,
-            })
-          }
-
-          // settleDamage 内部已处理：DAMAGE_TAKEN 事件、仇恨、ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
-        }
-      } catch (error) {
-        // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
-        this.buffSystem.setBuffAppliedCallbackEnabled(true)
-        //  出错时也刷出缓冲的 sub 日志，防止内存泄漏
-        LoggerProvider.logger.flushBufferedSubLogs()
-        LoggerProvider.logger.addDebugLog(`技能执行失败: ${action.skillId}`, {
-          level: LogLevel.ERROR,
-          error: error as Error,
-        })
-        action.type = ActionTypes.ATTACK
-        action.damage = battle.rng.nextInt(10, 29)
-        action.effects = [
-          {
-            type: EffectType.DAMAGE,
-            value: action.damage,
-            description: `${source.name} 普通攻击 (技能执行失败)`,
-          },
-        ]
-      }
-    }
-
-    // NOTE: skill actions already apply damage+heal inside SkillExecutor,
-    // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
+    // NOTE: 技能路径统一由 selectAndExecuteSkill 走完整管线（目标解析/被动/记录/日志/动画），
+    //       此处仅处理非技能动作（fallback 普攻 / executeDefaultAction 传入的预计算 damage）。
     if (action.type !== ActionTypes.SKILL) {
       if (action.damage && action.damage > 0) {
         // NOTE: 固定预算模型 — 飞行→命中扣血→命中特效

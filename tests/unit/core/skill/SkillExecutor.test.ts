@@ -10,19 +10,6 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { createParticipantFromEnemy } from '@tests/fixtures/participants'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout = (fn: (...args: unknown[]) => void) => { fn(); return Symbol('mock') }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 const mockEventBus = { emit: vi.fn(), on: vi.fn(), off: vi.fn(), offByListenerId: vi.fn() }
 const TEST_MAX_ENERGY = 200
 const TEST_INITIAL_ENERGY = 30

@@ -168,23 +168,27 @@ describe('种子导入 seedFengshenData', () => {
     expect(all.filter((e) => e.recipeId).every((e) => e.craftable)).toBe(true)
   })
 
-  it('种子导入包含 scene_test（测试场景），且其引用的敌人全部在库', async () => {
+  it('种子导入包含西游场景，且全部场景引用的敌人均在库（合并后 scenes 以 xiyou/scenes.json 为权威）', async () => {
     const storage = new MemoryStorage()
     await seedFengshenData(storage)
 
-    const scene = await storage.get<SceneData>(FENGSHEN_STORE.SCENES, 'scene_test')
-    expect(scene).not.toBeNull()
-    expect(scene?.name).toBe('测试场景')
+    const sceneKeys = await storage.keys(FENGSHEN_STORE.SCENES)
+    expect(sceneKeys.length).toBeGreaterThan(0)
+    expect(sceneKeys).toContain('huaguo')
 
-    const sceneEnemyIds = new Set([
-      ...(scene!.difficulties.easy.enemyIds ?? []),
-      ...(scene!.difficulties.normal.enemyIds ?? []),
-      ...(scene!.difficulties.hard.enemyIds ?? []),
-    ])
+    // 逐场景校验 difficulties 三档引用的敌人 id 都在 enemies 表（引用完整性）
     const enemyKeys = await storage.keys(FENGSHEN_STORE.ENEMIES)
-    expect(sceneEnemyIds.size).toBeGreaterThan(0)
-    for (const id of sceneEnemyIds) {
-      expect(enemyKeys).toContain(id)
+    for (const key of sceneKeys) {
+      const scene = await storage.get<SceneData>(FENGSHEN_STORE.SCENES, key)
+      const sceneEnemyIds = new Set([
+        ...(scene!.difficulties.easy.enemyIds ?? []),
+        ...(scene!.difficulties.normal.enemyIds ?? []),
+        ...(scene!.difficulties.hard.enemyIds ?? []),
+      ])
+      expect(sceneEnemyIds.size).toBeGreaterThan(0)
+      for (const id of sceneEnemyIds) {
+        expect(enemyKeys).toContain(id)
+      }
     }
   })
 

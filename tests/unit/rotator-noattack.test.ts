@@ -11,22 +11,6 @@ import { createParticipantFromEnemy } from '@tests/fixtures/participants'
 import { getSkillConfig } from '@tests/fixtures/loadTestData'
 import type { CustomStepParams, ExtendedSkillStep } from '@/domain/skill/types'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout = (fn: (...args: unknown[]) => void) => {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 const mockEventBus = {
   emit: vi.fn(),
   on: vi.fn(),

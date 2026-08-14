@@ -2,6 +2,7 @@ import {
   ATTRIBUTE_CODE,
   ModifierSourceType,
   ModifierType,
+  type AttributeValue,
   type Modifier,
 } from '@/domain/attribute/types'
 import type {
@@ -10,7 +11,7 @@ import type {
   StepExecutionContext,
 } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { ControlType, StackRule, type BuffConfig } from '@/domain/buff/types'
+import { ControlType, StackRule, type BuffConfig, KNOWN_BUFF_IDS } from '@/domain/buff/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
@@ -201,10 +202,10 @@ export class SkillExecutor {
       }
     }
     // 消耗必暴标记（buff_guaranteed_crit）
-    if (result.isCritical && source.hasBuff?.('buff_guaranteed_crit')) {
+    if (result.isCritical && source.hasBuff?.(KNOWN_BUFF_IDS.GUARANTEED_CRIT)) {
       const instances = this.buffSystem.getBuffInstances(source.id)
       const critBuffInstances = instances.filter(
-        (i) => i.buffId === 'buff_guaranteed_crit',
+        (i) => i.buffId === KNOWN_BUFF_IDS.GUARANTEED_CRIT,
       )
       for (const instance of critBuffInstances) {
         this.buffSystem.removeBuff(instance.id)
@@ -354,6 +355,32 @@ export class SkillExecutor {
     }
   }
 
+  /** 运行时属性修饰符 upsert：按 sourceKey 去重替换后推入，标记缓存失效 */
+  private upsertModifier(
+    attrData: AttributeValue,
+    sourceKey: string,
+    attribute: ATTRIBUTE_CODE,
+    value: number,
+    type: ModifierType,
+    description?: string,
+  ): Modifier {
+    // 去重 — 移除同 sourceKey 的旧修饰符再添加新值
+    attrData.modifiers = attrData.modifiers.filter(
+      (m) => m.sourceKey !== sourceKey,
+    )
+    const newMod: Modifier = {
+      sourceKey,
+      sourceType: ModifierSourceType.SKILL,
+      attribute,
+      value,
+      type,
+      description,
+    }
+    attrData.modifiers.push(newMod)
+    attrData.cachedVersion = -1
+    return newMod
+  }
+
   /** 运行时修改目标属性（modify_attribute 步骤） */
   private executeModifyAttribute(
     skillStep: ExtendedSkillStep,
@@ -375,22 +402,14 @@ export class SkillExecutor {
       // PERCENTAGE 值由配置显式声明为百分数（如 5 表示 5%），直接使用
 
       const sourceKey = `passive:runtime:${mod.id || skillStep.buffId || 'mod'}`
-
-      // 去重 — 移除同 sourceKey 的旧修饰符再添加新值
-      attrData.modifiers = attrData.modifiers.filter(
-        (m) => m.sourceKey !== sourceKey,
-      )
-
-      const newMod: Modifier = {
+      const newMod = this.upsertModifier(
+        attrData,
         sourceKey,
-        sourceType: ModifierSourceType.SKILL,
-        attribute: attrCode,
+        attrCode,
         value,
-        type: mod.type,
-        description: mod.sourceName || '被动技能',
-      }
-      attrData.modifiers.push(newMod)
-      attrData.cachedVersion = -1
+        mod.type,
+        mod.sourceName || '被动技能',
+      )
 
       // 统一使用 shared/attributeSync 中的加成属性同步
       if (mod.type === ModifierType.PERCENTAGE) {
@@ -563,46 +582,7 @@ export class SkillExecutor {
       })
     } else if (customType === 'overflow_shield') {
       // 回春护盾溢出转盾 — 从 action.extra.healOverflow 按目标ID查找溢出量
-      const overflowMap = action.extra?.healOverflow ?? {}
-      const overflow = overflowMap[target.id] ?? 0
-      if (overflow > 0) {
-        const config: BuffConfig = {
-          id: 'buff_shield',
-          name: '护盾',
-          description: '治疗溢出转化的护盾',
-          duration: skillStep.duration ?? 2,
-          maxStacks: 1,
-          cooldown: 0,
-          stackRule: StackRule.REFRESH,
-          controlType: ControlType.NONE,
-          parameters: { shieldValue: overflow },
-        }
-        const shieldInstanceId = this.buffSystem.addBuff(target.id, 'buff_shield', config, action.turn ?? 0)
-        if (!shieldInstanceId) {
-          LoggerProvider.logger.addDebugLog(
-            `回春护盾: 护盾施加被免疫/跳过`,
-            { level: LogLevel.WARN },
-          )
-        } else {
-          LoggerProvider.logger.addDebugLog(
-            `回春护盾: 溢出 ${overflow} 点治疗转化为护盾`,
-            { level: LogLevel.INFO },
-          )
-          action.effects.push({
-            type: EffectType.STATUS,
-            targetId: target.id,
-            buffId: 'buff_shield',
-            instanceId: shieldInstanceId,
-            description: `溢出治疗转护盾: ${overflow}`,
-          })
-        }
-      } else {
-        action.effects.push({
-          type: EffectType.STATUS,
-          targetId: target.id,
-          description: '无治疗溢出，未生成护盾',
-        })
-      }
+      this.handleOverflowShield(skillStep, action, target)
     } else {
       throw new Error(
         `[SkillExecutor] 未实现的自定义步骤类型: ${desc}（${customType}）。` +
@@ -669,6 +649,54 @@ export class SkillExecutor {
     }
   }
 
+  /** 回春护盾 — 治疗溢出转护盾（从 action.extra.healOverflow 按目标ID查找溢出量） */
+  private handleOverflowShield(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    target: BattleEntity,
+  ): void {
+    const overflowMap = action.extra?.healOverflow ?? {}
+    const overflow = overflowMap[target.id] ?? 0
+    if (overflow > 0) {
+      const config: BuffConfig = {
+        id: 'buff_shield',
+        name: '护盾',
+        description: '治疗溢出转化的护盾',
+        duration: skillStep.duration ?? 2,
+        maxStacks: 1,
+        cooldown: 0,
+        stackRule: StackRule.REFRESH,
+        controlType: ControlType.NONE,
+        parameters: { shieldValue: overflow },
+      }
+      const shieldInstanceId = this.buffSystem.addBuff(target.id, 'buff_shield', config, action.turn ?? 0)
+      if (!shieldInstanceId) {
+        LoggerProvider.logger.addDebugLog(
+          `回春护盾: 护盾施加被免疫/跳过`,
+          { level: LogLevel.WARN },
+        )
+      } else {
+        LoggerProvider.logger.addDebugLog(
+          `回春护盾: 溢出 ${overflow} 点治疗转化为护盾`,
+          { level: LogLevel.INFO },
+        )
+        action.effects.push({
+          type: EffectType.STATUS,
+          targetId: target.id,
+          buffId: 'buff_shield',
+          instanceId: shieldInstanceId,
+          description: `溢出治疗转护盾: ${overflow}`,
+        })
+      }
+    } else {
+      action.effects.push({
+        type: EffectType.STATUS,
+        targetId: target.id,
+        description: '无治疗溢出，未生成护盾',
+      })
+    }
+  }
+
   /** 第三连击：每第3次普攻伤害+50% */
   private handleThirdStrike(action: BattleAction, source: BattleEntity): void {
     let state = this.comboStates.get(source.id)
@@ -682,19 +710,14 @@ export class SkillExecutor {
       // 应用伤害加成
       const attrData = source.getAttrValue(ATTRIBUTE_CODE.damageBoost)
       if (attrData) {
-        const sourceKey = 'custom:third_strike'
-        attrData.modifiers = attrData.modifiers.filter(
-          (m) => m.sourceKey !== sourceKey,
+        this.upsertModifier(
+          attrData,
+          'custom:third_strike',
+          ATTRIBUTE_CODE.damageBoost,
+          50,
+          ModifierType.ADDITIVE,
+          '第三连击',
         )
-        attrData.modifiers.push({
-          sourceKey,
-          sourceType: ModifierSourceType.SKILL,
-          attribute: ATTRIBUTE_CODE.damageBoost,
-          value: 50,
-          type: ModifierType.ADDITIVE,
-          description: '第三连击',
-        })
-        attrData.cachedVersion = -1
         // 通过 recalcAll 使生效，但在被动触发时 source.recalcAll 可能导致问题
         // 简化实现 — 加一个临时 buff 替代
         source.recalcAll()
@@ -730,19 +753,14 @@ export class SkillExecutor {
       const bonus = (state.streak - 1) * 10
       const attrData = source.getAttrValue(ATTRIBUTE_CODE.damageBoost)
       if (attrData) {
-        const sourceKey = 'custom:combo_master'
-        attrData.modifiers = attrData.modifiers.filter(
-          (m) => m.sourceKey !== sourceKey,
+        this.upsertModifier(
+          attrData,
+          'custom:combo_master',
+          ATTRIBUTE_CODE.damageBoost,
+          bonus,
+          ModifierType.ADDITIVE,
+          `连击大师 x${state.streak}`,
         )
-        attrData.modifiers.push({
-          sourceKey,
-          sourceType: ModifierSourceType.SKILL,
-          attribute: ATTRIBUTE_CODE.damageBoost,
-          value: bonus,
-          type: ModifierType.ADDITIVE,
-          description: `连击大师 x${state.streak}`,
-        })
-        attrData.cachedVersion = -1
         source.recalcAll()
       }
       action.effects.push({
@@ -910,7 +928,7 @@ export class SkillExecutor {
       type: EffectType.STATUS,
       targetId: target.id,
       buffId,
-      description: `${source.name} applies ${controlType === ControlType.STUN ? 'stun' : 'silence'} to ${target.name}`,
+      description: `${source.name} applies ${controlType} to ${target.name}`,
     })
   }
 

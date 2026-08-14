@@ -83,10 +83,23 @@ export const DamageCategoryName : Record<DamageCategory, string>  = {
 export type DamageCategoryName = (typeof DamageCategoryName)[keyof typeof DamageCategoryName]
 
 /**
- * 属性类型
+ * 元素代码（运行时值）
  * 物理 金 木 水 火 土
  */
-export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
+export const ElementCode = {
+  PHYSICAL: 'PHYSICAL',
+  JIN: 'JIN',
+  MU: 'MU',
+  SHU: 'SHU',
+  HUO: 'HUO',
+  TU: 'TU',
+} as const
+
+/**
+ * 元素类型
+ * 物理 金 木 水 火 土
+ */
+export type ElementType = (typeof ElementCode)[keyof typeof ElementCode]
 
 /**
  * 目标阵营
@@ -332,15 +345,6 @@ export type ActionResultType = (typeof ActionResultType)[keyof typeof ActionResu
 export const EffectType = {
   ...StepEffectType,
   ...ActionResultType,
-  // @deprecated 以下值仅保留在 EffectType 中以供向后兼容，当前没有任何代码使用
-  AURA: 'aura',
-  REMOVE_BUFF: 'remove_buff',
-  DISPEL: 'dispel',
-  KNOCKBACK: 'knockback',
-  PULL: 'pull',
-  TELEPORT: 'teleport',
-  SUMMON: 'summon',
-  TRANSFORM: 'transform',
   SPECIAL: 'special',
 } as const
 export type EffectType = (typeof EffectType)[keyof typeof EffectType]

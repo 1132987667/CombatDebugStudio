@@ -1,18 +1,18 @@
 <template>
   <Transition name="xy-map-fade">
     <div v-if="modelValue" ref="overlayRef" class="xy-map-dlg" role="dialog" aria-modal="true"
-      aria-label="降妖路引 · 大地图" tabindex="-1" @click.self="close">
+      aria-label="降妖路引 · 关卡列表" tabindex="-1" @click.self="close">
       <div class="xy-map-dlg__panel">
         <header class="xy-map-dlg__head">
           <div class="xy-map-dlg__head-text">
             <h2 class="xy-map-dlg__name">降妖路引</h2>
-            <p class="xy-map-dlg__sub">四域十六关 · 以步丈量</p>
+            <p class="xy-map-dlg__sub">四域十六关 · 择路而进</p>
           </div>
           <div class="xy-map-dlg__head-right">
             <span class="xy-map-dlg__progress">
               已踏 <em>{{ unlockedCount }}</em> / {{ scenes.length }} 关
             </span>
-            <button type="button" class="xy-map-dlg__close" aria-label="关闭大地图" @click="close">
+            <button type="button" class="xy-map-dlg__close" aria-label="关闭降妖路引" @click="close">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
               </svg>
@@ -30,53 +30,48 @@
         </div>
 
         <div class="xy-map-dlg__body">
-          <div class="xy-map-dlg__map" :aria-label="`${activeRegion.name} · ${activeRegion.sub} 大地图`">
-            <svg :viewBox="activeRegion.viewBox" class="xy-map-dlg__svg" aria-hidden="true"
-              preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <linearGradient id="xy-map-sky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="rgba(var(--rgb-black), 0.55)" />
-                  <stop offset="0.5" stop-color="rgba(var(--rgb-black), 0.18)" />
-                  <stop offset="1" stop-color="rgba(var(--rgb-black), 0.02)" />
-                </linearGradient>
-                <linearGradient id="xy-map-hill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="rgba(var(--rgb-white), 0.1)" />
-                  <stop offset="1" stop-color="rgba(var(--rgb-white), 0.02)" />
-                </linearGradient>
-                <radialGradient id="xy-node-halo" cx="0.5" cy="0.5" r="0.5">
-                  <stop offset="0" stop-color="currentColor" stop-opacity="0.5" />
-                  <stop offset="1" stop-color="currentColor" stop-opacity="0" />
-                </radialGradient>
-              </defs>
-
-              <rect width="100" height="108" fill="url(#xy-map-sky)" />
-
-              <g class="xy-map-dlg__hills">
-                <path d="M -4 92 C 10 74 26 76 40 88 C 54 98 70 90 82 96 C 92 100 98 98 104 100 L 104 112 L -4 112 Z" />
-                <path d="M -4 100 C 14 86 30 90 46 100 C 60 108 78 100 92 106 C 98 108 102 107 104 108 L 104 112 L -4 112 Z" />
-              </g>
-
-              <g class="xy-map-dlg__decor">
-                <path v-for="(d, i) in activeRegion.decors" :key="i" :d="d.d"
-                  :class="`xy-map-dlg__decor--${d.kind}`" />
-              </g>
-
-              <path :d="activeRegion.route" class="xy-map-dlg__route" />
-
-              <g v-for="s in regionScenes" :key="s.id" class="xy-map-dlg__node"
-                :class="[`xy-node--${nodeTone(s.difficulty)}`, { selected: s.id === selectedId, locked: !s.unlocked }]"
-                role="button" :tabindex="s.unlocked ? 0 : -1" :aria-label="`${s.name}${s.unlocked ? '' : '（未解锁）'}`"
-                @click="selectNode(s)" @keydown.enter="selectNode(s)">
-                <circle class="xy-node__halo" :cx="s.pos.x" :cy="s.pos.y" r="11" fill="url(#xy-node-halo)" />
-                <circle class="xy-node__ring" :cx="s.pos.x" :cy="s.pos.y" r="7" />
-                <circle class="xy-node__core" :cx="s.pos.x" :cy="s.pos.y" r="4.4" />
-                <path v-if="!s.unlocked" class="xy-node__lock"
-                  :d="`M ${s.pos.x - 2.4} ${s.pos.y - 1.2} a 2.4 2.4 0 0 1 4.8 0 M ${s.pos.x - 2.4} ${s.pos.y - 1.2} v 3.2 M ${s.pos.x + 2.4} ${s.pos.y - 1.2} v 3.2 M ${s.pos.x - 3.4} ${s.pos.y + 2} h 6.8 v 4.4 h -6.8 Z`" />
-                <text :x="s.pos.x" :y="s.pos.y + 25" text-anchor="middle" class="xy-node__label">{{ s.name }}</text>
-              </g>
-            </svg>
-
-            <span class="xy-map-dlg__stamp">{{ activeRegion.sub }}</span>
+          <div class="xy-map-dlg__list" :aria-label="`${activeRegion.name} · ${activeRegion.sub} 关卡列表`">
+            <button
+              v-for="s in regionScenes"
+              :key="s.id"
+              type="button"
+              class="xy-map-dlg__stage xy-ink-hover"
+              :class="[`xy-map-dlg__stage--${nodeTone(s.difficulty)}`, { selected: s.id === selectedId, locked: !s.unlocked }]"
+              role="button"
+              :tabindex="s.unlocked ? 0 : -1"
+              :aria-label="`${s.name}${s.unlocked ? '' : '（未解锁）'}`"
+              @click="selectNode(s)"
+              @keydown.enter="selectNode(s)"
+            >
+              <span class="xy-map-dlg__stage-head">
+                <span class="xy-map-dlg__stage-name">{{ s.name }}</span>
+                <span v-if="!s.unlocked" class="xy-map-dlg__stage-lock" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    <rect x="5" y="10" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                  </svg>
+                </span>
+                <span v-else class="xy-map-dlg__stage-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+              </span>
+              <span class="xy-map-dlg__stage-range">{{ s.range }}</span>
+              <span class="xy-map-dlg__stage-meta">
+                <span class="xy-map-dlg__difficulty" :class="`xy-map-dlg__difficulty--${nodeTone(s.difficulty)}`">
+                  <span class="xy-map-dlg__difficulty-dot" aria-hidden="true"></span>
+                  {{ difficultyText(s.difficulty) }}
+                </span>
+                <span class="xy-map-dlg__stars" :aria-label="`关卡星级 ${s.stars}/${s.maxStars}`">
+                  <svg v-for="i in s.maxStars" :key="i" viewBox="0 0 24 24" class="xy-map-dlg__star"
+                    :class="{ on: i <= s.stars }" aria-hidden="true">
+                    <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
+                  </svg>
+                </span>
+              </span>
+            </button>
+            <p v-if="regionScenes.length === 0" class="xy-map-dlg__list-empty">此域暂无关卡</p>
           </div>
 
           <aside class="xy-map-dlg__detail" aria-label="关卡详情">
@@ -251,7 +246,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .xy-map-dlg__panel {
   display: flex;
   flex-direction: column;
-  width: min(1180px, 96vw);
+  width: min(1080px, 96vw);
   height: min(760px, 92vh);
   min-height: 0;
   background: var(--xy-paper);
@@ -401,195 +396,127 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   grid-template-columns: minmax(0, 1fr) 340px;
 }
 
-.xy-map-dlg__map {
-  position: relative;
+/* ── 关卡按钮列表（替代原 SVG 手绘地图） ── */
+.xy-map-dlg__list {
   min-width: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
   border-right: 1px solid var(--xy-ink-line);
   background: linear-gradient(180deg, var(--color-bg-tertiary), var(--xy-paper));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+  align-content: start;
 }
 
-.xy-map-dlg__svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.xy-map-dlg__stamp {
-  position: absolute;
-  bottom: var(--space-4);
-  left: var(--space-4);
-  display: inline-flex;
-  align-items: center;
+.xy-map-dlg__stage {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid rgba(var(--rgb-brand-red), 0.4);
-  border-radius: 2px;
-  background: rgba(var(--rgb-brand-red), 0.08);
-  color: var(--xy-seal);
-  font-family: var(--xy-font-title);
-  font-size: var(--font-size-md);
-  letter-spacing: 3px;
-}
-
-/* ── SVG 地形 ── */
-.xy-map-dlg__hills {
-  fill: url(#xy-map-hill);
-  stroke: none;
-
-  path:last-child {
-    fill: rgba(var(--rgb-black), 0.06);
-  }
-}
-
-.xy-map-dlg__decor {
-  fill: none;
-  stroke-linejoin: round;
-
-  &--mountain {
-    stroke: rgba(var(--rgb-black), 0.4);
-    stroke-width: 1.2;
-    fill: rgba(var(--rgb-white), 0.05);
-  }
-
-  &--cloud {
-    stroke: rgba(var(--rgb-white), 0.32);
-    stroke-width: 0.9;
-    fill: rgba(var(--rgb-white), 0.08);
-  }
-
-  &--water,
-  &--wave {
-    stroke: rgba(var(--rgb-skill-active), 0.45);
-    stroke-width: 1.1;
-  }
-
-  &--fire {
-    stroke: rgba(var(--rgb-warning), 0.6);
-    stroke-width: 1.2;
-  }
-
-  &--tower {
-    stroke: rgba(var(--rgb-black), 0.4);
-    stroke-width: 1.2;
-  }
-}
-
-.xy-map-dlg__route {
-  fill: none;
-  stroke: rgba(var(--rgb-white), 0.22);
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-dasharray: 2.5 3;
-  opacity: 0.85;
-}
-
-/* ── 关卡节点 ── */
-.xy-node--easy {
-  color: var(--xy-jade);
-}
-
-.xy-node--normal {
-  color: var(--xy-ink-3);
-}
-
-.xy-node--hard {
-  color: var(--color-debuff);
-}
-
-.xy-node--hell {
-  color: var(--xy-gold);
-}
-
-.xy-map-dlg__node {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+  text-align: left;
+  font-family: var(--xy-font-body);
   cursor: pointer;
-  transition: opacity var(--transition-fast);
+  color: var(--xy-ink-1);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 
-  .xy-node__halo {
-    opacity: 0;
-    transition: opacity var(--transition-base);
+  &:hover:not(.locked) {
+    border-color: currentColor;
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
   }
 
-  .xy-node__ring {
-    fill: rgba(var(--rgb-black), 0.45);
-    stroke: currentColor;
-    stroke-width: 1.7;
-    transition:
-      fill var(--transition-fast),
-      stroke-width var(--transition-fast);
-  }
-
-  .xy-node__core {
-    fill: var(--xy-paper);
-    transition: fill var(--transition-fast);
-  }
-
-  .xy-node__label {
-    font-size: 6.4px;
-    fill: var(--xy-ink-2);
-    font-family: var(--xy-font-body);
-    letter-spacing: 0.4px;
-    stroke: var(--xy-paper);
-    stroke-width: 2.6px;
-    paint-order: stroke;
-    transition: fill var(--transition-fast);
-  }
-
-  .xy-node__lock {
-    fill: none;
-    stroke: var(--xy-ink-4);
-    stroke-width: 1.1;
-    stroke-linejoin: round;
-  }
-
-  &:hover {
-    .xy-node__ring {
-      fill: currentColor;
-      stroke-width: 2.2;
-    }
-
-    .xy-node__core {
-      fill: var(--xy-paper);
-    }
-
-    .xy-node__label {
-      fill: currentColor;
-    }
-  }
-
-  &.selected {
-    .xy-node__halo {
-      opacity: 1;
-    }
-
-    .xy-node__ring {
-      fill: var(--xy-seal);
-      stroke: var(--xy-seal);
-      stroke-width: 2.4;
-    }
-
-    .xy-node__core {
-      fill: #fff;
-    }
-
-    .xy-node__label {
-      fill: var(--xy-seal);
-      font-weight: var(--font-weight-medium);
-    }
+  &:focus-visible {
+    outline: 2px solid var(--color-energy);
+    outline-offset: 2px;
   }
 
   &.locked {
     cursor: not-allowed;
-    opacity: 0.55;
-
-    .xy-node__halo {
-      display: none;
-    }
-
-    &:hover {
-      opacity: 0.55;
-    }
+    opacity: 0.5;
   }
+
+  &.selected {
+    border-color: var(--xy-seal);
+    border-width: 2px;
+    background: var(--xy-seal-soft);
+  }
+}
+
+.xy-map-dlg__stage--easy {
+  color: var(--xy-jade);
+}
+
+.xy-map-dlg__stage--normal {
+  color: var(--xy-ink-3);
+}
+
+.xy-map-dlg__stage--hard {
+  color: var(--color-debuff);
+}
+
+.xy-map-dlg__stage--hell {
+  color: var(--xy-gold);
+}
+
+.xy-map-dlg__stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.xy-map-dlg__stage-name {
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-lg);
+  letter-spacing: 2px;
+  color: var(--xy-ink-1);
+}
+
+.xy-map-dlg__stage-lock,
+.xy-map-dlg__stage-check {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.xy-map-dlg__stage-lock {
+  color: var(--xy-ink-4);
+}
+
+.xy-map-dlg__stage-check {
+  color: var(--xy-jade);
+}
+
+.xy-map-dlg__stage-range {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-map-dlg__stage-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.xy-map-dlg__list-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--space-5);
+  text-align: center;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-4);
 }
 
 /* ── 右侧画卷详情 ── */

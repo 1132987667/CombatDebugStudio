@@ -94,7 +94,7 @@
     </section>
 
     <section class="xy-section">
-      <h4 class="xy-sec-title">装备总览<span class="xy-sec-count">{{ equippedGear.length }}/{{ gearSlots.length }}</span></h4>
+      <h4 class="xy-sec-title">装备总览<span class="xy-sec-count">{{ equippedGear.length }}/3</span></h4>
       <div class="xy-equip-list">
         <div class="xy-equip-row" v-for="g in equippedGear" :key="g.slot">
           <span class="xy-equip-slot">{{ g.slot }}</span>
@@ -117,7 +117,8 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import AttributeTooltip from '@/presentation/components/AttributeTooltip.vue'
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, ATTRIBUTE_DISPLAY_CONFIG } from '@/presentation/config/attributeDisplay'
-import { gearSlots, player, playerAttributes, statPoints } from '../../data/mock'
+import { player, playerAttributes, statPoints } from '../../data/mock'
+import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import { qualityClass, qualityOf } from '../../data/quality'
 
 defineEmits<{ goEquip: [] }>()
@@ -275,7 +276,28 @@ function resetStats() {
   })
 }
 
-const equippedGear = gearSlots.filter((g) => g.equipped)
+const pack = usePackStore()
+
+// NOTE: 装备总览 = 真实穿戴（pack.equipped），与装备/强化/升星面板同源，不再读静态 gearSlots
+interface EquipOverviewRow {
+  slot: string
+  item: string
+  rarity: number
+  enhance: number
+}
+const equippedGear = computed<EquipOverviewRow[]>(() =>
+  (['weapon', 'armor', 'accessory'] as GearSlotKey[])
+    .filter((slot) => pack.equippedGear(slot))
+    .map((slot) => {
+      const g = pack.equippedGear(slot)!
+      return {
+        slot: GEAR_SLOT_LABELS[slot],
+        item: g.name,
+        rarity: g.rarity,
+        enhance: 0,
+      }
+    }),
+)
 </script>
 
 <style scoped lang="scss">

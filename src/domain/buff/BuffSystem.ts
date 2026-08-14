@@ -27,7 +27,10 @@ import type {
 } from '@/domain/buff/types'
 import { BUFF_ID_PREFIX, ControlType, StackRule } from '@/domain/buff/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
-import type { ResolvedBuffConfig } from '@/domain/buff/atomic/BuffConfigResolver'
+import type {
+  ResolvedBuffConfig,
+  ResolvedEffectPlan,
+} from '@/domain/buff/atomic/BuffConfigResolver'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
@@ -91,7 +94,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   private onEnergyRequest?: (targetId: string, amount: number) => void
   private onSummonRequest?: (request: SummonRequest) => void
   private onBuffApplied?: (characterId: string, buffId: string) => void
-  private buffAppliedCallbackEnabled: boolean = true
   private readonly eventBus: IDomainEventBus
   private triggerScripts = new Map<
     string,
@@ -309,10 +311,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     callback: (characterId: string, buffId: string) => void,
   ): void {
     this.onBuffApplied = callback
-  }
-
-  public setBuffAppliedCallbackEnabled(enabled: boolean): void {
-    this.buffAppliedCallbackEnabled = enabled
   }
 
   /** 设置角色解析器 */
@@ -749,7 +747,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     )
 
     // ponytail: 通知外部（如 BattleSystem）buff 已添加，用于触发 UI 动画
-    if (this.buffAppliedCallbackEnabled && this.onBuffApplied) {
+    if (this.onBuffApplied) {
       this.onBuffApplied(characterId, buffInstance.buffId)
     }
 
@@ -887,6 +885,27 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return count
   }
 
+  /**
+   * 按执行路径分发回调（PATH A: 脚本驱动 / PATH B: effectPlan 驱动 / PATH D: 无回调）
+   * 收敛 addBuff/removeBuff/refreshBuff/updatePerTurn 中重复的"路径判定 + A/B 分发"样板。
+   */
+  private dispatchByExecPath(
+    instance: BuffInstance,
+    handlers: {
+      onScript: (script: IBuffScript) => void
+      onEffectPlan: (effectPlan: ResolvedEffectPlan[]) => void
+    },
+  ): void {
+    if (instance.script) {
+      handlers.onScript(instance.script)
+      return
+    }
+    const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
+    if (buffResolved?.effectPlan && buffResolved.effectPlan.length > 0) {
+      handlers.onEffectPlan(buffResolved.effectPlan)
+    }
+  }
+
   public removeBuff(instanceId: string, options?: { silent?: boolean }): boolean {
     const instance = this.buffInstances.get(instanceId)
     if (!instance || !instance.isActive) return false
@@ -907,24 +926,22 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       }
 
       // 路径判定（与 addBuff 对称）
-      const buffScript = this.scriptRegistry.get(instance.buffId)
-      const hasScript = buffScript !== null
-      const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
-      const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
-
-      if (hasScript) {
-        // PATH A：脚本 onRemove（有错误边界）
-        BuffErrorBoundary.wrap(() => {
-          instance.script.onRemove(instance.context)
-        })
-      } else if (hasEffectPlan) {
-        // PATH B：effectPlan onRemove（有错误边界）
-        for (const effect of buffResolved!.effectPlan) {
+      this.dispatchByExecPath(instance, {
+        onScript: (script) => {
+          // PATH A：脚本 onRemove（有错误边界）
           BuffErrorBoundary.wrap(() => {
-            effect.handler.onRemove(instance.context, effect.params)
+            script.onRemove(instance.context)
           })
-        }
-      }
+        },
+        onEffectPlan: (effectPlan) => {
+          // PATH B：effectPlan onRemove（有错误边界）
+          for (const effect of effectPlan) {
+            BuffErrorBoundary.wrap(() => {
+              effect.handler.onRemove(instance.context, effect.params)
+            })
+          }
+        },
+      })
       // PATH D：无回调
     } finally {
       //  无论是否异常，保证清理
@@ -982,28 +999,26 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     instance.context.currentTurn = currentTurn
 
     // 路径判定（与 addBuff 对称）
-    const hasScript = instance.script !== null
-    const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
-    const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
-
-    if (hasScript) {
-      // PATH A：脚本 onRefresh
-      BuffErrorBoundary.wrap(() => {
-        instance.script.onRefresh(instance.context)
-      })
-      instance.effectLines =
-        instance.script.getEffectLines?.(instance.context) ?? []
-    } else if (hasEffectPlan) {
-      // PATH B：effectPlan onRefresh
-      for (const effect of buffResolved!.effectPlan) {
+    this.dispatchByExecPath(instance, {
+      onScript: (script) => {
+        // PATH A：脚本 onRefresh
         BuffErrorBoundary.wrap(() => {
-          effect.handler.onRefresh?.(instance.context, effect.params)
+          script.onRefresh(instance.context)
         })
-      }
-      instance.effectLines = buffResolved!.effectPlan
-        .map(e => e.handler.getEffectLines?.(instance.context, e.params) ?? [])
-        .flat()
-    }
+        instance.effectLines = script.getEffectLines?.(instance.context) ?? []
+      },
+      onEffectPlan: (effectPlan) => {
+        // PATH B：effectPlan onRefresh
+        for (const effect of effectPlan) {
+          BuffErrorBoundary.wrap(() => {
+            effect.handler.onRefresh?.(instance.context, effect.params)
+          })
+        }
+        instance.effectLines = effectPlan
+          .map(e => e.handler.getEffectLines?.(instance.context, e.params) ?? [])
+          .flat()
+      },
+    })
     // PATH C/D：无刷新逻辑
 
     instance.startTurn = currentTurn
@@ -1026,23 +1041,22 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (instance.startTurn === currentTurn) return
 
       // 路径判定（与 addBuff 对称）
-      const hasScript = instance.script !== null
-      const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
-      const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
-
-      if (hasScript) {
-        // PATH A：脚本 onUpdate（每回合一次，脚本从 context.currentTurn 读回合号）
-        BuffErrorBoundary.wrap(() => {
-          instance.script.onUpdate(instance.context)
-        })
-      } else if (hasEffectPlan) {
-        // PATH B：effectPlan onTick（有错误边界）
-        for (const effect of buffResolved!.effectPlan) {
+      this.dispatchByExecPath(instance, {
+        onScript: (script) => {
+          // PATH A：脚本 onUpdate（每回合一次，脚本从 context.currentTurn 读回合号）
           BuffErrorBoundary.wrap(() => {
-            effect.handler.onTick?.(instance.context, effect.params, currentTurn)
+            script.onUpdate(instance.context)
           })
-        }
-      }
+        },
+        onEffectPlan: (effectPlan) => {
+          // PATH B：effectPlan onTick（有错误边界）
+          for (const effect of effectPlan) {
+            BuffErrorBoundary.wrap(() => {
+              effect.handler.onTick?.(instance.context, effect.params, currentTurn)
+            })
+          }
+        },
+      })
       // PATH C/D：无更新逻辑
 
       // ponytail: 永久 buff（duration === -1）跳过剩余回合递减

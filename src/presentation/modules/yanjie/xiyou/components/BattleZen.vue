@@ -92,7 +92,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { buildBattleTeams, dropsForScene, type XiyouScene } from '../data/mock'
+import { buildBattleTeams, dropsForScene, equipBonuses, type XiyouScene } from '../data/mock'
 import BattleSutra from './BattleSutra.vue'
 import QuickSlotBar from './QuickSlotBar.vue'
 import SkillAltar from './SkillAltar.vue'
@@ -242,7 +242,12 @@ let acceptingDrops = false
 
 async function initBattle(): Promise<void> {
   acceptingDrops = false
-  const { ally, enemy } = buildBattleTeams(props.scene)
+  // NOTE: 已穿戴装备属性注入主角（背包实例化闭环：制造 → 装备 → 战斗生效）
+  // 先确保 packStore 已 init（玩家可能未开行囊/洞府直接战斗：背包/装备/掉落都要就绪）
+  const pack = usePackStore()
+  await pack.init()
+  const allyBonuses = equipBonuses(pack.equippedStats())
+  const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses)
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()
   if (battleService.getIsBattleActive()) battleService.endBattle(ParticipantSide.ALLY)

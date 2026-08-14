@@ -16,19 +16,6 @@ import { EMPTY_SKILL_SET, makeDefaultAttributes } from '@tests/fixtures/particip
 import { getSkillConfig, getBuffConfig } from '@tests/fixtures/loadTestData'
 import type { SkillConfig } from '@/domain/skill/types'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout = (fn: (...args: unknown[]) => void) => { fn(); return Symbol('mock') }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 // ───── 从真实配置加载测试数据 ─────
 
 /** skill_enemy_004_passive：常驻被动，battle_start 触发，modify_attribute 步骤 */

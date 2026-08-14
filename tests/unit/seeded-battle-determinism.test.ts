@@ -14,23 +14,6 @@ import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStatus } from '@/domain/battle/type/types'
 import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 const SEED = 'determinism-seed-42'
 const ROUNDS = 4
 

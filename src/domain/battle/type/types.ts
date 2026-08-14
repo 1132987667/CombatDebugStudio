@@ -145,16 +145,6 @@ export const AUTO_BATTLE_CONFIG = {
   DEFAULT_DELAY: 500,
 } as const
 
-/** 技能效果常量 */
-export const SKILL_EFFECT_CONSTANTS = {
-  HEAL_SKILL_HEAL: 50,
-  ATTACK_SKILL_DAMAGE: 35,
-  ULTIMATE_SKILL_DAMAGE: 80,
-  ENEMY_BASIC_SKILL_DAMAGE: 25,
-  ENEMY_ULTIMATE_SKILL_DAMAGE: 60,
-  DEFAULT_SKILL_DAMAGE: 10,
-} as const
-
 /** 动作类型常量 */
 export const ActionTypes = {
   ATTACK: 'attack',
@@ -179,15 +169,6 @@ export const ActionResultType = {
 }
 export type ActionResultType =
   (typeof ActionResultType)[keyof typeof ActionResultType]
-
-/** 动作类型数组 - 从 ACTION_TYPES 自动生成 */
-export const ValidActionTypes = Object.freeze([
-  ActionTypes.ATTACK,
-  ActionTypes.SKILL,
-  ActionTypes.HEAL,
-  ActionTypes.BUFF,
-  ActionTypes.ITEM,
-]) as readonly (typeof ActionTypes)[keyof typeof ActionTypes][]
 
 /** ponytail: P0/AI-1 — 参与者控制模式
  * AI: 使用 AI 实例决策（含目标建议）
@@ -594,9 +575,6 @@ export interface BattleEffect {
 
   /** 效果文本描述（用于兜底 / 未实现的自定义效果） */
   description?: string
-
-  /** 特殊效果标签：immune(免疫)/unyielding(不屈)/share(分担)/summon(召唤) */
-  effectTag?: 'immune' | 'unyielding' | 'share' | 'summon'
 }
 
 /**
@@ -618,54 +596,6 @@ export interface BattleState {
   startTime: number
   endTime?: number
   winner?: ParticipantSide
-}
-
-/**
- * 参与者初始化数据接口
- * 用于创建战斗参与者的基础数据结构
- * 仅包含数据属性，不包含方法实现
- */
-export interface ParticipantInfo {
-  /** 参与者唯一标识符 */
-  id: string
-  /** 参与者名称 */
-  name: string
-  /** 队伍归属 */
-  team: ParticipantSide
-  /** 最大气血值 */
-  maxHealth: number
-  /** 当前气血值 */
-  currentHealth?: number
-  /** 最大能量值 */
-  maxEnergy?: number
-  /** 当前能量值（初始值25） */
-  currentEnergy?: number
-  /** 等级（≥1） */
-  level: number
-  /** 攻击力（攻击模型扁平化后为单一数值） */
-  attack: number
-  /** 防御力（≥0） */
-  defense: number
-  /** 速度（≥1） */
-  speed: number
-  /** 暴击率（百分比，0-100，默认10） */
-  critRate?: number
-  /** 暴击伤害（百分比，≥100，默认125） */
-  critDamage?: number
-  /** 免伤率（百分比，0-100） */
-  damageReduction?: number
-  /** 气血加成（百分比，可正可负） */
-  healthBonus?: number
-  /** 攻击加成（百分比，可正可负） */
-  attackBonus?: number
-  /** 防御加成（百分比，可正可负） */
-  defenseBonus?: number
-  /** 速度加成（百分比，可正可负） */
-  speedBonus?: number
-  /** Buff实例ID列表 */
-  buffs?: string[]
-  /** 技能配置 */
-  skills?: SkillSet
 }
 
 /**
@@ -908,15 +838,6 @@ export interface ReplayBattleEvent {
   sourceId?: string
   targetId?: string
   data: Record<string, any>
-}
-
-/** 快照索引项 */
-export interface SnapshotIndexItem {
-  snapshotIndex: number
-  eventIndex: number
-  turn: number
-  roundNumber: number
-  timestamp: number
 }
 
 /**

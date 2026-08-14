@@ -8,6 +8,7 @@
     "src/domain/**/*.ts",
     "src/application/**/*.ts",
     "src/infrastructure/**/*.ts",
+    "src/presentation/**/*.ts",
     "src/**/*.d.ts"
   ],
   "exclude": [

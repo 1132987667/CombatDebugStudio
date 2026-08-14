@@ -14,14 +14,16 @@ export interface BreakpointConfig {
   type: 'none' | 'damage' | 'level' | 'roll' | 'actor'
   value?: number | string
   enabled: boolean
+  /** watch 模式：命中只标记 + 累计计数，不暂停（排查低置信度问题时「只记录不打断」） */
+  watch?: boolean
 }
 
-/** 新建断点（随机短 id） */
+/** 新建断点（随机短 id；默认非 watch = 命中暂停） */
 export function createBreakpoint(
   type: BreakpointConfig['type'],
   value: number | string | undefined,
 ): BreakpointConfig {
-  return { id: `bp_${Math.random().toString(36).slice(2, 8)}`, type, value, enabled: true }
+  return { id: `bp_${Math.random().toString(36).slice(2, 8)}`, type, value, enabled: true, watch: false }
 }
 
 /** 事件是否命中该断点条件（未启用或 type 为 none 恒不命中） */
@@ -44,10 +46,12 @@ export function checkBreakpointHit(ev: UnifiedEvent, bp: BreakpointConfig): bool
   }
 }
 
+/** 事件命中哪些启用断点（watch 与非 watch 都计入；供命中计数与暂停判定使用） */
+export function findHitBreakpoints(ev: UnifiedEvent, bps: BreakpointConfig[]): BreakpointConfig[] {
+  return bps.filter((bp) => checkBreakpointHit(ev, bp))
+}
+
 /** 事件是否命中断点列表中的任一启用断点 */
 export function checkAnyBreakpointHit(ev: UnifiedEvent, bps: BreakpointConfig[]): boolean {
-  for (const bp of bps) {
-    if (checkBreakpointHit(ev, bp)) return true
-  }
-  return false
+  return findHitBreakpoints(ev, bps).length > 0
 }

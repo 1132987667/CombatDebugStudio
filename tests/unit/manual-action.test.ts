@@ -15,23 +15,6 @@ import { BattleStatus } from '@/domain/battle/type/types'
 import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 describe('BattleSystem.executeManualAction 手动干预', () => {
   let battleSystem: BattleSystem
 

@@ -36,7 +36,7 @@ import {
 } from '@/domain/battle/replay/unified/unified-sim'
 import { createStressArchive } from '@/domain/battle/replay/unified/stress-archive'
 import { diffArchives, createRateVariant, createRollVariant, diffSummary, type DiffRow } from '@/domain/battle/replay/unified/unified-diff'
-import { checkAnyBreakpointHit, createBreakpoint, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
+import { createBreakpoint, findHitBreakpoints, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { summarizeBattle, type BattleSummary, type UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { deriveAttrsAt } from '@/domain/battle/replay/unified/unified-attrs'
 import { runValidationPipeline } from '@/shared/utils/unified-worker'
@@ -62,10 +62,10 @@ export interface PlaybackState {
   last: number
 }
 
-/** 调试会话（导出/导入 JSON 载荷） */
+/** 调试会话（导出/导入 JSON 载荷）；导出恒为 v2，导入兼容 v1 迁移 */
 export interface DebugSession {
   app: 'haotian'
-  version: 2
+  version: 1 | 2
   battleId: string
   mode: HaotianMode
   selectedId: string | null
@@ -141,7 +141,7 @@ function loadPrefs(): Partial<PersistedPrefs> {
     if (parsed.version === 1) {
       // v1 迁移：单断点 + 全局开关 → 断点数组
       if (parsed.breakpoint) {
-        parsed.breakpoints = [{ id: 'bp_v1', ...parsed.breakpoint, enabled: !!parsed.bpArmed }]
+        parsed.breakpoints = [{ ...parsed.breakpoint, id: 'bp_v1', enabled: !!parsed.bpArmed }]
       }
       return parsed
     }
@@ -193,6 +193,8 @@ export const useHaotianStore = defineStore('haotian', () => {
   const bookmarks = ref<Set<string>>(new Set())
   const bookmarkOpen = ref(false)
   const breakpoints = ref<BreakpointConfig[]>([])
+  /** 断点累计命中次数（断点 id → 次数；watch 与非 watch 都计，供面板徽标与建议 7 回归沉淀） */
+  const breakpointHits = ref<Record<string, number>>({})
   const streamText = ref('')
   /** 事件流组合过滤：phase / level / 单位 / 结果类型（空串 = 全部） */
   const filterPhase = ref('')
@@ -664,8 +666,32 @@ export const useHaotianStore = defineStore('haotian', () => {
     else play({ restartAtEnd: true })
   }
 
-  function checkBreakpoint(ev: UnifiedEvent): boolean {
-    return checkAnyBreakpointHit(ev, breakpoints.value)
+  /**
+   * 断点命中副作用：计数 + 按命中断点的 watch 语义决定是否暂停定位。
+   * 返回 'pause'（命中非 watch 断点，已暂停，调用方短路）/ 'watch'（仅 watch 断点命中，已计数标记，不打断）/ 'none'。
+   * NOTE: 播放循环与单步前进共用同一入口，保证断点语义一致（资深用户建议 4 / 审计问题 8）。
+   */
+  function applyBreakpoint(ev: UnifiedEvent): 'pause' | 'watch' | 'none' {
+    const hits = findHitBreakpoints(ev, breakpoints.value)
+    if (!hits.length) return 'none'
+    for (const bp of hits) breakpointHits.value[bp.id] = (breakpointHits.value[bp.id] ?? 0) + 1
+    // 任一非 watch 断点命中 → 暂停定位（原语义）；全部为 watch → 只标记 + 计数，不打断
+    if (hits.some((bp) => !bp.watch)) {
+      fxEventId.value = ev.id
+      selectedId.value = ev.id
+      rebuildState(ev.timestamp)
+      pause()
+      toast(`断点命中: ${ev.summary}`)
+      syncHash()
+      if (mode.value === 'debug') {
+        const node = nodeOfEvent(debugEntries.value, ev.id)
+        if (node && node.id !== debugNodeId.value) selectDebugNode(node.id)
+      }
+      return 'pause'
+    }
+    // watch 模式：静默标记 + 计数，不 toast / 不 seek / 不移动选中（「只记录不打断」）
+    fxEventId.value = ev.id
+    return 'watch'
   }
 
   function tickLoop(now: number): void {
@@ -677,15 +703,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     playback.value.firedIdx = advanceSimTo(cur.value, evs.value, playback.value.t, playback.value.firedIdx)
     for (let i = before; i < playback.value.firedIdx; i++) {
       const ev = evs.value[i]
-      if (ev && checkBreakpoint(ev)) {
-        fxEventId.value = ev.id
-        selectedId.value = ev.id
-        rebuildState(ev.timestamp)
-        pause()
-        toast(`断点命中: ${ev.summary}`)
-        syncHash()
-        return
-      }
+      if (ev && applyBreakpoint(ev) === 'pause') return
     }
     if (playback.value.firedIdx > before && evs.value[playback.value.firedIdx - 1]) {
       fxEventId.value = evs.value[playback.value.firedIdx - 1].id
@@ -718,10 +736,13 @@ export const useHaotianStore = defineStore('haotian', () => {
         }
       }
     }
-    if (target) {
-      if (mode.value === 'replay') fxEventId.value = target.id
-      selectEvent(target.id, { seek: true })
-    }
+    if (!target) return
+    // NOTE: 单步前进 = 执行到该事件，命中断点应暂停（与播放循环一致）；
+    //       后退是回看、seekTo 是显式导航，均不拦截（标准调试器 jump 语义）。
+    //       watch 断点命中不暂停：applyBreakpoint 返回 'watch' 时继续正常步进（计数 + 标记已做）。
+    if (dir > 0 && applyBreakpoint(target) === 'pause') return
+    if (mode.value === 'replay') fxEventId.value = target.id
+    selectEvent(target.id, { seek: true })
   }
 
   function selectDebugNode(id: string): void {
@@ -779,6 +800,9 @@ export const useHaotianStore = defineStore('haotian', () => {
 
   function removeBreakpoint(id: string): void {
     breakpoints.value = breakpoints.value.filter((b) => b.id !== id)
+    const next = { ...breakpointHits.value }
+    delete next[id]
+    breakpointHits.value = next
     persistPrefs()
   }
 
@@ -787,8 +811,15 @@ export const useHaotianStore = defineStore('haotian', () => {
     persistPrefs()
   }
 
+  /** 切换断点 watch 模式：命中只标记 + 计数，不暂停 */
+  function toggleBreakpointWatch(id: string): void {
+    breakpoints.value = breakpoints.value.map((b) => (b.id === id ? { ...b, watch: !b.watch } : b))
+    persistPrefs()
+  }
+
   function clearBreakpoints(): void {
     breakpoints.value = []
+    breakpointHits.value = {}
     persistPrefs()
   }
 
@@ -1065,7 +1096,7 @@ export const useHaotianStore = defineStore('haotian', () => {
         breakpoints.value = s.breakpoints
       } else if (s.version === 1 && s.breakpoint) {
         // v1 会话迁移：单断点 → 断点数组
-        breakpoints.value = [{ id: 'bp_v1', ...s.breakpoint, enabled: !!s.bpArmed }]
+        breakpoints.value = [{ ...s.breakpoint, id: 'bp_v1', enabled: !!s.bpArmed }]
       }
       showDbg.value = s.showDbg ?? false
       streamText.value = s.streamText ?? ''
@@ -1273,12 +1304,13 @@ export const useHaotianStore = defineStore('haotian', () => {
     clearBookmarks,
     toggleBookmarkPanel,
     breakpoints,
+    breakpointHits,
     bpArmed,
     addBreakpoint,
     removeBreakpoint,
     toggleBreakpoint,
+    toggleBreakpointWatch,
     clearBreakpoints,
-    checkBreakpoint,
     bpOpen,
     sumOpen,
     diffOpen,

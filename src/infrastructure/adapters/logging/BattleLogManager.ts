@@ -126,8 +126,6 @@ export class BattleLogManager implements IBattleLogManager {
       action: true,
       debug: true,
     }
-
-    // this.addHandler(new ConsoleLogHandler())
   }
 
   /**

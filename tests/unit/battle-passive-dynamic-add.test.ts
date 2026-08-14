@@ -15,11 +15,6 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { createBattleParticipantsFromConfig } from '@tests/factories/ParticipantFactory'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
 vi.mock('@/shared/utils/RAF', () => ({
   RAFTimer: class {
     // NOTE: 必须保持异步时序——BattleAnimationManager 依赖 setTimeout 回调

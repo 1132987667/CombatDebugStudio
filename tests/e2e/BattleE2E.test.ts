@@ -12,23 +12,6 @@ import { createBattleParticipantsFromConfig } from '@tests/factories/Participant
 import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 describe('BattleSystem E2E', () => {
   beforeEach(() => {
     container.clear()

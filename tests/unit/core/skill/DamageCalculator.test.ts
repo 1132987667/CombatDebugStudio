@@ -6,7 +6,6 @@ import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory } from '@/domain/skill/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { StepExecutionContext } from '@/domain/battle/type/types'
-import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 
@@ -14,16 +13,6 @@ vi.mock('@/infrastructure/adapters/logging', () => ({
   battleLogManager: { addDebugLog: () => {}, addSystemLog: () => {} },
   LogLevel: { DEBUG: 'DEBUG', INFO: 'INFO', WARN: 'WARN', ERROR: 'ERROR' },
 }))
-
-LoggerProvider.logger = {
-  addDebugLog: vi.fn(),
-  addSystemLog: vi.fn(),
-  addBattleLog: vi.fn(),
-  addActionLog: vi.fn(),
-  clearLogs: vi.fn(),
-  syncBattleLogs: vi.fn(),
-  getSystemLogs: () => [],
-} as any
 
 function createSkillStep(overrides?: Partial<ExtendedSkillStep>): ExtendedSkillStep {
   return {

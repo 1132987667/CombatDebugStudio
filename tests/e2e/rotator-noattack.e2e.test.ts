@@ -16,23 +16,6 @@ import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 const CONTROL_BUFF_IDS = [
   'buff_seal_all',
   'buff_seal',

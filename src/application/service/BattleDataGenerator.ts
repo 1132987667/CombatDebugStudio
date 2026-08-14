@@ -23,15 +23,8 @@ import { ParticipantSide, ParticipantSideName, BattleStatus, BattleEventType } f
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import type { Enemy } from '@/shared/types/enemy'
-import { container } from '@/infrastructure/di/Container'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 
-/** 惰性获取 DebugGate 实例（DI 容器初始化后方可 resolve） */
-function getDebugGate(): DebugGate | undefined {
-  try { return container.resolve<DebugGate>('DebugGate') }
-  catch { return undefined }
-}
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { LogType, LogLevel, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import { projectSnapshotLogs } from '@/domain/battle/logs/BattleLogProjector'
@@ -75,10 +68,19 @@ export class BattleDataGenerator {
   /** 上一场参与者 ID，用于清理 BuffSystem 残留修饰符 */
   private _prevParticipantIds: string[] = []
   private _currentParticipantIds: string[] = []
+  /** DI 容器（DebugGate 惰性解析用；构造注入避免模块级反向依赖） */
+  private container: Container
 
   constructor(container: Container) {
+    this.container = container
     const battleService = container.resolve<BattleService>('BattleService')
     this.battleSystem = battleService.getBattleManager().getBattleSystem()
+  }
+
+  /** 惰性获取 DebugGate 实例（DI 容器初始化后方可 resolve） */
+  private getDebugGate(): DebugGate | undefined {
+    try { return this.container.resolve<DebugGate>('DebugGate') }
+    catch { return undefined }
   }
 
   /** 取消正在执行的生成任务 */
@@ -99,11 +101,11 @@ export class BattleDataGenerator {
     this._currentParticipantIds = []
 
     // ── 备份并隔离全局日志状态，防止 50 场战斗污染 UI 面板 ──
-    const savedBattleLogs = battleLogManager.exportLogs()
-    battleLogManager.setAutoCleanup(false) // 解除 200 条上限，防止长战斗日志被截断
+    const savedBattleLogs = LoggerProvider.logger.exportLogs()
+    LoggerProvider.logger.setAutoCleanup(false) // 解除 200 条上限，防止长战斗日志被截断
     // 静默：批量写入的日志不通知 UI 监听器，避免 BattleLog 逐条全量重渲染导致白屏
-    battleLogManager.setMuted(true)
-    battleLogManager.clearLogs()
+    LoggerProvider.logger.setMuted(true)
+    LoggerProvider.logger.clearLogs()
 
     const battleLogs: SingleBattleLog[] = []
     //  录制格式时收集本场 RecordedBattle（须在 resetBattle 清除内存录制之前取值）
@@ -113,7 +115,7 @@ export class BattleDataGenerator {
     //  是否保存到昊天镜（IndexedDB）：由显式 record 开关控制，'record' 格式不再隐式存库
     //   （"生成记录"只下载、"存入昊天镜"才存库，两者独立）
     const shouldRecord = options.record === true
-    const dg = getDebugGate()
+    const dg = this.getDebugGate()
     const prevDebugEnabled = dg?.enabled ?? false
     if (dg) dg.enabled = false
     const prevHeadless = this.battleSystem.getHeadless()
@@ -146,7 +148,7 @@ export class BattleDataGenerator {
         // 清理上一场参与者残留在 BuffSystem 中的修饰符
         this.cleanupPrevBuffSystemEntries()
         // 清空上一场的战斗日志，保证本场日志独立完整
-        battleLogManager.clearLogs()
+        LoggerProvider.logger.clearLogs()
 
         // 每场独立 battleId
         this.battleSystem.regenerateBattleId()
@@ -231,12 +233,12 @@ export class BattleDataGenerator {
     } finally {
       // 恢复原始设置
       this.battleSystem.setHeadless(prevHeadless)
-      const dgRestore = getDebugGate()
+      const dgRestore = this.getDebugGate()
       if (dgRestore) dgRestore.enabled = prevDebugEnabled
-      battleLogManager.setAutoCleanup(true)
+      LoggerProvider.logger.setAutoCleanup(true)
       // 解除静默（补发一次通知），随后恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
-      battleLogManager.setMuted(false)
-      battleLogManager.importLogs(savedBattleLogs)
+      LoggerProvider.logger.setMuted(false)
+      LoggerProvider.logger.importLogs(savedBattleLogs)
       // 清理最后一场参与者残留
       this.cleanupPrevBuffSystemEntries()
       // 清理可能未进入 _prevParticipantIds 的当前参与者
@@ -282,7 +284,7 @@ export class BattleDataGenerator {
    * 与日志面板"导出"使用完全相同的渲染管线，保证格式一致
    */
   private collectNarrativeBlocks(): NarrativeBlock[] {
-    const entries = battleLogManager
+    const entries = LoggerProvider.logger
       .getAllLogs()
       .filter((l) => l.type === LogType.BATTLE) as BattleLogEntry[]
     return this.renderer.renderEntries(entries)
@@ -300,7 +302,7 @@ export class BattleDataGenerator {
     if (!battleData) return
 
     const lastTurn = battleData.currentTurn || 1
-    const allBattles = battleLogManager.getAllLogs().filter(
+    const allBattles = LoggerProvider.logger.getAllLogs().filter(
       (l) => l.type === LogType.BATTLE,
     ) as BattleLogEntry[]
 
@@ -309,7 +311,7 @@ export class BattleDataGenerator {
     if (!hasSnapshot) {
       // 投影器统一生成（与 BattleSystem 回合末/终局快照同口径）
       for (const log of projectSnapshotLogs(battleData.participants, lastTurn)) {
-        battleLogManager.addBattleLog({
+        LoggerProvider.logger.addBattleLog({
           turn: lastTurn,
           ...log,
         })
@@ -322,7 +324,7 @@ export class BattleDataGenerator {
     )
     if (!hasEndBanner && battleData.winner) {
       const winnerLabel = ParticipantSideName[battleData.winner!]
-      battleLogManager.addBattleLog({
+      LoggerProvider.logger.addBattleLog({
         turn: lastTurn,
         message: `战斗结束！胜利者：${winnerLabel}`,
         segments: [{ text: `战斗结束！胜利者：${winnerLabel}` }],

@@ -333,3 +333,84 @@ describe('持久化', () => {
     expect(pack.countOf('mat_001')).toBe(24)
   })
 })
+
+describe("装备穿戴（背包实例化闭环）", () => {
+  it("竹剑可穿戴到武器槽：扣背包一件、槽位记录、属性注入可算", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    expect(pack.countOf("wp_t1_light_01")).toBe(1)
+
+    expect(pack.slotKeyOf("wp_t1_light_01")).toBe("weapon")
+    expect(pack.equip("wp_t1_light_01")).toBe(true)
+
+    expect(pack.countOf("wp_t1_light_01")).toBe(0)
+    expect(pack.equipped.weapon).toBe("wp_t1_light_01")
+    expect(pack.equippedGear("weapon")?.name).toBe("竹剑")
+
+    const stats = pack.equippedStats()
+    expect(stats.some((s) => s.attribute === "attack" && s.value === 12 && s.modifierType === "flat")).toBe(true)
+  })
+
+  it("穿戴非装备物品被拒绝", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    expect(pack.slotKeyOf("mat_001")).toBeNull()
+    expect(pack.equip("mat_001")).toBe(false)
+  })
+
+  it("同槽换装：旧装备自动回背包", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 初始：竹剑 ×1、松木棍 ×1
+    pack.addItem("wp_t1_mid_01", 1) // 松木棍 ×2
+    expect(pack.equip("wp_t1_light_01")).toBe(true) // 竹剑 ×0
+    expect(pack.equip("wp_t1_mid_01")).toBe(true) // 松木棍 ×1，竹剑回背包 ×1
+
+    expect(pack.equipped.weapon).toBe("wp_t1_mid_01")
+    expect(pack.countOf("wp_t1_light_01")).toBe(1)
+    expect(pack.countOf("wp_t1_mid_01")).toBe(1)
+  })
+
+  it("卸下装备回背包并清空槽位", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    expect(pack.unequip("weapon")).toBe(true)
+
+    expect(pack.equipped.weapon).toBeUndefined()
+    expect(pack.countOf("wp_t1_light_01")).toBe(1)
+  })
+
+  it("equipped 随快照持久化，load 可恢复", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    await pack.flush()
+
+    const doc = __mem.get("xiyou")?.get("pack_runtime") as { data: { equipped?: Record<string, string> } }
+    expect(doc.data.equipped?.weapon).toBe("wp_t1_light_01")
+
+    setActivePinia(createPinia())
+    const pack2 = usePackStore()
+    await pack2.init()
+    expect(pack2.equipped.weapon).toBe("wp_t1_light_01")
+  })
+})
+
+describe("equipBonuses 装备属性注入", () => {
+  it("flat 属性直接相加，percent 按主角基础值折算", async () => {
+    const { equipBonuses } = await import("@/presentation/modules/yanjie/xiyou/data/mock")
+    const bonuses = equipBonuses([
+      { attribute: "attack", modifierType: "flat" as const, value: 12 },
+      { attribute: "attack", modifierType: "percent" as const, value: 10 },
+    ])
+    // 返回增量：flat +12 + percent 10%（主角基础攻击 18 → round(1.8)=2）= 14
+    expect(bonuses.attack).toBe(14)
+  })
+
+  it("未穿戴任何装备返回空加成", async () => {
+    const { equipBonuses } = await import("@/presentation/modules/yanjie/xiyou/data/mock")
+    const bonuses = equipBonuses([])
+    expect(bonuses.attack ?? 0).toBe(0)
+  })
+})

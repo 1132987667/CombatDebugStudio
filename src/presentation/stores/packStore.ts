@@ -14,6 +14,7 @@ import { defineStore } from 'pinia'
 import type { XiyouCatalogItem, XiyouCurrency, XiyouPlayer, XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/data/mock'
 import {
   currency as mockCurrency,
+  equipmentCatalog,
   materials,
   equipment,
   packItems,
@@ -22,6 +23,7 @@ import {
   player as mockPlayer,
   storageCells,
 } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import type { EquipmentData } from '@/domain/fengshen/types'
 import type { XiyouData } from '@/domain/fengshen/types'
 import type { EnemyDrop } from '@/shared/types/enemy'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
@@ -35,6 +37,16 @@ export interface StorageSlot {
   count: number
 }
 
+/** 装备槽位键（三类装备槽，对齐 equipment.json slot：weapon/armor/accessory） */
+export type GearSlotKey = 'weapon' | 'armor' | 'accessory'
+
+/** 装备槽位展示名（EquipPanel 用） */
+export const GEAR_SLOT_LABELS: Record<GearSlotKey, string> = {
+  weapon: '武器',
+  armor: '衣服',
+  accessory: '饰品',
+}
+
 /** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data） */
 export interface PackRuntimeSnapshot {
   version: 1
@@ -42,6 +54,8 @@ export interface PackRuntimeSnapshot {
   storage: StorageSlot[]
   quickSlots: (string | null)[]
   currency: XiyouCurrency
+  /** 已穿戴装备（槽位 → itemId，缺省未穿戴） */
+  equipped?: Partial<Record<GearSlotKey, string>>
   updatedAt: string
 }
 
@@ -68,8 +82,13 @@ for (const it of packItems) {
   if (!nameToId.has(it.name)) nameToId.set(it.name, it.id)
 }
 
+/** 玩家数值属性键（name/title 等字符串属性不可参与加减） */
+type NumericPlayerKey = {
+  [K in keyof XiyouPlayer]: XiyouPlayer[K] extends number ? K : never
+}[keyof XiyouPlayer]
+
 /** 永久丹药效果表（items.json 未给 effects，此处按 source 文案补齐，供战斗外使用） */
-const PERM_PILL_EFFECTS: Record<string, { attr: keyof XiyouPlayer; label: string; value: number }> = {
+const PERM_PILL_EFFECTS: Record<string, { attr: NumericPlayerKey; label: string; value: number }> = {
   elix_perm_01: { attr: 'maxHp', label: '气血上限', value: 20 },
   elix_perm_02: { attr: 'defense', label: '防御', value: 5 },
   elix_perm_03: { attr: 'attackMin', label: '攻击', value: 5 },
@@ -98,6 +117,8 @@ export const usePackStore = defineStore('pack', () => {
   const storage = ref<StorageSlot[]>([])
   /** 快捷栏（固定 4 格，存 itemId） */
   const quickSlots = ref<(string | null)[]>(Array(QUICK_SLOT_COUNT).fill(null))
+  /** 已穿戴装备：槽位 → itemId（背包实例化，穿戴上扣背包一件） */
+  const equipped = reactive<Partial<Record<GearSlotKey, string>>>({})
   /** 货币（独立持有，变更写回 mock.currency 保持全局一致） */
   const currency = reactive<XiyouCurrency>({ ...mockCurrency })
 
@@ -139,6 +160,7 @@ export const usePackStore = defineStore('pack', () => {
       storage: storage.value.map((s) => ({ itemId: s.itemId, count: s.count })),
       quickSlots: [...quickSlots.value],
       currency: { copper: currency.copper, silver: currency.silver, jade: currency.jade },
+      equipped: { ...equipped },
       updatedAt: new Date().toISOString(),
     }
     try {
@@ -172,6 +194,11 @@ export const usePackStore = defineStore('pack', () => {
         currency.jade = snap.currency.jade
         syncCurrency()
       }
+      if (snap.equipped) {
+        for (const key of Object.keys(snap.equipped) as GearSlotKey[]) {
+          if (snap.equipped[key]) equipped[key] = snap.equipped[key]
+        }
+      }
     } catch {
       // IDB 不可用/损坏时保持 configs 兜底
     }
@@ -203,6 +230,71 @@ export const usePackStore = defineStore('pack', () => {
     initialized = true
     buildFromConfigs()
     await load()
+  }
+
+  // ════════════ 装备穿戴（背包实例化） ════════════
+
+  /** 装备定义查询（equipment.json 唯一权威；不在目录内返回 undefined） */
+  function gearById(itemId: string): EquipmentData | undefined {
+    return equipmentCatalog.find((g) => g.id === itemId)
+  }
+
+  /** 装备对应的槽位键（weapon/armor/accessory）；非装备返回 null */
+  function slotKeyOf(itemId: string): GearSlotKey | null {
+    return gearById(itemId)?.slot ?? null
+  }
+
+  /** 当前槽位已穿戴的装备定义 */
+  function equippedGear(slot: GearSlotKey): EquipmentData | undefined {
+    const id = equipped[slot]
+    return id ? gearById(id) : undefined
+  }
+
+  /** 穿戴装备：扣背包一件 → 写入槽位（同槽旧装备自动卸下回背包） */
+  function equip(itemId: string): boolean {
+    const slot = slotKeyOf(itemId)
+    if (!slot) {
+      notification.toast('该物品不可穿戴')
+      return false
+    }
+    const cur = inventory.value[itemId] ?? 0
+    if (cur <= 0) {
+      notification.toast('背包中没有该装备')
+      return false
+    }
+    // 同槽旧装备先卸下回背包
+    const oldId = equipped[slot]
+    if (oldId && oldId !== itemId) {
+      inventory.value[oldId] = (inventory.value[oldId] ?? 0) + 1
+    }
+    equipped[slot] = itemId
+    const next = cur - 1
+    if (next <= 0) delete inventory.value[itemId]
+    else inventory.value[itemId] = next
+    scheduleSave()
+    notification.toast(`已穿戴「${gearById(itemId)?.name ?? itemId}」`, 'success')
+    return true
+  }
+
+  /** 卸下装备：槽位清空 → 装备回背包 */
+  function unequip(slot: GearSlotKey): boolean {
+    const id = equipped[slot]
+    if (!id) return false
+    delete equipped[slot]
+    inventory.value[id] = (inventory.value[id] ?? 0) + 1
+    scheduleSave()
+    notification.toast(`已卸下「${gearById(id)?.name ?? id}」`, 'success')
+    return true
+  }
+
+  /** 已穿戴装备的 stats 汇总（供 buildBattleTeams 注入主角，未穿戴返回空） */
+  function equippedStats(): EquipmentData['stats'] {
+    const out: EquipmentData['stats'] = []
+    for (const slot of ['weapon', 'armor', 'accessory'] as const) {
+      const g = equippedGear(slot)
+      if (g) out.push(...g.stats)
+    }
+    return out
   }
 
   // ════════════ 背包操作 ════════════
@@ -489,10 +581,17 @@ export const usePackStore = defineStore('pack', () => {
     storageCapacity,
     quickSlots,
     currency,
+    equipped,
     ownedItems,
     catalogById,
     countOf,
     canUseOutOfBattle,
+    gearById,
+    slotKeyOf,
+    equippedGear,
+    equippedStats,
+    equip,
+    unequip,
     init,
     addItem,
     removeItem,

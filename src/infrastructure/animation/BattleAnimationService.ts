@@ -121,19 +121,73 @@ export class BattleAnimationService {
     })
   }
 
+  /** 浮动文本动画通用管线：创建/复用 div → cssText → 上浮缩放 → 淡出缩小 → 清理
+   *  reuseSelector 提供时复用已存在的同名元素（技能名连续触发不叠加） */
+  private playFloatingTextAnimation(
+    targetElement: HTMLElement,
+    options: {
+      className: string
+      cssText: string
+      text: string
+      moveY?: number
+      delayMs?: number
+      reuseSelector?: string
+    },
+  ): void {
+    const { className, cssText, text, moveY = -40, delayMs = 0, reuseSelector } =
+      options
+    const reused = reuseSelector
+      ? targetElement.querySelector<HTMLElement>(reuseSelector)
+      : null
+    const textElement =
+      reused ??
+      (() => {
+        const el = document.createElement('div')
+        el.className = className
+        el.style.cssText = cssText
+        targetElement.style.position = 'relative'
+        targetElement.appendChild(el)
+        return el
+      })()
+    textElement.textContent = text
+    textElement.style.opacity = '1'
+    textElement.style.transform = 'translate(-50%, -50%) scale(1)'
+
+    const timeline = this.createTimeline()
+    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
+    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
+
+    timeline
+      .set(textElement, { opacity: 1, scale: 1, y: 0 })
+      .to(textElement, {
+        y: moveY,
+        scale: 0.8,
+        duration: moveDurationMs / 1000,
+        ease: 'power2.out',
+        delay: delayMs / 1000,
+      })
+      .to(textElement, {
+        opacity: 0,
+        scale: 0.3,
+        duration: fadeDurationMs / 1000,
+        ease: 'power2.in',
+        onComplete: () => {
+          if (textElement.parentNode) {
+            textElement.parentNode.removeChild(textElement)
+          }
+        },
+      })
+  }
+
   private playSkillNameAnimation(
     targetElement: HTMLElement,
     skillName: string,
     side: SideType,
   ): void {
-    let skillElement: HTMLElement | null = targetElement.querySelector(
-      '.floating-skill-name',
-    )
-
-    if (!skillElement) {
-      skillElement = document.createElement('div')
-      skillElement.className = 'floating-skill-name'
-      skillElement.style.cssText = `
+    const direction = side === Side.LEFT ? -1 : 1
+    this.playFloatingTextAnimation(targetElement, {
+      className: 'floating-skill-name',
+      cssText: `
         position: absolute;
         left: 50%;
         top: 50%;
@@ -145,42 +199,12 @@ export class BattleAnimationService {
         pointer-events: none;
         z-index: var(--z-float);
         white-space: nowrap;
-      `
-      targetElement.style.position = 'relative'
-      targetElement.appendChild(skillElement)
-    }
-
-    skillElement.textContent = skillName
-    skillElement.style.opacity = '1'
-    skillElement.style.transform = 'translate(-50%, -50%) scale(1)'
-
-    const timeline = this.createTimeline()
-    const delayMs = this.getScaledDuration(this.SKILL_NAME_DELAY)
-    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
-    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
-
-    const direction = side === Side.LEFT ? -1 : 1
-
-    timeline
-      .set(skillElement, { opacity: 1, scale: 1, y: 0 })
-      .to(skillElement, {
-        y: -30 * direction,
-        scale: 0.8,
-        duration: moveDurationMs / 1000,
-        ease: 'power2.out',
-        delay: delayMs / 1000,
-      })
-      .to(skillElement, {
-        opacity: 0,
-        scale: 0.3,
-        duration: fadeDurationMs / 1000,
-        ease: 'power2.in',
-        onComplete: () => {
-          if (skillElement && skillElement.parentNode) {
-            skillElement.parentNode.removeChild(skillElement)
-          }
-        },
-      })
+      `,
+      text: skillName,
+      moveY: -30 * direction,
+      delayMs: this.getScaledDuration(this.SKILL_NAME_DELAY),
+      reuseSelector: '.floating-skill-name',
+    })
   }
 
   playHitAnimation(data: HitAnimationData): Promise<void> {
@@ -296,9 +320,6 @@ export class BattleAnimationService {
     isCritical?: boolean,
     delayMs: number = 0,
   ): void {
-    const textElement = document.createElement('div')
-    textElement.className = 'floating-damage-text'
-
     const colorMap: Partial<Record<ActionResultType, string>> = {
       [ActionResultType.DAMAGE]: 'var(--color-damage)',
       [ActionResultType.HEAL]: 'var(--color-heal)',
@@ -308,47 +329,23 @@ export class BattleAnimationService {
     const prefix = type === ActionResultType.HEAL ? '+' : '-'
     const suffix = isCritical ? '!' : ''
 
-    textElement.style.cssText = `
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: ${isCritical ? '24px' : '18px'};
-      font-weight: bold;
-      color: ${colorMap[type]};
-      text-shadow: 0 0 10px ${colorMap[type]};
-      pointer-events: none;
-      z-index: var(--z-float);
-    `
-    textElement.textContent = `${prefix}${Math.abs(damage)}${suffix}`
-
-    targetElement.style.position = 'relative'
-    targetElement.appendChild(textElement)
-
-    const timeline = this.createTimeline()
-    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
-    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
-
-    timeline
-      .set(textElement, { opacity: 1, scale: 1, y: 0 })
-      .to(textElement, {
-        y: -40,
-        scale: 0.8,
-        duration: moveDurationMs / 1000,
-        ease: 'power2.out',
-        delay: delayMs / 1000,
-      })
-      .to(textElement, {
-        opacity: 0,
-        scale: 0.3,
-        duration: fadeDurationMs / 1000,
-        ease: 'power2.in',
-        onComplete: () => {
-          if (textElement.parentNode) {
-            textElement.parentNode.removeChild(textElement)
-          }
-        },
-      })
+    this.playFloatingTextAnimation(targetElement, {
+      className: 'floating-damage-text',
+      cssText: `
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: ${isCritical ? '24px' : '18px'};
+        font-weight: bold;
+        color: ${colorMap[type]};
+        text-shadow: 0 0 10px ${colorMap[type]};
+        pointer-events: none;
+        z-index: var(--z-float);
+      `,
+      text: `${prefix}${Math.abs(damage)}${suffix}`,
+      delayMs,
+    })
   }
 
   private playPassiveTextAnimation(
@@ -356,50 +353,23 @@ export class BattleAnimationService {
     passiveName: string,
     delayMs: number,
   ): void {
-    const textElement = document.createElement('div')
-    textElement.className = 'floating-passive-text'
-
-    textElement.style.cssText = `
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 14px;
-      font-weight: bold;
-      color: var(--color-debuff);
-      text-shadow: 0 0 10px rgba(var(--rgb-debuff), 0.8);
-      pointer-events: none;
-      z-index: var(--z-float);
-    `
-    textElement.textContent = passiveName
-
-    targetElement.style.position = 'relative'
-    targetElement.appendChild(textElement)
-
-    const timeline = this.createTimeline()
-    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
-    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
-
-    timeline
-      .set(textElement, { opacity: 1, scale: 1, y: 0 })
-      .to(textElement, {
-        y: -40,
-        scale: 0.8,
-        duration: moveDurationMs / 1000,
-        ease: 'power2.out',
-        delay: delayMs / 1000,
-      })
-      .to(textElement, {
-        opacity: 0,
-        scale: 0.3,
-        duration: fadeDurationMs / 1000,
-        ease: 'power2.in',
-        onComplete: () => {
-          if (textElement.parentNode) {
-            textElement.parentNode.removeChild(textElement)
-          }
-        },
-      })
+    this.playFloatingTextAnimation(targetElement, {
+      className: 'floating-passive-text',
+      cssText: `
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 14px;
+        font-weight: bold;
+        color: var(--color-debuff);
+        text-shadow: 0 0 10px rgba(var(--rgb-debuff), 0.8);
+        pointer-events: none;
+        z-index: var(--z-float);
+      `,
+      text: passiveName,
+      delayMs,
+    })
   }
 
   playBuffAnimation(

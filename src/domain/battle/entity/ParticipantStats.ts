@@ -78,11 +78,6 @@ export class ParticipantStats {
     return this.attributes.get(attr)
   }
 
-  getAttrVal(attr: ATTRIBUTE_CODE): number {
-    const result = this.getAttribute(attr)
-    return result?.value ?? 0
-  }
-
   getAttribute(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
     return this.attributes.get(attr)
   }

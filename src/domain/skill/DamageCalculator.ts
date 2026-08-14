@@ -1,4 +1,4 @@
-import {
+﻿import {
   ATTRIBUTE_CODE,
   getAttrDv,
 } from '@/domain/attribute/types'
@@ -8,10 +8,11 @@ import type {
 import type { BattleEntity, StepExecutionContext } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
-import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
+import { AttackType, DamageCategory, ElementCode, ElementType } from '@/domain/skill/types'
 import { processExtraValues, processTargetModifiers, resolveAttributeValue } from '@/domain/skill/calculation-utils'
 import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
+import { KNOWN_BUFF_IDS } from '@/domain/buff/types'
 import { clamp, floor } from '@/shared/utils/math'
 import { resolveElementCoefficient, type ElementMatrixLike } from '@/domain/fengshen/elementMatrix'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
@@ -42,13 +43,6 @@ export interface DamageResult {
   isMiss: boolean
 }
 
-
-function getAttrVal(
-  participant: BattleEntity,
-  attr: ATTRIBUTE_CODE,
-): number {
-  return participant.getAttribute(attr)
-}
 
 interface CalculationStepLog {
   step: string
@@ -128,7 +122,7 @@ export class DamageCalculator {
     }
 
     //  检测必暴标记：必暴意味着必中+必暴
-    const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff('buff_guaranteed_crit')
+    const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff(KNOWN_BUFF_IDS.GUARANTEED_CRIT)
 
     // 命中/闪避判定 — 默认命中率由攻防命中值/闪避值对抗，命中率/闪避率作为修正项
     // 闪避门控：仅当 enableDodge 为 true 时执行闪避判定
@@ -258,7 +252,7 @@ export class DamageCalculator {
     // ===== 来源方加成（原始伤害阶段） =====
 
     // 来源方伤害提升（damageBoost）
-    const dmgBoost = getAttrVal(source, ATTRIBUTE_CODE.damageBoost)
+    const dmgBoost = source.getAttribute(ATTRIBUTE_CODE.damageBoost)
     breakdown.damageBoost = dmgBoost
     if (dmgBoost > 0) {
       const before = damage
@@ -275,8 +269,8 @@ export class DamageCalculator {
 
     // 火系技能伤害加成（来源方）— 仅火元素技能
     const elementType = skillStep.elementType
-    if (elementType === 'HUO') {
-      const fireBonus = getAttrVal(source, ATTRIBUTE_CODE.fireSkillDmgBonus)
+    if (elementType === ElementCode.HUO) {
+      const fireBonus = source.getAttribute(ATTRIBUTE_CODE.fireSkillDmgBonus)
       breakdown.fireSkillDmgBonus = fireBonus
       if (fireBonus > 0) {
         const before = damage
@@ -298,7 +292,7 @@ export class DamageCalculator {
       skillAtkType === AttackType.NORMAL ||
       damageCategory === DamageCategory.PHYSICAL
     ) {
-      const physBonus = getAttrVal(source, ATTRIBUTE_CODE.physicalSkillDmgBonus)
+      const physBonus = source.getAttribute(ATTRIBUTE_CODE.physicalSkillDmgBonus)
       breakdown.physicalSkillDmgBonus = physBonus
       if (physBonus > 0) {
         const before = damage
@@ -320,7 +314,7 @@ export class DamageCalculator {
         ? Math.max(0, (target.currentHealth / target.maxHealth) * 100)
         : 100
     if (targetHpPercent < 30) {
-      const lowHpBonus = getAttrVal(source, ATTRIBUTE_CODE.damageToLowHp)
+      const lowHpBonus = source.getAttribute(ATTRIBUTE_CODE.damageToLowHp)
       breakdown.damageToLowHp = lowHpBonus
       if (lowHpBonus > 0) {
         const before = damage
@@ -344,8 +338,7 @@ export class DamageCalculator {
 
     // 暴击承伤减免（目标方）
     if (damageResult.isCritical) {
-      const critReduction = getAttrVal(
-        target,
+      const critReduction = target.getAttribute(
         ATTRIBUTE_CODE.critDmgTakenReduction,
       )
       breakdown.critDmgTakenReduction = critReduction
@@ -365,7 +358,7 @@ export class DamageCalculator {
 
     // 防御计算（减法公式）— 真实伤害跳过
     if (damageCategory !== DamageCategory.TRUE) {
-      breakdown.defenseValue = getAttrVal(target, ATTRIBUTE_CODE.defense)
+      breakdown.defenseValue = target.getAttribute(ATTRIBUTE_CODE.defense)
       breakdown.effectiveDefense = breakdown.defenseValue
       breakdown.defenseMultiplier = Math.max(
         0,
@@ -391,8 +384,7 @@ export class DamageCalculator {
     if (damageCategory !== DamageCategory.TRUE) {
       const atkType = skillAtkType
       if (atkType === AttackType.NORMAL) {
-        const reduction = getAttrVal(
-          target,
+        const reduction = target.getAttribute(
           ATTRIBUTE_CODE.normalAtkDmgReduction,
         )
         breakdown.normalAtkReduction = reduction
@@ -409,8 +401,7 @@ export class DamageCalculator {
           })
         }
       } else {
-        const reduction = getAttrVal(
-          target,
+        const reduction = target.getAttribute(
           ATTRIBUTE_CODE.skillDmgReduction,
         )
         breakdown.skillDmgReduction = reduction
@@ -445,10 +436,10 @@ export class DamageCalculator {
       if (!elementType) {
         LoggerProvider.logger.addDebugLog(`ELEMENTAL 类型伤害缺少 elementType，默认使用 HUO(火)`, { level: LogLevel.WARN })
       }
-      const resolvedType = elementType || 'HUO'
+      const resolvedType = elementType || ElementCode.HUO
       const resAttr =
         ELEMENT_RESISTANCE_MAP[resolvedType] || ATTRIBUTE_CODE.fireRes
-      const elementalRes = getAttrVal(target, resAttr)
+      const elementalRes = target.getAttribute(resAttr)
       breakdown.elementalResistance = elementalRes
       if (elementalRes > 0) {
         const before = damage
@@ -483,7 +474,7 @@ export class DamageCalculator {
 
     // 伤害减免 — 同时作用于 ELEMENTAL 和 PHYSICAL，TRUE 跳过
     if (damageCategory !== DamageCategory.TRUE) {
-      const dmgReduction = getAttrVal(target, ATTRIBUTE_CODE.damageReduction)
+      const dmgReduction = target.getAttribute(ATTRIBUTE_CODE.damageReduction)
       breakdown.damageReduction = dmgReduction
       if (dmgReduction > 0) {
         const before = damage
@@ -501,8 +492,7 @@ export class DamageCalculator {
     // TRUE 伤害跳过伤害减免：无数值变换，不记录步骤
 
     // 受到伤害增加
-    breakdown.damageTakenIncrease = getAttrVal(
-      target,
+    breakdown.damageTakenIncrease = target.getAttribute(
       ATTRIBUTE_CODE.damageTakenIncrease,
     )
     if (breakdown.damageTakenIncrease > 0) {

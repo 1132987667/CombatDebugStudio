@@ -21,7 +21,7 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
 import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
-import scenesData from '@configs/scenes/scenes.json'
+import xiyouScenesData from '@configs/xiyou/scenes.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
@@ -65,7 +65,29 @@ export class ConfigDataSource implements IDataSource {
   }
 
   getScenes(): SceneData[] {
-    return scenesData as SceneData[]
+    // NOTE: 场景数据已合并至 xiyou/scenes.json（L4 合并 scenes.json 与 xiyou/scenes.json）：
+    //       以西游关卡为唯一权威，desc 即 SceneData.background，difficulties/奖励/解锁链随关内置。
+    return (xiyouScenesData as unknown as Array<{
+      id: string
+      name: string
+      desc: string
+      difficulties: SceneData['difficulties']
+      requiredLevel: number
+      rewards: SceneData['rewards']
+      unlocks?: string
+      hiddenBoss?: SceneData['hiddenBoss']
+      rewardDrops?: string[]
+    }>).map((s) => ({
+      id: s.id,
+      name: s.name,
+      background: s.desc,
+      difficulties: s.difficulties,
+      requiredLevel: s.requiredLevel,
+      rewards: s.rewards,
+      ...(s.unlocks !== undefined && { unlocks: s.unlocks }),
+      ...(s.hiddenBoss !== undefined && { hiddenBoss: s.hiddenBoss }),
+      ...(s.rewardDrops !== undefined && { rewardDrops: s.rewardDrops }),
+    }))
   }
 
   getLineups(): LineupData[] {

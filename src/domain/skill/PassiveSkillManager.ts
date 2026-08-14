@@ -56,17 +56,6 @@ export interface PassiveSkillConfig {
 export class PassiveSkillManager {
   // 当前参战角色的被动技能配置
   private passives: Map<string, PassiveSkillConfig[]> = new Map()
-  /**
-   * 倒排索引：按触发时机索引被动技能
-   * 加速 triggerPassiveSkillsForAll 查询，避免遍历所有角色×所有被动
-   * ponytail: 必须与 registerPassive/removePassive/clearPassives/clearAll 同步更新。
-   *           所有被动注册必须通过 registerPassive()，禁止直接操作 passives Map，
-   *           否则索引与实际数据不一致导致被动静默丢失。
-   */
-  private indexByPhase = new Map<
-    BattleTriggerPhase,
-    Array<{ characterId: string; config: PassiveSkillConfig }>
-  >()
   private skillManager: SkillManager
   private buffSystem: BuffSystem
 
@@ -154,13 +143,6 @@ export class PassiveSkillManager {
     const list = this.passives.get(characterId) || []
     list.push(config)
     this.passives.set(characterId, list)
-
-    // 同步更新倒排索引
-    if (config.trigger) {
-      const entries = this.indexByPhase.get(config.trigger) || []
-      entries.push({ characterId, config })
-      this.indexByPhase.set(config.trigger, entries)
-    }
   }
 
   /**
@@ -734,39 +716,16 @@ export class PassiveSkillManager {
     if (!list) return false
     const index = list.findIndex((p) => p.id === passiveId)
     if (index === -1) return false
-    const removed = list[index]
     list.splice(index, 1)
-
-    // 同步更新倒排索引
-    if (removed.trigger) {
-      const entries = this.indexByPhase.get(removed.trigger)
-      if (entries) {
-        const idx = entries.findIndex(
-          (e) => e.characterId === characterId && e.config.id === passiveId,
-        )
-        if (idx !== -1) entries.splice(idx, 1)
-        if (entries.length === 0) this.indexByPhase.delete(removed.trigger)
-      }
-    }
     return true
   }
 
   clearPassives(characterId: string): void {
-    // 从倒排索引中移除该角色的所有条目
-    this.indexByPhase.forEach((entries, trigger) => {
-      const remaining = entries.filter((e) => e.characterId !== characterId)
-      if (remaining.length === 0) {
-        this.indexByPhase.delete(trigger)
-      } else {
-        this.indexByPhase.set(trigger, remaining)
-      }
-    })
     this.passives.delete(characterId)
   }
 
   clearAll(): void {
     this.passives.clear()
-    this.indexByPhase.clear()
   }
 
   /** 为所有参与者触发指定时机的被动技能 */
@@ -774,10 +733,16 @@ export class PassiveSkillManager {
     participants: Map<string, BattleEntity>,
     context: PassiveTriggerContext,
   ): void {
-    // 优先走倒排索引，只遍历注册了该时机的被动
-    const entries = this.indexByPhase.get(context.phase)
-    if (entries && entries.length > 0) {
-      for (const { characterId } of entries) {
+    // 按需收集注册了该触发时机的角色（单一数据源 passives，无同步不变量）
+    const registered = new Set<string>()
+    this.passives.forEach((list, characterId) => {
+      if (list.some((config) => config.trigger === context.phase)) {
+        registered.add(characterId)
+      }
+    })
+
+    if (registered.size > 0) {
+      for (const characterId of registered) {
         const entity = participants.get(characterId)
         if (!entity?.isAlive()) continue
         this.triggerPassives(entity, {

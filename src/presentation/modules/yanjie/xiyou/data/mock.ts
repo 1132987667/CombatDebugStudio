@@ -144,10 +144,12 @@ export function buildEnemyParty(sceneEnemies: Array<{ name: string; level: numbe
 
 /**
  * 敌人掉落表（敌人名 → 掉落条目）
- * NOTE: 数据暂收拢于此常量，后续可下沉 configs/xiyou（如 drops.json）；物品 id 必须存在于 items.json
+ * NOTE: 覆盖全部 16 关 39 个敌人名（第 12 关起补齐），物品 id 必须存在于 items.json；
+ *       掉落主题随关卡等级递进：低关木材/玉石 → 中关金属/皮革 → 高关金精/灵气/晶球。
  */
 const XIYOU_DROPS: Record<string, EnemyDrop[]> = {
-  花妖: [{ itemId: 'mat_001', quantity: 1, chance: 1 }],
+  // aolai 区域（花果山/水帘洞/市集/东海）
+  花妖: [{ itemId: 'mat_001', quantity: 2, chance: 1 }],
   石精: [{ itemId: 'mat_002', quantity: 1, chance: 0.8 }],
   山魈: [{ itemId: 'mat_003', quantity: 1, chance: 0.5 }],
   虾兵: [{ itemId: 'mat_005', quantity: 1, chance: 1 }],
@@ -158,6 +160,37 @@ const XIYOU_DROPS: Record<string, EnemyDrop[]> = {
   老狐: [{ itemId: 'mat_004', quantity: 1, chance: 0.4 }],
   礁蟹: [{ itemId: 'mat_005', quantity: 1, chance: 0.6 }],
   小蛟龙: [{ itemId: 'mat_sp_02', quantity: 1, chance: 0.3 }],
+  // tang 区域（五行山/高老庄/浮屠山/流沙河）
+  岩妖: [{ itemId: 'mat_002', quantity: 1, chance: 0.7 }],
+  金精: [{ itemId: 'mat_016', quantity: 1, chance: 0.4 }],
+  山鬼: [{ itemId: 'mat_sp_01', quantity: 1, chance: 0.3 }],
+  野猪精: [{ itemId: 'mat_009', quantity: 1, chance: 0.6 }],
+  家仆妖: [{ itemId: 'mat_003', quantity: 1, chance: 0.5 }],
+  管家妖: [{ itemId: 'mat_008', quantity: 1, chance: 0.4 }],
+  乌鸦精: [{ itemId: 'mat_006', quantity: 1, chance: 0.6 }],
+  黄风怪: [{ itemId: 'mat_sp_02', quantity: 1, chance: 0.35 }],
+  沙妖: [{ itemId: 'mat_002', quantity: 1, chance: 0.7 }],
+  水蛇精: [{ itemId: 'mat_005', quantity: 1, chance: 0.6 }],
+  河伯: [{ itemId: 'mat_008', quantity: 1, chance: 0.4 }],
+  // niliang 区域（黑风山/女儿国/琵琶洞/火焰山）
+  黑熊精: [{ itemId: 'mat_012', quantity: 1, chance: 0.5 }],
+  锦鼠: [{ itemId: 'mat_007', quantity: 1, chance: 0.5 }],
+  驿丞妖: [{ itemId: 'mat_013', quantity: 1, chance: 0.5 }],
+  花仙: [{ itemId: 'mat_020', quantity: 1, chance: 0.4 }],
+  琵琶精: [{ itemId: 'mat_017', quantity: 1, chance: 0.4 }],
+  蝎子精: [{ itemId: 'mat_boss_02', quantity: 1, chance: 0.3 }],
+  火蜥蜴: [{ itemId: 'mat_014', quantity: 1, chance: 0.6 }],
+  熔岩精: [{ itemId: 'mat_013', quantity: 1, chance: 0.5 }],
+  火童子: [{ itemId: 'crys_003', quantity: 1, chance: 0.3 }],
+  // xiniu 区域（翠云山/狮驼岭/通天河/雷音寺）
+  牛魔王: [{ itemId: 'mat_boss_01', quantity: 1, chance: 0.3 }],
+  罗刹女: [{ itemId: 'mat_017', quantity: 1, chance: 0.4 }],
+  青狮精: [{ itemId: 'mat_018', quantity: 1, chance: 0.4 }],
+  白象精: [{ itemId: 'mat_024', quantity: 1, chance: 0.4 }],
+  大鹏: [{ itemId: 'mat_boss_03', quantity: 1, chance: 0.3 }],
+  灵感大王: [{ itemId: 'ess_001', quantity: 1, chance: 0.3 }],
+  鱼妖: [{ itemId: 'mat_008', quantity: 1, chance: 0.5 }],
+  六耳猕猴: [{ itemId: 'ess_003', quantity: 1, chance: 0.5 }],
 }
 
 /** 战斗胜利掉落：聚合场景全部敌人的掉落条目（供 BattleZen 结算入包） */
@@ -171,11 +204,42 @@ export function dropsForScene(scene: XiyouScene): EnemyDrop[] {
 }
 
 /**
+ * 装备加成 → 主角最终属性增量
+ * NOTE: flat 直接相加；percent 按 buildBattleTeams 实际使用的主角基础属性（playerParty[0]）
+ *       计算绝对增量，保证 flat 与 percent 的基准与战斗主角同源。
+ */
+export function equipBonuses(stats: EquipmentData['stats']): Partial<Record<string, number>> {
+  const base = playerParty[0]
+  const flat: Record<string, number> = {}
+  const percent: Record<string, number> = {}
+  for (const s of stats) {
+    if (s.modifierType === 'flat') flat[s.attribute] = (flat[s.attribute] ?? 0) + s.value
+    else percent[s.attribute] = (percent[s.attribute] ?? 0) + s.value
+  }
+  const baseByAttr: Record<string, number> = {
+    [ATTRIBUTE_CODE.attack]: base.attack,
+    [ATTRIBUTE_CODE.defense]: base.defense,
+    [ATTRIBUTE_CODE.speed]: base.speed,
+    [ATTRIBUTE_CODE.maxHealth]: base.maxHp,
+    [ATTRIBUTE_CODE.critRate]: player.critRate,
+  }
+  const out: Record<string, number> = { ...flat }
+  for (const [attr, pct] of Object.entries(percent)) {
+    out[attr] = (out[attr] ?? 0) + Math.round((baseByAttr[attr] ?? 0) * (pct / 100))
+  }
+  return out
+}
+
+/**
  * 将斗战西游阵容转换为战斗引擎参与者（真实参战）
  * NOTE: 经 GameDataProcessor.enemyToParticipant 构造 BattleEntity，消费引擎而非直接 new 领域实现，
  *       与唤灵台演武台同数据源；技能留空（引擎普攻兜底），后续技能接入随 configs/skills 扩展。
+ * @param allyBonuses 主角属性加成（已穿戴装备 stats，flat/percent 归一到最终数值），缺省无加成
  */
-export function buildBattleTeams(scene: XiyouScene): { ally: BattleEntity[]; enemy: BattleEntity[] } {
+export function buildBattleTeams(
+  scene: XiyouScene,
+  allyBonuses?: Partial<Record<string, number>>,
+): { ally: BattleEntity[]; enemy: BattleEntity[] } {
   const toEnemy = (c: XiyouCombatant): Enemy => ({
     id: c.id,
     name: c.name,
@@ -194,9 +258,22 @@ export function buildBattleTeams(scene: XiyouScene): { ally: BattleEntity[]; ene
     drops: XIYOU_DROPS[c.name] ?? [],
     skills: { small: [], passive: [], ultimate: [] },
   })
-  const ally = playerParty.map((c, i) =>
-    GameDataProcessor.enemyToParticipant(toEnemy(c), ParticipantSide.ALLY, i),
-  )
+  // NOTE: 装备加成仅作用于主角（playerParty[0] 降妖者），伙伴为固定出场属性
+  const ally = playerParty.map((c, i) => {
+    if (i !== 0 || !allyBonuses) return GameDataProcessor.enemyToParticipant(toEnemy(c), ParticipantSide.ALLY, i)
+    const boosted: Enemy = {
+      ...toEnemy(c),
+      stats: {
+        ...toEnemy(c).stats,
+        [ATTRIBUTE_CODE.attack]: (toEnemy(c).stats[ATTRIBUTE_CODE.attack] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.attack] ?? 0),
+        [ATTRIBUTE_CODE.defense]: (toEnemy(c).stats[ATTRIBUTE_CODE.defense] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.defense] ?? 0),
+        [ATTRIBUTE_CODE.speed]: (toEnemy(c).stats[ATTRIBUTE_CODE.speed] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.speed] ?? 0),
+        [ATTRIBUTE_CODE.maxHealth]: (toEnemy(c).stats[ATTRIBUTE_CODE.maxHealth] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.maxHealth] ?? 0),
+        [ATTRIBUTE_CODE.critRate]: (toEnemy(c).stats[ATTRIBUTE_CODE.critRate] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.critRate] ?? 0),
+      },
+    }
+    return GameDataProcessor.enemyToParticipant(boosted, ParticipantSide.ALLY, i)
+  })
   const enemy = buildEnemyParty(scene.enemies).map((c, i) =>
     GameDataProcessor.enemyToParticipant(toEnemy(c), ParticipantSide.ENEMY, i),
   )
@@ -243,12 +320,11 @@ export interface XiyouRegion {
   id: string
   name: string
   sub: string
-  viewBox: string
-  route: string
-  decors: Array<{ d: string; kind: 'mountain' | 'cloud' | 'water' | 'fire' | 'tower' | 'wave' }>
 }
 
-/** 场景（关卡）卡片 */
+/** 场景（关卡）卡片
+ * NOTE: 合并自 configs/scenes/scenes.json（L4）：吸收多难度编组/奖励/解锁链/隐藏BOSS，
+ *       battle 用内联 enemies，唤灵台角色库经 GameDataProcessor 读 difficulties.enemyIds */
 export interface XiyouScene {
   id: string
   regionId: string
@@ -260,7 +336,26 @@ export interface XiyouScene {
   difficulty: XiyouDifficulty
   stars: number
   maxStars: number
-  pos: { x: number; y: number }
+  /** 三档难度编组（引用 enemies 表，唤灵台角色库 / 未来难度选择） */
+  difficulties: {
+    easy: { enemyIds: string[] }
+    normal: { enemyIds: string[] }
+    hard: { enemyIds: string[] }
+  }
+  /** 所需等级 */
+  requiredLevel: number
+  /** 通关奖励 */
+  rewards: { exp: number; gold: number }
+  /** 通关解锁的下一关 id（线性关卡链） */
+  unlocks?: string
+  /** 隐藏 BOSS（通关指定难度解锁） */
+  hiddenBoss?: {
+    enemyId: string
+    unlockDifficulty: 'easy' | 'normal' | 'hard'
+    description?: string
+  }
+  /** 通关掉落组引用（drops 表） */
+  rewardDrops?: string[]
 }
 
 /** 流派（对应修行「流派」子系统 · v3.0 技能树） */
@@ -356,18 +451,6 @@ export interface XiyouDharma {
   type: '攻击' | '防御' | '辅助' | '身法'
   level: number
   maxLevel: number
-  effect: string
-  equipped: boolean
-}
-
-/** 装备槽位（装备子系统） */
-export interface XiyouGearSlot {
-  slot: string
-  item: string
-  rarity: number
-  enhance: number
-  maxEnhance: number
-  star: number
   effect: string
   equipped: boolean
 }
@@ -552,7 +635,6 @@ export const martialArts: XiyouMartial[] = reactive<XiyouMartial[]>(cultivateJso
 export const meridians: XiyouMeridian[] = reactive<XiyouMeridian[]>(cultivateJson.meridians as unknown as XiyouMeridian[])
 export const dharmas: XiyouDharma[] = reactive<XiyouDharma[]>(cultivateJson.dharmas as unknown as XiyouDharma[])
 
-export const gearSlots: XiyouGearSlot[] = reactive<XiyouGearSlot[]>(equipJson.gearSlots as unknown as XiyouGearSlot[])
 export const treasures: XiyouTreasure[] = reactive<XiyouTreasure[]>(equipJson.treasures as unknown as XiyouTreasure[])
 export const mounts: XiyouMount[] = reactive<XiyouMount[]>(equipJson.mounts as unknown as XiyouMount[])
 
@@ -632,8 +714,6 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   migrateRarity(martialArts)
   aIn(meridians, 'cultivate', 'meridians')
   aIn(dharmas, 'cultivate', 'dharmas')
-  aIn(gearSlots, 'equip', 'gearSlots')
-  migrateRarity(gearSlots)
   aIn(treasures, 'equip', 'treasures')
   migrateRarity(treasures)
   aIn(mounts, 'equip', 'mounts')

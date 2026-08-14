@@ -3,13 +3,8 @@ import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { StackRule, ControlType } from '@/domain/buff/types'
 import type { BuffConfig } from '@/domain/buff/types'
-import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { getBuffConfig } from '@tests/fixtures/loadTestData'
-
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
+import { createMockLogManager } from '@tests/mocks/MockLogger'
 
 const mockEventBus = {
   emit: vi.fn(),
@@ -18,17 +13,7 @@ const mockEventBus = {
   offByListenerId: vi.fn(),
 }
 
-const mockLogger = {
-  addDebugLog: vi.fn(),
-  addSystemLog: vi.fn(),
-  addBattleLog: vi.fn(),
-  addActionLog: vi.fn(),
-  clearLogs: vi.fn(),
-  syncBattleLogs: vi.fn(),
-  getSystemLogs: vi.fn(),
-}
-
-LoggerProvider.logger = mockLogger as any
+const mockLogger = createMockLogManager()
 
 function createBuffConfig(overrides?: Partial<BuffConfig>): BuffConfig {
   return {

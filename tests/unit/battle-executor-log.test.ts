@@ -10,9 +10,11 @@ import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { createMockLogManager } from '@tests/mocks/MockLogger'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import type { BattleData, BattleEntity } from '@/domain/battle/type/types'
 import { ParticipantSide, ActionTypes } from '@/domain/battle/type/types'
+import { EffectType } from '@/domain/skill/types'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 
 // 镜像 BattleExecutor 内的局部 DTO（非导出，测试侧定义同构结构）
@@ -100,25 +102,10 @@ describe('BattleExecutor 日志发射器', () => {
 
     addBattleLog = vi.fn()
     flushBufferedSubLogs = vi.fn()
-    LoggerProvider.logger = {
-      addDebugLog: vi.fn(),
-      addSystemLog: vi.fn(),
+    LoggerProvider.logger = createMockLogManager({
       addBattleLog,
-      addActionLog: vi.fn(),
-      clearLogs: vi.fn(),
-      syncBattleLogs: vi.fn(),
-      getSystemLogs: () => [],
-      getBattleLogs: () => [],
-      getActionLogs: () => [],
-      getStateLogs: () => [],
-      addStateLog: vi.fn(),
-      getLogs: () => [],
-      setCurrentBattleId: vi.fn(),
-      getCurrentBattleId: () => 'test-battle',
-      setBattleId: vi.fn(),
-      beginBufferSubLogs: vi.fn(),
       flushBufferedSubLogs,
-    } as any
+    })
   })
 
   const skillManifest = (
@@ -421,9 +408,13 @@ describe('BattleExecutor 日志发射器', () => {
     })
   })
 
-  it('executeAction 技能路径：日志经 projectSkillLog 统一投影（【技能名】+ 敌我前缀，不再手写裸 skillId）', async () => {
+  it('executeAction fallback 普攻：飞行→命中结算→特效，并记录动作（executeDefaultAction 兜底路径）', async () => {
     const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
-    const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50)
+    const target = {
+      ...makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50),
+      takeDamage: (n: number) => n,
+      heal: () => 0,
+    } as unknown as BattleEntity
     const battle = {
       currentTurn: 1,
       battleId: 'b1',
@@ -434,42 +425,33 @@ describe('BattleExecutor 日志发射器', () => {
       actions: [],
       rng: new SeededRandom('test-seed'),
     } as unknown as BattleData
-    // 零伤害零治疗技能（走"无伤害/治疗"分支，避免动画/结算依赖）
-    vi.spyOn(skillManager, 'executeSkill').mockReturnValue({
-      success: true,
-      damage: 0,
-      heal: 0,
-      effects: [],
-      isCrit: false,
-    } as any)
-    // 替换 animationManager mock，提供动画方法
+    const flight = vi.fn().mockResolvedValue(undefined)
+    const impact = vi.fn().mockResolvedValue(undefined)
     ;(executor as any).animationManager = {
       triggerAnimationAndWait: vi.fn().mockResolvedValue(undefined),
-      triggerFlightPhaseAndWait: vi.fn().mockResolvedValue(undefined),
-      triggerImpactPhaseAndWait: vi.fn().mockResolvedValue(undefined),
+      triggerFlightPhaseAndWait: flight,
+      triggerImpactPhaseAndWait: impact,
       triggerDirectImpactAndWait: vi.fn().mockResolvedValue(undefined),
       triggerMissImpactAndWait: vi.fn().mockResolvedValue(undefined),
       triggerBuffEffectAndWait: vi.fn().mockResolvedValue(undefined),
     }
+    const recordAction = (executor as any).battleRecorder.recordAction
 
     await (executor as any).executeAction(battle, {
-      type: ActionTypes.SKILL,
+      id: 'action_1',
+      type: ActionTypes.ATTACK,
       sourceId: 's1',
       targetId: 't1',
-      skillId: 'skill_fireball',
+      damage: 30,
+      success: true,
+      timestamp: Date.now(),
       turn: 1,
+      effects: [{ type: EffectType.DAMAGE, value: 30, description: '普通攻击' }],
     })
 
-    const action = addBattleLog.mock.calls[0][0]
-    expect(action.message).toBe('[友方]剑客 对 [敌方]史莱姆 使用 【火球术】')
-    expect(action.category).toBe(BATTLE_LOG_CATEGORIES.STATUS)
-    expect(action.meta).toMatchObject({ role: 'action', skillName: 'skill_fireball' })
-    const skillSeg = action.segments.find((s: any) => s.kind === 'skill')
-    expect(skillSeg).toMatchObject({ text: '【火球术】' })
-    expect(action.segments[0]).toMatchObject({
-      text: '[友方]剑客',
-      kind: 'entity',
-      faction: 'ally',
-    })
+    expect(flight).toHaveBeenCalled()
+    expect(impact).toHaveBeenCalled()
+    expect(recordAction).toHaveBeenCalled()
+    expect(battle.actions.length).toBe(1)
   })
 })

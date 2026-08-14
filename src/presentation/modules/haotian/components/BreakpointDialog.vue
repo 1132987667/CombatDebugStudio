@@ -3,12 +3,15 @@
     content-class="dialog-content--flush" @update:model-value="onModelValue">
     <div class="ht-modal-bd">
       <div v-if="store.breakpoints.length" class="ht-bp-list">
-        <div v-for="bp in store.breakpoints" :key="bp.id" class="ht-bp-item" :class="{ off: !bp.enabled }">
+        <div v-for="bp in store.breakpoints" :key="bp.id" class="ht-bp-item" :class="{ off: !bp.enabled, watch: bp.watch }">
           <label class="ht-bp-item-arm" :title="bp.enabled ? '停用该断点' : '启用该断点'">
             <input type="checkbox" :checked="bp.enabled" :aria-label="`${bp.enabled ? '停用' : '启用'}断点：${bpTitle(bp)}`"
               @change="store.toggleBreakpoint(bp.id)" />
           </label>
           <span class="ht-bp-item-label" :class="{ muted: !bp.enabled }">{{ bpTitle(bp) }}</span>
+          <ToggleSwitch :model-value="!!bp.watch" label="监视" accent-color="var(--color-warning)"
+            :aria-label="`${bpTitle(bp)}：watch 模式命中只计数不暂停`" @update:model-value="store.toggleBreakpointWatch(bp.id)" />
+          <span class="ht-bp-item-hits" :class="{ armed: hitCount(bp.id) > 0 }" :title="`累计命中 ${hitCount(bp.id)} 次`">×{{ hitCount(bp.id) }}</span>
           <button type="button" class="ht-bp-item-del" title="删除断点" aria-label="删除断点"
             @click="store.removeBreakpoint(bp.id)">×</button>
         </div>
@@ -35,7 +38,7 @@
           <TacticalSelect v-model="value" size="md" :options="actorOptions" />
         </div>
         <div v-if="type === 'actor' && !actorOptions.length" class="ht-bp-note">需先加载一份战斗数据（顶部选择数据源）才能按单位设置断点。</div>
-        <div class="ht-bp-note">示例：伤害 ≥ 150 → 命中结算即暂停；级别 warn/error → 命中警告或错误事件。可添加多条，任一命中即暂停。</div>
+        <div class="ht-bp-note">示例：伤害 ≥ 150 → 命中结算即暂停；级别 warn/error → 命中警告或错误事件。可添加多条，任一命中即暂停。「监视」开 = watch 模式，命中只累计计数、不暂停，适合低置信度排查。</div>
       </div>
     </div>
     <template #footer>
@@ -52,6 +55,7 @@ import type { BreakpointConfig } from '@/domain/battle/replay/unified/unified-br
 import { useHaotianStore } from '../stores/haotianStore'
 import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
+import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
@@ -98,6 +102,10 @@ const BP_TITLE: Record<string, (bp: BreakpointConfig) => string> = {
 
 function bpTitle(bp: BreakpointConfig): string {
   return (BP_TITLE[bp.type] ?? (() => bp.type))(bp)
+}
+
+function hitCount(id: string): number {
+  return store.breakpointHits[id] ?? 0
 }
 
 function add(): void {

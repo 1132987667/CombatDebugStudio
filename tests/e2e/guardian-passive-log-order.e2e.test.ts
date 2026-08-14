@@ -22,23 +22,6 @@ import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarr
 import type { NarrativeBlock } from '@/shared/types/battle-log'
 import { NarrativeBlockType } from '@/shared/types/battle-log'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 const blockText = (segs: { text: string }[]): string =>
   segs.map((s) => s.text).join('')
 

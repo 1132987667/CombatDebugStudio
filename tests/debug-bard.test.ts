@@ -6,11 +6,6 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { createBattleParticipantsFromConfig } from '@tests/factories/ParticipantFactory'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
 vi.mock('@/shared/utils/RAF', () => ({
   RAFTimer: class {
     setTimeout(fn: (...args: unknown[]) => void, ms?: number): symbol {

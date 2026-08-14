@@ -2467,6 +2467,26 @@
   opacity: 0.55;
 }
 
+.ht-bp-item.watch {
+  border-color: var(--color-warning);
+}
+
+.ht-bp-item-hits {
+  min-width: 2em;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+  font-family: var(--ht-mono);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.ht-bp-item-hits.armed {
+  background: var(--color-warning);
+  color: var(--color-bg-primary);
+}
+
 .ht-bp-item-arm {
   display: grid;
   place-items: center;

@@ -93,6 +93,12 @@ export interface IBattleLogManager {
   setAutoCleanup(enabled: boolean): void
 
   /**
+   * 静音/恢复日志更新通知（批量生成期间抑制 UI 全量重渲染，结束后置 false 并补发一次）
+   * @param muted true = 抑制通知，false = 恢复并补发
+   */
+  setMuted(muted: boolean): void
+
+  /**
    * 同步战斗日志到存储
    * @param battleState 可选战斗状态快照
    */

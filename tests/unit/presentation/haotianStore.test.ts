@@ -64,6 +64,77 @@ describe('haotianStore（演示存档装配）', () => {
     s.clearBreakpoints()
   })
 
+  it('单步前进命中断点：暂停并定位到断点事件，不再穿过（问题 8）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.addBreakpoint('damage', 100)
+    // 从 t=0 逐事件前进 ev01→ev02→ev03→ev04→ev05（113≥100 命中）
+    for (let i = 0; i < 5; i++) s.stepEvent(1)
+    expect(s.selectedId).toBe('ev05')
+    expect(s.playback.playing).toBe(false)
+    // 命中后不穿过：下一次单步继续走到 ev06
+    s.stepEvent(1)
+    expect(s.selectedId).toBe('ev06')
+  })
+
+  it('单步前进未命中断点：正常步进不暂停（问题 8）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.addBreakpoint('damage', 9999) // 永不命中
+    s.stepEvent(1)
+    s.stepEvent(1)
+    expect(s.selectedId).toBe('ev02')
+    expect(s.playback.playing).toBe(false)
+  })
+
+  it('watch 断点：单步命中只计数不暂停，步进继续（问题 8 余项）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.addBreakpoint('damage', 100)
+    const bpId = s.breakpoints[0].id
+    s.toggleBreakpointWatch(bpId)
+    expect(s.breakpoints[0].watch).toBe(true)
+    // 逐事件前进 ev01→…→ev05（113≥100 命中 watch）
+    for (let i = 0; i < 5; i++) s.stepEvent(1)
+    expect(s.breakpointHits[bpId]).toBe(1)
+    // watch 命中不暂停、不移动选中（仍是上次正常步进的事件）
+    expect(s.playback.playing).toBe(false)
+    expect(s.selectedId).toBe('ev05')
+    // 不卡在断点上：继续单步到 ev06
+    s.stepEvent(1)
+    expect(s.selectedId).toBe('ev06')
+    expect(s.breakpointHits[bpId]).toBe(1) // 计数不重复
+  })
+
+  it('watch 断点：多次命中计数累加（ev05 113 / ev18 306）', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.addBreakpoint('damage', 100)
+    const bpId = s.breakpoints[0].id
+    s.toggleBreakpointWatch(bpId)
+    let guard = 0
+    while (s.playback.t < s.duration && guard < 200) {
+      s.stepEvent(1)
+      guard++
+    }
+    expect(s.breakpointHits[bpId]).toBe(2)
+  })
+
+  it('watch 与非 watch 同时命中：仍暂停定位，两者都计数', async () => {
+    const s = useHaotianStore()
+    await s.loadDemo()
+    s.addBreakpoint('damage', 100) // watch
+    s.toggleBreakpointWatch(s.breakpoints[0].id)
+    s.addBreakpoint('damage', 113) // 非 watch（ev05 113 恰好命中两者）
+    const watchBp = s.breakpoints.find((b) => b.watch)!
+    const pauseBp = s.breakpoints.find((b) => !b.watch)!
+    for (let i = 0; i < 5; i++) s.stepEvent(1) // ev05 同时命中两者
+    expect(s.selectedId).toBe('ev05')
+    expect(s.playback.playing).toBe(false)
+    expect(s.breakpointHits[watchBp.id]).toBe(1)
+    expect(s.breakpointHits[pauseBp.id]).toBe(1)
+  })
+
   it('会话导入往返（书签/断点/模式/过滤）', async () => {
     const s = useHaotianStore()
     await s.loadDemo()

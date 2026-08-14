@@ -15,23 +15,36 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BattleDataGenerator } from '@/application/service/BattleDataGenerator'
 import { BattleStatus, ParticipantSide } from '@/domain/battle/type/types'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
-// ── 模块 mock：生成器只依赖 battleLogManager 收集日志、GameDataProcessor 提供敌人/参与者 ──
+// ── 模块 mock：生成器依赖 LoggerProvider.logger 收集日志、GameDataProcessor 提供敌人/参与者 ──
+// NOTE: vi.hoisted 内无法引用 import 的工厂（hoisting 时机早于模块求值），故内联定义完整 mock。
 const { mockLogMgr } = vi.hoisted(() => ({
   mockLogMgr: {
-    exportLogs: vi.fn(() => []),
+    addDebugLog: vi.fn(),
+    addSystemLog: vi.fn(),
+    addBattleLog: vi.fn(),
+    addActionLog: vi.fn(),
+    addItemLog: vi.fn(),
+    clearLogs: vi.fn(),
+    getSystemLogs: vi.fn(() => []),
+    getDebugLogs: vi.fn(() => []),
+    getAllLogs: vi.fn(() => []),
+    getFilteredLogs: vi.fn(() => []),
+    getFilters: vi.fn(() => ({ battle: true, system: true, item: true, action: true, debug: true })),
+    updateFilters: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     setAutoCleanup: vi.fn(),
     setMuted: vi.fn(),
-    clearLogs: vi.fn(),
+    syncBattleLogs: vi.fn(),
+    beginBufferSubLogs: vi.fn(),
+    flushBufferedSubLogs: vi.fn(),
+    exportLogs: vi.fn(() => []),
     importLogs: vi.fn(),
-    getAllLogs: vi.fn(() => []),
-    addBattleLog: vi.fn(),
-    addSystemLog: vi.fn(),
-    addDebugLog: vi.fn(),
   },
 }))
 
-vi.mock('@/infrastructure/adapters/logging', () => ({ battleLogManager: mockLogMgr }))
 vi.mock('@/shared/utils/GameDataProcessor', () => ({
   GameDataProcessor: {
     getEnemiesData: () => [{ id: 'e1', name: '敌人1' }],
@@ -106,6 +119,7 @@ async function runGenerate(options: Parameters<BattleDataGenerator['generate']>[
 
 describe('BattleDataGenerator.generate 下载决策', () => {
   beforeEach(() => {
+    LoggerProvider.logger = mockLogMgr
     mockLogMgr.getAllLogs.mockReturnValue([])
     vi.clearAllMocks()
   })

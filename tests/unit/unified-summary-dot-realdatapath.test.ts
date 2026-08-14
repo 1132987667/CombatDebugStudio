@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 文件: unified-summary-dot-realdatapath.test.ts
  * 功能: dot 持续伤害进入真实录制战报的回归测试
  * 描述: 修复前 DOT 伤害在真实录制中完全没有 DAMAGE_CALCULATION 事件
@@ -16,23 +16,6 @@ import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { TracePhase } from '@/shared/types/trace-event'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
 import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
-
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
 
 describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_CALCULATION）', () => {
   let battleSystem: BattleSystem

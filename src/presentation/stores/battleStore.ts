@@ -312,15 +312,8 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
-  /** 处理回合开始事件（更新当前行动者ID） */
-  const handleTurnStartEvent = (data: { actorId: string | null }) => {
-    if (data?.actorId) {
-      currentActorId.value = data.actorId
-    }
-  }
-
-  /** 处理当前行动者切换事件（仅更新 UI，不记录回合开始日志） */
-  const handleCurrentActorChanged = (data: { actorId: string | null }) => {
+  /** 处理回合开始 / 当前行动者切换事件（更新当前行动者ID） */
+  const handleActorIdChanged = (data: { actorId: string | null }) => {
     if (data?.actorId) {
       currentActorId.value = data.actorId
     }
@@ -363,9 +356,9 @@ export const useBattleStore = defineStore('battle', () => {
   const events = new Map<BattleEventCode, (data: any) => void>()
   events.set(BattleEventCodes.BATTLE_ENDED, handleBattleEndEvent)
   events.set(BattleEventCodes.BATTLE_RESET, handleBattleResetEvent)
-  events.set(BattleEventCodes.TURN_START, handleTurnStartEvent)
+  events.set(BattleEventCodes.TURN_START, handleActorIdChanged)
   events.set(BattleEventCodes.TURN_END, handleTurnEndEvent)
-  events.set(BattleEventCodes.CURRENT_ACTOR_CHANGED, handleCurrentActorChanged)
+  events.set(BattleEventCodes.CURRENT_ACTOR_CHANGED, handleActorIdChanged)
   events.set(BattleEventCodes.DAMAGE_ANIMATION, handleDamageAnimationEvent)
   events.set(BattleEventCodes.MISS_ANIMATION, handleMissAnimationEvent)
   events.set(BattleEventCodes.BUFF_EFFECT, handleBuffEffectEvent)
@@ -577,18 +570,58 @@ export const useBattleStore = defineStore('battle', () => {
 
   //  业务动作包装器（统一错误处理与 Loading 状态）
 
+  interface BattleActionOptions<F = boolean> {
+    /** 操作描述（Loading 文本）；提供则自动 setLoading(true, ...) 前缀并在结束时关闭 */
+    loading?: string
+    /** 注入标准守卫（战斗数据生成中 / 战斗管理器未初始化）并清空错误；默认 false */
+    guard?: boolean
+    /** 失败时调试日志前缀（拼接 `${debugLabel}: ${message}`）；缺省不写 debug 日志 */
+    debugLabel?: string
+    /** 失败返回值（可基于错误消息派生）；缺省 false */
+    failValue?: F | ((message: string) => F)
+    /** 失败时的额外处理钩子 */
+    onError?: (message: string) => void
+  }
+
+  /** 战斗操作统一包装器：Loading 前缀 + 守卫检查 + 错误归一化 + 调试日志 */
+  const withBattleAction = async <T, F = boolean>(
+    action: () => T | Promise<T>,
+    options: BattleActionOptions<F> = {},
+  ): Promise<T | F> => {
+    const { loading: loadingText, guard = false, debugLabel, failValue, onError } =
+      options
+    const hasLoading = loadingText !== undefined
+    if (hasLoading) setLoading(true, loadingText)
+    if (guard) clearError()
+    try {
+      if (guard) {
+        if (generationProgress.isGenerating)
+          throw new Error('战斗数据生成中，请等待完成')
+        if (!battleService.value) throw new Error('战斗管理器未初始化')
+      }
+      return await action()
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      setError(errorMsg, err instanceof Error ? err.stack : null)
+      if (debugLabel)
+        battleLogManager.addDebugLog(`${debugLabel}: ${errorMsg}`)
+      onError?.(errorMsg)
+      return typeof failValue === 'function'
+        ? (failValue as (message: string) => F)(errorMsg)
+        : ((failValue as F | undefined) ?? (false as unknown as F))
+    } finally {
+      if (hasLoading) setLoading(false)
+    }
+  }
+
   /**
    * 开始新战斗
    * @returns Promise<boolean> 操作是否成功
    * @description 初始化战斗会话，生成战斗ID，同步状态并启动战斗循环
    */
-  const startBattle = async () => {
-    setLoading(true, '开始战斗')
-    clearError()
-    try {
-      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
-      if (!battleService.value) throw new Error('战斗管理器未初始化')
-      const battleId = await battleService.value.startBattle()
+  const startBattle = async () =>
+    withBattleAction(async () => {
+      const battleId = await battleService.value!.startBattle()
       if (!battleId) throw new Error('战斗创建失败，请检查参战队伍的配置')
       currentBattleId.value = battleId
       // NOTE: 战斗数据快照（规格说明书 §6.3）——战斗开始即冻结封神榜全量数据 + dataVersion，
@@ -596,20 +629,16 @@ export const useBattleStore = defineStore('battle', () => {
       void container
         .resolve<DataPackageService>('DataPackageService')
         .buildSnapshot(battleId)
-      battleService.value.syncBattleState()
+      battleService.value!.syncBattleState()
       setBattleActive(true)
-      autoPlayMode.value = battleService.value.getAutoBattle()
+      autoPlayMode.value = battleService.value!.getAutoBattle()
       battleLogManager.addSystemLog({ message: '战斗已开始' })
       return true
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      battleLogManager.addDebugLog(`开始战斗失败: ${errorMsg}`)
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
+    }, {
+      loading: '开始战斗',
+      guard: true,
+      debugLabel: '开始战斗失败',
+    })
 
   /**
    * 结束当前战斗
@@ -619,38 +648,26 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const endBattle = async (
     winner: typeof ParticipantSide.ALLY = ParticipantSide.ALLY,
-  ) => {
-    setLoading(true, '结束战斗')
-    clearError()
-    try {
-      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
-      if (!battleService.value) throw new Error('战斗管理器未初始化')
-      battleService.value.endBattle(winner)
-      battleService.value.syncBattleState()
+  ) =>
+    withBattleAction(async () => {
+      battleService.value!.endBattle(winner)
+      battleService.value!.syncBattleState()
       setBattleActive(false)
       return true
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      battleLogManager.addDebugLog(`结束战斗失败: ${errorMsg}`)
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
+    }, {
+      loading: '结束战斗',
+      guard: true,
+      debugLabel: '结束战斗失败',
+    })
 
   /**
    * 重置战斗状态
    * @returns Promise<boolean> 操作是否成功
    * @description 清空所有战斗数据，重置回合数和日志，恢复到初始状态
    */
-  const resetBattle = async () => {
-    setLoading(true, '重置战斗')
-    clearError()
-    try {
-      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
-      if (!battleService.value) throw new Error('战斗管理器未初始化')
-      battleService.value.reset()
+  const resetBattle = async () =>
+    withBattleAction(async () => {
+      battleService.value!.reset()
       currentActorId.value = null
       setBattleActive(false)
       clearBattleLogs()
@@ -658,39 +675,27 @@ export const useBattleStore = defineStore('battle', () => {
       turnOrder.value = []
       battleLogManager.addSystemLog({ message: '战斗已重置' })
       return true
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      battleLogManager.addDebugLog(`重置战斗失败: ${errorMsg}`)
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
+    }, {
+      loading: '重置战斗',
+      guard: true,
+      debugLabel: '重置战斗失败',
+    })
 
   /**
    * 执行单个回合
    * @returns Promise<boolean> 操作是否成功
    * @description 手动触发下一回合的战斗逻辑执行（用于非自动模式下的单步操作）
    */
-  const processSingleTurn = async () => {
-    setLoading(true, '执行回合')
-    clearError()
-    try {
-      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
-      if (!battleService.value) throw new Error('战斗管理器未初始化')
-      await battleService.value.processSingleTurn()
-      battleService.value.syncBattleState()
+  const processSingleTurn = async () =>
+    withBattleAction(async () => {
+      await battleService.value!.processSingleTurn()
+      battleService.value!.syncBattleState()
       return true
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      battleLogManager.addDebugLog(`执行回合时出错: ${errorMsg}`)
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
+    }, {
+      loading: '执行回合',
+      guard: true,
+      debugLabel: '执行回合时出错',
+    })
 
   /**
    * 手动干预：让指定参战者立即对指定目标执行一次指定行动（技能或普攻）
@@ -701,66 +706,57 @@ export const useBattleStore = defineStore('battle', () => {
     participantId: string,
     skillId: string | null,
     targetId: string,
-  ): Promise<string | null> => {
-    setLoading(true, '手动施放')
-    clearError()
-    try {
-      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
-      if (!battleService.value) throw new Error('战斗管理器未初始化')
-      const error = await battleService.value.executeManualAction(participantId, skillId, targetId)
-      if (error === null) battleService.value.syncBattleState()
+  ): Promise<string | null> =>
+    withBattleAction(async () => {
+      const error = await battleService.value!.executeManualAction(
+        participantId,
+        skillId,
+        targetId,
+      )
+      if (error === null) battleService.value!.syncBattleState()
       return error
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      battleLogManager.addDebugLog(`手动施放失败: ${errorMsg}`)
-      return errorMsg
-    } finally {
-      setLoading(false)
-    }
-  }
+    }, {
+      loading: '手动施放',
+      guard: true,
+      debugLabel: '手动施放失败',
+      failValue: (errorMsg) => errorMsg,
+    })
 
   /**
    * 切换自动播放模式
    * @returns Promise<boolean> 操作是否成功
    * @description 在自动战斗和手动模式之间切换，失败时自动恢复原状态
    */
-  const toggleAutoPlay = async () => {
-    setLoading(true)
-    clearError()
-    try {
-      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
-      if (!battleService.value) throw new Error('战斗管理器未初始化')
-      const isActive = battleService.value.getAutoBattle()
+  const toggleAutoPlay = async () =>
+    withBattleAction(async () => {
+      const isActive = battleService.value!.getAutoBattle()
       if (isActive) {
-        battleService.value.stopAutoBattle()
+        battleService.value!.stopAutoBattle()
         autoPlayMode.value = false
         isBattleActive.value = false
         battleLogManager.addSystemLog({ message: '停止自动战斗' })
       } else {
-        await battleService.value.startAutoBattle()
+        await battleService.value!.startAutoBattle()
         autoPlayMode.value = true
         isBattleActive.value = true
-        battleService.value.syncBattleState()
+        battleService.value!.syncBattleState()
         battleLogManager.addSystemLog({ message: '开始自动战斗' })
       }
       return true
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      battleLogManager.addDebugLog(`切换自动战斗状态失败: ${errorMsg}`)
-      autoPlayMode.value = !autoPlayMode.value // 恢复原状态
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
+    }, {
+      loading: '',
+      guard: true,
+      debugLabel: '切换自动战斗状态失败',
+      onError: () => {
+        autoPlayMode.value = !autoPlayMode.value // 恢复原状态
+      },
+    })
 
   /**
    * 切换暂停状态
    * @returns boolean 操作是否成功
    */
-  const togglePause = () => {
+  const togglePause = (): boolean => {
     try {
       if (generationProgress.isGenerating) return false
       if (!battleService.value) return false
@@ -782,12 +778,8 @@ export const useBattleStore = defineStore('battle', () => {
    * @returns Promise<boolean> 操作是否成功
    * @description 读取之前导出的队伍配置存档，重建双方队伍并恢复规则配置（不恢复战斗中的回合/血量现场）
    */
-  const importState = async () => {
-    setLoading(true, '导入配置')
-    clearError()
-    try {
-      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
-      if (!battleService.value) throw new Error('战斗管理器未初始化')
+  const importState = async () =>
+    withBattleAction(async () => {
       const savedState = await persistentStorage.get<{
         version?: number
         allyIds?: string[]
@@ -808,11 +800,11 @@ export const useBattleStore = defineStore('battle', () => {
       if (!allyIds?.length || !enemyIds?.length) throw new Error('存档缺少队伍数据')
 
       // 停掉可能进行中的战斗并清空当前编成
-      if (battleService.value.getIsBattleActive()) {
-        battleService.value.endBattle(ParticipantSide.ALLY)
+      if (battleService.value!.getIsBattleActive()) {
+        battleService.value!.endBattle(ParticipantSide.ALLY)
       }
-      battleService.value.reset()
-      battleService.value.clearParticipants()
+      battleService.value!.reset()
+      battleService.value!.clearParticipants()
 
       // 重建双方队伍
       allyIds.forEach((id, index) => {
@@ -842,19 +834,15 @@ export const useBattleStore = defineStore('battle', () => {
 
       syncTeams()
       // 选中第一个我方角色，避免导入后角色监控面板为空
-      const firstAlly = battleService.getAllyTeam()[0]
+      const firstAlly = battleService.value!.getAllyTeam()[0]
       if (firstAlly) selectCharacter(firstAlly.id)
       battleLogManager.addSystemLog({ message: '队伍配置已导入：编成与规则已恢复' })
       return true
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      battleLogManager.addDebugLog(`导入队伍配置失败: ${errorMsg}`)
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
+    }, {
+      loading: '导入配置',
+      guard: true,
+      debugLabel: '导入队伍配置失败',
+    })
 
   /**
    * 导出队伍配置（保存到 IndexedDB）
@@ -862,8 +850,8 @@ export const useBattleStore = defineStore('battle', () => {
    * @returns boolean 操作是否成功
    * @description 将当前队伍编成（角色 id）与规则配置序列化保存，供"导入配置"恢复
    */
-  const exportState = async (currentTurn: number) => {
-    try {
+  const exportState = async (currentTurn: number) =>
+    withBattleAction(async () => {
       const allyTeam = battleService.value?.getEnabledAllyTeam() || []
       const enemyTeam = battleService.value?.getEnabledEnemyTeam() || []
       const state = {
@@ -876,12 +864,7 @@ export const useBattleStore = defineStore('battle', () => {
       await persistentStorage.set(STORAGE_STORE.SNAPSHOTS, 'battleStateExport', state)
       battleLogManager.addSystemLog({ message: '战斗状态已导出' })
       return true
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      setError(errorMsg, err instanceof Error ? err.stack : null)
-      return false
-    }
-  }
+    })
 
   /**
    * 设置战斗动画播放速度
@@ -889,7 +872,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @returns boolean 操作是否成功
    * @description 调整战斗动画的播放速度，影响所有动画效果的持续时间
    */
-  const setBattleSpeed = (speed: number) => {
+  const setBattleSpeed = (speed: number): boolean => {
     try {
       if (!battleService.value) throw new Error('战斗管理器未初始化')
       battleService.value.setBattleSpeed(speed)
@@ -933,34 +916,32 @@ export const useBattleStore = defineStore('battle', () => {
     generationProgress.percent = 0
 
     try {
-      const { BattleDataGenerator } = await import('@/application/service/BattleDataGenerator')
-      const generator = new BattleDataGenerator(container)
-      _currentGenerator = generator
-      // 非正/非法场次回退默认 50，超过 50 钳制到 50（与 UI 上限、maxRecordings 语义一致）
-      const safeCount = Number.isFinite(count) && Math.floor(count) >= 1
-        ? Math.min(Math.floor(count), 50)
-        : 50
-      // NOTE: store=true（存入昊天镜）时只入库不下载；format 强制 'record' 以走录制保存管线
-      const effFormat = store ? 'record' : format
-      await generator.generate({
-        totalBattles: safeCount,
-        mode,
-        format: effFormat,
-        record: store || record,
-        download: store ? false : undefined,
-        onProgress: (_progress: number, current: number, total: number) => {
-          generationProgress.current = current
-          generationProgress.total = total
-          generationProgress.percent = Math.round((current / total) * 100)
-        },
-      })
-      battleLogManager.addSystemLog({ message: store
-        ? `战斗数据生成完成（${mode}×${count}场），已存入昊天镜`
-        : `战斗数据生成完成（${mode}×${count}场），文件已下载` })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      setError(msg)
-      battleLogManager.addDebugLog(`战斗数据生成失败: ${msg}`)
+      await withBattleAction(async () => {
+        const { BattleDataGenerator } = await import('@/application/service/BattleDataGenerator')
+        const generator = new BattleDataGenerator(container)
+        _currentGenerator = generator
+        // 非正/非法场次回退默认 50，超过 50 钳制到 50（与 UI 上限、maxRecordings 语义一致）
+        const safeCount = Number.isFinite(count) && Math.floor(count) >= 1
+          ? Math.min(Math.floor(count), 50)
+          : 50
+        // NOTE: store=true（存入昊天镜）时只入库不下载；format 强制 'record' 以走录制保存管线
+        const effFormat = store ? 'record' : format
+        await generator.generate({
+          totalBattles: safeCount,
+          mode,
+          format: effFormat,
+          record: store || record,
+          download: store ? false : undefined,
+          onProgress: (_progress: number, current: number, total: number) => {
+            generationProgress.current = current
+            generationProgress.total = total
+            generationProgress.percent = Math.round((current / total) * 100)
+          },
+        })
+        battleLogManager.addSystemLog({ message: store
+          ? `战斗数据生成完成（${mode}×${count}场），已存入昊天镜`
+          : `战斗数据生成完成（${mode}×${count}场），文件已下载` })
+      }, { debugLabel: '战斗数据生成失败' })
     } finally {
       generationProgress.isGenerating = false
       _currentGenerator = null

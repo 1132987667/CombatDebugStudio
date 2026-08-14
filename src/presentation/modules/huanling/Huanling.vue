@@ -78,7 +78,7 @@ import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
 import ConfirmDialog from "@/presentation/components/ConfirmDialog.vue";
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import { useNotificationStore } from '@/presentation/stores/notificationStore';
-import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
+import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
 import BattleDashboard from "./views/BattleDashboard.vue";
@@ -111,7 +111,6 @@ const showDebugControlDialog = ref(false);
 
 /** 从 BattleSystem.traceCollector 刷新树状日志 */
 const handleDebugAction = async (action: string) => {
-  console.log('Debug action:', action)
   switch (action) {
     case 'win_battle':
       await battleStore.endBattle(ParticipantSide.ALLY)
@@ -148,6 +147,7 @@ const handleDebugAction = async (action: string) => {
       break
     }
     case 'dump_logs':
+      // NOTE: 功能按钮「输出日志」——有意输出到开发者控制台，非调试残留
       console.log('Current logs:', battleLogManager.getAllLogs())
       battleLogManager.addSystemLog({
         message: ' 日志已输出到控制台',
@@ -246,6 +246,7 @@ const handleDebugAction = async (action: string) => {
       battleLogManager.addSystemLog({ message: '调试: 清除所有动画效果' })
       break
     case 'dump_animation':
+      // NOTE: 功能按钮「输出动画状态」——有意输出到开发者控制台，非调试残留
       console.log('[动画调试] animationState:', JSON.parse(JSON.stringify(battleStore.animationState)))
       console.log('[动画调试] battleSpeed:', battleStore.battleSpeed)
       console.log('[动画调试] getAnimationDuration:', battleStore.getAnimationDuration())
@@ -526,7 +527,7 @@ const handleApplyAttributes = (payload: { charId: string; attributes: Record<str
   ]
   const entity = allParticipants.find(e => e.id === payload.charId)
   if (!entity) {
-    console.warn('[属性调整] 未找到实体:', payload.charId)
+    battleLogManager.addDebugLog(`属性调整: 未找到实体 [${payload.charId}]`, { level: LogLevel.WARN })
     return
   }
 
@@ -637,8 +638,8 @@ const startBattle = async () => {
       notification.notify("错误", "开始战斗失败", "error");
     }
   } catch (error) {
-    console.error("开始战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
+    battleLogManager.addDebugLog(`开始战斗时出错: ${errorMsg}`, { level: LogLevel.ERROR });
     battleLogManager.addSystemLog({
       message: `开始战斗时出错: ${errorMsg}`,
     });
@@ -678,8 +679,8 @@ const endBattle = async () => {
       notification.notify("错误", battleStore.error.message || "结束战斗失败", "error");
     }
   } catch (error) {
-    console.error("结束战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
+    battleLogManager.addDebugLog(`结束战斗时出错: ${errorMsg}`, { level: LogLevel.ERROR });
     battleLogManager.addSystemLog({
       message: `结束战斗时出错: ${errorMsg}`,
     });
@@ -704,8 +705,8 @@ const resetBattle = async () => {
       notification.notify("错误", battleStore.error.message || "重置战斗失败", "error");
     }
   } catch (error) {
-    console.error("重置战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
+    battleLogManager.addDebugLog(`重置战斗时出错: ${errorMsg}`, { level: LogLevel.ERROR });
     battleLogManager.addSystemLog({
       message: `重置战斗时出错: ${errorMsg}`,
     });
@@ -725,8 +726,8 @@ const toggleAutoPlay = async () => {
       notification.notify("错误", battleStore.error.message || "切换自动战斗状态失败", "error");
     }
   } catch (error) {
-    console.error("切换自动战斗状态失败:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
+    battleLogManager.addDebugLog(`切换自动战斗状态失败: ${errorMsg}`, { level: LogLevel.ERROR });
     battleLogManager.addSystemLog({
       message: `切换自动战斗状态失败: ${errorMsg}`,
     });

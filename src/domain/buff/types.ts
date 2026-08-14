@@ -5,9 +5,20 @@ import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import {
   ConditionState,
 } from '@/shared/types/buff-display'
+import { STATUS_CODE } from '@/shared/types/status-meta'
 
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'
+
+/** 配置驱动的常用 Buff ID（buffs.json 定义，代码引用避免魔法字符串） */
+export const KNOWN_BUFF_IDS = {
+  GUARANTEED_CRIT: 'buff_guaranteed_crit',
+} as const
+
+/** 常用 Buff 标签（hasBuffWithTag 匹配，代码引用避免魔法字符串） */
+export const BUFF_TAGS = {
+  ENERGY_ABSORPTION: 'energy_absorption',
+} as const
 
 /**
  * buff 查询接口
@@ -101,25 +112,26 @@ export enum StackRule {
 
 /**
  * 控制效果类型枚举
+ * NOTE: 值复用 status-meta 的 STATUS_CODE（单一事实来源），避免同一批控制代码重复定义。
  */
 export const ControlType = {
   /** 无控制效果 */
   NONE: 'none',
-  STUN: 'stun',
-  SILENCE: 'silence',
-  FREEZE: 'freeze',
-  SLEEP: 'sleep',
-  BIND: 'bind',
-  CONFUSION: 'confusion',
-  FEAR: 'fear',
-  CHARM: 'charm',
-  TAUNT: 'taunt',
-  PETRIFY: 'petrify',
-  IMMOBILIZE: 'immobilize',
-  DISARM: 'disarm',
-  POLYMORPH: 'polymorph',
-  IMPRISON: 'imprison',
-  GUIXU: 'guixu',
+  STUN: STATUS_CODE.STUN,
+  SILENCE: STATUS_CODE.SILENCE,
+  FREEZE: STATUS_CODE.FREEZE,
+  SLEEP: STATUS_CODE.SLEEP,
+  BIND: STATUS_CODE.BIND,
+  CONFUSION: STATUS_CODE.CONFUSION,
+  FEAR: STATUS_CODE.FEAR,
+  CHARM: STATUS_CODE.CHARM,
+  TAUNT: STATUS_CODE.TAUNT,
+  PETRIFY: STATUS_CODE.PETRIFY,
+  IMMOBILIZE: STATUS_CODE.IMMOBILIZE,
+  DISARM: STATUS_CODE.DISARM,
+  POLYMORPH: STATUS_CODE.POLYMORPH,
+  IMPRISON: STATUS_CODE.IMPRISON,
+  GUIXU: STATUS_CODE.GUIXU,
 } as const
 export type ControlType = (typeof ControlType)[keyof typeof ControlType]
 

@@ -53,7 +53,6 @@
 </template>
 
 <script setup lang="ts">
-import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType';
 import { ActionResultType, ActionTypes, type BattleEntity } from '@/domain/battle/type/types';
 import { container } from '@/infrastructure/di/Container';
@@ -225,15 +224,6 @@ const selectedTarget = computed(() => {
   if (!id) return null
   return [...allyTeam.value, ...enemyTeam.value].find(p => p.id === id) ?? null
 })
-
-// 辅助函数：转换为数字（兼容 AttributeValue 和 number）
-function toNumber(value: number | AttributeValue | undefined): number {
-  if (typeof value === 'number') return value;
-  if (value && typeof value === 'object' && 'value' in value) {
-    return value.value ?? 0;
-  }
-  return 0;
-}
 
 function isCurrentActor(memberId: string): boolean {
   return currentActor.value?.id === memberId || props.currentActorId === memberId;

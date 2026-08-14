@@ -17,6 +17,7 @@
         </span>
         <p class="xy-cave-enh-slot__effect">{{ qualityOf(g.rarity) }} · {{ g.slot }}</p>
       </button>
+      <p v-if="gears.length === 0" class="xy-cave-enh-empty">尚未穿戴任何装备</p>
     </div>
 
     <template v-if="gear && mat">
@@ -56,31 +57,58 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { usePackStore } from '@/presentation/stores/packStore'
-import type { XiyouGearSlot } from '../../data/mock'
-import { gearSlots } from '../../data/mock'
+import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
+import type { EquipmentData } from '@/domain/fengshen/types'
 import { qualityOf } from '../../data/quality'
 import {
   enhanceCost,
   enhanceMaterialOf,
   enhanceSuccessRate,
-  formatEffect,
   type MaterialCost,
 } from '../../data/caveLogic'
+
+/** 强化槽位视图（真实穿戴装备 → 展示用） */
+interface EnhanceGearView {
+  slot: GearSlotKey
+  slotLabel: string
+  item: string
+  rarity: number
+  enhance: number
+  maxEnhance: number
+  effect: string
+}
 
 const pack = usePackStore()
 const notification = useNotificationStore()
 
-const gears = gearSlots
 const idx = ref(-1)
 const rippling = ref(false)
 const shaking = ref(false)
 
-function usable(g: XiyouGearSlot): boolean {
-  return g.equipped && g.item !== '空位'
+// NOTE: 强化数据源 = 真实穿戴（pack.equipped），与装备面板同源，不再读 equip.json 静态 gearSlots。
+// 强化等级目前无独立存档（强化系统未落地），统一展示 0/N 占位，仅走流程演示。
+const gears = computed<EnhanceGearView[]>(() =>
+  (['weapon', 'armor', 'accessory'] as GearSlotKey[])
+    .filter((slot) => pack.equippedGear(slot))
+    .map((slot) => {
+      const g = pack.equippedGear(slot) as EquipmentData
+      return {
+        slot,
+        slotLabel: GEAR_SLOT_LABELS[slot],
+        item: g.name,
+        rarity: g.rarity,
+        enhance: 0,
+        maxEnhance: 10,
+        effect: statText(g),
+      }
+    }),
+)
+
+function usable(g: EnhanceGearView): boolean {
+  return true
 }
 
-const gear = computed<XiyouGearSlot | null>(() => (idx.value >= 0 ? gears[idx.value] ?? null : null))
+const gear = computed<EnhanceGearView | null>(() => (idx.value >= 0 ? gears.value[idx.value] ?? null : null))
 
 const mat = computed<MaterialCost | null>(() =>
   gear.value ? enhanceMaterialOf(gear.value.slot) : null,
@@ -110,12 +138,12 @@ function enhance(): void {
 
   const success = Math.random() * 100 < rate.value
   if (success) {
-    g.enhance += 1
+    // NOTE: 强化等级暂无持久化（强化系统未落地），本轮仅流程演示，数值不入库
     rippling.value = true
     window.setTimeout(() => {
       rippling.value = false
     }, 700)
-    notification.toast(`强化成功！「${g.item}」强化 +${g.enhance}`, 'success')
+    notification.toast(`强化成功！「${g.item}」强化 +1（演示）`, 'success')
   } else {
     shaking.value = true
     window.setTimeout(() => {
@@ -123,5 +151,34 @@ function enhance(): void {
     }, 400)
     notification.toast(`强化失败，「${g.item}」等级不变`, 'error')
   }
+}
+
+/** 装备 stats 文案（"攻击 +12"），供强化对比展示 */
+function statText(g: EquipmentData): string {
+  const label: Record<string, string> = {
+    attack: '攻击',
+    defense: '防御',
+    maxHealth: '气血',
+    speed: '速度',
+    critRate: '暴击率',
+  }
+  return g.stats.map((s) => {
+    const n = label[s.attribute] ?? s.attribute
+    const suffix = s.modifierType === 'percent' ? '%' : ''
+    return `${n} ${s.value >= 0 ? '+' : ''}${s.value}${suffix}`
+  }).join(' · ')
+}
+
+/** 从效果文案推基础值后按强化档位重算（"攻击 +12" → 强化后数值） */
+function formatEffect(effect: string, level: number): string {
+  const m = /^([^\d+-]*)([+-])(\d+(?:\.\d+)?)(%)?/.exec(effect)
+  if (!m) return effect
+  const prefix = m[1]
+  const sign = m[2]
+  const base = parseFloat(m[3])
+  const isPercent = !!m[4]
+  const next = Math.round(base * (1 + 0.05 * level))
+  const suffix = isPercent ? '%' : ''
+  return `${prefix}${sign}${next}${suffix}`
 }
 </script>

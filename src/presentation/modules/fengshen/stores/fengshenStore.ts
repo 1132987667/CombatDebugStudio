@@ -43,7 +43,9 @@ export const useFengshenStore = defineStore('fengshen', () => {
 
   // 编辑抽屉
   const drawerOpen = ref(false)
-  const editingEntity = ref<Record<string, unknown> | null>(null)
+  /** 编辑草稿：必有 id（保存/校验前置要求），其余字段任意 */
+  type EntityDraft = { id: string } & Record<string, unknown>
+  const editingEntity = ref<EntityDraft | null>(null)
   const isNew = ref(false)
   const formErrors = ref<string[]>([])
 
@@ -181,7 +183,8 @@ export const useFengshenStore = defineStore('fengshen', () => {
   }
 
   function openEdit(entity: Record<string, unknown>, isNewEntity = false): void {
-    editingEntity.value = { ...entity }
+    // NOTE: 实体必带 id（列表行/新建/复制均生成）；断言保留运行时原样，id 异常时由 save 前置校验拦截
+    editingEntity.value = { ...entity } as EntityDraft
     isNew.value = isNewEntity
     formErrors.value = []
     drawerOpen.value = true
@@ -262,7 +265,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     for (const id of ids) {
       const row = rows.value.find((r) => String(r.id) === id)
       if (!row) continue
-      const result = await write.save(currentTable.value, { ...row, [field]: value })
+      const result = await write.save(currentTable.value, { ...row, [field]: value } as EntityDraft)
       if (result.ok) ok++
       else failed.push(id)
     }

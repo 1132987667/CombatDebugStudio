@@ -9,19 +9,6 @@ import { createParticipantFromEnemy } from '@tests/fixtures/participants'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import type { SkillConfig } from '@/domain/skill/types'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout = (fn: (...args: unknown[]) => void) => { fn(); return Symbol('mock') }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 const mockEventBus = { emit: vi.fn(), on: vi.fn(), off: vi.fn(), offByListenerId: vi.fn() }
 const mockLogger = {
   addDebugLog: vi.fn(),

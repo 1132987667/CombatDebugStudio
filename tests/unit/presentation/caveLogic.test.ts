@@ -48,10 +48,10 @@ describe('强化数值', () => {
     expect(enhanceCost(6)).toBe(140)
   })
 
-  it('槽位 → 强化材料映射', () => {
-    expect(enhanceMaterialOf('武器')).toMatchObject({ itemId: 'mat_enh_01', count: 1 })
-    expect(enhanceMaterialOf('衣服')).toMatchObject({ itemId: 'mat_enh_03' })
-    expect(enhanceMaterialOf('护符')).toMatchObject({ itemId: 'mat_enh_02' })
+  it('槽位 → 强化材料映射（GearSlotKey: weapon/armor/accessory）', () => {
+    expect(enhanceMaterialOf('weapon')).toMatchObject({ itemId: 'mat_enh_01', count: 1 })
+    expect(enhanceMaterialOf('armor')).toMatchObject({ itemId: 'mat_enh_03' })
+    expect(enhanceMaterialOf('accessory')).toMatchObject({ itemId: 'mat_enh_02' })
     expect(enhanceMaterialOf('未知槽')).toBeNull()
   })
 

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ACTION_END 行动后钩子 + 回合末统一结算测试（P2-8 重构）
  *
  * 契约：
@@ -12,23 +12,6 @@ import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStatus, BattleTriggerPhase } from '@/domain/battle/type/types'
 import { StackRule } from '@/domain/buff/types'
 import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
-
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
 
 describe('ACTION_END 行动后钩子 + 回合末统一结算（P2-8）', () => {
   let battleSystem: BattleSystem

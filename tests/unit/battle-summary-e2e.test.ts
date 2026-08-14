@@ -17,23 +17,6 @@ import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
 import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 describe('真实战斗端到端战报（七层自洽与数值合理）', () => {
   let battleSystem: BattleSystem
 

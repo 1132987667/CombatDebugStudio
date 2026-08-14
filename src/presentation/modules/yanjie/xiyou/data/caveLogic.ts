@@ -35,14 +35,18 @@ export function qualityOf(itemId: string): XiyouQuality {
   return qualityByRarity(idToItem.get(itemId)?.rarity ?? 1)
 }
 
+/** 强化材料（槽位 → 材料映射值） */
+export interface MaterialCost {
+  name: string
+  itemId: string
+  count: number
+}
+
 /** 装备槽位 → 强化材料（设计：武器异矿 / 衣服灵气·强化 / 饰品灵水） */
 const ENHANCE_MATERIAL_BY_SLOT: Record<string, MaterialCost> = {
-  武器: { name: '异矿', itemId: 'mat_enh_01', count: 1 },
-  衣服: { name: '灵气·强化', itemId: 'mat_enh_03', count: 1 },
-  头盔: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
-  靴子: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
-  护符: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
-  戒指: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
+  weapon: { name: '异矿', itemId: 'mat_enh_01', count: 1 },
+  armor: { name: '灵气·强化', itemId: 'mat_enh_03', count: 1 },
+  accessory: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
 }
 
 export function enhanceMaterialOf(slot: string): MaterialCost | null {

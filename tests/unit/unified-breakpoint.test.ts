@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest'
 import {
   checkBreakpointHit,
   checkAnyBreakpointHit,
+  findHitBreakpoints,
   type BreakpointConfig,
 } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { createDemoArchive } from '@/domain/battle/replay/unified/demo-archive'
@@ -62,5 +63,27 @@ describe('checkAnyBreakpointHit（多断点列表）', () => {
     const ev05 = ev('ev05')
     expect(checkAnyBreakpointHit(ev05, [bp('damage', 50, false), bp('level', 'warn', false)])).toBe(false)
     expect(checkAnyBreakpointHit(ev05, [])).toBe(false)
+  })
+})
+
+describe('findHitBreakpoints（watch 模式：命中计数与暂停判定的数据源）', () => {
+  it('返回所有命中断点，watch 与非 watch 都计入', () => {
+    const ev05 = ev('ev05') // damage result 113
+    const list = [
+      { ...bp('damage', 50), id: 'a', watch: true },
+      { ...bp('damage', 200), id: 'b', watch: false },
+      { ...bp('level', 'error'), id: 'c', watch: true },
+    ]
+    expect(findHitBreakpoints(ev05, list).map((h) => h.id)).toEqual(['a'])
+  })
+
+  it('watch 不影响命中判定；未启用 / none 仍不命中', () => {
+    const ev05 = ev('ev05')
+    const list = [
+      { ...bp('damage', 50), id: 'a', watch: true },
+      { ...bp('damage', 50), id: 'b', watch: false, enabled: false },
+      { ...bp('none'), id: 'c', watch: true },
+    ]
+    expect(findHitBreakpoints(ev05, list).map((h) => h.id)).toEqual(['a'])
   })
 })

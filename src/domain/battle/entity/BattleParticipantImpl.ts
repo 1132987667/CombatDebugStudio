@@ -27,7 +27,7 @@ import {
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
-import type { BuffQuery } from '@/domain/buff/types'
+import { BUFF_TAGS, type BuffQuery } from '@/domain/buff/types'
 import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { SkillType } from '@/domain/skill/types'
@@ -540,7 +540,7 @@ export class BattleParticipantImpl implements BattleEntity {
 
     // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
     if (
-      this.buffQuery?.hasBuffWithTag(this.id, 'energy_absorption') &&
+      this.buffQuery?.hasBuffWithTag(this.id, BUFF_TAGS.ENERGY_ABSORPTION) &&
       this.currentEnergy > 0
     ) {
       const energyUsed = Math.min(this.currentEnergy, damage)

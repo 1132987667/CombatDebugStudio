@@ -19,23 +19,6 @@ import { TracePhase } from '@/shared/types/trace-event'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
 import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
 
-vi.mock('@/main', () => ({
-  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
-  default: {},
-}))
-
-vi.mock('@/shared/utils/RAF', () => ({
-  RAFTimer: class {
-    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
-      fn()
-      return Symbol('mock')
-    }
-    setInterval = () => Symbol('mock')
-    clearTimeout = () => {}
-    clearInterval = () => {}
-  },
-}))
-
 describe('战斗结束 trace 收尾（battle_end 事件补发 + 落盘）', () => {
   let battleSystem: BattleSystem
 

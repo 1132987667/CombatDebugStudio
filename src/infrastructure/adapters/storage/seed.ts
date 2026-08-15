@@ -53,6 +53,7 @@ import xiyouCollectJson from '@configs/xiyou/collect.json'
 import xiyouQuestJson from '@configs/xiyou/quest.json'
 import xiyouCaveJson from '@configs/xiyou/cave.json'
 import itemsDataRaw from '@configs/xiyou/items.json'
+import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 
 // NOTE: v13 — 新增装备词条库 equipment_affixes（独立于敌人词缀 affixes，词条属性映射 attributes.json、
 //       部位约束 slotKey 强校验，供装备随机词条掉落/洗炼/重铸按部位抽池）。
@@ -61,11 +62,19 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 // NOTE: v15 — 词缀库按设计稿 v3.1 重建：affixes.json 顶层改为对象（affix_library_version/affixes/mandate_bindings/
 //       conflict_rules/wuxing_res_cap），69 条词缀（yao_1~4/mandate/jie 六档），五行词缀统一为抗性（D1b 已删五行攻击）。
 //       升级版本号让已 seed 的浏览器重导最新 configs。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v15'
+// NOTE: v16 — 敌人体系拆档：guardian_* 五行护法等旧敌人归档 enemies-old.json 且 ConfigDataSource 已加载，
+//       修复 seed 后 actors 表为空（deriveActors 依赖 guardian_* 派生）。升版强制已 seed 的浏览器重导补全。
+// NOTE: v17 — 敌人技能/敌人 buff 数据补全：enemy-buffs.json 合并入 buffs 表（技能 steps.buffId 引用断裂 178 项修复）。
+// NOTE: v18 — 经验与金钱管理：params 域新增结构化种子 exp_table / enemy_reward_table / level_diff_bonus
+//       （经验曲线、敌人奖励基准+难度/角色倍率、等级差加成规则，供封神榜编辑与引擎结算消费）。
+// NOTE: v19 — 玩家等级上限 30 → 50（《关卡系统 v2.0.md》）：exp_table maxLevel 50、补 11-50 档位
+//       （1-10 级 300×等级 / 11-30 级 600×等级 / 31-50 级 900×等级）。升版强制已 seed 的浏览器重导新经验表。
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v19'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
   ...buffsData,
+  ...(enemyBuffsJson as unknown as Array<Record<string, unknown>>),
   ...((effectsDataRaw as { effects: EffectsJsonEntry[] }).effects ?? []),
 ]
 
@@ -137,6 +146,99 @@ function buildParams(): BattleParamData[] {
     { id: 'max_damage', name: '最大伤害', value: 9999, range: { min: 1, max: 99999 }, description: '战斗规则·单次攻击最高伤害（combat.maxDamage）', updatedAt: nowIso() },
     { id: 'max_turns', name: '最大回合数', value: 99, range: { min: 1, max: 999 }, description: '战斗规则·固定回合上限（turnSystem.maxTurns）', updatedAt: nowIso() },
   ]
+}
+
+/** 经验与金钱管理结构化种子：玩家升级经验表（params 域，key=exp_table） */
+function buildExpTable(): BattleParamData {
+  const levelRange = (start: number, end: number): { level: number; expRequired: number }[] => {
+    const out: { level: number; expRequired: number }[] = []
+    for (let lv = start; lv <= end; lv++) out.push({ level: lv, expRequired: 300 * lv })
+    return out
+  }
+  const growthRange = (start: number, end: number, perLv: number): { level: number; expRequired: number }[] => {
+    const out: { level: number; expRequired: number }[] = []
+    for (let lv = start; lv <= end; lv++) out.push({ level: lv, expRequired: perLv * lv })
+    return out
+  }
+  return {
+    id: 'exp_table',
+    name: '玩家升级经验表',
+    description: '定义玩家每个等级升至下一级所需的经验值',
+    data: {
+      id: 'exp_table',
+      maxLevel: 50,
+      entries: [
+        ...levelRange(1, 10),
+        ...growthRange(11, 30, 600),
+        ...growthRange(31, 50, 900),
+      ],
+      formulaHint: '1-10级：300×等级；11-30级：600×等级；31-50级：900×等级',
+    },
+    updatedAt: nowIso(),
+  }
+}
+
+/** 经验与金钱管理结构化种子：敌人经验与金钱基准表（params 域，key=enemy_reward_table） */
+function buildEnemyRewardTable(): BattleParamData {
+  return {
+    id: 'enemy_reward_table',
+    name: '敌人经验与金钱基准表',
+    description: '定义每个等级敌人被击败后给予的基础经验与金钱区间',
+    data: {
+      id: 'enemy_reward_table',
+      baseExpFormula: 'enemyLevel × 10',
+      baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
+      roleMultiplier: {
+        normal: 1.0,
+        guardian: 1.2,
+        minor_boss: 2.0,
+        major_boss: 3.0,
+        achievement_boss: 4.0,
+        hidden_boss: 5.0,
+        three_kings: 7.0,
+        final_boss: 8.0,
+      },
+      entries: [
+        { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
+        { enemyLevel: 5, baseExp: 50, goldMin: 15, goldMax: 25, note: '小花山后期' },
+        { enemyLevel: 10, baseExp: 100, goldMin: 30, goldMax: 50, note: '浅水涧' },
+        { enemyLevel: 15, baseExp: 150, goldMin: 45, goldMax: 75, note: '碎石坡' },
+        { enemyLevel: 20, baseExp: 200, goldMin: 60, goldMax: 100, note: '熔岩洞' },
+        { enemyLevel: 25, baseExp: 250, goldMin: 75, goldMax: 125, note: '蛛丝谷' },
+        { enemyLevel: 30, baseExp: 300, goldMin: 90, goldMax: 150, note: '灵霄台终局' },
+        { enemyLevel: 40, baseExp: 400, goldMin: 120, goldMax: 200, note: '中期深度（插值锚点）' },
+        { enemyLevel: 50, baseExp: 500, goldMin: 150, goldMax: 250, note: '后期深度（插值锚点）' },
+        { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '隐藏 BOSS 档（插值锚点）' },
+        { enemyLevel: 70, baseExp: 700, goldMin: 210, goldMax: 350, note: '终局档（插值锚点）' },
+      ],
+      interpolation: 'linear',
+    },
+    updatedAt: nowIso(),
+  }
+}
+
+/** 经验与金钱管理结构化种子：等级差经验加成规则（params 域，key=level_diff_bonus） */
+function buildLevelDiffBonus(): BattleParamData {
+  return {
+    id: 'level_diff_bonus',
+    name: '等级差经验加成规则',
+    description: '玩家攻击高于或低于自身等级的敌人时，经验获取的倍率修正',
+    data: {
+      id: 'level_diff_bonus',
+      rules: [
+        { id: 'rule_underleveled_5', label: '碾压（低5级及以上）', condition: { diff: '<= -5' }, expMultiplier: 0.1, goldMultiplier: 0.5, description: '敌人等级比玩家低5级及以上，经验大幅衰减', note: '防止低级刷怪' },
+        { id: 'rule_underleveled_3', label: '轻松（低3~4级）', condition: { diff: [-4, -3] }, expMultiplier: 0.5, goldMultiplier: 0.8, description: '敌人等级比玩家低3~4级，经验减半' },
+        { id: 'rule_underleveled_1', label: '略低（低1~2级）', condition: { diff: [-2, -1] }, expMultiplier: 0.8, goldMultiplier: 1.0, description: '敌人等级略低于玩家，经验轻微衰减' },
+        { id: 'rule_even', label: '同级', condition: { diff: 0 }, expMultiplier: 1.0, goldMultiplier: 1.0, description: '等级相同，无修正' },
+        { id: 'rule_overleveled_1', label: '略高（高1~2级）', condition: { diff: [1, 2] }, expMultiplier: 1.2, goldMultiplier: 1.0, description: '敌人略强，经验小幅加成' },
+        { id: 'rule_overleveled_3', label: '挑战（高3~5级）', condition: { diff: [3, 5] }, expMultiplier: 1.5, goldMultiplier: 1.2, description: '越级挑战，经验显著加成' },
+        { id: 'rule_overleveled_6', label: '极限（高6级及以上）', condition: { diff: '>= 6' }, expMultiplier: 2.0, goldMultiplier: 1.5, description: '极限越级，经验翻倍', note: '鼓励挑战高难内容' },
+      ],
+      fallbackMultiplier: 1.0,
+      clampRange: { min: 0.1, max: 3.0 },
+    },
+    updatedAt: nowIso(),
+  }
 }
 
 /** 西游数据种子：configs/xiyou/*.json 单文档导入（演劫台经封神榜读取，需求说明 §5.1 方案 B） */
@@ -227,7 +329,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
       [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
-      [FENGSHEN_STORE.PARAMS, buildParams()],
+      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus()]],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
       [FENGSHEN_STORE.GEARS, (equipmentDataRaw as EquipmentData[]).filter((e) => e.craftable) as GearData[]],

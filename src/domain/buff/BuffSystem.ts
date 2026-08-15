@@ -7,6 +7,7 @@ import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
   BattleTriggerPhase,
   StepExecutionContext,
+  normalizeTriggerPhase,
   type BattleEntity,
 } from '@/domain/battle/type/types'
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'
@@ -33,7 +34,7 @@ import type {
 } from '@/domain/buff/atomic/BuffConfigResolver'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType, StepEffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
 import { Counter } from '@/shared/utils/Counter'
@@ -157,7 +158,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   private registerDefaultTriggerScripts(): void {
     this.registerTriggerScript(
-      EffectType.DEAL_DAMAGE,
+      StepEffectType.DEAL_DAMAGE,
       (ctx: TriggerExecutionContext) => {
         const damage = (ctx.params?.damage as number) ?? 0
         const damagePercent = (ctx.params?.damagePercent as number) ?? 0
@@ -172,7 +173,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       },
     )
     this.registerTriggerScript(
-      EffectType.APPLY_BUFF,
+      StepEffectType.APPLY_BUFF,
       (ctx: TriggerExecutionContext) => {
         if (ctx.params?.buffId) {
           const buffId = ctx.params.buffId as string
@@ -198,7 +199,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       },
     )
     this.registerTriggerScript(
-      EffectType.HEAL,
+      StepEffectType.HEAL,
       (ctx: TriggerExecutionContext) => {
         this.healTarget(ctx.targetId ?? '', (ctx.params?.amount as number) ?? 0)
       },
@@ -372,8 +373,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!buffInstance) return
 
     for (const trigger of triggers) {
-      // phase 已由 BuffConfigResolver 归一化为枚举值，直接注册
-      const phase = trigger.phase
+      // NOTE: phase 在此入口统一归一化——JSON 配置已在 BuffConfigResolver 归一化（幂等），
+      //       运行时动态创建（调用方 config.triggers）的 Buff 未经解析器，此处兜底归一化。
+      const phase = normalizeTriggerPhase(trigger.phase, buffInstance.buffId)
       let triggerCount = 0
       let lastTriggerTurn = -999
 
@@ -416,7 +418,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         }
       }
 
-      this.eventBus.on(phase, callback as (...args: any[]) => void, instanceId)
+      this.eventBus.on(phase, callback as (...args: unknown[]) => void, instanceId)
     }
   }
 
@@ -710,14 +712,26 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     // NOTE: 触发器注册独立于 effectPlan/脚本路径，两者可以共存。
     // 触发器与效果原语正交——effectPlan 管理每回合效果，triggers 管理事件响应。
-    // 注册解析器归一化后的 triggers（phase 已是枚举值）
+    // 注册解析器归一化后的 triggers（动态 buff 在此入口由 normalizeTriggerPhase 统一归一化）
     const normalizedTriggers = buffResolved?.triggers ?? resolvedConfig.triggers
     if (normalizedTriggers && normalizedTriggers.length > 0) {
-      this.registerTriggersForInstance(
-        instanceId,
-        normalizedTriggers,
-        characterId,
-      )
+      try {
+        this.registerTriggersForInstance(
+          instanceId,
+          normalizedTriggers,
+          characterId,
+        )
+      } catch (error) {
+        // 触发器配置非法（如无法识别的 phase）→ 回滚实例，避免半初始化残留
+        this.unregisterTriggersForInstance(instanceId)
+        this.buffInstances.delete(instanceId)
+        BuffContextPool.return(buffContext)
+        this.logger.addDebugLog(
+          `[BuffSystem] 触发器注册失败，已回滚: ${buffId} → ${characterId}`,
+          { level: LogLevel.WARN, error: error as Error },
+        )
+        return ''
+      }
     }
 
     this.triggerAttributeChange(characterId)
@@ -753,7 +767,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     if (context?.record) {
       context?.record.effects.push({
-        type: buffResolved?.polarity === 'negative' ? EffectType.DEBUFF : EffectType.BUFF,
+        type: buffResolved?.polarity === 'negative' ? ActionResultType.DEBUFF : ActionResultType.BUFF,
         targetId: characterId,
         buffId: resolvedConfig.id,
         instanceId,
@@ -976,7 +990,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
    */
   private cascadeRemoveChildren(
     parentId: string,
-    parentCharacterId: string,
+    _parentCharacterId: string,
   ): void {
     const children = this.parentToChildren.get(parentId)
     if (!children || children.size === 0) return
@@ -1256,7 +1270,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return this.getBuffNameByInstanceId(sourceId)
   }
 
-  public getSourceType(sourceId: string): ModifierSourceType {
+  public getSourceType(_sourceId: string): ModifierSourceType {
     return 'buff'
   }
 

@@ -1,6 +1,6 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ModifierType as ModifierTypeEnum } from '@/domain/attribute/types'
 
 /**
@@ -27,6 +27,14 @@ export interface AttributeModifier {
  * - 支持固定值和动态值两种模式
  * - 支持单一属性和批量属性
  * - 不预设成长逻辑——子类在 _onUpdate 中自行实现
+ *
+ * 性能设计（值快照比对）：
+ * - getModifiers() 的声明列表在实例生命周期内缓存，避免每次构造新数组
+ * - applyModifiers(replace) 对每个修饰符维护"上次应用的最终值"快照：
+ *   值未变 → 跳过；值变化/新增 → 仅重写该属性；声明中被移除 → 精确移除。
+ *   不再无条件 remove + re-add，避免 shouldReapplyOnUpdate 类 Buff 每回合无效重算。
+ * - 契约：同一属性 + 类型的修饰符在一个声明中至多出现一次
+ *   （同属性多类型可共存，如 attack ADDITIVE + attack MULTIPLICATIVE）。
  *
  *
  * @example
@@ -66,15 +74,34 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     return false
   }
 
+  // ==================== 声明缓存与值快照 ====================
+
+  /** 子类 getModifiers() 的结果缓存（一个脚本实例对应一个 Buff 实例，生命周期安全） */
+  private modifierDeclarationCache: AttributeModifier[] | null = null
+
+  /**
+   * 已应用修饰符的值快照：key=`${attribute}:${type}` → 上次应用的最终值（含层数缩放）。
+   * applyModifiers(replace) 据此比对，值未变时跳过重写。
+   */
+  private appliedValues = new Map<string, number>()
+
+  /** 读取（并缓存）子类声明的修饰符列表 */
+  protected getCachedModifiers(): AttributeModifier[] {
+    if (!this.modifierDeclarationCache) {
+      this.modifierDeclarationCache = this.getModifiers()
+    }
+    return this.modifierDeclarationCache
+  }
+
   // ==================== 气血周期实现 ====================
 
   protected _onApply(context: BuffContext): void {
-    const modifiers = this.getModifiers()
+    const modifiers = this.getCachedModifiers()
     this.applyModifiers(context, false, modifiers)
     this.log(context, `√ 效果生效，应用了 ${modifiers.length} 个属性修饰符`)
   }
 
-  protected _onRemove(context: BuffContext): void {
+  protected _onRemove(_context: BuffContext): void {
     // NOTE: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
     //       不在脚本层调用 context.removeModifiers()。
     //        子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
@@ -91,7 +118,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
 
   protected _onRefresh(context: BuffContext): void {
     if (this.shouldReapplyOnRefresh()) {
-      const modifiers = this.getModifiers()
+      const modifiers = this.getCachedModifiers()
       this.applyModifiers(context, true, modifiers)
       this.log(context, `刷新效果，重新应用了 ${modifiers.length} 个修饰符`)
     }
@@ -102,25 +129,27 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   /**
    * 应用修饰符列表到 BuffContext
    * @param context Buff 上下文
-   * @param replace 是否先替换再应用——精确移除每个声明的属性的旧修饰符，再添加新值
-   * @param modifiers 可选——传入的修饰符列表，不传时调用 this.getModifiers()
+   * @param replace 是否先替换再应用——与值快照比对，仅重写值变化/新增的属性，移除声明中已删除的属性
+   * @param modifiers 可选——传入的修饰符列表，不传时调用 getCachedModifiers()
    */
   protected applyModifiers(
     context: BuffContext,
     replace: boolean = false,
     modifiers?: AttributeModifier[],
   ): void {
-    modifiers ??= this.getModifiers()
+    const declarations = modifiers ?? this.getCachedModifiers()
     const stacks = this.getStacks(context)
 
-    if (replace) {
-      // ponytail: 精确移除——只移除本 instance 下每个声明属性的旧修饰符，不影响同 instance 的其他属性
-      for (const mod of modifiers) {
-        context.removeModifiers(mod.attribute as ATTRIBUTE_CODE)
-      }
-    }
-
-    for (const mod of modifiers) {
+    // 求值当前声明：过滤非法属性，解析动态值（含异常兜底），应用层数缩放
+    const current: Array<{
+      key: string
+      attribute: ATTRIBUTE_CODE
+      value: number
+      type: ModifierTypeEnum
+      rawValue: number
+      description?: string
+    }> = []
+    for (const mod of declarations) {
       // NOTE: 运行时校验——仅接受已知 ATTRIBUTE_CODE，非法属性跳过并 warn
       if (
         !Object.values(ATTRIBUTE_CODE).includes(mod.attribute as ATTRIBUTE_CODE)
@@ -145,24 +174,52 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
         rawValue = mod.value
       }
       const value = rawValue * stacks
-      context.addModifier(mod.attribute as ATTRIBUTE_CODE, value, mod.type)
+      current.push({
+        key: `${mod.attribute}:${mod.type}`,
+        attribute: mod.attribute as ATTRIBUTE_CODE,
+        value,
+        type: mod.type,
+        rawValue,
+        description: mod.description,
+      })
+    }
+
+    if (replace) {
+      // 值变化/新增的属性 → 精确重写（remove 该属性+类型，再 add）
+      const toRewrite = new Map<string, (typeof current)[number]>()
+      for (const item of current) {
+        if (this.appliedValues.get(item.key) !== item.value) {
+          toRewrite.set(item.key, item)
+        }
+      }
+      // 声明中已删除的属性 → 精确移除旧修饰符（保留同属性其他类型）
+      for (const key of [...this.appliedValues.keys()]) {
+        if (!current.some((c) => c.key === key)) {
+          const separator = key.lastIndexOf(':')
+          const attribute = key.slice(0, separator) as ATTRIBUTE_CODE
+          const type = key.slice(separator + 1) as ModifierTypeEnum
+          context.removeModifiers(attribute, type)
+          this.appliedValues.delete(key)
+        }
+      }
+      for (const [key, item] of toRewrite) {
+        context.removeModifiers(item.attribute, item.type)
+        context.addModifier(item.attribute, item.value, item.type)
+        this.appliedValues.set(key, item.value)
+      }
+    } else {
+      // 非 replace（首次施加）：全量应用并记录快照
+      for (const item of current) {
+        context.addModifier(item.attribute, item.value, item.type)
+        this.appliedValues.set(item.key, item.value)
+      }
     }
 
     if (this._isDebugMode()) {
-      for (const mod of modifiers) {
-        const rawVal =
-          typeof mod.value === 'function'
-            ? (() => {
-                try {
-                  return mod.value(context)
-                } catch {
-                  return NaN
-                }
-              })()
-            : mod.value
+      for (const item of current) {
         this.log(
           context,
-          `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${rawVal}（${stacks}层→实际${Number.isNaN(rawVal) ? 'N/A' : rawVal * stacks}）`,
+          `  ├─ ${item.description ?? item.attribute}: ${item.attribute} ${item.type} ${item.rawValue}（${stacks}层→实际${item.value}）`,
         )
       }
     }
@@ -181,7 +238,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   }
 
   /** 批量解析参数：合并默认值和配置值 */
-  protected resolveParams<T extends Record<string, any>>(
+  protected resolveParams<T extends Record<string, unknown>>(
     context: BuffContext,
     defaults: T,
   ): T {

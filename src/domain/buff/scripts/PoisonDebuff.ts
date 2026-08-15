@@ -1,8 +1,8 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-import { EffectType } from '@/domain/skill/types'
+import { StepEffectType } from '@/domain/skill/types'
 
 export class PoisonDebuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_poison'
@@ -43,7 +43,7 @@ export class PoisonDebuff extends BaseBuffScript {
 
     this.log(context, `毒素伤害：${currentDamage}`)
     // 通过触发系统造成伤害（dot:true → 战报补发 dot 事件，计入承伤不计命中/技能）
-    this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
+    this.triggerEvent(context, StepEffectType.DEAL_DAMAGE, {
       damage: currentDamage,
       dot: true,
     })

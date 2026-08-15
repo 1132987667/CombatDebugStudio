@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="battle-test-tool">
     <!-- 公共顶部栏：太初道枢 + 模块 Tab + 按模块收敛的操作按钮（9.3）
          NOTE: 进入演劫台游戏后隐藏，避免与游戏自身顶部栏（xy-topbar）叠加 -->

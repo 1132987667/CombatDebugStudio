@@ -51,11 +51,13 @@ export function getPassiveSkills(): SkillConfig[] {
 import type { Enemy } from '@/shared/types/enemy'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
+import enemiesOldDataRaw from '@configs/enemies/enemies-old.json'
 
-// 与 GameDataProcessor 保持同一合并口径：正式敌人 + 测试敌人
+// 与 ConfigDataSource 保持同一合并口径：正式敌人 + 测试敌人 + 旧敌人归档（guardian_* 五行护法等）
 const enemiesData = [
   ...(enemiesDataRaw as Enemy[]),
   ...(enemiesTestDataRaw as Enemy[]),
+  ...(enemiesOldDataRaw as Enemy[]),
 ] as Enemy[]
 
 /** 按 ID 查找敌人配置 */

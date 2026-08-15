@@ -1,14 +1,9 @@
 <template>
   <div class="xy-item-card-wrap">
-    <button
-      type="button"
+    <button type="button"
       :class="['xy-item-card', `xy-item-card--r${item.rarity}`, { 'is-selected': selected }, 'xy-ink-hover']"
-      :aria-label="`${item.name} ×${count}`"
-      @mouseenter="onEnter"
-      @mouseleave="onLeave"
-      @click="$emit('open', item.id)"
-      @contextmenu.prevent="openMenu($event)"
-    >
+      :aria-label="`${item.name} ×${count}`" @mouseenter="onEnter" @mouseleave="onLeave" @click="$emit('open', item.id)"
+      @contextmenu.prevent="openMenu($event)">
       <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ item.name }}</span>
       <span class="xy-item-meta">
         <span class="xy-item-type">{{ item.type }}</span>
@@ -27,7 +22,8 @@
         <button v-if="showUse" type="button" class="xy-ctx-item" :disabled="!canUseNow"
           :title="inBattleOnly ? '仅战斗中可用（行囊·快捷栏）' : undefined" @click="act('use')">使用</button>
         <button v-if="canStore" type="button" class="xy-ctx-item" @click="act('storage')">存入仓库</button>
-        <button v-if="canDiscard" type="button" class="xy-ctx-item xy-ctx-item--danger" @click="act('discard')">丢弃</button>
+        <button v-if="canDiscard" type="button" class="xy-ctx-item xy-ctx-item--danger"
+          @click="act('discard')">丢弃</button>
         <button type="button" class="xy-ctx-item" @click="act('open')">查看详情</button>
       </div>
     </Teleport>
@@ -156,7 +152,7 @@ onBeforeUnmount(() => {
   border-radius: 2px;
 
   &::after {
-    @include bg-gilt();
+    @include mixin-bg-dual-dots();
     content: '';
     position: absolute;
     inset: 0;
@@ -173,7 +169,7 @@ onBeforeUnmount(() => {
       0 22px 46px rgba(0, 0, 0, 0.4);
 
     &::after {
-      animation: hover-breath 1.2s ease-in-out infinite;
+      animation: dots-flow 6s linear infinite;
     }
   }
 
@@ -183,42 +179,42 @@ onBeforeUnmount(() => {
   }
 
   &--r1 {
-    --r-color: var(--xy-ink-4);
+    --r-color: var(--rarity-1);
 
     &::after {
-      @include bg-gilt($light: color.adjust(#7a7a86, $lightness: -15%));
+      @include mixin-bg-dual-dots($color: color.adjust(#7a7a86));
     }
   }
 
   &--r2 {
-    --r-color: var(--xy-jade);
+    --r-color: var(--rarity-2);
 
     &::after {
-      @include bg-gilt($light: color.adjust(#4caf50, $lightness: -15%));
+      @include mixin-bg-dual-dots($color: color.adjust(#4caf50));
     }
   }
 
   &--r3 {
-    --r-color: var(--color-skill-active);
+    --r-color: var(--rarity-3);
 
     &::after {
-      @include bg-gilt($light: color.adjust(#60a5fa, $lightness: -15%));
+      @include mixin-bg-dual-dots($color: color.adjust(#60a5fa));
     }
   }
 
   &--r4 {
-    --r-color: var(--color-debuff);
+    --r-color: var(--rarity-4);
 
     &::after {
-      @include bg-gilt($light: color.adjust(#a855f7, $lightness: -15%));
+      @include mixin-bg-dual-dots($color: color.adjust(#a855f7));
     }
   }
 
   &--r5 {
-    --r-color: var(--xy-gold);
+    --r-color: var(--rarity-5);
 
     &::after {
-      @include bg-gilt($light: color.adjust(#ff9800, $lightness: -15%));
+      @include mixin-bg-dual-dots($color: color.adjust(#ff9800));
     }
   }
 }

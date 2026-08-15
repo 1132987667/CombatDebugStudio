@@ -3,234 +3,504 @@
     "id": "drop_level1_easy",
     "name": "关卡1 简单难度掉落",
     "entries": [
-      { "itemId": "mat_taomu", "probability": 80 },
-      { "itemId": "mat_cushi", "probability": 70 },
-      { "itemId": "mat_danshuiyu", "probability": 40 },
-      { "itemId": "elix_001", "probability": 30 }
+      {
+        "itemId": "mat_taomu",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_cushi",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "probability": 40
+      },
+      {
+        "itemId": "elix_001",
+        "probability": 30
+      }
     ]
   },
   {
     "id": "drop_level1_hard",
     "name": "关卡1 困难难度掉落",
     "entries": [
-      { "itemId": "mat_taomu", "probability": 70 },
-      { "itemId": "mat_tongjing", "probability": 35 },
-      { "itemId": "mat_danshuiyu", "probability": 60 },
-      { "itemId": "crys_007", "probability": 5 }
+      {
+        "itemId": "mat_taomu",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_tongjing",
+        "probability": 35
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_007",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level2_easy",
     "name": "关卡2 简单难度掉落",
     "entries": [
-      { "itemId": "mat_beike", "probability": 80 },
-      { "itemId": "mat_danshuiyu", "probability": 60 },
-      { "itemId": "elix_001", "probability": 30 }
+      {
+        "itemId": "mat_beike",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "probability": 60
+      },
+      {
+        "itemId": "elix_001",
+        "probability": 30
+      }
     ]
   },
   {
     "id": "drop_level2_hard",
     "name": "关卡2 困难难度掉落",
     "entries": [
-      { "itemId": "mat_beike", "probability": 70 },
-      { "itemId": "mat_danshuiyu", "probability": 65 },
-      { "itemId": "mat_zhenzhu", "probability": 60 },
-      { "itemId": "crys_007", "probability": 5 }
+      {
+        "itemId": "mat_beike",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_zhenzhu",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_007",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level3_easy",
     "name": "关卡3 简单难度掉落",
     "entries": [
-      { "itemId": "mat_cushi", "probability": 80 },
-      { "itemId": "mat_songmu", "probability": 60 },
-      { "itemId": "mat_tongjing", "probability": 30 }
+      {
+        "itemId": "mat_cushi",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_songmu",
+        "probability": 60
+      },
+      {
+        "itemId": "mat_tongjing",
+        "probability": 30
+      }
     ]
   },
   {
     "id": "drop_level3_hard",
     "name": "关卡3 困难难度掉落",
     "entries": [
-      { "itemId": "mat_cushi", "probability": 70 },
-      { "itemId": "mat_tongjing", "probability": 65 },
-      { "itemId": "mat_tiejing", "probability": 60 },
-      { "itemId": "crys_001", "probability": 5 }
+      {
+        "itemId": "mat_cushi",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_tongjing",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_tiejing",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_001",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level4_easy",
     "name": "关卡4 简单难度掉落",
     "entries": [
-      { "itemId": "mat_songmu", "probability": 80 },
-      { "itemId": "mat_lupi", "probability": 60 },
-      { "itemId": "mat_xuanzhi", "probability": 70 },
-      { "itemId": "mat_cushi", "probability": 40 }
+      {
+        "itemId": "mat_songmu",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_lupi",
+        "probability": 60
+      },
+      {
+        "itemId": "mat_xuanzhi",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_cushi",
+        "probability": 40
+      }
     ]
   },
   {
     "id": "drop_level4_hard",
     "name": "关卡4 困难难度掉落",
     "entries": [
-      { "itemId": "mat_songmu", "probability": 70 },
-      { "itemId": "mat_xuanzhi", "probability": 65 },
-      { "itemId": "mat_qinghuaci", "probability": 60 },
-      { "itemId": "crys_002", "probability": 5 }
+      {
+        "itemId": "mat_songmu",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_xuanzhi",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_qinghuaci",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_002",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level5_easy",
     "name": "关卡5 简单难度掉落",
     "entries": [
-      { "itemId": "mat_cushi", "probability": 80 },
-      { "itemId": "mat_beike", "probability": 70 },
-      { "itemId": "mat_shenshuiyu", "probability": 60 }
+      {
+        "itemId": "mat_cushi",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_beike",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_shenshuiyu",
+        "probability": 60
+      }
     ]
   },
   {
     "id": "drop_level5_hard",
     "name": "关卡5 困难难度掉落",
     "entries": [
-      { "itemId": "mat_cushi", "probability": 70 },
-      { "itemId": "mat_tiejing", "probability": 65 },
-      { "itemId": "mat_shenshuiyu", "probability": 65 },
-      { "itemId": "mat_shengshui", "probability": 60 },
-      { "itemId": "crys_008", "probability": 5 }
+      {
+        "itemId": "mat_cushi",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_tiejing",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_shenshuiyu",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_shengshui",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_008",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level6_easy",
     "name": "关卡6 简单难度掉落",
     "entries": [
-      { "itemId": "mat_tiemu", "probability": 80 },
-      { "itemId": "mat_tieyan", "probability": 70 },
-      { "itemId": "mat_tiejing", "probability": 20 }
+      {
+        "itemId": "mat_tiemu",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_tieyan",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_tiejing",
+        "probability": 20
+      }
     ]
   },
   {
     "id": "drop_level6_hard",
     "name": "关卡6 困难难度掉落",
     "entries": [
-      { "itemId": "mat_tiemu", "probability": 70 },
-      { "itemId": "mat_tieyan", "probability": 65 },
-      { "itemId": "mat_gutongjing", "probability": 65 },
-      { "itemId": "mat_jinjing", "probability": 60 },
-      { "itemId": "crys_003", "probability": 5 }
+      {
+        "itemId": "mat_tiemu",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_tieyan",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_gutongjing",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_jinjing",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_003",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level7_easy",
     "name": "关卡7 简单难度掉落",
     "entries": [
-      { "itemId": "mat_xiongpi", "probability": 80 },
-      { "itemId": "mat_duye", "probability": 20 },
-      { "itemId": "mat_hantan", "probability": 70 }
+      {
+        "itemId": "mat_xiongpi",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_duye",
+        "probability": 20
+      },
+      {
+        "itemId": "mat_hantan",
+        "probability": 70
+      }
     ]
   },
   {
     "id": "drop_level7_hard",
     "name": "关卡7 困难难度掉落",
     "entries": [
-      { "itemId": "mat_xiongpi", "probability": 70 },
-      { "itemId": "mat_hantan", "probability": 65 },
-      { "itemId": "mat_xianyun", "probability": 60 },
-      { "itemId": "crys_009", "probability": 5 }
+      {
+        "itemId": "mat_xiongpi",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_hantan",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_xianyun",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_009",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level8_easy",
     "name": "关卡8 简单难度掉落",
     "entries": [
-      { "itemId": "mat_hupi", "probability": 80 },
-      { "itemId": "mat_jinyang", "probability": 70 },
-      { "itemId": "mat_jinjing", "probability": 20 }
+      {
+        "itemId": "mat_hupi",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_jinyang",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_jinjing",
+        "probability": 20
+      }
     ]
   },
   {
     "id": "drop_level8_hard",
     "name": "关卡8 困难难度掉落",
     "entries": [
-      { "itemId": "mat_hupi", "probability": 70 },
-      { "itemId": "mat_jinyang", "probability": 65 },
-      { "itemId": "mat_gutongjing", "probability": 60 },
-      { "itemId": "mat_jinjing", "probability": 35 },
-      { "itemId": "crys_006", "probability": 5 }
+      {
+        "itemId": "mat_hupi",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_jinyang",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_gutongjing",
+        "probability": 60
+      },
+      {
+        "itemId": "mat_jinjing",
+        "probability": 35
+      },
+      {
+        "itemId": "crys_006",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level9_easy",
     "name": "关卡9 简单难度掉落",
     "entries": [
-      { "itemId": "mat_xianyun", "probability": 80 },
-      { "itemId": "mat_shengshui", "probability": 70 },
-      { "itemId": "frag_004", "probability": 60 }
+      {
+        "itemId": "mat_xianyun",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_shengshui",
+        "probability": 70
+      },
+      {
+        "itemId": "frag_004",
+        "probability": 60
+      }
     ]
   },
   {
     "id": "drop_level9_hard",
     "name": "关卡9 困难难度掉落",
     "entries": [
-      { "itemId": "mat_xianyun", "probability": 70 },
-      { "itemId": "mat_shengshui", "probability": 65 },
-      { "itemId": "mat_dimai", "probability": 60 },
-      { "itemId": "mat_tiangang", "probability": 60 },
-      { "itemId": "crys_003", "probability": 5 }
+      {
+        "itemId": "mat_xianyun",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_shengshui",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_dimai",
+        "probability": 60
+      },
+      {
+        "itemId": "mat_tiangang",
+        "probability": 60
+      },
+      {
+        "itemId": "crys_003",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_level10_easy",
     "name": "关卡10 简单难度掉落",
     "entries": [
-      { "itemId": "mat_tiangang_suipian", "probability": 80 },
-      { "itemId": "mat_hunyuan_suipian", "probability": 70 },
-      { "itemId": "frag_003", "probability": 60 }
+      {
+        "itemId": "mat_tiangang_suipian",
+        "probability": 80
+      },
+      {
+        "itemId": "mat_hunyuan_suipian",
+        "probability": 70
+      },
+      {
+        "itemId": "frag_003",
+        "probability": 60
+      }
     ]
   },
   {
     "id": "drop_level10_hard",
     "name": "关卡10 困难难度掉落",
     "entries": [
-      { "itemId": "mat_dimai", "probability": 70 },
-      { "itemId": "mat_tiangang", "probability": 65 },
-      { "itemId": "mat_hunyuan", "probability": 60 },
-      { "itemId": "elix_007", "probability": 5 }
+      {
+        "itemId": "mat_dimai",
+        "probability": 70
+      },
+      {
+        "itemId": "mat_tiangang",
+        "probability": 65
+      },
+      {
+        "itemId": "mat_hunyuan",
+        "probability": 60
+      },
+      {
+        "itemId": "elix_007",
+        "probability": 5
+      }
     ]
   },
   {
     "id": "drop_boss",
     "name": "关卡守护者掉落",
     "entries": [
-      { "itemId": "crys_001", "probability": 30 },
-      { "itemId": "elix_001", "probability": 50 }
+      {
+        "itemId": "crys_009",
+        "probability": 30
+      },
+      {
+        "itemId": "elix_001",
+        "probability": 50
+      }
     ]
   },
   {
     "id": "drop_equipment_t1",
     "name": "一阶装备掉落",
     "entries": [
-      { "itemId": "wp_t1_light_01", "probability": 20 },
-      { "itemId": "ar_t1_light_01", "probability": 20 },
-      { "itemId": "ac_t1_charm_01", "probability": 15 },
-      { "itemId": "eq_c002", "probability": 15 }
+      {
+        "itemId": "wp_t1_light_01",
+        "probability": 20
+      },
+      {
+        "itemId": "ar_t1_light_01",
+        "probability": 20
+      },
+      {
+        "itemId": "ac_t1_charm_01",
+        "probability": 15
+      },
+      {
+        "itemId": "eq_c002",
+        "probability": 15
+      }
     ]
   },
   {
     "id": "drop_equipment_t2",
     "name": "二阶装备掉落",
     "entries": [
-      { "itemId": "wp_t2_light_01", "probability": 15 },
-      { "itemId": "ar_t2_light_01", "probability": 15 },
-      { "itemId": "ac_t2_charm_01", "probability": 10 },
-      { "itemId": "ac_t2_ring_01", "probability": 10 }
+      {
+        "itemId": "wp_t2_light_01",
+        "probability": 15
+      },
+      {
+        "itemId": "ar_t2_light_01",
+        "probability": 15
+      },
+      {
+        "itemId": "ac_t2_charm_01",
+        "probability": 10
+      },
+      {
+        "itemId": "ac_t2_ring_01",
+        "probability": 10
+      }
     ]
   },
   {
     "id": "drop_equipment_t3",
     "name": "三阶装备掉落",
     "entries": [
-      { "itemId": "wp_t3_light_01", "probability": 10 },
-      { "itemId": "ar_t3_light_01", "probability": 10 },
-      { "itemId": "ac_t3_charm_01", "probability": 8 },
-      { "itemId": "eq_c014", "probability": 8 }
+      {
+        "itemId": "wp_t3_light_01",
+        "probability": 10
+      },
+      {
+        "itemId": "ar_t3_light_01",
+        "probability": 10
+      },
+      {
+        "itemId": "ac_t3_charm_01",
+        "probability": 8
+      },
+      {
+        "itemId": "eq_c014",
+        "probability": 8
+      }
     ]
   }
 ]

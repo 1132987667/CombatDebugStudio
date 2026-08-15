@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="fs-list-view">
     <div class="fs-list-layout">
       <!-- 左：列表（18/24 栅格） -->

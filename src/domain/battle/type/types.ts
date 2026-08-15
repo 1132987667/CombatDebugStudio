@@ -11,7 +11,6 @@ import type {
   IModifierProvider,
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
-import { EffectType } from '@/domain/skill/types'
 import type { BuffQuery } from '@/domain/buff/types'
 import { Counter } from '@/shared/utils/Counter'
 import { SkillType } from '@/domain/skill/types'
@@ -159,16 +158,8 @@ export const ActionTypes = {
 
 export type ActionTypes = (typeof ActionTypes)[keyof typeof ActionTypes]
 
-// 重命名常量名
-export const ActionResultType = {
-  DAMAGE: EffectType.DAMAGE,
-  SHIELD: EffectType.SHIELD,
-  HEAL: EffectType.HEAL,
-  CRITICAL: EffectType.CRITICAL,
-  MISS: EffectType.MISS,
-}
-export type ActionResultType =
-  (typeof ActionResultType)[keyof typeof ActionResultType]
+import { ActionResultType } from '@/domain/skill/types'
+export { ActionResultType }
 
 /** ponytail: P0/AI-1 — 参与者控制模式
  * AI: 使用 AI 实例决策（含目标建议）
@@ -538,7 +529,7 @@ export const BattleActionHelper = {
  * SkillExecutor 只负责填空不拼接字符串，EffectRenderer 负责所有文本排版。
  */
 export interface BattleEffect {
-  type: EffectType
+  type: ActionResultType
   targetId?: string
   /** 来源 ID（关键：反伤时 source 是被反弹者，target 是攻击者） */
   sourceId?: string
@@ -783,6 +774,25 @@ export const OLD_PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
   ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
   ON_APPLY: BattleTriggerPhase.ON_APPLY,
   ON_REVIVE: BattleTriggerPhase.ON_REVIVE,
+}
+
+/**
+ * 归一化触发阶段：旧风格（ON_ATTACK_HIT）→ 枚举值（on_hit），无法识别则抛错。
+ * JSON 配置（BuffConfigResolver）与运行时动态 Buff（BuffSystem.registerTriggersForInstance）
+ * 共用同一实现，保证两条路径 phase 归一化行为一致。
+ */
+export function normalizeTriggerPhase(
+  phase: string,
+  source: string,
+): BattleTriggerPhase {
+  const normalized = OLD_PHASE_NAME_MAP[phase]
+  if (normalized) return normalized
+  if ((Object.values(BattleTriggerPhase) as string[]).includes(phase)) {
+    return phase as BattleTriggerPhase
+  }
+  throw new Error(
+    `[normalizeTriggerPhase] ${source}: 无法识别的触发器阶段 "${phase}"`,
+  )
 }
 
 /** BattleTriggerPhase → 中文显示名 */

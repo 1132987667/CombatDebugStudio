@@ -37,7 +37,9 @@ function extractAttributesFromConfig(
     if (!cn) continue
     // value 语义由配置显式声明：PERCENTAGE 为百分比点，ADDITIVE 为固定值
     const isFlat = cfg.type === 'ADDITIVE' ? true : undefined
-    result.push({ attr: cn, value: Math.round(cfg.value * stacks), isFlat })
+    // perStack=false 的修饰符叠层不放大（与 ModifierEffect 语义一致），否则 × 层数
+    const scaled = cfg.perStack === false ? cfg.value : cfg.value * stacks
+    result.push({ attr: cn, value: Math.round(scaled), isFlat })
   }
   return result
 }

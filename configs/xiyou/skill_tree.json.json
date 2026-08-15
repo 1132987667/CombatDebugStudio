@@ -461,9 +461,9 @@
       "layer": 1,
       "type": "attribute",
       "cost": 1,
-      "effect": { "attribute": "blockRate", "value": 3, "calc": "percentage" },
+      "effect": { "attribute": "damageReduction", "value": 3, "calc": "percentage" },
       "prerequisite": null,
-      "description": "铁壁横身，格挡率 +3%。",
+      "description": "铁壁横身，免伤率 +3%。",
       "skillId": null,
       "buffId": null
     },

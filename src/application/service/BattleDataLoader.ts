@@ -15,13 +15,12 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData } from '@/domain/fengshen/types'
-import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import { normalizeBuffEntries } from '@/shared/types/effects-json'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BattleRuleManager, type BattleRulesConfig } from '@/domain/battle/service/BattleRuleManager'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
-import type { BattleParamData } from '@/domain/fengshen/types'
+import type { BattleParamData, EnemyRewardTableConfig, ExpTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
 import { container } from '@/infrastructure/di/Container'
 
 /** 引擎规则参数路径映射：params 表 id → BattleRulesConfig 路径（规格说明书 §3.10 收拢引擎调参） */
@@ -49,6 +48,12 @@ export class BattleDataLoader {
       const buffs = normalizeBuffEntries(await this.loadAll<{ id: string }>(FENGSHEN_STORE.BUFFS))
       const materials = await this.loadAll<Item>(FENGSHEN_STORE.MATERIALS)
 
+      // NOTE: params 表混合简单数字参数（BattleRuleManager 消费）与结构化经验/金钱表（按 id 提取）
+      const params = await this.loadAll<BattleParamData>(FENGSHEN_STORE.PARAMS)
+      const expTable = params.find((p) => p.id === 'exp_table')?.data as ExpTableConfig | undefined ?? null
+      const enemyRewardTable = params.find((p) => p.id === 'enemy_reward_table')?.data as EnemyRewardTableConfig | undefined ?? null
+      const levelDiffBonus = params.find((p) => p.id === 'level_diff_bonus')?.data as LevelDiffBonusConfig | undefined ?? null
+
       const source: IDataSource = {
         getEnemies: () => enemies,
         getSkills: () => skills,
@@ -56,6 +61,9 @@ export class BattleDataLoader {
         getLineups: () => lineups,
         getBuffs: () => buffs,
         getMaterials: () => materials,
+        getExpTable: () => expTable,
+        getEnemyRewardTable: () => enemyRewardTable,
+        getLevelDiffBonus: () => levelDiffBonus,
       }
       GameDataProcessor.setDataSource(source)
 
@@ -66,7 +74,7 @@ export class BattleDataLoader {
       }
 
       // 封神榜 params 表 → BattleRuleManager 战斗规则默认值（封神榜改参数 → reload → 引擎生效）
-      this.applyParams(await this.loadAll<BattleParamData>(FENGSHEN_STORE.PARAMS))
+      this.applyParams(params)
       return true
     } catch {
       return false
@@ -80,7 +88,7 @@ export class BattleDataLoader {
     const turnSystem: Record<string, number> = {}
     for (const p of params) {
       const rule = PARAM_RULE_PATHS[p.id]
-      if (!rule) continue
+      if (!rule || typeof p.value !== 'number') continue
       if (rule.section === 'combat') combat[rule.key] = p.value
       else turnSystem[rule.key] = p.value
     }

@@ -26,25 +26,21 @@
   {
     "id": "buff_sky_overlord",
     "name": "天空霸主",
-    "category": "attribute",
+    "category": "immunity",
     "maxStacks": 1,
     "duration": -1,
     "effects": [
       {
-        "type": "modifier",
+        "type": "immunity",
         "params": {
-          "attributes": {
-            "slowImmune": {
-              "value": 1,
-              "type": "ADDITIVE"
-            }
-          },
-          "perStack": true
+          "tags": [
+            "slow"
+          ]
         }
       }
     ],
     "polarity": "positive",
-    "description": "减速免疫+1"
+    "description": "免疫减速"
   },
   {
     "id": "buff_guard_shield",
@@ -443,29 +439,22 @@
   {
     "id": "buff_unshakable",
     "name": "不动如山",
-    "category": "attribute",
+    "category": "immunity",
     "maxStacks": 1,
     "duration": -1,
     "effects": [
       {
-        "type": "modifier",
+        "type": "immunity",
         "params": {
-          "attributes": {
-            "stunResist": {
-              "value": 1,
-              "type": "ADDITIVE"
-            },
-            "knockbackResist": {
-              "value": 1,
-              "type": "ADDITIVE"
-            }
-          },
-          "perStack": true
+          "tags": [
+            "stun",
+            "knockback"
+          ]
         }
       }
     ],
     "polarity": "positive",
-    "description": "眩晕抵抗+1，击退抵抗+1"
+    "description": "免疫眩晕、击退"
   },
   {
     "id": "buff_indestructible",
@@ -798,29 +787,22 @@
   {
     "id": "buff_sand_avatar",
     "name": "沙之化身",
-    "category": "attribute",
+    "category": "immunity",
     "maxStacks": 1,
     "duration": -1,
     "effects": [
       {
-        "type": "modifier",
+        "type": "immunity",
         "params": {
-          "attributes": {
-            "poisonResist": {
-              "value": 1,
-              "type": "ADDITIVE"
-            },
-            "bleedResist": {
-              "value": 1,
-              "type": "ADDITIVE"
-            }
-          },
-          "perStack": true
+          "tags": [
+            "poison",
+            "bleed"
+          ]
         }
       }
     ],
     "polarity": "positive",
-    "description": "毒抗+1，流血抵抗+1"
+    "description": "免疫中毒、流血"
   },
   {
     "id": "buff_snake_king_awe_trigger",
@@ -987,18 +969,22 @@
   {
     "id": "buff_fire_lord",
     "name": "火焰领主",
-    "category": "attribute",
+    "category": "immunity",
     "maxStacks": 1,
     "duration": -1,
     "effects": [
       {
+        "type": "immunity",
+        "params": {
+          "tags": [
+            "burn"
+          ]
+        }
+      },
+      {
         "type": "modifier",
         "params": {
           "attributes": {
-            "burnImmune": {
-              "value": 1,
-              "type": "ADDITIVE"
-            },
             "fireDamage": {
               "value": 20,
               "type": "PERCENTAGE"
@@ -1009,7 +995,7 @@
       }
     ],
     "polarity": "positive",
-    "description": "灼烧免疫+1，火攻+20%"
+    "description": "免疫灼烧，火攻+20%"
   },
   {
     "id": "buff_earth_fire_heart_trigger",

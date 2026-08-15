@@ -10,7 +10,6 @@ import {
   battleAnimationService,
 } from '@/infrastructure/animation/BattleAnimationService'
 import type { ActionResultType } from '@/domain/battle/type/types'
-import { EffectType } from '@/domain/skill/types'
 
 export interface UseBattleAnimationOptions {
   battleSpeed?: Ref<number>
@@ -85,7 +84,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     targetId: string,
     data: {
       damage?: number
-      hitEffect: EffectType
+      hitEffect: ActionResultType
       isCritical?: boolean
       skillName?: string
       passiveName?: string
@@ -105,7 +104,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
         targetId,
         targetElement,
         damage: data.damage,
-        hitEffect: data.hitEffect as unknown as ActionResultType,
+        hitEffect: data.hitEffect,
         isCritical: data.isCritical,
         skillName: data.skillName,
         passiveName: data.passiveName,

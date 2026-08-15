@@ -1,16 +1,20 @@
 // @vitest-environment happy-dom
 /**
  * playerProfile.test.ts — 玩家属性创建与计算（AGENTS.md：非琐碎逻辑留可运行检查）
- * 覆盖: 基础+成长计算、加点换算、经验表/封顶、mock.ts 展示快照随加点实时反映
+ * 覆盖: 基础+成长计算、加点换算、经验表/封顶、playerStore 展示快照随加点实时反映、
+ *       战斗主角数据源（buildBattleTeams/equipBonuses 取玩家实时属性）
  */
 import { describe, expect, it } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import {
   computePlayerBase,
   computeStatBonuses,
   createPlayerProfile,
   expNeedForLevel,
 } from '@/presentation/modules/yanjie/xiyou/data/playerProfile'
-import { player, playerAttributes, statPoints } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { usePlayerStore } from '@/presentation/stores/playerStore'
+import { buildBattleTeams, equipBonuses, type XiyouScene } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 describe('playerProfile 玩家属性创建', () => {
   it('level 5 档位对齐演示数值', () => {
@@ -57,11 +61,65 @@ describe('playerProfile 玩家属性创建', () => {
     expect(expNeedForLevel(99)).toBe(Infinity)
   })
 
-  it('mock.ts 展示快照随加点实时反映', () => {
-    expect(playerAttributes.value.attack).toBe(player.attackMax)
-    statPoints.strength += 2
-    expect(playerAttributes.value.attack).toBe(player.attackMax + 2)
-    statPoints.strength -= 2
-    expect(playerAttributes.value.attack).toBe(player.attackMax)
+  it('playerStore 展示快照随加点实时反映', () => {
+    setActivePinia(createPinia())
+    const store = usePlayerStore()
+    expect(store.playerAttributes.attack).toBe(store.player.attackMax)
+    store.statPoints.strength += 2
+    expect(store.playerAttributes.attack).toBe(store.player.attackMax + 2)
+    store.statPoints.strength -= 2
+    expect(store.playerAttributes.attack).toBe(store.player.attackMax)
+  })
+})
+
+describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuses）', () => {
+  const scene: XiyouScene = {
+    id: 'scene_test',
+    regionId: 'aolai',
+    name: '测试关',
+    desc: '',
+    enemies: [{ name: '花妖', level: 1 }],
+    unlocked: true,
+    difficulty: 'easy',
+    stars: 0,
+    maxStars: 3,
+  }
+
+  it('battleSnapshot 取玩家实时属性，加点加成反映到攻击', () => {
+    setActivePinia(createPinia())
+    const store = usePlayerStore()
+    expect(store.battleSnapshot.attack).toBe(store.player.attackMax)
+    store.statPoints.strength += 2
+    expect(store.battleSnapshot.attack).toBe(store.player.attackMax + 2)
+    store.statPoints.strength -= 2
+  })
+
+  it('buildBattleTeams 主角属性取玩家实时值，伙伴保持 playerParty 固定值', () => {
+    setActivePinia(createPinia())
+    const store = usePlayerStore()
+    const { ally } = buildBattleTeams(scene, undefined, store.battleSnapshot)
+    // 主角：玩家真实属性（attackMax 20、maxHp 420、critRate 7.5）
+    expect(ally[0].getAttribute(ATTRIBUTE_CODE.attack)).toBe(store.player.attackMax)
+    expect(ally[0].getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(store.player.maxHp)
+    expect(ally[0].getAttribute(ATTRIBUTE_CODE.critRate)).toBe(store.player.critRate)
+    // 伙伴（sun）：playerParty 固定 attack 22，不受玩家属性影响
+    expect(ally[1].getAttribute(ATTRIBUTE_CODE.attack)).toBe(22)
+  })
+
+  it('buildBattleTeams 缺省 protagonist 回退 playerParty[0] 演示值', () => {
+    setActivePinia(createPinia())
+    const { ally } = buildBattleTeams(scene)
+    expect(ally[0].getAttribute(ATTRIBUTE_CODE.attack)).toBe(18)
+  })
+
+  it('equipBonuses percent 以主角快照为基准折算', () => {
+    setActivePinia(createPinia())
+    const store = usePlayerStore()
+    const bonuses = equipBonuses(
+      [{ attribute: 'attack', modifierType: 'percent' as const, value: 10 }],
+      store.battleSnapshot,
+    )
+    // round(attackMax 20 × 10%) = 2
+    expect(bonuses.attack).toBe(2)
   })
 })

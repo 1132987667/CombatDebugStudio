@@ -1,4 +1,4 @@
-﻿import {
+import {
   ATTRIBUTE_CODE,
   getAttrDv,
 } from '@/domain/attribute/types'
@@ -11,7 +11,7 @@ import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory, ElementCode, ElementType } from '@/domain/skill/types'
 import { processExtraValues, processTargetModifiers, resolveAttributeValue } from '@/domain/skill/calculation-utils'
 import { LogLevel } from '@/shared/types/battle-log'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType } from '@/domain/skill/types'
 import { KNOWN_BUFF_IDS } from '@/domain/buff/types'
 import { clamp, floor } from '@/shared/utils/math'
 import { resolveElementCoefficient, type ElementMatrixLike } from '@/domain/fengshen/elementMatrix'
@@ -610,7 +610,7 @@ export class DamageCalculator {
 
     if (context?.record) {
       context?.record.effects?.push({
-        type: EffectType.DAMAGE,
+        type: ActionResultType.DAMAGE,
         targetId: target.id,
         value: baseDamage,
         description: `基础伤害 ${baseDamage}`,

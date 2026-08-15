@@ -160,6 +160,23 @@ $transition-fast: var(--transition-fast);
   --cat-attribute: #60a5fa;
   --cat-other: #90a4ae;
 
+  /* ═══ 品阶色板（稀有度 1-5：凡/玄/地/天/仙，语义化统一令牌） ═══
+     唯一真源：quality.ts / affix.ts / xy-q--* / px-q* / px-qs-q* / rarity-* 全部引用此组，
+     禁止再裸引 --color-* 拼装品阶色。 */
+  --rarity-1: #8bc34a;
+  --rarity-2: #64b5f6;
+  --rarity-3: #ce93d8;
+  --rarity-4: #ffd54f;
+  --rarity-5: #ef5350;
+
+  /* ═══ 装备品质色板（1-5：凡/精/超/绝/神，独立于品阶；品质决定系数与词条数）
+     唯一真源：quality.ts QUALITY_COLORS / xy-eq-q--* / equipQualityClass 引用此组。 */
+  --eq-q-1: #8bc34a;
+  --eq-q-2: #64b5f6;
+  --eq-q-3: #ce93d8;
+  --eq-q-4: #ffd54f;
+  --eq-q-5: #ef5350;
+
   /* ==========================================================================
      2. 排版系统 (基准 14px，适配当前项目)
      ========================================================================== */

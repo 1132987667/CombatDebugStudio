@@ -5,7 +5,7 @@
  * - 目录静态源：items.json（经 mock.ts 的 packItems 全量索引）；持有量（inventory）为运行时状态
  * - 初始持有量：pack.json 的 materials/equipment/pills/consumables 按 name 匹配 items.json 生成
  * - 持久化：封神榜 xiyou 表 id='pack_runtime'（复用现有方案 B 存储路径），防抖 500ms
- * - 货币：store 内独立持有，变更时同步写回 mock.ts 的 currency（顶栏/坊市同一货币口径）
+ * - 货币：引用 playerStore.currency（顶栏/坊市同一货币口径）
  * - 战斗联动：useInBattle 经 BattleSystem.getBuffSystem() 注入 requestHeal/requestEnergy/addBuff
  */
 
@@ -13,23 +13,32 @@ import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { XiyouCatalogItem, XiyouCurrency, XiyouPlayer, XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/data/mock'
 import {
-  currency as mockCurrency,
   equipmentCatalog,
   materials,
   equipment,
   packItems,
   pills,
   consumables,
-  player as mockPlayer,
   storageCells,
 } from '@/presentation/modules/yanjie/xiyou/data/mock'
-import type { EquipmentData } from '@/domain/fengshen/types'
+import type { EquipmentAffixData, EquipmentData } from '@/domain/fengshen/types'
 import type { XiyouData } from '@/domain/fengshen/types'
 import type { EnemyDrop } from '@/shared/types/enemy'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
+import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
+import { affixAppliesTo, rollAffixStat, rollEquipmentAffix } from '@/shared/utils/equipmentAffix'
+import {
+  enhanceCost,
+  enhanceFactor,
+  enhanceMaterialOf,
+  enhanceMaxByRarity,
+  enhanceSuccessRate,
+} from '@/presentation/modules/yanjie/xiyou/data/caveLogic'
+import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/data/quality'
 import { useNotificationStore } from './notificationStore'
 import { useBattleStore } from './battleStore'
+import { usePlayerStore } from './playerStore'
 
 /** 仓库格子（itemId=null 表示空位） */
 export interface StorageSlot {
@@ -37,25 +46,74 @@ export interface StorageSlot {
   count: number
 }
 
-/** 装备槽位键（三类装备槽，对齐 equipment.json slot：weapon/armor/accessory） */
-export type GearSlotKey = 'weapon' | 'armor' | 'accessory'
+/** 装备槽位键（六类装备槽，对齐 equipment.json slot：weapon/armor/helmet/boots/charm/ring） */
+export type GearSlotKey = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
 
 /** 装备槽位展示名（EquipPanel 用） */
 export const GEAR_SLOT_LABELS: Record<GearSlotKey, string> = {
   weapon: '武器',
   armor: '衣服',
-  accessory: '饰品',
+  helmet: '头盔',
+  boots: '靴子',
+  charm: '护符',
+  ring: '戒指',
 }
 
-/** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data） */
+/** 装备词条（实例化：制造时从 equipment-affixes.json 抽取并锁定数值） */
+export interface GearAffix {
+  id: string
+  attribute: string
+  modifierType: 'flat' | 'percent'
+  value: number
+}
+
+/** 装备实例（唯一 id；词缀 / 强化等级 / 品质 / 品质系数为实例属性，独立于 equipment.json 静态定义） */
+export interface GearInstance {
+  instanceId: string
+  itemId: string
+  enhance: number
+  /** 品质（1-5 → 凡/精/超/绝/神，制造/掉落时 roll；决定词条数量与基础属性系数） */
+  quality: number
+  /** 品质系数（制造时在品质区间内 roll 并锁定；旧档兜底用区间中值） */
+  qualityFactor: number
+  affixes: GearAffix[]
+}
+
+/** 装备词条库（equipment-affixes.json 静态索引，模块级构建一次） */
+const EQUIP_AFFIXES = equipmentAffixesJson as unknown as EquipmentAffixData[]
+
+/** 随机数生成器（可注入做确定性测试） */
+export type Rng = () => number
+
+/** 装备实例唯一 id（优先 crypto.randomUUID，降级时间戳+随机） */
+export function newInstanceId(): string {
+  const c = globalThis.crypto as Crypto | undefined
+  if (c?.randomUUID) return c.randomUUID()
+  return `inst_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+/** 创建装备实例（默认无词缀、enhance 0、品质 1 凡品、系数取品质区间中值） */
+export function makeInstance(
+  itemId: string,
+  affixes: GearAffix[] = [],
+  enhance = 0,
+  quality = 1,
+  qualityFactor = qualityFactorOf(quality),
+): GearInstance {
+  return { instanceId: newInstanceId(), itemId, enhance, quality, qualityFactor, affixes }
+}
+
+/** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 新增实例 quality/qualityFactor） */
 export interface PackRuntimeSnapshot {
-  version: 1
+  version: 3
   inventory: Record<string, number>
   storage: StorageSlot[]
   quickSlots: (string | null)[]
   currency: XiyouCurrency
-  /** 已穿戴装备（槽位 → itemId，缺省未穿戴） */
-  equipped?: Partial<Record<GearSlotKey, string>>
+  /** 背包中未穿戴的装备实例 */
+  gearInstances: GearInstance[]
+  /** 已穿戴装备（槽位 → 实例，缺省未穿戴） */
+  equipped?: Partial<Record<GearSlotKey, GearInstance>>
   updatedAt: string
 }
 
@@ -110,23 +168,20 @@ const ORB_DROPS: Record<string, string[]> = {
 
 export const usePackStore = defineStore('pack', () => {
   const notification = useNotificationStore()
+  const playerStore = usePlayerStore()
 
-  /** 背包持有量：itemId → count（仅记录 >0 的条目） */
+  /** 背包持有量：itemId → count（仅记录 >0 的条目；装备不在此列，见 gearInstances） */
   const inventory = ref<Record<string, number>>({})
   /** 仓库格子（长度即容量） */
   const storage = ref<StorageSlot[]>([])
   /** 快捷栏（固定 4 格，存 itemId） */
   const quickSlots = ref<(string | null)[]>(Array(QUICK_SLOT_COUNT).fill(null))
-  /** 已穿戴装备：槽位 → itemId（背包实例化，穿戴上扣背包一件） */
-  const equipped = reactive<Partial<Record<GearSlotKey, string>>>({})
-  /** 货币（独立持有，变更写回 mock.currency 保持全局一致） */
-  const currency = reactive<XiyouCurrency>({ ...mockCurrency })
-
-  function syncCurrency(): void {
-    mockCurrency.copper = currency.copper
-    mockCurrency.silver = currency.silver
-    mockCurrency.jade = currency.jade
-  }
+  /** 背包中未穿戴的装备实例（制造 / 掉落 / 初始装备均实例化） */
+  const gearInstances = ref<GearInstance[]>([])
+  /** 已穿戴装备：槽位 → 实例（穿戴从 gearInstances 移出，卸下回填） */
+  const equipped = reactive<Partial<Record<GearSlotKey, GearInstance>>>({})
+  /** 货币（引用 playerStore 同一对象，变更即全局一致） */
+  const currency = playerStore.currency
 
   /** 目录查询 */
   function catalogById(itemId: string | null | undefined): XiyouCatalogItem | undefined {
@@ -134,11 +189,22 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   function countOf(itemId: string): number {
+    if (gearById(itemId)) return gearCount(itemId)
     return inventory.value[itemId] ?? 0
   }
 
+  /** 装备持有量：背包中未穿戴实例数（穿戴上即不计入，与"扣背包一件"语义一致） */
+  function gearCount(itemId: string): number {
+    return gearInstances.value.filter((g) => g.itemId === itemId).length
+  }
+
   /** 持有多大的"拥有物品"列表（count > 0） */
-  const ownedItems = computed(() => packItems.filter((it) => (inventory.value[it.id] ?? 0) > 0))
+  const ownedItems = computed(() => {
+    const has = new Set<string>()
+    for (const [id, c] of Object.entries(inventory.value)) if (c > 0) has.add(id)
+    for (const g of gearInstances.value) has.add(g.itemId)
+    return packItems.filter((it) => has.has(it.id))
+  })
   const storageCapacity = computed(() => storage.value.length)
 
   // ════════════ 持久化 ════════════
@@ -155,12 +221,24 @@ export const usePackStore = defineStore('pack', () => {
     // 未 init（从未打开行囊）时跳过：避免把空快照写入覆盖 configs 初始持有
     if (!initialized) return
     const snapshot: PackRuntimeSnapshot = {
-      version: 1,
+      version: 3,
       inventory: { ...inventory.value },
       storage: storage.value.map((s) => ({ itemId: s.itemId, count: s.count })),
       quickSlots: [...quickSlots.value],
       currency: { copper: currency.copper, silver: currency.silver, jade: currency.jade },
-      equipped: { ...equipped },
+      gearInstances: gearInstances.value.map((g) => ({
+        instanceId: g.instanceId,
+        itemId: g.itemId,
+        enhance: g.enhance,
+        quality: g.quality,
+        qualityFactor: g.qualityFactor,
+        affixes: g.affixes.map((a) => ({ ...a })),
+      })),
+      equipped: Object.fromEntries(
+        (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
+          .filter((slot) => equipped[slot])
+          .map((slot) => [slot, equipped[slot]] as [GearSlotKey, GearInstance]),
+      ) as Partial<Record<GearSlotKey, GearInstance>>,
       updatedAt: new Date().toISOString(),
     }
     try {
@@ -181,6 +259,21 @@ export const usePackStore = defineStore('pack', () => {
       const snap = doc?.data as PackRuntimeSnapshot | undefined
       if (!snap?.inventory) return
       inventory.value = { ...snap.inventory }
+      // NOTE: v1 旧档装备计数在 inventory 中；升级到实例模型前先迁移（幂等：仅当快照无 gearInstances 时）
+      if (!Array.isArray(snap.gearInstances) || snap.gearInstances.length === 0) {
+        const migrated = new Map<string, number>()
+        for (const [id, count] of Object.entries(inventory.value)) {
+          if (gearById(id)) {
+            migrated.set(id, count)
+            delete inventory.value[id]
+          }
+        }
+        const gear: GearInstance[] = []
+        for (const [id, count] of migrated) {
+          for (let i = 0; i < count; i++) gear.push(makeInstance(id, [], 0))
+        }
+        gearInstances.value = gear
+      }
       if (Array.isArray(snap.storage)) {
         storage.value = snap.storage.map((s) => ({ itemId: s.itemId, count: s.count ?? 0 }))
       }
@@ -192,28 +285,71 @@ export const usePackStore = defineStore('pack', () => {
         currency.copper = snap.currency.copper
         currency.silver = snap.currency.silver
         currency.jade = snap.currency.jade
-        syncCurrency()
       }
+      // NOTE: v1 旧档 equipped 为槽位 → itemId；升级为实例（无词缀、enhance 0、凡品）。v2 起存实例。
+      //       三槽时代的 accessory 键迁移到六槽 charm（对齐 save-bridge 的 accessory → charm 映射）。
       if (snap.equipped) {
-        for (const key of Object.keys(snap.equipped) as GearSlotKey[]) {
-          if (snap.equipped[key]) equipped[key] = snap.equipped[key]
+        const legacy = Object.entries(snap.equipped) as [string, unknown][]
+        const shifted = new Map<string, unknown>()
+        for (const [key, raw] of legacy) {
+          if (key === 'accessory' && raw) shifted.set('charm', raw)
+          else if (raw) shifted.set(key, raw)
         }
+        for (const [key, raw] of shifted) {
+          if (!(key in GEAR_SLOT_LABELS)) continue
+          const slot = key as GearSlotKey
+          if (typeof raw === 'string') equipped[slot] = makeInstance(raw, [], 0)
+          else if (raw && typeof raw === 'object' && 'itemId' in raw) {
+            const g = raw as Partial<GearInstance>
+            const quality = Number.isInteger(g.quality) && (g.quality as number) >= 1 && (g.quality as number) <= 5 ? (g.quality as number) : 1
+            equipped[slot] = {
+              instanceId: g.instanceId ?? newInstanceId(),
+              itemId: g.itemId as string,
+              enhance: Number.isFinite(g.enhance) ? (g.enhance as number) : 0,
+              quality,
+              qualityFactor: Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality),
+              affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
+            }
+          }
+        }
+      }
+      if (Array.isArray(snap.gearInstances)) {
+        gearInstances.value = snap.gearInstances
+          .filter((g): g is GearInstance => !!g && typeof g.itemId === 'string')
+          .map((g) => ({
+            instanceId: g.instanceId ?? newInstanceId(),
+            itemId: g.itemId,
+            enhance: Number.isFinite(g.enhance) ? g.enhance : 0,
+            quality: Number.isInteger(g.quality) && g.quality >= 1 && g.quality <= 5 ? g.quality : 1,
+            qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1),
+            affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
+          }))
       }
     } catch {
       // IDB 不可用/损坏时保持 configs 兜底
     }
   }
 
-  /** 初始持有量：pack.json 的 four 组按 name 匹配 items.json */
+  /** 初始持有量：pack.json 的 four 组按 name 匹配 items.json（装备组实例化入 gearInstances） */
   function buildFromConfigs(): void {
     const inv: Record<string, number> = {}
-    for (const group of [materials, equipment, pills, consumables]) {
+    for (const group of [materials, pills, consumables]) {
       for (const item of group) {
         const id = nameToId.get(item.name)
         if (id) inv[id] = item.count
       }
     }
     inventory.value = inv
+
+    // 装备组：每件生成一个实例（无词缀、enhance 0）
+    const gear: GearInstance[] = []
+    for (const item of equipment) {
+      const id = nameToId.get(item.name)
+      if (id && gearById(id)) {
+        for (let i = 0; i < item.count; i++) gear.push(makeInstance(id, [], 0))
+      }
+    }
+    gearInstances.value = gear
 
     storage.value = storageCells.map((cell) => {
       if (cell.locked || !cell.name || cell.name === '空位') return { itemId: null, count: 0 }
@@ -232,67 +368,213 @@ export const usePackStore = defineStore('pack', () => {
     await load()
   }
 
-  // ════════════ 装备穿戴（背包实例化） ════════════
+  // ════════════ 装备（实例化模型） ════════════
 
   /** 装备定义查询（equipment.json 唯一权威；不在目录内返回 undefined） */
   function gearById(itemId: string): EquipmentData | undefined {
     return equipmentCatalog.find((g) => g.id === itemId)
   }
 
-  /** 装备对应的槽位键（weapon/armor/accessory）；非装备返回 null */
+  /** 装备对应的槽位键（weapon/armor/helmet/boots/charm/ring）；非装备返回 null */
   function slotKeyOf(itemId: string): GearSlotKey | null {
     return gearById(itemId)?.slot ?? null
   }
 
-  /** 当前槽位已穿戴的装备定义 */
+  /** 当前槽位已穿戴的装备定义（基础属性，不含强化/词缀） */
   function equippedGear(slot: GearSlotKey): EquipmentData | undefined {
-    const id = equipped[slot]
-    return id ? gearById(id) : undefined
+    const inst = equipped[slot]
+    return inst ? gearById(inst.itemId) : undefined
   }
 
-  /** 穿戴装备：扣背包一件 → 写入槽位（同槽旧装备自动卸下回背包） */
+  /** 当前槽位已穿戴的装备实例（含强化等级与词缀；未穿戴返回 null） */
+  function equippedInstance(slot: GearSlotKey): GearInstance | null {
+    return equipped[slot] ?? null
+  }
+
+  /** 穿戴装备实例：从背包移入槽位（同槽旧装备自动卸下回背包） */
+  function equipInstance(instanceId: string): boolean {
+    const idx = gearInstances.value.findIndex((g) => g.instanceId === instanceId)
+    if (idx < 0) {
+      notification.toast('背包中没有该装备')
+      return false
+    }
+    const inst = gearInstances.value[idx]
+    const slot = slotKeyOf(inst.itemId)
+    if (!slot) {
+      notification.toast('该物品不可穿戴')
+      return false
+    }
+    // 同槽旧装备先卸下回背包
+    const old = equipped[slot]
+    if (old) gearInstances.value.push(old)
+    equipped[slot] = inst
+    gearInstances.value.splice(idx, 1)
+    scheduleSave()
+    notification.toast(`已穿戴「${gearById(inst.itemId)?.name ?? inst.itemId}」`, 'success')
+    return true
+  }
+
+  /** 穿戴装备（按物品 id）：取背包中该装备一件实例穿戴；无实例时从 inventory 遗留计数件生成（v1 兼容） */
   function equip(itemId: string): boolean {
     const slot = slotKeyOf(itemId)
     if (!slot) {
       notification.toast('该物品不可穿戴')
       return false
     }
-    const cur = inventory.value[itemId] ?? 0
-    if (cur <= 0) {
-      notification.toast('背包中没有该装备')
-      return false
+    const inst = gearInstances.value.find((g) => g.itemId === itemId)
+    if (inst) return equipInstance(inst.instanceId)
+    if ((inventory.value[itemId] ?? 0) > 0) {
+      inventory.value[itemId]! -= 1
+      if (inventory.value[itemId]! <= 0) delete inventory.value[itemId]
+      const old = equipped[slot]
+      if (old) gearInstances.value.push(old)
+      equipped[slot] = makeInstance(itemId, [], 0)
+      scheduleSave()
+      notification.toast(`已穿戴「${gearById(itemId)?.name ?? itemId}」`, 'success')
+      return true
     }
-    // 同槽旧装备先卸下回背包
-    const oldId = equipped[slot]
-    if (oldId && oldId !== itemId) {
-      inventory.value[oldId] = (inventory.value[oldId] ?? 0) + 1
-    }
-    equipped[slot] = itemId
-    const next = cur - 1
-    if (next <= 0) delete inventory.value[itemId]
-    else inventory.value[itemId] = next
-    scheduleSave()
-    notification.toast(`已穿戴「${gearById(itemId)?.name ?? itemId}」`, 'success')
-    return true
+    notification.toast('背包中没有该装备')
+    return false
   }
 
-  /** 卸下装备：槽位清空 → 装备回背包 */
+  /** 背包实例装备列表（未穿戴） */
+  function packGearInstances(): GearInstance[] {
+    return [...gearInstances.value]
+  }
+
+  /** 卸载装备：槽位清空 → 实例回背包 */
   function unequip(slot: GearSlotKey): boolean {
-    const id = equipped[slot]
-    if (!id) return false
+    const inst = equipped[slot]
+    if (!inst) return false
     delete equipped[slot]
-    inventory.value[id] = (inventory.value[id] ?? 0) + 1
+    gearInstances.value.push(inst)
     scheduleSave()
-    notification.toast(`已卸下「${gearById(id)?.name ?? id}」`, 'success')
+    notification.toast(`已卸下「${gearById(inst.itemId)?.name ?? inst.itemId}」`, 'success')
     return true
   }
 
-  /** 已穿戴装备的 stats 汇总（供 buildBattleTeams 注入主角，未穿戴返回空） */
+  /** 实例最终属性（基础 stats × 品质系数 × 强化倍率 + 词缀；未穿戴/未定义返回空） */
+  function instanceStats(inst: GearInstance): EquipmentData['stats'] {
+    const g = gearById(inst.itemId)
+    if (!g) return []
+    const factor = inst.qualityFactor * enhanceFactor(inst.enhance)
+    const base = g.stats.map((s) => ({ ...s, value: Math.round(s.value * factor) }))
+    const affixStats: EquipmentData['stats'] = inst.affixes.map((a) => ({
+      attribute: a.attribute,
+      modifierType: a.modifierType,
+      value: a.value,
+    }))
+    return [...base, ...affixStats]
+  }
+
+  /** 已穿戴装备的 stats 汇总（供 buildBattleTeams 注入主角与属性面板重算，未穿戴返回空） */
   function equippedStats(): EquipmentData['stats'] {
     const out: EquipmentData['stats'] = []
-    for (const slot of ['weapon', 'armor', 'accessory'] as const) {
-      const g = equippedGear(slot)
-      if (g) out.push(...g.stats)
+    for (const slot of Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[]) {
+      const inst = equipped[slot]
+      if (inst) out.push(...instanceStats(inst))
+    }
+    return out
+  }
+
+  /** 强化当前槽位装备：扣材料与金钱 → 成功率判定 → 强化等级 +1（失败只扣消耗） */
+  function enhanceGear(slot: GearSlotKey, rng: Rng = Math.random): boolean {
+    const inst = equipped[slot]
+    const g = inst ? gearById(inst.itemId) : undefined
+    if (!inst || !g) {
+      notification.toast('该槽位未穿戴装备')
+      return false
+    }
+    const maxEnhance = enhanceMaxByRarity(g.rarity)
+    if (inst.enhance >= maxEnhance) {
+      notification.toast('已达强化上限')
+      return false
+    }
+    const mat = enhanceMaterialOf(slot)
+    if (!mat) {
+      notification.toast('该部位暂不支持强化')
+      return false
+    }
+    if ((inventory.value[mat.itemId] ?? 0) < mat.count) {
+      notification.toast(`强化材料不足（需要「${mat.name}」×${mat.count}）`, 'warning')
+      return false
+    }
+    const cost = enhanceCost(inst.enhance)
+    if (currency.copper < cost) {
+      notification.toast(`铜钱不足（需要 ${cost}）`, 'warning')
+      return false
+    }
+    inventory.value[mat.itemId] = (inventory.value[mat.itemId] ?? 0) - mat.count
+    if (inventory.value[mat.itemId]! <= 0) delete inventory.value[mat.itemId]
+    currency.copper -= cost
+    if (rng() * 100 < enhanceSuccessRate(inst.enhance)) {
+      inst.enhance += 1
+      scheduleSave()
+      notification.toast(`强化成功！「${g.name}」强化 +${inst.enhance}`, 'success')
+      return true
+    }
+    scheduleSave()
+    notification.toast(`强化失败，「${g.name}」等级不变`, 'error')
+    return false
+  }
+
+  /**
+   * 制造装备：检查材料 → 扣材料 → 生成装备实例（按稀有度随机词缀，凡品 1 条）→ 入背包
+   * NOTE: 词缀数值在制造时锁定（rollAffixStat），强化/升星不影响词缀
+   */
+  function craftEquipment(itemId: string, rng: Rng = Math.random): GearInstance | null {
+    const g = gearById(itemId)
+    if (!g) {
+      notification.toast('未知装备配方')
+      return null
+    }
+    if (!g.materials?.length) {
+      notification.toast(`「${g.name}」无需材料`)
+      return null
+    }
+    for (const m of g.materials) {
+      if ((inventory.value[m.itemId] ?? 0) < m.count) {
+        notification.toast('材料不足，无法铸造', 'error')
+        return null
+      }
+    }
+    for (const m of g.materials) {
+      inventory.value[m.itemId] = (inventory.value[m.itemId] ?? 0) - m.count
+      if (inventory.value[m.itemId]! <= 0) delete inventory.value[m.itemId]
+    }
+    const quality = rollQuality(g.rarity, rng)
+    const qualityFactor = rollQualityFactor(quality, rng)
+    const inst = makeInstance(itemId, rollAffixes(itemId, quality, rng), 0, quality, qualityFactor)
+    gearInstances.value.push(inst)
+    scheduleSave()
+    notification.toast(`铸造成功！获得「${g.name}」`, 'success')
+    return inst
+  }
+
+  /** 从词条库按部位/子类型抽取词缀（weight 加权随机，词条数按品质 1/2/3/4/5） */
+  function rollAffixes(itemId: string, quality: number, rng: Rng = Math.random): GearAffix[] {
+    const g = gearById(itemId)
+    if (!g) return []
+    const pool = EQUIP_AFFIXES.filter((a) => affixAppliesTo(a, g.slot, g.subType))
+    const out: GearAffix[] = []
+    const seen = new Set<string>()
+    let count = affixCountByQuality(quality)
+    // 词缀质量随品质抬升：凡品取 rarity=1 的词条（weight>0），高品质全池
+    const source = quality === 1
+      ? pool.filter((a) => a.rarity === 1)
+      : pool
+    // NOTE: 去重不放回——每次从「键未使用」的候选中加权抽取，保证绝/神品词条数达标，
+    //       且 rng 单调（固定值）时无死循环（remaining 单调缩小）。同键词条同装备不重复（设计稿 §9.4）
+    let remaining = source
+    while (count > 0 && remaining.length > 0) {
+      const affix = rollEquipmentAffix(remaining, g.slot, g.subType, rng)
+      if (!affix) break
+      const key = `${affix.attribute}:${affix.modifierType}`
+      seen.add(key)
+      const stat = rollAffixStat(affix, rng)
+      out.push({ id: affix.id, attribute: stat.attribute, modifierType: stat.modifierType, value: stat.value })
+      remaining = source.filter((a) => !seen.has(`${a.attribute}:${a.modifierType}`))
+      count--
     }
     return out
   }
@@ -301,12 +583,28 @@ export const usePackStore = defineStore('pack', () => {
 
   function addItem(itemId: string, count: number): void {
     if (count <= 0) return
-    inventory.value[itemId] = (inventory.value[itemId] ?? 0) + count
+    // 装备进 gearInstances（每件一个实例，掉落按阶位 roll 品质与系数）；其余进 inventory 计数
+    const def = gearById(itemId)
+    if (def) {
+      for (let i = 0; i < count; i++) {
+        const quality = rollQuality(def.rarity)
+        gearInstances.value.push(makeInstance(itemId, [], 0, quality, rollQualityFactor(quality)))
+      }
+    } else {
+      inventory.value[itemId] = (inventory.value[itemId] ?? 0) + count
+    }
     scheduleSave()
   }
 
-  /** 扣除数量；不足返回 false（不扣） */
+  /** 扣除数量；不足返回 false（不扣）。装备从 gearInstances 移除（穿戴中的装备不在背包） */
   function removeItem(itemId: string, count: number): boolean {
+    if (gearById(itemId)) {
+      const idxs = gearInstances.value.map((g, i) => (g.itemId === itemId ? i : -1)).filter((i) => i >= 0)
+      if (idxs.length < count) return false
+      for (let i = 0; i < count; i++) gearInstances.value.splice(idxs[i] - i, 1)
+      scheduleSave()
+      return true
+    }
     const cur = inventory.value[itemId] ?? 0
     if (cur < count) return false
     const next = cur - count
@@ -323,9 +621,13 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast('任务物品不可丢弃')
       return false
     }
-    const count = inventory.value[itemId] ?? 0
+    const count = countOf(itemId)
     if (count <= 0) return false
-    delete inventory.value[itemId]
+    if (gearById(itemId)) {
+      gearInstances.value = gearInstances.value.filter((g) => g.itemId !== itemId)
+    } else {
+      delete inventory.value[itemId]
+    }
     scheduleSave()
     notification.toast(`丢弃了「${item?.name ?? itemId}」×${count}`)
     return true
@@ -381,7 +683,6 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     currency.jade -= cost
-    syncCurrency()
     const added = Math.min(STORAGE_EXPAND_STEP, MAX_STORAGE - storage.value.length)
     for (let i = 0; i < added; i++) storage.value.push({ itemId: null, count: 0 })
     scheduleSave()
@@ -396,7 +697,6 @@ export const usePackStore = defineStore('pack', () => {
     if (amount <= 0) return true
     if (currency[unit] < amount) return false
     currency[unit] -= amount
-    syncCurrency()
     scheduleSave()
     return true
   }
@@ -412,7 +712,6 @@ export const usePackStore = defineStore('pack', () => {
     const total = good.price * count
     if (wallet < total) return '货币不足'
     currency[unit] = wallet - total
-    syncCurrency()
     if (good.stock >= 0) good.stock -= count
     addItem(itemId, count)
     scheduleSave()
@@ -514,7 +813,7 @@ export const usePackStore = defineStore('pack', () => {
 
     const perm = PERM_PILL_EFFECTS[itemId]
     if (perm) {
-      const p = mockPlayer as XiyouPlayer
+      const p = playerStore.player as XiyouPlayer
       if (perm.attr === 'maxHp') p.maxHp += perm.value
       else if (perm.attr === 'attackMin') {
         p.attackMin += perm.value
@@ -563,16 +862,32 @@ export const usePackStore = defineStore('pack', () => {
 
   /**
    * 战斗胜利掉落结算：逐条 roll（命中 chance 才入包）+ toast
-   * NOTE: 掉落为表现层结算（引擎不处理），用 Math.random；确定性由战斗引擎自身保证，掉落非其验证点
+   * @param silent 静默模式（批量结算用，如刷关模拟；抑制逐条 toast 刷屏）
+   * @returns 实际命中的掉落条目（供结算展示；确定性由战斗引擎自身保证，掉落非其验证点）
+   * NOTE: debugForceDrops 为调试开关（DebugCavePanel「掉落率锁定」），开启时全部命中，验证掉落表完整性
    */
-  function applyDrops(drops: EnemyDrop[]): void {
+  let debugForceDrops = false
+
+  function setDebugForceDrops(on: boolean): void {
+    debugForceDrops = on
+  }
+
+  /** 读取掉落率锁定状态（DebugCavePanel「刷关模拟」等复用，保证与锁定开关联动） */
+  function isDebugForceDrops(): boolean {
+    return debugForceDrops
+  }
+
+  function applyDrops(drops: EnemyDrop[], silent = false): EnemyDrop[] {
+    const hit: EnemyDrop[] = []
     for (const d of drops) {
       const item = catalogById(d.itemId)
       if (!item || d.quantity <= 0 || d.chance <= 0) continue
-      if (Math.random() >= d.chance) continue
+      if (!debugForceDrops && Math.random() >= d.chance) continue
       addItem(d.itemId, d.quantity)
-      notification.toast(`获得「${item.name}」×${d.quantity}`, 'success')
+      hit.push(d)
+      if (!silent) notification.toast(`获得「${item.name}」×${d.quantity}`, 'success')
     }
+    return hit
   }
 
   return {
@@ -582,6 +897,7 @@ export const usePackStore = defineStore('pack', () => {
     quickSlots,
     currency,
     equipped,
+    gearInstances,
     ownedItems,
     catalogById,
     countOf,
@@ -589,9 +905,16 @@ export const usePackStore = defineStore('pack', () => {
     gearById,
     slotKeyOf,
     equippedGear,
+    equippedInstance,
+    instanceStats,
     equippedStats,
+    packGearInstances,
+    equipInstance,
     equip,
     unequip,
+    enhanceGear,
+    craftEquipment,
+    rollAffixes,
     init,
     addItem,
     removeItem,
@@ -607,5 +930,7 @@ export const usePackStore = defineStore('pack', () => {
     useItem,
     applyDrops,
     flush,
+    setDebugForceDrops,
+    isDebugForceDrops,
   }
 })

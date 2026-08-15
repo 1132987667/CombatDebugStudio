@@ -49,7 +49,7 @@ import {
   SkillType,
   AttackType,
   DamageCategory,
-  EffectType,
+  ActionResultType,
   StepEffectType,
   convertSkillConfigToSkill,
   type BuffConfigLookup,
@@ -613,7 +613,7 @@ export class BattleExecutor {
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
         const isCrit = allEffects.some(
-          (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
+          (e: BattleEffect) => e.type === ActionResultType.DAMAGE && e.isCritical,
         )
         manifest.isCrit = isCrit
 
@@ -717,7 +717,7 @@ export class BattleExecutor {
       action.damage = battleData.rng.nextInt(10, 29)
       action.effects = [
         {
-          type: EffectType.DAMAGE,
+          type: ActionResultType.DAMAGE,
           value: action.damage,
           description: `${source.name} 普通攻击 (技能执行失败)`,
         },
@@ -764,7 +764,7 @@ export class BattleExecutor {
         targetId: targets[0]?.id,
         damage: action.damage,
         isCritical: action.effects?.some(
-          (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
+          (e: BattleEffect) => e.type === ActionResultType.DAMAGE && e.isCritical,
         ),
       }),
     )
@@ -846,7 +846,7 @@ export class BattleExecutor {
    * 构造普通攻击的技能步骤配置
    * NOTE: 此步骤不走 SkillExecutor.executeStep（直接传入 damageCalculator.calculateDamage），
    *       因此 type 字段仅用于识别，不参与 switch 调度。值使用 StepEffectType.DEAL_DAMAGE
-   *       而非 EffectType.DAMAGE 以满足 SkillStep.type 的类型约束。
+   *       而非 ActionResultType.DAMAGE 以满足 SkillStep.type 的类型约束。
    */
   buildNormalAttackStep(
     source: BattleEntity,
@@ -1041,7 +1041,7 @@ export class BattleExecutor {
     battle: BattleData,
   ): Promise<void> {
     action.effects.push({
-      type: EffectType.MISS,
+      type: ActionResultType.MISS,
       value: 0,
       description: `${target.name} 闪避了攻击`,
     })
@@ -1115,7 +1115,7 @@ export class BattleExecutor {
     action.damage = damage
 
     action.effects.push({
-      type: EffectType.DAMAGE,
+      type: ActionResultType.DAMAGE,
       value: damage,
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
@@ -1412,7 +1412,7 @@ export class BattleExecutor {
       turn: battle.currentTurn || 1,
       effects: [
         {
-          type: EffectType.DAMAGE,
+          type: ActionResultType.DAMAGE,
           value: damage,
           description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
         },

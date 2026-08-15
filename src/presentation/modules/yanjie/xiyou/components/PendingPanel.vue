@@ -37,7 +37,7 @@ defineProps<{ title: string; subtitle: string; desc: string }>()
 
 .xy-pending-title {
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xxl);
   letter-spacing: 8px;
   color: var(--xy-ink-3);

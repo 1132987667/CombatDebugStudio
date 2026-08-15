@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="fs-list-view">
     <div class="fs-page-title">
       数据包管理

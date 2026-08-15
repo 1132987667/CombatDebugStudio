@@ -104,6 +104,8 @@ function buildBuffRawItems(
       const rawConfig = buffSystem.getScriptRegistry().getBuffConfig(config.id)
 
       // 从 effectPlan 的 modifier 效果中提取修饰符数据（供展示层生成属性标签）
+      // NOTE: 合并时透传 perStack 标志——perStack=false 的修饰符叠层不放大，
+      //       展示层据此跳过 ×stacks（否则与实际生效值不符）。
       let attributes: Record<string, AttributeValueConfig> | undefined
       const resolved = buffSystem.getResolvedBuffConfig?.(config.id)
       const modifierEffects = resolved?.effectPlan?.filter(
@@ -113,7 +115,11 @@ function buildBuffRawItems(
         attributes = {}
         for (const effect of modifierEffects) {
           const attrs = effect.params.attributes as Record<string, AttributeValueConfig> | undefined
-          if (attrs) Object.assign(attributes, attrs)
+          if (!attrs) continue
+          const perStack = effect.params.perStack !== false
+          for (const [code, cfg] of Object.entries(attrs)) {
+            attributes[code] = perStack ? cfg : { ...cfg, perStack: false }
+          }
         }
       }
 

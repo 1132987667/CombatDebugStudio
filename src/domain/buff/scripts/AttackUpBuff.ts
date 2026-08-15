@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 攻击提升buff
  */
 import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'

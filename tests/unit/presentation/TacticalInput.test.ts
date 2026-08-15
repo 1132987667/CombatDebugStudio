@@ -8,7 +8,7 @@
  *
  * 运行: npx vitest run tests/unit/presentation/TacticalInput.test.ts
  */
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { createApp, h, nextTick, ref, type App } from 'vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
@@ -170,5 +170,18 @@ describe('TacticalInput', () => {
   it('placeholder 透传', () => {
     const { root } = mount({ placeholder: '输入名称' })
     expect(inputEl(root).getAttribute('placeholder')).toBe('输入名称')
+  })
+
+  it('modelValue 为 undefined 时兜底为空输入（reactive 动态键缺失）', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    host = document.createElement('div')
+    document.body.appendChild(host)
+    app = createApp({
+      render: () => h(TacticalInput, { modelValue: undefined as unknown as string | number | null }),
+    })
+    app.mount(host)
+    expect(warn).not.toHaveBeenCalled()
+    expect(inputEl(host).value).toBe('')
+    warn.mockRestore()
   })
 })

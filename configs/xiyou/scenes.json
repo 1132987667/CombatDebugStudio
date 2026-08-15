@@ -3,7 +3,10 @@
     "id": "scene_1_1",
     "regionId": "region_1",
     "name": "桃林小径",
-    "levelRange": [1, 2],
+    "levelRange": [
+      1,
+      2
+    ],
     "desc": "桃林边缘的泥泞小路，花瓣染着异色。师父的断棒还带着余温。",
     "enemies": [
       {
@@ -25,25 +28,47 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s1_1_g", "name": "桃林守卫", "level": 2 },
+    "guardian": {
+      "id": "enemy_s1_1_g",
+      "name": "桃林守卫",
+      "level": 2
+    },
     "drops": {
-      "materials": ["mat_taomu", "mat_cushi"],
-      "gold": [10, 30],
-      "exp": [15, 25]
+      "materials": [
+        "mat_taomu",
+        "mat_cushi"
+      ],
+      "gold": [
+        10,
+        30
+      ],
+      "exp": [
+        15,
+        25
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 80, "y": 100 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": null },
+    "pos": {
+      "x": 80,
+      "y": 100
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": null
+    },
     "narrativeHook": "师父倒在桃树下，断棒塞进你手里：往西走，找到小蝉。"
   },
   {
     "id": "scene_1_2",
     "regionId": "region_1",
     "name": "落英坡",
-    "levelRange": [3, 4],
+    "levelRange": [
+      3,
+      4
+    ],
     "desc": "桃花如雨落下，坡上妖气渐浓。老猴曾在此传授棍法。",
     "enemies": [
       {
@@ -65,25 +90,48 @@
         "type": "new_born"
       }
     ],
-    "guardian": { "id": "enemy_s1_2_g", "name": "崖顶石猴", "level": 4 },
+    "guardian": {
+      "id": "enemy_s1_2_g",
+      "name": "崖顶石猴",
+      "level": 4
+    },
     "drops": {
-      "materials": ["mat_taomu", "mat_cushi", "mat_tongjing"],
-      "gold": [20, 45],
-      "exp": [30, 50]
+      "materials": [
+        "mat_taomu",
+        "mat_cushi",
+        "mat_tongjing"
+      ],
+      "gold": [
+        20,
+        45
+      ],
+      "exp": [
+        30,
+        50
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 230, "y": 70 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_1" },
+    "pos": {
+      "x": 230,
+      "y": 70
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_1"
+    },
     "narrativeHook": "灵猴道入门：老猴说，棍不在重，在心。"
   },
   {
     "id": "scene_1_3",
     "regionId": "region_1",
     "name": "桃溪畔",
-    "levelRange": [5, 6],
+    "levelRange": [
+      5,
+      6
+    ],
     "desc": "溪水映着桃花倒影，水底隐约有妖物蠕动。",
     "enemies": [
       {
@@ -105,25 +153,48 @@
         "type": "new_born"
       }
     ],
-    "guardian": { "id": "enemy_s1_3_g", "name": "溪中岩精", "level": 6 },
+    "guardian": {
+      "id": "enemy_s1_3_g",
+      "name": "溪中岩精",
+      "level": 6
+    },
     "drops": {
-      "materials": ["mat_taomu", "mat_danshui_yu", "mat_cushi"],
-      "gold": [35, 60],
-      "exp": [50, 75]
+      "materials": [
+        "mat_taomu",
+        "mat_danshuiyu",
+        "mat_cushi"
+      ],
+      "gold": [
+        35,
+        60
+      ],
+      "exp": [
+        50,
+        75
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 380, "y": 120 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_2" },
+    "pos": {
+      "x": 380,
+      "y": 120
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_2"
+    },
     "narrativeHook": "溪水中映出小蝉的幻影，你握紧了断棒。"
   },
   {
     "id": "scene_1_4",
     "regionId": "region_1",
     "name": "断枝林",
-    "levelRange": [7, 8],
+    "levelRange": [
+      7,
+      8
+    ],
     "desc": "桃林深处，断枝横生。一千年前的战意残留于此，化为怨念。",
     "enemies": [
       {
@@ -145,25 +216,48 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s1_4_g", "name": "枯木王", "level": 8 },
+    "guardian": {
+      "id": "enemy_s1_4_g",
+      "name": "枯木王",
+      "level": 8
+    },
     "drops": {
-      "materials": ["mat_taomu", "mat_tongjing", "mat_danshui_yu"],
-      "gold": [50, 80],
-      "exp": [70, 100]
+      "materials": [
+        "mat_taomu",
+        "mat_tongjing",
+        "mat_danshuiyu"
+      ],
+      "gold": [
+        50,
+        80
+      ],
+      "exp": [
+        70,
+        100
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 530, "y": 80 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_3" },
+    "pos": {
+      "x": 530,
+      "y": 80
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_3"
+    },
     "narrativeHook": "断枝中传来低语：大圣……大圣……"
   },
   {
     "id": "scene_1_5",
     "regionId": "region_1",
     "name": "桃林深处",
-    "levelRange": [9, 10],
+    "levelRange": [
+      9,
+      10
+    ],
     "desc": "桃林最深处，花妖王盘踞于此。千瓣花冠遮天蔽日。",
     "enemies": [
       {
@@ -185,25 +279,79 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s1_5_g", "name": "花妖近卫", "level": 10 },
+    "guardian": {
+      "id": "enemy_s1_5_g",
+      "name": "花妖近卫",
+      "level": 10
+    },
     "drops": {
-      "materials": ["mat_taomu", "mat_danshui_yu", "mat_tongjing"],
-      "gold": [70, 120],
-      "exp": [100, 140]
+      "materials": [
+        "mat_taomu",
+        "mat_danshuiyu",
+        "mat_tongjing"
+      ],
+      "gold": [
+        70,
+        120
+      ],
+      "exp": [
+        100,
+        140
+      ]
     },
     "unlocked": false,
     "difficulty": "hard",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 700, "y": 100 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_4" },
+    "pos": {
+      "x": 700,
+      "y": 100
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_4"
+    },
     "narrativeHook": "花妖王的声音从四面八方传来：又一个来找死的？"
+  },
+  {
+    "id": "scene_1_boss",
+    "regionId": "region_1",
+    "name": "花妖王巢",
+    "levelRange": [
+      10,
+      10
+    ],
+    "desc": "桃林妖气汇于一处，千瓣花冠旋转如轮。",
+    "enemies": [
+      {
+        "id": "boss_major_huayaowang",
+        "name": "花妖王·千瓣",
+        "level": 10,
+        "type": "old_blood"
+      }
+    ],
+    "unlocked": false,
+    "difficulty": "hard",
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 850,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_5"
+    },
+    "narrativeHook": "千瓣花冠之下，一双眼睛打量着你：又一个来摘花的？"
   },
   {
     "id": "scene_2_1",
     "regionId": "region_2",
     "name": "渡口残桥",
-    "levelRange": [11, 12],
+    "levelRange": [
+      11,
+      12
+    ],
     "desc": "断柳渡的残桥横在河上，柳条垂入水中如鬼手。",
     "enemies": [
       {
@@ -225,25 +373,47 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s2_1_g", "name": "断桥蟹将", "level": 12 },
+    "guardian": {
+      "id": "enemy_s2_1_g",
+      "name": "断桥蟹将",
+      "level": 12
+    },
     "drops": {
-      "materials": ["mat_beike", "mat_qingshui_yu"],
-      "gold": [80, 140],
-      "exp": [110, 160]
+      "materials": [
+        "mat_beike",
+        "mat_qingshui_yu"
+      ],
+      "gold": [
+        80,
+        140
+      ],
+      "exp": [
+        110,
+        160
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 80, "y": 90 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_huayaowang" },
+    "pos": {
+      "x": 80,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_boss"
+    },
     "narrativeHook": "残桥上刻着一行字：渡人者，亦渡己。"
   },
   {
     "id": "scene_2_2",
     "regionId": "region_2",
     "name": "浅水涧",
-    "levelRange": [13, 14],
+    "levelRange": [
+      13,
+      14
+    ],
     "desc": "浅水涧中，虾兵列阵。河底隐约可见舍利碎片的微光。",
     "enemies": [
       {
@@ -265,25 +435,48 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s2_2_g", "name": "柳荫铁甲蟹", "level": 14 },
+    "guardian": {
+      "id": "enemy_s2_2_g",
+      "name": "柳荫铁甲蟹",
+      "level": 14
+    },
     "drops": {
-      "materials": ["mat_beike", "mat_zhenzhu", "mat_qingshui_yu"],
-      "gold": [100, 170],
-      "exp": [140, 200]
+      "materials": [
+        "mat_beike",
+        "mat_zhenzhu",
+        "mat_qingshui_yu"
+      ],
+      "gold": [
+        100,
+        170
+      ],
+      "exp": [
+        140,
+        200
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 230, "y": 110 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_1" },
+    "pos": {
+      "x": 230,
+      "y": 110
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_2_1"
+    },
     "narrativeHook": "舍利碎片的光芒在水中闪烁，妖物因此聚集。"
   },
   {
     "id": "scene_2_3",
     "regionId": "region_2",
     "name": "沉船河",
-    "levelRange": [15, 16],
+    "levelRange": [
+      15,
+      16
+    ],
     "desc": "河底沉船无数，怨魂不散。一千年前渡人的船，如今渡鬼。",
     "enemies": [
       {
@@ -305,25 +498,48 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s2_3_g", "name": "河心鱼精王", "level": 16 },
+    "guardian": {
+      "id": "enemy_s2_3_g",
+      "name": "河心鱼精王",
+      "level": 16
+    },
     "drops": {
-      "materials": ["mat_beike", "mat_zhenzhu", "mat_shenshui_yu"],
-      "gold": [120, 200],
-      "exp": [170, 240]
+      "materials": [
+        "mat_beike",
+        "mat_zhenzhu",
+        "mat_shenshuiyu"
+      ],
+      "gold": [
+        120,
+        200
+      ],
+      "exp": [
+        170,
+        240
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 380, "y": 80 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_2" },
+    "pos": {
+      "x": 380,
+      "y": 80
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_2_2"
+    },
     "narrativeHook": "沉船中传来哭声：一千年了，为什么还没有人来渡我？"
   },
   {
     "id": "scene_2_4",
     "regionId": "region_2",
     "name": "道碑暗礁",
-    "levelRange": [17, 18],
+    "levelRange": [
+      17,
+      18
+    ],
     "desc": "暗礁丛中嵌着一块残碑，碑文模糊，隐约可见道碑第三的字样。",
     "enemies": [
       {
@@ -345,25 +561,48 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s2_4_g", "name": "沉船沙妖王", "level": 18 },
+    "guardian": {
+      "id": "enemy_s2_4_g",
+      "name": "沉船沙妖王",
+      "level": 18
+    },
     "drops": {
-      "materials": ["mat_beike", "mat_shenshui_yu", "mat_zhenzhu"],
-      "gold": [150, 240],
-      "exp": [210, 290]
+      "materials": [
+        "mat_beike",
+        "mat_shenshuiyu",
+        "mat_zhenzhu"
+      ],
+      "gold": [
+        150,
+        240
+      ],
+      "exp": [
+        210,
+        290
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 530, "y": 120 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_3" },
+    "pos": {
+      "x": 530,
+      "y": 120
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_2_3"
+    },
     "narrativeHook": "道碑第三：水流无形，心定则明。你将碑文拓印下来。"
   },
   {
     "id": "scene_2_5",
     "regionId": "region_2",
     "name": "河伯祠",
-    "levelRange": [19, 20],
+    "levelRange": [
+      19,
+      20
+    ],
     "desc": "河伯祠香火已断，祠中河伯石像双目含泪。沧浪之水，今已浑浊。",
     "enemies": [
       {
@@ -385,25 +624,79 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s2_5_g", "name": "河伯祠守卫", "level": 20 },
+    "guardian": {
+      "id": "enemy_s2_5_g",
+      "name": "河伯祠守卫",
+      "level": 20
+    },
     "drops": {
-      "materials": ["mat_beike", "mat_shenshui_yu", "mat_zhenzhu"],
-      "gold": [180, 280],
-      "exp": [250, 340]
+      "materials": [
+        "mat_beike",
+        "mat_shenshuiyu",
+        "mat_zhenzhu"
+      ],
+      "gold": [
+        180,
+        280
+      ],
+      "exp": [
+        250,
+        340
+      ]
     },
     "unlocked": false,
     "difficulty": "hard",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 700, "y": 90 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_4" },
+    "pos": {
+      "x": 700,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_2_4"
+    },
     "narrativeHook": "河伯的声音从石像中传出：我守了千年，等一个能净化河水的人。"
+  },
+  {
+    "id": "scene_2_boss",
+    "regionId": "region_2",
+    "name": "河伯祠底",
+    "levelRange": [
+      20,
+      20
+    ],
+    "desc": "河水倒流，河伯石像活了过来，沧浪之声如泣。",
+    "enemies": [
+      {
+        "id": "boss_major_hebo",
+        "name": "河伯·沧浪",
+        "level": 20,
+        "type": "old_blood"
+      }
+    ],
+    "unlocked": false,
+    "difficulty": "hard",
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 850,
+      "y": 110
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_2_5"
+    },
+    "narrativeHook": "河水倒流之际，河伯低语：净化我，或是被我吞没。"
   },
   {
     "id": "scene_3_1",
     "regionId": "region_3",
     "name": "崩石道",
-    "levelRange": [21, 22],
+    "levelRange": [
+      21,
+      22
+    ],
     "desc": "五行山崩裂后留下的碎石道，空气中弥漫着矿尘。",
     "enemies": [
       {
@@ -425,25 +718,47 @@
         "type": "new_born"
       }
     ],
-    "guardian": { "id": "enemy_s3_1_g", "name": "碎石坡岩妖", "level": 22 },
+    "guardian": {
+      "id": "enemy_s3_1_g",
+      "name": "碎石坡岩妖",
+      "level": 22
+    },
     "drops": {
-      "materials": ["mat_cushi", "mat_tiejing"],
-      "gold": [200, 320],
-      "exp": [280, 380]
+      "materials": [
+        "mat_cushi",
+        "mat_tiejing"
+      ],
+      "gold": [
+        200,
+        320
+      ],
+      "exp": [
+        280,
+        380
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 80, "y": 110 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_hebo" },
+    "pos": {
+      "x": 80,
+      "y": 110
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_2_boss"
+    },
     "narrativeHook": "碎石中隐约可见五行山的封印纹路。"
   },
   {
     "id": "scene_3_2",
     "regionId": "region_3",
     "name": "铁匠铺废墟",
-    "levelRange": [23, 24],
+    "levelRange": [
+      23,
+      24
+    ],
     "desc": "一千年前的铁匠铺，炉火早已熄灭。铁砧上留着一柄未完成的兵刃。",
     "enemies": [
       {
@@ -465,25 +780,48 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s3_2_g", "name": "废铺铁精", "level": 24 },
+    "guardian": {
+      "id": "enemy_s3_2_g",
+      "name": "废铺铁精",
+      "level": 24
+    },
     "drops": {
-      "materials": ["mat_tiejing", "mat_jinj", "mat_cushi"],
-      "gold": [230, 360],
-      "exp": [320, 430]
+      "materials": [
+        "mat_tiejing",
+        "mat_jinjing",
+        "mat_cushi"
+      ],
+      "gold": [
+        230,
+        360
+      ],
+      "exp": [
+        320,
+        430
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 230, "y": 80 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_1" },
+    "pos": {
+      "x": 230,
+      "y": 80
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_3_1"
+    },
     "narrativeHook": "金行道传承：铁砧下的遗物中藏着一卷棍法残篇，以金入道，以刚克柔。"
   },
   {
     "id": "scene_3_3",
     "regionId": "region_3",
     "name": "五行裂缝",
-    "levelRange": [25, 26],
+    "levelRange": [
+      25,
+      26
+    ],
     "desc": "五行山崩裂的裂缝深处，五行之力紊乱。怨妖被困千年，只余执念。",
     "enemies": [
       {
@@ -505,25 +843,48 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s3_3_g", "name": "崩山巨岩妖", "level": 26 },
+    "guardian": {
+      "id": "enemy_s3_3_g",
+      "name": "崩山巨岩妖",
+      "level": 26
+    },
     "drops": {
-      "materials": ["mat_tiejing", "mat_jinj", "mat_cushi"],
-      "gold": [260, 400],
-      "exp": [360, 480]
+      "materials": [
+        "mat_tiejing",
+        "mat_jinjing",
+        "mat_cushi"
+      ],
+      "gold": [
+        260,
+        400
+      ],
+      "exp": [
+        360,
+        480
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 380, "y": 120 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_2" },
+    "pos": {
+      "x": 380,
+      "y": 120
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_3_2"
+    },
     "narrativeHook": "裂缝深处传来铁链拖地的声音，一千年未断。"
   },
   {
     "id": "scene_3_4",
     "regionId": "region_3",
     "name": "山神祭坛",
-    "levelRange": [27, 28],
+    "levelRange": [
+      27,
+      28
+    ],
     "desc": "山神以自身为锚封印怨魂的祭坛，如今封印将破。",
     "enemies": [
       {
@@ -545,25 +906,48 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s3_4_g", "name": "矿脉铁甲虫王", "level": 28 },
+    "guardian": {
+      "id": "enemy_s3_4_g",
+      "name": "矿脉铁甲虫王",
+      "level": 28
+    },
     "drops": {
-      "materials": ["mat_tiejing", "mat_jinj", "mat_cushi"],
-      "gold": [300, 450],
-      "exp": [400, 540]
+      "materials": [
+        "mat_tiejing",
+        "mat_jinjing",
+        "mat_cushi"
+      ],
+      "gold": [
+        300,
+        450
+      ],
+      "exp": [
+        400,
+        540
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 530, "y": 90 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_3" },
+    "pos": {
+      "x": 530,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_3_3"
+    },
     "narrativeHook": "山神的石像裂开一道缝，露出一只含泪的眼睛。"
   },
   {
     "id": "scene_3_5",
     "regionId": "region_3",
     "name": "碎石岭顶",
-    "levelRange": [29, 30],
+    "levelRange": [
+      29,
+      30
+    ],
     "desc": "岭顶风急，山神岩坚在此等待。五行残躯支撑着最后的封印。",
     "enemies": [
       {
@@ -585,25 +969,79 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s3_5_g", "name": "五行山脚岩石巨人", "level": 30 },
+    "guardian": {
+      "id": "enemy_s3_5_g",
+      "name": "五行山脚岩石巨人",
+      "level": 30
+    },
     "drops": {
-      "materials": ["mat_tiejing", "mat_jinj", "mat_cushi"],
-      "gold": [340, 500],
-      "exp": [450, 600]
+      "materials": [
+        "mat_tiejing",
+        "mat_jinjing",
+        "mat_cushi"
+      ],
+      "gold": [
+        340,
+        500
+      ],
+      "exp": [
+        450,
+        600
+      ]
     },
     "unlocked": false,
     "difficulty": "hard",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 700, "y": 100 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_4" },
+    "pos": {
+      "x": 700,
+      "y": 100
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_3_4"
+    },
     "narrativeHook": "山神的声音如岩石碰撞：你来了。我撑不了多久了。"
+  },
+  {
+    "id": "scene_3_boss",
+    "regionId": "region_3",
+    "name": "五行封印口",
+    "levelRange": [
+      30,
+      30
+    ],
+    "desc": "山神以残躯压住最后一道封印，妖气却已渗入其心。",
+    "enemies": [
+      {
+        "id": "boss_major_shanshen",
+        "name": "山神·岩坚",
+        "level": 30,
+        "type": "old_blood"
+      }
+    ],
+    "unlocked": false,
+    "difficulty": "hard",
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 850,
+      "y": 80
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_3_5"
+    },
+    "narrativeHook": "山神的声音从岩缝中传出：我快压不住了，孩子。"
   },
   {
     "id": "scene_4_1",
     "regionId": "region_4",
     "name": "谷口雾墙",
-    "levelRange": [31, 32],
+    "levelRange": [
+      31,
+      32
+    ],
     "desc": "浓雾如墙，踏入便不辨方向。雾中回荡着不属于这个时代的脚步声。",
     "enemies": [
       {
@@ -625,25 +1063,47 @@
         "type": "new_born"
       }
     ],
-    "guardian": { "id": "enemy_s4_1_g", "name": "雾口树精", "level": 32 },
+    "guardian": {
+      "id": "enemy_s4_1_g",
+      "name": "雾口树精",
+      "level": 32
+    },
     "drops": {
-      "materials": ["mat_xiongpi", "mat_hantan_shui"],
-      "gold": [380, 560],
-      "exp": [500, 660]
+      "materials": [
+        "mat_xiongpi",
+        "mat_hantan"
+      ],
+      "gold": [
+        380,
+        560
+      ],
+      "exp": [
+        500,
+        660
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 80, "y": 100 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_shanshen" },
+    "pos": {
+      "x": 80,
+      "y": 100
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_3_boss"
+    },
     "narrativeHook": "雾中传来六耳的低语：听，你听到了什么？"
   },
   {
     "id": "scene_4_2",
     "regionId": "region_4",
     "name": "蛛网回廊",
-    "levelRange": [33, 34],
+    "levelRange": [
+      33,
+      34
+    ],
     "desc": "盘丝一脉织就的蛛网回廊，丝线上挂着迷途者的衣物。",
     "enemies": [
       {
@@ -665,25 +1125,48 @@
         "type": "new_born"
       }
     ],
-    "guardian": { "id": "enemy_s4_2_g", "name": "迷径毒蘑菇王", "level": 34 },
+    "guardian": {
+      "id": "enemy_s4_2_g",
+      "name": "迷径毒蘑菇王",
+      "level": 34
+    },
     "drops": {
-      "materials": ["mat_xiongpi", "mat_duye", "mat_hantan_shui"],
-      "gold": [420, 620],
-      "exp": [550, 720]
+      "materials": [
+        "mat_xiongpi",
+        "mat_duye",
+        "mat_hantan"
+      ],
+      "gold": [
+        420,
+        620
+      ],
+      "exp": [
+        550,
+        720
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 230, "y": 120 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_1" },
+    "pos": {
+      "x": 230,
+      "y": 120
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_4_1"
+    },
     "narrativeHook": "蛛网上挂着一件僧袍，上面绣着一个禅字。"
   },
   {
     "id": "scene_4_3",
     "regionId": "region_4",
     "name": "听风崖",
-    "levelRange": [35, 36],
+    "levelRange": [
+      35,
+      36
+    ],
     "desc": "崖顶风声如泣，六耳残魂在此布下听的陷阱。听到的声音越多，迷失越深。",
     "enemies": [
       {
@@ -705,25 +1188,48 @@
         "type": "old_blood"
       }
     ],
-    "guardian": { "id": "enemy_s4_3_g", "name": "蛛丝林蛛网精", "level": 36 },
+    "guardian": {
+      "id": "enemy_s4_3_g",
+      "name": "蛛丝林蛛网精",
+      "level": 36
+    },
     "drops": {
-      "materials": ["mat_xiongpi", "mat_hupi", "mat_duye"],
-      "gold": [460, 680],
-      "exp": [600, 790]
+      "materials": [
+        "mat_xiongpi",
+        "mat_hupi",
+        "mat_duye"
+      ],
+      "gold": [
+        460,
+        680
+      ],
+      "exp": [
+        600,
+        790
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 380, "y": 80 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_2" },
+    "pos": {
+      "x": 380,
+      "y": 80
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_4_2"
+    },
     "narrativeHook": "风声中混着一千年前取经路上的诵经声，真假难辨。"
   },
   {
     "id": "scene_4_4",
     "regionId": "region_4",
     "name": "迷途深渊",
-    "levelRange": [37, 38],
+    "levelRange": [
+      37,
+      38
+    ],
     "desc": "深渊无底，雾中传来一个声音：一千年了。你分不清那是谁的声音。",
     "enemies": [
       {
@@ -745,25 +1251,48 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s4_4_g", "name": "回声洞蝙蝠王", "level": 38 },
+    "guardian": {
+      "id": "enemy_s4_4_g",
+      "name": "回声洞蝙蝠王",
+      "level": 38
+    },
     "drops": {
-      "materials": ["mat_xiongpi", "mat_duye", "mat_hantan_shui"],
-      "gold": [500, 740],
-      "exp": [650, 850]
+      "materials": [
+        "mat_xiongpi",
+        "mat_duye",
+        "mat_hantan"
+      ],
+      "gold": [
+        500,
+        740
+      ],
+      "exp": [
+        650,
+        850
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 530, "y": 110 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_3" },
+    "pos": {
+      "x": 530,
+      "y": 110
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_4_3"
+    },
     "narrativeHook": "迷雾中听到一千年了的声音，不是对你说的，是对它自己。"
   },
   {
     "id": "scene_4_5",
     "regionId": "region_4",
     "name": "河底石碑谷",
-    "levelRange": [39, 40],
+    "levelRange": [
+      39,
+      40
+    ],
     "desc": "谷底的河水中立着一块石碑，碑文记载着磐石道的真意。迷雾妖主在此等候。",
     "enemies": [
       {
@@ -785,25 +1314,79 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s4_5_g", "name": "盘丝穴蛛后近卫", "level": 40 },
+    "guardian": {
+      "id": "enemy_s4_5_g",
+      "name": "盘丝穴蛛后近卫",
+      "level": 40
+    },
     "drops": {
-      "materials": ["mat_xiongpi", "mat_feicui_yuzhuo", "mat_hantan_shui"],
-      "gold": [550, 800],
-      "exp": [700, 920]
+      "materials": [
+        "mat_xiongpi",
+        "mat_feicui",
+        "mat_hantan"
+      ],
+      "gold": [
+        550,
+        800
+      ],
+      "exp": [
+        700,
+        920
+      ]
     },
     "unlocked": false,
     "difficulty": "hard",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 700, "y": 90 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_4" },
+    "pos": {
+      "x": 700,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_4_4"
+    },
     "narrativeHook": "磐石道传承：河底石碑上刻着——不动如山，不动于心。"
+  },
+  {
+    "id": "scene_4_boss",
+    "regionId": "region_4",
+    "name": "雾海幻境",
+    "levelRange": [
+      40,
+      40
+    ],
+    "desc": "雾中万声齐响，皆是你自己的声音，真假难辨。",
+    "enemies": [
+      {
+        "id": "boss_major_miwu",
+        "name": "迷雾妖主·幻影",
+        "level": 40,
+        "type": "old_blood"
+      }
+    ],
+    "unlocked": false,
+    "difficulty": "hard",
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 850,
+      "y": 100
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_4_5"
+    },
+    "narrativeHook": "万声齐响中，有一个声音格外清晰：你分得清真假吗？"
   },
   {
     "id": "scene_5_1",
     "regionId": "region_5",
     "name": "假佛门",
-    "levelRange": [41, 42],
+    "levelRange": [
+      41,
+      42
+    ],
     "desc": "灵山脚下的山门，佛光中混着妖气。诵经声整齐划一，却无一丝温度。",
     "enemies": [
       {
@@ -825,25 +1408,47 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s5_1_g", "name": "禅音道小金刚", "level": 42 },
+    "guardian": {
+      "id": "enemy_s5_1_g",
+      "name": "禅音道小金刚",
+      "level": 42
+    },
     "drops": {
-      "materials": ["mat_shengshui_yu", "mat_yufo_xiang"],
-      "gold": [600, 880],
-      "exp": [760, 1000]
+      "materials": [
+        "mat_shengshui",
+        "mat_yufoxiang"
+      ],
+      "gold": [
+        600,
+        880
+      ],
+      "exp": [
+        760,
+        1000
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 80, "y": 90 },
-    "unlockCondition": { "type": "clear_boss", "sceneId": "boss_major_miwu" },
+    "pos": {
+      "x": 80,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_4_boss"
+    },
     "narrativeHook": "山门上的匾额写着灵山，但字迹是反的。"
   },
   {
     "id": "scene_5_2",
     "regionId": "region_5",
     "name": "诵经廊",
-    "levelRange": [43, 44],
+    "levelRange": [
+      43,
+      44
+    ],
     "desc": "长廊两侧石僧诵经不止，声音汇聚成假佛音，侵蚀心神。",
     "enemies": [
       {
@@ -865,29 +1470,48 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s5_2_g", "name": "金刚门力士", "level": 44 },
+    "guardian": {
+      "id": "enemy_s5_2_g",
+      "name": "金刚门力士",
+      "level": 44
+    },
     "drops": {
       "materials": [
-        "mat_shengshui_yu",
-        "mat_yufo_xiang",
-        "mat_tiangang_lingqi"
+        "mat_shengshui",
+        "mat_yufoxiang",
+        "mat_tiangang"
       ],
-      "gold": [650, 950],
-      "exp": [820, 1080]
+      "gold": [
+        650,
+        950
+      ],
+      "exp": [
+        820,
+        1080
+      ]
     },
     "unlocked": false,
     "difficulty": "easy",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 230, "y": 110 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_1" },
+    "pos": {
+      "x": 230,
+      "y": 110
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_1"
+    },
     "narrativeHook": "石僧的嘴唇在动，但声音是从地下传来的。"
   },
   {
     "id": "scene_5_3",
     "regionId": "region_5",
     "name": "断棒祭坛",
-    "levelRange": [45, 46],
+    "levelRange": [
+      45,
+      46
+    ],
     "desc": "祭坛上供着一根断棒，与你手中的断棒一模一样。六耳的碎片在此共鸣。",
     "enemies": [
       {
@@ -909,25 +1533,48 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s5_3_g", "name": "罗汉堂护法", "level": 46 },
+    "guardian": {
+      "id": "enemy_s5_3_g",
+      "name": "罗汉堂护法",
+      "level": 46
+    },
     "drops": {
-      "materials": ["mat_shengshui_yu", "mat_yufo_xiang", "mat_hunyuan_lingqi"],
-      "gold": [700, 1020],
-      "exp": [880, 1160]
+      "materials": [
+        "mat_shengshui",
+        "mat_yufoxiang",
+        "mat_hunyuan"
+      ],
+      "gold": [
+        700,
+        1020
+      ],
+      "exp": [
+        880,
+        1160
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 380, "y": 80 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_2" },
+    "pos": {
+      "x": 380,
+      "y": 80
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_2"
+    },
     "narrativeHook": "断棒是六耳碎片。你手中的断棒开始震颤，与祭坛上的断棒共鸣。"
   },
   {
     "id": "scene_5_4",
     "regionId": "region_5",
     "name": "须弥幻境",
-    "levelRange": [47, 48],
+    "levelRange": [
+      47,
+      48
+    ],
     "desc": "须弥山化为幻境，佛与魔的边界在此模糊。六耳的分身游荡其间。",
     "enemies": [
       {
@@ -949,29 +1596,48 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s5_4_g", "name": "须弥阶金刚将领", "level": 48 },
+    "guardian": {
+      "id": "enemy_s5_4_g",
+      "name": "须弥阶金刚将领",
+      "level": 48
+    },
     "drops": {
       "materials": [
-        "mat_shengshui_yu",
-        "mat_tiangang_lingqi",
-        "mat_hunyuan_lingqi"
+        "mat_shengshui",
+        "mat_tiangang",
+        "mat_hunyuan"
       ],
-      "gold": [760, 1100],
-      "exp": [950, 1250]
+      "gold": [
+        760,
+        1100
+      ],
+      "exp": [
+        950,
+        1250
+      ]
     },
     "unlocked": false,
     "difficulty": "normal",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 530, "y": 120 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_3" },
+    "pos": {
+      "x": 530,
+      "y": 120
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_3"
+    },
     "narrativeHook": "幻境中你看到了自己，但那个你手持完整的金箍棒。"
   },
   {
     "id": "scene_5_5",
     "regionId": "region_5",
     "name": "灵霄台顶",
-    "levelRange": [49, 50],
+    "levelRange": [
+      49,
+      50
+    ],
     "desc": "灵霄台之巅，如来法相端坐莲台。但那双眼睛里，映出的不是慈悲。",
     "enemies": [
       {
@@ -993,18 +1659,69 @@
         "type": "old_soul"
       }
     ],
-    "guardian": { "id": "enemy_s5_5_g", "name": "灵霄顶金刚统帅", "level": 50 },
+    "guardian": {
+      "id": "enemy_s5_5_g",
+      "name": "灵霄顶金刚统帅",
+      "level": 50
+    },
     "drops": {
-      "materials": ["mat_shengshui_yu", "mat_yufo_xiang", "mat_hunyuan_lingqi"],
-      "gold": [820, 1200],
-      "exp": [1020, 1350]
+      "materials": [
+        "mat_shengshui",
+        "mat_yufoxiang",
+        "mat_hunyuan"
+      ],
+      "gold": [
+        820,
+        1200
+      ],
+      "exp": [
+        1020,
+        1350
+      ]
     },
     "unlocked": false,
     "difficulty": "hard",
     "stars": 0,
     "maxStars": 3,
-    "pos": { "x": 700, "y": 100 },
-    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_4" },
+    "pos": {
+      "x": 700,
+      "y": 100
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_4"
+    },
     "narrativeHook": "最终对决。六耳的声音从如来法相中传出：你终于来了，另一个我。"
+  },
+  {
+    "id": "scene_5_boss",
+    "regionId": "region_5",
+    "name": "灵霄台巅",
+    "levelRange": [
+      50,
+      50
+    ],
+    "desc": "莲花宝座之下，六耳的声音愈发清晰：另一个我，终于来了。",
+    "enemies": [
+      {
+        "id": "boss_major_rulai",
+        "name": "如来法相·须弥",
+        "level": 50,
+        "type": "old_blood"
+      }
+    ],
+    "unlocked": false,
+    "difficulty": "hard",
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 850,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_5"
+    },
+    "narrativeHook": "法相睁开眼：世间已无如来，只有被六耳夺舍的躯壳。"
   }
 ]

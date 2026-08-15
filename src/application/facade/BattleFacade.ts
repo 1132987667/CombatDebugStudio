@@ -27,9 +27,9 @@ export class BattleService {
 
   // ==================== 战斗流程控制（Use Cases） ====================
 
-  /** 开始战斗 */
-  async startBattle(): Promise<string | null> {
-    return this.battleManager.startBattle()
+  /** 开始战斗（seed 可选：确定性复现用，透传领域层 BattleSystem.initialize） */
+  async startBattle(seed?: string): Promise<string | null> {
+    return this.battleManager.startBattle(seed)
   }
 
   /** 结束战斗 */

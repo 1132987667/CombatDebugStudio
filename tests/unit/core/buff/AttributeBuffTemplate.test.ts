@@ -13,7 +13,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 
 // ============================================================
 // 测试辅助：继承 AttributeBuffTemplate 的具象子类
@@ -41,7 +40,7 @@ class TestBuffWithStacks extends AttributeBuffTemplate {
       type: ModifierType.ADDITIVE,
     }]
   }
-  protected getStacks(context: BuffContext): number {
+  protected getStacks(_context: BuffContext): number {
     return 5 // 固定返回 5 层用于测试
   }
 }
@@ -143,8 +142,8 @@ describe('AttributeBuffTemplate', () => {
       buff['applyModifiers'](context, true)
 
       expect(context.removeModifiers).toHaveBeenCalledTimes(2)
-      expect(context.removeModifiers).toHaveBeenCalledWith(ATTRIBUTE_CODE.attack)
-      expect(context.removeModifiers).toHaveBeenCalledWith(ATTRIBUTE_CODE.defense)
+      expect(context.removeModifiers).toHaveBeenCalledWith(ATTRIBUTE_CODE.attack, ModifierType.ADDITIVE)
+      expect(context.removeModifiers).toHaveBeenCalledWith(ATTRIBUTE_CODE.defense, ModifierType.ADDITIVE)
       expect(context.addModifier).toHaveBeenCalledTimes(2)
     })
   })
@@ -272,6 +271,131 @@ describe('AttributeBuffTemplate', () => {
       buff['_onUpdate'](context)
 
       expect(context.addModifier).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('value 快照比对（脏标记机制）', () => {
+    it('值未变化时 replace 不触发 remove/add（跳过无效重算）', () => {
+      const mods = [{
+        attribute: ATTRIBUTE_CODE.attack,
+        value: 10,
+        type: ModifierType.ADDITIVE,
+      }]
+      context.getVariable = vi.fn().mockReturnValue(1)
+
+      buff['applyModifiers'](context, true, mods) // 首次：全量应用
+      context.removeModifiers.mockClear()
+      context.addModifier.mockClear()
+
+      buff['applyModifiers'](context, true, mods) // 值未变 → 跳过
+
+      expect(context.removeModifiers).not.toHaveBeenCalled()
+      expect(context.addModifier).not.toHaveBeenCalled()
+    })
+
+    it('值变化时仅重写变化的属性，不变属性不重写', () => {
+      context.getVariable = vi.fn().mockReturnValue(1)
+
+      buff['applyModifiers'](context, true, [
+        { attribute: ATTRIBUTE_CODE.attack, value: 10, type: ModifierType.ADDITIVE },
+        { attribute: ATTRIBUTE_CODE.defense, value: 5, type: ModifierType.ADDITIVE },
+      ])
+      context.removeModifiers.mockClear()
+      context.addModifier.mockClear()
+
+      buff['applyModifiers'](context, true, [
+        { attribute: ATTRIBUTE_CODE.attack, value: 15, type: ModifierType.ADDITIVE },
+        { attribute: ATTRIBUTE_CODE.defense, value: 5, type: ModifierType.ADDITIVE },
+      ])
+
+      expect(context.removeModifiers).toHaveBeenCalledTimes(1)
+      expect(context.removeModifiers).toHaveBeenCalledWith(ATTRIBUTE_CODE.attack, ModifierType.ADDITIVE)
+      expect(context.addModifier).toHaveBeenCalledTimes(1)
+      expect(context.addModifier).toHaveBeenCalledWith(ATTRIBUTE_CODE.attack, 15, ModifierType.ADDITIVE)
+    })
+
+    it('声明中被移除的属性被精确移除，未变化属性不重写', () => {
+      context.getVariable = vi.fn().mockReturnValue(1)
+
+      buff['applyModifiers'](context, true, [
+        { attribute: ATTRIBUTE_CODE.attack, value: 10, type: ModifierType.ADDITIVE },
+        { attribute: ATTRIBUTE_CODE.defense, value: 5, type: ModifierType.ADDITIVE },
+      ])
+      context.removeModifiers.mockClear()
+      context.addModifier.mockClear()
+
+      buff['applyModifiers'](context, true, [
+        { attribute: ATTRIBUTE_CODE.attack, value: 10, type: ModifierType.ADDITIVE },
+      ])
+
+      expect(context.removeModifiers).toHaveBeenCalledTimes(1)
+      expect(context.removeModifiers).toHaveBeenCalledWith(ATTRIBUTE_CODE.defense, ModifierType.ADDITIVE)
+      expect(context.addModifier).not.toHaveBeenCalled()
+    })
+
+    it('同属性多类型共存，变更一个类型不误删另一个', () => {
+      context.getVariable = vi.fn().mockReturnValue(1)
+
+      buff['applyModifiers'](context, true, [
+        { attribute: ATTRIBUTE_CODE.attack, value: 10, type: ModifierType.ADDITIVE },
+        { attribute: ATTRIBUTE_CODE.attack, value: 0.5, type: ModifierType.MULTIPLICATIVE },
+      ])
+      context.removeModifiers.mockClear()
+      context.addModifier.mockClear()
+
+      buff['applyModifiers'](context, true, [
+        { attribute: ATTRIBUTE_CODE.attack, value: 15, type: ModifierType.ADDITIVE },
+        { attribute: ATTRIBUTE_CODE.attack, value: 0.5, type: ModifierType.MULTIPLICATIVE },
+      ])
+
+      // 首次 2 次 remove + 第二次 1 次（仅 ADDITIVE）
+      expect(context.removeModifiers).toHaveBeenCalledTimes(1)
+      expect(context.addModifier).toHaveBeenCalledTimes(1)
+      expect(context.addModifier).toHaveBeenCalledWith(ATTRIBUTE_CODE.attack, 15, ModifierType.ADDITIVE)
+      // MULTIPLICATIVE 值未变，未被重写
+      const multCalls = context.addModifier.mock.calls.filter((c) => c[1] === 0.5)
+      expect(multCalls).toHaveLength(0)
+    })
+
+    it('层数缩放后的最终值参与比对（stacks 变化触发重写）', () => {
+      const mods = [{
+        attribute: ATTRIBUTE_CODE.attack,
+        value: 10,
+        type: ModifierType.ADDITIVE,
+      }]
+
+      context.getVariable = vi.fn().mockReturnValue(1)
+      buff['applyModifiers'](context, true, mods)
+      context.addModifier.mockClear()
+
+      context.getVariable = vi.fn().mockReturnValue(3)
+      buff['applyModifiers'](context, true, mods)
+
+      expect(context.addModifier).toHaveBeenCalledTimes(1)
+      expect(context.addModifier).toHaveBeenCalledWith(ATTRIBUTE_CODE.attack, 30, ModifierType.ADDITIVE)
+    })
+  })
+
+  describe('声明缓存（getModifiers 结果缓存）', () => {
+    it('多次生命周期调用仅执行一次 getModifiers()', () => {
+      let calls = 0
+      const countingBuff = new class extends TestBuff {
+        protected getModifiers(): AttributeModifier[] {
+          calls++
+          return [{
+            attribute: ATTRIBUTE_CODE.attack,
+            value: 10,
+            type: ModifierType.ADDITIVE,
+          }]
+        }
+      }()
+      context.getVariable = vi.fn().mockReturnValue(1)
+
+      countingBuff['_onApply'](context)
+      countingBuff['_onRefresh'](context)
+      countingBuff['applyModifiers'](context, true)
+
+      expect(calls).toBe(1)
     })
   })
 })

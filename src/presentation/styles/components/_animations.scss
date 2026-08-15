@@ -167,7 +167,23 @@
   }
 }
 
-/* ----- 悬停呼吸（纯缩放，hover 放大缩小） ----- */
+/* ----- 双点阵背景横向流动（PackItemCard hover：图案从左向右缓移） -----
+   NOTE: background-position 须与 _mixins.scss mixin-bg-dual-dots 的默认位置逐层对齐；
+   终点为起始每层 x + 网格周期(24px)，循环无缝。 */
+@keyframes dots-flow {
+  from {
+    background-position:
+      0px 0px, 0px -5px, 0px 5px, -5px 0px, 5px 0px,
+      12px 12px, 12px 7px, 12px 17px, 7px 12px, 17px 12px;
+  }
+  to {
+    background-position:
+      24px 0px, 24px -5px, 24px 5px, 19px 0px, 29px 0px,
+      36px 12px, 36px 7px, 36px 17px, 31px 12px, 41px 12px;
+  }
+}
+
+/* ----- 同心环背景呼吸（品质光晕装备卡 hover：同心环缩放起伏） ----- */
 @keyframes hover-breath {
   0%,
   100% {

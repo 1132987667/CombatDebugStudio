@@ -43,6 +43,7 @@
       <HealthView v-else-if="store.activeView === 'health'" />
       <LogsView v-else-if="store.activeView === 'logs'" />
       <PackagesView v-else-if="store.activeView === 'packages'" />
+      <ExpGoldView v-else-if="store.activeView === 'expgold'" />
     </main>
   </div>
 </template>
@@ -57,6 +58,7 @@ import FormulasView from '@/presentation/modules/fengshen/views/FormulasView.vue
 import HealthView from '@/presentation/modules/fengshen/views/HealthView.vue'
 import LogsView from '@/presentation/modules/fengshen/views/LogsView.vue'
 import PackagesView from '@/presentation/modules/fengshen/views/PackagesView.vue'
+import ExpGoldView from '@/presentation/modules/fengshen/views/ExpGoldView.vue'
 
 /** 数据域按子领域分组（侧栏导航层次） */
 const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableName; label: string }> }> = [
@@ -106,6 +108,7 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
 
 const SYSTEM_VIEWS: Array<{ view: FengshenView; label: string }> = [
   { view: 'formulas', label: '属性与公式' },
+  { view: 'expgold', label: '经验与金钱管理' },
   { view: 'packages', label: '数据包管理' },
   { view: 'health', label: '健康检查' },
   { view: 'logs', label: '操作日志' },

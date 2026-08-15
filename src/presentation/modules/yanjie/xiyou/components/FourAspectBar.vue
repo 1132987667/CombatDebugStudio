@@ -92,7 +92,7 @@ const TABS: Array<{ id: GroupTab; label: string; badge?: string; path: string }>
   background: transparent;
   color: var(--color-text-tertiary);
   cursor: pointer;
-  font-family: var(--xy-font-title);
+  
   letter-spacing: 2px;
 
   &:hover:not(.active) {

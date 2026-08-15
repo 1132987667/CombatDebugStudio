@@ -35,10 +35,15 @@ export const FENGSHEN_STORE = {
 } as const
 export type FengshenStoreName = (typeof FENGSHEN_STORE)[keyof typeof FENGSHEN_STORE]
 
-/** 全部 store 名（基础 + 封神榜），供迁移/统计遍历 */
-export const ALL_STORES = [...Object.values(STORAGE_STORE), ...Object.values(FENGSHEN_STORE)] as const
+/** 存档 store（演劫台存档体系 · DB v6 起，见 documents/演劫台/玩家存档数据储存与新游戏功能.md §5.1） */
+export const SAVE_STORE = {
+  SAVES: 'saves',
+} as const
 
-export type StorageStoreName = (typeof STORAGE_STORE)[keyof typeof STORAGE_STORE] | FengshenStoreName
+/** 全部 store 名（基础 + 封神榜 + 存档），供迁移/统计遍历 */
+export const ALL_STORES = [...Object.values(STORAGE_STORE), ...Object.values(FENGSHEN_STORE), ...Object.values(SAVE_STORE)] as const
+
+export type StorageStoreName = (typeof STORAGE_STORE)[keyof typeof STORAGE_STORE] | FengshenStoreName | (typeof SAVE_STORE)[keyof typeof SAVE_STORE]
 
 export interface StorageStats {
   usedBytes: number

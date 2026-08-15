@@ -73,6 +73,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../data/mock'
 import { alchemyRecipes } from '../../data/mock'
 import { itemIdByName, itemName, qualityOf } from '../../data/caveLogic'
+import { qualityClassOf } from '../../data/quality'
 
 const pack = usePackStore()
 const notification = useNotificationStore()
@@ -93,12 +94,7 @@ function qualityOfOut(r: XiyouRecipe): string {
 }
 
 function qualityChip(r: XiyouRecipe): string {
-  const q = qualityOfOut(r)
-  if (q === '凡品') return 'xy-q--凡品'
-  if (q === '玄品') return 'xy-q--玄品'
-  if (q === '地品') return 'xy-q--地品'
-  if (q === '天品') return 'xy-q--天品'
-  return 'xy-q--仙品'
+  return qualityClassOf(qualityOfOut(r))
 }
 
 interface MatView {

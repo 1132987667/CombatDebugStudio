@@ -245,25 +245,25 @@ function fillSlot(itemId: string): void {
   color: var(--color-text-disabled);
 }
 
-/* 品质色（对齐 QUALITY_COLORS：text-disabled/success/skill-active/debuff/warning） */
+/* 品质色（统一引用 tokens.scss 的 --rarity-* 令牌） */
 .px-qs-q1 {
-  color: var(--color-text-disabled);
+  color: var(--rarity-1);
 }
 
 .px-qs-q2 {
-  color: var(--color-success);
+  color: var(--rarity-2);
 }
 
 .px-qs-q3 {
-  color: var(--color-skill-active);
+  color: var(--rarity-3);
 }
 
 .px-qs-q4 {
-  color: var(--color-debuff);
+  color: var(--rarity-4);
 }
 
 .px-qs-q5 {
-  color: var(--color-warning);
+  color: var(--rarity-5);
 }
 
 .xy-qs-fade-enter-active,

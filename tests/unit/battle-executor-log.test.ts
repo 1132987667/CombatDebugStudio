@@ -14,7 +14,7 @@ import { createMockLogManager } from '@tests/mocks/MockLogger'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import type { BattleData, BattleEntity } from '@/domain/battle/type/types'
 import { ParticipantSide, ActionTypes } from '@/domain/battle/type/types'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType } from '@/domain/skill/types'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 
 // 镜像 BattleExecutor 内的局部 DTO（非导出，测试侧定义同构结构）
@@ -446,7 +446,7 @@ describe('BattleExecutor 日志发射器', () => {
       success: true,
       timestamp: Date.now(),
       turn: 1,
-      effects: [{ type: EffectType.DAMAGE, value: 30, description: '普通攻击' }],
+      effects: [{ type: ActionResultType.DAMAGE, value: 30, description: '普通攻击' }],
     })
 
     expect(flight).toHaveBeenCalled()

@@ -135,3 +135,26 @@ export const AffixId = {
   JIE_HP_REGEN: 'affix_jie_008',
 } as const
 export type AffixId = (typeof AffixId)[keyof typeof AffixId]
+
+/** 词缀品阶显示名（rarity 1-5 → 凡/精/超/绝/神；与 _cards.scss 的 affix-qN 类对齐） */
+export const AffixRarityNames: Record<number, string> = {
+  1: '凡',
+  2: '精',
+  3: '超',
+  4: '绝',
+  5: '神',
+}
+
+/** 词缀品阶色（CSS 值；统一引用 tokens.scss 的 --rarity-* 令牌，与品质色同源） */
+export const AFFIX_RARITY_COLORS: Record<number, string> = {
+  1: 'var(--rarity-1)',
+  2: 'var(--rarity-2)',
+  3: 'var(--rarity-3)',
+  4: 'var(--rarity-4)',
+  5: 'var(--rarity-5)',
+}
+
+/** 词缀品阶名（未知品级回退「凡」） */
+export function affixRarityName(rarity: number): string {
+  return AffixRarityNames[rarity] ?? '凡'
+}

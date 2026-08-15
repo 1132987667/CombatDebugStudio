@@ -7,7 +7,7 @@
  *
  * 运行: npx vitest run tests/unit/presentation/AttributeTooltip.test.ts
  */
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { createApp, h, type App } from 'vue'
 import AttributeTooltip from '@/presentation/components/AttributeTooltip.vue'
 import type { Modifier } from '@/domain/attribute/types'
@@ -82,5 +82,12 @@ describe('AttributeTooltip 悬浮计算过程', () => {
     expect(html).toContain('50')
     expect(html).not.toContain('无详细来源信息')
     expect(html).not.toContain('无详细计算信息')
+  })
+
+  it('省略可选 prop（modifiers/valueType 等）不触发 Missing required 警告', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mount({ visible: false, title: '' })
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

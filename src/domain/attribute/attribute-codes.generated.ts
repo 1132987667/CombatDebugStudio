@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-08-14T17:00:19.484Z
+// 生成时间: 2026-08-15T13:56:32.745Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -53,12 +53,6 @@ export const ATTRIBUTE_CODE = {
   damageToLowHp: 'damageToLowHp',
   shield: 'shield',
   reflectDamagePercent: 'reflectDamagePercent',
-  slowImmune: 'slowImmune',
-  stunResist: 'stunResist',
-  knockbackResist: 'knockbackResist',
-  poisonResist: 'poisonResist',
-  bleedResist: 'bleedResist',
-  burnImmune: 'burnImmune',
   debuffImmunityRate: 'debuffImmunityRate',
   demonDamage: 'demonDamage',
   skillCooldown: 'skillCooldown',
@@ -488,60 +482,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: true,
     range: '0-100%',
     impact: '受到伤害时反弹部分伤害给攻击者',
-  },
-  slowImmune: {
-    code: 'slowImmune',
-    name: '减速免疫',
-    displayName: '减速免疫',
-    description: '免疫减速效果',
-    isPercentage: false,
-    range: '0-1',
-    impact: '非0时免疫减速',
-  },
-  stunResist: {
-    code: 'stunResist',
-    name: '眩晕抗性',
-    displayName: '眩晕抗性',
-    description: '抵抗眩晕效果',
-    isPercentage: false,
-    range: '0-1',
-    impact: '非0时抵抗眩晕',
-  },
-  knockbackResist: {
-    code: 'knockbackResist',
-    name: '击退抗性',
-    displayName: '击退抗性',
-    description: '抵抗击退效果',
-    isPercentage: false,
-    range: '0-1',
-    impact: '非0时抵抗击退',
-  },
-  poisonResist: {
-    code: 'poisonResist',
-    name: '中毒抗性',
-    displayName: '中毒抗性',
-    description: '抵抗中毒效果',
-    isPercentage: false,
-    range: '0-1',
-    impact: '非0时抵抗中毒',
-  },
-  bleedResist: {
-    code: 'bleedResist',
-    name: '流血抗性',
-    displayName: '流血抗性',
-    description: '抵抗流血效果',
-    isPercentage: false,
-    range: '0-1',
-    impact: '非0时抵抗流血',
-  },
-  burnImmune: {
-    code: 'burnImmune',
-    name: '灼烧免疫',
-    displayName: '灼烧免疫',
-    description: '免疫灼烧效果',
-    isPercentage: false,
-    range: '0-1',
-    impact: '非0时免疫灼烧',
   },
   debuffImmunityRate: {
     code: 'debuffImmunityRate',

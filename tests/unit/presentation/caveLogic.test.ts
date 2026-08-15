@@ -7,6 +7,7 @@ import {
   catalogById,
   enhanceCost,
   enhanceMaterialOf,
+  enhanceMaxByRarity,
   enhanceSuccessRate,
   formatEffect,
   fragmentRuleViews,
@@ -48,11 +49,24 @@ describe('强化数值', () => {
     expect(enhanceCost(6)).toBe(140)
   })
 
-  it('槽位 → 强化材料映射（GearSlotKey: weapon/armor/accessory）', () => {
+  it('槽位 → 强化材料映射（六槽：weapon/armor/helmet/boots/charm/ring）', () => {
     expect(enhanceMaterialOf('weapon')).toMatchObject({ itemId: 'mat_enh_01', count: 1 })
     expect(enhanceMaterialOf('armor')).toMatchObject({ itemId: 'mat_enh_03' })
-    expect(enhanceMaterialOf('accessory')).toMatchObject({ itemId: 'mat_enh_02' })
+    expect(enhanceMaterialOf('helmet')).toMatchObject({ itemId: 'mat_enh_02' })
+    expect(enhanceMaterialOf('boots')).toMatchObject({ itemId: 'mat_enh_02' })
+    expect(enhanceMaterialOf('charm')).toMatchObject({ itemId: 'mat_enh_02' })
+    expect(enhanceMaterialOf('ring')).toMatchObject({ itemId: 'mat_enh_02' })
     expect(enhanceMaterialOf('未知槽')).toBeNull()
+  })
+
+  it('强化上限按阶位（equipment-system.json enhance_max_by_tier：+5/+10/+15/+15/+20）', () => {
+    expect(enhanceMaxByRarity(1)).toBe(5) // 凡品
+    expect(enhanceMaxByRarity(2)).toBe(10) // 玄品
+    expect(enhanceMaxByRarity(3)).toBe(15) // 地品
+    expect(enhanceMaxByRarity(4)).toBe(15) // 天品
+    expect(enhanceMaxByRarity(5)).toBe(20) // 仙品
+    expect(enhanceMaxByRarity(0)).toBe(5) // 越界兜底凡品
+    expect(enhanceMaxByRarity(9)).toBe(5)
   })
 
   it('effect 文案按等级重算（数值 +5%/级，百分比保留 %）', () => {

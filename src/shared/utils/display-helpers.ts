@@ -5,7 +5,7 @@
  * 键名优先使用现有枚举常量，无枚举覆盖的保留字符串字面量。
  */
 import { EquipmentSlot } from '@/shared/types/Item'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType } from '@/domain/skill/types'
 
 // ───── 装备槽位 ─────
 
@@ -44,9 +44,9 @@ export function getItemTypeText(type: string): string {
 // ───── 效果类型 ─────
 
 export const effectTypeLabels: Record<string, string> = {
-  [EffectType.HEAL]: '气血恢复',
-  [EffectType.BUFF]: '增益效果',
-  [EffectType.DAMAGE]: '伤害',
+  [ActionResultType.HEAL]: '气血恢复',
+  [ActionResultType.BUFF]: '增益效果',
+  [ActionResultType.DAMAGE]: '伤害',
   mpRestore: '能量恢复',
   shield: '护盾',
 }

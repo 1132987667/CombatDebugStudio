@@ -4,14 +4,14 @@
     { "name": "铜精", "count": 12, "rarity": 1, "desc": "粗炼铜矿精华，锻造常用金属" },
     { "name": "粗石", "count": 8, "rarity": 1, "desc": "蕴含微弱地脉灵气的石块" },
     { "name": "淡水玉", "count": 6, "rarity": 2, "desc": "淡水河中所产，温和的水属性灵气" },
-    { "name": "贝壳", "count": 15, "rarity": 1, "desc": "河滩常见的贝壳，可制装饰品" },
+    { "name": "贝壳", "count": 15, "rarity": 1, "desc": "河滩常见的贝壳，可制配件" },
     { "name": "松木", "count": 3, "rarity": 2, "desc": "深山老松，二阶装备材料" },
     { "name": "玄铁", "count": 2, "rarity": 3, "desc": "千锤百炼的寒铁，三阶锻造主材" },
     { "name": "妖丹", "count": 1, "rarity": 4, "desc": "大妖凝结内丹，炼药与法宝的至宝" },
     { "name": "鹿皮", "count": 5, "rarity": 1, "desc": "鹿的皮革，柔软坚韧，可制一阶皮甲" },
     { "name": "异矿", "count": 6, "rarity": 2, "desc": "晶球开启所得，强化武器的基础材料" },
     { "name": "灵气·强化", "count": 6, "rarity": 2, "desc": "晶球开启所得，强化衣服的基础材料" },
-    { "name": "灵水", "count": 6, "rarity": 2, "desc": "晶球开启所得，强化饰品的材料" },
+    { "name": "灵水", "count": 6, "rarity": 2, "desc": "晶球开启所得，强化配件的材料" },
     { "name": "小魂玉", "count": 6, "rarity": 2, "desc": "装备升星所需，蕴含魂力" }
   ],
   "equipment": [

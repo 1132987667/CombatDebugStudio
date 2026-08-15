@@ -8,8 +8,12 @@
     <div class="member-info">
       <!-- 名称和行动标识 -->
       <div class="member-name">
-        <template v-if="displayLevel > 0">Lv.{{ displayLevel }} </template>{{ displayName }} {{ hpText }}
-        <div class="member-action" v-if="isActive">
+        <template v-if="displayLevel > 0">Lv.{{ displayLevel }} </template>
+        <span v-if="affixTags.length > 0" class="member-affixes">【<span v-for="(a, i) in affixTags" :key="a.id"
+            class="affix-tag" :class="'affix-q' + a.rarity" @mouseenter="showAffixTooltip(a.affix, $event)"
+            @mouseleave="clearAffixTooltip">{{ i > 0 ? '、' : '' }}{{ a.name }}</span>】</span>
+        <span class="ml-2" :class="isEnemy ? 'name--enemy' : 'name--ally'">{{ displayName }}</span> {{ hpText }}
+        <div class="member-action ml-2" v-if="isActive">
           <span :class="['acting-badge', { 'enemy-acting': isEnemy }]">←操作中</span>
         </div>
       </div>
@@ -103,6 +107,10 @@
           </div>
         </transition>
       </Teleport>
+      <!-- 词缀悬浮效果（EntityTooltip 渲染 Teleport fragment，悬停保活由组件内部 onTooltipEnter/Leave 负责，
+           宿主只经 @hide 清理状态，传 DOM 事件会被 Vue 告警且不生效） -->
+      <EntityTooltip :visible="!!hoveredAffix" :data="affixTooltipData" :trigger-rect="affixHoverPos"
+        @hide="hoveredAffix = null" />
     </div>
   </div>
 </template>
@@ -135,6 +143,8 @@ import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
+import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
+import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
@@ -142,6 +152,9 @@ import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/ty
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'
 import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { AffixData, AffixLibraryData } from '@/domain/fengshen/types'
+import { AFFIX_RARITY_COLORS, affixRarityName } from '@/shared/constants/affix'
+import affixLibraryRaw from '@configs/affixes/affixes.json'
 
 const props = defineProps<{
   /** 战斗参与者实例（displayData 注入时可为空） */
@@ -179,6 +192,73 @@ const snap = computed(() =>
 
 const displayLevel = computed(() => display.value?.level ?? props.participant?.level ?? 0)
 const displayName = computed(() => display.value?.name ?? props.participant?.name ?? '')
+
+// ============ 词缀展示 ============
+// 词缀库索引（id → 词缀）；词缀经 applyAffixToParticipant 以 `affix:${id}` 修饰符注入实体属性
+const AFFIX_INDEX = new Map<string, AffixData>()
+for (const affix of (affixLibraryRaw as AffixLibraryData).affixes) {
+  AFFIX_INDEX.set(affix.id, affix)
+}
+
+/** 角色带有的词缀（从实体属性修饰符提取 affix: 前缀 sourceKey，回放纯数据模式无词缀信息）
+ * NOTE: modifiers 数组本身非响应式，依赖投影快照 version（词缀注入 → recalcAll → 投影刷新 → version 变化）触发重算 */
+const affixTags = computed(() => {
+  const entity = props.participant
+  if (!entity) return []
+  void snap.value?.version
+  const ids = new Set<string>()
+  for (const code of Object.values(ATTRIBUTE_CODE)) {
+    const attrVal = entity.getAttrValue(code)
+    for (const mod of attrVal?.modifiers ?? []) {
+      if (mod.sourceKey.startsWith('affix:')) ids.add(mod.sourceKey.slice('affix:'.length))
+    }
+  }
+  return [...ids]
+    .map((id) => AFFIX_INDEX.get(id))
+    .filter((a): a is AffixData => !!a)
+    .map((a) => ({ id: a.id, name: a.name, rarity: a.rarity ?? 1, affix: a }))
+})
+
+/** 品阶名（1-5 → 凡/精/超/绝/神） */
+function affixQuality(rarity: number): string {
+  return affixRarityName(rarity)
+}
+
+/** 词缀悬浮数据（复用 EntityTooltip 契约） */
+const hoveredAffix = ref<AffixData | null>(null)
+const affixHoverPos = ref<DOMRect | null>(null)
+
+function showAffixTooltip(a: AffixData, event: MouseEvent): void {
+  hoveredAffix.value = a
+  affixHoverPos.value = (event.currentTarget as HTMLElement).getBoundingClientRect()
+}
+
+/** 鼠标离开词缀 tag 即清除悬浮（tooltip 内保活由 EntityTooltip 内部 onTooltipEnter/Leave 负责，
+ *  宿主经 @hide 清除 hoveredAffix —— 与 BattleLog（战斗心经）/PackItemCard 悬浮范式一致，避免 Teleport 下双隐藏通道） */
+function clearAffixTooltip(): void {
+  hoveredAffix.value = null
+  affixHoverPos.value = null
+}
+
+/** 词缀悬浮卡片数据（明细 = 各属性修正百分比） */
+const affixTooltipData = computed<TooltipData | null>(() => {
+  const a = hoveredAffix.value
+  if (!a) return null
+  const rarity = a.rarity ?? 1
+  const color = AFFIX_RARITY_COLORS[Math.max(0, Math.min(4, rarity - 1))]
+  return {
+    name: a.name,
+    description: a.description ?? '',
+    badge: `${affixQuality(rarity)}品`,
+    nameColor: color,
+    badgeColor: color,
+    details: a.statModifiers.map((m) => ({
+      label: getAttrName(m.attribute),
+      value: `${m.percent > 0 ? '+' : ''}${m.percent}%`,
+    })),
+    source: a.drop_hint ? `掉落倾向：${a.drop_hint}` : undefined,
+  }
+})
 
 // 从快照派生 isAlive/hpPercent/energyPercent（回退到从实体直接读取）
 const isAlive = computed(() => {
@@ -592,41 +672,4 @@ defineExpose({
   color: var(--color-text-disabled);
 }
 
-/* ============ 卡片视觉状态动画 ============ */
-
-/* 蓄力/施法 */
-.member-card.casting {
-  transform: translateY(-3px);
-  box-shadow: 0 0 30px var(--color-brand-red), 0 6px 24px rgba(var(--rgb-black), 0.7);
-  animation: cast-pulse 0.6s ease;
-}
-
-/* 受击 */
-.member-card.hurt {
-  animation: hurt-shake 0.45s cubic-bezier(.36, .07, .19, .97);
-}
-
-.member-card.hurt::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(var(--rgb-danger), var(--alpha-glow)), transparent 70%);
-  pointer-events: none;
-  animation: hurt-flash 0.45s ease;
-}
-
-/* 被治疗 */
-.member-card.healed {
-  animation: heal-glow 0.8s ease;
-}
-
-/* 被加护盾 */
-.member-card.shielded {
-  animation: shield-glow 0.8s ease;
-}
-
-/* 气血 条闪光 */
-.hp-fill.hp-flash {
-  animation: hp-bar-flash 0.8s ease;
-}
 </style>

@@ -50,7 +50,7 @@ import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import type { TraceEvent } from '@/shared/types/trace-event'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType } from '@/domain/skill/types'
 import {
   BATTLE_LOG_CATEGORIES,
   type BattleLogCategory,
@@ -581,12 +581,12 @@ export class BattleRecorder {
     const effectTypes: string[] =
       action.effects?.map((e: { type: string }) => e.type) ?? []
     if (
-      effectTypes.includes(EffectType.HEAL) &&
-      !effectTypes.includes(EffectType.DAMAGE)
+      effectTypes.includes(ActionResultType.HEAL) &&
+      !effectTypes.includes(ActionResultType.DAMAGE)
     ) {
       return BATTLE_LOG_CATEGORIES.HEAL
     }
-    if (effectTypes.includes(EffectType.DAMAGE)) {
+    if (effectTypes.includes(ActionResultType.DAMAGE)) {
       return BATTLE_LOG_CATEGORIES.DAMAGE
     }
     return BATTLE_LOG_CATEGORIES.STATUS

@@ -48,8 +48,8 @@ export interface EquipmentMaterialEntry {
 export interface EquipmentData {
   id: string
   name: string
-  slot: 'weapon' | 'armor' | 'accessory'
-  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/项链/腰带/手镯/冠冕） */
+  slot: 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
+  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/头盔/冠冕/靴子） */
   subType?: string
   /** 阶位（t1 凡品 ~ t5 仙品） */
   tier?: 't1' | 't2' | 't3' | 't4' | 't5'
@@ -101,8 +101,8 @@ export interface GearMaterialEntry {
 export interface GearData {
   id: string
   name: string
-  slot: 'weapon' | 'armor' | 'accessory'
-  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/项链/腰带/手镯/冠冕） */
+  slot: 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
+  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/头盔/冠冕/靴子） */
   subType?: string
   /** 阶位（t1 凡品 ~ t5 仙品） */
   tier: 't1' | 't2' | 't3' | 't4' | 't5'
@@ -272,14 +272,80 @@ export interface OperationLogEntry {
   updatedAt: string
 }
 
-/** 战斗规则参数（params 表）—— 可调参数收拢为数据，供引擎 BattleRuleManager 消费（规格说明书 §3.10） */
+/** 战斗规则参数（params 表）—— 可调参数收拢为数据，供引擎 BattleRuleManager 消费（规格说明书 §3.10）。
+ * 简单数字参数用 value（引擎数值调参）；经验/金钱结构化参数（exp_table 等）用 data，二者互斥。 */
 export interface BattleParamData {
   id: string
   name: string
-  value: number
+  value?: number
   range?: { min: number; max: number }
+  /** 结构化参数数据（经验/金钱表，value 为 undefined 时使用） */
+  data?: ExpTableConfig | EnemyRewardTableConfig | LevelDiffBonusConfig
   description?: string
   updatedAt: string
+}
+
+/** 玩家升级经验表（params 域，key=exp_table）—— 每个等级升至下一级所需经验 */
+export interface ExpTableEntry {
+  level: number
+  expRequired: number
+  /** 备注（仅管理用，不参与计算） */
+  note?: string
+}
+export interface ExpTableConfig {
+  id: string
+  name?: string
+  description?: string
+  /** 玩家等级上限 */
+  maxLevel: number
+  entries: ExpTableEntry[]
+  /** 公式提示（辅助编定，非运行时字段） */
+  formulaHint?: string
+}
+
+/** 敌人经验与金钱基准表（params 域，key=enemy_reward_table）—— 按敌人等级定义基础经验与金钱区间 */
+export interface EnemyRewardEntry {
+  enemyLevel: number
+  baseExp: number
+  goldMin: number
+  goldMax: number
+  note?: string
+}
+export type RewardInterpolation = 'linear' | 'nearest'
+export interface EnemyRewardTableConfig {
+  id: string
+  name?: string
+  description?: string
+  baseExpFormula?: string
+  baseGoldFormula?: string
+  /** 敌人角色倍率（键对齐 enemies.json role：normal/guardian/minor_boss/major_boss/achievement_boss/hidden_boss/three_kings/final_boss） */
+  roleMultiplier: Record<string, number>
+  entries: EnemyRewardEntry[]
+  /** 未列出等级的插值方式：linear（线性插值）/ nearest（取最近档） */
+  interpolation: RewardInterpolation
+}
+
+/** 等级差条件：0=精确相等 / [min,max]=闭区间 / "<= -5" 或 ">= 6"=半开区间 */
+export type LevelDiffCondition = number | [number, number] | string
+export interface LevelDiffRule {
+  id: string
+  label?: string
+  condition: { diff: LevelDiffCondition }
+  expMultiplier: number
+  goldMultiplier: number
+  description?: string
+  note?: string
+}
+export interface LevelDiffBonusConfig {
+  id: string
+  name?: string
+  description?: string
+  /** 按数组顺序匹配，先匹配先生效 */
+  rules: LevelDiffRule[]
+  /** 无规则匹配时的兜底倍率 */
+  fallbackMultiplier: number
+  /** 最终倍率钳制范围 */
+  clampRange: { min: number; max: number }
 }
 
 /** 西游数据域（xiyou 表）—— configs/xiyou/*.json 单文档种子，供演劫台经封神榜读取（需求说明 §5.1 方案 B） */

@@ -109,7 +109,7 @@
     //   transparent 50%,
     //   var(--gt-gold) 100%
     // ),
-    linear-gradient(45deg, rgba(255, 0, 150, 0.1) 0%, transparent 40%, transparent 60%, rgba(0, 200, 255, 0.1) 100%),
+    linear-gradient(45deg, rgba(255, 0, 150, 0.02) 0%, transparent 40%, transparent 60%, rgba(0, 200, 255, 0.02) 100%),
     repeating-linear-gradient(45deg, var(--gt-line) 0 1px, transparent 1px 6px),
     radial-gradient(
       circle,
@@ -138,6 +138,38 @@
     calc(var(--gt-dot-grid) / 2) calc(var(--gt-dot-grid) / 2),
     0 0 !important;
 }
+
+@mixin mixin-bg-dual-dots($color: #2a2a3a) {
+  --dd-base: var(--color-bg-secondary);
+  --dd-color-a: rgba(255, 180, 120, 0.06);
+  --dd-color-a-sub: rgba(255, 180, 120, 0.08);
+  --dd-color-b: rgba(130, 180, 255, 0.06);
+  --dd-color-b-sub: rgba(130, 180, 255, 0.08);
+  --dd-main-size: 2.2px;
+  --dd-main-fade: 2.3px;
+  --dd-sub-size: 1px;
+  --dd-sub-fade: 1.1px;
+  --dd-grid: 24px;
+
+  background-color: var(--dd-base) !important;
+  background-image:
+    radial-gradient(var(--dd-color-a) var(--dd-main-size), transparent var(--dd-main-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-a-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b) var(--dd-main-size), transparent var(--dd-main-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)),
+    radial-gradient(var(--dd-color-b-sub) var(--dd-sub-size), transparent var(--dd-sub-fade)) !important;
+  background-size: var(--dd-grid) var(--dd-grid) !important;
+  // NOTE: 不加 !important——PackItemCard 的 dots-flow 动画需覆盖 position 实现横向流动。
+  background-position:
+    0px 0px, 0px -5px, 0px 5px, -5px 0px, 5px 0px,
+    12px 12px, 12px 7px, 12px 17px, 7px 12px, 17px 12px;
+}
+
 // ── 同心环 · 涟漪（大环 + 小环 + 中心实点，三层错落） ──
 // 默认深蓝底 #16213e；$dark 决定底色基调，$light 为环/点主题色（默认白色）。
 // 中间横向渐变色由 $dark 自动加深 8% 生成，与 bg-gilt 保持一致。

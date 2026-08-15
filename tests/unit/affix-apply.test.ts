@@ -11,6 +11,9 @@ import { ParticipantSide } from '@/domain/battle/type/types'
 import {
   applyAffixToParticipant,
   applyRandomAffixes,
+  applyRandomAffixesByPool,
+  clearAffixesFromParticipant,
+  resolveAffixPlan,
 } from '@/shared/utils/affix'
 import type { AffixData } from '@/domain/fengshen/types'
 
@@ -24,6 +27,7 @@ function makeEntity(id: string): BattleEntity {
     [ATTRIBUTE_CODE.speed]: { value: 35, base: 35, modifiers: [], cachedVersion: 0 },
     [ATTRIBUTE_CODE.fireRes]: { value: 0, base: 0, modifiers: [], cachedVersion: 0 },
     [ATTRIBUTE_CODE.earthRes]: { value: 0, base: 0, modifiers: [], cachedVersion: 0 },
+    [ATTRIBUTE_CODE.critRate]: { value: 0, base: 0, modifiers: [], cachedVersion: 0 },
   }
   return {
     id,
@@ -124,6 +128,33 @@ describe('applyAffixToParticipant', () => {
     expect(entity.getAttrValue(ATTRIBUTE_CODE.speed)?.modifiers.length).toBe(1)
   })
 
+  it('isPercentage 属性未声明 type 时默认 ADDITIVE（防 base=0 时 PERCENTAGE 缩放无效）', () => {
+    // critRate 为 isPercentage 属性，词缀未声明 type → 应默认 ADDITIVE（百分点直加，非相对缩放）
+    const entity = makeEntity('e_pct')
+    const affixCrit: AffixData = {
+      id: 'affix_test_crit',
+      name: '暴击',
+      tier: 'yao_1',
+      target: 'enemy',
+      statModifiers: [{ attribute: 'critRate', percent: 20 }],
+    }
+    const ok = applyAffixToParticipant(entity, affixCrit)
+    expect(ok).toBe(true)
+    const mod = entity.getAttrValue('critRate')?.modifiers[0]
+    expect(mod).toMatchObject({ type: ModifierType.ADDITIVE, value: 20 })
+  })
+
+  it('数值属性未声明 type 时默认 PERCENTAGE（相对缩放）', () => {
+    // attack 为非 isPercentage 属性，未声明 type → 默认 PERCENTAGE
+    const entity = makeEntity('e_atk')
+    const ok = applyAffixToParticipant(entity, affixAttack)
+    expect(ok).toBe(true)
+    expect(entity.getAttrValue(ATTRIBUTE_CODE.attack)?.modifiers[0]).toMatchObject({
+      type: ModifierType.PERCENTAGE,
+      value: 20,
+    })
+  })
+
   it('目标属性不存在时跳过，返回 false 且不触发重算', () => {
     let recalculated = 0
     const entity = makeEntity('e3')
@@ -149,6 +180,42 @@ describe('applyAffixToParticipant', () => {
     applyAffixToParticipant(entity, affixAttack)
     applyAffixToParticipant(entity, affixAttack)
     expect(entity.getAttrValue(ATTRIBUTE_CODE.attack)?.modifiers.length).toBe(2)
+  })
+
+  it('clearAffixesFromParticipant 清除全部词缀修饰符，非词缀修饰符保留', () => {
+    const entity = makeEntity('e5')
+    applyAffixToParticipant(entity, affixAttack)
+    applyAffixToParticipant(entity, affixDefense)
+    // 注入一个非词缀修饰符（模拟 base/bonus），验证不被误删
+    const attrData = entity.getAttrValue(ATTRIBUTE_CODE.attack)!
+    attrData.modifiers.push({
+      sourceKey: 'passive:test',
+      sourceType: 'talent',
+      attribute: ATTRIBUTE_CODE.attack,
+      value: 5,
+      type: ModifierType.PERCENTAGE,
+    })
+    expect(attrData.modifiers.length).toBe(2)
+    // 词缀修饰符同时在多个属性上：attack 1 个 + defense 1 个
+    expect(entity.getAttrValue(ATTRIBUTE_CODE.defense)!.modifiers.length).toBe(1)
+
+    const cleared = clearAffixesFromParticipant(entity)
+    expect(cleared).toBe(true)
+    expect(attrData.modifiers.length).toBe(1)
+    expect(attrData.modifiers[0].sourceKey).toBe('passive:test')
+    expect(entity.getAttrValue(ATTRIBUTE_CODE.defense)!.modifiers.length).toBe(0)
+  })
+
+  it('无词缀时 clearAffixesFromParticipant 返回 false 且不触发重算', () => {
+    let recalculated = 0
+    const entity = makeEntity('e6')
+    const original = entity.recalcAll
+    entity.recalcAll = () => {
+      recalculated++
+      original()
+    }
+    expect(clearAffixesFromParticipant(entity)).toBe(false)
+    expect(recalculated).toBe(0)
   })
 })
 
@@ -216,5 +283,88 @@ describe('applyRandomAffixes', () => {
       expect(selected.filter((a) => a.conflict_group === g).length).toBeLessThanOrEqual(1)
     }
     expect(selectedGroups.size).toBeGreaterThan(0)
+  })
+})
+
+describe('resolveAffixPlan', () => {
+  const affixes: AffixData[] = [
+    { id: 'affix_yao_2_001', name: '噬血', tier: 'yao_2', target: 'enemy',
+      statModifiers: [{ attribute: 'lifestealRate', percent: 40, type: 'ADDITIVE' }] },
+    { id: 'affix_yao_2_002', name: '猎杀', tier: 'yao_2', target: 'enemy',
+      statModifiers: [{ attribute: 'damageToLowHp', percent: 40, type: 'ADDITIVE' }] },
+    { id: 'affix_yao_3_001', name: '天罚', tier: 'yao_3', target: 'enemy',
+      statModifiers: [{ attribute: 'attack', percent: 60 }] },
+    { id: 'affix_jie_001', name: '破军', tier: 'jie', target: 'player',
+      statModifiers: [{ attribute: 'attack', percent: -20 }] },
+    { id: 'affix_mandate_001', name: '混世魔威', tier: 'mandate', target: 'enemy',
+      statModifiers: [{ attribute: 'attack', percent: 60 }] },
+  ]
+  const mandateBindings = new Map<string, string>([['boss_king_niumo', 'affix_mandate_001']])
+
+  it('buffTier 0 / 缺省 → null（无词缀）', () => {
+    expect(resolveAffixPlan({ id: 'e1', affixPool: { buffTier: 0, count: 0 } }, affixes, mandateBindings)).toBeNull()
+    expect(resolveAffixPlan({ id: 'e2' }, affixes, mandateBindings)).toBeNull()
+  })
+
+  it('buffTier 2 → 二档增益池，数量取 count', () => {
+    const plan = resolveAffixPlan({ id: 'e3', affixPool: { buffTier: 2, count: 2 } }, affixes, mandateBindings)
+    expect(plan).not.toBeNull()
+    expect(plan!.pool.map((a) => a.id).sort()).toEqual(['affix_yao_2_001', 'affix_yao_2_002'])
+    expect(plan!.count).toBe(2)
+  })
+
+  it('buffTier 3 → 三档池，不含劫数（jie）与天命（mandate）', () => {
+    const plan = resolveAffixPlan({ id: 'e4', affixPool: { buffTier: 3 } }, affixes, mandateBindings)
+    expect(plan).not.toBeNull()
+    expect(plan!.pool.map((a) => a.id)).toEqual(['affix_yao_3_001'])
+    expect(plan!.count).toBe(1)
+  })
+
+  it('buffTier 5 → 按 mandate_bindings 绑定附加，不可随机', () => {
+    const plan = resolveAffixPlan({ id: 'boss_king_niumo', affixPool: { buffTier: 5 } }, affixes, mandateBindings)
+    expect(plan).not.toBeNull()
+    expect(plan!.pool.map((a) => a.id)).toEqual(['affix_mandate_001'])
+    expect(plan!.count).toBe(1)
+  })
+
+  it('buffTier 非 5 但命中 mandate_bindings → 仍按绑定附加（绑定表优先于档位判定）', () => {
+    // 数据两处维护：mandate_bindings 是权威，buffTier 即使不是 5 也应附加绑定天命
+    const plan = resolveAffixPlan({ id: 'boss_king_niumo', affixPool: { buffTier: 2 } }, affixes, mandateBindings)
+    expect(plan).not.toBeNull()
+    expect(plan!.pool.map((a) => a.id)).toEqual(['affix_mandate_001'])
+  })
+
+  it('buffTier 5 且无绑定 → null（不随机天命）', () => {
+    expect(resolveAffixPlan({ id: 'boss_unknown', affixPool: { buffTier: 5 } }, affixes, mandateBindings)).toBeNull()
+  })
+
+  it('档位池为空 → null', () => {
+    expect(resolveAffixPlan({ id: 'e9', affixPool: { buffTier: 4 } }, affixes, mandateBindings)).toBeNull()
+  })
+})
+
+describe('applyRandomAffixesByPool', () => {
+  it('按每角色独立词缀池抽取，池解析失败的角色跳过', () => {
+    const eEnemy = makeEntity('char_enemy')
+    const eAlly = makeEntity('char_ally')
+    const eNoPool = makeEntity('char_none')
+    const poolA: AffixData[] = [
+      { id: 'affix_yao_2_006', name: '蛮力·烈', tier: 'yao_2', target: 'enemy',
+        statModifiers: [{ attribute: 'attack', percent: 40 }] },
+    ]
+    const poolB: AffixData[] = [
+      { id: 'affix_yao_3_001', name: '天罚', tier: 'yao_3', target: 'enemy',
+        statModifiers: [{ attribute: 'attack', percent: 60 }] },
+    ]
+    const resolvePool = (p: BattleEntity) => {
+      if (p.id === 'char_enemy') return { pool: poolA, count: 1 }
+      if (p.id === 'char_ally') return { pool: poolB, count: 2 }
+      return null
+    }
+    const result = applyRandomAffixesByPool([eEnemy, eAlly, eNoPool], resolvePool, () => 0)
+    expect(result.size).toBe(2)
+    expect(result.get('char_enemy')).toEqual(['affix_yao_2_006'])
+    // 池 B 仅 1 条，count=2 也不会越界
+    expect(result.get('char_ally')).toEqual(['affix_yao_3_001'])
   })
 })

@@ -407,60 +407,6 @@
     "isPercentage": true
   },
   {
-    "code": "slowImmune",
-    "name": "减速免疫",
-    "displayName": "减速免疫",
-    "description": "免疫减速效果",
-    "range": "0-1",
-    "impact": "非0时免疫减速",
-    "isPercentage": false
-  },
-  {
-    "code": "stunResist",
-    "name": "眩晕抗性",
-    "displayName": "眩晕抗性",
-    "description": "抵抗眩晕效果",
-    "range": "0-1",
-    "impact": "非0时抵抗眩晕",
-    "isPercentage": false
-  },
-  {
-    "code": "knockbackResist",
-    "name": "击退抗性",
-    "displayName": "击退抗性",
-    "description": "抵抗击退效果",
-    "range": "0-1",
-    "impact": "非0时抵抗击退",
-    "isPercentage": false
-  },
-  {
-    "code": "poisonResist",
-    "name": "中毒抗性",
-    "displayName": "中毒抗性",
-    "description": "抵抗中毒效果",
-    "range": "0-1",
-    "impact": "非0时抵抗中毒",
-    "isPercentage": false
-  },
-  {
-    "code": "bleedResist",
-    "name": "流血抗性",
-    "displayName": "流血抗性",
-    "description": "抵抗流血效果",
-    "range": "0-1",
-    "impact": "非0时抵抗流血",
-    "isPercentage": false
-  },
-  {
-    "code": "burnImmune",
-    "name": "灼烧免疫",
-    "displayName": "灼烧免疫",
-    "description": "免疫灼烧效果",
-    "range": "0-1",
-    "impact": "非0时免疫灼烧",
-    "isPercentage": false
-  },
-  {
     "code": "debuffImmunityRate",
     "name": "减益免疫率",
     "displayName": "减益免疫率",

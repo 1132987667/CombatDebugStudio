@@ -1,8 +1,8 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-import { EffectType } from '@/domain/skill/types'
+import { StepEffectType } from '@/domain/skill/types'
 /**
  * 强毒debuff脚本
  * 比普通中毒更强的毒素效果，造成更高的持续伤害
@@ -61,7 +61,7 @@ export class StrongPoisonDebuff extends BaseBuffScript {
 
     this.log(context, `强毒伤害：${currentDamage}`)
     // dot:true → 战报补发 dot 事件，计入承伤不计命中/技能
-    this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
+    this.triggerEvent(context, StepEffectType.DEAL_DAMAGE, {
       damage: currentDamage,
       dot: true,
     })

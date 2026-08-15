@@ -11,13 +11,17 @@ import type { IPersistentStorage, StorageStats, StorageStoreName } from '@/domai
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { seedFengshenData } from '@/infrastructure/adapters/storage/seed'
 import { DataIntegrityService } from '@/application/service/DataIntegrityService'
-import type { EquipmentAffixData } from '@/domain/fengshen/types'
+import type { EquipmentAffixData, EquipmentData } from '@/domain/fengshen/types'
+import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
+import equipmentJson from '@configs/equipment/equipment.json'
 import {
   validateSlotKey,
   affixAppliesTo,
   rollEquipmentAffix,
   rollAffixValue,
   rollAffixStat,
+  affixConflictFor,
+  affixEffectiveWeight,
 } from '@/shared/utils/equipmentAffix'
 
 class MemoryStorage implements IPersistentStorage {
@@ -90,6 +94,28 @@ const affixArmor: EquipmentAffixData = {
   rarity: 1,
 }
 
+const affixBlock: EquipmentAffixData = {
+  id: 'eqaff_test_block',
+  name: '测试格挡',
+  attribute: 'blockRate',
+  modifierType: 'percent',
+  valueRange: { min: 3, max: 12 },
+  applicableSlots: ['weapon', 'armor'],
+  weight: 50,
+  rarity: 2,
+}
+
+const affixCombo: EquipmentAffixData = {
+  id: 'eqaff_test_combo',
+  name: '测试连击',
+  attribute: 'comboRate',
+  modifierType: 'percent',
+  valueRange: { min: 5, max: 15 },
+  applicableSlots: ['weapon'],
+  weight: 30,
+  rarity: 2,
+}
+
 const makeServices = () => {
   const storage = new MemoryStorage()
   const integrity = new DataIntegrityService(storage)
@@ -101,20 +127,22 @@ describe('validateSlotKey（部位枚举强校验）', () => {
     expect(validateSlotKey('*')).toBeNull()
     expect(validateSlotKey('weapon')).toBeNull()
     expect(validateSlotKey('weapon:轻型')).toBeNull()
-    expect(validateSlotKey('accessory:冠冕')).toBeNull()
+    expect(validateSlotKey('helmet:冠冕')).toBeNull()
+    expect(validateSlotKey('ring:戒指')).toBeNull()
   })
   it('拒绝未知部位 / 未知子类型 / 部位与子类型交叉', () => {
     expect(validateSlotKey('hat')).not.toBeNull()
     expect(validateSlotKey('weapon:布甲')).not.toBeNull()
     expect(validateSlotKey('weapon:皮甲')).not.toBeNull()
     expect(validateSlotKey('armor:戒指')).not.toBeNull()
+    expect(validateSlotKey('accessory')).not.toBeNull()
   })
 })
 
 describe('affixAppliesTo（部位匹配）', () => {
   it('* 通配匹配任何部位', () => {
     expect(affixAppliesTo(affixAttack, 'weapon', '轻型')).toBe(true)
-    expect(affixAppliesTo(affixAttack, 'accessory', '戒指')).toBe(true)
+    expect(affixAppliesTo(affixAttack, 'ring', '戒指')).toBe(true)
   })
   it('部位级匹配该部位全部子类型', () => {
     expect(affixAppliesTo(affixArmor, 'armor', '铠甲')).toBe(true)
@@ -143,12 +171,12 @@ describe('rollEquipmentAffix（按部位抽池）', () => {
   it('weight=0 的词条不参与随机', () => {
     const zero = { ...affixAttack, id: 'eqaff_zero', weight: 0 }
     const rng = () => 0.5
-    const result = rollEquipmentAffix([affixAttack, zero], 'accessory', '戒指', rng)
+    const result = rollEquipmentAffix([affixAttack, zero], 'ring', '戒指', rng)
     expect(result?.id).toBe('eqaff_test_atk')
   })
   it('候选全为 weight=0 时返回 null（weight=0 语义：不参与随机）', () => {
     const zero = { ...affixAttack, weight: 0 }
-    expect(rollEquipmentAffix([zero], 'accessory', '戒指')).toBeNull()
+    expect(rollEquipmentAffix([zero], 'ring', '戒指')).toBeNull()
   })
   it('抽池权重越大越容易被抽中', () => {
     const heavy = { ...affixAttack, id: 'eqaff_heavy', weight: 1000 }
@@ -174,6 +202,71 @@ describe('rollAffixValue / rollAffixStat（数值区间随机）', () => {
   })
 })
 
+describe('affixConflictFor / affixEffectiveWeight（§14.9 部位冲突检测）', () => {
+  it('轻型武器禁止格挡率', () => {
+    expect(affixConflictFor('weapon', '轻型', 'blockRate')).toBe('forbidden')
+    expect(affixConflictFor('weapon', '轻型', 'comboRate')).toBeNull()
+  })
+  it('重型武器连击率权重减半（不禁止）', () => {
+    expect(affixConflictFor('weapon', '重型', 'comboRate')).toBe('halved')
+    expect(affixConflictFor('weapon', '重型', 'blockRate')).toBeNull()
+  })
+  it('皮甲禁止格挡率，铠甲禁止闪避率', () => {
+    expect(affixConflictFor('armor', '皮甲', 'blockRate')).toBe('forbidden')
+    expect(affixConflictFor('armor', '铠甲', 'dodge')).toBe('forbidden')
+    expect(affixConflictFor('armor', '木甲', 'dodge')).toBeNull()
+  })
+  it('护符禁止暴击率/暴击伤害，靴子禁止暴击伤害', () => {
+    expect(affixConflictFor('charm', '护符', 'critRate')).toBe('forbidden')
+    expect(affixConflictFor('charm', '护符', 'critDamage')).toBe('forbidden')
+    expect(affixConflictFor('boots', '靴子', 'critDamage')).toBe('forbidden')
+    expect(affixConflictFor('boots', '靴子', 'critRate')).toBeNull()
+  })
+  it('未指定子类型或无匹配规则返回 null', () => {
+    expect(affixConflictFor('weapon', undefined, 'blockRate')).toBeNull()
+    expect(affixConflictFor('ring', '戒指', 'blockRate')).toBeNull()
+  })
+  it('生效权重：禁止 → 0，减半 → 减半（保底 1），无冲突原样', () => {
+    expect(affixEffectiveWeight('weapon', '轻型', { attribute: 'blockRate', weight: 50 })).toBe(0)
+    expect(affixEffectiveWeight('weapon', '重型', { attribute: 'comboRate', weight: 30 })).toBe(15)
+    expect(affixEffectiveWeight('weapon', '重型', { attribute: 'comboRate', weight: 1 })).toBe(1)
+    expect(affixEffectiveWeight('weapon', '轻型', { attribute: 'comboRate', weight: 30 })).toBe(30)
+    expect(affixEffectiveWeight('weapon', '轻型', { attribute: 'attack', weight: 0 })).toBe(0)
+  })
+})
+
+describe('rollEquipmentAffix（冲突规则应用）', () => {
+  it('轻型武器池中含格挡词条被剔除（不抽取）', () => {
+    const pool = [affixAttack, affixBlock]
+    for (let i = 0; i < 20; i++) {
+      const picked = rollEquipmentAffix(pool, 'weapon', '轻型', () => Math.random())
+      expect(picked?.attribute).not.toBe('blockRate')
+    }
+  })
+  it('重型武器连击词条权重减半：抽取频率低于同池同权重词条', () => {
+    const pool = [affixCombo, { ...affixAttack, applicableSlots: ['weapon'], weight: 30 }]
+    let combo = 0
+    for (let i = 0; i < 2000; i++) {
+      if (rollEquipmentAffix(pool, 'weapon', '重型', () => Math.random())?.id === 'eqaff_test_combo') combo++
+    }
+    expect(combo).toBeGreaterThan(400) // 权重 30→15，占比约 1/3
+    expect(combo).toBeLessThan(1000)
+  })
+  it('护符槽抽取不到暴击率（池含护符可用暴击词条也被剔除）', () => {
+    const pool = [{ ...affixAttack, attribute: 'critRate', applicableSlots: ['charm:护符'], weight: 50 }]
+    expect(rollEquipmentAffix(pool, 'charm', '护符')).toBeNull()
+  })
+  it('同池同部位不冲突的词条不受影响（轻型武器连击率原权重）', () => {
+    const pool = [affixLightWeapon, { ...affixAttack, applicableSlots: ['weapon:轻型'], weight: 60 }]
+    let combo = 0
+    for (let i = 0; i < 2000; i++) {
+      if (rollEquipmentAffix(pool, 'weapon', '轻型', () => Math.random())?.id === 'eqaff_test_light') combo++
+    }
+    expect(combo).toBeGreaterThan(400) // 权重 60/120 = 50%
+    expect(combo).toBeLessThan(1400)
+  })
+})
+
 describe('DataIntegrityService 装备词条强校验', () => {
   let storage: MemoryStorage
   let integrity: DataIntegrityService
@@ -188,7 +281,7 @@ describe('DataIntegrityService 装备词条强校验', () => {
     attribute: 'attack',
     modifierType: 'flat',
     valueRange: { min: 1, max: 5 },
-    applicableSlots: ['weapon', 'accessory:戒指'],
+    applicableSlots: ['weapon', 'ring:戒指'],
     school: '金行道',
     weight: 50,
     rarity: 1,
@@ -212,6 +305,23 @@ describe('DataIntegrityService 装备词条强校验', () => {
     expect(bad1.valid).toBe(false)
     const bad2 = await integrity.validateOnSave('equipment_affixes', { ...valid(), applicableSlots: ['weapon:皮甲'] })
     expect(bad2.valid).toBe(false)
+  })
+  it('applicableSlots 与部位冲突规则矛盾（护符配暴击率）被拦截', async () => {
+    const result = await integrity.validateOnSave('equipment_affixes', {
+      ...valid(),
+      attribute: 'critRate',
+      applicableSlots: ['charm:护符'],
+    })
+    expect(result.valid).toBe(false)
+    expect(result.errors.join()).toContain('与部位冲突规则矛盾')
+  })
+  it('适用部位含冲突规则部位但 attribute 不在禁制内时不拦截（护符配气血）', async () => {
+    const result = await integrity.validateOnSave('equipment_affixes', {
+      ...valid(),
+      attribute: 'maxHealth',
+      applicableSlots: ['charm:护符'],
+    })
+    expect(result.valid).toBe(true)
   })
   it('school 不存在于 schools.json 被拦截', async () => {
     const result = await integrity.validateOnSave('equipment_affixes', { ...valid(), school: '不存在流派' })
@@ -248,5 +358,46 @@ describe('DataIntegrityService 装备词条强校验', () => {
     const report = await integrity.runHealthCheck()
     const issues = report.issues.filter((i) => i.sourceTable === 'equipment_affixes' && i.sourceId === 'eqaff_broken')
     expect(issues.map((i) => i.field).sort()).toEqual(['applicableSlots', 'attribute', 'school', 'valueRange'])
+  })
+})
+
+describe('天品/仙品词条池充足（P1：品质→词条数 4/5 达标，去重抽满）', () => {
+  it('所有 rarity≥4 装备的可用词条唯一键 ≥ 需求（绝 4 / 神 5）', () => {
+    const affixes = equipmentAffixesJson as unknown as EquipmentAffixData[]
+    const equip = equipmentJson as unknown as EquipmentData[]
+    for (const g of equip) {
+      if (g.rarity < 4) continue
+      const need = g.rarity === 5 ? 5 : 4
+      const pool = affixes.filter((a) => affixAppliesTo(a, g.slot, g.subType) && (a.weight ?? 0) > 0)
+      const unique = new Set(pool.map((a) => `${a.attribute}:${a.modifierType}`)).size
+      expect(unique, `${g.id}「${g.name}」词条唯一键 ${unique} < 需求 ${need}`).toBeGreaterThanOrEqual(need)
+    }
+  })
+
+  it('去重不放回抽取：池充足时随机 rng 下多次制造均能抽满 4/5 条（无去重截断）', () => {
+    const affixes = equipmentAffixesJson as unknown as EquipmentAffixData[]
+    const equip = equipmentJson as unknown as EquipmentData[]
+    for (const g of equip) {
+      if (g.rarity < 4) continue
+      const need = g.rarity === 5 ? 5 : 4
+      const pool = affixes.filter((a) => affixAppliesTo(a, g.slot, g.subType))
+      const source = pool.filter((a) => (a.weight ?? 0) > 0)
+      for (let i = 0; i < 200; i++) {
+        let seed = i * 7919 + 13
+        const rng = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648 }
+        const out: string[] = []
+        const seen = new Set<string>()
+        let remaining = source
+        while (out.length < need && remaining.length > 0) {
+          const affix = rollEquipmentAffix(remaining, g.slot, g.subType, rng)
+          if (!affix) break
+          const key = `${affix.attribute}:${affix.modifierType}`
+          seen.add(key)
+          out.push(key)
+          remaining = source.filter((a) => !seen.has(`${a.attribute}:${a.modifierType}`))
+        }
+        expect(out.length, `${g.id} 第${i}次制造词条数 ${out.length} < ${need}`).toBeGreaterThanOrEqual(need)
+      }
+    }
   })
 })

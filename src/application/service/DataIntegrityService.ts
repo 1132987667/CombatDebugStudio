@@ -11,7 +11,7 @@ import { TABLE_SCHEMAS, REFERENCE_RULES, extractReferenceIds } from '@/domain/fe
 import type { FengshenTableName, XiyouData } from '@/domain/fengshen/types'
 import type { ElementsData } from '@/domain/fengshen/types'
 import { AttributeMetaMap } from '@/domain/attribute/types'
-import { validateSlotKey } from '@/shared/utils/equipmentAffix'
+import { validateSlotKey, affixConflictFor } from '@/shared/utils/equipmentAffix'
 import { validateBuffConfigShape } from '@/domain/buff/buffConfigValidation'
 import { normalizeBuffEntries } from '@/shared/types/effects-json'
 
@@ -94,6 +94,11 @@ export class DataIntegrityService {
       errors.push(...this.equipmentAffixIssues(entity, schoolNames).map((i) => i.message))
     }
 
+    // 经验与金钱结构化参数强校验：params 表 data 字段按 id 匹配对应表结构
+    if (table === 'params') {
+      errors.push(...this.expGoldIssues(entity as { id?: unknown; data?: unknown }))
+    }
+
     for (const rule of REFERENCE_RULES.filter((r) => r.sourceTable === table)) {
       const refIds = extractReferenceIds(entity, rule.path)
       if (refIds.length === 0 && rule.optional) continue
@@ -157,6 +162,22 @@ export class DataIntegrityService {
       }
     }
 
+    // 经验与金钱结构化参数扫描（exp_table / enemy_reward_table / level_diff_bonus）
+    const params = await this.listAll('params')
+    for (const entity of params) {
+      if (!['exp_table', 'enemy_reward_table', 'level_diff_bonus'].includes(entity.id)) continue
+      checkedEntities++
+      for (const message of this.expGoldIssues(entity)) {
+        issues.push({
+          sourceTable: 'params',
+          sourceId: entity.id,
+          field: 'data',
+          missingId: message,
+          targetTable: 'params',
+        })
+      }
+    }
+
     return { scannedRules: REFERENCE_RULES.length, checkedEntities, issues }
   }
 
@@ -179,16 +200,116 @@ export class DataIntegrityService {
 
   // ── 内部工具 ────────────────────────────────────────────────
 
-  /** 学校（流派）name 集合：读封神榜 xiyou 表 schools 文档（seed 自 configs/xiyou/schools.json） */
+  /** 学校（流派）name 集合：读封神榜 xiyou 表 schools 文档（seed 自 configs/xiyou/schools.json，data 为 { schools: [...] } 包裹） */
   private async getSchoolNames(): Promise<Set<string>> {
     const doc = await this.storage.get<XiyouData>(FENGSHEN_STORE.XIYOU, 'schools')
     const data = doc?.data
     const names = new Set<string>()
-    if (!Array.isArray(data)) return names
-    for (const s of data) {
+    const rows = Array.isArray(data)
+      ? data
+      : Array.isArray((data as { schools?: unknown[] } | undefined)?.schools)
+        ? (data as { schools: unknown[] }).schools
+        : []
+    for (const s of rows) {
       if (s && typeof (s as Record<string, unknown>).name === 'string') names.add((s as { name: string }).name)
     }
     return names
+  }
+
+  /**
+   * 经验与金钱结构化参数强校验（保存校验与健康检查共用）。
+   * 按 params 记录 id 匹配对应表：exp_table / enemy_reward_table / level_diff_bonus。
+   * 返回问题列表（不符合规则的错误消息）。
+   */
+  private expGoldIssues(entity: { id?: unknown; data?: unknown }): string[] {
+    if (typeof entity.id !== 'string') return []
+    const data = entity.data as Record<string, unknown> | undefined
+    if (!data || typeof data !== 'object') {
+      return entity.id.startsWith('exp_table') || entity.id.startsWith('enemy_reward_table') || entity.id.startsWith('level_diff_bonus')
+        ? ['结构化参数缺少 data 字段']
+        : []
+    }
+    switch (entity.id) {
+      case 'exp_table':
+        return this.validateExpTable(data)
+      case 'enemy_reward_table':
+        return this.validateEnemyRewardTable(data)
+      case 'level_diff_bonus':
+        return this.validateLevelDiffBonus(data)
+      default:
+        return []
+    }
+  }
+
+  private validateExpTable(data: Record<string, unknown>): string[] {
+    const errors: string[] = []
+    const maxLevel = data.maxLevel
+    if (typeof maxLevel !== 'number' || !Number.isInteger(maxLevel) || maxLevel < 1 || maxLevel > 100) {
+      errors.push('最大等级超出允许范围（1~100）')
+    }
+    const entries = data.entries
+    if (!Array.isArray(entries)) {
+      return [...errors, '升级经验表缺少 entries 数组']
+    }
+    const levels = new Set<number>()
+    for (const e of entries) {
+      const entry = e as { level?: unknown; expRequired?: unknown }
+      if (typeof entry.level !== 'number' || typeof entry.expRequired !== 'number' || !Number.isInteger(entry.expRequired) || entry.expRequired <= 0) {
+        errors.push(`等级 ${String(entry.level)}：升级经验必须为正整数`)
+      }
+      if (typeof entry.level === 'number') levels.add(entry.level)
+    }
+    if (typeof maxLevel === 'number' && maxLevel >= 1 && maxLevel <= 100) {
+      for (let lv = 1; lv <= maxLevel; lv++) {
+        if (!levels.has(lv)) errors.push(`等级 ${lv} 缺失，请补全`)
+      }
+    }
+    return errors
+  }
+
+  private validateEnemyRewardTable(data: Record<string, unknown>): string[] {
+    const errors: string[] = []
+    const entries = data.entries
+    if (!Array.isArray(entries)) return ['敌人奖励基准缺少 entries 数组']
+    for (const e of entries) {
+      const entry = e as { enemyLevel?: unknown; baseExp?: unknown; goldMin?: unknown; goldMax?: unknown }
+      if (typeof entry.baseExp !== 'number' || !Number.isInteger(entry.baseExp) || entry.baseExp <= 0) {
+        errors.push(`敌人等级 ${String(entry.enemyLevel)}：基础经验必须为正整数`)
+      }
+      if (typeof entry.goldMin !== 'number' || typeof entry.goldMax !== 'number' || entry.goldMin > entry.goldMax) {
+        errors.push(`敌人等级 ${String(entry.enemyLevel)}：金钱下限不能大于上限`)
+      }
+    }
+    const roleMult = data.roleMultiplier
+    if (roleMult && typeof roleMult === 'object') {
+      for (const [key, v] of Object.entries(roleMult as Record<string, unknown>)) {
+        if (typeof v !== 'number' || !(v > 0)) errors.push(`角色倍率「${key}」必须大于 0`)
+      }
+    }
+    return errors
+  }
+
+  private validateLevelDiffBonus(data: Record<string, unknown>): string[] {
+    const errors: string[] = []
+    const rules = data.rules
+    if (!Array.isArray(rules) || rules.length === 0) return ['等级差规则为空']
+    let hasEvenRule = false
+    for (const r of rules) {
+      const rule = r as { label?: unknown; condition?: { diff?: unknown }; expMultiplier?: unknown; goldMultiplier?: unknown }
+      const label = typeof rule.label === 'string' ? rule.label : ''
+      for (const key of ['expMultiplier', 'goldMultiplier'] as const) {
+        const v = rule[key]
+        if (typeof v !== 'number' || v < 0.01 || v > 10) errors.push(`规则「${label}」倍率超出合理范围（0.01~10）`)
+      }
+      const cond = rule.condition?.diff
+      if (typeof cond === 'number') {
+        if (cond === 0) hasEvenRule = true
+      } else if (!Array.isArray(cond) && typeof cond !== 'string') {
+        errors.push(`规则「${label}」等级差条件格式非法`)
+      }
+    }
+    if (!hasEvenRule) errors.push('缺少同级（diff=0）规则')
+    return errors
   }
 
   /** 装备词条强约束检查：attribute ∈ attributes.json / modifierType ∈ {flat,percent} / valueRange 完整 /
@@ -229,7 +350,23 @@ export class DataIntegrityService {
           continue
         }
         const err = validateSlotKey(key)
-        if (err) issues.push({ field: 'applicableSlots', missingId: key, targetTable: 'slot', message: err })
+        if (err) {
+          issues.push({ field: 'applicableSlots', missingId: key, targetTable: 'slot', message: err })
+          continue
+        }
+        // 部位冲突规则兜底（设计稿 v2.0 §14.9）：词条适用部位与该部位禁制矛盾 = 数据自相矛盾
+        const [slot, subType] = key.split(':')
+        if (subType !== undefined && typeof attribute === 'string') {
+          const conflict = affixConflictFor(slot, subType, attribute)
+          if (conflict === 'forbidden') {
+            issues.push({
+              field: 'applicableSlots',
+              missingId: key,
+              targetTable: 'equipmentConflictRules',
+              message: `「${key}」与部位冲突规则矛盾：「${attribute}」在该部位被禁止`,
+            })
+          }
+        }
       }
     }
 

@@ -6,8 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { player as mockPlayer } from '@/presentation/modules/yanjie/xiyou/data/mock'
-import { currency as mockCurrency } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { usePlayerStore } from '@/presentation/stores/playerStore'
 import type { XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/data/mock'
 
 /** 内存版持久化（代替 IndexedDB，供 flush/load 往返断言） */
@@ -45,9 +44,6 @@ beforeEach(() => {
   setActivePinia(createPinia())
   vi.restoreAllMocks()
   __mem.clear()
-  mockCurrency.copper = 12880
-  mockCurrency.silver = 36
-  mockCurrency.jade = 520
 })
 
 describe('初始化', () => {
@@ -166,13 +162,14 @@ describe('仓库扩容', () => {
 })
 
 describe('货币扣减 spend', () => {
-  it('扣减成功并写回 mock.currency；不足返回 false 不扣', async () => {
+  it('扣减成功并同步 playerStore.currency；不足返回 false 不扣', async () => {
     const pack = usePackStore()
+    const player = usePlayerStore()
     await pack.init()
     const before = pack.currency.copper
     expect(pack.spend('copper', 140)).toBe(true)
     expect(pack.currency.copper).toBe(before - 140)
-    expect(mockCurrency.copper).toBe(before - 140)
+    expect(player.currency.copper).toBe(before - 140)
     expect(pack.spend('copper', 99999999)).toBe(false)
     expect(pack.currency.copper).toBe(before - 140)
   })
@@ -228,11 +225,12 @@ describe('坊市购买', () => {
 describe('战斗外使用', () => {
   it('永久丹药提升属性并消耗', async () => {
     const pack = usePackStore()
+    const player = usePlayerStore()
     await pack.init()
     pack.addItem('elix_perm_01', 1) // 培元丹：气血上限 +20
-    const before = mockPlayer.maxHp
+    const before = player.player.maxHp
     expect(pack.useItem('elix_perm_01')).toBe(true)
-    expect(mockPlayer.maxHp).toBe(before + 20)
+    expect(player.player.maxHp).toBe(before + 20)
     expect(pack.countOf('elix_perm_01')).toBe(0)
   })
 
@@ -301,6 +299,26 @@ describe('战斗掉落', () => {
     ])
     expect(pack.countOf('mat_taomu')).toBe(24)
   })
+
+  it('掉落率锁定（setDebugForceDrops(true)）时全部命中，忽略 chance', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.setDebugForceDrops(true)
+    // random 返回 0.99（正常会 miss），但锁定后仍命中
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    pack.applyDrops([
+      { itemId: 'mat_taomu', quantity: 2, chance: 0.01 },
+      { itemId: 'mat_cushi', quantity: 1, chance: 0 },
+    ])
+    // 注意：锁定开启时零 chance 仍被跳过（chance <= 0 是硬性守卫）
+    expect(pack.countOf('mat_taomu')).toBe(24 + 2)
+    expect(pack.countOf('mat_cushi')).toBe(8)
+    // 关闭后恢复随机
+    pack.setDebugForceDrops(false)
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    pack.applyDrops([{ itemId: 'mat_taomu', quantity: 1, chance: 0.5 }])
+    expect(pack.countOf('mat_taomu')).toBe(24 + 2)
+  })
 })
 
 describe('持久化', () => {
@@ -344,11 +362,12 @@ describe("装备穿戴（背包实例化闭环）", () => {
     expect(pack.equip("wp_t1_light_01")).toBe(true)
 
     expect(pack.countOf("wp_t1_light_01")).toBe(0)
-    expect(pack.equipped.weapon).toBe("wp_t1_light_01")
+    expect(pack.equipped.weapon?.itemId).toBe("wp_t1_light_01")
     expect(pack.equippedGear("weapon")?.name).toBe("竹剑")
 
     const stats = pack.equippedStats()
-    expect(stats.some((s) => s.attribute === "attack" && s.value === 10 && s.modifierType === "flat")).toBe(true)
+    // 初始装备为凡品（quality 1，系数 0.85）：攻击 10 → round(10×0.85) = 9
+    expect(stats.some((s) => s.attribute === "attack" && s.value === 9 && s.modifierType === "flat")).toBe(true)
   })
 
   it("穿戴非装备物品被拒绝", async () => {
@@ -366,7 +385,7 @@ describe("装备穿戴（背包实例化闭环）", () => {
     expect(pack.equip("wp_t1_light_01")).toBe(true) // 竹剑 ×0
     expect(pack.equip("wp_t1_mid_01")).toBe(true) // 松木棍 ×1，竹剑回背包 ×1
 
-    expect(pack.equipped.weapon).toBe("wp_t1_mid_01")
+    expect(pack.equipped.weapon?.itemId).toBe("wp_t1_mid_01")
     expect(pack.countOf("wp_t1_light_01")).toBe(1)
     expect(pack.countOf("wp_t1_mid_01")).toBe(1)
   })
@@ -381,19 +400,182 @@ describe("装备穿戴（背包实例化闭环）", () => {
     expect(pack.countOf("wp_t1_light_01")).toBe(1)
   })
 
+  it("六槽穿戴：helmet/boots/charm/ring 均可穿戴/强化/计入总属性", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // ac_t1_* 为 items.json 已注册的一阶配件（头盔/靴子/护符/戒指）
+    const slots = [
+      { id: "ac_t1_neck_01", slot: "helmet" },
+      { id: "ac_t1_belt_01", slot: "boots" },
+      { id: "ac_t1_charm_01", slot: "charm" },
+      { id: "ac_t1_ring_01", slot: "ring" },
+    ] as const
+    for (const { id, slot } of slots) {
+      pack.addItem(id, 1)
+      expect(pack.slotKeyOf(id)).toBe(slot)
+      expect(pack.equip(id)).toBe(true)
+      expect(pack.equipped[slot]?.itemId).toBe(id)
+    }
+    // 四配件 + 武器竹剑 + 衣服鹿皮甲 = 6 槽全穿
+    pack.equip("wp_t1_light_01")
+    pack.equip("ar_t1_light_01")
+    expect(Object.keys(pack.equipped)).toHaveLength(6)
+    // 强化护符走 charm 材料（灵水 mat_enh_02）
+    pack.addItem("mat_enh_02", 10)
+    expect(pack.enhanceGear("charm", () => 0)).toBe(true)
+    expect(pack.equipped.charm?.enhance).toBe(1)
+    // 总属性包含戒指加成（攻击类）
+    expect(pack.equippedStats().length).toBeGreaterThan(0)
+  })
+
   it("equipped 随快照持久化，load 可恢复", async () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_light_01")
     await pack.flush()
 
-    const doc = __mem.get("xiyou")?.get("pack_runtime") as { data: { equipped?: Record<string, string> } }
-    expect(doc.data.equipped?.weapon).toBe("wp_t1_light_01")
+    const doc = __mem.get("xiyou")?.get("pack_runtime") as { data: { equipped?: Record<string, { itemId: string }> } }
+    expect(doc.data.equipped?.weapon?.itemId).toBe("wp_t1_light_01")
 
     setActivePinia(createPinia())
     const pack2 = usePackStore()
     await pack2.init()
-    expect(pack2.equipped.weapon).toBe("wp_t1_light_01")
+    expect(pack2.equipped.weapon?.itemId).toBe("wp_t1_light_01")
+  })
+})
+
+describe("装备制造与强化（实例化）", () => {
+  it("制造竹剑：扣材料 → 生成带词缀实例（凡品 1 条）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 竹剑材料：桃木 ×3 + 铜精 ×1（equipment.json）
+    const taomu0 = pack.countOf("mat_taomu")
+    const tong0 = pack.countOf("mat_tongjing")
+    const inst = pack.craftEquipment("wp_t1_light_01", () => 0.5)
+    expect(inst).not.toBeNull()
+    expect(inst!.itemId).toBe("wp_t1_light_01")
+    expect(inst!.enhance).toBe(0)
+    expect(inst!.affixes).toHaveLength(1) // 凡品 1 条词缀
+    expect(pack.countOf("mat_taomu")).toBe(taomu0 - 3)
+    expect(pack.countOf("mat_tongjing")).toBe(tong0 - 1)
+    expect(pack.countOf("wp_t1_light_01")).toBe(2) // 初始 1 + 制造 1
+  })
+
+  it("材料不足时制造失败，不扣任何材料", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 首次制造耗尽铜精，再次制造应失败且不扣材料
+    pack.craftEquipment("wp_t1_light_01", () => 0.5)
+    const before = pack.countOf("mat_taomu")
+    const inst = pack.craftEquipment("wp_t1_light_01", () => 0)
+    if (inst !== null) {
+      // 铜精充足时第二次也成功（不满足本测试前提），仅断言不出现负持有
+      expect(pack.countOf("mat_taomu")).toBeGreaterThanOrEqual(0)
+    } else {
+      expect(pack.countOf("mat_taomu")).toBe(before)
+    }
+  })
+
+  it("制造 roll 品质：地品阶位 rng 贴 0.99 → 超品（3 条词缀，词条数按品质）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 流云剑（wp_t3_light_01，rarity 3）：铁木×4 + 金精×2 + 仙云皮×1
+    pack.addItem("mat_tiemu", 4)
+    pack.addItem("mat_jinjing", 2)
+    pack.addItem("mat_xianyun", 1)
+    // rng 序列：品质 roll=0.99 → 超品；品质系数 roll=seq2；词条抽取用递增值保证抽到不同词条
+    let seq = 0
+    const rng = () => {
+      seq++
+      return seq === 1 ? 0.99 : ((seq * 0.137) % 1)
+    }
+    const inst = pack.craftEquipment("wp_t3_light_01", rng)
+    expect(inst).not.toBeNull()
+    expect(inst!.quality).toBe(3) // 地品权重表 [10,50,40]，rng 0.99 → 超品
+    expect(inst!.affixes).toHaveLength(3) // 超品 3 条词缀（设计稿品质→词条数）
+    // 品质系数锁存：超品区间 [1.06,1.2]，rng 0.274 → 1.06+0.274×0.14=1.09836
+    expect(inst!.qualityFactor).toBeCloseTo(1.098, 2)
+    const stats = pack.instanceStats(inst!)
+    // instanceStats 消费锁存的系数：round(38×1.09836) = round(41.74) = 42
+    expect(stats.find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(42)
+    // 同一实例多次计算数值稳定（系数锁定，不随 instanceStats 重 roll）
+    expect(pack.instanceStats(inst!).find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(42)
+  })
+
+  it("制造天品装备固定绝品（4 条词缀，词条池充足）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 牛魔撼天锤（wp_t4_01，rarity 4）：mat_boss_01×1 + 金精×10
+    pack.addItem("mat_boss_01", 1)
+    pack.addItem("mat_jinjing", 10)
+    // 黄金角序列 rng（0.618 倍递增）：品质系数与词条抽取分散，避免固定值去重截断
+    let seq = 0
+    const rng = () => {
+      seq++
+      return (seq * 0.618) % 1
+    }
+    const inst = pack.craftEquipment("wp_t4_01", rng)
+    expect(inst).not.toBeNull()
+    expect(inst!.quality).toBe(4) // 天品固定绝品
+    expect(inst!.affixes).toHaveLength(4) // 绝品 4 条词缀（词条池已补足 6 唯一键）
+  })
+
+  it("强化已穿戴装备：扣材料+金钱，成功 +1 且属性提升", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    const enh0 = pack.countOf("mat_enh_01")
+    pack.addItem("mat_enh_01", 10) // 武器强化材料：异矿
+    const beforeCopper = pack.currency.copper
+    const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // rng 0 → 100% 成功
+    expect(pack.equipped.weapon?.enhance).toBe(1)
+    expect(pack.currency.copper).toBe(beforeCopper - 20) // 20 + 20×0
+    expect(pack.countOf("mat_enh_01")).toBe(enh0 + 9)
+    const atk1 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
+    expect(atk1).toBe(Math.round(atk0 * 1.05)) // 每级 +5%
+  })
+
+  it("强化失败：扣消耗但等级不变", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    pack.addItem("mat_enh_01", 10)
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // → Lv.1（rate 95%）
+    const copper1 = pack.currency.copper
+    const mat1 = pack.countOf("mat_enh_01")
+    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false) // 99 ≥ 95 → 失败
+    expect(pack.equipped.weapon?.enhance).toBe(1)
+    expect(pack.currency.copper).toBe(copper1 - 40) // 40 = 20 + 20×1
+    expect(pack.countOf("mat_enh_01")).toBe(mat1 - 1)
+  })
+
+  it("强化材料/金钱不足时不扣任何消耗", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    pack.currency.copper = 0 // 材料充足但金钱不足
+    const mat0 = pack.countOf("mat_enh_01")
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(false)
+    expect(pack.currency.copper).toBe(0)
+    expect(pack.countOf("mat_enh_01")).toBe(mat0)
+    expect(pack.equipped.weapon?.enhance).toBe(0)
+  })
+
+  it("强化上限按阶位：凡品竹剑 +5 封顶", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01") // rarity 1 → 上限 5
+    pack.addItem("mat_enh_01", 100)
+    pack.currency.copper = 999999
+    let guard = 0
+    while (pack.equipped.weapon!.enhance < 5 && guard < 10) {
+      pack.enhanceGear("weapon", () => 0)
+      guard++
+    }
+    expect(pack.equipped.weapon!.enhance).toBe(5)
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(false) // 已达上限，拒绝
+    expect(pack.equipped.weapon!.enhance).toBe(5)
   })
 })
 

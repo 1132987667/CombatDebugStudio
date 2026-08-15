@@ -69,14 +69,19 @@ export class BuffContext {
     modifierStack.addModifier(this.instanceId, attribute, value, type)
   }
 
-  public removeModifiers(attribute?: ATTRIBUTE_CODE): void {
+  /**
+   * 移除本实例的修饰符
+   * @param attribute 可选——指定属性时仅移除该属性下本实例的修饰符
+   * @param type 可选——同时指定时仅移除该属性 + 类型下本实例的修饰符（精确移除）
+   */
+  public removeModifiers(attribute?: ATTRIBUTE_CODE, type?: ModifierType): void {
     const system = this.buffSystem
     if (!system) {
       LoggerProvider.logger.addDebugLog('BuffSystem not injected, cannot remove modifiers', { level: LogLevel.WARN })
       return
     }
     const modifierStack = system.getModifierStack(this.characterId)
-    modifierStack.removeModifier(this.instanceId, attribute)
+    modifierStack.removeModifier(this.instanceId, attribute, type)
   }
 
   /**

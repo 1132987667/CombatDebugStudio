@@ -12,6 +12,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
+import type { ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { EffectsJsonEntry } from '@/shared/types/effects-json'
 import { normalizeBuffEntries } from '@/shared/types/effects-json'
@@ -21,6 +22,7 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
 import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
+import enemiesOldDataRaw from '@configs/enemies/enemies-old.json'
 import enemySkillsData from '@configs/xiyou/enemy-skills.json'
 import enemyBuffsData from '@configs/xiyou/enemy-buffs.json'
 import xiyouScenesData from '@configs/xiyou/scenes.json'
@@ -67,10 +69,13 @@ const skillTypeById = new Map(
   (enemySkillsData as Array<{ id: string; skillType?: string }>).map((s) => [s.id, s.skillType ?? 'small']),
 )
 
+// NOTE: 旧敌人体系（enemy_001 系 / guardian_* 五行护法）归档于 enemies-old.json，
+//       seed 的 deriveActors 依赖 guardian_* 派生 actors、lineups 引用旧敌人 id，故兜底数据源一并加载。
 const enemies = [
   ...(enemiesDataRaw as unknown as RawEnemyEntry[]).map((e) => normalizeEnemy(e, skillTypeById)),
   ...(enemiesTestDataRaw as Enemy[]),
   ...(enemiesXiyouHiddenDataRaw as Enemy[]),
+  ...(enemiesOldDataRaw as Enemy[]),
 ]
 
 const skills = [
@@ -119,5 +124,18 @@ export class ConfigDataSource implements IDataSource {
 
   getMaterials(): Item[] {
     return materials
+  }
+
+  // NOTE: 经验/金钱三表以 IDB params 域为权威，configs 无兜底数据（引擎无 IDB 时按默认规则运行）
+  getExpTable(): ExpTableConfig | null {
+    return null
+  }
+
+  getEnemyRewardTable(): EnemyRewardTableConfig | null {
+    return null
+  }
+
+  getLevelDiffBonus(): LevelDiffBonusConfig | null {
+    return null
   }
 }

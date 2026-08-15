@@ -2,7 +2,7 @@
   <div class="xy-panel-scroll">
     <Tabs v-model="sub" :tabs="SUBS" destroy-inactive class="xy-tabs--seal">
       <template #mates>
-        <p class="xy-panel-hint">上阵伙伴上限 3 · 主角 {{ player.name }} Lv.{{ player.level }}</p>
+        <p class="xy-panel-hint">上阵伙伴上限 3 · 主角 {{ playerStore.player.name }} Lv.{{ playerStore.player.level }}</p>
         <div class="xy-card-grid">
           <div v-for="m in matesWithUnlock" :key="m.name" class="xy-mate-card" :class="{ active: m.active, locked: !m.unlocked }">
             <div class="xy-mate-head">
@@ -64,8 +64,11 @@
 import { ref } from 'vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
-import { affinities, mates, pets, player, type XiyouMate } from '../data/mock'
+import { affinities, mates, pets, type XiyouMate } from '../data/mock'
 import { qualityClass, qualityOf } from '../data/quality'
+import { usePlayerStore } from '@/presentation/stores/playerStore'
+
+const playerStore = usePlayerStore()
 
 const sub = ref<'mates' | 'pets' | 'affinity'>('mates')
 

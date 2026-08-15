@@ -12,6 +12,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
+import type { ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
 
 export interface IDataSource {
   getEnemies(): Enemy[]
@@ -23,4 +24,9 @@ export interface IDataSource {
   getBuffs(): BuffJsonEntry[]
   /** 材料（materials 表，图鉴等消费方读取） */
   getMaterials(): Item[]
+
+  // ===== 经验与金钱（params 域结构化表；数据源不存在时返回 null，引擎回退默认值） =====
+  getExpTable(): ExpTableConfig | null
+  getEnemyRewardTable(): EnemyRewardTableConfig | null
+  getLevelDiffBonus(): LevelDiffBonusConfig | null
 }

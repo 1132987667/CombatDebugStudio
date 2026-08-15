@@ -5,7 +5,7 @@
 *       battle-header / round / action / settlement / snapshot / section /
 *       summary / plain 各形态。悬浮信息卡片由宿主组件通过 hover/leave
 *       事件自行处理（复用 LogTooltipResolver + EntityTooltip）。
-*       唤灵台 BattleLog 与演劫台战斗心经共用本组件，避免重复实现。
+ *       唤灵台 BattleLog（演劫台战斗心经亦直接复用 BattleLog）共用本组件，避免重复实现。
 -->
 <template>
   <div class="nb-root">

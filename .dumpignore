@@ -26,7 +26,7 @@ build/
 # json数据
 # configs/
 
-docs/
+# docs/
 # documents/
 prompts/
 tests/

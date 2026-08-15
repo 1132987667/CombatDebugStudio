@@ -1,7 +1,7 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-import { EffectType } from '@/domain/skill/types'
+import { StepEffectType } from '@/domain/skill/types'
 export class MountainGodBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_mountain_god'
 
@@ -44,7 +44,7 @@ export class MountainGodBuff extends BaseBuffScript {
     // 每回合恢复少量气血值
     const regeneration = this.getConfigValue(context, 'regeneration', 5)
     this.log(context, `山神的祝福：恢复 ${regeneration} 气血值`)
-    this.triggerEvent(context, EffectType.HEAL, {
+    this.triggerEvent(context, StepEffectType.HEAL, {
       amount: regeneration,
     })
   }

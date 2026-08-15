@@ -28,7 +28,7 @@ import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType } from '@/domain/skill/types'
 import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { DamageCategory } from '@/domain/skill/types'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
@@ -568,8 +568,8 @@ export class PassiveSkillManager {
       if (!effect.targetId) continue
 
       if (
-        effect.type === EffectType.DAMAGE ||
-        effect.type === EffectType.REFLECT
+        effect.type === ActionResultType.DAMAGE ||
+        effect.type === ActionResultType.REFLECT
       ) {
         this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
           targetId: effect.targetId,
@@ -579,11 +579,11 @@ export class PassiveSkillManager {
           isHeal: false,
         })
       } else if (
-        effect.type === EffectType.HEAL ||
-        effect.type === EffectType.DRAIN
+        effect.type === ActionResultType.HEAL ||
+        effect.type === ActionResultType.DRAIN
       ) {
         // 吸血需要发射两个动画：目标受击，自身回血
-        if (effect.type === EffectType.DRAIN) {
+        if (effect.type === ActionResultType.DRAIN) {
           this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId: effect.targetId,
             damage: effect.damage || 0,

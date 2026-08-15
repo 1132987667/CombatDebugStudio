@@ -237,7 +237,7 @@
     },
     "drops": {
       "guaranteed": ["mat_xiongpi", "mat_duye"],
-      "rare": ["recipe_accessory_t3"],
+      "rare": [],
       "gold": [450, 680],
       "exp": [380, 520]
     },
@@ -429,7 +429,7 @@
     },
     "drops": {
       "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshuiyu"],
-      "rare": ["recipe_accessory_t2"],
+      "rare": [],
       "gold": [350, 600],
       "exp": [320, 480]
     },
@@ -557,7 +557,7 @@
     },
     "drops": {
       "guaranteed": ["mat_xiongpi", "mat_duye", "mat_hantan"],
-      "rare": ["recipe_accessory_t3", "recipe_weapon_t3"],
+      "rare": ["recipe_weapon_t3"],
       "gold": [650, 950],
       "exp": [580, 820]
     },
@@ -762,7 +762,7 @@
     },
     "drops": {
       "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshuiyu"],
-      "rare": ["recipe_accessory_t5", "mat_wudao_dan"],
+      "rare": ["mat_wudao_dan"],
       "gold": [1300, 1900],
       "exp": [1100, 1600]
     },
@@ -892,7 +892,7 @@
     },
     "drops": {
       "guaranteed": ["mat_xiongpi", "mat_duye", "mat_feicui"],
-      "rare": ["recipe_accessory_t5", "mat_wudao_dan"],
+      "rare": ["mat_wudao_dan"],
       "gold": [1350, 1950],
       "exp": [1150, 1650]
     },
@@ -1094,7 +1094,7 @@
     },
     "drops": {
       "guaranteed": ["mat_boss_02", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
-      "rare": ["recipe_accessory_t6"],
+      "rare": [],
       "gold": [2500, 3500],
       "exp": [2000, 3000]
     },
@@ -1244,7 +1244,7 @@
         "mat_jiuzhuan_jindan",
         "mat_wudao_dan"
       ],
-      "rare": ["recipe_weapon_t7", "recipe_armor_t7", "recipe_accessory_t7"],
+      "rare": ["recipe_weapon_t7", "recipe_armor_t7"],
       "gold": [5000, 8000],
       "exp": [5000, 8000]
     },

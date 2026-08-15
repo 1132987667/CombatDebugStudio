@@ -66,7 +66,9 @@ const canUse = computed(() => (props.itemId ? pack.canUseOutOfBattle(props.itemI
 /** 恢复/增益类丹药（有 effects）：战斗外禁用，仅快捷栏战斗中可用 */
 const inBattleOnly = computed(() => !!eff.value && !canUse.value)
 
-const canEquip = computed(() => ['武器', '衣服', '饰品'].includes(item.value?.type ?? ''))
+// NOTE: 装备判断以 equipment.json 槽位为权威（6 槽：weapon/armor/helmet/boots/charm/ring），
+//       items.json type 已无「饰品」分类，不能用旧 3 类白名单判断
+const canEquip = computed(() => (props.itemId ? !!pack.slotKeyOf(props.itemId) : false))
 
 const canStore = computed(() => props.count > 0 && pack.storage.some((s) => !s.itemId))
 
@@ -101,25 +103,25 @@ function onDiscard(): void {
   gap: var(--space-3);
 }
 
-/* 品质色（凡/玄/地/天/仙，对齐 xiyou.scss 的 xy-q--* 映射） */
+/* 品质色（凡/玄/地/天/仙，统一引用 tokens.scss 的 --rarity-* 令牌） */
 .px-q1 {
-  color: var(--color-text-disabled);
+  color: var(--rarity-1);
 }
 
 .px-q2 {
-  color: var(--color-success);
+  color: var(--rarity-2);
 }
 
 .px-q3 {
-  color: var(--color-skill-active);
+  color: var(--rarity-3);
 }
 
 .px-q4 {
-  color: var(--color-debuff);
+  color: var(--rarity-4);
 }
 
 .px-q5 {
-  color: var(--color-warning);
+  color: var(--rarity-5);
 }
 
 .px-detail-top {

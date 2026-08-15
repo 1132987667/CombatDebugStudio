@@ -4,13 +4,16 @@
  * 覆盖 useBuffDisplay.ts 中的核心纯函数，直接从源文件导入。
  */
 import { describe, it, expect } from 'vitest'
+import { ref } from 'vue'
 import {
   detectCondition,
   mergeAttributes,
   sortItems,
   formatRemainingTurns,
   getConditionLabel,
+  useBuffDisplay,
 } from '@/presentation/composables/useBuffDisplay'
+import type { BuffRawItem } from '@/shared/types/buff-display'
 
 type ConditionState = 'active' | 'inactive' | 'permanent' | 'none'
 
@@ -219,5 +222,38 @@ describe('getConditionLabel', () => {
   })
   it('none 返回空字符串', () => {
     expect(getConditionLabel('none')).toBe('')
+  })
+})
+
+describe('perStack 语义透传（修改4.md 1.1）', () => {
+  const baseItem = (over: Partial<BuffRawItem>): BuffRawItem => ({
+    id: 'b1',
+    buffId: 'test_buff',
+    name: '测试',
+    isAura: false,
+    ...over,
+  })
+
+  it('perStack=true（缺省）按层数缩放', () => {
+    const state = useBuffDisplay(
+      ref([baseItem({ attributes: { attack: { value: 30, type: 'PERCENTAGE' } }, currentStacks: 3 })]),
+      'p1',
+    )
+    const mod = state.value.items[0].modifiers[0]
+    expect(mod.value).toBe(90)
+  })
+
+  it('perStack=false 叠层不放大', () => {
+    const state = useBuffDisplay(
+      ref([
+        baseItem({
+          attributes: { attack: { value: -30, type: 'PERCENTAGE', perStack: false } },
+          currentStacks: 3,
+        }),
+      ]),
+      'p1',
+    )
+    const mod = state.value.items[0].modifiers[0]
+    expect(mod.value).toBe(-30)
   })
 })

@@ -22,6 +22,13 @@ export interface EnemySkills {
   ultimate?: string[]
 }
 
+/** 敌人 affixPool 配置（enemies 表）：buffTier 0 无 / 1-4 增益档 / 5 天命；count 词缀数量；hasDebuff 是否含劫数（暂未启用） */
+export interface EnemyAffixPool {
+  buffTier?: number
+  count?: number
+  hasDebuff?: boolean
+}
+
 export interface Enemy {
   id: string
   name: string
@@ -33,6 +40,8 @@ export interface Enemy {
   noAttack?: boolean
   /** 词缀 ID 列表（引用 affixes 表，精英/首领敌人附加的属性修正标签） */
   affixes?: string[]
+  /** 词缀池（决定该敌人可获得词缀的档位与数量，「随机词缀」按此抽取） */
+  affixPool?: EnemyAffixPool
 }
 
 

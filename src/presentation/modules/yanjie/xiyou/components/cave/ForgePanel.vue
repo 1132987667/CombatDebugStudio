@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- 部位 Tab：武器 / 衣服 / 饰品 -->
+    <!-- 部位 Tab：武器 / 衣服 / 头盔 / 靴子 / 护符 / 戒指 -->
     <Tabs v-model="part" :tabs="PART_TABS" destroy-inactive class="xy-tabs--seal">
       <template v-for="p in PART_TABS" :key="p.id" #[p.id]>
         <div class="xy-cave-forge-list">
@@ -86,12 +86,17 @@ import { catalogById, itemIdByName, itemName, qualityOf } from '../../data/caveL
 const pack = usePackStore()
 const notification = useNotificationStore()
 
-const part = ref<'weapon' | 'armor' | 'ornament'>('weapon')
+type ForgePart = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
+
+const part = ref<ForgePart>('weapon')
 
 const PART_TABS: TabItem[] = [
   { id: 'weapon', label: '武器' },
   { id: 'armor', label: '衣服' },
-  { id: 'ornament', label: '饰品' },
+  { id: 'helmet', label: '头盔' },
+  { id: 'boots', label: '靴子' },
+  { id: 'charm', label: '护符' },
+  { id: 'ring', label: '戒指' },
 ]
 
 const selected = ref<XiyouRecipe | null>(null)
@@ -103,12 +108,22 @@ watch(part, () => {
   selected.value = null
 })
 
-/** 配方产出物品 type → 部位分组（头盔等未归类归饰品） */
-function partOf(r: XiyouRecipe): 'weapon' | 'armor' | 'ornament' {
-  const type = catalogById(itemIdByName(r.name) ?? '')?.type
-  if (type === '武器') return 'weapon'
-  if (type === '衣服') return 'armor'
-  return 'ornament'
+// NOTE: 部位以 equipment.json slot 为权威（6 槽）；不用 item.type 判断——
+//       材料与装备存在重名（如「翡翠玉镯」：玉石材料 vs 戒指装备），type 会误判。
+const SLOT_OF_PART: Record<ForgePart, string> = {
+  weapon: 'weapon',
+  armor: 'armor',
+  helmet: 'helmet',
+  boots: 'boots',
+  charm: 'charm',
+  ring: 'ring',
+}
+
+function partOf(r: XiyouRecipe): ForgePart | null {
+  const g = equipmentCatalog.find((eq) => eq.name === r.name)
+  if (!g) return null
+  const found = (Object.entries(SLOT_OF_PART) as [ForgePart, string][]).find(([, slot]) => slot === g.slot)
+  return found?.[0] ?? null
 }
 
 function recipesOf(id: string): XiyouRecipe[] {
@@ -161,6 +176,8 @@ function canCraft(r: XiyouRecipe): boolean {
 function craft(): void {
   const r = selected.value
   if (!r || brewing.value) return
+  const g = gearOf(r)
+  if (!g) return
   if (!canCraft(r)) {
     shaking.value = true
     notification.toast('材料不足，无法铸造', 'error')
@@ -172,15 +189,13 @@ function craft(): void {
 
   brewing.value = true
   window.setTimeout(() => {
-    const mats = gearOf(r)?.materials ?? []
-    for (const m of mats) pack.removeItem(m.itemId, m.count)
-    const outId = itemIdByName(r.name)
-    if (outId) pack.addItem(outId, 1)
-    rippling.value = true
-    window.setTimeout(() => {
-      rippling.value = false
-    }, 700)
-    notification.toast(`铸造成功！获得「${r.name}」`, 'success')
+    const inst = pack.craftEquipment(g.id)
+    if (inst) {
+      rippling.value = true
+      window.setTimeout(() => {
+        rippling.value = false
+      }, 700)
+    }
     brewing.value = false
   }, 500)
 }

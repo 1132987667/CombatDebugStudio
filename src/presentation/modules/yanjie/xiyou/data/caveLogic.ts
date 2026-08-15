@@ -6,6 +6,7 @@
  */
 import type { XiyouCatalogItem, XiyouQuality } from './mock'
 import itemsJson from '@configs/xiyou/items.json'
+import equipmentSystemJson from '@configs/xiyou/equipment/equipment-system.json'
 import { qualityOf as qualityByRarity } from './quality'
 
 const ITEMS = itemsJson.items as unknown as XiyouCatalogItem[]
@@ -42,11 +43,14 @@ export interface MaterialCost {
   count: number
 }
 
-/** 装备槽位 → 强化材料（设计：武器异矿 / 衣服灵气·强化 / 饰品灵水） */
+/** 装备槽位 → 强化材料（设计：武器异矿 / 衣服灵气·强化 / 头盔/靴子/护符/戒指 灵水） */
 const ENHANCE_MATERIAL_BY_SLOT: Record<string, MaterialCost> = {
   weapon: { name: '异矿', itemId: 'mat_enh_01', count: 1 },
   armor: { name: '灵气·强化', itemId: 'mat_enh_03', count: 1 },
-  accessory: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
+  helmet: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
+  boots: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
+  charm: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
+  ring: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
 }
 
 export function enhanceMaterialOf(slot: string): MaterialCost | null {
@@ -56,6 +60,14 @@ export function enhanceMaterialOf(slot: string): MaterialCost | null {
 /** 强化成功率：随等级递减，地板 50% */
 export function enhanceSuccessRate(enhance: number): number {
   return Math.max(50, 100 - enhance * 5)
+}
+
+/** 强化上限按阶位（equipment-system.json enhance_max_by_tier：凡+5 玄+10 地+15 天+15 仙+20） */
+const ENHANCE_MAX_BY_TIER = (equipmentSystemJson as unknown as { enhance_max_by_tier: Record<string, number> }).enhance_max_by_tier
+const TIER_KEY_BY_RARITY: Record<number, string> = { 1: 'fan', 2: 'xuan', 3: 'di', 4: 'tian', 5: 'xian' }
+
+export function enhanceMaxByRarity(rarity: number): number {
+  return ENHANCE_MAX_BY_TIER[TIER_KEY_BY_RARITY[rarity] ?? 'fan'] ?? 5
 }
 
 /** 强化金钱消耗：20 + 20×当前等级 */

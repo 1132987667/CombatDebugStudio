@@ -84,7 +84,7 @@ const shaking = ref(false)
 
 // NOTE: 升星数据源 = 真实穿戴（pack.equipped），与装备/强化面板同源，不再读 equip.json 静态 gearSlots。
 const gears = computed<StarGearView[]>(() =>
-  (['weapon', 'armor', 'accessory'] as GearSlotKey[])
+  (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
     .filter((slot) => pack.equippedGear(slot))
     .map((slot) => {
       const g = pack.equippedGear(slot) as EquipmentData

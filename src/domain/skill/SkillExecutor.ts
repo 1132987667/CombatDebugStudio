@@ -22,7 +22,7 @@ import type {
   GainEnergyStepParams,
   ReviveStepParams,
 } from '@/domain/skill/types'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType, StepEffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
 import {
@@ -101,42 +101,42 @@ export class SkillExecutor {
     context?: StepExecutionContext,
   ): void {
     switch (skillStep.type) {
-      case EffectType.DEAL_DAMAGE:
+      case StepEffectType.DEAL_DAMAGE:
         this.executeDamage(skillStep, action, source, target, context)
         break
-      case EffectType.HEAL:
+      case StepEffectType.HEAL:
         this.executeHeal(skillStep, action, source, target, context)
         break
-      case EffectType.APPLY_BUFF:
+      case StepEffectType.APPLY_BUFF:
         this.executeBuff(skillStep, action, source, target, context)
         break
-      case EffectType.SHIELD:
+      case StepEffectType.SHIELD:
         this.executeShield(skillStep, action, source, target)
         break
-      case EffectType.GAIN_ENERGY:
+      case StepEffectType.GAIN_ENERGY:
         this.executeGainEnergy(skillStep, action, source, target)
         break
-      case EffectType.STUN:
-      case EffectType.SILENCE:
+      case StepEffectType.STUN:
+      case StepEffectType.SILENCE:
         this.executeControl(skillStep, action, source, target, skillStep.type)
         break
-      case EffectType.MODIFY_ATTRIBUTE:
+      case StepEffectType.MODIFY_ATTRIBUTE:
         this.executeModifyAttribute(skillStep, action, source, target)
         break
-      case EffectType.REMOVE_DEBUFF:
-      case EffectType.CLEANSE:
+      case StepEffectType.REMOVE_DEBUFF:
+      case StepEffectType.CLEANSE:
         this.executeCleanse(skillStep, action, source, target)
         break
-      case EffectType.REFLECT:
+      case StepEffectType.REFLECT:
         this.executeReflect(skillStep, action, source, target, context)
         break
-      case EffectType.DRAIN:
+      case StepEffectType.DRAIN:
         this.executeDrain(skillStep, action, source, target, context)
         break
-      case EffectType.CUSTOM:
+      case StepEffectType.CUSTOM:
         this.executeCustom(skillStep, action, source, target, context)
         break
-      case EffectType.REVIVE:
+      case StepEffectType.REVIVE:
         this.executeRevive(skillStep, action, source, target, context)
         break
       default: {
@@ -163,7 +163,7 @@ export class SkillExecutor {
     )
     if (result.isMiss) {
       action.effects.push({
-        type: EffectType.MISS,
+        type: ActionResultType.MISS,
         sourceId: source.id,
         targetId: target.id,
         value: 0,
@@ -176,7 +176,7 @@ export class SkillExecutor {
         context.token.record(target, result.damage, 0, result.rawDamage)
         action.damage = (action.damage ?? 0) + result.damage
         action.effects.push({
-          type: EffectType.DAMAGE,
+          type: ActionResultType.DAMAGE,
           sourceId: source.id,
           targetId: target.id,
           value: result.damage,
@@ -191,7 +191,7 @@ export class SkillExecutor {
         )
         action.damage = (action.damage ?? 0) + actualDamage
         action.effects.push({
-          type: EffectType.DAMAGE,
+          type: ActionResultType.DAMAGE,
           sourceId: source.id,
           targetId: target.id,
           value: actualDamage,
@@ -240,7 +240,7 @@ export class SkillExecutor {
       context.token.record(healTarget, 0, heal)
       action.heal = (action.heal ?? 0) + heal
       action.effects.push({
-        type: EffectType.HEAL,
+        type: ActionResultType.HEAL,
         sourceId: source.id,
         targetId: healTarget.id,
         value: heal,
@@ -252,7 +252,7 @@ export class SkillExecutor {
       const actualHeal = this.healCalculator.applyHeal(healTarget, heal)
       action.heal = (action.heal ?? 0) + actualHeal
       action.effects.push({
-        type: EffectType.HEAL,
+        type: ActionResultType.HEAL,
         sourceId: source.id,
         targetId: healTarget.id,
         value: actualHeal,
@@ -263,7 +263,7 @@ export class SkillExecutor {
     }
     if (this.healCalculator.isSingleTurnEffect(skillStep)) {
       action.effects.push({
-        type: EffectType.STATUS,
+        type: ActionResultType.STATUS,
         description: '立即生效的单回合治疗效果',
       })
     }
@@ -313,7 +313,7 @@ export class SkillExecutor {
       : undefined
     const actualStacks = buffInstance?.currentStacks ?? skillStep.stacks ?? 1
     action.effects.push({
-      type: EffectType.BUFF,
+      type: ActionResultType.BUFF,
       sourceId: source.id,
       targetId: buffTarget.id,
       buffId,
@@ -436,7 +436,7 @@ export class SkillExecutor {
     const modTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
     const instances = this.buffSystem.getBuffInstances(modTarget.id)
-    const isRemoveDebuff = skillStep.type === EffectType.REMOVE_DEBUFF
+    const isRemoveDebuff = skillStep.type === StepEffectType.REMOVE_DEBUFF
     const count = skillStep.count || (isRemoveDebuff ? 1 : 999)
 
     let removed = 0
@@ -452,7 +452,7 @@ export class SkillExecutor {
     }
 
     action.effects.push({
-      type: EffectType.STATUS,
+      type: ActionResultType.STATUS,
       targetId: modTarget.id,
       description: `${isRemoveDebuff ? '移除减益' : '净化'}: ${removed} 个效果`,
     })
@@ -477,7 +477,7 @@ export class SkillExecutor {
         this.damageCalculator.applyDamage(target, dmg.damage)
       }
       action.effects.push({
-        type: EffectType.REFLECT,
+        type: ActionResultType.REFLECT,
         sourceId: source.id,
         targetId: target.id,
         value: dmg.damage,
@@ -516,7 +516,7 @@ export class SkillExecutor {
         }
       }
       action.effects.push({
-        type: EffectType.DRAIN,
+        type: ActionResultType.DRAIN,
         sourceId: source.id,
         targetId: target.id,
         value: dmg.damage,
@@ -567,7 +567,7 @@ export class SkillExecutor {
           { level: LogLevel.INFO },
         )
         action.effects.push({
-          type: EffectType.STATUS,
+          type: ActionResultType.STATUS,
           targetId: source.id,
           description: `时之沙触发！${source.name} 获得额外行动`,
         })
@@ -681,7 +681,7 @@ export class SkillExecutor {
           { level: LogLevel.INFO },
         )
         action.effects.push({
-          type: EffectType.STATUS,
+          type: ActionResultType.STATUS,
           targetId: target.id,
           buffId: 'buff_shield',
           instanceId: shieldInstanceId,
@@ -690,7 +690,7 @@ export class SkillExecutor {
       }
     } else {
       action.effects.push({
-        type: EffectType.STATUS,
+        type: ActionResultType.STATUS,
         targetId: target.id,
         description: '无治疗溢出，未生成护盾',
       })
@@ -723,7 +723,7 @@ export class SkillExecutor {
         source.recalcAll()
       }
       action.effects.push({
-        type: EffectType.STATUS,
+        type: ActionResultType.STATUS,
         targetId: source.id,
         description: '第三连击！伤害+50%',
       })
@@ -764,7 +764,7 @@ export class SkillExecutor {
         source.recalcAll()
       }
       action.effects.push({
-        type: EffectType.STATUS,
+        type: ActionResultType.STATUS,
         targetId: source.id,
         description: `连击 x${state.streak}，伤害+${bonus}%`,
       })
@@ -813,7 +813,7 @@ export class SkillExecutor {
     }
 
     action.effects.push({
-      type: EffectType.DAMAGE,
+      type: ActionResultType.DAMAGE,
       targetId: target.id,
       value: finalDmg,
       damage: finalDmg,
@@ -837,7 +837,7 @@ export class SkillExecutor {
     if (value <= 0) return
     modTarget.gainEnergy(value)
     action.effects.push({
-      type: EffectType.STATUS,
+      type: ActionResultType.STATUS,
       targetId: modTarget.id,
       description: `${modTarget.name} 获得 ${value} 能量`,
     })
@@ -884,7 +884,7 @@ export class SkillExecutor {
       return
     }
     action.effects.push({
-      type: EffectType.STATUS,
+      type: ActionResultType.STATUS,
       targetId: buffTarget.id,
       buffId: 'buff_shield',
       instanceId,
@@ -900,9 +900,9 @@ export class SkillExecutor {
     normalizedType: string,
   ): void {
     const controlType =
-      normalizedType === EffectType.STUN
+      normalizedType === StepEffectType.STUN
         ? ControlType.STUN
-        : normalizedType === EffectType.SILENCE
+        : normalizedType === StepEffectType.SILENCE
           ? ControlType.SILENCE
           : ControlType.STUN
     const buffId = skillStep.buffId || `control_${controlType}`
@@ -925,7 +925,7 @@ export class SkillExecutor {
       return
     }
     action.effects.push({
-      type: EffectType.STATUS,
+      type: ActionResultType.STATUS,
       targetId: target.id,
       buffId,
       description: `${source.name} applies ${controlType} to ${target.name}`,
@@ -950,7 +950,7 @@ export class SkillExecutor {
     // 前置校验：目标必须已死亡
     if (target.isAlive()) {
       action.effects.push({
-        type: EffectType.STATUS,
+        type: ActionResultType.STATUS,
         targetId: target.id,
         description: `${target.name} 仍然存活，无需复活`,
       })
@@ -973,7 +973,7 @@ export class SkillExecutor {
     action.extra.reviveParams = params
 
     action.effects.push({
-      type: EffectType.HEAL,
+      type: ActionResultType.HEAL,
       sourceId: source.id,
       targetId: target.id,
       value: reviveHp,

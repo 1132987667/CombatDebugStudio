@@ -40,10 +40,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { player, realms } from '../../data/mock'
+import { realms } from '../../data/mock'
 import type { XiyouRealm } from '../../data/mock'
+import { usePlayerStore } from '@/presentation/stores/playerStore'
 
 const notification = useNotificationStore()
+const playerStore = usePlayerStore()
 
 const currentRealm = computed(() => realms.find((r) => r.level > 0) ?? realms.find((r) => r.unlocked) ?? realms[0])
 
@@ -56,7 +58,7 @@ const reachedCount = computed(() => realms.filter((r) => r.unlocked).length)
 
 const canBreakthrough = computed(() => {
   const n = nextRealm.value
-  return !!n && player.level >= (n.levelReq ?? Infinity)
+  return !!n && playerStore.player.level >= (n.levelReq ?? Infinity)
 })
 
 function isCurrent(r: XiyouRealm): boolean {
@@ -115,7 +117,7 @@ function handleBreakthrough() {
 }
 
 .xy-realm-name {
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xl);
   letter-spacing: 2px;
   color: var(--xy-ink-1);

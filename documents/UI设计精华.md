@@ -1,4 +1,4 @@
-# UI 设计精华（学自 ui-ux-pro-max-skill）
+﻿# UI 设计精华（学自 ui-ux-pro-max-skill）
 
 > 来源：GitHub `nextlevelbuilder/ui-ux-pro-max-skill`（11.2 万 star，AI UI/UX 设计 skill，支持 Claude Code / Cursor / Codex）。
 > 本文是适配本项目的精简版——本项目是**桌面 Web 调试沙盒**，App 专属规则（safe-area、触屏目标、haptics、Dynamic Type）已剔除。

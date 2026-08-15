@@ -4,8 +4,14 @@
     "name": "淬锋",
     "attribute": "attack",
     "modifierType": "flat",
-    "valueRange": { "min": 1, "max": 50 },
-    "applicableSlots": ["weapon", "ring:戒指"],
+    "valueRange": {
+      "min": 1,
+      "max": 50
+    },
+    "applicableSlots": [
+      "weapon",
+      "ring:戒指"
+    ],
     "weight": 100,
     "rarity": 1,
     "description": "攻击 +1~50"
@@ -15,8 +21,15 @@
     "name": "凌厉",
     "attribute": "attack",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 12 },
-    "applicableSlots": ["weapon", "ring:戒指", "helmet:冠冕"],
+    "valueRange": {
+      "min": 3,
+      "max": 12
+    },
+    "applicableSlots": [
+      "weapon",
+      "ring:戒指",
+      "helmet:冠冕"
+    ],
     "weight": 100,
     "rarity": 2,
     "description": "攻击 +3%~12%"
@@ -26,8 +39,14 @@
     "name": "养体",
     "attribute": "maxHealth",
     "modifierType": "flat",
-    "valueRange": { "min": 20, "max": 300 },
-    "applicableSlots": ["charm:护符", "armor"],
+    "valueRange": {
+      "min": 20,
+      "max": 300
+    },
+    "applicableSlots": [
+      "charm:护符",
+      "armor"
+    ],
     "weight": 80,
     "rarity": 1,
     "description": "气血 +20~300"
@@ -37,8 +56,15 @@
     "name": "养元",
     "attribute": "maxHealth",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 12 },
-    "applicableSlots": ["charm:护符", "helmet:冠冕", "armor:木甲"],
+    "valueRange": {
+      "min": 3,
+      "max": 12
+    },
+    "applicableSlots": [
+      "charm:护符",
+      "helmet:冠冕",
+      "armor"
+    ],
     "weight": 80,
     "rarity": 1,
     "description": "气血 +3%~12%"
@@ -48,8 +74,14 @@
     "name": "固本",
     "attribute": "defense",
     "modifierType": "flat",
-    "valueRange": { "min": 1, "max": 40 },
-    "applicableSlots": ["armor", "helmet:头盔"],
+    "valueRange": {
+      "min": 1,
+      "max": 40
+    },
+    "applicableSlots": [
+      "armor",
+      "helmet:头盔"
+    ],
     "weight": 80,
     "rarity": 1,
     "description": "防御 +1~40"
@@ -59,8 +91,14 @@
     "name": "坚壁",
     "attribute": "defense",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 12 },
-    "applicableSlots": ["helmet:头盔", "armor"],
+    "valueRange": {
+      "min": 3,
+      "max": 12
+    },
+    "applicableSlots": [
+      "helmet:头盔",
+      "armor"
+    ],
     "weight": 80,
     "rarity": 2,
     "description": "防御 +3%~12%"
@@ -70,8 +108,14 @@
     "name": "轻身",
     "attribute": "speed",
     "modifierType": "flat",
-    "valueRange": { "min": 1, "max": 20 },
-    "applicableSlots": ["boots:靴子", "weapon:轻型"],
+    "valueRange": {
+      "min": 1,
+      "max": 20
+    },
+    "applicableSlots": [
+      "boots:靴子",
+      "weapon:轻型"
+    ],
     "weight": 80,
     "rarity": 1,
     "description": "速度 +1~20"
@@ -81,8 +125,14 @@
     "name": "神行",
     "attribute": "speed",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 12 },
-    "applicableSlots": ["boots:靴子", "helmet:头盔"],
+    "valueRange": {
+      "min": 3,
+      "max": 12
+    },
+    "applicableSlots": [
+      "boots:靴子",
+      "helmet:头盔"
+    ],
     "weight": 80,
     "rarity": 2,
     "description": "速度 +3%~12%"
@@ -92,8 +142,14 @@
     "name": "锋锐",
     "attribute": "critRate",
     "modifierType": "percent",
-    "valueRange": { "min": 1, "max": 8 },
-    "applicableSlots": ["ring:戒指", "weapon"],
+    "valueRange": {
+      "min": 1,
+      "max": 8
+    },
+    "applicableSlots": [
+      "ring:戒指",
+      "weapon"
+    ],
     "weight": 50,
     "rarity": 2,
     "description": "暴击率 +1%~8%"
@@ -103,8 +159,14 @@
     "name": "斩金",
     "attribute": "critDamage",
     "modifierType": "percent",
-    "valueRange": { "min": 5, "max": 25 },
-    "applicableSlots": ["ring:戒指", "weapon:中型"],
+    "valueRange": {
+      "min": 5,
+      "max": 25
+    },
+    "applicableSlots": [
+      "ring:戒指",
+      "weapon:中型"
+    ],
     "weight": 50,
     "rarity": 3,
     "description": "暴击伤害 +5%~25%"
@@ -114,8 +176,13 @@
     "name": "定神",
     "attribute": "hit",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 12 },
-    "applicableSlots": ["ring:戒指"],
+    "valueRange": {
+      "min": 3,
+      "max": 12
+    },
+    "applicableSlots": [
+      "ring:戒指"
+    ],
     "weight": 50,
     "rarity": 2,
     "description": "命中 +3%~12%"
@@ -125,8 +192,14 @@
     "name": "幻身",
     "attribute": "dodge",
     "modifierType": "percent",
-    "valueRange": { "min": 2, "max": 6 },
-    "applicableSlots": ["armor:皮甲", "boots:靴子"],
+    "valueRange": {
+      "min": 2,
+      "max": 6
+    },
+    "applicableSlots": [
+      "armor:皮甲",
+      "boots:靴子"
+    ],
     "weight": 50,
     "rarity": 3,
     "description": "闪避 +2%~6%"
@@ -136,8 +209,14 @@
     "name": "不动",
     "attribute": "damageReduction",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 10 },
-    "applicableSlots": ["helmet:头盔", "armor:铠甲"],
+    "valueRange": {
+      "min": 3,
+      "max": 10
+    },
+    "applicableSlots": [
+      "helmet:头盔",
+      "armor:铠甲"
+    ],
     "weight": 50,
     "rarity": 3,
     "description": "免伤率 +3%~10%"
@@ -147,8 +226,14 @@
     "name": "回春",
     "attribute": "healReceived",
     "modifierType": "percent",
-    "valueRange": { "min": 5, "max": 20 },
-    "applicableSlots": ["charm:护符", "armor:木甲"],
+    "valueRange": {
+      "min": 5,
+      "max": 20
+    },
+    "applicableSlots": [
+      "charm:护符",
+      "armor:木甲"
+    ],
     "weight": 50,
     "rarity": 2,
     "description": "治疗效果 +5%~20%"
@@ -158,8 +243,14 @@
     "name": "诛残",
     "attribute": "damageToLowHp",
     "modifierType": "percent",
-    "valueRange": { "min": 5, "max": 20 },
-    "applicableSlots": ["ring:戒指", "weapon"],
+    "valueRange": {
+      "min": 5,
+      "max": 20
+    },
+    "applicableSlots": [
+      "ring:戒指",
+      "weapon"
+    ],
     "weight": 10,
     "rarity": 3,
     "description": "对低血量目标伤害 +5%~20%"
@@ -169,8 +260,14 @@
     "name": "镇魔",
     "attribute": "damageToDemon",
     "modifierType": "percent",
-    "valueRange": { "min": 5, "max": 15 },
-    "applicableSlots": ["weapon:重型", "helmet:冠冕"],
+    "valueRange": {
+      "min": 5,
+      "max": 15
+    },
+    "applicableSlots": [
+      "weapon:重型",
+      "helmet:冠冕"
+    ],
     "weight": 10,
     "rarity": 3,
     "description": "对妖魔伤害 +5%~15%"
@@ -180,8 +277,14 @@
     "name": "破军",
     "attribute": "attackBonus",
     "modifierType": "percent",
-    "valueRange": { "min": 6, "max": 15 },
-    "applicableSlots": ["weapon:中型", "weapon:重型"],
+    "valueRange": {
+      "min": 6,
+      "max": 15
+    },
+    "applicableSlots": [
+      "weapon:中型",
+      "weapon:重型"
+    ],
     "school": "金行道",
     "weight": 30,
     "rarity": 3,
@@ -192,8 +295,14 @@
     "name": "连影",
     "attribute": "comboRate",
     "modifierType": "percent",
-    "valueRange": { "min": 5, "max": 15 },
-    "applicableSlots": ["weapon:轻型", "armor:皮甲"],
+    "valueRange": {
+      "min": 5,
+      "max": 15
+    },
+    "applicableSlots": [
+      "weapon:轻型",
+      "armor:皮甲"
+    ],
     "school": "灵猴道",
     "weight": 30,
     "rarity": 2,
@@ -204,8 +313,14 @@
     "name": "疾风",
     "attribute": "speed",
     "modifierType": "percent",
-    "valueRange": { "min": 4, "max": 10 },
-    "applicableSlots": ["weapon:轻型", "boots:靴子"],
+    "valueRange": {
+      "min": 4,
+      "max": 10
+    },
+    "applicableSlots": [
+      "weapon:轻型",
+      "boots:靴子"
+    ],
     "school": "灵猴道",
     "weight": 30,
     "rarity": 2,
@@ -216,8 +331,14 @@
     "name": "灵步",
     "attribute": "dodge",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 8 },
-    "applicableSlots": ["weapon:轻型", "armor:皮甲"],
+    "valueRange": {
+      "min": 3,
+      "max": 8
+    },
+    "applicableSlots": [
+      "weapon:轻型",
+      "armor:皮甲"
+    ],
     "school": "灵猴道",
     "weight": 20,
     "rarity": 3,
@@ -228,8 +349,14 @@
     "name": "石肤",
     "attribute": "defenseBonus",
     "modifierType": "percent",
-    "valueRange": { "min": 8, "max": 18 },
-    "applicableSlots": ["armor", "charm:护符"],
+    "valueRange": {
+      "min": 8,
+      "max": 18
+    },
+    "applicableSlots": [
+      "armor",
+      "charm:护符"
+    ],
     "school": "磐石道",
     "weight": 30,
     "rarity": 2,
@@ -240,8 +367,15 @@
     "name": "厚土",
     "attribute": "maxHealth",
     "modifierType": "percent",
-    "valueRange": { "min": 8, "max": 20 },
-    "applicableSlots": ["armor:铠甲", "charm:护符", "helmet:冠冕"],
+    "valueRange": {
+      "min": 8,
+      "max": 20
+    },
+    "applicableSlots": [
+      "armor:铠甲",
+      "charm:护符",
+      "helmet:冠冕"
+    ],
     "school": "磐石道",
     "weight": 30,
     "rarity": 3,
@@ -252,11 +386,137 @@
     "name": "倒打",
     "attribute": "reflectDamagePercent",
     "modifierType": "percent",
-    "valueRange": { "min": 3, "max": 10 },
-    "applicableSlots": ["armor:铠甲", "helmet:头盔"],
+    "valueRange": {
+      "min": 3,
+      "max": 10
+    },
+    "applicableSlots": [
+      "armor:铠甲",
+      "helmet:头盔"
+    ],
     "school": "磐石道",
     "weight": 20,
     "rarity": 3,
     "description": "反弹伤害 +3%~10%"
+  },
+  {
+    "id": "eqaff_dmg_reduction",
+    "name": "磐石",
+    "attribute": "damageReduction",
+    "modifierType": "percent",
+    "valueRange": {
+      "min": 3,
+      "max": 10
+    },
+    "applicableSlots": [
+      "armor",
+      "helmet:头盔",
+      "helmet:冠冕",
+      "charm:护符"
+    ],
+    "weight": 50,
+    "rarity": 3,
+    "description": "免伤率 +3%~10%"
+  },
+  {
+    "id": "eqaff_shield_effect",
+    "name": "灵盾",
+    "attribute": "shield",
+    "modifierType": "percent",
+    "valueRange": {
+      "min": 5,
+      "max": 20
+    },
+    "applicableSlots": [
+      "helmet:头盔",
+      "helmet:冠冕",
+      "charm:护符"
+    ],
+    "weight": 40,
+    "rarity": 3,
+    "description": "护盾效果 +5%~20%"
+  },
+  {
+    "id": "eqaff_ctrl_resist",
+    "name": "定念",
+    "attribute": "controlDurationReduction",
+    "modifierType": "percent",
+    "valueRange": {
+      "min": 3,
+      "max": 10
+    },
+    "applicableSlots": [
+      "helmet:头盔",
+      "helmet:冠冕",
+      "charm:护符"
+    ],
+    "weight": 40,
+    "rarity": 2,
+    "description": "控制抗性 +3%~10%"
+  },
+  {
+    "id": "eqaff_debuff_resist",
+    "name": "净体",
+    "attribute": "debuffImmunityRate",
+    "modifierType": "percent",
+    "valueRange": {
+      "min": 5,
+      "max": 20
+    },
+    "applicableSlots": [
+      "helmet:冠冕",
+      "charm:护符"
+    ],
+    "weight": 30,
+    "rarity": 3,
+    "description": "异常状态抗性 +5%~20%"
+  },
+  {
+    "id": "eqaff_hit_boots",
+    "name": "寻踪",
+    "attribute": "hit",
+    "modifierType": "percent",
+    "valueRange": {
+      "min": 3,
+      "max": 12
+    },
+    "applicableSlots": [
+      "boots:靴子"
+    ],
+    "weight": 60,
+    "rarity": 2,
+    "description": "命中 +3%~12%"
+  },
+  {
+    "id": "eqaff_hp_boots",
+    "name": "步履",
+    "attribute": "maxHealth",
+    "modifierType": "flat",
+    "valueRange": {
+      "min": 20,
+      "max": 120
+    },
+    "applicableSlots": [
+      "boots:靴子"
+    ],
+    "weight": 60,
+    "rarity": 1,
+    "description": "气血 +20~120"
+  },
+  {
+    "id": "eqaff_def_boots",
+    "name": "磐足",
+    "attribute": "defense",
+    "modifierType": "percent",
+    "valueRange": {
+      "min": 3,
+      "max": 10
+    },
+    "applicableSlots": [
+      "boots:靴子"
+    ],
+    "weight": 60,
+    "rarity": 2,
+    "description": "防御 +3%~10%"
   }
 ]

@@ -274,7 +274,7 @@
     {
       "id": "forge_ac_t1_charm_01",
       "equipmentId": "ac_t1_charm_01",
-      "blueprintId": "bp_t1_ac",
+      "blueprintId": "bp_t1_ch",
       "name": "淡水玉护符",
       "level": 1,
       "effect": "气血+3% · 护符",
@@ -283,7 +283,7 @@
     {
       "id": "forge_ac_t1_ring_01",
       "equipmentId": "ac_t1_ring_01",
-      "blueprintId": "bp_t1_ac",
+      "blueprintId": "bp_t1_rg",
       "name": "藤蔓箍",
       "level": 1,
       "effect": "气血+60 · 戒指",
@@ -292,7 +292,7 @@
     {
       "id": "forge_ac_t1_neck_01",
       "equipmentId": "ac_t1_neck_01",
-      "blueprintId": "bp_t1_ac",
+      "blueprintId": "bp_t1_hl",
       "name": "贝壳链",
       "level": 1,
       "effect": "防御+5% · 头盔",
@@ -301,7 +301,7 @@
     {
       "id": "forge_ac_t1_belt_01",
       "equipmentId": "ac_t1_belt_01",
-      "blueprintId": "bp_t1_ac",
+      "blueprintId": "bp_t1_bs",
       "name": "宣纸腰带",
       "level": 1,
       "effect": "速度+5% · 靴子",
@@ -310,7 +310,7 @@
     {
       "id": "forge_ac_t1_brace_01",
       "equipmentId": "ac_t1_brace_01",
-      "blueprintId": "bp_t1_ac",
+      "blueprintId": "bp_t1_rg",
       "name": "贝壳镯",
       "level": 1,
       "effect": "暴击率+3% · 戒指",
@@ -319,7 +319,7 @@
     {
       "id": "forge_ac_t1_crown_01",
       "equipmentId": "ac_t1_crown_01",
-      "blueprintId": "bp_t1_ac",
+      "blueprintId": "bp_t1_hl",
       "name": "藤编冠",
       "level": 1,
       "effect": "气血+2%，攻击+2%，防御+2% · 头盔",
@@ -328,7 +328,7 @@
     {
       "id": "forge_ac_t2_charm_01",
       "equipmentId": "ac_t2_charm_01",
-      "blueprintId": "bp_t2_ac",
+      "blueprintId": "bp_t2_ch",
       "name": "深水玉护符",
       "level": 4,
       "effect": "气血+6% · 护符",
@@ -337,7 +337,7 @@
     {
       "id": "forge_ac_t2_ring_01",
       "equipmentId": "ac_t2_ring_01",
-      "blueprintId": "bp_t2_ac",
+      "blueprintId": "bp_t2_rg",
       "name": "青花瓷戒",
       "level": 4,
       "effect": "攻击+6% · 戒指",
@@ -346,7 +346,7 @@
     {
       "id": "forge_ac_t2_neck_01",
       "equipmentId": "ac_t2_neck_01",
-      "blueprintId": "bp_t2_ac",
+      "blueprintId": "bp_t2_hl",
       "name": "铁精链",
       "level": 4,
       "effect": "防御+6% · 头盔",
@@ -355,7 +355,7 @@
     {
       "id": "forge_ac_t2_belt_01",
       "equipmentId": "ac_t2_belt_01",
-      "blueprintId": "bp_t2_ac",
+      "blueprintId": "bp_t2_bs",
       "name": "青花瓷扣带",
       "level": 4,
       "effect": "速度+6% · 靴子",
@@ -364,7 +364,7 @@
     {
       "id": "forge_ac_t2_brace_01",
       "equipmentId": "ac_t2_brace_01",
-      "blueprintId": "bp_t2_ac",
+      "blueprintId": "bp_t2_rg",
       "name": "深水玉镯",
       "level": 4,
       "effect": "暴击率+5% · 戒指",
@@ -373,7 +373,7 @@
     {
       "id": "forge_ac_t2_crown_01",
       "equipmentId": "ac_t2_crown_01",
-      "blueprintId": "bp_t2_ac",
+      "blueprintId": "bp_t2_hl",
       "name": "铁木冠",
       "level": 4,
       "effect": "气血+3%，攻击+3%，防御+3% · 头盔",
@@ -382,7 +382,7 @@
     {
       "id": "forge_ac_t3_charm_01",
       "equipmentId": "ac_t3_charm_01",
-      "blueprintId": "bp_t3_ac",
+      "blueprintId": "bp_t3_ch",
       "name": "圣水玉护符",
       "level": 6,
       "effect": "气血+10% · 护符",
@@ -391,7 +391,7 @@
     {
       "id": "forge_ac_t3_ring_01",
       "equipmentId": "ac_t3_ring_01",
-      "blueprintId": "bp_t3_ac",
+      "blueprintId": "bp_t3_rg",
       "name": "金精戒",
       "level": 6,
       "effect": "攻击+10% · 戒指",
@@ -400,7 +400,7 @@
     {
       "id": "forge_ac_t3_neck_01",
       "equipmentId": "ac_t3_neck_01",
-      "blueprintId": "bp_t3_ac",
+      "blueprintId": "bp_t3_hl",
       "name": "翡翠链",
       "level": 6,
       "effect": "防御+10% · 头盔",
@@ -409,7 +409,7 @@
     {
       "id": "forge_ac_t3_belt_01",
       "equipmentId": "ac_t3_belt_01",
-      "blueprintId": "bp_t3_ac",
+      "blueprintId": "bp_t3_bs",
       "name": "古铜镜扣带",
       "level": 6,
       "effect": "速度+10% · 靴子",
@@ -418,7 +418,7 @@
     {
       "id": "forge_ac_t3_brace_01",
       "equipmentId": "ac_t3_brace_01",
-      "blueprintId": "bp_t3_ac",
+      "blueprintId": "bp_t3_rg",
       "name": "翡翠玉镯",
       "level": 6,
       "effect": "暴击率+7% · 戒指",
@@ -427,7 +427,7 @@
     {
       "id": "forge_ac_t3_crown_01",
       "equipmentId": "ac_t3_crown_01",
-      "blueprintId": "bp_t3_ac",
+      "blueprintId": "bp_t3_hl",
       "name": "金精冠",
       "level": 6,
       "effect": "气血+5%，攻击+5%，防御+5% · 头盔",

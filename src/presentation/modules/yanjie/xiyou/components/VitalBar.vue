@@ -38,7 +38,7 @@ defineProps<{
 }
 
 .xy-vital-label {
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-md);
   letter-spacing: 1px;
   color: var(--xy-ink-1);

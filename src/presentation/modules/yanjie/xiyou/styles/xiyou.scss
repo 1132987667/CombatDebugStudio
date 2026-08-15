@@ -63,7 +63,7 @@
 
 .xy-topbar-title {
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xxxl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 4px;
@@ -102,16 +102,17 @@
   display: grid;
   overflow: hidden;
 
-  /* 行路态（默认）：战斗禅台 + 功能宝阁 290px + 四象栏 72px */
+  /* 行路态（默认）：四象栏 + 角色行囊栏 400px + 战斗禅台 + 功能宝阁 290px
+     NOTE: 左/右切换为对称镜像——aspect 挪到另一端，其余栏（roster→zen→cabinet）相对顺序不变 */
   &.xy-body--journey {
     &.xy-side--right {
-      grid-template-columns: minmax(0, 1fr) 290px 72px;
-      grid-template-areas: 'zen cabinet aspect';
+      grid-template-columns: 400px minmax(0, 1fr) 290px 72px;
+      grid-template-areas: 'roster zen cabinet aspect';
     }
 
     &.xy-side--left {
-      grid-template-columns: 72px 290px minmax(0, 1fr);
-      grid-template-areas: 'aspect cabinet zen';
+      grid-template-columns: 72px 400px minmax(0, 1fr) 290px;
+      grid-template-areas: 'aspect roster zen cabinet';
     }
   }
 
@@ -242,8 +243,6 @@
 .xy-panel-scroll {
   height: 100%;
   overflow-y: auto;
-  padding-right: var(--space-2);
-  padding-left: var(--space-2);
 }
 
 /* 有内部 Tabs 的功能面板（修行/装备/伙伴/收集/历练等 SUB 导航）：Tab 头固定、内容区内部滚动。
@@ -270,7 +269,7 @@
   margin: 0 0 var(--space-3);
   padding: var(--space-1) 0 var(--space-2);
   border-bottom: 2px solid var(--xy-ink-line);
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 3px;
@@ -448,31 +447,53 @@
   color: var(--xy-ink-4);
 }
 
-/* 品质色（凡 / 玄 / 地 / 天 / 仙） */
-.xy-q--凡品 {
-  color: var(--xy-ink-4);
+/* 品质色（凡 / 玄 / 地 / 天 / 仙 → xy-q--1..5，数字后缀规范化，避免中文类名）
+   NOTE: 色值统一引用 tokens.scss 的 --rarity-* 令牌 */
+.xy-q--1 {
+  color: var(--rarity-1);
 }
 
-.xy-q--玄品 {
-  color: var(--xy-jade);
+.xy-q--2 {
+  color: var(--rarity-2);
 }
 
-.xy-q--地品 {
-  color: var(--color-skill-active);
+.xy-q--3 {
+  color: var(--rarity-3);
 }
 
-.xy-q--天品 {
-  color: var(--color-debuff);
+.xy-q--4 {
+  color: var(--rarity-4);
 }
 
-.xy-q--仙品 {
-  color: var(--xy-gold);
+.xy-q--5 {
+  color: var(--rarity-5);
+}
+
+/* 装备品质色（凡 / 精 / 超 / 绝 / 神 → xy-eq-q--1..5，独立于品阶）
+   NOTE: 色值统一引用 tokens.scss 的 --eq-q-* 令牌 */
+.xy-eq-q--1 {
+  color: var(--eq-q-1);
+}
+
+.xy-eq-q--2 {
+  color: var(--eq-q-2);
+}
+
+.xy-eq-q--3 {
+  color: var(--eq-q-3);
+}
+
+.xy-eq-q--4 {
+  color: var(--eq-q-4);
+}
+
+.xy-eq-q--5 {
+  color: var(--eq-q-5);
 }
 
 /* 通用条目行卡 */
 .xy-row-card {
   padding: var(--space-2) var(--space-3);
-  margin-bottom: var(--space-2);
   border: 1px solid var(--xy-ink-line);
   background: var(--xy-paper);
   border-radius: 2px;
@@ -512,6 +533,41 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
+}
+
+/* 属性网格（角色属性展示 · 角色面板/战斗侧栏共用，勿在组件内重复定义） */
+.xy-attr-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.xy-attr-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: 2px;
+  transition: background-color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-bg-hover);
+  }
+}
+
+.xy-attr-label {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-attr-value {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--xy-ink-1);
+}
+
+.xy-attr-value--pct {
+  color: var(--xy-gold);
 }
 
 /* 货币徽章 */

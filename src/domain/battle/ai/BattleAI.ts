@@ -13,7 +13,7 @@ import {
   BattleActionHelper,
   BATTLE_CONSTANTS,
 } from '@/domain/battle/type/types'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
@@ -385,7 +385,7 @@ export class BaseBattleAI implements BattleAI {
       turn: 0,
       effects: [
         {
-          type: EffectType.SPECIAL,
+          type: ActionResultType.SPECIAL,
           description: `${participant.name} uses skill`,
         },
       ],
@@ -404,7 +404,7 @@ export class BaseBattleAI implements BattleAI {
       turn: 0,
       effects: [
         {
-          type: EffectType.DAMAGE,
+          type: ActionResultType.DAMAGE,
           value: atk,
           description: `${participant.name} normal attack`,
         },

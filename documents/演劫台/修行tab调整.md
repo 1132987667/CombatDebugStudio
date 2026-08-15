@@ -1,4 +1,4 @@
-基于您提供的《斗战西游 · 修行面板重构设计文档》以及项目的开发规范（特别是 **禁止使用 emoji**、**文本大小不低于 `--font-size-md`**、**水墨主题令牌** 等约束），我为您完成了修行面板（CultivatePanel）的界面重构代码。
+﻿基于您提供的《斗战西游 · 修行面板重构设计文档》以及项目的开发规范（特别是 **禁止使用 emoji**、**文本大小不低于 `--font-size-md`**、**水墨主题令牌** 等约束），我为您完成了修行面板（CultivatePanel）的界面重构代码。
 
 以下代码严格遵循了项目的 DDD 架构与 Vue 3 Composition API 规范，并将原先的硬编码内容替换为结构化的数据驱动，同时去除了设计文档中所有的 emoji 符号（如 `🔒`、`→`），以确保符合 `AGENTS.md` 的硬性约束。
 
@@ -95,7 +95,7 @@ defineProps<{ title: string; subtitle: string; desc: string }>()
   color: var(--xy-ink-4);
 }
 .xy-pending-icon { width: 64px; height: 64px; margin-bottom: var(--space-3); opacity: 0.5; }
-.xy-pending-title { font-family: var(--xy-font-title); font-size: var(--font-size-xxl); letter-spacing: 8px; color: var(--xy-ink-3); margin: 0; }
+.xy-pending-title {  font-size: var(--font-size-xxl); letter-spacing: 8px; color: var(--xy-ink-3); margin: 0; }
 .xy-pending-name { font-size: var(--font-size-lg); color: var(--xy-ink-2); margin: var(--space-2) 0 0; }
 .xy-pending-sub { font-size: var(--font-size-md); color: var(--xy-ink-4); margin: 0; }
 .xy-pending-desc { font-size: var(--font-size-md); color: var(--xy-ink-4); margin: var(--space-2) 0 0; max-width: 280px; text-align: center; line-height: var(--line-height-lg); }
@@ -217,7 +217,7 @@ function qualityClass(q: string) { return `xy-q--${q}` }
 .xy-char-avatar { width: 64px; height: 64px; flex-shrink: 0; }
 .xy-char-info { flex: 1; display: flex; flex-direction: column; gap: var(--space-1); }
 .xy-char-name-row { display: flex; align-items: baseline; gap: var(--space-2); }
-.xy-char-name { font-family: var(--xy-font-title); font-size: var(--font-size-xl); color: var(--xy-ink-1); letter-spacing: 2px; }
+.xy-char-name {  font-size: var(--font-size-xl); color: var(--xy-ink-1); letter-spacing: 2px; }
 .xy-char-level { font-size: var(--font-size-md); color: var(--xy-gold); }
 .xy-char-title { margin: 0; font-size: var(--font-size-md); color: var(--xy-ink-3); }
 .xy-exp-bar { position: relative; height: 12px; background: var(--color-bg-secondary); border: 1px solid var(--xy-ink-line); border-radius: 2px; overflow: hidden; margin-top: var(--space-1); }
@@ -329,7 +329,7 @@ function handleBreakthrough() {
 .xy-realm-panel { display: flex; flex-direction: column; gap: var(--space-4); }
 .xy-realm-current { padding: var(--space-4); border: 1px solid rgba(var(--rgb-warning), var(--alpha-border)); background: var(--xy-gold-soft); border-radius: 2px; }
 .xy-realm-head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
-.xy-realm-name { font-family: var(--xy-font-title); font-size: var(--font-size-xl); color: var(--xy-ink-1); letter-spacing: 2px; }
+.xy-realm-name {  font-size: var(--font-size-xl); color: var(--xy-ink-1); letter-spacing: 2px; }
 .xy-realm-bonus { margin: 0 0 var(--space-3); font-size: var(--font-size-md); color: var(--xy-ink-2); }
 .xy-realm-next { margin: var(--space-2) 0 0; font-size: var(--font-size-md); color: var(--xy-ink-3); strong { color: var(--xy-ink-1); } }
 
@@ -456,7 +456,7 @@ function resetSkillPoints() {
   &:hover { border-color: var(--xy-ink-2); }
   &.is-selected { border-color: var(--xy-gold); background: var(--xy-gold-soft); }
 }
-.xy-school-name { margin: 0; font-family: var(--xy-font-title); font-size: var(--font-size-lg); color: var(--xy-ink-1); }
+.xy-school-name { margin: 0;  font-size: var(--font-size-lg); color: var(--xy-ink-1); }
 .xy-school-motto { margin: 0; font-size: var(--font-size-md); color: var(--xy-ink-3); flex: 1; }
 
 .xy-section { border: 1px solid var(--xy-ink-line); background: var(--xy-paper); border-radius: 2px; padding: var(--space-3); }

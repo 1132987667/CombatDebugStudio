@@ -198,8 +198,8 @@ export class BattleRuleManager {
         },
         // 自动战斗规则：控制自动战斗功能的相关参数
         autoBattle: {
-          // enabled: 是否默认启用自动战斗模式
-          enabled: true,
+          // enabled: 是否默认启用自动战斗模式（默认关闭，由玩家手动开启）
+          enabled: false,
           // defaultSpeed: 默认战斗播放速度倍率
           defaultSpeed: 1.0,
           // availableSpeeds: 可选的速度倍率列表，供玩家选择

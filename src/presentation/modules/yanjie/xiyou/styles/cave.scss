@@ -33,7 +33,7 @@
   align-items: baseline;
   gap: var(--space-2);
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   letter-spacing: 3px;
@@ -116,7 +116,7 @@
   background: var(--xy-paper);
   color: var(--xy-ink-3);
   cursor: pointer;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-md);
   letter-spacing: 2px;
   text-align: left;
@@ -202,7 +202,7 @@
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   letter-spacing: 3px;
@@ -436,7 +436,7 @@
   background: var(--xy-seal);
   color: #fff;
   cursor: pointer;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-md);
   letter-spacing: 4px;
   transition:
@@ -850,7 +850,7 @@
   background: var(--xy-paper);
   color: var(--xy-ink-3);
   cursor: pointer;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-md);
   letter-spacing: 2px;
 

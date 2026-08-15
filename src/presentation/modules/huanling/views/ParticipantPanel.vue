@@ -175,14 +175,17 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from "vue";
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
-import { applyRandomAffixes } from "@/shared/utils/affix";
+import { applyRandomAffixesByPool, clearAffixesFromParticipant, resolveAffixPlan } from "@/shared/utils/affix";
+import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
 import { container } from '@/infrastructure/di/Container';
 import { GameDataApi } from '@/application/service/GameDataApi';
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
-import type { ActorData, AffixData, LineupData } from '@/domain/fengshen/types';
+import type { ActorData, AffixData, AffixLibraryData, LineupData } from '@/domain/fengshen/types';
 import { ParticipantSide } from "@/domain/battle/type/types";
+import type { BattleEntity } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
+import affixesRaw from '@configs/affixes/affixes.json'
 import { useBattleStore } from '@/presentation/stores';
 import { useBattlePresetStore } from '@/presentation/stores/battlePresetStore';
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore';
@@ -563,13 +566,19 @@ const totalTeamCount = computed(
 );
 
 /**
- * 随机词缀：为所有参战角色随机附加 1-3 个词缀（封神榜 affixes 表）。
+ * 随机词缀：为所有参战角色随机附加词缀。
+ * 生成逻辑对齐词缀设计稿 v3.1 —— 不是完全从词缀库随机，而是按角色来源决定词缀池：
+ * - 敌方角色（enemies 表）：按该敌人 affixPool.buffTier 决定档位池（1-4 → yao_1~4，5 → 天命绑定），
+ *   count 决定附加数量；buffTier 0 / 无 affixPool 的角色不附加。
+ * - 我方角色（无 affixPool）：从词缀库随机附加 1-3 个（对齐词缀文档：劫数作用于玩家的规则）。
  * 词缀属性修正以 PERCENTAGE 修饰符注入，属性拆解可见「词缀·xxx」来源。
  */
 const applyRandomAffixesToTeam = async () => {
   const all = [...allyTeam.value, ...enemyTeam.value];
   if (all.length === 0) return;
   try {
+    // NOTE: 重新随机 = 替换词缀而非累积：先清除所有参战角色旧词缀，再按新计划附加
+    for (const p of all) clearAffixesFromParticipant(p);
     const affixes = await gameDataApi.listByTable<AffixData>('affixes', {
       limit: 1000,
     });
@@ -577,9 +586,36 @@ const applyRandomAffixesToTeam = async () => {
       notification.notify('提示', '词缀库为空，请先在封神榜配置词缀', 'warning');
       return;
     }
-    const applied = applyRandomAffixes(all, affixes);
+    // 天命词缀绑定表（affixes.json 顶层 mandate_bindings：boss_id → affix_id）
+    const mandateBindings = new Map(
+      ((affixesRaw as AffixLibraryData).mandate_bindings ?? []).map((b) => [b.boss_id, b.affix_id]),
+    );
+
+    const resolvePool = (p: BattleEntity): { pool: AffixData[]; count: number } | null => {
+      // 参战者 id 格式 `[阵营]_来源id_序号`：直接按「前缀 + enemy.id + _」匹配，
+      // 避免敌人 id 自身含数字时正则误剥（如 enemy_007_1）
+      const enemy = enemiesData.value.find((e) =>
+        p.id.startsWith(`[ALLY]_${e.id}_`) || p.id.startsWith(`[ENEMY]_${e.id}_`),
+      );
+      if (enemy) return resolveAffixPlan(enemy, affixes, mandateBindings);
+      // 我方角色（actors 等，无 affixPool）：词缀库随机 1-3 个
+      const pool = affixes.filter((a) => a.target === 'enemy');
+      return pool.length > 0 ? { pool, count: 1 + Math.floor(Math.random() * 3) } : null;
+    };
+
+    const applied = applyRandomAffixesByPool(all, resolvePool);
     let count = 0;
-    for (const ids of applied.values()) count += ids.length;
+    for (const [pid, ids] of applied) {
+      count += ids.length;
+      const p = all.find((c) => c.id === pid);
+      const names = ids.map((id) => affixes.find((a) => a.id === id)?.name ?? id).join('、');
+      battleLogManager.addActionLog({
+        source: '随机词缀',
+        action: '附加',
+        target: p?.name ?? pid,
+        message: `随机词缀：${p?.name ?? pid} 获得 ${names}`,
+      });
+    }
     notification.notify('成功', `已为 ${applied.size} 个参战角色随机附加 ${count} 个词缀`, 'success');
   } catch (e) {
     notification.notify('错误', `随机词缀失败: ${(e as Error).message}`, 'error');

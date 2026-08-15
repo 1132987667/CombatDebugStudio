@@ -12,8 +12,11 @@ import type {
   BattleParamData,
   DropGroupData,
   ElementsData,
+  EnemyRewardTableConfig,
   EquipmentData,
+  ExpTableConfig,
   GrowthCurveData,
+  LevelDiffBonusConfig,
   LineupData,
   MetaDataVersion,
   OperationLogEntry,
@@ -105,6 +108,24 @@ export class GameDataApi {
 
   async getBattleParam(id: string): Promise<BattleParamData | null> {
     return this.storage.get<BattleParamData>(FENGSHEN_STORE.PARAMS, id)
+  }
+
+  /** 玩家升级经验表（params 域 exp_table 的 data；未 seed / 无配置返回 null） */
+  async getExpTable(): Promise<ExpTableConfig | null> {
+    const rec = await this.getBattleParam('exp_table')
+    return rec?.data && typeof rec.data === 'object' && 'maxLevel' in rec.data ? (rec.data as ExpTableConfig) : null
+  }
+
+  /** 敌人经验与金钱基准表（params 域 enemy_reward_table 的 data） */
+  async getEnemyRewardTable(): Promise<EnemyRewardTableConfig | null> {
+    const rec = await this.getBattleParam('enemy_reward_table')
+    return rec?.data && typeof rec.data === 'object' && 'roleMultiplier' in rec.data ? (rec.data as EnemyRewardTableConfig) : null
+  }
+
+  /** 等级差经验加成规则（params 域 level_diff_bonus 的 data） */
+  async getLevelDiffBonus(): Promise<LevelDiffBonusConfig | null> {
+    const rec = await this.getBattleParam('level_diff_bonus')
+    return rec?.data && typeof rec.data === 'object' && 'rules' in rec.data ? (rec.data as LevelDiffBonusConfig) : null
   }
 
   async listBattleParams(): Promise<BattleParamData[]> {

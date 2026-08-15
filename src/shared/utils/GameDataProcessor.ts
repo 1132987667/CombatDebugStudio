@@ -25,7 +25,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 import { SkillType } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
-import type { LineupData, ActorData } from '@/domain/fengshen/types'
+import type { LineupData, ActorData, ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import { Counter } from '@/shared/utils/Counter'
@@ -112,6 +112,21 @@ export class GameDataProcessor {
   /** 获取所有材料（materials 表，图鉴等消费方读取） */
   static getMaterialsData(): Item[] {
     return dataSource.getMaterials()
+  }
+
+  /** 获取玩家升级经验表（params 域 exp_table；数据源不存在时返回 null，调用方回退默认） */
+  static getExpTable(): ExpTableConfig | null {
+    return dataSource.getExpTable()
+  }
+
+  /** 获取敌人经验与金钱基准表（params 域 enemy_reward_table） */
+  static getEnemyRewardTable(): EnemyRewardTableConfig | null {
+    return dataSource.getEnemyRewardTable()
+  }
+
+  /** 获取等级差经验加成规则（params 域 level_diff_bonus） */
+  static getLevelDiffBonus(): LevelDiffBonusConfig | null {
+    return dataSource.getLevelDiffBonus()
   }
 
   /**

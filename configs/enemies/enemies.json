@@ -3369,7 +3369,7 @@
       "skill_boss_major_huayaowang_ult"
     ],
     "passiveSkillIds": ["passive_boss_major_huayaowang_p1"],
-    "affixPool": { "buffTier": 1, "count": 1 },
+    "affixPool": { "buffTier": 5, "count": 1 },
     "drops": [
       { "itemId": "mat_taomu", "probability": 1.0 },
       { "itemId": "mat_danshuiyu", "probability": 0.6 },
@@ -3422,7 +3422,7 @@
       "skill_boss_major_hebo_ult"
     ],
     "passiveSkillIds": ["passive_boss_major_hebo_p1"],
-    "affixPool": { "buffTier": 2, "count": 1 },
+    "affixPool": { "buffTier": 5, "count": 1 },
     "drops": [
       { "itemId": "mat_tongjing", "probability": 1.0 },
       { "itemId": "mat_danshuiyu", "probability": 0.6 },
@@ -3475,7 +3475,7 @@
       "skill_boss_major_shanshen_ult"
     ],
     "passiveSkillIds": ["passive_boss_major_shanshen_p1"],
-    "affixPool": { "buffTier": 2, "count": 1 },
+    "affixPool": { "buffTier": 5, "count": 1 },
     "drops": [
       { "itemId": "mat_cushi", "probability": 1.0 },
       { "itemId": "mat_tiejing", "probability": 0.6 },

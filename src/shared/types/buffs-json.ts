@@ -41,6 +41,12 @@ export interface BuffJsonTriggerEntry {
 export interface AttributeValueConfig {
   value: number
   type: 'PERCENTAGE' | 'ADDITIVE'
+  /**
+   * 修饰符是否按层数缩放，缺省 true。
+   * perStack=false 时叠层不放大（与 ModifierEffect 的 perStack 语义一致）。
+   * 此标志在 buff 的 effects[].params.perStack 上声明，投影层合并 attributes 时透传到此。
+   */
+  perStack?: boolean
 }
 
 export interface BuffJsonEntry {

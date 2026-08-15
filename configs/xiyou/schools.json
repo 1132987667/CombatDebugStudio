@@ -48,9 +48,9 @@
       "unlockScene": "scene_4_5",
       "unlockNarrative": "河底石碑上刻着两个字：「不躲。」",
       "pureBonus": {
-        "attribute": "blockRate",
+        "attribute": "damageReduction",
         "value": 10,
-        "desc": "纯磐石道加成：格挡率 +10%"
+        "desc": "纯磐石道加成：免伤率 +10%"
       },
       "energyRhythm": {
         "trigger": "受击能量获取 +20%",
@@ -85,7 +85,7 @@
     "condition": "被动 + 2 小技能 + 大招全部来自同一流派",
     "linghou": { "attribute": "comboRate", "value": 10 },
     "jinxing": { "attribute": "critRate", "value": 10 },
-    "panshi": { "attribute": "blockRate", "value": 10 },
+    "panshi": { "attribute": "damageReduction", "value": 10 },
     "mixed": { "desc": "混搭无额外加成" }
   },
   "ui": {

@@ -338,16 +338,9 @@ export const ActionResultType = {
   SHIELD: 'shield',
   DRAIN: 'drain',
   REFLECT: 'reflect',
-} as const
-export type ActionResultType = (typeof ActionResultType)[keyof typeof ActionResultType]
-
-/** @deprecated 逐步迁移到 StepEffectType / ActionResultType */
-export const EffectType = {
-  ...StepEffectType,
-  ...ActionResultType,
   SPECIAL: 'special',
 } as const
-export type EffectType = (typeof EffectType)[keyof typeof EffectType]
+export type ActionResultType = (typeof ActionResultType)[keyof typeof ActionResultType]
 
 /**
  * 技能步骤接口

@@ -74,6 +74,9 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  // NOTE: modelValue 默认 null —— 父组件绑定时若意外为 undefined（如 reactive 动态键缺失），
+  // Vue 以默认值替换并跳过类型检查；null 与 undefined 语义等价（显示空输入）。
+  modelValue: null,
   type: 'text',
   integer: false,
   required: false,

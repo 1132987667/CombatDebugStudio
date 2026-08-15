@@ -31,7 +31,7 @@ export interface BuffRawItem {
   remainingTurns?: number
   /** 当前层数 */
   currentStacks?: number
-  /** 属性修正（key=attribute code, value=显式声明的 { value, type } 对象，per-stack 值） */
+  /** 属性修正（key=attribute code, value=显式声明的 { value, type } 对象，单层值；perStack=false 表示叠层不放大） */
   attributes?: Record<ATTRIBUTE_CODE, AttributeValueConfig>
   /** 显式声明的条件标签（如 "残血"），供 condition 为 inactive 时拼接 "残血·未激活" */
   conditionLabel?: string

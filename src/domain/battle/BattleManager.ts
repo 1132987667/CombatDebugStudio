@@ -452,7 +452,7 @@ export class BattleManager {
    * 开始战斗
    * 从 BattleData 获取启用的角色数据
    */
-  async startBattle(): Promise<string | null> {
+  async startBattle(seed?: string): Promise<string | null> {
     if (!this.battleSystem) {
       throw new Error('战斗系统未初始化')
     }
@@ -471,8 +471,8 @@ export class BattleManager {
     // 传递阵型配置到 BattleSystem
     this.battleSystem.setFormations(this.allyFormation, this.enemyFormation)
 
-    // 直接使用 BattleEntity 数组（传入场景 ID）
-    const battleState = this.battleSystem.initialize(allyTeam, enemyTeam, this.currentSceneId)
+    // 直接使用 BattleEntity 数组（传入场景 ID；seed 可选，确定性复现用）
+    const battleState = this.battleSystem.initialize(allyTeam, enemyTeam, this.currentSceneId, seed)
     this.battleSystem.setBattleState(BattleStatus.ACTIVE)
     this.battleStateManager.setBattleId(battleState.battleId)
     this.syncBattleState()

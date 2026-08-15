@@ -718,7 +718,7 @@
     "cost": 45,
     "craftable": true,
     "recipeId": "forge_ac_t1_charm_01",
-    "blueprintId": "bp_t1_ac",
+    "blueprintId": "bp_t1_ch",
     "legacyIds": [
       "eq_c001"
     ],
@@ -753,7 +753,7 @@
     "cost": 35,
     "craftable": true,
     "recipeId": "forge_ac_t1_ring_01",
-    "blueprintId": "bp_t1_ac",
+    "blueprintId": "bp_t1_rg",
     "source": "cave.json 已有配方",
     "description": "藤蔓盘绕而成，气血 +60。"
   },
@@ -784,7 +784,7 @@
     ],
     "cost": 30,
     "craftable": true,
-    "blueprintId": "bp_t1_ac",
+    "blueprintId": "bp_t1_hl",
     "source": "v2.0（原项链并入头盔）",
     "description": "贝壳缀连，蕴含水灵。防御 +5%。"
   },
@@ -815,7 +815,7 @@
     ],
     "cost": 25,
     "craftable": true,
-    "blueprintId": "bp_t1_ac",
+    "blueprintId": "bp_t1_bs",
     "legacyIds": [
       "eq_c004"
     ],
@@ -849,7 +849,7 @@
     ],
     "cost": 40,
     "craftable": true,
-    "blueprintId": "bp_t1_ac",
+    "blueprintId": "bp_t1_rg",
     "source": "v2.0（原手镯并入戒指）",
     "description": "玉润含光，暴击率 +3%。"
   },
@@ -890,7 +890,7 @@
     ],
     "cost": 50,
     "craftable": true,
-    "blueprintId": "bp_t1_ac",
+    "blueprintId": "bp_t1_hl",
     "source": "v2.0（原冠冕并入头盔）",
     "description": "藤木编就，灵气汇聚。全属性 +2%。"
   },
@@ -921,7 +921,7 @@
     ],
     "cost": 140,
     "craftable": true,
-    "blueprintId": "bp_t2_ac",
+    "blueprintId": "bp_t2_ch",
     "legacyIds": [
       "eq_c007"
     ],
@@ -955,7 +955,7 @@
     ],
     "cost": 130,
     "craftable": true,
-    "blueprintId": "bp_t2_ac",
+    "blueprintId": "bp_t2_rg",
     "legacyIds": [
       "eq_c008"
     ],
@@ -989,7 +989,7 @@
     ],
     "cost": 120,
     "craftable": true,
-    "blueprintId": "bp_t2_ac",
+    "blueprintId": "bp_t2_hl",
     "legacyIds": [
       "eq_c009"
     ],
@@ -1023,7 +1023,7 @@
     ],
     "cost": 110,
     "craftable": true,
-    "blueprintId": "bp_t2_ac",
+    "blueprintId": "bp_t2_bs",
     "legacyIds": [
       "eq_c010"
     ],
@@ -1057,7 +1057,7 @@
     ],
     "cost": 150,
     "craftable": true,
-    "blueprintId": "bp_t2_ac",
+    "blueprintId": "bp_t2_rg",
     "legacyIds": [
       "eq_c011"
     ],
@@ -1105,7 +1105,7 @@
     ],
     "cost": 170,
     "craftable": true,
-    "blueprintId": "bp_t2_ac",
+    "blueprintId": "bp_t2_hl",
     "source": "v2.0（原冠冕并入头盔）",
     "description": "铁木冠顶，全属性 +3%。"
   },
@@ -1136,7 +1136,7 @@
     ],
     "cost": 380,
     "craftable": true,
-    "blueprintId": "bp_t3_ac",
+    "blueprintId": "bp_t3_ch",
     "legacyIds": [
       "eq_c013"
     ],
@@ -1170,7 +1170,7 @@
     ],
     "cost": 360,
     "craftable": true,
-    "blueprintId": "bp_t3_ac",
+    "blueprintId": "bp_t3_rg",
     "source": "关卡7-9 制造",
     "description": "金精吐芒，攻击 +10%。"
   },
@@ -1201,7 +1201,7 @@
     ],
     "cost": 350,
     "craftable": true,
-    "blueprintId": "bp_t3_ac",
+    "blueprintId": "bp_t3_hl",
     "source": "v2.0（原项链并入头盔）",
     "description": "翡翠通灵，防御 +10%。"
   },
@@ -1232,7 +1232,7 @@
     ],
     "cost": 340,
     "craftable": true,
-    "blueprintId": "bp_t3_ac",
+    "blueprintId": "bp_t3_bs",
     "legacyIds": [
       "eq_c016"
     ],
@@ -1266,7 +1266,7 @@
     ],
     "cost": 400,
     "craftable": true,
-    "blueprintId": "bp_t3_ac",
+    "blueprintId": "bp_t3_rg",
     "legacyIds": [
       "eq_c017"
     ],
@@ -1310,7 +1310,7 @@
     ],
     "cost": 420,
     "craftable": true,
-    "blueprintId": "bp_t3_ac",
+    "blueprintId": "bp_t3_hl",
     "legacyIds": [
       "eq_c018"
     ],

@@ -43,6 +43,7 @@
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouQuality } from '../../data/mock'
+import { qualityClassOf } from '../../data/quality'
 import { fragmentRuleViews, type FragmentRuleView } from '../../data/caveLogic'
 
 const pack = usePackStore()
@@ -63,7 +64,7 @@ function canSynthesize(v: FragmentRuleView): boolean {
 }
 
 function qualityChip(q: XiyouQuality): string {
-  return `xy-q--${q}`
+  return qualityClassOf(q)
 }
 
 function synthesize(v: FragmentRuleView): void {

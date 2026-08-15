@@ -1,6 +1,6 @@
 /**
  * 文件: unified-migrate-stress.test.ts
- * 功能: 迁移器（v0.9 → v2.0.0）与压测存档合成器自检测试
+ * 功能: 压测存档合成器 / 校验器 / 分支对比 / 录制映射自检测试
  */
 import { describe, it, expect } from 'vitest'
 import { createStressArchive } from '@/domain/battle/replay/unified/stress-archive'

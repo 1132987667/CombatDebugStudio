@@ -1,6 +1,6 @@
 import type { BattleEffect, BattleEntity } from '@/domain/battle/type/types'
 import type { LogSegment } from '@/shared/types/battle-log'
-import { EffectType } from '@/domain/skill/types'
+import { ActionResultType } from '@/domain/skill/types'
 
 /**
  * 渲染上下文 — 提供执行来源、目标和 HP 快照
@@ -47,24 +47,24 @@ export class EffectRenderer {
     const snapshot = effect.targetId ? ctx.hpSnapshots.get(effect.targetId) : undefined
 
     switch (effect.type) {
-      case EffectType.DAMAGE:
+      case ActionResultType.DAMAGE:
         return this.renderDamage(effect, targetName, snapshot)
-      case EffectType.HEAL:
+      case ActionResultType.HEAL:
         return this.renderHeal(effect, targetName, snapshot)
-      case EffectType.DRAIN:
+      case ActionResultType.DRAIN:
         return this.renderDrain(effect, ctx, snapshot)
-      case EffectType.REFLECT:
+      case ActionResultType.REFLECT:
         return this.renderReflect(effect, ctx, snapshot)
-      case EffectType.BUFF:
-      case EffectType.DEBUFF:
+      case ActionResultType.BUFF:
+      case ActionResultType.DEBUFF:
         return this.renderBuff(effect, targetName, effect.targetId === ctx.source.id)
-      case EffectType.SHIELD:
+      case ActionResultType.SHIELD:
         return this.renderShield(effect, targetName)
-      case EffectType.MISS:
+      case ActionResultType.MISS:
         return this.renderMiss(effect, targetName)
-      case EffectType.STATUS:
-      case EffectType.CRITICAL:
-      case EffectType.SPECIAL:
+      case ActionResultType.STATUS:
+      case ActionResultType.CRITICAL:
+      case ActionResultType.SPECIAL:
       default:
         return effect.description ? [{ text: effect.description }] : []
     }

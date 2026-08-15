@@ -4,10 +4,7 @@ import type { BuffConfig, StackRule, ControlType, TriggerAction } from '@/domain
 import type { BuffPolarity } from '@/shared/types/buff-classification'
 import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import {
-  BattleTriggerPhase,
-  OLD_PHASE_NAME_MAP,
-} from '@/domain/battle/type/types'
+import { normalizeTriggerPhase } from '@/domain/battle/type/types'
 
 /** 解析后的运行时效果计划 */
 export interface ResolvedEffectPlan {
@@ -169,21 +166,9 @@ export class BuffConfigResolver {
       triggers: raw.triggers
         ? (raw.triggers as TriggerAction[]).map((t) => ({
             ...t,
-            phase: this.normalizePhase(t.phase, raw.id),
+            phase: normalizeTriggerPhase(t.phase, raw.id ?? 'unknown'),
           }))
         : undefined,
     }
-  }
-
-  /** 归一化触发阶段：旧风格（ON_ATTACK_HIT）→ 枚举值（on_hit），无法识别则抛错 */
-  private normalizePhase(phase: string, buffId: string): BattleTriggerPhase {
-    const normalized = OLD_PHASE_NAME_MAP[phase]
-    if (normalized) return normalized
-    if ((Object.values(BattleTriggerPhase) as string[]).includes(phase)) {
-      return phase as BattleTriggerPhase
-    }
-    throw new Error(
-      `[BuffConfigResolver] ${buffId ?? 'unknown'}: 无法识别的触发器阶段 "${phase}"`
-    )
   }
 }

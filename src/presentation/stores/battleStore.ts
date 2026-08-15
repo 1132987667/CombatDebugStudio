@@ -1,6 +1,7 @@
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
 import {
@@ -621,7 +622,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const startBattle = async () =>
     withBattleAction(async () => {
-      const battleId = await battleService.value!.startBattle()
+      const battleId = await battleService.value!.startBattle(pendingSeed.value ?? undefined)
       if (!battleId) throw new Error('战斗创建失败，请检查参战队伍的配置')
       currentBattleId.value = battleId
       // NOTE: 战斗数据快照（规格说明书 §6.3）——战斗开始即冻结封神榜全量数据 + dataVersion，
@@ -647,7 +648,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @description 终止战斗会话，记录胜负结果，清理相关状态
    */
   const endBattle = async (
-    winner: typeof ParticipantSide.ALLY = ParticipantSide.ALLY,
+    winner: ParticipantSide = ParticipantSide.ALLY,
   ) =>
     withBattleAction(async () => {
       battleService.value!.endBattle(winner)
@@ -696,6 +697,73 @@ export const useBattleStore = defineStore('battle', () => {
       guard: true,
       debugLabel: '执行回合时出错',
     })
+
+  // ════════════ 调试注入（DebugCavePanel 战斗调试调用；仅修改参与者公开属性，不触碰引擎内部逻辑） ════════════
+
+  /** 强制结束战斗并指定胜利方（面板不 import domain 枚举，走字符串字面量） */
+  const debugEndBattle = (winner: 'ally' | 'enemy'): Promise<boolean> =>
+    endBattle(winner === 'ally' ? ParticipantSide.ALLY : ParticipantSide.ENEMY)
+
+  /** 我方全员满血满能量 */
+  const restoreAllAlly = (): boolean => {
+    if (!battleService.value) return false
+    for (const p of allyTeam.value) {
+      p.setAttribute(ATTRIBUTE_CODE.currentHealth, p.getAttribute(ATTRIBUTE_CODE.maxHealth))
+      p.setAttribute(ATTRIBUTE_CODE.currentEnergy, p.getAttribute(ATTRIBUTE_CODE.maxEnergy))
+    }
+    battleService.value.syncBattleState()
+    return true
+  }
+
+  /** 击杀选中敌人（HP 归零，走属性变更而非直接移除） */
+  const killSelectedEnemy = (): boolean => {
+    const target = enemyTeam.value.find((p) => p.id === selectedCharacterId.value)
+    if (!target) return false
+    target.setAttribute(ATTRIBUTE_CODE.currentHealth, 0)
+    battleService.value?.syncBattleState()
+    return true
+  }
+
+  /** 强制暴击开关：将我方全员暴击率暂置 100（验证暴击公式），关闭时恢复开启前的原值 */
+  const forceCritOrig = new Map<string, number>()
+  const setForceCrit = (on: boolean): void => {
+    for (const p of allyTeam.value) {
+      if (on && !forceCritOrig.has(p.id)) forceCritOrig.set(p.id, p.getAttribute(ATTRIBUTE_CODE.critRate))
+      p.setAttribute(ATTRIBUTE_CODE.critRate, on ? 100 : (forceCritOrig.get(p.id) ?? 0))
+      if (!on) forceCritOrig.delete(p.id)
+    }
+    battleService.value?.syncBattleState()
+  }
+
+  /** 强制闪避开关：将我方全员闪避率暂置 100（验证闪避公式），关闭时恢复开启前的原值 */
+  const forceDodgeOrig = new Map<string, number>()
+  const setForceDodge = (on: boolean): void => {
+    for (const p of allyTeam.value) {
+      if (on && !forceDodgeOrig.has(p.id)) forceDodgeOrig.set(p.id, p.getAttribute(ATTRIBUTE_CODE.dodge))
+      p.setAttribute(ATTRIBUTE_CODE.dodge, on ? 100 : (forceDodgeOrig.get(p.id) ?? 0))
+      if (!on) forceDodgeOrig.delete(p.id)
+    }
+    battleService.value?.syncBattleState()
+  }
+
+  /** 下次战斗使用的固定随机种子（确定性复现；null 恢复随机） */
+  const pendingSeed = ref<string | null>(null)
+
+  const setPendingSeed = (seed: string | null): void => {
+    pendingSeed.value = seed
+  }
+
+  /** 最近一次伤害分步（DamageCalculator 计算日志；无伤害记录返回空） */
+  const lastDamageTrace = ref<unknown[]>([])
+
+  const captureDamageTrace = (): void => {
+    try {
+      const calc = battleService.value?.getBattleManager().getBattleSystem().getSkillManager().getDamageCalculator()
+      lastDamageTrace.value = calc?.getCalculationLogs() ?? []
+    } catch {
+      lastDamageTrace.value = []
+    }
+  }
 
   /**
    * 手动干预：让指定参战者立即对指定目标执行一次指定行动（技能或普攻）
@@ -1135,6 +1203,17 @@ export const useBattleStore = defineStore('battle', () => {
     executeManualAction, // 手动施放指定行动（技能/普攻）
     toggleAutoPlay, // 切换自动播放
     togglePause, // 切换暂停
+
+    // ========== 调试注入（DebugCavePanel 战斗调试） ==========
+    debugEndBattle, // 强制结束战斗（'ally' | 'enemy'）
+    restoreAllAlly, // 我方全员满血满能量
+    killSelectedEnemy, // 击杀选中敌人
+    setForceCrit, // 强制暴击开关
+    setForceDodge, // 强制闪避开关
+    pendingSeed, // 固定随机种子（null=随机）
+    setPendingSeed, // 设置固定随机种子
+    lastDamageTrace, // 最近一次伤害分步
+    captureDamageTrace, // 捕获最近一次伤害分步
 
     // ========== 数据导入导出 ==========
     importState, // 导入状态

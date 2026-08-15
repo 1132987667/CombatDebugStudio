@@ -150,11 +150,13 @@ import { BuffPolarity } from '@/shared/types/buff-classification'
 import { round } from '@/shared/utils/math'
 
 interface Props {
-  visible: boolean
-  title: string
-  modifiers: Modifier[]
-  finalValue: number
-  valueType: AttributeValueType
+  // NOTE: 有 withDefaults 默认值的 prop 必须标 `?` 可选——否则调用方未传时
+  // 运行时仍触发 "Missing required prop"（默认值不覆盖缺失场景）。
+  visible?: boolean
+  title?: string
+  modifiers?: Modifier[]
+  finalValue?: number
+  valueType?: AttributeValueType
   triggerRect?: DOMRect | null
   /** 属性编码（可选），传此值可避免从 title 反向查找 attributeMeta */
   attributeCode?: string

@@ -188,7 +188,7 @@ function nodeTypeText(t: XiyouNodeType): string {
 
 .xy-school-name {
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-lg);
   color: var(--xy-ink-1);
 }

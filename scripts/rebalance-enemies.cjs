@@ -7,10 +7,11 @@
  *
  * 曲线（线性，低成长，确保我方 L10 守护者全程可破防且后期有挑战）：
  *   HP  = 80  + 11×(L−1)      → L1:80   L10:179  L19:278  L27:366
- *   ATK = 10  + 1.9×(L−1)     → L1:10   L10:27   L19:44   L27:59
+ *   ATK = 10  + 2.0×(L−1)     → L1:10   L10:28   L19:46   L27:62
  *   DEF = 1   + 0.9×(L−1)     → L1:1    L10:9    L19:17   L27:24   （低于我方最低攻击 44×0.85≈37，杜绝破防悬崖）
  *   SPD = 10  + 1.2×(L−1)     → L1:10   L10:21   L19:32   L27:41   （不全面压过我方守护者，保留先手博弈）
  *
+ * 曲线参数由 configs/params/curves.json 驱动（数值体系中枢，见 documents/数值体系搭建指南.md §4.1）。
  * guardian_*（我方核心角色，同时可被选入敌方）单独手写，高于野怪曲线（主角团定位）。
  *
  * 用法：node scripts/rebalance-enemies.cjs
@@ -20,14 +21,22 @@ const fs = require('fs')
 const path = require('path')
 
 const FILE = path.resolve(__dirname, '..', 'configs', 'enemies', 'enemies.json')
+const CURVES_FILE = path.resolve(__dirname, '..', 'configs', 'params', 'curves.json')
 const enemies = JSON.parse(fs.readFileSync(FILE, 'utf8'))
+const curves = JSON.parse(fs.readFileSync(CURVES_FILE, 'utf8'))
 
-/** 野怪曲线（按等级） */
+/** 曲线求值器：目前支持线性（value = base + perLevel×(L−1)），未知类型直接抛错防静默算错 */
+function evalCurve(spec, L) {
+  if (spec.type !== 'linear') throw new Error(`[rebalance-enemies] 不支持的曲线类型: ${spec.type}`)
+  return spec.base + spec.perLevel * (L - 1)
+}
+
+/** 野怪曲线（按等级），参数来自 configs/params/curves.json */
 const curve = (L) => ({
-  hp: 80 + 11 * (L - 1),
-  atk: 10 + 2.0 * (L - 1),
-  def: 1 + 0.9 * (L - 1),
-  spd: 10 + 1.2 * (L - 1),
+  hp: evalCurve(curves.enemy.hp, L),
+  atk: evalCurve(curves.enemy.atk, L),
+  def: evalCurve(curves.enemy.def, L),
+  spd: evalCurve(curves.enemy.spd, L),
 })
 
 /** guardian_* 手写数值（火/金/水/木/土，主角团定位，高于野怪曲线约 1.5~2 倍） */

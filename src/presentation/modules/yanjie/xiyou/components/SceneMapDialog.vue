@@ -57,7 +57,7 @@
                   </svg>
                 </span>
               </span>
-              <span class="xy-map-dlg__stage-range">{{ s.range }}</span>
+              <span class="xy-map-dlg__stage-range">Lv.{{ s.levelRange?.[0] }}-{{ s.levelRange?.[1] }}</span>
               <span class="xy-map-dlg__stage-meta">
                 <span class="xy-map-dlg__difficulty" :class="`xy-map-dlg__difficulty--${nodeTone(s.difficulty)}`">
                   <span class="xy-map-dlg__difficulty-dot" aria-hidden="true"></span>
@@ -91,7 +91,7 @@
                     </svg>
                   </span>
                 </div>
-                <p class="xy-map-dlg__detail-loc">{{ regionName(selected.regionId) }} · {{ selected.range }}</p>
+                <p class="xy-map-dlg__detail-loc">{{ regionName(selected.regionId) }} · Lv.{{ selected.levelRange?.[0] }}-{{ selected.levelRange?.[1] }}</p>
               </header>
 
               <div class="xy-map-dlg__detail-meta">
@@ -212,11 +212,11 @@ function regionName(regionId: string): string {
 }
 
 function difficultyText(d: XiyouScene['difficulty']): string {
-  return { easy: '简单', normal: '普通', hard: '困难', hell: '极难' }[d]
+  return { easy: '简单', normal: '普通', hard: '困难' }[d]
 }
 
 function nodeTone(d: XiyouScene['difficulty']): string {
-  return { easy: 'easy', normal: 'normal', hard: 'hard', hell: 'hell' }[d]
+  return { easy: 'easy', normal: 'normal', hard: 'hard' }[d]
 }
 
 const overlayRef = ref<HTMLElement | null>(null)
@@ -276,7 +276,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 .xy-map-dlg__name {
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xxl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 8px;
@@ -461,10 +461,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   color: var(--color-debuff);
 }
 
-.xy-map-dlg__stage--hell {
-  color: var(--xy-gold);
-}
-
 .xy-map-dlg__stage-head {
   display: flex;
   align-items: center;
@@ -473,7 +469,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .xy-map-dlg__stage-name {
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-lg);
   letter-spacing: 2px;
   color: var(--xy-ink-1);
@@ -563,7 +559,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 .xy-map-dlg__detail-name {
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xxl);
   letter-spacing: 3px;
   color: var(--xy-ink-1);
@@ -623,10 +619,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
   &--hard {
     color: var(--color-debuff);
-  }
-
-  &--hell {
-    color: var(--xy-gold);
   }
 }
 
@@ -719,7 +711,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   padding: var(--space-2) var(--space-3);
   border-radius: 2px;
   cursor: pointer;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-md);
   letter-spacing: 3px;
   transition: all var(--transition-fast);
@@ -757,7 +749,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-lg);
   letter-spacing: 4px;
   color: var(--xy-ink-4);

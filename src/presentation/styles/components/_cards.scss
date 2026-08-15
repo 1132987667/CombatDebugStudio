@@ -12,7 +12,12 @@
   background: var(--color-bg-tertiary);
   border: 2px solid var(--color-border-default);
   cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .character-item:hover {
@@ -109,7 +114,12 @@
   margin-bottom: var(--space-2);
   display: flex;
   gap: var(--space-2);
-  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
   position: relative;
 }
 
@@ -125,10 +135,16 @@
 .member-card.hit {
   animation: hitFlash 0.4s ease-out;
 }
+/* 蓄力/施法 */
 
 .member-card.casting {
-  animation: castingGlow 1s ease-in-out infinite;
   border-color: var(--color-casting);
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 30px var(--color-brand-red),
+    0 6px 24px rgba(var(--rgb-black), 0.7);
+  animation: cast-pulse 0.6s ease;
+  animation: castingGlow 1s ease-in-out infinite;
 }
 
 .member-card.buffed {
@@ -139,6 +155,30 @@
 .member-card.selected {
   border-color: var(--color-selected);
   box-shadow: 0 0 8px rgba(var(--rgb-energy), var(--alpha-glow));
+}
+
+/* 受击 */
+.member-card.hurt {
+  animation: hurt-shake 0.45s cubic-bezier(.36, .07, .19, .97);
+}
+
+.member-card.hurt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(var(--rgb-danger), var(--alpha-glow)), transparent 70%);
+  pointer-events: none;
+  animation: hurt-flash 0.45s ease;
+}
+
+/* 被治疗 */
+.member-card.healed {
+  animation: heal-glow 0.8s ease;
+}
+
+/* 被加护盾 */
+.member-card.shielded {
+  animation: shield-glow 0.8s ease;
 }
 
 /* ----- 4. 成员信息 ----- */
@@ -154,6 +194,42 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin-bottom: var(--space-1);
+}
+
+/* 名字阵营色 */
+.member-name .name--ally {
+  color: var(--color-ally-text);
+}
+
+.member-name .name--enemy {
+  color: var(--color-enemy-text);
+}
+
+/* 词缀前缀（名字前【词缀1、词缀2】，文本色随品阶）
+   NOTE: 色值统一引用 tokens.scss 的 --rarity-* 令牌 */
+.member-affixes {
+  font-weight: var(--font-weight-bold);
+  margin-right: var(--space-1);
+}
+
+.affix-tag.affix-q1 {
+  color: var(--rarity-1);
+}
+
+.affix-tag.affix-q2 {
+  color: var(--rarity-2);
+}
+
+.affix-tag.affix-q3 {
+  color: var(--rarity-3);
+}
+
+.affix-tag.affix-q4 {
+  color: var(--rarity-4);
+}
+
+.affix-tag.affix-q5 {
+  color: var(--rarity-5);
 }
 
 .member-action {
@@ -311,9 +387,18 @@
     0 0 30px rgba(var(--rgb-success), 0.4);
 }
 
+/* 气血 条闪光 */
+.hp-fill.hp-flash {
+  animation: hp-bar-flash 0.8s ease;
+}
+
 /* ── 能量/护盾填充 ── */
 .energy-fill {
-  background: linear-gradient(90deg, var(--color-energy), var(--color-energy-deep));
+  background: linear-gradient(
+    90deg,
+    var(--color-energy),
+    var(--color-energy-deep)
+  );
   box-shadow:
     0 0 10px rgba(var(--rgb-energy), 0.8),
     0 0 30px rgba(var(--rgb-energy), 0.4);
@@ -324,11 +409,19 @@
 .energy-fill.low,
 .energy-fill.medium,
 .energy-fill.full {
-  background: linear-gradient(90deg, var(--color-energy), var(--color-energy-deep));
+  background: linear-gradient(
+    90deg,
+    var(--color-energy),
+    var(--color-energy-deep)
+  );
 }
 
 .shield-fill {
-  background: linear-gradient(90deg, var(--color-shield), var(--color-shield-deep));
+  background: linear-gradient(
+    90deg,
+    var(--color-shield),
+    var(--color-shield-deep)
+  );
   box-shadow:
     0 0 10px rgba(var(--rgb-shield), 0.8),
     0 0 30px rgba(var(--rgb-shield), 0.4);

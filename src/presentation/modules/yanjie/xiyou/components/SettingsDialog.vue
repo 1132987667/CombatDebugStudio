@@ -39,6 +39,24 @@
               <span class="xy-settings-dlg__label">退出演劫台</span>
               <span class="xy-settings-dlg__hint">离开斗战西游，返回唤灵台</span>
             </button>
+            <button type="button" class="xy-settings-dlg__row xy-settings-dlg__row--btn xy-ink-hover" @click="onManualSave">
+              <span class="xy-settings-dlg__label">手动保存进度</span>
+              <span class="xy-settings-dlg__hint">立即写入当前存档</span>
+            </button>
+            <button type="button" class="xy-settings-dlg__row xy-settings-dlg__row--btn xy-ink-hover" @click="onImportClick">
+              <span class="xy-settings-dlg__label">导入存档</span>
+              <span class="xy-settings-dlg__hint">从 JSON 文件恢复进度</span>
+            </button>
+            <input ref="fileInput" type="file" accept=".json,application/json" class="xy-settings-dlg__file" @change="onImportFile" />
+          </section>
+
+          <section class="xy-settings-dlg__group xy-settings-dlg__group--danger">
+            <h3 class="xy-settings-dlg__cat xy-settings-dlg__cat--danger">危险操作</h3>
+            <button type="button" class="xy-settings-dlg__row xy-settings-dlg__row--btn xy-settings-dlg__row--danger xy-ink-hover"
+              @click="showResetConfirm = true">
+              <span class="xy-settings-dlg__label">新游戏</span>
+              <span class="xy-settings-dlg__hint">清除所有进度，从头开始</span>
+            </button>
           </section>
 
           <section class="xy-settings-dlg__group">
@@ -73,6 +91,30 @@
             </div>
           </section>
         </div>
+
+        <!-- 新游戏二次确认（PRD §6.2：未确认前不执行任何清除） -->
+        <div v-if="showResetConfirm" class="xy-settings-dlg__confirm" role="alertdialog" aria-modal="true"
+          aria-label="确认开始新游戏？" tabindex="-1">
+          <div class="xy-settings-dlg__confirm-panel">
+            <h3 class="xy-settings-dlg__confirm-title">确认开始新游戏？</h3>
+            <p class="xy-settings-dlg__confirm-text">
+              此操作将清除当前所有游戏进度（包括等级、装备、材料与任务），且不可恢复。建议先导出存档备份。
+            </p>
+            <div class="xy-settings-dlg__confirm-actions">
+              <button type="button" class="xy-settings-dlg__confirm-btn xy-settings-dlg__confirm-btn--primary"
+                @click="onResetWithExport">
+                导出备份并重置
+              </button>
+              <button type="button" class="xy-settings-dlg__confirm-btn xy-settings-dlg__confirm-btn--danger"
+                @click="doReset">
+                直接重置
+              </button>
+              <button type="button" class="xy-settings-dlg__confirm-btn" @click="showResetConfirm = false">
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </Transition>
@@ -80,6 +122,8 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { saveManager } from '../data/save-bridge'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 const props = defineProps<{
   modelValue: boolean
@@ -89,10 +133,56 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   'update:sidebar': [value: 'left' | 'right']
   back: []
+  'progress-changed': []
 }>()
 
+const notification = useNotificationStore()
+const showResetConfirm = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+
 function close(): void {
+  showResetConfirm.value = false
   emit('update:modelValue', false)
+}
+
+/** 手动存档：立即写入主档（保留最近自动备份，防误覆盖） */
+async function onManualSave(): Promise<void> {
+  const ok = await saveManager.save('manual')
+  notification.toast(ok ? '进度已保存' : '保存失败，请检查浏览器存储', ok ? 'success' : 'error')
+}
+
+function onImportClick(): void {
+  fileInput.value?.click()
+}
+
+/** 导入存档：解析 → 迁移 → 校验 → 落盘 → 恢复，成功后通知父级刷新 UI */
+async function onImportFile(e: Event): Promise<void> {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  const result = await saveManager.importSave(file)
+  notification.toast(result.message ?? (result.ok ? '存档导入成功' : '存档导入失败'), result.ok ? 'success' : 'error')
+  if (result.ok) emit('progress-changed')
+}
+
+/** 新游戏（导出备份并重置）：先下载当前进度 JSON，再执行重置 */
+async function onResetWithExport(): Promise<void> {
+  showResetConfirm.value = false
+  await saveManager.exportSave()
+  await doResetCore()
+}
+
+/** 新游戏（直接重置） */
+async function doReset(): Promise<void> {
+  showResetConfirm.value = false
+  await doResetCore()
+}
+
+async function doResetCore(): Promise<void> {
+  await saveManager.reset()
+  notification.toast('新游戏已开始', 'success')
+  emit('progress-changed')
 }
 
 const overlayRef = ref<HTMLElement | null>(null)
@@ -129,6 +219,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .xy-settings-dlg__panel {
   display: flex;
   flex-direction: column;
+  position: relative;
   width: min(520px, 92vw);
   max-height: min(680px, 88vh);
   min-height: 0;
@@ -151,7 +242,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 .xy-settings-dlg__name {
   margin: 0;
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 6px;
@@ -300,5 +391,110 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .xy-settings-fade-enter-from,
 .xy-settings-fade-leave-to {
   opacity: 0;
+}
+
+/* 导入存档文件选择器（隐藏原生 input） */
+.xy-settings-dlg__file {
+  display: none;
+}
+
+/* 危险操作分组 */
+.xy-settings-dlg__group--danger {
+  border-top: 1px dashed var(--xy-ink-line);
+  padding-top: var(--space-4);
+}
+
+.xy-settings-dlg__cat--danger {
+  border-left-color: var(--xy-seal);
+  color: var(--xy-seal);
+}
+
+.xy-settings-dlg__row--danger:hover {
+  border-color: var(--xy-seal);
+  background: var(--xy-seal-soft);
+}
+
+/* 新游戏二次确认覆盖层 */
+.xy-settings-dlg__confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: rgba(var(--rgb-black), 0.62);
+  backdrop-filter: blur(2px);
+  outline: none;
+}
+
+.xy-settings-dlg__confirm-panel {
+  width: min(420px, 92%);
+  padding: var(--space-5);
+  background: var(--xy-paper);
+  border: 1px solid var(--xy-ink-line);
+  box-shadow: 0 20px 48px rgba(var(--rgb-black), 0.5);
+  border-radius: 4px;
+}
+
+.xy-settings-dlg__confirm-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--xy-ink-1);
+}
+
+.xy-settings-dlg__confirm-text {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-md);
+  line-height: 1.7;
+  color: var(--xy-ink-3);
+}
+
+.xy-settings-dlg__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.xy-settings-dlg__confirm-btn {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--xy-ink-2);
+  font-family: var(--xy-font-body);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background var(--transition-fast);
+
+  &:hover {
+    border-color: var(--xy-seal);
+    color: var(--xy-ink-1);
+  }
+
+  &--primary {
+    border-color: var(--xy-seal);
+    background: var(--xy-seal);
+    color: #fff;
+
+    &:hover {
+      background: var(--xy-seal);
+      color: #fff;
+    }
+  }
+
+  &--danger {
+    border-color: var(--xy-seal);
+    color: var(--xy-seal);
+
+    &:hover {
+      background: var(--xy-seal-soft);
+    }
+  }
 }
 </style>

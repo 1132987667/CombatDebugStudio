@@ -94,7 +94,7 @@
     </section>
 
     <section class="xy-section">
-      <h4 class="xy-sec-title">装备总览<span class="xy-sec-count">{{ equippedGear.length }}/3</span></h4>
+      <h4 class="xy-sec-title">装备总览<span class="xy-sec-count">{{ equippedGear.length }}/6</span></h4>
       <div class="xy-equip-list">
         <div class="xy-equip-row" v-for="g in equippedGear" :key="g.slot">
           <span class="xy-equip-slot">{{ g.slot }}</span>
@@ -113,11 +113,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import AttributeTooltip from '@/presentation/components/AttributeTooltip.vue'
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, ATTRIBUTE_DISPLAY_CONFIG } from '@/presentation/config/attributeDisplay'
-import { player, playerAttributes, statPoints } from '../../data/mock'
+import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import { qualityClass, qualityOf } from '../../data/quality'
 
@@ -125,7 +126,9 @@ defineEmits<{ goEquip: [] }>()
 
 const notification = useNotificationStore()
 
-const expPct = computed(() => (player.exp / player.expNeed) * 100)
+const { player, statPoints, playerAttributes } = storeToRefs(usePlayerStore())
+
+const expPct = computed(() => (player.value.exp / player.value.expNeed) * 100)
 
 /* ── 属性面板（对齐唤灵台「角色监控」：基础/加成/进阶三层分组，元数据驱动 + 悬浮说明） ── */
 
@@ -250,18 +253,18 @@ const statList = [
 
 type StatKey = (typeof statList)[number]['key']
 
-const usedPoints = computed(() => statList.reduce((sum, s) => sum + statPoints[s.key], 0))
+const usedPoints = computed(() => statList.reduce((sum, s) => sum + statPoints.value[s.key], 0))
 
 function incStat(key: StatKey) {
-  if (statPoints.available <= 0) return
-  statPoints.available--
-  statPoints[key]++
+  if (statPoints.value.available <= 0) return
+  statPoints.value.available--
+  statPoints.value[key]++
 }
 
 function decStat(key: StatKey) {
-  if (statPoints[key] <= 0) return
-  statPoints[key]--
-  statPoints.available++
+  if (statPoints.value[key] <= 0) return
+  statPoints.value[key]--
+  statPoints.value.available++
 }
 
 function applyStats() {
@@ -271,8 +274,8 @@ function applyStats() {
 function resetStats() {
   if (!confirm('确认重置所有加点？')) return
   statList.forEach((s) => {
-    statPoints.available += statPoints[s.key]
-    statPoints[s.key] = 0
+    statPoints.value.available += statPoints.value[s.key]
+    statPoints.value[s.key] = 0
   })
 }
 
@@ -286,7 +289,7 @@ interface EquipOverviewRow {
   enhance: number
 }
 const equippedGear = computed<EquipOverviewRow[]>(() =>
-  (['weapon', 'armor', 'accessory'] as GearSlotKey[])
+  (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
     .filter((slot) => pack.equippedGear(slot))
     .map((slot) => {
       const g = pack.equippedGear(slot)!
@@ -294,7 +297,7 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
         slot: GEAR_SLOT_LABELS[slot],
         item: g.name,
         rarity: g.rarity,
-        enhance: 0,
+        enhance: pack.equippedInstance(slot)?.enhance ?? 0,
       }
     }),
 )
@@ -337,7 +340,7 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
 }
 
 .xy-char-name {
-  font-family: var(--xy-font-title);
+  
   font-size: var(--font-size-xl);
   letter-spacing: 2px;
   color: var(--xy-ink-1);
@@ -450,39 +453,8 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   color: var(--xy-ink-4);
 }
 
-.xy-attr-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-}
-
 .xy-attr-item {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-bg-secondary);
-  border-radius: 2px;
   cursor: help;
-  transition: background-color var(--transition-fast);
-
-  &:hover {
-    background: var(--color-bg-hover);
-  }
-}
-
-.xy-attr-label {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
-}
-
-.xy-attr-value {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-bold);
-  color: var(--xy-ink-1);
-}
-
-.xy-attr-value--pct {
-  color: var(--xy-gold);
 }
 
 .xy-stat-list {
@@ -630,13 +602,5 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   &:hover {
     text-decoration: underline;
   }
-}
-
-.xy-q--凡品 {
-  color: var(--xy-ink-4);
-}
-
-.xy-q--玄品 {
-  color: var(--xy-jade);
 }
 </style>

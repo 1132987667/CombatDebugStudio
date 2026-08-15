@@ -50,6 +50,8 @@ class TestBuffWithStacks extends AttributeBuffTemplate {
 // ============================================================
 
 function createMockContext(overrides?: Partial<BuffContext>): BuffContext {
+  let varReadTracker: Set<string> | null = null
+  const variables = new Map<string, unknown>()
   const context = {
     characterId: 'test_char',
     instanceId: 'test_instance',
@@ -64,10 +66,24 @@ function createMockContext(overrides?: Partial<BuffContext>): BuffContext {
       controlType: 'none' as any,
       parameters: {},
     },
+    variables,
     addModifier: vi.fn(),
     removeModifiers: vi.fn(),
-    getVariable: vi.fn(),
-    setVariable: vi.fn(),
+    getVariable: vi.fn((key: string) => {
+      if (varReadTracker) varReadTracker.add(key)
+      return variables.get(key)
+    }),
+    setVariable: vi.fn((key: string, value: unknown) => {
+      variables.set(key, value)
+    }),
+    beginVariableTracking: () => {
+      varReadTracker = new Set()
+    },
+    endVariableTracking: () => {
+      const result = varReadTracker
+      varReadTracker = null
+      return result
+    },
     ...overrides,
   } as unknown as BuffContext
   return context
@@ -396,6 +412,41 @@ describe('AttributeBuffTemplate', () => {
       countingBuff['applyModifiers'](context, true)
 
       expect(calls).toBe(1)
+    })
+  })
+
+  describe('value 函数结果缓存（依赖变量追踪）', () => {
+    it('依赖变量未变化时缓存结果，不重复调用 value 函数', () => {
+      context.setVariable('_defenseBonus', 5)
+      const fn = vi.fn((ctx: BuffContext) => (ctx.getVariable<number>('_defenseBonus') ?? 0))
+      const mod = { attribute: ATTRIBUTE_CODE.attack, value: fn, type: ModifierType.ADDITIVE }
+
+      buff['applyModifiers'](context, true, [mod])
+      buff['applyModifiers'](context, true, [mod])
+
+      expect(fn).toHaveBeenCalledTimes(1)
+    })
+
+    it('依赖变量变化时重新求值 value 函数', () => {
+      context.setVariable('_defenseBonus', 5)
+      const fn = vi.fn((ctx: BuffContext) => (ctx.getVariable<number>('_defenseBonus') ?? 0))
+      const mod = { attribute: ATTRIBUTE_CODE.attack, value: fn, type: ModifierType.ADDITIVE }
+
+      buff['applyModifiers'](context, true, [mod])
+      context.setVariable('_defenseBonus', 8)
+      buff['applyModifiers'](context, true, [mod])
+
+      expect(fn).toHaveBeenCalledTimes(2)
+    })
+
+    it('无变量依赖的 value 函数结果永久缓存', () => {
+      const fn = vi.fn(() => 10)
+      const mod = { attribute: ATTRIBUTE_CODE.attack, value: fn, type: ModifierType.ADDITIVE }
+
+      buff['applyModifiers'](context, true, [mod])
+      buff['applyModifiers'](context, true, [mod])
+
+      expect(fn).toHaveBeenCalledTimes(1)
     })
   })
 })

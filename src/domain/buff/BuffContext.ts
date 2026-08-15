@@ -13,6 +13,11 @@ export class BuffContext {
   /** 当前回合号（由 updatePerTurn 注入，供脚本 onUpdate 读取） */
   public currentTurn: number = 0
   private _buffSystem: BuffSystem | null = null
+  /**
+   * 变量读取追踪器——非空时 getVariable 记录被读取的 key。
+   * 供 AttributeBuffTemplate 检测动态 value 函数的依赖集合（value 函数结果缓存）。
+   */
+  private _varReadTracker: Set<string> | null = null
 
   constructor(characterId?: string, instanceId?: string, config?: BuffConfig, buffSystem?: BuffSystem) {
     if (buffSystem) this._buffSystem = buffSystem
@@ -41,6 +46,7 @@ export class BuffContext {
     this.config = {} as BuffConfig
     this.variables.clear()
     this._buffSystem = null
+    this._varReadTracker = null
   }
 
   public setVariable(key: string, value: string | number | boolean): void {
@@ -48,11 +54,24 @@ export class BuffContext {
   }
 
   public getVariable<T>(key: string): T | undefined {
+    if (this._varReadTracker) this._varReadTracker.add(key)
     return this.variables.get(key) as T
   }
 
   public removeVariable(key: string): void {
     this.variables.delete(key)
+  }
+
+  /** 开启变量读取追踪（供 AttributeBuffTemplate 求值 value 函数前调用） */
+  public beginVariableTracking(): void {
+    this._varReadTracker = new Set()
+  }
+
+  /** 结束变量读取追踪并返回本次读取过的变量 key 集合（未开启追踪时返回 null） */
+  public endVariableTracking(): Set<string> | null {
+    const result = this._varReadTracker
+    this._varReadTracker = null
+    return result
   }
 
   public addModifier(

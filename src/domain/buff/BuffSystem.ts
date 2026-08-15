@@ -712,8 +712,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     // NOTE: 触发器注册独立于 effectPlan/脚本路径，两者可以共存。
     // 触发器与效果原语正交——effectPlan 管理每回合效果，triggers 管理事件响应。
-    // 注册解析器归一化后的 triggers（动态 buff 在此入口由 normalizeTriggerPhase 统一归一化）
-    const normalizedTriggers = buffResolved?.triggers ?? resolvedConfig.triggers
+    // config.triggers 优先（与 duration/stackRule 等"调用方覆盖"语义一致）——
+    // JSON 配置的 triggers 已归一化，动态 config.triggers 在此入口统一归一化。
+    const normalizedTriggers = resolvedConfig.triggers ?? buffResolved?.triggers
     if (normalizedTriggers && normalizedTriggers.length > 0) {
       try {
         this.registerTriggersForInstance(
@@ -722,10 +723,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           characterId,
         )
       } catch (error) {
-        // 触发器配置非法（如无法识别的 phase）→ 回滚实例，避免半初始化残留
-        this.unregisterTriggersForInstance(instanceId)
-        this.buffInstances.delete(instanceId)
-        BuffContextPool.return(buffContext)
+        // 触发器配置非法（如无法识别的 phase）→ 回滚实例。
+        // 复用 removeBuff 做完整清理（监听器/修饰符/免疫/级联），不依赖"动态 buff 无副作用"假设。
+        this.removeBuff(instanceId, { silent: true })
         this.logger.addDebugLog(
           `[BuffSystem] 触发器注册失败，已回滚: ${buffId} → ${characterId}`,
           { level: LogLevel.WARN, error: error as Error },

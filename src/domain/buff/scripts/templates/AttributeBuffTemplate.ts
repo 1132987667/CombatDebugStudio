@@ -85,12 +85,63 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
    */
   private appliedValues = new Map<string, number>()
 
+  /**
+   * 动态 value 函数结果缓存：key=`${attribute}:${type}` → 求值结果 + 依赖变量快照。
+   * 求值时通过 context 的变量读取追踪记录依赖集合（getVariable 读取的 key）；
+   * 下次 applyModifiers 若依赖变量未变化则复用结果，跳过 value 函数调用。
+   * 契约：value 函数的值输入须经 context.getVariable 读取（config 参数视为常量）。
+   */
+  private valueCache = new Map<
+    string,
+    { depKeys: string[]; depValues: Array<string | number | boolean | undefined>; result: number }
+  >()
+
   /** 读取（并缓存）子类声明的修饰符列表 */
   protected getCachedModifiers(): AttributeModifier[] {
     if (!this.modifierDeclarationCache) {
       this.modifierDeclarationCache = this.getModifiers()
     }
     return this.modifierDeclarationCache
+  }
+
+  /**
+   * 求值单个修饰符的原始值（不含层数缩放）。
+   * 动态 value 函数：依赖变量未变化时复用缓存结果，否则重新求值并刷新依赖快照。
+   */
+  private resolveRawValue(
+    mod: AttributeModifier,
+    context: BuffContext,
+    key: string,
+    attribute: string,
+  ): number {
+    if (typeof mod.value !== 'function') return mod.value
+
+    const cached = this.valueCache.get(key)
+    if (
+      cached &&
+      cached.depKeys.every(
+        (k, i) => context.getVariable(k) === cached.depValues[i],
+      )
+    ) {
+      return cached.result
+    }
+
+    context.beginVariableTracking()
+    let rawValue: number
+    try {
+      rawValue = mod.value(context)
+    } catch (error) {
+      this.log(context, `修饰符值计算失败 (${attribute}): ${error}`)
+      rawValue = 0
+    }
+    const tracked = context.endVariableTracking()
+    const depKeys = tracked ? Array.from(tracked) : []
+    this.valueCache.set(key, {
+      depKeys,
+      depValues: depKeys.map((k) => context.getVariable(k)),
+      result: rawValue,
+    })
+    return rawValue
   }
 
   // ==================== 气血周期实现 ====================
@@ -161,21 +212,18 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
         continue
       }
 
-      // HACK: 动态 value 函数可能抛出异常——try-catch 兜底确保单个修饰符失败不拖垮整个战斗流程
-      let rawValue: number
-      if (typeof mod.value === 'function') {
-        try {
-          rawValue = mod.value(context)
-        } catch (error) {
-          this.log(context, `修饰符值计算失败 (${mod.attribute}): ${error}`)
-          rawValue = 0
-        }
-      } else {
-        rawValue = mod.value
-      }
+      // HACK: 动态 value 函数可能抛出异常——resolveRawValue 内 try-catch 兜底，
+      //       确保单个修饰符失败不拖垮整个战斗流程。
+      const key = `${mod.attribute}:${mod.type}`
+      const rawValue = this.resolveRawValue(
+        mod,
+        context,
+        key,
+        mod.attribute as string,
+      )
       const value = rawValue * stacks
       current.push({
-        key: `${mod.attribute}:${mod.type}`,
+        key,
         attribute: mod.attribute as ATTRIBUTE_CODE,
         value,
         type: mod.type,

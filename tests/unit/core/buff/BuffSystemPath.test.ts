@@ -157,4 +157,24 @@ describe('BuffSystem 触发器 phase 归一化（#6）', () => {
     expect(id).toBe('')
     expect(buffSystem.getBuffInstances('char_1')).toHaveLength(0)
   })
+
+  it('JSON 配置 Buff 的 triggers 可被调用方 config.triggers 覆盖', () => {
+    mockEventBus.on.mockClear()
+    registry.loadBuffConfigsFromArray([{
+      id: 'json_trigger_buff',
+      polarity: 'positive',
+      triggers: [{ phase: 'turn_end', scriptId: 'heal_percent_max_hp' }],
+    }])
+    const id = buffSystem.addBuff('char_1', 'json_trigger_buff', createBuffConfig({
+      id: 'json_trigger_buff',
+      triggers: [{
+        phase: 'turn_start',
+        scriptId: 'heal_percent_max_hp',
+      }],
+    }), 1)
+    expect(id).toBeTruthy()
+    // 调用方 config.triggers 优先，JSON 默认触发器被覆盖
+    expect(mockEventBus.on.mock.calls.find((c) => c[0] === 'turn_start')).toBeDefined()
+    expect(mockEventBus.on.mock.calls.find((c) => c[0] === 'turn_end')).toBeUndefined()
+  })
 })

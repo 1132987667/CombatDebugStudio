@@ -62,7 +62,7 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import type { EquipmentData } from '@/domain/fengshen/types'
-import { equipQualityClass, equipQualityColor, qualityClass, qualityName, qualityOf } from '../data/quality'
+import { equipQualityClass, equipQualityColor, qualityClass, qualityName, qualityOf } from '../quality'
 
 const props = defineProps<{
   instance: GearInstance | null

@@ -12,7 +12,8 @@
     { "name": "异矿", "count": 6, "rarity": 2, "desc": "晶球开启所得，强化武器的基础材料" },
     { "name": "灵气·强化", "count": 6, "rarity": 2, "desc": "晶球开启所得，强化衣服的基础材料" },
     { "name": "灵水", "count": 6, "rarity": 2, "desc": "晶球开启所得，强化配件的材料" },
-    { "name": "小魂玉", "count": 6, "rarity": 2, "desc": "装备升星所需，蕴含魂力" }
+    { "name": "小魂玉", "count": 6, "rarity": 2, "desc": "装备升星所需，蕴含魂力" },
+    { "name": "灵芝", "count": 2, "rarity": 2, "desc": "药园灵田培育，炼制强化保护符的核心材料" }
   ],
   "equipment": [
     { "name": "竹剑", "count": 1, "rarity": 2, "desc": "一阶轻型武器 · 桃木×3 + 铜精×1" },

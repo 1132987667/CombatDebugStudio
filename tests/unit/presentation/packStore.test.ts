@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import type { XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import type { XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/types'
 
 /** 内存版持久化（代替 IndexedDB，供 flush/load 往返断言） */
 const { __mem, __storage } = vi.hoisted(() => {
@@ -640,7 +640,7 @@ describe("装备制造与强化（实例化）", () => {
 
 describe("equipBonuses 装备属性注入", () => {
   it("flat 属性直接相加，percent 按主角基础值折算", async () => {
-    const { equipBonuses } = await import("@/presentation/modules/yanjie/xiyou/data/mock")
+    const { equipBonuses } = await import("@/presentation/modules/yanjie/xiyou/battle")
     const bonuses = equipBonuses([
       { attribute: "attack", modifierType: "flat" as const, value: 12 },
       { attribute: "attack", modifierType: "percent" as const, value: 10 },
@@ -650,8 +650,127 @@ describe("equipBonuses 装备属性注入", () => {
   })
 
   it("未穿戴任何装备返回空加成", async () => {
-    const { equipBonuses } = await import("@/presentation/modules/yanjie/xiyou/data/mock")
+    const { equipBonuses } = await import("@/presentation/modules/yanjie/xiyou/battle")
     const bonuses = equipBonuses([])
     expect(bonuses.attack ?? 0).toBe(0)
+  })
+})
+
+describe("强化保护符", () => {
+  it("强化失败消耗保护符保住材料，无保护符时材料损失", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    pack.addItem("enh_protect", 1)
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // 0→1 必成（rate 100%）
+    const mat1 = pack.countOf("mat_enh_01")
+
+    // 失败（rate 95%，rng 0.99）：保护符保住材料，仅消耗保护符
+    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
+    expect(pack.equipped.weapon?.enhance).toBe(1)
+    expect(pack.countOf("mat_enh_01")).toBe(mat1)
+    expect(pack.countOf("enh_protect")).toBe(0)
+
+    // 再无保护符：失败则材料照扣
+    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
+    expect(pack.countOf("mat_enh_01")).toBe(mat1 - 1)
+  })
+
+  it("强化成功不消耗保护符", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    pack.addItem("enh_protect", 1)
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(true)
+    expect(pack.countOf("enh_protect")).toBe(1)
+  })
+})
+
+describe("药园", () => {
+  const T0 = 1_000_000_000_000
+
+  it("种植→收获材料入包→地块进入冷却，冷却后可再种", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // pack.json 初始灵芝 ×2
+    expect(pack.countOf("mat_lingzhi")).toBe(2)
+
+    expect(pack.plantCrop(0, "mat_lingzhi", T0)).toBe(true)
+    expect(pack.garden[0].cropId).toBe("mat_lingzhi")
+
+    // 立即可收获：灵芝 +3
+    expect(pack.harvestCrop(0, T0)).toBe(true)
+    expect(pack.countOf("mat_lingzhi")).toBe(5)
+    expect(pack.garden[0].cropId).toBeNull()
+
+    // 冷却 300s
+    expect(pack.gardenCooldown(0, T0)).toBe(300)
+    expect(pack.plantCrop(0, "mat_zhuguo", T0 + 1000)).toBe(false)
+
+    // 冷却结束后可再种
+    expect(pack.plantCrop(0, "mat_zhuguo", T0 + 300_001)).toBe(true)
+    expect(pack.garden[0].cropId).toBe("mat_zhuguo")
+  })
+
+  it("已种植地块不可重复种植；空地块收获无效果", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.plantCrop(0, "mat_xiantao", T0)
+    expect(pack.plantCrop(0, "mat_lingzhi", T0)).toBe(false)
+    // 空地块收获返回 false 且不改状态
+    expect(pack.harvestCrop(1, T0)).toBe(false)
+    expect(pack.countOf("mat_xiantao")).toBe(0)
+  })
+
+  it("药园状态随 flush/load 持久化", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.plantCrop(0, "mat_lingzhi", T0)
+    await pack.flush()
+
+    setActivePinia(createPinia())
+    const pack2 = usePackStore()
+    await pack2.init()
+    expect(pack2.garden[0].cropId).toBe("mat_lingzhi")
+  })
+})
+
+describe("坊市刷新", () => {
+  it("初始全量上架；刷新后抽取 6 种，列表变化", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    expect(pack.shopGoods.length).toBe(10)
+
+    const before = new Set(pack.shopGoods.map((g) => g.name))
+    pack.refreshShop(new Date(), () => 0)
+    expect(pack.shopGoods.length).toBe(6)
+    // 抽取的是商品池子集
+    for (const g of pack.shopGoods) expect(before.has(g.name)).toBe(true)
+
+    // 不同 rng 产生不同上架组合
+    const a = pack.shopGoods.map((g) => g.name)
+    pack.refreshShop(new Date(), () => 0.5)
+    const b = pack.shopGoods.map((g) => g.name)
+    expect(a).not.toEqual(b)
+  })
+
+  it("限量商品刷新后库存重置为 1-5", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 洗髓丹（tag 限量）在池中；rng 0 时库存 = 1
+    pack.refreshShop(new Date(), () => 0)
+    for (const g of pack.shopGoods) {
+      if (g.tag === "限量") expect(g.stock).toBeGreaterThanOrEqual(1)
+    }
+  })
+
+  it("isNewDay 跨天判定", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const day1 = new Date("2026-08-16T10:00:00")
+    const day2 = new Date("2026-08-17T10:00:00")
+    expect(pack.isNewDay(day1.toISOString(), day1)).toBe(false)
+    expect(pack.isNewDay(day1.toISOString(), day2)).toBe(true)
+    expect(pack.isNewDay("", day1)).toBe(true)
   })
 })

@@ -1,0 +1,1258 @@
+[
+  {
+    "id": "boss_minor_taoyao",
+    "name": "桃妖·灵根",
+    "type": "minor",
+    "level": 6,
+    "regionId": "region_1",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 500,
+      "attack": 25,
+      "defense": 8,
+      "speed": 12,
+      "critRate": 10,
+      "critDamage": 120
+    },
+    "passive": {
+      "id": "passive_root_bind",
+      "name": "根须缠绕",
+      "desc": "攻击20%概率使目标降速20%，持续2回合"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_minor_1_s1",
+        "name": "毒花粉",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成80%攻击力伤害并施加中毒3%，持续2回合"
+      },
+      {
+        "id": "skill_boss_minor_1_s2",
+        "name": "藤蔓抽击",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成120%攻击力伤害，15%概率眩晕1回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_minor_1_ult",
+      "name": "百花齐放",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成180%攻击力伤害，并召唤2个小花妖"
+    },
+    "phases": [{ "threshold": 50, "trigger": "召唤2个花妖护卫" }],
+    "affixPool": {
+      "buffTier": 1,
+      "hasDebuff": false
+    },
+    "drops": {
+      "guaranteed": ["mat_taomu", "mat_danshuiyu"],
+      "rare": ["recipe_weapon_t1"],
+      "gold": [100, 200],
+      "exp": [80, 120]
+    },
+    "narrative": {
+      "intro": "桃林深处，一株老桃树缓缓睁开双眼。它的根须扎入泥土，汲取着被妖气污染的水源。又一个闯入者，它的根须已经等了很久。",
+      "outro": "桃妖的根须缓缓收回泥土，花瓣如雨落下。它守了这片桃林一千年，终究没能守住。",
+      "deathQuote": "桃林……还会再开的。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_5" }
+  },
+  {
+    "id": "boss_minor_liuyao",
+    "name": "柳妖·断桥",
+    "type": "minor",
+    "level": 16,
+    "regionId": "region_2",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 1200,
+      "attack": 55,
+      "defense": 22,
+      "speed": 22,
+      "critRate": 12,
+      "critDamage": 130
+    },
+    "passive": {
+      "id": "passive_willow_whip",
+      "name": "柳鞭回弹",
+      "desc": "受到攻击时15%概率反弹10%伤害给攻击者"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_minor_2_s1",
+        "name": "断柳横扫",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对前排敌人造成100%攻击力伤害，20%概率降速15%，持续2回合"
+      },
+      {
+        "id": "skill_boss_minor_2_s2",
+        "name": "柳絮迷眼",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对全体敌人施加命中率降低10%，持续2回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_minor_2_ult",
+      "name": "断桥残影",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成160%攻击力伤害，并使自身闪避提升20%，持续2回合"
+    },
+    "phases": [{ "threshold": 50, "trigger": "柳条再生，恢复10%最大气血" }],
+    "affixPool": {
+      "buffTier": 2,
+      "hasDebuff": false
+    },
+    "drops": {
+      "guaranteed": ["mat_beike", "mat_zhenzhu"],
+      "rare": ["recipe_armor_t2"],
+      "gold": [200, 380],
+      "exp": [160, 240]
+    },
+    "narrative": {
+      "intro": "断桥边的老柳树垂下千条柳丝，每一条都缠着一个渡人的故事。它不记得自己等了多少年，只记得桥断的那天，再没有人来过。",
+      "outro": "柳丝一根根垂落，断桥上的青苔被雨水冲散。它终于可以不再等了。",
+      "deathQuote": "桥断了……人也不来了。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_5" }
+  },
+  {
+    "id": "boss_minor_yanjing",
+    "name": "岩精·裂地",
+    "type": "minor",
+    "level": 26,
+    "regionId": "region_3",
+    "enemyType": "new_born",
+    "stats": {
+      "maxHealth": 2000,
+      "attack": 90,
+      "defense": 38,
+      "speed": 32,
+      "critRate": 14,
+      "critDamage": 140
+    },
+    "passive": {
+      "id": "passive_stone_skin",
+      "name": "岩甲",
+      "desc": "受到伤害超过最大气血10%时，减免超出部分的30%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_minor_3_s1",
+        "name": "碎石飞射",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对随机2个敌人造成90%攻击力伤害"
+      },
+      {
+        "id": "skill_boss_minor_3_s2",
+        "name": "地裂震",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对全体敌人造成70%攻击力伤害，25%概率眩晕1回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_minor_3_ult",
+      "name": "山崩地裂",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成200%攻击力伤害，并使自身防御提升30%，持续2回合"
+    },
+    "phases": [
+      { "threshold": 50, "trigger": "岩甲碎裂，攻击力提升20%但防御降低10%" }
+    ],
+    "affixPool": {
+      "buffTier": 2,
+      "hasDebuff": false
+    },
+    "drops": {
+      "guaranteed": ["mat_tiejing", "mat_cushi"],
+      "rare": ["recipe_weapon_t2"],
+      "gold": [320, 520],
+      "exp": [260, 380]
+    },
+    "narrative": {
+      "intro": "碎石岭的裂缝中，一块巨岩缓缓站起。它没有记忆，没有名字，只有一千年积攒的怨气凝成的核心。它不知道自己为何而战，只知道有人闯入了它的领地。",
+      "outro": "巨岩轰然倒塌，碎成无数石块。裂缝中透出一缕阳光，照在它曾经站立的地方。",
+      "deathQuote": "我……只是想……站起来。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_5" }
+  },
+  {
+    "id": "boss_minor_zhuyao",
+    "name": "蛛妖·织网",
+    "type": "minor",
+    "level": 36,
+    "regionId": "region_4",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 2800,
+      "attack": 125,
+      "defense": 55,
+      "speed": 42,
+      "critRate": 16,
+      "critDamage": 145
+    },
+    "passive": {
+      "id": "passive_web_trap",
+      "name": "蛛网束缚",
+      "desc": "攻击25%概率使目标无法行动1回合"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_minor_4_s1",
+        "name": "毒丝喷射",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成110%攻击力伤害并施加中毒4%，持续3回合"
+      },
+      {
+        "id": "skill_boss_minor_4_s2",
+        "name": "织网困敌",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标施加束缚状态，使其速度降低30%，持续2回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_minor_4_ult",
+      "name": "千丝万缕",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成170%攻击力伤害，30%概率施加束缚1回合"
+    },
+    "phases": [
+      { "threshold": 50, "trigger": "召唤3只幼蛛" },
+      { "threshold": 25, "trigger": "进入狂暴状态，攻击力提升25%" }
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "hasDebuff": false
+    },
+    "drops": {
+      "guaranteed": ["mat_xiongpi", "mat_duye"],
+      "rare": [],
+      "gold": [450, 680],
+      "exp": [380, 520]
+    },
+    "narrative": {
+      "intro": "迷雾谷的蛛网层层叠叠，每一根丝都映着迷路者的倒影。蛛妖·织网是盘丝一脉的后裔，她织的不是网，是寂寞。",
+      "outro": "蛛网一根根断裂，织网的蛛妖缓缓倒下。她的网困住了无数人，却困不住自己的孤独。",
+      "deathQuote": "我只是……不想一个人。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_5" }
+  },
+  {
+    "id": "boss_minor_panseng",
+    "name": "叛僧·破戒",
+    "type": "minor",
+    "level": 46,
+    "regionId": "region_5",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 3600,
+      "attack": 160,
+      "defense": 72,
+      "speed": 52,
+      "critRate": 18,
+      "critDamage": 150
+    },
+    "passive": {
+      "id": "passive_broken_vow",
+      "name": "破戒之力",
+      "desc": "每损失20%气血，攻击力提升8%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_minor_5_s1",
+        "name": "伪佛掌",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成130%攻击力伤害，无视20%防御"
+      },
+      {
+        "id": "skill_boss_minor_5_s2",
+        "name": "假经诵念",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对全体敌人造成80%攻击力伤害，20%概率使目标能量减少20"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_minor_5_ult",
+      "name": "破戒真言",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成220%攻击力伤害，并使自身暴击率提升15%，持续3回合"
+    },
+    "phases": [
+      { "threshold": 50, "trigger": "撕裂僧袍，进入破戒状态，攻击力提升20%" },
+      { "threshold": 25, "trigger": "佛珠碎裂，暴击伤害提升30%" }
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "hasDebuff": false
+    },
+    "drops": {
+      "guaranteed": ["mat_shengshui", "mat_yufoxiang"],
+      "rare": ["recipe_weapon_t4"],
+      "gold": [580, 850],
+      "exp": [480, 650]
+    },
+    "narrative": {
+      "intro": "灵霄台的偏殿中，一个僧人背对佛像。他的僧袍上满是裂痕，每一道都是他亲手撕开的。他曾是虔诚的信徒，直到他发现佛光是假的。",
+      "outro": "叛僧倒下时，嘴角带着一丝解脱的笑。他终于不用再假装相信了。",
+      "deathQuote": "佛不渡我……我便自渡。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_5" }
+  },
+  {
+    "id": "boss_major_huayaowang",
+    "name": "花妖王·千瓣",
+    "type": "major",
+    "level": 10,
+    "regionId": "region_1",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 900,
+      "attack": 45,
+      "defense": 18,
+      "speed": 18,
+      "critRate": 12,
+      "critDamage": 130
+    },
+    "passive": {
+      "id": "passive_thousand_petals",
+      "name": "千瓣护体",
+      "desc": "每回合开始时，获得一层花瓣护盾，减免下一次受到的伤害20%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_major_1_s1",
+        "name": "花瓣风暴",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成90%攻击力伤害"
+      },
+      {
+        "id": "skill_boss_major_1_s2",
+        "name": "根须缠绕",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成110%攻击力伤害并施加降速25%，持续2回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_major_1_ult",
+      "name": "百花葬",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成200%攻击力伤害，并恢复自身15%最大气血"
+    },
+    "phases": [
+      { "threshold": 60, "trigger": "召唤4个花妖护卫" },
+      { "threshold": 30, "trigger": "花瓣护盾层数翻倍" }
+    ],
+    "affixPool": {
+      "buffTier": 1,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_taomu", "mat_danshuiyu", "mat_tongjing"],
+      "rare": ["recipe_weapon_t1", "recipe_armor_t1"],
+      "gold": [200, 400],
+      "exp": [180, 280]
+    },
+    "narrative": {
+      "intro": "桃林最深处，千瓣花冠遮天蔽日。花妖王·千瓣是桃林中最古老的存在，它的花瓣上刻着一千年前的战意残痕。它不恨任何人，只是不允许任何人踏过桃林。",
+      "outro": "千瓣花冠一片片落下，花妖王的身躯化为泥土。桃林的妖气随之消散，花瓣重新变得洁净。",
+      "deathQuote": "桃林无罪……只是……想活下去。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_1_5" }
+  },
+  {
+    "id": "boss_major_hebo",
+    "name": "河伯·沧浪",
+    "type": "major",
+    "level": 20,
+    "regionId": "region_2",
+    "enemyType": "old_soul",
+    "stats": {
+      "maxHealth": 1600,
+      "attack": 75,
+      "defense": 35,
+      "speed": 28,
+      "critRate": 14,
+      "critDamage": 140
+    },
+    "passive": {
+      "id": "passive_river_flow",
+      "name": "沧浪之水",
+      "desc": "每回合恢复3%最大气血，若当前气血低于50%则恢复5%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_major_2_s1",
+        "name": "浊浪冲击",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成100%攻击力伤害，30%概率使目标防御降低15%，持续2回合"
+      },
+      {
+        "id": "skill_boss_major_2_s2",
+        "name": "漩涡吞噬",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成140%攻击力伤害，并将其拉至前排"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_major_2_ult",
+      "name": "千年洪流",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成220%攻击力伤害，并使全体敌人速度降低20%，持续2回合"
+    },
+    "phases": [
+      { "threshold": 60, "trigger": "河水暴涨，全体敌人速度降低10%" },
+      { "threshold": 30, "trigger": "河伯显形，攻击力提升25%，恢复10%气血" }
+    ],
+    "affixPool": {
+      "buffTier": 2,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshuiyu"],
+      "rare": [],
+      "gold": [350, 600],
+      "exp": [320, 480]
+    },
+    "narrative": {
+      "intro": "河伯祠的石像裂开，沧浪之水从裂缝中涌出。一千年前他是渡口的守护者，一千年后他成了渡口的囚徒。舍利碎片的光芒是他唯一的执念。",
+      "outro": "河水渐渐清澈，河伯的石像重新合拢。他守了千年的渡口，终于可以安息了。",
+      "deathQuote": "沧浪之水清兮……可以濯吾缨。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_2_5" }
+  },
+  {
+    "id": "boss_major_shanshen",
+    "name": "山神·岩坚",
+    "type": "major",
+    "level": 30,
+    "regionId": "region_3",
+    "enemyType": "old_soul",
+    "stats": {
+      "maxHealth": 2400,
+      "attack": 110,
+      "defense": 52,
+      "speed": 38,
+      "critRate": 15,
+      "critDamage": 145
+    },
+    "passive": {
+      "id": "passive_mountain_anchor",
+      "name": "五行之锚",
+      "desc": "受到伤害时，将10%伤害转化为自身防御提升，最多叠加5层"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_major_3_s1",
+        "name": "崩石拳",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成130%攻击力伤害，无视15%防御"
+      },
+      {
+        "id": "skill_boss_major_3_s2",
+        "name": "五行封印",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标施加封印状态，使其无法使用大招，持续2回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_major_3_ult",
+      "name": "五行山崩",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成230%攻击力伤害，并使全体敌人防御降低20%，持续2回合"
+    },
+    "phases": [
+      { "threshold": 60, "trigger": "封印松动，召唤2个五行怨魂" },
+      { "threshold": 30, "trigger": "山神怒目，攻击力提升30%，速度提升15%" }
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_tiejing", "mat_jinjing", "mat_cushi"],
+      "rare": ["recipe_weapon_t3", "recipe_armor_t3"],
+      "gold": [500, 800],
+      "exp": [450, 650]
+    },
+    "narrative": {
+      "intro": "山神·岩坚从碎石中站起，他的身躯上刻满了五行山的封印纹路。一千年前他以自身为锚封住了怨妖，一千年后封印将破，他的身躯也已摇摇欲坠。",
+      "outro": "山神的身躯缓缓化为碎石，封印纹路随之消散。他守了五行山一千年，终于等到了接班人。",
+      "deathQuote": "五行山……交给你了。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_3_5" }
+  },
+  {
+    "id": "boss_major_miwu",
+    "name": "迷雾妖主·幻影",
+    "type": "major",
+    "level": 40,
+    "regionId": "region_4",
+    "enemyType": "new_born",
+    "stats": {
+      "maxHealth": 3200,
+      "attack": 145,
+      "defense": 70,
+      "speed": 48,
+      "critRate": 16,
+      "critDamage": 150
+    },
+    "passive": {
+      "id": "passive_mist_phantom",
+      "name": "幻影迷踪",
+      "desc": "每回合20%概率闪避一次攻击，闪避后下次攻击伤害提升15%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_major_4_s1",
+        "name": "迷雾侵蚀",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成90%攻击力伤害，25%概率使目标命中率降低10%，持续2回合"
+      },
+      {
+        "id": "skill_boss_major_4_s2",
+        "name": "幻影分身",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "生成2个幻影分身，分身拥有本体30%攻击力"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_major_4_ult",
+      "name": "千年迷途",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成210%攻击力伤害，并使全体敌人陷入混乱状态1回合"
+    },
+    "phases": [
+      { "threshold": 60, "trigger": "迷雾加浓，全体敌人命中率降低15%" },
+      { "threshold": 30, "trigger": "幻影合一，攻击力提升35%，速度提升20%" }
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_xiongpi", "mat_duye", "mat_hantan"],
+      "rare": ["recipe_weapon_t3"],
+      "gold": [650, 950],
+      "exp": [580, 820]
+    },
+    "narrative": {
+      "intro": "迷雾谷的最深处，幻影没有形体，只有声音。它是一千年间所有迷路者的恐惧凝聚而成的存在。它不知道自己是谁，只知道它必须让所有人都迷路。",
+      "outro": "迷雾渐渐散去，幻影的身影在阳光中消融。它终于看清了自己的模样，原来它只是一个迷路的孩子。",
+      "deathQuote": "我……只是找不到回家的路。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_4_5" }
+  },
+  {
+    "id": "boss_major_rulai",
+    "name": "如来法相·须弥",
+    "type": "major",
+    "level": 50,
+    "regionId": "region_5",
+    "enemyType": "old_soul",
+    "stats": {
+      "maxHealth": 4000,
+      "attack": 180,
+      "defense": 88,
+      "speed": 58,
+      "critRate": 18,
+      "critDamage": 155
+    },
+    "passive": {
+      "id": "passive_false_buddha",
+      "name": "假佛金身",
+      "desc": "受到伤害时，15%概率免疫本次伤害并反弹10%伤害给攻击者"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_major_5_s1",
+        "name": "佛光普照",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成110%攻击力伤害，20%概率使目标能量减少15"
+      },
+      {
+        "id": "skill_boss_major_5_s2",
+        "name": "须弥镇压",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成160%攻击力伤害，30%概率使目标无法行动1回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_major_5_ult",
+      "name": "假佛降世",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成250%攻击力伤害，并使自身恢复20%最大气血"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "佛光变异，全体敌人命中率降低10%" },
+      { "threshold": 50, "trigger": "六耳低语，攻击力提升20%，暴击率提升10%" },
+      { "threshold": 25, "trigger": "法相崩裂，进入狂暴状态，攻击力提升40%" }
+    ],
+    "affixPool": {
+      "buffTier": 4,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": [
+        "mat_shengshui",
+        "mat_yufoxiang",
+        "mat_hunyuan"
+      ],
+      "rare": ["recipe_weapon_t5", "recipe_armor_t5"],
+      "gold": [800, 1200],
+      "exp": [720, 1000]
+    },
+    "narrative": {
+      "intro": "灵霄台之巅，如来法相端坐莲台。金色的佛光洒落，却带着一丝不属于佛门的阴冷。这不是如来，这是六耳猕猴用千年执念塑造的假象。",
+      "outro": "法相崩裂，金色的碎片如流星般坠落。莲台上空无一物，只有一缕黑色的残魂飘散。",
+      "deathQuote": "我不是如来……但我比他更像如来。"
+    },
+    "unlockCondition": { "type": "clear_scene", "sceneId": "scene_5_5" }
+  },
+  {
+    "id": "boss_achieve_huayaowang",
+    "name": "花妖王·千瓣·真身",
+    "type": "achievement",
+    "level": 55,
+    "regionId": "region_1",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 5200,
+      "attack": 230,
+      "defense": 115,
+      "speed": 68,
+      "critRate": 20,
+      "critDamage": 160
+    },
+    "passive": {
+      "id": "passive_true_form_petals",
+      "name": "真身千瓣",
+      "desc": "每回合开始时获得2层花瓣护盾，每层减免15%伤害。花瓣被击碎时对攻击者造成5%最大气血伤害"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_ach_1_s1",
+        "name": "万花葬天",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成120%攻击力伤害，并施加中毒3%，持续3回合"
+      },
+      {
+        "id": "skill_boss_ach_1_s2",
+        "name": "灵根汲取",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成150%攻击力伤害，并恢复自身伤害值30%的气血"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_ach_1_ult",
+      "name": "桃林永葬",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成260%攻击力伤害，召唤4个花妖护卫，并使全体敌人降速20%，持续3回合"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "花瓣护盾层数增至4层" },
+      { "threshold": 50, "trigger": "真身显现，攻击力提升25%，召唤花妖护卫" },
+      { "threshold": 25, "trigger": "桃林共鸣，每回合恢复5%最大气血" }
+    ],
+    "affixPool": {
+      "buffTier": 4,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_taomu", "mat_danshuiyu", "mat_tongjing"],
+      "rare": ["recipe_weapon_t5", "mat_wudao_dan"],
+      "gold": [1200, 1800],
+      "exp": [1000, 1500]
+    },
+    "narrative": {
+      "intro": "桃林深处，花妖王的真身从泥土中升起。千瓣花冠化为千刃，根须扎入大地深处。它不再是守林者，它是桃林本身。一千年前大圣的战意赋予了它生命，如今它要用这份生命守住最后的桃林。",
+      "outro": "真身崩碎，千瓣化为漫天飞花。桃林的妖气彻底消散，花瓣重新变得洁净。花妖王用最后的力气，在泥土中种下一颗新的桃核。",
+      "deathQuote": "桃林……会记得你的。"
+    },
+    "unlockCondition": { "type": "player_level", "level": 50 }
+  },
+  {
+    "id": "boss_achieve_hebo",
+    "name": "河伯·沧浪·千年执念",
+    "type": "achievement",
+    "level": 55,
+    "regionId": "region_2",
+    "enemyType": "old_soul",
+    "stats": {
+      "maxHealth": 5500,
+      "attack": 240,
+      "defense": 120,
+      "speed": 70,
+      "critRate": 20,
+      "critDamage": 160
+    },
+    "passive": {
+      "id": "passive_eternal_current",
+      "name": "千年洪流",
+      "desc": "每回合恢复4%最大气血。受到水系伤害时减免30%，受到火系伤害时增加20%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_ach_2_s1",
+        "name": "沧浪怒涛",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成130%攻击力伤害，35%概率使目标防御降低20%，持续2回合"
+      },
+      {
+        "id": "skill_boss_ach_2_s2",
+        "name": "舍利共鸣",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成170%攻击力伤害，并使其能量减少30"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_ach_2_ult",
+      "name": "千年不渡",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成270%攻击力伤害，使全体敌人速度降低25%，持续3回合，并恢复自身20%最大气血"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "河水暴涨，全体敌人命中率降低15%" },
+      {
+        "threshold": 50,
+        "trigger": "执念显形，攻击力提升30%，每回合额外恢复3%气血"
+      },
+      {
+        "threshold": 25,
+        "trigger": "千年怨念爆发，攻击力提升50%，但防御降低20%"
+      }
+    ],
+    "affixPool": {
+      "buffTier": 4,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_beike", "mat_zhenzhu", "mat_shenshuiyu"],
+      "rare": ["mat_wudao_dan"],
+      "gold": [1300, 1900],
+      "exp": [1100, 1600]
+    },
+    "narrative": {
+      "intro": "河伯祠的废墟中，沧浪之水再次涌起。这一次，河伯不再是石像中的残魂，而是千年执念凝聚的真身。他守了渡口一千年，等了一个不会来的人。如今他不再等待，他要让所有人都留在这条河里。",
+      "outro": "千年执念化为泡沫，河伯的身影在水中渐渐透明。他终于放下了等待，河水恢复了清澈。",
+      "deathQuote": "一千年……够了。"
+    },
+    "unlockCondition": { "type": "player_level", "level": 50 }
+  },
+  {
+    "id": "boss_achieve_shanshen",
+    "name": "山神·岩坚·五行残躯",
+    "type": "achievement",
+    "level": 55,
+    "regionId": "region_3",
+    "enemyType": "old_soul",
+    "stats": {
+      "maxHealth": 5800,
+      "attack": 250,
+      "defense": 125,
+      "speed": 72,
+      "critRate": 20,
+      "critDamage": 160
+    },
+    "passive": {
+      "id": "passive_wuxing_remnant",
+      "name": "五行残躯",
+      "desc": "每损失15%气血，切换一种五行属性，改变自身攻击属性与抗性"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_ach_3_s1",
+        "name": "五行轮转",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成120%攻击力伤害，伤害属性随当前五行变化"
+      },
+      {
+        "id": "skill_boss_ach_3_s2",
+        "name": "封印镇压",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成160%攻击力伤害，40%概率施加封印状态，使其无法使用技能，持续1回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_ach_3_ult",
+      "name": "五行山崩·真",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成280%攻击力伤害，使全体敌人防御降低25%，持续3回合，并使自身进入金刚状态，减免下次伤害50%"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "切换火属性，攻击力提升20%" },
+      { "threshold": 50, "trigger": "切换水属性，每回合恢复5%气血" },
+      { "threshold": 25, "trigger": "五行归一，全属性提升30%" }
+    ],
+    "affixPool": {
+      "buffTier": 4,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_tiejing", "mat_jinjing", "mat_cushi"],
+      "rare": ["recipe_weapon_t5", "mat_wudao_dan"],
+      "gold": [1400, 2000],
+      "exp": [1200, 1700]
+    },
+    "narrative": {
+      "intro": "碎石岭之巅，山神的残躯从五行封印中挣脱。他的身躯上刻满了千年的封印纹路，每一道都是一次牺牲。他不再是守护者，他是五行山最后的意志。",
+      "outro": "五行残躯化为碎石，封印纹路一一消散。山神的最后一缕意识融入了大地，五行山终于安息。",
+      "deathQuote": "五行归一……山不再崩。"
+    },
+    "unlockCondition": { "type": "player_level", "level": 50 }
+  },
+  {
+    "id": "boss_achieve_miwu",
+    "name": "迷雾妖主·幻影·千年迷途",
+    "type": "achievement",
+    "level": 55,
+    "regionId": "region_4",
+    "enemyType": "new_born",
+    "stats": {
+      "maxHealth": 5400,
+      "attack": 235,
+      "defense": 118,
+      "speed": 75,
+      "critRate": 22,
+      "critDamage": 165
+    },
+    "passive": {
+      "id": "passive_lost_millennium",
+      "name": "千年迷途",
+      "desc": "每回合30%概率闪避一次攻击。闪避后生成一个幻影分身，分身拥有本体20%攻击力"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_ach_4_s1",
+        "name": "迷雾深渊",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成110%攻击力伤害，30%概率使目标命中率降低15%，持续2回合"
+      },
+      {
+        "id": "skill_boss_ach_4_s2",
+        "name": "听风陷阱",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成150%攻击力伤害，25%概率使目标陷入混乱，攻击友方1回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_ach_4_ult",
+      "name": "千年不醒",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成250%攻击力伤害，使全体敌人陷入梦境状态1回合，并生成3个幻影分身"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "迷雾加浓，全体敌人命中率降低20%" },
+      { "threshold": 50, "trigger": "幻影分裂，生成4个分身" },
+      { "threshold": 25, "trigger": "千年迷途觉醒，攻击力提升40%，速度提升30%" }
+    ],
+    "affixPool": {
+      "buffTier": 4,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_xiongpi", "mat_duye", "mat_feicui"],
+      "rare": ["mat_wudao_dan"],
+      "gold": [1350, 1950],
+      "exp": [1150, 1650]
+    },
+    "narrative": {
+      "intro": "迷雾谷的最深处，幻影终于现出了真身。它不是一个妖怪，而是一千年来所有迷路者的恐惧、绝望与思念凝聚而成的存在。它不想伤害任何人，它只是不想再一个人。",
+      "outro": "迷雾散去，幻影的身影在阳光中化为无数光点。那些迷路者的灵魂终于找到了回家的路。",
+      "deathQuote": "原来……出口一直在那里。"
+    },
+    "unlockCondition": { "type": "player_level", "level": 50 }
+  },
+  {
+    "id": "boss_achieve_rulai",
+    "name": "如来法相·须弥·六耳投影",
+    "type": "achievement",
+    "level": 55,
+    "regionId": "region_5",
+    "enemyType": "old_soul",
+    "stats": {
+      "maxHealth": 6000,
+      "attack": 260,
+      "defense": 130,
+      "speed": 78,
+      "critRate": 22,
+      "critDamage": 165
+    },
+    "passive": {
+      "id": "passive_liuer_projection",
+      "name": "六耳投影",
+      "desc": "每损失20%气血，切换一次形态，改变攻击模式。形态切换时清除自身负面状态"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_ach_5_s1",
+        "name": "假佛真言",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对全体敌人造成130%攻击力伤害，25%概率使目标能量减少25"
+      },
+      {
+        "id": "skill_boss_ach_5_s2",
+        "name": "须弥幻灭",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对目标造成180%攻击力伤害，35%概率使目标无法行动1回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_ach_5_ult",
+      "name": "六耳降世",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成290%攻击力伤害，使自身进入六耳形态，攻击力提升30%，持续3回合"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "佛光崩裂，切换为六耳形态，攻击力提升25%" },
+      { "threshold": 50, "trigger": "投影分裂，生成2个六耳分身" },
+      {
+        "threshold": 25,
+        "trigger": "真身显现，全属性提升35%，清除所有负面状态"
+      }
+    ],
+    "affixPool": {
+      "buffTier": 4,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": [
+        "mat_shengshui",
+        "mat_yufoxiang",
+        "mat_tiangang"
+      ],
+      "rare": ["recipe_weapon_t5", "mat_wudao_dan"],
+      "gold": [1500, 2200],
+      "exp": [1300, 1800]
+    },
+    "narrative": {
+      "intro": "灵霄台之巅，如来法相再次凝聚。但这一次，法相的眼中映出的是六耳猕猴的身影。这不是佛，这是六耳用千年执念塑造的终极幻象。它要证明，它比孙悟空更像孙悟空，比如来更像如来。",
+      "outro": "法相崩碎，六耳的投影在金光中消散。莲台上只留下一根金色的毫毛，那是六耳猕猴最后的执念。",
+      "deathQuote": "我比你更像佛……为什么……为什么选的是你。"
+    },
+    "unlockCondition": { "type": "player_level", "level": 50 }
+  },
+  {
+    "id": "boss_king_niumo",
+    "name": "牛魔·赤焰",
+    "type": "three_kings",
+    "level": 65,
+    "regionId": "region_final",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 7000,
+      "attack": 320,
+      "defense": 160,
+      "speed": 85,
+      "critRate": 25,
+      "critDamage": 170
+    },
+    "passive": {
+      "id": "passive_bull_rage",
+      "name": "牛魔之怒",
+      "desc": "每损失10%气血，攻击力提升5%。气血低于30%时进入狂暴状态，攻击力额外提升20%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_king_1_s1",
+        "name": "赤焰冲撞",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成150%攻击力伤害，无视25%防御，20%概率眩晕1回合"
+      },
+      {
+        "id": "skill_boss_king_1_s2",
+        "name": "烈焰践踏",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对全体敌人造成120%攻击力伤害，并施加灼烧5%，持续3回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_king_1_ult",
+      "name": "牛魔焚天",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成300%攻击力伤害，使全体敌人灼烧8%，持续3回合，并使自身防御提升30%，持续2回合"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "赤焰觉醒，攻击力提升20%" },
+      { "threshold": 50, "trigger": "牛魔真身显现，召唤2个牛魔侍卫" },
+      { "threshold": 25, "trigger": "进入狂暴状态，攻击力提升40%，速度提升20%" }
+    ],
+    "affixPool": {
+      "buffTier": 5,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_boss_01", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
+      "rare": ["recipe_weapon_t6"],
+      "gold": [2500, 3500],
+      "exp": [2000, 3000]
+    },
+    "narrative": {
+      "intro": "牛魔·赤焰从烈焰中走出，他的双角燃烧着不熄的火焰。他是牛魔王的后裔，继承了先祖的力量，也继承了先祖的执念。只要我够强，就没人能再欺负我。这句话他对自己说了一千年。",
+      "outro": "赤焰的火焰渐渐熄灭，牛魔的身躯轰然倒下。他终于不再需要证明自己了。",
+      "deathQuote": "它骗了我们。……我知道。但已经太晚了。"
+    },
+    "unlockCondition": { "type": "clear_all_achievement" }
+  },
+  {
+    "id": "boss_king_pansi",
+    "name": "盘丝·织梦",
+    "type": "three_kings",
+    "level": 65,
+    "regionId": "region_final",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 6800,
+      "attack": 300,
+      "defense": 150,
+      "speed": 90,
+      "critRate": 28,
+      "critDamage": 175
+    },
+    "passive": {
+      "id": "passive_web_of_dreams",
+      "name": "织梦之网",
+      "desc": "每回合开始时，对随机一个敌人施加梦境标记。被标记的敌人下回合攻击力降低20%"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_king_2_s1",
+        "name": "千丝缚魂",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成140%攻击力伤害，35%概率施加束缚状态，使其无法行动1回合"
+      },
+      {
+        "id": "skill_boss_king_2_s2",
+        "name": "毒梦侵蚀",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对全体敌人造成100%攻击力伤害，并施加中毒5%，持续3回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_king_2_ult",
+      "name": "盘丝永缚",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成280%攻击力伤害，使全体敌人速度降低30%，持续3回合，并恢复自身15%最大气血"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "织梦之网加浓，全体敌人命中率降低15%" },
+      { "threshold": 50, "trigger": "盘丝真身显现，召唤4只盘丝蛛" },
+      { "threshold": 25, "trigger": "梦境崩溃，攻击力提升35%，暴击率提升15%" }
+    ],
+    "affixPool": {
+      "buffTier": 5,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_boss_02", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
+      "rare": [],
+      "gold": [2500, 3500],
+      "exp": [2000, 3000]
+    },
+    "narrative": {
+      "intro": "盘丝·织梦从蛛网中走出，她的丝线缠绕着无数迷途者的梦境。她是盘丝大仙的后裔，继承了先祖的织网之术，也继承了先祖的孤独。只要我把所有人都留在身边，就没人会离开。",
+      "outro": "织梦的丝线一根根断裂，盘丝的身影在月光中渐渐透明。她终于明白，留住人留不住心。",
+      "deathQuote": "它骗了我们。……我知道。但已经太晚了。"
+    },
+    "unlockCondition": { "type": "clear_all_achievement" }
+  },
+  {
+    "id": "boss_king_dapeng",
+    "name": "大鹏·遮天",
+    "type": "three_kings",
+    "level": 65,
+    "regionId": "region_final",
+    "enemyType": "old_blood",
+    "stats": {
+      "maxHealth": 6600,
+      "attack": 340,
+      "defense": 140,
+      "speed": 100,
+      "critRate": 30,
+      "critDamage": 180
+    },
+    "passive": {
+      "id": "passive_sky_dominator",
+      "name": "遮天之翼",
+      "desc": "速度高于目标时，伤害提升15%。每回合首次攻击必定命中"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_king_3_s1",
+        "name": "鹏翼斩",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成160%攻击力伤害，无视30%防御"
+      },
+      {
+        "id": "skill_boss_king_3_s2",
+        "name": "遮天蔽日",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对全体敌人造成110%攻击力伤害，使全体敌人命中率降低20%，持续2回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_king_3_ult",
+      "name": "大鹏展翅·遮天",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成310%攻击力伤害，使自身速度提升30%，持续3回合，并使全体敌人防御降低20%，持续2回合"
+    },
+    "phases": [
+      { "threshold": 75, "trigger": "遮天之翼展开，速度提升25%" },
+      { "threshold": 50, "trigger": "大鹏真身显现，攻击力提升30%" },
+      { "threshold": 25, "trigger": "进入极速状态，每回合行动两次" }
+    ],
+    "affixPool": {
+      "buffTier": 5,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": ["mat_boss_03", "mat_jiuzhuan_jindan", "mat_wudao_dan"],
+      "rare": ["recipe_armor_t6"],
+      "gold": [2500, 3500],
+      "exp": [2000, 3000]
+    },
+    "narrative": {
+      "intro": "大鹏·遮天从九天之上俯冲而下，他的双翼遮蔽了整片天空。他是大鹏金翅雕的后裔，继承了先祖的速度与傲慢。只要我飞得够高，就没人能再看不起我。这句话他对自己说了一千年。",
+      "outro": "遮天的双翼缓缓收拢，大鹏的身影从天空坠落。他终于不再需要飞得更高了。",
+      "deathQuote": "它骗了我们。……我知道。但已经太晚了。"
+    },
+    "unlockCondition": { "type": "clear_all_achievement" }
+  },
+  {
+    "id": "boss_final_liuer",
+    "name": "六耳猕猴",
+    "type": "final",
+    "level": 70,
+    "regionId": "region_final",
+    "enemyType": "old_soul",
+    "stats": {
+      "maxHealth": 8000,
+      "attack": 250,
+      "defense": 120,
+      "speed": 45,
+      "critRate": 35,
+      "critDamage": 180
+    },
+    "passive": {
+      "id": "passive_seventy_two_transforms",
+      "name": "七十二变",
+      "desc": "每损失25%气血转换形态并重置技能冷却。形态转换时清除自身所有负面状态"
+    },
+    "skills": [
+      {
+        "id": "skill_boss_final_s1",
+        "name": "随心铁杆兵",
+        "energyCost": 50,
+        "cooldown": 2,
+        "desc": "对目标造成140%攻击力伤害，无视20%防御"
+      },
+      {
+        "id": "skill_boss_final_s2",
+        "name": "六耳听风",
+        "energyCost": 50,
+        "cooldown": 3,
+        "desc": "对全体敌人造成100%攻击力伤害，20%概率使目标能量减少20"
+      },
+      {
+        "id": "skill_boss_final_s3",
+        "name": "假悟空",
+        "energyCost": 50,
+        "cooldown": 4,
+        "desc": "生成一个悟空幻影，幻影拥有本体40%攻击力，持续3回合"
+      }
+    ],
+    "ultimate": {
+      "id": "skill_boss_final_ult",
+      "name": "真假美猴王",
+      "energyCost": 150,
+      "cooldown": 5,
+      "desc": "对全体敌人造成280%攻击力伤害，生成2个悟空幻影，并使自身闪避提升25%，持续2回合"
+    },
+    "phases": [
+      {
+        "threshold": 75,
+        "trigger": "第二阶段：形态转换，清除负面状态，重置技能冷却"
+      },
+      {
+        "threshold": 50,
+        "trigger": "第三阶段：速度提升50%，频繁使用大招，大招冷却减少2回合"
+      },
+      {
+        "threshold": 25,
+        "trigger": "第四阶段：最终形态，攻击频率提高，每回合行动两次，攻击力提升30%"
+      }
+    ],
+    "affixPool": {
+      "buffTier": 5,
+      "hasDebuff": true
+    },
+    "drops": {
+      "guaranteed": [
+        "mat_liuer_canhun",
+        "mat_jiuzhuan_jindan",
+        "mat_wudao_dan"
+      ],
+      "rare": ["recipe_weapon_t7", "recipe_armor_t7"],
+      "gold": [5000, 8000],
+      "exp": [5000, 8000]
+    },
+    "narrative": {
+      "intro": "灵霄台之巅，六耳猕猴终于现出了真身。他不再是如来的法相，不再是悟空的幻影，他就是他自己。一千年前他输给了孙悟空，一千年后他要用这具残魂证明，他才是那个该去取经的人。",
+      "outro": "六耳猕猴的身躯在金光中渐渐透明。他看着你手中的断棒，那根断棒上刻着他的名字。他笑了，笑得像一千年前那个不服气的猴子。",
+      "deathQuote": "原来……断棒里一直是我。"
+    },
+    "unlockCondition": { "type": "clear_three_kings" }
+  }
+]

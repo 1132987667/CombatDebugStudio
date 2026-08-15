@@ -62,8 +62,8 @@ import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import type { EquipmentData } from '@/domain/fengshen/types'
-import { qualityOf } from '../../data/quality'
-import { itemIdByName, STAR_MAX, starCost } from '../../data/caveLogic'
+import { qualityOf } from '../../quality'
+import { itemIdByName, STAR_MAX, starCost } from '../../caveLogic'
 
 /** 升星槽位视图（真实穿戴实例 → 星级为实例属性，持久化） */
 interface StarGearView {

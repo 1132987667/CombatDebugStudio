@@ -103,7 +103,7 @@ interface SelectOption {
 
 const selectOptions = computed<SelectOption[]>(() => {
   if (props.field.enum) {
-    return props.field.enum.map((v) => ({ id: v, label: v }))
+    return props.field.enum.map((v) => ({ id: v, label: props.field.valueLabel?.[v] ?? v }))
   }
   if (props.field.refTable) {
     return (props.options ?? []).map((o) => ({ id: o.id, label: `${o.id} · ${o.name}` }))

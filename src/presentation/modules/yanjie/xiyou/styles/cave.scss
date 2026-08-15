@@ -1027,6 +1027,125 @@
   flex: 0 1 200px;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   药园 Garden
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-garden-seeds {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.xy-garden-seed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: var(--xy-paper);
+  color: var(--xy-ink-3);
+  cursor: pointer;
+
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  &:hover {
+    border-color: var(--xy-ink-2);
+    color: var(--xy-ink-1);
+  }
+
+  &.is-selected {
+    border-color: var(--xy-seal);
+    background: var(--xy-seal-soft);
+    color: var(--xy-seal);
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+.xy-garden-seed__name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.xy-garden-seed__yield {
+  font-size: var(--font-size-md);
+  color: var(--xy-gold);
+}
+
+.xy-garden-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.xy-garden-plot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 96px;
+  padding: var(--space-3);
+  border: 1px dashed var(--xy-ink-line);
+  border-radius: 3px;
+  background: var(--xy-paper);
+  color: var(--xy-ink-3);
+  cursor: pointer;
+  font-family: inherit;
+
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: var(--xy-ink-2);
+  }
+
+  /* 已成熟可收获 */
+  &.is-ready {
+    border-style: solid;
+    border-color: var(--xy-gold);
+    box-shadow: 0 0 0 1px var(--xy-gold);
+  }
+
+  /* 冷却中：置灰不可点 */
+  &.is-cooling {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.xy-garden-plot__crop {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--xy-ink-1);
+}
+
+.xy-garden-plot.is-ready .xy-garden-plot__crop {
+  color: var(--xy-gold);
+}
+
+.xy-garden-plot__hint {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
 /* 减动效降级 */
 @media (prefers-reduced-motion: reduce) {
   .xy-cave *,

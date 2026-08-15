@@ -17,7 +17,8 @@ import type { AffixData } from '@/domain/fengshen/types'
 import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
 import { createPlayerProfile } from './playerProfile'
-import { dropsForScene, rewardForScene } from './mock'
+import { dropsForScene, rewardForScene } from './battle'
+import { equippedSkills, grantPillPoint, pureSchoolBonus } from './xiyouData'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 
 /** 材料类型集合（与 PackPanel 的 material/essence/enhance 分组对齐，供"给予全部N阶材料"按 items.json 全量筛选） */
@@ -320,6 +321,7 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 id: 'count',
                 type: 'select',
                 options: [
+                  { value: '1', label: '1 次' },
                   { value: '5', label: '5 次' },
                   { value: '10', label: '10 次' },
                   { value: '20', label: '20 次' },
@@ -1134,14 +1136,6 @@ function buildSceneCategory(env: PlayerStoreDebugEnv): DebugCategory {
             },
           },
           {
-            id: 'scene_unlock_difficulty',
-            label: '解锁全部难度',
-            execute: () => {
-              for (const s of scenes) s.difficulty = 'hard'
-              return ok('所有场景难度已设为困难（解锁难度测试）')
-            },
-          },
-          {
             id: 'scene_jump',
             label: '跳转到指定场景',
             input: {
@@ -1246,26 +1240,10 @@ function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
         label: '流派',
         actions: [
           {
-            id: 'cult_school_switch',
-            label: '流派切换',
-            input: {
-              type: 'select',
-              options: () => schools.map((s) => ({ value: s.id, label: s.name })),
-              placeholder: '选择流派',
-              required: true,
-            },
-            execute: (schoolId) => {
-              const target = schools.find((s) => s.id === schoolId)
-              if (!target) return fail('未知流派')
-              for (const s of schools) s.selected = s.id === schoolId
-              return ok(`已切换流派「${target.name}」`)
-            },
-          },
-          {
             id: 'cult_school_view',
             label: '查看流派列表',
             execute: () => {
-              const payload = schools.map((s) => ({ id: s.id, name: s.name, selected: s.selected ?? false, motto: s.motto }))
+              const payload = schools.map((s) => ({ id: s.id, name: s.name, nodes: s.nodes.length }))
               return ok(`流派列表（${payload.length} 支）`, payload)
             },
           },
@@ -1282,7 +1260,15 @@ function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
               const sp = skillPoints
               if (!sp) return fail('技能点系统未就绪')
               sp.spent = Math.max(0, sp.spent - 5)
-              return ok(`技能点 +5（可用 ${sp.max - sp.spent}/${sp.max}）`)
+              return ok(`技能点 +5（可用 ${Math.max(0, sp.earned - sp.spent)}/${sp.max}）`)
+            },
+          },
+          {
+            id: 'cult_skill_pill',
+            label: '悟道丹 +1 技能点',
+            execute: () => {
+              if (!grantPillPoint()) return fail('悟道丹已服满 10 颗')
+              return ok(`悟道丹 +1（已用 ${skillPoints.totalPillsUsed}/10）`)
             },
           },
           {
@@ -1293,10 +1279,14 @@ function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
               const sp = skillPoints
               if (!sp) return fail('技能点系统未就绪')
               sp.spent = 0
+              equippedSkills.passive = []
+              equippedSkills.small = []
+              equippedSkills.ultimate = null
+              pureSchoolBonus.value = null
               for (const s of schools) {
                 for (const n of s.nodes ?? []) n.learned = false
               }
-              return ok('技能树已重置（全部节点未点亮）')
+              return ok('技能树已重置（全部节点未点亮，装备槽已清空）')
             },
           },
         ],

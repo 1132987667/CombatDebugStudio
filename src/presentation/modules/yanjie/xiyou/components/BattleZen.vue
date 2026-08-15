@@ -33,7 +33,6 @@
               <span class="xy-drop-name">{{ scene.guardian.name }}</span>
               <span class="xy-guard-tag">守护</span>
             </span>
-            <span class="xy-drop-items xy-drop-items--hint">定向稀有 · 值得重复挑战</span>
           </div>
         </div>
       </div>
@@ -116,35 +115,23 @@ import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { itemName } from '../data/caveLogic'
+import { itemName } from '../caveLogic'
 import { PLAYER_ID } from '@/shared/constants/player'
 import {
   buildBattleTeams,
   dropsForEnemy,
   dropsForScene,
   equipBonuses,
-  markSceneCleared,
   rewardForScene,
-  type XiyouScene,
-} from '../data/mock'
-import { saveManager } from '../data/save-bridge'
+} from '../battle'
+import type { XiyouScene } from '../types'
+import { markSceneCleared } from '../xiyouData'
+import { saveManager } from '../save-bridge'
 import BattleLog from '@/presentation/modules/huanling/views/BattleLog.vue'
 import QuickSlotBar from './QuickSlotBar.vue'
 import SkillAltar from './SkillAltar.vue'
 
 const props = defineProps<{ scene: XiyouScene }>()
-
-/** 战斗结算结果（供父级弹窗展示：胜负 / 经验 / 金钱 / 掉落 / 升级） */
-export interface BattleResultData {
-  winner: 'player' | 'enemy'
-  exp: number
-  gold: number
-  leveled: number
-  drops: Array<{ itemId: string; quantity: number; name: string }>
-  victory: boolean
-}
-
-const emit = defineEmits<{ result: [BattleResultData] }>()
 
 const store = useBattleStore()
 const battleService = container.resolve<BattleService>('BattleService')
@@ -311,7 +298,9 @@ async function initBattle(): Promise<void> {
   const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses, protagonist)
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()
-  if (battleService.getIsBattleActive()) battleService.endBattle(ParticipantSide.ALLY)
+  // NOTE: 切场景收尾旧战斗用 reset（静默清场）而非 endBattle——endBattle 会广播 BATTLE_ENDED，
+  //       被全局 battleStore 当成一场战斗结算并弹出战报（唤灵台 BattleField 常驻监听）。未打完的
+  //       旧战斗不应触发战报，reset + clearParticipants 已覆盖停自动战斗/清 buff/清录制。
   battleService.reset()
   battleService.clearParticipants()
   battleService.initializeTeams(ally, enemy)
@@ -335,11 +324,6 @@ function onBattleEnded(data: BattleEndedEventData): void {
     player.player.energy = Math.max(0, Math.min(allyPlayer.currentEnergy, player.player.maxEnergy))
   }
 
-  let exp = 0
-  let gold = 0
-  let leveled = 0
-  const drops: BattleResultData['drops'] = []
-
   if (victory && acceptingDrops) {
     acceptingDrops = false
     // 通关解锁链：胜利解锁本关与依赖它的后续关卡（V08）
@@ -348,30 +332,16 @@ function onBattleEnded(data: BattleEndedEventData): void {
     const reward = rewardForScene(props.scene)
     const roll = (range: [number, number] | undefined): number =>
       range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
-    exp = roll(reward.exp)
-    gold = roll(reward.gold)
-    const levelBefore = player.player.level
+    const exp = roll(reward.exp)
+    const gold = roll(reward.gold)
     if (exp > 0) player.gainExp(exp)
     if (gold > 0) player.gainCurrency('copper', gold)
-    leveled = player.player.level - levelBefore
-    // 掉落：入包并汇总展示（applyDrops 内部逐条 roll + toast，返回命中项）
-    const sceneDrops = dropsForScene(props.scene)
-    const hit = pack.applyDrops(sceneDrops)
-    for (const d of hit) {
-      drops.push({ itemId: d.itemId, quantity: d.quantity, name: itemName(d.itemId) })
-    }
+    // 掉落：入包（applyDrops 内部逐条 roll + toast）
+    pack.applyDrops(dropsForScene(props.scene))
   }
 
   // NOTE: 胜负结算完成后自动存档（PRD §5.3 关键节点触发；含失败局，保证最近进度可恢复）
   void saveManager.autoSave()
-  emit('result', {
-    winner: victory ? 'player' : 'enemy',
-    victory,
-    exp,
-    gold,
-    leveled,
-    drops,
-  })
 }
 
 watch(() => props.scene.id, () => { void initBattle() })

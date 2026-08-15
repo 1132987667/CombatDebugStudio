@@ -3,7 +3,6 @@
     <header class="xy-timeline-head">
       <div class="xy-timeline-head-text">
         <h3 class="xy-timeline-title">降妖路引</h3>
-        <p class="xy-timeline-sub">五域二十五关 · 择路而进</p>
       </div>
       <span class="xy-timeline-progress">
         已踏 <em>{{ unlockedCount }}</em>/{{ scenes.length }}
@@ -50,7 +49,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { XiyouRegion, XiyouScene } from '../data/mock'
+import type { XiyouRegion, XiyouScene } from '../types'
 
 const props = defineProps<{
   regions: XiyouRegion[]

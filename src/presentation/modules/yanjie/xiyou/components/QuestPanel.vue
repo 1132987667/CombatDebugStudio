@@ -58,7 +58,8 @@
 import { computed, ref } from 'vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
-import { checkinDays, events, quests, type XiyouQuest } from '../data/mock'
+import { checkinDays, events, quests } from '../xiyouData'
+import type { XiyouQuest } from '../types'
 
 const sub = ref<'quest' | 'checkin' | 'event'>('quest')
 

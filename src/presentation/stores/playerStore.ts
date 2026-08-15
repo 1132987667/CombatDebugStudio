@@ -9,9 +9,10 @@
 
 import { computed, reactive } from 'vue'
 import { defineStore } from 'pinia'
-import type { XiyouCurrency, XiyouPlayer, XiyouStatPoints, ProtagonistSnapshot } from '@/presentation/modules/yanjie/xiyou/data/mock'
-import { computeStatBonuses, createPlayerProfile, expNeedForLevel, playerConfig } from '@/presentation/modules/yanjie/xiyou/data/playerProfile'
-import { schoolAttributeBonuses } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import type { XiyouCurrency, XiyouPlayer, XiyouStatPoints, ProtagonistSnapshot } from '@/presentation/modules/yanjie/xiyou/types'
+import { computeStatBonuses, createPlayerProfile, expNeedForLevel, playerConfig } from '@/presentation/modules/yanjie/xiyou/playerProfile'
+import { schoolAttributeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
+import { grantLevelPoint } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { PLAYER_ID } from '@/shared/constants/player'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
@@ -104,6 +105,8 @@ export const usePlayerStore = defineStore('player', () => {
     while (player.exp >= player.expNeed && Number.isFinite(player.expNeed)) {
       player.exp -= player.expNeed
       leveled += 1
+      // 每升 1 级 +1 技能点（需求 §2.1.1，等级点上限 50）
+      grantLevelPoint()
       const profile = createPlayerProfile({
         level: player.level + 1,
         exp: player.exp,

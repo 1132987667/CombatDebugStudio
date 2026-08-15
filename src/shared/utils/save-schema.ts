@@ -82,11 +82,17 @@ export interface SaveEquipmentInstance {
   affixes: { id: string; attribute: string; modifierType: string; value: number }[]
 }
 
-/** 流派（v3.0 技能树 · 存档：所选流派 + 已点亮节点 id + 已用技能点） */
+/** 流派（v3.0 技能树 · 存档：所选流派 + 已点亮节点 id + 已用技能点 + 出战装备槽） */
 export interface SaveSchoolState {
   selected: string | null
   learned: string[]
   spent: number
+  /** 累计获得技能点（等级点 + 悟道丹点；旧档缺省 = max(spent, 初始等级点数)） */
+  earned?: number
+  /** 已服用悟道丹次数（全档上限 10；旧档缺省 0） */
+  totalPillsUsed?: number
+  /** 出战装备槽（存节点 id；旧档缺省空槽） */
+  equipped?: { passive: string[]; small: string[]; ultimate: string | null }
 }
 
 export interface SaveData {

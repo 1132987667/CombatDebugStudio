@@ -81,9 +81,9 @@ import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
-import type { XiyouRecipe } from '../../data/mock'
-import { forgeRecipes, equipmentCatalog } from '../../data/mock'
-import { catalogById, itemIdByName, itemName, qualityOf } from '../../data/caveLogic'
+import type { XiyouRecipe } from '../../types'
+import { forgeRecipes, equipmentCatalog } from '../../xiyouData'
+import { catalogById, itemIdByName, itemName, qualityOf } from '../../caveLogic'
 
 const pack = usePackStore()
 const notification = useNotificationStore()

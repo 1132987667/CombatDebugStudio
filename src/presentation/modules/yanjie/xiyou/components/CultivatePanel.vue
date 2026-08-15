@@ -8,7 +8,7 @@
         <RealmPanel />
       </template>
       <template #school>
-        <SchoolPanel />
+        <SkillTreeView />
       </template>
       <template #martial>
         <PendingPanel title="功法" subtitle="问道长生 · 即将开放" desc="收集天下功法，装配四卷，修得无上神通。" />
@@ -30,7 +30,7 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import PendingPanel from './PendingPanel.vue'
 import CharacterPanel from './cultivate/CharacterPanel.vue'
 import RealmPanel from './cultivate/RealmPanel.vue'
-import SchoolPanel from './cultivate/SchoolPanel.vue'
+import SkillTreeView from './SkillTreeView.vue'
 
 const emit = defineEmits<{ 'open-equip': [] }>()
 

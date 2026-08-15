@@ -5731,7 +5731,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "wood",
-    "role": "achievement_boss",
+    "role": "hidden_boss",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -5822,7 +5822,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "water",
-    "role": "achievement_boss",
+    "role": "hidden_boss",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -5913,7 +5913,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "earth",
-    "role": "achievement_boss",
+    "role": "hidden_boss",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -6004,7 +6004,7 @@
     "level": 55,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "achievement_boss",
+    "role": "hidden_boss",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -6095,7 +6095,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "earth",
-    "role": "achievement_boss",
+    "role": "hidden_boss",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -6673,7 +6673,7 @@
     "level": 65,
     "type": "old_blood",
     "faction": "fire",
-    "role": "three_kings",
+    "role": "major_boss",
     "stats": {
       "maxHealth": 2380,
       "attack": 568,
@@ -6760,7 +6760,7 @@
     "level": 65,
     "type": "old_blood",
     "faction": "wood",
-    "role": "three_kings",
+    "role": "major_boss",
     "stats": {
       "maxHealth": 2380,
       "attack": 568,
@@ -6847,7 +6847,7 @@
     "level": 65,
     "type": "old_blood",
     "faction": "metal",
-    "role": "three_kings",
+    "role": "major_boss",
     "stats": {
       "maxHealth": 2380,
       "attack": 568,
@@ -6934,7 +6934,7 @@
     "level": 70,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "final_boss",
+    "role": "hidden_boss",
     "stats": {
       "maxHealth": 8000,
       "attack": 250,

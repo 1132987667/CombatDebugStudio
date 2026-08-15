@@ -38,7 +38,7 @@ import Button from '@/presentation/components/Button.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { qualityColor, qualityOf } from '../data/quality'
+import { qualityColor, qualityOf } from '../quality'
 
 const props = defineProps<{
   itemId: string | null

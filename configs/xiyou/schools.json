@@ -62,11 +62,11 @@
     }
   ],
   "skillPointRules": {
-    "levelPoints": 30,
-    "levelRange": [1, 30],
+    "levelPoints": 50,
+    "levelRange": [1, 50],
     "pillPoints": 10,
     "pillName": "悟道丹",
-    "totalPoints": 40,
+    "totalPoints": 60,
     "resetCostFormula": "500 × 已分配点数",
     "pillRefundOnReset": false
   },

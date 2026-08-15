@@ -269,6 +269,8 @@ export interface SkillTargetConfig {
  * 将 SkillTargetConfig 转换为人类可读的中文描述
  */
 export function formatTargetConfig(config: SkillTargetConfig): string {
+  // NOTE: 旧格式技能（enemy-skills.json 守卫者被动等）无 selector 字段，兜底展示避免渲染崩溃
+  if (!config?.faction) return '目标'
   const factionName: Record<string, string> = {
     enemy: '敌方',
     ally: '友方',

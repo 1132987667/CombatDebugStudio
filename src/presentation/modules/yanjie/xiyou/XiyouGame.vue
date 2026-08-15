@@ -33,12 +33,9 @@
         @select="onSceneSelect" @open-equip="activeCabinet = 'equip'" />
 
       <!-- 战斗禅台（仅行路态显示；gameLoaded 前不挂载，避免首屏用存档前初始属性初始化战斗） -->
-      <BattleZen v-if="gameLoaded" v-show="!isFeature" :scene="currentScene" @result="onBattleResult" />
+      <BattleZen v-if="gameLoaded" v-show="!isFeature" :scene="currentScene" />
       <div v-else class="xy-battle-loading" aria-label="斗战西游加载中">斗战西游加载中…</div>
     </div>
-
-    <!-- 战斗结算弹窗 -->
-    <BattleResultDialog v-model="resultOpen" :result="battleResult" />
 
     <!-- 降妖路引：弹窗大地图 -->
     <SceneMapDialog v-model="mapOpen" :regions="regions" :scenes="scenes" :current="currentScene"
@@ -53,15 +50,14 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch, type WatchStopHandle } from 'vue'
 import BattleRoster from './components/BattleRoster.vue'
-import BattleResultDialog from './components/BattleResultDialog.vue'
-import BattleZen, { type BattleResultData } from './components/BattleZen.vue'
+import BattleZen from './components/BattleZen.vue'
 import DebugCavePanel from './components/DebugCavePanel.vue'
 import FourAspectBar, { type GroupTab } from './components/FourAspectBar.vue'
 import SceneMapDialog from './components/SceneMapDialog.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
 import TreasureCabinet from './components/TreasureCabinet.vue'
-import { regions, scenes, loadXiyouData, type XiyouScene } from './data/mock'
-import { saveManager } from './data/save-bridge'
+import { regions, scenes, loadXiyouData, type XiyouScene } from './xiyouData'
+import { saveManager } from './save-bridge'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
@@ -79,16 +75,6 @@ const mapOpen = ref(false)
 
 /** 设置弹窗开关 */
 const settingsOpen = ref(false)
-
-/** 战斗结算弹窗 */
-const resultOpen = ref(false)
-const battleResult = ref<BattleResultData | null>(null)
-
-/** 战斗结束：记录结算结果并弹窗展示 */
-function onBattleResult(result: BattleResultData): void {
-  battleResult.value = result
-  resultOpen.value = true
-}
 
 /** 功能面板页签位置（四象栏在左/右；设计稿 §8.2：默认左侧，设置中可切换右侧） */
 const sidebarSide = ref<'left' | 'right'>('left')

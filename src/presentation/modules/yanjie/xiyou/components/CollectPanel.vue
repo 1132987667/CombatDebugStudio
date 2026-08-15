@@ -58,7 +58,7 @@
 import { ref } from 'vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
-import { achievements, codexChapters, titles } from '../data/mock'
+import { achievements, codexChapters, titles } from '../xiyouData'
 
 const sub = ref<'codex' | 'achievement' | 'title'>('codex')
 

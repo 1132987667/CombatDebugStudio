@@ -1,0 +1,473 @@
+[
+  {
+    "id": "elix_008",
+    "name": "暴击丹药",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（金阳矿+铜精）",
+    "description": "激发暴击潜能的丹药。战斗中可使用，暴击率 +15%，持续 3 回合。"
+  },
+  {
+    "id": "elix_009",
+    "name": "破甲丹药",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（铁焰矿+粗石）",
+    "description": "破除防御的丹药。战斗中可使用，无视目标 20% 防御，持续 3 回合。"
+  },
+  {
+    "id": "elix_010",
+    "name": "吸血丹药",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（毒液+寒潭水）",
+    "description": "嗜血丹药。战斗中可使用，攻击吸血 10%，持续 3 回合。"
+  },
+  {
+    "id": "elix_011",
+    "name": "铁壁丹药",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（古铜镜+铁精）",
+    "description": "固若金汤的丹药。战斗中可使用，伤害减免 +15%，持续 3 回合。"
+  },
+  {
+    "id": "elix_012",
+    "name": "连击丹药",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（仙云皮+松木）",
+    "description": "连击丹药。战斗中可使用，连击率 +20%，持续 3 回合。"
+  },
+  {
+    "id": "elix_013",
+    "name": "净化丹药",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（神泉水+圣水玉）",
+    "description": "净化丹药。战斗中即时使用，清除所有负面状态。"
+  },
+  {
+    "id": "elix_014",
+    "name": "复活丹药",
+    "type": "丹药",
+    "rarity": 3,
+    "source": "炼丹（九转金丹碎片+神泉水）",
+    "description": "复活丹药。阵亡后自动复活，恢复 30% 气血（每场 1 次）。"
+  },
+  {
+    "id": "elix_015",
+    "name": "毒攻丹",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（毒液+淡水玉）",
+    "description": "毒攻丹。战斗中可使用，攻击附加中毒效果（2 回合）。"
+  },
+  {
+    "id": "elix_016",
+    "name": "寒息丹",
+    "type": "丹药",
+    "rarity": 2,
+    "source": "炼丹（寒潭水+贝壳）",
+    "description": "寒息丹。战斗中可使用，攻击附加减速效果（速度 -20%）。"
+  },
+  {
+    "id": "bp_page",
+    "name": "图纸残页",
+    "type": "图纸",
+    "rarity": 1,
+    "source": "普通敌人低概率掉落（3 页=1 图纸）"
+  },
+  {
+    "id": "enh_protect_01",
+    "name": "强化保护符",
+    "type": "强化",
+    "rarity": 2,
+    "source": "商店、任务奖励"
+  },
+  {
+    "id": "enh_protect_02",
+    "name": "强化必成符",
+    "type": "强化",
+    "rarity": 3,
+    "source": "隐藏 BOSS、成就"
+  },
+  {
+    "id": "enh_bless_01",
+    "name": "强化祝福石",
+    "type": "强化",
+    "rarity": 2,
+    "source": "守护者掉落"
+  },
+  {
+    "id": "star_soul_02",
+    "name": "大魂玉",
+    "type": "升星",
+    "rarity": 2,
+    "source": "守护者、BOSS、分解高品质装备"
+  },
+  {
+    "id": "star_soul_03",
+    "name": "魂玉精华",
+    "type": "升星",
+    "rarity": 3,
+    "source": "隐藏 BOSS、三大 BOSS"
+  },
+  {
+    "id": "star_residue",
+    "name": "装备残魂",
+    "type": "升星",
+    "rarity": 2,
+    "source": "分解同名装备、守护者、悬赏"
+  },
+  {
+    "id": "ench_dust_01",
+    "name": "一阶附魔粉尘",
+    "type": "附魔",
+    "rarity": 1,
+    "source": "关卡1-3 守护者"
+  },
+  {
+    "id": "ench_dust_02",
+    "name": "二阶附魔粉尘",
+    "type": "附魔",
+    "rarity": 2,
+    "source": "关卡4-6 守护者"
+  },
+  {
+    "id": "ench_dust_03",
+    "name": "三阶附魔粉尘",
+    "type": "附魔",
+    "rarity": 2,
+    "source": "关卡7-9 守护者"
+  },
+  {
+    "id": "ench_dust_04",
+    "name": "天品附魔粉尘",
+    "type": "附魔",
+    "rarity": 4,
+    "source": "三大 BOSS"
+  },
+  {
+    "id": "ench_dust_05",
+    "name": "仙品附魔粉尘",
+    "type": "附魔",
+    "rarity": 5,
+    "source": "最终 BOSS"
+  },
+  {
+    "id": "ench_essence",
+    "name": "附魔精华",
+    "type": "附魔",
+    "rarity": 3,
+    "source": "分解附魔装备（累积 3 次必成）"
+  },
+  {
+    "id": "ench_lock",
+    "name": "附魔锁定石",
+    "type": "附魔",
+    "rarity": 3,
+    "source": "隐藏 BOSS、商店限量"
+  },
+  {
+    "id": "wash_stone_01",
+    "name": "洗炼石",
+    "type": "洗炼",
+    "rarity": 1,
+    "source": "关卡敌人掉落、商店"
+  },
+  {
+    "id": "wash_stone_02",
+    "name": "精洗石",
+    "type": "洗炼",
+    "rarity": 2,
+    "source": "守护者、BOSS"
+  },
+  {
+    "id": "wash_stone_03",
+    "name": "锁词符",
+    "type": "洗炼",
+    "rarity": 3,
+    "source": "隐藏 BOSS、成就"
+  },
+  {
+    "id": "wash_liquid",
+    "name": "洗髓液",
+    "type": "洗炼",
+    "rarity": 2,
+    "source": "寒潭水×3 + 地脉灵气×1 合成"
+  },
+  {
+    "id": "wash_reroll",
+    "name": "天命洗炼符",
+    "type": "洗炼",
+    "rarity": 4,
+    "source": "三大 BOSS、最终 BOSS"
+  },
+  {
+    "id": "reforge_core",
+    "name": "重铸核心",
+    "type": "重铸",
+    "rarity": 4,
+    "source": "三大 BOSS、最终 BOSS"
+  },
+  {
+    "id": "reforge_flux",
+    "name": "重铸熔剂",
+    "type": "重铸",
+    "rarity": 3,
+    "source": "隐藏 BOSS"
+  },
+  {
+    "id": "reforge_dust",
+    "name": "重铸粉尘",
+    "type": "重铸",
+    "rarity": 3,
+    "source": "分解绝品/神品装备"
+  },
+  {
+    "id": "inherit_seal",
+    "name": "传承封印",
+    "type": "传承",
+    "rarity": 2,
+    "source": "关卡 BOSS、商店"
+  },
+  {
+    "id": "inherit_catalyst",
+    "name": "传承催化剂",
+    "type": "传承",
+    "rarity": 2,
+    "source": "守护者掉落"
+  },
+  {
+    "id": "decomp_hammer",
+    "name": "分解锤",
+    "type": "分解",
+    "rarity": 1,
+    "source": "初始拥有（不消耗）"
+  },
+  {
+    "id": "decomp_magnet",
+    "name": "分解磁铁",
+    "type": "分解",
+    "rarity": 1,
+    "source": "商店、任务"
+  },
+  {
+    "id": "crys_shard",
+    "name": "晶球碎片",
+    "type": "分解",
+    "rarity": 1,
+    "source": "分解精品以上装备（5 个=1 晶球）"
+  },
+  {
+    "id": "cons_001",
+    "name": "桃符",
+    "type": "符箓",
+    "rarity": 1,
+    "source": "商店、任务"
+  },
+  {
+    "id": "cons_002",
+    "name": "引路香",
+    "type": "符箓",
+    "rarity": 1,
+    "source": "商店"
+  },
+  {
+    "id": "cons_003",
+    "name": "捆妖索",
+    "type": "符箓",
+    "rarity": 2,
+    "source": "商店、掉落"
+  },
+  {
+    "id": "cons_005",
+    "name": "定身符",
+    "type": "符箓",
+    "rarity": 2,
+    "source": "炼丹（宣纸+铜精）"
+  },
+  {
+    "id": "cons_006",
+    "name": "隐身符",
+    "type": "符箓",
+    "rarity": 2,
+    "source": "隐藏 BOSS"
+  },
+  {
+    "id": "cons_007",
+    "name": "嘲讽符",
+    "type": "符箓",
+    "rarity": 2,
+    "source": "炼丹（虎皮+粗石）"
+  },
+  {
+    "id": "cons_008",
+    "name": "回复符",
+    "type": "符箓",
+    "rarity": 2,
+    "source": "炼丹（神泉水+宣纸）"
+  },
+  {
+    "id": "cons_009",
+    "name": "能量符",
+    "type": "符箓",
+    "rarity": 2,
+    "source": "炼丹（深水玉+宣纸）"
+  },
+  {
+    "id": "break_stone_01",
+    "name": "突破石·初",
+    "type": "突破",
+    "rarity": 1,
+    "source": "关卡3-5 精英"
+  },
+  {
+    "id": "break_stone_02",
+    "name": "突破石·中",
+    "type": "突破",
+    "rarity": 2,
+    "source": "关卡6-8 精英"
+  },
+  {
+    "id": "break_stone_03",
+    "name": "突破石·高",
+    "type": "突破",
+    "rarity": 3,
+    "source": "关卡9-10 精英、BOSS"
+  },
+  {
+    "id": "char_shard",
+    "name": "角色碎片",
+    "type": "突破",
+    "rarity": 2,
+    "source": "关卡掉落、商店兑换"
+  },
+  {
+    "id": "skill_book_01",
+    "name": "技能书·初",
+    "type": "技能书",
+    "rarity": 1,
+    "source": "关卡1-4 掉落"
+  },
+  {
+    "id": "skill_book_02",
+    "name": "技能书·中",
+    "type": "技能书",
+    "rarity": 2,
+    "source": "关卡5-7 掉落、守护者"
+  },
+  {
+    "id": "skill_book_03",
+    "name": "技能书·高",
+    "type": "技能书",
+    "rarity": 3,
+    "source": "关卡8-10 掉落、BOSS"
+  },
+  {
+    "id": "exp_pill_01",
+    "name": "小经验丹",
+    "type": "经验",
+    "rarity": 1,
+    "source": "普通敌人、任务"
+  },
+  {
+    "id": "exp_pill_02",
+    "name": "中经验丹",
+    "type": "经验",
+    "rarity": 2,
+    "source": "守护者、精英"
+  },
+  {
+    "id": "exp_pill_03",
+    "name": "大经验丹",
+    "type": "经验",
+    "rarity": 3,
+    "source": "BOSS、隐藏 BOSS"
+  },
+  {
+    "id": "cultivate_stone",
+    "name": "闭关石",
+    "type": "经验",
+    "rarity": 2,
+    "source": "商店、任务"
+  },
+  {
+    "id": "spirit_awaken_01",
+    "name": "灵性精华",
+    "type": "器灵",
+    "rarity": 2,
+    "source": "穿戴装备战斗自动积累"
+  },
+  {
+    "id": "spirit_awaken_02",
+    "name": "觉醒石",
+    "type": "器灵",
+    "rarity": 4,
+    "source": "隐藏 BOSS、三大 BOSS"
+  },
+  {
+    "id": "spirit_awaken_03",
+    "name": "器灵培养丹",
+    "type": "器灵",
+    "rarity": 4,
+    "source": "最终 BOSS、成就"
+  },
+  {
+    "id": "set_brand_01",
+    "name": "套装烙印·灵猴",
+    "type": "套装烙印",
+    "rarity": 3,
+    "source": "灵猴道专属 BOSS"
+  },
+  {
+    "id": "set_brand_02",
+    "name": "套装烙印·金行",
+    "type": "套装烙印",
+    "rarity": 3,
+    "source": "金行道专属 BOSS"
+  },
+  {
+    "id": "set_brand_03",
+    "name": "套装烙印·磐石",
+    "type": "套装烙印",
+    "rarity": 3,
+    "source": "磐石道专属 BOSS"
+  },
+  {
+    "id": "set_brand_04",
+    "name": "套装烙印·佛门",
+    "type": "套装烙印",
+    "rarity": 3,
+    "source": "佛门专属 BOSS"
+  },
+  {
+    "id": "recipe_weapon_t6",
+    "name": "六阶武器图纸",
+    "type": "图纸",
+    "rarity": 5,
+    "source": "三大王 掉落"
+  },
+  {
+    "id": "recipe_weapon_t7",
+    "name": "七阶武器图纸",
+    "type": "图纸",
+    "rarity": 5,
+    "source": "最终BOSS 掉落"
+  },
+  {
+    "id": "recipe_armor_t6",
+    "name": "六阶衣服图纸",
+    "type": "图纸",
+    "rarity": 5,
+    "source": "三大王 掉落"
+  },
+  {
+    "id": "recipe_armor_t7",
+    "name": "七阶衣服图纸",
+    "type": "图纸",
+    "rarity": 5,
+    "source": "最终BOSS 掉落"
+  }
+]

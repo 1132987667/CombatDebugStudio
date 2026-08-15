@@ -120,7 +120,7 @@ import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAtt
 import { getAttributeDisplayConfig, ATTRIBUTE_DISPLAY_CONFIG } from '@/presentation/config/attributeDisplay'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
-import { qualityClass, qualityOf } from '../../data/quality'
+import { qualityClass, qualityOf } from '../../quality'
 
 defineEmits<{ goEquip: [] }>()
 

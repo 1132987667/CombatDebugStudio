@@ -11,7 +11,7 @@
  *       （凡 1 / 精 2 / 超 3 / 绝 4 / 神 5，见 affixCountByQuality）。制造/掉落时按装备阶位
  *       roll 品质（rollQuality），天品阶位固定绝品、仙品阶位固定神品。
  */
-import type { XiyouQuality } from './mock'
+import type { XiyouQuality } from './types'
 
 /** 品级（rarity 1-5 → 凡品/玄品/地品/天品/仙品） */
 export const RARITY_TO_QUALITY: Record<number, XiyouQuality> = {

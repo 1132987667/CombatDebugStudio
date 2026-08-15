@@ -40,8 +40,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { realms } from '../../data/mock'
-import type { XiyouRealm } from '../../data/mock'
+import { realms } from '../../xiyouData'
+import type { XiyouRealm } from '../../types'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 
 const notification = useNotificationStore()

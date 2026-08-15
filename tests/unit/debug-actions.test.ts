@@ -5,10 +5,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { createDebugCategories, fail, ok, type DebugCategory } from '@/presentation/modules/yanjie/xiyou/data/debugActions'
-import type { PlayerStoreDebugEnv } from '@/presentation/modules/yanjie/xiyou/data/debugEnv'
-import { packItems, quests, realms, scenes, schools, shopGoods, skillPoints } from '@/presentation/modules/yanjie/xiyou/data/mock'
-import { saveManager } from '@/presentation/modules/yanjie/xiyou/data/save-bridge'
+import { createDebugCategories, fail, ok, type DebugCategory } from '@/presentation/modules/yanjie/xiyou/debugActions'
+import type { PlayerStoreDebugEnv } from '@/presentation/modules/yanjie/xiyou/debugEnv'
+import { packItems, quests, realms, scenes, schools, shopGoods, skillPoints } from '@/presentation/modules/yanjie/xiyou/xiyouData'
+import { saveManager } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { makeInstance, usePackStore } from '@/presentation/stores/packStore'
 

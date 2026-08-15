@@ -43,6 +43,8 @@
         <div class="xy-cave-panel" :key="active">
           <ForgePanel v-if="active === 'forge'" />
           <AlchemyPanel v-else-if="active === 'alchemy'" />
+          <TalismanPanel v-else-if="active === 'talisman'" />
+          <GardenPanel v-else-if="active === 'garden'" />
           <EnhancePanel v-else-if="active === 'enhance'" />
           <StarPanel v-else-if="active === 'star'" />
           <SkillPanel v-else-if="active === 'skill'" />
@@ -62,13 +64,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { crafts } from '../../data/mock'
+import { crafts } from '../../xiyouData'
 import AlchemyPanel from './AlchemyPanel.vue'
 import EnhancePanel from './EnhancePanel.vue'
 import ForgePanel from './ForgePanel.vue'
 import FragmentPanel from './FragmentPanel.vue'
+import GardenPanel from './GardenPanel.vue'
 import SkillPanel from './SkillPanel.vue'
 import StarPanel from './StarPanel.vue'
+import TalismanPanel from './TalismanPanel.vue'
 
 const pack = usePackStore()
 
@@ -76,7 +80,7 @@ onMounted(() => {
   void pack.init()
 })
 
-type CaveNavId = 'forge' | 'alchemy' | 'enhance' | 'star' | 'skill' | 'fragment'
+type CaveNavId = 'forge' | 'alchemy' | 'talisman' | 'garden' | 'enhance' | 'star' | 'skill' | 'fragment'
 
 const active = ref<CaveNavId>('forge')
 
@@ -84,6 +88,8 @@ const active = ref<CaveNavId>('forge')
 const NAVS: Array<{ id: CaveNavId; label: string; path: string }> = [
   { id: 'forge', label: '打造装备', path: 'M15 3l6 6-4 4-6-6 4-4zM6 21l6.5-6.5M11 5l8 8M4 20l2-2' },
   { id: 'alchemy', label: '炼制丹药', path: 'M5 8h14M5 8l1 9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-9M3 8h18M9 4h6' },
+  { id: 'talisman', label: '炼制符箓', path: 'M5 4h14v16H5zM9 9h6M9 13h6M9 17h4' },
+  { id: 'garden', label: '药园灵田', path: 'M12 21v-8M12 13c0-2.5 2-4.5 4.5-4.5 0 2.5-2 4.5-4.5 4.5zM12 13c0-2.5-2-4.5-4.5-4.5 0 2.5 2 4.5 4.5 4.5z' },
   { id: 'enhance', label: '强化装备', path: 'M12 20V6M6 14l6-6 6 6' },
   { id: 'star', label: '装备升星', path: 'M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z' },
   { id: 'skill', label: '技能修炼', path: 'M12 6a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM12 11v4M8 20c.5-2.5 1.8-3.5 3.2-3.5S14.5 17.5 15 20' },
@@ -94,6 +100,8 @@ const ACTIVE_NAV = computed(() => {
   const map: Record<CaveNavId, { label: string; sub: string }> = {
     forge: { label: '打造装备', sub: '铸炉 · 消耗材料制造兵甲' },
     alchemy: { label: '炼制丹药', sub: '丹炉 · 投入草药炼制灵丹' },
+    talisman: { label: '炼制符箓', sub: '符炉 · 炼制强化保护符' },
+    garden: { label: '药园灵田', sub: '灵田 · 种植收获灵草仙果' },
     enhance: { label: '强化装备', sub: '砺台 · 消耗晶球与金钱强化' },
     star: { label: '装备升星', sub: '星台 · 消耗同名装备突破星级' },
     skill: { label: '技能修炼', sub: '悟道 · 分配技能点修炼流派' },

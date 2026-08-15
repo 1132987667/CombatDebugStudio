@@ -9,7 +9,7 @@
 import playerConfigJson from '@configs/xiyou/player.json'
 import { ATTRIBUTE_CODE, type ATTRIBUTE_CODE as AttrCode } from '@/domain/attribute/types'
 import type { ActorData, GrowthCurveData } from '@/domain/fengshen/types'
-import type { XiyouPlayer, XiyouStatPoints } from './mock'
+import type { XiyouPlayer, XiyouStatPoints } from './types'
 
 export interface XiyouPlayerConfig {
   name: string

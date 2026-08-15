@@ -11,10 +11,9 @@ import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
 import {
   buildEnemyTeam,
   dropsForScene,
-  markSceneCleared,
   rewardForScene,
-  scenes,
-} from '@/presentation/modules/yanjie/xiyou/data/mock'
+} from '@/presentation/modules/yanjie/xiyou/battle'
+import { markSceneCleared, scenes } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 
 beforeEach(() => {
   setActivePinia(createPinia())

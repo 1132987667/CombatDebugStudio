@@ -64,8 +64,9 @@
 import { ref } from 'vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
-import { affinities, mates, pets, type XiyouMate } from '../data/mock'
-import { qualityClass, qualityOf } from '../data/quality'
+import { affinities, mates, pets } from '../xiyouData'
+import type { XiyouMate } from '../types'
+import { qualityClass, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 
 const playerStore = usePlayerStore()

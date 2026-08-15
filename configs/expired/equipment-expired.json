@@ -1,0 +1,130 @@
+[
+  {
+    "id": "eq_w002",
+    "name": "铜棍",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 12
+      }
+    ],
+    "source": "旧版封神榜装备表（掉落）",
+    "description": "一阶中型武器。通体铜铸，势大力沉。攻击力 10-15。"
+  },
+  {
+    "id": "eq_c003",
+    "name": "粗石项链",
+    "slot": "helmet",
+    "subType": "头盔",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "source": "旧版封神榜装备表（掉落）",
+    "description": "一阶项链（并入头盔）。粗石沉稳，防御 +5%。"
+  },
+  {
+    "id": "eq_c005",
+    "name": "淡水玉手镯",
+    "slot": "ring",
+    "subType": "戒指",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "source": "旧版封神榜装备表（掉落）",
+    "description": "一阶手镯（并入戒指）。玉润含光，暴击率 +3%。"
+  },
+  {
+    "id": "eq_c006",
+    "name": "铜精冠冕",
+    "slot": "helmet",
+    "subType": "冠冕",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 2
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 2
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 2
+      }
+    ],
+    "source": "旧版封神榜装备表（掉落）",
+    "description": "一阶冠冕（并入头盔）。铜精聚灵，全属性 +2%。"
+  },
+  {
+    "id": "eq_c012",
+    "name": "铁精冠冕",
+    "slot": "helmet",
+    "subType": "冠冕",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 4
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 4
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 4
+      }
+    ],
+    "source": "旧版封神榜装备表（掉落）",
+    "description": "二阶冠冕（并入头盔）。铁精冠顶，全属性 +4%。"
+  },
+  {
+    "id": "eq_c015",
+    "name": "金精项链",
+    "slot": "helmet",
+    "subType": "头盔",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "source": "旧版封神榜装备表（掉落）",
+    "description": "三阶项链（并入头盔）。金精护体，防御 +12%。"
+  }
+]

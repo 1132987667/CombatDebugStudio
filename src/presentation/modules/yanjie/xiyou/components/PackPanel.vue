@@ -43,7 +43,7 @@ import Dialog from '@/presentation/components/Dialog.vue'
 import EmptyState from '@/presentation/components/EmptyState.vue'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { qualityColor } from '../data/quality'
+import { qualityColor } from '../quality'
 import PackItemDetail from './PackItemDetail.vue'
 import PackPane, { type PackSub } from './PackPane.vue'
 

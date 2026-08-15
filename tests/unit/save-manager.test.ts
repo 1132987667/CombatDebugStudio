@@ -3,7 +3,7 @@
  * save-manager.test.ts — 存档管理器编排逻辑（AGENTS.md：非琐碎逻辑留可运行检查）
  * 覆盖: 手动/自动存档落盘、加载恢复、主档损坏→备份降级、无档→新建、导出/导入、新游戏重置
  */
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SaveManager, type SaveStatePort } from '@/shared/utils/save-manager'
 import {
   attachChecksum,
@@ -44,6 +44,29 @@ class MemStorage implements IPersistentStorage {
   }
   raw(store: StorageStoreName, key: string): unknown {
     return this.map.get(store)?.get(key)
+  }
+}
+
+/** IDB 全操作失败的存储（模拟 IndexedDB 被禁用/隐私模式），localStorage 仍可用 */
+class FailStorage implements IPersistentStorage {
+  readonly backend = 'indexeddb' as const
+  async set<T>(): Promise<boolean> {
+    return false
+  }
+  async get<T>(): Promise<T | null> {
+    return null
+  }
+  async remove(): Promise<boolean> {
+    return false
+  }
+  async keys(): Promise<string[]> {
+    return []
+  }
+  async clear(): Promise<boolean> {
+    return false
+  }
+  async getStats() {
+    return null
   }
 }
 
@@ -102,6 +125,31 @@ describe('save（手动 / 自动）', () => {
     expect(f.storage.raw(SAVE_STORE.SAVES, SAVE_MAIN_KEY)).toBeTruthy()
     expect(f.storage.raw(SAVE_STORE.SAVES, SAVE_AUTO_KEY)).toBeTruthy()
     expect(localStorage.getItem(LOCAL_AUTO_KEY)).toBeTruthy()
+  })
+
+  it('IDB 不可用但 localStorage 可用：save 判定成功且降级档已落盘（防误报保存失败）', async () => {
+    const f = makeFixture()
+    const manager = new SaveManager(f.port, new FailStorage())
+    manager.setCurrentSceneId('scene_1_1')
+    expect(await manager.save('manual')).toBe(true)
+    const local = JSON.parse(localStorage.getItem(LOCAL_MAIN_KEY)!) as SaveData
+    expect(local.meta.version).toBe('2.0.0')
+    expect(local.meta.checksum).toBeTruthy()
+    expect(local.progress.current_scene).toBe('scene_1_1')
+  })
+
+  it('IDB 与 localStorage 均不可用：save 判定失败', async () => {
+    const f = makeFixture()
+    const manager = new SaveManager(f.port, new FailStorage())
+    localStorage.clear()
+    const spy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('denied')
+    })
+    try {
+      expect(await manager.save('manual')).toBe(false)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
 
@@ -171,6 +219,23 @@ describe('load', () => {
     expect(f.restored.at(-1)?.player.level).toBe(3)
     expect(f.storage.raw(SAVE_STORE.SAVES, SAVE_MAIN_KEY)).toBeTruthy()
     expect(localStorage.getItem(LOCAL_MAIN_KEY)).toBeNull()
+  })
+
+  it('IDB 不可用时 localStorage 迁移保留旧键（防迁移失败丢档）', async () => {
+    const restored: SaveData[] = []
+    const port: SaveStatePort = {
+      collect: async () => createInitialGameState(),
+      restore: async (d) => { restored.push(d) },
+    }
+    const manager = new SaveManager(port, new FailStorage())
+    const legacy = attachChecksum({ ...createInitialGameState(), player: { ...createInitialGameState().player, level: 3 } })
+    localStorage.setItem(LOCAL_MAIN_KEY, JSON.stringify(legacy))
+    const r = await manager.load()
+    expect(r.source).toBe('local')
+    expect(r.migrated).toBe(false)
+    expect(restored.at(-1)?.player.level).toBe(3)
+    // 旧键保留：IDB 未写入，下次加载仍能从降级档恢复
+    expect(localStorage.getItem(LOCAL_MAIN_KEY)).toBeTruthy()
   })
 })
 

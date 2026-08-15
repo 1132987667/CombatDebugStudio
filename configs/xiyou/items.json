@@ -8,7 +8,8 @@
       "type": "木材",
       "rarity": 1,
       "source": "关卡1-2 掉落",
-      "description": "普通桃树的木材，质地轻盈坚韧，适合制作轻型武器和木甲。用途：制作一阶装备的基础材料。"
+      "description": "普通桃树的木材，质地轻盈坚韧，适合制作轻型武器和木甲。用途：制作一阶装备的基础材料。",
+      "sellPrice": 8
     },
     {
       "id": "mat_cushi",
@@ -16,7 +17,8 @@
       "type": "矿石",
       "rarity": 1,
       "source": "关卡1-3 掉落",
-      "description": "粗糙的石块，蕴含微弱的地脉灵气，可用于基础装备制作。用途：制作一阶装备和配件的基础材料。"
+      "description": "粗糙的石块，蕴含微弱的地脉灵气，可用于基础装备制作。用途：制作一阶装备和配件的基础材料。",
+      "sellPrice": 10
     },
     {
       "id": "mat_tongjing",
@@ -24,7 +26,8 @@
       "type": "金属",
       "rarity": 1,
       "source": "关卡1-3 掉落",
-      "description": "经过初步提炼的铜矿石精华，具有较好的延展性和韧性。用途：制作一阶装备和配件的主要金属材料。"
+      "description": "经过初步提炼的铜矿石精华，具有较好的延展性和韧性。用途：制作一阶装备和配件的主要金属材料。",
+      "sellPrice": 15
     },
     {
       "id": "mat_danshuiyu",
@@ -32,7 +35,8 @@
       "type": "玉石",
       "rarity": 1,
       "source": "关卡1-2 掉落",
-      "description": "产自淡水河流中的玉石，蕴含温和的水属性灵气。用途：制作一阶护符和戒指。"
+      "description": "产自淡水河流中的玉石，蕴含温和的水属性灵气。用途：制作一阶护符和戒指。",
+      "sellPrice": 12
     },
     {
       "id": "mat_beike",
@@ -40,7 +44,8 @@
       "type": "水产",
       "rarity": 1,
       "source": "关卡2 掉落",
-      "description": "河滩上常见的贝壳，可用于制作简单的配件。用途：制作一阶戒指。"
+      "description": "河滩上常见的贝壳，可用于制作简单的配件。用途：制作一阶戒指。",
+      "sellPrice": 6
     },
     {
       "id": "mat_songmu",
@@ -48,7 +53,8 @@
       "type": "木材",
       "rarity": 1,
       "source": "关卡3-4 掉落",
-      "description": "松树的木材，质地比桃木更坚硬，适合制作中型武器。用途：制作二阶装备的基础材料。"
+      "description": "松树的木材，质地比桃木更坚硬，适合制作中型武器。用途：制作二阶装备的基础材料。",
+      "sellPrice": 8
     },
     {
       "id": "mat_tiejing",
@@ -56,7 +62,8 @@
       "type": "金属",
       "rarity": 1,
       "source": "关卡3-5 掉落",
-      "description": "精炼过的铁矿石，硬度高且耐磨，适合制作中级装备。用途：制作二阶装备和配件的主要金属材料。"
+      "description": "精炼过的铁矿石，硬度高且耐磨，适合制作中级装备。用途：制作二阶装备和配件的主要金属材料。",
+      "sellPrice": 15
     },
     {
       "id": "mat_shenshuiyu",
@@ -64,7 +71,8 @@
       "type": "玉石",
       "rarity": 1,
       "source": "关卡3-5 掉落",
-      "description": "产自深水区域的玉石，蕴含更浓郁的水属性灵气。用途：制作二阶护符和戒指。"
+      "description": "产自深水区域的玉石，蕴含更浓郁的水属性灵气。用途：制作二阶护符和戒指。",
+      "sellPrice": 12
     },
     {
       "id": "mat_lupi",
@@ -72,7 +80,8 @@
       "type": "皮革",
       "rarity": 1,
       "source": "关卡4 掉落",
-      "description": "鹿的皮革，柔软且坚韧，适合制作轻型护甲。用途：制作一阶皮甲的基础材料。"
+      "description": "鹿的皮革，柔软且坚韧，适合制作轻型护甲。用途：制作一阶皮甲的基础材料。",
+      "sellPrice": 10
     },
     {
       "id": "mat_xuanzhi",
@@ -80,7 +89,8 @@
       "type": "织物",
       "rarity": 1,
       "source": "关卡4 掉落",
-      "description": "传统制作的宣纸，轻盈且有韧性，可用于制作配件。用途：制作一阶靴子。"
+      "description": "传统制作的宣纸，轻盈且有韧性，可用于制作配件。用途：制作一阶靴子。",
+      "sellPrice": 6
     },
     {
       "id": "mat_qinghuaci",
@@ -88,7 +98,8 @@
       "type": "陶瓷",
       "rarity": 1,
       "source": "关卡4-5 掉落",
-      "description": "精美的青花瓷器碎片，具有艺术价值和灵气。用途：制作二阶戒指和靴子。"
+      "description": "精美的青花瓷器碎片，具有艺术价值和灵气。用途：制作二阶戒指和靴子。",
+      "sellPrice": 20
     },
     {
       "id": "mat_xiongpi",
@@ -96,7 +107,8 @@
       "type": "皮革",
       "rarity": 1,
       "source": "关卡4-7 掉落",
-      "description": "熊的皮革，厚实耐磨，适合制作中级皮甲。用途：制作二阶皮甲的基础材料。"
+      "description": "熊的皮革，厚实耐磨，适合制作中级皮甲。用途：制作二阶皮甲的基础材料。",
+      "sellPrice": 10
     },
     {
       "id": "mat_tiemu",
@@ -104,7 +116,8 @@
       "type": "木材",
       "rarity": 2,
       "source": "关卡6-7 掉落",
-      "description": "质地坚硬如铁的木材，极为稀有，适合制作高级装备。用途：制作三阶装备的基础材料。"
+      "description": "质地坚硬如铁的木材，极为稀有，适合制作高级装备。用途：制作三阶装备的基础材料。",
+      "sellPrice": 48
     },
     {
       "id": "mat_tieyan",
@@ -112,7 +125,8 @@
       "type": "矿石",
       "rarity": 1,
       "source": "关卡6 掉落",
-      "description": "在火焰山附近找到的特殊矿石，蕴含火属性灵气。用途：制作特殊装备的材料。"
+      "description": "在火焰山附近找到的特殊矿石，蕴含火属性灵气。用途：制作特殊装备的材料。",
+      "sellPrice": 10
     },
     {
       "id": "mat_gutongjing",
@@ -120,7 +134,8 @@
       "type": "古董",
       "rarity": 2,
       "source": "关卡6-8 掉落",
-      "description": "古老的铜镜，蕴含着神秘的灵气，可用于制作高级配件。用途：制作三阶靴子。"
+      "description": "古老的铜镜，蕴含着神秘的灵气，可用于制作高级配件。用途：制作三阶靴子。",
+      "sellPrice": 150
     },
     {
       "id": "mat_jinjing",
@@ -128,7 +143,8 @@
       "type": "金属",
       "rarity": 2,
       "source": "关卡6-9 掉落",
-      "description": "提炼出的黄金精华，极其珍贵，适合制作顶级装备。用途：制作三阶装备和配件的主要金属材料。"
+      "description": "提炼出的黄金精华，极其珍贵，适合制作顶级装备。用途：制作三阶装备和配件的主要金属材料。",
+      "sellPrice": 90
     },
     {
       "id": "mat_shengshui",
@@ -136,7 +152,8 @@
       "type": "玉石",
       "rarity": 2,
       "source": "关卡5、9 掉落",
-      "description": "蕴含神圣水属性的玉石，极为纯净，适合制作顶级配件。用途：制作三阶护符和戒指。"
+      "description": "蕴含神圣水属性的玉石，极为纯净，适合制作顶级配件。用途：制作三阶护符和戒指。",
+      "sellPrice": 72
     },
     {
       "id": "mat_feicui",
@@ -144,7 +161,8 @@
       "type": "玉石",
       "rarity": 2,
       "source": "关卡7 掉落",
-      "description": "翡翠制成的玉镯，蕴含强大的灵气，可大幅提升属性。用途：制作三阶戒指。"
+      "description": "翡翠制成的玉镯，蕴含强大的灵气，可大幅提升属性。用途：制作三阶戒指。",
+      "sellPrice": 72
     },
     {
       "id": "mat_xianyun",
@@ -152,7 +170,8 @@
       "type": "皮革",
       "rarity": 2,
       "source": "关卡7-9 掉落",
-      "description": "仙兽的皮革，轻盈如云却坚韧无比，适合制作顶级皮甲。用途：制作三阶皮甲的基础材料。"
+      "description": "仙兽的皮革，轻盈如云却坚韧无比，适合制作顶级皮甲。用途：制作三阶皮甲的基础材料。",
+      "sellPrice": 60
     },
     {
       "id": "mat_hupi",
@@ -160,7 +179,8 @@
       "type": "皮革",
       "rarity": 1,
       "source": "关卡8 掉落",
-      "description": "猛虎的皮革，极具威严和力量，适合制作高级皮甲。用途：制作三阶皮甲的基础材料。"
+      "description": "猛虎的皮革，极具威严和力量，适合制作高级皮甲。用途：制作三阶皮甲的基础材料。",
+      "sellPrice": 10
     },
     {
       "id": "mat_zhenzhu",
@@ -168,7 +188,8 @@
       "type": "水产",
       "rarity": 1,
       "source": "关卡2 守护者掉落",
-      "description": "河蚌中孕育的珍珠，散发着温和的光芒，可用于制作配件。用途：制作特殊配件。"
+      "description": "河蚌中孕育的珍珠，散发着温和的光芒，可用于制作配件。用途：制作特殊配件。",
+      "sellPrice": 6
     },
     {
       "id": "mat_hantan",
@@ -176,7 +197,8 @@
       "type": "液体",
       "rarity": 1,
       "source": "关卡7 掉落",
-      "description": "取自寒潭的冰水，蕴含冰属性灵气，可用于特殊丹药炼制。用途：炼制特殊丹药的材料。"
+      "description": "取自寒潭的冰水，蕴含冰属性灵气，可用于特殊丹药炼制。用途：炼制特殊丹药的材料。",
+      "sellPrice": 15
     },
     {
       "id": "mat_duye",
@@ -184,7 +206,8 @@
       "type": "毒物",
       "rarity": 1,
       "source": "关卡7 掉落",
-      "description": "蜘蛛精的毒液，可炼制毒属性丹药或涂抹在武器上。用途：炼制毒属性丹药或制作毒属性武器。"
+      "description": "蜘蛛精的毒液，可炼制毒属性丹药或涂抹在武器上。用途：炼制毒属性丹药或制作毒属性武器。",
+      "sellPrice": 20
     },
     {
       "id": "mat_jinyang",
@@ -192,7 +215,8 @@
       "type": "矿石",
       "rarity": 2,
       "source": "关卡8 掉落",
-      "description": "在狮驼岭发现的金色矿石，蕴含太阳灵气。用途：制作特殊装备的材料。"
+      "description": "在狮驼岭发现的金色矿石，蕴含太阳灵气。用途：制作特殊装备的材料。",
+      "sellPrice": 60
     },
     {
       "id": "mat_shenquan",
@@ -200,7 +224,8 @@
       "type": "液体",
       "rarity": 2,
       "source": "关卡8 隐藏敌人掉落",
-      "description": "神鸟栖息之地的泉水，蕴含风属性灵气。用途：炼制高级丹药的材料。"
+      "description": "神鸟栖息之地的泉水，蕴含风属性灵气。用途：炼制高级丹药的材料。",
+      "sellPrice": 90
     },
     {
       "id": "mat_yufoxiang",
@@ -208,77 +233,88 @@
       "type": "古董",
       "rarity": 2,
       "source": "关卡9 BOSS / 碎片合成",
-      "description": "雕刻精美的玉佛像，蕴含强大的佛门灵气。用途：制作顶级配件或特殊装备。"
+      "description": "雕刻精美的玉佛像，蕴含强大的佛门灵气。用途：制作顶级配件或特殊装备。",
+      "sellPrice": 150
     },
     {
       "id": "mat_sp_01",
       "name": "玄铁",
       "type": "特殊材料",
       "rarity": 2,
-      "source": "商店（500 金钱）"
+      "source": "商店（500 金钱）",
+      "sellPrice": 250
     },
     {
       "id": "mat_sp_02",
       "name": "妖丹",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "隐藏 BOSS / 精英敌人"
+      "source": "隐藏 BOSS / 精英敌人",
+      "sellPrice": 400
     },
     {
       "id": "mat_sp_03",
       "name": "火灵珠",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "关卡6 BOSS 首杀"
+      "source": "关卡6 BOSS 首杀",
+      "sellPrice": 1200
     },
     {
       "id": "mat_sp_04",
       "name": "风灵珠",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "关卡8 BOSS 首杀"
+      "source": "关卡8 BOSS 首杀",
+      "sellPrice": 1200
     },
     {
       "id": "mat_sp_05",
       "name": "地灵珠",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "关卡5 BOSS 首杀"
+      "source": "关卡5 BOSS 首杀",
+      "sellPrice": 1200
     },
     {
       "id": "mat_sp_06",
       "name": "水灵珠",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "关卡2 BOSS 首杀"
+      "source": "关卡2 BOSS 首杀",
+      "sellPrice": 1200
     },
     {
       "id": "mat_sp_07",
       "name": "雷灵珠",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "关卡9 BOSS 首杀"
+      "source": "关卡9 BOSS 首杀",
+      "sellPrice": 1200
     },
     {
       "id": "mat_boss_01",
       "name": "牛魔角",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "牛魔王（首杀 100%，重复 20%）"
+      "source": "牛魔王（首杀 100%，重复 20%）",
+      "sellPrice": 800
     },
     {
       "id": "mat_boss_02",
       "name": "毒囊",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "蝎子精（首杀 100%，重复 20%）"
+      "source": "蝎子精（首杀 100%，重复 20%）",
+      "sellPrice": 800
     },
     {
       "id": "mat_boss_03",
       "name": "鹏羽",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "金翅大鹏（首杀 100%，重复 20%）"
+      "source": "金翅大鹏（首杀 100%，重复 20%）",
+      "sellPrice": 800
     },
     {
       "id": "mat_dimai",
@@ -286,7 +322,8 @@
       "type": "灵气",
       "rarity": 2,
       "source": "关卡3-5 BOSS（15%-25%）",
-      "description": "大地脉动中提取的纯净灵气，蕴含土属性力量。用途：用于装备强化和高级丹药炼制。"
+      "description": "大地脉动中提取的纯净灵气，蕴含土属性力量。用途：用于装备强化和高级丹药炼制。",
+      "sellPrice": 300
     },
     {
       "id": "mat_tiangang",
@@ -294,7 +331,8 @@
       "type": "灵气",
       "rarity": 3,
       "source": "关卡8-10 BOSS（10%-15%）/ 碎片合成",
-      "description": "来自天罡星辰的灵气，蕴含强大的星辰之力。用途：用于顶级装备强化和传说丹药炼制。"
+      "description": "来自天罡星辰的灵气，蕴含强大的星辰之力。用途：用于顶级装备强化和传说丹药炼制。",
+      "sellPrice": 800
     },
     {
       "id": "mat_hunyuan",
@@ -302,7 +340,8 @@
       "type": "灵气",
       "rarity": 3,
       "source": "六耳猕猴（首杀 100%，重复 10%）/ 碎片合成",
-      "description": "混沌初开时存在的原始灵气，蕴含创世之力。用途：用于传说装备的最终强化。"
+      "description": "混沌初开时存在的原始灵气，蕴含创世之力。用途：用于传说装备的最终强化。",
+      "sellPrice": 1500
     },
     {
       "id": "mat_tiangang_suipian",
@@ -310,7 +349,8 @@
       "type": "碎片",
       "rarity": 2,
       "source": "关卡8-10 高难敌人（3:1 合成灵气）",
-      "description": "天罡灵气的碎片，收集 3 个可合成完整的天罡灵气。用途：锁词条洗练。"
+      "description": "天罡灵气的碎片，收集 3 个可合成完整的天罡灵气。用途：锁词条洗练。",
+      "sellPrice": 100
     },
     {
       "id": "mat_hunyuan_suipian",
@@ -318,7 +358,8 @@
       "type": "碎片",
       "rarity": 2,
       "source": "最终 BOSS 重复 / 关卡10 守护者（5:1 合成）",
-      "description": "混元灵气的碎片，收集 5 个可合成完整的混元灵气。用途：重铸、附魔封存。"
+      "description": "混元灵气的碎片，收集 5 个可合成完整的混元灵气。用途：重铸、附魔封存。",
+      "sellPrice": 100
     },
     {
       "id": "frag_003",
@@ -326,7 +367,8 @@
       "type": "碎片",
       "rarity": 3,
       "source": "三大 BOSS / 关卡10 守护者（5:1 合成）",
-      "description": "九转金丹的碎片，收集一定数量可合成完整的九转金丹。用途：5个碎片可合成1个九转金丹。"
+      "description": "九转金丹的碎片，收集一定数量可合成完整的九转金丹。用途：5个碎片可合成1个九转金丹。",
+      "sellPrice": 400
     },
     {
       "id": "frag_004",
@@ -334,7 +376,8 @@
       "type": "碎片",
       "rarity": 2,
       "source": "关卡9 高难敌人（5:1 合成）",
-      "description": "玉佛像的碎片，收集一定数量可合成完整的玉佛像。用途：5个碎片可合成1个玉佛像。"
+      "description": "玉佛像的碎片，收集一定数量可合成完整的玉佛像。用途：5个碎片可合成1个玉佛像。",
+      "sellPrice": 100
     },
     {
       "id": "curr_001",
@@ -350,7 +393,8 @@
       "type": "晶球",
       "rarity": 1,
       "source": "武器强化（一阶）",
-      "description": "蕴含金属性灵气的晶球，可用于强化一阶武器。开启后获得异矿。用途：强化一阶武器，每级提升攻击力5%。"
+      "description": "蕴含金属性灵气的晶球，可用于强化一阶武器。开启后获得异矿。用途：强化一阶武器，每级提升攻击力5%。",
+      "sellPrice": 60
     },
     {
       "id": "crys_002",
@@ -358,7 +402,8 @@
       "type": "晶球",
       "rarity": 1,
       "source": "武器强化（二阶）",
-      "description": "蕴含更浓郁金属性灵气的晶球，可用于强化二阶武器。开启后获得异矿。用途：强化二阶武器，每级提升攻击力5%。"
+      "description": "蕴含更浓郁金属性灵气的晶球，可用于强化二阶武器。开启后获得异矿。用途：强化二阶武器，每级提升攻击力5%。",
+      "sellPrice": 60
     },
     {
       "id": "crys_003",
@@ -366,7 +411,8 @@
       "type": "晶球",
       "rarity": 2,
       "source": "武器强化（三阶）",
-      "description": "蕴含纯粹金属性灵气的晶球，可用于强化三阶武器。开启后获得异矿。用途：强化三阶武器，每级提升攻击力5%。"
+      "description": "蕴含纯粹金属性灵气的晶球，可用于强化三阶武器。开启后获得异矿。用途：强化三阶武器，每级提升攻击力5%。",
+      "sellPrice": 120
     },
     {
       "id": "crys_004",
@@ -374,7 +420,8 @@
       "type": "晶球",
       "rarity": 1,
       "source": "衣服强化（一阶）",
-      "description": "蕴含木属性灵气的晶球，可用于强化一阶衣服。开启后获得灵水。用途：强化一阶衣服，每级提升防御力5%。"
+      "description": "蕴含木属性灵气的晶球，可用于强化一阶衣服。开启后获得灵水。用途：强化一阶衣服，每级提升防御力5%。",
+      "sellPrice": 60
     },
     {
       "id": "crys_005",
@@ -382,7 +429,8 @@
       "type": "晶球",
       "rarity": 1,
       "source": "衣服强化（二阶）",
-      "description": "蕴含更浓郁木属性灵气的晶球，可用于强化二阶衣服。开启后获得灵水。用途：强化二阶衣服，每级提升防御力5%。"
+      "description": "蕴含更浓郁木属性灵气的晶球，可用于强化二阶衣服。开启后获得灵水。用途：强化二阶衣服，每级提升防御力5%。",
+      "sellPrice": 60
     },
     {
       "id": "crys_006",
@@ -390,7 +438,8 @@
       "type": "晶球",
       "rarity": 2,
       "source": "衣服强化（三阶）",
-      "description": "蕴含纯粹木属性灵气的晶球，可用于强化三阶衣服。开启后获得灵水。用途：强化三阶衣服，每级提升防御力5%。"
+      "description": "蕴含纯粹木属性灵气的晶球，可用于强化三阶衣服。开启后获得灵水。用途：强化三阶衣服，每级提升防御力5%。",
+      "sellPrice": 120
     },
     {
       "id": "crys_007",
@@ -398,7 +447,8 @@
       "type": "晶球",
       "rarity": 1,
       "source": "配件强化（一阶）",
-      "description": "蕴含水属性灵气的晶球，可用于强化一阶配件。开启后获得灵气。用途：强化一阶配件，每级提升属性加成3%。"
+      "description": "蕴含水属性灵气的晶球，可用于强化一阶配件。开启后获得灵气。用途：强化一阶配件，每级提升属性加成3%。",
+      "sellPrice": 60
     },
     {
       "id": "crys_008",
@@ -406,7 +456,8 @@
       "type": "晶球",
       "rarity": 1,
       "source": "配件强化（二阶）",
-      "description": "蕴含更浓郁水属性灵气的晶球，可用于强化二阶配件。开启后获得灵气。用途：强化二阶配件，每级提升属性加成3%。"
+      "description": "蕴含更浓郁水属性灵气的晶球，可用于强化二阶配件。开启后获得灵气。用途：强化二阶配件，每级提升属性加成3%。",
+      "sellPrice": 60
     },
     {
       "id": "crys_009",
@@ -414,7 +465,8 @@
       "type": "晶球",
       "rarity": 2,
       "source": "配件强化（三阶）",
-      "description": "蕴含纯粹水属性灵气的晶球，可用于强化三阶配件。开启后获得灵气。用途：强化三阶配件，每级提升属性加成3%。"
+      "description": "蕴含纯粹水属性灵气的晶球，可用于强化三阶配件。开启后获得灵气。用途：强化三阶配件，每级提升属性加成3%。",
+      "sellPrice": 120
     },
     {
       "id": "elix_001",
@@ -428,7 +480,8 @@
           "type": "heal",
           "value": 100
         }
-      ]
+      ],
+      "sellPrice": 40
     },
     {
       "id": "elix_002",
@@ -442,7 +495,8 @@
           "type": "energy",
           "value": 50
         }
-      ]
+      ],
+      "sellPrice": 60
     },
     {
       "id": "elix_003",
@@ -457,7 +511,8 @@
           "value": 0,
           "buffId": "buff_defense_up"
         }
-      ]
+      ],
+      "sellPrice": 80
     },
     {
       "id": "elix_004",
@@ -472,7 +527,8 @@
           "value": 0,
           "buffId": "buff_attack_up"
         }
-      ]
+      ],
+      "sellPrice": 80
     },
     {
       "id": "elix_005",
@@ -487,7 +543,8 @@
           "value": 0,
           "buffId": "buff_speed_up"
         }
-      ]
+      ],
+      "sellPrice": 80
     },
     {
       "id": "elix_006",
@@ -502,7 +559,8 @@
           "value": 0,
           "buffId": "buff_all_stats"
         }
-      ]
+      ],
+      "sellPrice": 150
     },
     {
       "id": "elix_007",
@@ -516,674 +574,320 @@
           "type": "heal",
           "value": 9999
         }
-      ]
-    },
-    {
-      "id": "elix_008",
-      "name": "暴击丹药",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（金阳矿+铜精）",
-      "description": "激发暴击潜能的丹药。战斗中可使用，暴击率 +15%，持续 3 回合。"
-    },
-    {
-      "id": "elix_009",
-      "name": "破甲丹药",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（铁焰矿+粗石）",
-      "description": "破除防御的丹药。战斗中可使用，无视目标 20% 防御，持续 3 回合。"
-    },
-    {
-      "id": "elix_010",
-      "name": "吸血丹药",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（毒液+寒潭水）",
-      "description": "嗜血丹药。战斗中可使用，攻击吸血 10%，持续 3 回合。"
-    },
-    {
-      "id": "elix_011",
-      "name": "铁壁丹药",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（古铜镜+铁精）",
-      "description": "固若金汤的丹药。战斗中可使用，伤害减免 +15%，持续 3 回合。"
-    },
-    {
-      "id": "elix_012",
-      "name": "连击丹药",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（仙云皮+松木）",
-      "description": "连击丹药。战斗中可使用，连击率 +20%，持续 3 回合。"
-    },
-    {
-      "id": "elix_013",
-      "name": "净化丹药",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（神泉水+圣水玉）",
-      "description": "净化丹药。战斗中即时使用，清除所有负面状态。"
-    },
-    {
-      "id": "elix_014",
-      "name": "复活丹药",
-      "type": "丹药",
-      "rarity": 3,
-      "source": "炼丹（九转金丹碎片+神泉水）",
-      "description": "复活丹药。阵亡后自动复活，恢复 30% 气血（每场 1 次）。"
-    },
-    {
-      "id": "elix_015",
-      "name": "毒攻丹",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（毒液+淡水玉）",
-      "description": "毒攻丹。战斗中可使用，攻击附加中毒效果（2 回合）。"
-    },
-    {
-      "id": "elix_016",
-      "name": "寒息丹",
-      "type": "丹药",
-      "rarity": 2,
-      "source": "炼丹（寒潭水+贝壳）",
-      "description": "寒息丹。战斗中可使用，攻击附加减速效果（速度 -20%）。"
+      ],
+      "sellPrice": 500
     },
     {
       "id": "elix_perm_01",
       "name": "培元丹",
       "type": "永久丹药",
       "rarity": 3,
-      "source": "成长丹药（气血 +20，上限 20 颗）"
+      "source": "成长丹药（气血 +20，上限 20 颗）",
+      "sellPrice": 500
     },
     {
       "id": "elix_perm_02",
       "name": "淬体丹",
       "type": "永久丹药",
       "rarity": 3,
-      "source": "成长丹药（防御 +5，上限 20 颗）"
+      "source": "成长丹药（防御 +5，上限 20 颗）",
+      "sellPrice": 500
     },
     {
       "id": "elix_perm_03",
       "name": "锐锋丹",
       "type": "永久丹药",
       "rarity": 3,
-      "source": "成长丹药（攻击 +5，上限 20 颗）"
+      "source": "成长丹药（攻击 +5，上限 20 颗）",
+      "sellPrice": 500
     },
     {
       "id": "elix_perm_04",
       "name": "迅影丹",
       "type": "永久丹药",
       "rarity": 3,
-      "source": "成长丹药（速度 +3，上限 10 颗）"
+      "source": "成长丹药（速度 +3，上限 10 颗）",
+      "sellPrice": 500
     },
     {
       "id": "elix_perm_05",
       "name": "洗髓丹",
       "type": "永久丹药",
       "rarity": 4,
-      "source": "炼丹（妖丹×1 + 玄铁×2）"
+      "source": "炼丹（妖丹×1 + 玄铁×2）",
+      "sellPrice": 2000
     },
     {
       "id": "bp_t1_wp",
       "name": "一阶武器图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "默认解锁 / 新手任务"
+      "source": "默认解锁 / 新手任务",
+      "sellPrice": 80
     },
     {
       "id": "bp_t1_ar",
       "name": "一阶衣服图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "默认解锁 / 新手任务"
+      "source": "默认解锁 / 新手任务",
+      "sellPrice": 80
     },
     {
       "id": "bp_t1_hl",
       "name": "一阶头盔图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "默认解锁 / 新手任务"
+      "source": "默认解锁 / 新手任务",
+      "sellPrice": 80
     },
     {
       "id": "bp_t1_bs",
       "name": "一阶靴子图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "默认解锁 / 新手任务"
+      "source": "默认解锁 / 新手任务",
+      "sellPrice": 80
     },
     {
       "id": "bp_t1_ch",
       "name": "一阶护符图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "默认解锁 / 新手任务"
+      "source": "默认解锁 / 新手任务",
+      "sellPrice": 80
     },
     {
       "id": "bp_t1_rg",
       "name": "一阶戒指图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "默认解锁 / 新手任务"
+      "source": "默认解锁 / 新手任务",
+      "sellPrice": 80
     },
     {
       "id": "bp_t2_wp",
       "name": "二阶武器图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS"
+      "source": "关卡3-5 守护者 / BOSS",
+      "sellPrice": 200
     },
     {
       "id": "bp_t2_ar",
       "name": "二阶衣服图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS"
+      "source": "关卡3-5 守护者 / BOSS",
+      "sellPrice": 200
     },
     {
       "id": "bp_t2_hl",
       "name": "二阶头盔图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS"
+      "source": "关卡3-5 守护者 / BOSS",
+      "sellPrice": 200
     },
     {
       "id": "bp_t2_bs",
       "name": "二阶靴子图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS"
+      "source": "关卡3-5 守护者 / BOSS",
+      "sellPrice": 200
     },
     {
       "id": "bp_t2_ch",
       "name": "二阶护符图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS"
+      "source": "关卡3-5 守护者 / BOSS",
+      "sellPrice": 200
     },
     {
       "id": "bp_t2_rg",
       "name": "二阶戒指图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS"
+      "source": "关卡3-5 守护者 / BOSS",
+      "sellPrice": 200
     },
     {
       "id": "bp_t3_wp",
       "name": "三阶武器图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS"
+      "source": "关卡6-9 守护者 / BOSS",
+      "sellPrice": 500
     },
     {
       "id": "bp_t3_ar",
       "name": "三阶衣服图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS"
+      "source": "关卡6-9 守护者 / BOSS",
+      "sellPrice": 500
     },
     {
       "id": "bp_t3_hl",
       "name": "三阶头盔图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS"
+      "source": "关卡6-9 守护者 / BOSS",
+      "sellPrice": 500
     },
     {
       "id": "bp_t3_bs",
       "name": "三阶靴子图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS"
+      "source": "关卡6-9 守护者 / BOSS",
+      "sellPrice": 500
     },
     {
       "id": "bp_t3_ch",
       "name": "三阶护符图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS"
+      "source": "关卡6-9 守护者 / BOSS",
+      "sellPrice": 500
     },
     {
       "id": "bp_t3_rg",
       "name": "三阶戒指图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS"
+      "source": "关卡6-9 守护者 / BOSS",
+      "sellPrice": 500
     },
     {
       "id": "bp_sp_01",
       "name": "特殊装备图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "隐藏 BOSS"
+      "source": "隐藏 BOSS",
+      "sellPrice": 500
     },
     {
       "id": "bp_legend_01",
       "name": "牛魔撼天锤图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "牛魔王首杀"
+      "source": "牛魔王首杀",
+      "sellPrice": 1500
     },
     {
       "id": "bp_legend_02",
       "name": "万毒蚀心镯图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "蝎子精首杀"
+      "source": "蝎子精首杀",
+      "sellPrice": 1500
     },
     {
       "id": "bp_legend_03",
       "name": "大鹏逐日冠图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "金翅大鹏首杀"
+      "source": "金翅大鹏首杀",
+      "sellPrice": 1500
     },
     {
       "id": "bp_immortal_01",
       "name": "混元无极环图纸",
       "type": "图纸",
       "rarity": 5,
-      "source": "六耳猕猴首杀"
+      "source": "六耳猕猴首杀",
+      "sellPrice": 3000
     },
     {
       "id": "bp_immortal_02",
       "name": "混沌天衣图纸",
       "type": "图纸",
       "rarity": 5,
-      "source": "六耳猕猴首杀"
+      "source": "六耳猕猴首杀",
+      "sellPrice": 3000
     },
     {
       "id": "bp_immortal_03",
       "name": "太初道冠图纸",
       "type": "图纸",
       "rarity": 5,
-      "source": "六耳猕猴首杀"
+      "source": "六耳猕猴首杀",
+      "sellPrice": 3000
     },
     {
       "id": "bp_immortal_04",
       "name": "混元灵珠图纸",
       "type": "图纸",
       "rarity": 5,
-      "source": "六耳猕猴首杀"
-    },
-    {
-      "id": "bp_page",
-      "name": "图纸残页",
-      "type": "图纸",
-      "rarity": 1,
-      "source": "普通敌人低概率掉落（3 页=1 图纸）"
+      "source": "六耳猕猴首杀",
+      "sellPrice": 3000
     },
     {
       "id": "mat_enh_01",
       "name": "异矿",
       "type": "强化",
       "rarity": 1,
-      "source": "灿金晶球开启（武器强化）"
+      "source": "灿金晶球开启（武器强化）",
+      "sellPrice": 60
     },
     {
       "id": "mat_enh_02",
       "name": "灵水",
       "type": "强化",
       "rarity": 1,
-      "source": "玲珑晶球开启（配件强化）"
+      "source": "玲珑晶球开启（配件强化）",
+      "sellPrice": 60
     },
     {
       "id": "mat_enh_03",
       "name": "灵气·强化",
       "type": "强化",
       "rarity": 1,
-      "source": "清辉晶球开启（衣服强化）"
-    },
-    {
-      "id": "enh_protect_01",
-      "name": "强化保护符",
-      "type": "强化",
-      "rarity": 2,
-      "source": "商店、任务奖励"
-    },
-    {
-      "id": "enh_protect_02",
-      "name": "强化必成符",
-      "type": "强化",
-      "rarity": 3,
-      "source": "隐藏 BOSS、成就"
-    },
-    {
-      "id": "enh_bless_01",
-      "name": "强化祝福石",
-      "type": "强化",
-      "rarity": 2,
-      "source": "守护者掉落"
+      "source": "清辉晶球开启（衣服强化）",
+      "sellPrice": 60
     },
     {
       "id": "star_soul_01",
       "name": "小魂玉",
       "type": "升星",
       "rarity": 1,
-      "source": "普通敌人、分解装备"
-    },
-    {
-      "id": "star_soul_02",
-      "name": "大魂玉",
-      "type": "升星",
-      "rarity": 2,
-      "source": "守护者、BOSS、分解高品质装备"
-    },
-    {
-      "id": "star_soul_03",
-      "name": "魂玉精华",
-      "type": "升星",
-      "rarity": 3,
-      "source": "隐藏 BOSS、三大 BOSS"
-    },
-    {
-      "id": "star_residue",
-      "name": "装备残魂",
-      "type": "升星",
-      "rarity": 2,
-      "source": "分解同名装备、守护者、悬赏"
-    },
-    {
-      "id": "ench_dust_01",
-      "name": "一阶附魔粉尘",
-      "type": "附魔",
-      "rarity": 1,
-      "source": "关卡1-3 守护者"
-    },
-    {
-      "id": "ench_dust_02",
-      "name": "二阶附魔粉尘",
-      "type": "附魔",
-      "rarity": 2,
-      "source": "关卡4-6 守护者"
-    },
-    {
-      "id": "ench_dust_03",
-      "name": "三阶附魔粉尘",
-      "type": "附魔",
-      "rarity": 2,
-      "source": "关卡7-9 守护者"
-    },
-    {
-      "id": "ench_dust_04",
-      "name": "天品附魔粉尘",
-      "type": "附魔",
-      "rarity": 4,
-      "source": "三大 BOSS"
-    },
-    {
-      "id": "ench_dust_05",
-      "name": "仙品附魔粉尘",
-      "type": "附魔",
-      "rarity": 5,
-      "source": "最终 BOSS"
-    },
-    {
-      "id": "ench_essence",
-      "name": "附魔精华",
-      "type": "附魔",
-      "rarity": 3,
-      "source": "分解附魔装备（累积 3 次必成）"
-    },
-    {
-      "id": "ench_lock",
-      "name": "附魔锁定石",
-      "type": "附魔",
-      "rarity": 3,
-      "source": "隐藏 BOSS、商店限量"
-    },
-    {
-      "id": "wash_stone_01",
-      "name": "洗炼石",
-      "type": "洗炼",
-      "rarity": 1,
-      "source": "关卡敌人掉落、商店"
-    },
-    {
-      "id": "wash_stone_02",
-      "name": "精洗石",
-      "type": "洗炼",
-      "rarity": 2,
-      "source": "守护者、BOSS"
-    },
-    {
-      "id": "wash_stone_03",
-      "name": "锁词符",
-      "type": "洗炼",
-      "rarity": 3,
-      "source": "隐藏 BOSS、成就"
-    },
-    {
-      "id": "wash_liquid",
-      "name": "洗髓液",
-      "type": "洗炼",
-      "rarity": 2,
-      "source": "寒潭水×3 + 地脉灵气×1 合成"
-    },
-    {
-      "id": "wash_reroll",
-      "name": "天命洗炼符",
-      "type": "洗炼",
-      "rarity": 4,
-      "source": "三大 BOSS、最终 BOSS"
-    },
-    {
-      "id": "reforge_core",
-      "name": "重铸核心",
-      "type": "重铸",
-      "rarity": 4,
-      "source": "三大 BOSS、最终 BOSS"
-    },
-    {
-      "id": "reforge_flux",
-      "name": "重铸熔剂",
-      "type": "重铸",
-      "rarity": 3,
-      "source": "隐藏 BOSS"
-    },
-    {
-      "id": "reforge_dust",
-      "name": "重铸粉尘",
-      "type": "重铸",
-      "rarity": 3,
-      "source": "分解绝品/神品装备"
-    },
-    {
-      "id": "inherit_seal",
-      "name": "传承封印",
-      "type": "传承",
-      "rarity": 2,
-      "source": "关卡 BOSS、商店"
-    },
-    {
-      "id": "inherit_catalyst",
-      "name": "传承催化剂",
-      "type": "传承",
-      "rarity": 2,
-      "source": "守护者掉落"
-    },
-    {
-      "id": "decomp_hammer",
-      "name": "分解锤",
-      "type": "分解",
-      "rarity": 1,
-      "source": "初始拥有（不消耗）"
-    },
-    {
-      "id": "decomp_magnet",
-      "name": "分解磁铁",
-      "type": "分解",
-      "rarity": 1,
-      "source": "商店、任务"
-    },
-    {
-      "id": "crys_shard",
-      "name": "晶球碎片",
-      "type": "分解",
-      "rarity": 1,
-      "source": "分解精品以上装备（5 个=1 晶球）"
-    },
-    {
-      "id": "cons_001",
-      "name": "桃符",
-      "type": "符箓",
-      "rarity": 1,
-      "source": "商店、任务"
-    },
-    {
-      "id": "cons_002",
-      "name": "引路香",
-      "type": "符箓",
-      "rarity": 1,
-      "source": "商店"
-    },
-    {
-      "id": "cons_003",
-      "name": "捆妖索",
-      "type": "符箓",
-      "rarity": 2,
-      "source": "商店、掉落"
-    },
-    {
-      "id": "cons_005",
-      "name": "定身符",
-      "type": "符箓",
-      "rarity": 2,
-      "source": "炼丹（宣纸+铜精）"
-    },
-    {
-      "id": "cons_006",
-      "name": "隐身符",
-      "type": "符箓",
-      "rarity": 2,
-      "source": "隐藏 BOSS"
-    },
-    {
-      "id": "cons_007",
-      "name": "嘲讽符",
-      "type": "符箓",
-      "rarity": 2,
-      "source": "炼丹（虎皮+粗石）"
-    },
-    {
-      "id": "cons_008",
-      "name": "回复符",
-      "type": "符箓",
-      "rarity": 2,
-      "source": "炼丹（神泉水+宣纸）"
-    },
-    {
-      "id": "cons_009",
-      "name": "能量符",
-      "type": "符箓",
-      "rarity": 2,
-      "source": "炼丹（深水玉+宣纸）"
-    },
-    {
-      "id": "break_stone_01",
-      "name": "突破石·初",
-      "type": "突破",
-      "rarity": 1,
-      "source": "关卡3-5 精英"
-    },
-    {
-      "id": "break_stone_02",
-      "name": "突破石·中",
-      "type": "突破",
-      "rarity": 2,
-      "source": "关卡6-8 精英"
-    },
-    {
-      "id": "break_stone_03",
-      "name": "突破石·高",
-      "type": "突破",
-      "rarity": 3,
-      "source": "关卡9-10 精英、BOSS"
-    },
-    {
-      "id": "char_shard",
-      "name": "角色碎片",
-      "type": "突破",
-      "rarity": 2,
-      "source": "关卡掉落、商店兑换"
-    },
-    {
-      "id": "skill_book_01",
-      "name": "技能书·初",
-      "type": "技能书",
-      "rarity": 1,
-      "source": "关卡1-4 掉落"
-    },
-    {
-      "id": "skill_book_02",
-      "name": "技能书·中",
-      "type": "技能书",
-      "rarity": 2,
-      "source": "关卡5-7 掉落、守护者"
-    },
-    {
-      "id": "skill_book_03",
-      "name": "技能书·高",
-      "type": "技能书",
-      "rarity": 3,
-      "source": "关卡8-10 掉落、BOSS"
-    },
-    {
-      "id": "exp_pill_01",
-      "name": "小经验丹",
-      "type": "经验",
-      "rarity": 1,
-      "source": "普通敌人、任务"
-    },
-    {
-      "id": "exp_pill_02",
-      "name": "中经验丹",
-      "type": "经验",
-      "rarity": 2,
-      "source": "守护者、精英"
-    },
-    {
-      "id": "exp_pill_03",
-      "name": "大经验丹",
-      "type": "经验",
-      "rarity": 3,
-      "source": "BOSS、隐藏 BOSS"
-    },
-    {
-      "id": "cultivate_stone",
-      "name": "闭关石",
-      "type": "经验",
-      "rarity": 2,
-      "source": "商店、任务"
+      "source": "普通敌人、分解装备",
+      "sellPrice": 40
     },
     {
       "id": "misc_001",
       "name": "碎银",
       "type": "杂物",
       "rarity": 1,
-      "source": "特定敌人掉落（出售 100 金钱）"
+      "source": "特定敌人掉落（出售 100 金钱）",
+      "sellPrice": 100
     },
     {
       "id": "misc_002",
       "name": "破损兵器",
       "type": "杂物",
       "rarity": 1,
-      "source": "普通敌人（出售 10 金钱）"
+      "source": "普通敌人（出售 10 金钱）",
+      "sellPrice": 10
     },
     {
       "id": "misc_003",
       "name": "妖骨",
       "type": "杂物",
       "rarity": 1,
-      "source": "普通敌人（出售 20 金钱）"
+      "source": "普通敌人（出售 20 金钱）",
+      "sellPrice": 20
     },
     {
       "id": "misc_004",
       "name": "旧布",
       "type": "杂物",
       "rarity": 1,
-      "source": "普通敌人（出售 5 金钱）"
+      "source": "普通敌人（出售 5 金钱）",
+      "sellPrice": 5
     },
     {
       "id": "misc_005",
@@ -1256,627 +960,660 @@
       "source": "花果山"
     },
     {
-      "id": "spirit_awaken_01",
-      "name": "灵性精华",
-      "type": "器灵",
-      "rarity": 2,
-      "source": "穿戴装备战斗自动积累"
-    },
-    {
-      "id": "spirit_awaken_02",
-      "name": "觉醒石",
-      "type": "器灵",
-      "rarity": 4,
-      "source": "隐藏 BOSS、三大 BOSS"
-    },
-    {
-      "id": "spirit_awaken_03",
-      "name": "器灵培养丹",
-      "type": "器灵",
-      "rarity": 4,
-      "source": "最终 BOSS、成就"
-    },
-    {
-      "id": "set_brand_01",
-      "name": "套装烙印·灵猴",
-      "type": "套装烙印",
-      "rarity": 3,
-      "source": "灵猴道专属 BOSS"
-    },
-    {
-      "id": "set_brand_02",
-      "name": "套装烙印·金行",
-      "type": "套装烙印",
-      "rarity": 3,
-      "source": "金行道专属 BOSS"
-    },
-    {
-      "id": "set_brand_03",
-      "name": "套装烙印·磐石",
-      "type": "套装烙印",
-      "rarity": 3,
-      "source": "磐石道专属 BOSS"
-    },
-    {
-      "id": "set_brand_04",
-      "name": "套装烙印·佛门",
-      "type": "套装烙印",
-      "rarity": 3,
-      "source": "佛门专属 BOSS"
-    },
-    {
       "id": "wp_t1_light_01",
       "name": "竹剑",
       "type": "武器",
       "rarity": 1,
-      "source": "制造（cave.json 已有配方）"
+      "source": "制造（cave.json 已有配方）",
+      "sellPrice": 150
     },
     {
       "id": "wp_t1_mid_01",
       "name": "铜棍",
       "type": "武器",
       "rarity": 1,
-      "source": "制造（cave.json 已有配方）"
+      "source": "制造（cave.json 已有配方）",
+      "sellPrice": 150
     },
     {
       "id": "wp_t1_heavy_01",
       "name": "铜锤",
       "type": "武器",
       "rarity": 1,
-      "source": "制造（新增配方）"
+      "source": "制造（新增配方）",
+      "sellPrice": 150
     },
     {
       "id": "wp_t2_light_01",
       "name": "迅风剑",
       "type": "武器",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "wp_t2_mid_01",
       "name": "铁棒",
       "type": "武器",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "wp_t2_heavy_01",
       "name": "铁锤",
       "type": "武器",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "wp_t3_light_01",
       "name": "流云剑",
       "type": "武器",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "wp_t3_mid_01",
       "name": "伏魔杖",
       "type": "武器",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "wp_t3_heavy_01",
       "name": "撼地锤",
       "type": "武器",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "wp_t4_01",
       "name": "牛魔撼天锤",
       "type": "武器",
       "rarity": 4,
-      "source": "牛魔王（天品合成）"
+      "source": "牛魔王（天品合成）",
+      "sellPrice": 4000
     },
     {
       "id": "wp_t5_01",
       "name": "混元无极环",
       "type": "武器",
       "rarity": 5,
-      "source": "最终 BOSS（仙品合成）"
+      "source": "最终 BOSS（仙品合成）",
+      "sellPrice": 8000
     },
     {
       "id": "wp_sp_01",
       "name": "烈焰斩",
       "type": "武器",
       "rarity": 3,
-      "source": "隐藏 BOSS（特殊装备制造）"
+      "source": "隐藏 BOSS（特殊装备制造）",
+      "sellPrice": 2000
     },
     {
       "id": "ar_t1_light_01",
       "name": "鹿皮甲",
       "type": "衣服",
       "rarity": 1,
-      "source": "制造（cave.json 已有配方）"
+      "source": "制造（cave.json 已有配方）",
+      "sellPrice": 150
     },
     {
       "id": "ar_t1_mid_01",
       "name": "铜木甲",
       "type": "衣服",
       "rarity": 1,
-      "source": "制造（新增配方）"
+      "source": "制造（新增配方）",
+      "sellPrice": 150
     },
     {
       "id": "ar_t1_heavy_01",
       "name": "轻铜甲",
       "type": "衣服",
       "rarity": 1,
-      "source": "制造（新增配方）"
+      "source": "制造（新增配方）",
+      "sellPrice": 150
     },
     {
       "id": "ar_t2_light_01",
       "name": "熊皮甲",
       "type": "衣服",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ar_t2_mid_01",
       "name": "铁木甲",
       "type": "衣服",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ar_t2_heavy_01",
       "name": "重铁甲",
       "type": "衣服",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ar_t3_light_01",
       "name": "虎威甲",
       "type": "衣服",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ar_t3_mid_01",
       "name": "金木甲",
       "type": "衣服",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ar_t3_heavy_01",
       "name": "神金甲",
       "type": "衣服",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ar_t5_01",
       "name": "混沌天衣",
       "type": "衣服",
       "rarity": 5,
-      "source": "最终 BOSS（仙品合成）"
+      "source": "最终 BOSS（仙品合成）",
+      "sellPrice": 8000
     },
     {
       "id": "ar_sp_01",
       "name": "风灵袍",
       "type": "衣服",
       "rarity": 3,
-      "source": "隐藏 BOSS（特殊装备制造）"
+      "source": "隐藏 BOSS（特殊装备制造）",
+      "sellPrice": 2000
     },
     {
       "id": "ac_t1_charm_01",
       "name": "淡水玉护符",
       "type": "护符",
       "rarity": 1,
-      "source": "制造（cave.json 已有配方）"
+      "source": "制造（cave.json 已有配方）",
+      "sellPrice": 150
     },
     {
       "id": "ac_t1_ring_01",
       "name": "藤蔓箍",
       "type": "戒指",
       "rarity": 1,
-      "source": "制造（cave.json 已有配方）"
+      "source": "制造（cave.json 已有配方）",
+      "sellPrice": 150
     },
     {
       "id": "ac_t1_neck_01",
       "name": "贝壳链",
       "type": "头盔",
       "rarity": 1,
-      "source": "制造（新增配方）"
+      "source": "制造（新增配方）",
+      "sellPrice": 150
     },
     {
       "id": "ac_t1_belt_01",
       "name": "宣纸腰带",
       "type": "靴子",
       "rarity": 1,
-      "source": "制造（新增配方）"
+      "source": "制造（新增配方）",
+      "sellPrice": 150
     },
     {
       "id": "ac_t1_brace_01",
       "name": "贝壳镯",
       "type": "戒指",
       "rarity": 1,
-      "source": "制造（新增配方）"
+      "source": "制造（新增配方）",
+      "sellPrice": 150
     },
     {
       "id": "ac_t1_crown_01",
       "name": "藤编冠",
       "type": "头盔",
       "rarity": 1,
-      "source": "制造（新增配方）"
+      "source": "制造（新增配方）",
+      "sellPrice": 150
     },
     {
       "id": "ac_t2_charm_01",
       "name": "深水玉护符",
       "type": "护符",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ac_t2_ring_01",
       "name": "青花瓷戒",
       "type": "戒指",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ac_t2_neck_01",
       "name": "铁精链",
       "type": "头盔",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ac_t2_belt_01",
       "name": "青花瓷扣带",
       "type": "靴子",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ac_t2_brace_01",
       "name": "深水玉镯",
       "type": "戒指",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ac_t2_crown_01",
       "name": "铁木冠",
       "type": "头盔",
       "rarity": 2,
-      "source": "关卡4-6 制造"
+      "source": "关卡4-6 制造",
+      "sellPrice": 400
     },
     {
       "id": "ac_t3_charm_01",
       "name": "圣水玉护符",
       "type": "护符",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ac_t3_ring_01",
       "name": "金精戒",
       "type": "戒指",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ac_t3_neck_01",
       "name": "翡翠链",
       "type": "头盔",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ac_t3_belt_01",
       "name": "古铜镜扣带",
       "type": "靴子",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ac_t3_brace_01",
       "name": "翡翠玉镯",
       "type": "戒指",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ac_t3_crown_01",
       "name": "金精冠",
       "type": "头盔",
       "rarity": 3,
-      "source": "关卡7-9 制造"
+      "source": "关卡7-9 制造",
+      "sellPrice": 1000
     },
     {
       "id": "ac_t4_01",
       "name": "万毒蚀心镯",
       "type": "戒指",
       "rarity": 4,
-      "source": "蝎子精（天品合成）"
+      "source": "蝎子精（天品合成）",
+      "sellPrice": 4000
     },
     {
       "id": "ac_t4_02",
       "name": "大鹏逐日冠",
       "type": "头盔",
       "rarity": 4,
-      "source": "金翅大鹏（天品合成）"
+      "source": "金翅大鹏（天品合成）",
+      "sellPrice": 4000
     },
     {
       "id": "ac_t5_01",
       "name": "太初道冠",
       "type": "头盔",
       "rarity": 5,
-      "source": "最终 BOSS（仙品合成）"
+      "source": "最终 BOSS（仙品合成）",
+      "sellPrice": 8000
     },
     {
       "id": "ac_t5_02",
       "name": "混元灵珠",
       "type": "护符",
       "rarity": 5,
-      "source": "最终 BOSS（仙品合成）"
+      "source": "最终 BOSS（仙品合成）",
+      "sellPrice": 8000
     },
     {
       "id": "ac_sp_01",
       "name": "地灵护符",
       "type": "护符",
       "rarity": 3,
-      "source": "隐藏 BOSS（特殊装备制造）"
+      "source": "隐藏 BOSS（特殊装备制造）",
+      "sellPrice": 2000
     },
     {
       "id": "eq_w001",
       "name": "竹剑",
       "type": "武器",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_w002",
       "name": "铜棍",
       "type": "武器",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_w003",
       "name": "铜锤",
       "type": "武器",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_w004",
       "name": "迅风剑",
       "type": "武器",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_w005",
       "name": "铁棒",
       "type": "武器",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_w006",
       "name": "铁锤",
       "type": "武器",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_w007",
       "name": "流云剑",
       "type": "武器",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_w008",
       "name": "伏魔杖",
       "type": "武器",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_w009",
       "name": "撼地锤",
       "type": "武器",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_a001",
       "name": "鹿皮甲",
       "type": "衣服",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_a002",
       "name": "铜木甲",
       "type": "衣服",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_a003",
       "name": "轻铜甲",
       "type": "衣服",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_a004",
       "name": "熊皮甲",
       "type": "衣服",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_a005",
       "name": "铁木甲",
       "type": "衣服",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_a006",
       "name": "重铁甲",
       "type": "衣服",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_a007",
       "name": "虎威甲",
       "type": "衣服",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_a008",
       "name": "金木甲",
       "type": "衣服",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_a009",
       "name": "神金甲",
       "type": "衣服",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_c001",
       "name": "淡水玉护符",
       "type": "护符",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_c002",
       "name": "贝壳戒指",
       "type": "戒指",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_c003",
       "name": "粗石项链",
       "type": "头盔",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_c004",
       "name": "宣纸腰带",
       "type": "靴子",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_c005",
       "name": "淡水玉手镯",
       "type": "戒指",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_c006",
       "name": "铜精冠冕",
       "type": "头盔",
       "rarity": 1,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 150
     },
     {
       "id": "eq_c007",
       "name": "深水玉护符",
       "type": "护符",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_c008",
       "name": "青花瓷戒指",
       "type": "戒指",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_c009",
       "name": "铁精项链",
       "type": "头盔",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_c010",
       "name": "青花瓷腰带",
       "type": "靴子",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_c011",
       "name": "深水玉手镯",
       "type": "戒指",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_c012",
       "name": "铁精冠冕",
       "type": "头盔",
       "rarity": 2,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 400
     },
     {
       "id": "eq_c013",
       "name": "圣水玉护符",
       "type": "护符",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_c014",
       "name": "翡翠玉镯戒指",
       "type": "戒指",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_c015",
       "name": "金精项链",
       "type": "头盔",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_c016",
       "name": "古铜镜腰带",
       "type": "靴子",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_c017",
       "name": "翡翠玉镯手镯",
       "type": "戒指",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "eq_c018",
       "name": "金精冠冕",
       "type": "头盔",
       "rarity": 3,
-      "source": "旧版封神榜装备表（drops 仍引用）"
+      "source": "旧版封神榜装备表（drops 仍引用）",
+      "sellPrice": 1000
     },
     {
       "id": "mat_qingshui_yu",
@@ -1884,7 +1621,8 @@
       "type": "玉石",
       "rarity": 1,
       "source": "关卡2 掉落",
-      "description": "浅水区出产的玉石，清澈透亮。用途：制作二阶配件的基础材料。"
+      "description": "浅水区出产的玉石，清澈透亮。用途：制作二阶配件的基础材料。",
+      "sellPrice": 12
     },
     {
       "id": "mat_jiuzhuan_jindan",
@@ -1892,7 +1630,8 @@
       "type": "丹药",
       "rarity": 5,
       "source": "三大王/最终BOSS（首杀 100%，重复 10%）",
-      "description": "九转还丹，蕴含生死之力，服之可起死回生。用途：终极突破与传说装备炼制的核心材料。"
+      "description": "九转还丹，蕴含生死之力，服之可起死回生。用途：终极突破与传说装备炼制的核心材料。",
+      "sellPrice": 3000
     },
     {
       "id": "mat_wudao_dan",
@@ -1900,7 +1639,8 @@
       "type": "丹药",
       "rarity": 5,
       "source": "成就/隐藏BOSS 掉落",
-      "description": "参悟大道的丹药，蕴含一丝道韵。用途：悟道突破与顶级装备强化的核心材料。"
+      "description": "参悟大道的丹药，蕴含一丝道韵。用途：悟道突破与顶级装备强化的核心材料。",
+      "sellPrice": 3000
     },
     {
       "id": "mat_liuer_canhun",
@@ -1908,7 +1648,8 @@
       "type": "BOSS材料",
       "rarity": 5,
       "source": "最终BOSS·六耳猕猴（首杀 100%，重复 10%）",
-      "description": "六耳猕猴残留的执念残魂，蕴含千年不甘。用途：打造传说级装备与神级配件。"
+      "description": "六耳猕猴残留的执念残魂，蕴含千年不甘。用途：打造传说级装备与神级配件。",
+      "sellPrice": 3000
     },
     {
       "id": "mat_baiyan_jin",
@@ -1916,7 +1657,8 @@
       "type": "BOSS材料",
       "rarity": 4,
       "source": "隐藏BOSS·百眼旧将 掉落",
-      "description": "百眼魔君炼化的金色妖核，无数只眼睛折射着金光。用途：打造顶级装备的稀有材料。"
+      "description": "百眼魔君炼化的金色妖核，无数只眼睛折射着金光。用途：打造顶级装备的稀有材料。",
+      "sellPrice": 800
     },
     {
       "id": "mat_dixing_tu",
@@ -1924,7 +1666,8 @@
       "type": "BOSS材料",
       "rarity": 4,
       "source": "隐藏BOSS·地行仙 掉落",
-      "description": "遁地千里所染的灵土，厚重而温润。用途：打造顶级装备的稀有材料。"
+      "description": "遁地千里所染的灵土，厚重而温润。用途：打造顶级装备的稀有材料。",
+      "sellPrice": 800
     },
     {
       "id": "mat_heifeng_ling",
@@ -1932,7 +1675,8 @@
       "type": "BOSS材料",
       "rarity": 4,
       "source": "隐藏BOSS·黑风老妖 掉落",
-      "description": "黑风洞中凝聚的风之精华，蕴含着千年的呼啸。用途：打造顶级装备的稀有材料。"
+      "description": "黑风洞中凝聚的风之精华，蕴含着千年的呼啸。用途：打造顶级装备的稀有材料。",
+      "sellPrice": 800
     },
     {
       "id": "mat_jinchan_canhui",
@@ -1940,7 +1684,8 @@
       "type": "BOSS材料",
       "rarity": 4,
       "source": "隐藏BOSS·金蝉残影 掉落",
-      "description": "金蝉脱壳时留下的残灰，带着淡淡的佛光。用途：打造顶级装备的稀有材料。"
+      "description": "金蝉脱壳时留下的残灰，带着淡淡的佛光。用途：打造顶级装备的稀有材料。",
+      "sellPrice": 800
     },
     {
       "id": "mat_jiuchi_canpo",
@@ -1948,7 +1693,8 @@
       "type": "BOSS材料",
       "rarity": 4,
       "source": "隐藏BOSS·九齿残魂 掉落",
-      "description": "九齿钉耙中残存的器灵魄，历经千年而不散。用途：打造顶级装备的稀有材料。"
+      "description": "九齿钉耙中残存的器灵魄，历经千年而不散。用途：打造顶级装备的稀有材料。",
+      "sellPrice": 800
     },
     {
       "id": "mystery_chest",
@@ -1963,98 +1709,116 @@
       "name": "一阶武器图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 80
     },
     {
       "id": "recipe_weapon_t2",
       "name": "二阶武器图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 200
     },
     {
       "id": "recipe_weapon_t3",
       "name": "三阶武器图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 500
     },
     {
       "id": "recipe_weapon_t4",
       "name": "四阶武器图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 1500
     },
     {
       "id": "recipe_weapon_t5",
       "name": "五阶武器图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "BOSS 掉落"
-    },
-    {
-      "id": "recipe_weapon_t6",
-      "name": "六阶武器图纸",
-      "type": "图纸",
-      "rarity": 5,
-      "source": "三大王 掉落"
-    },
-    {
-      "id": "recipe_weapon_t7",
-      "name": "七阶武器图纸",
-      "type": "图纸",
-      "rarity": 5,
-      "source": "最终BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 1500
     },
     {
       "id": "recipe_armor_t1",
       "name": "一阶衣服图纸",
       "type": "图纸",
       "rarity": 1,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 80
     },
     {
       "id": "recipe_armor_t2",
       "name": "二阶衣服图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 200
     },
     {
       "id": "recipe_armor_t3",
       "name": "三阶衣服图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 500
     },
     {
       "id": "recipe_armor_t4",
       "name": "四阶衣服图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 1500
     },
     {
       "id": "recipe_armor_t5",
       "name": "五阶衣服图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "BOSS 掉落"
+      "source": "BOSS 掉落",
+      "sellPrice": 1500
     },
     {
-      "id": "recipe_armor_t6",
-      "name": "六阶衣服图纸",
-      "type": "图纸",
-      "rarity": 5,
-      "source": "三大王 掉落"
+      "id": "enh_protect",
+      "name": "强化保护符",
+      "type": "强化",
+      "rarity": 3,
+      "source": "炼器（灵芝×2 + 桃木×1）",
+      "description": "刻有守护阵法的灵符。用途：强化装备失败时自动消耗一张，保住本次强化的材料不损失。",
+      "sellPrice": 200
     },
     {
-      "id": "recipe_armor_t7",
-      "name": "七阶衣服图纸",
-      "type": "图纸",
-      "rarity": 5,
-      "source": "最终BOSS 掉落"
+      "id": "mat_lingzhi",
+      "name": "灵芝",
+      "type": "特殊材料",
+      "rarity": 2,
+      "source": "药园种植收获",
+      "description": "药园灵田中培育的灵芝，蕴含浓郁草木灵气。用途：炼制强化保护符的核心材料。",
+      "sellPrice": 50
+    },
+    {
+      "id": "mat_zhuguo",
+      "name": "朱果",
+      "type": "特殊材料",
+      "rarity": 3,
+      "source": "药园种植收获",
+      "description": "药园灵田中结出的朱红色灵果，蕴含火属性灵气。用途：炼制高级丹药与护符的材料。",
+      "sellPrice": 120
+    },
+    {
+      "id": "mat_xiantao",
+      "name": "仙桃",
+      "type": "特殊材料",
+      "rarity": 4,
+      "source": "药园种植收获",
+      "description": "药园灵田中结出的仙桃，蕴含纯净灵气，极为珍贵。用途：炼制顶级丹药与传说护符的材料。",
+      "sellPrice": 300
     }
   ]
 }

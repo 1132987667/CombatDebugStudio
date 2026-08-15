@@ -59,14 +59,14 @@ import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import type { EquipmentData } from '@/domain/fengshen/types'
-import { qualityOf } from '../../data/quality'
+import { qualityOf } from '../../quality'
 import {
   enhanceCost,
   enhanceMaterialOf,
   enhanceMaxByRarity,
   enhanceSuccessRate,
   type MaterialCost,
-} from '../../data/caveLogic'
+} from '../../caveLogic'
 
 /** 强化槽位视图（真实穿戴实例 → 强化等级为实例属性） */
 interface EnhanceGearView {

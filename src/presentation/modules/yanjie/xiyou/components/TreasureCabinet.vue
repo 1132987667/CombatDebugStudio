@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { GroupTab } from './FourAspectBar.vue'
-import type { XiyouRegion, XiyouScene } from '../data/mock'
+import type { XiyouRegion, XiyouScene } from '../types'
 import CavePanel from './cave/CavePanel.vue'
 import CollectPanel from './CollectPanel.vue'
 import CultivatePanel from './CultivatePanel.vue'
@@ -48,7 +48,7 @@ const isRouteTab = computed(() => props.tab === 'battle' || props.tab === 'map')
 const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
   const map: Record<GroupTab, { label: string; sub: string }> = {
     battle: { label: '战斗', sub: '演武台 · 当前场景对战' },
-    map: { label: '降妖路引', sub: '西游大地图 · 四域十六关' },
+    map: { label: '降妖路引', sub: '五域二十五关 · 择路而进' },
     pack: { label: '行囊', sub: '乾坤袋 · 背包 / 仓库 / 坊市' },
     cultivate: { label: '修行', sub: '问道长生 · 角色 / 境界 / 流派 / 功法 / 经脉 / 神通' },
     equip: { label: '装备', sub: '兵器法宝 · 装备 / 法宝 / 坐骑' },

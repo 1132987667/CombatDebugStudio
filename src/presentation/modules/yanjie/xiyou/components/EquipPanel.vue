@@ -153,8 +153,8 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
-import { mounts, treasures } from '../data/mock'
-import { equipQualityClass, qualityClass, qualityColor, qualityName, qualityOf } from '../data/quality'
+import { mounts, treasures } from '../xiyouData'
+import { equipQualityClass, qualityClass, qualityColor, qualityName, qualityOf } from '../quality'
 import GearDetailDialog from './GearDetailDialog.vue'
 
 const pack = usePackStore()

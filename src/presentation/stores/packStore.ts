@@ -11,7 +11,7 @@
 
 import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { XiyouCatalogItem, XiyouCurrency, XiyouPlayer, XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import type { XiyouCatalogItem, XiyouCurrency, XiyouGardenCrop, XiyouPlayer, XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/types'
 import {
   equipmentCatalog,
   materials,
@@ -20,7 +20,10 @@ import {
   pills,
   consumables,
   storageCells,
-} from '@/presentation/modules/yanjie/xiyou/data/mock'
+  grantPillPoint,
+  gardenCrops,
+  shopGoods as shopPool,
+} from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import type { EquipmentAffixData, EquipmentData } from '@/domain/fengshen/types'
 import type { XiyouData } from '@/domain/fengshen/types'
 import type { EnemyDrop } from '@/shared/types/enemy'
@@ -36,8 +39,8 @@ import {
   enhanceSuccessRate,
   STAR_MAX,
   starCost,
-} from '@/presentation/modules/yanjie/xiyou/data/caveLogic'
-import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/data/quality'
+} from '@/presentation/modules/yanjie/xiyou/caveLogic'
+import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/quality'
 import { useNotificationStore } from './notificationStore'
 import { useBattleStore } from './battleStore'
 import { usePlayerStore } from './playerStore'
@@ -46,6 +49,12 @@ import { usePlayerStore } from './playerStore'
 export interface StorageSlot {
   itemId: string | null
   count: number
+}
+
+/** 药园地块（运行时）：cropId 非空 = 已种植可收获；cropId 空且 cooldownUntil 未到 = 冷却中 */
+export interface GardenPlot {
+  cropId: string | null
+  cooldownUntil: number | null
 }
 
 /** 装备槽位键（六类装备槽，对齐 equipment.json slot：weapon/armor/helmet/boots/charm/ring） */
@@ -110,7 +119,7 @@ export function makeInstance(
 
 /** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 新增实例 quality/qualityFactor） */
 export interface PackRuntimeSnapshot {
-  version: 3
+  version: 4
   inventory: Record<string, number>
   storage: StorageSlot[]
   quickSlots: (string | null)[]
@@ -119,6 +128,12 @@ export interface PackRuntimeSnapshot {
   gearInstances: GearInstance[]
   /** 已穿戴装备（槽位 → 实例，缺省未穿戴） */
   equipped?: Partial<Record<GearSlotKey, GearInstance>>
+  /** 药园地块（v4） */
+  garden?: GardenPlot[]
+  /** 坊市当前上架商品（v4） */
+  shopGoods?: XiyouShopGood[]
+  /** 坊市上次刷新时间（v4，ISO） */
+  shopRefreshedAt?: string
   updatedAt: string
 }
 
@@ -129,6 +144,13 @@ const STORAGE_EXPAND_STEP = 6
 const MAX_STORAGE = 36
 /** 扩容消耗（灵石），按扩容次数取档 */
 const EXPAND_COSTS = [50, 100, 200, 400]
+
+/** 药园地块数量（对齐 cave.json crops 六格） */
+const GARDEN_PLOT_COUNT = 6
+/** 坊市每轮上架商品数量（从商品池随机抽取） */
+const SHOP_PICK_COUNT = 6
+/** 强化保护符物品 id（强化失败时消耗一张保住材料） */
+const ENH_PROTECT_ID = 'enh_protect'
 
 /** 坊市货币单位 → 货币字段 */
 const UNIT_KEY: Record<XiyouShopGood['unit'], keyof XiyouCurrency> = {
@@ -171,6 +193,9 @@ const ORB_DROPS: Record<string, string[]> = {
   crys_009: ['mat_enh_02'],
 }
 
+/** 悟道丹物品 id（items.json；服用 +1 技能点，全存档最多 10 颗，需求 §2.1.2） */
+const WUDAO_PILL_ID = 'mat_wudao_dan'
+
 export const usePackStore = defineStore('pack', () => {
   const notification = useNotificationStore()
   const playerStore = usePlayerStore()
@@ -187,6 +212,12 @@ export const usePackStore = defineStore('pack', () => {
   const equipped = reactive<Partial<Record<GearSlotKey, GearInstance>>>({})
   /** 货币（引用 playerStore 同一对象，变更即全局一致） */
   const currency = playerStore.currency
+  /** 药园地块（种植/收获运行时） */
+  const garden = ref<GardenPlot[]>([])
+  /** 坊市当前上架商品（运行时副本，刷新时从商品池抽取） */
+  const shopGoods = ref<XiyouShopGood[]>([])
+  /** 坊市上次刷新时间（ISO） */
+  const shopRefreshedAt = ref('')
 
   /** 目录查询 */
   function catalogById(itemId: string | null | undefined): XiyouCatalogItem | undefined {
@@ -226,7 +257,7 @@ export const usePackStore = defineStore('pack', () => {
     // 未 init（从未打开行囊）时跳过：避免把空快照写入覆盖 configs 初始持有
     if (!initialized) return
     const snapshot: PackRuntimeSnapshot = {
-      version: 3,
+      version: 4,
       inventory: { ...inventory.value },
       storage: storage.value.map((s) => ({ itemId: s.itemId, count: s.count })),
       quickSlots: [...quickSlots.value],
@@ -245,6 +276,9 @@ export const usePackStore = defineStore('pack', () => {
           .filter((slot) => equipped[slot])
           .map((slot) => [slot, equipped[slot]] as [GearSlotKey, GearInstance]),
       ) as Partial<Record<GearSlotKey, GearInstance>>,
+      garden: garden.value.map((p) => ({ cropId: p.cropId, cooldownUntil: p.cooldownUntil })),
+      shopGoods: shopGoods.value.map((g) => ({ ...g })),
+      shopRefreshedAt: shopRefreshedAt.value,
       updatedAt: new Date().toISOString(),
     }
     try {
@@ -333,6 +367,16 @@ export const usePackStore = defineStore('pack', () => {
             affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
           }))
       }
+      // v4 药园：恢复地块（缺省补满空置地块）
+      garden.value = Array.from({ length: GARDEN_PLOT_COUNT }, (_, i) => {
+        const p = Array.isArray(snap.garden) ? snap.garden[i] : undefined
+        return { cropId: p?.cropId ?? null, cooldownUntil: p?.cooldownUntil ?? null }
+      })
+      // v4 坊市：恢复上架商品（缺省保持 buildFromConfigs 的池兜底）
+      if (Array.isArray(snap.shopGoods) && snap.shopGoods.length > 0) {
+        shopGoods.value = snap.shopGoods.map((g) => ({ ...g }))
+      }
+      shopRefreshedAt.value = snap.shopRefreshedAt ?? shopRefreshedAt.value
     } catch {
       // IDB 不可用/损坏时保持 configs 兜底
     }
@@ -364,6 +408,10 @@ export const usePackStore = defineStore('pack', () => {
       const id = nameToId.get(cell.name)
       return id ? { itemId: id, count: cell.count } : { itemId: null, count: 0 }
     })
+
+    garden.value = Array.from({ length: GARDEN_PLOT_COUNT }, () => ({ cropId: null, cooldownUntil: null }))
+    shopGoods.value = shopPool.map((g) => ({ ...g }))
+    shopRefreshedAt.value = new Date().toISOString()
   }
 
   let initialized = false
@@ -374,6 +422,8 @@ export const usePackStore = defineStore('pack', () => {
     initialized = true
     buildFromConfigs()
     await load()
+    // 每日自动刷新：跨天则重抽坊市商品（静默，避免 init 时打扰）
+    if (isNewDay(shopRefreshedAt.value)) refreshShop(new Date(), Math.random, true)
   }
 
   // ════════════ 装备（实例化模型） ════════════
@@ -521,6 +571,15 @@ export const usePackStore = defineStore('pack', () => {
       scheduleSave()
       notification.toast(`强化成功！「${g.name}」强化 +${inst.enhance}`, 'success')
       return true
+    }
+    // 失败：持有强化保护符则回退材料并消耗一张（金钱照扣），否则材料损失
+    if ((inventory.value[ENH_PROTECT_ID] ?? 0) > 0) {
+      inventory.value[mat.itemId] = (inventory.value[mat.itemId] ?? 0) + mat.count
+      inventory.value[ENH_PROTECT_ID] = (inventory.value[ENH_PROTECT_ID] ?? 0) - 1
+      if (inventory.value[ENH_PROTECT_ID]! <= 0) delete inventory.value[ENH_PROTECT_ID]
+      scheduleSave()
+      notification.toast(`强化失败，保护符保住了「${mat.name}」`, 'warning')
+      return false
     }
     scheduleSave()
     notification.toast(`强化失败，「${g.name}」等级不变`, 'error')
@@ -781,6 +840,82 @@ export const usePackStore = defineStore('pack', () => {
     return null
   }
 
+  // ════════════ 药园 ════════════
+
+  function gardenCropById(cropId: string): XiyouGardenCrop | undefined {
+    return gardenCrops.find((c) => c.id === cropId)
+  }
+
+  /** 地块剩余冷却秒数（冷却中返回 >0，否则 0） */
+  function gardenCooldown(plotIdx: number, now = Date.now()): number {
+    const plot = garden.value[plotIdx]
+    if (!plot?.cooldownUntil) return 0
+    return Math.max(0, Math.ceil((plot.cooldownUntil - now) / 1000))
+  }
+
+  /** 种植：空置（且冷却已结束）地块种下作物，立即可收获 */
+  function plantCrop(plotIdx: number, cropId: string, now = Date.now()): boolean {
+    const plot = garden.value[plotIdx]
+    if (!plot) return false
+    if (plot.cropId) {
+      notification.toast('该地块已有作物')
+      return false
+    }
+    if (plot.cooldownUntil && plot.cooldownUntil > now) {
+      notification.toast('该地块仍在恢复中')
+      return false
+    }
+    const crop = gardenCropById(cropId)
+    if (!crop) {
+      notification.toast('未知作物')
+      return false
+    }
+    plot.cropId = cropId
+    plot.cooldownUntil = null
+    scheduleSave()
+    return true
+  }
+
+  /** 收获：产出 yield 数量材料入包，地块进入冷却 */
+  function harvestCrop(plotIdx: number, now = Date.now()): boolean {
+    const plot = garden.value[plotIdx]
+    const crop = plot?.cropId ? gardenCropById(plot.cropId) : undefined
+    if (!plot || !crop) return false
+    addItem(crop.id, crop.yield)
+    plot.cropId = null
+    plot.cooldownUntil = now + crop.cooldown * 1000
+    scheduleSave()
+    notification.toast(`收获「${crop.name}」×${crop.yield}`, 'success')
+    return true
+  }
+
+  // ════════════ 坊市刷新 ════════════
+
+  /** 是否已跨天（用于每日自动刷新判定） */
+  function isNewDay(iso: string, now = new Date()): boolean {
+    if (!iso) return true
+    const d = new Date(iso)
+    return Number.isNaN(d.getTime()) || d.toDateString() !== now.toDateString()
+  }
+
+  /** 刷新坊市：从商品池随机抽取 SHOP_PICK_COUNT 种上架，限量商品库存重置 1-5 */
+  function refreshShop(now = new Date(), rng: Rng = Math.random, silent = false): void {
+    const pool = [...shopPool]
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1))
+      const tmp = pool[i]
+      pool[i] = pool[j]
+      pool[j] = tmp
+    }
+    shopGoods.value = pool.slice(0, SHOP_PICK_COUNT).map((g) => {
+      const stock = g.stock >= 0 && g.tag === '限量' ? 1 + Math.floor(rng() * 5) : g.stock
+      return { ...g, stock }
+    })
+    shopRefreshedAt.value = now.toISOString()
+    scheduleSave()
+    if (!silent) notification.toast('坊市商品已刷新', 'success')
+  }
+
   // ════════════ 快捷栏 ════════════
 
   function setQuickSlot(idx: number, itemId: string | null): void {
@@ -867,11 +1002,22 @@ export const usePackStore = defineStore('pack', () => {
 
   // ════════════ 战斗外使用 ════════════
 
-  /** 战斗外使用：永久丹药提升属性、晶球开启产出；其余（heal/energy/buff 丹药）提示仅战斗中可用 */
+  /** 战斗外使用：悟道丹加技能点、永久丹药提升属性、晶球开启产出；其余（heal/energy/buff 丹药）提示仅战斗中可用 */
   function useItem(itemId: string): boolean {
     const item = catalogById(itemId)
     const count = countOf(itemId)
     if (!item || count <= 0) return false
+
+    // 悟道丹：服用 +1 技能点（全档最多 10 颗）
+    if (itemId === WUDAO_PILL_ID) {
+      if (!grantPillPoint()) {
+        notification.toast('悟道丹已服满 10 颗，无法再获得技能点', 'warning')
+        return false
+      }
+      removeItem(itemId, 1)
+      notification.toast('服用了「悟道丹」，技能点 +1', 'success')
+      return true
+    }
 
     const perm = PERM_PILL_EFFECTS[itemId]
     if (perm) {
@@ -908,11 +1054,13 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /** 战斗外可即时生效（有实现）：
+   *  - 悟道丹：服用 +1 技能点
    *  - 晶球：开启产出
    *  - 永久丹药：仅已在 PERM_PILL_EFFECTS 中实现者（洗髓丹等未实现者不显示使用） */
   function canUseOutOfBattle(itemId: string): boolean {
     const item = catalogById(itemId)
     if (!item) return false
+    if (itemId === WUDAO_PILL_ID) return true
     if (item.type === '晶球') return true
     return item.type === '永久丹药' && !!PERM_PILL_EFFECTS[itemId]
   }
@@ -989,6 +1137,15 @@ export const usePackStore = defineStore('pack', () => {
     expandStorage,
     spend,
     purchase,
+    garden,
+    shopGoods,
+    shopRefreshedAt,
+    gardenCropById,
+    gardenCooldown,
+    plantCrop,
+    harvestCrop,
+    refreshShop,
+    isNewDay,
     setQuickSlot,
     useInBattle,
     useItem,

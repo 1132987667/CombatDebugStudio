@@ -46,7 +46,7 @@ interface SkillView {
   desc: string
 }
 
-/** 主角技能面板：普攻 + 已学小技能/大招（learnedPlayerSkills 已注入主角实体的 skills） */
+/** 主角技能面板：普攻 + 装备槽选出的已学小技能/大招（equippedPlayerSkills 已注入主角实体的 skills） */
 const skills = computed<SkillView[]>(() => {
   const p = store.allyTeam.find((c) => c.id === PLAYER_ID)
   const out: SkillView[] = [{ id: null, name: '普攻', type: 'basic', cost: 0, desc: '造成 100% 攻击力伤害' }]

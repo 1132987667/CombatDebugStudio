@@ -406,13 +406,11 @@ function defaultEnemyReward(): EnemyRewardTableConfig {
     baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
     roleMultiplier: {
       normal: 1.0,
+      elite: 1.15,
       guardian: 1.2,
       minor_boss: 2.0,
       major_boss: 3.0,
-      achievement_boss: 4.0,
       hidden_boss: 5.0,
-      three_kings: 7.0,
-      final_boss: 8.0,
     },
     entries: [
       { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },

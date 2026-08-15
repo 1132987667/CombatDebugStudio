@@ -4,12 +4,17 @@
       :class="['xy-item-card', `xy-item-card--r${item.rarity}`, { 'is-selected': selected }, 'xy-ink-hover']"
       :aria-label="`${item.name} ×${count}`" @mouseenter="onEnter" @mouseleave="onLeave" @click="$emit('open', item.id)"
       @contextmenu.prevent="openMenu($event)">
-      <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ item.name }}</span>
-      <span class="xy-item-meta">
+      <span class="xy-item-title">
+        <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ item.name }}</span>
         <span class="xy-item-type">{{ item.type }}</span>
-        <span class="xy-item-count">×{{ count }}</span>
       </span>
-      <span class="xy-item-rarity" :class="qualityClass(item.rarity)">{{ qualityOf(item.rarity) }}</span>
+      <span class="xy-item-meta">
+        <span v-if="sellable" class="xy-item-price">
+          <span class="xy-item-price-icon" aria-hidden="true" v-html="moneyIcon"></span>
+          <span class="xy-item-price-value">{{ item.sellPrice }}</span>
+        </span>
+        <span class="xy-item-count" :class="{ 'is-sellable': sellable }">×{{ count }}</span>
+      </span>
     </button>
 
     <!-- 悬浮信息卡（复用 EntityTooltip 范式：Teleport + rect 定位 + 视口翻转） -->
@@ -34,9 +39,13 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
+import moneyIconRaw from '@/presentation/assets/icons/money.svg?raw'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { qualityClass, qualityColor, qualityOf } from '../data/quality'
-import type { XiyouCatalogItem } from '../data/mock'
+import { qualityClass, qualityColor, qualityOf } from '../quality'
+import type { XiyouCatalogItem } from '../types'
+
+/** 货币图标（money.svg 单行 XML → 提取 <svg>，随 ControlBar.vue 惯例 v-html 内联以便 CSS 着色） */
+const moneyIcon = moneyIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, '$1')
 
 const props = defineProps<{
   item: XiyouCatalogItem
@@ -93,6 +102,9 @@ const showUse = computed(() => canUseNow.value || inBattleOnly.value)
 
 const canStore = computed(() => props.count > 0 && pack.storage.some((s) => !s.itemId))
 const canDiscard = computed(() => props.count > 0 && props.item.type !== '任务')
+
+/** 可出售：items.json sellPrice > 0（无该字段视为不可出售，如任务/钥匙/宝箱） */
+const sellable = computed(() => (props.item.sellPrice ?? 0) > 0)
 
 function openMenu(e: MouseEvent): void {
   tooltipVisible.value = false
@@ -219,18 +231,18 @@ onBeforeUnmount(() => {
   }
 }
 
+/* 名称行：名词 + 类型（类型贴名词右侧） */
+.xy-item-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
 /* 名称用品阶色（xy-q--* 全局类）；此处不设 color，避免覆盖品阶类 */
 .xy-item-name {
   font-size: var(--font-size-md);
-}
-
-/* 类型 + 数量同行：类型左、数量右，视觉对应不脱节 */
-.xy-item-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
-  width: 100%;
 }
 
 .xy-item-type {
@@ -242,10 +254,45 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-md);
 }
 
-/* 数量（类型行右端） */
+/* 价值 + 数量同行：价值最左、数量最右 */
+.xy-item-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.xy-item-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--font-size-md);
+  color: var(--xy-gold);
+}
+
+.xy-item-price-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--xy-gold);
+
+  :deep(svg) {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+  }
+}
+
+/* 数量（meta 行右端）；可出售时用绿色标识 */
 .xy-item-count {
   font-size: var(--font-size-md);
   color: var(--xy-seal);
+
+  &.is-sellable {
+    color: var(--color-success);
+  }
 }
 
 /* 右键菜单（Teleport 到 body，用全局令牌） */

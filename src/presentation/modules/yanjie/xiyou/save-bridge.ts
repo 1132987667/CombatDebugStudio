@@ -22,7 +22,8 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
-import { materials as packMaterials, packItems, pills as packPills, scenes, schools, skillPoints, type XiyouDifficulty } from './mock'
+import { materials as packMaterials, packItems, pills as packPills, scenes, schools, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, PILL_POINT_LIMIT } from './xiyouData'
+import type { XiyouDifficulty } from './types'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
 
@@ -62,6 +63,24 @@ function serializeInstances(): SaveEquipmentInstance[] {
     }
   }
   return out
+}
+
+/** 装备槽类型（存档 equipped 键） */
+type EquipSlotKey = 'passive' | 'small' | 'ultimate'
+
+/** 恢复出战装备槽：过滤未解锁或类型不匹配槽位的节点引用（存档容错） */
+function restoreEquipped(eq: { passive?: string[]; small?: string[]; ultimate?: string | null } | undefined): void {
+  const valid = (id: string, slot: EquipSlotKey): boolean => {
+    const node = skillNodeMap.get(id)
+    if (!node || !node.learned) return false
+    if (slot === 'passive') return node.type === 'passive'
+    if (slot === 'small') return node.type === 'skill'
+    return node.type === 'ultimate'
+  }
+  equippedSkills.passive = (eq?.passive ?? []).filter((id) => valid(id, 'passive'))
+  equippedSkills.small = (eq?.small ?? []).filter((id) => valid(id, 'small'))
+  const ult = eq?.ultimate
+  equippedSkills.ultimate = ult && valid(ult, 'ultimate') ? ult : null
 }
 
 export const xiyouSaveBridge: SaveStatePort = {
@@ -108,12 +127,19 @@ export const xiyouSaveBridge: SaveStatePort = {
     // equipment_instances（词缀 + 强化等级）
     data.equipment_instances = serializeInstances()
 
-    // school（v3.0 流派：所选流派 + 已点亮节点 id + 已用技能点）
-    const selectedSchool = schools.find((s) => s.selected)
+    // school（v3.0 流派：已点亮节点 id + 已用技能点 + 出战装备槽）
+    // NOTE: selected 字段保留兼容（旧档读取），新档不再写入选流派（v3.0 跨流派加点无单一流派概念）
     data.school = {
-      selected: selectedSchool?.id ?? null,
+      selected: null,
       learned: schools.flatMap((s) => s.nodes.filter((n) => n.learned).map((n) => n.id)),
       spent: skillPoints.spent,
+      earned: skillPoints.earned,
+      totalPillsUsed: skillPoints.totalPillsUsed,
+      equipped: {
+        passive: [...equippedSkills.passive],
+        small: [...equippedSkills.small],
+        ultimate: equippedSkills.ultimate,
+      },
     }
 
     return data
@@ -227,7 +253,7 @@ export const xiyouSaveBridge: SaveStatePort = {
     const unlockedSet = new Set(data.progress.unlocked_scenes ?? [])
     for (const s of scenes) s.unlocked = unlockedSet.has(s.id) || !s.unlockCondition?.sceneId
 
-    // school（v3.0 流派：恢复所选流派 + 已点亮节点 + 已用技能点）
+    // school（v3.0 流派：恢复已点亮节点 + 技能点 + 出战装备槽）
     const schoolState = data.school
     if (schoolState) {
       for (const s of schools) s.selected = s.id === schoolState.selected
@@ -242,6 +268,21 @@ export const xiyouSaveBridge: SaveStatePort = {
             (sum, s) => sum + s.nodes.filter((n) => n.learned).reduce((acc, n) => acc + n.points, 0),
             0,
           )
+      // 累计获得技能点（旧档缺省：>= 已分配且 >= 初始等级点数 4，保证 available 非负）
+      const earnedVal = schoolState.earned
+      const earned = typeof earnedVal === 'number' && Number.isFinite(earnedVal)
+        ? Math.min(Math.max(earnedVal, 0), skillPoints.max)
+        : Math.max(skillPoints.spent, 4)
+      skillPoints.earned = Math.max(earned, skillPoints.spent)
+      // 悟道丹服用次数（旧档缺省 0）
+      const pillsVal = schoolState.totalPillsUsed
+      skillPoints.totalPillsUsed = typeof pillsVal === 'number' && Number.isFinite(pillsVal)
+        ? Math.min(Math.max(pillsVal, 0), PILL_POINT_LIMIT)
+        : 0
+      // 出战装备槽恢复（校验节点已解锁且类型匹配槽位）
+      restoreEquipped(schoolState.equipped)
+      // 纯流派加成重算
+      pureSchoolBonus.value = calcPureSchool(equippedSkills)
     }
 
     // 同步行囊运行时落盘（防止旧 pack_runtime 覆盖恢复结果）

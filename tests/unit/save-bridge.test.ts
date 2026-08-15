@@ -5,10 +5,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { xiyouSaveBridge } from '@/presentation/modules/yanjie/xiyou/data/save-bridge'
+import { xiyouSaveBridge } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { scenes } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { scenes } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { SaveManager } from '@/shared/utils/save-manager'
 import { createInitialGameState, verifySaveChecksum, type SaveData } from '@/shared/utils/save-schema'
 

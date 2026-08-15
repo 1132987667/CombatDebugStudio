@@ -18,7 +18,8 @@ import { ParticipantSide } from '@/domain/battle/type/types'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import { buildBattleTeams, scenes } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { buildBattleTeams } from '@/presentation/modules/yanjie/xiyou/battle'
+import { scenes } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 
 describe('唤灵台 × 斗战西游 初始化竞态', () => {

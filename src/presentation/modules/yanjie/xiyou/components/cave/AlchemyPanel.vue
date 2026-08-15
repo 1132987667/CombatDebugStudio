@@ -70,10 +70,10 @@
 import { ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
-import type { XiyouRecipe } from '../../data/mock'
-import { alchemyRecipes } from '../../data/mock'
-import { itemIdByName, itemName, qualityOf } from '../../data/caveLogic'
-import { qualityClassOf } from '../../data/quality'
+import type { XiyouRecipe } from '../../types'
+import { alchemyRecipes } from '../../xiyouData'
+import { itemIdByName, itemName, qualityOf } from '../../caveLogic'
+import { qualityClassOf } from '../../quality'
 
 const pack = usePackStore()
 const notification = useNotificationStore()

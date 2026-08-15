@@ -32,18 +32,16 @@
 
     <!-- 行囊 · 50% -->
     <section class="xy-roster-half">
-      <h4 class="xy-sec-title">行囊<span class="xy-sec-count">{{ pack.ownedItems.length }} 种 · {{ totalCount }} 件</span>
+      <h4 class="xy-sec-title">行囊
+        <Button size="small" variant="ghost" class="xy-roster-pack-more" @click="emit('open-pack')">打开完整行囊</Button>
       </h4>
       <div class="xy-roster-scroll">
-        <div v-for="it in pack.ownedItems.slice(0, 10)" :key="it.id" class="xy-row-card">
-          <div class="xy-row-top">
-            <span class="xy-row-name" :style="{ color: qualityColor(it.rarity) }">{{ it.name }}</span>
-            <span class="xy-row-side">×{{ pack.countOf(it.id) }}</span>
-          </div>
+        <div class="xy-roster-pack-list">
+          <PackItemCard v-for="it in pack.ownedItems.slice(0, 10)" :key="it.id" :item="it"
+            :count="pack.countOf(it.id)"
+            @open="emit('open-pack')" @use="emit('open-pack')" @storage="emit('open-pack')"
+            @discard="emit('open-pack')" />
         </div>
-        <Button size="small" variant="ghost" block class="xy-roster-pack-more" @click="emit('open-pack')">
-          打开完整行囊（背包 / 仓库 / 坊市）
-        </Button>
       </div>
     </section>
   </aside>
@@ -56,8 +54,9 @@ import Button from '@/presentation/components/Button.vue'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import { equipBonuses, realms, schools } from '../data/mock'
-import { qualityColor } from '../data/quality'
+import { equipBonuses } from '../battle'
+import { realms, schools } from '../xiyouData'
+import PackItemCard from './PackItemCard.vue'
 
 const emit = defineEmits<{ 'open-pack': [] }>()
 
@@ -82,8 +81,6 @@ const expPct = computed(() => {
 })
 
 const expNeedText = computed(() => (Number.isFinite(player.value.expNeed) ? player.value.expNeed : 'MAX'))
-
-const totalCount = computed(() => pack.ownedItems.reduce((sum, it) => sum + pack.countOf(it.id), 0))
 
 interface AttrRow {
   label: string
@@ -154,7 +151,16 @@ const attrRows = computed<AttrRow[]>(() => {
   padding-right: var(--space-1);
 }
 
+/* 卡片纵向间距 + 四周留白：hover 外圈阴影（6px ring + 上移 4px）超出滚动容器 overflow 裁剪边界，
+   留出 padding 让阴影在 padding 区域内完整显示（上下 14px / 左右 12px，各留 4px+ 余量） */
+.xy-roster-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 14px var(--space-3);
+}
+
 .xy-roster-pack-more {
-  margin-top: var(--space-2);
+  margin-left: auto;
 }
 </style>

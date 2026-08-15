@@ -610,5 +610,43 @@
       "progress": 0.08,
       "effect": "每级缩短药园作物生长时间 5%"
     }
+  ],
+  "talismanRecipes": [
+    {
+      "name": "强化保护符",
+      "level": 3,
+      "materials": [
+        {
+          "itemId": "mat_lingzhi",
+          "count": 2
+        },
+        {
+          "itemId": "mat_taomu",
+          "count": 1
+        }
+      ],
+      "effect": "强化失败时自动消耗，保住材料不损失",
+      "count": 1
+    }
+  ],
+  "gardenCrops": [
+    {
+      "id": "mat_lingzhi",
+      "name": "灵芝",
+      "yield": 3,
+      "cooldown": 300
+    },
+    {
+      "id": "mat_zhuguo",
+      "name": "朱果",
+      "yield": 2,
+      "cooldown": 300
+    },
+    {
+      "id": "mat_xiantao",
+      "name": "仙桃",
+      "yield": 1,
+      "cooldown": 300
+    }
   ]
 }

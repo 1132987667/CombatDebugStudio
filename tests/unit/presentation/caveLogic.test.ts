@@ -14,7 +14,7 @@ import {
   itemIdByName,
   qualityOf,
   starCost,
-} from '@/presentation/modules/yanjie/xiyou/data/caveLogic'
+} from '@/presentation/modules/yanjie/xiyou/caveLogic'
 
 describe('物品索引与品质', () => {
   it('name → id 同名取首注册（竹剑 → 制造产出 wp_t1_light_01）', () => {

@@ -1,0 +1,433 @@
+/**
+ * 斗战西游 · 类型定义（组件仅引用类型，数据实体见 configs/xiyou/*.json）
+ */
+
+import type { ItemEffect } from '@/shared/types/Item'
+
+/** 玩家货币（运行时状态 · 持有在 playerStore） */
+export interface XiyouCurrency {
+  copper: number
+  silver: number
+  jade: number
+}
+
+/** 玩家属性快照（运行时状态 · 持有在 playerStore） */
+export interface XiyouPlayer {
+  level: number
+  name: string
+  title: string
+  hp: number
+  maxHp: number
+  energy: number
+  maxEnergy: number
+  attackMin: number
+  attackMax: number
+  defense: number
+  speed: number
+  critRate: number
+  critDamage: number
+  hitRate: number
+  dodgeRate: number
+  exp: number
+  expNeed: number
+}
+
+/** 角色加点（运行时状态 · 持有在 playerStore；展示态，暂未回灌战斗属性） */
+export interface XiyouStatPoints {
+  available: number
+  strength: number
+  vitality: number
+  agility: number
+  spirit: number
+}
+
+/**
+ * 战斗单位快照（4v4 阵容）
+ * NOTE: 我方阵容 = 主角 + 上阵伙伴（至多 4 人）；敌方 = 场景 enemies 至多 4 个
+ */
+export interface XiyouCombatant {
+  id: string
+  name: string
+  level: number
+  hp: number
+  maxHp: number
+  energy: number
+  maxEnergy: number
+  speed: number
+  attack: number
+  defense: number
+  side: 'player' | 'enemy'
+  /** 阵亡标记（展示用） */
+  down?: boolean
+}
+
+/**
+ * 主角实时战斗快照（playerStore.player 派生）
+ * NOTE: 战斗主角以此属性为权威（加点/丹药/等级变化反映到战斗），缺省回退 playerParty[0] 的演示值；
+ *       伙伴仍取 playerParty 固定出场属性。
+ */
+export type ProtagonistSnapshot = XiyouCombatant & {
+  critRate: number
+  critDamage: number
+  dodge: number
+  damageReduction: number
+}
+
+/** 关卡难度 */
+export type XiyouDifficulty = 'easy' | 'normal' | 'hard'
+
+/** 物品品质（凡 / 玄 / 地 / 天 / 仙） */
+export type XiyouQuality = '凡品' | '玄品' | '地品' | '天品' | '仙品'
+
+/** 技能树节点类型（v3.0） */
+export type XiyouNodeType = 'attribute' | 'passive' | 'skill' | 'ultimate' | 'enhance'
+
+/** 技能树节点效果（skill_tree.json 节点 effect：属性节点提供，供属性注入） */
+export interface XiyouSkillNodeEffect {
+  attribute: string
+  value: number
+  calc: 'percentage' | 'additive'
+  /** 复合效果（skill_tree 部分节点 extra，当前仅取主效果注入） */
+  extra?: XiyouSkillNodeEffect
+}
+
+/** 技能树节点（v3.0：3 分支 × 4 层，逐层点亮，消耗技能点） */
+export interface XiyouSkillNode {
+  id: string
+  /** 所属流派 id（linghou / jinxing / panshi，纯流派判定用） */
+  schoolId: string
+  branch: string
+  tier: 1 | 2 | 3 | 4
+  name: string
+  type: XiyouNodeType
+  /** 点亮消耗技能点（1-5） */
+  points: number
+  /** 战斗中能量消耗（属性/被动/强化为 0） */
+  energyCost: number
+  desc: string
+  /** 运行时：已点亮（configs 未含 · 展示态） */
+  learned?: boolean
+  /** 属性效果（attribute/enhance 节点，供角色属性注入；无则为 undefined） */
+  effect?: XiyouSkillNodeEffect
+  /** 实际技能配置 id（skill_tree skillId 映射到 configs/skills 后的 id；无技能为 undefined） */
+  skillId?: string
+}
+
+/** 流派技能点（v3.0：全局 60 点 = 等级 50 + 悟道丹 10，跨流派共享）
+ *  earned 累计获得（等级点 + 丹药点），spent 已分配，available = earned - spent */
+export interface XiyouSkillPoints {
+  /** 硬上限（60），UI 展示用 */
+  max: number
+  /** 已分配点数（洗点消耗与节点点亮共用） */
+  spent: number
+  /** 累计获得技能点（等级 50 上限 + 悟道丹 10 上限，合计 60） */
+  earned: number
+  /** 已服用悟道丹次数（全存档上限 10） */
+  totalPillsUsed: number
+}
+
+/** 出战技能装备槽（v3.0：被动 2 / 小技能 2 / 大招 1，存节点 id 而非技能配置 id） */
+export interface XiyouEquippedSkills {
+  passive: string[]
+  small: string[]
+  ultimate: string | null
+}
+
+/** 区域（章节）· 对应一张大地图 */
+export interface XiyouRegion {
+  id: string
+  name: string
+  sub: string
+  /** 等级范围（configs/xiyou/regions.json） */
+  levelRange?: [number, number]
+}
+
+/** 场景（关卡）卡片
+ * NOTE: 25 关平铺结构（configs/xiyou/scenes.json）：单值 difficulty + 内联 enemies + 解锁链 */
+export interface XiyouScene {
+  id: string
+  regionId: string
+  name: string
+  /** 等级范围（configs/xiyou/scenes.json） */
+  levelRange?: [number, number]
+  desc: string
+  enemies: Array<{ id?: string; name: string; level: number; type?: string }>
+  /** 守护者（本关精英 · configs/xiyou/scenes.json 内联） */
+  guardian?: { name: string; level: number } | null
+  /** 掉落配置（材料 / 金币区间 / 经验区间） */
+  drops?: { materials?: string[]; gold?: [number, number]; exp?: [number, number] }
+  /** 剧情钩子（configs/xiyou/scenes.json narrativeHook） */
+  narrativeHook?: string
+  unlocked: boolean
+  difficulty: XiyouDifficulty
+  stars: number
+  maxStars: number
+  /** 解锁条件（无前置 sceneId 为 null 时默认解锁） */
+  unlockCondition?: { type: 'clear_scene' | 'clear_boss'; sceneId: string | null }
+}
+
+/** 流派（对应修行「流派」子系统 · v3.0 技能树） */
+export interface XiyouSchool {
+  id: string
+  name: string
+  motto: string
+  branches: string[]
+  nodes: XiyouSkillNode[]
+  selected?: boolean
+  /** 纯流派加成（schools.json pureBonus：所选流派全员生效的属性加成） */
+  pureBonus?: { attribute: string; value: number; desc?: string }
+}
+
+/** 乾坤袋物品（背包子系统 · 数据源 pack.json） */
+export interface XiyouItem {
+  name: string
+  count: number
+  /** 稀有度（数字，pack.json 实际 1-4；展示层经 quality.ts 映射中文品级） */
+  rarity: number
+  desc: string
+}
+
+/** 物品目录条目（items.json 主键索引 · 行囊默认全量展示） */
+export interface XiyouCatalogItem {
+  id: string
+  name: string
+  type: string
+  rarity: number
+  /** 出售价（单位：金钱/铜钱）；>0 即可在坊市出售，缺省不可出售 */
+  sellPrice?: number
+  source?: string
+  description?: string
+  /** 使用效果（仅丹药/符箓/晶球类，来自 items.json effects） */
+  effects?: ItemEffect[]
+}
+
+/** 坊市商品（商店子系统） */
+export interface XiyouShopGood {
+  name: string
+  type: '杂货' | '材料' | '丹药' | '装备'
+  price: number
+  unit: '铜钱' | '银两' | '灵石'
+  stock: number
+  tag?: string
+}
+
+/** 仓库格子（仓库子系统） */
+export interface XiyouStorageCell {
+  name: string
+  count: number
+  locked: boolean
+}
+
+/** 境界（修为子系统） */
+export interface XiyouRealm {
+  name: string
+  level: number
+  bonus: string
+  progress: number
+  unlocked: boolean
+  desc: string
+  /** 突破需求（configs 补充字段，IDB 旧数据可能缺失） */
+  levelReq?: number
+  materialName?: string
+  materialCount?: number
+}
+
+/** 功法（功法子系统） */
+export interface XiyouMartial {
+  name: string
+  rarity: number
+  level: number
+  maxLevel: number
+  slot: string
+  effect: string
+  equipped: boolean
+}
+
+/** 经脉穴位（经脉子系统） */
+export interface XiyouMeridianNode {
+  name: string
+  level: number
+  maxLevel: number
+  breakthrough: boolean
+  effect: string
+}
+
+export interface XiyouMeridian {
+  name: string
+  nodes: XiyouMeridianNode[]
+}
+
+/** 神通（神通子系统） */
+export interface XiyouDharma {
+  name: string
+  type: '攻击' | '防御' | '辅助' | '身法'
+  level: number
+  maxLevel: number
+  effect: string
+  equipped: boolean
+}
+
+/** 法宝（法宝子系统） */
+export interface XiyouTreasure {
+  name: string
+  rarity: number
+  level: number
+  maxLevel: number
+  progress: number
+  skill: string
+  active: boolean
+}
+
+/** 坐骑（坐骑子系统） */
+export interface XiyouMount {
+  name: string
+  rarity: number
+  level: number
+  aptitude: number
+  speed: number
+  skill: string
+  active: boolean
+}
+
+/** 伙伴卡（伙伴子系统） */
+export interface XiyouMate {
+  name: string
+  role: string
+  rarity: number
+  level: number
+  stars: number
+  active: boolean
+  desc: string
+}
+
+/** 灵宠（灵宠子系统） */
+export interface XiyouPet {
+  name: string
+  rarity: number
+  growth: number
+  level: number
+  skill: string
+  active: boolean
+}
+
+/** 缘分（缘分子系统） */
+export interface XiyouAffinity {
+  name: string
+  members: string[]
+  bonus: string
+  progress: number
+  activated: boolean
+}
+
+/** 图鉴条目（图鉴子系统） */
+export interface XiyouCodexEntry {
+  name: string
+  level: number
+  captured: boolean
+}
+
+export interface XiyouCodexChapter {
+  name: string
+  entries: XiyouCodexEntry[]
+}
+
+/** 成就（成就子系统） */
+export interface XiyouAchievement {
+  name: string
+  desc: string
+  progress: number
+  target: number
+  reward: string
+  done: boolean
+}
+
+/** 称号（称号子系统） */
+export interface XiyouTitle {
+  name: string
+  bonus: string
+  desc: string
+  owned: boolean
+  equipped: boolean
+}
+
+/** 任务（任务子系统） */
+export interface XiyouQuest {
+  type: '主线' | '日常' | '周常'
+  name: string
+  desc: string
+  progress: number
+  target: number
+  reward: string
+}
+
+/** 签到（签到子系统） */
+export interface XiyouCheckinDay {
+  day: number
+  reward: string
+  state: 'done' | 'today' | 'future'
+}
+
+/** 活动（活动子系统） */
+export interface XiyouEvent {
+  name: string
+  time: string
+  desc: string
+  reward: string
+  status: '进行中' | '预告' | '已结束'
+}
+
+/** 配方材料（结构化：itemId + count，引用 items 表；锻造配方材料经 equipmentId 引用装备 JSON，权威在 equipment.json） */
+export interface XiyouRecipeMaterial {
+  itemId: string
+  count: number
+}
+
+/** 炼丹 / 炼器丹方（炼丹 · 炼器子系统） */
+export interface XiyouRecipe {
+  id?: string
+  equipmentId?: string
+  blueprintId?: string
+  name: string
+  level: number
+  /** 材料消耗（炼丹配方内联；锻造配方由 equipmentId 指向的装备定义提供） */
+  materials?: XiyouRecipeMaterial[]
+  effect: string
+  count: number
+}
+
+/** 闭关（闭关子系统） */
+export interface XiyouRetreat {
+  name: string
+  time: string
+  desc: string
+  reward: string
+}
+
+/** 药园（药园子系统） */
+export interface XiyouCrop {
+  name: string
+  growth: number
+  time: string
+  reward: string
+  status: '已成熟' | '生长中' | '空置'
+}
+
+/** 药园可种植作物（configs/xiyou/cave.json gardenCrops） */
+export interface XiyouGardenCrop {
+  /** 作物物品 id（items.json 注册；种植与产出共用该 id） */
+  id: string
+  name: string
+  /** 单次收获产出数量 */
+  yield: number
+  /** 收获后冷却时长（秒） */
+  cooldown: number
+}
+
+/** 技艺（百艺子系统） */
+export interface XiyouCraft {
+  name: string
+  level: number
+  maxLevel: number
+  progress: number
+  effect: string
+}

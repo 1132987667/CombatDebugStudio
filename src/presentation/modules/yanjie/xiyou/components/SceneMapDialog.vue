@@ -6,7 +6,7 @@
         <header class="xy-map-dlg__head">
           <div class="xy-map-dlg__head-text">
             <h2 class="xy-map-dlg__name">降妖路引</h2>
-            <p class="xy-map-dlg__sub">四域十六关 · 择路而进</p>
+            <p class="xy-map-dlg__sub">五域二十五关 · 择路而进</p>
           </div>
           <div class="xy-map-dlg__head-right">
             <span class="xy-map-dlg__progress">
@@ -154,7 +154,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import type { XiyouRegion, XiyouScene } from '../data/mock'
+import type { XiyouRegion, XiyouScene } from '../types'
 
 const props = defineProps<{
   modelValue: boolean

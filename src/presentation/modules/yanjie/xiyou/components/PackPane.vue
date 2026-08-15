@@ -57,7 +57,11 @@ export type PackSub = 'pack' | 'storage' | 'shop'
       <!-- ── 坊市 ── -->
       <template #shop>
         <div class="xy-pack-list xy-panel-tabs">
-          <div v-for="g in shopGoods" :key="g.name" class="xy-row-card xy-shop-row">
+          <div class="xy-shop-head">
+            <p class="xy-panel-hint">每日刷新 · 当前上架 {{ pack.shopGoods.length }} 种</p>
+            <Button size="small" variant="energy" @click="pack.refreshShop()">刷新商品</Button>
+          </div>
+          <div v-for="g in pack.shopGoods" :key="g.name" class="xy-row-card xy-shop-row">
             <div class="xy-row-top">
               <span class="xy-row-name">{{ g.name }}</span>
               <span class="xy-chip xy-chip--jade">{{ g.type }}</span>
@@ -99,9 +103,8 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import TacticalSelect from '@/presentation/components/TacticalSelect.vue'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { shopGoods } from '../data/mock'
-import type { XiyouCatalogItem, XiyouShopGood } from '../data/mock'
-import { qualityColor } from '../data/quality'
+import type { XiyouCatalogItem, XiyouShopGood } from '../types'
+import { qualityColor } from '../quality'
 import PackItemCard from './PackItemCard.vue'
 
 const props = defineProps<{
@@ -330,6 +333,19 @@ const UNIT_KEY: Record<XiyouShopGood['unit'], 'copper' | 'silver' | 'jade'> = {
   margin: 0 0 var(--space-3);
   font-size: var(--font-size-md);
   color: var(--xy-ink-4);
+}
+
+/* ── 坊市刷新栏 ── */
+.xy-shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+
+  .xy-panel-hint {
+    margin: 0;
+  }
 }
 
 /* ── 背包工具栏（搜索 + 排序） ── */

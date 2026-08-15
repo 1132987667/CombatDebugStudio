@@ -67,7 +67,11 @@ import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 //       （经验曲线、敌人奖励基准+难度/角色倍率、等级差加成规则，供封神榜编辑与引擎结算消费）。
 // NOTE: v19 — 玩家等级上限 30 → 50（《关卡系统 v2.0.md》）：exp_table maxLevel 50、补 11-50 档位
 //       （1-10 级 300×等级 / 11-30 级 600×等级 / 31-50 级 900×等级）。升版强制已 seed 的浏览器重导新经验表。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v19'
+// NOTE: v20 — 敌人品阶体系（6 档：小怪/精英/头目/大头目/妖王/隐藏妖王）：role 码由 8 个归并为 6 个——
+//       three_kings→major_boss（妖王）、achievement_boss/final_boss→hidden_boss（隐藏妖王）、新增 elite（精英，暂未落数据）。
+//       roleMultiplier 同步归并（取各归并源代表档原值：major_boss=3.0 大头目、hidden_boss=5.0 隐藏BOSS）。
+//       enemies.json 数据已归并，升版强制已 seed 的浏览器重导。
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v20'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -188,13 +192,11 @@ function buildEnemyRewardTable(): BattleParamData {
       baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
       roleMultiplier: {
         normal: 1.0,
+        elite: 1.15,
         guardian: 1.2,
         minor_boss: 2.0,
         major_boss: 3.0,
-        achievement_boss: 4.0,
         hidden_boss: 5.0,
-        three_kings: 7.0,
-        final_boss: 8.0,
       },
       entries: [
         { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },

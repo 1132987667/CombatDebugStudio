@@ -140,7 +140,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { saveManager } from '../data/save-bridge'
+import { saveManager } from '../save-bridge'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 

@@ -17,7 +17,7 @@ import {
   qualityOf,
   rollQuality,
   rollQualityFactor,
-} from '@/presentation/modules/yanjie/xiyou/data/quality'
+} from '@/presentation/modules/yanjie/xiyou/quality'
 import packJson from '@configs/xiyou/pack.json'
 import mateJson from '@configs/xiyou/mate.json'
 import equipJson from '@configs/xiyou/equip.json'

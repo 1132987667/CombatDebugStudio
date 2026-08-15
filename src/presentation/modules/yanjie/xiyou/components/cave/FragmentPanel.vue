@@ -42,9 +42,9 @@
 <script setup lang="ts">
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
-import type { XiyouQuality } from '../../data/mock'
-import { qualityClassOf } from '../../data/quality'
-import { fragmentRuleViews, type FragmentRuleView } from '../../data/caveLogic'
+import type { XiyouQuality } from '../../types'
+import { qualityClassOf } from '../../quality'
+import { fragmentRuleViews, type FragmentRuleView } from '../../caveLogic'
 
 const pack = usePackStore()
 const notification = useNotificationStore()

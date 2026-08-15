@@ -124,10 +124,10 @@ import { LogLevel } from '@/shared/types/battle-log'
 import type { GameDataApi } from '@/application/service/GameDataApi'
 import type { DataIntegrityService } from '@/application/service/DataIntegrityService'
 import { container } from '@/infrastructure/di/Container'
-import { createDebugCategories, type DebugActionDef, type DebugActionInput, type DebugActionResult, type DebugCategory } from '../data/debugActions'
-import type { PlayerStoreDebugEnv } from '../data/debugEnv'
-import { alchemyRecipes, equipmentCatalog, forgeRecipes, loadXiyouData, packItems, quests, realms, scenes, schools, shopGoods, skillPoints } from '../data/mock'
-import { saveManager } from '../data/save-bridge'
+import { createDebugCategories, type DebugActionDef, type DebugActionInput, type DebugActionResult, type DebugCategory } from '../debugActions'
+import type { PlayerStoreDebugEnv } from '../debugEnv'
+import { alchemyRecipes, equipmentCatalog, forgeRecipes, loadXiyouData, packItems, quests, realms, scenes, schools, shopGoods, skillPoints } from '../xiyouData'
+import { saveManager } from '../save-bridge'
 
 interface Props {
   /** 面板是否可见（v-show 保活） */

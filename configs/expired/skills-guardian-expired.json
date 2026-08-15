@@ -1,0 +1,1527 @@
+[
+  {
+    "id": "guardian_desperate_will",
+    "name": "绝境意志",
+    "description": "气血值低于20%时，立即获得一个基于最大气血值50%的护盾，每场战斗仅触发一次",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 1,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "hp_lower_than"
+    ],
+    "parameters": {
+      "hpThreshold": 20
+    },
+    "steps": [
+      {
+        "type": "shield",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.5
+            }
+          ]
+        }
+      }
+    ],
+    "passiveCategory": [
+      "shield"
+    ]
+  },
+  {
+    "id": "guardian_last_blood_harvest",
+    "name": "残血收割",
+    "description": "气血值低于40%时，对气血值低于自己的目标造成+40%伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "hp_lower_than"
+    ],
+    "parameters": {
+      "hpThreshold": 40
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "last_blood_dmg_up",
+            "sourceName": "残血收割",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 40
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_dying_body",
+    "name": "濒死之躯",
+    "description": "气血值低于25%时，闪避率提升至+60%（乘法叠加），但伤害降低20%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "hp_lower_than"
+    ],
+    "parameters": {
+      "hpThreshold": 25
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "dying_body_dodge",
+            "sourceName": "濒死之躯",
+            "sourceType": "SKILL",
+            "targetAttribute": "dodge",
+            "type": "ADDITIVE",
+            "value": 60
+          },
+          {
+            "id": "dying_body_dmg_down",
+            "sourceName": "濒死之躯",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": -20
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_armor_break",
+    "name": "破甲打击",
+    "description": "普攻命中后，降低目标20%防御力，持续2回合（可叠加）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "before_attack"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_armor_break"
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_toxin_soak",
+    "name": "毒素浸染",
+    "description": "普攻附带3%目标最大气血值的真实伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.03
+            }
+          ]
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger",
+      "dot"
+    ]
+  },
+  {
+    "id": "guardian_blood_thirst",
+    "name": "吸血渴望",
+    "description": "将造成伤害的25%转化为自身气血回复",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "after_attack"
+    ],
+    "steps": [
+      {
+        "type": "drain",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.25
+            }
+          ]
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger",
+      "heal"
+    ]
+  },
+  {
+    "id": "guardian_thorn_counter",
+    "name": "荆棘反刺",
+    "description": "反射所受35%的伤害给攻击者",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "steps": [
+      {
+        "type": "reflect",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "defense",
+              "ratio": 0.35
+            }
+          ]
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_firm_shield",
+    "name": "坚毅护盾",
+    "description": "受击时若伤害超过最大气血值15%，减免超出部分的50%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_firm_shield"
+      }
+    ],
+    "passiveCategory": [
+      "trigger",
+      "shield"
+    ]
+  },
+  {
+    "id": "guardian_pain_suppression",
+    "name": "痛感抑制",
+    "description": "每次受击后，增加+3防御力（上限30）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 10,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "pain_suppression_def",
+            "sourceName": "痛感抑制",
+            "sourceType": "SKILL",
+            "targetAttribute": "defense",
+            "type": "ADDITIVE",
+            "value": 3
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_static_rebound",
+    "name": "静电反冲",
+    "description": "受击时有30%概率使攻击者沉默1回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "parameters": {
+      "triggerProbability": 0.3
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_static_rebound"
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_injury_energy",
+    "name": "受伤回能",
+    "description": "每损失10%气血值，立即回复15能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "steps": [
+      {
+        "type": "gain_energy",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "parameters": {
+          "value": 15
+        }
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_backwater_armor",
+    "name": "背水护甲",
+    "description": "气血值低于40%时，受到伤害时先由能量值抵扣（每1能量抵扣1%伤害）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "hp_lower_than"
+    ],
+    "parameters": {
+      "hpThreshold": 40
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_backwater_armor"
+      }
+    ],
+    "passiveCategory": [
+      "trigger",
+      "shield"
+    ]
+  },
+  {
+    "id": "guardian_first_strike",
+    "name": "先发制人",
+    "description": "若本回合先手行动，造成的伤害提升25%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_first_strike",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_charge_burst",
+    "name": "蓄力爆发",
+    "description": "若本回合不进行攻击（使用防御或技能），下回合伤害提升100%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_charge_burst",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_element_slow",
+    "name": "元素迟缓",
+    "description": "回合结束时，降低全体敌方5%速度（不可叠加），持续1回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_end"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_element_slow"
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_inspire_banner",
+    "name": "鼓舞之旗",
+    "description": "回合开始时，我方气血值最低的单位回复8%最大气血值",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": {
+          "faction": "ally",
+          "strategy": "lowest_hp",
+          "count": 1
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.08
+            }
+          ]
+        }
+      }
+    ],
+    "passiveCategory": [
+      "heal"
+    ]
+  },
+  {
+    "id": "guardian_despair_aura",
+    "name": "绝望气场",
+    "description": "战斗开始时，敌方全体暴击率降低15%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "battle_start"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_despair_aura"
+      }
+    ],
+    "passiveCategory": [
+      "aura"
+    ]
+  },
+  {
+    "id": "guardian_venom_hunt",
+    "name": "剧毒追猎",
+    "description": "攻击中毒目标时，伤害提升30%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "condition": "target_has_poison",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "venom_hunt_dmg_up",
+            "sourceName": "剧毒追猎",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 30
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_stun_strike",
+    "name": "眩晕重击",
+    "description": "攻击眩晕目标时，暴击率提升至100%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "before_attack"
+    ],
+    "condition": "target_has_stun",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "stun_strike_crit",
+            "sourceName": "眩晕重击",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 100
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_burn_detonate",
+    "name": "灼烧爆破",
+    "description": "攻击燃烧目标时，引爆剩余灼烧层数，造成额外火焰伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "condition": "target_has_burn",
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "引爆灼烧层数，每层造成额外火焰伤害",
+          "customType": "burn_detonate"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger",
+      "dot"
+    ]
+  },
+  {
+    "id": "guardian_purify_body",
+    "name": "净化之体",
+    "description": "每回合开始时，有50%概率移除自身一个Debuff",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "parameters": {
+      "triggerProbability": 0.5
+    },
+    "steps": [
+      {
+        "type": "remove_debuff",
+        "count": 1,
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "immunity"
+    ]
+  },
+  {
+    "id": "guardian_dark_contract",
+    "name": "黑暗契约",
+    "description": "若自身拥有3个以上Debuff，攻击力提升35%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "condition": "source_has_debuff_count",
+    "conditionParams": {
+      "count": 3
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "dark_contract_atk",
+            "sourceName": "黑暗契约",
+            "sourceType": "SKILL",
+            "targetAttribute": "attack",
+            "type": "PERCENTAGE",
+            "value": 35
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_heal_breeze",
+    "name": "治愈微风",
+    "description": "为友方治疗时，同时额外提升友方20%防御力，受到1次攻击后移除",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "heal_received"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_heal_breeze"
+      }
+    ],
+    "passiveCategory": [
+      "heal",
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_double_return",
+    "name": "双倍奉还",
+    "description": "受击时有15%概率将本次伤害100%反弹给攻击者",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "parameters": {
+      "triggerProbability": 0.15
+    },
+    "steps": [
+      {
+        "type": "reflect",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "defense",
+              "ratio": 1
+            }
+          ]
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_blood_gambler",
+    "name": "嗜血赌徒",
+    "description": "普攻有20%概率偷取目标10%当前气血值",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "parameters": {
+      "triggerProbability": 0.2
+    },
+    "steps": [
+      {
+        "type": "drain",
+        "damageCategory": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "currentHealth",
+              "ratio": 0.1
+            }
+          ]
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger",
+      "heal"
+    ]
+  },
+  {
+    "id": "guardian_combo_master",
+    "name": "连击大师",
+    "description": "连续攻击同一目标时，每次伤害递增10%，切换目标后重置",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "连续攻击同一目标伤害递增10%，切换后重置",
+          "customType": "combo_master"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_battle_exp",
+    "name": "战斗经验",
+    "description": "每存活一回合，全属性提升2%，最多叠加15层",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 15,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_end"
+    ],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "battle_exp_atk",
+            "sourceName": "战斗经验",
+            "sourceType": "SKILL",
+            "targetAttribute": "attack",
+            "type": "PERCENTAGE",
+            "value": 2
+          },
+          {
+            "id": "battle_exp_def",
+            "sourceName": "战斗经验",
+            "sourceType": "SKILL",
+            "targetAttribute": "defense",
+            "type": "PERCENTAGE",
+            "value": 2
+          },
+          {
+            "id": "battle_exp_spd",
+            "sourceName": "战斗经验",
+            "sourceType": "SKILL",
+            "targetAttribute": "speed",
+            "type": "PERCENTAGE",
+            "value": 2
+          }
+        ],
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_eye_for_eye",
+    "name": "以牙还牙",
+    "description": "受到伤害后，下次攻击伤害提升等同于本次伤害的50%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_eye_for_eye",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_revenge_fury",
+    "name": "复仇之怒",
+    "description": "队友死亡后，自身攻击力提升30%，暴击率提升20%，持续3回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_death"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_revenge_fury",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_third_strike",
+    "name": "第三连击",
+    "description": "每第三次普通攻击，伤害+50%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "每第三次普攻伤害+50%，需记录普攻次数",
+          "customType": "third_strike"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_turn_heal_shield",
+    "name": "回春护盾",
+    "description": "回合开始回复8%气血，溢出气血转化为护盾",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "steps": [
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.08
+            }
+          ]
+        }
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "溢出治疗转化为护盾",
+          "customType": "overflow_shield"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "heal",
+      "shield"
+    ]
+  },
+  {
+    "id": "guardian_wind_thunder",
+    "name": "疾风迅雷",
+    "description": "每比目标快1点速度，伤害提升0.5%（上限30%）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_wind_thunder",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_sand_of_time",
+    "name": "时之沙",
+    "description": "回合结束时，有15%概率额外获得一次行动机会",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_end"
+    ],
+    "parameters": {
+      "triggerProbability": 0.15
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "15%概率额外获得一次行动机会",
+          "customType": "extra_action"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_unyielding_will",
+    "name": "不屈意志",
+    "description": "受到致命伤害时，保留1点气血并清除所有Debuff，每场战斗1次",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 1,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "steps": [
+      {
+        "type": "cleanse"
+      },
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 1,
+          "extraValues": []
+        }
+      }
+    ],
+    "passiveCategory": [
+      "immunity",
+      "heal"
+    ]
+  },
+  {
+    "id": "guardian_random_taunt",
+    "name": "随机嘲讽",
+    "description": "每两回合，战斗开始随机嘲讽一位敌人，攻击自己",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 2,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_random_taunt",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_frugal",
+    "name": "节俭",
+    "description": "使用技能时，有30%概率不消耗能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "skill_use"
+    ],
+    "parameters": {
+      "triggerProbability": 0.3
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "frugal_energy_save",
+            "sourceName": "节俭",
+            "sourceType": "SKILL",
+            "targetAttribute": "energyCost",
+            "type": "ADDITIVE",
+            "value": 0
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_limit_accumulate",
+    "name": "极限积攒",
+    "description": "每次受击额外获得+10能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "steps": [
+      {
+        "type": "gain_energy",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "parameters": {
+          "value": 10
+        }
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_over_focus",
+    "name": "过度专注",
+    "description": "若能量高于90%，暴击率提升30%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "condition": "source_energy_high",
+    "conditionParams": {
+      "ratio": 0.9
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "over_focus_crit",
+            "sourceName": "过度专注",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 30
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "guardian_toxic_hunt",
+    "name": "毒性追猎",
+    "description": "攻击中毒目标时，伤害提升50%且必定暴击",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "before_attack"
+    ],
+    "condition": "target_has_poison",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "toxic_hunt_dmg",
+            "sourceName": "毒性追猎",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 50
+          },
+          {
+            "id": "toxic_hunt_crit",
+            "sourceName": "毒性追猎",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 100
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_hypnotist",
+    "name": "催眠师",
+    "description": "攻击睡眠目标时，不唤醒且造成1.5倍伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "condition": "target_has_sleep",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "hypnotist_dmg",
+            "sourceName": "催眠师",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 50
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_burn_detonate_full",
+    "name": "灼烧引爆",
+    "description": "攻击燃烧目标时，引爆剩余灼烧总伤害的200%（一次性结算）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "condition": "target_has_burn",
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "引爆灼烧总伤害的200%，一次性结算",
+          "customType": "burn_detonate_full"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger",
+      "dot"
+    ]
+  },
+  {
+    "id": "guardian_paralyze_tentacle",
+    "name": "麻痹触手",
+    "description": "攻击时有20%概率使目标麻痹（速度-50%，概率无法行动）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "parameters": {
+      "triggerProbability": 0.2
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_paralyze"
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_dying_emergency",
+    "name": "濒死急救",
+    "description": "治疗气血低于30%的友方时，效果提升60%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "heal_received"
+    ],
+    "condition": "target_low_hp",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "dying_emergency_heal",
+            "sourceName": "濒死急救",
+            "sourceType": "SKILL",
+            "targetAttribute": "healEffect",
+            "type": "ADDITIVE",
+            "value": 60
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "heal",
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_sacrifice_rage",
+    "name": "献祭之怒",
+    "description": "友方阵亡时，自身获得攻击力+50%和暴击率+20%（持续至战斗结束）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_death"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_sacrifice_rage",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_berserker",
+    "name": "狂战士",
+    "description": "战斗开始后三回合，攻击力+30%，防御力-15%，无法使用技能（仅普攻）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 1,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "battle_start"
+    ],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_berserker",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_night_hunter",
+    "name": "暗夜猎手",
+    "description": "若当前回合数大于5，暴击率提升20%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "condition": "source_turn_gt",
+    "conditionParams": {
+      "turn": 5
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "night_hunter_crit",
+            "sourceName": "暗夜猎手",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 20
+          }
+        ]
+      }
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "guardian_protracted_war",
+    "name": "持久战",
+    "description": "每过5回合，全体友方回复15%气血和30能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 5,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "condition": "source_turn_mod",
+    "conditionParams": {
+      "mod": 5
+    },
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": {
+          "faction": "ally",
+          "strategy": "all"
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.15
+            }
+          ]
+        }
+      },
+      {
+        "type": "gain_energy",
+        "targetConfig": {
+          "faction": "ally",
+          "strategy": "all"
+        },
+        "parameters": {
+          "value": 30
+        }
+      }
+    ],
+    "passiveCategory": [
+      "heal"
+    ]
+  }
+]

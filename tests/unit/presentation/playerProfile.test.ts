@@ -11,9 +11,10 @@ import {
   computeStatBonuses,
   createPlayerProfile,
   expNeedForLevel,
-} from '@/presentation/modules/yanjie/xiyou/data/playerProfile'
+} from '@/presentation/modules/yanjie/xiyou/playerProfile'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import { buildBattleTeams, equipBonuses, type XiyouScene } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { buildBattleTeams, equipBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
+import type { XiyouScene } from '@/presentation/modules/yanjie/xiyou/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 describe('playerProfile 玩家属性创建', () => {

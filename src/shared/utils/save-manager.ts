@@ -3,7 +3,7 @@
  *
  * 负责存档读写的编排：save / load / reset / export / import / 自动存档。
  * 通过 SaveStatePort 依赖注入运行时状态的收集与恢复（端口实现见
- * src/presentation/modules/yanjie/xiyou/data/save-bridge.ts），本文件不依赖任何 store，
+ * src/presentation/modules/yanjie/xiyou/save-bridge.ts），本文件不依赖任何 store，
  * 可在 node 环境单测。
  *
  * 存储：IndexedDB saves store（save:main 主档 / save:auto 自动备份）为主，localStorage
@@ -80,33 +80,38 @@ export class SaveManager {
 
   /**
    * 落盘：IndexedDB saves store 为主，localStorage 降级；autoSave 额外写 auto 备份键。
+   * 返回两种存储各自的成败——调用方按需判定（save 取「任一成功」；load 迁移仅在 IDB 成功时清理旧键）。
    * NOTE: 统一在此 attachChecksum——load/reset 路径传入的旧档/初始档可能无 checksum 或已失效，
    *       必须重算后才能让下次加载的完整性校验成立。
    */
-  private async persist(data: SaveData, withAuto: boolean): Promise<boolean> {
+  private async persist(data: SaveData, withAuto: boolean): Promise<{ idb: boolean; local: boolean }> {
     const stamped = attachChecksum(data)
-    let ok = false
+    let idb = false
     try {
-      ok = await this.storage.set(SAVE_STORE.SAVES, SAVE_MAIN_KEY, stamped)
+      idb = await this.storage.set(SAVE_STORE.SAVES, SAVE_MAIN_KEY, stamped)
       if (withAuto) await this.storage.set(SAVE_STORE.SAVES, SAVE_AUTO_KEY, stamped)
     } catch {
-      ok = false
+      idb = false
     }
+    let local = false
     try {
       localStorage.setItem(LOCAL_MAIN_KEY, JSON.stringify(stamped))
       if (withAuto) localStorage.setItem(LOCAL_AUTO_KEY, JSON.stringify(stamped))
+      local = true
     } catch {
       /* localStorage 不可用（隐私模式等）：IDB 仍为主存储 */
     }
     this.lastData = stamped
-    return ok
+    return { idb, local }
   }
 
   /** 存档（manual=仅写主档，覆盖自动备份语义；auto=主档 + 自动备份） */
   async save(kind: 'manual' | 'auto'): Promise<boolean> {
     try {
       const data = await this.collectData()
-      return await this.persist(data, kind === 'auto')
+      const { idb, local } = await this.persist(data, kind === 'auto')
+      // NOTE: IDB 失败但 localStorage 写入成功时仍算保存成功（降级路径，防误报"保存失败"）
+      return idb || local
     } catch {
       return false
     }
@@ -204,15 +209,18 @@ export class SaveManager {
         const parsed = JSON.parse(local)
         const data = migrateSave(parsed)
         await this.port.restore(data)
-        await this.persist(data, true)
+        const { idb } = await this.persist(data, true)
         this.setSessionFromMeta(data)
-        try {
-          localStorage.removeItem(LOCAL_MAIN_KEY)
-          localStorage.removeItem(LOCAL_AUTO_KEY)
-        } catch {
-          /* ignore */
+        // 仅当迁移确实写入 IDB 主档后才删除 localStorage 旧键；IDB 不可用时保留降级档，防下次加载丢档
+        if (idb) {
+          try {
+            localStorage.removeItem(LOCAL_MAIN_KEY)
+            localStorage.removeItem(LOCAL_AUTO_KEY)
+          } catch {
+            /* ignore */
+          }
         }
-        return { ok: true, source: 'local', migrated: true }
+        return { ok: true, source: 'local', migrated: idb }
       } catch {
         /* 损坏的 localStorage 档：继续走新建 */
       }

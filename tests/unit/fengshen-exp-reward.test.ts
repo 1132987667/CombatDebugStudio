@@ -217,7 +217,10 @@ describe('seed：params 域三条结构化种子', () => {
 
     const er = await api.getEnemyRewardTable()
     expect(er?.entries.length).toBeGreaterThanOrEqual(7)
-    expect(er?.roleMultiplier).toHaveProperty('final_boss')
+    expect(er?.roleMultiplier).toHaveProperty('hidden_boss')
+    expect(er?.roleMultiplier).toHaveProperty('major_boss')
+    expect(er?.roleMultiplier).toHaveProperty('elite')
+    expect(er?.roleMultiplier).not.toHaveProperty('final_boss')
     expect(er?.interpolation).toBe('linear')
 
     const ld = await api.getLevelDiffBonus()

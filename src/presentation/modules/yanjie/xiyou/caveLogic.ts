@@ -4,7 +4,7 @@
  * 职责：物品名 ↔ items.json ID 索引、配方材料文本解析、强化/升星数值、
  *       碎片合成规则。组件只消费本层导出，不内联解析逻辑。
  */
-import type { XiyouCatalogItem, XiyouQuality } from './mock'
+import type { XiyouCatalogItem, XiyouQuality } from './types'
 import itemsJson from '@configs/xiyou/items.json'
 import equipmentSystemJson from '@configs/xiyou/equipment/equipment-system.json'
 import { qualityOf as qualityByRarity } from './quality'

@@ -2,7 +2,7 @@
   <div>
     <div class="xy-cave-skill-bar">
       <span>可用技能点</span>
-      <strong>{{ skillPoints.max - skillPoints.spent }}</strong>
+      <strong>{{ availablePoints }}</strong>
     </div>
 
     <!-- 流派切换 -->
@@ -62,8 +62,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { XiyouSkillNode, XiyouNodeType } from '../../data/mock'
-import { schools, skillPoints } from '../../data/mock'
+import type { XiyouSkillNode, XiyouNodeType } from '../../types'
+import { schools, skillPoints } from '../../xiyouData'
 
 const notification = useNotificationStore()
 
@@ -73,7 +73,7 @@ const choosingId = ref<string | null>(null)
 
 const currentSkills = computed<XiyouSkillNode[]>(() => schools.find((s) => s.id === schoolId.value)?.nodes ?? [])
 
-const availablePoints = computed(() => skillPoints.max - skillPoints.spent)
+const availablePoints = computed(() => Math.max(0, skillPoints.earned - skillPoints.spent))
 
 function schoolOf(): XiyouSkillNode[] {
   return schools.find((s) => s.id === schoolId.value)?.nodes ?? []
@@ -130,6 +130,6 @@ function learn(sk: XiyouSkillNode): void {
   sk.learned = true
   skillPoints.spent += sk.points
   choosingId.value = null
-  notification.toast(`习得「${sk.name}」，剩余技能点 ${skillPoints.max - skillPoints.spent}`, 'success')
+  notification.toast(`习得「${sk.name}」，剩余技能点 ${availablePoints.value}`, 'success')
 }
 </script>

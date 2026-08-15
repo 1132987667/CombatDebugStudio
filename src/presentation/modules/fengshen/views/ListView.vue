@@ -152,7 +152,7 @@ const tableHint = computed(() => {
     actors: '基础属性 / 成长曲线 / 技能绑定 / 阵营元素',
     skills: '主动 / 被动 · 能量消耗 · 步骤编排 · 效果组合',
     buffs: '增益 / 减益 / 控制 · 叠加规则 · 效果链',
-    enemies: '属性 / 技能组 / 掉落物',
+    enemies: '品阶 / 属性 / 技能组 / 掉落物',
     scenes: '多难度敌人编组 · 所需等级 · 通关奖励',
     formations: '站位布局 / 阵型增益 / 前排保护',
     lineups: '角色组合 + 阵型绑定 · 供场景引用与一键布阵',
@@ -171,7 +171,16 @@ const filteredRows = computed(() => {
   for (const f of schema.value.filters ?? []) {
     if (f.type === 'select') {
       const v = filterState[f.key]
-      if (v) rows = rows.filter((r) => String(r[f.key] ?? '') === v)
+      if (v) {
+        if (f.labelMap) {
+          // 档位过滤：选中项显示名反查该档全部字段值，全匹配
+          const label = f.labelMap[v] ?? v
+          const codes = Object.keys(f.labelMap).filter((k) => f.labelMap[k] === label)
+          rows = rows.filter((r) => codes.includes(String(r[f.key] ?? '')))
+        } else {
+          rows = rows.filter((r) => String(r[f.key] ?? '') === v)
+        }
+      }
     } else if (f.type === 'range') {
       const r = rangeState[f.key]
       if (r?.min !== undefined && r.min !== '') rows = rows.filter((row) => Number(row[f.key]) >= Number(r.min))
@@ -226,7 +235,21 @@ const pageButtons = computed(() => {
 })
 
 function selectOptions(f: TableFilter): OptionItem[] {
-  if (f.options) return f.options.map((o) => ({ id: o, label: o }))
+  if (f.options) {
+    if (f.labelMap) {
+      // 值→显示名映射：同名档位合并为一个下拉项（id 取该档首个值，过滤时按档位全匹配）
+      const seen = new Set<string>()
+      const items: OptionItem[] = []
+      for (const o of f.options) {
+        const label = f.labelMap[o] ?? o
+        if (seen.has(label)) continue
+        seen.add(label)
+        items.push({ id: o, label })
+      }
+      return items
+    }
+    return f.options.map((o) => ({ id: o, label: o }))
+  }
   if (f.refTable) return optionsCache.value[f.refTable] ?? []
   return []
 }

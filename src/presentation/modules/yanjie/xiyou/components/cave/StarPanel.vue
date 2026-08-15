@@ -65,7 +65,7 @@ import type { EquipmentData } from '@/domain/fengshen/types'
 import { qualityOf } from '../../data/quality'
 import { itemIdByName, STAR_MAX, starCost } from '../../data/caveLogic'
 
-/** 升星槽位视图（真实穿戴装备 → 展示用，星级暂无独立存档，统一 0 起步） */
+/** 升星槽位视图（真实穿戴实例 → 星级为实例属性，持久化） */
 interface StarGearView {
   slot: GearSlotKey
   slotLabel: string
@@ -82,19 +82,20 @@ const idx = ref(-1)
 const rippling = ref(false)
 const shaking = ref(false)
 
-// NOTE: 升星数据源 = 真实穿戴（pack.equipped），与装备/强化面板同源，不再读 equip.json 静态 gearSlots。
+// NOTE: 升星数据源 = 真实穿戴实例（pack.equipped），星级/强化/品质持久化在实例，与装备面板同源。
 const gears = computed<StarGearView[]>(() =>
   (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
     .filter((slot) => pack.equippedGear(slot))
     .map((slot) => {
       const g = pack.equippedGear(slot) as EquipmentData
+      const inst = pack.equippedInstance(slot) as NonNullable<ReturnType<typeof pack.equippedInstance>>
       return {
         slot,
         slotLabel: GEAR_SLOT_LABELS[slot],
         item: g.name,
         rarity: g.rarity,
-        star: 0,
-        effect: statText(g),
+        star: inst.star ?? 0,
+        effect: statText(pack.instanceStats(inst)),
       }
     }),
 )
@@ -118,19 +119,21 @@ function doStar(): void {
   const g = gear.value
   if (!g || !canStar.value) return
 
-  if (!pack.removeItem(sameId.value!, 1)) return
-  if (!pack.removeItem('star_soul_01', soulNeed.value)) return
-
-  // NOTE: 星级暂无持久化（升星系统未落地），本轮仅流程演示
+  if (!pack.starGear(g.slot)) {
+    shaking.value = true
+    window.setTimeout(() => {
+      shaking.value = false
+    }, 400)
+    return
+  }
   rippling.value = true
   window.setTimeout(() => {
     rippling.value = false
   }, 700)
-  notification.toast(`升星成功！「${g.item}」升至 1 星（演示）`, 'success')
 }
 
-/** 装备 stats 文案（"攻击 +12"），供升星展示 */
-function statText(g: EquipmentData): string {
+/** 装备 stats 文案（含品质系数/强化/星级/词缀），供升星展示 */
+function statText(stats: EquipmentData['stats']): string {
   const label: Record<string, string> = {
     attack: '攻击',
     defense: '防御',
@@ -138,7 +141,7 @@ function statText(g: EquipmentData): string {
     speed: '速度',
     critRate: '暴击率',
   }
-  return g.stats.map((s) => {
+  return stats.map((s) => {
     const n = label[s.attribute] ?? s.attribute
     const suffix = s.modifierType === 'percent' ? '%' : ''
     return `${n} ${s.value >= 0 ? '+' : ''}${s.value}${suffix}`

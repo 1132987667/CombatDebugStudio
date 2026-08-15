@@ -12,6 +12,8 @@
       <span class="fs-detail-id">{{ entity.id }}</span>
       <h3 class="fs-detail-title">{{ detailName }}</h3>
       <span class="fs-detail-table">{{ schema.label }}</span>
+      <Button v-if="schema.table === 'lineups'" size="small"
+        title="切换到唤灵台并加载该预设阵容" @click="emit('openInHuanling')">在唤灵台打开</Button>
       <Button size="small" title="在编辑器中打开该实体" @click="emit('edit')">编辑</Button>
     </header>
 
@@ -99,6 +101,8 @@ const emit = defineEmits<{
   edit: []
   /** 跳转到引用方所在表 */
   goto: [table: string]
+  /** 在唤灵台加载该预设阵容（仅 lineups 表） */
+  openInHuanling: []
 }>()
 
 const detailName = computed(() => String(props.entity.name ?? props.entity.id ?? '未命名'))

@@ -48,9 +48,10 @@
     </div>
 
     <DataTable :schema="schema" :rows="pagedRows" :selected-ids="store.selectedIds" :loading="store.loading"
-      :detail-id="detailId" :sort-key="sortKey" :sort-dir="sortDir" :ref-index="store.refIndex"
+      :has-filter="hasFilter" :detail-id="detailId" :sort-key="sortKey" :sort-dir="sortDir" :ref-index="store.refIndex"
       @toggle-select="store.toggleSelect"
-      @edit="store.openEdit" @copy="onCopy" @remove="requestRemove" @detail="onDetail" @sort="onSort" />
+      @edit="store.openEdit" @copy="onCopy" @remove="requestRemove" @detail="onDetail" @sort="onSort"
+      @clear-filters="onClearFilters" />
 
     <div v-if="totalPages > 1" class="fs-pagination" role="navigation" aria-label="分页">
       <span class="fs-page-info">共 {{ filteredRows.length }} 条 · 第 {{ page }}/{{ totalPages }} 页</span>
@@ -66,7 +67,7 @@
       <aside class="fs-list-detail" role="region" aria-label="实体详情">
         <EntityDetailPanel v-if="detailEntity" :schema="schema" :entity="detailEntity" :references="store.references"
           :ref-index="store.refIndex"
-          @edit="store.openEdit(detailEntity)" @goto="onGotoTable" />
+          @edit="store.openEdit(detailEntity)" @goto="onGotoTable" @open-in-huanling="onOpenInHuanling" />
         <div v-else class="fs-detail-empty">
           <span class="fs-detail-empty-title">实体详情</span>
           <span class="fs-detail-empty-hint">点击列表中的名称查看对应信息</span>
@@ -101,6 +102,7 @@ import TacticalSelect, { type TSelectOption } from '@/presentation/components/Ta
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { uiNavBus, OPEN_LINEUP_EVENT } from '@/presentation/uiEvents'
 
 const PAGE_SIZE = 20
 
@@ -130,6 +132,19 @@ function onSort(col: string): void {
 
 function onDetail(row: Record<string, unknown>): void {
   detailId.value = String(row.id)
+}
+
+/** 是否处于搜索 / 列级筛选过滤态（空态据此提示「清除搜索与筛选」） */
+const hasFilter = computed(() => {
+  if (store.search) return true
+  if (Object.values(filterState).some((v) => v !== '' && v !== undefined)) return true
+  return Object.values(rangeState).some((r) => r?.min !== '' || r?.max !== '')
+})
+
+/** 空态「清除搜索与筛选」：清空搜索词与全部列级筛选，回到全量列表 */
+function onClearFilters(): void {
+  store.search = ''
+  resetFilters()
 }
 
 const tableHint = computed(() => {
@@ -289,6 +304,12 @@ async function onBatchApply(field: string, value: unknown): Promise<void> {
 /** 详情面板「被引用」跳转到引用方表 */
 function onGotoTable(table: string): void {
   store.navigateTo(table as never)
+}
+
+/** 详情面板「在唤灵台打开」：发布跨模块导航事件（BattleArena 切 tab + ParticipantPanel 加载阵容） */
+function onOpenInHuanling(): void {
+  if (!detailId.value) return
+  uiNavBus.emit(OPEN_LINEUP_EVENT, detailId.value)
 }
 
 // 表切换：重置筛选 / 分页 / 排序 / 预载 refTable 选项（immediate：首次挂载即预填 select 键，避免 v-model 绑 undefined）

@@ -1,5 +1,5 @@
 /**
- * 洞府 · 纯逻辑层（无 Vue / Store 依赖，供单元测试）
+ * 洞府 · 纯逻辑层
  *
  * 职责：物品名 ↔ items.json ID 索引、配方材料文本解析、强化/升星数值、
  *       碎片合成规则。组件只消费本层导出，不内联解析逻辑。
@@ -98,8 +98,8 @@ export function starCost(star: number): number {
   return star + 1
 }
 
-/** 升星上限 */
-export const STAR_MAX = 5
+/** 升星上限（设计稿补充-装备 §8：星级 0-3，每星基础属性 +10%） */
+export const STAR_MAX = 3
 
 /** 碎片合成规则（frag 碎片 → 完整物品，比例来自 items.json source 文案） */
 export interface FragmentRule {

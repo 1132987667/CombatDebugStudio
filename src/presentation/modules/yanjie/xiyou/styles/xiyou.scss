@@ -95,9 +95,26 @@
   white-space: nowrap;
 }
 
+/* 战斗禅台加载占位（gameLoaded 前替代 BattleZen，占同一网格位 zen） */
+.xy-battle-loading {
+  grid-area: zen;
+  margin: var(--space-3);
+  padding: var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--xy-ink-4);
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+  border: 1px dashed var(--xy-ink-line);
+  border-radius: var(--radius-sm);
+  background: var(--xy-paper);
+}
+
 /* 主体三栏（行路态：战斗+宝阁+四象栏 / 功能态：全屏宝阁+四象栏；四象栏位置可左/右） */
 .xy-body {
   flex: 1;
+  min-height: 0;
   min-height: 0;
   display: grid;
   overflow: hidden;

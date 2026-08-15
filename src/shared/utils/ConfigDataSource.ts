@@ -9,7 +9,7 @@ import type { IDataSource } from '@/domain/port/IDataSource'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
-import type { LineupData } from '@/domain/fengshen/types'
+import type { LineupData, AffixData, AffixLibraryData } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import type { ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
@@ -34,6 +34,7 @@ import skillsData from '@configs/skills/skills.json'
 import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
 import hiddenBossSkillsData from '@configs/skills/skill_hidden_boss.json'
 import effectsDataRaw from '@configs/effects/effects.json'
+import affixLibraryDataRaw from '@configs/affixes/affixes.json'
 
 /** 新结构敌人条目（enemies.json：skillIds/passiveSkillIds/drops.probability） */
 interface RawEnemyEntry {
@@ -124,6 +125,10 @@ export class ConfigDataSource implements IDataSource {
 
   getMaterials(): Item[] {
     return materials
+  }
+
+  getAffixes(): AffixData[] {
+    return (affixLibraryDataRaw as AffixLibraryData).affixes
   }
 
   // NOTE: 经验/金钱三表以 IDB params 域为权威，configs 无兜底数据（引擎无 IDB 时按默认规则运行）

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies/drops）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/ring）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册（含旧版 eq_w/eq_a/eq_c 沿用 ID，drops.json 仍引用，保留注册）。",
+  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/ring）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册（含旧版 eq_w/eq_a/eq_c 沿用 ID）。",
   "items": [
     {
       "id": "mat_taomu",
@@ -1877,30 +1877,6 @@
       "type": "头盔",
       "rarity": 3,
       "source": "旧版封神榜装备表（drops 仍引用）"
-    },
-    {
-      "id": "mat_niumojiao",
-      "name": "牛魔角",
-      "type": "BOSS材料",
-      "rarity": 4,
-      "source": "三大王·牛魔·赤焰（首杀 100%，重复 20%）",
-      "description": "牛魔一族最坚硬的双角，燃烧着不熄的赤焰。用途：打造神级武器与传说装备的核心材料。"
-    },
-    {
-      "id": "mat_dunang",
-      "name": "毒囊",
-      "type": "BOSS材料",
-      "rarity": 4,
-      "source": "三大王·盘丝·织梦（首杀 100%，重复 20%）",
-      "description": "盘丝大仙炼化的剧毒囊，凝聚千年毒力。用途：打造传说装备与特殊丹药的核心材料。"
-    },
-    {
-      "id": "mat_pengyu",
-      "name": "鹏羽",
-      "type": "BOSS材料",
-      "rarity": 4,
-      "source": "三大王·大鹏·遮天（首杀 100%，重复 20%）",
-      "description": "大鹏金翅雕的翎羽，锋利如刃。用途：打造传说装备与特殊配件的核心材料。"
     },
     {
       "id": "mat_qingshui_yu",

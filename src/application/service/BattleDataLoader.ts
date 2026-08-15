@@ -14,7 +14,7 @@ import type { IDataSource } from '@/domain/port/IDataSource'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
-import type { LineupData } from '@/domain/fengshen/types'
+import type { LineupData, AffixData } from '@/domain/fengshen/types'
 import type { Item } from '@/shared/types/Item'
 import { normalizeBuffEntries } from '@/shared/types/effects-json'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
@@ -47,6 +47,8 @@ export class BattleDataLoader {
       // NOTE: buffs 表为混合格式（buffs.json + effects.json 原始条目），数据源侧归一化为 BuffJsonEntry
       const buffs = normalizeBuffEntries(await this.loadAll<{ id: string }>(FENGSHEN_STORE.BUFFS))
       const materials = await this.loadAll<Item>(FENGSHEN_STORE.MATERIALS)
+      // 词缀库（affixes 表）：enemyToParticipant 按敌人 affixPool 自动应用词缀的运行时权威源
+      const affixes = await this.loadAll<AffixData>(FENGSHEN_STORE.AFFIXES)
 
       // NOTE: params 表混合简单数字参数（BattleRuleManager 消费）与结构化经验/金钱表（按 id 提取）
       const params = await this.loadAll<BattleParamData>(FENGSHEN_STORE.PARAMS)
@@ -61,6 +63,7 @@ export class BattleDataLoader {
         getLineups: () => lineups,
         getBuffs: () => buffs,
         getMaterials: () => materials,
+        getAffixes: () => affixes,
         getExpTable: () => expTable,
         getEnemyRewardTable: () => enemyRewardTable,
         getLevelDiffBonus: () => levelDiffBonus,

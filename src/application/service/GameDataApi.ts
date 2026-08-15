@@ -10,7 +10,6 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
   BattleParamData,
-  DropGroupData,
   ElementsData,
   EnemyRewardTableConfig,
   EquipmentData,
@@ -100,10 +99,6 @@ export class GameDataApi {
 
   async getGrowthCurve(id: string): Promise<GrowthCurveData | null> {
     return this.storage.get<GrowthCurveData>(FENGSHEN_STORE.GROWTH, id)
-  }
-
-  async getDropGroup(id: string): Promise<DropGroupData | null> {
-    return this.storage.get<DropGroupData>(FENGSHEN_STORE.DROPS, id)
   }
 
   async getBattleParam(id: string): Promise<BattleParamData | null> {

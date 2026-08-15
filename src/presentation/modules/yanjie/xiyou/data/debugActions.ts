@@ -12,6 +12,7 @@
 
 import { makeInstance, GEAR_SLOT_LABELS, type GearInstance, type GearSlotKey } from '@/presentation/stores/packStore'
 import { applyAffixToParticipant, clearAffixesFromParticipant } from '@/shared/utils/affix'
+import { PLAYER_ID } from '@/shared/constants/player'
 import type { AffixData } from '@/domain/fengshen/types'
 import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
@@ -386,7 +387,7 @@ function buildPlayerCategory(env: PlayerStoreDebugEnv): DebugCategory {
   const { player } = env
   const p = player.player
   return {
-    id: 'player',
+    id: PLAYER_ID,
     label: '状态',
     groups: [
       {

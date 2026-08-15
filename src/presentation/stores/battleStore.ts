@@ -45,6 +45,8 @@ import { getActionBudget } from '@/shared/constants/animation-timing'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
 import { DataPackageService } from '@/application/service/DataPackageService'
+import { GameDataApi } from '@/application/service/GameDataApi'
+import type { ActorData } from '@/domain/fengshen/types'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -320,8 +322,10 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
-  /** 处理回合结束事件 */
-  const handleTurnEndEvent = () => {}
+  /** 处理回合结束事件（本回合所有行动结束：清空当前行动者，等待下回合 TURN_START 重置） */
+  const handleTurnEndEvent = () => {
+    currentActorId.value = null
+  }
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
   const handleDamageAnimationEvent = (data: DamageEventData) =>
@@ -873,24 +877,38 @@ export const useBattleStore = defineStore('battle', () => {
       }
       battleService.value!.reset()
       battleService.value!.clearParticipants()
+      // 非 lineup 来源的编成恢复：清空阵型，避免上一次 lineup 的阵型 Buff 残留
+      battleService.value!.setFormations(undefined, undefined)
+
+      // 我方角色（actors 表）与我方用敌人数据的阵容都支持；失配角色打日志跳过，避免"少人"静默开战
+      // 我方角色解析失败只影响"我方角色"加载，不回退整个导入（敌人路径不依赖 actors）
+      let actors: ActorData[] = []
+      try {
+        actors = await container.resolve<GameDataApi>('GameDataApi').listByTable<ActorData>('actors', { limit: 1000 })
+      } catch {
+        actors = []
+      }
+      let skipped = 0
 
       // 重建双方队伍
       allyIds.forEach((id, index) => {
-        const enemyData = GameDataProcessor.findEnemyById(id)
-        if (enemyData) {
-          battleService.value!.addCharacterToTeam(
-            GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index),
-            ParticipantSide.ALLY,
-          )
+        const roleId = GameDataProcessor.sourceRoleIdOf({ id })
+        const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ALLY, index, actors)
+        if (entity) {
+          battleService.value!.addCharacterToTeam(entity, ParticipantSide.ALLY)
+        } else {
+          skipped++
+          battleLogManager.addSystemLog({ message: `导入队伍配置：角色未找到，已跳过: ${id}` })
         }
       })
       enemyIds.forEach((id, index) => {
-        const enemyData = GameDataProcessor.findEnemyById(id)
-        if (enemyData) {
-          battleService.value!.addCharacterToTeam(
-            GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index),
-            ParticipantSide.ENEMY,
-          )
+        const roleId = GameDataProcessor.sourceRoleIdOf({ id })
+        const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ENEMY, index, actors)
+        if (entity) {
+          battleService.value!.addCharacterToTeam(entity, ParticipantSide.ENEMY)
+        } else {
+          skipped++
+          battleLogManager.addSystemLog({ message: `导入队伍配置：角色未找到，已跳过: ${id}` })
         }
       })
 
@@ -904,7 +922,9 @@ export const useBattleStore = defineStore('battle', () => {
       // 选中第一个我方角色，避免导入后角色监控面板为空
       const firstAlly = battleService.value!.getAllyTeam()[0]
       if (firstAlly) selectCharacter(firstAlly.id)
-      battleLogManager.addSystemLog({ message: '队伍配置已导入：编成与规则已恢复' })
+      battleLogManager.addSystemLog({
+        message: `队伍配置已导入：编成与规则已恢复${skipped ? `（${skipped} 个角色未找到）` : ''}`,
+      })
       return true
     }, {
       loading: '导入配置',

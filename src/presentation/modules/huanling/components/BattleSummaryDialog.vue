@@ -161,6 +161,7 @@
 
     <!-- 底部按钮 -->
     <template #footer>
+      <Button variant="energy" title="切换到昊天镜并回放该战斗（需先保存战斗记录）" @click="openInHaotian">去昊天镜分析</Button>
       <Button @click="copySummary">复制摘要</Button>
       <Button @click="exportJson">导出 JSON</Button>
       <Button @click="closeDialog">关闭</Button>
@@ -174,6 +175,7 @@ import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { uiNavBus, OPEN_ANALYSIS_EVENT } from '@/presentation/uiEvents'
 import type { BattleSummary, UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
 
 interface Props {
@@ -192,6 +194,17 @@ const emit = defineEmits<{
 
 const emitModelValue = (v: boolean) => emit('update:modelValue', v)
 const closeDialog = () => emit('update:modelValue', false)
+
+/** 去昊天镜分析：广播跨模块导航事件（BattleArena 切 tab + haotianStore 按 battleId 加载记录） */
+const openInHaotian = () => {
+  const battleId = props.summary?.battleId
+  if (!battleId) {
+    useNotificationStore().toast('暂无战斗 ID，无法跳转分析', 'warning')
+    return
+  }
+  uiNavBus.emit(OPEN_ANALYSIS_EVENT, battleId)
+  closeDialog()
+}
 
 const teamLabel = (side: string): string => (side === 'ally' ? '友方' : side === 'enemy' ? '敌方' : side)
 

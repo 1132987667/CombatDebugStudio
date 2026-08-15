@@ -9,11 +9,11 @@
       <span class="xy-altar-auto-label">自动</span>
     </button>
 
-    <!-- 技能按钮：普攻 / 小技能 / 大招 -->
+    <!-- 技能按钮：普攻 / 小技能 / 大招（真实释放：轮到主角时点击出手） -->
     <div class="xy-altar-skills">
-      <button v-for="s in skills" :key="s.name" type="button" class="xy-altar-skill xy-ink-hover"
-        :class="[`xy-altar-skill--${s.type}`, { ready: s.ready }]"
-        :title="`${s.name} · ${s.desc}`">
+      <button v-for="s in skills" :key="s.id ?? '__basic__'" type="button" class="xy-altar-skill xy-ink-hover"
+        :class="[`xy-altar-skill--${s.type}`, { ready: canAct(s) }]"
+        :disabled="!canAct(s)" :title="`${s.name} · ${s.desc}`" @click="castSkill(s.id)">
         <span class="xy-altar-skill-name">{{ s.name }}</span>
         <span class="xy-altar-skill-cost" v-if="s.cost > 0">{{ s.cost }} 能量</span>
         <span class="xy-altar-skill-cost" v-else>普攻</span>
@@ -23,22 +23,68 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { PLAYER_ID } from '@/shared/constants/player'
+import type { SkillConfig } from '@/domain/skill/types'
 
 const store = useBattleStore()
+const notification = useNotificationStore()
 
 /** 切换自动战斗：真实引擎 autoPlay 开关 */
 function toggleAuto(): void {
   void store.toggleAutoPlay()
 }
 
-/** 框架展示用技能按钮（能量充足与否由 ready 表达样式） */
-const skills = [
-  { name: '普攻', type: 'basic', cost: 0, desc: '造成 100% 攻击力伤害', ready: true },
-  { name: '破甲斩', type: 'skill', cost: 50, desc: '120% 伤害，无视 30% 防御', ready: true },
-  { name: '疾风步', type: 'skill', cost: 50, desc: '提升 30% 速度，持续 3 回合', ready: true },
-  { name: '齐天战意', type: 'ultimate', cost: 150, desc: '提升 50% 攻击力和 30% 暴击率，持续 5 回合', ready: false },
-] as const
+interface SkillView {
+  /** 技能 id（null = 普攻） */
+  id: string | null
+  name: string
+  type: 'basic' | 'skill' | 'ultimate'
+  cost: number
+  desc: string
+}
+
+/** 主角技能面板：普攻 + 已学小技能/大招（learnedPlayerSkills 已注入主角实体的 skills） */
+const skills = computed<SkillView[]>(() => {
+  const p = store.allyTeam.find((c) => c.id === PLAYER_ID)
+  const out: SkillView[] = [{ id: null, name: '普攻', type: 'basic', cost: 0, desc: '造成 100% 攻击力伤害' }]
+  if (!p) return out
+  const push = (s: SkillConfig, type: SkillView['type']): void => {
+    out.push({ id: s.id, name: s.name, type, cost: s.energyCost ?? 0, desc: s.description ?? '' })
+  }
+  for (const s of p.skills.small ?? []) push(s, 'skill')
+  for (const s of p.skills.ultimate ?? []) push(s, 'ultimate')
+  return out
+})
+
+/** 可出手：战斗中 + 非自动 + 轮到主角 + 存活 + 能量足够 */
+function canAct(s: SkillView): boolean {
+  if (!store.isBattleActive || store.autoPlayMode) return false
+  if (store.currentActorId !== PLAYER_ID) return false
+  const p = store.allyTeam.find((c) => c.id === PLAYER_ID)
+  if (!p || p.currentHealth <= 0) return false
+  return s.cost === 0 || (p.currentEnergy ?? 0) >= s.cost
+}
+
+/** 目标：优先当前选中的敌方，否则敌方首个存活单位 */
+function pickTarget(): string | null {
+  const sel = store.selectedCharacterId
+  if (sel && store.enemyTeam.some((e) => e.id === sel && e.currentHealth > 0)) return sel
+  return store.enemyTeam.find((e) => e.currentHealth > 0)?.id ?? null
+}
+
+/** 释放技能（id=null 普攻） */
+async function castSkill(id: string | null): Promise<void> {
+  const target = pickTarget()
+  if (!target) {
+    notification.toast('没有可攻击的敌人', 'error')
+    return
+  }
+  const err = await store.executeManualAction('player', id, target)
+  if (err) notification.toast(err, 'error')
+}
 </script>
 
 <style scoped lang="scss">

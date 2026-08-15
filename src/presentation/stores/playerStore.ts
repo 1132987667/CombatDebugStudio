@@ -12,6 +12,7 @@ import { defineStore } from 'pinia'
 import type { XiyouCurrency, XiyouPlayer, XiyouStatPoints, ProtagonistSnapshot } from '@/presentation/modules/yanjie/xiyou/data/mock'
 import { computeStatBonuses, createPlayerProfile, expNeedForLevel, playerConfig } from '@/presentation/modules/yanjie/xiyou/data/playerProfile'
 import { schoolAttributeBonuses } from '@/presentation/modules/yanjie/xiyou/data/mock'
+import { PLAYER_ID } from '@/shared/constants/player'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export const usePlayerStore = defineStore('player', () => {
@@ -66,7 +67,7 @@ export const usePlayerStore = defineStore('player', () => {
   const battleSnapshot = computed<ProtagonistSnapshot>(() => {
     const attr = playerAttributes.value
     return {
-      id: 'player',
+      id: PLAYER_ID,
       name: player.name,
       level: player.level,
       hp: player.hp,

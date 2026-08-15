@@ -449,6 +449,19 @@ export class BattleManager {
   }
 
   /**
+   * 设置阵型配置（presentation 层从 lineup.formationId 解析后写入；
+   * startBattle 时用于座位分配 + 传递 BattleSystem 应用阵型 Buff）。
+   * 传 undefined 表示该侧不启用阵型。
+   */
+  setFormations(
+    allyFormation?: import('@/shared/types/formation').FormationConfig,
+    enemyFormation?: import('@/shared/types/formation').FormationConfig,
+  ): void {
+    this.allyFormation = allyFormation
+    this.enemyFormation = enemyFormation
+  }
+
+  /**
    * 开始战斗
    * 从 BattleData 获取启用的角色数据
    */

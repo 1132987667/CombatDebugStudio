@@ -51,15 +51,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import Button from "@/presentation/components/Button.vue";
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import GlobalNotifications from "@/presentation/components/GlobalNotifications.vue";
 import ModuleHeader, { modulePanelId, moduleTabId, type ModuleId } from "@/presentation/components/ModuleHeader.vue";
 import Fengshen from "@/presentation/modules/fengshen/Fengshen.vue";
 import HaotianMirror from "@/presentation/modules/haotian/HaotianMirror.vue";
+import { useHaotianStore } from "@/presentation/modules/haotian/stores/haotianStore";
 import Huanling from "@/presentation/modules/huanling/Huanling.vue";
 import Yanjie from "@/presentation/modules/yanjie/Yanjie.vue";
+import { uiNavBus, OPEN_LINEUP_EVENT, OPEN_ANALYSIS_EVENT } from "@/presentation/uiEvents";
 
 const showCompendiumDialog = ref(false);
 
@@ -79,4 +81,24 @@ const huanlingRef = ref<HuanlingExposed | null>(null);
 // 演劫台进入即游戏态，无大厅/选择逻辑，无需 ref；back 事件由模板内联切回唤灵台
 // NOTE: 进入演劫台 = 隐藏全局 ModuleHeader，面板沉浸全屏
 const inYanjieGame = computed(() => activeModule.value === 'yanjie');
+
+// 封神榜「在唤灵台打开阵容」：切到唤灵台 tab（阵容加载由 ParticipantPanel 订阅同一事件完成）
+const onOpenLineupInHuanling = (): void => {
+  activeModule.value = 'huanling';
+};
+
+// 唤灵台战报「去昊天镜分析」：切到昊天镜 tab + 按 battleId 加载该战斗记录
+const onOpenAnalysisInHaotian = (battleId: string): void => {
+  activeModule.value = 'haotian';
+  void useHaotianStore().openBattleById(battleId);
+};
+
+onMounted(() => {
+  uiNavBus.on(OPEN_LINEUP_EVENT, onOpenLineupInHuanling);
+  uiNavBus.on(OPEN_ANALYSIS_EVENT, onOpenAnalysisInHaotian);
+});
+onUnmounted(() => {
+  uiNavBus.off(OPEN_LINEUP_EVENT, onOpenLineupInHuanling);
+  uiNavBus.off(OPEN_ANALYSIS_EVENT, onOpenAnalysisInHaotian);
+});
 </script>

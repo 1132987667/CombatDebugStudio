@@ -464,7 +464,7 @@ const handleSaveScene = (sceneNameValue: string) => {
   });
 };
 
-/** 加载场景：按阵容快照重建双方队伍 */
+/** 加载场景：按阵容快照重建双方队伍（roleId 先按我方角色、再按敌人解析；失配角色打日志跳过，避免"少人"静默开战） */
 const handleLoadScene = async (sceneNameValue: string) => {
   const scene = sceneStorage.value[sceneNameValue]
   if (!scene) {
@@ -475,29 +475,39 @@ const handleLoadScene = async (sceneNameValue: string) => {
   if (battleStore.isBattleActive) await battleStore.endBattle(ParticipantSide.ALLY)
   battleStore.resetBattle()
   battleService.clearParticipants()
+  // 我方角色（actors 表）解析失败只影响"我方角色"加载，不回退整个场景（敌人路径不依赖 actors）
+  let actors: ActorData[] = []
+  try {
+    actors = await container.resolve<GameDataApi>('GameDataApi').listByTable<ActorData>('actors', { limit: 1000 })
+  } catch {
+    actors = []
+  }
+  let skipped = 0
   scene.allyIds.forEach((id, index) => {
-    const enemyData = GameDataProcessor.findEnemyById(id)
-    if (enemyData) {
-      battleService.addCharacterToTeam(
-        GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index),
-        ParticipantSide.ALLY,
-      )
+    const roleId = GameDataProcessor.sourceRoleIdOf({ id })
+    const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ALLY, index, actors)
+    if (entity) {
+      battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
+    } else {
+      skipped++
+      battleLogManager.addSystemLog({ message: `加载场景：角色未找到，已跳过: ${id}` })
     }
   })
   scene.enemyIds.forEach((id, index) => {
-    const enemyData = GameDataProcessor.findEnemyById(id)
-    if (enemyData) {
-      battleService.addCharacterToTeam(
-        GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index),
-        ParticipantSide.ENEMY,
-      )
+    const roleId = GameDataProcessor.sourceRoleIdOf({ id })
+    const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ENEMY, index, actors)
+    if (entity) {
+      battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
+    } else {
+      skipped++
+      battleLogManager.addSystemLog({ message: `加载场景：角色未找到，已跳过: ${id}` })
     }
   })
   battleStore.syncTeams()
   const firstAlly = battleService.getAllyTeam()[0]
   if (firstAlly) battleStore.selectCharacter(firstAlly.id)
   battleLogManager.addSystemLog({
-    message: `加载场景: ${sceneNameValue}（我方${scene.allyIds.length} / 敌方${scene.enemyIds.length}）`,
+    message: `加载场景: ${sceneNameValue}（我方${scene.allyIds.length} / 敌方${scene.enemyIds.length}）${skipped ? `，${skipped} 个角色未找到` : ''}`,
   });
 };
 
@@ -525,6 +535,7 @@ const handleApplyBuffs = (payload: { charId: string; buffs: { buffId: string; du
     source: '系统', action: '注入 Buff', target: payload.charId,
     message: `${payload.buffs.length}个 Buff 已注入到 [${payload.charId}]`,
   })
+  notification.notify('成功', `${payload.buffs.length} 个状态已注入 ${payload.charId}`, 'success')
 }
 
 /** 改写属性：调用实体 setter */
@@ -580,6 +591,7 @@ const handleApplyAttributes = (payload: { charId: string; attributes: Record<str
     source: '系统', action: '改写属性', target: payload.charId,
     message: `属性已更新: ${attrs}`,
   })
+  notification.notify('成功', `属性已更新: ${attrs}`, 'success')
 }
 
 /** 重置角色状态 */
@@ -617,6 +629,7 @@ const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_ene
     source: '系统', action: '重置角色', target: payload.charId,
     message: modeName,
   })
+  notification.notify('成功', `${payload.charId} ${modeName}`, 'success')
 }
 
 

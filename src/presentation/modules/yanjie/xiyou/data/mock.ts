@@ -20,11 +20,12 @@ import scenesJson from '@configs/xiyou/scenes.json'
 import schoolsJson from '@configs/xiyou/schools.json'
 import skillTreeJson from '@configs/xiyou/skill_tree.json.json'
 import { reactive } from 'vue'
+import { PLAYER_ID } from '@/shared/constants/player'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
-import type { Enemy, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
+import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
 import type { ItemEffect } from '@/shared/types/Item'
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
@@ -89,7 +90,7 @@ export interface XiyouCombatant {
 
 /** 我方 4 人阵容（主角 + 3 上阵伙伴，对齐 mate.json active） */
 export const playerParty: XiyouCombatant[] = [
-  { id: 'player', name: '降妖者', level: 5, hp: 350, maxHp: 420, energy: 120, maxEnergy: 150, speed: 15, attack: 18, defense: 8, side: 'player' },
+  { id: PLAYER_ID, name: '降妖者', level: 5, hp: 350, maxHp: 420, energy: 120, maxEnergy: 150, speed: 15, attack: 18, defense: 8, side: 'player' },
   { id: 'sun', name: '孙小圣', level: 5, hp: 380, maxHp: 430, energy: 110, maxEnergy: 140, speed: 18, attack: 22, defense: 6, side: 'player' },
   { id: 'bajie', name: '八戒', level: 4, hp: 520, maxHp: 560, energy: 70, maxEnergy: 120, speed: 9, attack: 15, defense: 14, side: 'player' },
   { id: 'wujing', name: '悟净', level: 3, hp: 300, maxHp: 360, energy: 130, maxEnergy: 160, speed: 11, attack: 13, defense: 10, side: 'player' },
@@ -129,8 +130,8 @@ export function buildEnemyTeam(scene: XiyouScene): BattleEntity[] {
       stats: {
         [ATTRIBUTE_CODE.currentHealth]: s(st.maxHealth),
         [ATTRIBUTE_CODE.maxHealth]: s(st.maxHealth),
-        [ATTRIBUTE_CODE.currentEnergy]: st.maxEnergy ?? 150,
-        [ATTRIBUTE_CODE.maxEnergy]: st.maxEnergy ?? 150,
+        [ATTRIBUTE_CODE.currentEnergy]: s(st.maxEnergy ?? 150),
+        [ATTRIBUTE_CODE.maxEnergy]: s(st.maxEnergy ?? 150),
         [ATTRIBUTE_CODE.attack]: s(st.attack),
         [ATTRIBUTE_CODE.defense]: s(st.defense),
         [ATTRIBUTE_CODE.speed]: s(st.speed),
@@ -141,6 +142,9 @@ export function buildEnemyTeam(scene: XiyouScene): BattleEntity[] {
       },
       drops: dropsFromRow(row),
       skills: skillsOfRow(row),
+      // NOTE: 词缀池数据贯通（W12）：enemyToParticipant 已消费 affixPool 自动应用词缀（GameDataProcessor 内部按
+      //       数据源 affixes 表解析池并注入），此处透传 affixPool 即完成「敌人词缀配置 → 战斗生效」闭环。
+      affixPool: row.affixPool,
     }
     return GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, i)
   })
@@ -178,6 +182,7 @@ interface EnemyRow {
   exp?: [number, number]
   skillIds?: string[]
   passiveSkillIds?: string[]
+  affixPool?: EnemyAffixPool
 }
 
 /** 敌人配置索引（id → 行；id 与 scenes.json 敌人 id 一一对应，封神榜健康检查保证零断裂） */
@@ -205,12 +210,17 @@ function dropsFromRow(row: EnemyRow): EnemyDrop[] {
   }))
 }
 
-/** 战斗胜利掉落：聚合场景全部敌人的掉落条目（configs/enemies/enemies.json 权威，供 BattleZen 结算入包） */
+/** 战斗胜利掉落：聚合场景全部敌人的掉落条目 + 场景掉落表材料（configs/enemies/enemies.json 与 scenes.json 权威，供 BattleZen 结算入包） */
 export function dropsForScene(scene: XiyouScene): EnemyDrop[] {
   const out: EnemyDrop[] = []
   for (const e of scene.enemies) {
     const row = e.id ? enemyById.get(e.id) : undefined
     if (row) out.push(...dropsFromRow(row))
+  }
+  // NOTE: 场景掉落表 materials（scenes.json drops.materials）为关卡必掉材料，补并入包；
+  //       否则该字段不参与任何结算，章节材料（beike/songmu 等）永远无法获得
+  for (const m of scene.drops?.materials ?? []) {
+    out.push({ itemId: m, quantity: 1, chance: 1 })
   }
   return out
 }
@@ -273,7 +283,14 @@ export function equipBonuses(
   }
   const out: Record<string, number> = { ...flat }
   for (const [attr, pct] of Object.entries(percent)) {
-    out[attr] = (out[attr] ?? 0) + Math.round((baseByAttr[attr] ?? 0) * (pct / 100))
+    // NOTE: isPercentage 属性（critRate/dodge/damageReduction 等）value 即百分点，直接相加
+    //       （与 schoolAttributeBonuses 同语义）；数值属性按基础值相对缩放。
+    //       否则 dodge/damageReduction 不在 baseByAttr 且基值常为 0，相对缩放恒算 0 而失效。
+    if (getAttrMeta(attr as ATTRIBUTE_CODE)?.isPercentage) {
+      out[attr] = (out[attr] ?? 0) + pct
+    } else {
+      out[attr] = (out[attr] ?? 0) + Math.round((baseByAttr[attr] ?? 0) * (pct / 100))
+    }
   }
   return out
 }
@@ -357,7 +374,7 @@ export function buildBattleTeams(
   allyBonuses?: Partial<Record<string, number>>,
   protagonist?: ProtagonistSnapshot,
 ): { ally: BattleEntity[]; enemy: BattleEntity[] } {
-  const toEnemy = (c: XiyouCombatant & { critRate?: number; critDamage?: number; dodge?: number; damageReduction?: number }, player: boolean): Enemy => ({
+  const toEnemy = (c: XiyouCombatant & { critRate?: number; critDamage?: number; hitRate?: number; dodge?: number; damageReduction?: number }, player: boolean): Enemy => ({
     id: c.id,
     name: c.name,
     level: c.level,
@@ -371,6 +388,7 @@ export function buildBattleTeams(
       [ATTRIBUTE_CODE.speed]: c.speed,
       [ATTRIBUTE_CODE.critRate]: c.critRate ?? 10,
       [ATTRIBUTE_CODE.critDamage]: c.critDamage ?? 1.5,
+      [ATTRIBUTE_CODE.hit]: c.hitRate ?? 90,
       [ATTRIBUTE_CODE.dodge]: c.dodge ?? 0,
       [ATTRIBUTE_CODE.damageReduction]: c.damageReduction ?? 0,
     },
@@ -383,17 +401,13 @@ export function buildBattleTeams(
     const src = i === 0 && protagonist ? { ...c, ...protagonist } : c
     if (i !== 0 || !allyBonuses) return GameDataProcessor.enemyToParticipant(toEnemy(src, i === 0), ParticipantSide.ALLY, i)
     const enemy = toEnemy(src, i === 0)
-    const boosted: Enemy = {
-      ...enemy,
-      stats: {
-        ...enemy.stats,
-        [ATTRIBUTE_CODE.attack]: (enemy.stats[ATTRIBUTE_CODE.attack] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.attack] ?? 0),
-        [ATTRIBUTE_CODE.defense]: (enemy.stats[ATTRIBUTE_CODE.defense] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.defense] ?? 0),
-        [ATTRIBUTE_CODE.speed]: (enemy.stats[ATTRIBUTE_CODE.speed] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.speed] ?? 0),
-        [ATTRIBUTE_CODE.maxHealth]: (enemy.stats[ATTRIBUTE_CODE.maxHealth] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.maxHealth] ?? 0),
-        [ATTRIBUTE_CODE.critRate]: (enemy.stats[ATTRIBUTE_CODE.critRate] ?? 0) + (allyBonuses[ATTRIBUTE_CODE.critRate] ?? 0),
-      },
+    // NOTE: 合并装备/流派全部加成属性到主角 stats（原为白名单 5 项，遗漏 dodge/damageReduction 等）
+    const boostedStats: Enemy['stats'] = { ...enemy.stats }
+    for (const [attr, bonus] of Object.entries(allyBonuses ?? {})) {
+      if (!bonus) continue
+      boostedStats[attr as ATTRIBUTE_CODE] = (boostedStats[attr as ATTRIBUTE_CODE] ?? 0) + bonus
     }
+    const boosted: Enemy = { ...enemy, stats: boostedStats }
     return GameDataProcessor.enemyToParticipant(boosted, ParticipantSide.ALLY, i)
   })
   const enemy = buildEnemyTeam(scene)

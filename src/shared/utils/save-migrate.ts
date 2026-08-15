@@ -65,7 +65,6 @@ export function migrateEquipmentSlots(oldSave: unknown): SaveData {
     player: {
       ...base.player,
       ...oldPlayer,
-      pills_eaten: { ...(toRecord(oldPlayer.pills_eaten)) },
       statBonuses: { ...(toRecord(oldPlayer.statBonuses)) },
     },
     progress: {
@@ -92,26 +91,6 @@ export function migrateEquipmentSlots(oldSave: unknown): SaveData {
       boots: asId(oldEquip.belt),
       charm: asId(oldEquip.bracelet),
       ring: asId(oldEquip.ring),
-    },
-    craft: {
-      ...base.craft,
-      ...(isObj(old.craft) ? old.craft : {}),
-    },
-    skills: {
-      ...base.skills,
-      ...(isObj(old.skills) ? old.skills : {}),
-    },
-    battle_stats: {
-      ...base.battle_stats,
-      ...(isObj(old.battle_stats) ? old.battle_stats : {}),
-    },
-    quests: {
-      active: Array.isArray(old.quests && isObj(old.quests) ? old.quests.active : undefined)
-        ? (old.quests as { active: unknown[] }).active.map(String)
-        : [],
-      completed: Array.isArray(old.quests && isObj(old.quests) ? old.quests.completed : undefined)
-        ? (old.quests as { completed: unknown[] }).completed.map(String)
-        : [],
     },
   }
 }

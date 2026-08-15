@@ -126,7 +126,10 @@
         "type": "heal",
         "calculation": {
           "baseValue": 150,
-          "extraValues": [{ "ratio": 10, "attribute": "level" }]
+          "extraValues": [
+            { "ratio": 5, "attribute": "level" },
+            { "ratio": 5, "attribute": "level" }
+          ]
         }
       },
       {

@@ -149,17 +149,6 @@ export interface GrowthCurveData {
   expTable?: GrowthExpEntry[]
 }
 
-/** 掉落组（drops 表）—— 对齐规格说明书 3.9 */
-export interface DropEntry {
-  itemId: string
-  probability: number
-}
-export interface DropGroupData {
-  id: string
-  name: string
-  entries: DropEntry[]
-}
-
 /** 词缀属性修正条目 —— 单个属性按百分比修正 */
 export interface AffixStatModifier {
   /** 目标属性代码（ATTRIBUTE_CODE，如 attack/defense/speed/critRate） */
@@ -182,6 +171,8 @@ export interface AffixData {
   tier: AffixTier
   /** 作用目标（AffixTarget：player 劫数 / enemy 增益） */
   target: AffixTarget
+  /** 允许的作用角色类型枚举（与 target 同步，供引用完整性审计契约） */
+  allowed?: AffixTarget[]
   /** 属性修正列表 */
   statModifiers: AffixStatModifier[]
   /** 冲突组（同组词缀不共存；五行单体 wuxing_single / 全抗 wuxing_all） */
@@ -371,7 +362,6 @@ export interface FengshenTables {
   equipment: EquipmentData
   elements: ElementsData
   growth: GrowthCurveData
-  drops: DropGroupData
   affixes: AffixData
   equipment_affixes: EquipmentAffixData
   params: BattleParamData

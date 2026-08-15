@@ -4,7 +4,7 @@
  * 覆盖：applyAffixToParticipant 修饰符注入、applyRandomAffixes 随机分配（确定性 rng）。
  * 运行: npx vitest run tests/unit/affix-apply.test.ts
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { ParticipantSide } from '@/domain/battle/type/types'
@@ -16,6 +16,12 @@ import {
   resolveAffixPlan,
 } from '@/shared/utils/affix'
 import type { AffixData } from '@/domain/fengshen/types'
+import type { Enemy } from '@/shared/types/enemy'
+import type { SkillConfig } from '@/domain/skill/types'
+import type { SceneData } from '@/shared/types/scene'
+import type { IDataSource } from '@/domain/port/IDataSource'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 
 /** 构造独立 BattleEntity（属性对象各自独立，避免 MockEntity 共享 modifiers 引用导致的测试间污染） */
 function makeEntity(id: string): BattleEntity {
@@ -366,5 +372,83 @@ describe('applyRandomAffixesByPool', () => {
     expect(result.get('char_enemy')).toEqual(['affix_yao_2_006'])
     // 池 B 仅 1 条，count=2 也不会越界
     expect(result.get('char_ally')).toEqual(['affix_yao_3_001'])
+  })
+})
+
+describe('enemyToParticipant 自动应用词缀（W12 自动路径）', () => {
+  const affixAtk: AffixData = {
+    id: 'affix_auto_atk',
+    name: '蛮力',
+    tier: 'yao_1',
+    target: 'enemy',
+    statModifiers: [{ attribute: 'attack', percent: 20 }],
+  }
+  const affixHp: AffixData = {
+    id: 'affix_auto_hp',
+    name: '铜躯',
+    tier: 'yao_1',
+    target: 'enemy',
+    statModifiers: [{ attribute: 'maxHealth', percent: 20 }],
+  }
+  const makeSource = (affixes: AffixData[]): IDataSource => ({
+    getEnemies: () => [],
+    getSkills: () => [] as SkillConfig[],
+    getScenes: () => [] as SceneData[],
+    getLineups: () => [],
+    getAffixes: () => affixes,
+  })
+  const makeEnemy = (id: string, affixPool?: { buffTier?: number; count?: number }): Enemy => ({
+    id,
+    name: id,
+    level: 1,
+    stats: { currentHealth: 500, maxHealth: 500, attack: 100, defense: 50, speed: 30 },
+    drops: [],
+    skills: { small: [], passive: [], ultimate: [] },
+    affixPool,
+  })
+
+  afterEach(() => {
+    GameDataProcessor.setDataSource(new ConfigDataSource())
+  })
+
+  it('affixPool.buffTier>0 → 自动附加词缀修饰符并生效于属性', () => {
+    GameDataProcessor.setDataSource(makeSource([affixAtk]))
+    const p = GameDataProcessor.enemyToParticipant(
+      makeEnemy('e_auto', { buffTier: 1, count: 1 }),
+      ParticipantSide.ENEMY,
+    )
+    const atkMods = p.getAttrValue(ATTRIBUTE_CODE.attack)?.modifiers ?? []
+    const affixMods = atkMods.filter((m) => m.sourceKey.startsWith('affix:'))
+    expect(affixMods).toHaveLength(1)
+    expect(affixMods[0].sourceType).toBe('affix')
+    expect(p.getAttribute(ATTRIBUTE_CODE.attack)).toBe(120)
+  })
+
+  it('affixPool 缺省 / buffTier 0 → 不附加词缀', () => {
+    GameDataProcessor.setDataSource(makeSource([affixAtk]))
+    const plain = GameDataProcessor.enemyToParticipant(makeEnemy('e_plain'), ParticipantSide.ENEMY)
+    expect(
+      (plain.getAttrValue(ATTRIBUTE_CODE.attack)?.modifiers ?? []).some((m) => m.sourceKey.startsWith('affix:')),
+    ).toBe(false)
+    const zero = GameDataProcessor.enemyToParticipant(
+      makeEnemy('e_zero', { buffTier: 0, count: 0 }),
+      ParticipantSide.ENEMY,
+    )
+    expect(
+      (zero.getAttrValue(ATTRIBUTE_CODE.attack)?.modifiers ?? []).some((m) => m.sourceKey.startsWith('affix:')),
+    ).toBe(false)
+  })
+
+  it('词缀修正 maxHealth 后 currentHealth 同步为最终上限（满血，词缀在气血修正之后应用）', () => {
+    GameDataProcessor.setDataSource(makeSource([affixAtk, affixHp]))
+    const p = GameDataProcessor.enemyToParticipant(
+      makeEnemy('e_hp', { buffTier: 1, count: 1 }),
+      ParticipantSide.ENEMY,
+    )
+    // 池含 2 条、count=1，随机附加任意一条；无论命中 maxHealth 修正与否，
+    // 词缀应用后 currentHealth 都应与最终 maxHealth 一致
+    expect(p.getAttribute(ATTRIBUTE_CODE.currentHealth)).toBe(
+      p.getAttribute(ATTRIBUTE_CODE.maxHealth),
+    )
   })
 })

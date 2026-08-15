@@ -38,7 +38,6 @@ export interface SavePlayerState {
   gold: number
   silver: number
   jade: number
-  pills_eaten: Record<string, number>
   statBonuses?: Record<string, number>
 }
 
@@ -48,10 +47,6 @@ export interface SaveProgressState {
   current_difficulty: SaveDifficulty
   unlocked_scenes: string[]
   unlocked_difficulties: Record<string, string[]>
-  boss_killed: string[]
-  hidden_boss_killed: string[]
-  great_boss_defeated: string[]
-  final_boss_defeated: boolean
 }
 
 export interface SaveInventoryState {
@@ -78,39 +73,13 @@ export interface SaveEquipmentInstance {
   instanceId: string
   itemId: string
   enhance: number
-  /** 品质（1-5 → 凡/精/超/绝/神，缺省按凡品） */
+  /** 品质（1-5 → 凡/精/超/绝/神，缺省取凡品） */
   quality?: number
-  /** 品质系数（制造时在品质区间内 roll 并锁定；缺省取品质区间中值） */
+  /** 品质系数（制造时品质区间内 roll 锁存；缺省取品质区间中值） */
   qualityFactor?: number
+  /** 星级（0-3，缺省 0） */
+  star?: number
   affixes: { id: string; attribute: string; modifierType: string; value: number }[]
-}
-
-export interface SaveCraftState {
-  weapon_level: number
-  weapon_exp: number
-  armor_level: number
-  armor_exp: number
-  accessory_level: number
-  accessory_exp: number
-}
-
-export interface SaveSkillsState {
-  passive: string | null
-  minor1: string | null
-  minor2: string | null
-  major: string | null
-}
-
-export interface SaveBattleStatsState {
-  total_battles: number
-  total_wins: number
-  total_losses: number
-  scene_battle_count: Record<string, number>
-}
-
-export interface SaveQuestsState {
-  active: string[]
-  completed: string[]
 }
 
 /** 流派（v3.0 技能树 · 存档：所选流派 + 已点亮节点 id + 已用技能点） */
@@ -128,10 +97,6 @@ export interface SaveData {
   equipment: SaveEquipmentState
   /** 装备实例（背包 + 已穿戴；equipment 槽位存 instanceId 引用） */
   equipment_instances?: SaveEquipmentInstance[]
-  craft: SaveCraftState
-  skills: SaveSkillsState
-  battle_stats: SaveBattleStatsState
-  quests: SaveQuestsState
   /** 流派（v3.0；旧档无此字段，恢复时按缺省无选择） */
   school?: SaveSchoolState
 }
@@ -153,7 +118,6 @@ export function createInitialGameState(): SaveData {
       gold: 0,
       silver: 0,
       jade: 0,
-      pills_eaten: {},
       statBonuses: { available: 3, strength: 0, vitality: 0, agility: 0, spirit: 0 },
     },
     progress: {
@@ -162,10 +126,6 @@ export function createInitialGameState(): SaveData {
       current_difficulty: 'easy',
       unlocked_scenes: [],
       unlocked_difficulties: {},
-      boss_killed: [],
-      hidden_boss_killed: [],
-      great_boss_defeated: [],
-      final_boss_defeated: false,
     },
     inventory: {
       materials: {},
@@ -180,27 +140,6 @@ export function createInitialGameState(): SaveData {
       boots: null,
       charm: null,
       ring: null,
-    },
-    craft: {
-      weapon_level: 0, weapon_exp: 0,
-      armor_level: 0, armor_exp: 0,
-      accessory_level: 0, accessory_exp: 0,
-    },
-    skills: {
-      passive: null,
-      minor1: null,
-      minor2: null,
-      major: null,
-    },
-    battle_stats: {
-      total_battles: 0,
-      total_wins: 0,
-      total_losses: 0,
-      scene_battle_count: {},
-    },
-    quests: {
-      active: [],
-      completed: [],
     },
   }
 }

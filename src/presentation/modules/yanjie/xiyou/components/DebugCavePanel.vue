@@ -246,6 +246,8 @@ const confirmMessage = ref('')
 /** 带输入的动作：点击按钮直接执行（参数在 inputValues 中）；file 动作由 onFileChange 传 File */
 async function runAction(act: DebugActionDef, param: string | number | File | Record<string, string | number | File | null> | null): Promise<void> {
   const value = param
+  // 确保 packStore 初始化完成（调试动作改背包/掉落 → flush 落盘的前提；init 幂等）
+  await pack.init()
   if (act.input && !hasFileInput(act) && !isParamsFilled(act, value)) {
     notification.toast('请先输入参数', 'warning')
     return

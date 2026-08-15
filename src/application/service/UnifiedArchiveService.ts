@@ -95,16 +95,16 @@ function normalizeTraceEvent(te: TraceEvent, hpSim: Map<string, { cur: number; m
   }
 
   // ④ HP 快照：伤害/治疗按 target 累减，clamp 到 [0, maxHp]
-  // NOTE: 近似值——真实录制仅能从事件流恢复"伤害/治疗净变化"，护盾吸收、
-  //       多层减伤不在事件中（TraceDamageLogger 只发 breakdown.final），
-  //       回放气血与实况可能存在偏差。精确修复需发射端补发实际扣血快照
-  //       （LiveBattleStream 观察式快照已走此路径，录制路径是唯一近似源）。
+  // NOTE: 伤害优先用 payload.actual（TraceDamageLogger 携带的实际扣血，护盾吸收/多层减伤后），
+  //       fallback 到 final（理论伤害）。用 final 时护盾吸收会高估扣血，回放气血与实况偏差。
+  //       治疗仍用 final（HealCalculator 的 final 即实际回血）。
   const isDamage = te.phase === TracePhase.DAMAGE_CALCULATION
   const isHeal = te.phase === TracePhase.HEAL_CALCULATION
   if (te.targetId && (isDamage || isHeal) && typeof payload.final === 'number') {
     const h = hpSim.get(te.targetId)
     if (h) {
-      const delta = isHeal ? payload.final : -payload.final
+      const amount = isHeal ? payload.final : (typeof payload.actual === 'number' ? payload.actual : payload.final)
+      const delta = isHeal ? amount : -amount
       const next = Math.max(0, Math.min(h.max, Math.round(h.cur + delta)))
       h.cur = next
       ev.snapshot = { participants: [{ id: te.targetId, hp: next }] }

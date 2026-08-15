@@ -9,7 +9,8 @@
             :key="r.name"
             type="button"
             class="xy-cave-card"
-            :class="{ 'is-selected': selected?.name === r.name }"
+            :class="[{ 'is-selected': selected?.name === r.name }, { 'is-locked': !unlockedOf(r) }]"
+            :disabled="!unlockedOf(r)"
             @click="selected = r"
           >
             <span class="xy-cave-card__top">
@@ -29,6 +30,7 @@
                 <span v-if="!m.enough" class="xy-cave-mat__tag">不足</span>
               </span>
             </span>
+            <p v-if="!unlockedOf(r)" class="xy-cave-card__lock">需「{{ blueprintNameOf(r) }}」解锁</p>
           </button>
         </div>
       </template>
@@ -169,8 +171,23 @@ function materialsOf(r: XiyouRecipe): MatView[] {
 }
 
 function canCraft(r: XiyouRecipe): boolean {
+  const g = gearOf(r)
+  if (!g || !pack.blueprintUnlocked(g.id)) return false
   const mats = materialsOf(r)
   return mats.length > 0 && mats.every((m) => m.enough)
+}
+
+/** 图纸解锁状态（t1 默认解锁；高阶需持有图纸） */
+function unlockedOf(r: XiyouRecipe): boolean {
+  const g = gearOf(r)
+  return g ? pack.blueprintUnlocked(g.id) : false
+}
+
+/** 图纸名称（未持有/未注册时兜底 blueprintId） */
+function blueprintNameOf(r: XiyouRecipe): string {
+  const g = gearOf(r)
+  if (!g?.blueprintId) return ''
+  return itemName(g.blueprintId) ?? g.blueprintId
 }
 
 function craft(): void {
@@ -178,6 +195,10 @@ function craft(): void {
   if (!r || brewing.value) return
   const g = gearOf(r)
   if (!g) return
+  if (!unlockedOf(r)) {
+    notification.toast(`未解锁「${g.name}」制造，需持有「${blueprintNameOf(r)}」`, 'warning')
+    return
+  }
   if (!canCraft(r)) {
     shaking.value = true
     notification.toast('材料不足，无法铸造', 'error')

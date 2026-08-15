@@ -80,6 +80,8 @@ export function resolveAttributeValue(
   source: BattleEntity,
   target: BattleEntity,
 ): number {
+  // level 为实体级字段（非属性系统属性），直接取 source.level
+  if (attr === 'level') return source.level
   // 默认：尝试从目标读取，否则从来源读取
   const entity = (attr === 'maxHealth' || attr === 'currentHealth') ? target : source
   return entity.getAttribute(attr as ATTRIBUTE_CODE) || 0

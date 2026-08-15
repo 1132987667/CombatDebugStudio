@@ -79,6 +79,22 @@ describe('HealCalculator', () => {
       expect(heal).toBe(81)
     })
 
+    it('should resolve level as source.level in extraValues', () => {
+      const source = createMockEntity()
+      const target = createMockEntity({ currentHealth: 200, maxHealth: 1000 })
+      const step = createHealStep({
+        calculation: {
+          baseValue: 150,
+          extraValues: [{ attribute: 'level', ratio: 10 }],
+        },
+      })
+
+      const { heal } = calculator.calculateHeal(step, source, target)
+
+      // source.level = 50 → 150 + 50×10 = 650（未超上限）
+      expect(heal).toBe(650)
+    })
+
     it('should not exceed max health with extra values', () => {
       const source = createMockEntity()
       const target = createMockEntity({ currentHealth: 800, maxHealth: 1000 })

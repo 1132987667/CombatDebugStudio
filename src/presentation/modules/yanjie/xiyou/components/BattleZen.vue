@@ -117,6 +117,7 @@ import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/ani
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { itemName } from '../data/caveLogic'
+import { PLAYER_ID } from '@/shared/constants/player'
 import {
   buildBattleTeams,
   dropsForEnemy,
@@ -251,17 +252,18 @@ const orderFillStyle = computed(() => {
   return { width: pct + '%' }
 })
 
-/** 生效状态（由引擎 Buff 派生，缺省兜底静态） */
+/** 生效状态（由投影快照 buffs 派生，展示中文名；无 buff 时提示空，不展示未生效的静态文案） */
 const battleBuffs = computed(() => {
   const list: Array<{ name: string; kind: 'atk' | 'spd' | 'debuff' }> = []
   for (const p of [...store.allyTeam, ...store.enemyTeam]) {
-    const buffIds = p.getBuffInstanceIds()
-    if (buffIds.length) {
-      buffIds.slice(0, 2).forEach((id, i) => list.push({ name: `${p.name} · ${id}`, kind: i % 2 ? 'spd' : 'atk' }))
+    const buffs = store.participants.get(p.id)?.buffs ?? []
+    for (const b of buffs.slice(0, 2)) {
+      const i = list.length
+      list.push({ name: `${p.name} · ${b.name}`, kind: b.isNegative ? 'debuff' : i % 2 ? 'spd' : 'atk' })
     }
   }
   if (!list.length) {
-    list.push({ name: '全队攻击 +30%', kind: 'atk' }, { name: `${leadEnemy.value?.name ?? '敌方'} 减速 -20%`, kind: 'debuff' })
+    list.push({ name: '当前无生效状态', kind: 'debuff' })
   }
   return list.slice(0, 6)
 })
@@ -320,11 +322,18 @@ async function initBattle(): Promise<void> {
   // NOTE: 进入斗战西游只建战斗不强制自动打，玩家点技能/自动按钮后才行动
 }
 
-/** 战斗结束：胜利时结算经验/金钱/掉落入账（W16 经济闭环），并上报结算结果供展示 */
+/** 战斗结束：回写主角当前血/能量 → 结算经验/金钱/掉落入账（W16 经济闭环）→ 上报结算结果 */
 function onBattleEnded(data: BattleEndedEventData): void {
   const victory = data.winner === ParticipantSide.ALLY
   const player = usePlayerStore()
   const pack = usePackStore()
+
+  // 战斗内主角状态回写面板（战斗为引擎独立副本，结束须同步；升级后 createPlayerProfile 会回满）
+  const allyPlayer = store.allyTeam.find((p) => p.id === PLAYER_ID)
+  if (allyPlayer) {
+    player.player.hp = Math.max(0, Math.min(allyPlayer.currentHealth, player.player.maxHp))
+    player.player.energy = Math.max(0, Math.min(allyPlayer.currentEnergy, player.player.maxEnergy))
+  }
 
   let exp = 0
   let gold = 0

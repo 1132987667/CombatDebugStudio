@@ -8,7 +8,7 @@
  * - skills/buffs/enemies/scenes/formations/lineups 直接落表；
  * - materials 剥离 3 件装备（weapon/armor/accessory）至独立 equipment 域并补全字段；
  * - actors 从 guardian_* 敌人派生（id 保持一致，供预设阵容 roleId 引用）；
- * - elements/growth/drops 为新建种子；
+ * - elements/growth 为新建种子；
  * - meta 写 dataVersion（初值 1）+ 种子标记。
  */
 
@@ -19,7 +19,6 @@ import type {
   AffixData,
   AffixLibraryData,
   BattleParamData,
-  DropGroupData,
   ElementsData,
   EquipmentAffixData,
   EquipmentData,
@@ -39,7 +38,6 @@ import formationsDataRaw from '@configs/formations/formations.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import equipmentDataRaw from '@configs/equipment/equipment.json'
 import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
-import dropsDataRaw from '@configs/drops/drops.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
 import xiyouRegionsJson from '@configs/xiyou/regions.json'
@@ -326,7 +324,6 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.EQUIPMENT, equipmentDataRaw as EquipmentData[]],
       [FENGSHEN_STORE.ACTORS, deriveActors(enemies)],
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
-      [FENGSHEN_STORE.DROPS, dropsDataRaw as DropGroupData[]],
       [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
       [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus()]],

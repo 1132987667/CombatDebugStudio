@@ -38,10 +38,15 @@ export class FengshenDataService {
     const store = table as StorageStoreName
     const existed = await this.storage.get(store, entity.id)
     const now = new Date().toISOString()
-    await this.storage.set(store, entity.id, {
+    // NOTE: set() 底层 QuotaExceeded 等写失败返回 false（promisify 兜底），必须检查，
+    //       否则 UI 误报「已保存」而数据未落盘
+    const written = await this.storage.set(store, entity.id, {
       ...(entity as object),
       updatedAt: now,
     })
+    if (!written) {
+      return { ok: false, errors: ['数据写入失败（存储已满或数据库不可用），请清理数据后重试'] }
+    }
     await this.bumpVersion()
     const diffs: FieldDiff[] = existed
       ? computeFieldDiff(
@@ -60,7 +65,10 @@ export class FengshenDataService {
       const detail = block.blockers.map((b) => `${b.table}(${b.entityIds.join(',')})`).join('；')
       return { ok: false, errors: [`实体 ${id} 被以下数据引用，无法删除：${detail}`] }
     }
-    await this.storage.remove(table as StorageStoreName, id)
+    const removed = await this.storage.remove(table as StorageStoreName, id)
+    if (!removed) {
+      return { ok: false, errors: ['数据删除失败（数据库不可用），请重试'] }
+    }
     await this.bumpVersion()
     await this.logOp('delete', table, id)
     return { ok: true }

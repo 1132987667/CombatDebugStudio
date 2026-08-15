@@ -7,6 +7,7 @@
       "name": "蛮力",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "attack",
@@ -22,6 +23,7 @@
       "name": "铁躯",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "defense",
@@ -37,6 +39,7 @@
       "name": "疾影",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "speed",
@@ -52,6 +55,7 @@
       "name": "凶威",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "critRate",
@@ -68,6 +72,7 @@
       "name": "罗刹",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "hit",
@@ -84,6 +89,7 @@
       "name": "灵虚",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "dodge",
@@ -100,6 +106,7 @@
       "name": "玄龟",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "maxHealth",
@@ -115,6 +122,7 @@
       "name": "回春",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "hpRegenPercent",
@@ -131,6 +139,7 @@
       "name": "蓄锐",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "maxEnergy",
@@ -146,6 +155,7 @@
       "name": "凝息",
       "tier": "yao_1",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "energyInit",
@@ -161,6 +171,7 @@
       "name": "噬血",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "lifestealRate",
@@ -177,6 +188,7 @@
       "name": "猎杀",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "damageToLowHp",
@@ -193,6 +205,7 @@
       "name": "连山",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "comboRate",
@@ -209,6 +222,7 @@
       "name": "背水",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "counterRate",
@@ -225,6 +239,7 @@
       "name": "倒打",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "reflectDamagePercent",
@@ -241,6 +256,7 @@
       "name": "蛮力·烈",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "attack",
@@ -256,6 +272,7 @@
       "name": "铁躯·烈",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "defense",
@@ -271,6 +288,7 @@
       "name": "疾影·烈",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "speed",
@@ -286,6 +304,7 @@
       "name": "凶威·烈",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "critRate",
@@ -302,6 +321,7 @@
       "name": "玄龟·烈",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "maxHealth",
@@ -317,6 +337,7 @@
       "name": "回春·烈",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "hpRegenPercent",
@@ -333,6 +354,7 @@
       "name": "金钟·初",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "damageReduction",
@@ -349,6 +371,7 @@
       "name": "困仙·初",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "controlSuccessRate",
@@ -365,6 +388,7 @@
       "name": "甘露·初",
       "tier": "yao_2",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "healReceived",
@@ -381,6 +405,7 @@
       "name": "天罚",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "attack",
@@ -396,6 +421,7 @@
       "name": "不动",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "defense",
@@ -411,6 +437,7 @@
       "name": "瞬影",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "speed",
@@ -426,6 +453,7 @@
       "name": "焚天",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "critRate",
@@ -442,6 +470,7 @@
       "name": "噬魂",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "hpRegenPercent",
@@ -458,6 +487,7 @@
       "name": "冥河",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "lifestealRate",
@@ -474,6 +504,7 @@
       "name": "灭世",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "damageBoost",
@@ -490,6 +521,7 @@
       "name": "金钟",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "damageReduction",
@@ -506,6 +538,7 @@
       "name": "甘露",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "healReceived",
@@ -522,6 +555,7 @@
       "name": "困仙",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "controlSuccessRate",
@@ -538,6 +572,7 @@
       "name": "火灵护体",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "fireRes",
@@ -555,6 +590,7 @@
       "name": "水灵护体",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "waterRes",
@@ -572,6 +608,7 @@
       "name": "金灵护体",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "metalRes",
@@ -589,6 +626,7 @@
       "name": "木灵护体",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "woodRes",
@@ -606,6 +644,7 @@
       "name": "土灵护体",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "earthRes",
@@ -623,6 +662,7 @@
       "name": "五行轮转",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "fireRes",
@@ -660,6 +700,7 @@
       "name": "混元归一",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "fireRes",
@@ -697,6 +738,7 @@
       "name": "星辰·初",
       "tier": "yao_3",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "maxHealth",
@@ -712,6 +754,7 @@
       "name": "太虚",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "attack",
@@ -727,6 +770,7 @@
       "name": "混沌",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "defense",
@@ -742,6 +786,7 @@
       "name": "九幽",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "speed",
@@ -757,6 +802,7 @@
       "name": "紫霄",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "critDamage",
@@ -773,6 +819,7 @@
       "name": "玄黄",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "damageReduction",
@@ -789,6 +836,7 @@
       "name": "星辰",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "maxHealth",
@@ -804,6 +852,7 @@
       "name": "万劫",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "comboRate",
@@ -820,6 +869,7 @@
       "name": "天罗",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "counterRate",
@@ -836,6 +886,7 @@
       "name": "镜反",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "reflectDamagePercent",
@@ -852,6 +903,7 @@
       "name": "诛仙",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "trueDamageRate",
@@ -868,6 +920,7 @@
       "name": "缚神",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "controlSuccessRate",
@@ -884,6 +937,7 @@
       "name": "不朽",
       "tier": "yao_4",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "healReceived",
@@ -900,6 +954,7 @@
       "name": "混世魔威",
       "tier": "mandate",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "attack",
@@ -924,6 +979,7 @@
       "name": "万毒归宗",
       "tier": "mandate",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "lifestealRate",
@@ -950,6 +1006,7 @@
       "name": "大鹏展翅",
       "tier": "mandate",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "speed",
@@ -975,6 +1032,7 @@
       "name": "六耳通灵",
       "tier": "mandate",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "attack",
@@ -1007,6 +1065,7 @@
       "name": "花妖王·灵根",
       "tier": "mandate",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "hpRegenPercent",
@@ -1027,6 +1086,7 @@
       "name": "河伯·沧浪",
       "tier": "mandate",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "waterRes",
@@ -1052,6 +1112,7 @@
       "name": "山神·岩坚",
       "tier": "mandate",
       "target": "enemy",
+      "allowed": ["enemy"],
       "statModifiers": [
         {
           "attribute": "defense",
@@ -1077,6 +1138,7 @@
       "name": "破军",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "attack",
@@ -1091,6 +1153,7 @@
       "name": "蚀骨",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "defense",
@@ -1105,6 +1168,7 @@
       "name": "缚足",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "speed",
@@ -1119,6 +1183,7 @@
       "name": "噬心",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "critRate",
@@ -1134,6 +1199,7 @@
       "name": "夺魄",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "hit",
@@ -1149,6 +1215,7 @@
       "name": "凌虚",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "dodge",
@@ -1164,6 +1231,7 @@
       "name": "摧元",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "maxHealth",
@@ -1178,6 +1246,7 @@
       "name": "绝脉",
       "tier": "jie",
       "target": "player",
+      "allowed": ["player"],
       "statModifiers": [
         {
           "attribute": "hpRegenPercent",

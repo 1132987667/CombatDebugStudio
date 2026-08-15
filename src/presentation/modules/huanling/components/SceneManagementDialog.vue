@@ -33,7 +33,7 @@
     </div>
 
     <div v-if="savedScenes.length === 0" class="empty-tip">
-      暂保存的场景，点击保存按钮创建新场景
+      暂无保存的场景，输入名称后点击保存
     </div>
   </Dialog>
 

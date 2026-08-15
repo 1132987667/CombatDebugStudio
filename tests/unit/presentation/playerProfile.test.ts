@@ -122,4 +122,37 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     // round(attackMax 20 × 10%) = 2
     expect(bonuses.attack).toBe(2)
   })
+
+  it('equipBonuses isPercentage 词条按百分点直接相加（dodge/critDamage/hit 不静默失效）', () => {
+    setActivePinia(createPinia())
+    const store = usePlayerStore()
+    const bonuses = equipBonuses(
+      [
+        { attribute: 'dodge', modifierType: 'percent' as const, value: 6 },
+        { attribute: 'critDamage', modifierType: 'percent' as const, value: 15 },
+        { attribute: 'hit', modifierType: 'percent' as const, value: 8 },
+      ],
+      store.battleSnapshot,
+    )
+    // isPercentage 属性 value 即百分点，直接相加；此前按 baseByAttr（无 dodge/critDamage/hit）恒算 0
+    expect(bonuses.dodge).toBe(6)
+    expect(bonuses.critDamage).toBe(15)
+    expect(bonuses.hit).toBe(8)
+  })
+
+  it('buildBattleTeams 全量注入装备加成（含 dodge/critDamage/hit 等词条属性）', () => {
+    setActivePinia(createPinia())
+    const store = usePlayerStore()
+    const { ally } = buildBattleTeams(
+      scene,
+      { dodge: 6, critDamage: 15, hit: 8, attack: 2 },
+      store.battleSnapshot,
+    )
+    const hero = ally[0]
+    // 主角基础 dodge 10 + 6 = 16；critDamage 125 + 15 = 140；hit 90 + 8 = 98
+    expect(hero.getAttribute(ATTRIBUTE_CODE.dodge)).toBe(store.battleSnapshot.dodge + 6)
+    expect(hero.getAttribute(ATTRIBUTE_CODE.critDamage)).toBe(store.battleSnapshot.critDamage + 15)
+    expect(hero.getAttribute(ATTRIBUTE_CODE.hit)).toBe(store.player.hitRate + 8)
+    expect(hero.getAttribute(ATTRIBUTE_CODE.attack)).toBe(store.player.attackMax + 2)
+  })
 })

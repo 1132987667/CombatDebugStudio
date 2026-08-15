@@ -35,6 +35,7 @@ import {
   type SimCheckpoint,
 } from '@/domain/battle/replay/unified/unified-sim'
 import { createStressArchive } from '@/domain/battle/replay/unified/stress-archive'
+import { isLegacyRecordedBattle, migrateUnifiedArchive } from '@/domain/battle/replay/unified/unified-migrate'
 import { diffArchives, createRateVariant, createRollVariant, diffSummary, type DiffRow } from '@/domain/battle/replay/unified/unified-diff'
 import { createBreakpoint, findHitBreakpoints, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { summarizeBattle, type BattleSummary, type UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
@@ -219,6 +220,10 @@ export const useHaotianStore = defineStore('haotian', () => {
   const recordings = ref<RecordingMeta[]>([])
   /** 当前已加载的录制 saveKey（CommandBar 下拉回显；非记录源加载时为空） */
   const curRecordKey = ref('')
+  /** 存档装配中（loadArchive 含 Worker 校验与索引构建，UI 显示加载态） */
+  const loadingArchive = ref(false)
+  /** 存档加载并发计数：多处切换数据源时确保 loading 到最后一个完成才关闭 */
+  let loadingDepth = 0
 
   const service = new UnifiedArchiveService()
 
@@ -388,33 +393,43 @@ export const useHaotianStore = defineStore('haotian', () => {
     next: UnifiedArchive,
     opts: { followEnd?: boolean; skipWorker?: boolean; label?: string } = {},
   ): Promise<void> {
-    let pipeline: { validation: ValidationResult; parseMs: number; validateMs: number }
-    if (opts.skipWorker) {
-      const t0 = performance.now()
-      pipeline = { validation: validateUnified(next), parseMs: 0, validateMs: performance.now() - t0 }
-    } else {
-      pipeline = await runValidationPipeline(next)
+    loadingDepth++
+    loadingArchive.value = true
+    try {
+      let pipeline: { validation: ValidationResult; parseMs: number; validateMs: number }
+      if (opts.skipWorker) {
+        const t0 = performance.now()
+        pipeline = { validation: validateUnified(next), parseMs: 0, validateMs: performance.now() - t0 }
+      } else {
+        pipeline = await runValidationPipeline(next)
+      }
+      const idx = buildArchiveIndices(next)
+      archive.value = next
+      validation.value = pipeline.validation
+      parseMs.value = pipeline.parseMs
+      validateMs.value = pipeline.validateMs
+      indices.value = idx
+      debugEntries.value = deriveDebugTree(idx.evs, idx.byId, pnameOf(next))
+      simCheckpoints.value = buildSimCheckpoints(next, idx.evs)
+      selectedId.value = null
+      debugNodeId.value = null
+      curRecordKey.value = '' // 非记录源加载（demo/stress/live/导入）时无记录 key 可回显
+      playback.value = { t: 0, playing: false, speed: playback.value.speed, follow: playback.value.follow, firedIdx: 0, last: 0 }
+      if (opts.label !== undefined) {
+        source.value = opts.label
+        sourceKey.value = LABEL_TO_SOURCE_KEY[opts.label] ?? sourceKey.value
+      }
+      const firstAction = allNodesFlat(debugEntries.value).find((n) => n.action)
+      if (firstAction) selectDebugNode(firstAction.id)
+      rebuildState(opts.followEnd ? duration.value : 0)
+      syncHash()
+    } finally {
+      loadingDepth--
+      if (loadingDepth <= 0) {
+        loadingDepth = 0
+        loadingArchive.value = false
+      }
     }
-    const idx = buildArchiveIndices(next)
-    archive.value = next
-    validation.value = pipeline.validation
-    parseMs.value = pipeline.parseMs
-    validateMs.value = pipeline.validateMs
-    indices.value = idx
-    debugEntries.value = deriveDebugTree(idx.evs, idx.byId, pnameOf(next))
-    simCheckpoints.value = buildSimCheckpoints(next, idx.evs)
-    selectedId.value = null
-    debugNodeId.value = null
-    curRecordKey.value = '' // 非记录源加载（demo/stress/live/导入）时无记录 key 可回显
-    playback.value = { t: 0, playing: false, speed: playback.value.speed, follow: playback.value.follow, firedIdx: 0, last: 0 }
-    if (opts.label !== undefined) {
-      source.value = opts.label
-      sourceKey.value = LABEL_TO_SOURCE_KEY[opts.label] ?? sourceKey.value
-    }
-    const firstAction = allNodesFlat(debugEntries.value).find((n) => n.action)
-    if (firstAction) selectDebugNode(firstAction.id)
-    rebuildState(opts.followEnd ? duration.value : 0)
-    syncHash()
   }
 
   async function loadDemo(): Promise<void> {
@@ -590,6 +605,18 @@ export const useHaotianStore = defineStore('haotian', () => {
   async function attachLatest(): Promise<void> {
     const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
     await loadLatest(battleSystem)
+  }
+
+  /** 跨模块跳转入口（唤灵台战报「去昊天镜分析」）：按 battleId 加载对应战斗记录，未找到时回退最近记录 */
+  async function openBattleById(battleId: string): Promise<void> {
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    await refreshRecordings(battleSystem)
+    const rec = recordings.value.find((r) => r.battleId === battleId)
+    if (rec) await loadRecording(battleSystem, rec.saveKey)
+    else {
+      toast('未找到该战斗的记录，已回退最近记录')
+      await loadLatest(battleSystem)
+    }
   }
 
   /** 数据源入口（命令栏 / 空态共用）：战斗已激活则直接接管，否则保持待命（开战后自动接入） */
@@ -1157,33 +1184,34 @@ export const useHaotianStore = defineStore('haotian', () => {
     }
   }
 
+  /**
+   * 导入结构迁移：v1.0.0 RecordedBattle → fromRecordedBattle；UnifiedArchive → 补版本。
+   * 返回 null 表示无法识别（调用方提示格式不合法）。
+   */
+  function migrateImport(raw: unknown): UnifiedArchive | null {
+    if (isLegacyRecordedBattle(raw)) return service.fromRecordedBattle(raw as never)
+    return migrateUnifiedArchive(raw)
+  }
+
   /** 导入统一存档 JSON 作为主视图（回放/调试双工作台）——与唤灵台战报弹窗「导出 JSON」联通；多场生成的文件为数组，导入第一场 */
   async function loadArchiveFile(file: File): Promise<void> {
     try {
       const text = await file.text()
-      const parsed = JSON.parse(text) as UnifiedArchive | UnifiedArchive[]
-      if (Array.isArray(parsed)) {
-        if (!parsed.length) {
-          toast('存档文件为空')
-          return
-        }
-        const first = parsed[0]
-        if (!Array.isArray(first?.events)) {
-          toast('存档文件格式不合法（缺少 events 事件流）')
-          return
-        }
-        await loadArchive(first, { label: '导入存档' })
-        toast(parsed.length > 1
-          ? `已导入存档 ${first.battleId}（文件含 ${parsed.length} 场，已导入第一场）`
-          : `已导入存档 ${first.battleId}，可在回放/调试工作台使用`)
+      const parsed = JSON.parse(text) as unknown
+      const list = Array.isArray(parsed) ? parsed : [parsed]
+      if (!list.length) {
+        toast('存档文件为空')
         return
       }
-      if (!Array.isArray(parsed?.events)) {
-        toast('存档文件格式不合法（缺少 events 事件流）')
+      const first = migrateImport(list[0])
+      if (!first) {
+        toast('存档文件格式不合法（无法识别统一存档 / 旧版录制）')
         return
       }
-      await loadArchive(parsed, { label: '导入存档' })
-      toast(`已导入存档 ${parsed.battleId}，可在回放/调试工作台使用`)
+      await loadArchive(first, { label: '导入存档' })
+      toast(list.length > 1
+        ? `已导入存档 ${first.battleId}（文件含 ${list.length} 场，已导入第一场）`
+        : `已导入存档 ${first.battleId}，可在回放/调试工作台使用`)
     } catch {
       toast('存档导入失败')
     }
@@ -1225,6 +1253,16 @@ export const useHaotianStore = defineStore('haotian', () => {
     persistPrefs()
   }
 
+  /** 清除事件流全部过滤条件（关键词 / 阶段 / 级别 / 单位 / 结果类型） */
+  function clearStreamFilters(): void {
+    streamText.value = ''
+    filterPhase.value = ''
+    filterLevel.value = ''
+    filterActor.value = ''
+    filterKind.value = ''
+    persistPrefs()
+  }
+
   function toggleDiag(): void {
     diagOpen.value = !diagOpen.value
   }
@@ -1256,6 +1294,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     validation,
     parseMs,
     validateMs,
+    loadingArchive,
     indices,
     evs,
     byId,
@@ -1345,6 +1384,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     refreshRecordings,
     deleteRecording,
     loadRecording,
+    openBattleById,
     curRecordKey,
     startLive,
     stopLive,
@@ -1367,6 +1407,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     setMode,
     toggleMode,
     toggleDbg,
+    clearStreamFilters,
     toggleDiag,
     rebuildState,
   }

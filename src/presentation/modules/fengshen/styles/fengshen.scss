@@ -430,6 +430,24 @@
   color: var(--color-text-tertiary);
 }
 
+/* 空态「清除搜索与筛选」按钮 */
+.fs-empty-action {
+  display: inline-block;
+  margin-top: var(--space-3);
+  padding: 4px 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-info);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-info);
+  }
+}
+
 /* ── 分页 ── */
 .fs-pagination {
   display: flex;

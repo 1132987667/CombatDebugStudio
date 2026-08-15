@@ -25,20 +25,35 @@ import type { SkillConfig } from '@/domain/skill/types'
 import { SkillType } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
-import type { LineupData, ActorData, ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
+import type {
+  LineupData,
+  ActorData,
+  ExpTableConfig,
+  EnemyRewardTableConfig,
+  LevelDiffBonusConfig,
+  AffixData,
+  AffixLibraryData,
+} from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import { Counter } from '@/shared/utils/Counter'
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import { toArray } from '@/shared/utils/Utils'
+import { resolveAffixPlan, applyRandomAffixesByPool } from '@/shared/utils/affix'
 import type { IDataSource } from '@/domain/port/IDataSource'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
-
+import affixLibraryRaw from '@configs/affixes/affixes.json'
 const counter = new Counter()
 
 // NOTE: 引擎数据源（封神榜开发计划 §3.4）——默认 ConfigDataSource 兜底，
 // 启动编排（main.ts bootstrap）完成种子导入后切换为 IdbDataSource。
 let dataSource: IDataSource = new ConfigDataSource()
+
+// NOTE: 天命词缀与 BOSS 绑定表（affixes.json 顶层配置，配置静态数据）。
+//       与唤灵台「随机词缀」按钮同源读取——该绑定表不随封神榜编辑（affixes 表编辑只动词缀库本体）。
+const MANDATE_BINDINGS: ReadonlyMap<string, string> = new Map(
+  ((affixLibraryRaw as AffixLibraryData).mandate_bindings ?? []).map((b) => [b.boss_id, b.affix_id]),
+)
 
 /**
  * 游戏数据处理工具类
@@ -112,6 +127,11 @@ export class GameDataProcessor {
   /** 获取所有材料（materials 表，图鉴等消费方读取） */
   static getMaterialsData(): Item[] {
     return dataSource.getMaterials()
+  }
+
+  /** 获取词缀库（affixes 表；enemyToParticipant 按 affixPool 自动应用词缀时读取） */
+  static getAffixesData(): AffixData[] {
+    return dataSource.getAffixes()
   }
 
   /** 获取玩家升级经验表（params 域 exp_table；数据源不存在时返回 null，调用方回退默认） */
@@ -238,8 +258,18 @@ export class GameDataProcessor {
       }
     }
 
-    // 7. 重新计算全部属性（使被动技能和配置加成的修饰符生效），初始满血
+    // 7. 重新计算全部属性（使被动技能和配置加成的修饰符生效）
     participant.recalcAll()
+
+    // 8. 词缀自动生效（W12 词缀闭环自动路径）：按 enemy.affixPool 解析词缀池并附加。
+    //    buffTier 0 / 缺省 / 词缀库为空 → resolveAffixPlan 返回 null，跳过。
+    //    词缀库取引擎数据源（affixes 表，封神榜编辑后 reload 生效）；天命绑定表为配置静态数据。
+    const affixPlan = resolveAffixPlan(enemy, GameDataProcessor.getAffixesData(), MANDATE_BINDINGS)
+    if (affixPlan && affixPlan.pool.length > 0 && affixPlan.count > 0) {
+      applyRandomAffixesByPool([participant], () => affixPlan)
+    }
+
+    // 9. 初始满血（词缀可能含 maxHealth 修正，故在词缀应用后再同步 currentHealth）
     // ponytail: setAttributeBase 只改 base 不改 value，而 currentHealth 是运行时属性
     // （recalcAttribute 跳过），value 永不会从 base 同步，故直接写 value
     const curHp = participant.getAttrVal(ATTRIBUTE_CODE.currentHealth)
@@ -283,6 +313,33 @@ export class GameDataProcessor {
       curHp.value = participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
     }
     return participant
+  }
+
+  /**
+   * 从参与者 id 解析原始 roleId（id 格式 [side]_sourceId_counter，sourceId 可含下划线且可数字结尾）。
+   * 兼容纯 roleId 输入（已是 roleId 时原样返回），供场景快照/队伍导出的保存-加载对称还原。
+   */
+  static sourceRoleIdOf(participant: { id: string }): string {
+    const m = /^\[(?:ALLY|ENEMY)\]_(.+)_\d+$/.exec(participant.id)
+    return m ? m[1] : participant.id
+  }
+
+  /**
+   * 将 roleId 解析为参战者：先查 actors（封神榜我方角色），再查 enemies（敌方）。
+   * 两边都查不到返回 null（调用方负责日志/提示，避免"少人"静默开战）。
+   * side/seatIndex 由调用方按语义决定。
+   */
+  static resolveRoleToParticipant(
+    roleId: string,
+    side: ParticipantSide,
+    seatIndex: number,
+    actors: readonly ActorData[],
+  ): BattleParticipantImpl | null {
+    const actor = actors.find((a) => a.id === roleId)
+    if (actor) return GameDataProcessor.actorToParticipant(actor, side, seatIndex)
+    const enemy = GameDataProcessor.findEnemyById(roleId)
+    if (enemy) return GameDataProcessor.enemyToParticipant(enemy, side, seatIndex)
+    return null
   }
 
   /**

@@ -71,6 +71,10 @@ export class TraceDamageLogger {
             base: breakdown.baseDamage,
             raw: breakdown.rawDamage ?? breakdown.postCritDamage,
             final,
+            // 实际扣血（护盾吸收/背水甲抵扣后的真实值；final 为理论伤害，两者差即被吸收部分）。
+            // 录制路径 HP 快照以此为准（fromRecordedBattle），否则回放气血与实况偏差（L3）。
+            actual: record.damage,
+            overkill: record.overkill,
             crit: {
               rate: breakdown.critRate,
               multiplier: breakdown.critMultiplier,

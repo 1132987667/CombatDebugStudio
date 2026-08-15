@@ -84,6 +84,15 @@ export class BattleService {
 
   // ==================== 队伍/角色管理 ====================
 
+  /** 设置阵型配置（从 lineup.formationId 解析后写入；startBattle 时应用阵型 Buff） */
+  setFormations(
+    allyFormation?: import('@/shared/types/formation').FormationConfig,
+    enemyFormation?: import('@/shared/types/formation').FormationConfig,
+  ): void {
+    this.battleManager.setFormations(allyFormation, enemyFormation)
+  }
+
+  /** 初始化队伍数据 */
   initializeTeams(
     allyTeam: BattleEntity[],
     enemyTeam: BattleEntity[],

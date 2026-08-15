@@ -36,13 +36,23 @@
           <td class="fs-col-actions">
             <Button size="small" @click="emit('edit', row)">编辑</Button>
             <Button size="small" title="复制选中数据为模板" @click="emit('copy', row)">复制</Button>
-            <Button size="small" variant="danger" @click="emit('remove', row)">删</Button>
+            <Button size="small" variant="danger" @click="emit('remove', row)">删除</Button>
           </td>
         </tr>
         <tr v-if="rows.length === 0">
           <td :colspan="columns.length + 2" class="fs-empty">
-            <div class="fs-empty-title">{{ loading ? '加载中…' : '暂无数据' }}</div>
-            <div v-if="!loading" class="fs-empty-hint">点击右上角「新增」创建第一条记录，或调整搜索 / 筛选条件</div>
+            <template v-if="loading">
+              <div class="fs-empty-title">加载中…</div>
+            </template>
+            <template v-else-if="hasFilter">
+              <div class="fs-empty-title">无匹配结果</div>
+              <div class="fs-empty-hint">当前搜索 / 筛选条件下没有数据</div>
+              <button type="button" class="fs-empty-action" @click="emit('clear-filters')">清除搜索与筛选</button>
+            </template>
+            <template v-else>
+              <div class="fs-empty-title">暂无数据</div>
+              <div class="fs-empty-hint">点击右上角「新增」创建第一条记录</div>
+            </template>
           </td>
         </tr>
       </tbody>
@@ -62,6 +72,8 @@ const props = withDefaults(
     rows: Record<string, unknown>[]
     selectedIds: string[]
     loading?: boolean
+    /** 是否处于搜索/筛选过滤态（空态时提示「清除搜索与筛选」） */
+    hasFilter?: boolean
     /** 右侧详情面板当前选中的行 id（用于行高亮） */
     detailId?: string | null
     /** 当前排序列（表头点击切换） */
@@ -82,6 +94,8 @@ const emit = defineEmits<{
   detail: [row: Record<string, unknown>]
   /** 点击表头按该列排序 */
   sort: [col: string]
+  /** 空态「清除搜索与筛选」 */
+  'clear-filters': []
 }>()
 
 const columns = computed(() => props.schema.columns)

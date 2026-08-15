@@ -333,6 +333,16 @@
   }
 }
 
+/* 图纸未解锁配方：锁标签提示 */
+.xy-cave-card__lock {
+  margin: var(--space-1) 0 0;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-4);
+}
+
 .xy-cave-card__top {
   display: flex;
   align-items: baseline;

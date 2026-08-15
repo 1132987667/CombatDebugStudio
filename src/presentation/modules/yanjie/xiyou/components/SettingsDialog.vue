@@ -35,7 +35,7 @@
 
           <section class="xy-settings-dlg__group">
             <h3 class="xy-settings-dlg__cat">游戏</h3>
-            <button type="button" class="xy-settings-dlg__row xy-settings-dlg__row--btn xy-ink-hover" @click="emit('back')">
+            <button type="button" class="xy-settings-dlg__row xy-settings-dlg__row--btn xy-ink-hover" @click="onExitClick">
               <span class="xy-settings-dlg__label">退出演劫台</span>
               <span class="xy-settings-dlg__hint">离开斗战西游，返回唤灵台</span>
             </button>
@@ -114,6 +114,24 @@
               </button>
             </div>
           </div>
+          <div v-if="showExitConfirm" class="xy-settings-dlg__confirm" role="alertdialog" aria-modal="true"
+            aria-label="确认退出演劫台？" tabindex="-1">
+            <div class="xy-settings-dlg__confirm-panel">
+              <h3 class="xy-settings-dlg__confirm-title">战斗进行中，确认退出？</h3>
+              <p class="xy-settings-dlg__confirm-text">
+                当前战斗尚未结束，退出后战斗进度将保留（自动存档），但战场现场不会继续。确定返回唤灵台吗？
+              </p>
+              <div class="xy-settings-dlg__confirm-actions">
+                <button type="button" class="xy-settings-dlg__confirm-btn xy-settings-dlg__confirm-btn--primary"
+                  @click="confirmExit">
+                  确认退出
+                </button>
+                <button type="button" class="xy-settings-dlg__confirm-btn" @click="showExitConfirm = false">
+                  留在演劫台
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -123,6 +141,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { saveManager } from '../data/save-bridge'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 const props = defineProps<{
@@ -138,11 +157,28 @@ const emit = defineEmits<{
 
 const notification = useNotificationStore()
 const showResetConfirm = ref(false)
+const showExitConfirm = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 function close(): void {
   showResetConfirm.value = false
+  showExitConfirm.value = false
   emit('update:modelValue', false)
+}
+
+/** 退出演劫台：战斗进行中先二次确认，防止误触丢战斗现场 */
+function onExitClick(): void {
+  const battle = useBattleStore()
+  if (battle.isBattleActive) {
+    showExitConfirm.value = true
+    return
+  }
+  emit('back')
+}
+
+function confirmExit(): void {
+  showExitConfirm.value = false
+  emit('back')
 }
 
 /** 手动存档：立即写入主档（保留最近自动备份，防误覆盖） */

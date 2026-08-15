@@ -223,6 +223,7 @@ async function onSessionFile(e: Event): Promise<void> {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
+  store.toast('正在解析调试会话…')
   await store.importSession(file)
   input.value = ''
 }
@@ -231,6 +232,7 @@ async function onArchiveFile(e: Event): Promise<void> {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
+  store.toast('正在解析存档文件…')
   await store.loadArchiveFile(file)
   input.value = ''
 }

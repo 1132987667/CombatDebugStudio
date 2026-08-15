@@ -53,12 +53,12 @@ function serializeInstances(): SaveEquipmentInstance[] {
   const pack = usePackStore()
   const out: SaveEquipmentInstance[] = []
   for (const g of pack.gearInstances) {
-    out.push({ instanceId: g.instanceId, itemId: g.itemId, enhance: g.enhance, quality: g.quality, qualityFactor: g.qualityFactor, affixes: g.affixes.map((a) => ({ ...a })) })
+    out.push({ instanceId: g.instanceId, itemId: g.itemId, enhance: g.enhance, quality: g.quality, qualityFactor: g.qualityFactor, star: g.star ?? 0, affixes: g.affixes.map((a) => ({ ...a })) })
   }
   for (const slot of Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[]) {
     const inst = pack.equipped[slot]
     if (inst) {
-      out.push({ instanceId: inst.instanceId, itemId: inst.itemId, enhance: inst.enhance, quality: inst.quality, qualityFactor: inst.qualityFactor, affixes: inst.affixes.map((a) => ({ ...a })) })
+      out.push({ instanceId: inst.instanceId, itemId: inst.itemId, enhance: inst.enhance, quality: inst.quality, qualityFactor: inst.qualityFactor, star: inst.star ?? 0, affixes: inst.affixes.map((a) => ({ ...a })) })
     }
   }
   return out
@@ -192,6 +192,7 @@ export const xiyouSaveBridge: SaveStatePort = {
           enhance: Number.isFinite(inst.enhance) ? inst.enhance : 0,
           quality,
           qualityFactor: Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality),
+          star: Number.isInteger(inst.star) && (inst.star as number) >= 0 ? (inst.star as number) : 0,
           affixes: (inst.affixes ?? []).map((a): GearAffix => ({
             id: a.id,
             attribute: a.attribute,

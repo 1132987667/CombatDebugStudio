@@ -105,7 +105,6 @@ const TABLE_OPTIONS: Array<{ table: FengshenTableName; label: string }> = [
   { table: 'equipment', label: '装备' },
   { table: 'elements', label: '阵营克制' },
   { table: 'growth', label: '成长曲线' },
-  { table: 'drops', label: '掉落组' },
   { table: 'affixes', label: '词缀' },
 ]
 

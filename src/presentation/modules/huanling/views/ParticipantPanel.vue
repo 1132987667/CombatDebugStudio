@@ -15,7 +15,7 @@
       <div class="section-header">
         <span>参战管理</span>
         <div class="section-header-actions">
-          <Button variant="primary" :disabled="totalTeamCount === 0" title="为所有参战角色随机附加词缀"
+          <Button variant="primary" :disabled="totalTeamCount === 0 || affixing" :loading="affixing" title="为所有参战角色随机附加词缀"
             @click="applyRandomAffixesToTeam">
             <span class="icon mr-2">[~]</span>随机词缀
           </Button>
@@ -131,7 +131,10 @@
                   <Button size="tiny" @click.stop="addActorToBattle(actor)"><span class="icon mr-2">[+]</span>我方</Button>
                 </div>
               </div>
-              <EmptyState v-if="visibleActors.length === 0">未找到匹配的角色</EmptyState>
+              <EmptyState v-if="visibleActors.length === 0">
+                <template v-if="rosterSearch">未找到匹配的角色<button type="button" class="roster-search-clear" @click="rosterSearch = ''">清除搜索</button></template>
+                <template v-else>暂无角色</template>
+              </EmptyState>
             </template>
             <template v-else>
               <div v-for="enemy in visibleEnemies" :key="enemy.id" class="character-item bg-dots"
@@ -146,7 +149,10 @@
                   <Button size="tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)"><span class="icon mr-2">[+]</span>敌方</Button>
                 </div>
               </div>
-              <EmptyState v-if="visibleEnemies.length === 0">未找到匹配的角色</EmptyState>
+              <EmptyState v-if="visibleEnemies.length === 0">
+                <template v-if="rosterSearch">未找到匹配的角色<button type="button" class="roster-search-clear" @click="rosterSearch = ''">清除搜索</button></template>
+                <template v-else>该场景暂无敌人</template>
+              </EmptyState>
             </template>
           </div>
         </div>
@@ -173,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted } from "vue";
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { applyRandomAffixesByPool, clearAffixesFromParticipant, resolveAffixPlan } from "@/shared/utils/affix";
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
@@ -196,6 +202,7 @@ import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
+import { uiNavBus, OPEN_LINEUP_EVENT } from '@/presentation/uiEvents'
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -211,7 +218,7 @@ const notification = useNotificationStore();
 
 // 初始化 GameDataProcessor（敌人/场景经数据源切换反映封神榜最新数据）
 const rosterSearch = ref("");
-const enemiesData = ref<Enemy[]>([]);
+const affixing = ref(false);const enemiesData = ref<Enemy[]>([]);
 const scenesData = ref<SceneData[]>([]);
 enemiesData.value = GameDataProcessor.getEnemiesData();
 scenesData.value = GameDataProcessor.getScenesData();
@@ -255,6 +262,32 @@ async function loadFengshenData(): Promise<void> {
     lineups.value = []
     actors.value = []
   }
+  // 跨模块跳转早于阵容数据就绪时，数据到达后补加载（封神榜 → 唤灵台打开阵容）。
+  // 一次尝试即止：目标 id 在数据源中不存在时也清空，避免 pending 残留后在某次数据刷新时意外自动加载同名阵容。
+  if (pendingOpenLineup) {
+    if (lineups.value.some((l) => l.id === pendingOpenLineup)) {
+      applyPresetById(pendingOpenLineup)
+    }
+    pendingOpenLineup = null
+  }
+}
+
+/** 封神榜「在唤灵台打开」跳转信号暂存：阵容列表未就绪时记下，加载完成后消费 */
+let pendingOpenLineup: string | null = null
+
+/** 按 lineupId 应用预设（先选中下拉项，再复用 applyPreset 的统一装填逻辑） */
+function applyPresetById(lineupId: string): void {
+  selectedPreset.value = lineupId
+  applyPreset()
+}
+
+/** 封神榜「在唤灵台打开」事件：阵容已就绪则立即加载，否则暂存待数据到达 */
+function handleOpenLineup(lineupId: string): void {
+  if (lineups.value.some((l) => l.id === lineupId)) {
+    applyPresetById(lineupId)
+  } else {
+    pendingOpenLineup = lineupId
+  }
 }
 
 onMounted(() => {
@@ -264,6 +297,11 @@ onMounted(() => {
     () => fengshenStore.dataVersion,
     () => void loadFengshenData(),
   )
+  uiNavBus.on(OPEN_LINEUP_EVENT, handleOpenLineup)
+})
+
+onUnmounted(() => {
+  uiNavBus.off(OPEN_LINEUP_EVENT, handleOpenLineup)
 })
 
 // 阵容预设（内置调试用例 + 用户自定义，见 battlePresetStore）
@@ -352,21 +390,36 @@ const removePreset = () => {
   notification.notify('成功', '预设已删除', 'success')
 }
 
-/** 封神榜阵容 → 参战者（roles 按 seatIndex 排序；角色归我方、敌人归敌方） */
+/** 封神榜阵容 → 参战者（roles 按 seatIndex 排序；角色归我方、敌人归敌方；失配角色打日志跳过，避免"少人"静默开战） */
+/** 阵型异步加载竞态守卫：连续切换阵容时，仅最后一次选中的阵容写回阵型（迟到的旧 promise 丢弃） */
+let pendingFormationLineupId: string | null = null
+
 function applyLineup(lineup: LineupData): void {
   const roles = [...lineup.roles].sort((a, b) => a.seatIndex - b.seatIndex)
   for (const role of roles) {
-    const actor = actors.value.find((a) => a.id === role.roleId)
-    if (actor) {
-      const entity = GameDataProcessor.actorToParticipant(actor, ParticipantSide.ALLY, role.seatIndex)
-      battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
-      continue
+    const isActor = actors.value.some((a) => a.id === role.roleId)
+    const side = isActor ? ParticipantSide.ALLY : ParticipantSide.ENEMY
+    const entity = GameDataProcessor.resolveRoleToParticipant(role.roleId, side, role.seatIndex, actors.value)
+    if (entity) {
+      battleService.addCharacterToTeam(entity, side)
+    } else {
+      console.warn(`阵容「${lineup.name}」角色未找到，已跳过: ${role.roleId}`)
     }
-    const enemy = GameDataProcessor.findEnemyById(role.roleId)
-    if (enemy) {
-      const entity = GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, role.seatIndex)
-      battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
-    }
+  }
+
+  // M2: 阵型绑定——lineup.formationId 对应的阵型配置随阵容进入战斗（startBattle 时分配座位 + 应用阵型 Buff）。
+  // 按阵容阵营倾向决定侧：roles 全为敌人（无我方角色，如敌方试炼编组）→ 敌方阵型；否则我方阵型。
+  const actorCount = roles.filter((r) => actors.value.some((a) => a.id === r.roleId)).length
+  const isEnemyLineup = actorCount === 0
+  pendingFormationLineupId = lineup.id
+  if (lineup.formationId) {
+    void gameDataApi.getFormation(lineup.formationId).then((f) => {
+      if (pendingFormationLineupId !== lineup.id) return
+      if (isEnemyLineup) battleService.setFormations(undefined, f ?? undefined)
+      else battleService.setFormations(f ?? undefined, undefined)
+    })
+  } else {
+    battleService.setFormations(undefined, undefined)
   }
 }
 
@@ -393,26 +446,29 @@ const applyPreset = () => {
   const preset = presetStore.allPresets.find(p => p.id === id)
   if (!preset) return
 
+  // 自定义预设/手动配置不绑定阵型：清空上次 lineup 残留，避免阵型 Buff 误生效
+  battleService.setFormations(undefined, undefined)
+
   // 构建我方
   preset.ally.forEach((pid, index) => {
-    const enemyData = GameDataProcessor.findEnemyById(pid)
-    if (!enemyData) {
-      console.warn(`预设角色未找到: ${pid}`)
-      return
+    const roleId = GameDataProcessor.sourceRoleIdOf({ id: pid })
+    const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ALLY, index, actors.value)
+    if (entity) {
+      battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
+    } else {
+      console.warn(`预设角色未找到，已跳过: ${pid}`)
     }
-    const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index)
-    battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
   })
 
   // 构建敌方
   preset.enemy.forEach((pid, index) => {
-    const enemyData = GameDataProcessor.findEnemyById(pid)
-    if (!enemyData) {
-      console.warn(`预设角色未找到: ${pid}`)
-      return
+    const roleId = GameDataProcessor.sourceRoleIdOf({ id: pid })
+    const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ENEMY, index, actors.value)
+    if (entity) {
+      battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
+    } else {
+      console.warn(`预设角色未找到，已跳过: ${pid}`)
     }
-    const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index)
-    battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
   })
 
   battleStore.syncTeams()
@@ -576,6 +632,7 @@ const totalTeamCount = computed(
 const applyRandomAffixesToTeam = async () => {
   const all = [...allyTeam.value, ...enemyTeam.value];
   if (all.length === 0) return;
+  affixing.value = true;
   try {
     // NOTE: 重新随机 = 替换词缀而非累积：先清除所有参战角色旧词缀，再按新计划附加
     for (const p of all) clearAffixesFromParticipant(p);
@@ -619,6 +676,8 @@ const applyRandomAffixesToTeam = async () => {
     notification.notify('成功', `已为 ${applied.size} 个参战角色随机附加 ${count} 个词缀`, 'success');
   } catch (e) {
     notification.notify('错误', `随机词缀失败: ${(e as Error).message}`, 'error');
+  } finally {
+    affixing.value = false;
   }
 };
 
@@ -794,5 +853,22 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 .save-preset-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 角色库搜索无结果空态内的「清除搜索」按钮 */
+.roster-search-clear {
+  margin-left: var(--space-2);
+  padding: 2px 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-info);
+  font-style: normal;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:hover {
+    border-color: var(--color-info);
+  }
 }
 </style>

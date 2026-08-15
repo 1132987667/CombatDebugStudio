@@ -479,7 +479,8 @@ describe("装备制造与强化（实例化）", () => {
   it("制造 roll 品质：地品阶位 rng 贴 0.99 → 超品（3 条词缀，词条数按品质）", async () => {
     const pack = usePackStore()
     await pack.init()
-    // 流云剑（wp_t3_light_01，rarity 3）：铁木×4 + 金精×2 + 仙云皮×1
+    // 流云剑（wp_t3_light_01，rarity 3）：铁木×4 + 金精×2 + 仙云皮×1；三阶需持有 bp_t3_wp 解锁
+    pack.addItem("bp_t3_wp", 1)
     pack.addItem("mat_tiemu", 4)
     pack.addItem("mat_jinjing", 2)
     pack.addItem("mat_xianyun", 1)
@@ -505,7 +506,8 @@ describe("装备制造与强化（实例化）", () => {
   it("制造天品装备固定绝品（4 条词缀，词条池充足）", async () => {
     const pack = usePackStore()
     await pack.init()
-    // 牛魔撼天锤（wp_t4_01，rarity 4）：mat_boss_01×1 + 金精×10
+    // 牛魔撼天锤（wp_t4_01，rarity 4）：mat_boss_01×1 + 金精×10；天品需持有 bp_legend_01 解锁
+    pack.addItem("bp_legend_01", 1)
     pack.addItem("mat_boss_01", 1)
     pack.addItem("mat_jinjing", 10)
     // 黄金角序列 rng（0.618 倍递增）：品质系数与词条抽取分散，避免固定值去重截断
@@ -518,6 +520,33 @@ describe("装备制造与强化（实例化）", () => {
     expect(inst).not.toBeNull()
     expect(inst!.quality).toBe(4) // 天品固定绝品
     expect(inst!.affixes).toHaveLength(4) // 绝品 4 条词缀（词条池已补足 6 唯一键）
+  })
+
+  it("图纸解锁：一阶默认解锁；高阶未持有图纸时拒绝制造且不扣材料", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 一阶（t1）默认解锁：无需图纸直接可造
+    expect(pack.blueprintUnlocked("wp_t1_light_01")).toBe(true)
+    // 二阶未持有图纸 → 锁定
+    expect(pack.blueprintUnlocked("wp_t2_light_01")).toBe(false)
+    const songmu0 = pack.countOf("mat_songmu")
+    const inst = pack.craftEquipment("wp_t2_light_01", () => 0.5)
+    expect(inst).toBeNull() // 未解锁拒绝
+    expect(pack.countOf("mat_songmu")).toBe(songmu0) // 材料未扣
+  })
+
+  it("图纸解锁：持有图纸后可制造，图纸不消耗（解锁判定）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 流云剑（wp_t3_light_01）需 bp_t3_wp：铁木×4 + 金精×2 + 仙云皮×1
+    pack.addItem("bp_t3_wp", 1)
+    pack.addItem("mat_tiemu", 4)
+    pack.addItem("mat_jinjing", 2)
+    pack.addItem("mat_xianyun", 1)
+    const bp0 = pack.countOf("bp_t3_wp")
+    const inst = pack.craftEquipment("wp_t3_light_01", () => 0.5)
+    expect(inst).not.toBeNull()
+    expect(pack.countOf("bp_t3_wp")).toBe(bp0) // 图纸不消耗
   })
 
   it("强化已穿戴装备：扣材料+金钱，成功 +1 且属性提升", async () => {
@@ -576,6 +605,36 @@ describe("装备制造与强化（实例化）", () => {
     expect(pack.equipped.weapon!.enhance).toBe(5)
     expect(pack.enhanceGear("weapon", () => 0)).toBe(false) // 已达上限，拒绝
     expect(pack.equipped.weapon!.enhance).toBe(5)
+  })
+
+  it("升星真实生效：扣同名装备 + 魂玉 → 星级 +1 → 基础属性提升", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_mid_01") // 铜棍（攻击 +12，基数高到升星可观测）
+    pack.addItem("wp_t1_mid_01", 1) // 背包再入 1 件（升星消耗同名）
+    const soul0 = pack.countOf("star_soul_01")
+    pack.addItem("star_soul_01", 5) // 小魂玉
+    const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
+    expect(pack.starGear("weapon")).toBe(true)
+    expect(pack.equipped.weapon?.star).toBe(1)
+    expect(pack.countOf("wp_t1_mid_01")).toBe(0) // 同名消耗
+    expect(pack.countOf("star_soul_01")).toBe(soul0 + 5 - 1) // 0 星 → 1 星耗 1
+    const atk1 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
+    expect(atk1).toBeGreaterThan(atk0) // 每星 +10% 基础属性，攻击必提升
+  })
+
+  it("升星同名装备不足 / 满星时拒绝", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01") // 背包无同款
+    expect(pack.starGear("weapon")).toBe(false)
+    expect(pack.equipped.weapon?.star ?? 0).toBe(0)
+    // 3 星满级后拒绝
+    pack.addItem("wp_t1_light_01", 10)
+    pack.addItem("star_soul_01", 99)
+    for (let i = 0; i < 3; i++) pack.starGear("weapon")
+    expect(pack.equipped.weapon?.star).toBe(3)
+    expect(pack.starGear("weapon")).toBe(false) // 满星拒绝
   })
 })
 

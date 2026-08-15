@@ -409,6 +409,39 @@ describe('FengshenDataService 版本戳与操作日志', () => {
     expect(logs[0].table).toBe('actors')
     expect(logs[0].entityId).toBe('hero_001')
   })
+
+  it('写失败（set 返回 false，如 QuotaExceeded）返回 ok:false 且不递增版本（L1：不误报已保存）', async () => {
+    const { storage, write } = makeServices()
+    await seedFengshenData(storage)
+    // 注入失败：set 一律返回 false
+    const orig = storage.set.bind(storage)
+    storage.set = async () => false
+    try {
+      const before = await storage.get(FENGSHEN_STORE.META, 'dataVersion')
+      const result = await write.save('actors', validActor)
+      expect(result.ok).toBe(false)
+      expect(result.errors?.[0]).toContain('写入失败')
+      // 版本未递增（save 失败不 bumpVersion）
+      const after = await storage.get(FENGSHEN_STORE.META, 'dataVersion')
+      expect(after).toEqual(before)
+    } finally {
+      storage.set = orig
+    }
+  })
+
+  it('删除失败（remove 返回 false）返回 ok:false（L1）', async () => {
+    const { storage, write } = makeServices()
+    await seedFengshenData(storage)
+    const orig = storage.remove.bind(storage)
+    storage.remove = async () => false
+    try {
+      const result = await write.remove('actors', 'hero_001')
+      expect(result.ok).toBe(false)
+      expect(result.errors?.[0]).toContain('删除失败')
+    } finally {
+      storage.remove = orig
+    }
+  })
 })
 
 describe('数据源切换（GameDataProcessor）', () => {
@@ -431,6 +464,7 @@ describe('数据源切换（GameDataProcessor）', () => {
       getSkills: () => [] as SkillConfig[],
       getScenes: () => [] as SceneData[],
       getLineups: () => [],
+      getAffixes: () => [],
     }
     GameDataProcessor.setDataSource(source)
     expect(GameDataProcessor.findEnemyById('enemy_fake')?.name).toBe('假敌人')
@@ -452,6 +486,7 @@ describe('数据源切换（GameDataProcessor）', () => {
       getSkills: () => [] as SkillConfig[],
       getScenes: () => [] as SceneData[],
       getLineups: () => [],
+      getAffixes: () => [],
     }
     GameDataProcessor.setDataSource(source)
     const lineup = {
@@ -476,6 +511,7 @@ describe('数据源切换（GameDataProcessor）', () => {
       getLineups: () => [
         { id: 'lineup_1', name: '阵容1', formationId: 'f1', roles: [] },
       ],
+      getAffixes: () => [],
     }
     GameDataProcessor.setDataSource(source)
     expect(GameDataProcessor.findLineupById('lineup_1')?.name).toBe('阵容1')
@@ -536,7 +572,6 @@ describe('纯函数', () => {
     expect(keys).toContain('enemies.affixes')
     expect(keys).toContain('equipment.factionRestriction')
     expect(keys).toContain('actors.growth')
-    expect(keys).toContain('drops.entries[].itemId')
   })
 
   it('词缀数据与 AffixId 常量一一对应（防漂移）', async () => {

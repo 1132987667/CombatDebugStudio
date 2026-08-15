@@ -86,7 +86,6 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
       { table: 'materials', label: '材料' },
       { table: 'equipment', label: '装备' },
       { table: 'gears', label: '装备详情' },
-      { table: 'drops', label: '掉落组' },
     ],
   },
   {

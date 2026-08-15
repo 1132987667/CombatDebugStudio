@@ -59,6 +59,8 @@ export class HealCalculator {
             if (attr === 'damageDealt' || attr === 'damageTaken') {
               return context?.damage ?? 0
             }
+            // level 为实体级字段（非属性系统属性），与 resolveAttributeValue 同口径
+            if (attr === 'level') return source.level ?? 0
             return source.getAttribute(attr as ATTRIBUTE_CODE) || 0
           },
         )

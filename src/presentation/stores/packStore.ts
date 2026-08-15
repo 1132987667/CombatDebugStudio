@@ -34,6 +34,8 @@ import {
   enhanceMaterialOf,
   enhanceMaxByRarity,
   enhanceSuccessRate,
+  STAR_MAX,
+  starCost,
 } from '@/presentation/modules/yanjie/xiyou/data/caveLogic'
 import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/data/quality'
 import { useNotificationStore } from './notificationStore'
@@ -74,8 +76,10 @@ export interface GearInstance {
   enhance: number
   /** 品质（1-5 → 凡/精/超/绝/神，制造/掉落时 roll；决定词条数量与基础属性系数） */
   quality: number
-  /** 品质系数（制造时在品质区间内 roll 并锁定；旧档兜底用区间中值） */
+  /** 品质系数（制造时品质区间内 roll 并锁存；旧档/未锁定实例用区间中值兜底） */
   qualityFactor: number
+  /** 星级（0-3，设计稿补充-装备 §8：每星基础属性 +10%）；升星消耗同名装备 + 魂玉 */
+  star: number
   affixes: GearAffix[]
 }
 
@@ -99,8 +103,9 @@ export function makeInstance(
   enhance = 0,
   quality = 1,
   qualityFactor = qualityFactorOf(quality),
+  star = 0,
 ): GearInstance {
-  return { instanceId: newInstanceId(), itemId, enhance, quality, qualityFactor, affixes }
+  return { instanceId: newInstanceId(), itemId, enhance, quality, qualityFactor, star, affixes }
 }
 
 /** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 新增实例 quality/qualityFactor） */
@@ -232,6 +237,7 @@ export const usePackStore = defineStore('pack', () => {
         enhance: g.enhance,
         quality: g.quality,
         qualityFactor: g.qualityFactor,
+        star: g.star ?? 0,
         affixes: g.affixes.map((a) => ({ ...a })),
       })),
       equipped: Object.fromEntries(
@@ -308,6 +314,7 @@ export const usePackStore = defineStore('pack', () => {
               enhance: Number.isFinite(g.enhance) ? (g.enhance as number) : 0,
               quality,
               qualityFactor: Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality),
+              star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
               affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
             }
           }
@@ -322,6 +329,7 @@ export const usePackStore = defineStore('pack', () => {
             enhance: Number.isFinite(g.enhance) ? g.enhance : 0,
             quality: Number.isInteger(g.quality) && g.quality >= 1 && g.quality <= 5 ? g.quality : 1,
             qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1),
+            star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
             affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
           }))
       }
@@ -457,7 +465,8 @@ export const usePackStore = defineStore('pack', () => {
   function instanceStats(inst: GearInstance): EquipmentData['stats'] {
     const g = gearById(inst.itemId)
     if (!g) return []
-    const factor = inst.qualityFactor * enhanceFactor(inst.enhance)
+    // 基础属性 = 原始 × 品质系数 × 强化倍率 × 星级倍率（设计稿 §8.1：每星 +10%）
+    const factor = inst.qualityFactor * enhanceFactor(inst.enhance) * (1 + 0.1 * (inst.star ?? 0))
     const base = g.stats.map((s) => ({ ...s, value: Math.round(s.value * factor) }))
     const affixStats: EquipmentData['stats'] = inst.affixes.map((a) => ({
       attribute: a.attribute,
@@ -519,8 +528,56 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 制造装备：检查材料 → 扣材料 → 生成装备实例（按稀有度随机词缀，凡品 1 条）→ 入背包
-   * NOTE: 词缀数值在制造时锁定（rollAffixStat），强化/升星不影响词缀
+   * 升星当前槽位装备：扣同名装备一件 + 魂玉 → 星级 +1（设计稿 §8：0-3 星，每星基础属性 +10%）
+   * NOTE: 升星只增强基础属性，不改词条内容/数量（与强化独立成长线）
+   */
+  function starGear(slot: GearSlotKey): boolean {
+    const inst = equipped[slot]
+    const g = inst ? gearById(inst.itemId) : undefined
+    if (!inst || !g) {
+      notification.toast('该槽位未穿戴装备')
+      return false
+    }
+    const cur = inst.star ?? 0
+    if (cur >= STAR_MAX) {
+      notification.toast('已达满星')
+      return false
+    }
+    // 同名装备 ×1（背包中未穿戴的同款，从 gearInstances 移除）
+    const sameIdx = gearInstances.value.findIndex((x) => x.itemId === inst.itemId)
+    if (sameIdx < 0) {
+      notification.toast('需要同名装备一件（当前升星消耗）', 'warning')
+      return false
+    }
+    const need = starCost(cur)
+    if ((inventory.value['star_soul_01'] ?? 0) < need) {
+      notification.toast(`魂玉不足（需要 ${need}）`, 'warning')
+      return false
+    }
+    gearInstances.value.splice(sameIdx, 1)
+    inventory.value['star_soul_01'] = (inventory.value['star_soul_01'] ?? 0) - need
+    if (inventory.value['star_soul_01']! <= 0) delete inventory.value['star_soul_01']
+    inst.star = cur + 1
+    scheduleSave()
+    notification.toast(`升星成功！「${g.name}」升至 ${inst.star} 星`, 'success')
+    return true
+  }
+
+  /**
+   * 图纸解锁判定：装备无 blueprintId（旧版/非图纸体系）→ 直接可造；
+   * 一阶（t1）图纸默认解锁（新手期无门槛，设计稿 §3.1「默认解锁」）；
+   * 其余阶位需背包持有对应图纸（解锁判定不消耗图纸，对齐设计稿「解锁制造权限」语义）。
+   */
+  function blueprintUnlocked(itemId: string): boolean {
+    const g = gearById(itemId)
+    if (!g?.blueprintId) return true
+    if (g.tier === 't1') return true
+    return (inventory.value[g.blueprintId] ?? 0) > 0
+  }
+
+  /**
+   * 制造装备：图纸解锁校验 → 检查材料 → 扣材料 → 生成装备实例（按稀有度随机词缀）→ 入背包
+   * NOTE: 图纸仅作解锁判定（持图可造、制造不消耗），一阶默认解锁；词缀数值在制造时锁定（rollAffixStat）
    */
   function craftEquipment(itemId: string, rng: Rng = Math.random): GearInstance | null {
     const g = gearById(itemId)
@@ -530,6 +587,11 @@ export const usePackStore = defineStore('pack', () => {
     }
     if (!g.materials?.length) {
       notification.toast(`「${g.name}」无需材料`)
+      return null
+    }
+    if (!blueprintUnlocked(itemId)) {
+      const bp = catalogById(g.blueprintId)
+      notification.toast(`未解锁「${g.name}」制造，需持有「${bp?.name ?? g.blueprintId}」`, 'warning')
       return null
     }
     for (const m of g.materials) {
@@ -913,6 +975,8 @@ export const usePackStore = defineStore('pack', () => {
     equip,
     unequip,
     enhanceGear,
+    starGear,
+    blueprintUnlocked,
     craftEquipment,
     rollAffixes,
     init,

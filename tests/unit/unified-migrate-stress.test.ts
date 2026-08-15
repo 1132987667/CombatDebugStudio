@@ -219,6 +219,40 @@ describe('fromRecordedBattle（录制映射）', () => {
     expect(validateUnified(arch).errors).toEqual([])
   })
 
+  it('HP 快照优先实际扣血 actual（L3：护盾吸收后 final≠actual，回放气血与实况一致）', () => {
+    // TraceDamageLogger 现携带 actual（record.damage，护盾吸收后的真实扣血）。
+    // final=420 但 actual=180（240 被护盾吸收）→ 快照按 actual 扣血：1500-180=1320
+    const rec = {
+      battleId: 'bt-shield',
+      replayId: 'rp-shield',
+      version: '2.0.0',
+      randomSeed: '9',
+      startTime: 0,
+      initialState: {
+        participants: [
+          { id: 'u1', name: '剑士', team: 'ally', maxHealth: 3200, currentHealth: 3200, maxEnergy: 100, currentEnergy: 100 },
+          { id: 'u2', name: '骷髅', team: 'enemy', maxHealth: 1500, currentHealth: 1500, maxEnergy: 100, currentEnergy: 60 },
+        ],
+      },
+      events: [],
+      rounds: [],
+      combatRecords: [],
+      traceEvents: [
+        {
+          id: 's1', phase: 'damage_calculation', correlationId: 'c1', timestamp: 100, level: 'debug', sourceId: 'u1', targetId: 'u2',
+          payload: { final: 420, actual: 180 }, summary: '伤害计算 剑士→骷髅 最终伤害 420（护盾吸收 240）',
+        },
+      ],
+    } as unknown as Parameters<typeof fromRecordedBattle>[0]
+
+    const arch = fromRecordedBattle(rec)!
+    const dmg = arch.events[1]
+    // actual 优先：1500 - 180 = 1320（而非 final 的 1080）
+    expect(dmg.snapshot?.participants[0]).toEqual({ id: 'u2', hp: 1320 })
+    expect(dmg.payload.actual).toBe(180)
+    expect(validateUnified(arch).errors).toEqual([])
+  })
+
   it('DamageStep 累计值语义：value 是每步后绝对值，转增量链后累计终值 == result', () => {
     // 真实 TraceDamageLogger 的 DamageStep.value = after（每一步之后的累计伤害），
     // 不是单步增量。若把 value 当增量直转，防御会显示成 +50 且累计 170 ≠ 最终 50（用户报障）。

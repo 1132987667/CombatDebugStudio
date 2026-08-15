@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="ht-pane-bd ht-vscroll" ref="scrollRef" @scroll.passive="onScroll">
-      <div v-if="store.archive" class="ht-vlist" :style="{ height: totalHeight + 'px' }">
+      <div v-if="store.archive && visible.length" class="ht-vlist" :style="{ height: totalHeight + 'px' }">
         <div v-for="ev in visible" :key="ev.id" class="ht-vitem" :data-vid="ev.id"
           :ref="(el) => measure(ev.id, el as HTMLElement | null)"
           :style="{ transform: `translateY(${offsetOf(ev.id)}px)` }">
@@ -44,7 +44,10 @@
           </div>
         </div>
       </div>
-      <div v-else class="ht-empty">存档未加载</div>
+      <div v-else-if="store.archive" class="ht-empty">
+        无匹配事件<button type="button" class="ht-empty-clear" @click="clearFilters">清除过滤</button>
+      </div>
+      <div v-else class="ht-empty">{{ store.loadingArchive ? '正在载入…' : '存档未加载' }}</div>
     </div>
   </div>
 </template>
@@ -62,6 +65,9 @@ import TacticalSelect, { type TSelectOption } from '@/presentation/components/Ta
 import Button from '@/presentation/components/Button.vue'
 
 const store = useHaotianStore()
+
+/** 空态「清除过滤」：还原全部事件流条件 */
+const clearFilters = (): void => store.clearStreamFilters()
 
 const { scrollRef, onScroll, updateView, remeasure, measure, offsetOf, totalHeight, visible } =
   useVirtualList<UnifiedEvent>({

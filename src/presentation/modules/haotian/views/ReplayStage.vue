@@ -14,22 +14,28 @@
     </div>
 
     <div v-if="!store.archive" class="ht-stage-empty">
-      <div class="ht-se-hint">尚未加载战斗数据</div>
-      <div class="ht-se-sub">选择一种数据来源开始分析</div>
-      <div class="ht-empty-cards">
-        <button type="button" class="ht-empty-card" @click="onLoadDemo">
-          <span class="ht-ec-t">载入演示存档</span>
-          <span class="ht-ec-d">无需准备，立即体验回放与调试</span>
-        </button>
-        <button type="button" class="ht-empty-card" @click="onLoadLatest">
-          <span class="ht-ec-t">打开最近战斗记录</span>
-          <span class="ht-ec-d">唤灵台「保存战斗记录」后自动存档于此</span>
-        </button>
-        <button type="button" class="ht-empty-card" @click="onAttachLive">
-          <span class="ht-ec-t">接入实时战斗</span>
-          <span class="ht-ec-d">先在唤灵台开战，过程实时流入此处</span>
-        </button>
+      <div v-if="store.loadingArchive" class="ht-se-loading">
+        <span class="ht-se-spinner" aria-hidden="true"></span>
+        <span class="ht-se-hint">正在载入战斗数据…</span>
       </div>
+      <template v-else>
+        <div class="ht-se-hint">尚未加载战斗数据</div>
+        <div class="ht-se-sub">选择一种数据来源开始分析</div>
+        <div class="ht-empty-cards">
+          <button type="button" class="ht-empty-card" @click="onLoadDemo">
+            <span class="ht-ec-t">载入演示存档</span>
+            <span class="ht-ec-d">无需准备，立即体验回放与调试</span>
+          </button>
+          <button type="button" class="ht-empty-card" @click="onLoadLatest">
+            <span class="ht-ec-t">打开最近战斗记录</span>
+            <span class="ht-ec-d">唤灵台「保存战斗记录」后自动存档于此</span>
+          </button>
+          <button type="button" class="ht-empty-card" @click="onAttachLive">
+            <span class="ht-ec-t">接入实时战斗</span>
+            <span class="ht-ec-d">先在唤灵台开战，过程实时流入此处</span>
+          </button>
+        </div>
+      </template>
     </div>
 
     <div class="ht-arena" v-show="!!store.archive">

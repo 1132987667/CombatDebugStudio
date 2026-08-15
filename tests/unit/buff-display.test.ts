@@ -225,7 +225,7 @@ describe('getConditionLabel', () => {
   })
 })
 
-describe('perStack 语义透传（修改4.md 1.1）', () => {
+describe('perStack 语义透传', () => {
   const baseItem = (over: Partial<BuffRawItem>): BuffRawItem => ({
     id: 'b1',
     buffId: 'test_buff',

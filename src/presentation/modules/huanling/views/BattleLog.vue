@@ -27,7 +27,10 @@
       <template #battle>
         <div class="log-content" :class="{ 'is-active': activeTab === 'battle' }"
           ref="battleContainer" @scroll="onScroll" aria-live="polite">
-          <EmptyState v-if="blocks.length === 0">暂无战斗日志</EmptyState>
+          <EmptyState v-if="blocks.length === 0">
+            <template v-if="keyword && battleTotal > 0">无匹配结果<button type="button" class="empty-clear" @click="keyword = ''">清除搜索</button></template>
+            <template v-else>暂无战斗日志</template>
+          </EmptyState>
           <NarrativeBlocks :blocks="blocks" @hover="onSegmentEnter" @leave="onSegmentLeave" />
         </div> <!-- /battle-content -->
       </template>
@@ -36,7 +39,10 @@
       <template #system>
         <div class="log-content log-content--flat" :class="{ 'is-active': activeTab === 'system' }"
           ref="systemContainer" @scroll="onScroll">
-          <EmptyState v-if="systemLogs.length === 0">暂无系统日志</EmptyState>
+          <EmptyState v-if="systemLogs.length === 0">
+            <template v-if="keyword && systemTotal > 0">无匹配结果<button type="button" class="empty-clear" @click="keyword = ''">清除搜索</button></template>
+            <template v-else>暂无系统日志</template>
+          </EmptyState>
 
           <div v-for="entry in systemLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
             <!-- 系统/动作/物品条目：优先 segments -->
@@ -57,7 +63,10 @@
           <div v-if="debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
             仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
           </div>
-          <EmptyState v-if="debugLogs.length === 0">暂无调试日志</EmptyState>
+          <EmptyState v-if="debugLogs.length === 0">
+            <template v-if="keyword && debugTotal > 0">无匹配结果<button type="button" class="empty-clear" @click="keyword = ''">清除搜索</button></template>
+            <template v-else>暂无调试日志</template>
+          </EmptyState>
 
           <div v-for="(entry, idx) in debugLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
             <!-- NOTE: 显示本地序号而非全局 index——全局计数器被 debug 等占用会产生空洞（跳号） -->
@@ -93,6 +102,7 @@ import Tabs from '@/presentation/components/Tabs.vue'
 import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import EmptyState from '@/presentation/components/EmptyState.vue'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
@@ -171,13 +181,19 @@ const systemLogs = computed(() => {
 })
 
 /** 调试页签数据（限量显示最新 N 条） */
+const debugAllRaw = computed(() => allLogs.value.filter((l) => l.type === LogType.DEBUG))
 const debugAll = computed(() => {
-  let r = allLogs.value.filter((l) => l.type === LogType.DEBUG)
+  let r = debugAllRaw.value
   if (keyword.value) r = applyKeyword(r, keyword.value)
   return r
 })
-const debugTotal = computed(() => debugAll.value.length)
+/** 调试日志原始总数（截断提示用；与 keyword 无关） */
+const debugTotal = computed(() => debugAllRaw.value.length)
 const debugLogs = computed(() => debugAll.value.slice(-DEBUG_DISPLAY_LIMIT))
+
+/** 战斗 / 系统日志原始总数（搜索无结果空态区分用：过滤后有内容但无匹配 → 提示清除搜索） */
+const battleTotal = computed(() => allLogs.value.filter((l) => l.type === LogType.BATTLE).length)
+const systemTotal = computed(() => allLogs.value.filter((l) => SYSTEM_TYPES.includes(l.type)).length)
 
 /** 叙事块 */
 const blocks = computed(() => renderer.renderEntries(battleLogs.value))
@@ -320,7 +336,10 @@ function exportLogs(format: 'txt' | 'html' = 'txt'): void {
     ext = 'txt'
   }
 
-  if (!content.trim()) return
+  if (!content.trim()) {
+    useNotificationStore().toast('当前页签无内容可导出', 'warning')
+    return
+  }
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
   const filename = `battle-log-${activeTab.value}-${timestamp}.${ext}`
   const blob = new Blob([content], { type: mime })
@@ -540,5 +559,22 @@ onUnmounted(() => {
 .flat-err {
   flex-basis: 100%;
   color: var(--color-danger);
+}
+
+/* 搜索无结果空态内的「清除搜索」按钮 */
+.empty-clear {
+  margin-left: var(--space-2);
+  padding: 2px 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-info);
+  font-style: normal;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:hover {
+    border-color: var(--color-info);
+  }
 }
 </style>

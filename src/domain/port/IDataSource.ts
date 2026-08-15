@@ -9,7 +9,7 @@
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
-import type { LineupData } from '@/domain/fengshen/types'
+import type { LineupData, AffixData } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import type { ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
@@ -24,6 +24,8 @@ export interface IDataSource {
   getBuffs(): BuffJsonEntry[]
   /** 材料（materials 表，图鉴等消费方读取） */
   getMaterials(): Item[]
+  /** 词缀库（affixes 表，封神榜可编辑；enemyToParticipant 按 affixPool 自动应用词缀时读取） */
+  getAffixes(): AffixData[]
 
   // ===== 经验与金钱（params 域结构化表；数据源不存在时返回 null，引擎回退默认值） =====
   getExpTable(): ExpTableConfig | null

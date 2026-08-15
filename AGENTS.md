@@ -90,7 +90,7 @@ npm run build        # 构建生产版本
 - **动画**: GSAP
 - **测试**: Vitest
 - **事件**: mitt
-- **DI**: tsyringe
+- **DI**: 自研 Container（src/infrastructure/di/Container.ts，服务注册/工厂/单例）
 
 ## 目录约定
 

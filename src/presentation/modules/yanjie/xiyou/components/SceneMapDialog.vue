@@ -36,7 +36,7 @@
               :key="s.id"
               type="button"
               class="xy-map-dlg__stage xy-ink-hover"
-              :class="[`xy-map-dlg__stage--${nodeTone(s.difficulty)}`, { selected: s.id === selectedId, locked: !s.unlocked }]"
+              :class="{ selected: s.id === selectedId, locked: !s.unlocked }"
               role="button"
               :tabindex="s.unlocked ? 0 : -1"
               :aria-label="`${s.name}${s.unlocked ? '' : '（未解锁）'}`"
@@ -59,10 +59,6 @@
               </span>
               <span class="xy-map-dlg__stage-range">Lv.{{ s.levelRange?.[0] }}-{{ s.levelRange?.[1] }}</span>
               <span class="xy-map-dlg__stage-meta">
-                <span class="xy-map-dlg__difficulty" :class="`xy-map-dlg__difficulty--${nodeTone(s.difficulty)}`">
-                  <span class="xy-map-dlg__difficulty-dot" aria-hidden="true"></span>
-                  {{ difficultyText(s.difficulty) }}
-                </span>
                 <span class="xy-map-dlg__stars" :aria-label="`关卡星级 ${s.stars}/${s.maxStars}`">
                   <svg v-for="i in s.maxStars" :key="i" viewBox="0 0 24 24" class="xy-map-dlg__star"
                     :class="{ on: i <= s.stars }" aria-hidden="true">
@@ -95,10 +91,6 @@
               </header>
 
               <div class="xy-map-dlg__detail-meta">
-                <span class="xy-map-dlg__difficulty" :class="`xy-map-dlg__difficulty--${nodeTone(selected.difficulty)}`">
-                  <span class="xy-map-dlg__difficulty-dot" aria-hidden="true"></span>
-                  {{ difficultyText(selected.difficulty) }}
-                </span>
                 <span v-if="!selected.unlocked" class="xy-map-dlg__lock-tag">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -209,14 +201,6 @@ function close(): void {
 
 function regionName(regionId: string): string {
   return props.regions.find(r => r.id === regionId)?.name ?? ''
-}
-
-function difficultyText(d: XiyouScene['difficulty']): string {
-  return { easy: '简单', normal: '普通', hard: '困难' }[d]
-}
-
-function nodeTone(d: XiyouScene['difficulty']): string {
-  return { easy: 'easy', normal: 'normal', hard: 'hard' }[d]
 }
 
 const overlayRef = ref<HTMLElement | null>(null)
@@ -449,18 +433,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   }
 }
 
-.xy-map-dlg__stage--easy {
-  color: var(--xy-jade);
-}
-
-.xy-map-dlg__stage--normal {
-  color: var(--xy-ink-3);
-}
-
-.xy-map-dlg__stage--hard {
-  color: var(--color-debuff);
-}
-
 .xy-map-dlg__stage-head {
   display: flex;
   align-items: center;
@@ -597,36 +569,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   gap: var(--space-2);
   margin-bottom: var(--space-4);
   padding-left: var(--space-3);
-}
-
-.xy-map-dlg__difficulty {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 2px var(--space-2);
-  border: 1px solid currentColor;
-  border-radius: 2px;
-  font-size: var(--font-size-md);
-  white-space: nowrap;
-
-  &--easy {
-    color: var(--xy-jade);
-  }
-
-  &--normal {
-    color: var(--xy-ink-3);
-  }
-
-  &--hard {
-    color: var(--color-debuff);
-  }
-}
-
-.xy-map-dlg__difficulty-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
 }
 
 .xy-map-dlg__lock-tag,

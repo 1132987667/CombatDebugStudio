@@ -1,6 +1,6 @@
 [
   {
-    "id": "guardian_revenge_rage",
+    "id": "yaotu_revenge_rage",
     "name": "复仇怒火",
     "description": "每次受击时，获得+5%攻击力（可叠加5层），持续到战斗结束",
     "skillType": "passive",
@@ -17,7 +17,7 @@
     "steps": [
       {
         "type": "apply_buff",
-        "buffId": "guardian_buff_revenge_rage",
+        "buffId": "yaotu_buff_revenge_rage",
         "targetConfig": {
           "faction": "self",
           "strategy": "first"
@@ -29,7 +29,7 @@
     ]
   },
   {
-    "id": "guardian_combo_heart",
+    "id": "yaotu_combo_heart",
     "name": "连击之心",
     "description": "普攻有25%概率触发一次额外普攻（伤害减半，可触发攻击特效）",
     "skillType": "passive",
@@ -65,7 +65,7 @@
     ]
   },
   {
-    "id": "guardian_energy_overload",
+    "id": "yaotu_energy_overload",
     "name": "能量过载",
     "description": "每次攻击命中额外获得+8能量",
     "skillType": "passive",
@@ -95,7 +95,7 @@
     ]
   },
   {
-    "id": "guardian_swift_wind",
+    "id": "yaotu_swift_wind",
     "name": "疾风叠步",
     "description": "每次普通攻击命中敌人，为自己增加5%速度，直到战斗结束",
     "skillType": "passive",
@@ -111,7 +111,7 @@
     "steps": [
       {
         "type": "apply_buff",
-        "buffId": "guardian_buff_swift_wind",
+        "buffId": "yaotu_buff_swift_wind",
         "targetConfig": {
           "faction": "self",
           "strategy": "first"

@@ -22,7 +22,7 @@ function createRng(seed: number): () => number {
   }
 }
 
-// NOTE: 技能名取自现有系统（configs/skills 与 guardian 被动），参与者为真实角色
+// NOTE: 技能名取自现有系统（configs/skills 与 yaotu 被动），参与者为真实角色
 const SKILLS = ['普通攻击', '复仇怒火', '破甲打击', '连击之心', '首领光环', '能量过载', '疾风叠步', '灼烧爆破']
 
 /**

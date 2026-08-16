@@ -23,11 +23,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_001_small"
+        "skill_yaozun_001_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_001_ultimate"
+        "skill_yaozun_001_ultimate"
       ]
     }
   },
@@ -55,11 +55,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_002_small"
+        "skill_yaozun_002_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_002_ultimate"
+        "skill_yaozun_002_ultimate"
       ]
     }
   },
@@ -82,11 +82,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_003_small"
+        "skill_yaozun_003_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_003_ultimate"
+        "skill_yaozun_003_ultimate"
       ]
     }
   },
@@ -109,11 +109,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_004_small"
+        "skill_yaozun_004_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_004_ultimate"
+        "skill_yaozun_004_ultimate"
       ]
     }
   },
@@ -141,11 +141,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_005_small"
+        "skill_yaozun_005_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_005_ultimate"
+        "skill_yaozun_005_ultimate"
       ]
     }
   },
@@ -173,11 +173,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_006_small"
+        "skill_yaozun_006_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_006_ultimate"
+        "skill_yaozun_006_ultimate"
       ]
     }
   },
@@ -205,11 +205,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_007_small"
+        "skill_yaozun_007_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_007_ultimate"
+        "skill_yaozun_007_ultimate"
       ]
     }
   },
@@ -237,11 +237,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_008_small"
+        "skill_yaozun_008_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_008_ultimate"
+        "skill_yaozun_008_ultimate"
       ]
     }
   },
@@ -269,11 +269,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_009_small"
+        "skill_yaozun_009_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_009_ultimate"
+        "skill_yaozun_009_ultimate"
       ]
     }
   },
@@ -306,11 +306,11 @@
     ],
     "skills": {
       "small": [
-        "skill_hidden_boss_010_small"
+        "skill_yaozun_010_small"
       ],
       "passive": [],
       "ultimate": [
-        "skill_hidden_boss_010_ultimate"
+        "skill_yaozun_010_ultimate"
       ]
     }
   }

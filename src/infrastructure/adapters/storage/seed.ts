@@ -7,7 +7,7 @@
  * 种子内容：
  * - skills/buffs/enemies/scenes/formations/lineups 直接落表；
  * - materials 剥离 3 件装备（weapon/armor/accessory）至独立 equipment 域并补全字段；
- * - actors 从 guardian_* 敌人派生（id 保持一致，供预设阵容 roleId 引用）；
+ * - actors 从 yaotu_* 敌人派生（id 保持一致，供预设阵容 roleId 引用）；
  * - elements/growth 为新建种子；
  * - meta 写 dataVersion（初值 1）+ 种子标记。
  */
@@ -53,40 +53,6 @@ import xiyouCaveJson from '@configs/xiyou/cave.json'
 import itemsDataRaw from '@configs/xiyou/items.json'
 import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 
-// NOTE: v13 — 新增装备词条库 equipment_affixes（独立于敌人词缀 affixes，词条属性映射 attributes.json、
-//       部位约束 slotKey 强校验，供装备随机词条掉落/洗炼/重铸按部位抽池）。
-// NOTE: v14 — cave.json 配方材料结构化：锻造配方（forgeRecipes）不再内联 materials，经 equipmentId 引用装备 JSON 权威材料；
-//       forgeRecipes 补全为全部 43 件可打造装备（原仅 5 件，闭环完整）。
-// NOTE: v15 — 词缀库按设计稿 v3.1 重建：affixes.json 顶层改为对象（affix_library_version/affixes/mandate_bindings/
-//       conflict_rules/wuxing_res_cap），69 条词缀（yao_1~4/mandate/jie 六档），五行词缀统一为抗性（D1b 已删五行攻击）。
-//       升级版本号让已 seed 的浏览器重导最新 configs。
-// NOTE: v16 — 敌人体系拆档：guardian_* 五行护法等旧敌人归档 enemies-old.json 且 ConfigDataSource 已加载，
-//       修复 seed 后 actors 表为空（deriveActors 依赖 guardian_* 派生）。升版强制已 seed 的浏览器重导补全。
-// NOTE: v17 — 敌人技能/敌人 buff 数据补全：enemy-buffs.json 合并入 buffs 表（技能 steps.buffId 引用断裂 178 项修复）。
-// NOTE: v18 — 经验与金钱管理：params 域新增结构化种子 exp_table / enemy_reward_table / level_diff_bonus
-//       （经验曲线、敌人奖励基准+难度/角色倍率、等级差加成规则，供封神榜编辑与引擎结算消费）。
-// NOTE: v19 — 玩家等级上限 30 → 50（《关卡系统 v2.0.md》）：exp_table maxLevel 50、补 11-50 档位
-//       （1-10 级 300×等级 / 11-30 级 600×等级 / 31-50 级 900×等级）。升版强制已 seed 的浏览器重导新经验表。
-// NOTE: v20 — 敌人品阶体系（6 档：小怪/精英/头目/大头目/妖王/隐藏妖王）：role 码由 8 个归并为 6 个——
-//       three_kings→major_boss（妖王）、achievement_boss/final_boss→hidden_boss（隐藏妖王）、新增 elite（精英，暂未落数据）。
-//       roleMultiplier 同步归并（取各归并源代表档原值：major_boss=3.0 大头目、hidden_boss=5.0 隐藏BOSS）。
-//       enemies.json 数据已归并，升版强制已 seed 的浏览器重导。
-// NOTE: v23 — 守护者品阶归一：25 个关卡守护者敌人 role 由 guardian（头目）改为 elite（精英），
-//       （guardian 档暂留 roleMultiplier 无数据占用；elite 倍率 1.15 已在 v20 定义）。升版强制已 seed 的浏览器重导。
-// NOTE: v24 — 品阶档 minor_boss（大头目）废弃：5 个大头目敌人 role 由 minor_boss 改为 guardian（头目），
-//       连带 id/技能/buff 编码 boss_minor_* → boss_guardian_* 改名；guardian 保持 1.2。升版强制已 seed 的浏览器重导。
-// NOTE: v25 — 5 大场景 BOSS 收敛到 bosses.json（权威，运行时转换）并降档：boss_major_*（lv10/20/30/40/50 妖王）
-//       role 由 major_boss 改为 minor_boss（大头目），数值以 bosses.json 为准（血量大幅提升）；enemies.json 移除
-//       这 5 个 boss_major_* 定义；roleMultiplier/schema 恢复 minor_boss 档（2.0）。升版强制已 seed 的浏览器重导。
-// NOTE: v21 — 物品价值语义重构：items.json sellPrice → value（实际价值），坊市经济系数入 params 域
-//       （economy_ratios：购买 200% / 出售 56%），坊市商品按 itemId 关联物品由 价值×购买系数 派生价格。
-//       升版强制已 seed 的浏览器重导（items 表 value 字段 + params economy_ratios）。
-// NOTE: v22 — 炼丹图谱补全：cave.json alchemyRecipes 新增 元气丹/全属性丹药 丹方，速度丹药/洗髓丹
-//       产出数量定值（2/1）；AlchemyPanel 炼制按丹方 count 产出。升版重导 XIYOU cave 表。
-// NOTE: v25 — 修复 buff_thorns（荆棘/反伤）：effects 用了不存在的原子效果类型 "reflect"
-//       （AtomicEffectType 仅认 "thorns"，且无对应处理器），战斗触发时 BuffConfigResolver 抛
-//       「未知原子效果类型 reflect」。改为与 buff_metallization 一致的 TRIGGER + scriptId=reflect_damage
-//       （params.percent=0.1）。升版强制已 seed 的浏览器重导 buffs 表。
 export const SEED_FLAG_ID = 'cds:fengshen-seed-v25'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
@@ -103,17 +69,17 @@ export interface SeedResult {
 
 const nowIso = () => new Date().toISOString()
 
-/** guardian_* 敌人派生角色：id 保持一致，faction 由 id 后缀映射，技能合并 small/passive/ultimate */
+/** yaotu_* 敌人派生角色：id 保持一致，faction 由 id 后缀映射，技能合并 small/passive/ultimate */
 function deriveActors(enemies: Enemy[]): ActorData[] {
   const factionMap: Record<string, string> = {
-    guardian_fire: 'fire',
-    guardian_water: 'water',
-    guardian_wood: 'wood',
-    guardian_earth: 'earth',
-    guardian_gold: 'metal',
+    yaotu_fire: 'fire',
+    yaotu_water: 'water',
+    yaotu_wood: 'wood',
+    yaotu_earth: 'earth',
+    yaotu_gold: 'metal',
   }
   return enemies
-    .filter((e) => e.id.startsWith('guardian_'))
+    .filter((e) => e.id.startsWith('yaotu_'))
     .map((e) => {
       const stats: Record<string, number> = { ...e.stats }
       delete stats.currentHealth
@@ -211,10 +177,10 @@ function buildEnemyRewardTable(): BattleParamData {
       roleMultiplier: {
         normal: 1.0,
         elite: 1.15,
-        guardian: 1.2,
-        minor_boss: 2.0,
-        major_boss: 3.0,
-        hidden_boss: 5.0,
+        yaotu: 1.2,
+        yaokui: 2.0,
+        yaowang: 3.0,
+        yaozun: 5.0,
       },
       entries: [
         { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
@@ -226,7 +192,7 @@ function buildEnemyRewardTable(): BattleParamData {
         { enemyLevel: 30, baseExp: 300, goldMin: 90, goldMax: 150, note: '灵霄台终局' },
         { enemyLevel: 40, baseExp: 400, goldMin: 120, goldMax: 200, note: '中期深度（插值锚点）' },
         { enemyLevel: 50, baseExp: 500, goldMin: 150, goldMax: 250, note: '后期深度（插值锚点）' },
-        { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '隐藏 BOSS 档（插值锚点）' },
+        { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '妖尊 档（插值锚点）' },
         { enemyLevel: 70, baseExp: 700, goldMin: 210, goldMax: 350, note: '终局档（插值锚点）' },
       ],
       interpolation: 'linear',

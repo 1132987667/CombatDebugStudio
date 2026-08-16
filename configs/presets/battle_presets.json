@@ -3,29 +3,29 @@
     "id": "baseline_fire_vs_gold",
     "name": "火护法 vs 金护法",
     "description": "基线测试：速度递增 vs 攻击递增的消耗战",
-    "ally": ["guardian_fire"],
-    "enemy": ["guardian_gold"]
+    "ally": ["yaotu_fire"],
+    "enemy": ["yaotu_gold"]
   },
   {
     "id": "baseline_2v1_boss",
     "name": "双护法 vs Boss",
     "description": "2v1 多目标选择、Boss 技能释放",
-    "ally": ["guardian_fire", "guardian_gold"],
+    "ally": ["yaotu_fire", "yaotu_gold"],
     "enemy": ["boss_007"]
   },
   {
     "id": "baseline_multi_boss",
     "name": "双护法 vs 双Boss",
     "description": "高压多目标战斗稳定性",
-    "ally": ["guardian_fire", "guardian_gold"],
+    "ally": ["yaotu_fire", "yaotu_gold"],
     "enemy": ["boss_001", "boss_002"]
   },
   {
     "id": "baseline_full_roster",
     "name": "全角色混战",
     "description": "所有已有角色参战，验证系统上限",
-    "ally": ["guardian_fire", "enemy_003", "enemy_004"],
-    "enemy": ["guardian_gold", "enemy_005", "boss_003"]
+    "ally": ["yaotu_fire", "enemy_003", "enemy_004"],
+    "enemy": ["yaotu_gold", "enemy_005", "boss_003"]
   },
   {
     "id": "test_basic_damage",
@@ -101,21 +101,21 @@
     "id": "mixed_fire_vs_dodge",
     "name": "火护法 vs 闪避大师",
     "description": "真实角色的连击被动 vs 测试角色的闪避被动",
-    "ally": ["guardian_fire"],
+    "ally": ["yaotu_fire"],
     "enemy": ["test_dodge_master"]
   },
   {
     "id": "mixed_gold_vs_vampire",
     "name": "金护法 vs 吸血鬼",
     "description": "复仇怒火(越挨打越强) vs 吸血(越打越回血)",
-    "ally": ["guardian_gold"],
+    "ally": ["yaotu_gold"],
     "enemy": ["test_vampire"]
   },
   {
     "id": "mixed_full_battle",
     "name": "全面混战",
     "description": "3v3 多被动并发、多Buff交互",
-    "ally": ["guardian_fire", "test_vampire", "test_bard"],
-    "enemy": ["guardian_gold", "test_dodge_master", "test_thorns"]
+    "ally": ["yaotu_fire", "test_vampire", "test_bard"],
+    "enemy": ["yaotu_gold", "test_dodge_master", "test_thorns"]
   }
 ]

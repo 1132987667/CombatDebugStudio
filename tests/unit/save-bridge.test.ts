@@ -57,7 +57,6 @@ describe('collect 状态映射', () => {
     expect(data.player.base_atk).toEqual([player.player.attackMin, player.player.attackMax])
     expect(data.player.statBonuses?.strength).toBe(2)
     expect(data.progress.current_scene).toBe('scene_1_1')
-    expect(data.progress.current_difficulty).toBe('easy')
     // 初始档第一关解锁 → max_scene >= 1
     expect(data.progress.max_scene).toBeGreaterThanOrEqual(1)
     expect(validateShape(data)).toBe(true)

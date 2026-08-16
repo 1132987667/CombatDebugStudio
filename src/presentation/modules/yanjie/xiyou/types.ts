@@ -72,9 +72,6 @@ export type ProtagonistSnapshot = XiyouCombatant & {
   damageReduction: number
 }
 
-/** 关卡难度 */
-export type XiyouDifficulty = 'easy' | 'normal' | 'hard'
-
 /** 物品品质（凡 / 玄 / 地 / 天 / 仙） */
 export type XiyouQuality = '凡品' | '玄品' | '地品' | '天品' | '仙品'
 
@@ -142,7 +139,7 @@ export interface XiyouRegion {
 }
 
 /** 场景（关卡）卡片
- * NOTE: 25 关平铺结构（configs/xiyou/scenes.json）：单值 difficulty + 内联 enemies + 解锁链 */
+ * NOTE: 25 关平铺结构（configs/xiyou/scenes.json）：内联 enemies + 解锁链 */
 export interface XiyouScene {
   id: string
   regionId: string
@@ -151,14 +148,13 @@ export interface XiyouScene {
   levelRange?: [number, number]
   desc: string
   enemies: Array<{ id?: string; name: string; level: number; type?: string }>
-  /** 守护者（本关头目 · configs/xiyou/scenes.json 内联，id 关联 enemies.json 完整定义） */
-  guardian?: { id: string; name: string; level: number } | null
+  /** 守护者（本关妖徒 · configs/xiyou/scenes.json 内联，id 关联 enemies.json 完整定义） */
+  yaotu?: { id: string; name: string; level: number } | null
   /** 掉落配置（材料 / 金币区间 / 经验区间） */
   drops?: { materials?: string[]; gold?: [number, number]; exp?: [number, number] }
   /** 剧情钩子（configs/xiyou/scenes.json narrativeHook） */
   narrativeHook?: string
   unlocked: boolean
-  difficulty: XiyouDifficulty
   stars: number
   maxStars: number
   /** 解锁条件（无前置 sceneId 为 null 时默认解锁） */

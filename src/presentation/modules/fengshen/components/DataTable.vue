@@ -200,8 +200,8 @@ const KIND_LABEL: Record<string, Record<string, string>> = {
   type: { small: '小技能', ultimate: '大技能', passive: '被动', material: '材料', consumable: '消耗品' },
   slot: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指' },
   rank: {
-    normal: '小怪', elite: '精英', guardian: '头目',
-    minor_boss: '大头目', major_boss: '妖王', hidden_boss: '隐藏妖王',
+    normal: '小妖', yaobing: '妖兵', yaotu: '妖徒',
+    yaokui: '妖魁', yaowang: '妖王', yaozun: '妖尊',
   },
 }
 
@@ -210,8 +210,8 @@ const KIND_CLS: Record<string, (v: string) => string> = {
   category: (v) => (v === 'control' || v === 'dot' ? 'fs-tag-danger' : v === 'aura' || v === 'immunity' ? 'fs-tag-aura' : v === 'shield' || v === 'hot' || v === 'trigger' ? 'fs-tag-aura' : 'fs-tag-buff'),
   type: (v) => (v === 'passive' || v === 'material' ? 'fs-tag-muted' : v === 'consumable' ? 'fs-tag-buff' : 'fs-tag-aura'),
   slot: () => 'fs-tag-aura',
-  // 品阶：灰(小怪)→绿(精英)→紫(头目/大头目)→红(妖王/隐藏妖王)
-  rank: (v) => (v === 'normal' ? 'fs-tag-muted' : v === 'elite' ? 'fs-tag-buff' : v === 'major_boss' || v === 'hidden_boss' ? 'fs-tag-danger' : 'fs-tag-aura'),
+  // 品阶：灰(小妖)→绿(精英)→紫(头目/妖魁)→红(妖王/妖尊)
+  rank: (v) => (v === 'normal' ? 'fs-tag-muted' : v === 'elite' ? 'fs-tag-buff' : v === 'yaowang' || v === 'yaozun' ? 'fs-tag-danger' : 'fs-tag-aura'),
   neutral: () => 'fs-tag-aura',
 }
 

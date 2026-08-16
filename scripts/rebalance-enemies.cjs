@@ -12,7 +12,7 @@
  *   SPD = 10  + 1.2×(L−1)     → L1:10   L10:21   L19:32   L27:41   （不全面压过我方守护者，保留先手博弈）
  *
  * 曲线参数由 configs/params/curves.json 驱动（数值体系中枢，见 documents/数值体系搭建指南.md §4.1）。
- * guardian_*（我方核心角色，同时可被选入敌方）单独手写，高于野怪曲线（主角团定位）。
+ * yaotu_*（我方核心角色，同时可被选入敌方）单独手写，高于野怪曲线（主角团定位）。
  *
  * 用法：node scripts/rebalance-enemies.cjs
  */
@@ -39,19 +39,19 @@ const curve = (L) => ({
   spd: evalCurve(curves.enemy.spd, L),
 })
 
-/** guardian_* 手写数值（火/金/水/木/土，主角团定位，高于野怪曲线约 1.5~2 倍） */
-const GUARDIAN = {
-  guardian_fire: { hp: 350, atk: 70, def: 12, spd: 35 },
-  guardian_gold: { hp: 430, atk: 58, def: 18, spd: 24 },
-  guardian_water: { hp: 390, atk: 48, def: 14, spd: 30 },
-  guardian_wood: { hp: 410, atk: 52, def: 16, spd: 26 },
-  guardian_earth: { hp: 520, atk: 40, def: 25, spd: 16 },
+/** yaotu_* 手写数值（火/金/水/木/土，主角团定位，高于野怪曲线约 1.5~2 倍） */
+const yaotu = {
+  yaotu_fire: { hp: 350, atk: 70, def: 12, spd: 35 },
+  yaotu_gold: { hp: 430, atk: 58, def: 18, spd: 24 },
+  yaotu_water: { hp: 390, atk: 48, def: 14, spd: 30 },
+  yaotu_wood: { hp: 410, atk: 52, def: 16, spd: 26 },
+  yaotu_earth: { hp: 520, atk: 40, def: 25, spd: 16 },
 }
 
-/** 按等级分组（排除 guardian） */
+/** 按等级分组（排除 yaotu） */
 const groups = new Map()
 for (const e of enemies) {
-  if (GUARDIAN[e.id]) continue
+  if (yaotu[e.id]) continue
   if (!groups.has(e.level)) groups.set(e.level, [])
   groups.get(e.level).push(e)
 }
@@ -75,9 +75,9 @@ for (const [lv, group] of groups) {
   }
 }
 
-// guardian 覆盖
+// yaotu 覆盖
 for (const e of enemies) {
-  const g = GUARDIAN[e.id]
+  const g = yaotu[e.id]
   if (!g) continue
   e.stats.currentHealth = g.hp
   e.stats.attack = g.atk

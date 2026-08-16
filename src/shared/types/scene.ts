@@ -63,7 +63,7 @@ export interface SceneDrops {
 
 /**
  * 场景（关卡）数据 —— 对齐 configs/xiyou/scenes.json（25 关平铺结构）。
- * 每关一个难度档（difficulty 单值），敌人平铺在 enemies（普通）+ guardian（守护者）。
+ * 每关敌人平铺在 enemies（普通）+ yaotu（守护者）。
  */
 export interface SceneData {
   id: string
@@ -77,9 +77,7 @@ export interface SceneData {
   /** 普通敌人（内联 id 引用 enemies 表） */
   enemies: SceneEnemyRef[]
   /** 守护者（本关精英，内联 id 引用 enemies 表） */
-  guardian?: SceneEnemyRef | null
-  /** 难度档位（每关固定一个难度） */
-  difficulty: 'easy' | 'normal' | 'hard'
+  yaotu?: SceneEnemyRef | null
   /** 掉落配置（材料 / 金币区间 / 经验区间） */
   drops?: SceneDrops
   /** 是否已解锁 */

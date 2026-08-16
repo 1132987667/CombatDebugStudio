@@ -90,7 +90,7 @@
     "name": "强化必成符",
     "type": "强化",
     "rarity": 3,
-    "source": "隐藏 BOSS、成就"
+    "source": "妖尊、成就"
   },
   {
     "id": "enh_bless_01",
@@ -111,7 +111,7 @@
     "name": "魂玉精华",
     "type": "升星",
     "rarity": 3,
-    "source": "隐藏 BOSS、三大 BOSS"
+    "source": "妖尊、三大 BOSS"
   },
   {
     "id": "star_residue",
@@ -167,7 +167,7 @@
     "name": "附魔锁定石",
     "type": "附魔",
     "rarity": 3,
-    "source": "隐藏 BOSS、商店限量"
+    "source": "妖尊、商店限量"
   },
   {
     "id": "wash_stone_01",
@@ -188,7 +188,7 @@
     "name": "锁词符",
     "type": "洗炼",
     "rarity": 3,
-    "source": "隐藏 BOSS、成就"
+    "source": "妖尊、成就"
   },
   {
     "id": "wash_liquid",
@@ -216,7 +216,7 @@
     "name": "重铸熔剂",
     "type": "重铸",
     "rarity": 3,
-    "source": "隐藏 BOSS"
+    "source": "妖尊"
   },
   {
     "id": "reforge_dust",
@@ -293,7 +293,7 @@
     "name": "隐身符",
     "type": "符箓",
     "rarity": 2,
-    "source": "隐藏 BOSS"
+    "source": "妖尊"
   },
   {
     "id": "cons_007",
@@ -321,21 +321,21 @@
     "name": "突破石·初",
     "type": "突破",
     "rarity": 1,
-    "source": "关卡3-5 精英"
+    "source": "关卡3-5 妖兵"
   },
   {
     "id": "break_stone_02",
     "name": "突破石·中",
     "type": "突破",
     "rarity": 2,
-    "source": "关卡6-8 精英"
+    "source": "关卡6-8 妖兵"
   },
   {
     "id": "break_stone_03",
     "name": "突破石·高",
     "type": "突破",
     "rarity": 3,
-    "source": "关卡9-10 精英、BOSS"
+    "source": "关卡9-10 妖兵、妖王"
   },
   {
     "id": "char_shard",
@@ -384,7 +384,7 @@
     "name": "大经验丹",
     "type": "经验",
     "rarity": 3,
-    "source": "BOSS、隐藏 BOSS"
+    "source": "BOSS、妖尊"
   },
   {
     "id": "cultivate_stone",
@@ -405,7 +405,7 @@
     "name": "觉醒石",
     "type": "器灵",
     "rarity": 4,
-    "source": "隐藏 BOSS、三大 BOSS"
+    "source": "妖尊、三大 BOSS"
   },
   {
     "id": "spirit_awaken_03",

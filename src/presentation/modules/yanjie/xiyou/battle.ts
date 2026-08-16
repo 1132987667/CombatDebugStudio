@@ -14,7 +14,7 @@ import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/typ
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import type { EquipmentData } from '@/domain/fengshen/types'
 import { equippedSkills, pureSchoolBonus, schools, skillNodeMap } from './xiyouData'
-import type { ProtagonistSnapshot, XiyouCombatant, XiyouDifficulty, XiyouScene } from './types'
+import type { ProtagonistSnapshot, XiyouCombatant, XiyouScene } from './types'
 
 /** 我方初始阵容：仅主角一人（孙小圣/八戒/悟净等伙伴在 mate.json 队友表，初始不上阵） */
 export const playerParty: XiyouCombatant[] = [
@@ -23,22 +23,20 @@ export const playerParty: XiyouCombatant[] = [
 
 /**
  * 由场景敌人构造敌方阵容（至多 4 个，R22：属性/掉落/技能来自 configs/enemies/enemies.json 按 id 关联）
- * 头目（guardian）参战：scenes.json guardian.id 关联 enemies.json 完整定义，追加在普通敌人之后。
- * 难度倍率 R19：简单 1 / 普通 1.5 / 困难 2，作用于主要数值属性。
+ * 妖徒（yaotu）参战：scenes.json yaotu.id 关联 enemies.json 完整定义，追加在普通敌人之后。
  * 技能按 enemy-skills.json 的 skillType 分桶（与 ConfigDataSource.normalizeEnemy 同口径），
  * passiveSkillIds 归被动、skillType=ultimate 归大招、其余归小技能。
  */
 export function buildEnemyTeam(scene: XiyouScene): BattleEntity[] {
-  const mult = DIFFICULTY_MULT[scene.difficulty] ?? 1
   const rowOf = (id?: string): EnemyRow | null => (id ? (enemyById.get(id) ?? null) : null)
   const rows: EnemyRow[] = scene.enemies
     .map((e) => rowOf(e.id))
     .filter((r): r is EnemyRow => !!r)
-  const guardianRow = scene.guardian ? rowOf(scene.guardian.id) : null
-  if (guardianRow) rows.push(guardianRow)
+  const yaotuRow = scene.yaotu ? rowOf(scene.yaotu.id) : null
+  if (yaotuRow) rows.push(yaotuRow)
   return rows.slice(0, 4).map((row, i) => {
     const st = row.stats ?? {}
-    const s = (v?: number): number => Math.round((v ?? 0) * mult)
+    const s = (v?: number): number => Math.round(v ?? 0)
     const enemy: Enemy = {
       id: row.id,
       name: row.name,
@@ -142,7 +140,7 @@ function bossToRow(b: BossRow): EnemyRow | null {
     level: b.level ?? 1,
     type: b.enemyType ?? 'old_blood',
     faction: b.faction,
-    role: 'minor_boss',
+    role: 'yaokui',
     stats: {
       ...(b.stats ?? {}),
       hit: b.stats?.hit ?? 30,
@@ -180,13 +178,6 @@ const enemySkillTypeById = new Map<string, string>(
     .map((s) => [s.id, s.skillType ?? 'small'] as const),
 )
 
-/** 场景难度 → 敌人属性倍率（R19：简单 1 / 普通 1.5 / 困难 2） */
-export const DIFFICULTY_MULT: Record<XiyouDifficulty, number> = {
-  easy: 1,
-  normal: 1.5,
-  hard: 2,
-}
-
 function dropsFromRow(row: EnemyRow): EnemyDrop[] {
   return (row.drops ?? []).map((d) => ({
     itemId: d.itemId,
@@ -202,9 +193,9 @@ export function dropsForScene(scene: XiyouScene): EnemyDrop[] {
     const row = e.id ? enemyById.get(e.id) : undefined
     if (row) out.push(...dropsFromRow(row))
   }
-  // 头目掉落并入（guardian 已参战，胜利结算应含其掉落）
-  if (scene.guardian) {
-    const row = enemyById.get(scene.guardian.id)
+  // 妖徒掉落并入（yaotu 已参战，胜利结算应含其掉落）
+  if (scene.yaotu) {
+    const row = enemyById.get(scene.yaotu.id)
     if (row) out.push(...dropsFromRow(row))
   }
   // NOTE: 场景掉落表 materials（scenes.json drops.materials）为关卡必掉材料，补并入包；
@@ -253,9 +244,9 @@ export function rewardForScene(scene: XiyouScene): { gold: [number, number]; exp
       e1 += row.exp[1]
     }
   }
-  // 头目奖励并入（guardian 已参战，结算与预览一致）
-  if (scene.guardian) {
-    const row = enemyById.get(scene.guardian.id)
+  // 妖徒奖励并入（yaotu 已参战，结算与预览一致）
+  if (scene.yaotu) {
+    const row = enemyById.get(scene.yaotu.id)
     if (row?.gold) {
       g0 += row.gold[0]
       g1 += row.gold[1]

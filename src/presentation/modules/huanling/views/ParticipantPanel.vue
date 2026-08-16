@@ -235,7 +235,7 @@ function firstPopulatedSceneId(): string {
   for (const scene of scenesData.value) {
     const sceneEnemyIds = new Set([
       ...(scene.enemies ?? []).map((e) => e.id),
-      ...(scene.guardian?.id ? [scene.guardian.id] : []),
+      ...(scene.yaotu?.id ? [scene.yaotu.id] : []),
     ]);
     if (enemiesData.value.some((enemy) => sceneEnemyIds.has(enemy.id))) {
       return scene.id;
@@ -494,7 +494,7 @@ const sceneGroups = computed<GroupedEnemies[]>(() => {
     .map((scene) => {
       const sceneEnemyIds = new Set([
         ...(scene.enemies ?? []).map((e) => e.id),
-        ...(scene.guardian?.id ? [scene.guardian.id] : []),
+        ...(scene.yaotu?.id ? [scene.yaotu.id] : []),
       ]);
 
       const sceneEnemies = allEnemies.filter((enemy) =>

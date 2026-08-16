@@ -207,7 +207,7 @@
       "name": "珍珠",
       "type": "水产",
       "rarity": 1,
-      "source": "关卡2 守护者掉落",
+      "source": "关卡2 妖魁掉落",
       "description": "河蚌中孕育的珍珠，散发着温和的光芒，可用于制作配件",
       "value": 6,
       "usage": "制作特殊配件"
@@ -275,7 +275,7 @@
       "name": "妖丹",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "隐藏 BOSS / 精英敌人",
+      "source": "妖尊 / 妖王 / 妖魁 敌人",
       "value": 400
     },
     {
@@ -389,7 +389,7 @@
       "name": "混元灵气碎片",
       "type": "碎片",
       "rarity": 2,
-      "source": "最终 BOSS 重复 / 关卡10 守护者（5:1 合成）",
+      "source": "最终 BOSS 重复 / 关卡10 妖魁（5:1 合成）",
       "description": "混元灵气的碎片，收集 5 个可合成完整的混元灵气",
       "value": 100,
       "usage": "重铸、附魔封存"
@@ -399,7 +399,7 @@
       "name": "九转金丹碎片",
       "type": "碎片",
       "rarity": 3,
-      "source": "三大 BOSS / 关卡10 守护者（5:1 合成）",
+      "source": "三大 BOSS / 关卡10 妖魁（5:1 合成）",
       "description": "九转金丹的碎片，收集一定数量可合成完整的九转金丹",
       "value": 400,
       "usage": "5个碎片可合成1个九转金丹"
@@ -696,7 +696,7 @@
       "name": "固本丹",
       "type": "永久丹药",
       "rarity": 3,
-      "source": "炼丹（水灵参×3 + 寒潭玉髓×2）/关卡2-2 BOSS「浅水涧守护者」掉落(25%)",
+      "source": "炼丹（水灵参×3 + 寒潭玉髓×2）/关卡2-2 BOSS「浅水涧妖魁」掉落(25%)",
       "description": "固本培元的丹药，基础气血+30，上限20颗。",
       "value": 500
     },
@@ -762,7 +762,7 @@
       "name": "二阶武器图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS",
+      "source": "关卡3-5 妖魁 / BOSS",
       "value": 200
     },
     {
@@ -770,7 +770,7 @@
       "name": "二阶衣服图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS",
+      "source": "关卡3-5 妖魁 / BOSS",
       "value": 200
     },
     {
@@ -778,7 +778,7 @@
       "name": "二阶头盔图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS",
+      "source": "关卡3-5 妖魁 / BOSS",
       "value": 200
     },
     {
@@ -786,7 +786,7 @@
       "name": "二阶靴子图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS",
+      "source": "关卡3-5 妖魁 / BOSS",
       "value": 200
     },
     {
@@ -794,7 +794,7 @@
       "name": "二阶护符图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS",
+      "source": "关卡3-5 妖魁 / BOSS",
       "value": 200
     },
     {
@@ -802,7 +802,7 @@
       "name": "二阶戒指图纸",
       "type": "图纸",
       "rarity": 2,
-      "source": "关卡3-5 守护者 / BOSS",
+      "source": "关卡3-5 妖魁 / BOSS",
       "value": 200
     },
     {
@@ -810,7 +810,7 @@
       "name": "三阶武器图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS",
+      "source": "关卡6-9 妖魁 / BOSS",
       "value": 500
     },
     {
@@ -818,7 +818,7 @@
       "name": "三阶衣服图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS",
+      "source": "关卡6-9 妖魁 / BOSS",
       "value": 500
     },
     {
@@ -826,7 +826,7 @@
       "name": "三阶头盔图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS",
+      "source": "关卡6-9 妖魁 / BOSS",
       "value": 500
     },
     {
@@ -834,7 +834,7 @@
       "name": "三阶靴子图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS",
+      "source": "关卡6-9 妖魁 / BOSS",
       "value": 500
     },
     {
@@ -842,7 +842,7 @@
       "name": "三阶护符图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS",
+      "source": "关卡6-9 妖魁 / BOSS",
       "value": 500
     },
     {
@@ -850,7 +850,7 @@
       "name": "三阶戒指图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "关卡6-9 守护者 / BOSS",
+      "source": "关卡6-9 妖魁 / BOSS",
       "value": 500
     },
     {
@@ -858,7 +858,7 @@
       "name": "特殊装备图纸",
       "type": "图纸",
       "rarity": 3,
-      "source": "隐藏 BOSS",
+      "source": "妖尊",
       "value": 500
     },
     {
@@ -1137,7 +1137,7 @@
       "name": "烈焰斩",
       "type": "武器",
       "rarity": 3,
-      "source": "隐藏 BOSS（特殊装备制造）",
+      "source": "妖尊（特殊装备制造）",
       "value": 2000
     },
     {
@@ -1225,7 +1225,7 @@
       "name": "风灵袍",
       "type": "衣服",
       "rarity": 3,
-      "source": "隐藏 BOSS（特殊装备制造）",
+      "source": "妖尊（特殊装备制造）",
       "value": 2000
     },
     {
@@ -1265,7 +1265,7 @@
       "name": "地灵护符",
       "type": "护符",
       "rarity": 3,
-      "source": "隐藏 BOSS（特殊装备制造）",
+      "source": "妖尊（特殊装备制造）",
       "value": 2000
     },
     {
@@ -2303,7 +2303,7 @@
       "name": "六阶武器图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "隐藏 BOSS 掉落",
+      "source": "妖尊 掉落",
       "value": 2000
     },
     {
@@ -2319,7 +2319,7 @@
       "name": "六阶衣服图纸",
       "type": "图纸",
       "rarity": 4,
-      "source": "隐藏 BOSS 掉落",
+      "source": "妖尊 掉落",
       "value": 2000
     },
     {

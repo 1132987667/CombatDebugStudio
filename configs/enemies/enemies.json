@@ -149,7 +149,7 @@
     "level": 2,
     "type": "new_born",
     "faction": "wood",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 122,
       "attack": 18,
@@ -347,7 +347,7 @@
     "level": 4,
     "type": "new_born",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 153,
       "attack": 26,
@@ -545,7 +545,7 @@
     "level": 6,
     "type": "new_born",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 185,
       "attack": 34,
@@ -743,7 +743,7 @@
     "level": 8,
     "type": "old_soul",
     "faction": "wood",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 216,
       "attack": 42,
@@ -941,7 +941,7 @@
     "level": 10,
     "type": "old_blood",
     "faction": "wood",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 247,
       "attack": 49,
@@ -1155,7 +1155,7 @@
     "level": 12,
     "type": "old_blood",
     "faction": "water",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 278,
       "attack": 57,
@@ -1361,7 +1361,7 @@
     "level": 14,
     "type": "old_blood",
     "faction": "water",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 309,
       "attack": 65,
@@ -1559,7 +1559,7 @@
     "level": 16,
     "type": "old_blood",
     "faction": "water",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 341,
       "attack": 73,
@@ -1761,7 +1761,7 @@
     "level": 18,
     "type": "new_born",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 372,
       "attack": 81,
@@ -1963,7 +1963,7 @@
     "level": 20,
     "type": "old_blood",
     "faction": "water",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 403,
       "attack": 88,
@@ -2161,7 +2161,7 @@
     "level": 22,
     "type": "new_born",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 434,
       "attack": 96,
@@ -2343,7 +2343,7 @@
     "level": 24,
     "type": "new_born",
     "faction": "metal",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 465,
       "attack": 104,
@@ -2525,7 +2525,7 @@
     "level": 26,
     "type": "new_born",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 497,
       "attack": 112,
@@ -2707,7 +2707,7 @@
     "level": 28,
     "type": "new_born",
     "faction": "metal",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 528,
       "attack": 120,
@@ -2889,7 +2889,7 @@
     "level": 30,
     "type": "new_born",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 559,
       "attack": 127,
@@ -3087,7 +3087,7 @@
     "level": 32,
     "type": "new_born",
     "faction": "wood",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 590,
       "attack": 135,
@@ -3281,7 +3281,7 @@
     "level": 34,
     "type": "new_born",
     "faction": "wood",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 621,
       "attack": 143,
@@ -3475,7 +3475,7 @@
     "level": 36,
     "type": "old_blood",
     "faction": "wood",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 653,
       "attack": 151,
@@ -3661,7 +3661,7 @@
     "level": 38,
     "type": "old_blood",
     "faction": "neutral",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 684,
       "attack": 159,
@@ -3851,7 +3851,7 @@
     "level": 40,
     "type": "old_blood",
     "faction": "wood",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 715,
       "attack": 166,
@@ -4037,7 +4037,7 @@
     "level": 42,
     "type": "old_blood",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 746,
       "attack": 174,
@@ -4223,7 +4223,7 @@
     "level": 44,
     "type": "old_blood",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 777,
       "attack": 182,
@@ -4405,7 +4405,7 @@
     "level": 46,
     "type": "old_blood",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 809,
       "attack": 190,
@@ -4591,7 +4591,7 @@
     "level": 48,
     "type": "old_blood",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 840,
       "attack": 198,
@@ -4777,7 +4777,7 @@
     "level": 50,
     "type": "old_blood",
     "faction": "earth",
-    "role": "guardian",
+    "role": "yaotu",
     "stats": {
       "maxHealth": 871,
       "attack": 205,
@@ -4827,7 +4827,7 @@
     "level": 6,
     "type": "old_blood",
     "faction": "wood",
-    "role": "minor_boss",
+    "role": "yaokui",
     "stats": {
       "maxHealth": 256,
       "attack": 47,
@@ -4898,7 +4898,7 @@
     "level": 16,
     "type": "old_soul",
     "faction": "wood",
-    "role": "minor_boss",
+    "role": "yaokui",
     "stats": {
       "maxHealth": 472,
       "attack": 101,
@@ -4969,7 +4969,7 @@
     "level": 26,
     "type": "new_born",
     "faction": "earth",
-    "role": "minor_boss",
+    "role": "yaokui",
     "stats": {
       "maxHealth": 688,
       "attack": 155,
@@ -5036,7 +5036,7 @@
     "level": 36,
     "type": "old_blood",
     "faction": "wood",
-    "role": "minor_boss",
+    "role": "yaokui",
     "stats": {
       "maxHealth": 904,
       "attack": 209,
@@ -5103,7 +5103,7 @@
     "level": 46,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "minor_boss",
+    "role": "yaokui",
     "stats": {
       "maxHealth": 1120,
       "attack": 263,
@@ -5170,7 +5170,7 @@
     "level": 10,
     "type": "old_blood",
     "faction": "wood",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 418,
       "attack": 84,
@@ -5251,7 +5251,7 @@
     "level": 20,
     "type": "old_blood",
     "faction": "water",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 682,
       "attack": 150,
@@ -5332,7 +5332,7 @@
     "level": 30,
     "type": "old_blood",
     "faction": "earth",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 946,
       "attack": 216,
@@ -5409,7 +5409,7 @@
     "level": 40,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 1210,
       "attack": 282,
@@ -5486,7 +5486,7 @@
     "level": 50,
     "type": "old_blood",
     "faction": "earth",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 1474,
       "attack": 348,
@@ -5567,7 +5567,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "wood",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -5654,7 +5654,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "water",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -5741,7 +5741,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "earth",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -5828,7 +5828,7 @@
     "level": 55,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -5915,7 +5915,7 @@
     "level": 55,
     "type": "old_blood",
     "faction": "earth",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1825,
       "attack": 433,
@@ -6002,7 +6002,7 @@
     "level": 60,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1975,
       "attack": 470,
@@ -6097,7 +6097,7 @@
     "level": 60,
     "type": "old_soul",
     "faction": "earth",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1975,
       "attack": 470,
@@ -6192,7 +6192,7 @@
     "level": 60,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1975,
       "attack": 470,
@@ -6287,7 +6287,7 @@
     "level": 60,
     "type": "old_soul",
     "faction": "metal",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1975,
       "attack": 470,
@@ -6378,7 +6378,7 @@
     "level": 60,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 1975,
       "attack": 470,
@@ -6469,7 +6469,7 @@
     "level": 65,
     "type": "old_blood",
     "faction": "fire",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 2380,
       "attack": 568,
@@ -6552,7 +6552,7 @@
     "level": 65,
     "type": "old_blood",
     "faction": "wood",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 2380,
       "attack": 568,
@@ -6635,7 +6635,7 @@
     "level": 65,
     "type": "old_blood",
     "faction": "metal",
-    "role": "major_boss",
+    "role": "yaowang",
     "stats": {
       "maxHealth": 2380,
       "attack": 568,
@@ -6718,7 +6718,7 @@
     "level": 70,
     "type": "old_soul",
     "faction": "neutral",
-    "role": "hidden_boss",
+    "role": "yaozun",
     "stats": {
       "maxHealth": 8000,
       "attack": 250,

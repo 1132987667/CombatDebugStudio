@@ -313,7 +313,7 @@
     "cost": 280,
     "craftable": true,
     "blueprintId": "bp_sp_01",
-    "source": "隐藏 BOSS（特殊装备制造）",
+    "source": "妖尊（特殊装备制造）",
     "description": "火灵淬刃，烈焰焚身。攻击 +38，速度 +10%。"
   },
   {
@@ -353,7 +353,7 @@
     "cost": 300,
     "craftable": true,
     "blueprintId": "bp_sp_01",
-    "source": "隐藏 BOSS（特殊装备制造）",
+    "source": "妖尊（特殊装备制造）",
     "description": "风灵织就，身轻如燕。防御 +24，速度 +15%。"
   },
   {
@@ -393,7 +393,7 @@
     "cost": 260,
     "craftable": true,
     "blueprintId": "bp_sp_01",
-    "source": "隐藏 BOSS（特殊装备制造）",
+    "source": "妖尊（特殊装备制造）",
     "description": "地灵护体，厚德载物。防御 +12%，气血 +6%。"
   },
   {

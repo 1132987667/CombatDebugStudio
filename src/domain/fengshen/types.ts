@@ -313,7 +313,7 @@ export interface EnemyRewardTableConfig {
   description?: string
   baseExpFormula?: string
   baseGoldFormula?: string
-  /** 敌人角色倍率（键对齐 enemies.json role 品阶：normal/elite/guardian/major_boss/hidden_boss） */
+  /** 敌人角色倍率（键对齐 enemies.json role 品阶：normal/elite/yaotu/yaowang/yaozun） */
   roleMultiplier: Record<string, number>
   entries: EnemyRewardEntry[]
   /** 未列出等级的插值方式：linear（线性插值）/ nearest（取最近档） */

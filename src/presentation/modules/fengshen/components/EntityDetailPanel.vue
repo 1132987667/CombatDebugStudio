@@ -234,7 +234,6 @@ const NESTED_VALUE_LABEL: Record<string, Record<string, string>> = {
   stackRule: { replace: '替换', stack: '叠加', independent: '独立' },
   row: { front: '前排', back: '后排' },
   target: { player: '玩家', enemy: '敌人' },
-  difficulty: { easy: '简单', normal: '普通', hard: '困难' },
   slot: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指' },
   tier: {
     yao_1: '一档·妖气', yao_2: '二档·妖性', yao_3: '三档·妖道', yao_4: '四档·妖圣', mandate: '天命', jie: '劫数',

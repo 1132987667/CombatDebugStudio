@@ -490,7 +490,7 @@
       "type": "clear_scene",
       "sceneId": "scene_1_5"
     },
-    "role": "minor_boss"
+    "role": "yaokui"
   },
   {
     "id": "boss_major_hebo",
@@ -574,7 +574,7 @@
       "type": "clear_scene",
       "sceneId": "scene_2_5"
     },
-    "role": "minor_boss"
+    "role": "yaokui"
   },
   {
     "id": "boss_major_shanshen",
@@ -661,7 +661,7 @@
       "type": "clear_scene",
       "sceneId": "scene_3_5"
     },
-    "role": "minor_boss"
+    "role": "yaokui"
   },
   {
     "id": "boss_major_miwu",
@@ -747,7 +747,7 @@
       "type": "clear_scene",
       "sceneId": "scene_4_5"
     },
-    "role": "minor_boss"
+    "role": "yaokui"
   },
   {
     "id": "boss_major_rulai",
@@ -838,7 +838,7 @@
       "type": "clear_scene",
       "sceneId": "scene_5_5"
     },
-    "role": "minor_boss"
+    "role": "yaokui"
   },
   {
     "id": "boss_achieve_huayaowang",

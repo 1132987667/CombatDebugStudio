@@ -67,7 +67,7 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
           { n: '攻击力', op: '+', v: 65, src: 'unit.atk' },
           { n: '防御减免', op: '−', v: 15, src: 'target.def' },
           { n: '暴击倍率', op: '×', v: 1.5, src: 'crit_rate' },
-          { n: '复仇怒火', op: '+', v: 8, src: 'buff_guardian_revenge_rage' },
+          { n: '复仇怒火', op: '+', v: 8, src: 'buff_yaotu_revenge_rage' },
         ],
         rolls: [{ kind: 'hit', rate: 0.875, roll: 0.642 }, { kind: 'crit', rate: 0.25, roll: 0.12 }],
         result: 113,
@@ -133,7 +133,7 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
       payload: {
         // 契约字段（§2.6）：verdict/passiveId/passiveName/owner 与 PassiveSkillManager 真实发射形态一致，
         // 缺失会导致演示战报 L6 被动统计恒为空（统计层只认这组字段）
-        passiveId: 'buff_guardian_revenge_rage', passiveName: '复仇怒火', owner: '火护法',
+        passiveId: 'buff_yaotu_revenge_rage', passiveName: '复仇怒火', owner: '火护法',
         verdict: 'TRIGGERED',
         passive: '复仇怒火', chance: 0.35,
         rolls: [{ kind: 'passive', rate: 0.35, roll: 0.22 }],

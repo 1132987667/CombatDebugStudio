@@ -27,14 +27,14 @@
               </span>
             </span>
           </div>
-          <div v-if="scene.guardian" class="xy-drop-row xy-drop-row--guardian" role="listitem">
+          <div v-if="scene.yaotu" class="xy-drop-row xy-drop-row--yaotu" role="listitem">
             <span class="xy-drop-ename">
-              <span class="xy-dot xy-dot--guardian"></span>
-              <span class="xy-drop-name">{{ scene.guardian.name }}</span>
+              <span class="xy-dot xy-dot--yaotu"></span>
+              <span class="xy-drop-name">{{ scene.yaotu.name }}</span>
               <span class="xy-guard-tag">守护</span>
             </span>
             <span class="xy-drop-items">
-              <span v-for="d in dropsForEnemy(scene.guardian.name)" :key="d.itemId" class="xy-drop-chip">
+              <span v-for="d in dropsForEnemy(scene.yaotu.name)" :key="d.itemId" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
                     }}</template></span>
                 <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
@@ -441,7 +441,7 @@ onUnmounted(() => {
     background: var(--color-skill-active);
   }
 
-  &--guardian {
+  &--yaotu {
     background: var(--xy-gold);
   }
 
@@ -487,7 +487,7 @@ onUnmounted(() => {
   }
 }
 
-.xy-drop-row--guardian .xy-drop-name {
+.xy-drop-row--yaotu .xy-drop-name {
   color: var(--xy-gold);
 }
 

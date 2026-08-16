@@ -407,10 +407,10 @@ function defaultEnemyReward(): EnemyRewardTableConfig {
     roleMultiplier: {
       normal: 1.0,
       elite: 1.15,
-      guardian: 1.2,
-      minor_boss: 2.0,
-      major_boss: 3.0,
-      hidden_boss: 5.0,
+      yaotu: 1.2,
+      yaokui: 2.0,
+      yaowang: 3.0,
+      yaozun: 5.0,
     },
     entries: [
       { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
@@ -422,7 +422,7 @@ function defaultEnemyReward(): EnemyRewardTableConfig {
       { enemyLevel: 30, baseExp: 300, goldMin: 90, goldMax: 150, note: '灵霄台终局' },
       { enemyLevel: 40, baseExp: 400, goldMin: 120, goldMax: 200, note: '中期深度（插值锚点）' },
       { enemyLevel: 50, baseExp: 500, goldMin: 150, goldMax: 250, note: '后期深度（插值锚点）' },
-      { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '隐藏 BOSS 档（插值锚点）' },
+      { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '妖尊 档（插值锚点）' },
       { enemyLevel: 70, baseExp: 700, goldMin: 210, goldMax: 350, note: '终局档（插值锚点）' },
     ],
     interpolation: 'linear',

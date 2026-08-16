@@ -23,7 +23,6 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import { materials as packMaterials, packItems, pills as packPills, scenes, schools, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, PILL_POINT_LIMIT } from './xiyouData'
-import type { XiyouDifficulty } from './types'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
 
@@ -114,7 +113,6 @@ export const xiyouSaveBridge: SaveStatePort = {
     data.progress.max_scene = unlocked.length
     const current = currentSceneId ? scenes.find((s) => s.id === currentSceneId) : undefined
     data.progress.current_scene = current?.id ?? unlocked[0]?.id ?? ''
-    data.progress.current_difficulty = (current?.difficulty ?? 'easy') as XiyouDifficulty
 
     // inventory
     data.inventory = classifyInventory()

@@ -17,7 +17,6 @@ describe('createInitialGameState', () => {
     const s = createInitialGameState()
     expect(s.meta.version).toBe(SAVE_VERSION)
     expect(s.player).toMatchObject({ level: 1, exp: 0, hp_max: 100, energy_max: 150, base_atk: [5, 8] })
-    expect(s.progress).toMatchObject({ current_difficulty: 'easy' })
     expect(s.equipment).toEqual({ weapon: null, armor: null, helmet: null, boots: null, charm: null, ring: null })
     expect(validateSaveData(s).ok).toBe(true)
   })
@@ -89,11 +88,6 @@ describe('migrateEquipmentSlots（v1.x → v2.0.0）', () => {
     const out = migrateEquipmentSlots({ equipment: { weapon: 'w' } })
     expect(out.equipment.helmet).toBeNull()
     expect(out.equipment.weapon).toBe('w')
-  })
-
-  it('旧档 difficulty simple 归一为 easy', () => {
-    const out = migrateEquipmentSlots({ progress: { current_difficulty: 'simple' } })
-    expect(out.progress.current_difficulty).toBe('easy')
   })
 
   it('非对象 / 空输入不抛错（静默回退初始档）', () => {

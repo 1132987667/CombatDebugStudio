@@ -41,7 +41,7 @@ export interface ListQuery {
 /**
  * 自然排序（数字感知字典序）：actors_002 < actors_010（数字按数值），
  * growth_attack < growth_balanced（无数字段按字典序）。
- * 封神榜 id 含补零自增（hero_001）、固定名（elements / growth_balanced / guardian_fire）等混合格式，统一按此排序。
+ * 封神榜 id 含补零自增（hero_001）、固定名（elements / growth_balanced / yaotu_fire）等混合格式，统一按此排序。
  */
 const idCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 

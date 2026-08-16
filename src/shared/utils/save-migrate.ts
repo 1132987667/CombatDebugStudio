@@ -10,7 +10,6 @@ import {
   createInitialGameState,
   SAVE_VERSION,
   type SaveData,
-  type SaveDifficulty,
 } from './save-schema'
 
 function toRecord(v: unknown): Record<string, number> {
@@ -23,11 +22,6 @@ function toRecord(v: unknown): Record<string, number> {
     return out
   }
   return {}
-}
-
-function normalizeDifficulty(d: unknown): SaveDifficulty {
-  // 兼容 PRD 草案的 'simple'
-  return d === 'simple' || d === 'easy' ? 'easy' : d === 'hard' ? 'hard' : 'normal'
 }
 
 /**
@@ -70,13 +64,9 @@ export function migrateEquipmentSlots(oldSave: unknown): SaveData {
     progress: {
       ...base.progress,
       ...oldProgress,
-      current_difficulty: normalizeDifficulty(oldProgress.current_difficulty),
       unlocked_scenes: Array.isArray(oldProgress.unlocked_scenes)
         ? oldProgress.unlocked_scenes.map(String)
         : [],
-      unlocked_difficulties: isObj(oldProgress.unlocked_difficulties)
-        ? { ...(oldProgress.unlocked_difficulties as Record<string, string[]>) }
-        : {},
     },
     inventory: {
       materials: toRecord(isObj(old.inventory) ? old.inventory.materials : undefined),

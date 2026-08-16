@@ -5,8 +5,8 @@
  * 数值调整（scripts/rebalance-enemies.cjs）后运行本脚本验证战斗节奏。
  *
  * 平衡目标：
- * - guardian 1v1 普攻 TTK ≈ 6~12 回合
- * - 我方 4v4（guardian）vs 场景敌方 ≈ 4~10 回合分出胜负，前期胜、后期有挑战
+ * - yaotu 1v1 普攻 TTK ≈ 6~12 回合
+ * - 我方 4v4（yaotu）vs 场景敌方 ≈ 4~10 回合分出胜负，前期胜、后期有挑战
  * - 任何敌方防御 < 我方最低攻击 × 0.85（杜绝破防卡 1 点）
  *
  * 用法：node scripts/balance-check.cjs
@@ -21,11 +21,11 @@ const enemies = JSON.parse(
 const byId = Object.fromEntries(enemies.map((e) => [e.id, e]))
 
 const GUARD = {
-  guardian_fire: { hp: 350, atk: 70, def: 12, spd: 35 },
-  guardian_gold: { hp: 430, atk: 58, def: 18, spd: 24 },
-  guardian_water: { hp: 390, atk: 48, def: 14, spd: 30 },
-  guardian_wood: { hp: 410, atk: 52, def: 16, spd: 26 },
-  guardian_earth: { hp: 520, atk: 40, def: 25, spd: 16 },
+  yaotu_fire: { hp: 350, atk: 70, def: 12, spd: 35 },
+  yaotu_gold: { hp: 430, atk: 58, def: 18, spd: 24 },
+  yaotu_water: { hp: 390, atk: 48, def: 14, spd: 30 },
+  yaotu_wood: { hp: 410, atk: 52, def: 16, spd: 26 },
+  yaotu_earth: { hp: 520, atk: 40, def: 25, spd: 16 },
 }
 
 function mkGuard(id) {
@@ -84,19 +84,19 @@ function sim(foes, allies, seed = 1) {
   }
 }
 
-console.log('=== guardian 1v1 ===')
+console.log('=== yaotu 1v1 ===')
 const pairs = [
-  ['guardian_fire', 'guardian_gold'],
-  ['guardian_gold', 'guardian_fire'],
-  ['guardian_fire', 'guardian_earth'],
-  ['guardian_water', 'guardian_wood'],
+  ['yaotu_fire', 'yaotu_gold'],
+  ['yaotu_gold', 'yaotu_fire'],
+  ['yaotu_fire', 'yaotu_earth'],
+  ['yaotu_water', 'yaotu_wood'],
 ]
 for (const [a, b] of pairs) {
   const r = sim([mkGuard(b)], [mkGuard(a)])
   console.log(`${a} vs ${b}: ${r.turns} 回合 ${r.result}`)
 }
 
-console.log('=== 4v4 guardian(fire/gold/water/wood) vs 场景 ===')
+console.log('=== 4v4 yaotu(fire/gold/water/wood) vs 场景 ===')
 const scenes = [
   ['scene_001 easy L1', ['enemy_001', 'enemy_002', 'enemy_003']],
   ['scene_001 hard L7', ['enemy_007', 'enemy_008', 'boss_001']],
@@ -104,7 +104,7 @@ const scenes = [
   ['scene_008 hard L15', ['enemy_063', 'enemy_064', 'boss_008']],
   ['scene_010 hard L19', ['enemy_079', 'enemy_080', 'boss_010']],
 ]
-const squad = ['guardian_fire', 'guardian_gold', 'guardian_wood', 'guardian_water']
+const squad = ['yaotu_fire', 'yaotu_gold', 'yaotu_wood', 'yaotu_water']
 for (const [label, ids] of scenes) {
   const foes = ids.map((id) => mk(byId[id]))
   const allies = squad.map((id) => ({ ...mkGuard(id), hp: GUARD[id].hp, alive: true }))
@@ -112,6 +112,6 @@ for (const [label, ids] of scenes) {
   console.log(`${label}: ${r.turns} 回合 ${r.result} 剩我${r.allyLeft}/敌${r.foesLeft}`)
 }
 
-console.log('=== 破防悬崖检查（guardian 最低攻 earth atk40×0.85=34）===')
+console.log('=== 破防悬崖检查（yaotu 最低攻 earth atk40×0.85=34）===')
 const highDef = enemies.filter((e) => e.stats.defense > 30).map((e) => `${e.id}(def${e.stats.defense})`)
 console.log(highDef.length ? `def>30 的敌人: ${highDef.join(', ')}` : '无，全部可破防')

@@ -328,7 +328,7 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                     ...scene.enemies
                       .filter((e): e is { id: string; name: string; level: number; type?: string } => !!e.id)
                       .map((e) => ({ id: e.id, name: e.name, kind: '普通' as const })),
-                    ...(scene.guardian ? [{ id: scene.guardian.id, name: scene.guardian.name, kind: '头目' as const }] : []),
+                    ...(scene.yaotu ? [{ id: scene.yaotu.id, name: scene.yaotu.name, kind: '头目' as const }] : []),
                   ]
                   return enemies.map((e) => ({ value: e.id, label: `${e.name}（${e.kind}）` }))
                 },
@@ -359,7 +359,7 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
               const reward = rewardForEnemyById(enemyId)
               const enemyDrops = dropsForEnemyById(enemyId)
               const enemyName =
-                env.scenes.flatMap((s) => [...s.enemies, ...(s.guardian ? [s.guardian] : [])]).find((e) => e.id === enemyId)?.name ??
+                env.scenes.flatMap((s) => [...s.enemies, ...(s.yaotu ? [s.yaotu] : [])]).find((e) => e.id === enemyId)?.name ??
                 enemyId
               let totalExp = 0
               let totalGold = 0
@@ -1205,7 +1205,6 @@ function buildSceneCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 name: s.name,
                 unlocked: s.unlocked,
                 stars: s.stars,
-                difficulty: s.difficulty,
               }))
               return ok(`进度快照（${payload.length} 关）`, payload)
             },

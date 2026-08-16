@@ -552,7 +552,7 @@
     "description": "20%概率攻击附加中毒"
   },
   {
-    "id": "buff_water_guardian_trigger",
+    "id": "buff_water_yaotu_trigger",
     "name": "水之守护",
     "category": "trigger",
     "duration": -1,
@@ -1314,7 +1314,7 @@
     "description": "护盾（含每回合恢复与刷新增强，由 ShieldBuff 脚本驱动；护盾值由 executeShield/applyShield 传入）"
   },
   {
-    "id": "guardian_buff_revenge_rage",
+    "id": "yaotu_buff_revenge_rage",
     "name": "复仇怒火",
     "category": "attribute",
     "description": "攻击↑5%/层",
@@ -1338,7 +1338,7 @@
     "polarity": "positive"
   },
   {
-    "id": "guardian_buff_armor_break",
+    "id": "yaotu_buff_armor_break",
     "name": "破甲打击",
     "category": "attribute",
     "description": "防御↓20%",
@@ -1361,7 +1361,7 @@
     "polarity": "negative"
   },
   {
-    "id": "guardian_buff_firm_shield",
+    "id": "yaotu_buff_firm_shield",
     "name": "坚毅护盾",
     "category": "shield",
     "maxStacks": 1,
@@ -1379,7 +1379,7 @@
     "description": "吸收伤害的护盾"
   },
   {
-    "id": "guardian_buff_static_rebound",
+    "id": "yaotu_buff_static_rebound",
     "name": "静电反冲",
     "category": "trigger",
     "maxStacks": 1,
@@ -1399,7 +1399,7 @@
     "description": "沉默攻击者"
   },
   {
-    "id": "guardian_buff_first_strike",
+    "id": "yaotu_buff_first_strike",
     "name": "先发制人",
     "category": "attribute",
     "description": "伤害↑25%",
@@ -1422,7 +1422,7 @@
     "polarity": "positive"
   },
   {
-    "id": "guardian_buff_charge_burst",
+    "id": "yaotu_buff_charge_burst",
     "name": "蓄力爆发",
     "category": "attribute",
     "description": "伤害↑100%",
@@ -1445,7 +1445,7 @@
     "polarity": "positive"
   },
   {
-    "id": "guardian_buff_element_slow",
+    "id": "yaotu_buff_element_slow",
     "name": "元素迟缓",
     "category": "attribute",
     "description": "速度↓5%",
@@ -1468,7 +1468,7 @@
     "polarity": "negative"
   },
   {
-    "id": "guardian_buff_despair_aura",
+    "id": "yaotu_buff_despair_aura",
     "name": "绝望气场",
     "category": "aura",
     "maxStacks": 1,
@@ -1493,7 +1493,7 @@
     "description": "光环：全体敌方 暴击率-15"
   },
   {
-    "id": "guardian_buff_heal_breeze",
+    "id": "yaotu_buff_heal_breeze",
     "name": "治愈微风",
     "category": "attribute",
     "description": "防御↑20%",
@@ -1516,7 +1516,7 @@
     "polarity": "positive"
   },
   {
-    "id": "guardian_buff_eye_for_eye",
+    "id": "yaotu_buff_eye_for_eye",
     "name": "以牙还牙",
     "category": "trigger",
     "maxStacks": 1,
@@ -1526,7 +1526,7 @@
     "description": "下次攻击附加等同上一次所受伤害50%的额外伤害"
   },
   {
-    "id": "guardian_buff_revenge_fury",
+    "id": "yaotu_buff_revenge_fury",
     "name": "复仇之怒",
     "category": "attribute",
     "description": "攻击↑30% 暴击↑20%",
@@ -1553,7 +1553,7 @@
     "polarity": "positive"
   },
   {
-    "id": "guardian_buff_paralyze",
+    "id": "yaotu_buff_paralyze",
     "name": "麻痹触手",
     "category": "control",
     "description": "速度↓50%",
@@ -1583,7 +1583,7 @@
     "polarity": "negative"
   },
   {
-    "id": "guardian_buff_sacrifice_rage",
+    "id": "yaotu_buff_sacrifice_rage",
     "name": "献祭之怒",
     "category": "attribute",
     "description": "攻击↑50% 暴击↑20%",
@@ -1610,7 +1610,7 @@
     "polarity": "positive"
   },
   {
-    "id": "guardian_buff_berserker",
+    "id": "yaotu_buff_berserker",
     "name": "狂战士",
     "category": "attribute",
     "description": "攻击↑30% 防御↓15%",
@@ -1637,7 +1637,7 @@
     "polarity": "positive"
   },
   {
-    "id": "guardian_buff_wind_thunder",
+    "id": "yaotu_buff_wind_thunder",
     "name": "疾风迅雷",
     "category": "attribute",
     "maxStacks": 1,
@@ -1647,7 +1647,7 @@
     "description": "每比目标快1点速度，伤害提升0.5%（上限30%）"
   },
   {
-    "id": "guardian_buff_random_taunt",
+    "id": "yaotu_buff_random_taunt",
     "name": "随机嘲讽",
     "category": "control",
     "maxStacks": 1,
@@ -1665,7 +1665,7 @@
     "description": "使目标束缚"
   },
   {
-    "id": "guardian_buff_backwater_armor",
+    "id": "yaotu_buff_backwater_armor",
     "name": "背水护甲",
     "category": "trigger",
     "maxStacks": 1,
@@ -1678,7 +1678,7 @@
     "description": "气血低于40%时，受到伤害先由能量抵扣"
   },
   {
-    "id": "guardian_buff_swift_wind",
+    "id": "yaotu_buff_swift_wind",
     "name": "疾风叠步",
     "category": "attribute",
     "description": "速度↑5%/层",

@@ -70,7 +70,7 @@ const EXPLICIT_SRC: Record<string, string> = {
   'passive.base': '被动基础值',
   'passive.combo_heart': '连击之心被动',
   'buff_gold_shield': '金甲护体',
-  'buff_guardian_revenge_rage': '复仇怒火',
+  'buff_yaotu_revenge_rage': '复仇怒火',
   'buff_yishang': '易伤加成',
 }
 

@@ -751,21 +751,21 @@
         "type": "modify_attribute",
         "modifiers": [
           {
-            "id": "water_guardian_mdef",
+            "id": "water_yaotu_mdef",
             "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "水之守护"
           },
           {
-            "id": "water_guardian_res",
+            "id": "water_yaotu_res",
             "targetAttribute": "waterRes",
             "type": "ADDITIVE",
             "value": 25,
             "sourceName": "水之守护"
           },
           {
-            "id": "water_guardian_atk",
+            "id": "water_yaotu_atk",
             "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 15,
@@ -775,7 +775,7 @@
       },
       {
         "type": "apply_buff",
-        "buffId": "buff_water_guardian_trigger"
+        "buffId": "buff_water_yaotu_trigger"
       }
     ],
     "energyCost": 0,

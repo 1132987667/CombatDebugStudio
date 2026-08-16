@@ -2695,7 +2695,7 @@
     }
   },
   {
-    "id": "guardian_gold",
+    "id": "yaotu_gold",
     "name": "金护法",
     "level": 10,
     "stats": {
@@ -2714,7 +2714,7 @@
     }
   },
   {
-    "id": "guardian_wood",
+    "id": "yaotu_wood",
     "name": "木护法",
     "level": 10,
     "stats": {
@@ -2731,7 +2731,7 @@
     }
   },
   {
-    "id": "guardian_water",
+    "id": "yaotu_water",
     "name": "水护法",
     "level": 10,
     "stats": {
@@ -2748,7 +2748,7 @@
     }
   },
   {
-    "id": "guardian_fire",
+    "id": "yaotu_fire",
     "name": "火护法",
     "level": 10,
     "stats": {
@@ -2761,16 +2761,16 @@
     "skills": {
       "small": [],
       "passive": [
-        "guardian_revenge_rage",
-        "guardian_combo_heart",
-        "guardian_energy_overload",
-        "guardian_swift_wind"
+        "yaotu_revenge_rage",
+        "yaotu_combo_heart",
+        "yaotu_energy_overload",
+        "yaotu_swift_wind"
       ],
       "ultimate": []
     }
   },
   {
-    "id": "guardian_earth",
+    "id": "yaotu_earth",
     "name": "土护法",
     "level": 10,
     "stats": {

@@ -6,7 +6,6 @@
  *
  * NOTE: 与 PRD 的差异（适配实际运行时状态）：
  * - current_scene / unlocked_scenes 用场景 id（string）而非数字（configs/xiyou/scenes.json 为 scene_1_1 结构）；
- * - current_difficulty 用 'easy'（实际系统难度枚举），兼容旧档 'simple'（迁移时归一）；
  * - inventory 四类统一 Record<id,count>（PRD 的 equipments: string[] 改为 Record，避免数量丢失）。
  */
 
@@ -19,8 +18,6 @@ export const SAVE_MAIN_KEY = 'save:main'
 export const SAVE_AUTO_KEY = 'save:auto'
 export const LOCAL_MAIN_KEY = 'xiyou_save'
 export const LOCAL_AUTO_KEY = 'xiyou_save_auto'
-
-export type SaveDifficulty = 'easy' | 'normal' | 'hard'
 
 export interface SaveMeta {
   version: string
@@ -44,9 +41,7 @@ export interface SavePlayerState {
 export interface SaveProgressState {
   max_scene: number
   current_scene: string
-  current_difficulty: SaveDifficulty
   unlocked_scenes: string[]
-  unlocked_difficulties: Record<string, string[]>
 }
 
 export interface SaveInventoryState {
@@ -129,9 +124,7 @@ export function createInitialGameState(): SaveData {
     progress: {
       max_scene: 1,
       current_scene: '',
-      current_difficulty: 'easy',
       unlocked_scenes: [],
-      unlocked_difficulties: {},
     },
     inventory: {
       materials: {},

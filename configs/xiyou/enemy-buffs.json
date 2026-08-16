@@ -339,7 +339,7 @@
     "description": "被吸取25点能量。"
   },
   {
-    "id": "buff_boss_guardian_phase2_atk",
+    "id": "buff_boss_yaotu_phase2_atk",
     "name": "狂暴觉醒",
     "polarity": "positive",
     "category": "modifier",
@@ -370,7 +370,7 @@
       "attack": { "value": 35, "type": "PERCENTAGE" },
       "speed": { "value": 15, "type": "PERCENTAGE" }
     },
-    "description": "大头目阶段转换：攻击+35%，速度+15%。"
+    "description": "妖魁阶段转换：攻击+35%，速度+15%。"
   },
   {
     "id": "buff_boss_major_phase3_berserk",
@@ -388,7 +388,7 @@
       "defense": { "value": -15, "type": "PERCENTAGE" },
       "speed": { "value": 20, "type": "PERCENTAGE" }
     },
-    "description": "大头目狂暴状态：攻击+50%，防御-15%，速度+20%。"
+    "description": "妖魁狂暴状态：攻击+50%，防御-15%，速度+20%。"
   },
   {
     "id": "buff_boss_achieve_phase2_atk",

@@ -38,7 +38,7 @@ export interface Enemy {
   skills: EnemySkills
   /** 是否完全不会攻击（木人/训练靶子；AI 回合直接跳过行动） */
   noAttack?: boolean
-  /** 词缀 ID 列表（引用 affixes 表，精英/首领敌人附加的属性修正标签） */
+  /** 词缀 ID 列表（引用 affixes 表，敌人附加的属性修正标签） */
   affixes?: string[]
   /** 词缀池（决定该敌人可获得词缀的档位与数量，「随机词缀」按此抽取） */
   affixPool?: EnemyAffixPool

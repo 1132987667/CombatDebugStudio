@@ -29,11 +29,11 @@ import enemyBuffsData from '@configs/xiyou/enemy-buffs.json'
 import xiyouScenesData from '@configs/xiyou/scenes.json'
 import lineupsDataRaw from '@configs/lineups/lineups.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
-import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
+import yaotuPassiveSkillsData from '@configs/skills/skill_passive_yaotu.json'
 import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import skillsData from '@configs/skills/skills.json'
 import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
-import hiddenBossSkillsData from '@configs/skills/skill_hidden_boss.json'
+import hiddenBossSkillsData from '@configs/skills/skill_yaozun.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 import affixLibraryDataRaw from '@configs/affixes/affixes.json'
 
@@ -112,8 +112,8 @@ function bossToEnemy(b: BossRow): Enemy | null {
   }
 }
 
-// NOTE: 旧敌人体系（enemy_001 系 / guardian_* 五行护法）归档于 enemies-old.json，
-//       seed 的 deriveActors 依赖 guardian_* 派生 actors、lineups 引用旧敌人 id，故兜底数据源一并加载。
+// NOTE: 旧敌人体系（enemy_001 系 / yaotu_* 五行护法）归档于 enemies-old.json，
+//       seed 的 deriveActors 依赖 yaotu_* 派生 actors、lineups 引用旧敌人 id，故兜底数据源一并加载。
 // NOTE: 5 大场景 BOSS 定义收敛到 bosses.json（权威），此处并入供封神榜敌人表/健康检查一致性。
 const enemies = [
   ...(enemiesDataRaw as unknown as RawEnemyEntry[]).map((e) => normalizeEnemy(e, skillTypeById)),
@@ -126,7 +126,7 @@ const enemies = [
 const skills = [
   ...skillsData,
   ...passiveSkillsData,
-  ...guardianPassiveSkillsData,
+  ...yaotuPassiveSkillsData,
   ...passiveTestSkillsData,
   ...(playerXiyouSkillsData as SkillConfig[]),
   ...(hiddenBossSkillsData as SkillConfig[]),
@@ -154,7 +154,7 @@ export class ConfigDataSource implements IDataSource {
 
   getScenes(): SceneData[] {
     // NOTE: 场景数据已合并至 xiyou/scenes.json（L4 合并 scenes.json 与 xiyou/scenes.json）：
-    //       以西游关卡为唯一权威。新结构为 25 关平铺（enemies + guardian + 单值 difficulty），
+    //       以西游关卡为唯一权威。新结构为 25 关平铺（enemies + yaotu），
     //       SceneData 已对齐该结构，此处直接透传。
     return xiyouScenesData as unknown as SceneData[]
   }

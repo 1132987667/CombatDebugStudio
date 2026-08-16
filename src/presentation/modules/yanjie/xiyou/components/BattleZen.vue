@@ -33,6 +33,25 @@
               <span class="xy-drop-name">{{ scene.guardian.name }}</span>
               <span class="xy-guard-tag">守护</span>
             </span>
+            <span class="xy-drop-items">
+              <span v-for="d in dropsForEnemy(scene.guardian.name)" :key="d.itemId" class="xy-drop-chip">
+                <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
+                    }}</template></span>
+                <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
+              </span>
+            </span>
+          </div>
+          <div v-if="scene.drops?.materials?.length" class="xy-drop-row xy-drop-row--materials" role="listitem">
+            <span class="xy-drop-ename">
+              <span class="xy-dot xy-dot--materials"></span>
+              <span class="xy-drop-name">关卡必掉</span>
+            </span>
+            <span class="xy-drop-items">
+              <span v-for="m in scene.drops.materials" :key="m" class="xy-drop-chip">
+                <span class="xy-drop-chip-name">{{ itemName(m) }}</span>
+                <span class="xy-pct xy-pct--main">必掉</span>
+              </span>
+            </span>
           </div>
         </div>
       </div>
@@ -46,47 +65,17 @@
           :is-enemy="true" :turn-tick="store.currentTurn" @click="selectCharacter(c.id)" />
       </div>
 
-      <span class="xy-vs" aria-hidden="true">斗</span>
+      <div class="xy-vs">
+        <span class="xy-vs-mark" aria-hidden="true">斗</span>
+        <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`"
+          @click="cycleSpeed">{{ store.battleSpeed }}x</button>
+      </div>
 
       <div class="xy-vitals-row xy-vitals-row--player" role="list" aria-label="我方阵容">
         <ParticipantCard v-for="c in store.allyTeam" :key="c.id" :ref="(el) => handleCardRef(c.id, el)" :participant="c"
           :is-active="isCurrentActor(c.id)" :is-selected="store.selectedCharacterId === c.id" :is-enemy="false"
           :turn-tick="store.currentTurn" @click="selectCharacter(c.id)" />
       </div>
-    </div>
-
-    <!-- 战况状态行：回合 / 行动顺序 / 生效状态 -->
-    <div class="xy-battle-status">
-      <div class="xy-battle-status-row">
-        <span class="xy-battle-round">第 {{ store.currentTurn }} 回合</span>
-        <span class="xy-chip" :class="store.autoPlayMode ? 'xy-chip--gold' : 'xy-chip--muted'">
-          {{ store.autoPlayMode ? '自动战斗 · 已开启' : '自动战斗 · 待命' }}
-        </span>
-      </div>
-      <div class="xy-battle-order" role="img" aria-label="行动顺序">
-        <span class="xy-order-tag xy-order-tag--player">我方先锋 {{ leadPlayer?.name ?? '—' }} · 速 {{
-          leadPlayer?.getAttribute(ATTRIBUTE_CODE.speed) ?? 0 }}</span>
-        <span class="xy-order-bar"><span class="xy-order-bar-fill" :style="orderFillStyle"></span></span>
-        <span class="xy-order-tag xy-order-tag--enemy">敌方先锋 {{ leadEnemy?.name ?? '—' }} · 速 {{
-          leadEnemy?.getAttribute(ATTRIBUTE_CODE.speed) ?? 0 }}</span>
-      </div>
-      <div class="xy-battle-buffs">
-        <span v-for="b in battleBuffs" :key="b.name" class="xy-buff-tag" :class="`xy-buff-tag--${b.kind}`">
-          {{ b.name }}
-        </span>
-      </div>
-    </div>
-
-    <!-- 中部：技能灵台 -->
-    <div class="xy-battle-zen-row">
-      <SkillAltar />
-      <button type="button" class="xy-battle-pack xy-ink-hover" aria-label="打开行囊" @click="quickOpen = true">
-        <svg viewBox="0 0 24 24" class="xy-battle-pack-icon" aria-hidden="true">
-          <path d="M5 8h14v11H5zM5 8c0-2.2 1.8-4 4-4h6c2.2 0 4 1.8 4 4M9 12h6" fill="none" stroke="currentColor"
-            stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span class="xy-battle-pack-label">行囊</span>
-      </button>
     </div>
 
     <!-- 战斗快捷栏浮层 -->
@@ -101,7 +90,6 @@
 </template>
 
 <script setup lang="ts">
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ActionTypes, ActionResultType, ParticipantSide } from '@/domain/battle/type/types'
 import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
 import type { BattleService } from '@/application/facade/BattleFacade'
@@ -114,7 +102,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { itemName } from '../caveLogic'
 import { PLAYER_ID } from '@/shared/constants/player'
 import {
@@ -129,7 +117,6 @@ import { markSceneCleared } from '../xiyouData'
 import { saveManager } from '../save-bridge'
 import BattleLog from '@/presentation/modules/huanling/views/BattleLog.vue'
 import QuickSlotBar from './QuickSlotBar.vue'
-import SkillAltar from './SkillAltar.vue'
 
 const props = defineProps<{ scene: XiyouScene }>()
 
@@ -154,6 +141,15 @@ const {
 } = useBattleAnimation()
 
 watch(() => store.battleSpeed, (v) => v && setBattleSpeed(v), { immediate: true })
+
+/** 战斗倍速档位（对齐调试台 speed 选项） */
+const BATTLE_SPEEDS = [1, 2, 4, 5] as const
+
+function cycleSpeed(): void {
+  const idx = BATTLE_SPEEDS.indexOf(store.battleSpeed as 1 | 2 | 4 | 5)
+  const next = BATTLE_SPEEDS[(idx < 0 ? 0 : idx + 1) % BATTLE_SPEEDS.length]
+  store.setBattleSpeed(next)
+}
 
 function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantCard> | null | unknown): void {
   const card = el as InstanceType<typeof ParticipantCard> | null
@@ -230,31 +226,6 @@ watch(store.animationState, (state) => {
 }, { deep: true })
 
 // ════════════ 数据派生 ════════════
-const leadPlayer = computed(() => [...store.allyTeam].sort((a, b) => b.getAttribute(ATTRIBUTE_CODE.speed) - a.getAttribute(ATTRIBUTE_CODE.speed))[0])
-const leadEnemy = computed(() => [...store.enemyTeam].sort((a, b) => b.getAttribute(ATTRIBUTE_CODE.speed) - a.getAttribute(ATTRIBUTE_CODE.speed))[0])
-
-const orderFillStyle = computed(() => {
-  const max = Math.max(leadPlayer.value?.getAttribute(ATTRIBUTE_CODE.speed) ?? 0, leadEnemy.value?.getAttribute(ATTRIBUTE_CODE.speed) ?? 0, 1)
-  const pct = Math.round((leadPlayer.value?.getAttribute(ATTRIBUTE_CODE.speed) ?? 0) / max * 82)
-  return { width: pct + '%' }
-})
-
-/** 生效状态（由投影快照 buffs 派生，展示中文名；无 buff 时提示空，不展示未生效的静态文案） */
-const battleBuffs = computed(() => {
-  const list: Array<{ name: string; kind: 'atk' | 'spd' | 'debuff' }> = []
-  for (const p of [...store.allyTeam, ...store.enemyTeam]) {
-    const buffs = store.participants.get(p.id)?.buffs ?? []
-    for (const b of buffs.slice(0, 2)) {
-      const i = list.length
-      list.push({ name: `${p.name} · ${b.name}`, kind: b.isNegative ? 'debuff' : i % 2 ? 'spd' : 'atk' })
-    }
-  }
-  if (!list.length) {
-    list.push({ name: '当前无生效状态', kind: 'debuff' })
-  }
-  return list.slice(0, 6)
-})
-
 function isCurrentActor(id: string): boolean {
   return store.currentActorId === id
 }
@@ -473,6 +444,10 @@ onUnmounted(() => {
   &--guardian {
     background: var(--xy-gold);
   }
+
+  &--materials {
+    background: var(--xy-jade);
+  }
 }
 
 .xy-drop-items {
@@ -529,48 +504,6 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 技能灵台 + 行囊按钮同行 */
-.xy-battle-zen-row {
-  display: flex;
-  align-items: stretch;
-  gap: var(--space-3);
-
-  :deep(.xy-altar) {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.xy-battle-pack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  width: 64px;
-  flex-shrink: 0;
-  padding: var(--space-2);
-  margin-bottom: var(--space-4);
-  border: 1px solid var(--xy-ink-line);
-  border-radius: var(--radius-sm);
-  background: var(--xy-paper-warm);
-  color: var(--xy-ink-2);
-  cursor: pointer;
-  font-family: inherit;
-
-  &:hover {
-    border-color: var(--xy-gold);
-    color: var(--xy-gold);
-  }
-}
-
-.xy-battle-pack-icon {
-  width: 22px;
-  height: 22px;
-}
-
-.xy-battle-pack-label {}
-
 /* 4v4 双行阵容：敌方一行在上、我方一行在下（ParticipantCard 演武台同款） */
 .xy-vitals {
   flex-shrink: 0;
@@ -588,96 +521,33 @@ onUnmounted(() => {
 }
 
 .xy-vs {
-  align-self: center;
-
-  font-size: var(--font-size-lg);
-  letter-spacing: 4px;
-  color: var(--xy-seal);
-  line-height: 1;
-}
-
-.xy-battle-status {
-  flex-shrink: 0;
-  padding: var(--space-3) 0;
-  margin-bottom: var(--space-3);
-  border-top: 1px dashed var(--xy-ink-line);
-  border-bottom: 1px dashed var(--xy-ink-line);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-}
-
-.xy-battle-status-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.xy-battle-round {
-
-  font-size: var(--font-size-lg);
-  letter-spacing: 3px;
-  color: var(--xy-seal);
-}
-
-.xy-battle-order {
-  display: flex;
   align-items: center;
   gap: var(--space-2);
-}
+  align-self: center;
 
-.xy-order-tag {
-  flex-shrink: 0;
-  white-space: nowrap;
-
-  &--player {
-    color: var(--xy-jade);
-  }
-
-  &--enemy {
+  .xy-vs-mark {
+    font-size: var(--font-size-lg);
+    letter-spacing: 4px;
     color: var(--xy-seal);
-  }
-}
-
-.xy-order-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--color-bg-secondary);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.xy-order-bar-fill {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, var(--xy-jade), var(--color-skill-active));
-  border-radius: 3px;
-}
-
-.xy-battle-buffs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-}
-
-.xy-buff-tag {
-  padding: 1px var(--space-2);
-  border: 1px solid var(--xy-ink-line);
-  border-radius: var(--radius-full);
-
-  &--atk {
-    color: var(--color-skill-active);
-    border-color: rgba(var(--rgb-skill-active), var(--alpha-border));
+    line-height: 1;
   }
 
-  &--spd {
-    color: var(--xy-jade);
-    border-color: rgba(var(--rgb-success), var(--alpha-border));
-  }
+  .xy-vs-speed {
+    padding: 2px 10px;
+    border: 1px solid var(--xy-ink-line);
+    border-radius: var(--radius-sm);
+    background: var(--xy-paper-warm);
+    color: var(--xy-ink-2);
+    font-family: var(--font-family-mono);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
 
-  &--debuff {
-    color: var(--color-debuff);
-    border-color: rgba(var(--rgb-debuff), var(--alpha-border));
+    &:hover {
+      border-color: var(--xy-gold);
+      color: var(--xy-gold);
+    }
   }
 }
 </style>

@@ -1140,7 +1140,7 @@
     "drops": {
       "materials": [
         "mat_xiongpi",
-        "mat_duye",
+        "mat_bizhanglingye",
         "mat_hantan",
         "mat_lupi",
         "mat_xuanzhi"
@@ -1206,7 +1206,7 @@
       "materials": [
         "mat_xiongpi",
         "mat_hupi",
-        "mat_duye",
+        "mat_bizhanglingye",
         "mat_lupi",
         "mat_xuanzhi"
       ],
@@ -1270,7 +1270,7 @@
     "drops": {
       "materials": [
         "mat_xiongpi",
-        "mat_duye",
+        "mat_bizhanglingye",
         "mat_hantan",
         "mat_lupi",
         "mat_xuanzhi"

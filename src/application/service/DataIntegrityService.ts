@@ -30,13 +30,19 @@ export interface DeleteBlock {
   blockers: DeleteBlocker[]
 }
 
+/** 健康检查问题类别：integrity=断裂/非法引用，duplicate_name=命名重复，duplicate_ref=字段内重复引用 */
+export type HealthCheckKind = 'integrity' | 'duplicate_name' | 'duplicate_ref'
+
 export interface HealthCheckIssue {
+  kind: HealthCheckKind
   sourceTable: FengshenTableName
   sourceId: string
   field: string
   missingId: string
   /** 权威源：封神榜表名 / attributes / schools / slot / valueRange 等外部权威 */
   targetTable: string
+  /** 人类可读补充说明（如命名重复列出的全部冲突 id） */
+  detail?: string
 }
 
 export interface HealthCheckReport {
@@ -141,6 +147,7 @@ export class DataIntegrityService {
         for (const refId of refIds) {
           if (!(await this.existsIn(rule.targetTables, refId))) {
             issues.push({
+              kind: 'integrity',
               sourceTable: rule.sourceTable,
               sourceId: entity.id,
               field: rule.path,
@@ -158,7 +165,7 @@ export class DataIntegrityService {
     for (const entity of eqAffixes) {
       checkedEntities++
       for (const issue of this.equipmentAffixIssues(entity, schoolNames)) {
-        issues.push({ sourceTable: 'equipment_affixes', sourceId: entity.id, ...issue })
+        issues.push({ kind: 'integrity', sourceTable: 'equipment_affixes', sourceId: entity.id, ...issue })
       }
     }
 
@@ -169,6 +176,7 @@ export class DataIntegrityService {
       checkedEntities++
       for (const message of this.expGoldIssues(entity)) {
         issues.push({
+          kind: 'integrity',
           sourceTable: 'params',
           sourceId: entity.id,
           field: 'data',
@@ -178,7 +186,80 @@ export class DataIntegrityService {
       }
     }
 
+    // 命名重复（表内 / items×equipment 跨表）：名称 → 组内去重 id，不同 id 数 >1 即重复
+    checkedEntities += await this.scanNameDuplicates(issues)
+
+    // 字段内重复引用：数组路径（skillIds / drops[].itemId / steps[].buffId 等）同一 id 出现多次
+    checkedEntities += await this.scanDuplicateRefs(issues)
+
     return { scannedRules: REFERENCE_RULES.length, checkedEntities, issues }
+  }
+
+  /**
+   * 命名重复扫描：收集 items + equipment 两表的 (id, name)，按 name 分组、组内按 id 去重，
+   * 去重后仍多出 1 个不同 id 即报「同名不同 id」。
+   * NOTE: 派生关系（materials⊂items / gears⊂equipment）与装备注册（装备同 id 同时在 items 与 equipment）
+   *       天然同 id 同名，经 id 去重后不计为重复；只有真正「不同 id 共用一名」才报。
+   */
+  private async scanNameDuplicates(issues: HealthCheckIssue[]): Promise<number> {
+    const byName = new Map<string, Map<string, FengshenTableName>>()
+    const collect = (table: FengshenTableName, entities: Array<Record<string, unknown> & { id: string }>) => {
+      for (const e of entities) {
+        const name = typeof e.name === 'string' ? e.name.trim() : ''
+        if (!name) continue
+        if (!byName.has(name)) byName.set(name, new Map())
+        byName.get(name)!.set(e.id, table)
+      }
+    }
+    const items = await this.listAll('items')
+    const equipment = await this.listAll('equipment')
+    collect('items', items)
+    collect('equipment', equipment)
+
+    for (const [name, idMap] of byName) {
+      if (idMap.size < 2) continue
+      const entries = Array.from(idMap.entries())
+      issues.push({
+        kind: 'duplicate_name',
+        sourceTable: 'items',
+        sourceId: entries[0][0],
+        field: 'name',
+        missingId: name,
+        targetTable: 'items/equipment',
+        detail: `名称「${name}」被多个不同 id 共用：${entries.map(([id, t]) => `${t}:${id}`).join(', ')}`,
+      })
+    }
+    return items.length + equipment.length
+  }
+
+  /** 字段内重复引用扫描：REFERENCE_RULES 各路径下，同一实体对某 id 引用多次（数组字段重复项） */
+  private async scanDuplicateRefs(issues: HealthCheckIssue[]): Promise<number> {
+    let checked = 0
+    for (const rule of REFERENCE_RULES) {
+      const entities = await this.listAll(rule.sourceTable)
+      for (const entity of entities) {
+        checked++
+        const refIds = extractReferenceIds(entity, rule.path)
+        if (refIds.length < 2) continue
+        const seen = new Set<string>()
+        for (const refId of refIds) {
+          if (seen.has(refId)) {
+            issues.push({
+              kind: 'duplicate_ref',
+              sourceTable: rule.sourceTable,
+              sourceId: entity.id,
+              field: rule.path,
+              missingId: refId,
+              targetTable: rule.targetTables[0],
+              detail: `字段「${rule.path}」内重复引用 ${refId}`,
+            })
+          } else {
+            seen.add(refId)
+          }
+        }
+      }
+    }
+    return checked
   }
 
   /** 反向引用：哪些表的哪些实体引用了指定 id（供详情面板「被引用」视图） */

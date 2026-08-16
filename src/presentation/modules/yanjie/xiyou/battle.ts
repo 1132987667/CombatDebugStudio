@@ -6,6 +6,7 @@
 
 import enemiesJson from '@configs/enemies/enemies.json'
 import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
+import bossesJson from '@configs/xiyou/bosses.json'
 import { PLAYER_ID } from '@/shared/constants/player'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
@@ -15,27 +16,27 @@ import type { EquipmentData } from '@/domain/fengshen/types'
 import { equippedSkills, pureSchoolBonus, schools, skillNodeMap } from './xiyouData'
 import type { ProtagonistSnapshot, XiyouCombatant, XiyouDifficulty, XiyouScene } from './types'
 
-/** 我方 4 人阵容（主角 + 3 上阵伙伴，对齐 mate.json active） */
+/** 我方初始阵容：仅主角一人（孙小圣/八戒/悟净等伙伴在 mate.json 队友表，初始不上阵） */
 export const playerParty: XiyouCombatant[] = [
   { id: PLAYER_ID, name: '降妖者', level: 5, hp: 350, maxHp: 420, energy: 120, maxEnergy: 150, speed: 15, attack: 18, defense: 8, side: 'player' },
-  { id: 'sun', name: '孙小圣', level: 5, hp: 380, maxHp: 430, energy: 110, maxEnergy: 140, speed: 18, attack: 22, defense: 6, side: 'player' },
-  { id: 'bajie', name: '八戒', level: 4, hp: 520, maxHp: 560, energy: 70, maxEnergy: 120, speed: 9, attack: 15, defense: 14, side: 'player' },
-  { id: 'wujing', name: '悟净', level: 3, hp: 300, maxHp: 360, energy: 130, maxEnergy: 160, speed: 11, attack: 13, defense: 10, side: 'player' },
 ]
 
 /**
  * 由场景敌人构造敌方阵容（至多 4 个，R22：属性/掉落/技能来自 configs/enemies/enemies.json 按 id 关联）
+ * 头目（guardian）参战：scenes.json guardian.id 关联 enemies.json 完整定义，追加在普通敌人之后。
  * 难度倍率 R19：简单 1 / 普通 1.5 / 困难 2，作用于主要数值属性。
  * 技能按 enemy-skills.json 的 skillType 分桶（与 ConfigDataSource.normalizeEnemy 同口径），
  * passiveSkillIds 归被动、skillType=ultimate 归大招、其余归小技能。
  */
 export function buildEnemyTeam(scene: XiyouScene): BattleEntity[] {
   const mult = DIFFICULTY_MULT[scene.difficulty] ?? 1
-  const rows = scene.enemies
-    .map((e) => (e.id ? enemyById.get(e.id) : undefined))
+  const rowOf = (id?: string): EnemyRow | null => (id ? (enemyById.get(id) ?? null) : null)
+  const rows: EnemyRow[] = scene.enemies
+    .map((e) => rowOf(e.id))
     .filter((r): r is EnemyRow => !!r)
-    .slice(0, 4)
-  return rows.map((row, i) => {
+  const guardianRow = scene.guardian ? rowOf(scene.guardian.id) : null
+  if (guardianRow) rows.push(guardianRow)
+  return rows.slice(0, 4).map((row, i) => {
     const st = row.stats ?? {}
     const s = (v?: number): number => Math.round((v ?? 0) * mult)
     const enemy: Enemy = {
@@ -91,6 +92,7 @@ interface EnemyRow {
   name: string
   level: number
   type?: string
+  faction?: string
   stats?: Partial<Record<ATTRIBUTE_CODE, number>>
   drops?: EnemyDropRow[]
   gold?: [number, number]
@@ -98,11 +100,79 @@ interface EnemyRow {
   skillIds?: string[]
   passiveSkillIds?: string[]
   affixPool?: EnemyAffixPool
+  sceneId?: string
+  description?: string
+  phases?: Array<{ threshold: number; trigger: string; buffId?: string }>
 }
 
-/** 敌人配置索引（id → 行；id 与 scenes.json 敌人 id 一一对应，封神榜健康检查保证零断裂） */
+/** 敌人配置索引（id → 行；id 与 scenes.json 敌人 id 一一对应，封神榜健康检查保证零断裂）
+ * NOTE: 5 大场景 BOSS（boss_major_*）定义收敛到 bosses.json（权威），运行时经 bossToRow 转换合并进索引。 */
 const enemyRows = enemiesJson as unknown as EnemyRow[]
 const enemyById = new Map<string, EnemyRow>(enemyRows.map((r) => [r.id, r]))
+
+/** bosses.json 重型 BOSS 条目（设计稿结构：内联文本技能 / 对象掉落 / 缺角色字段） */
+interface BossRow {
+  id?: string
+  name?: string
+  level?: number
+  type?: string
+  enemyType?: string
+  faction?: string
+  stats?: Partial<Record<ATTRIBUTE_CODE, number>>
+  skills?: Array<{ id?: string }>
+  passive?: { id?: string }
+  ultimate?: { id?: string }
+  affixPool?: EnemyAffixPool
+  drops?: { guaranteed?: string[]; rare?: string[]; gold?: [number, number]; exp?: [number, number] }
+  phases?: Array<{ threshold: number; trigger: string }>
+  unlockCondition?: { sceneId?: string }
+  description?: string
+  narrative?: unknown
+}
+
+/** 把 bosses.json 的 major BOSS 条目转为引擎 EnemyRow（数值以 bosses.json 为准；技能引用 enemy-skills.json 现有可执行定义） */
+function bossToRow(b: BossRow): EnemyRow | null {
+  if (!b.id || b.type !== 'major') return null
+  const name = b.id.replace('boss_major_', '')
+  const guaranteed = b.drops?.guaranteed ?? []
+  const rare = b.drops?.rare ?? []
+  return {
+    id: b.id,
+    name: b.name ?? b.id,
+    level: b.level ?? 1,
+    type: b.enemyType ?? 'old_blood',
+    faction: b.faction,
+    role: 'minor_boss',
+    stats: {
+      ...(b.stats ?? {}),
+      hit: b.stats?.hit ?? 30,
+      dodge: b.stats?.dodge ?? 15,
+      maxEnergy: b.stats?.maxEnergy ?? 150,
+      energyInit: b.stats?.energyInit ?? 25,
+    },
+    skillIds: [`skill_boss_major_${name}_s1`, `skill_boss_major_${name}_s2`, `skill_boss_major_${name}_ult`],
+    passiveSkillIds: [`passive_boss_major_${name}_p1`],
+    affixPool: { buffTier: b.affixPool?.buffTier ?? 1, count: 1 },
+    drops: [
+      ...guaranteed.map((id) => ({ itemId: id, probability: 1 })),
+      ...rare.map((id) => ({ itemId: id, probability: 0.3 })),
+    ],
+    gold: b.drops?.gold,
+    exp: b.drops?.exp,
+    sceneId: b.unlockCondition?.sceneId,
+    description: b.description,
+    phases: (b.phases ?? []).map((p, i) => ({
+      ...p,
+      buffId: i === 0 ? 'buff_boss_major_phase2_atk' : 'buff_boss_major_phase3_berserk',
+    })),
+  }
+}
+
+// NOTE: 收敛 —— 5 大场景 BOSS 定义来自 bosses.json（权威），覆盖 enemies.json 同名索引（该处已删除）
+for (const b of bossesJson as unknown as BossRow[]) {
+  const row = bossToRow(b)
+  if (row) enemyById.set(row.id, row)
+}
 
 /** 敌人技能 → 类型索引（enemy-skills.json skillType；与 ConfigDataSource.normalizeEnemy 同口径） */
 const enemySkillTypeById = new Map<string, string>(
@@ -132,6 +202,11 @@ export function dropsForScene(scene: XiyouScene): EnemyDrop[] {
     const row = e.id ? enemyById.get(e.id) : undefined
     if (row) out.push(...dropsFromRow(row))
   }
+  // 头目掉落并入（guardian 已参战，胜利结算应含其掉落）
+  if (scene.guardian) {
+    const row = enemyById.get(scene.guardian.id)
+    if (row) out.push(...dropsFromRow(row))
+  }
   // NOTE: 场景掉落表 materials（scenes.json drops.materials）为关卡必掉材料，补并入包；
   //       否则该字段不参与任何结算，章节材料（beike/songmu 等）永远无法获得
   for (const m of scene.drops?.materials ?? []) {
@@ -152,6 +227,15 @@ export function dropsForEnemy(name: string): EnemyDrop[] {
   return row ? dropsFromRow(row) : []
 }
 
+/** 单个敌人金币/经验奖励区间（按敌人 id，供单敌击杀结算；缺省无奖励） */
+export function rewardForEnemyById(enemyId: string): { gold: [number, number]; exp: [number, number] } {
+  const row = enemyById.get(enemyId)
+  return {
+    gold: row?.gold ?? [0, 0],
+    exp: row?.exp ?? [0, 0],
+  }
+}
+
 /** 场景金币/经验奖励区间（per-enemy gold/exp 区间加和；供战前预览与结算入账） */
 export function rewardForScene(scene: XiyouScene): { gold: [number, number]; exp: [number, number] } {
   let g0 = 0
@@ -160,6 +244,18 @@ export function rewardForScene(scene: XiyouScene): { gold: [number, number]; exp
   let e1 = 0
   for (const en of scene.enemies) {
     const row = en.id ? enemyById.get(en.id) : undefined
+    if (row?.gold) {
+      g0 += row.gold[0]
+      g1 += row.gold[1]
+    }
+    if (row?.exp) {
+      e0 += row.exp[0]
+      e1 += row.exp[1]
+    }
+  }
+  // 头目奖励并入（guardian 已参战，结算与预览一致）
+  if (scene.guardian) {
+    const row = enemyById.get(scene.guardian.id)
     if (row?.gold) {
       g0 += row.gold[0]
       g1 += row.gold[1]

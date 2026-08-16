@@ -71,7 +71,23 @@ import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 //       three_kings→major_boss（妖王）、achievement_boss/final_boss→hidden_boss（隐藏妖王）、新增 elite（精英，暂未落数据）。
 //       roleMultiplier 同步归并（取各归并源代表档原值：major_boss=3.0 大头目、hidden_boss=5.0 隐藏BOSS）。
 //       enemies.json 数据已归并，升版强制已 seed 的浏览器重导。
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v20'
+// NOTE: v23 — 守护者品阶归一：25 个关卡守护者敌人 role 由 guardian（头目）改为 elite（精英），
+//       （guardian 档暂留 roleMultiplier 无数据占用；elite 倍率 1.15 已在 v20 定义）。升版强制已 seed 的浏览器重导。
+// NOTE: v24 — 品阶档 minor_boss（大头目）废弃：5 个大头目敌人 role 由 minor_boss 改为 guardian（头目），
+//       连带 id/技能/buff 编码 boss_minor_* → boss_guardian_* 改名；guardian 保持 1.2。升版强制已 seed 的浏览器重导。
+// NOTE: v25 — 5 大场景 BOSS 收敛到 bosses.json（权威，运行时转换）并降档：boss_major_*（lv10/20/30/40/50 妖王）
+//       role 由 major_boss 改为 minor_boss（大头目），数值以 bosses.json 为准（血量大幅提升）；enemies.json 移除
+//       这 5 个 boss_major_* 定义；roleMultiplier/schema 恢复 minor_boss 档（2.0）。升版强制已 seed 的浏览器重导。
+// NOTE: v21 — 物品价值语义重构：items.json sellPrice → value（实际价值），坊市经济系数入 params 域
+//       （economy_ratios：购买 200% / 出售 56%），坊市商品按 itemId 关联物品由 价值×购买系数 派生价格。
+//       升版强制已 seed 的浏览器重导（items 表 value 字段 + params economy_ratios）。
+// NOTE: v22 — 炼丹图谱补全：cave.json alchemyRecipes 新增 元气丹/全属性丹药 丹方，速度丹药/洗髓丹
+//       产出数量定值（2/1）；AlchemyPanel 炼制按丹方 count 产出。升版重导 XIYOU cave 表。
+// NOTE: v25 — 修复 buff_thorns（荆棘/反伤）：effects 用了不存在的原子效果类型 "reflect"
+//       （AtomicEffectType 仅认 "thorns"，且无对应处理器），战斗触发时 BuffConfigResolver 抛
+//       「未知原子效果类型 reflect」。改为与 buff_metallization 一致的 TRIGGER + scriptId=reflect_damage
+//       （params.percent=0.1）。升版强制已 seed 的浏览器重导 buffs 表。
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v25'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -147,6 +163,8 @@ function buildParams(): BattleParamData[] {
     { id: 'min_damage', name: '最小伤害', value: 1, range: { min: 1, max: 9999 }, description: '战斗规则·单次攻击最低伤害（combat.minDamage）', updatedAt: nowIso() },
     { id: 'max_damage', name: '最大伤害', value: 9999, range: { min: 1, max: 99999 }, description: '战斗规则·单次攻击最高伤害（combat.maxDamage）', updatedAt: nowIso() },
     { id: 'max_turns', name: '最大回合数', value: 99, range: { min: 1, max: 999 }, description: '战斗规则·固定回合上限（turnSystem.maxTurns）', updatedAt: nowIso() },
+    // 坊市经济：物品实际价值 → 购买价 / 出售价 换算系数（百分比口径；200=价值×200%）
+    { id: 'economy_ratios', name: '坊市经济系数', description: '物品实际价值 → 坊市购买价 / 出售价换算（百分比；购买 200% 即价值×2.0，出售 56% 即价值×0.56）', data: { id: 'economy_ratios', buyPercent: 200, sellPercent: 56 }, updatedAt: nowIso() },
   ]
 }
 

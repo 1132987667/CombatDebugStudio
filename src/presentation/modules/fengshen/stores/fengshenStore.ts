@@ -9,6 +9,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
+import { seedFengshenData } from '@/infrastructure/adapters/storage/seed'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { BattleDataLoader } from '@/application/service/BattleDataLoader'
@@ -288,6 +290,25 @@ export const useFengshenStore = defineStore('fengshen', () => {
     logs.value = await api.listOperationLogs(200)
   }
 
+  /** 从 configs/ 项目文件强制重导全部封神榜数据（清空 IndexedDB → 重新 seed → 重载引擎数据源），丢弃手动修改 */
+  async function reloadFromProject(): Promise<void> {
+    loading.value = true
+    try {
+      for (const storeName of Object.values(FENGSHEN_STORE)) {
+        await persistentStorage.clear(storeName)
+      }
+      await seedFengshenData(persistentStorage)
+      await new BattleDataLoader(persistentStorage).reload()
+      invalidateOptions()
+      invalidateRefIndex()
+      await refreshVersion()
+      await refreshList()
+      useNotificationStore().toast('已从项目文件重载全部数据', 'info', 3500)
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     activeView,
     currentTable,
@@ -329,5 +350,6 @@ export const useFengshenStore = defineStore('fengshen', () => {
     batchUpdate,
     runHealth,
     loadLogs,
+    reloadFromProject,
   }
 })

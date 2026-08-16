@@ -9,7 +9,7 @@
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
-import type { LineupData, AffixData } from '@/domain/fengshen/types'
+import type { LineupData, AffixData, EconomyRatiosConfig } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import type { ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
@@ -31,4 +31,6 @@ export interface IDataSource {
   getExpTable(): ExpTableConfig | null
   getEnemyRewardTable(): EnemyRewardTableConfig | null
   getLevelDiffBonus(): LevelDiffBonusConfig | null
+  /** 坊市经济系数（params 域 economy_ratios；null 时消费方回退默认系数） */
+  getEconomyRatios(): EconomyRatiosConfig | null
 }

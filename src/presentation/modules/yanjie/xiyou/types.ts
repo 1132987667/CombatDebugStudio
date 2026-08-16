@@ -63,8 +63,7 @@ export interface XiyouCombatant {
 
 /**
  * 主角实时战斗快照（playerStore.player 派生）
- * NOTE: 战斗主角以此属性为权威（加点/丹药/等级变化反映到战斗），缺省回退 playerParty[0] 的演示值；
- *       伙伴仍取 playerParty 固定出场属性。
+ * NOTE: 战斗主角以此属性为权威（加点/丹药/等级变化反映到战斗），缺省回退 playerParty[0] 的演示值。
  */
 export type ProtagonistSnapshot = XiyouCombatant & {
   critRate: number
@@ -152,8 +151,8 @@ export interface XiyouScene {
   levelRange?: [number, number]
   desc: string
   enemies: Array<{ id?: string; name: string; level: number; type?: string }>
-  /** 守护者（本关精英 · configs/xiyou/scenes.json 内联） */
-  guardian?: { name: string; level: number } | null
+  /** 守护者（本关头目 · configs/xiyou/scenes.json 内联，id 关联 enemies.json 完整定义） */
+  guardian?: { id: string; name: string; level: number } | null
   /** 掉落配置（材料 / 金币区间 / 经验区间） */
   drops?: { materials?: string[]; gold?: [number, number]; exp?: [number, number] }
   /** 剧情钩子（configs/xiyou/scenes.json narrativeHook） */
@@ -193,18 +192,21 @@ export interface XiyouCatalogItem {
   name: string
   type: string
   rarity: number
-  /** 出售价（单位：金钱/铜钱）；>0 即可在坊市出售，缺省不可出售 */
-  sellPrice?: number
+  /** 实际价值（单位：铜钱口径）；>0 即可出售，出售价/坊市购买价由价值 × 全局系数派生 */
+  value?: number
   source?: string
   description?: string
   /** 使用效果（仅丹药/符箓/晶球类，来自 items.json effects） */
   effects?: ItemEffect[]
 }
 
-/** 坊市商品（商店子系统） */
+/** 坊市商品（商店子系统）。有 itemId 的商品价格 = 物品实际价值 × 购买系数（params 域 economy_ratios），
+ *  无 itemId（如引路香、跨货币单位商品）保留 price 手写兜底价 */
 export interface XiyouShopGood {
   name: string
   type: '杂货' | '材料' | '丹药' | '装备'
+  /** 关联物品（items.json 主键）；存在时价格由 价值×购买系数 派生，price 仅兜底 */
+  itemId?: string
   price: number
   unit: '铜钱' | '银两' | '灵石'
   stock: number

@@ -37,16 +37,26 @@ describe('物品索引与品质', () => {
 })
 
 describe('强化数值', () => {
-  it('成功率随等级递减，地板 50%', () => {
-    expect(enhanceSuccessRate(0)).toBe(100)
+  it('成功率分档制（P0 裁定）：+1~+5:80 / +6~+10:70 / +11~+15:60 / +16~+20:50', () => {
+    expect(enhanceSuccessRate(0)).toBe(80)
+    expect(enhanceSuccessRate(1)).toBe(80)
+    expect(enhanceSuccessRate(5)).toBe(80)
     expect(enhanceSuccessRate(6)).toBe(70)
-    expect(enhanceSuccessRate(10)).toBe(50)
+    expect(enhanceSuccessRate(10)).toBe(70)
+    expect(enhanceSuccessRate(11)).toBe(60)
+    expect(enhanceSuccessRate(15)).toBe(60)
+    expect(enhanceSuccessRate(16)).toBe(50)
     expect(enhanceSuccessRate(99)).toBe(50)
   })
 
-  it('金钱消耗随等级递增', () => {
-    expect(enhanceCost(0)).toBe(20)
-    expect(enhanceCost(6)).toBe(140)
+  it('金钱消耗按阶位单价 × (强化前等级+1)', () => {
+    expect(enhanceCost(0, 1)).toBe(20) // 凡品 0→1 花 20
+    expect(enhanceCost(6, 1)).toBe(140) // 凡品 6→7 花 20×7
+    expect(enhanceCost(0, 2)).toBe(50) // 玄品 0→1 花 50
+    expect(enhanceCost(0, 3)).toBe(100) // 地品
+    expect(enhanceCost(0, 4)).toBe(150) // 天品
+    expect(enhanceCost(0, 5)).toBe(200) // 仙品
+    expect(enhanceCost(19, 5)).toBe(4000) // 仙品 19→20 花 200×20
   })
 
   it('槽位 → 强化材料映射（六槽：weapon/armor/helmet/boots/charm/ring）', () => {

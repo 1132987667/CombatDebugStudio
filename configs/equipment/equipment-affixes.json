@@ -10,7 +10,7 @@
     },
     "applicableSlots": [
       "weapon",
-      "ring:戒指"
+      "ring"
     ],
     "weight": 100,
     "rarity": 1,
@@ -27,8 +27,8 @@
     },
     "applicableSlots": [
       "weapon",
-      "ring:戒指",
-      "helmet:冠冕"
+      "ring",
+      "helmet"
     ],
     "weight": 100,
     "rarity": 2,
@@ -44,7 +44,7 @@
       "max": 300
     },
     "applicableSlots": [
-      "charm:护符",
+      "charm",
       "armor"
     ],
     "weight": 80,
@@ -61,8 +61,8 @@
       "max": 12
     },
     "applicableSlots": [
-      "charm:护符",
-      "helmet:冠冕",
+      "charm",
+      "helmet",
       "armor"
     ],
     "weight": 80,
@@ -80,7 +80,7 @@
     },
     "applicableSlots": [
       "armor",
-      "helmet:头盔"
+      "helmet"
     ],
     "weight": 80,
     "rarity": 1,
@@ -96,7 +96,7 @@
       "max": 12
     },
     "applicableSlots": [
-      "helmet:头盔",
+      "helmet",
       "armor"
     ],
     "weight": 80,
@@ -113,7 +113,7 @@
       "max": 20
     },
     "applicableSlots": [
-      "boots:靴子",
+      "boots",
       "weapon:轻型"
     ],
     "weight": 80,
@@ -130,8 +130,8 @@
       "max": 12
     },
     "applicableSlots": [
-      "boots:靴子",
-      "helmet:头盔"
+      "boots",
+      "helmet"
     ],
     "weight": 80,
     "rarity": 2,
@@ -147,7 +147,7 @@
       "max": 8
     },
     "applicableSlots": [
-      "ring:戒指",
+      "ring",
       "weapon"
     ],
     "weight": 50,
@@ -164,7 +164,7 @@
       "max": 25
     },
     "applicableSlots": [
-      "ring:戒指",
+      "ring",
       "weapon:中型"
     ],
     "weight": 50,
@@ -181,7 +181,7 @@
       "max": 12
     },
     "applicableSlots": [
-      "ring:戒指"
+      "ring"
     ],
     "weight": 50,
     "rarity": 2,
@@ -198,7 +198,7 @@
     },
     "applicableSlots": [
       "armor:皮甲",
-      "boots:靴子"
+      "boots"
     ],
     "weight": 50,
     "rarity": 3,
@@ -214,7 +214,7 @@
       "max": 10
     },
     "applicableSlots": [
-      "helmet:头盔",
+      "helmet",
       "armor:铠甲"
     ],
     "weight": 50,
@@ -231,7 +231,7 @@
       "max": 20
     },
     "applicableSlots": [
-      "charm:护符",
+      "charm",
       "armor:木甲"
     ],
     "weight": 50,
@@ -248,7 +248,7 @@
       "max": 20
     },
     "applicableSlots": [
-      "ring:戒指",
+      "ring",
       "weapon"
     ],
     "weight": 10,
@@ -266,7 +266,7 @@
     },
     "applicableSlots": [
       "weapon:重型",
-      "helmet:冠冕"
+      "helmet"
     ],
     "weight": 10,
     "rarity": 3,
@@ -319,7 +319,7 @@
     },
     "applicableSlots": [
       "weapon:轻型",
-      "boots:靴子"
+      "boots"
     ],
     "school": "灵猴道",
     "weight": 30,
@@ -355,7 +355,7 @@
     },
     "applicableSlots": [
       "armor",
-      "charm:护符"
+      "charm"
     ],
     "school": "磐石道",
     "weight": 30,
@@ -373,8 +373,8 @@
     },
     "applicableSlots": [
       "armor:铠甲",
-      "charm:护符",
-      "helmet:冠冕"
+      "charm",
+      "helmet"
     ],
     "school": "磐石道",
     "weight": 30,
@@ -392,7 +392,7 @@
     },
     "applicableSlots": [
       "armor:铠甲",
-      "helmet:头盔"
+      "helmet"
     ],
     "school": "磐石道",
     "weight": 20,
@@ -410,9 +410,9 @@
     },
     "applicableSlots": [
       "armor",
-      "helmet:头盔",
-      "helmet:冠冕",
-      "charm:护符"
+      "helmet",
+      "helmet",
+      "charm"
     ],
     "weight": 50,
     "rarity": 3,
@@ -428,9 +428,9 @@
       "max": 20
     },
     "applicableSlots": [
-      "helmet:头盔",
-      "helmet:冠冕",
-      "charm:护符"
+      "helmet",
+      "helmet",
+      "charm"
     ],
     "weight": 40,
     "rarity": 3,
@@ -446,9 +446,9 @@
       "max": 10
     },
     "applicableSlots": [
-      "helmet:头盔",
-      "helmet:冠冕",
-      "charm:护符"
+      "helmet",
+      "helmet",
+      "charm"
     ],
     "weight": 40,
     "rarity": 2,
@@ -464,8 +464,8 @@
       "max": 20
     },
     "applicableSlots": [
-      "helmet:冠冕",
-      "charm:护符"
+      "helmet",
+      "charm"
     ],
     "weight": 30,
     "rarity": 3,
@@ -481,7 +481,7 @@
       "max": 12
     },
     "applicableSlots": [
-      "boots:靴子"
+      "boots"
     ],
     "weight": 60,
     "rarity": 2,
@@ -497,7 +497,7 @@
       "max": 120
     },
     "applicableSlots": [
-      "boots:靴子"
+      "boots"
     ],
     "weight": 60,
     "rarity": 1,
@@ -513,7 +513,7 @@
       "max": 10
     },
     "applicableSlots": [
-      "boots:靴子"
+      "boots"
     ],
     "weight": 60,
     "rarity": 2,

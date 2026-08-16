@@ -16,6 +16,7 @@
           <span class="xy-cave-card__side">丹方 Lv.{{ r.level }}</span>
         </span>
         <p class="xy-cave-card__desc xy-cave-card__key">{{ r.effect }}</p>
+        <span class="xy-cave-card__yield">产出 ×{{ Math.max(1, r.count ?? 1) }}</span>
         <span class="xy-cave-card__mats">
           <span
             v-for="m in materialsOf(r)"
@@ -117,20 +118,29 @@ function canCraft(r: XiyouRecipe): boolean {
   return mats.length > 0 && mats.every((m) => m.enough)
 }
 
-/** 炼制：1.5s 后结算（防连点 + 炉火动画） */
+/** 炼制：1.5s 后结算（防连点 + 炉火动画）。产出数量取丹方 count（至少 1 颗），材料不足/无产出定义不扣料 */
 function brew(): void {
   const r = selected.value
   if (!r || brewing.value) return
+  const outId = itemIdByName(r.name)
+  if (!outId) {
+    notification.toast(`炼制失败：未找到「${r.name}」的产出定义`, 'danger')
+    return
+  }
+  if (!canCraft(r)) {
+    notification.toast('材料不足，无法开炉', 'danger')
+    return
+  }
   brewing.value = true
   window.setTimeout(() => {
     for (const m of r.materials ?? []) pack.removeItem(m.itemId, m.count)
-    const outId = itemIdByName(r.name)
-    if (outId) pack.addItem(outId, 1)
+    const outCount = Math.max(1, r.count ?? 1)
+    pack.addItem(outId, outCount)
     rippling.value = true
     window.setTimeout(() => {
       rippling.value = false
     }, 700)
-    notification.toast(`炼制成功！获得「${r.name}」`, 'success')
+    notification.toast(`炼制成功！获得「${r.name}」×${outCount}`, 'success')
     brewing.value = false
   }, 1500)
 }

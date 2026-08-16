@@ -31,7 +31,7 @@ vi.mock('@/infrastructure/adapters/storage', () => ({ persistentStorage: __stora
 
 function makeGood(overrides: Partial<XiyouShopGood> = {}): XiyouShopGood {
   return {
-    name: '疗伤丹药',
+    name: '疗伤丹',
     type: '丹药',
     price: 50,
     unit: '铜钱',
@@ -222,15 +222,67 @@ describe('坊市购买', () => {
   })
 })
 
+describe('坊市经济（价值 × 全局系数）', () => {
+  it('有 itemId 的商品单价 = 实际价值 × 购买系数（默认 200%）；购买按派生价结算', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // pack.json 桃木 itemId=mat_taomu，value=8 → 8 × 200% = 16（配置价 8 被忽略）
+    const good = makeGood({ name: '桃木', itemId: 'mat_taomu', price: 8 })
+    expect(pack.shopPrice(good)).toBe(16)
+    expect(pack.purchase(good, 1)).toBeNull()
+    expect(pack.currency.copper).toBe(12880 - 16)
+  })
+
+  it('无 itemId 商品（引路香/跨货币）回退配置价', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const good = makeGood({ name: '引路香', price: 20 })
+    expect(pack.shopPrice(good)).toBe(20)
+  })
+
+  it('出售单价 = 实际价值 × 出售系数（默认 56%，向下取整）', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 桃木 value=8 → floor(8 × 0.56) = 4
+    expect(pack.sellPriceOf('mat_taomu')).toBe(4)
+  })
+
+  it('出售成功：扣物品、按出售价入账铜钱', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const before = pack.currency.copper
+    expect(pack.sell('mat_taomu', 10)).toBeNull()
+    expect(pack.countOf('mat_taomu')).toBe(24 - 10)
+    expect(pack.currency.copper).toBe(before + 4 * 10)
+  })
+
+  it('无价值物品（任务/钥匙）不可出售', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    expect(pack.sellPriceOf('quest_001')).toBe(0)
+    expect(pack.sell('quest_001', 1)).toBe('该物品不可出售')
+    expect(pack.countOf('quest_001')).toBe(1)
+  })
+
+  it('数量不足出售失败且不扣货币', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const before = pack.currency.copper
+    expect(pack.sell('mat_taomu', 999)).toBe('数量不足')
+    expect(pack.currency.copper).toBe(before)
+    expect(pack.countOf('mat_taomu')).toBe(24)
+  })
+})
+
 describe('战斗外使用', () => {
   it('永久丹药提升属性并消耗', async () => {
     const pack = usePackStore()
     const player = usePlayerStore()
     await pack.init()
-    pack.addItem('elix_perm_01', 1) // 培元丹：气血上限 +20
-    const before = player.player.maxHp
+    pack.addItem('elix_perm_01', 1) // 铁骨丹：防御 +5
+    const before = player.player.defense
     expect(pack.useItem('elix_perm_01')).toBe(true)
-    expect(player.player.maxHp).toBe(before + 20)
+    expect(player.player.defense).toBe(before + 5)
     expect(pack.countOf('elix_perm_01')).toBe(0)
   })
 
@@ -251,19 +303,28 @@ describe('战斗外使用', () => {
     expect(pack.countOf('elix_001')).toBe(5)
   })
 
-  it('未实现的永久丹药（洗髓丹）提示暂未开放且不消耗', async () => {
+  it('洗髓丹（永久丹药）全属性 +2 并消耗', async () => {
     const pack = usePackStore()
+    const player = usePlayerStore()
     await pack.init()
     expect(pack.countOf('elix_perm_05')).toBe(1)
-    expect(pack.useItem('elix_perm_05')).toBe(false)
-    expect(pack.countOf('elix_perm_05')).toBe(1)
+    const m = player.player.maxHp
+    const a = player.player.attackMin
+    const d = player.player.defense
+    const s = player.player.speed
+    expect(pack.useItem('elix_perm_05')).toBe(true)
+    expect(player.player.maxHp).toBe(m + 2)
+    expect(player.player.attackMin).toBe(a + 2)
+    expect(player.player.defense).toBe(d + 2)
+    expect(player.player.speed).toBe(s + 2)
+    expect(pack.countOf('elix_perm_05')).toBe(0)
   })
 
   it('canUseOutOfBattle 只对已实现效果放行', async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.canUseOutOfBattle('elix_perm_01')).toBe(true) // 培元丹
-    expect(pack.canUseOutOfBattle('elix_perm_05')).toBe(false) // 洗髓丹未实现
+    expect(pack.canUseOutOfBattle('elix_perm_01')).toBe(true) // 铁骨丹
+    expect(pack.canUseOutOfBattle('elix_perm_05')).toBe(true) // 洗髓丹已实现
     expect(pack.canUseOutOfBattle('crys_001')).toBe(true) // 晶球
     expect(pack.canUseOutOfBattle('elix_001')).toBe(false) // 恢复丹战斗外不可用
   })
@@ -403,12 +464,12 @@ describe("装备穿戴（背包实例化闭环）", () => {
   it("六槽穿戴：helmet/boots/charm/ring 均可穿戴/强化/计入总属性", async () => {
     const pack = usePackStore()
     await pack.init()
-    // ac_t1_* 为 items.json 已注册的一阶配件（头盔/靴子/护符/戒指）
+    // hd/bt/hf/jz 为文档主线一阶配件（头盔/靴子/护符/戒指）
     const slots = [
-      { id: "ac_t1_neck_01", slot: "helmet" },
-      { id: "ac_t1_belt_01", slot: "boots" },
-      { id: "ac_t1_charm_01", slot: "charm" },
-      { id: "ac_t1_ring_01", slot: "ring" },
+      { id: "hd_t1_war_01", slot: "helmet" },
+      { id: "bt_t1_light_01", slot: "boots" },
+      { id: "hf_t1_life_01", slot: "charm" },
+      { id: "jz_t1_power_01", slot: "ring" },
     ] as const
     for (const { id, slot } of slots) {
       pack.addItem(id, 1)
@@ -497,10 +558,10 @@ describe("装备制造与强化（实例化）", () => {
     // 品质系数锁存：超品区间 [1.06,1.2]，rng 0.274 → 1.06+0.274×0.14=1.09836
     expect(inst!.qualityFactor).toBeCloseTo(1.098, 2)
     const stats = pack.instanceStats(inst!)
-    // instanceStats 消费锁存的系数：round(38×1.09836) = round(41.74) = 42
-    expect(stats.find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(42)
+    // instanceStats 消费锁存的系数：round(35×1.09836) = round(38.44) = 38
+    expect(stats.find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(38)
     // 同一实例多次计算数值稳定（系数锁定，不随 instanceStats 重 roll）
-    expect(pack.instanceStats(inst!).find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(42)
+    expect(pack.instanceStats(inst!).find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(38)
   })
 
   it("制造天品装备固定绝品（4 条词缀，词条池充足）", async () => {

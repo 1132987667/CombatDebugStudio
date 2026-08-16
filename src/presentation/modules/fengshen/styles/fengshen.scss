@@ -147,6 +147,32 @@
   }
 }
 
+.fs-reload-btn {
+  border: 1px solid rgba(var(--rgb-danger), var(--alpha-border));
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-danger);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-danger);
+    background: var(--color-danger-bg);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-danger);
+    outline-offset: -1px;
+  }
+}
+
 .fs-help-pop {
   margin-top: var(--space-2);
   padding: var(--space-2) var(--space-3);
@@ -227,7 +253,6 @@
 
 /* 列表可点击字段（名称等） */
 .fs-link {
-  padding: 0;
   border: none;
   background: none;
   font: inherit;
@@ -235,6 +260,7 @@
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
+  min-width: 3rem;
 
   &:hover {
     text-decoration-thickness: 2px;
@@ -411,6 +437,24 @@
   color: var(--color-danger);
   font-family: var(--font-family-mono);
   font-variant-numeric: tabular-nums;
+}
+
+/* 健康检查问题类别标签 */
+.fs-kind {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+.fs-kind-integrity { background: var(--color-danger-bg); color: var(--color-danger); }
+.fs-kind-duplicate_name { background: var(--color-warning-bg); color: var(--color-warning); }
+.fs-kind-duplicate_ref { background: var(--color-info-bg); color: var(--color-info); }
+.fs-kind-detail {
+  display: block;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  margin-top: 2px;
 }
 
 .fs-empty {

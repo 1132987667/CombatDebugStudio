@@ -52,11 +52,16 @@ const lineupSchema: TableSchema = {
   ],
 }
 
-function mount(entity: Record<string, unknown>, schemaOverride?: TableSchema, refIndex?: Record<string, string>): HTMLElement {
+function mount(
+  entity: Record<string, unknown>,
+  schemaOverride?: TableSchema,
+  refIndex?: Record<string, string>,
+  references?: Array<{ sourceTable: string; ids: string[] }>,
+): HTMLElement {
   host = document.createElement('div')
   document.body.appendChild(host)
   app = createApp({
-    render: () => h(EntityDetailPanel, { schema: schemaOverride ?? schema, entity, refIndex }),
+    render: () => h(EntityDetailPanel, { schema: schemaOverride ?? schema, entity, refIndex, references }),
   })
   app.mount(host)
   return host
@@ -147,5 +152,42 @@ describe('EntityDetailPanel 引用字段优先中文', () => {
     expect(root.textContent).toContain('火护法')
     expect(root.textContent).toContain('花妖王')
     expect(root.textContent).not.toContain('guardian_fire')
+  })
+
+  it('被引用区域 id 列表翻译为中文名，title 保留原始 id（未命中回退 id）', () => {
+    const root = mount(
+      { id: 'mat_x', name: '桃木' },
+      schema,
+      { boss_hidden_003: '镇山神兽·岩', enemy_006: '成年山魈' },
+      [{ sourceTable: 'enemies', ids: ['boss_hidden_003', 'enemy_006', 'enemy_022', 'enemy_076', 'enemy_079'] }],
+    )
+    expect(root.textContent).toContain('被引用（5 处）')
+    expect(root.textContent).toContain('镇山神兽·岩')
+    expect(root.textContent).toContain('成年山魈')
+    // 未命中字典的敌人回退原始 id，不丢失引用信息
+    expect(root.textContent).toContain('enemy_022')
+    expect(root.textContent).toContain('enemy_076')
+    expect(root.textContent).toContain('enemy_079')
+    expect(root.textContent).not.toContain('enemy_006')
+    // 原始 id 保留在 title 悬浮
+    const idsSpan = Array.from(root.querySelectorAll('span')).find((s) => s.textContent === '镇山神兽·岩、成年山魈、enemy_022、enemy_076、enemy_079')
+    expect(idsSpan?.getAttribute('title')).toContain('boss_hidden_003')
+  })
+
+  it('被引用区装备详情（gears）来源：装备名渲染为可悬浮 tag，显示名称而非编号', () => {
+    const root = mount(
+      { id: 'mat_x', name: '幽影木' },
+      schema,
+      { hf_t4_war_01: '毒牙战符', jz_t4_power_01: '毒牙戒', wp_t4_light_01: '幽影刃' },
+      [{ sourceTable: 'gears', ids: ['hf_t4_war_01', 'jz_t4_power_01', 'wp_t4_light_01'] }],
+    )
+    expect(root.textContent).toContain('毒牙战符')
+    expect(root.textContent).toContain('毒牙戒')
+    expect(root.textContent).toContain('幽影刃')
+    expect(root.textContent).not.toContain('hf_t4_war_01')
+    // 每个装备是独立可悬浮 tag，title 保留原始 id
+    const tags = Array.from(root.querySelectorAll('.fs-ref-gear'))
+    expect(tags.length).toBe(3)
+    expect(tags[0]?.getAttribute('title')).toContain('hf_t4_war_01')
   })
 })

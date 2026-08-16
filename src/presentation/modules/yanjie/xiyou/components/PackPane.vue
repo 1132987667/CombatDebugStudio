@@ -24,7 +24,8 @@ export type PackSub = 'pack' | 'storage' | 'shop'
                         v-for="it in group.items" :key="it.id"
                         :item="it" :count="countOf(it.id)" :selected="selectedId === it.id"
                         @open="emit('open-detail', $event)" @use="emit('use', $event)"
-                        @storage="emit('move-storage', $event)" @discard="emit('ask-card-discard', $event)" />
+                        @storage="emit('move-storage', $event)" @discard="emit('ask-card-discard', $event)"
+                        @sell="onSellCard($event)" />
                     </div>
                   </div>
                 </template>
@@ -66,7 +67,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
               <span class="xy-row-name">{{ g.name }}</span>
               <span class="xy-chip xy-chip--jade">{{ g.type }}</span>
               <span v-if="g.tag" class="xy-chip" :class="g.tag === '限量' ? 'xy-chip--gold' : 'xy-chip--seal'">{{ g.tag }}</span>
-              <span class="xy-shop-price" :class="`xy-shop-price--${g.unit}`">{{ g.price }} {{ g.unit }}</span>
+              <span class="xy-shop-price" :class="`xy-shop-price--${g.unit}`">{{ pack.shopPrice(g) }} {{ g.unit }}</span>
             </div>
             <div class="xy-row-bottom">
               <p class="xy-row-desc">库存 {{ g.stock }}</p>
@@ -80,7 +81,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
                 <span class="xy-shop-qty-num">{{ buyState.count }}</span>
                 <Button size="small" :disabled="buyState.count >= buyMax(g)" @click="buyState.count++">＋</Button>
               </div>
-              <p class="xy-shop-total">总价 {{ g.price * buyState.count }} {{ g.unit }}</p>
+              <p class="xy-shop-total">总价 {{ pack.shopPrice(g) * buyState.count }} {{ g.unit }}</p>
               <Button size="small" variant="primary" :disabled="walletShort(g) !== null" @click="doBuy(g)">确认购买</Button>
               <p v-if="walletShort(g)" class="xy-shop-diff">差额 {{ walletShort(g) }} {{ g.unit }}</p>
             </div>
@@ -125,6 +126,13 @@ const emit = defineEmits<{
   'open-storage-cell': [index: number]
 }>()
 
+/** 卡片右键「出售」：全部卖出（数量 = 当前持有），结果经 pack.sell 提示 */
+function onSellCard(itemId: string): void {
+  const count = pack.countOf(itemId)
+  if (count <= 0) return
+  pack.sell(itemId, count)
+}
+
 function onSubChange(v: string): void {
   emit('update:sub', v as PackSub)
 }
@@ -150,12 +158,12 @@ const tabs = computed<TabItem[]>(() =>
  */
 const PACK_CATEGORIES = [
   { id: 'all', label: '全部', types: [] as string[] },
-  { id: 'equip', label: '装备', types: ['武器', '衣服', '头盔', '靴子', '护符', '戒指'] },
-  { id: 'consumable', label: '消耗', types: ['丹药', '永久丹药', '符箓', '晶球'] },
-  { id: 'material', label: '材料', types: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '图纸'] },
+  { id: 'equip', label: '装备', types: ['武器', '衣服', '头盔', '靴子', '护符', '戒指', '法宝', '神器'] },
+  { id: 'consumable', label: '消耗', types: ['丹药', '永久丹药', '符箓', '晶球', '药引', '经验丹', '卷轴'] },
+  { id: 'material', label: '材料', types: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '图纸', '草药', '制造辅助'] },
   { id: 'essence', label: '灵气', types: ['灵气', '碎片'] },
-  { id: 'enhance', label: '强化', types: ['强化', '升星', '附魔', '洗炼', '重铸', '传承', '分解', '突破', '技能书', '经验'] },
-  { id: 'misc', label: '杂物', types: ['货币', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印'] },
+  { id: 'enhance', label: '强化', types: ['强化', '升星', '附魔', '洗练', '洗炼', '重铸', '传承', '分解', '突破', '技能书', '经验'] },
+  { id: 'misc', label: '杂物', types: ['货币', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '功能道具'] },
 ] as const
 
 type PackCatId = (typeof PACK_CATEGORIES)[number]['id']
@@ -236,7 +244,8 @@ function toggleBuy(g: XiyouShopGood): void {
 
 function buyMax(g: XiyouShopGood): number {
   const key = UNIT_KEY[g.unit]
-  const byMoney = g.price > 0 ? Math.floor(pack.currency[key] / g.price) : 0
+  const price = pack.shopPrice(g)
+  const byMoney = price > 0 ? Math.floor(pack.currency[key] / price) : 0
   const byStock = g.stock < 0 ? Infinity : g.stock
   return Math.max(1, Math.min(byMoney, byStock))
 }
@@ -244,7 +253,7 @@ function buyMax(g: XiyouShopGood): number {
 /** 余额差额（不足返回正数，足够返回 null） */
 function walletShort(g: XiyouShopGood): number | null {
   const key = UNIT_KEY[g.unit]
-  const total = g.price * buyState.value!.count
+  const total = pack.shopPrice(g) * buyState.value!.count
   const short = total - pack.currency[key]
   return short > 0 ? short : null
 }

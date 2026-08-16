@@ -20,7 +20,7 @@ import { normalizeBuffEntries } from '@/shared/types/effects-json'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BattleRuleManager, type BattleRulesConfig } from '@/domain/battle/service/BattleRuleManager'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
-import type { BattleParamData, EnemyRewardTableConfig, ExpTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
+import type { BattleParamData, EnemyRewardTableConfig, ExpTableConfig, LevelDiffBonusConfig, EconomyRatiosConfig } from '@/domain/fengshen/types'
 import { container } from '@/infrastructure/di/Container'
 
 /** 引擎规则参数路径映射：params 表 id → BattleRulesConfig 路径（规格说明书 §3.10 收拢引擎调参） */
@@ -55,6 +55,7 @@ export class BattleDataLoader {
       const expTable = params.find((p) => p.id === 'exp_table')?.data as ExpTableConfig | undefined ?? null
       const enemyRewardTable = params.find((p) => p.id === 'enemy_reward_table')?.data as EnemyRewardTableConfig | undefined ?? null
       const levelDiffBonus = params.find((p) => p.id === 'level_diff_bonus')?.data as LevelDiffBonusConfig | undefined ?? null
+      const economyRatios = params.find((p) => p.id === 'economy_ratios')?.data as EconomyRatiosConfig | undefined ?? null
 
       const source: IDataSource = {
         getEnemies: () => enemies,
@@ -67,6 +68,7 @@ export class BattleDataLoader {
         getExpTable: () => expTable,
         getEnemyRewardTable: () => enemyRewardTable,
         getLevelDiffBonus: () => levelDiffBonus,
+        getEconomyRatios: () => economyRatios,
       }
       GameDataProcessor.setDataSource(source)
 

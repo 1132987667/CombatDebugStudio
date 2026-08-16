@@ -9,7 +9,7 @@ import type { IDataSource } from '@/domain/port/IDataSource'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
-import type { LineupData, AffixData, AffixLibraryData } from '@/domain/fengshen/types'
+import type { LineupData, AffixData, AffixLibraryData, EconomyRatiosConfig } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Item } from '@/shared/types/Item'
 import type { ExpTableConfig, EnemyRewardTableConfig, LevelDiffBonusConfig } from '@/domain/fengshen/types'
@@ -20,6 +20,7 @@ import type { ItemData } from '@/domain/fengshen/types'
 import { deriveMaterials } from '@/domain/fengshen/derive-materials'
 import itemsDataRaw from '@configs/xiyou/items.json'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
+import bossesJson from '@configs/xiyou/bosses.json'
 import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
 import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
 import enemiesOldDataRaw from '@configs/enemies/enemies-old.json'
@@ -70,10 +71,53 @@ const skillTypeById = new Map(
   (enemySkillsData as Array<{ id: string; skillType?: string }>).map((s) => [s.id, s.skillType ?? 'small']),
 )
 
+/** bosses.json 重型 BOSS 条目（设计稿结构：内联文本技能 / 对象掉落 / 缺角色字段） */
+interface BossRow {
+  id?: string
+  name?: string
+  level?: number
+  type?: string
+  stats?: Record<string, number>
+  affixPool?: { buffTier?: number }
+  drops?: { guaranteed?: string[]; rare?: string[] }
+}
+
+/** 把 bosses.json 的 major BOSS 条目转成引擎 Enemy（技能引用 enemy-skills.json 现有可执行定义；数值以 bosses.json 为准） */
+function bossToEnemy(b: BossRow): Enemy | null {
+  if (!b.id || b.type !== 'major') return null
+  const name = b.id.replace('boss_major_', '')
+  const guaranteed = b.drops?.guaranteed ?? []
+  const rare = b.drops?.rare ?? []
+  return {
+    id: b.id,
+    name: b.name ?? b.id,
+    level: b.level ?? 1,
+    stats: {
+      ...(b.stats ?? {}),
+      hit: b.stats?.hit ?? 30,
+      dodge: b.stats?.dodge ?? 15,
+      maxEnergy: b.stats?.maxEnergy ?? 150,
+      energyInit: b.stats?.energyInit ?? 25,
+    },
+    skills: {
+      small: [`skill_boss_major_${name}_s1`, `skill_boss_major_${name}_s2`],
+      passive: [`passive_boss_major_${name}_p1`],
+      ultimate: [`skill_boss_major_${name}_ult`],
+    },
+    drops: [
+      ...guaranteed.map((itemId) => ({ itemId, quantity: 1, chance: 1 })),
+      ...rare.map((itemId) => ({ itemId, quantity: 1, chance: 0.3 })),
+    ],
+    affixPool: { buffTier: b.affixPool?.buffTier ?? 1, count: 1 },
+  }
+}
+
 // NOTE: 旧敌人体系（enemy_001 系 / guardian_* 五行护法）归档于 enemies-old.json，
 //       seed 的 deriveActors 依赖 guardian_* 派生 actors、lineups 引用旧敌人 id，故兜底数据源一并加载。
+// NOTE: 5 大场景 BOSS 定义收敛到 bosses.json（权威），此处并入供封神榜敌人表/健康检查一致性。
 const enemies = [
   ...(enemiesDataRaw as unknown as RawEnemyEntry[]).map((e) => normalizeEnemy(e, skillTypeById)),
+  ...(bossesJson as unknown as BossRow[]).map(bossToEnemy).filter((e): e is Enemy => !!e),
   ...(enemiesTestDataRaw as Enemy[]),
   ...(enemiesXiyouHiddenDataRaw as Enemy[]),
   ...(enemiesOldDataRaw as Enemy[]),
@@ -141,6 +185,10 @@ export class ConfigDataSource implements IDataSource {
   }
 
   getLevelDiffBonus(): LevelDiffBonusConfig | null {
+    return null
+  }
+
+  getEconomyRatios(): EconomyRatiosConfig | null {
     return null
   }
 }

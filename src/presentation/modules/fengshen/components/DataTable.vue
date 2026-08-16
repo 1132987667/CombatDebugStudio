@@ -6,11 +6,8 @@
           <th class="fs-col-check">
             <input type="checkbox" :checked="allSelected" @change="toggleAll" aria-label="全选" />
           </th>
-          <th v-for="col in columns" :key="col" class="fs-th"
-            :class="{ 'fs-sorted': sortKey === col }"
-            :aria-sort="sortAria(col)"
-            :title="`按「${fieldLabel(col)}」排序`"
-            @click="emit('sort', col)">
+          <th v-for="col in columns" :key="col" class="fs-th" :class="{ 'fs-sorted': sortKey === col }"
+            :aria-sort="sortAria(col)" :title="`按「${fieldLabel(col)}」排序`" @click="emit('sort', col)">
             {{ fieldLabel(col) }}
             <span class="fs-sort-ico">{{ sortIco(col) }}</span>
           </th>
@@ -18,19 +15,18 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="String(row.id)"
-          :class="{ 'is-detail-selected': detailId === String(row.id) }">
+        <tr v-for="row in rows" :key="String(row.id)" :class="{ 'is-detail-selected': detailId === String(row.id) }">
           <td class="fs-col-check">
             <input type="checkbox" :checked="selectedIds.includes(String(row.id))"
               @change="emit('toggle-select', String(row.id))" :aria-label="`选择 ${row.id}`" />
           </td>
-          <td v-for="col in columns" :key="col" :class="cellClass(row, col)"
-            :title="cellTitle(row, col) ?? undefined">
+          <td v-for="col in columns" :key="col" :class="cellClass(row, col)" :title="cellTitle(row, col) ?? undefined">
             <template v-if="tagInfo(row, col)">
               <span class="fs-tag" :class="tagInfo(row, col)!.cls">{{ tagInfo(row, col)!.text }}</span>
             </template>
-            <button v-else-if="isClickableField(col)" type="button" class="fs-link"
-              @click="emit('detail', row)">{{ cellText(row, col) }}</button>
+            <button v-else-if="isClickableField(col)" type="button" class="fs-link" @click="emit('detail', row)">{{
+              cellText(row,
+              col) }}</button>
             <template v-else>{{ cellText(row, col) }}</template>
           </td>
           <td class="fs-col-actions">

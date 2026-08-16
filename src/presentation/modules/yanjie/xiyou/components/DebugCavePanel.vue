@@ -33,7 +33,7 @@
                     <TacticalSelect
                       v-if="input.type === 'select'"
                       v-model="inputValues[valueKey(act, input)]"
-                      :options="resolveOptions(input)"
+                      :options="resolveOptions(act, input)"
                       :placeholder="input.placeholder ?? '请选择'"
                       size="sm"
                     />
@@ -230,10 +230,10 @@ function setFileInput(act: DebugActionDef, input: DebugActionInput, el: unknown)
   fileInputRefs[valueKey(act, input)] = el as HTMLInputElement | null
 }
 
-/** 解析 select 选项（支持惰性函数，动态列表每次渲染求值） */
-function resolveOptions(input: DebugActionInput): Array<{ value: string; label: string }> {
+/** 解析 select 选项（支持惰性函数，动态列表每次渲染求值；函数可读当前已填输入值实现联动） */
+function resolveOptions(act: DebugActionDef, input: DebugActionInput): Array<{ value: string; label: string }> {
   const opts = input.options
-  if (typeof opts === 'function') return opts()
+  if (typeof opts === 'function') return opts(inputValues)
   return opts ?? []
 }
 

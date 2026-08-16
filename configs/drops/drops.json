@@ -264,7 +264,7 @@
         "probability": 80
       },
       {
-        "itemId": "mat_duye",
+        "itemId": "mat_bizhanglingye",
         "probability": 20
       },
       {
@@ -418,7 +418,7 @@
         "probability": 60
       },
       {
-        "itemId": "elix_007",
+        "itemId": "mat_jiuzhuan_jindan",
         "probability": 5
       }
     ]
@@ -450,11 +450,11 @@
         "probability": 20
       },
       {
-        "itemId": "ac_t1_charm_01",
+        "itemId": "hf_t1_life_01",
         "probability": 15
       },
       {
-        "itemId": "eq_c002",
+        "itemId": "jz_t1_power_01",
         "probability": 15
       }
     ]
@@ -472,11 +472,11 @@
         "probability": 15
       },
       {
-        "itemId": "ac_t2_charm_01",
+        "itemId": "hf_t2_life_01",
         "probability": 10
       },
       {
-        "itemId": "ac_t2_ring_01",
+        "itemId": "jz_t2_power_01",
         "probability": 10
       }
     ]
@@ -494,11 +494,11 @@
         "probability": 10
       },
       {
-        "itemId": "ac_t3_charm_01",
+        "itemId": "hf_t3_life_01",
         "probability": 8
       },
       {
-        "itemId": "eq_c014",
+        "itemId": "jz_t3_power_01",
         "probability": 8
       }
     ]

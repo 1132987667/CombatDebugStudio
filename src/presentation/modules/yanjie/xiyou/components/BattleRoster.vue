@@ -40,7 +40,7 @@
           <PackItemCard v-for="it in pack.ownedItems.slice(0, 10)" :key="it.id" :item="it"
             :count="pack.countOf(it.id)"
             @open="emit('open-pack')" @use="emit('open-pack')" @storage="emit('open-pack')"
-            @discard="emit('open-pack')" />
+            @discard="emit('open-pack')" @sell="emit('open-pack')" />
         </div>
       </div>
     </section>
@@ -151,11 +151,11 @@ const attrRows = computed<AttrRow[]>(() => {
   padding-right: var(--space-1);
 }
 
-/* 卡片纵向间距 + 四周留白：hover 外圈阴影（6px ring + 上移 4px）超出滚动容器 overflow 裁剪边界，
+/* 卡片两列网格 + 四周留白：hover 外圈阴影（6px ring + 上移 4px）超出滚动容器 overflow 裁剪边界，
    留出 padding 让阴影在 padding 区域内完整显示（上下 14px / 左右 12px，各留 4px+ 余量） */
 .xy-roster-pack-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-2);
   padding: 14px var(--space-3);
 }

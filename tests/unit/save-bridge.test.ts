@@ -80,7 +80,7 @@ describe('collect 状态映射', () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip('wp_t1_light_01') // 竹剑 → weapon
-    pack.equip('ac_t1_charm_01') // 淡水玉护符 → charm
+    pack.equip('hf_t1_life_01') // 淡水玉护符 → charm
 
     const data = await xiyouSaveBridge.collect({ currentSceneId: null })
     expect(data.equipment.weapon).toBe(pack.equipped.weapon?.instanceId)
@@ -90,7 +90,7 @@ describe('collect 状态映射', () => {
     expect(data.equipment.ring).toBeNull()
     // 实例化装备带词缀（凡品 1 条）与强化等级，可还原
     expect(data.equipment_instances?.some((i) => i.itemId === 'wp_t1_light_01')).toBe(true)
-    expect(data.equipment_instances?.some((i) => i.itemId === 'ac_t1_charm_01')).toBe(true)
+    expect(data.equipment_instances?.some((i) => i.itemId === 'hf_t1_life_01')).toBe(true)
   })
 })
 

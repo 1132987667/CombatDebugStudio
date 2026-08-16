@@ -17,7 +17,7 @@ import type { AffixData } from '@/domain/fengshen/types'
 import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
 import { createPlayerProfile } from './playerProfile'
-import { dropsForScene, rewardForScene } from './battle'
+import { dropsForEnemyById, rewardForEnemyById } from './battle'
 import { equippedSkills, grantPillPoint, pureSchoolBonus } from './xiyouData'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 
@@ -54,8 +54,8 @@ export interface DebugActionInput {
   /** 输入控件 id（多输入时用于区分；单输入缺省为动作 id） */
   id?: string
   type: 'number' | 'select' | 'text' | 'file'
-  /** select 选项（value → label 对）；支持惰性函数（动态列表如背包装备实例） */
-  options?: DebugSelectOption[] | (() => DebugSelectOption[])
+  /** select 选项（value → label 对）；支持惰性函数（动态列表如背包装备实例；可读当前已填输入值实现联动，如场景→敌人） */
+  options?: DebugSelectOption[] | ((values: Record<string, string | number | null>) => DebugSelectOption[])
   placeholder?: string
   /** number 的最小/最大值（可选） */
   min?: number
@@ -318,6 +318,24 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 required: true,
               },
               {
+                id: 'enemy',
+                type: 'select',
+                options: (values) => {
+                  const sceneId = values[`battle_grind:scene`] as string | undefined
+                  const scene = env.scenes.find((s) => s.id === sceneId)
+                  if (!scene) return []
+                  const enemies = [
+                    ...scene.enemies
+                      .filter((e): e is { id: string; name: string; level: number; type?: string } => !!e.id)
+                      .map((e) => ({ id: e.id, name: e.name, kind: '普通' as const })),
+                    ...(scene.guardian ? [{ id: scene.guardian.id, name: scene.guardian.name, kind: '头目' as const }] : []),
+                  ]
+                  return enemies.map((e) => ({ value: e.id, label: `${e.name}（${e.kind}）` }))
+                },
+                placeholder: '选择敌人',
+                required: true,
+              },
+              {
                 id: 'count',
                 type: 'select',
                 options: [
@@ -333,19 +351,21 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
             ],
             execute: async (params) => {
               const p = params as Record<string, string | number | File | null>
-              const sceneId = p.scene as string
+              const enemyId = p.enemy as string
               const n = Number(p.count ?? 10)
-              const scene = env.scenes.find((s) => s.id === sceneId)
-              if (!scene) return fail('未知场景')
+              if (!enemyId) return fail('未知敌人')
               const roll = (range: [number, number] | undefined): number =>
                 range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
-              const reward = rewardForScene(scene)
+              const reward = rewardForEnemyById(enemyId)
+              const enemyDrops = dropsForEnemyById(enemyId)
+              const enemyName =
+                env.scenes.flatMap((s) => [...s.enemies, ...(s.guardian ? [s.guardian] : [])]).find((e) => e.id === enemyId)?.name ??
+                enemyId
               let totalExp = 0
               let totalGold = 0
               let totalLevel = 0
               const drops = new Map<string, { name: string; quantity: number; times: number }>()
               const levelBefore = player.player.level
-              const sceneDrops = dropsForScene(scene)
               for (let i = 0; i < n; i++) {
                 const exp = roll(reward.exp)
                 const gold = roll(reward.gold)
@@ -353,8 +373,8 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 totalGold += gold
                 if (exp > 0) player.gainExp(exp)
                 if (gold > 0) player.gainCurrency('copper', gold)
-                // 掉落：直接复用战斗结束同源结算 applyDrops（含「掉落率锁定」联动，silent 抑制逐条 toast 刷屏）
-                for (const d of pack.applyDrops(sceneDrops, true)) {
+                // 掉落：仅 roll 所选敌人的掉落（含「掉落率锁定」联动，silent 抑制逐条 toast 刷屏）
+                for (const d of pack.applyDrops(enemyDrops, true)) {
                   const key = d.itemId
                   const cur = drops.get(key) ?? { name: pack.catalogById(d.itemId)?.name ?? d.itemId, quantity: 0, times: 0 }
                   cur.quantity += d.quantity
@@ -364,7 +384,7 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
               }
               totalLevel = player.player.level - levelBefore
               const summary = {
-                scene: scene.name,
+                enemy: enemyName,
                 battles: n,
                 exp: totalExp,
                 gold: totalGold,
@@ -373,7 +393,7 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 dropVariety: drops.size,
               }
               return ok(
-                `「${scene.name}」×${n}：经验+${totalExp} · 金钱+${totalGold} · 升级${totalLevel} · 掉落${drops.size}种`,
+                `「${enemyName}」×${n}：经验+${totalExp} · 金钱+${totalGold} · 升级${totalLevel} · 掉落${drops.size}种`,
                 summary,
               )
             },

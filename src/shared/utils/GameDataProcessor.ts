@@ -31,6 +31,7 @@ import type {
   ExpTableConfig,
   EnemyRewardTableConfig,
   LevelDiffBonusConfig,
+  EconomyRatiosConfig,
   AffixData,
   AffixLibraryData,
 } from '@/domain/fengshen/types'
@@ -147,6 +148,11 @@ export class GameDataProcessor {
   /** 获取等级差经验加成规则（params 域 level_diff_bonus） */
   static getLevelDiffBonus(): LevelDiffBonusConfig | null {
     return dataSource.getLevelDiffBonus()
+  }
+
+  /** 获取坊市经济系数（params 域 economy_ratios；null 时消费方回退默认系数） */
+  static getEconomyRatios(): EconomyRatiosConfig | null {
+    return dataSource.getEconomyRatios()
   }
 
   /**

@@ -25,8 +25,9 @@
           IndexedDB {{ storageOk ? '已连接' : '降级 configs' }}
         </div>
         <div class="fs-storage-stat">数据版本 v{{ store.dataVersion }}</div>
-        <button type="button" class="fs-help-toggle" :class="{ on: helpOpen }"
-          :aria-expanded="helpOpen" @click="helpOpen = !helpOpen">使用说明</button>
+        <button type="button" class="fs-reload-btn" :disabled="store.loading" @click="askReload">从项目文件重载</button>
+        <button type="button" class="fs-help-toggle" :class="{ on: helpOpen }" :aria-expanded="helpOpen"
+          @click="helpOpen = !helpOpen">使用说明</button>
         <div v-if="helpOpen" class="fs-help-pop">
           <p>· 数据存于浏览器 IndexedDB，任何写操作（增/删/改/导入）都会递增全局数据版本。</p>
           <p>· 编辑保存后、未开战时，战斗引擎数据源自动重载，改动即时生效。</p>
@@ -45,6 +46,10 @@
       <PackagesView v-else-if="store.activeView === 'packages'" />
       <ExpGoldView v-else-if="store.activeView === 'expgold'" />
     </main>
+
+    <ConfirmDialog v-model="confirmReload" title="从项目文件重载"
+      message="将从 configs/ 项目文件重导全部数据，覆盖封神榜内手动修改的内容。确定继续？"
+      confirm-text="重载" danger @confirm="doReload" />
   </div>
 </template>
 
@@ -59,6 +64,7 @@ import HealthView from '@/presentation/modules/fengshen/views/HealthView.vue'
 import LogsView from '@/presentation/modules/fengshen/views/LogsView.vue'
 import PackagesView from '@/presentation/modules/fengshen/views/PackagesView.vue'
 import ExpGoldView from '@/presentation/modules/fengshen/views/ExpGoldView.vue'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 
 /** 数据域按子领域分组（侧栏导航层次） */
 const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableName; label: string }> }> = [
@@ -116,10 +122,21 @@ const SYSTEM_VIEWS: Array<{ view: FengshenView; label: string }> = [
 const store = useFengshenStore()
 const storageOk = ref(true)
 const helpOpen = ref(false)
+const confirmReload = ref(false)
 
 function selectDomain(table: FengshenTableName): void {
   store.activeView = 'domain' as FengshenView
   store.setTable(table)
+}
+
+/** 从项目文件重导（覆盖语义）：先弹确认框 */
+function askReload(): void {
+  confirmReload.value = true
+}
+
+/** 确认后清空并重导全部封神榜表 */
+async function doReload(): Promise<void> {
+  await store.reloadFromProject()
 }
 
 onMounted(() => {

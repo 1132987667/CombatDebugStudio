@@ -95,16 +95,15 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     store.statPoints.strength -= 2
   })
 
-  it('buildBattleTeams 主角属性取玩家实时值，伙伴保持 playerParty 固定值', () => {
+  it('buildBattleTeams 主角属性取玩家实时值，初始队伍仅主角一人', () => {
     setActivePinia(createPinia())
     const store = usePlayerStore()
     const { ally } = buildBattleTeams(scene, undefined, store.battleSnapshot)
     // 主角：玩家真实属性（attackMax 20、maxHp 420、critRate 7.5）
+    expect(ally).toHaveLength(1)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.attack)).toBe(store.player.attackMax)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(store.player.maxHp)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.critRate)).toBe(store.player.critRate)
-    // 伙伴（sun）：playerParty 固定 attack 22，不受玩家属性影响
-    expect(ally[1].getAttribute(ATTRIBUTE_CODE.attack)).toBe(22)
   })
 
   it('buildBattleTeams 缺省 protagonist 回退 playerParty[0] 演示值', () => {

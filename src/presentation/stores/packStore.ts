@@ -31,6 +31,7 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
 import { affixAppliesTo, rollAffixStat, rollEquipmentAffix } from '@/shared/utils/equipmentAffix'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import {
   enhanceCost,
   enhanceFactor,
@@ -172,25 +173,42 @@ type NumericPlayerKey = {
   [K in keyof XiyouPlayer]: XiyouPlayer[K] extends number ? K : never
 }[keyof XiyouPlayer]
 
-/** 永久丹药效果表（items.json 未给 effects，此处按 source 文案补齐，供战斗外使用） */
-const PERM_PILL_EFFECTS: Record<string, { attr: NumericPlayerKey; label: string; value: number }> = {
-  elix_perm_01: { attr: 'maxHp', label: '气血上限', value: 20 },
-  elix_perm_02: { attr: 'defense', label: '防御', value: 5 },
-  elix_perm_03: { attr: 'attackMin', label: '攻击', value: 5 },
-  elix_perm_04: { attr: 'speed', label: '速度', value: 3 },
+/** 永久丹药效果表（items.json 未给 effects，此处按《全物品文档-8.16》第四章补齐，供战斗外使用） */
+const PERM_PILL_EFFECTS: Record<string, { attrs: Array<{ attr: NumericPlayerKey; value: number }>; label: string }> = {
+  // 铁骨丹 防御+5
+  elix_perm_01: { attrs: [{ attr: 'defense', value: 5 }], label: '防御' },
+  // 灵犀丹 速度+3
+  elix_perm_02: { attrs: [{ attr: 'speed', value: 3 }], label: '速度' },
+  // 破境丹 攻击+5
+  elix_perm_03: { attrs: [{ attr: 'attackMin', value: 5 }], label: '攻击' },
+  // 固本丹 气血+30
+  elix_perm_04: { attrs: [{ attr: 'maxHp', value: 30 }], label: '气血上限' },
+  // 洗髓丹 全属性+2
+  elix_perm_05: { attrs: [
+    { attr: 'maxHp', value: 2 },
+    { attr: 'attackMin', value: 2 },
+    { attr: 'defense', value: 2 },
+    { attr: 'speed', value: 2 },
+  ], label: '全属性' },
 }
 
 /** 晶球开启产出（crys_* → 强化材料 mat_enh_*） */
 const ORB_DROPS: Record<string, string[]> = {
-  crys_001: ['mat_enh_01'],
-  crys_002: ['mat_enh_01'],
-  crys_003: ['mat_enh_01'],
-  crys_004: ['mat_enh_03'],
-  crys_005: ['mat_enh_03'],
-  crys_006: ['mat_enh_03'],
-  crys_007: ['mat_enh_02'],
-  crys_008: ['mat_enh_02'],
-  crys_009: ['mat_enh_02'],
+  crys_001: ['mat_yikuang'],
+  crys_002: ['mat_yikuang'],
+  crys_003: ['mat_yikuang'],
+  crys_004: ['mat_lingqi'],
+  crys_005: ['mat_lingqi'],
+  crys_006: ['mat_lingqi'],
+  crys_007: ['mat_lingshui'],
+  crys_008: ['mat_lingshui'],
+  crys_009: ['mat_lingshui'],
+  crys_010: ['mat_yikuang'],
+  crys_011: ['mat_yikuang'],
+  crys_012: ['mat_lingqi'],
+  crys_013: ['mat_lingqi'],
+  crys_014: ['mat_lingshui'],
+  crys_015: ['mat_lingshui'],
 }
 
 /** 悟道丹物品 id（items.json；服用 +1 技能点，全存档最多 10 颗，需求 §2.1.2） */
@@ -558,7 +576,7 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast(`强化材料不足（需要「${mat.name}」×${mat.count}）`, 'warning')
       return false
     }
-    const cost = enhanceCost(inst.enhance)
+    const cost = enhanceCost(inst.enhance, g.rarity)
     if (currency.copper < cost) {
       notification.toast(`铜钱不足（需要 ${cost}）`, 'warning')
       return false
@@ -822,7 +840,58 @@ export const usePackStore = defineStore('pack', () => {
     return true
   }
 
-  /** 购买；返回失败原因文案（成功返回 null）。成功直接扣减库存（stock=-1 表示无限，不扣）。 */
+  /**
+   * 坊市经济（物品实际价值 → 买卖价）：系数由 params 域 economy_ratios 控制（购买 200% / 出售 56%），
+   * 改参数即全局生效，物品数据只存单一「实际价值」。
+   */
+  /** 默认购买系数（无 params 域参数兜底）：价值 × 2.0 = 坊市购买价 */
+  const DEFAULT_BUY_RATIO = 2
+  /** 默认出售系数（无 params 域参数兜底）：价值 × 0.56 = 出售价 */
+  const DEFAULT_SELL_RATIO = 0.56
+
+  /** 购买系数（百分比参数 → 小数）；读取 params 域 economy_ratios.buyPercent */
+  function buyRatio(): number {
+    return (GameDataProcessor.getEconomyRatios()?.buyPercent ?? DEFAULT_BUY_RATIO * 100) / 100
+  }
+
+  /** 出售系数（百分比参数 → 小数）；读取 params 域 economy_ratios.sellPercent */
+  function sellRatio(): number {
+    return (GameDataProcessor.getEconomyRatios()?.sellPercent ?? DEFAULT_SELL_RATIO * 100) / 100
+  }
+
+  /** 坊市商品单价：有 itemId 的物品按 实际价值 × 购买系数 派生（四舍五入）；
+   *  无 itemId（引路香 / 跨货币单位商品如灵石、银两）用配置兜底价 */
+  function shopPrice(good: XiyouShopGood): number {
+    if (good.itemId) {
+      const value = catalogById(good.itemId)?.value
+      if (value != null && value > 0) return Math.round(value * buyRatio())
+    }
+    return good.price
+  }
+
+  /** 物品出售单价：实际价值 × 出售系数（向下取整，防刷金） */
+  function sellPriceOf(itemId: string): number {
+    const value = catalogById(itemId)?.value ?? 0
+    return Math.floor(value * sellRatio())
+  }
+
+  /** 出售物品（背包普通物品或未穿戴装备实例）；返回失败原因文案（成功返回 null）。
+   *  入账货币为铜钱（价值 × 出售系数），普通物品扣 inventory、装备移除对应数量实例 */
+  function sell(itemId: string, count: number): string | null {
+    if (count <= 0) return '数量无效'
+    const price = sellPriceOf(itemId)
+    if (price <= 0) return '该物品不可出售'
+    if (countOf(itemId) < count) return '数量不足'
+    if (!removeItem(itemId, count)) return '数量不足'
+    currency.copper += price * count
+    scheduleSave()
+    const item = catalogById(itemId)
+    notification.toast(`出售「${item?.name ?? itemId}」×${count}，获得 ${price * count} 铜钱`)
+    return null
+  }
+
+  /** 购买；返回失败原因文案（成功返回 null）。成功直接扣减库存（stock=-1 表示无限，不扣）。
+   *  单价 = shopPrice（有 itemId 的商品按 实际价值 × 购买系数 派生） */
   function purchase(good: XiyouShopGood, count: number): string | null {
     if (count <= 0) return '数量无效'
     const itemId = nameToId.get(good.name)
@@ -830,7 +899,7 @@ export const usePackStore = defineStore('pack', () => {
     if (good.stock >= 0 && good.stock < count) return '库存不足'
     const unit = UNIT_KEY[good.unit]
     const wallet = currency[unit]
-    const total = good.price * count
+    const total = shopPrice(good) * count
     if (wallet < total) return '货币不足'
     currency[unit] = wallet - total
     if (good.stock >= 0) good.stock -= count
@@ -1022,15 +1091,22 @@ export const usePackStore = defineStore('pack', () => {
     const perm = PERM_PILL_EFFECTS[itemId]
     if (perm) {
       const p = playerStore.player as XiyouPlayer
-      if (perm.attr === 'maxHp') p.maxHp += perm.value
-      else if (perm.attr === 'attackMin') {
-        p.attackMin += perm.value
-        p.attackMax += perm.value
-      } else {
-        p[perm.attr] += perm.value
+      const applied: string[] = []
+      for (const a of perm.attrs) {
+        if (a.attr === 'maxHp') {
+          p.maxHp += a.value
+          applied.push(`气血+${a.value}`)
+        } else if (a.attr === 'attackMin') {
+          p.attackMin += a.value
+          p.attackMax += a.value
+          applied.push(`攻击+${a.value}`)
+        } else {
+          p[a.attr] += a.value
+          applied.push(`${a.attr}+${a.value}`)
+        }
       }
       removeItem(itemId, 1)
-      notification.toast(`使用了「${item.name}」，${perm.label} +${perm.value}`, 'success')
+      notification.toast(`使用了「${item.name}」，${perm.label} ${applied.join('，')}`, 'success')
       return true
     }
 
@@ -1137,6 +1213,9 @@ export const usePackStore = defineStore('pack', () => {
     expandStorage,
     spend,
     purchase,
+    shopPrice,
+    sellPriceOf,
+    sell,
     garden,
     shopGoods,
     shopRefreshedAt,

@@ -9,11 +9,11 @@
         <span class="xy-item-type">{{ item.type }}</span>
       </span>
       <span class="xy-item-meta">
-        <span v-if="sellable" class="xy-item-price">
+        <span v-if="sellable" class="xy-item-price" :title="`实际价值 ${item.value}`">
           <span class="xy-item-price-icon" aria-hidden="true" v-html="moneyIcon"></span>
-          <span class="xy-item-price-value">{{ item.sellPrice }}</span>
+          <span class="xy-item-price-value">{{ item.value }}</span>
         </span>
-        <span class="xy-item-count" :class="{ 'is-sellable': sellable }">×{{ count }}</span>
+        <span class="xy-item-count">×{{ count }}</span>
       </span>
     </button>
 
@@ -26,6 +26,7 @@
       <div v-if="menuOpen" ref="menuRef" class="xy-ctx" role="menu" :style="menuStyle" aria-label="物品操作">
         <button v-if="showUse" type="button" class="xy-ctx-item" :disabled="!canUseNow"
           :title="inBattleOnly ? '仅战斗中可用（行囊·快捷栏）' : undefined" @click="act('use')">使用</button>
+        <button v-if="showSell" type="button" class="xy-ctx-item" @click="act('sell')">出售</button>
         <button v-if="canStore" type="button" class="xy-ctx-item" @click="act('storage')">存入仓库</button>
         <button v-if="canDiscard" type="button" class="xy-ctx-item xy-ctx-item--danger"
           @click="act('discard')">丢弃</button>
@@ -56,6 +57,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'open', itemId: string): void
   (e: 'use', itemId: string): void
+  (e: 'sell', itemId: string): void
   (e: 'storage', itemId: string): void
   (e: 'discard', itemId: string): void
 }>()
@@ -103,8 +105,10 @@ const showUse = computed(() => canUseNow.value || inBattleOnly.value)
 const canStore = computed(() => props.count > 0 && pack.storage.some((s) => !s.itemId))
 const canDiscard = computed(() => props.count > 0 && props.item.type !== '任务')
 
-/** 可出售：items.json sellPrice > 0（无该字段视为不可出售，如任务/钥匙/宝箱） */
-const sellable = computed(() => (props.item.sellPrice ?? 0) > 0)
+/** 可出售：items.json value > 0（无该字段视为不可出售，如任务/钥匙/宝箱） */
+const sellable = computed(() => (props.item.value ?? 0) > 0)
+/** 右键菜单「出售」：有价值且持有数量 > 0 */
+const showSell = computed(() => sellable.value && props.count > 0)
 
 function openMenu(e: MouseEvent): void {
   tooltipVisible.value = false
@@ -130,7 +134,7 @@ function closeMenu(): void {
   removeDocListener = null
 }
 
-function act(action: 'use' | 'storage' | 'discard' | 'open'): void {
+function act(action: 'use' | 'sell' | 'storage' | 'discard' | 'open'): void {
   closeMenu()
   emit(action, props.item.id)
 }
@@ -241,18 +245,13 @@ onBeforeUnmount(() => {
 }
 
 /* 名称用品阶色（xy-q--* 全局类）；此处不设 color，避免覆盖品阶类 */
-.xy-item-name {
-  font-size: var(--font-size-md);
-}
+.xy-item-name {}
 
 .xy-item-type {
-  font-size: var(--font-size-md);
   color: var(--xy-ink-3);
 }
 
-.xy-item-rarity {
-  font-size: var(--font-size-md);
-}
+.xy-item-rarity {}
 
 /* 价值 + 数量同行：价值最左、数量最右 */
 .xy-item-meta {
@@ -267,7 +266,6 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: var(--font-size-md);
   color: var(--xy-gold);
 }
 
@@ -287,12 +285,7 @@ onBeforeUnmount(() => {
 
 /* 数量（meta 行右端）；可出售时用绿色标识 */
 .xy-item-count {
-  font-size: var(--font-size-md);
-  color: var(--xy-seal);
-
-  &.is-sellable {
-    color: var(--color-success);
-  }
+  color: var(--color-success);
 }
 
 /* 右键菜单（Teleport 到 body，用全局令牌） */
@@ -316,7 +309,6 @@ onBeforeUnmount(() => {
   background: transparent;
   color: var(--color-text-primary);
   font-family: inherit;
-  font-size: var(--font-size-md);
   text-align: left;
   cursor: pointer;
   border-radius: var(--radius-sm);

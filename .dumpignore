@@ -25,7 +25,7 @@ build/
 
 # json数据
 # configs/
-
+# src/
 # docs/
 # documents/
 prompts/

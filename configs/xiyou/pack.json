@@ -22,11 +22,11 @@
     { "name": "铜棍", "count": 1, "rarity": 1, "desc": "一阶中型武器 · 桃木×2 + 铜精×2" }
   ],
   "pills": [
-    { "name": "疗伤丹药", "count": 5, "rarity": 1, "desc": "恢复 50 点气血" },
-    { "name": "攻击丹药", "count": 3, "rarity": 2, "desc": "临时提升攻击力 20%，持续 3 回合" },
-    { "name": "防御丹药", "count": 2, "rarity": 2, "desc": "临时提升防御力 20%，持续 3 回合" },
-    { "name": "速度丹药", "count": 1, "rarity": 3, "desc": "临时提升速度 20%，持续 3 回合" },
-    { "name": "洗髓丹", "count": 1, "rarity": 4, "desc": "重置经脉点数，不损耗已获得点数" }
+    { "name": "疗伤丹", "count": 5, "rarity": 1, "desc": "恢复30%最大气血" },
+    { "name": "破障丹", "count": 3, "rarity": 4, "desc": "本回合攻击+50%，无视20%防御" },
+    { "name": "铁壁丹", "count": 2, "rarity": 2, "desc": "本回合防御+50%" },
+    { "name": "疾风丹", "count": 1, "rarity": 3, "desc": "本回合速度+50%，先手行动" },
+    { "name": "洗髓丹", "count": 1, "rarity": 4, "desc": "全属性+2，上限3颗" }
   ],
   "consumables": [
     { "name": "桃符", "count": 4, "rarity": 1, "desc": "桃木所制符纸，驱邪净身" },
@@ -35,13 +35,13 @@
     { "name": "水帘洞藏宝图", "count": 1, "rarity": 3, "desc": "残缺的藏宝图，指向水帘洞深处" }
   ],
   "shopGoods": [
-    { "name": "疗伤丹药", "type": "丹药", "price": 50, "unit": "铜钱", "stock": 99, "tag": "常售" },
-    { "name": "攻击丹药", "type": "丹药", "price": 120, "unit": "铜钱", "stock": 20, "tag": "常售" },
-    { "name": "桃木", "type": "材料", "price": 8, "unit": "铜钱", "stock": 200 },
-    { "name": "铜精", "type": "材料", "price": 35, "unit": "铜钱", "stock": 120 },
-    { "name": "淡水玉", "type": "材料", "price": 180, "unit": "铜钱", "stock": 40, "tag": "限量" },
-    { "name": "竹剑", "type": "装备", "price": 320, "unit": "铜钱", "stock": 5 },
-    { "name": "鹿皮甲", "type": "装备", "price": 400, "unit": "铜钱", "stock": 5 },
+    { "name": "疗伤丹", "itemId": "elix_001", "type": "丹药", "price": 50, "unit": "铜钱", "stock": 99, "tag": "常售" },
+    { "name": "破障丹", "itemId": "elix_007", "type": "丹药", "price": 120, "unit": "铜钱", "stock": 20, "tag": "常售" },
+    { "name": "桃木", "itemId": "mat_taomu", "type": "材料", "price": 8, "unit": "铜钱", "stock": 200 },
+    { "name": "铜精", "itemId": "mat_tongjing", "type": "材料", "price": 35, "unit": "铜钱", "stock": 120 },
+    { "name": "淡水玉", "itemId": "mat_danshuiyu", "type": "材料", "price": 180, "unit": "铜钱", "stock": 40, "tag": "限量" },
+    { "name": "竹剑", "itemId": "wp_t1_light_01", "type": "装备", "price": 320, "unit": "铜钱", "stock": 5 },
+    { "name": "鹿皮甲", "itemId": "ar_t1_light_01", "type": "装备", "price": 400, "unit": "铜钱", "stock": 5 },
     { "name": "洗髓丹", "type": "丹药", "price": 3, "unit": "灵石", "stock": 2, "tag": "限量" },
     { "name": "玄铁", "type": "材料", "price": 5, "unit": "银两", "stock": 8 },
     { "name": "引路香", "type": "杂货", "price": 20, "unit": "铜钱", "stock": 99 }

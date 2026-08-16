@@ -99,7 +99,7 @@ export const REFERENCE_RULES: ReferenceRule[] = [
   { sourceTable: 'enemies', path: 'passiveSkillIds', targetTables: ['skills'], optional: true },
   { sourceTable: 'enemies', path: 'affixes', targetTables: ['affixes'], optional: true },
   { sourceTable: 'equipment', path: 'factionRestriction', targetTables: ['elements'], optional: true },
-  { sourceTable: 'gears', path: 'materials[].itemId', targetTables: ['items'] },
+  { sourceTable: 'gears', path: 'materials[].itemId', targetTables: ['items', 'materials'] },
   { sourceTable: 'elements', path: 'matrix[].attackerId', targetTables: ['elements'], optional: true },
   { sourceTable: 'elements', path: 'matrix[].defenderId', targetTables: ['elements'], optional: true },
 ]
@@ -108,7 +108,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   actors: {
     table: 'actors',
     label: '角色/敌人',
-    columns: ['id', 'name', 'level', 'growth', 'skillIds'],
+    columns: ['name', 'level', 'growth', 'skillIds'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'level', label: '等级', type: 'number', required: true, min: 1, max: 99, column: { format: 'number' } },
@@ -126,7 +126,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   skills: {
     table: 'skills',
     label: '技能',
-    columns: ['id', 'name', 'skillType', 'energyCost', 'cooldown'],
+    columns: ['name', 'skillType', 'energyCost', 'cooldown'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'skillType', label: '类型', type: 'select', enum: ['small', 'ultimate', 'passive'], column: { tagKind: 'type' }, searchable: true,
@@ -152,7 +152,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   buffs: {
     table: 'buffs',
     label: '状态与 Buff',
-    columns: ['id', 'name', 'polarity', 'category', 'duration'],
+    columns: ['name', 'polarity', 'category', 'duration'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'polarity', label: '极性', type: 'select', enum: ['positive', 'negative'], column: { tagKind: 'polarity' }, searchable: true,
@@ -180,7 +180,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   enemies: {
     table: 'enemies',
     label: '敌人',
-    columns: ['id', 'name', 'role', 'level', 'skills'],
+    columns: ['name', 'role', 'level', 'skills'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'role', label: '品阶', type: 'select', enum: ['normal', 'elite', 'guardian', 'minor_boss', 'major_boss', 'hidden_boss'], column: { tagKind: 'rank' }, searchable: true,
@@ -216,7 +216,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   scenes: {
     table: 'scenes',
     label: '场景',
-    columns: ['id', 'name', 'difficulty'],
+    columns: ['name', 'difficulty'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'background', label: '背景描述', type: 'text', searchable: true },
@@ -249,7 +249,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   formations: {
     table: 'formations',
     label: '阵型',
-    columns: ['id', 'name', 'maxSlots'],
+    columns: ['name', 'maxSlots'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'maxSlots', label: '最大站位', type: 'number', min: 1, max: 8, column: { format: 'number' } },
@@ -267,7 +267,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   lineups: {
     table: 'lineups',
     label: '预设阵容',
-    columns: ['id', 'name', 'formationId', 'tags'],
+    columns: ['name', 'formationId', 'tags'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'formationId', label: '绑定阵型', type: 'select', refTable: 'formations' },
@@ -282,26 +282,27 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   materials: {
     table: 'materials',
     label: '材料',
-    columns: ['id', 'name', 'type', 'rarity'],
+    columns: ['name', 'type', 'rarity', 'usage'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'type', label: '类型', type: 'select', enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '丹药', '碎片', '货币'], column: { tagKind: 'type' }, searchable: true },
+      { key: 'type', label: '类型', type: 'select', enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '碎片', '货币', '草药', '药引', '种子'], column: { tagKind: 'type' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'effects', label: '使用效果', type: 'array',
         description: '效果类型 + 数值（heal/buff/...）',
         arrayTemplate: [{ type: 'heal', value: 50 }] },
+      { key: 'usage', label: '用途', type: 'text', searchable: true },
       { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
     filters: [
-      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '丹药', '碎片', '货币'] },
+      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '碎片', '货币', '草药', '药引', '种子'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],
   },
   equipment: {
     table: 'equipment',
     label: '装备',
-    columns: ['id', 'name', 'slot', 'rarity', 'requiredLevel'],
+    columns: ['name', 'slot', 'rarity', 'requiredLevel'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring'], column: { tagKind: 'slot' }, searchable: true,
@@ -323,7 +324,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   elements: {
     table: 'elements',
     label: '阵营元素',
-    columns: ['id', 'name'],
+    columns: ['name'],
     fields: [
       { key: 'elements', label: '元素定义', type: 'array', searchable: true,
         description: '元素 id + 名称',
@@ -337,7 +338,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   growth: {
     table: 'growth',
     label: '成长曲线',
-    columns: ['id', 'name'],
+    columns: ['name'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'perLevel', label: '每级增量', type: 'map' },
@@ -350,7 +351,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   affixes: {
     table: 'affixes',
     label: '词缀',
-    columns: ['id', 'name', 'tier', 'target', 'rarity'],
+    columns: ['name', 'tier', 'target', 'rarity'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'tier', label: '档位', type: 'select', enum: ['yao_1', 'yao_2', 'yao_3', 'yao_4', 'mandate', 'jie'], column: { tagKind: 'neutral' }, searchable: true,
@@ -375,7 +376,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   equipment_affixes: {
     table: 'equipment_affixes',
     label: '装备词条',
-    columns: ['id', 'name', 'attribute', 'modifierType', 'school', 'rarity'],
+    columns: ['name', 'attribute', 'modifierType', 'school', 'rarity'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'attribute', label: '属性', type: 'text', required: true, searchable: true,
@@ -404,7 +405,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   params: {
     table: 'params',
     label: '战斗规则参数',
-    columns: ['id', 'name', 'value', 'description'],
+    columns: ['name', 'value', 'description'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'value', label: '当前值', type: 'number', column: { format: 'number' },
@@ -421,7 +422,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   xiyou: {
     table: 'xiyou',
     label: '西游数据',
-    columns: ['id', 'name', 'description'],
+    columns: ['name', 'description'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'description', label: '说明', type: 'text', searchable: true },
@@ -433,25 +434,28 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
   items: {
     table: 'items',
     label: '物品',
-    columns: ['id', 'name', 'type', 'rarity'],
+    columns: ['name', 'type', 'rarity', 'usage'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'type', label: '类型', type: 'select',
-        enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '附魔', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣服', '饰品'],
+        enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '附魔', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣服', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'],
         column: { tagKind: 'type' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
+      { key: 'value', label: '实际价值', type: 'number', min: 0, max: 999999, column: { format: 'number' },
+        description: '物品实际价值（铜钱口径）；出售价 / 坊市购买价 = 价值 × 全局系数（params 域 economy_ratios）' },
       { key: 'source', label: '来源', type: 'text', searchable: true },
+      { key: 'usage', label: '用途', type: 'text', searchable: true },
       { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     filters: [
-      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '附魔', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣服', '饰品'] },
+      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '附魔', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣服', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],
   },
   gears: {
     table: 'gears',
     label: '装备详情',
-    columns: ['id', 'name', 'slot', 'tier', 'rarity', 'cost'],
+    columns: ['name', 'slot', 'tier', 'rarity', 'cost'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring'], column: { tagKind: 'slot' }, searchable: true,

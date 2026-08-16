@@ -10,8 +10,8 @@
 import type { Item } from '@/shared/types/Item'
 import type { ItemData } from '@/domain/fengshen/types'
 
-/** 材料域 type 白名单（对齐 schema.ts materials 表 type 枚举） */
-const MATERIAL_TYPES = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '丹药', '碎片', '货币']
+/** 材料域 type 白名单（对齐 schema.ts materials 表 type 枚举；丹药为消耗品，不归入材料） */
+const MATERIAL_TYPES = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '碎片', '货币', '草药', '药引', '种子']
 
 export function deriveMaterials(items: ItemData[]): Item[] {
   return items
@@ -22,6 +22,7 @@ export function deriveMaterials(items: ItemData[]): Item[] {
       type: it.type,
       rarity: it.rarity,
       description: it.description ?? '',
+      usage: it.usage ?? '',
       ...(it.effects ? { effects: it.effects } : {}),
     }))
 }

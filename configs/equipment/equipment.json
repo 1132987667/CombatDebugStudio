@@ -1,1323 +1,5 @@
 [
   {
-    "id": "wp_t1_light_01",
-    "name": "竹剑",
-    "slot": "weapon",
-    "subType": "轻型",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 10
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_taomu",
-        "count": 3
-      },
-      {
-        "itemId": "mat_tongjing",
-        "count": 1
-      }
-    ],
-    "cost": 50,
-    "craftable": true,
-    "recipeId": "forge_wp_t1_light_01",
-    "blueprintId": "bp_t1_wp",
-    "legacyIds": [
-      "eq_w001"
-    ],
-    "source": "cave.json 已有配方",
-    "description": "以桃木为骨、铜精为刃，轻盈迅捷。攻击 +10，攻速 +10%。"
-  },
-  {
-    "id": "wp_t1_mid_01",
-    "name": "铜棍",
-    "slot": "weapon",
-    "subType": "中型",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 12
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_taomu",
-        "count": 2
-      },
-      {
-        "itemId": "mat_tongjing",
-        "count": 2
-      }
-    ],
-    "cost": 60,
-    "craftable": true,
-    "recipeId": "forge_wp_t1_mid_01",
-    "blueprintId": "bp_t1_wp",
-    "legacyIds": [
-      "eq_w002"
-    ],
-    "source": "v2.0 配方（原松木棍）",
-    "description": "通体铜铸，势大力沉。攻击 +12。"
-  },
-  {
-    "id": "wp_t1_heavy_01",
-    "name": "铜锤",
-    "slot": "weapon",
-    "subType": "重型",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 14
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -5
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tongjing",
-        "count": 3
-      },
-      {
-        "itemId": "mat_cushi",
-        "count": 2
-      }
-    ],
-    "cost": 70,
-    "craftable": true,
-    "blueprintId": "bp_t1_wp",
-    "legacyIds": [
-      "eq_w003"
-    ],
-    "source": "回答.md 新增",
-    "description": "铜铸重锤，一击破防。攻击 +14，速度 -5%。"
-  },
-  {
-    "id": "wp_t2_light_01",
-    "name": "迅风剑",
-    "slot": "weapon",
-    "subType": "轻型",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 22
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_songmu",
-        "count": 4
-      },
-      {
-        "itemId": "mat_tiejing",
-        "count": 2
-      }
-    ],
-    "cost": 150,
-    "craftable": true,
-    "blueprintId": "bp_t2_wp",
-    "legacyIds": [
-      "eq_w004"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "剑过留风，迅捷难防。攻击 +22，攻速 +10%。"
-  },
-  {
-    "id": "wp_t2_mid_01",
-    "name": "铁棒",
-    "slot": "weapon",
-    "subType": "中型",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 30
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_songmu",
-        "count": 2
-      },
-      {
-        "itemId": "mat_tiejing",
-        "count": 3
-      },
-      {
-        "itemId": "mat_cushi",
-        "count": 1
-      }
-    ],
-    "cost": 180,
-    "craftable": true,
-    "blueprintId": "bp_t2_wp",
-    "legacyIds": [
-      "eq_w005"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "精铁锻造，刚猛无匹。攻击 +30。"
-  },
-  {
-    "id": "wp_t2_heavy_01",
-    "name": "铁锤",
-    "slot": "weapon",
-    "subType": "重型",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 35
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -8
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tiejing",
-        "count": 4
-      },
-      {
-        "itemId": "mat_cushi",
-        "count": 3
-      }
-    ],
-    "cost": 220,
-    "craftable": true,
-    "blueprintId": "bp_t2_wp",
-    "legacyIds": [
-      "eq_w006"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "铁铸重锤，碎石裂地。攻击 +35，速度 -8%。"
-  },
-  {
-    "id": "wp_t3_light_01",
-    "name": "流云剑",
-    "slot": "weapon",
-    "subType": "轻型",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 38
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tiemu",
-        "count": 4
-      },
-      {
-        "itemId": "mat_jinjing",
-        "count": 2
-      },
-      {
-        "itemId": "mat_xianyun",
-        "count": 1
-      }
-    ],
-    "cost": 400,
-    "craftable": true,
-    "blueprintId": "bp_t3_wp",
-    "legacyIds": [
-      "eq_w007"
-    ],
-    "source": "关卡7-9 制造",
-    "description": "剑走流云，快若惊鸿。攻击 +38，攻速 +15%。"
-  },
-  {
-    "id": "wp_t3_mid_01",
-    "name": "伏魔杖",
-    "slot": "weapon",
-    "subType": "中型",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 48
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tiemu",
-        "count": 3
-      },
-      {
-        "itemId": "mat_jinjing",
-        "count": 3
-      },
-      {
-        "itemId": "mat_shengshui",
-        "count": 1
-      }
-    ],
-    "cost": 450,
-    "craftable": true,
-    "blueprintId": "bp_t3_wp",
-    "legacyIds": [
-      "eq_w008"
-    ],
-    "source": "关卡7-9 制造",
-    "description": "杖镇群魔，佛光凛然。攻击 +48。"
-  },
-  {
-    "id": "wp_t3_heavy_01",
-    "name": "撼地锤",
-    "slot": "weapon",
-    "subType": "重型",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 55
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_jinjing",
-        "count": 5
-      },
-      {
-        "itemId": "mat_gutongjing",
-        "count": 2
-      },
-      {
-        "itemId": "mat_cushi",
-        "count": 3
-      }
-    ],
-    "cost": 520,
-    "craftable": true,
-    "blueprintId": "bp_t3_wp",
-    "legacyIds": [
-      "eq_w009"
-    ],
-    "source": "关卡7-9 制造",
-    "description": "一锤撼地，万军辟易。攻击 +55，速度 -10%。"
-  },
-  {
-    "id": "ar_t1_light_01",
-    "name": "鹿皮甲",
-    "slot": "armor",
-    "subType": "皮甲",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 8
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_lupi",
-        "count": 4
-      }
-    ],
-    "cost": 30,
-    "craftable": true,
-    "recipeId": "forge_ar_t1_light_01",
-    "blueprintId": "bp_t1_ar",
-    "legacyIds": [
-      "eq_a001"
-    ],
-    "source": "cave.json 已有配方",
-    "description": "鹿皮鞣制，轻软护身。防御 +8，速度 +20%。"
-  },
-  {
-    "id": "ar_t1_mid_01",
-    "name": "铜木甲",
-    "slot": "armor",
-    "subType": "木甲",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_taomu",
-        "count": 3
-      },
-      {
-        "itemId": "mat_tongjing",
-        "count": 3
-      }
-    ],
-    "cost": 60,
-    "craftable": true,
-    "blueprintId": "bp_t1_ar",
-    "legacyIds": [
-      "eq_a002"
-    ],
-    "source": "回答.md 新增",
-    "description": "桃木为衬、铜精镶边，坚固耐用。防御 +10。"
-  },
-  {
-    "id": "ar_t1_heavy_01",
-    "name": "轻铜甲",
-    "slot": "armor",
-    "subType": "铠甲",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 12
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -5
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tongjing",
-        "count": 4
-      },
-      {
-        "itemId": "mat_cushi",
-        "count": 2
-      }
-    ],
-    "cost": 70,
-    "craftable": true,
-    "blueprintId": "bp_t1_ar",
-    "legacyIds": [
-      "eq_a003"
-    ],
-    "source": "回答.md 新增",
-    "description": "铜板甲身，防御扎实。防御 +12，速度 -5%。"
-  },
-  {
-    "id": "ar_t2_light_01",
-    "name": "熊皮甲",
-    "slot": "armor",
-    "subType": "皮甲",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 14
-      },
-      {
-        "attribute": "dodge",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_xiongpi",
-        "count": 3
-      },
-      {
-        "itemId": "mat_xuanzhi",
-        "count": 1
-      }
-    ],
-    "cost": 130,
-    "craftable": true,
-    "blueprintId": "bp_t2_ar",
-    "legacyIds": [
-      "eq_a004"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "熊皮厚韧，刀枪难入。防御 +14，闪避 +3%。"
-  },
-  {
-    "id": "ar_t2_mid_01",
-    "name": "铁木甲",
-    "slot": "armor",
-    "subType": "木甲",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 18
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_songmu",
-        "count": 3
-      },
-      {
-        "itemId": "mat_tiejing",
-        "count": 2
-      }
-    ],
-    "cost": 160,
-    "craftable": true,
-    "blueprintId": "bp_t2_ar",
-    "legacyIds": [
-      "eq_a005"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "铁木为骨，坚逾精钢。防御 +18。"
-  },
-  {
-    "id": "ar_t2_heavy_01",
-    "name": "重铁甲",
-    "slot": "armor",
-    "subType": "铠甲",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 22
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -6
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tiejing",
-        "count": 5
-      },
-      {
-        "itemId": "mat_cushi",
-        "count": 3
-      }
-    ],
-    "cost": 200,
-    "craftable": true,
-    "blueprintId": "bp_t2_ar",
-    "legacyIds": [
-      "eq_a006"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "重铁板甲，固若金汤。防御 +22，速度 -6%。"
-  },
-  {
-    "id": "ar_t3_light_01",
-    "name": "虎威甲",
-    "slot": "armor",
-    "subType": "皮甲",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 24
-      },
-      {
-        "attribute": "dodge",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_hupi",
-        "count": 3
-      },
-      {
-        "itemId": "mat_xianyun",
-        "count": 1
-      }
-    ],
-    "cost": 380,
-    "craftable": true,
-    "blueprintId": "bp_t3_ar",
-    "legacyIds": [
-      "eq_a007"
-    ],
-    "source": "关卡7-9 制造",
-    "description": "虎皮为衬，威震山林。防御 +24，闪避 +5%。"
-  },
-  {
-    "id": "ar_t3_mid_01",
-    "name": "金木甲",
-    "slot": "armor",
-    "subType": "木甲",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 30
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tiemu",
-        "count": 4
-      },
-      {
-        "itemId": "mat_jinjing",
-        "count": 2
-      }
-    ],
-    "cost": 420,
-    "craftable": true,
-    "blueprintId": "bp_t3_ar",
-    "legacyIds": [
-      "eq_a008"
-    ],
-    "source": "关卡7-9 制造",
-    "description": "金丝缠木，刚柔并济。防御 +30。"
-  },
-  {
-    "id": "ar_t3_heavy_01",
-    "name": "神金甲",
-    "slot": "armor",
-    "subType": "铠甲",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 36
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -8
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_jinjing",
-        "count": 6
-      },
-      {
-        "itemId": "mat_gutongjing",
-        "count": 1
-      },
-      {
-        "itemId": "mat_shengshui",
-        "count": 1
-      }
-    ],
-    "cost": 500,
-    "craftable": true,
-    "blueprintId": "bp_t3_ar",
-    "legacyIds": [
-      "eq_a009"
-    ],
-    "source": "关卡7-9 制造",
-    "description": "神金铸就，万法不侵。防御 +36，速度 -8%。"
-  },
-  {
-    "id": "ac_t1_charm_01",
-    "name": "淡水玉护符",
-    "slot": "charm",
-    "subType": "护符",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_danshuiyu",
-        "count": 2
-      },
-      {
-        "itemId": "mat_beike",
-        "count": 1
-      }
-    ],
-    "cost": 45,
-    "craftable": true,
-    "recipeId": "forge_ac_t1_charm_01",
-    "blueprintId": "bp_t1_ch",
-    "legacyIds": [
-      "eq_c001"
-    ],
-    "source": "cave.json 已有配方",
-    "description": "淡水玉养人，气血 +3%。"
-  },
-  {
-    "id": "ac_t1_ring_01",
-    "name": "藤蔓箍",
-    "slot": "ring",
-    "subType": "戒指",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "flat",
-        "value": 60
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_beike",
-        "count": 2
-      },
-      {
-        "itemId": "mat_taomu",
-        "count": 2
-      }
-    ],
-    "cost": 35,
-    "craftable": true,
-    "recipeId": "forge_ac_t1_ring_01",
-    "blueprintId": "bp_t1_rg",
-    "source": "cave.json 已有配方",
-    "description": "藤蔓盘绕而成，气血 +60。"
-  },
-  {
-    "id": "ac_t1_neck_01",
-    "name": "贝壳链",
-    "slot": "helmet",
-    "subType": "头盔",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_beike",
-        "count": 3
-      },
-      {
-        "itemId": "mat_xuanzhi",
-        "count": 1
-      }
-    ],
-    "cost": 30,
-    "craftable": true,
-    "blueprintId": "bp_t1_hl",
-    "source": "v2.0（原项链并入头盔）",
-    "description": "贝壳缀连，蕴含水灵。防御 +5%。"
-  },
-  {
-    "id": "ac_t1_belt_01",
-    "name": "宣纸腰带",
-    "slot": "boots",
-    "subType": "靴子",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_xuanzhi",
-        "count": 2
-      },
-      {
-        "itemId": "mat_taomu",
-        "count": 1
-      }
-    ],
-    "cost": 25,
-    "craftable": true,
-    "blueprintId": "bp_t1_bs",
-    "legacyIds": [
-      "eq_c004"
-    ],
-    "source": "v2.0（原腰带并入靴子）",
-    "description": "宣纸轻韧，束腰提气。速度 +5%。"
-  },
-  {
-    "id": "ac_t1_brace_01",
-    "name": "贝壳镯",
-    "slot": "ring",
-    "subType": "戒指",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "critRate",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_beike",
-        "count": 2
-      },
-      {
-        "itemId": "mat_danshuiyu",
-        "count": 1
-      }
-    ],
-    "cost": 40,
-    "craftable": true,
-    "blueprintId": "bp_t1_rg",
-    "source": "v2.0（原手镯并入戒指）",
-    "description": "玉润含光，暴击率 +3%。"
-  },
-  {
-    "id": "ac_t1_crown_01",
-    "name": "藤编冠",
-    "slot": "helmet",
-    "subType": "冠冕",
-    "tier": "t1",
-    "rarity": 1,
-    "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 2
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 2
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 2
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_taomu",
-        "count": 3
-      },
-      {
-        "itemId": "mat_xuanzhi",
-        "count": 1
-      }
-    ],
-    "cost": 50,
-    "craftable": true,
-    "blueprintId": "bp_t1_hl",
-    "source": "v2.0（原冠冕并入头盔）",
-    "description": "藤木编就，灵气汇聚。全属性 +2%。"
-  },
-  {
-    "id": "ac_t2_charm_01",
-    "name": "深水玉护符",
-    "slot": "charm",
-    "subType": "护符",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 6
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_shenshuiyu",
-        "count": 2
-      },
-      {
-        "itemId": "mat_qinghuaci",
-        "count": 1
-      }
-    ],
-    "cost": 140,
-    "craftable": true,
-    "blueprintId": "bp_t2_ch",
-    "legacyIds": [
-      "eq_c007"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "深水玉凝魂，气血 +6%。"
-  },
-  {
-    "id": "ac_t2_ring_01",
-    "name": "青花瓷戒",
-    "slot": "ring",
-    "subType": "戒指",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 6
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tiejing",
-        "count": 2
-      },
-      {
-        "itemId": "mat_qinghuaci",
-        "count": 1
-      }
-    ],
-    "cost": 130,
-    "craftable": true,
-    "blueprintId": "bp_t2_rg",
-    "legacyIds": [
-      "eq_c008"
-    ],
-    "source": "关卡4-6 制造",
-    "description": "青花蕴力，攻击 +6%。"
-  },
-  {
-    "id": "ac_t2_neck_01",
-    "name": "铁精链",
-    "slot": "helmet",
-    "subType": "头盔",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 6
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_tiejing",
-        "count": 2
-      },
-      {
-        "itemId": "mat_qinghuaci",
-        "count": 1
-      }
-    ],
-    "cost": 120,
-    "craftable": true,
-    "blueprintId": "bp_t2_hl",
-    "legacyIds": [
-      "eq_c009"
-    ],
-    "source": "v2.0（原项链并入头盔）",
-    "description": "铁精锻心，防御 +6%。"
-  },
-  {
-    "id": "ac_t2_belt_01",
-    "name": "青花瓷扣带",
-    "slot": "boots",
-    "subType": "靴子",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 6
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_qinghuaci",
-        "count": 2
-      },
-      {
-        "itemId": "mat_xiongpi",
-        "count": 1
-      }
-    ],
-    "cost": 110,
-    "craftable": true,
-    "blueprintId": "bp_t2_bs",
-    "legacyIds": [
-      "eq_c010"
-    ],
-    "source": "v2.0（原腰带并入靴子）",
-    "description": "瓷纹流转，速度 +6%。"
-  },
-  {
-    "id": "ac_t2_brace_01",
-    "name": "深水玉镯",
-    "slot": "ring",
-    "subType": "戒指",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "critRate",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_shenshuiyu",
-        "count": 2
-      },
-      {
-        "itemId": "mat_tiejing",
-        "count": 1
-      }
-    ],
-    "cost": 150,
-    "craftable": true,
-    "blueprintId": "bp_t2_rg",
-    "legacyIds": [
-      "eq_c011"
-    ],
-    "source": "v2.0（原手镯并入戒指）",
-    "description": "水玉生辉，暴击率 +5%。"
-  },
-  {
-    "id": "ac_t2_crown_01",
-    "name": "铁木冠",
-    "slot": "helmet",
-    "subType": "冠冕",
-    "tier": "t2",
-    "rarity": 2,
-    "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 3
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 3
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_songmu",
-        "count": 2
-      },
-      {
-        "itemId": "mat_tiejing",
-        "count": 2
-      },
-      {
-        "itemId": "mat_qinghuaci",
-        "count": 1
-      }
-    ],
-    "cost": 170,
-    "craftable": true,
-    "blueprintId": "bp_t2_hl",
-    "source": "v2.0（原冠冕并入头盔）",
-    "description": "铁木冠顶，全属性 +3%。"
-  },
-  {
-    "id": "ac_t3_charm_01",
-    "name": "圣水玉护符",
-    "slot": "charm",
-    "subType": "护符",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_shengshui",
-        "count": 2
-      },
-      {
-        "itemId": "mat_xianyun",
-        "count": 1
-      }
-    ],
-    "cost": 380,
-    "craftable": true,
-    "blueprintId": "bp_t3_ch",
-    "legacyIds": [
-      "eq_c013"
-    ],
-    "source": "关卡7-9 制造",
-    "description": "圣水玉润泽，气血 +10%。"
-  },
-  {
-    "id": "ac_t3_ring_01",
-    "name": "金精戒",
-    "slot": "ring",
-    "subType": "戒指",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_jinjing",
-        "count": 3
-      },
-      {
-        "itemId": "mat_feicui",
-        "count": 1
-      }
-    ],
-    "cost": 360,
-    "craftable": true,
-    "blueprintId": "bp_t3_rg",
-    "source": "关卡7-9 制造",
-    "description": "金精吐芒，攻击 +10%。"
-  },
-  {
-    "id": "ac_t3_neck_01",
-    "name": "翡翠链",
-    "slot": "helmet",
-    "subType": "头盔",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_feicui",
-        "count": 2
-      },
-      {
-        "itemId": "mat_xianyun",
-        "count": 1
-      }
-    ],
-    "cost": 350,
-    "craftable": true,
-    "blueprintId": "bp_t3_hl",
-    "source": "v2.0（原项链并入头盔）",
-    "description": "翡翠通灵，防御 +10%。"
-  },
-  {
-    "id": "ac_t3_belt_01",
-    "name": "古铜镜扣带",
-    "slot": "boots",
-    "subType": "靴子",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_gutongjing",
-        "count": 2
-      },
-      {
-        "itemId": "mat_hupi",
-        "count": 1
-      }
-    ],
-    "cost": 340,
-    "craftable": true,
-    "blueprintId": "bp_t3_bs",
-    "legacyIds": [
-      "eq_c016"
-    ],
-    "source": "v2.0（原腰带并入靴子）",
-    "description": "古镜映身，速度 +10%。"
-  },
-  {
-    "id": "ac_t3_brace_01",
-    "name": "翡翠玉镯",
-    "slot": "ring",
-    "subType": "戒指",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "critRate",
-        "modifierType": "percent",
-        "value": 7
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_feicui",
-        "count": 2
-      },
-      {
-        "itemId": "mat_shengshui",
-        "count": 1
-      }
-    ],
-    "cost": 400,
-    "craftable": true,
-    "blueprintId": "bp_t3_rg",
-    "legacyIds": [
-      "eq_c017"
-    ],
-    "source": "v2.0（原手镯并入戒指）",
-    "description": "翡翠生辉，暴击率 +7%。"
-  },
-  {
-    "id": "ac_t3_crown_01",
-    "name": "金精冠",
-    "slot": "helmet",
-    "subType": "冠冕",
-    "tier": "t3",
-    "rarity": 3,
-    "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 5
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 5
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
-    "materials": [
-      {
-        "itemId": "mat_jinjing",
-        "count": 3
-      },
-      {
-        "itemId": "mat_xianyun",
-        "count": 2
-      }
-    ],
-    "cost": 420,
-    "craftable": true,
-    "blueprintId": "bp_t3_hl",
-    "legacyIds": [
-      "eq_c018"
-    ],
-    "source": "v2.0（原冠冕并入头盔）",
-    "description": "金精加冕，全属性 +5%。"
-  },
-  {
     "id": "wp_t4_01",
     "name": "牛魔撼天锤",
     "slot": "weapon",
@@ -1370,7 +52,7 @@
     ],
     "materials": [
       {
-        "itemId": "mat_boss_02",
+        "itemId": "mat_tianxiewangdu",
         "count": 1
       },
       {
@@ -1715,10 +397,418 @@
     "description": "地灵护体，厚德载物。防御 +12%，气血 +6%。"
   },
   {
-    "id": "eq_c002",
+    "id": "wp_t1_light_01",
+    "name": "竹剑",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 10
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 1
+      }
+    ],
+    "cost": 50,
+    "craftable": true,
+    "recipeId": "forge_wp_t1_light_01",
+    "blueprintId": "bp_t1_wp",
+    "legacyIds": [
+      "eq_w001"
+    ],
+    "source": "制造（主线，免图纸）",
+    "description": "竹剑，攻击+10速度+10%"
+  },
+  {
+    "id": "wp_t1_mid_01",
+    "name": "铜棍",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 2
+      }
+    ],
+    "cost": 60,
+    "craftable": true,
+    "recipeId": "forge_wp_t1_mid_01",
+    "blueprintId": "bp_t1_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铜棍，攻击+12"
+  },
+  {
+    "id": "wp_t1_heavy_01",
+    "name": "铜锤",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 14
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tongjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 2
+      }
+    ],
+    "cost": 70,
+    "craftable": true,
+    "recipeId": "forge_wp_t1_heavy_01",
+    "blueprintId": "bp_t1_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铜锤，攻击+14速度-5%，格挡率+5%"
+  },
+  {
+    "id": "ar_t1_light_01",
+    "name": "鹿皮甲",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 6
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_lupi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_taomu",
+        "count": 2
+      }
+    ],
+    "cost": 40,
+    "craftable": true,
+    "recipeId": "forge_ar_t1_light_01",
+    "blueprintId": "bp_t1_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "鹿皮甲，防御+6闪避+5%速度+5%"
+  },
+  {
+    "id": "ar_t1_mid_01",
+    "name": "铜木甲",
+    "slot": "armor",
+    "subType": "木甲",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 2
+      }
+    ],
+    "cost": 50,
+    "craftable": true,
+    "recipeId": "forge_ar_t1_mid_01",
+    "blueprintId": "bp_t1_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铜木甲，防御+8气血+5%"
+  },
+  {
+    "id": "ar_t1_heavy_01",
+    "name": "轻铜甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tongjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 2
+      }
+    ],
+    "cost": 60,
+    "craftable": true,
+    "recipeId": "forge_ar_t1_heavy_01",
+    "blueprintId": "bp_t1_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "轻铜甲，防御+10伤害减免+5%速度-5%"
+  },
+  {
+    "id": "hd_t1_war_01",
+    "name": "藤蔓箍",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 1
+      }
+    ],
+    "cost": 35,
+    "craftable": true,
+    "recipeId": "forge_hd_t1_war_01",
+    "blueprintId": "bp_t1_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "藤蔓箍，防御+5%韧性+3%"
+  },
+  {
+    "id": "hd_t1_spirit_01",
+    "name": "灵桃冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 1
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "count": 1
+      }
+    ],
+    "cost": 40,
+    "craftable": true,
+    "recipeId": "forge_hd_t1_spirit_01",
+    "blueprintId": "bp_t1_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "灵桃冠，全属性+3%能量获取+5%"
+  },
+  {
+    "id": "bt_t1_light_01",
+    "name": "草编履",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_beike",
+        "count": 2
+      }
+    ],
+    "cost": 30,
+    "craftable": true,
+    "recipeId": "forge_bt_t1_light_01",
+    "blueprintId": "bp_t1_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "草编履，速度+5%闪避+3%"
+  },
+  {
+    "id": "bt_t1_heavy_01",
+    "name": "粗石靴",
+    "slot": "boots",
+    "subType": "重靴",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_cushi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_lupi",
+        "count": 1
+      }
+    ],
+    "cost": 35,
+    "craftable": true,
+    "recipeId": "forge_bt_t1_heavy_01",
+    "blueprintId": "bp_t1_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "粗石靴，防御+3%韧性+3%"
+  },
+  {
+    "id": "hf_t1_life_01",
+    "name": "淡水玉护符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_danshuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_beike",
+        "count": 1
+      }
+    ],
+    "cost": 40,
+    "craftable": true,
+    "recipeId": "forge_hf_t1_life_01",
+    "blueprintId": "bp_t1_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "淡水玉护符，气血+5%治疗效果+3%"
+  },
+  {
+    "id": "hf_t1_war_01",
+    "name": "桃木战符",
+    "slot": "charm",
+    "subType": "战意护符",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 1
+      }
+    ],
+    "cost": 35,
+    "craftable": true,
+    "recipeId": "forge_hf_t1_war_01",
+    "blueprintId": "bp_t1_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "桃木战符，气血+3%攻击+3%暴击率+2%"
+  },
+  {
+    "id": "jz_t1_power_01",
     "name": "贝壳戒指",
     "slot": "ring",
-    "subType": "戒指",
+    "subType": "力戒",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
@@ -1729,14 +819,944 @@
         "value": 5
       }
     ],
-    "source": "旧版封神榜装备表（掉落）",
-    "description": "一阶戒指。贝纹含灵，攻击 +5%。"
+    "materials": [
+      {
+        "itemId": "mat_beike",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 1
+      }
+    ],
+    "cost": 35,
+    "craftable": true,
+    "recipeId": "forge_jz_t1_power_01",
+    "blueprintId": "bp_t1_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "贝壳戒指，攻击+5%命中+3%"
   },
   {
-    "id": "eq_c014",
-    "name": "翡翠玉镯戒指",
+    "id": "jz_t1_spirit_01",
+    "name": "桃核戒",
     "slot": "ring",
-    "subType": "戒指",
+    "subType": "灵戒",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 1
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "count": 1
+      }
+    ],
+    "cost": 35,
+    "craftable": true,
+    "recipeId": "forge_jz_t1_spirit_01",
+    "blueprintId": "bp_t1_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "桃核戒，技能伤害+5%能量+3%"
+  },
+  {
+    "id": "wp_t2_light_01",
+    "name": "迅风剑",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 22
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_songmu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      }
+    ],
+    "cost": 120,
+    "craftable": true,
+    "recipeId": "forge_wp_t2_light_01",
+    "blueprintId": "bp_t2_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "迅风剑，攻击+22速度+12%连击率+5%"
+  },
+  {
+    "id": "wp_t2_mid_01",
+    "name": "铁棒",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 27
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_songmu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 3
+      }
+    ],
+    "cost": 140,
+    "craftable": true,
+    "recipeId": "forge_wp_t2_mid_01",
+    "blueprintId": "bp_t2_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铁棒，攻击+27暴击率+4%"
+  },
+  {
+    "id": "wp_t2_heavy_01",
+    "name": "铁锤",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 32
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiejing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_qinggang",
+        "count": 3
+      }
+    ],
+    "cost": 160,
+    "craftable": true,
+    "recipeId": "forge_wp_t2_heavy_01",
+    "blueprintId": "bp_t2_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铁锤，攻击+32速度-8%格挡率+8%眩晕+5%"
+  },
+  {
+    "id": "ar_t2_light_01",
+    "name": "熊皮甲",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xiongpi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_songmu",
+        "count": 2
+      }
+    ],
+    "cost": 110,
+    "craftable": true,
+    "recipeId": "forge_ar_t2_light_01",
+    "blueprintId": "bp_t2_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "熊皮甲，防御+12闪避+8%速度+8%"
+  },
+  {
+    "id": "ar_t2_mid_01",
+    "name": "铁木甲",
+    "slot": "armor",
+    "subType": "木甲",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 16
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_songmu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 3
+      }
+    ],
+    "cost": 130,
+    "craftable": true,
+    "recipeId": "forge_ar_t2_mid_01",
+    "blueprintId": "bp_t2_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铁木甲，防御+16气血+8%"
+  },
+  {
+    "id": "ar_t2_heavy_01",
+    "name": "重铁甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 20
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiejing",
+        "count": 4
+      },
+      {
+        "itemId": "mat_qinggang",
+        "count": 3
+      }
+    ],
+    "cost": 150,
+    "craftable": true,
+    "recipeId": "forge_ar_t2_heavy_01",
+    "blueprintId": "bp_t2_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "重铁甲，防御+20伤害减免+8%速度-5%"
+  },
+  {
+    "id": "hd_t2_war_01",
+    "name": "铁战盔",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiejing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_qinggang",
+        "count": 2
+      }
+    ],
+    "cost": 100,
+    "craftable": true,
+    "recipeId": "forge_hd_t2_war_01",
+    "blueprintId": "bp_t2_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铁战盔，防御+8%韧性+5%"
+  },
+  {
+    "id": "hd_t2_spirit_01",
+    "name": "河伯灵冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_shenshuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_songmu",
+        "count": 1
+      }
+    ],
+    "cost": 110,
+    "craftable": true,
+    "recipeId": "forge_hd_t2_spirit_01",
+    "blueprintId": "bp_t2_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "河伯灵冠，全属性+5%技能伤害+8%"
+  },
+  {
+    "id": "bt_t2_light_01",
+    "name": "踏浪靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xiongpi",
+        "count": 2
+      },
+      {
+        "itemId": "mat_beike",
+        "count": 2
+      }
+    ],
+    "cost": 90,
+    "craftable": true,
+    "recipeId": "forge_bt_t2_light_01",
+    "blueprintId": "bp_t2_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "踏浪靴，速度+8%闪避+5%"
+  },
+  {
+    "id": "bt_t2_heavy_01",
+    "name": "铁蹄靴",
+    "slot": "boots",
+    "subType": "重靴",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_qinggang",
+        "count": 2
+      }
+    ],
+    "cost": 100,
+    "craftable": true,
+    "recipeId": "forge_bt_t2_heavy_01",
+    "blueprintId": "bp_t2_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铁蹄靴，防御+5%格挡率+5%"
+  },
+  {
+    "id": "hf_t2_life_01",
+    "name": "深水玉符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_shenshuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_zhenzhu",
+        "count": 1
+      }
+    ],
+    "cost": 110,
+    "craftable": true,
+    "recipeId": "forge_hf_t2_life_01",
+    "blueprintId": "bp_t2_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "深水玉符，气血+8%治疗效果+5%"
+  },
+  {
+    "id": "hf_t2_war_01",
+    "name": "河铁战符",
+    "slot": "charm",
+    "subType": "战意护符",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_beike",
+        "count": 2
+      }
+    ],
+    "cost": 100,
+    "craftable": true,
+    "recipeId": "forge_hf_t2_war_01",
+    "blueprintId": "bp_t2_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "河铁战符，气血+5%攻击+5%暴击率+3%"
+  },
+  {
+    "id": "jz_t2_power_01",
+    "name": "铁精戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiejing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_qinggang",
+        "count": 1
+      }
+    ],
+    "cost": 100,
+    "craftable": true,
+    "recipeId": "forge_jz_t2_power_01",
+    "blueprintId": "bp_t2_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "铁精戒，攻击+8%暴击伤害+10%"
+  },
+  {
+    "id": "jz_t2_spirit_01",
+    "name": "水灵戒",
+    "slot": "ring",
+    "subType": "灵戒",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_shenshuiyu",
+        "count": 1
+      },
+      {
+        "itemId": "mat_zhenzhu",
+        "count": 1
+      }
+    ],
+    "cost": 110,
+    "craftable": true,
+    "recipeId": "forge_jz_t2_spirit_01",
+    "blueprintId": "bp_t2_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "水灵戒，技能伤害+8%能量+5%"
+  },
+  {
+    "id": "wp_t3_light_01",
+    "name": "流云剑",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 35
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiemu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 2
+      }
+    ],
+    "cost": 250,
+    "craftable": true,
+    "recipeId": "forge_wp_t3_light_01",
+    "blueprintId": "bp_t3_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "流云剑，攻击+35速度+15%连击率+8%"
+  },
+  {
+    "id": "wp_t3_mid_01",
+    "name": "伏魔杖",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 42
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiemu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 3
+      }
+    ],
+    "cost": 280,
+    "craftable": true,
+    "recipeId": "forge_wp_t3_mid_01",
+    "blueprintId": "bp_t3_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "伏魔杖，攻击+42暴击率+6%暴击伤害+15%"
+  },
+  {
+    "id": "wp_t3_heavy_01",
+    "name": "撼地锤",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 50
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_jinjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 3
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 2
+      }
+    ],
+    "cost": 300,
+    "craftable": true,
+    "recipeId": "forge_wp_t3_heavy_01",
+    "blueprintId": "bp_t3_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "撼地锤，攻击+50速度-10%格挡率+10%眩晕+10%"
+  },
+  {
+    "id": "ar_t3_light_01",
+    "name": "虎威甲",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 20
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_hupi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tiemu",
+        "count": 2
+      }
+    ],
+    "cost": 240,
+    "craftable": true,
+    "recipeId": "forge_ar_t3_light_01",
+    "blueprintId": "bp_t3_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "虎威甲，防御+20闪避+10%暴击率+3%"
+  },
+  {
+    "id": "ar_t3_mid_01",
+    "name": "金木甲",
+    "slot": "armor",
+    "subType": "木甲",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 26
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiemu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 3
+      }
+    ],
+    "cost": 260,
+    "craftable": true,
+    "recipeId": "forge_ar_t3_mid_01",
+    "blueprintId": "bp_t3_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "金木甲，防御+26气血+10%韧性+5%"
+  },
+  {
+    "id": "ar_t3_heavy_01",
+    "name": "神金甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 32
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_jinjing",
+        "count": 4
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 3
+      }
+    ],
+    "cost": 280,
+    "craftable": true,
+    "recipeId": "forge_ar_t3_heavy_01",
+    "blueprintId": "bp_t3_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "神金甲，防御+32伤害减免+10%速度-8%"
+  },
+  {
+    "id": "hd_t3_war_01",
+    "name": "钢战盔",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_gangjing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 2
+      }
+    ],
+    "cost": 220,
+    "craftable": true,
+    "recipeId": "forge_hd_t3_war_01",
+    "blueprintId": "bp_t3_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "钢战盔，防御+12%韧性+8%"
+  },
+  {
+    "id": "hd_t3_spirit_01",
+    "name": "岩灵冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_yanxin",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiemu",
+        "count": 1
+      }
+    ],
+    "cost": 240,
+    "craftable": true,
+    "recipeId": "forge_hd_t3_spirit_01",
+    "blueprintId": "bp_t3_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "岩灵冠，全属性+8%技能伤害+12%能量+8%"
+  },
+  {
+    "id": "bt_t3_light_01",
+    "name": "疾风靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xianyun",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiemu",
+        "count": 1
+      }
+    ],
+    "cost": 200,
+    "craftable": true,
+    "recipeId": "forge_bt_t3_light_01",
+    "blueprintId": "bp_t3_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "疾风靴，速度+12%闪避+8%先手+5%"
+  },
+  {
+    "id": "bt_t3_heavy_01",
+    "name": "磐石靴",
+    "slot": "boots",
+    "subType": "重靴",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xuantie",
+        "count": 3
+      },
+      {
+        "itemId": "mat_cushi",
+        "count": 2
+      }
+    ],
+    "cost": 220,
+    "craftable": true,
+    "recipeId": "forge_bt_t3_heavy_01",
+    "blueprintId": "bp_t3_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "磐石靴，防御+8%格挡率+8%受击回能+10%"
+  },
+  {
+    "id": "hf_t3_life_01",
+    "name": "翠玉护符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_cuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 1
+      }
+    ],
+    "cost": 240,
+    "craftable": true,
+    "recipeId": "forge_hf_t3_life_01",
+    "blueprintId": "bp_t3_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "翠玉护符，气血+12%治疗效果+8%护盾+5%"
+  },
+  {
+    "id": "hf_t3_war_01",
+    "name": "金精战符",
+    "slot": "charm",
+    "subType": "战意护符",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_jinjing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 2
+      }
+    ],
+    "cost": 220,
+    "craftable": true,
+    "recipeId": "forge_hf_t3_war_01",
+    "blueprintId": "bp_t3_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "金精战符，气血+8%攻击+8%暴击率+5%"
+  },
+  {
+    "id": "jz_t3_power_01",
+    "name": "金精戒",
+    "slot": "ring",
+    "subType": "力戒",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
@@ -1747,7 +1767,2610 @@
         "value": 12
       }
     ],
-    "source": "旧版封神榜装备表（掉落）",
-    "description": "三阶戒指。翡翠吐芒，攻击 +12%。"
+    "materials": [
+      {
+        "itemId": "mat_jinjing",
+        "count": 2
+      },
+      {
+        "itemId": "mat_yanxin",
+        "count": 1
+      }
+    ],
+    "cost": 220,
+    "craftable": true,
+    "recipeId": "forge_jz_t3_power_01",
+    "blueprintId": "bp_t3_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "金精戒，攻击+12%暴击伤害+15%破甲+5%"
+  },
+  {
+    "id": "jz_t3_spirit_01",
+    "name": "翠玉灵戒",
+    "slot": "ring",
+    "subType": "灵戒",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_cuiyu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_shenshuiyu",
+        "count": 1
+      }
+    ],
+    "cost": 240,
+    "craftable": true,
+    "recipeId": "forge_jz_t3_spirit_01",
+    "blueprintId": "bp_t3_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "翠玉灵戒，技能伤害+12%能量+8%大招伤害+8%"
+  },
+  {
+    "id": "wp_t4_light_01",
+    "name": "幽影刃",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 48
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_youmu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_bizhanglingye",
+        "count": 2
+      }
+    ],
+    "cost": 380,
+    "craftable": true,
+    "recipeId": "forge_wp_t4_light_01",
+    "blueprintId": "bp_t4_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "幽影刃，攻击+48速度+18%连击率+10%"
+  },
+  {
+    "id": "wp_t4_mid_01",
+    "name": "破幻杖",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 55
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_youmu",
+        "count": 2
+      },
+      {
+        "itemId": "mat_huancai",
+        "count": 2
+      }
+    ],
+    "cost": 400,
+    "craftable": true,
+    "recipeId": "forge_wp_t4_mid_01",
+    "blueprintId": "bp_t4_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "破幻杖，攻击+55暴击率+8%命中+10%"
+  },
+  {
+    "id": "wp_t4_heavy_01",
+    "name": "碎岳锤",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 65
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_huancai",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 3
+      }
+    ],
+    "cost": 420,
+    "craftable": true,
+    "recipeId": "forge_wp_t4_heavy_01",
+    "blueprintId": "bp_t4_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "碎岳锤，攻击+65速度-10%格挡率+12%反伤+8%"
+  },
+  {
+    "id": "ar_t4_light_01",
+    "name": "影豹皮甲",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 26
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_yingbao",
+        "count": 2
+      },
+      {
+        "itemId": "mat_xianyun",
+        "count": 2
+      }
+    ],
+    "cost": 360,
+    "craftable": true,
+    "recipeId": "forge_ar_t4_light_01",
+    "blueprintId": "bp_t4_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "影豹皮甲，防御+26闪避+12%速度+10%"
+  },
+  {
+    "id": "ar_t4_mid_01",
+    "name": "瘴木甲",
+    "slot": "armor",
+    "subType": "木甲",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 32
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_youmu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_huancai",
+        "count": 2
+      }
+    ],
+    "cost": 380,
+    "craftable": true,
+    "recipeId": "forge_ar_t4_mid_01",
+    "blueprintId": "bp_t4_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "瘴木甲，防御+32气血+12%异常抗性+10%"
+  },
+  {
+    "id": "ar_t4_heavy_01",
+    "name": "幻岩铠",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 40
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_huancai",
+        "count": 4
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 3
+      }
+    ],
+    "cost": 400,
+    "craftable": true,
+    "recipeId": "forge_ar_t4_heavy_01",
+    "blueprintId": "bp_t4_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "幻岩铠，防御+40伤害减免+12%韧性+10%"
+  },
+  {
+    "id": "hd_t4_war_01",
+    "name": "幻岩战盔",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_huancai",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 2
+      }
+    ],
+    "cost": 350,
+    "craftable": true,
+    "recipeId": "forge_hd_t4_war_01",
+    "blueprintId": "bp_t4_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "幻岩战盔，防御+15%韧性+10%控制抗性+8%"
+  },
+  {
+    "id": "hd_t4_spirit_01",
+    "name": "幽兰灵冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_youlan",
+        "count": 2
+      },
+      {
+        "itemId": "mat_wuling",
+        "count": 2
+      }
+    ],
+    "cost": 370,
+    "craftable": true,
+    "recipeId": "forge_hd_t4_spirit_01",
+    "blueprintId": "bp_t4_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "幽兰灵冠，全属性+10%技能伤害+15%能量+10%"
+  },
+  {
+    "id": "bt_t4_light_01",
+    "name": "影步靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_yingbao",
+        "count": 2
+      },
+      {
+        "itemId": "mat_wuling",
+        "count": 2
+      }
+    ],
+    "cost": 340,
+    "craftable": true,
+    "recipeId": "forge_bt_t4_light_01",
+    "blueprintId": "bp_t4_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "影步靴，速度+15%闪避+10%先手+8%"
+  },
+  {
+    "id": "bt_t4_heavy_01",
+    "name": "幻岩重靴",
+    "slot": "boots",
+    "subType": "重靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_huancai",
+        "count": 3
+      },
+      {
+        "itemId": "mat_xuantie",
+        "count": 2
+      }
+    ],
+    "cost": 360,
+    "craftable": true,
+    "recipeId": "forge_bt_t4_heavy_01",
+    "blueprintId": "bp_t4_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "幻岩重靴，防御+10%格挡率+10%受击回能+15%"
+  },
+  {
+    "id": "hf_t4_life_01",
+    "name": "翡翠护符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_feicui",
+        "count": 2
+      },
+      {
+        "itemId": "mat_youlan",
+        "count": 1
+      }
+    ],
+    "cost": 370,
+    "craftable": true,
+    "recipeId": "forge_hf_t4_life_01",
+    "blueprintId": "bp_t4_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "翡翠护符，气血+15%治疗效果+10%护盾+8%"
+  },
+  {
+    "id": "hf_t4_war_01",
+    "name": "毒牙战符",
+    "slot": "charm",
+    "subType": "战意护符",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_bizhanglingye",
+        "count": 2
+      },
+      {
+        "itemId": "mat_yingbao",
+        "count": 1
+      }
+    ],
+    "cost": 350,
+    "craftable": true,
+    "recipeId": "forge_hf_t4_war_01",
+    "blueprintId": "bp_t4_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "毒牙战符，气血+10%攻击+10%暴击率+6%"
+  },
+  {
+    "id": "jz_t4_power_01",
+    "name": "毒牙戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_bizhanglingye",
+        "count": 2
+      },
+      {
+        "itemId": "mat_huancai",
+        "count": 1
+      }
+    ],
+    "cost": 350,
+    "craftable": true,
+    "recipeId": "forge_jz_t4_power_01",
+    "blueprintId": "bp_t4_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "毒牙戒，攻击+15%暴击伤害+20%"
+  },
+  {
+    "id": "jz_t4_spirit_01",
+    "name": "雾灵戒",
+    "slot": "ring",
+    "subType": "灵戒",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_wuling",
+        "count": 2
+      },
+      {
+        "itemId": "mat_youlan",
+        "count": 1
+      }
+    ],
+    "cost": 370,
+    "craftable": true,
+    "recipeId": "forge_jz_t4_spirit_01",
+    "blueprintId": "bp_t4_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "雾灵戒，技能伤害+15%能量+10%大招伤害+12%"
+  },
+  {
+    "id": "wp_t5_light_01",
+    "name": "菩提降龙剑",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 62
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 20
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_puti",
+        "count": 3
+      },
+      {
+        "itemId": "mat_foguang",
+        "count": 2
+      }
+    ],
+    "cost": 800,
+    "craftable": true,
+    "recipeId": "forge_wp_t5_light_01",
+    "blueprintId": "bp_t5_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "菩提降龙剑，攻击+62速度+20%连击率+12%"
+  },
+  {
+    "id": "wp_t5_mid_01",
+    "name": "天罡伏魔杖",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 72
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_puti",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiangang",
+        "count": 1
+      }
+    ],
+    "cost": 850,
+    "craftable": true,
+    "recipeId": "forge_wp_t5_mid_01",
+    "blueprintId": "bp_t5_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "天罡伏魔杖，攻击+72暴击率+10%暴击伤害+25%"
+  },
+  {
+    "id": "wp_t5_heavy_01",
+    "name": "须弥碎天锤",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 85
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": -12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xumi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tiangang",
+        "count": 1
+      }
+    ],
+    "cost": 900,
+    "craftable": true,
+    "recipeId": "forge_wp_t5_heavy_01",
+    "blueprintId": "bp_t5_wp",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "须弥碎天锤，攻击+85速度-12%格挡率+15%反伤+12%"
+  },
+  {
+    "id": "ar_t5_light_01",
+    "name": "天蚕仙衣",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 32
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiancan",
+        "count": 3
+      },
+      {
+        "itemId": "mat_foguang",
+        "count": 2
+      }
+    ],
+    "cost": 780,
+    "craftable": true,
+    "recipeId": "forge_ar_t5_light_01",
+    "blueprintId": "bp_t5_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "天蚕仙衣，防御+32闪避+15%速度+12%先手+10%"
+  },
+  {
+    "id": "ar_t5_mid_01",
+    "name": "菩提道袍",
+    "slot": "armor",
+    "subType": "木甲",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 40
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_puti",
+        "count": 3
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 2
+      }
+    ],
+    "cost": 820,
+    "craftable": true,
+    "recipeId": "forge_ar_t5_mid_01",
+    "blueprintId": "bp_t5_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "菩提道袍，防御+40气血+15%异常抗性+15%"
+  },
+  {
+    "id": "ar_t5_heavy_01",
+    "name": "金刚不坏甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 50
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xumi",
+        "count": 4
+      },
+      {
+        "itemId": "mat_tiangang",
+        "count": 1
+      }
+    ],
+    "cost": 860,
+    "craftable": true,
+    "recipeId": "forge_ar_t5_heavy_01",
+    "blueprintId": "bp_t5_ar",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "金刚不坏甲，防御+50伤害减免+15%韧性+12%"
+  },
+  {
+    "id": "hd_t5_war_01",
+    "name": "金刚战盔",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xumi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_foguang",
+        "count": 2
+      }
+    ],
+    "cost": 750,
+    "craftable": true,
+    "recipeId": "forge_hd_t5_war_01",
+    "blueprintId": "bp_t5_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "金刚战盔，防御+18%韧性+12%控制抗性+12%"
+  },
+  {
+    "id": "hd_t5_spirit_01",
+    "name": "菩提道冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_puti",
+        "count": 2
+      },
+      {
+        "itemId": "mat_lingxiao",
+        "count": 1
+      }
+    ],
+    "cost": 780,
+    "craftable": true,
+    "recipeId": "forge_hd_t5_spirit_01",
+    "blueprintId": "bp_t5_hl",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "菩提道冠，全属性+12%技能伤害+18%能量+12%"
+  },
+  {
+    "id": "bt_t5_light_01",
+    "name": "仙云靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiancan",
+        "count": 2
+      },
+      {
+        "itemId": "mat_foguang",
+        "count": 2
+      }
+    ],
+    "cost": 720,
+    "craftable": true,
+    "recipeId": "forge_bt_t5_light_01",
+    "blueprintId": "bp_t5_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "仙云靴，速度+18%闪避+12%先手+10%"
+  },
+  {
+    "id": "bt_t5_heavy_01",
+    "name": "金刚重靴",
+    "slot": "boots",
+    "subType": "重靴",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xumi",
+        "count": 3
+      },
+      {
+        "itemId": "mat_shengshui",
+        "count": 1
+      }
+    ],
+    "cost": 750,
+    "craftable": true,
+    "recipeId": "forge_bt_t5_heavy_01",
+    "blueprintId": "bp_t5_bs",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "金刚重靴，防御+12%格挡率+12%受击回能+20%"
+  },
+  {
+    "id": "hf_t5_life_01",
+    "name": "琉璃净符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_shengshui",
+        "count": 2
+      },
+      {
+        "itemId": "mat_lingxiao",
+        "count": 1
+      }
+    ],
+    "cost": 780,
+    "craftable": true,
+    "recipeId": "forge_hf_t5_life_01",
+    "blueprintId": "bp_t5_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "琉璃净符，气血+18%治疗效果+12%护盾+10%"
+  },
+  {
+    "id": "hf_t5_war_01",
+    "name": "天罡战符",
+    "slot": "charm",
+    "subType": "战意护符",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiangang",
+        "count": 1
+      },
+      {
+        "itemId": "mat_foguang",
+        "count": 2
+      }
+    ],
+    "cost": 800,
+    "craftable": true,
+    "recipeId": "forge_hf_t5_war_01",
+    "blueprintId": "bp_t5_ch",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "天罡战符，气血+12%攻击+12%暴击率+8%"
+  },
+  {
+    "id": "jz_t5_power_01",
+    "name": "金刚力戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_xumi",
+        "count": 2
+      },
+      {
+        "itemId": "mat_tiangang",
+        "count": 1
+      }
+    ],
+    "cost": 780,
+    "craftable": true,
+    "recipeId": "forge_jz_t5_power_01",
+    "blueprintId": "bp_t5_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "金刚力戒，攻击+18%暴击伤害+25%破甲+10%"
+  },
+  {
+    "id": "jz_t5_spirit_01",
+    "name": "菩提灵戒",
+    "slot": "ring",
+    "subType": "灵戒",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_puti",
+        "count": 2
+      },
+      {
+        "itemId": "mat_lingxiao",
+        "count": 1
+      }
+    ],
+    "cost": 800,
+    "craftable": true,
+    "recipeId": "forge_jz_t5_spirit_01",
+    "blueprintId": "bp_t5_rg",
+    "legacyIds": [],
+    "source": "制造（主线，免图纸）",
+    "description": "菩提灵戒，技能伤害+18%能量+12%大招伤害+15%"
+  },
+  {
+    "id": "wp_sb01",
+    "name": "灵根缠藤鞭",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t1",
+    "rarity": 4,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "花妖王首杀掉落",
+    "description": "灵根缠藤鞭，攻击+18，攻击附带缠绕"
+  },
+  {
+    "id": "ar_sb02",
+    "name": "沧浪涌潮甲",
+    "slot": "armor",
+    "subType": "木甲",
+    "tier": "t2",
+    "rarity": 4,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 22
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "河伯首杀掉落",
+    "description": "沧浪涌潮甲，防御+22"
+  },
+  {
+    "id": "hd_sb03",
+    "name": "磐石不动盔",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t3",
+    "rarity": 4,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 14
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "山神首杀掉落",
+    "description": "磐石不动盔，防御+14%"
+  },
+  {
+    "id": "jz_sb04",
+    "name": "幻瞳迷心戒",
+    "slot": "ring",
+    "subType": "灵戒",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "迷雾妖主首杀掉落",
+    "description": "幻瞳迷心戒，技能伤害+18%"
+  },
+  {
+    "id": "ar_sb05",
+    "name": "龙鳞逆甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 38
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "浊浪龙王掉落",
+    "description": "龙鳞逆甲，防御+38"
+  },
+  {
+    "id": "wp_sb06",
+    "name": "炽焰焚天刃",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t3",
+    "rarity": 4,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 48
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "火焰领主掉落",
+    "description": "炽焰焚天刃，攻击+48，攻击附带灼烧"
+  },
+  {
+    "id": "hf_sb07",
+    "name": "千丝缚灵索",
+    "slot": "charm",
+    "subType": "战意护符",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "盘丝大仙掉落",
+    "description": "千丝缚灵索，气血+10%攻击+8%"
+  },
+  {
+    "id": "bt_sb08",
+    "name": "裂风疾羽靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "风暴领主掉落",
+    "description": "裂风疾羽靴，速度+18%"
+  },
+  {
+    "id": "hf_sb09",
+    "name": "金身不破符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t5",
+    "rarity": 4,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 20
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "罗汉尊者掉落",
+    "description": "金身不破符，气血+20%"
+  },
+  {
+    "id": "hd_sb10",
+    "name": "法相金莲冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t5",
+    "rarity": 4,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "如来法相掉落",
+    "description": "法相金莲冠，全属性+15%"
+  },
+  {
+    "id": "bt_hb01",
+    "name": "黑风疾行靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t5",
+    "rarity": 4,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 20
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "黑风老妖掉落",
+    "description": "黑风疾行靴，速度+20%"
+  },
+  {
+    "id": "bt_hb02",
+    "name": "遁地重靴",
+    "slot": "boots",
+    "subType": "重靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "土行孙掉落",
+    "description": "遁地重靴，防御+12%"
+  },
+  {
+    "id": "jz_hb03",
+    "name": "九齿破甲戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 16
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "朱刚鬣掉落",
+    "description": "九齿破甲戒，攻击+16%"
+  },
+  {
+    "id": "hd_hb04",
+    "name": "百眼灵冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "hit",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "百眼魔君掉落",
+    "description": "百眼灵冠，技能命中+15%"
+  },
+  {
+    "id": "hf_hb05",
+    "name": "净坛护符",
+    "slot": "charm",
+    "subType": "元素护符",
+    "tier": "t5",
+    "rarity": 4,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "金蝉长老掉落",
+    "description": "净坛护符，气血+15%"
+  },
+  {
+    "id": "hd_t4_war_02",
+    "name": "牛魔战盔",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 35,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 20
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_boss_01",
+        "count": 1
+      },
+      {
+        "itemId": "mat_huancai",
+        "count": 3
+      }
+    ],
+    "cost": 1000,
+    "craftable": true,
+    "recipeId": "forge_hd_t4_war_02",
+    "blueprintId": "bp_legend_01",
+    "legacyIds": [],
+    "source": "制造（需图纸 bp_legend_01）",
+    "description": "牛魔战盔，防御+20%，受击30%嘲讽"
+  },
+  {
+    "id": "bt_t4_02",
+    "name": "蝎尾灵靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 35,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 20
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tianxiewangdu",
+        "count": 1
+      },
+      {
+        "itemId": "mat_yingbao",
+        "count": 3
+      }
+    ],
+    "cost": 1000,
+    "craftable": true,
+    "recipeId": "forge_bt_t4_02",
+    "blueprintId": "bp_legend_02",
+    "legacyIds": [],
+    "source": "制造（需图纸 bp_legend_02）",
+    "description": "蝎尾灵靴，速度+20%，先手+12%"
+  },
+  {
+    "id": "bt_t4_03",
+    "name": "鹏翼轻靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 35,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 22
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_boss_03",
+        "count": 1
+      },
+      {
+        "itemId": "mat_tiancan",
+        "count": 3
+      }
+    ],
+    "cost": 1000,
+    "craftable": true,
+    "recipeId": "forge_bt_t4_03",
+    "blueprintId": "bp_legend_03",
+    "legacyIds": [],
+    "source": "制造（需图纸 bp_legend_03）",
+    "description": "鹏翼轻靴，速度+22%，闪避+18%"
+  },
+  {
+    "id": "jz_sp_02",
+    "name": "寒潭玉戒",
+    "slot": "ring",
+    "subType": "灵戒",
+    "tier": "t4",
+    "rarity": 3,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "百眼魔君掉落",
+    "description": "寒潭玉戒，技能伤害+15%"
+  },
+  {
+    "id": "wp_sp_02",
+    "name": "噬魂刃",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 40
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "黑风老妖掉落",
+    "description": "噬魂刃，攻击+40，击杀恢复气血"
+  },
+  {
+    "id": "ar_sp_03",
+    "name": "不灭战甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 45
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "成就「百战不殆」奖励",
+    "description": "不灭战甲，防御+45"
+  },
+  {
+    "id": "hd_sp_04",
+    "name": "轮回之冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "成就「九死一生」奖励",
+    "description": "轮回之冠，全属性+10%"
+  },
+  {
+    "id": "bt_sp_05",
+    "name": "追风逐电靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t5",
+    "rarity": 4,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 25
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "风暴领主困难模式掉落",
+    "description": "追风逐电靴，速度+25%，先手+15%"
+  },
+  {
+    "id": "jz_sp_06",
+    "name": "万妖臣服戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t5",
+    "rarity": 4,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 20
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "legacyIds": [],
+    "source": "成就「降妖除魔」奖励",
+    "description": "万妖臣服戒，攻击+20%"
+  },
+  {
+    "id": "wt_01",
+    "name": "试炼木剑",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 8
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第1层首通掉落",
+    "description": "无尽塔第1层装备试炼木剑"
+  },
+  {
+    "id": "wt_02",
+    "name": "试炼布甲",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 5
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第2层首通掉落",
+    "description": "无尽塔第2层装备试炼布甲"
+  },
+  {
+    "id": "wt_03",
+    "name": "试炼草帽",
+    "slot": "helmet",
+    "subType": "战盔",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第3层首通掉落",
+    "description": "无尽塔第3层装备试炼草帽"
+  },
+  {
+    "id": "wt_04",
+    "name": "试炼布鞋",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第4层首通掉落",
+    "description": "无尽塔第4层装备试炼布鞋"
+  },
+  {
+    "id": "wt_05",
+    "name": "试炼玉佩",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第5层首通掉落",
+    "description": "无尽塔第5层装备试炼玉佩"
+  },
+  {
+    "id": "wt_06",
+    "name": "试炼铜戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 3
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第6层首通掉落",
+    "description": "无尽塔第6层装备试炼铜戒"
+  },
+  {
+    "id": "wt_07",
+    "name": "破风刃",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 12
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第7层首通掉落",
+    "description": "无尽塔第7层装备破风刃"
+  },
+  {
+    "id": "wt_08",
+    "name": "铁壁甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 8
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第8层首通掉落",
+    "description": "无尽塔第8层装备铁壁甲"
+  },
+  {
+    "id": "wt_09",
+    "name": "鹰眼盔",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "hit",
+        "modifierType": "percent",
+        "value": 5
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第9层首通掉落",
+    "description": "无尽塔第9层装备鹰眼盔"
+  },
+  {
+    "id": "wt_10",
+    "name": "疾行靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 6
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第10层首通掉落",
+    "description": "无尽塔第10层装备疾行靴"
+  },
+  {
+    "id": "wt_11",
+    "name": "寒铁剑",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 20
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第11层首通掉落",
+    "description": "无尽塔第11层装备寒铁剑"
+  },
+  {
+    "id": "wt_12",
+    "name": "玄铁甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 14
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第12层首通掉落",
+    "description": "无尽塔第12层装备玄铁甲"
+  },
+  {
+    "id": "wt_13",
+    "name": "灵犀冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 4
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第13层首通掉落",
+    "description": "无尽塔第13层装备灵犀冠"
+  },
+  {
+    "id": "wt_14",
+    "name": "风行靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第14层首通掉落",
+    "description": "无尽塔第14层装备风行靴"
+  },
+  {
+    "id": "wt_15",
+    "name": "守心符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第15层首通掉落",
+    "description": "无尽塔第15层装备守心符"
+  },
+  {
+    "id": "wt_16",
+    "name": "破军戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第16层首通掉落",
+    "description": "无尽塔第16层装备破军戒"
+  },
+  {
+    "id": "wt_17",
+    "name": "裂空刃",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 24
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第17层首通掉落",
+    "description": "无尽塔第17层装备裂空刃"
+  },
+  {
+    "id": "wt_18",
+    "name": "磐石铠",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第18层首通掉落",
+    "description": "无尽塔第18层装备磐石铠"
+  },
+  {
+    "id": "wt_19",
+    "name": "慧眼冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 8
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第19层首通掉落",
+    "description": "无尽塔第19层装备慧眼冠"
+  },
+  {
+    "id": "wt_20",
+    "name": "踏云靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第20层首通掉落",
+    "description": "无尽塔第20层装备踏云靴"
+  },
+  {
+    "id": "wt_21",
+    "name": "金刚杵",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 35
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第21层首通掉落",
+    "description": "无尽塔第21层装备金刚杵"
+  },
+  {
+    "id": "wt_22",
+    "name": "龙鳞甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 22
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第22层首通掉落",
+    "description": "无尽塔第22层装备龙鳞甲"
+  },
+  {
+    "id": "wt_23",
+    "name": "天灵冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 6
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第23层首通掉落",
+    "description": "无尽塔第23层装备天灵冠"
+  },
+  {
+    "id": "wt_24",
+    "name": "逐风靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第24层首通掉落",
+    "description": "无尽塔第24层装备逐风靴"
+  },
+  {
+    "id": "wt_25",
+    "name": "不灭符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第25层首通掉落",
+    "description": "无尽塔第25层装备不灭符"
+  },
+  {
+    "id": "wt_26",
+    "name": "碎星戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第26层首通掉落",
+    "description": "无尽塔第26层装备碎星戒"
+  },
+  {
+    "id": "wt_27",
+    "name": "噬魂刀",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 38
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第27层首通掉落",
+    "description": "无尽塔第27层装备噬魂刀"
+  },
+  {
+    "id": "wt_28",
+    "name": "玄武甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 26
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第28层首通掉落",
+    "description": "无尽塔第28层装备玄武甲"
+  },
+  {
+    "id": "wt_29",
+    "name": "通灵冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第29层首通掉落",
+    "description": "无尽塔第29层装备通灵冠"
+  },
+  {
+    "id": "wt_30",
+    "name": "瞬影靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 14
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第30层首通掉落",
+    "description": "无尽塔第30层装备瞬影靴"
+  },
+  {
+    "id": "wt_31",
+    "name": "天罡剑",
+    "slot": "weapon",
+    "subType": "轻型",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 45
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第31层首通掉落",
+    "description": "无尽塔第31层装备天罡剑"
+  },
+  {
+    "id": "wt_32",
+    "name": "混元甲",
+    "slot": "armor",
+    "subType": "木甲",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 30
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第32层首通掉落",
+    "description": "无尽塔第32层装备混元甲"
+  },
+  {
+    "id": "wt_33",
+    "name": "法相冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 10
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第33层首通掉落",
+    "description": "无尽塔第33层装备法相冠"
+  },
+  {
+    "id": "wt_34",
+    "name": "凌波靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 16
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第34层首通掉落",
+    "description": "无尽塔第34层装备凌波靴"
+  },
+  {
+    "id": "wt_35",
+    "name": "金刚符",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第35层首通掉落",
+    "description": "无尽塔第35层装备金刚符"
+  },
+  {
+    "id": "wt_36",
+    "name": "灭世戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第36层首通掉落",
+    "description": "无尽塔第36层装备灭世戒"
+  },
+  {
+    "id": "wt_37",
+    "name": "诛仙剑",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 52
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第37层首通掉落",
+    "description": "无尽塔第37层装备诛仙剑"
+  },
+  {
+    "id": "wt_38",
+    "name": "须弥铠",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 36
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第38层首通掉落",
+    "description": "无尽塔第38层装备须弥铠"
+  },
+  {
+    "id": "wt_39",
+    "name": "天眼冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 15
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第39层首通掉落",
+    "description": "无尽塔第39层装备天眼冠"
+  },
+  {
+    "id": "wt_40",
+    "name": "风火靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 30,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第40层首通掉落",
+    "description": "无尽塔第40层装备风火靴"
+  },
+  {
+    "id": "wt_41",
+    "name": "降魔杵",
+    "slot": "weapon",
+    "subType": "重型",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 60
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第41层首通掉落",
+    "description": "无尽塔第41层装备降魔杵"
+  },
+  {
+    "id": "wt_42",
+    "name": "天蚕仙袍",
+    "slot": "armor",
+    "subType": "皮甲",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 35
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第42层首通掉落",
+    "description": "无尽塔第42层装备天蚕仙袍"
+  },
+  {
+    "id": "wt_43",
+    "name": "菩提法冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 12
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第43层首通掉落",
+    "description": "无尽塔第43层装备菩提法冠"
+  },
+  {
+    "id": "wt_44",
+    "name": "金乌靴",
+    "slot": "boots",
+    "subType": "轻靴",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 20
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第44层首通掉落",
+    "description": "无尽塔第44层装备金乌靴"
+  },
+  {
+    "id": "wt_45",
+    "name": "琉璃净珠",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第45层首通掉落",
+    "description": "无尽塔第45层装备琉璃净珠"
+  },
+  {
+    "id": "wt_46",
+    "name": "天罡战戒",
+    "slot": "ring",
+    "subType": "力戒",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第46层首通掉落",
+    "description": "无尽塔第46层装备天罡战戒"
+  },
+  {
+    "id": "wt_47",
+    "name": "太虚·燃魂刃",
+    "slot": "weapon",
+    "subType": "中型",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 75
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第47层首通掉落",
+    "description": "无尽塔第47层装备太虚·燃魂刃"
+  },
+  {
+    "id": "wt_48",
+    "name": "劫灭·燃血甲",
+    "slot": "armor",
+    "subType": "铠甲",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "defense",
+        "modifierType": "flat",
+        "value": 48
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第48层首通掉落",
+    "description": "无尽塔第48层装备劫灭·燃血甲"
+  },
+  {
+    "id": "wt_49",
+    "name": "太虚·燃魂冠",
+    "slot": "helmet",
+    "subType": "灵冠",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 18
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第49层首通掉落",
+    "description": "无尽塔第49层装备太虚·燃魂冠"
+  },
+  {
+    "id": "wt_50",
+    "name": "劫灭·焚魄珠",
+    "slot": "charm",
+    "subType": "生命护符",
+    "tier": "t5",
+    "rarity": 5,
+    "requiredLevel": 40,
+    "stats": [
+      {
+        "attribute": "maxHealth",
+        "modifierType": "percent",
+        "value": 25
+      }
+    ],
+    "materials": [],
+    "cost": 0,
+    "craftable": false,
+    "source": "无尽塔第50层首通掉落",
+    "description": "无尽塔第50层装备劫灭·焚魄珠"
   }
 ]

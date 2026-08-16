@@ -106,19 +106,19 @@ describe('种子导入 seedFengshenData', () => {
     const equipKeys = await storage.keys(FENGSHEN_STORE.EQUIPMENT)
     expect(equipKeys).toContain('wp_t1_light_01')
     expect(equipKeys).not.toContain('eq_w001')
-    expect(equipKeys).toContain('eq_c002')
+    expect(equipKeys).not.toContain('eq_c002')
 
-    // 物品主键索引（items 表）：全量注册，新装备（wp_/ar_/ac_）+ 旧装备（eq_）ID 均在内
+    // 物品主键索引（items 表）：全量注册新装备（wp_/ar_/ac_）；旧 eq_* 占位已清理（经 equipment legacyIds 映射，不作为 items 主键）
     const itemKeys = await storage.keys(FENGSHEN_STORE.ITEMS)
     expect(itemKeys).toContain('mat_taomu')
     expect(itemKeys).toContain('wp_t1_light_01')
     expect(itemKeys).toContain('ar_t1_light_01')
-    expect(itemKeys).toContain('eq_w001')
+    expect(itemKeys).not.toContain('eq_w001')
 
-    // 装备详情（gears 表）：全量可打造装备 46 件（43 常规 + 3 特殊装备烈焰斩/风灵袍/地灵护符）
+    // 装备详情（gears 表）：全量可打造装备（equipment.json 中 craftable 的装备）
     const gearKeys = await storage.keys(FENGSHEN_STORE.GEARS)
-    expect(gearKeys).toHaveLength(46)
-    expect(gearKeys).toContain('ac_t1_charm_01')
+    expect(gearKeys).toHaveLength(83)
+    expect(gearKeys).toContain('hf_t1_life_01')
 
     // 词缀表：69 种种子词缀齐全（妖气 10 + 妖性 14 + 妖道 18 + 妖圣 12 + 天命 7 + 劫数 8）
     const affixKeys = await storage.keys(FENGSHEN_STORE.AFFIXES)
@@ -312,7 +312,58 @@ describe('健康检查 runHealthCheck', () => {
     const report = await integrity.runHealthCheck()
     const hit = report.issues.find((i) => i.sourceId === 'skill_broken' && i.missingId === 'buff_not_exist')
     expect(hit).toBeDefined()
+    expect(hit?.kind).toBe('integrity')
     expect(hit?.targetTable).toBe('buffs')
+  })
+
+  it('命名重复：items×equipment 同 name 不同 id 被报告（kind=duplicate_name）', async () => {
+    const { integrity, storage } = makeServices()
+    await seedFengshenData(storage)
+    // 种子里造两件不同 id 同名的物品（模拟 wt_43/wt_45 那样的冲突）
+    await storage.set(FENGSHEN_STORE.ITEMS, 'dup_item_a', {
+      id: 'dup_item_a', name: '玄铁剑', type: '武器', rarity: 2, value: 100, updatedAt: new Date().toISOString(),
+    })
+    await storage.set(FENGSHEN_STORE.ITEMS, 'dup_item_b', {
+      id: 'dup_item_b', name: '玄铁剑', type: '武器', rarity: 2, value: 120, updatedAt: new Date().toISOString(),
+    })
+    const report = await integrity.runHealthCheck()
+    const hits = report.issues.filter((i) => i.kind === 'duplicate_name' && i.missingId === '玄铁剑')
+    expect(hits.length).toBe(1)
+    expect(hits[0].detail).toContain('dup_item_a')
+    expect(hits[0].detail).toContain('dup_item_b')
+  })
+
+  it('命名重复：同 id 同名（装备注册 / 派生关系）不计为重复', async () => {
+    const { integrity, storage } = makeServices()
+    await seedFengshenData(storage)
+    // equipment 表里加一件与 items 同 id 的装备：同 id 同名应被忽略
+    const report = await integrity.runHealthCheck()
+    expect(report.issues.filter((i) => i.kind === 'duplicate_name')).toEqual([])
+  })
+
+  it('字段内重复引用：drops[].itemId 重复被报告（kind=duplicate_ref）', async () => {
+    const { integrity, storage } = makeServices()
+    await seedFengshenData(storage)
+    const enemyKeys = await storage.keys(FENGSHEN_STORE.ENEMIES)
+    const someId = enemyKeys[0]
+    const enemy = await storage.get<{ drops?: Array<{ itemId: string }> }>(FENGSHEN_STORE.ENEMIES, someId)
+    await storage.set(FENGSHEN_STORE.ENEMIES, someId, {
+      ...enemy,
+      drops: [...(enemy?.drops ?? []), ...(enemy?.drops?.[0] ? [enemy.drops[0]] : [])],
+      updatedAt: new Date().toISOString(),
+    })
+    const report = await integrity.runHealthCheck()
+    const hits = report.issues.filter((i) => i.kind === 'duplicate_ref' && i.sourceId === someId)
+    expect(hits.length).toBeGreaterThan(0)
+    expect(hits[0].field).toBe('drops[].itemId')
+  })
+
+  it('种子数据自洽：命名重复修复生效（无 duplicate_name）', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+    const report = await new DataIntegrityService(storage).runHealthCheck()
+    // NOTE: 仅断言本次目标（命名重复）已清零；断裂引用/字段重复取决于工作区敌人数据现状，不在此强断
+    expect(report.issues.filter((i) => i.kind === 'duplicate_name')).toEqual([])
   })
 })
 

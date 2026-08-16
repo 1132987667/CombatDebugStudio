@@ -84,10 +84,14 @@ export interface ItemData {
   type: string
   /** 稀有度（1 普通 ~ 5 仙品） */
   rarity: number
+  /** 实际价值（铜钱口径；出售价 / 坊市购买价 = 价值 × 全局系数） */
+  value?: number
   /** 获取来源 */
   source?: string
   /** 物品描述（材料/丹药等来自原 materials.json 的条目含描述） */
   description?: string
+  /** 用途（从 description 中拆分的独立字段，如「强化一阶武器，每级提升攻击力5%」） */
+  usage?: string
   /** 使用效果（仅消耗品/丹药类） */
   effects?: ItemEffect[]
 }
@@ -271,7 +275,7 @@ export interface BattleParamData {
   value?: number
   range?: { min: number; max: number }
   /** 结构化参数数据（经验/金钱表，value 为 undefined 时使用） */
-  data?: ExpTableConfig | EnemyRewardTableConfig | LevelDiffBonusConfig
+  data?: ExpTableConfig | EnemyRewardTableConfig | LevelDiffBonusConfig | EconomyRatiosConfig
   description?: string
   updatedAt: string
 }
@@ -309,7 +313,7 @@ export interface EnemyRewardTableConfig {
   description?: string
   baseExpFormula?: string
   baseGoldFormula?: string
-  /** 敌人角色倍率（键对齐 enemies.json role 品阶：normal/elite/guardian/minor_boss/major_boss/hidden_boss） */
+  /** 敌人角色倍率（键对齐 enemies.json role 品阶：normal/elite/guardian/major_boss/hidden_boss） */
   roleMultiplier: Record<string, number>
   entries: EnemyRewardEntry[]
   /** 未列出等级的插值方式：linear（线性插值）/ nearest（取最近档） */
@@ -337,6 +341,17 @@ export interface LevelDiffBonusConfig {
   fallbackMultiplier: number
   /** 最终倍率钳制范围 */
   clampRange: { min: number; max: number }
+}
+
+/** 坊市经济系数（params 域，key=economy_ratios）—— 物品实际价值 → 买卖价换算（百分比口径） */
+export interface EconomyRatiosConfig {
+  id: string
+  name?: string
+  description?: string
+  /** 购买系数（百分比）：坊市购买价 = 物品实际价值 × buyPercent / 100（200 = 200%） */
+  buyPercent: number
+  /** 出售系数（百分比）：出售价 = 物品实际价值 × sellPercent / 100（56 = 56%） */
+  sellPercent: number
 }
 
 /** 西游数据域（xiyou 表）—— configs/xiyou/*.json 单文档种子，供演劫台经封神榜读取（需求说明 §5.1 方案 B） */

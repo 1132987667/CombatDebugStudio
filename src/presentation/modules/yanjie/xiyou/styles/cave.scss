@@ -379,6 +379,14 @@
   gap: var(--space-1) var(--space-2);
 }
 
+/* 丹方产出数量（弱化色，与效果区分） */
+.xy-cave-card__yield {
+  display: inline-block;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-md);
+  color: var(--xy-gold);
+}
+
 /* 材料标签 */
 .xy-cave-mat {
   display: inline-flex;

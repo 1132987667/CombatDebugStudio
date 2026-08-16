@@ -12,8 +12,8 @@
       <span class="fs-detail-id">{{ entity.id }}</span>
       <h3 class="fs-detail-title">{{ detailName }}</h3>
       <span class="fs-detail-table">{{ schema.label }}</span>
-      <Button v-if="schema.table === 'lineups'" size="small"
-        title="切换到唤灵台并加载该预设阵容" @click="emit('openInHuanling')">在唤灵台打开</Button>
+      <Button v-if="schema.table === 'lineups'" size="small" title="切换到唤灵台并加载该预设阵容"
+        @click="emit('openInHuanling')">在唤灵台打开</Button>
       <Button size="small" title="在编辑器中打开该实体" @click="emit('edit')">编辑</Button>
     </header>
 
@@ -54,7 +54,8 @@
             </template>
             <template v-else-if="isEnemySkillsField(field)">
               <dl class="fs-detail-map">
-                <div v-for="(ids, kind) in entity[field.key] as Record<string, unknown[]>" :key="kind" class="fs-detail-map-row">
+                <div v-for="(ids, kind) in entity[field.key] as Record<string, unknown[]>" :key="kind"
+                  class="fs-detail-map-row">
                   <dt class="fs-detail-map-key">{{ skillKindLabel(String(kind)) }}</dt>
                   <dd class="fs-detail-map-val">
                     <template v-if="(ids as unknown[]).length">
@@ -77,7 +78,8 @@
               </dl>
             </template>
             <template v-else>
-              <span v-if="isRefKey(field.key)" :title="`id: ${String(entity[field.key])}`">{{ refName(entity[field.key]) }}</span>
+              <span v-if="isRefKey(field.key)" :title="`id: ${String(entity[field.key])}`">{{ refName(entity[field.key])
+                }}</span>
               <template v-else>{{ topLevelValue(field, entity[field.key]) }}</template>
             </template>
           </dd>
@@ -90,14 +92,22 @@
       <div v-for="g in references" :key="g.sourceTable" class="fs-detail-refs-row">
         <button type="button" class="fs-link" :title="`跳转到${tableLabel(g.sourceTable)}表`"
           @click="emit('goto', g.sourceTable)">{{ tableLabel(g.sourceTable) }}</button>
-        <span class="fs-detail-refs-ids">{{ g.ids.join('、') }}</span>
+        <span v-if="g.sourceTable !== 'gears'" class="fs-detail-refs-ids" :title="`id: ${g.ids.join('、')}`">{{
+          g.ids.map(refName).join('、') }}</span>
+        <span v-else class="fs-detail-refs-ids">
+          <template v-for="(id, i) in g.ids" :key="id">
+            <span class="fs-ref-gear" :title="`id: ${id}`"
+              @mouseenter="showGearTip($event, id)" @mouseleave="hideGearTip">{{ gearName(id) }}</span>{{ i < g.ids.length - 1 ? '、' : '' }}
+          </template>
+        </span>
       </div>
     </div>
   </div>
 
   <!-- 技能悬浮详情 -->
-  <EntityTooltip :visible="skillTipVisible" :data="skillTipData" :trigger-rect="skillTipRect"
-    @hide="hideSkillTip" />
+  <EntityTooltip :visible="skillTipVisible" :data="skillTipData" :trigger-rect="skillTipRect" @hide="hideSkillTip" />
+  <!-- 装备合成材料悬浮详情 -->
+  <EntityTooltip :visible="gearTipVisible" :data="gearTipData" :trigger-rect="gearTipRect" @hide="hideGearTip" />
 </template>
 
 <script setup lang="ts">
@@ -108,6 +118,9 @@ import { resolveRefName } from '@/domain/fengshen/refNames'
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
+import type { GearData } from '@/domain/fengshen/types'
+import { container } from '@/infrastructure/di/Container'
+import { GameDataApi } from '@/application/service/GameDataApi'
 import Button from '@/presentation/components/Button.vue'
 import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 
@@ -152,9 +165,35 @@ function isRefKey(key: string): boolean {
   return refLeafKeys.value.has(key)
 }
 
+/** 装备名称兜底索引（id → name）：refIndex 未覆盖 gears 时的可靠名称来源，懒加载一次 */
+const gearNameIndex = ref<Record<string, string>>({})
+let gearNameLoaded = false
+function loadGearNameIndex(): void {
+  if (gearNameLoaded) return
+  gearNameLoaded = true
+  try {
+    const api = container.resolve<GameDataApi>('GameDataApi')
+    void api.listByTable<GearData>('gears', { limit: 1000 }).then((gears) => {
+      const idx: Record<string, string> = {}
+      for (const g of gears) if (g.id) idx[g.id] = g.name ?? g.id
+      gearNameIndex.value = idx
+    })
+  } catch {
+    // 容器未初始化（如单测环境）：跳过，gear tag 名称回退 refIndex / 原 id
+  }
+}
+void loadGearNameIndex()
+
 /** 引用值 → 中文名（未命中回退原 id，保留调试语义） */
 function refName(v: unknown): string {
   return resolveRefName(String(v), props.refIndex)
+}
+
+/** gear id → 名称：优先 refIndex，兜底组件内 gear 索引，仍缺失回退 id */
+function gearName(id: string): string {
+  return resolveRefName(id, props.refIndex) !== id
+    ? refName(id)
+    : resolveRefName(id, gearNameIndex.value)
 }
 
 /** 嵌套键值对值渲染：引用键优先中文，否则保持原有标量/对象渲染 */
@@ -325,6 +364,44 @@ function showSkillTip(e: MouseEvent, skillId: string): void {
 function hideSkillTip(): void {
   skillTipVisible.value = false
   skillTipData.value = null
+}
+
+// ════ 装备合成材料悬浮详情（被引用区：装备详情来源） ════
+const gearTipVisible = ref(false)
+const gearTipData = ref<TooltipData | null>(null)
+const gearTipRect = ref<DOMRect | null>(null)
+
+let gearTipSeq = 0
+function showGearTip(e: MouseEvent, gearId: string): void {
+  // NOTE: 事件 currentTarget 仅在同步阶段有效，进入异步回调后必为 null —— 先同步取 rect
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const api = container.resolve<GameDataApi>('GameDataApi')
+  const seq = ++gearTipSeq
+  void api.listByTable<GearData>('gears', { limit: 1000 }).then((gears) => {
+    if (seq !== gearTipSeq) return
+    const gear = gears.find((g) => g.id === gearId)
+    if (!gear) return
+    const details = (gear.materials ?? []).map((m) => ({
+      label: refName(m.itemId),
+      value: `×${m.count}`,
+    }))
+    if (gear.cost && gear.cost > 0) details.push({ label: '制造金钱', value: `${gear.cost}` })
+    gearTipData.value = {
+      name: gear.name,
+      description: gear.description ?? '',
+      badge: NESTED_VALUE_LABEL.slot[gear.slot] ?? gear.slot,
+      durationLabel: gear.tier ? NESTED_VALUE_LABEL.tier[gear.tier] ?? gear.tier : undefined,
+      details,
+      source: gear.source,
+    }
+    gearTipRect.value = rect
+    gearTipVisible.value = true
+  })
+}
+
+function hideGearTip(): void {
+  gearTipVisible.value = false
+  gearTipData.value = null
 }
 
 function isObject(v: unknown): v is Record<string, unknown> {
@@ -498,5 +575,23 @@ const refCount = computed(() => props.references?.reduce((n, g) => n + g.ids.len
   color: var(--color-text-tertiary);
   font-family: var(--font-family-mono);
   word-break: break-all;
+}
+
+/* 被引用区：装备详情（gears）来源的装备名 tag —— 悬浮展示合成材料清单 */
+.fs-ref-gear {
+  display: inline-block;
+  margin: 1px 2px 1px 0;
+  padding: 0 6px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
+  color: var(--color-info);
+  cursor: help;
+  transition: var(--transition-fast);
+
+  &:hover {
+    border-color: var(--color-info);
+    background: var(--color-info-bg);
+  }
 }
 </style>

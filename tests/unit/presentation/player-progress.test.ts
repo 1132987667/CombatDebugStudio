@@ -86,11 +86,15 @@ describe('敌方参战者（R22 敌人数据加载）与难度倍率（R19）', 
     const s1 = scenes.find((s) => s.id === 'scene_1_1')
     expect(s1).toBeDefined()
     const enemy = buildEnemyTeam(s1!)
-    expect(enemy.length).toBe(3)
+    // 3 普通敌人 + 1 头目（guardian 参战）
+    expect(enemy.length).toBe(4)
     const hua = enemy.find((e) => e.name === '花妖幼芽')
     expect(hua).toBeDefined()
     expect(hua!.getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(82)
     expect(hua!.getAttribute(ATTRIBUTE_CODE.attack)).toBe(11)
+    // 头目参战：scene_1_1.guardian「桃林守卫」来自 enemies.json 完整定义
+    const guard = enemy.find((e) => e.name === '桃林守卫')
+    expect(guard).toBeDefined()
   })
 
   it('难度倍率：普通 ×1.5 / 困难 ×2（作用于主要数值属性）', () => {

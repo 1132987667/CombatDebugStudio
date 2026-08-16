@@ -260,17 +260,20 @@
     "id": "buff_thorns",
     "name": "反伤",
     "polarity": "positive",
-    "category": "modifier",
+    "category": "trigger",
     "duration": 1,
     "maxStacks": 1,
     "stackRule": "REFRESH",
     "dispellable": true,
     "cleanseable": false,
     "tags": ["thorns", "reflect"],
-    "effects": [
+    "triggers": [
       {
-        "type": "reflect",
-        "reflectPercent": 0.1
+        "phase": "ON_DAMAGE_TAKEN",
+        "scriptId": "reflect_damage",
+        "params": {
+          "percent": 0.1
+        }
       }
     ],
     "description": "反弹10%受到的伤害。"
@@ -336,7 +339,7 @@
     "description": "被吸取25点能量。"
   },
   {
-    "id": "buff_boss_minor_phase2_atk",
+    "id": "buff_boss_guardian_phase2_atk",
     "name": "狂暴觉醒",
     "polarity": "positive",
     "category": "modifier",

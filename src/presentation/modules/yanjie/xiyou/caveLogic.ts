@@ -45,21 +45,24 @@ export interface MaterialCost {
 
 /** 装备槽位 → 强化材料（设计：武器异矿 / 衣服灵气·强化 / 头盔/靴子/护符/戒指 灵水） */
 const ENHANCE_MATERIAL_BY_SLOT: Record<string, MaterialCost> = {
-  weapon: { name: '异矿', itemId: 'mat_enh_01', count: 1 },
-  armor: { name: '灵气·强化', itemId: 'mat_enh_03', count: 1 },
-  helmet: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
-  boots: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
-  charm: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
-  ring: { name: '灵水', itemId: 'mat_enh_02', count: 1 },
+  weapon: { name: '异矿', itemId: 'mat_yikuang', count: 1 },
+  armor: { name: '灵气·强化', itemId: 'mat_lingqi', count: 1 },
+  helmet: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
+  boots: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
+  charm: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
+  ring: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
 }
 
 export function enhanceMaterialOf(slot: string): MaterialCost | null {
   return ENHANCE_MATERIAL_BY_SLOT[slot] ?? null
 }
 
-/** 强化成功率：随等级递减，地板 50% */
+/** 强化成功率：分档制（P0 裁定，失败不降级）——+1~+5:80%、+6~+10:70%、+11~+15:60%、+16~+20:50% */
 export function enhanceSuccessRate(enhance: number): number {
-  return Math.max(50, 100 - enhance * 5)
+  if (enhance <= 5) return 80
+  if (enhance <= 10) return 70
+  if (enhance <= 15) return 60
+  return 50
 }
 
 /** 强化上限按阶位（equipment-system.json enhance_max_by_tier：凡+5 玄+10 地+15 天+15 仙+20） */
@@ -70,9 +73,12 @@ export function enhanceMaxByRarity(rarity: number): number {
   return ENHANCE_MAX_BY_TIER[TIER_KEY_BY_RARITY[rarity] ?? 'fan'] ?? 5
 }
 
-/** 强化金钱消耗：20 + 20×当前等级 */
-export function enhanceCost(enhance: number): number {
-  return 20 + enhance * 20
+/** 强化金钱单价按阶位（凡/玄/地/天/仙 → 20/50/100/150/200 铜钱 × 强化次数） */
+const ENHANCE_COST_BY_RARITY: Record<number, number> = { 1: 20, 2: 50, 3: 100, 4: 150, 5: 200 }
+
+/** 强化金钱消耗：阶位单价 × (强化前等级 + 1)，即第 n 次强化花 单价×n */
+export function enhanceCost(enhance: number, rarity: number): number {
+  return (ENHANCE_COST_BY_RARITY[rarity] ?? 20) * (enhance + 1)
 }
 
 /** 装备属性提升倍率：每级 +5% */
@@ -111,7 +117,7 @@ export interface FragmentRule {
 export const FRAGMENT_RULES: FragmentRule[] = [
   { fragId: 'mat_tiangang_suipian', outId: 'mat_tiangang', need: 3 },
   { fragId: 'mat_hunyuan_suipian', outId: 'mat_hunyuan', need: 5 },
-  { fragId: 'frag_003', outId: 'elix_007', need: 5 },
+  { fragId: 'frag_003', outId: 'mat_jiuzhuan_jindan', need: 5 },
   { fragId: 'frag_004', outId: 'mat_yufoxiang', need: 5 },
 ]
 

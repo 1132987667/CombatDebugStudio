@@ -2534,7 +2534,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_minor_taoyao_s1",
+    "id": "skill_boss_guardian_taoyao_s1",
     "name": "毒花粉",
     "skillType": "small",
     "energyCost": 50,
@@ -2559,7 +2559,7 @@
     "description": "释放毒花粉，造成140%攻击伤害，50%概率中毒2回合。"
   },
   {
-    "id": "skill_boss_minor_taoyao_ult",
+    "id": "skill_boss_guardian_taoyao_ult",
     "name": "百花齐放",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -2584,7 +2584,7 @@
     "description": "百花齐放，造成200%攻击伤害，80%概率中毒3回合。"
   },
   {
-    "id": "passive_boss_minor_taoyao_p1",
+    "id": "passive_boss_guardian_taoyao_p1",
     "name": "根须缠绕",
     "skillType": "passive",
     "trigger": "ON_ATTACK_LANDED",
@@ -2600,7 +2600,7 @@
     "description": "攻击命中后20%概率使目标减速2回合。"
   },
   {
-    "id": "skill_boss_minor_liuyao_s1",
+    "id": "skill_boss_guardian_liuyao_s1",
     "name": "柳鞭抽击",
     "skillType": "small",
     "energyCost": 50,
@@ -2625,7 +2625,7 @@
     "description": "以柳鞭抽击，造成140%攻击伤害，40%概率减速2回合。"
   },
   {
-    "id": "skill_boss_minor_liuyao_ult",
+    "id": "skill_boss_guardian_liuyao_ult",
     "name": "万柳缠身",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -2650,7 +2650,7 @@
     "description": "万柳缠身，造成200%攻击伤害，60%概率束缚1回合。"
   },
   {
-    "id": "passive_boss_minor_liuyao_p1",
+    "id": "passive_boss_guardian_liuyao_p1",
     "name": "柳絮飘飞",
     "skillType": "passive",
     "trigger": "BATTLE_START",
@@ -2666,7 +2666,7 @@
     "description": "战斗开始时永久提升自身速度。"
   },
   {
-    "id": "skill_boss_minor_yanjing_s1",
+    "id": "skill_boss_guardian_yanjing_s1",
     "name": "落石轰击",
     "skillType": "small",
     "energyCost": 50,
@@ -2691,7 +2691,7 @@
     "description": "以落石轰击，造成140%攻击伤害，25%概率眩晕1回合。"
   },
   {
-    "id": "skill_boss_minor_yanjing_ult",
+    "id": "skill_boss_guardian_yanjing_ult",
     "name": "山崩地裂",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -2716,7 +2716,7 @@
     "description": "山崩地裂，对全体造成200%攻击伤害，50%概率减速2回合。"
   },
   {
-    "id": "passive_boss_minor_yanjing_p1",
+    "id": "passive_boss_guardian_yanjing_p1",
     "name": "岩石肌肤",
     "skillType": "passive",
     "trigger": "ON_DAMAGE_TAKEN",
@@ -2732,7 +2732,7 @@
     "description": "受到攻击时提升自身防御1回合。"
   },
   {
-    "id": "skill_boss_minor_zhuyao_s1",
+    "id": "skill_boss_guardian_zhuyao_s1",
     "name": "毒丝喷射",
     "skillType": "small",
     "energyCost": 50,
@@ -2757,7 +2757,7 @@
     "description": "喷射毒丝，造成140%攻击伤害，50%概率中毒2回合。"
   },
   {
-    "id": "skill_boss_minor_zhuyao_ult",
+    "id": "skill_boss_guardian_zhuyao_ult",
     "name": "千丝万缕",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -2782,7 +2782,7 @@
     "description": "千丝万缕，对全体造成200%攻击伤害，40%概率束缚1回合。"
   },
   {
-    "id": "passive_boss_minor_zhuyao_p1",
+    "id": "passive_boss_guardian_zhuyao_p1",
     "name": "蛛网感应",
     "skillType": "passive",
     "trigger": "ON_DODGE_SUCCESS",
@@ -2798,7 +2798,7 @@
     "description": "闪避成功时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_minor_panseng_s1",
+    "id": "skill_boss_guardian_panseng_s1",
     "name": "邪佛掌",
     "skillType": "small",
     "energyCost": 50,
@@ -2817,7 +2817,7 @@
     "description": "以邪佛掌攻击，造成150%攻击伤害。"
   },
   {
-    "id": "skill_boss_minor_panseng_ult",
+    "id": "skill_boss_guardian_panseng_ult",
     "name": "万佛叛宗",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -2842,7 +2842,7 @@
     "description": "万佛叛宗，造成220%攻击伤害，自身攻击提升3回合。"
   },
   {
-    "id": "passive_boss_minor_panseng_p1",
+    "id": "passive_boss_guardian_panseng_p1",
     "name": "破戒之力",
     "skillType": "passive",
     "trigger": "BATTLE_START",

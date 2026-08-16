@@ -572,11 +572,6 @@
         "itemId": "mat_cushi",
         "quantity": 2,
         "chance": 0.8
-      },
-      {
-        "itemId": "mat_songmu",
-        "quantity": 1,
-        "chance": 0.2
       }
     ],
     "skills": {
@@ -625,11 +620,6 @@
     },
     "drops": [
       {
-        "itemId": "mat_songmu",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
         "itemId": "elix_001",
         "quantity": 1,
         "chance": 0.4
@@ -656,11 +646,6 @@
         "itemId": "mat_cushi",
         "quantity": 4,
         "chance": 0.75
-      },
-      {
-        "itemId": "mat_songmu",
-        "quantity": 2,
-        "chance": 0.25
       }
     ],
     "skills": {
@@ -714,11 +699,6 @@
       "attack": 26
     },
     "drops": [
-      {
-        "itemId": "mat_songmu",
-        "quantity": 3,
-        "chance": 0.65
-      },
       {
         "itemId": "crys_001",
         "quantity": 1,
@@ -783,11 +763,6 @@
         "itemId": "mat_tongjing",
         "quantity": 3,
         "chance": 0.65
-      },
-      {
-        "itemId": "mat_songmu",
-        "quantity": 4,
-        "chance": 0.35
       }
     ],
     "skills": {
@@ -813,11 +788,6 @@
       "attack": 34
     },
     "drops": [
-      {
-        "itemId": "mat_tiejing",
-        "quantity": 1,
-        "chance": 0.6
-      },
       {
         "itemId": "crys_004",
         "quantity": 1,
@@ -847,11 +817,6 @@
       "attack": 22
     },
     "drops": [
-      {
-        "itemId": "mat_songmu",
-        "quantity": 2,
-        "chance": 0.8
-      },
       {
         "itemId": "mat_lupi",
         "quantity": 1,
@@ -931,11 +896,6 @@
       "attack": 29
     },
     "drops": [
-      {
-        "itemId": "mat_songmu",
-        "quantity": 4,
-        "chance": 0.75
-      },
       {
         "itemId": "mat_shenshuiyu",
         "quantity": 1,
@@ -1025,11 +985,6 @@
     },
     "drops": [
       {
-        "itemId": "mat_songmu",
-        "quantity": 5,
-        "chance": 0.7
-      },
-      {
         "itemId": "mat_qinghuaci",
         "quantity": 1,
         "chance": 0.3
@@ -1092,11 +1047,6 @@
       "attack": 38
     },
     "drops": [
-      {
-        "itemId": "mat_xiongpi",
-        "quantity": 1,
-        "chance": 0.6
-      },
       {
         "itemId": "crys_005",
         "quantity": 1,
@@ -1214,11 +1164,6 @@
         "itemId": "mat_cushi",
         "quantity": 5,
         "chance": 0.75
-      },
-      {
-        "itemId": "mat_tiejing",
-        "quantity": 1,
-        "chance": 0.25
       }
     ],
     "skills": {
@@ -1341,11 +1286,6 @@
         "itemId": "mat_beike",
         "quantity": 5,
         "chance": 0.65
-      },
-      {
-        "itemId": "mat_tiejing",
-        "quantity": 2,
-        "chance": 0.35
       }
     ],
     "skills": {
@@ -1409,11 +1349,6 @@
         "itemId": "mat_tiemu",
         "quantity": 1,
         "chance": 0.8
-      },
-      {
-        "itemId": "mat_tiejing",
-        "quantity": 1,
-        "chance": 0.2
       }
     ],
     "skills": {
@@ -1493,11 +1428,6 @@
         "itemId": "mat_tiemu",
         "quantity": 3,
         "chance": 0.75
-      },
-      {
-        "itemId": "mat_tiejing",
-        "quantity": 2,
-        "chance": 0.25
       }
     ],
     "skills": {
@@ -1620,11 +1550,6 @@
         "itemId": "mat_tieyan",
         "quantity": 3,
         "chance": 0.65
-      },
-      {
-        "itemId": "mat_tiejing",
-        "quantity": 3,
-        "chance": 0.35
       }
     ],
     "skills": {
@@ -1685,12 +1610,7 @@
     },
     "drops": [
       {
-        "itemId": "mat_xiongpi",
-        "quantity": 1,
-        "chance": 0.8
-      },
-      {
-        "itemId": "mat_duye",
+        "itemId": "mat_bizhanglingye",
         "quantity": 1,
         "chance": 0.2
       }
@@ -1741,11 +1661,6 @@
     },
     "drops": [
       {
-        "itemId": "mat_xiongpi",
-        "quantity": 2,
-        "chance": 0.6
-      },
-      {
         "itemId": "elix_001",
         "quantity": 1,
         "chance": 0.4
@@ -1768,11 +1683,6 @@
       "attack": 42
     },
     "drops": [
-      {
-        "itemId": "mat_xiongpi",
-        "quantity": 3,
-        "chance": 0.75
-      },
       {
         "itemId": "mat_feicui",
         "quantity": 1,
@@ -1861,11 +1771,6 @@
       "attack": 52
     },
     "drops": [
-      {
-        "itemId": "mat_xiongpi",
-        "quantity": 4,
-        "chance": 0.7
-      },
       {
         "itemId": "elix_004",
         "quantity": 1,
@@ -2668,7 +2573,7 @@
     },
     "drops": [
       {
-        "itemId": "elix_007",
+        "itemId": "mat_jiuzhuan_jindan",
         "quantity": 1,
         "chance": 0.65
       },
@@ -2767,7 +2672,7 @@
     },
     "drops": [
       {
-        "itemId": "elix_007",
+        "itemId": "mat_jiuzhuan_jindan",
         "quantity": 2,
         "chance": 0.6
       },

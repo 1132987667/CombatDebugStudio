@@ -98,7 +98,7 @@
     "forbidden_tiers": ["tian", "xian"],
     "conditions": ["同部位", "同阶位", "目标装备未强化或强化等级低于来源装备"],
     "transfers": ["强化等级"],
-    "does_not_transfer": ["品质", "星级", "随机词条", "固定特效", "附魔"]
+    "does_not_transfer": ["品质", "星级", "随机词条", "固定特效", "精锻"]
   },
   "star_system": {
     "star_bonuses": [
@@ -147,7 +147,7 @@
       "allowed_qualities": ["chao", "jue", "shen"],
       "cost": { "混元灵气碎片": 5, "tier_crystal": 1, "gold": "大量" },
       "alternative_cost": { "混元灵气": 1 },
-      "preserves": ["装备品质", "强化等级", "附魔", "星级"],
+      "preserves": ["装备品质", "强化等级", "精锻", "星级"],
       "regenerates": ["所有随机词条"]
     }
   },

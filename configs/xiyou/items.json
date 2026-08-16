@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 附魔 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/ring）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册。旧版 eq_w/eq_a/eq_c 装备占位与 recipe_weapon/armor_t1-3 图纸占位已清理，装备经 equipment.json legacyIds 映射。",
+  "description": "物品主键索引：全部物品的唯一 ID 注册表（开发计划 P0 行动 2）。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 精锻 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣服 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/ring）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册。旧版 eq_w/eq_a/eq_c 装备占位与 recipe_weapon/armor_t1-3 图纸占位已清理，装备经 equipment.json legacyIds 映射。",
   "items": [
     {
       "id": "mat_taomu",
@@ -392,7 +392,7 @@
       "source": "最终 BOSS 重复 / 关卡10 妖魁（5:1 合成）",
       "description": "混元灵气的碎片，收集 5 个可合成完整的混元灵气",
       "value": 100,
-      "usage": "重铸、附魔封存"
+      "usage": "重铸、精锻封存"
     },
     {
       "id": "frag_003",
@@ -1554,9 +1554,9 @@
       "type": "织物",
       "rarity": 1,
       "source": "关卡1-1 草精掉落",
-      "description": "坚韧的藤蔓纤维，可用于轻型装备附魔",
+      "description": "坚韧的藤蔓纤维，可用于轻型装备精锻",
       "value": 6,
-      "usage": "附魔材料"
+      "usage": "精锻材料"
     },
     {
       "id": "mat_houmao",
@@ -1586,7 +1586,7 @@
       "source": "关卡4-2 蛛妖掉落",
       "description": "迷雾中凝成的灵丝，缥缈如烟",
       "value": 60,
-      "usage": "四阶装备附魔/洗练材料"
+      "usage": "四阶装备精锻/洗练材料"
     },
     {
       "id": "mat_youlan",
@@ -1596,7 +1596,7 @@
       "source": "关卡4-4 幽兰妖掉落",
       "description": "幽兰凝结的露水，清冽幽香",
       "value": 60,
-      "usage": "高级炼丹/附魔材料"
+      "usage": "高级炼丹/精锻材料"
     },
     {
       "id": "mat_yanxin",
@@ -1616,7 +1616,7 @@
       "source": "关卡3-4 磁石妖掉落",
       "description": "磁石的粉末，可吸附灵气",
       "value": 30,
-      "usage": "三阶装备附魔"
+      "usage": "三阶装备精锻"
     },
     {
       "id": "mat_zhixuecao",
@@ -1980,33 +1980,33 @@
     },
     {
       "id": "ench_poison",
-      "name": "毒液附魔粉",
-      "type": "附魔",
+      "name": "毒液精锻粉",
+      "type": "精锻",
       "rarity": 4,
       "source": "关卡4-2 蛛妖掉落(15%)",
       "description": "附加毒伤词条（攻击附带中毒）",
       "value": 60,
-      "usage": "装备附魔"
+      "usage": "装备精锻"
     },
     {
       "id": "ench_frost",
-      "name": "寒霜附魔粉",
-      "type": "附魔",
+      "name": "寒霜精锻粉",
+      "type": "精锻",
       "rarity": 2,
       "source": "关卡2-3 冰晶水妖/关卡2-4 寒冰蛇妖掉落",
       "description": "附加冰伤词条（攻击附带减速）",
       "value": 40,
-      "usage": "装备附魔"
+      "usage": "装备精锻"
     },
     {
       "id": "ench_fire",
-      "name": "烈焰附魔粉",
-      "type": "附魔",
+      "name": "烈焰精锻粉",
+      "type": "精锻",
       "rarity": 3,
       "source": "关卡3-2 火焰蜥蜴王掉落(15%)",
       "description": "附加火伤词条（攻击附带灼烧）",
       "value": 60,
-      "usage": "装备附魔"
+      "usage": "装备精锻"
     },
     {
       "id": "talisman_01",
@@ -2130,13 +2130,13 @@
     },
     {
       "id": "ench_seal",
-      "name": "附魔封存符",
+      "name": "精锻封存符",
       "type": "功能道具",
       "rarity": 4,
       "source": "隐藏BOSS百眼魔君掉落(20%)",
-      "description": "将附魔槽词条封存，防止洗练/重铸覆盖",
+      "description": "将精锻槽词条封存，防止洗练/重铸覆盖",
       "value": 400,
-      "usage": "附魔保护"
+      "usage": "精锻保护"
     },
     {
       "id": "decomp_soul",

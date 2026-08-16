@@ -122,50 +122,50 @@
   },
   {
     "id": "ench_dust_01",
-    "name": "一阶附魔粉尘",
-    "type": "附魔",
+    "name": "一阶精锻粉尘",
+    "type": "精锻",
     "rarity": 1,
     "source": "关卡1-3 守护者"
   },
   {
     "id": "ench_dust_02",
-    "name": "二阶附魔粉尘",
-    "type": "附魔",
+    "name": "二阶精锻粉尘",
+    "type": "精锻",
     "rarity": 2,
     "source": "关卡4-6 守护者"
   },
   {
     "id": "ench_dust_03",
-    "name": "三阶附魔粉尘",
-    "type": "附魔",
+    "name": "三阶精锻粉尘",
+    "type": "精锻",
     "rarity": 2,
     "source": "关卡7-9 守护者"
   },
   {
     "id": "ench_dust_04",
-    "name": "天品附魔粉尘",
-    "type": "附魔",
+    "name": "天品精锻粉尘",
+    "type": "精锻",
     "rarity": 4,
     "source": "三大 BOSS"
   },
   {
     "id": "ench_dust_05",
-    "name": "仙品附魔粉尘",
-    "type": "附魔",
+    "name": "仙品精锻粉尘",
+    "type": "精锻",
     "rarity": 5,
     "source": "最终 BOSS"
   },
   {
     "id": "ench_essence",
-    "name": "附魔精华",
-    "type": "附魔",
+    "name": "精锻精华",
+    "type": "精锻",
     "rarity": 3,
-    "source": "分解附魔装备（累积 3 次必成）"
+    "source": "分解精锻装备（累积 3 次必成）"
   },
   {
     "id": "ench_lock",
-    "name": "附魔锁定石",
-    "type": "附魔",
+    "name": "精锻锁定石",
+    "type": "精锻",
     "rarity": 3,
     "source": "妖尊、商店限量"
   },

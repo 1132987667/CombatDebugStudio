@@ -430,9 +430,7 @@
     "craftable": true,
     "recipeId": "forge_wp_t1_light_01",
     "blueprintId": "bp_t1_wp",
-    "legacyIds": [
-      "eq_w001"
-    ],
+    "legacyIds": ["eq_w001"],
     "source": "制造（主线，免图纸）",
     "description": "竹剑，攻击+10速度+10%"
   },

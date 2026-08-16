@@ -24,7 +24,7 @@ import type { PlayerStoreDebugEnv } from './debugEnv'
 /** 材料类型集合（与 PackPanel 的 material/essence/enhance 分组对齐，供"给予全部N阶材料"按 items.json 全量筛选） */
 const MATERIAL_TYPES = new Set([
   '木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物',
-  '特殊材料', 'BOSS材料', '灵气', '碎片', '强化', '升星', '附魔', '洗炼', '重铸', '传承', '分解',
+  '特殊材料', 'BOSS材料', '灵气', '碎片', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解',
   '突破', '技能书', '经验', '图纸',
 ])
 

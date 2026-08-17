@@ -400,7 +400,7 @@ export const usePackStore = defineStore('pack', () => {
     }
   }
 
-  /** 初始持有量：pack.json 的 four 组按 name 匹配 items.json（装备组实例化入 gearInstances） */
+  /** 仅储存了 name 和 count */
   function buildFromConfigs(): void {
     const inv: Record<string, number> = {}
     for (const group of [materials, pills, consumables]) {

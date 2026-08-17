@@ -1,0 +1,1002 @@
+[
+  {
+    "id": "hd_t1_war_01",
+    "name": "藤蔓箍",
+    "type": "头盔",
+    "rarity": 1,
+    "source": "制造（主线，免图纸）",
+    "value": 35
+  },
+  {
+    "id": "bt_t1_light_01",
+    "name": "草编履",
+    "type": "靴子",
+    "rarity": 1,
+    "source": "制造（主线，免图纸）",
+    "value": 30
+  },
+  {
+    "id": "bt_t1_heavy_01",
+    "name": "粗石靴",
+    "type": "靴子",
+    "rarity": 1,
+    "source": "制造（主线，免图纸）",
+    "value": 35
+  },
+  {
+    "id": "hf_t1_life_01",
+    "name": "淡水玉护符",
+    "type": "护符",
+    "rarity": 1,
+    "source": "制造（主线，免图纸）",
+    "value": 40
+  },
+  {
+    "id": "hf_t1_war_01",
+    "name": "桃木战符",
+    "type": "护符",
+    "rarity": 1,
+    "source": "制造（主线，免图纸）",
+    "value": 35
+  },
+  {
+    "id": "jz_t1_power_01",
+    "name": "贝壳戒指",
+    "type": "戒指",
+    "rarity": 1,
+    "source": "制造（主线，免图纸）",
+    "value": 35
+  },
+  {
+    "id": "jz_t1_spirit_01",
+    "name": "桃核戒",
+    "type": "戒指",
+    "rarity": 1,
+    "source": "制造（主线，免图纸）",
+    "value": 35
+  },
+  {
+    "id": "hd_t2_war_01",
+    "name": "铁战盔",
+    "type": "头盔",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 100
+  },
+  {
+    "id": "hd_t2_spirit_01",
+    "name": "河伯灵冠",
+    "type": "头盔",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 110
+  },
+  {
+    "id": "bt_t2_light_01",
+    "name": "踏浪靴",
+    "type": "靴子",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 90
+  },
+  {
+    "id": "bt_t2_heavy_01",
+    "name": "铁蹄靴",
+    "type": "靴子",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 100
+  },
+  {
+    "id": "hf_t2_life_01",
+    "name": "深水玉符",
+    "type": "护符",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 110
+  },
+  {
+    "id": "hf_t2_war_01",
+    "name": "河铁战符",
+    "type": "护符",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 100
+  },
+  {
+    "id": "jz_t2_power_01",
+    "name": "铁精戒",
+    "type": "戒指",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 100
+  },
+  {
+    "id": "jz_t2_spirit_01",
+    "name": "水灵戒",
+    "type": "戒指",
+    "rarity": 2,
+    "source": "制造（主线，免图纸）",
+    "value": 110
+  },
+  {
+    "id": "hd_t3_war_01",
+    "name": "钢战盔",
+    "type": "头盔",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 220
+  },
+  {
+    "id": "hd_t3_spirit_01",
+    "name": "岩灵冠",
+    "type": "头盔",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 240
+  },
+  {
+    "id": "bt_t3_light_01",
+    "name": "疾风靴",
+    "type": "靴子",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 200
+  },
+  {
+    "id": "bt_t3_heavy_01",
+    "name": "磐石靴",
+    "type": "靴子",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 220
+  },
+  {
+    "id": "hf_t3_life_01",
+    "name": "翠玉护符",
+    "type": "护符",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 240
+  },
+  {
+    "id": "hf_t3_war_01",
+    "name": "金精战符",
+    "type": "护符",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 220
+  },
+  {
+    "id": "jz_t3_power_01",
+    "name": "金精戒",
+    "type": "戒指",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 220
+  },
+  {
+    "id": "jz_t3_spirit_01",
+    "name": "翠玉灵戒",
+    "type": "戒指",
+    "rarity": 3,
+    "source": "制造（主线，免图纸）",
+    "value": 240
+  },
+  {
+    "id": "wp_t4_light_01",
+    "name": "幽影刃",
+    "type": "武器",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 380
+  },
+  {
+    "id": "wp_t4_mid_01",
+    "name": "破幻杖",
+    "type": "武器",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 400
+  },
+  {
+    "id": "wp_t4_heavy_01",
+    "name": "碎岳锤",
+    "type": "武器",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 420
+  },
+  {
+    "id": "ar_t4_light_01",
+    "name": "影豹皮甲",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 360
+  },
+  {
+    "id": "ar_t4_mid_01",
+    "name": "瘴木甲",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 380
+  },
+  {
+    "id": "ar_t4_heavy_01",
+    "name": "幻岩铠",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 400
+  },
+  {
+    "id": "hd_t4_war_01",
+    "name": "幻岩战盔",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 350
+  },
+  {
+    "id": "hd_t4_spirit_01",
+    "name": "幽兰灵冠",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 370
+  },
+  {
+    "id": "bt_t4_light_01",
+    "name": "影步靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 340
+  },
+  {
+    "id": "bt_t4_heavy_01",
+    "name": "幻岩重靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 360
+  },
+  {
+    "id": "hf_t4_life_01",
+    "name": "翡翠护符",
+    "type": "护符",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 370
+  },
+  {
+    "id": "hf_t4_war_01",
+    "name": "毒牙战符",
+    "type": "护符",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 350
+  },
+  {
+    "id": "jz_t4_power_01",
+    "name": "毒牙戒",
+    "type": "戒指",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 350
+  },
+  {
+    "id": "jz_t4_spirit_01",
+    "name": "雾灵戒",
+    "type": "戒指",
+    "rarity": 4,
+    "source": "制造（主线，免图纸）",
+    "value": 370
+  },
+  {
+    "id": "wp_t5_light_01",
+    "name": "菩提降龙剑",
+    "type": "武器",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 800
+  },
+  {
+    "id": "wp_t5_mid_01",
+    "name": "天罡伏魔杖",
+    "type": "武器",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 850
+  },
+  {
+    "id": "wp_t5_heavy_01",
+    "name": "须弥碎天锤",
+    "type": "武器",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 900
+  },
+  {
+    "id": "ar_t5_light_01",
+    "name": "天蚕仙衣",
+    "type": "衣服",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 780
+  },
+  {
+    "id": "ar_t5_mid_01",
+    "name": "菩提道袍",
+    "type": "衣服",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 820
+  },
+  {
+    "id": "ar_t5_heavy_01",
+    "name": "金刚不坏甲",
+    "type": "衣服",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 860
+  },
+  {
+    "id": "hd_t5_war_01",
+    "name": "金刚战盔",
+    "type": "头盔",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 750
+  },
+  {
+    "id": "hd_t5_spirit_01",
+    "name": "菩提道冠",
+    "type": "头盔",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 780
+  },
+  {
+    "id": "bt_t5_light_01",
+    "name": "仙云靴",
+    "type": "靴子",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 720
+  },
+  {
+    "id": "bt_t5_heavy_01",
+    "name": "金刚重靴",
+    "type": "靴子",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 750
+  },
+  {
+    "id": "hf_t5_life_01",
+    "name": "琉璃净符",
+    "type": "护符",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 780
+  },
+  {
+    "id": "hf_t5_war_01",
+    "name": "天罡战符",
+    "type": "护符",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 800
+  },
+  {
+    "id": "jz_t5_power_01",
+    "name": "金刚力戒",
+    "type": "戒指",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 780
+  },
+  {
+    "id": "jz_t5_spirit_01",
+    "name": "菩提灵戒",
+    "type": "戒指",
+    "rarity": 5,
+    "source": "制造（主线，免图纸）",
+    "value": 800
+  },
+  {
+    "id": "wp_sb01",
+    "name": "灵根缠藤鞭",
+    "type": "武器",
+    "rarity": 4,
+    "source": "花妖王首杀掉落",
+    "value": 0
+  },
+  {
+    "id": "ar_sb02",
+    "name": "沧浪涌潮甲",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "河伯首杀掉落",
+    "value": 0
+  },
+  {
+    "id": "hd_sb03",
+    "name": "磐石不动盔",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "山神首杀掉落",
+    "value": 0
+  },
+  {
+    "id": "jz_sb04",
+    "name": "幻瞳迷心戒",
+    "type": "戒指",
+    "rarity": 4,
+    "source": "迷雾妖主首杀掉落",
+    "value": 0
+  },
+  {
+    "id": "ar_sb05",
+    "name": "龙鳞逆甲",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "浊浪龙王掉落",
+    "value": 0
+  },
+  {
+    "id": "wp_sb06",
+    "name": "炽焰焚天刃",
+    "type": "武器",
+    "rarity": 4,
+    "source": "火焰领主掉落",
+    "value": 0
+  },
+  {
+    "id": "hf_sb07",
+    "name": "千丝缚灵索",
+    "type": "护符",
+    "rarity": 4,
+    "source": "盘丝大仙掉落",
+    "value": 0
+  },
+  {
+    "id": "bt_sb08",
+    "name": "裂风疾羽靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "风暴领主掉落",
+    "value": 0
+  },
+  {
+    "id": "hf_sb09",
+    "name": "金身不破符",
+    "type": "护符",
+    "rarity": 4,
+    "source": "罗汉尊者掉落",
+    "value": 0
+  },
+  {
+    "id": "hd_sb10",
+    "name": "法相金莲冠",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "如来法相掉落",
+    "value": 0
+  },
+  {
+    "id": "bt_hb01",
+    "name": "黑风疾行靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "黑风老妖掉落",
+    "value": 0
+  },
+  {
+    "id": "bt_hb02",
+    "name": "遁地重靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "土行孙掉落",
+    "value": 0
+  },
+  {
+    "id": "jz_hb03",
+    "name": "九齿破甲戒",
+    "type": "戒指",
+    "rarity": 4,
+    "source": "朱刚鬣掉落",
+    "value": 0
+  },
+  {
+    "id": "hd_hb04",
+    "name": "百眼灵冠",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "百眼魔君掉落",
+    "value": 0
+  },
+  {
+    "id": "hf_hb05",
+    "name": "净坛护符",
+    "type": "护符",
+    "rarity": 4,
+    "source": "金蝉长老掉落",
+    "value": 0
+  },
+  {
+    "id": "hd_t4_war_02",
+    "name": "牛魔战盔",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "制造（需图纸 bp_legend_01）",
+    "value": 1000
+  },
+  {
+    "id": "bt_t4_02",
+    "name": "蝎尾灵靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "制造（需图纸 bp_legend_02）",
+    "value": 1000
+  },
+  {
+    "id": "bt_t4_03",
+    "name": "鹏翼轻靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "制造（需图纸 bp_legend_03）",
+    "value": 1000
+  },
+  {
+    "id": "jz_sp_02",
+    "name": "寒潭玉戒",
+    "type": "戒指",
+    "rarity": 3,
+    "source": "百眼魔君掉落",
+    "value": 0
+  },
+  {
+    "id": "wp_sp_02",
+    "name": "噬魂刃",
+    "type": "武器",
+    "rarity": 4,
+    "source": "黑风老妖掉落",
+    "value": 0
+  },
+  {
+    "id": "ar_sp_03",
+    "name": "不灭战甲",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "成就「百战不殆」奖励",
+    "value": 0
+  },
+  {
+    "id": "hd_sp_04",
+    "name": "轮回之冠",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "成就「九死一生」奖励",
+    "value": 0
+  },
+  {
+    "id": "bt_sp_05",
+    "name": "追风逐电靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "风暴领主困难模式掉落",
+    "value": 0
+  },
+  {
+    "id": "jz_sp_06",
+    "name": "万妖臣服戒",
+    "type": "戒指",
+    "rarity": 4,
+    "source": "成就「降妖除魔」奖励",
+    "value": 0
+  },
+  {
+    "id": "wt_01",
+    "name": "试炼木剑",
+    "type": "武器",
+    "rarity": 1,
+    "source": "无尽塔第1层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_02",
+    "name": "试炼布甲",
+    "type": "衣服",
+    "rarity": 1,
+    "source": "无尽塔第2层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_03",
+    "name": "试炼草帽",
+    "type": "头盔",
+    "rarity": 1,
+    "source": "无尽塔第3层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_04",
+    "name": "试炼布鞋",
+    "type": "靴子",
+    "rarity": 1,
+    "source": "无尽塔第4层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_05",
+    "name": "试炼玉佩",
+    "type": "护符",
+    "rarity": 1,
+    "source": "无尽塔第5层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_06",
+    "name": "试炼铜戒",
+    "type": "戒指",
+    "rarity": 1,
+    "source": "无尽塔第6层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_07",
+    "name": "破风刃",
+    "type": "武器",
+    "rarity": 1,
+    "source": "无尽塔第7层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_08",
+    "name": "铁壁甲",
+    "type": "衣服",
+    "rarity": 1,
+    "source": "无尽塔第8层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_09",
+    "name": "鹰眼盔",
+    "type": "头盔",
+    "rarity": 1,
+    "source": "无尽塔第9层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_10",
+    "name": "疾行靴",
+    "type": "靴子",
+    "rarity": 1,
+    "source": "无尽塔第10层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_11",
+    "name": "寒铁剑",
+    "type": "武器",
+    "rarity": 2,
+    "source": "无尽塔第11层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_12",
+    "name": "玄铁甲",
+    "type": "衣服",
+    "rarity": 2,
+    "source": "无尽塔第12层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_13",
+    "name": "灵犀冠",
+    "type": "头盔",
+    "rarity": 2,
+    "source": "无尽塔第13层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_14",
+    "name": "风行靴",
+    "type": "靴子",
+    "rarity": 2,
+    "source": "无尽塔第14层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_15",
+    "name": "守心符",
+    "type": "护符",
+    "rarity": 2,
+    "source": "无尽塔第15层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_16",
+    "name": "破军戒",
+    "type": "戒指",
+    "rarity": 2,
+    "source": "无尽塔第16层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_17",
+    "name": "裂空刃",
+    "type": "武器",
+    "rarity": 2,
+    "source": "无尽塔第17层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_18",
+    "name": "磐石铠",
+    "type": "衣服",
+    "rarity": 2,
+    "source": "无尽塔第18层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_19",
+    "name": "慧眼冠",
+    "type": "头盔",
+    "rarity": 2,
+    "source": "无尽塔第19层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_20",
+    "name": "踏云靴",
+    "type": "靴子",
+    "rarity": 2,
+    "source": "无尽塔第20层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_21",
+    "name": "金刚杵",
+    "type": "武器",
+    "rarity": 3,
+    "source": "无尽塔第21层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_22",
+    "name": "龙鳞甲",
+    "type": "衣服",
+    "rarity": 3,
+    "source": "无尽塔第22层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_23",
+    "name": "天灵冠",
+    "type": "头盔",
+    "rarity": 3,
+    "source": "无尽塔第23层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_24",
+    "name": "逐风靴",
+    "type": "靴子",
+    "rarity": 3,
+    "source": "无尽塔第24层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_25",
+    "name": "不灭符",
+    "type": "护符",
+    "rarity": 3,
+    "source": "无尽塔第25层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_26",
+    "name": "碎星戒",
+    "type": "戒指",
+    "rarity": 3,
+    "source": "无尽塔第26层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_27",
+    "name": "噬魂刀",
+    "type": "武器",
+    "rarity": 3,
+    "source": "无尽塔第27层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_28",
+    "name": "玄武甲",
+    "type": "衣服",
+    "rarity": 3,
+    "source": "无尽塔第28层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_29",
+    "name": "通灵冠",
+    "type": "头盔",
+    "rarity": 3,
+    "source": "无尽塔第29层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_30",
+    "name": "瞬影靴",
+    "type": "靴子",
+    "rarity": 3,
+    "source": "无尽塔第30层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_31",
+    "name": "天罡剑",
+    "type": "武器",
+    "rarity": 4,
+    "source": "无尽塔第31层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_32",
+    "name": "混元甲",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "无尽塔第32层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_33",
+    "name": "法相冠",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "无尽塔第33层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_34",
+    "name": "凌波靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "无尽塔第34层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_35",
+    "name": "金刚符",
+    "type": "护符",
+    "rarity": 4,
+    "source": "无尽塔第35层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_36",
+    "name": "灭世戒",
+    "type": "戒指",
+    "rarity": 4,
+    "source": "无尽塔第36层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_37",
+    "name": "诛仙剑",
+    "type": "武器",
+    "rarity": 4,
+    "source": "无尽塔第37层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_38",
+    "name": "须弥铠",
+    "type": "衣服",
+    "rarity": 4,
+    "source": "无尽塔第38层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_39",
+    "name": "天眼冠",
+    "type": "头盔",
+    "rarity": 4,
+    "source": "无尽塔第39层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_40",
+    "name": "风火靴",
+    "type": "靴子",
+    "rarity": 4,
+    "source": "无尽塔第40层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_41",
+    "name": "降魔杵",
+    "type": "武器",
+    "rarity": 5,
+    "source": "无尽塔第41层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_42",
+    "name": "天蚕仙袍",
+    "type": "衣服",
+    "rarity": 5,
+    "source": "无尽塔第42层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_43",
+    "name": "菩提法冠",
+    "type": "头盔",
+    "rarity": 5,
+    "source": "无尽塔第43层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_44",
+    "name": "金乌靴",
+    "type": "靴子",
+    "rarity": 5,
+    "source": "无尽塔第44层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_45",
+    "name": "琉璃净珠",
+    "type": "护符",
+    "rarity": 5,
+    "source": "无尽塔第45层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_46",
+    "name": "天罡战戒",
+    "type": "戒指",
+    "rarity": 5,
+    "source": "无尽塔第46层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_47",
+    "name": "太虚·燃魂刃",
+    "type": "武器",
+    "rarity": 5,
+    "source": "无尽塔第47层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_48",
+    "name": "劫灭·燃血甲",
+    "type": "衣服",
+    "rarity": 5,
+    "source": "无尽塔第48层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_49",
+    "name": "太虚·燃魂冠",
+    "type": "头盔",
+    "rarity": 5,
+    "source": "无尽塔第49层首通掉落",
+    "value": 0
+  },
+  {
+    "id": "wt_50",
+    "name": "劫灭·焚魄珠",
+    "type": "护符",
+    "rarity": 5,
+    "source": "无尽塔第50层首通掉落",
+    "value": 0
+  }
+]

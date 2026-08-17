@@ -12,20 +12,17 @@
       {
         "id": "enemy_s1_1_a",
         "name": "花妖幼芽",
-        "level": 1,
-        "type": "new_born"
+        "level": 1
       },
       {
         "id": "enemy_s1_1_b",
         "name": "草精",
-        "level": 1,
-        "type": "new_born"
+        "level": 1
       },
       {
         "id": "enemy_s1_1_c",
         "name": "幼年山魈",
-        "level": 2,
-        "type": "old_blood"
+        "level": 2
       }
     ],
     "yaotu": {
@@ -73,20 +70,17 @@
       {
         "id": "enemy_s1_2_a",
         "name": "山魈",
-        "level": 3,
-        "type": "old_blood"
+        "level": 3
       },
       {
         "id": "enemy_s1_2_b",
         "name": "石猴",
-        "level": 3,
-        "type": "new_born"
+        "level": 3
       },
       {
         "id": "enemy_s1_2_c",
         "name": "藤蔓精",
-        "level": 4,
-        "type": "new_born"
+        "level": 4
       }
     ],
     "yaotu": {
@@ -135,20 +129,17 @@
       {
         "id": "enemy_s1_3_a",
         "name": "溪妖",
-        "level": 5,
-        "type": "new_born"
+        "level": 5
       },
       {
         "id": "enemy_s1_3_b",
         "name": "小岩精",
-        "level": 5,
-        "type": "new_born"
+        "level": 5
       },
       {
         "id": "enemy_s1_3_c",
         "name": "花蝶精",
-        "level": 6,
-        "type": "new_born"
+        "level": 6
       }
     ],
     "yaotu": {
@@ -203,14 +194,12 @@
       {
         "id": "enemy_s1_4_b",
         "name": "树皮精",
-        "level": 7,
-        "type": "new_born"
+        "level": 7
       },
       {
         "id": "enemy_s1_4_c",
         "name": "野狼精",
-        "level": 8,
-        "type": "old_blood"
+        "level": 8
       }
     ],
     "yaotu": {
@@ -259,20 +248,17 @@
       {
         "id": "enemy_s1_5_a",
         "name": "花妖护卫",
-        "level": 9,
-        "type": "old_blood"
+        "level": 9
       },
       {
         "id": "enemy_s1_5_b",
         "name": "毒蜂",
-        "level": 9,
-        "type": "new_born"
+        "level": 9
       },
       {
         "id": "enemy_s1_5_c",
         "name": "花妖精英",
-        "level": 10,
-        "type": "old_blood"
+        "level": 10
       }
     ],
     "yaotu": {
@@ -321,8 +307,7 @@
       {
         "id": "boss_major_huayaowang",
         "name": "花妖王·千瓣",
-        "level": 10,
-        "type": "old_blood"
+        "level": 10
       }
     ],
     "unlocked": false,
@@ -351,20 +336,17 @@
       {
         "id": "enemy_s2_1_a",
         "name": "小虾兵",
-        "level": 11,
-        "type": "old_blood"
+        "level": 11
       },
       {
         "id": "enemy_s2_1_b",
         "name": "幼年蟹将",
-        "level": 11,
-        "type": "old_blood"
+        "level": 11
       },
       {
         "id": "enemy_s2_1_c",
         "name": "青鱼精",
-        "level": 12,
-        "type": "old_blood"
+        "level": 12
       }
     ],
     "yaotu": {
@@ -412,14 +394,12 @@
       {
         "id": "enemy_s2_2_a",
         "name": "虾兵队长",
-        "level": 13,
-        "type": "old_blood"
+        "level": 13
       },
       {
         "id": "enemy_s2_2_b",
         "name": "铁甲蟹",
-        "level": 13,
-        "type": "old_blood"
+        "level": 13
       },
       {
         "id": "enemy_s2_2_c",
@@ -474,20 +454,17 @@
       {
         "id": "enemy_s2_3_a",
         "name": "鱼精",
-        "level": 15,
-        "type": "old_blood"
+        "level": 15
       },
       {
         "id": "enemy_s2_3_b",
         "name": "水蛇",
-        "level": 15,
-        "type": "old_blood"
+        "level": 15
       },
       {
         "id": "enemy_s2_3_c",
         "name": "河伯侍从",
-        "level": 16,
-        "type": "old_blood"
+        "level": 16
       }
     ],
     "yaotu": {
@@ -536,8 +513,7 @@
       {
         "id": "enemy_s2_4_a",
         "name": "沙妖",
-        "level": 17,
-        "type": "new_born"
+        "level": 17
       },
       {
         "id": "enemy_s2_4_b",
@@ -598,20 +574,17 @@
       {
         "id": "enemy_s2_5_a",
         "name": "虾兵统领",
-        "level": 19,
-        "type": "old_blood"
+        "level": 19
       },
       {
         "id": "enemy_s2_5_b",
         "name": "金甲蟹将",
-        "level": 19,
-        "type": "old_blood"
+        "level": 19
       },
       {
         "id": "enemy_s2_5_c",
         "name": "河伯亲卫",
-        "level": 20,
-        "type": "old_blood"
+        "level": 20
       }
     ],
     "yaotu": {
@@ -660,8 +633,7 @@
       {
         "id": "boss_major_hebo",
         "name": "河伯·沧浪",
-        "level": 20,
-        "type": "old_blood"
+        "level": 20
       }
     ],
     "unlocked": false,
@@ -690,20 +662,17 @@
       {
         "id": "enemy_s3_1_a",
         "name": "小岩妖",
-        "level": 21,
-        "type": "new_born"
+        "level": 21
       },
       {
         "id": "enemy_s3_1_b",
         "name": "碎石精",
-        "level": 21,
-        "type": "new_born"
+        "level": 21
       },
       {
         "id": "enemy_s3_1_c",
         "name": "矿虫",
-        "level": 22,
-        "type": "new_born"
+        "level": 22
       }
     ],
     "yaotu": {
@@ -752,8 +721,7 @@
       {
         "id": "enemy_s3_2_a",
         "name": "铁精",
-        "level": 23,
-        "type": "new_born"
+        "level": 23
       },
       {
         "id": "enemy_s3_2_b",
@@ -815,20 +783,17 @@
       {
         "id": "enemy_s3_3_a",
         "name": "巨岩妖",
-        "level": 25,
-        "type": "new_born"
+        "level": 25
       },
       {
         "id": "enemy_s3_3_b",
         "name": "金刚石精",
-        "level": 25,
-        "type": "new_born"
+        "level": 25
       },
       {
         "id": "enemy_s3_3_c",
         "name": "山魈王",
-        "level": 26,
-        "type": "old_blood"
+        "level": 26
       }
     ],
     "yaotu": {
@@ -884,14 +849,12 @@
       {
         "id": "enemy_s3_4_b",
         "name": "铁甲虫",
-        "level": 27,
-        "type": "new_born"
+        "level": 27
       },
       {
         "id": "enemy_s3_4_c",
         "name": "地底蛇",
-        "level": 28,
-        "type": "old_blood"
+        "level": 28
       }
     ],
     "yaotu": {
@@ -941,14 +904,12 @@
       {
         "id": "enemy_s3_5_a",
         "name": "山魈首领",
-        "level": 29,
-        "type": "old_blood"
+        "level": 29
       },
       {
         "id": "enemy_s3_5_b",
         "name": "岩石巨人",
-        "level": 29,
-        "type": "new_born"
+        "level": 29
       },
       {
         "id": "enemy_s3_5_c",
@@ -1004,8 +965,7 @@
       {
         "id": "boss_major_shanshen",
         "name": "山神·岩坚",
-        "level": 30,
-        "type": "old_blood"
+        "level": 30
       }
     ],
     "unlocked": false,
@@ -1034,20 +994,17 @@
       {
         "id": "enemy_s4_1_a",
         "name": "小树精",
-        "level": 31,
-        "type": "new_born"
+        "level": 31
       },
       {
         "id": "enemy_s4_1_b",
         "name": "雾妖",
-        "level": 31,
-        "type": "new_born"
+        "level": 31
       },
       {
         "id": "enemy_s4_1_c",
         "name": "蘑菇精",
-        "level": 32,
-        "type": "new_born"
+        "level": 32
       }
     ],
     "yaotu": {
@@ -1097,20 +1054,17 @@
       {
         "id": "enemy_s4_2_a",
         "name": "树精头目",
-        "level": 33,
-        "type": "old_blood"
+        "level": 33
       },
       {
         "id": "enemy_s4_2_b",
         "name": "毒蘑菇",
-        "level": 33,
-        "type": "new_born"
+        "level": 33
       },
       {
         "id": "enemy_s4_2_c",
         "name": "幻影蝶",
-        "level": 34,
-        "type": "new_born"
+        "level": 34
       }
     ],
     "yaotu": {
@@ -1161,20 +1115,17 @@
       {
         "id": "enemy_s4_3_a",
         "name": "小蜘蛛",
-        "level": 35,
-        "type": "old_blood"
+        "level": 35
       },
       {
         "id": "enemy_s4_3_b",
         "name": "毒蛾",
-        "level": 35,
-        "type": "new_born"
+        "level": 35
       },
       {
         "id": "enemy_s4_3_c",
         "name": "蛛网精",
-        "level": 36,
-        "type": "old_blood"
+        "level": 36
       }
     ],
     "yaotu": {
@@ -1225,8 +1176,7 @@
       {
         "id": "enemy_s4_4_a",
         "name": "蝙蝠精",
-        "level": 37,
-        "type": "old_blood"
+        "level": 37
       },
       {
         "id": "enemy_s4_4_b",
@@ -1289,14 +1239,12 @@
       {
         "id": "enemy_s4_5_a",
         "name": "蛛后亲卫",
-        "level": 39,
-        "type": "old_blood"
+        "level": 39
       },
       {
         "id": "enemy_s4_5_b",
         "name": "毒蛾女王",
-        "level": 39,
-        "type": "old_blood"
+        "level": 39
       },
       {
         "id": "enemy_s4_5_c",
@@ -1353,8 +1301,7 @@
       {
         "id": "boss_major_miwu",
         "name": "迷雾妖主·幻影",
-        "level": 40,
-        "type": "old_blood"
+        "level": 40
       }
     ],
     "unlocked": false,
@@ -1383,14 +1330,12 @@
       {
         "id": "enemy_s5_1_a",
         "name": "小金刚",
-        "level": 41,
-        "type": "old_blood"
+        "level": 41
       },
       {
         "id": "enemy_s5_1_b",
         "name": "罗汉侍者",
-        "level": 41,
-        "type": "old_blood"
+        "level": 41
       },
       {
         "id": "enemy_s5_1_c",
@@ -1445,14 +1390,12 @@
       {
         "id": "enemy_s5_2_a",
         "name": "金刚力士",
-        "level": 43,
-        "type": "old_blood"
+        "level": 43
       },
       {
         "id": "enemy_s5_2_b",
         "name": "降龙侍者",
-        "level": 43,
-        "type": "old_blood"
+        "level": 43
       },
       {
         "id": "enemy_s5_2_c",
@@ -1508,14 +1451,12 @@
       {
         "id": "enemy_s5_3_a",
         "name": "罗汉",
-        "level": 45,
-        "type": "old_blood"
+        "level": 45
       },
       {
         "id": "enemy_s5_3_b",
         "name": "护法",
-        "level": 45,
-        "type": "old_blood"
+        "level": 45
       },
       {
         "id": "enemy_s5_3_c",
@@ -1571,14 +1512,12 @@
       {
         "id": "enemy_s5_4_a",
         "name": "金刚护法将领",
-        "level": 47,
-        "type": "old_blood"
+        "level": 47
       },
       {
         "id": "enemy_s5_4_b",
         "name": "罗汉使者",
-        "level": 47,
-        "type": "old_blood"
+        "level": 47
       },
       {
         "id": "enemy_s5_4_c",
@@ -1634,14 +1573,12 @@
       {
         "id": "enemy_s5_5_a",
         "name": "金刚护法统帅",
-        "level": 49,
-        "type": "old_blood"
+        "level": 49
       },
       {
         "id": "enemy_s5_5_b",
         "name": "降龙罗汉",
-        "level": 49,
-        "type": "old_blood"
+        "level": 49
       },
       {
         "id": "enemy_s5_5_c",
@@ -1697,8 +1634,7 @@
       {
         "id": "boss_major_rulai",
         "name": "如来法相·须弥",
-        "level": 50,
-        "type": "old_blood"
+        "level": 50
       }
     ],
     "unlocked": false,

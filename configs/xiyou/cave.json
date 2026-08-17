@@ -329,8 +329,6 @@
       "equipmentId": "ar_t1_heavy_01",
       "blueprintId": "bp_t1_eq",
       "name": "轻铜甲",
-      "level": 1,
-      "effect": "防御+10，伤害减免+5%，速度+-5% · 衣服",
       "count": 1,
       "cost": 60,
       "materials": [
@@ -349,8 +347,6 @@
       "equipmentId": "hd_t1_war_01",
       "blueprintId": "bp_t1_eq",
       "name": "藤蔓箍",
-      "level": 1,
-      "effect": "防御+5%韧性+3% · 头盔",
       "count": 1,
       "cost": 35,
       "materials": [
@@ -369,8 +365,6 @@
       "equipmentId": "hd_t1_spirit_01",
       "blueprintId": "bp_t1_eq",
       "name": "灵桃冠",
-      "level": 1,
-      "effect": "全属性+3%能量获取+5% · 头盔",
       "count": 1,
       "cost": 40,
       "materials": [
@@ -389,8 +383,6 @@
       "equipmentId": "bt_t1_light_01",
       "blueprintId": "bp_t1_eq",
       "name": "草编履",
-      "level": 1,
-      "effect": "速度+5%闪避+3% · 靴子",
       "count": 1,
       "cost": 30,
       "materials": [
@@ -409,8 +401,6 @@
       "equipmentId": "bt_t1_heavy_01",
       "blueprintId": "bp_t1_eq",
       "name": "粗石靴",
-      "level": 1,
-      "effect": "防御+3%韧性+3% · 靴子",
       "count": 1,
       "cost": 35,
       "materials": [
@@ -429,8 +419,6 @@
       "equipmentId": "hf_t1_life_01",
       "blueprintId": "bp_t1_eq",
       "name": "淡水玉护符",
-      "level": 1,
-      "effect": "气血+5%治疗效果+3% · 护符",
       "count": 1,
       "cost": 40,
       "materials": [
@@ -449,8 +437,6 @@
       "equipmentId": "hf_t1_war_01",
       "blueprintId": "bp_t1_eq",
       "name": "桃木战符",
-      "level": 1,
-      "effect": "气血+3%攻击+3%暴击率+2% · 护符",
       "count": 1,
       "cost": 35,
       "materials": [
@@ -469,8 +455,6 @@
       "equipmentId": "jz_t1_power_01",
       "blueprintId": "bp_t1_eq",
       "name": "贝壳戒指",
-      "level": 1,
-      "effect": "攻击+5%命中+3% · 戒指",
       "count": 1,
       "cost": 35,
       "materials": [
@@ -489,8 +473,6 @@
       "equipmentId": "jz_t1_spirit_01",
       "blueprintId": "bp_t1_eq",
       "name": "桃核戒",
-      "level": 1,
-      "effect": "技能伤害+5%能量+3% · 戒指",
       "count": 1,
       "cost": 35,
       "materials": [
@@ -509,8 +491,6 @@
       "equipmentId": "wp_t2_light_01",
       "blueprintId": "bp_t2_wp",
       "name": "迅风剑",
-      "level": 4,
-      "effect": "攻击+22，速度+12% · 武器",
       "count": 1,
       "cost": 120,
       "materials": [
@@ -529,8 +509,6 @@
       "equipmentId": "wp_t2_mid_01",
       "blueprintId": "bp_t2_wp",
       "name": "铁棒",
-      "level": 4,
-      "effect": "攻击+27 · 武器",
       "count": 1,
       "cost": 140,
       "materials": [
@@ -549,8 +527,6 @@
       "equipmentId": "wp_t2_heavy_01",
       "blueprintId": "bp_t2_wp",
       "name": "铁锤",
-      "level": 4,
-      "effect": "攻击+32，速度+-8% · 武器",
       "count": 1,
       "cost": 160,
       "materials": [
@@ -569,8 +545,6 @@
       "equipmentId": "ar_t2_light_01",
       "blueprintId": "bp_t2_ar",
       "name": "熊皮甲",
-      "level": 4,
-      "effect": "防御+12，闪避+8%，速度+8% · 衣服",
       "count": 1,
       "cost": 110,
       "materials": [
@@ -589,8 +563,6 @@
       "equipmentId": "ar_t2_mid_01",
       "blueprintId": "bp_t2_ar",
       "name": "铁木甲",
-      "level": 4,
-      "effect": "防御+16，气血+8% · 衣服",
       "count": 1,
       "cost": 130,
       "materials": [
@@ -609,8 +581,6 @@
       "equipmentId": "ar_t2_heavy_01",
       "blueprintId": "bp_t2_ar",
       "name": "重铁甲",
-      "level": 4,
-      "effect": "防御+20，伤害减免+8%，速度+-5% · 衣服",
       "count": 1,
       "cost": 150,
       "materials": [
@@ -629,8 +599,6 @@
       "equipmentId": "hd_t2_war_01",
       "blueprintId": "bp_t2_hl",
       "name": "铁战盔",
-      "level": 2,
-      "effect": "防御+8%韧性+5% · 头盔",
       "count": 1,
       "cost": 100,
       "materials": [
@@ -649,8 +617,6 @@
       "equipmentId": "hd_t2_spirit_01",
       "blueprintId": "bp_t2_hl",
       "name": "河伯灵冠",
-      "level": 2,
-      "effect": "全属性+5%技能伤害+8% · 头盔",
       "count": 1,
       "cost": 110,
       "materials": [
@@ -669,8 +635,6 @@
       "equipmentId": "bt_t2_light_01",
       "blueprintId": "bp_t2_bs",
       "name": "踏浪靴",
-      "level": 2,
-      "effect": "速度+8%闪避+5% · 靴子",
       "count": 1,
       "cost": 90,
       "materials": [
@@ -689,8 +653,6 @@
       "equipmentId": "bt_t2_heavy_01",
       "blueprintId": "bp_t2_bs",
       "name": "铁蹄靴",
-      "level": 2,
-      "effect": "防御+5%格挡率+5% · 靴子",
       "count": 1,
       "cost": 100,
       "materials": [
@@ -709,8 +671,6 @@
       "equipmentId": "hf_t2_life_01",
       "blueprintId": "bp_t2_ch",
       "name": "深水玉符",
-      "level": 2,
-      "effect": "气血+8%治疗效果+5% · 护符",
       "count": 1,
       "cost": 110,
       "materials": [
@@ -729,8 +689,6 @@
       "equipmentId": "hf_t2_war_01",
       "blueprintId": "bp_t2_ch",
       "name": "河铁战符",
-      "level": 2,
-      "effect": "气血+5%攻击+5%暴击率+3% · 护符",
       "count": 1,
       "cost": 100,
       "materials": [
@@ -749,8 +707,6 @@
       "equipmentId": "jz_t2_power_01",
       "blueprintId": "bp_t2_rg",
       "name": "铁精戒",
-      "level": 2,
-      "effect": "攻击+8%暴击伤害+10% · 戒指",
       "count": 1,
       "cost": 100,
       "materials": [
@@ -769,8 +725,6 @@
       "equipmentId": "jz_t2_spirit_01",
       "blueprintId": "bp_t2_rg",
       "name": "水灵戒",
-      "level": 2,
-      "effect": "技能伤害+8%能量+5% · 戒指",
       "count": 1,
       "cost": 110,
       "materials": [
@@ -789,8 +743,6 @@
       "equipmentId": "wp_t3_light_01",
       "blueprintId": "bp_t3_wp",
       "name": "流云剑",
-      "level": 6,
-      "effect": "攻击+35，速度+15% · 武器",
       "count": 1,
       "cost": 250,
       "materials": [
@@ -809,8 +761,6 @@
       "equipmentId": "wp_t3_mid_01",
       "blueprintId": "bp_t3_wp",
       "name": "伏魔杖",
-      "level": 6,
-      "effect": "攻击+42 · 武器",
       "count": 1,
       "cost": 280,
       "materials": [
@@ -829,8 +779,6 @@
       "equipmentId": "wp_t3_heavy_01",
       "blueprintId": "bp_t3_wp",
       "name": "撼地锤",
-      "level": 6,
-      "effect": "攻击+50，速度+-10% · 武器",
       "count": 1,
       "cost": 300,
       "materials": [
@@ -853,8 +801,6 @@
       "equipmentId": "ar_t3_light_01",
       "blueprintId": "bp_t3_ar",
       "name": "虎威甲",
-      "level": 6,
-      "effect": "防御+20，闪避+10%，暴击率+3% · 衣服",
       "count": 1,
       "cost": 240,
       "materials": [
@@ -873,8 +819,6 @@
       "equipmentId": "ar_t3_mid_01",
       "blueprintId": "bp_t3_ar",
       "name": "金木甲",
-      "level": 6,
-      "effect": "防御+26，气血+10%，韧性+5% · 衣服",
       "count": 1,
       "cost": 260,
       "materials": [
@@ -893,8 +837,6 @@
       "equipmentId": "ar_t3_heavy_01",
       "blueprintId": "bp_t3_ar",
       "name": "神金甲",
-      "level": 6,
-      "effect": "防御+32，伤害减免+10%，速度+-8% · 衣服",
       "count": 1,
       "cost": 280,
       "materials": [
@@ -913,8 +855,6 @@
       "equipmentId": "hd_t3_war_01",
       "blueprintId": "bp_t3_hl",
       "name": "钢战盔",
-      "level": 3,
-      "effect": "防御+12%韧性+8% · 头盔",
       "count": 1,
       "cost": 220,
       "materials": [
@@ -933,8 +873,6 @@
       "equipmentId": "hd_t3_spirit_01",
       "blueprintId": "bp_t3_hl",
       "name": "岩灵冠",
-      "level": 3,
-      "effect": "全属性+8%技能伤害+12%能量+8% · 头盔",
       "count": 1,
       "cost": 240,
       "materials": [
@@ -953,8 +891,6 @@
       "equipmentId": "bt_t3_light_01",
       "blueprintId": "bp_t3_bs",
       "name": "疾风靴",
-      "level": 3,
-      "effect": "速度+12%闪避+8%先手+5% · 靴子",
       "count": 1,
       "cost": 200,
       "materials": [
@@ -973,8 +909,6 @@
       "equipmentId": "bt_t3_heavy_01",
       "blueprintId": "bp_t3_bs",
       "name": "磐石靴",
-      "level": 3,
-      "effect": "防御+8%格挡率+8%受击回能+10% · 靴子",
       "count": 1,
       "cost": 220,
       "materials": [
@@ -993,8 +927,6 @@
       "equipmentId": "hf_t3_life_01",
       "blueprintId": "bp_t3_ch",
       "name": "翠玉护符",
-      "level": 3,
-      "effect": "气血+12%治疗效果+8%护盾+5% · 护符",
       "count": 1,
       "cost": 240,
       "materials": [
@@ -1013,8 +945,6 @@
       "equipmentId": "hf_t3_war_01",
       "blueprintId": "bp_t3_ch",
       "name": "金精战符",
-      "level": 3,
-      "effect": "气血+8%攻击+8%暴击率+5% · 护符",
       "count": 1,
       "cost": 220,
       "materials": [
@@ -1033,8 +963,6 @@
       "equipmentId": "jz_t3_power_01",
       "blueprintId": "bp_t3_rg",
       "name": "金精戒",
-      "level": 3,
-      "effect": "攻击+12%暴击伤害+15%破甲+5% · 戒指",
       "count": 1,
       "cost": 220,
       "materials": [
@@ -1053,8 +981,6 @@
       "equipmentId": "jz_t3_spirit_01",
       "blueprintId": "bp_t3_rg",
       "name": "翠玉灵戒",
-      "level": 3,
-      "effect": "技能伤害+12%能量+8%大招伤害+8% · 戒指",
       "count": 1,
       "cost": 240,
       "materials": [
@@ -1073,8 +999,6 @@
       "equipmentId": "wp_t4_light_01",
       "blueprintId": "bp_t4_wp",
       "name": "幽影刃",
-      "level": 4,
-      "effect": "攻击+48速度+18%连击率+10% · 武器",
       "count": 1,
       "cost": 380,
       "materials": [
@@ -1093,8 +1017,6 @@
       "equipmentId": "wp_t4_mid_01",
       "blueprintId": "bp_t4_wp",
       "name": "破幻杖",
-      "level": 4,
-      "effect": "攻击+55暴击率+8%命中+10% · 武器",
       "count": 1,
       "cost": 400,
       "materials": [
@@ -1113,8 +1035,6 @@
       "equipmentId": "wp_t4_heavy_01",
       "blueprintId": "bp_t4_wp",
       "name": "碎岳锤",
-      "level": 4,
-      "effect": "攻击+65速度-10%格挡率+12%反伤+8% · 武器",
       "count": 1,
       "cost": 420,
       "materials": [
@@ -1133,8 +1053,6 @@
       "equipmentId": "ar_t4_light_01",
       "blueprintId": "bp_t4_ar",
       "name": "影豹皮甲",
-      "level": 4,
-      "effect": "防御+26闪避+12%速度+10% · 衣服",
       "count": 1,
       "cost": 360,
       "materials": [
@@ -1153,8 +1071,6 @@
       "equipmentId": "ar_t4_mid_01",
       "blueprintId": "bp_t4_ar",
       "name": "瘴木甲",
-      "level": 4,
-      "effect": "防御+32气血+12%异常抗性+10% · 衣服",
       "count": 1,
       "cost": 380,
       "materials": [
@@ -1173,8 +1089,6 @@
       "equipmentId": "ar_t4_heavy_01",
       "blueprintId": "bp_t4_ar",
       "name": "幻岩铠",
-      "level": 4,
-      "effect": "防御+40伤害减免+12%韧性+10% · 衣服",
       "count": 1,
       "cost": 400,
       "materials": [
@@ -1193,8 +1107,6 @@
       "equipmentId": "hd_t4_war_01",
       "blueprintId": "bp_t4_hl",
       "name": "幻岩战盔",
-      "level": 4,
-      "effect": "防御+15%韧性+10%控制抗性+8% · 头盔",
       "count": 1,
       "cost": 350,
       "materials": [
@@ -1213,8 +1125,6 @@
       "equipmentId": "hd_t4_spirit_01",
       "blueprintId": "bp_t4_hl",
       "name": "幽兰灵冠",
-      "level": 4,
-      "effect": "全属性+10%技能伤害+15%能量+10% · 头盔",
       "count": 1,
       "cost": 370,
       "materials": [
@@ -1233,8 +1143,6 @@
       "equipmentId": "bt_t4_light_01",
       "blueprintId": "bp_t4_bs",
       "name": "影步靴",
-      "level": 4,
-      "effect": "速度+15%闪避+10%先手+8% · 靴子",
       "count": 1,
       "cost": 340,
       "materials": [
@@ -1253,8 +1161,6 @@
       "equipmentId": "bt_t4_heavy_01",
       "blueprintId": "bp_t4_bs",
       "name": "幻岩重靴",
-      "level": 4,
-      "effect": "防御+10%格挡率+10%受击回能+15% · 靴子",
       "count": 1,
       "cost": 360,
       "materials": [
@@ -1273,8 +1179,6 @@
       "equipmentId": "hf_t4_life_01",
       "blueprintId": "bp_t4_ch",
       "name": "翡翠护符",
-      "level": 4,
-      "effect": "气血+15%治疗效果+10%护盾+8% · 护符",
       "count": 1,
       "cost": 370,
       "materials": [
@@ -1293,8 +1197,6 @@
       "equipmentId": "hf_t4_war_01",
       "blueprintId": "bp_t4_ch",
       "name": "毒牙战符",
-      "level": 4,
-      "effect": "气血+10%攻击+10%暴击率+6% · 护符",
       "count": 1,
       "cost": 350,
       "materials": [
@@ -1313,8 +1215,6 @@
       "equipmentId": "jz_t4_power_01",
       "blueprintId": "bp_t4_rg",
       "name": "毒牙戒",
-      "level": 4,
-      "effect": "攻击+15%暴击伤害+20% · 戒指",
       "count": 1,
       "cost": 350,
       "materials": [
@@ -1333,8 +1233,6 @@
       "equipmentId": "jz_t4_spirit_01",
       "blueprintId": "bp_t4_rg",
       "name": "雾灵戒",
-      "level": 4,
-      "effect": "技能伤害+15%能量+10%大招伤害+12% · 戒指",
       "count": 1,
       "cost": 370,
       "materials": [
@@ -1353,8 +1251,6 @@
       "equipmentId": "wp_t5_light_01",
       "blueprintId": "bp_t5_wp",
       "name": "菩提降龙剑",
-      "level": 5,
-      "effect": "攻击+62速度+20%连击率+12% · 武器",
       "count": 1,
       "cost": 800,
       "materials": [
@@ -1373,8 +1269,6 @@
       "equipmentId": "wp_t5_mid_01",
       "blueprintId": "bp_t5_wp",
       "name": "天罡伏魔杖",
-      "level": 5,
-      "effect": "攻击+72暴击率+10%暴击伤害+25% · 武器",
       "count": 1,
       "cost": 850,
       "materials": [
@@ -1393,8 +1287,6 @@
       "equipmentId": "wp_t5_heavy_01",
       "blueprintId": "bp_t5_wp",
       "name": "须弥碎天锤",
-      "level": 5,
-      "effect": "攻击+85速度-12%格挡率+15%反伤+12% · 武器",
       "count": 1,
       "cost": 900,
       "materials": [
@@ -1413,8 +1305,6 @@
       "equipmentId": "ar_t5_light_01",
       "blueprintId": "bp_t5_ar",
       "name": "天蚕仙衣",
-      "level": 5,
-      "effect": "防御+32闪避+15%速度+12%先手+10% · 衣服",
       "count": 1,
       "cost": 780,
       "materials": [
@@ -1433,8 +1323,6 @@
       "equipmentId": "ar_t5_mid_01",
       "blueprintId": "bp_t5_ar",
       "name": "菩提道袍",
-      "level": 5,
-      "effect": "防御+40气血+15%异常抗性+15% · 衣服",
       "count": 1,
       "cost": 820,
       "materials": [
@@ -1453,8 +1341,6 @@
       "equipmentId": "ar_t5_heavy_01",
       "blueprintId": "bp_t5_ar",
       "name": "金刚不坏甲",
-      "level": 5,
-      "effect": "防御+50伤害减免+15%韧性+12% · 衣服",
       "count": 1,
       "cost": 860,
       "materials": [
@@ -1473,8 +1359,6 @@
       "equipmentId": "hd_t5_war_01",
       "blueprintId": "bp_t5_hl",
       "name": "金刚战盔",
-      "level": 5,
-      "effect": "防御+18%韧性+12%控制抗性+12% · 头盔",
       "count": 1,
       "cost": 750,
       "materials": [
@@ -1493,8 +1377,6 @@
       "equipmentId": "hd_t5_spirit_01",
       "blueprintId": "bp_t5_hl",
       "name": "菩提道冠",
-      "level": 5,
-      "effect": "全属性+12%技能伤害+18%能量+12% · 头盔",
       "count": 1,
       "cost": 780,
       "materials": [
@@ -1513,8 +1395,6 @@
       "equipmentId": "bt_t5_light_01",
       "blueprintId": "bp_t5_bs",
       "name": "仙云靴",
-      "level": 5,
-      "effect": "速度+18%闪避+12%先手+10% · 靴子",
       "count": 1,
       "cost": 720,
       "materials": [
@@ -1533,8 +1413,6 @@
       "equipmentId": "bt_t5_heavy_01",
       "blueprintId": "bp_t5_bs",
       "name": "金刚重靴",
-      "level": 5,
-      "effect": "防御+12%格挡率+12%受击回能+20% · 靴子",
       "count": 1,
       "cost": 750,
       "materials": [
@@ -1553,8 +1431,6 @@
       "equipmentId": "hf_t5_life_01",
       "blueprintId": "bp_t5_ch",
       "name": "琉璃净符",
-      "level": 5,
-      "effect": "气血+18%治疗效果+12%护盾+10% · 护符",
       "count": 1,
       "cost": 780,
       "materials": [
@@ -1573,8 +1449,6 @@
       "equipmentId": "hf_t5_war_01",
       "blueprintId": "bp_t5_ch",
       "name": "天罡战符",
-      "level": 5,
-      "effect": "气血+12%攻击+12%暴击率+8% · 护符",
       "count": 1,
       "cost": 800,
       "materials": [
@@ -1593,8 +1467,6 @@
       "equipmentId": "jz_t5_power_01",
       "blueprintId": "bp_t5_rg",
       "name": "金刚力戒",
-      "level": 5,
-      "effect": "攻击+18%暴击伤害+25%破甲+10% · 戒指",
       "count": 1,
       "cost": 780,
       "materials": [
@@ -1613,8 +1485,6 @@
       "equipmentId": "jz_t5_spirit_01",
       "blueprintId": "bp_t5_rg",
       "name": "菩提灵戒",
-      "level": 5,
-      "effect": "技能伤害+18%能量+12%大招伤害+15% · 戒指",
       "count": 1,
       "cost": 800,
       "materials": [
@@ -1633,8 +1503,6 @@
       "equipmentId": "wp_t4_01",
       "blueprintId": "bp_legend_01",
       "name": "牛魔撼天锤",
-      "level": 7,
-      "effect": "攻击+80，速度-10%，眩晕25%，格挡+15% · 武器",
       "count": 1,
       "cost": 1000,
       "materials": [
@@ -1653,8 +1521,6 @@
       "equipmentId": "hd_t4_war_02",
       "blueprintId": "bp_legend_01",
       "name": "牛魔战盔",
-      "level": 4,
-      "effect": "防御+20%，受击30%嘲讽，韧性+15% · 头盔",
       "count": 1,
       "cost": 1000,
       "materials": [
@@ -1673,8 +1539,6 @@
       "equipmentId": "ac_t4_01",
       "blueprintId": "bp_legend_02",
       "name": "万毒蚀心镯",
-      "level": 7,
-      "effect": "技能伤害+22%，攻击附带剧毒，对中毒目标+30%伤害 · 戒指",
       "count": 1,
       "cost": 1000,
       "materials": [
@@ -1689,8 +1553,6 @@
       "equipmentId": "bt_t4_02",
       "blueprintId": "bp_legend_02",
       "name": "蝎尾灵靴",
-      "level": 4,
-      "effect": "速度+20%，先手+12%，闪避后毒刺 · 靴子",
       "count": 1,
       "cost": 1000,
       "materials": [
@@ -1709,8 +1571,6 @@
       "equipmentId": "ac_t4_02",
       "blueprintId": "bp_legend_03",
       "name": "大鹏逐日冠",
-      "level": 7,
-      "effect": "全属性+12%，暴击率+15%，暴击后速度+8%叠3层 · 头盔",
       "count": 1,
       "cost": 1000,
       "materials": [
@@ -1729,8 +1589,6 @@
       "equipmentId": "bt_t4_03",
       "blueprintId": "bp_legend_03",
       "name": "鹏翼轻靴",
-      "level": 4,
-      "effect": "速度+22%，闪避+18%，每回合首次行动必暴击 · 靴子",
       "count": 1,
       "cost": 1000,
       "materials": [
@@ -1749,8 +1607,6 @@
       "equipmentId": "wp_t5_01",
       "blueprintId": "bp_immortal_01",
       "name": "混元无极环",
-      "level": 8,
-      "effect": "攻击+100，全属性+10%，大招伤害+30% · 武器",
       "count": 1,
       "cost": 2000,
       "materials": [
@@ -1769,8 +1625,6 @@
       "equipmentId": "ar_t5_01",
       "blueprintId": "bp_immortal_02",
       "name": "混沌天衣",
-      "level": 8,
-      "effect": "防御+60，气血+20%，伤害减免20%，每回合回血5% · 衣服",
       "count": 1,
       "cost": 2000,
       "materials": [
@@ -1789,8 +1643,6 @@
       "equipmentId": "ac_t5_01",
       "blueprintId": "bp_immortal_03",
       "name": "太初道冠",
-      "level": 8,
-      "effect": "全属性+18%，技能冷却-1，能量获取+20% · 头盔",
       "count": 1,
       "cost": 2000,
       "materials": [
@@ -1809,8 +1661,6 @@
       "equipmentId": "ac_t5_02",
       "blueprintId": "bp_immortal_04",
       "name": "混元灵珠",
-      "level": 8,
-      "effect": "气血+25%，防御+15%，每回合净化全部负面，护盾+15% · 护符",
       "count": 1,
       "cost": 2000,
       "materials": [
@@ -1829,8 +1679,6 @@
       "equipmentId": "wp_sp_01",
       "blueprintId": "bp_sp_01",
       "name": "烈焰斩",
-      "level": 6,
-      "effect": "攻击+45，攻击附带灼烧3回合 · 武器",
       "count": 1,
       "cost": 260,
       "materials": [
@@ -1849,8 +1697,6 @@
       "equipmentId": "ar_sp_01",
       "blueprintId": "bp_sp_02",
       "name": "风灵袍",
-      "level": 6,
-      "effect": "防御+24，速度+15%，闪避+10% · 衣服",
       "count": 1,
       "cost": 260,
       "materials": [
@@ -1869,8 +1715,6 @@
       "equipmentId": "ac_sp_01",
       "blueprintId": "bp_sp_03",
       "name": "地灵护符",
-      "level": 6,
-      "effect": "防御+12%，气血+6%，受击10%石化攻击者1回合 · 护符",
       "count": 1,
       "cost": 260,
       "materials": [

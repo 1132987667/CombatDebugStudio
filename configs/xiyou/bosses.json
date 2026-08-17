@@ -5,7 +5,6 @@
     "type": "minor",
     "level": 6,
     "regionId": "region_1",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 500,
       "attack": 25,
@@ -85,7 +84,6 @@
     "type": "minor",
     "level": 16,
     "regionId": "region_2",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 1200,
       "attack": 55,
@@ -165,7 +163,6 @@
     "type": "minor",
     "level": 26,
     "regionId": "region_3",
-    "enemyType": "new_born",
     "stats": {
       "maxHealth": 2000,
       "attack": 90,
@@ -245,7 +242,6 @@
     "type": "minor",
     "level": 36,
     "regionId": "region_4",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 2800,
       "attack": 125,
@@ -327,7 +323,6 @@
     "type": "minor",
     "level": 46,
     "regionId": "region_5",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 3600,
       "attack": 160,
@@ -411,7 +406,6 @@
     "type": "major",
     "level": 10,
     "regionId": "region_1",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 900,
       "attack": 45,
@@ -498,7 +492,6 @@
     "type": "major",
     "level": 20,
     "regionId": "region_2",
-    "enemyType": "old_soul",
     "stats": {
       "maxHealth": 1600,
       "attack": 75,
@@ -582,7 +575,6 @@
     "type": "major",
     "level": 30,
     "regionId": "region_3",
-    "enemyType": "old_soul",
     "stats": {
       "maxHealth": 2400,
       "attack": 110,
@@ -669,7 +661,6 @@
     "type": "major",
     "level": 40,
     "regionId": "region_4",
-    "enemyType": "new_born",
     "stats": {
       "maxHealth": 3200,
       "attack": 145,
@@ -755,7 +746,6 @@
     "type": "major",
     "level": 50,
     "regionId": "region_5",
-    "enemyType": "old_soul",
     "stats": {
       "maxHealth": 4000,
       "attack": 180,
@@ -846,7 +836,6 @@
     "type": "achievement",
     "level": 55,
     "regionId": "region_1",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 5200,
       "attack": 230,
@@ -936,7 +925,6 @@
     "type": "achievement",
     "level": 55,
     "regionId": "region_2",
-    "enemyType": "old_soul",
     "stats": {
       "maxHealth": 5500,
       "attack": 240,
@@ -1025,7 +1013,6 @@
     "type": "achievement",
     "level": 55,
     "regionId": "region_3",
-    "enemyType": "old_soul",
     "stats": {
       "maxHealth": 5800,
       "attack": 250,
@@ -1115,7 +1102,6 @@
     "type": "achievement",
     "level": 55,
     "regionId": "region_4",
-    "enemyType": "new_born",
     "stats": {
       "maxHealth": 5400,
       "attack": 235,
@@ -1204,7 +1190,6 @@
     "type": "achievement",
     "level": 55,
     "regionId": "region_5",
-    "enemyType": "old_soul",
     "stats": {
       "maxHealth": 6000,
       "attack": 260,
@@ -1294,7 +1279,6 @@
     "type": "three_kings",
     "level": 65,
     "regionId": "region_final",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 7000,
       "attack": 320,
@@ -1382,7 +1366,6 @@
     "type": "three_kings",
     "level": 65,
     "regionId": "region_final",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 6800,
       "attack": 300,
@@ -1468,7 +1451,6 @@
     "type": "three_kings",
     "level": 65,
     "regionId": "region_final",
-    "enemyType": "old_blood",
     "stats": {
       "maxHealth": 6600,
       "attack": 340,
@@ -1556,7 +1538,6 @@
     "type": "final",
     "level": 70,
     "regionId": "region_final",
-    "enemyType": "old_soul",
     "stats": {
       "maxHealth": 8000,
       "attack": 250,

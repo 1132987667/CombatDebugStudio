@@ -1,6 +1,5 @@
 <template>
   <main class="xy-battle xy-panel" aria-label="战斗禅台">
-    <!-- 顶部：左叙事 右掉落表（方案B · 战前一眼读完，阵容由战场区实时展示不重复） -->
     <header class="xy-battle-head">
       <div class="xy-battle-head-grid">
         <div class="xy-battle-head-left">
@@ -15,7 +14,6 @@
         <div class="xy-battle-head-right" role="list" aria-label="敌人与掉落">
           <div v-for="e in scene.enemies" :key="e.name" class="xy-drop-row" role="listitem">
             <span class="xy-drop-ename">
-              <span class="xy-dot" :class="dotClass(e.type)"></span>
               <span class="xy-drop-name">{{ e.name }}</span>
               <span class="xy-drop-lv">Lv.{{ e.level }}</span>
             </span>
@@ -236,15 +234,6 @@ function selectCharacter(id: string): void {
 
 function getCharacterSide(characterId: string): 'left' | 'right' {
   return store.allyTeam.some((c) => c.id === characterId) ? 'left' : 'right'
-}
-
-// ════════════ 头部 · 方案B 派生（左叙事 右掉落表） ════════════
-
-/** 敌人血统点：new_born 新生 / old_blood 旧血 / old_soul 旧魂（对齐 scenes.json type 与方案B 色点） */
-function dotClass(type?: string): string {
-  if (type === 'old_blood') return 'xy-dot--old-blood'
-  if (type === 'old_soul') return 'xy-dot--old-soul'
-  return 'xy-dot--new-born'
 }
 
 /** 掉落概率色阶：主掉落青 / 次掉落灰 / 稀有金 */

@@ -42,8 +42,6 @@ export interface SceneEnemyRef {
   id: string
   name?: string
   level?: number
-  /** 敌人标签（new_born / old_blood 等） */
-  type?: string
 }
 
 /** 场景解锁条件 */

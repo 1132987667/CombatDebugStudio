@@ -38,22 +38,7 @@
         </div>
       </template>
 
-      <template #affinity>
-        <p class="xy-panel-hint">集齐缘分成员，激活羁绊加成</p>
-        <div v-for="a in affinities" :key="a.name" class="xy-row-card" :class="{ activated: a.activated }">
-          <div class="xy-row-top">
-            <span class="xy-row-name">{{ a.name }}</span>
-            <span class="xy-chip" :class="a.activated ? 'xy-chip--gold' : 'xy-chip--muted'">
-              {{ a.activated ? '已激活' : '未激活' }}
-            </span>
-          </div>
-          <p class="xy-row-desc">{{ a.members.join(' · ') }}</p>
-          <p class="xy-row-desc xy-row-desc--key">{{ a.bonus }}</p>
-          <div class="xy-progress">
-            <div class="xy-progress-fill" :style="{ width: a.progress * 100 + '%' }"></div>
-          </div>
-        </div>
-      </template>
+      
     </Tabs>
   </div>
 </template>
@@ -63,19 +48,18 @@ import { ref } from 'vue'
 import IconStar from '~icons/app/star'
 
 import type { TabItem } from '@/presentation/components'
-import { affinities, mates, pets } from '../xiyouData'
+import { mates, pets } from '../xiyouData'
 import type { XiyouMate } from '../types'
 import { qualityClass, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 
 const playerStore = usePlayerStore()
 
-const sub = ref<'mates' | 'pets' | 'affinity'>('mates')
+const sub = ref<'mates' | 'pets'>('mates')
 
 const SUBS: TabItem[] = [
   { id: 'mates', label: '伙伴' },
   { id: 'pets', label: '灵宠' },
-  { id: 'affinity', label: '缘分' },
 ]
 
 /** 伙伴解锁状态：前 4 位已解锁，余下待剧情推进（展示用） */

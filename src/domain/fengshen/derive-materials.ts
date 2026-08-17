@@ -9,13 +9,11 @@
 
 import type { Item } from '@/shared/types/Item'
 import type { ItemData } from '@/domain/fengshen/types'
-
-/** 材料域 type 白名单（对齐 schema.ts materials 表 type 枚举；丹药为消耗品，不归入材料） */
-const MATERIAL_TYPES = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '碎片', '货币', '草药', '药引', '种子']
+import { MATERIAL_DOMAIN_TYPES } from '@/shared/constants/item-types'
 
 export function deriveMaterials(items: ItemData[]): Item[] {
   return items
-    .filter((it) => MATERIAL_TYPES.includes(it.type))
+    .filter((it) => (MATERIAL_DOMAIN_TYPES as readonly string[]).includes(it.type))
     .map((it) => ({
       id: it.id,
       name: it.name,

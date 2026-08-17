@@ -150,7 +150,6 @@ const tabs = computed<TabItem[]>(() =>
 
 /**
  * 背包二级分类（方案二 2.2：40 种 type → 7 组）
- * NOTE: 原方案 7 组遗漏「图纸」type，归入材料组（图纸为制造配方，属制造链路），避免物品无处归类。
  */
 const PACK_CATEGORIES = [
   { id: 'all', label: '全部', types: [] as string[] },

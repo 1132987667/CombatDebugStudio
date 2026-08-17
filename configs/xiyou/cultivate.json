@@ -7,14 +7,6 @@
     { "name": "化神", "level": 0, "bonus": "气血 +2000 · 全属性 +20%", "progress": 0, "unlocked": false, "desc": "神识化神，窥探大道玄机", "levelReq": 30, "materialName": "化神露", "materialCount": 2 },
     { "name": "渡劫", "level": 0, "bonus": "气血 +5000 · 免疫一次致死", "progress": 0, "unlocked": false, "desc": "雷劫临身，渡过则飞升上界", "levelReq": 45, "materialName": "渡劫符", "materialCount": 1 }
   ],
-  "martialArts": [
-    { "name": "大品天仙诀", "rarity": 5, "level": 3, "maxLevel": 20, "slot": "主修", "effect": "气血 +12% · 能量上限 +10%", "equipped": true },
-    { "name": "八九玄功", "rarity": 4, "level": 5, "maxLevel": 15, "slot": "辅修一", "effect": "防御 +15% · 格挡率 +5%", "equipped": true },
-    { "name": "筋斗云心法", "rarity": 3, "level": 4, "maxLevel": 12, "slot": "辅修二", "effect": "速度 +18% · 闪避 +6%", "equipped": true },
-    { "name": "菩提静心经", "rarity": 3, "level": 2, "maxLevel": 12, "slot": "心法", "effect": "每回合回复 2% 最大能量", "equipped": true },
-    { "name": "火灵淬体诀", "rarity": 2, "level": 0, "maxLevel": 10, "slot": "未装配", "effect": "攻击 +8% · 抗灼烧 +20%", "equipped": false },
-    { "name": "太乙真言", "rarity": 1, "level": 0, "maxLevel": 8, "slot": "未装配", "effect": "法术伤害 +5%", "equipped": false }
-  ],
   "meridians": [
     {
       "name": "手太阴肺经",
@@ -42,12 +34,4 @@
       ]
     }
   ],
-  "dharmas": [
-    { "name": "七十二变", "type": "身法", "level": 6, "maxLevel": 12, "effect": "闪避后复制对手属性，持续 2 回合", "equipped": true },
-    { "name": "火眼金睛", "type": "辅助", "level": 5, "maxLevel": 10, "effect": "识破隐身，暴击率 +8%", "equipped": true },
-    { "name": "定身术", "type": "辅助", "level": 3, "maxLevel": 10, "effect": "目标速度降低 40%，持续 2 回合", "equipped": true },
-    { "name": "三头六臂", "type": "攻击", "level": 2, "maxLevel": 12, "effect": "普攻追加两次 30% 伤害", "equipped": false },
-    { "name": "金刚之躯", "type": "防御", "level": 4, "maxLevel": 10, "effect": "受到伤害时 15% 概率免疫", "equipped": true },
-    { "name": "翻江倒海", "type": "攻击", "level": 1, "maxLevel": 10, "effect": "对水系敌人伤害提升 30%", "equipped": false }
-  ]
 }

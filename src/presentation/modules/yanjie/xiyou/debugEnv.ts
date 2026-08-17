@@ -9,7 +9,7 @@ import type { useBattleStore } from '@/presentation/stores/battleStore'
 import type { usePlayerStore } from '@/presentation/stores/playerStore'
 import type { usePackStore } from '@/presentation/stores/packStore'
 import type { SaveManager } from '@/shared/utils/save-manager'
-import type { XiyouCatalogItem, XiyouQuest, XiyouRealm, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
+import type { XiyouCatalogItem, XiyouQuest, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
 import type { EquipmentData } from '@/domain/fengshen/types'
 
 /** 系统诊断端口（DebugCavePanel 装配：经 DI 容器 resolve application 层服务） */
@@ -34,8 +34,6 @@ export interface PlayerStoreDebugEnv {
   scenes: XiyouScene[]
   /** 任务表（reactive） */
   quests: XiyouQuest[]
-  /** 境界表（reactive） */
-  realms: XiyouRealm[]
   /** 流派表（reactive） */
   schools: XiyouSchool[]
   /** 流派技能点（reactive） */

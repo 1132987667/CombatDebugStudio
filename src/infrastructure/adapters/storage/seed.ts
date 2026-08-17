@@ -233,7 +233,7 @@ function buildXiyou(): XiyouData[] {
     { id: 'scenes', name: '场景', description: '西游·关卡卡片', data: xiyouScenesJson, updatedAt: now },
     { id: 'schools', name: '流派', description: '西游·三流派技能', data: xiyouSchoolsJson, updatedAt: now },
     { id: 'pack', name: '背包', description: '西游·乾坤袋/坊市/仓库', data: xiyouPackJson, updatedAt: now },
-    { id: 'cultivate', name: '养成', description: '西游·境界/功法/经脉/神通', data: xiyouCultivateJson, updatedAt: now },
+    { id: 'cultivate', name: '养成', description: '西游·境界/功法/经脉', data: xiyouCultivateJson, updatedAt: now },
     { id: 'equip', name: '装备', description: '西游·装备槽/法宝/坐骑', data: xiyouEquipJson, updatedAt: now },
     { id: 'mate', name: '伙伴', description: '西游·伙伴/灵宠/缘分', data: xiyouMateJson, updatedAt: now },
     { id: 'collect', name: '图鉴', description: '西游·图鉴/成就/称号', data: xiyouCollectJson, updatedAt: now },

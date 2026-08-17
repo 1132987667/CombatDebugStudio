@@ -18,15 +18,6 @@
       <template #school>
         <SchoolPanel />
       </template>
-      <template #martial>
-        <PendingPanel title="功法" subtitle="问道长生 · 即将开放" desc="收集天下功法，装配四卷，修得无上神通。" />
-      </template>
-      <template #meridian>
-        <PendingPanel title="经脉" subtitle="打通任督 · 即将开放" desc="冲穴通脉，先天根基，潜能无限。" />
-      </template>
-      <template #dharma>
-        <PendingPanel title="神通" subtitle="法力无边 · 即将开放" desc="领悟天地神通，装配四大神通，战无不胜。" />
-      </template>
     </Tabs>
   </div>
 </template>
@@ -38,7 +29,6 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import CharacterPanel from './character/CharacterPanel.vue'
 import RealmPanel from './realm/RealmPanel.vue'
 import SchoolPanel from './school/SchoolPanel.vue'
-import PendingPanel from './PendingPanel.vue'
 
 const sub = ref<'character' | 'realm' | 'school' | 'martial' | 'meridian' | 'dharma' | 'equip'>('character')
 
@@ -48,7 +38,6 @@ const SUBS: TabItem[] = [
   { id: 'school',    label: '流派' },
   { id: 'martial',   label: '功法' },
   { id: 'meridian',  label: '经脉' },
-  { id: 'dharma',    label: '神通' },
 ]
 </script>
 
@@ -61,46 +50,6 @@ const SUBS: TabItem[] = [
 </style>
 ```
 
-### 2. 通用占位组件：`PendingPanel.vue`
-用于功法、经脉、神通的待开发占位，严格遵守字号与无 emoji 规范。
-
-```vue
-<template>
-  <div class="xy-pending">
-    <div class="xy-pending-icon">
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4" />
-        <text x="24" y="28" text-anchor="middle" font-size="14" fill="currentColor" opacity="0.6">封</text>
-      </svg>
-    </div>
-    <h3 class="xy-pending-title">待 开 发 中 ....</h3>
-    <p class="xy-pending-name">{{ title }}</p>
-    <p class="xy-pending-sub">{{ subtitle }}</p>
-    <p class="xy-pending-desc">{{ desc }}</p>
-  </div>
-</template>
-
-<script setup lang="ts">
-defineProps<{ title: string; subtitle: string; desc: string }>()
-</script>
-
-<style scoped lang="scss">
-.xy-pending {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 320px;
-  gap: var(--space-2);
-  color: var(--xy-ink-4);
-}
-.xy-pending-icon { width: 64px; height: 64px; margin-bottom: var(--space-3); opacity: 0.5; }
-.xy-pending-title {  font-size: var(--font-size-xxl); letter-spacing: 8px; color: var(--xy-ink-3); margin: 0; }
-.xy-pending-name { font-size: var(--font-size-lg); color: var(--xy-ink-2); margin: var(--space-2) 0 0; }
-.xy-pending-sub { font-size: var(--font-size-md); color: var(--xy-ink-4); margin: 0; }
-.xy-pending-desc { font-size: var(--font-size-md); color: var(--xy-ink-4); margin: var(--space-2) 0 0; max-width: 280px; text-align: center; line-height: var(--line-height-lg); }
-</style>
-```
 
 ### 3. Tab 1：角色面板 `character/CharacterPanel.vue`
 整合了头像、经验条、属性网格、加点分配与装备总览。
@@ -595,6 +544,5 @@ export const schools = reactive<XiyouSchool[]>([
 ```
 
 ### 集成说明
-1. **文件落位**：请将 `PendingPanel.vue` 放置于 `components/` 目录下；`CharacterPanel.vue`、`RealmPanel.vue`、`SchoolPanel.vue` 分别放置于新建的 `character/`、`realm/`、`school/` 子目录中。
 2. **战斗联动预留**：当前代码仅处理 UI 表现与本地状态流转。后续接入战斗引擎时，只需在 `applyStats` 与 `handleBreakthrough` 中调用 `battleStore` 或 `GameDataProcessor` 将 `ModifierType.PERCENTAGE` 注入到 `BattleEntity` 即可。
 3. **对话框升级**：当前交互使用了原生的 `confirm()` 进行二次确认。若需统一视觉体验，可将其替换为项目内的 `ConfirmDialog.vue` 组件。

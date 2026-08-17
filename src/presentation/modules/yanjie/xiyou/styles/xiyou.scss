@@ -175,7 +175,6 @@
         .xy-sec-title,
         .xy-panel-hint,
         .xy-realm-now,
-        .xy-checkin-head,
         .xy-gear-actions,
         .xy-cabinet-cat,
         .xy-quest-cat,
@@ -188,7 +187,6 @@
         .xy-farm-grid,
         .xy-storage-grid,
         .xy-skill-grid,
-        .xy-checkin-grid,
         .xy-character-panel,
         .xy-realm-panel,
         .xy-school-panel,
@@ -206,8 +204,7 @@
         .xy-codex-grid,
         .xy-farm-grid,
         .xy-storage-grid,
-        .xy-skill-grid,
-        .xy-checkin-grid {
+        .xy-skill-grid {
           grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         }
 

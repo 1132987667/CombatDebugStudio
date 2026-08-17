@@ -26,13 +26,9 @@ import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
 import { migrateRarityField } from './quality'
 import type {
   XiyouAchievement,
-  XiyouAffinity,
   XiyouCatalogItem,
-  XiyouCheckinDay,
-  XiyouCodexChapter,
   XiyouCraft,
   XiyouCrop,
-  XiyouDharma,
   XiyouEvent,
   XiyouGardenCrop,
   XiyouItem,
@@ -43,7 +39,6 @@ import type {
   XiyouNodeType,
   XiyouPet,
   XiyouQuest,
-  XiyouRealm,
   XiyouRecipe,
   XiyouRegion,
   XiyouRetreat,
@@ -55,7 +50,6 @@ import type {
   XiyouSkillPoints,
   XiyouEquippedSkills,
   XiyouStorageCell,
-  XiyouTitle,
   XiyouTreasure,
 } from './types'
 
@@ -269,24 +263,18 @@ export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.sho
 export const storageCells: XiyouStorageCell[] = reactive<XiyouStorageCell[]>(packJson.storageCells as unknown as XiyouStorageCell[])
 export const packItems: XiyouCatalogItem[] = itemsJson.items as unknown as XiyouCatalogItem[]
 
-export const realms: XiyouRealm[] = reactive<XiyouRealm[]>(cultivateJson.realms as unknown as XiyouRealm[])
 export const martialArts: XiyouMartial[] = reactive<XiyouMartial[]>(cultivateJson.martialArts as unknown as XiyouMartial[])
 export const meridians: XiyouMeridian[] = reactive<XiyouMeridian[]>(cultivateJson.meridians as unknown as XiyouMeridian[])
-export const dharmas: XiyouDharma[] = reactive<XiyouDharma[]>(cultivateJson.dharmas as unknown as XiyouDharma[])
 
 export const treasures: XiyouTreasure[] = reactive<XiyouTreasure[]>(equipJson.treasures as unknown as XiyouTreasure[])
 export const mounts: XiyouMount[] = reactive<XiyouMount[]>(equipJson.mounts as unknown as XiyouMount[])
 
 export const mates: XiyouMate[] = reactive<XiyouMate[]>(mateJson.mates as unknown as XiyouMate[])
 export const pets: XiyouPet[] = reactive<XiyouPet[]>(mateJson.pets as unknown as XiyouPet[])
-export const affinities: XiyouAffinity[] = reactive<XiyouAffinity[]>(mateJson.affinities as unknown as XiyouAffinity[])
 
-export const codexChapters: XiyouCodexChapter[] = reactive<XiyouCodexChapter[]>(collectJson.codexChapters as unknown as XiyouCodexChapter[])
 export const achievements: XiyouAchievement[] = reactive<XiyouAchievement[]>(collectJson.achievements as unknown as XiyouAchievement[])
-export const titles: XiyouTitle[] = reactive<XiyouTitle[]>(collectJson.titles as unknown as XiyouTitle[])
 
 export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(questJson.quests as unknown as XiyouQuest[])
-export const checkinDays: XiyouCheckinDay[] = reactive<XiyouCheckinDay[]>(questJson.checkinDays as unknown as XiyouCheckinDay[])
 export const events: XiyouEvent[] = reactive<XiyouEvent[]>(questJson.events as unknown as XiyouEvent[])
 
 /** 装备定义目录（configs/equipment/equipment.json 唯一数据源 · 锻造配方按 equipmentId 引用其材料） */
@@ -377,11 +365,9 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(consumables, 'pack', 'consumables')
   aIn(shopGoods, 'pack', 'shopGoods')
   aIn(storageCells, 'pack', 'storageCells')
-  aIn(realms, 'cultivate', 'realms')
   aIn(martialArts, 'cultivate', 'martialArts')
   migrateRarity(martialArts)
   aIn(meridians, 'cultivate', 'meridians')
-  aIn(dharmas, 'cultivate', 'dharmas')
   aIn(treasures, 'equip', 'treasures')
   migrateRarity(treasures)
   aIn(mounts, 'equip', 'mounts')
@@ -390,12 +376,8 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   migrateRarity(mates)
   aIn(pets, 'mate', 'pets')
   migrateRarity(pets)
-  aIn(affinities, 'mate', 'affinities')
-  aIn(codexChapters, 'collect', 'codexChapters')
   aIn(achievements, 'collect', 'achievements')
-  aIn(titles, 'collect', 'titles')
   aIn(quests, 'quest', 'quests')
-  aIn(checkinDays, 'quest', 'checkinDays')
   aIn(events, 'quest', 'events')
   aIn(alchemyRecipes, 'cave', 'alchemyRecipes')
   aIn(forgeRecipes, 'cave', 'forgeRecipes')

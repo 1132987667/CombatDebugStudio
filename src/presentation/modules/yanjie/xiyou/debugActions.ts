@@ -20,13 +20,10 @@ import { createPlayerProfile } from './playerProfile'
 import { dropsForEnemyById, rewardForEnemyById } from './battle'
 import { equippedSkills, grantPillPoint, pureSchoolBonus } from './xiyouData'
 import type { PlayerStoreDebugEnv } from './debugEnv'
+import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
 
 /** 材料类型集合（与 PackPanel 的 material/essence/enhance 分组对齐，供"给予全部N阶材料"按 items.json 全量筛选） */
-const MATERIAL_TYPES = new Set([
-  '木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物',
-  '特殊材料', 'BOSS材料', '灵气', '碎片', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解',
-  '突破', '技能书', '经验', '图纸',
-])
+const MATERIAL_TYPES = ALL_ITEM_TYPES_SET
 
 /** 装备词条库（equipment-affixes.json，与 packStore 同源） */
 const EQUIP_AFFIXES = equipmentAffixesDataRaw as unknown as Array<{
@@ -1221,7 +1218,7 @@ function buildSceneCategory(env: PlayerStoreDebugEnv): DebugCategory {
 
 /** 修行调试（D07） */
 function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
-  const { realms, schools, player, skillPoints } = env
+  const { schools, player, skillPoints } = env
   return {
     id: 'cultivate',
     label: '修行',
@@ -1230,28 +1227,6 @@ function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
         id: 'realm',
         label: '境界',
         actions: [
-          {
-            id: 'cult_realm_up',
-            label: '境界提升',
-            execute: () => {
-              const current = realms.find((r) => r.level > 0)
-              const idx = current ? realms.indexOf(current) : -1
-              const next = realms[idx + 1]
-              if (!next) return fail('已臻化境，无更高境界')
-              if (current) current.level = 0
-              next.level = 1
-              next.unlocked = true
-              return ok(`境界提升至「${next.name}」`, { name: next.name, bonus: next.bonus })
-            },
-          },
-          {
-            id: 'cult_realm_view',
-            label: '查看境界谱系',
-            execute: () => {
-              const payload = realms.map((r) => ({ name: r.name, level: r.level, unlocked: r.unlocked, bonus: r.bonus }))
-              return ok(`境界谱系（${payload.length} 重）`, payload)
-            },
-          },
         ],
       },
       {

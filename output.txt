@@ -340,7 +340,6 @@ src/
                             TalismanPanel.vue
                         cultivate/
                             CharacterPanel.vue
-                            RealmPanel.vue
                         BattleRoster.vue
                         BattleZen.vue
                         CollectPanel.vue
@@ -354,7 +353,6 @@ src/
                         PackItemDetail.vue
                         PackPane.vue
                         PackPanel.vue
-                        PendingPanel.vue
                         QuestPanel.vue
                         QuickSlotBar.vue
                         SceneMapDialog.vue
@@ -409,6 +407,7 @@ src/
         constants/
             affix.ts
             animation-timing.ts
+            item-types.ts
             player.ts
             speed.ts
         types/
@@ -451,7 +450,6 @@ src/
             visual-effect-mapper.ts
     env.d.ts
     main.ts
-$log
 AGENTS.md
 eslint.config.js
 index.html
@@ -463,43 +461,6 @@ vite.config.ts
 
 ============================================================
 文件内容:
-
---- $log ---
-> game-system@0.0.0 predev
-> node scripts/generate-attributes.cjs
-[generate-attributes] 已生成 64 个属性 -> src\domain\attribute\attribute-codes.generated.ts
-> game-system@0.0.0 dev
-> vite --host
-Port 5173 is in use, trying another one...
-Port 5174 is in use, trying another one...
-  [32m[1mVITE[22m v6.4.1[39m  [2mready in [0m[1m393[22m[2m[0m ms[22m
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5175[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.3:[1m5175[22m/[39m
-[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
-[2m16:17:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-V4.html[22m
-[2m16:17:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-回放系统.html[22m
-[2m16:17:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-V4.html[22m
-[2m16:17:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-回放系统.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/参考网页/调试日志UI-调试系统示例.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-调试系统示例.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/参考网页/调试日志UI-回放系统.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-回放系统.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/参考网页/调试日志UI-V4.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/参考网页/调试日志UI示例.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-V4.html[22m
-[2m23:16:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI示例.html[22m
-[2m23:16:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/参考网页/封神榜后台管理Demo.html[22m
-[2m23:16:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/封神榜后台管理Demo.html[22m
-[2m23:16:41[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/参考网页/封神榜后台管理Demo.html[22m
-[2m00:06:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/封神榜后台管理Demo.html[22m
-[2m00:06:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-V4.html[22m
-[2m00:06:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-回放系统.html[22m
-[2m00:06:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI-调试系统示例.html[22m
-[2m00:06:29[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI示例.html[22m
-[2m00:19:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI示例.html[22m
-[2m00:19:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI示例.html[22m
-[2m00:19:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI示例.html[22m
-[2m00:21:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2mdocuments/调试日志UI示例.html[22m
 
 --- AGENTS.md ---
 # 石匠（Stone Mason），雕琢而非堆砌
@@ -8678,7 +8639,7 @@ export type BattleParticipantData = {
   attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
   /** 阵营元素 ID（克制矩阵用，引用封神榜 elements 表） */
   faction?: string
-  /** ponytail: P0/AI-1 — 控制模式，默认 AI */
+  /** 控制模式，默认 AI */
   controlMode?: ControlMode
   /** 是否完全不会攻击（木人/训练靶子） */
   noAttack?: boolean
@@ -13520,9 +13481,6 @@ export class BattleExecutor {
       : undefined
     return baseScope.child(TracePhase.ACTION_EXECUTION, execId)
   }
-  /**
-   * ponytail: P0/AI-1 — AUTO 模式决策：用权重策略选技能，无策略时走普攻
-   */
   private async autoDecision(
     battle: BattleData,
     participant: BattleEntity,
@@ -14373,7 +14331,6 @@ export class BattleExecutor {
     source: BattleEntity,
     suggestedTargetId?: string,
   ): string {
-    // ponytail: P0/AI-1 — 如果建议目标是存活敌方，直接采纳
     if (suggestedTargetId) {
       const suggested = battle.participants.get(suggestedTargetId)
       if (suggested && suggested.team !== source.team && suggested.isAlive()) {
@@ -21879,11 +21836,10 @@ export interface TriggerRuntimeState {
  */
 import type { Item } from '@/shared/types/Item'
 import type { ItemData } from '@/domain/fengshen/types'
-/** 材料域 type 白名单（对齐 schema.ts materials 表 type 枚举；丹药为消耗品，不归入材料） */
-const MATERIAL_TYPES = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '晶球', '碎片', '货币', '草药', '药引', '种子']
+import { MATERIAL_DOMAIN_TYPES } from '@/shared/constants/item-types'
 export function deriveMaterials(items: ItemData[]): Item[] {
   return items
-    .filter((it) => MATERIAL_TYPES.includes(it.type))
+    .filter((it) => (MATERIAL_DOMAIN_TYPES as readonly string[]).includes(it.type))
     .map((it) => ({
       id: it.id,
       name: it.name,
@@ -26027,7 +25983,6 @@ export class SkillManager {
   }
   getSkillConfig(skillId: string): SkillConfig | undefined {
     const config = this.skillConfigs.get(skillId)
-    // ponytail: 返回浅拷贝防止外部修改影响内部状态
     return config ? { ...config } : undefined
   }
   setSkillConfig(skillId: string, config: SkillConfig): void {
@@ -26084,7 +26039,6 @@ export class SkillManager {
         ],
       })
     }
-    // ponytail: P1/CTRL-1 — 统一可执行性检查委托给 participant.canExecuteSkill
     // 通过 getAttribute 获取能量，确保与属性系统（含修饰符）一致
     const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const availability = source.canExecuteSkill(
@@ -26114,7 +26068,6 @@ export class SkillManager {
         ],
       })
     }
-    // ponytail: 被动技能允许无 target（自施法技能通过 targetConfig.faction === 'self' 处理）
     const hasNonSelfStep =
       config.steps?.some(
         (s) =>
@@ -26142,7 +26095,6 @@ export class SkillManager {
         ],
       })
     }
-    // ponytail: 施法者被控制时技能取消
     const sourceControl = this.buffSystem.getHighestPriorityControlEffect(
       source.id,
     )
@@ -26168,7 +26120,6 @@ export class SkillManager {
       })
       return action
     }
-    // ponytail: 目标被控制时技能取消（覆盖所有非 NONE 控制类型）
     if (target) {
       const targetControl = this.buffSystem.getHighestPriorityControlEffect(
         target.id,
@@ -26267,7 +26218,6 @@ export class SkillManager {
       }
       this.executeStep(ctx)
     }
-    // ponytail: 技能执行成功后设置冷却（如果配置了冷却回合数）
     if (config.cooldown && config.cooldown > 0) {
       if (
         'setSkillCooldown' in source &&
@@ -26298,7 +26248,6 @@ export class SkillManager {
         { level: LogLevel.WARN },
       )
     }
-    // ponytail: validateSkillConfigs 签名返回 ValidationResult，实际不修改 data。
     // 保留原数组，仅记录验证结果。
     this.loadSkillConfigs(data)
     return data
@@ -28438,7 +28387,7 @@ function buildXiyou(): XiyouData[] {
     { id: 'scenes', name: '场景', description: '西游·关卡卡片', data: xiyouScenesJson, updatedAt: now },
     { id: 'schools', name: '流派', description: '西游·三流派技能', data: xiyouSchoolsJson, updatedAt: now },
     { id: 'pack', name: '背包', description: '西游·乾坤袋/坊市/仓库', data: xiyouPackJson, updatedAt: now },
-    { id: 'cultivate', name: '养成', description: '西游·境界/功法/经脉/神通', data: xiyouCultivateJson, updatedAt: now },
+    { id: 'cultivate', name: '养成', description: '西游·境界/功法/经脉', data: xiyouCultivateJson, updatedAt: now },
     { id: 'equip', name: '装备', description: '西游·装备槽/法宝/坐骑', data: xiyouEquipJson, updatedAt: now },
     { id: 'mate', name: '伙伴', description: '西游·伙伴/灵宠/缘分', data: xiyouMateJson, updatedAt: now },
     { id: 'collect', name: '图鉴', description: '西游·图鉴/成就/称号', data: xiyouCollectJson, updatedAt: now },
@@ -28581,7 +28530,6 @@ export class BattleAnimationService {
   private battleSpeed: number = 1
   private activeAnimations: gsap.core.Timeline[] = []
   private activeTweens: gsap.core.Tween[] = []
-  // ponytail: 突进要快——出去 150ms 回来 150ms，配合 back.out 弹性回位
   private readonly BASE_ATTACK_DURATION = 300
   private readonly SKILL_NAME_DELAY = 180
   private readonly SKILL_NAME_MOVE_DURATION = 180
@@ -28971,7 +28919,6 @@ export class Container {
       if (!service.instance && service.factory) {
         service.instance = service.factory()
       }
-      // ponytail: singleton 模式确保 instance 已初始化
       return service.instance!
     } else {
       if (service.factory) {
@@ -30614,7 +30561,7 @@ onUnmounted(() => {
 </style>
 <style>
 /* ============ 全局样式（非 scoped，因为动态创建的元素在 DOM 中） ============ */
-/* ponytail: VFX 专用色 — 纯视觉效果独有，不纳入全局设计令牌 */
+/* VFX 专用色 — 纯视觉效果独有，不纳入全局设计令牌 */
 :root {
   --vfx-fire: #ffaa30;
   --vfx-fire-glow: #ff6600;
@@ -31467,7 +31414,6 @@ import gsap from 'gsap'
 import BuffTextTag from '@/presentation/components/BuffTextTag.vue'
 import type { BuffTextItem, MergedAttributeLine } from '@/shared/types/buff-display'
 const barRef = ref<HTMLElement | null>(null)
-// ponytail: 保存 GSAP tween 引用，新动画开始时 kill 上一轮，防止 clearProps 叠加冲突
 let currentTween: gsap.core.Tween | null = null
 const props = withDefaults(defineProps<{
   /** 控制标签列表 */
@@ -31504,7 +31450,6 @@ const displayControlLabels = computed(() => props.controlLabels)
 /** 纯名字标签：全部显示（不折叠） */
 const displayPlainLabels = computed(() => props.plainLabels)
 /** 属性标签：由 useBuffDisplay 计算 visibleAttrLabels，直接消费 */
-// ponytail: 折叠逻辑已集中到 useBuffDisplay 的 collapseThreshold 参数，两边共用同一阈值
 // 标签变化时播放入场动画
 watch(
   [() => props.controlLabels, () => props.visibleAttrLabels],
@@ -31515,7 +31460,6 @@ watch(
     await nextTick()
     const tags = barRef.value?.querySelectorAll('.buff-text-tag')
     if (!tags || tags.length === 0) return
-    // ponytail: 动画作用于所有标签（含未变化的），在短间隔变化下足够流畅
     // 若需精准只动画新增标签，可加 data-anim-key 标记做增量检测
     currentTween = gsap.fromTo(
       tags,
@@ -31674,7 +31618,6 @@ const conditionText = computed(() => {
 /** 将 Buff 拆解为显示行 */
 const effectLines = computed(() => {
   const lines: Array<{ text: string; className: string }> = []
-  // ponytail: 控制效果不重复添加—header 已显示 【眩晕】剩余 3 回合
   // 属性修正行
   for (const mod of props.buff.modifiers) {
     const arrow = mod.value > 0 ? '↑' : '↓'
@@ -31933,7 +31876,6 @@ const emit = defineEmits<{
 }>()
 const panelRef = ref<HTMLElement | null>(null)
 const showSecondary = ref(false)
-// ponytail: 全局 click 监听器，点击面板外部关闭。使用 cleanup 函数避免泄漏
 let clickCleanup: (() => void) | null = null
 watch(() => props.visible, (val) => {
   if (clickCleanup) { clickCleanup(); clickCleanup = null }
@@ -31954,7 +31896,6 @@ watch(() => props.visible, (val) => {
   }
 })
 onUnmounted(() => { if (clickCleanup) clickCleanup() })
-// ponytail: 直接使用 props.groups —— useBuffDisplay 已经完成了排序
 // 如果在面板中需要不同排序，考虑将排序函数提升为共享模块
 const sortedGroups = computed(() => props.groups)
 interface SummaryLine {
@@ -34630,7 +34571,7 @@ import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'
 import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { AffixData, AffixLibraryData } from '@/domain/fengshen/types'
-import { AFFIX_RARITY_COLORS, affixRarityName } from '@/shared/constants/affix'
+import { QUALITY_NAMES, QUALITY_COLORS } from '@/presentation/modules/yanjie/xiyou/quality'
 import affixLibraryRaw from '@configs/affixes/affixes.json'
 const props = defineProps<{
   /** 战斗参与者实例（displayData 注入时可为空） */
@@ -34687,9 +34628,9 @@ const affixTags = computed(() => {
     .filter((a): a is AffixData => !!a)
     .map((a) => ({ id: a.id, name: a.name, rarity: a.rarity ?? 1, affix: a }))
 })
-/** 品阶名（1-5 → 凡/精/超/绝/神） */
+/** 品质名（1-5 → 凡/精/超/绝/神） */
 function affixQuality(rarity: number): string {
-  return affixRarityName(rarity)
+  return QUALITY_NAMES[rarity] ?? '凡'
 }
 /** 词缀悬浮数据（复用 EntityTooltip 契约） */
 const hoveredAffix = ref<AffixData | null>(null)
@@ -34709,7 +34650,7 @@ const affixTooltipData = computed<TooltipData | null>(() => {
   const a = hoveredAffix.value
   if (!a) return null
   const rarity = a.rarity ?? 1
-  const color = AFFIX_RARITY_COLORS[Math.max(0, Math.min(4, rarity - 1))]
+  const color = QUALITY_COLORS[Math.max(0, Math.min(4, rarity - 1))]
   return {
     name: a.name,
     description: a.description ?? '',
@@ -34856,7 +34797,6 @@ const baseAttributes = computed(() => {
   }
   return map
 })
-// ponytail: 参与者 ID 在气血周期内不变，直接读取
 const buffDisplay = useBuffDisplay(buffListItems, entityId.value, 5, baseAttributes)
 /** 无属性修饰且非控制的普通 Buff：纯名字标签（回放存档仅 name/stacks/turns，仍须在卡片上可见） */
 const plainBuffLabels = computed<BuffTextItem[]>(() =>
@@ -34866,7 +34806,7 @@ const plainBuffLabels = computed<BuffTextItem[]>(() =>
 const situationalAttrs = useSituationalAttributes(
   computed(() => props.participant ?? null),
   computed(() => props.targetEntity ?? null),
-  ref(null), // ponytail: skill 上下文暂未接入，未来从技能选中状态传递
+  ref(null), // skill 上下文暂未接入，未来从技能选中状态传递
   computed(() => snap.value?.version ?? 0), // 版本戳变化时重新求值
 )
 // === 属性/Buff 悬停追溯 ===
@@ -35186,7 +35126,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   &.radio-button--selected {
     background: var(--color-warning);
     color: var(--color-text-primary);
-    /* ponytail: border needs a darker shade; --color-brand-red-active provides contrast */
     border-color: var(--color-brand-red-active);
     .radio-button__icon {
       color: var(--color-text-primary);
@@ -36946,7 +36885,6 @@ export function detectCondition(raw: {
  */
 function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   const name = raw.name
-  // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
   const displayName = name || '未知效果'
   const description = raw.description || (name ? name : '无详细说明')
   const isNegative = raw.isNegative === true
@@ -37133,7 +37071,6 @@ export function useBuffDisplay(
       collapseThreshold - controlItems.length,
     )
     const visibleAttrLabels = mergedLabels.slice(0, visibleAttrSlots)
-    // ponytail: collapsedCount 只计实际隐藏的属性标签数，不包括一直全显的控制标签
     const collapsedCount = Math.max(0, mergedLabels.length - visibleAttrSlots)
     // 6. 为展开面板准备分组 — 极多 Buff 时拆分长时效果
     let groups: BuffTextItem[] = sorted
@@ -37336,7 +37273,6 @@ export function useCompendium() {
  * 功能: 情境属性 Composable — 动态计算当前上下文中已激活的 situational 属性
  * 描述: 根据当前选中的目标、技能，从 attributeDisplay 中过滤 displayTier==='situational'
  *       且在上下文中"有意义"的属性（如元素抗性在对应元素技能下激活、对妖加成在选中妖族时激活）
- * ponytail: 用 group 推导匹配规则，而非每个属性配一个函数——够用且简单。
  *           如需更精细化匹配，可扩展为 getAttributeDisplayConfig().situationalMatcher。
  */
 import { computed, toValue, type ComputedRef, type Ref } from 'vue'
@@ -37389,7 +37325,6 @@ export function useSituationalAttributes(
 }
 /**
  * 判断一个 situational 属性在当前上下文中是否"有意义"
- * ponytail: 用 group 做粗粒度匹配，不引入每个属性的匹配函数
  */
 function isContextRelevant(
   code: string,
@@ -37439,7 +37374,6 @@ export interface AttributeDisplayConfig {
 }
 /**
  * 属性展示配置映射表
- * ponytail: 与 AttributeMetaMap 一一对应，仅含 UI 相关的 displayTier/group 字段
  */
 export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = {
   currentHealth:               { displayTier: 'hidden',      group: 'defense' },
@@ -49529,7 +49463,6 @@ import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogMan
 import { container } from '@/infrastructure/di/Container';
 import type { BattleSystem } from '@/domain/battle/BattleSystem';
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
-;
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import { useNotificationStore } from '@/presentation/stores/notificationStore';
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log';
@@ -49556,7 +49489,6 @@ const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const showDebugControlDialog = ref(false);
-// ponytail: 调试面板现在独立监听事件总线，无需 Huanling 维护 phase 状态
 /** 从 BattleSystem.traceCollector 刷新树状日志 */
 const handleDebugAction = async (action: string) => {
   switch (action) {
@@ -50052,7 +49984,6 @@ const startBattle = async () => {
   try {
     const result = await battleStore.startBattle();
     if (result) {
-      // ponytail: 开始战斗后同步预设的战斗速度
       battleStore.setBattleSpeed(battleStore.battleSpeed)
       notification.notify("成功", "战斗已开始", "success");
     } else {
@@ -50493,8 +50424,6 @@ import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
 import { container } from '@/infrastructure/di/Container';
-;
-;
 import type { TabItem } from '@/presentation/components'
 import { useBattleStore } from '@/presentation/stores';
 import { formatBonusValue } from '@/shared/utils/format';
@@ -50726,7 +50655,6 @@ const getStepTypeName = (stepType?: string): string => {
 const formatCalculation = (step: ExtendedSkillStep): string => {
   if (!step.calculation) return ''
   const parts: string[] = []
-  // ponytail: 用 != null 而非 if(baseValue) 避免 baseValue=0 被跳过
   if (step.calculation.baseValue != null) parts.push(String(step.calculation.baseValue))
   if (step.calculation.extraValues) {
     for (const ev of step.calculation.extraValues) {
@@ -50758,7 +50686,6 @@ const handleKeyDown = (e: KeyboardEvent) => {
 const handleKeyUp = (e: KeyboardEvent) => {
   if (e.key === 'Alt') {
     altKeyHeld.value = false
-    // ponytail: Alt 释放时取消待执行的延迟隐藏并强制隐藏
     if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
     attrTooltipVisible.value = false
   }
@@ -50864,9 +50791,7 @@ onUnmounted(() => {
   border: 1px solid rgba(var(--rgb-skill-ultimate), var(--alpha-glow));
 }
 .skill-item:hover {
-  /* ponytail: uses --color-energy (#0a7f91) with opacity; no token for 10% bg */
   background: rgba(var(--rgb-energy), var(--alpha-wash));
-  /* ponytail: glow uses --color-energy with opacity */
   box-shadow: 0 0 8px var(--border-debug-color);
 }
 .skill-item.passive:hover {
@@ -51116,10 +51041,8 @@ import { ActionResultType, ActionTypes, type BattleEntity } from '@/domain/battl
 import { container } from '@/infrastructure/di/Container';
 import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus';
 const emitter = container.resolve<UIEventBus>('UIEventBus').getEmitter()
-;
 import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
 import ParticipantCard from '@/presentation/components/ParticipantCard.vue'
-;
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
 import { useBattleStore } from '@/presentation/stores/battleStore';
 import BattleLog from "./BattleLog.vue";
@@ -51132,7 +51055,6 @@ const store = useBattleStore()
 // 战报弹窗状态
 const showSummaryDialog = ref(false)
 const lastSummary = ref<BattleSummary | null>(null)
-// ponytail: 事件总线挂载后监听战报事件
 emitter.on(BattleEventCodes.BATTLE_SUMMARY, (summary: BattleSummary) => {
   lastSummary.value = summary
   showSummaryDialog.value = true
@@ -51162,12 +51084,10 @@ watch(() => store.battleSpeed, (newSpeed) => {
     setBattleSpeed(newSpeed);
   }
 }, { immediate: true });
-// ponytail: 注册/注销卡片 DOM 元素，供 GSAP 动画和 BattleVisualEffects 查找
 function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantCard> | null) {
   if (el) {
     participantCardRefs.value[characterId] = el
     registerElement(characterId, el.cardRef as HTMLElement | null)
-    // ponytail: defineExpose 自动解包 ref，el.cardRef 直接是 HTMLElement
     if (el?.cardRef) {
       visualEffectsRef.value?.registerCard(characterId, el.cardRef as HTMLElement)
     }
@@ -51177,7 +51097,6 @@ function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantC
     visualEffectsRef.value?.unregisterCard(characterId)
   }
 }
-// ponytail: 当 visualEffectsRef 可用时，补注册所有已存在的卡片（解决渲染时序竞态）
 watch(visualEffectsRef, (vf) => {
   if (!vf) return
   for (const [id, card] of Object.entries(participantCardRefs.value)) {
@@ -51199,13 +51118,11 @@ function addRoundAnnounce(text: string) {
     if (idx !== -1) roundAnnounces.value.splice(idx, 1)
   }, ANNOUNCE_DURATION)
 }
-// ponytail: 监听回合变化，触发动画
 watch(() => store.currentTurn, (newTurn, oldTurn) => {
   if (oldTurn !== undefined && newTurn > oldTurn) {
     addRoundAnnounce(`第 ${newTurn} 回合`)
   }
 })
-// ponytail: 固定预算模型 — 动画编排完全由领域层配速驱动，UI 只负责按事件即时显示
 watch(store.animationState, (state) => {
   const budget = getActionBudget(store.battleSpeed)
   if (state.skill) {
@@ -51892,9 +51809,6 @@ onUnmounted(() => {
 </template>
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from "vue";
-;
-;
-;
 import { container } from '@/infrastructure/di/Container'
 import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import type { DebugGate as DebugGateType } from '@/domain/battle/debug/DebugGate'
@@ -52533,7 +52447,6 @@ const previewRosterCharacter = (enemy: Enemy) => {
 const isRosterCharSelected = (enemyId: string): boolean => {
   const id = battleStore.selectedCharacterId;
   if (!id || !battleStore.previewEntity) return false;
-  // ponytail: previewEntity ID 格式是 [ENEMY]_<enemyId>_<counter>
   return id.startsWith(`[ENEMY]_${enemyId}_`);
 };
 const addEnemyToBattle = (enemy: Enemy, side: typeof ParticipantSide.ALLY | typeof ParticipantSide.ENEMY = ParticipantSide.ALLY) => {
@@ -53528,7 +53441,7 @@ const attrRows = computed<AttrRow[]>(() => {
             <span class="xy-drop-items">
               <span v-for="d in dropsForEnemy(e.name)" :key="d.itemId" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
-                    }}</template></span>
+                }}</template></span>
                 <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
               </span>
             </span>
@@ -53542,7 +53455,7 @@ const attrRows = computed<AttrRow[]>(() => {
             <span class="xy-drop-items">
               <span v-for="d in dropsForEnemy(scene.yaotu.name)" :key="d.itemId" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
-                    }}</template></span>
+                }}</template></span>
                 <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
               </span>
             </span>
@@ -53571,8 +53484,8 @@ const attrRows = computed<AttrRow[]>(() => {
       </div>
       <div class="xy-vs">
         <span class="xy-vs-mark" aria-hidden="true">斗</span>
-        <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`"
-          @click="cycleSpeed">{{ store.battleSpeed }}x</button>
+        <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`" @click="cycleSpeed">{{
+          store.battleSpeed }}x</button>
       </div>
       <div class="xy-vitals-row xy-vitals-row--player" role="list" aria-label="我方阵容">
         <ParticipantCard v-for="c in store.allyTeam" :key="c.id" :ref="(el) => handleCardRef(c.id, el)" :participant="c"
@@ -53589,21 +53502,21 @@ const attrRows = computed<AttrRow[]>(() => {
   </main>
 </template>
 <script setup lang="ts">
-import { ActionTypes, ActionResultType, ParticipantSide } from '@/domain/battle/type/types'
-import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
 import type { BattleService } from '@/application/facade/BattleFacade'
+import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
+import { ActionResultType, ActionTypes, ParticipantSide } from '@/domain/battle/type/types'
 import { container } from '@/infrastructure/di/Container'
 import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
 import ParticipantCard from '@/presentation/components/ParticipantCard.vue'
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation'
+import BattleLog from '@/presentation/modules/huanling/views/BattleLog.vue'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
+import { PLAYER_ID } from '@/shared/constants/player'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
-import { itemName } from '../caveLogic'
-import { PLAYER_ID } from '@/shared/constants/player'
 import {
   buildBattleTeams,
   dropsForEnemy,
@@ -53611,10 +53524,10 @@ import {
   equipBonuses,
   rewardForScene,
 } from '../battle'
+import { itemName } from '../caveLogic'
+import { saveManager } from '../save-bridge'
 import type { XiyouScene } from '../types'
 import { markSceneCleared } from '../xiyouData'
-import { saveManager } from '../save-bridge'
-import BattleLog from '@/presentation/modules/huanling/views/BattleLog.vue'
 import QuickSlotBar from './QuickSlotBar.vue'
 const props = defineProps<{ scene: XiyouScene }>()
 const store = useBattleStore()
@@ -53662,7 +53575,6 @@ watch(visualEffectsRef, (vf) => {
   }
 }, { immediate: true })
 let lastSkillKey = ''
-// ponytail: 固定预算模型 — 动画编排完全由领域层配速驱动（与唤灵台 BattleField 同款）
 watch(store.animationState, (state) => {
   const budget = getActionBudget(store.battleSpeed)
   const skill = state.skill
@@ -55620,210 +55532,6 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
 }
 </style>
 
---- src/presentation/modules/yanjie/xiyou/components/cultivate/RealmPanel.vue ---
-<template>
-  <div class="xy-realm-panel">
-    <section class="xy-realm-current">
-      <div class="xy-realm-head">
-        <span class="xy-realm-name">{{ currentRealm.name }} · {{ currentRealm.desc }}</span>
-        <span class="xy-chip xy-chip--gold">当前境界</span>
-      </div>
-      <p class="xy-realm-bonus">{{ currentRealm.bonus }}</p>
-      <div class="xy-progress xy-progress--gold">
-        <div class="xy-progress-fill" :style="{ width: currentRealm.progress * 100 + '%' }"></div>
-      </div>
-      <p class="xy-realm-next">
-        下一重：<strong>{{ nextRealm?.name ?? '已臻化境' }}</strong>
-        <span v-if="nextRealm">（需 Lv.{{ nextRealm.levelReq ?? '?' }} + {{ nextRealm.materialName ?? '?' }}×{{ nextRealm.materialCount ?? '?' }}）</span>
-      </p>
-    </section>
-    <section class="xy-section">
-      <h4 class="xy-sec-title">境界谱系<span class="xy-sec-count">已通 {{ reachedCount }}/{{ realms.length }}</span></h4>
-      <div class="xy-realm-list">
-        <div class="xy-realm-row" v-for="r in realms" :key="r.name"
-          :class="{ 'is-current': isCurrent(r), 'is-locked': !r.unlocked }">
-          <div class="xy-realm-main">
-            <span class="xy-realm-title">{{ r.name }}</span>
-            <span class="xy-chip" :class="realmStateChip(r)">{{ realmStateText(r) }}</span>
-          </div>
-          <p class="xy-realm-req" v-if="!r.unlocked">{{ realmReqText(r) }}</p>
-          <p class="xy-realm-unlock" v-else>{{ r.bonus }}</p>
-        </div>
-      </div>
-    </section>
-    <div class="xy-realm-actions" v-if="canBreakthrough">
-      <button type="button" class="xy-btn xy-btn--primary" @click="handleBreakthrough">突破至{{ nextRealm?.name }}</button>
-      <span class="xy-realm-cost">消耗：{{ nextRealm?.materialName }}×{{ nextRealm?.materialCount }}</span>
-    </div>
-  </div>
-</template>
-<script setup lang="ts">
-import { computed } from 'vue'
-import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { realms } from '../../xiyouData'
-import type { XiyouRealm } from '../../types'
-import { usePlayerStore } from '@/presentation/stores/playerStore'
-const notification = useNotificationStore()
-const playerStore = usePlayerStore()
-const currentRealm = computed(() => realms.find((r) => r.level > 0) ?? realms.find((r) => r.unlocked) ?? realms[0])
-const nextRealm = computed<XiyouRealm | null>(() => {
-  const idx = realms.findIndex((r) => r.level > 0)
-  return idx >= 0 && idx < realms.length - 1 ? realms[idx + 1] : null
-})
-const reachedCount = computed(() => realms.filter((r) => r.unlocked).length)
-const canBreakthrough = computed(() => {
-  const n = nextRealm.value
-  return !!n && playerStore.player.level >= (n.levelReq ?? Infinity)
-})
-function isCurrent(r: XiyouRealm): boolean {
-  return r.level > 0
-}
-function realmStateText(r: XiyouRealm): string {
-  if (r.level > 0) return '当前'
-  return r.unlocked ? '已通达' : '未开启'
-}
-function realmStateChip(r: XiyouRealm): string {
-  if (r.level > 0) return 'xy-chip--gold'
-  return r.unlocked ? 'xy-chip--jade' : 'xy-chip--muted'
-}
-function realmReqText(r: XiyouRealm): string {
-  if (r.levelReq === undefined) return r.desc
-  return `需 Lv.${r.levelReq} + ${r.materialName}×${r.materialCount}`
-}
-function handleBreakthrough() {
-  const n = nextRealm.value
-  const cur = currentRealm.value
-  if (!n || !cur) return
-  if (!confirm(`确认突破至${n.name}？消耗${n.materialName}×${n.materialCount}`)) return
-  cur.level = 0
-  cur.progress = 0
-  n.unlocked = true
-  n.level = 1
-  n.progress = 0
-  notification.toast(`突破「${n.name}」成功（展示态 · 待接入战斗属性）`)
-}
-</script>
-<style scoped lang="scss">
-.xy-realm-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-.xy-realm-current {
-  padding: var(--space-4);
-  border: 1px solid rgba(var(--rgb-warning), var(--alpha-border));
-  border-radius: 2px;
-  background: var(--xy-gold-soft);
-}
-.xy-realm-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-.xy-realm-name {
-  font-size: var(--font-size-xl);
-  letter-spacing: 2px;
-  color: var(--xy-ink-1);
-}
-.xy-realm-bonus {
-  margin: 0 0 var(--space-3);
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-2);
-}
-.xy-realm-next {
-  margin: var(--space-2) 0 0;
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
-  strong {
-    color: var(--xy-ink-1);
-  }
-}
-.xy-section {
-  padding: var(--space-3);
-  border: 1px solid var(--xy-ink-line);
-  border-radius: 2px;
-  background: var(--xy-paper);
-}
-.xy-sec-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-3);
-  padding-left: var(--space-2);
-  border-left: 3px solid var(--xy-seal);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--xy-ink-2);
-}
-.xy-sec-count {
-  margin-left: auto;
-  font-weight: var(--font-weight-regular);
-  color: var(--xy-ink-4);
-}
-.xy-realm-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.xy-realm-row {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--xy-ink-line);
-  border-radius: 2px;
-  &.is-current {
-    border-color: var(--xy-gold);
-    background: var(--xy-gold-soft);
-  }
-  &.is-locked {
-    opacity: 0.6;
-  }
-}
-.xy-realm-main {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-1);
-}
-.xy-realm-title {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-bold);
-  color: var(--xy-ink-1);
-}
-.xy-realm-req,
-.xy-realm-unlock {
-  margin: 0;
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
-}
-.xy-realm-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 1px dashed var(--xy-seal);
-  border-radius: 2px;
-  background: var(--xy-seal-soft);
-}
-.xy-realm-cost {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-2);
-}
-.xy-btn {
-  padding: var(--space-2) var(--space-4);
-  border-radius: 2px;
-  font-size: var(--font-size-md);
-  font-family: inherit;
-  letter-spacing: 2px;
-  cursor: pointer;
-}
-.xy-btn--primary {
-  border: 1px solid var(--xy-seal);
-  background: var(--xy-seal);
-  color: #fff;
-}
-</style>
-
 --- src/presentation/modules/yanjie/xiyou/components/CultivatePanel.vue ---
 <template>
   <div class="xy-panel-scroll">
@@ -55837,34 +55545,22 @@ function handleBreakthrough() {
       <template #school>
         <SkillTreeView />
       </template>
-      <template #martial>
-        <PendingPanel title="功法" subtitle="问道长生 · 即将开放" desc="收集天下功法，装配四卷，修得无上神通。" />
-      </template>
-      <template #meridian>
-        <PendingPanel title="经脉" subtitle="打通任督 · 即将开放" desc="冲穴通脉，先天根基，潜能无限。" />
-      </template>
-      <template #dharma>
-        <PendingPanel title="神通" subtitle="法力无边 · 即将开放" desc="领悟天地神通，装配四大神通，战无不胜。" />
-      </template>
     </Tabs>
   </div>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { TabItem } from '@/presentation/components'
-import PendingPanel from './PendingPanel.vue'
 import CharacterPanel from './cultivate/CharacterPanel.vue'
 import RealmPanel from './cultivate/RealmPanel.vue'
 import SkillTreeView from './SkillTreeView.vue'
 const emit = defineEmits<{ 'open-equip': [] }>()
-const sub = ref<'character' | 'realm' | 'school' | 'martial' | 'meridian' | 'dharma'>('character')
+const sub = ref<'character' | 'realm' | 'school' | 'meridian' | 'dharma'>('character')
 const SUBS: TabItem[] = [
   { id: 'character', label: '角色' },
   { id: 'realm', label: '境界' },
   { id: 'school', label: '流派' },
-  { id: 'martial', label: '功法' },
   { id: 'meridian', label: '经脉' },
-  { id: 'dharma', label: '神通' },
 ]
 </script>
 <style scoped lang="scss">
@@ -56025,7 +55721,6 @@ const env: PlayerStoreDebugEnv = {
   diag: makeDiagPort(),
   scenes,
   quests,
-  realms,
   schools,
   skillPoints,
   items: packItems,
@@ -57579,22 +57274,6 @@ function onEquip(): void {
           </div>
         </div>
       </template>
-      <template #affinity>
-        <p class="xy-panel-hint">集齐缘分成员，激活羁绊加成</p>
-        <div v-for="a in affinities" :key="a.name" class="xy-row-card" :class="{ activated: a.activated }">
-          <div class="xy-row-top">
-            <span class="xy-row-name">{{ a.name }}</span>
-            <span class="xy-chip" :class="a.activated ? 'xy-chip--gold' : 'xy-chip--muted'">
-              {{ a.activated ? '已激活' : '未激活' }}
-            </span>
-          </div>
-          <p class="xy-row-desc">{{ a.members.join(' · ') }}</p>
-          <p class="xy-row-desc xy-row-desc--key">{{ a.bonus }}</p>
-          <div class="xy-progress">
-            <div class="xy-progress-fill" :style="{ width: a.progress * 100 + '%' }"></div>
-          </div>
-        </div>
-      </template>
     </Tabs>
   </div>
 </template>
@@ -57602,16 +57281,15 @@ function onEquip(): void {
 import { ref } from 'vue'
 import IconStar from '~icons/app/star'
 import type { TabItem } from '@/presentation/components'
-import { affinities, mates, pets } from '../xiyouData'
+import { mates, pets } from '../xiyouData'
 import type { XiyouMate } from '../types'
 import { qualityClass, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 const playerStore = usePlayerStore()
-const sub = ref<'mates' | 'pets' | 'affinity'>('mates')
+const sub = ref<'mates' | 'pets'>('mates')
 const SUBS: TabItem[] = [
   { id: 'mates', label: '伙伴' },
   { id: 'pets', label: '灵宠' },
-  { id: 'affinity', label: '缘分' },
 ]
 /** 伙伴解锁状态：前 4 位已解锁，余下待剧情推进（展示用） */
 const matesWithUnlock: Array<XiyouMate & { unlocked: boolean }> = mates.map((m, i) => ({ ...m, unlocked: i < 4 }))
@@ -58238,7 +57916,6 @@ const tabs = computed<TabItem[]>(() =>
 )
 /**
  * 背包二级分类（方案二 2.2：40 种 type → 7 组）
- * NOTE: 原方案 7 组遗漏「图纸」type，归入材料组（图纸为制造配方，属制造链路），避免物品无处归类。
  */
 const PACK_CATEGORIES = [
   { id: 'all', label: '全部', types: [] as string[] },
@@ -58732,64 +58409,6 @@ onMounted(() => {
 }
 </style>
 
---- src/presentation/modules/yanjie/xiyou/components/PendingPanel.vue ---
-<template>
-  <div class="xy-pending">
-    <div class="xy-pending-icon" aria-hidden="true">
-      <IconPendingSeal />
-    </div>
-    <h3 class="xy-pending-title">待 开 发 中 ....</h3>
-    <p class="xy-pending-name">{{ title }}</p>
-    <p class="xy-pending-sub">{{ subtitle }}</p>
-    <p class="xy-pending-desc">{{ desc }}</p>
-  </div>
-</template>
-<script setup lang="ts">
-import IconPendingSeal from '~icons/app/pending-seal'
-defineProps<{ title: string; subtitle: string; desc: string }>()
-</script>
-<style scoped lang="scss">
-.xy-pending {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 320px;
-  gap: var(--space-2);
-  color: var(--xy-ink-4);
-}
-.xy-pending-icon {
-  width: 64px;
-  height: 64px;
-  margin-bottom: var(--space-3);
-  opacity: 0.5;
-}
-.xy-pending-title {
-  margin: 0;
-  font-size: var(--font-size-xxl);
-  letter-spacing: 8px;
-  color: var(--xy-ink-3);
-}
-.xy-pending-name {
-  margin: var(--space-2) 0 0;
-  font-size: var(--font-size-lg);
-  color: var(--xy-ink-2);
-}
-.xy-pending-sub {
-  margin: 0;
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-4);
-}
-.xy-pending-desc {
-  margin: var(--space-2) 0 0;
-  max-width: 280px;
-  text-align: center;
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-lg);
-  color: var(--xy-ink-4);
-}
-</style>
-
 --- src/presentation/modules/yanjie/xiyou/components/QuestPanel.vue ---
 <template>
   <div class="xy-panel-scroll">
@@ -58816,20 +58435,6 @@ defineProps<{ title: string; subtitle: string; desc: string }>()
           </div>
         </div>
       </template>
-      <template #checkin>
-        <div class="xy-checkin-head">
-          <span class="xy-checkin-streak">已连续签到 {{ checkinDays.filter(d => d.state === 'done').length }} 天</span>
-          <button type="button" class="xy-checkin-btn xy-ink-hover" :disabled="!todayReady">立即签到</button>
-        </div>
-        <div class="xy-checkin-grid">
-          <div v-for="d in checkinDays" :key="d.day" class="xy-checkin-cell"
-            :class="{ done: d.state === 'done', today: d.state === 'today', future: d.state === 'future' }">
-            <span class="xy-checkin-day">{{ d.day }}</span>
-            <span class="xy-checkin-reward">{{ d.reward }}</span>
-          </div>
-        </div>
-        <p class="xy-panel-hint">满 30 天领取「仙品自选箱」，断签后重新累计</p>
-      </template>
       <template #event>
         <div v-for="e in events" :key="e.name" class="xy-row-card">
           <div class="xy-row-top">
@@ -58847,22 +58452,20 @@ defineProps<{ title: string; subtitle: string; desc: string }>()
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { TabItem } from '@/presentation/components'
-import { checkinDays, events, quests } from '../xiyouData'
+import { events, quests } from '../xiyouData'
 import type { XiyouQuest } from '../types'
-const sub = ref<'quest' | 'checkin' | 'event'>('quest')
+const sub = ref<'quest' | 'event'>('quest')
 const SUBS: TabItem[] = [
   { id: 'quest', label: '任务' },
-  { id: 'checkin', label: '签到' },
   { id: 'event', label: '活动' },
 ]
 const questCats = computed(() => {
-  const order: Array<XiyouQuest['type']> = ['主线', '日常', '周常']
+  const order: Array<XiyouQuest['type']> = ['主线', '日常']
   return order.map(type => {
     const items = quests.filter(q => q.type === type)
     return { label: type, items, done: items.filter(q => q.progress >= q.target).length }
   })
 })
-const todayReady = computed(() => checkinDays.some(d => d.state === 'today'))
 function eventChip(status: string): string {
   return { 进行中: 'xy-chip--gold', 预告: 'xy-chip--seal', 已结束: 'xy-chip--muted' }[status] ?? 'xy-chip--muted'
 }
@@ -58879,68 +58482,6 @@ function eventChip(status: string): string {
 .xy-row-card.done {
   border-color: rgba(var(--rgb-warning), var(--alpha-border));
   background: var(--xy-gold-soft);
-}
-/* ── 签到 ── */
-.xy-checkin-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-.xy-checkin-streak {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-2);
-}
-.xy-checkin-btn {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--xy-seal);
-  background: var(--xy-seal-soft);
-  color: var(--xy-seal);
-  border-radius: 2px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--font-size-md);
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-.xy-checkin-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: var(--space-1);
-  margin-bottom: var(--space-3);
-}
-.xy-checkin-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: var(--space-1) 0;
-  border: 1px solid var(--xy-ink-line);
-  background: var(--xy-paper);
-  border-radius: 2px;
-  &.done {
-    border-color: var(--xy-jade);
-    color: var(--xy-jade);
-  }
-  &.today {
-    border-color: var(--xy-gold);
-    background: var(--xy-gold-soft);
-  }
-  &.future {
-    opacity: 0.5;
-  }
-}
-.xy-checkin-day {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-2);
-}
-.xy-checkin-reward {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
-  text-align: center;
 }
 </style>
 
@@ -61097,7 +60638,6 @@ const unlockedSkillNodes = computed(() => cultivate.unlockedSkillNodes)
       <CultivatePanel v-else-if="tab === 'cultivate'" @open-equip="emit('open-equip')" />
       <EquipPanel v-else-if="tab === 'equip'" />
       <MatePanel v-else-if="tab === 'mate'" />
-      <CollectPanel v-else-if="tab === 'collect'" />
       <QuestPanel v-else-if="tab === 'quest'" />
       <CavePanel v-else-if="tab === 'cave'" />
     </div>
@@ -61108,7 +60648,6 @@ import { computed } from 'vue'
 import type { GroupTab } from './FourAspectBar.vue'
 import type { XiyouRegion, XiyouScene } from '../types'
 import CavePanel from './cave/CavePanel.vue'
-import CollectPanel from './CollectPanel.vue'
 import CultivatePanel from './CultivatePanel.vue'
 import EquipPanel from './EquipPanel.vue'
 import MatePanel from './MatePanel.vue'
@@ -61129,7 +60668,7 @@ const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
     battle: { label: '战斗', sub: '演武台 · 当前场景对战' },
     map: { label: '降妖路引', sub: '五域二十五关 · 择路而进' },
     pack: { label: '行囊', sub: '乾坤袋 · 背包 / 仓库 / 坊市' },
-    cultivate: { label: '修行', sub: '问道长生 · 角色 / 境界 / 流派 / 功法 / 经脉 / 神通' },
+    cultivate: { label: '修行', sub: '问道长生 · 角色 / 境界 / 流派 / 功法 / 经脉' },
     equip: { label: '装备', sub: '兵器法宝 · 装备 / 法宝 / 坐骑' },
     mate: { label: '伙伴', sub: '结伴同行 · 伙伴 / 灵宠 / 缘分' },
     collect: { label: '收集', sub: '志怪录 · 图鉴 / 成就 / 称号' },
@@ -61210,12 +60749,9 @@ import { createPlayerProfile } from './playerProfile'
 import { dropsForEnemyById, rewardForEnemyById } from './battle'
 import { equippedSkills, grantPillPoint, pureSchoolBonus } from './xiyouData'
 import type { PlayerStoreDebugEnv } from './debugEnv'
+import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
 /** 材料类型集合（与 PackPanel 的 material/essence/enhance 分组对齐，供"给予全部N阶材料"按 items.json 全量筛选） */
-const MATERIAL_TYPES = new Set([
-  '木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物',
-  '特殊材料', 'BOSS材料', '灵气', '碎片', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解',
-  '突破', '技能书', '经验', '图纸',
-])
+const MATERIAL_TYPES = ALL_ITEM_TYPES_SET
 /** 装备词条库（equipment-affixes.json，与 packStore 同源） */
 const EQUIP_AFFIXES = equipmentAffixesDataRaw as unknown as Array<{
   id: string
@@ -62383,7 +61919,7 @@ function buildSceneCategory(env: PlayerStoreDebugEnv): DebugCategory {
 // ══════════════════════════════════════════════════════════════════
 /** 修行调试（D07） */
 function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
-  const { realms, schools, player, skillPoints } = env
+  const { schools, player, skillPoints } = env
   return {
     id: 'cultivate',
     label: '修行',
@@ -62392,28 +61928,6 @@ function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
         id: 'realm',
         label: '境界',
         actions: [
-          {
-            id: 'cult_realm_up',
-            label: '境界提升',
-            execute: () => {
-              const current = realms.find((r) => r.level > 0)
-              const idx = current ? realms.indexOf(current) : -1
-              const next = realms[idx + 1]
-              if (!next) return fail('已臻化境，无更高境界')
-              if (current) current.level = 0
-              next.level = 1
-              next.unlocked = true
-              return ok(`境界提升至「${next.name}」`, { name: next.name, bonus: next.bonus })
-            },
-          },
-          {
-            id: 'cult_realm_view',
-            label: '查看境界谱系',
-            execute: () => {
-              const payload = realms.map((r) => ({ name: r.name, level: r.level, unlocked: r.unlocked, bonus: r.bonus }))
-              return ok(`境界谱系（${payload.length} 重）`, payload)
-            },
-          },
         ],
       },
       {
@@ -62828,7 +62342,7 @@ import type { useBattleStore } from '@/presentation/stores/battleStore'
 import type { usePlayerStore } from '@/presentation/stores/playerStore'
 import type { usePackStore } from '@/presentation/stores/packStore'
 import type { SaveManager } from '@/shared/utils/save-manager'
-import type { XiyouCatalogItem, XiyouQuest, XiyouRealm, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
+import type { XiyouCatalogItem, XiyouQuest, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
 import type { EquipmentData } from '@/domain/fengshen/types'
 /** 系统诊断端口（DebugCavePanel 装配：经 DI 容器 resolve application 层服务） */
 export interface DebugDiagPort {
@@ -62851,8 +62365,6 @@ export interface PlayerStoreDebugEnv {
   scenes: XiyouScene[]
   /** 任务表（reactive） */
   quests: XiyouQuest[]
-  /** 境界表（reactive） */
-  realms: XiyouRealm[]
   /** 流派表（reactive） */
   schools: XiyouSchool[]
   /** 流派技能点（reactive） */
@@ -62968,26 +62480,26 @@ export function createPlayerProfile(opts?: { level?: number; exp?: number; stats
  * 稀有度 / 品质 · 统一映射表（方案 4：稀有度与品质体系统一化）
  *
  * NOTE: 数据层一律存数字 rarity（1-5）与 quality（1-5），展示层经本表映射中文。全库唯一映射源：
- *       RARITY_TO_QUALITY（品级/阶位）与 AFFIX_QUALITY（装备品质）为两个正交维度，
+ *       RARITY_NAMES（品级名）与 QUALITY_NAMES（品质名）为两个正交维度，
  *       避免「凡品」与「凡」等概念混淆；多组件共用品级名/品级色/品级类，集中于此不重复。
  *       QUALITY_COLORS 用全局 --color-* 令牌——弹窗/悬浮等 Teleport 到 body 时 --xy-* 不可用。
  *
- * 装备品质（AFFIX_QUALITY，设计稿《设计稿补充-装备V2》§5）：
+ * 装备品质（QUALITY_NAMES，设计稿《设计稿补充-装备V2》§5）：
  *       品质决定基础属性系数（凡 80%-90% … 神 141%-150%，本表取区间中值）与随机词条数量
  *       （凡 1 / 精 2 / 超 3 / 绝 4 / 神 5，见 affixCountByQuality）。制造/掉落时按装备阶位
  *       roll 品质（rollQuality），天品阶位固定绝品、仙品阶位固定神品。
  */
 import type { XiyouQuality } from './types'
-/** 品级（rarity 1-5 → 凡品/玄品/地品/天品/仙品） */
-export const RARITY_TO_QUALITY: Record<number, XiyouQuality> = {
+/** 品级名（rarity 1-5 → 凡品/玄品/地品/天品/仙品） */
+export const RARITY_NAMES: Record<number, XiyouQuality> = {
   1: '凡品',
   2: '玄品',
   3: '地品',
   4: '天品',
   5: '仙品',
 }
-/** 装备品质（1-5 → 凡/精/超/绝/神，与品级正交的独立维度；制造/掉落时按装备阶位 roll） */
-export const AFFIX_QUALITY: Record<number, string> = {
+/** 品质名（quality 1-5 → 凡/精/超/绝/神，与品级正交的独立维度；制造/掉落时按装备阶位 roll） */
+export const QUALITY_NAMES: Record<number, string> = {
   1: '凡',
   2: '精',
   3: '超',
@@ -63012,7 +62524,7 @@ export const QUALITY_FACTOR: Record<number, number> = {
 }
 /** 品质名（未知品质回退凡） */
 export function qualityName(quality: number): string {
-  return AFFIX_QUALITY[quality] ?? '凡'
+  return QUALITY_NAMES[quality] ?? '凡'
 }
 /** 装备品质色（1-5 → --eq-q-*，独立于品阶的 QUALITY_COLORS/--rarity-*） */
 export const EQUIP_QUALITY_COLORS: Record<number, string> = {
@@ -63077,7 +62589,7 @@ export const QUALITY_COLORS: Record<number, string> = {
 }
 /** 品级名（未知品级回退凡品） */
 export function qualityOf(rarity: number): XiyouQuality {
-  return RARITY_TO_QUALITY[rarity] ?? '凡品'
+  return RARITY_NAMES[rarity] ?? '凡品'
 }
 /** 品级色 CSS 值（未知品级回退次要文字色） */
 export function qualityColor(rarity: number): string {
@@ -63093,18 +62605,18 @@ export function qualityClass(rarity: number): string {
 }
 /** 品级名 → 品级 CSS 类（供按中文品级映射的场景，如洞府/碎片视图） */
 export function qualityClassOf(quality: XiyouQuality): string {
-  const suffix = Object.entries(RARITY_TO_QUALITY).find(([, q]) => q === quality)?.[0]
+  const suffix = Object.entries(RARITY_NAMES).find(([, q]) => q === quality)?.[0]
   return `xy-q--${suffix ?? '1'}`
 }
 /**
  * 旧版数据迁移：字段含中文品级（quality/tier，历史 seed/导入遗留）→ 数字 rarity。
- * 基于 RARITY_TO_QUALITY 反查，单一映射源。无品级字段/已是数字时原样返回。
+ * 基于 RARITY_NAMES 反查，单一映射源。无品级字段/已是数字时原样返回。
  */
 export function migrateRarityField(row: Record<string, unknown>): boolean {
   if (typeof row.rarity === 'number') return false
   const legacy = typeof row.quality === 'string' ? row.quality : row.tier
   const rarity = typeof legacy === 'string'
-    ? Object.entries(RARITY_TO_QUALITY).find(([, q]) => q === legacy)?.[0]
+    ? Object.entries(RARITY_NAMES).find(([, q]) => q === legacy)?.[0]
     : undefined
   if (!rarity) return false
   row.rarity = Number(rarity)
@@ -64538,7 +64050,6 @@ export const saveManager = new SaveManager(xiyouSaveBridge)
         .xy-sec-title,
         .xy-panel-hint,
         .xy-realm-now,
-        .xy-checkin-head,
         .xy-gear-actions,
         .xy-cabinet-cat,
         .xy-quest-cat,
@@ -64551,7 +64062,6 @@ export const saveManager = new SaveManager(xiyouSaveBridge)
         .xy-farm-grid,
         .xy-storage-grid,
         .xy-skill-grid,
-        .xy-checkin-grid,
         .xy-character-panel,
         .xy-realm-panel,
         .xy-school-panel,
@@ -64567,8 +64077,7 @@ export const saveManager = new SaveManager(xiyouSaveBridge)
         .xy-codex-grid,
         .xy-farm-grid,
         .xy-storage-grid,
-        .xy-skill-grid,
-        .xy-checkin-grid {
+        .xy-skill-grid {
           grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         }
         .xy-gear-grid {
@@ -64926,9 +64435,9 @@ export const saveManager = new SaveManager(xiyouSaveBridge)
 import type { ItemEffect } from '@/shared/types/Item'
 /** 玩家货币（运行时状态 · 持有在 playerStore） */
 export interface XiyouCurrency {
-  copper: number
-  silver: number
-  jade: number
+  copper: number // 铜币
+  silver: number // 银币
+  jade: number // 金币
 }
 /** 玩家属性快照（运行时状态 · 持有在 playerStore） */
 export interface XiyouPlayer {
@@ -65118,19 +64627,6 @@ export interface XiyouStorageCell {
   count: number
   locked: boolean
 }
-/** 境界（修为子系统） */
-export interface XiyouRealm {
-  name: string
-  level: number
-  bonus: string
-  progress: number
-  unlocked: boolean
-  desc: string
-  /** 突破需求（configs 补充字段，IDB 旧数据可能缺失） */
-  levelReq?: number
-  materialName?: string
-  materialCount?: number
-}
 /** 功法（功法子系统） */
 export interface XiyouMartial {
   name: string
@@ -65152,15 +64648,6 @@ export interface XiyouMeridianNode {
 export interface XiyouMeridian {
   name: string
   nodes: XiyouMeridianNode[]
-}
-/** 神通（神通子系统） */
-export interface XiyouDharma {
-  name: string
-  type: '攻击' | '防御' | '辅助' | '身法'
-  level: number
-  maxLevel: number
-  effect: string
-  equipped: boolean
 }
 /** 法宝（法宝子系统） */
 export interface XiyouTreasure {
@@ -65201,24 +64688,6 @@ export interface XiyouPet {
   skill: string
   active: boolean
 }
-/** 缘分（缘分子系统） */
-export interface XiyouAffinity {
-  name: string
-  members: string[]
-  bonus: string
-  progress: number
-  activated: boolean
-}
-/** 图鉴条目（图鉴子系统） */
-export interface XiyouCodexEntry {
-  name: string
-  level: number
-  captured: boolean
-}
-export interface XiyouCodexChapter {
-  name: string
-  entries: XiyouCodexEntry[]
-}
 /** 成就（成就子系统） */
 export interface XiyouAchievement {
   name: string
@@ -65228,28 +64697,14 @@ export interface XiyouAchievement {
   reward: string
   done: boolean
 }
-/** 称号（称号子系统） */
-export interface XiyouTitle {
-  name: string
-  bonus: string
-  desc: string
-  owned: boolean
-  equipped: boolean
-}
 /** 任务（任务子系统） */
 export interface XiyouQuest {
-  type: '主线' | '日常' | '周常'
+  type: '主线' | '日常'
   name: string
   desc: string
   progress: number
   target: number
   reward: string
-}
-/** 签到（签到子系统） */
-export interface XiyouCheckinDay {
-  day: number
-  reward: string
-  state: 'done' | 'today' | 'future'
 }
 /** 活动（活动子系统） */
 export interface XiyouEvent {
@@ -65338,13 +64793,9 @@ import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
 import { migrateRarityField } from './quality'
 import type {
   XiyouAchievement,
-  XiyouAffinity,
   XiyouCatalogItem,
-  XiyouCheckinDay,
-  XiyouCodexChapter,
   XiyouCraft,
   XiyouCrop,
-  XiyouDharma,
   XiyouEvent,
   XiyouGardenCrop,
   XiyouItem,
@@ -65355,7 +64806,6 @@ import type {
   XiyouNodeType,
   XiyouPet,
   XiyouQuest,
-  XiyouRealm,
   XiyouRecipe,
   XiyouRegion,
   XiyouRetreat,
@@ -65367,7 +64817,6 @@ import type {
   XiyouSkillPoints,
   XiyouEquippedSkills,
   XiyouStorageCell,
-  XiyouTitle,
   XiyouTreasure,
 } from './types'
 export const regions: XiyouRegion[] = reactive<XiyouRegion[]>(regionsJson as unknown as XiyouRegion[])
@@ -65559,20 +65008,14 @@ export const consumables: XiyouItem[] = reactive<XiyouItem[]>(packJson.consumabl
 export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.shopGoods as unknown as XiyouShopGood[])
 export const storageCells: XiyouStorageCell[] = reactive<XiyouStorageCell[]>(packJson.storageCells as unknown as XiyouStorageCell[])
 export const packItems: XiyouCatalogItem[] = itemsJson.items as unknown as XiyouCatalogItem[]
-export const realms: XiyouRealm[] = reactive<XiyouRealm[]>(cultivateJson.realms as unknown as XiyouRealm[])
 export const martialArts: XiyouMartial[] = reactive<XiyouMartial[]>(cultivateJson.martialArts as unknown as XiyouMartial[])
 export const meridians: XiyouMeridian[] = reactive<XiyouMeridian[]>(cultivateJson.meridians as unknown as XiyouMeridian[])
-export const dharmas: XiyouDharma[] = reactive<XiyouDharma[]>(cultivateJson.dharmas as unknown as XiyouDharma[])
 export const treasures: XiyouTreasure[] = reactive<XiyouTreasure[]>(equipJson.treasures as unknown as XiyouTreasure[])
 export const mounts: XiyouMount[] = reactive<XiyouMount[]>(equipJson.mounts as unknown as XiyouMount[])
 export const mates: XiyouMate[] = reactive<XiyouMate[]>(mateJson.mates as unknown as XiyouMate[])
 export const pets: XiyouPet[] = reactive<XiyouPet[]>(mateJson.pets as unknown as XiyouPet[])
-export const affinities: XiyouAffinity[] = reactive<XiyouAffinity[]>(mateJson.affinities as unknown as XiyouAffinity[])
-export const codexChapters: XiyouCodexChapter[] = reactive<XiyouCodexChapter[]>(collectJson.codexChapters as unknown as XiyouCodexChapter[])
 export const achievements: XiyouAchievement[] = reactive<XiyouAchievement[]>(collectJson.achievements as unknown as XiyouAchievement[])
-export const titles: XiyouTitle[] = reactive<XiyouTitle[]>(collectJson.titles as unknown as XiyouTitle[])
 export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(questJson.quests as unknown as XiyouQuest[])
-export const checkinDays: XiyouCheckinDay[] = reactive<XiyouCheckinDay[]>(questJson.checkinDays as unknown as XiyouCheckinDay[])
 export const events: XiyouEvent[] = reactive<XiyouEvent[]>(questJson.events as unknown as XiyouEvent[])
 /** 装备定义目录（configs/equipment/equipment.json 唯一数据源 · 锻造配方按 equipmentId 引用其材料） */
 export const equipmentCatalog: EquipmentData[] = equipmentJson as unknown as EquipmentData[]
@@ -65655,11 +65098,9 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(consumables, 'pack', 'consumables')
   aIn(shopGoods, 'pack', 'shopGoods')
   aIn(storageCells, 'pack', 'storageCells')
-  aIn(realms, 'cultivate', 'realms')
   aIn(martialArts, 'cultivate', 'martialArts')
   migrateRarity(martialArts)
   aIn(meridians, 'cultivate', 'meridians')
-  aIn(dharmas, 'cultivate', 'dharmas')
   aIn(treasures, 'equip', 'treasures')
   migrateRarity(treasures)
   aIn(mounts, 'equip', 'mounts')
@@ -65668,12 +65109,8 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   migrateRarity(mates)
   aIn(pets, 'mate', 'pets')
   migrateRarity(pets)
-  aIn(affinities, 'mate', 'affinities')
-  aIn(codexChapters, 'collect', 'codexChapters')
   aIn(achievements, 'collect', 'achievements')
-  aIn(titles, 'collect', 'titles')
   aIn(quests, 'quest', 'quests')
-  aIn(checkinDays, 'quest', 'checkinDays')
   aIn(events, 'quest', 'events')
   aIn(alchemyRecipes, 'cave', 'alchemyRecipes')
   aIn(forgeRecipes, 'cave', 'forgeRecipes')
@@ -66238,7 +65675,6 @@ export const useBattleStore = defineStore('battle', () => {
   /** 处理参与者属性变更事件（Buff 触发 recalculateAll 后，在 proxy 上同步调用以使 Vue 响应式系统追踪到变更） */
   const handleAttributeChanged = (data: { characterId: string }) => {
     const id = data.characterId
-    // ponytail: 从当前 proxy 数组中找到目标，调用其 recalculateAll 走 proxy set trap
     const proxy =
       allyTeam.value.find((p) => p.id === id) ??
       enemyTeam.value.find((p) => p.id === id) ??
@@ -66946,7 +66382,6 @@ export const useBattleStore = defineStore('battle', () => {
       enemy,
       ParticipantSide.ENEMY,
     )
-    // ponytail: 注册触发型被动技能到 PassiveSkillManager（预览时生效）
     const passiveSkillManager = container.resolve<any>('PassiveSkillManager')
     GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
     previewEntity.value = entity
@@ -70259,7 +69694,6 @@ html {
   border-bottom: 2px solid var(--color-border-default);
   padding-bottom: var(--space-3);
 }
-/** ponytail: 详情面板通用章节标题 — 从 3 个组件（BuffDetail/EnemyDetail/ItemDetail）提取的公共样式 */
 .section-title {
   font-weight: var(--font-weight-bold);
   color: var(--color-info);
@@ -70991,7 +70425,6 @@ $transition-fast: var(--transition-fast);
   --color-bg-active: rgba(255, 255, 255, 0.1); /* 按下/选中 */
   --color-bg-hover-accent: rgba(34, 211, 238, 0.08); /* 对应 --rgb-energy */
   --color-overlay: rgba(0, 0, 0, 0.6);
-  /* ponytail: 阵营色用于区分我方/敌方头部背景 */
   --color-ally-primary: #1a4a7a;
   --color-ally-text: var(--color-info);
   --color-enemy-primary: #7a1a1a;
@@ -71545,9 +70978,6 @@ export const uiNavBus: Emitter<UINavEvents> = mitt<UINavEvents>()
 </template>
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-;
-;
-;
 import ModuleHeader, { modulePanelId, moduleTabId, type ModuleId } from "@/presentation/components/ModuleHeader.vue";
 import Fengshen from "@/presentation/modules/fengshen/Fengshen.vue";
 import HaotianMirror from "@/presentation/modules/haotian/HaotianMirror.vue";
@@ -71722,26 +71152,6 @@ export const AffixId = {
   JIE_HP_REGEN: 'affix_jie_008',
 } as const
 export type AffixId = (typeof AffixId)[keyof typeof AffixId]
-/** 词缀品阶显示名（rarity 1-5 → 凡/精/超/绝/神；与 _cards.scss 的 affix-qN 类对齐） */
-export const AffixRarityNames: Record<number, string> = {
-  1: '凡',
-  2: '精',
-  3: '超',
-  4: '绝',
-  5: '神',
-}
-/** 词缀品阶色（CSS 值；统一引用 tokens.scss 的 --rarity-* 令牌，与品质色同源） */
-export const AFFIX_RARITY_COLORS: Record<number, string> = {
-  1: 'var(--rarity-1)',
-  2: 'var(--rarity-2)',
-  3: 'var(--rarity-3)',
-  4: 'var(--rarity-4)',
-  5: 'var(--rarity-5)',
-}
-/** 词缀品阶名（未知品级回退「凡」） */
-export function affixRarityName(rarity: number): string {
-  return AffixRarityNames[rarity] ?? '凡'
-}
 
 --- src/shared/constants/animation-timing.ts ---
 /**
@@ -71774,6 +71184,50 @@ export const getActionBudget = (speed: number): number =>
 /** 指定速度下某占比点对应的绝对毫秒 */
 export const phaseAt = (ratio: number, speed: number): number =>
   getActionBudget(speed) * ratio
+
+--- src/shared/constants/item-types.ts ---
+/**
+ * 物品类型常量定义
+ *
+ * 统一物品类型分类，避免各模块重复声明。
+ * 数据来源：configs/xiyou/items.json
+ */
+/** 基础材料类型（自然资源） */
+export const BASE_MATERIAL_TYPES = [
+  '木材', '矿石', '金属', '玉石', '水产',
+  '皮革', '织物', '陶瓷', '古董', '液体', '毒物',
+] as const
+/** 特殊材料类型 */
+export const SPECIAL_MATERIAL_TYPES = [
+  '特殊材料', 'BOSS材料', '灵气', '晶球',
+] as const
+/** 功能性物品类型（强化/升级/合成相关） */
+export const FUNCTIONAL_ITEM_TYPES = [
+  '碎片', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解',
+  '突破', '技能书', '经验', '图纸',
+] as const
+/** 消耗品类型 */
+export const CONSUMABLE_TYPES = [
+  '货币', '草药', '药引', '种子',
+] as const
+/** 材料域完整白名单（封神榜 derive-materials 使用） */
+export const MATERIAL_DOMAIN_TYPES = [
+  ...BASE_MATERIAL_TYPES,
+  ...SPECIAL_MATERIAL_TYPES,
+  '碎片',
+  ...CONSUMABLE_TYPES,
+] as const
+/** 调试用完整物品类型集合（debugActions 使用，包含所有功能性类型） */
+export const ALL_ITEM_TYPES_SET = new Set<string>([
+  ...BASE_MATERIAL_TYPES,
+  ...SPECIAL_MATERIAL_TYPES,
+  ...FUNCTIONAL_ITEM_TYPES,
+])
+/** 类型导出 */
+export type BaseMaterialType = typeof BASE_MATERIAL_TYPES[number]
+export type SpecialMaterialType = typeof SPECIAL_MATERIAL_TYPES[number]
+export type FunctionalItemType = typeof FUNCTIONAL_ITEM_TYPES[number]
+export type ConsumableType = typeof CONSUMABLE_TYPES[number]
 
 --- src/shared/constants/player.ts ---
 /**
@@ -74820,7 +74274,6 @@ export class GameDataProcessor {
         if (cached) return cached
         const enemy = DataProcessor.find(dataSource.getEnemies(), (e) => e.id === id)
         if (enemy) {
-          // ponytail: 先设 maxHealth 再缓存，避免后续修改副作用
           enemy.stats.maxHealth = enemy.stats.currentHealth
           DataProcessor.setCachedData(cacheKey, enemy)
         }
@@ -74969,7 +74422,6 @@ export class GameDataProcessor {
       applyRandomAffixesByPool([participant], () => affixPlan)
     }
     // 9. 初始满血（词缀可能含 maxHealth 修正，故在词缀应用后再同步 currentHealth）
-    // ponytail: setAttributeBase 只改 base 不改 value，而 currentHealth 是运行时属性
     // （recalcAttribute 跳过），value 永不会从 base 同步，故直接写 value
     const curHp = participant.getAttrVal(ATTRIBUTE_CODE.currentHealth)
     if (curHp) {
@@ -75082,7 +74534,6 @@ export class GameDataProcessor {
     const passives = entity.skills?.passive
     if (!passives || passives.length === 0) return
     for (const skill of passives) {
-      // ponytail: 统一管道 — 无 triggerTimes 的被动按 battle_start 注册
       const triggerTimes = skill.triggerTimes?.length
         ? skill.triggerTimes
         : [BattleTriggerPhase.BATTLE_START]
@@ -75092,10 +74543,8 @@ export class GameDataProcessor {
           console.warn(`未知的被动触发时机: ${rawTrigger} (技能: ${skill.id})`)
           continue
         }
-        // ponytail: 非 battle_start 无默认限制（undefined = 不限次数）
         const maxTriggerCount =
           skill.maxUses ?? (rawTrigger === 'battle_start' ? 1 : undefined)
-        // ponytail: 多 trigger 共享 skillId，通过 id 后缀区分以便独立计数/冷却
         const config: PassiveSkillConfig = {
           id: `${entity.id}:${skill.id}:${rawTrigger}`,
           name: skill.name,
@@ -75556,7 +75005,6 @@ export function round(number: number | string, precision = 0): number {
     return NaN
   }
   const factor = Math.pow(10, precision)
-  // ponytail: 引入 Number.EPSILON 解决 1.005 * 100 = 100.49999999999999 的精度丢失问题
   return Math.round((num + Number.EPSILON) * factor) / factor
 }
 /**
@@ -76829,7 +76277,6 @@ export function toArray<T>(array: T[]): T[] {
  * 集中管理业务伤害类型 → UI 视觉表现的映射逻辑，
  * 消除 BattleField.vue 等 UI 文件中的硬编码 if-else。
  *
- * ponytail: 当前只映射 damageCategory→动画类型，
  * 后续可扩展至元素属性（ElementType）→颜色/粒子效果。
  */
 import { DamageCategory, type DamageCategory as DamageCategoryType } from '@/domain/skill/types'

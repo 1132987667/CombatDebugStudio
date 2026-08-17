@@ -162,7 +162,6 @@ const env: PlayerStoreDebugEnv = {
   diag: makeDiagPort(),
   scenes,
   quests,
-  realms,
   schools,
   skillPoints,
   items: packItems,

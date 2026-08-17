@@ -216,20 +216,6 @@ export interface XiyouStorageCell {
   locked: boolean
 }
 
-/** 境界（修为子系统） */
-export interface XiyouRealm {
-  name: string
-  level: number
-  bonus: string
-  progress: number
-  unlocked: boolean
-  desc: string
-  /** 突破需求（configs 补充字段，IDB 旧数据可能缺失） */
-  levelReq?: number
-  materialName?: string
-  materialCount?: number
-}
-
 /** 功法（功法子系统） */
 export interface XiyouMartial {
   name: string
@@ -255,15 +241,7 @@ export interface XiyouMeridian {
   nodes: XiyouMeridianNode[]
 }
 
-/** 神通（神通子系统） */
-export interface XiyouDharma {
-  name: string
-  type: '攻击' | '防御' | '辅助' | '身法'
-  level: number
-  maxLevel: number
-  effect: string
-  equipped: boolean
-}
+
 
 /** 法宝（法宝子系统） */
 export interface XiyouTreasure {
@@ -308,27 +286,6 @@ export interface XiyouPet {
   active: boolean
 }
 
-/** 缘分（缘分子系统） */
-export interface XiyouAffinity {
-  name: string
-  members: string[]
-  bonus: string
-  progress: number
-  activated: boolean
-}
-
-/** 图鉴条目（图鉴子系统） */
-export interface XiyouCodexEntry {
-  name: string
-  level: number
-  captured: boolean
-}
-
-export interface XiyouCodexChapter {
-  name: string
-  entries: XiyouCodexEntry[]
-}
-
 /** 成就（成就子系统） */
 export interface XiyouAchievement {
   name: string
@@ -339,30 +296,15 @@ export interface XiyouAchievement {
   done: boolean
 }
 
-/** 称号（称号子系统） */
-export interface XiyouTitle {
-  name: string
-  bonus: string
-  desc: string
-  owned: boolean
-  equipped: boolean
-}
 
 /** 任务（任务子系统） */
 export interface XiyouQuest {
-  type: '主线' | '日常' | '周常'
+  type: '主线' | '日常'
   name: string
   desc: string
   progress: number
   target: number
   reward: string
-}
-
-/** 签到（签到子系统） */
-export interface XiyouCheckinDay {
-  day: number
-  reward: string
-  state: 'done' | 'today' | 'future'
 }
 
 /** 活动（活动子系统） */

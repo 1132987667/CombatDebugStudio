@@ -12,9 +12,7 @@
             <span class="xy-mate-role xy-chip xy-chip--jade">{{ m.role }}</span>
             <span class="xy-mate-level">Lv.{{ m.level }} · {{ qualityOf(m.rarity) }}</span>
             <div class="xy-mate-stars" aria-label="星级">
-              <svg v-for="i in 5" :key="i" viewBox="0 0 24 24" class="xy-star" :class="{ on: i <= m.stars }" aria-hidden="true">
-                <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
-              </svg>
+              <IconStar v-for="i in 5" :key="i" class="xy-star" :class="{ on: i <= m.stars }" />
             </div>
             <p class="xy-row-desc">{{ m.desc }}</p>
           </div>
@@ -62,8 +60,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
+import IconStar from '~icons/app/star'
+
+import type { TabItem } from '@/presentation/components'
 import { affinities, mates, pets } from '../xiyouData'
 import type { XiyouMate } from '../types'
 import { qualityClass, qualityOf } from '../quality'

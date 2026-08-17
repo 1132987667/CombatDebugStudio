@@ -7,9 +7,7 @@
           <h2 class="xy-settings-dlg__name">设置</h2>
           <p class="xy-settings-dlg__sub">掌游戏之枢 · 定界面之位</p>
           <button type="button" class="xy-settings-dlg__close" aria-label="关闭设置" @click="close">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
+            <IconXClose />
           </button>
         </header>
 
@@ -140,6 +138,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import IconXClose from '~icons/app/x-close'
 import { saveManager } from '../save-bridge'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'

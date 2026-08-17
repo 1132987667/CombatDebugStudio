@@ -57,10 +57,9 @@ import { BattleEventCodes } from '@/domain/battle/type/BattleEventType';
 import { ActionResultType, ActionTypes, type BattleEntity } from '@/domain/battle/type/types';
 import { container } from '@/infrastructure/di/Container';
 import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus';
-
 const emitter = container.resolve<UIEventBus>('UIEventBus').getEmitter()
-import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
-import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
+import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
+import ParticipantCard from '@/presentation/components/ParticipantCard.vue'
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
 import { useBattleStore } from '@/presentation/stores/battleStore';
 import BattleLog from "./BattleLog.vue";
@@ -76,7 +75,6 @@ const store = useBattleStore()
 const showSummaryDialog = ref(false)
 const lastSummary = ref<BattleSummary | null>(null)
 
-// ponytail: 事件总线挂载后监听战报事件
 emitter.on(BattleEventCodes.BATTLE_SUMMARY, (summary: BattleSummary) => {
   lastSummary.value = summary
   showSummaryDialog.value = true
@@ -113,12 +111,10 @@ watch(() => store.battleSpeed, (newSpeed) => {
   }
 }, { immediate: true });
 
-// ponytail: 注册/注销卡片 DOM 元素，供 GSAP 动画和 BattleVisualEffects 查找
 function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantCard> | null) {
   if (el) {
     participantCardRefs.value[characterId] = el
     registerElement(characterId, el.cardRef as HTMLElement | null)
-    // ponytail: defineExpose 自动解包 ref，el.cardRef 直接是 HTMLElement
     if (el?.cardRef) {
       visualEffectsRef.value?.registerCard(characterId, el.cardRef as HTMLElement)
     }
@@ -129,7 +125,6 @@ function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantC
   }
 }
 
-// ponytail: 当 visualEffectsRef 可用时，补注册所有已存在的卡片（解决渲染时序竞态）
 watch(visualEffectsRef, (vf) => {
   if (!vf) return
   for (const [id, card] of Object.entries(participantCardRefs.value)) {
@@ -154,14 +149,12 @@ function addRoundAnnounce(text: string) {
   }, ANNOUNCE_DURATION)
 }
 
-// ponytail: 监听回合变化，触发动画
 watch(() => store.currentTurn, (newTurn, oldTurn) => {
   if (oldTurn !== undefined && newTurn > oldTurn) {
     addRoundAnnounce(`第 ${newTurn} 回合`)
   }
 })
 
-// ponytail: 固定预算模型 — 动画编排完全由领域层配速驱动，UI 只负责按事件即时显示
 watch(store.animationState, (state) => {
   const budget = getActionBudget(store.battleSpeed)
   if (state.skill) {

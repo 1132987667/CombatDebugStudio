@@ -52,9 +52,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import Button from "@/presentation/components/Button.vue";
-import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
-import GlobalNotifications from "@/presentation/components/GlobalNotifications.vue";
 import ModuleHeader, { modulePanelId, moduleTabId, type ModuleId } from "@/presentation/components/ModuleHeader.vue";
 import Fengshen from "@/presentation/modules/fengshen/Fengshen.vue";
 import HaotianMirror from "@/presentation/modules/haotian/HaotianMirror.vue";

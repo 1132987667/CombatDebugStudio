@@ -9,9 +9,7 @@
       <!-- 调试入口（仅开发模式渲染，PRD §4.1） -->
       <div v-if="isDev" class="xy-topbar-debug">
         <button type="button" class="xy-topbar-debug-btn" :class="{ active: debugOpen }" @click="debugOpen = !debugOpen">
-          <svg viewBox="0 0 24 24" class="xy-topbar-debug-icon" aria-hidden="true">
-            <path d="M14 4h6v6M20 4l-9 9M10 7H5v12h12v-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+          <IconDebug class="xy-topbar-debug-icon" />
           <span>调试</span>
         </button>
       </div>
@@ -24,8 +22,6 @@
     <div class="xy-body" :class="[`xy-side--${sidebarSide}`, isFeature ? 'xy-body--feature' : 'xy-body--journey']">
       <!-- 最左：角色行囊栏（角色属性 + 行囊，仅行路态显示） -->
       <BattleRoster v-show="!isFeature" @open-pack="activeCabinet = 'pack'" />
-
-      <!-- 最右/左：功能菜单 · 四象栏 -->
       <FourAspectBar v-model="activeCabinet" @open-map="mapOpen = true" @open-settings="settingsOpen = true" />
 
       <!-- 功能宝阁（行路态 290px / 功能态全屏） -->
@@ -49,6 +45,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch, type WatchStopHandle } from 'vue'
+import IconDebug from '~icons/app/debug'
 import BattleRoster from './components/BattleRoster.vue'
 import BattleZen from './components/BattleZen.vue'
 import DebugCavePanel from './components/DebugCavePanel.vue'

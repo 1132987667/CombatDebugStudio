@@ -121,8 +121,6 @@ import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import type { GearData } from '@/domain/fengshen/types'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
-import Button from '@/presentation/components/Button.vue'
-import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 
 const props = withDefaults(
   defineProps<{

@@ -28,8 +28,6 @@
 <script setup lang="ts">
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
 
 defineProps<{ open: boolean }>()
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()

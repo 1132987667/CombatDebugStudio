@@ -196,12 +196,8 @@ import { useBattleStore } from '@/presentation/stores';
 import { useBattlePresetStore } from '@/presentation/stores/battlePresetStore';
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore';
 import { useNotificationStore } from '@/presentation/stores/notificationStore';
-import EmptyState from '@/presentation/components/EmptyState.vue'
-import Button from '@/presentation/components/Button.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
-import Dialog from '@/presentation/components/Dialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
+
 import { uiNavBus, OPEN_LINEUP_EVENT } from '@/presentation/uiEvents'
 
 interface GroupedEnemies {
@@ -552,7 +548,6 @@ const previewRosterCharacter = (enemy: Enemy) => {
 const isRosterCharSelected = (enemyId: string): boolean => {
   const id = battleStore.selectedCharacterId;
   if (!id || !battleStore.previewEntity) return false;
-  // ponytail: previewEntity ID 格式是 [ENEMY]_<enemyId>_<counter>
   return id.startsWith(`[ENEMY]_${enemyId}_`);
 };
 

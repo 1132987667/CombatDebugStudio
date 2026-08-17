@@ -20,7 +20,7 @@
             <span class="xy-drop-items">
               <span v-for="d in dropsForEnemy(e.name)" :key="d.itemId" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
-                    }}</template></span>
+                }}</template></span>
                 <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
               </span>
             </span>
@@ -34,7 +34,7 @@
             <span class="xy-drop-items">
               <span v-for="d in dropsForEnemy(scene.yaotu.name)" :key="d.itemId" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
-                    }}</template></span>
+                }}</template></span>
                 <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
               </span>
             </span>
@@ -65,8 +65,8 @@
 
       <div class="xy-vs">
         <span class="xy-vs-mark" aria-hidden="true">斗</span>
-        <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`"
-          @click="cycleSpeed">{{ store.battleSpeed }}x</button>
+        <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`" @click="cycleSpeed">{{
+          store.battleSpeed }}x</button>
       </div>
 
       <div class="xy-vitals-row xy-vitals-row--player" role="list" aria-label="我方阵容">
@@ -88,21 +88,21 @@
 </template>
 
 <script setup lang="ts">
-import { ActionTypes, ActionResultType, ParticipantSide } from '@/domain/battle/type/types'
-import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
 import type { BattleService } from '@/application/facade/BattleFacade'
+import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
+import { ActionResultType, ActionTypes, ParticipantSide } from '@/domain/battle/type/types'
 import { container } from '@/infrastructure/di/Container'
 import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
 import ParticipantCard from '@/presentation/components/ParticipantCard.vue'
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation'
+import BattleLog from '@/presentation/modules/huanling/views/BattleLog.vue'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
+import { PLAYER_ID } from '@/shared/constants/player'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
-import { itemName } from '../caveLogic'
-import { PLAYER_ID } from '@/shared/constants/player'
 import {
   buildBattleTeams,
   dropsForEnemy,
@@ -110,10 +110,10 @@ import {
   equipBonuses,
   rewardForScene,
 } from '../battle'
+import { itemName } from '../caveLogic'
+import { saveManager } from '../save-bridge'
 import type { XiyouScene } from '../types'
 import { markSceneCleared } from '../xiyouData'
-import { saveManager } from '../save-bridge'
-import BattleLog from '@/presentation/modules/huanling/views/BattleLog.vue'
 import QuickSlotBar from './QuickSlotBar.vue'
 
 const props = defineProps<{ scene: XiyouScene }>()
@@ -173,7 +173,6 @@ watch(visualEffectsRef, (vf) => {
 
 let lastSkillKey = ''
 
-// ponytail: 固定预算模型 — 动画编排完全由领域层配速驱动（与唤灵台 BattleField 同款）
 watch(store.animationState, (state) => {
   const budget = getActionBudget(store.battleSpeed)
   const skill = state.skill

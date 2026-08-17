@@ -100,7 +100,6 @@ export class SkillManager {
 
   getSkillConfig(skillId: string): SkillConfig | undefined {
     const config = this.skillConfigs.get(skillId)
-    // ponytail: 返回浅拷贝防止外部修改影响内部状态
     return config ? { ...config } : undefined
   }
 
@@ -164,7 +163,6 @@ export class SkillManager {
       })
     }
 
-    // ponytail: P1/CTRL-1 — 统一可执行性检查委托给 participant.canExecuteSkill
     // 通过 getAttribute 获取能量，确保与属性系统（含修饰符）一致
     const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const availability = source.canExecuteSkill(
@@ -195,7 +193,6 @@ export class SkillManager {
       })
     }
 
-    // ponytail: 被动技能允许无 target（自施法技能通过 targetConfig.faction === 'self' 处理）
     const hasNonSelfStep =
       config.steps?.some(
         (s) =>
@@ -224,7 +221,6 @@ export class SkillManager {
       })
     }
 
-    // ponytail: 施法者被控制时技能取消
     const sourceControl = this.buffSystem.getHighestPriorityControlEffect(
       source.id,
     )
@@ -251,7 +247,6 @@ export class SkillManager {
       return action
     }
 
-    // ponytail: 目标被控制时技能取消（覆盖所有非 NONE 控制类型）
     if (target) {
       const targetControl = this.buffSystem.getHighestPriorityControlEffect(
         target.id,
@@ -357,7 +352,6 @@ export class SkillManager {
       this.executeStep(ctx)
     }
 
-    // ponytail: 技能执行成功后设置冷却（如果配置了冷却回合数）
     if (config.cooldown && config.cooldown > 0) {
       if (
         'setSkillCooldown' in source &&
@@ -391,7 +385,6 @@ export class SkillManager {
         { level: LogLevel.WARN },
       )
     }
-    // ponytail: validateSkillConfigs 签名返回 ValidationResult，实际不修改 data。
     // 保留原数组，仅记录验证结果。
     this.loadSkillConfigs(data)
     return data

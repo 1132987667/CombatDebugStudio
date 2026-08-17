@@ -53,8 +53,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Button from '@/presentation/components/Button.vue'
-import Dialog from '@/presentation/components/Dialog.vue'
+
 import {
   usePackStore,
   GEAR_SLOT_LABELS,

@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Button from '@/presentation/components/Button.vue'
+
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import type { FengshenTableName } from '@/domain/fengshen/types'
 import type { HealthCheckKind } from '@/application/service/DataIntegrityService'

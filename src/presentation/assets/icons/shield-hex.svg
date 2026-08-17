@@ -1,0 +1,6 @@
+<svg viewBox="0 0 100 100" fill="none">
+  <polygon points="50,5 90,27 90,73 50,95 10,73 10,27" stroke="var(--vfx-frost)" stroke-width="2"
+    fill="rgba(76,201,240,0.1)" />
+  <polygon points="50,20 75,35 75,65 50,80 25,65 25,35" stroke="var(--vfx-heal)" stroke-width="1" fill="none"
+    opacity="0.6" />
+</svg>

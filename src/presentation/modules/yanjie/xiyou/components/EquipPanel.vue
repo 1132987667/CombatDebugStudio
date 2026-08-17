@@ -141,10 +141,8 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
-import TacticalSelect from '@/presentation/components/TacticalSelect.vue'
-import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
+import type { TabItem } from '@/presentation/components'
+
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import type { EquipmentData } from '@/domain/fengshen/types'
 import {

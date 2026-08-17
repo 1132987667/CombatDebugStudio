@@ -1,10 +1,7 @@
 <template>
   <div class="xy-pending">
     <div class="xy-pending-icon" aria-hidden="true">
-      <svg viewBox="0 0 48 48">
-        <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4" />
-        <text x="24" y="28" text-anchor="middle" font-size="14" fill="currentColor" opacity="0.6">封</text>
-      </svg>
+      <IconPendingSeal />
     </div>
     <h3 class="xy-pending-title">待 开 发 中 ....</h3>
     <p class="xy-pending-name">{{ title }}</p>
@@ -14,6 +11,7 @@
 </template>
 
 <script setup lang="ts">
+import IconPendingSeal from '~icons/app/pending-seal'
 defineProps<{ title: string; subtitle: string; desc: string }>()
 </script>
 

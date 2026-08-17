@@ -60,9 +60,7 @@ import { TraceLevel } from '@/shared/types/trace-event'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore, RESULT_FILTER_OPTIONS } from '../stores/haotianStore'
 import { useVirtualList } from '../composables/useVirtualList'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import Button from '@/presentation/components/Button.vue'
 
 const store = useHaotianStore()
 

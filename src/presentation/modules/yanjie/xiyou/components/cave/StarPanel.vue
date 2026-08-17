@@ -14,10 +14,8 @@
         <span class="xy-cave-enh-slot__meta">
           <span class="xy-cave-enh-slot__item">{{ g.item }}</span>
           <span class="xy-cave-star-stars" :aria-label="`星级 ${g.star}/${STAR_MAX}`">
-            <svg v-for="s in STAR_MAX" :key="s" viewBox="0 0 24 24" class="xy-cave-star-star"
-              :class="{ on: s <= g.star }" aria-hidden="true">
-              <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
-            </svg>
+            <IconStar v-for="s in STAR_MAX" :key="s" class="xy-cave-star-star"
+              :class="{ on: s <= g.star }" />
           </span>
           <span class="xy-cave-enh-slot__lv">{{ g.slotLabel }}</span>
         </span>
@@ -31,10 +29,8 @@
         <p class="xy-cave-card__desc">
           「{{ gear.item }}」当前星级
           <span class="xy-cave-star-stars" :aria-label="`星级 ${gear.star}/${STAR_MAX}`">
-            <svg v-for="s in STAR_MAX" :key="s" viewBox="0 0 24 24" class="xy-cave-star-star"
-              :class="{ on: s <= gear.star }" aria-hidden="true">
-              <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
-            </svg>
+            <IconStar v-for="s in STAR_MAX" :key="s" class="xy-cave-star-star"
+              :class="{ on: s <= gear.star }" />
           </span>
         </p>
         <div class="xy-cave-star-cost">
@@ -59,6 +55,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import IconStar from '~icons/app/star'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import type { EquipmentData } from '@/domain/fengshen/types'

@@ -93,7 +93,7 @@ import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import type { TracePhase } from '@/shared/types/trace-event'
 import { formatTimestamp } from '@/shared/utils/format'
 import BreakpointDialog from '../components/BreakpointDialog.vue'
-import Button from '@/presentation/components/Button.vue'
+
 import DiffDialog from '../components/DiffDialog.vue'
 import RecordManagerDialog from '../components/RecordManagerDialog.vue'
 import SummaryDialog from '../components/SummaryDialog.vue'

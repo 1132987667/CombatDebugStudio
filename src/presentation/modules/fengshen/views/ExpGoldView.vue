@@ -182,7 +182,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import Button from '@/presentation/components/Button.vue'
+
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'

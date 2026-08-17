@@ -49,10 +49,7 @@ import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { UnifiedArchiveService, type RecordingMeta } from '@/application/service/UnifiedArchiveService'
 import { useHaotianStore } from '../stores/haotianStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
+
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const props = defineProps<{ modelValue: boolean }>()

@@ -20,7 +20,6 @@
 import { computed } from 'vue'
 import type { ValidationResult } from '@/domain/battle/replay/unified/unified-validator'
 import { useHaotianStore } from '../stores/haotianStore'
-import Button from '@/presentation/components/Button.vue'
 
 const store = useHaotianStore()
 

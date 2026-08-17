@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import Tabs from '@/presentation/components/Tabs.vue'
+
 import { getAttrMeta, getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, type DisplayTier } from '@/presentation/config/attributeDisplay'
 import type { ArchiveParticipant } from '@/domain/battle/replay/unified/unified-archive'

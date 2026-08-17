@@ -13,9 +13,7 @@
               已踏 <em>{{ unlockedCount }}</em> / {{ scenes.length }} 关
             </span>
             <button type="button" class="xy-map-dlg__close" aria-label="关闭降妖路引" @click="close">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-              </svg>
+              <IconXClose />
             </button>
           </div>
         </header>
@@ -46,24 +44,17 @@
               <span class="xy-map-dlg__stage-head">
                 <span class="xy-map-dlg__stage-name">{{ s.name }}</span>
                 <span v-if="!s.unlocked" class="xy-map-dlg__stage-lock" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                    <rect x="5" y="10" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8" />
-                  </svg>
+                  <IconLock />
                 </span>
                 <span v-else class="xy-map-dlg__stage-check" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
+                  <IconCheck />
                 </span>
               </span>
               <span class="xy-map-dlg__stage-range">Lv.{{ s.levelRange?.[0] }}-{{ s.levelRange?.[1] }}</span>
               <span class="xy-map-dlg__stage-meta">
                 <span class="xy-map-dlg__stars" :aria-label="`关卡星级 ${s.stars}/${s.maxStars}`">
-                  <svg v-for="i in s.maxStars" :key="i" viewBox="0 0 24 24" class="xy-map-dlg__star"
-                    :class="{ on: i <= s.stars }" aria-hidden="true">
-                    <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
-                  </svg>
+                  <IconStar v-for="i in s.maxStars" :key="i" class="xy-map-dlg__star"
+                    :class="{ on: i <= s.stars }" />
                 </span>
               </span>
             </button>
@@ -81,10 +72,8 @@
                 <div class="xy-map-dlg__detail-title">
                   <h3 class="xy-map-dlg__detail-name">{{ selected.name }}</h3>
                   <span class="xy-map-dlg__stars" :aria-label="`关卡星级 ${selected.stars}/${selected.maxStars}`">
-                    <svg v-for="i in selected.maxStars" :key="i" viewBox="0 0 24 24" class="xy-map-dlg__star"
-                      :class="{ on: i <= selected.stars }" aria-hidden="true">
-                      <path d="M12 3l2.5 5.5 6 .6-4.5 4 1.3 5.9L12 15.9 6.7 19l1.3-5.9-4.5-4 6-.6L12 3z" fill="currentColor" />
-                    </svg>
+                    <IconStar v-for="i in selected.maxStars" :key="i" class="xy-map-dlg__star"
+                      :class="{ on: i <= selected.stars }" />
                   </span>
                 </div>
                 <p class="xy-map-dlg__detail-loc">{{ regionName(selected.regionId) }} · Lv.{{ selected.levelRange?.[0] }}-{{ selected.levelRange?.[1] }}</p>
@@ -92,16 +81,11 @@
 
               <div class="xy-map-dlg__detail-meta">
                 <span v-if="!selected.unlocked" class="xy-map-dlg__lock-tag">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                    <rect x="5" y="10" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8" />
-                  </svg>
+                  <IconLock />
                   尚未解锁
                 </span>
                 <span v-else class="xy-map-dlg__done-tag">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
+                  <IconCheck />
                   已解锁
                 </span>
               </div>
@@ -146,6 +130,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import IconXClose from '~icons/app/x-close'
+import IconLock from '~icons/app/lock'
+import IconCheck from '~icons/app/check'
+import IconStar from '~icons/app/star'
 import type { XiyouRegion, XiyouScene } from '../types'
 
 const props = defineProps<{

@@ -77,8 +77,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
+
+import type { TabItem } from '@/presentation/components'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'

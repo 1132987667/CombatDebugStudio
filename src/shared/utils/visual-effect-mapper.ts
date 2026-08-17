@@ -4,7 +4,6 @@
  * 集中管理业务伤害类型 → UI 视觉表现的映射逻辑，
  * 消除 BattleField.vue 等 UI 文件中的硬编码 if-else。
  *
- * ponytail: 当前只映射 damageCategory→动画类型，
  * 后续可扩展至元素属性（ElementType）→颜色/粒子效果。
  */
 import { DamageCategory, type DamageCategory as DamageCategoryType } from '@/domain/skill/types'

@@ -56,8 +56,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
+
+import type { TabItem } from '@/presentation/components'
 import { achievements, codexChapters, titles } from '../xiyouData'
 
 const sub = ref<'codex' | 'achievement' | 'title'>('codex')

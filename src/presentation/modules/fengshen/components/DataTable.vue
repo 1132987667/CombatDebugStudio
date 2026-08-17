@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Button from '@/presentation/components/Button.vue'
+
 import type { TableSchema } from '@/domain/fengshen/schema'
 import { resolveRefName, resolveRefNames } from '@/domain/fengshen/refNames'
 

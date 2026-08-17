@@ -95,16 +95,11 @@ import type {
 import { LogType, LogLevel } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
-import NarrativeBlocks from '@/presentation/components/NarrativeBlocks.vue'
-import LogSeg from '@/presentation/components/LogSeg.vue'
-import Button from '@/presentation/components/Button.vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
-import EmptyState from '@/presentation/components/EmptyState.vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
-import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
+import type { TabItem } from '@/presentation/components'
+
+import LogSeg from '@/presentation/components/LogSeg.vue'
+import NarrativeBlocks from '@/presentation/components/NarrativeBlocks.vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import { LogTooltipResolver } from '@/application/projection/LogTooltipResolver'
 import { container } from '@/infrastructure/di/Container'
@@ -384,7 +379,6 @@ onUnmounted(() => {
 
 /* ─────────── 头部 ─────────── */
 
-
 .log-title {
   color: var(--color-info);
   font-weight: var(--font-weight-bold);
@@ -448,8 +442,6 @@ onUnmounted(() => {
 .log-content.is-active {
   animation: content-in 0.18s ease-out;
 }
-
-
 
 /* ─────────── 扁平容器（系统/调试共用） ─────────── */
 .log-content--flat {

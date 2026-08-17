@@ -28,11 +28,7 @@
       <span class="t-select__ops">
         <button v-if="clearable && selected && !disabled" type="button" class="t-select__clear" title="清空"
           @click.stop="onClear" @keydown.enter.stop="onClear">×</button>
-        <svg class="t-select__chevron" :class="{ 'is-flipped': open }" viewBox="0 0 12 12" width="12" height="12"
-          aria-hidden="true">
-          <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-            stroke-linejoin="round" />
-        </svg>
+        <IconChevron class="t-select__chevron" :class="{ 'is-flipped': open }" />
       </span>
     </div>
 
@@ -96,6 +92,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import IconChevron from '~icons/app/chevron'
 
 /** 选项定义 */
 export interface TSelectOption {

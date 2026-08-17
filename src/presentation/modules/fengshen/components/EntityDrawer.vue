@@ -41,10 +41,7 @@ import { computed, ref, watch } from 'vue'
 import type { TableSchema, FieldSchema } from '@/domain/fengshen/schema'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
 import FieldEditor from './FieldEditor.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const props = defineProps<{
   open: boolean

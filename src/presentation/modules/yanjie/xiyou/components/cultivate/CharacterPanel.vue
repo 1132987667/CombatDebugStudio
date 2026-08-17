@@ -1,12 +1,6 @@
 <template>
   <div class="xy-character-panel">
     <section class="xy-char-header">
-      <div class="xy-char-avatar" aria-hidden="true">
-        <svg viewBox="0 0 48 48">
-          <circle cx="24" cy="24" r="22" fill="var(--xy-paper-warm)" stroke="var(--xy-ink-line)" stroke-width="2" />
-          <path d="M24 12c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 18c-5.3 0-16 2.7-16 8v4h32v-4c0-5.3-10.7-8-16-8z" fill="var(--xy-ink-3)" />
-        </svg>
-      </div>
       <div class="xy-char-info">
         <div class="xy-char-name-row">
           <span class="xy-char-name">{{ player.name }}</span>
@@ -115,7 +109,7 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import AttributeTooltip from '@/presentation/components/AttributeTooltip.vue'
+
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, ATTRIBUTE_DISPLAY_CONFIG } from '@/presentation/config/attributeDisplay'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
@@ -317,12 +311,6 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   border: 1px solid var(--xy-ink-line);
   background: var(--xy-paper);
   border-radius: 2px;
-}
-
-.xy-char-avatar {
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
 }
 
 .xy-char-info {

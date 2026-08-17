@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import Button from '@/presentation/components/Button.vue'
+
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import type { OperationKind, OperationLogEntry } from '@/domain/fengshen/types'

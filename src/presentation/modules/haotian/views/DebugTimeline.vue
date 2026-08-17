@@ -48,7 +48,7 @@ import { computed, reactive, watch } from 'vue'
 import { ACTION_TAG_TEXT, type ActionTypeTag, type DebugNode, type DebugTreeEntry } from '@/domain/battle/replay/unified/unified-debug-tree'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { useHaotianStore } from '../stores/haotianStore'
-import Button from '@/presentation/components/Button.vue'
+
 import { useVirtualList } from '../composables/useVirtualList'
 
 const props = defineProps<{ active?: boolean }>()

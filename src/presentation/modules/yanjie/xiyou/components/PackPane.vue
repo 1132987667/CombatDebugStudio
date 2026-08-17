@@ -97,12 +97,8 @@ export type PackSub = 'pack' | 'storage' | 'shop'
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import Button from '@/presentation/components/Button.vue'
-import EmptyState from '@/presentation/components/EmptyState.vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
-import TacticalSelect from '@/presentation/components/TacticalSelect.vue'
+import type { TabItem } from '@/presentation/components'
+
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouCatalogItem, XiyouShopGood } from '../types'
 import { qualityColor } from '../quality'

@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import Button from '@/presentation/components/Button.vue'
+
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'

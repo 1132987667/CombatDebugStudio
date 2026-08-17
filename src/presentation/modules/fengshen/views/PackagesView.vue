@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
-import Button from '@/presentation/components/Button.vue'
+
 import { DataPackageService, type DataPackage, type ImportResult, type ImportStrategy } from '@/application/service/DataPackageService'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'

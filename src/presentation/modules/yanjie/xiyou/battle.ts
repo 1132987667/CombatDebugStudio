@@ -4,17 +4,18 @@
  *       参与者（BattleEntity），与唤灵台演武台同数据源；玩家运行时状态持有在 playerStore。
  */
 
-import enemiesJson from '@configs/enemies/enemies.json'
-import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
-import bossesJson from '@configs/xiyou/bosses.json'
-import { PLAYER_ID } from '@/shared/constants/player'
-import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
-import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
+import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
+import { SkillType } from '@/domain/skill/types'
 import type { EquipmentData } from '@/domain/fengshen/types'
-import { equippedSkills, pureSchoolBonus, schools, skillNodeMap } from './xiyouData'
+import { PLAYER_ID } from '@/shared/constants/player'
+import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import enemiesJson from '@configs/enemies/enemies.json'
+import bossesJson from '@configs/xiyou/bosses.json'
+import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
 import type { ProtagonistSnapshot, XiyouCombatant, XiyouScene } from './types'
+import { equippedSkills, pureSchoolBonus, schools, skillNodeMap } from './xiyouData'
 
 /** 我方初始阵容：仅主角一人（孙小圣/八戒/悟净等伙伴在 mate.json 队友表，初始不上阵） */
 export const playerParty: XiyouCombatant[] = [
@@ -71,8 +72,8 @@ function skillsOfRow(row: EnemyRow): { small: string[]; passive: string[]; ultim
   const ultimate: string[] = []
   for (const id of row.skillIds ?? []) {
     const t = enemySkillTypeById.get(id)
-    if (t === 'ultimate') ultimate.push(id)
-    else if (t === 'passive') passive.push(id)
+    if (t === SkillType.ULTIMATE) ultimate.push(id)
+    else if (t === SkillType.PASSIVE) passive.push(id)
     else small.push(id)
   }
   return { small, passive, ultimate }

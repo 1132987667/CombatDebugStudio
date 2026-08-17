@@ -88,7 +88,6 @@ const emit = defineEmits<{
 const panelRef = ref<HTMLElement | null>(null)
 const showSecondary = ref(false)
 
-// ponytail: 全局 click 监听器，点击面板外部关闭。使用 cleanup 函数避免泄漏
 let clickCleanup: (() => void) | null = null
 watch(() => props.visible, (val) => {
   if (clickCleanup) { clickCleanup(); clickCleanup = null }
@@ -110,7 +109,6 @@ watch(() => props.visible, (val) => {
 })
 onUnmounted(() => { if (clickCleanup) clickCleanup() })
 
-// ponytail: 直接使用 props.groups —— useBuffDisplay 已经完成了排序
 // 如果在面板中需要不同排序，考虑将排序函数提升为共享模块
 const sortedGroups = computed(() => props.groups)
 

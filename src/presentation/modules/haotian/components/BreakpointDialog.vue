@@ -53,11 +53,7 @@
 import { ref, watch } from 'vue'
 import type { BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { useHaotianStore } from '../stores/haotianStore'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
-import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()

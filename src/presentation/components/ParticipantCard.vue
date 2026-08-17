@@ -141,9 +141,9 @@ export interface ParticipantDisplayData {
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
+
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
-import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
@@ -153,7 +153,7 @@ import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'
 import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { AffixData, AffixLibraryData } from '@/domain/fengshen/types'
-import { AFFIX_RARITY_COLORS, affixRarityName } from '@/shared/constants/affix'
+import { QUALITY_NAMES, QUALITY_COLORS } from '@/presentation/modules/yanjie/xiyou/quality'
 import affixLibraryRaw from '@configs/affixes/affixes.json'
 
 const props = defineProps<{
@@ -219,9 +219,9 @@ const affixTags = computed(() => {
     .map((a) => ({ id: a.id, name: a.name, rarity: a.rarity ?? 1, affix: a }))
 })
 
-/** 品阶名（1-5 → 凡/精/超/绝/神） */
+/** 品质名（1-5 → 凡/精/超/绝/神） */
 function affixQuality(rarity: number): string {
-  return affixRarityName(rarity)
+  return QUALITY_NAMES[rarity] ?? '凡'
 }
 
 /** 词缀悬浮数据（复用 EntityTooltip 契约） */
@@ -245,7 +245,7 @@ const affixTooltipData = computed<TooltipData | null>(() => {
   const a = hoveredAffix.value
   if (!a) return null
   const rarity = a.rarity ?? 1
-  const color = AFFIX_RARITY_COLORS[Math.max(0, Math.min(4, rarity - 1))]
+  const color = QUALITY_COLORS[Math.max(0, Math.min(4, rarity - 1))]
   return {
     name: a.name,
     description: a.description ?? '',
@@ -411,7 +411,6 @@ const baseAttributes = computed(() => {
   return map
 })
 
-// ponytail: 参与者 ID 在气血周期内不变，直接读取
 const buffDisplay = useBuffDisplay(buffListItems, entityId.value, 5, baseAttributes)
 
 /** 无属性修饰且非控制的普通 Buff：纯名字标签（回放存档仅 name/stacks/turns，仍须在卡片上可见） */
@@ -423,10 +422,9 @@ const plainBuffLabels = computed<BuffTextItem[]>(() =>
 const situationalAttrs = useSituationalAttributes(
   computed(() => props.participant ?? null),
   computed(() => props.targetEntity ?? null),
-  ref(null), // ponytail: skill 上下文暂未接入，未来从技能选中状态传递
+  ref(null), // skill 上下文暂未接入，未来从技能选中状态传递
   computed(() => snap.value?.version ?? 0), // 版本戳变化时重新求值
 )
-
 
 // === 属性/Buff 悬停追溯 ===
 const hoveredAttr = ref<MergedAttributeLine | null>(null)
@@ -620,7 +618,6 @@ defineExpose({
   border-bottom: 1px solid var(--border-common-color-dark);
   white-space: nowrap;
 }
-
 
 .breakdown-desc {
   color: var(--color-text-tertiary);

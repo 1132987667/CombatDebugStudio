@@ -64,7 +64,6 @@ import HealthView from '@/presentation/modules/fengshen/views/HealthView.vue'
 import LogsView from '@/presentation/modules/fengshen/views/LogsView.vue'
 import PackagesView from '@/presentation/modules/fengshen/views/PackagesView.vue'
 import ExpGoldView from '@/presentation/modules/fengshen/views/ExpGoldView.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 
 /** 数据域按子领域分组（侧栏导航层次） */
 const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableName; label: string }> }> = [

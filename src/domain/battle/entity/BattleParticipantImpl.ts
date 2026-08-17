@@ -45,7 +45,7 @@ export type BattleParticipantData = {
   attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
   /** 阵营元素 ID（克制矩阵用，引用封神榜 elements 表） */
   faction?: string
-  /** ponytail: P0/AI-1 — 控制模式，默认 AI */
+  /** 控制模式，默认 AI */
   controlMode?: ControlMode
   /** 是否完全不会攻击（木人/训练靶子） */
   noAttack?: boolean

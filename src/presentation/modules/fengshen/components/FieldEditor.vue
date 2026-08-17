@@ -78,11 +78,9 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import Button from '@/presentation/components/Button.vue'
 import type { FieldSchema } from '@/domain/fengshen/schema'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const props = defineProps<{
   field: FieldSchema

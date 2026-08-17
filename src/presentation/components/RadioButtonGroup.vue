@@ -125,7 +125,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   &.radio-button--selected {
     background: var(--color-warning);
     color: var(--color-text-primary);
-    /* ponytail: border needs a darker shade; --color-brand-red-active provides contrast */
     border-color: var(--color-brand-red-active);
 
     .radio-button__icon {

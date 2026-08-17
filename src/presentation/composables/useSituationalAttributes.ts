@@ -3,7 +3,6 @@
  * 功能: 情境属性 Composable — 动态计算当前上下文中已激活的 situational 属性
  * 描述: 根据当前选中的目标、技能，从 attributeDisplay 中过滤 displayTier==='situational'
  *       且在上下文中"有意义"的属性（如元素抗性在对应元素技能下激活、对妖加成在选中妖族时激活）
- * ponytail: 用 group 推导匹配规则，而非每个属性配一个函数——够用且简单。
  *           如需更精细化匹配，可扩展为 getAttributeDisplayConfig().situationalMatcher。
  */
 
@@ -67,7 +66,6 @@ export function useSituationalAttributes(
 
 /**
  * 判断一个 situational 属性在当前上下文中是否"有意义"
- * ponytail: 用 group 做粗粒度匹配，不引入每个属性的匹配函数
  */
 function isContextRelevant(
   code: string,

@@ -84,7 +84,6 @@ export function detectCondition(raw: {
  */
 function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   const name = raw.name
-  // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
   const displayName = name || '未知效果'
   const description = raw.description || (name ? name : '无详细说明')
   const isNegative = raw.isNegative === true
@@ -291,7 +290,6 @@ export function useBuffDisplay(
       collapseThreshold - controlItems.length,
     )
     const visibleAttrLabels = mergedLabels.slice(0, visibleAttrSlots)
-    // ponytail: collapsedCount 只计实际隐藏的属性标签数，不包括一直全显的控制标签
     const collapsedCount = Math.max(0, mergedLabels.length - visibleAttrSlots)
 
     // 6. 为展开面板准备分组 — 极多 Buff 时拆分长时效果

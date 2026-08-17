@@ -185,7 +185,6 @@ import {
   type StepAccum,
 } from '@/domain/battle/replay/unified/unified-steps'
 import { useHaotianStore } from '../stores/haotianStore'
-import Button from '@/presentation/components/Button.vue'
 
 interface ScoreCandidate {
   id: string

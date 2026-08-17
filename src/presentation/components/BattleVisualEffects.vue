@@ -27,12 +27,7 @@
 
     <!-- 护盾六边形 -->
     <div v-for="hex in shieldHexes" :key="hex.id" class="shield-hex" :style="{ left: hex.x + 'px', top: hex.y + 'px' }">
-      <svg viewBox="0 0 100 100" fill="none">
-        <polygon points="50,5 90,27 90,73 50,95 10,73 10,27" stroke="var(--vfx-frost)" stroke-width="2"
-          fill="rgba(76,201,240,0.1)" />
-        <polygon points="50,20 75,35 75,65 50,80 25,65 25,35" stroke="var(--vfx-heal)" stroke-width="1" fill="none"
-          opacity="0.6" />
-      </svg>
+      <IconShieldHex />
     </div>
 
     <!-- 伤害/治疗/护盾数字 -->
@@ -45,6 +40,7 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted, type Ref } from 'vue'
+import IconShieldHex from '~icons/app/shield-hex'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing'
 import { ImpactClass } from '@/shared/utils/visual-effect-mapper.ts'
@@ -477,7 +473,7 @@ onUnmounted(() => {
 <style>
 /* ============ 全局样式（非 scoped，因为动态创建的元素在 DOM 中） ============ */
 
-/* ponytail: VFX 专用色 — 纯视觉效果独有，不纳入全局设计令牌 */
+/* VFX 专用色 — 纯视觉效果独有，不纳入全局设计令牌 */
 :root {
   --vfx-fire: #ffaa30;
   --vfx-fire-glow: #ff6600;

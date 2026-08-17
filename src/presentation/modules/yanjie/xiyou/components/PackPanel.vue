@@ -38,9 +38,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
-import Dialog from '@/presentation/components/Dialog.vue'
-import EmptyState from '@/presentation/components/EmptyState.vue'
+
 import { usePackStore } from '@/presentation/stores/packStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { qualityColor } from '../quality'

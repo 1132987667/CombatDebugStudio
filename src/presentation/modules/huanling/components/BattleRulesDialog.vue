@@ -45,9 +45,7 @@
 
 <script setup lang="ts">
 import { ref, watch, reactive } from 'vue'
-import Dialog from '@/presentation/components/Dialog.vue'
-import SpeedSelector from '@/presentation/components/SpeedSelector.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
+
 import { BattleRules } from '@/presentation/stores/battleStore'
 
 interface Props {

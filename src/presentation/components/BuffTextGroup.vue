@@ -76,8 +76,6 @@ const conditionText = computed(() => {
 const effectLines = computed(() => {
   const lines: Array<{ text: string; className: string }> = []
 
-  // ponytail: 控制效果不重复添加—header 已显示 【眩晕】剩余 3 回合
-
   // 属性修正行
   for (const mod of props.buff.modifiers) {
     const arrow = mod.value > 0 ? '↑' : '↓'

@@ -13,11 +13,7 @@
         <TacticalInput :model-value="store.search" placeholder="按名称模糊搜索…" aria-label="按名称搜索"
           @update:model-value="store.search = String($event ?? '')">
           <template #icon>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
-              stroke-linecap="round" aria-hidden="true">
-              <circle cx="7" cy="7" r="5" />
-              <path d="M11 11l3.5 3.5" />
-            </svg>
+            <IconSearch />
           </template>
         </TacticalInput>
       </div>
@@ -90,17 +86,16 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import IconSearch from '~icons/app/search'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import type { TableFilter } from '@/domain/fengshen/schema'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import DataTable from '@/presentation/modules/fengshen/components/DataTable.vue'
-import Button from '@/presentation/components/Button.vue'
 import EntityDrawer from '@/presentation/modules/fengshen/components/EntityDrawer.vue'
 import BatchEditDialog from '@/presentation/modules/fengshen/components/BatchEditDialog.vue'
 import EntityDetailPanel from '@/presentation/modules/fengshen/components/EntityDetailPanel.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
+
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { uiNavBus, OPEN_LINEUP_EVENT } from '@/presentation/uiEvents'
 

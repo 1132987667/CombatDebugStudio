@@ -56,8 +56,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
+
+import type { TabItem } from '@/presentation/components'
 import { checkinDays, events, quests } from '../xiyouData'
 import type { XiyouQuest } from '../types'
 

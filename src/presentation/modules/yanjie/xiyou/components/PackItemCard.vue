@@ -10,7 +10,7 @@
       </span>
       <span class="xy-item-meta">
         <span v-if="sellable" class="xy-item-price" :title="`实际价值 ${item.value}`">
-          <span class="xy-item-price-icon" aria-hidden="true" v-html="moneyIcon"></span>
+          <span class="xy-item-price-icon" aria-hidden="true"><IconMoney /></span>
           <span class="xy-item-price-value">{{ item.value }}</span>
         </span>
         <span class="xy-item-count">×{{ count }}</span>
@@ -38,15 +38,12 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
+
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
-import moneyIconRaw from '@/presentation/assets/icons/money.svg?raw'
+import IconMoney from '~icons/app/money'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { qualityClass, qualityColor, qualityOf } from '../quality'
 import type { XiyouCatalogItem } from '../types'
-
-/** 货币图标（money.svg 单行 XML → 提取 <svg>，随 ControlBar.vue 惯例 v-html 内联以便 CSS 着色） */
-const moneyIcon = moneyIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, '$1')
 
 const props = defineProps<{
   item: XiyouCatalogItem

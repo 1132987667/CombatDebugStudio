@@ -25,8 +25,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
+
+import type { TabItem } from '@/presentation/components'
 import PendingPanel from './PendingPanel.vue'
 import CharacterPanel from './cultivate/CharacterPanel.vue'
 import RealmPanel from './cultivate/RealmPanel.vue'

@@ -122,14 +122,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
-import NumericStepper from '@/presentation/components/NumericStepper.vue'
+import type { TabItem } from '@/presentation/components'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
+
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff } from '@/shared/types/buff-classification'

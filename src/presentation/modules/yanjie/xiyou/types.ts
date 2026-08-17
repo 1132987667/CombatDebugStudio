@@ -6,9 +6,9 @@ import type { ItemEffect } from '@/shared/types/Item'
 
 /** 玩家货币（运行时状态 · 持有在 playerStore） */
 export interface XiyouCurrency {
-  copper: number
-  silver: number
-  jade: number
+  copper: number // 铜币
+  silver: number // 银币
+  jade: number // 金币
 }
 
 /** 玩家属性快照（运行时状态 · 持有在 playerStore） */

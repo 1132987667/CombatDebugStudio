@@ -23,10 +23,10 @@
               <slot name="header-actions"></slot>
               <button type="button" class="dialog-header-btn dialog-header-btn--drag" aria-label="拖动弹窗" title="拖动弹窗"
                 @mousedown.prevent="startDrag">
-                <span class="dialog-header-btn__icon" aria-hidden="true" v-html="dragIcon"></span>
+                <span class="dialog-header-btn__icon" aria-hidden="true"><IconDrag /></span>
               </button>
               <button type="button" class="dialog-header-btn dialog-header-btn--close" aria-label="关闭弹窗" @click="close">
-                <span class="dialog-header-btn__icon" aria-hidden="true" v-html="closeIcon"></span>
+                <span class="dialog-header-btn__icon" aria-hidden="true"><IconClose /></span>
               </button>
             </div>
           </div>
@@ -50,12 +50,8 @@ const openDialogKeys: symbol[] = [];
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
-import dragIconRaw from "@/presentation/assets/icons/drag.svg?raw";
-import closeIconRaw from "@/presentation/assets/icons/close.svg?raw";
-
-// drag.svg 自带 XML 声明与 DOCTYPE，仅保留 <svg> 部分，避免 v-html 插入非法文档头
-const dragIcon = dragIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
-const closeIcon = closeIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
+import IconDrag from "~icons/app/drag";
+import IconClose from "~icons/app/close";
 
 interface Props {
   modelValue: boolean;

@@ -21,7 +21,6 @@ export function round(number: number | string, precision = 0): number {
   }
 
   const factor = Math.pow(10, precision)
-  // ponytail: 引入 Number.EPSILON 解决 1.005 * 100 = 100.49999999999999 的精度丢失问题
   return Math.round((num + Number.EPSILON) * factor) / factor
 }
 

@@ -44,6 +44,49 @@ import BattleArena from '@/presentation/views/BattleArena.vue'
 import './presentation/styles/main.scss'
 import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 
+// 全局注册高频通用组件
+import {
+  Button,
+  NumericStepper,
+  ToggleSwitch,
+  RadioButtonGroup,
+  Tabs,
+  SpeedSelector,
+  TacticalInput,
+  TacticalSelect,
+  Dialog,
+  ConfirmDialog,
+  CompendiumDialog,
+  EmptyState,
+  GlobalNotifications,
+  ModuleHeader,
+  AttributeTooltip,
+  EntityTooltip,
+  EnemyDetail,
+  ItemDetail,
+} from '@/presentation/components'
+
+const globalComponents: Record<string, any> = {
+  Button,
+  NumericStepper,
+  ToggleSwitch,
+  RadioButtonGroup,
+  Tabs,
+  SpeedSelector,
+  TacticalInput,
+  TacticalSelect,
+  Dialog,
+  ConfirmDialog,
+  CompendiumDialog,
+  EmptyState,
+  GlobalNotifications,
+  ModuleHeader,
+  AttributeTooltip,
+  EntityTooltip,
+  EnemyDetail,
+  ItemDetail,
+}
+
 
 // 加载Buff脚本
 import('@/infrastructure/di/Container').then(({ container }) => {
@@ -66,6 +109,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const app = createApp(BattleArena)
     const pinia = createPinia()
     app.use(pinia)
+
+    // 全局注册高频通用组件
+    for (const [name, component] of Object.entries(globalComponents)) {
+      app.component(name, component)
+    }
+
     app.mount(appElement)
   }
 })

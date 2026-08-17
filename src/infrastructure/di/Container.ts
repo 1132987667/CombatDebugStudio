@@ -59,7 +59,6 @@ export class Container {
       if (!service.instance && service.factory) {
         service.instance = service.factory()
       }
-      // ponytail: singleton 模式确保 instance 已初始化
       return service.instance!
     } else {
       if (service.factory) {

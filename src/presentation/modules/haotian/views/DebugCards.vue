@@ -87,7 +87,7 @@ import { ACTION_TAG_TEXT, type ActionTypeTag, type DebugNode } from '@/domain/ba
 import { buildSegResults } from '@/domain/battle/replay/unified/unified-debug-tree'
 import type { UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
-import Button from '@/presentation/components/Button.vue'
+
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 import { useHaotianStore } from '../stores/haotianStore'
 import { useVirtualList } from '../composables/useVirtualList'

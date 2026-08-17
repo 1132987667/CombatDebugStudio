@@ -2,7 +2,7 @@
   <div class="control-bar">
     <!-- 自动战斗状态指示器 -->
     <div v-if="isAutoPlaying" class="auto-battle-indicator">
-      <span class="auto-indicator-icon" aria-hidden="true" v-html="lightningIcon"></span>
+      <span class="auto-indicator-icon" aria-hidden="true"><IconLightning /></span>
       <span class="auto-indicator-text">自动战斗中</span>
       <span class="auto-indicator-speed">x{{ props.battleSpeed ?? 1 }}</span>
     </div>
@@ -33,13 +33,12 @@
       <ToggleSwitch :model-value="store.quickMode" @update:model-value="store.toggleQuickMode()"
         accent-color="var(--color-warning)" label="快速" />
 
-
     </div>
     <div class="control-group right">
       <!-- 调试模式：暂停相位指示 + 暂停 / 单步调试 -->
       <template v-if="debugMode">
         <span v-if="debugPhase" class="debug-phase-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="3" width="5" height="18" rx="1"/><rect x="14" y="3" width="5" height="18" rx="1"/></svg>
+          <IconPause aria-hidden="true" />
           暂停于：{{ debugPhaseLabel }}
         </span>
         <Button @click="handleDebugStep" :disabled="!debugPhase">
@@ -59,17 +58,13 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from "vue";
-import Button from "@/presentation/components/Button.vue";
-import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
-import ToggleSwitch from "@/presentation/components/ToggleSwitch.vue";
 import { container } from '@/infrastructure/di/Container'
 import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import type { DebugGate as DebugGateType } from '@/domain/battle/debug/DebugGate'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
-import lightningIconRaw from "@/presentation/assets/icons/lightning.svg?raw";
-
-const lightningIcon = lightningIconRaw.replace(/^[\s\S]*?(<svg[\s\S]*<\/svg>)/, "$1");
+import IconLightning from '~icons/app/lightning'
+import IconPause from '~icons/app/pause'
 
 const emitter = container.resolve<UIEventBus>('UIEventBus').getEmitter()
 let debugGate: DebugGateType | undefined
@@ -114,7 +109,6 @@ const toggleBattleSpeed = () => {
   const nextIndex = (currentIndex + 1 + levels.length) % levels.length
   emit('battle-speed-change', levels[nextIndex]);
 };
-
 
 // ========== 调试模式 ==========
 // NOTE: debugGate 是普通类，状态不可响应式追踪，

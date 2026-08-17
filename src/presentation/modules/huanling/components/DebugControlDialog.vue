@@ -70,9 +70,7 @@
 import { ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { useBattleStore } from '@/presentation/stores/battleStore'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
-import NumericStepper from '@/presentation/components/NumericStepper.vue'
+
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const debugStore = useDebugStore()
@@ -266,7 +264,6 @@ const handleButtonClick = (action: string) => {
   flex-direction: column;
   gap: var(--space-2);
 }
-
 
 .log-gen-label {
   color: rgba(var(--rgb-white), 0.6);

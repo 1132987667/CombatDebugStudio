@@ -88,8 +88,8 @@ import type { ArchiveParticipant, ArchiveBuff, UnifiedEvent } from '@/domain/bat
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
+
 import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
-import Button from '@/presentation/components/Button.vue'
 import ParticipantCard, { type ParticipantDisplayData } from '@/presentation/components/ParticipantCard.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation'

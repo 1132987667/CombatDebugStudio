@@ -374,9 +374,6 @@ export class BattleExecutor {
     return baseScope.child(TracePhase.ACTION_EXECUTION, execId)
   }
 
-  /**
-   * ponytail: P0/AI-1 — AUTO 模式决策：用权重策略选技能，无策略时走普攻
-   */
   private async autoDecision(
     battle: BattleData,
     participant: BattleEntity,
@@ -1307,7 +1304,6 @@ export class BattleExecutor {
     source: BattleEntity,
     suggestedTargetId?: string,
   ): string {
-    // ponytail: P0/AI-1 — 如果建议目标是存活敌方，直接采纳
     if (suggestedTargetId) {
       const suggested = battle.participants.get(suggestedTargetId)
       if (suggested && suggested.team !== source.team && suggested.isAlive()) {

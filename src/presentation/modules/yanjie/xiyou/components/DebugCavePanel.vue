@@ -4,9 +4,7 @@
     <header class="xy-debug__head">
       <h2 class="xy-debug__title">调试面板 <span class="xy-debug__sub">演劫台</span></h2>
       <button type="button" class="xy-debug__close" aria-label="关闭调试面板" @click="emit('update:modelValue', false)">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-        </svg>
+        <IconXClose />
       </button>
     </header>
 
@@ -109,12 +107,8 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import Button from '@/presentation/components/Button.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
-import Dialog from '@/presentation/components/Dialog.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
-import TacticalSelect from '@/presentation/components/TacticalSelect.vue'
-import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
+import IconXClose from '~icons/app/x-close'
+
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'

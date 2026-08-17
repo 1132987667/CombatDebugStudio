@@ -107,7 +107,6 @@ export class GameDataProcessor {
         if (cached) return cached
         const enemy = DataProcessor.find(dataSource.getEnemies(), (e) => e.id === id)
         if (enemy) {
-          // ponytail: 先设 maxHealth 再缓存，避免后续修改副作用
           enemy.stats.maxHealth = enemy.stats.currentHealth
           DataProcessor.setCachedData(cacheKey, enemy)
         }
@@ -276,7 +275,6 @@ export class GameDataProcessor {
     }
 
     // 9. 初始满血（词缀可能含 maxHealth 修正，故在词缀应用后再同步 currentHealth）
-    // ponytail: setAttributeBase 只改 base 不改 value，而 currentHealth 是运行时属性
     // （recalcAttribute 跳过），value 永不会从 base 同步，故直接写 value
     const curHp = participant.getAttrVal(ATTRIBUTE_CODE.currentHealth)
     if (curHp) {
@@ -397,7 +395,6 @@ export class GameDataProcessor {
     if (!passives || passives.length === 0) return
 
     for (const skill of passives) {
-      // ponytail: 统一管道 — 无 triggerTimes 的被动按 battle_start 注册
       const triggerTimes = skill.triggerTimes?.length
         ? skill.triggerTimes
         : [BattleTriggerPhase.BATTLE_START]
@@ -409,11 +406,9 @@ export class GameDataProcessor {
           continue
         }
 
-        // ponytail: 非 battle_start 无默认限制（undefined = 不限次数）
         const maxTriggerCount =
           skill.maxUses ?? (rawTrigger === 'battle_start' ? 1 : undefined)
 
-        // ponytail: 多 trigger 共享 skillId，通过 id 后缀区分以便独立计数/冷却
         const config: PassiveSkillConfig = {
           id: `${entity.id}:${skill.id}:${rawTrigger}`,
           name: skill.name,

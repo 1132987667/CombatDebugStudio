@@ -34,9 +34,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import Button from '@/presentation/components/Button.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
-import Dialog from '@/presentation/components/Dialog.vue'
+
 import { usePackStore } from '@/presentation/stores/packStore'
 import { qualityColor, qualityOf } from '../quality'
 

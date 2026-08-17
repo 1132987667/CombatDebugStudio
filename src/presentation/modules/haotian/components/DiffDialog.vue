@@ -61,8 +61,7 @@ import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { DiffRow } from '@/domain/battle/replay/unified/unified-diff'
 import { useHaotianStore } from '../stores/haotianStore'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
+
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const props = defineProps<{ open: boolean }>()

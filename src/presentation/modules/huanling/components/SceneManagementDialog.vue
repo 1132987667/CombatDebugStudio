@@ -45,11 +45,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
-import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
-import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 interface Props {
   modelValue: boolean

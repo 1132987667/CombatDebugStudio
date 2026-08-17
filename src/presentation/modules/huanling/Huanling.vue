@@ -75,7 +75,6 @@ import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogMan
 import { container } from '@/infrastructure/di/Container';
 import type { BattleSystem } from '@/domain/battle/BattleSystem';
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
-import ConfirmDialog from "@/presentation/components/ConfirmDialog.vue";
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import { useNotificationStore } from '@/presentation/stores/notificationStore';
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log';
@@ -107,7 +106,6 @@ const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const showDebugControlDialog = ref(false);
 
-// ponytail: 调试面板现在独立监听事件总线，无需 Huanling 维护 phase 状态
 
 /** 从 BattleSystem.traceCollector 刷新树状日志 */
 const handleDebugAction = async (action: string) => {
@@ -632,7 +630,6 @@ const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_ene
   notification.notify('成功', `${payload.charId} ${modeName}`, 'success')
 }
 
-
 // 开始战斗
 const startBattle = async () => {
   // 获取启用的角色和敌人的详细信息
@@ -652,7 +649,6 @@ const startBattle = async () => {
     const result = await battleStore.startBattle();
 
     if (result) {
-      // ponytail: 开始战斗后同步预设的战斗速度
       battleStore.setBattleSpeed(battleStore.battleSpeed)
       notification.notify("成功", "战斗已开始", "success");
     } else {
@@ -734,8 +730,6 @@ const resetBattle = async () => {
     notification.notify("错误", errorMsg, "error");
   }
 };
-
-
 
 // 切换自动战斗状态
 const toggleAutoPlay = async () => {

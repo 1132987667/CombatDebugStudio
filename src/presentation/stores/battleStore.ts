@@ -372,7 +372,6 @@ export const useBattleStore = defineStore('battle', () => {
   /** 处理参与者属性变更事件（Buff 触发 recalculateAll 后，在 proxy 上同步调用以使 Vue 响应式系统追踪到变更） */
   const handleAttributeChanged = (data: { characterId: string }) => {
     const id = data.characterId
-    // ponytail: 从当前 proxy 数组中找到目标，调用其 recalculateAll 走 proxy set trap
     const proxy =
       allyTeam.value.find((p) => p.id === id) ??
       enemyTeam.value.find((p) => p.id === id) ??
@@ -1133,7 +1132,6 @@ export const useBattleStore = defineStore('battle', () => {
       enemy,
       ParticipantSide.ENEMY,
     )
-    // ponytail: 注册触发型被动技能到 PassiveSkillManager（预览时生效）
     const passiveSkillManager = container.resolve<any>('PassiveSkillManager')
     GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
     previewEntity.value = entity

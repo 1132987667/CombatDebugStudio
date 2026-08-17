@@ -1,3 +1,7 @@
+<!--
+  
+
+-->
 <template>
   <div>
     <!-- 丹方网格 -->
@@ -34,11 +38,7 @@
     <!-- 丹炉：选中丹方后投料 → 炼制 -->
     <div class="xy-cave-alc-hearth" :class="{ 'xy-cave-alc-hearth--brew': brewing, 'xy-cave-ripple': rippling }">
       <div class="xy-cave-alc-kettle-wrap">
-        <svg viewBox="0 0 110 84" class="xy-cave-alc-kettle" aria-hidden="true">
-          <path d="M15 22h80M15 22l5 48a6 6 0 0 0 6 6h58a6 6 0 0 0 6-6l5-48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          <path d="M28 22h54M38 22v-8h34v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          <path d="M40 10h30M46 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        <IconKettle class="xy-cave-alc-kettle" />
         <span class="xy-cave-alc-flame" aria-hidden="true"></span>
       </div>
 
@@ -69,6 +69,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import IconKettle from '~icons/app/kettle'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'

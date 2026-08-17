@@ -4174,13 +4174,18 @@
         "attribute": "attack",
         "modifierType": "flat",
         "value": 60
+      },
+      {
+        "attribute": "controlSuccessRate",
+        "modifierType": "percent",
+        "value": 12
       }
     ],
     "materials": [],
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第41层首通掉落",
-    "description": "无尽塔第41层装备降魔杵"
+    "description": "降魔杵，攻击+60，眩晕+12%，格挡+12%"
   },
   {
     "id": "wt_42",
@@ -4195,17 +4200,27 @@
         "attribute": "defense",
         "modifierType": "flat",
         "value": 35
+      },
+      {
+        "attribute": "dodge",
+        "modifierType": "percent",
+        "value": 15
+      },
+      {
+        "attribute": "speedBonus",
+        "modifierType": "percent",
+        "value": 10
       }
     ],
     "materials": [],
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第42层首通掉落",
-    "description": "无尽塔第42层装备天蚕仙袍"
+    "description": "天蚕仙袍，防御+35，闪避+15%，速度+10%"
   },
   {
     "id": "wt_43",
-    "name": "菩提法冠",
+    "name": "菩提道冠",
     "slot": "helmet",
     "subType": "灵冠",
     "tier": "t5",
@@ -4216,13 +4231,28 @@
         "attribute": "maxHealth",
         "modifierType": "percent",
         "value": 12
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 12
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 12
       }
     ],
     "materials": [],
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第43层首通掉落",
-    "description": "无尽塔第43层装备菩提法冠"
+    "description": "菩提道冠，全属性+12%，每回合净化1负面"
   },
   {
     "id": "wt_44",
@@ -4243,11 +4273,11 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第44层首通掉落",
-    "description": "无尽塔第44层装备金乌靴"
+    "description": "金乌靴，速度+20%，先手+15%"
   },
   {
     "id": "wt_45",
-    "name": "琉璃净珠",
+    "name": "琉璃净符",
     "slot": "charm",
     "subType": "生命护符",
     "tier": "t5",
@@ -4264,7 +4294,7 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第45层首通掉落",
-    "description": "无尽塔第45层装备琉璃净珠"
+    "description": "琉璃净符，气血+18%，治疗效果+15%"
   },
   {
     "id": "wt_46",
@@ -4279,13 +4309,18 @@
         "attribute": "attack",
         "modifierType": "percent",
         "value": 18
+      },
+      {
+        "attribute": "critRate",
+        "modifierType": "percent",
+        "value": 10
       }
     ],
     "materials": [],
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第46层首通掉落",
-    "description": "无尽塔第46层装备天罡战戒"
+    "description": "天罡战戒，攻击+18%，暴击率+10%"
   },
   {
     "id": "wt_47",
@@ -4306,7 +4341,7 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第47层首通掉落",
-    "description": "无尽塔第47层装备太虚·燃魂刃"
+    "description": "太虚·燃魂刃，攻击+75，攻击后攻击+5%（叠5层）；每回合扣除5%最大生命"
   },
   {
     "id": "wt_48",
@@ -4321,13 +4356,18 @@
         "attribute": "defense",
         "modifierType": "flat",
         "value": 48
+      },
+      {
+        "attribute": "damageReduction",
+        "modifierType": "percent",
+        "value": 18
       }
     ],
     "materials": [],
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第48层首通掉落",
-    "description": "无尽塔第48层装备劫灭·燃血甲"
+    "description": "劫灭·燃血甲，防御+48，受伤减免18%；受击额外扣除2%气血"
   },
   {
     "id": "wt_49",
@@ -4342,13 +4382,33 @@
         "attribute": "maxHealth",
         "modifierType": "percent",
         "value": 18
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 18
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 18
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 18
+      },
+      {
+        "attribute": "skillCooldown",
+        "modifierType": "flat",
+        "value": -1
       }
     ],
     "materials": [],
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第49层首通掉落",
-    "description": "无尽塔第49层装备太虚·燃魂冠"
+    "description": "太虚·燃魂冠，全属性+18%，技能冷却-1；击杀后获得1回合无敌；每回合扣除5%最大生命"
   },
   {
     "id": "wt_50",
@@ -4363,12 +4423,32 @@
         "attribute": "maxHealth",
         "modifierType": "percent",
         "value": 25
+      },
+      {
+        "attribute": "attack",
+        "modifierType": "percent",
+        "value": 8
+      },
+      {
+        "attribute": "defense",
+        "modifierType": "percent",
+        "value": 8
+      },
+      {
+        "attribute": "speed",
+        "modifierType": "percent",
+        "value": 8
+      },
+      {
+        "attribute": "hpRegenPercent",
+        "modifierType": "percent",
+        "value": 3
       }
     ],
     "materials": [],
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第50层首通掉落",
-    "description": "无尽塔第50层装备劫灭·焚魄珠"
+    "description": "劫灭·焚魄珠，气血+25%，全属性+8%，每回合恢复3%气血；气血低于20%时进入「焚魄」状态（全属性+15%但无法被治疗）"
   }
 ]

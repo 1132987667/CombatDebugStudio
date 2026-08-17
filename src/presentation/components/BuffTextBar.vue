@@ -33,7 +33,6 @@ import BuffTextTag from '@/presentation/components/BuffTextTag.vue'
 import type { BuffTextItem, MergedAttributeLine } from '@/shared/types/buff-display'
 
 const barRef = ref<HTMLElement | null>(null)
-// ponytail: 保存 GSAP tween 引用，新动画开始时 kill 上一轮，防止 clearProps 叠加冲突
 let currentTween: gsap.core.Tween | null = null
 
 const props = withDefaults(defineProps<{
@@ -76,7 +75,6 @@ const displayControlLabels = computed(() => props.controlLabels)
 const displayPlainLabels = computed(() => props.plainLabels)
 
 /** 属性标签：由 useBuffDisplay 计算 visibleAttrLabels，直接消费 */
-// ponytail: 折叠逻辑已集中到 useBuffDisplay 的 collapseThreshold 参数，两边共用同一阈值
 
 // 标签变化时播放入场动画
 watch(
@@ -88,7 +86,6 @@ watch(
     await nextTick()
     const tags = barRef.value?.querySelectorAll('.buff-text-tag')
     if (!tags || tags.length === 0) return
-    // ponytail: 动画作用于所有标签（含未变化的），在短间隔变化下足够流畅
     // 若需精准只动画新增标签，可加 data-anim-key 标记做增量检测
     currentTween = gsap.fromTo(
       tags,

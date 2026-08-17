@@ -31,10 +31,7 @@
       "level": 2
     },
     "drops": {
-      "materials": [
-        "mat_taomu",
-        "mat_cushi"
-      ],
+      "materials": [],
       "gold": [
         10,
         30
@@ -89,11 +86,7 @@
       "level": 4
     },
     "drops": {
-      "materials": [
-        "mat_taomu",
-        "mat_cushi",
-        "mat_tongjing"
-      ],
+      "materials": [],
       "gold": [
         20,
         45
@@ -148,11 +141,7 @@
       "level": 6
     },
     "drops": {
-      "materials": [
-        "mat_taomu",
-        "mat_danshuiyu",
-        "mat_cushi"
-      ],
+      "materials": [],
       "gold": [
         35,
         60
@@ -267,11 +256,7 @@
       "level": 10
     },
     "drops": {
-      "materials": [
-        "mat_taomu",
-        "mat_danshuiyu",
-        "mat_tongjing"
-      ],
+      "materials": [],
       "gold": [
         70,
         120
@@ -414,11 +399,7 @@
       "level": 14
     },
     "drops": {
-      "materials": [
-        "mat_beike",
-        "mat_zhenzhu",
-        "mat_qingshui_yu"
-      ],
+      "materials": [],
       "gold": [
         100,
         170
@@ -473,11 +454,7 @@
       "level": 16
     },
     "drops": {
-      "materials": [
-        "mat_beike",
-        "mat_zhenzhu",
-        "mat_shenshuiyu"
-      ],
+      "materials": [],
       "gold": [
         120,
         200
@@ -534,11 +511,7 @@
       "level": 18
     },
     "drops": {
-      "materials": [
-        "mat_beike",
-        "mat_shenshuiyu",
-        "mat_zhenzhu"
-      ],
+      "materials": [],
       "gold": [
         150,
         240
@@ -593,11 +566,7 @@
       "level": 20
     },
     "drops": {
-      "materials": [
-        "mat_beike",
-        "mat_shenshuiyu",
-        "mat_zhenzhu"
-      ],
+      "materials": [],
       "gold": [
         180,
         280
@@ -681,11 +650,7 @@
       "level": 22
     },
     "drops": {
-      "materials": [
-        "mat_cushi",
-        "mat_tiejing",
-        "mat_songmu"
-      ],
+      "materials": [],
       "gold": [
         200,
         320
@@ -742,12 +707,7 @@
       "level": 24
     },
     "drops": {
-      "materials": [
-        "mat_tiejing",
-        "mat_jinjing",
-        "mat_cushi",
-        "mat_songmu"
-      ],
+      "materials": [],
       "gold": [
         230,
         360
@@ -802,12 +762,7 @@
       "level": 26
     },
     "drops": {
-      "materials": [
-        "mat_tiejing",
-        "mat_jinjing",
-        "mat_cushi",
-        "mat_songmu"
-      ],
+      "materials": [],
       "gold": [
         260,
         400
@@ -863,12 +818,7 @@
       "level": 28
     },
     "drops": {
-      "materials": [
-        "mat_tiejing",
-        "mat_jinjing",
-        "mat_cushi",
-        "mat_songmu"
-      ],
+      "materials": [],
       "gold": [
         300,
         450
@@ -924,12 +874,7 @@
       "level": 30
     },
     "drops": {
-      "materials": [
-        "mat_tiejing",
-        "mat_jinjing",
-        "mat_cushi",
-        "mat_songmu"
-      ],
+      "materials": [],
       "gold": [
         340,
         500
@@ -1013,12 +958,7 @@
       "level": 32
     },
     "drops": {
-      "materials": [
-        "mat_xiongpi",
-        "mat_hantan",
-        "mat_lupi",
-        "mat_xuanzhi"
-      ],
+      "materials": [],
       "gold": [
         380,
         560
@@ -1073,13 +1013,7 @@
       "level": 34
     },
     "drops": {
-      "materials": [
-        "mat_xiongpi",
-        "mat_bizhanglingye",
-        "mat_hantan",
-        "mat_lupi",
-        "mat_xuanzhi"
-      ],
+      "materials": [],
       "gold": [
         420,
         620
@@ -1134,13 +1068,7 @@
       "level": 36
     },
     "drops": {
-      "materials": [
-        "mat_xiongpi",
-        "mat_hupi",
-        "mat_bizhanglingye",
-        "mat_lupi",
-        "mat_xuanzhi"
-      ],
+      "materials": [],
       "gold": [
         460,
         680
@@ -1197,13 +1125,7 @@
       "level": 38
     },
     "drops": {
-      "materials": [
-        "mat_xiongpi",
-        "mat_bizhanglingye",
-        "mat_hantan",
-        "mat_lupi",
-        "mat_xuanzhi"
-      ],
+      "materials": [],
       "gold": [
         500,
         740
@@ -1259,13 +1181,7 @@
       "level": 40
     },
     "drops": {
-      "materials": [
-        "mat_xiongpi",
-        "mat_feicui",
-        "mat_hantan",
-        "mat_lupi",
-        "mat_xuanzhi"
-      ],
+      "materials": [],
       "gold": [
         550,
         800
@@ -1350,11 +1266,7 @@
       "level": 42
     },
     "drops": {
-      "materials": [
-        "mat_shengshui",
-        "mat_yufoxiang",
-        "mat_qinghuaci"
-      ],
+      "materials": [],
       "gold": [
         600,
         880
@@ -1410,12 +1322,7 @@
       "level": 44
     },
     "drops": {
-      "materials": [
-        "mat_shengshui",
-        "mat_yufoxiang",
-        "mat_tiangang",
-        "mat_qinghuaci"
-      ],
+      "materials": [],
       "gold": [
         650,
         950
@@ -1471,12 +1378,7 @@
       "level": 46
     },
     "drops": {
-      "materials": [
-        "mat_shengshui",
-        "mat_yufoxiang",
-        "mat_hunyuan",
-        "mat_qinghuaci"
-      ],
+      "materials": [],
       "gold": [
         700,
         1020
@@ -1532,12 +1434,7 @@
       "level": 48
     },
     "drops": {
-      "materials": [
-        "mat_shengshui",
-        "mat_tiangang",
-        "mat_hunyuan",
-        "mat_qinghuaci"
-      ],
+      "materials": [],
       "gold": [
         760,
         1100
@@ -1593,12 +1490,7 @@
       "level": 50
     },
     "drops": {
-      "materials": [
-        "mat_shengshui",
-        "mat_yufoxiang",
-        "mat_hunyuan",
-        "mat_qinghuaci"
-      ],
+      "materials": [],
       "gold": [
         820,
         1200

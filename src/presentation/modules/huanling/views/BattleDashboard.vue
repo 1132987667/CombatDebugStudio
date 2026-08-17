@@ -188,17 +188,13 @@ import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
 import { container } from '@/infrastructure/di/Container';
-import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
-import BuffTextGroup from "@/presentation/components/BuffTextGroup.vue";
-import Tabs from '@/presentation/components/Tabs.vue'
-import type { TabItem } from '@/presentation/components/Tabs.vue'
+import type { TabItem } from '@/presentation/components'
 import { useBattleStore } from '@/presentation/stores';
 import { formatBonusValue } from '@/shared/utils/format';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
-
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
-import EmptyState from '@/presentation/components/EmptyState.vue'
+import BuffTextGroup from '@/presentation/components/BuffTextGroup.vue'
 
 const battleStore = useBattleStore();
 
@@ -455,7 +451,6 @@ const getStepTypeName = (stepType?: string): string => {
 const formatCalculation = (step: ExtendedSkillStep): string => {
   if (!step.calculation) return ''
   const parts: string[] = []
-  // ponytail: 用 != null 而非 if(baseValue) 避免 baseValue=0 被跳过
   if (step.calculation.baseValue != null) parts.push(String(step.calculation.baseValue))
   if (step.calculation.extraValues) {
     for (const ev of step.calculation.extraValues) {
@@ -492,7 +487,6 @@ const handleKeyDown = (e: KeyboardEvent) => {
 const handleKeyUp = (e: KeyboardEvent) => {
   if (e.key === 'Alt') {
     altKeyHeld.value = false
-    // ponytail: Alt 释放时取消待执行的延迟隐藏并强制隐藏
     if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
     attrTooltipVisible.value = false
   }
@@ -612,9 +606,7 @@ onUnmounted(() => {
 }
 
 .skill-item:hover {
-  /* ponytail: uses --color-energy (#0a7f91) with opacity; no token for 10% bg */
   background: rgba(var(--rgb-energy), var(--alpha-wash));
-  /* ponytail: glow uses --color-energy with opacity */
   box-shadow: 0 0 8px var(--border-debug-color);
 }
 
@@ -636,7 +628,6 @@ onUnmounted(() => {
   flex-direction: column;
   gap: var(--space-2);
 }
-
 
 .skill-category-title {
   font-weight: var(--font-weight-semibold);

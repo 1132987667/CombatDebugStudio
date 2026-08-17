@@ -25,7 +25,6 @@ export interface AttributeDisplayConfig {
 
 /**
  * 属性展示配置映射表
- * ponytail: 与 AttributeMetaMap 一一对应，仅含 UI 相关的 displayTier/group 字段
  */
 export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = {
   currentHealth:               { displayTier: 'hidden',      group: 'defense' },

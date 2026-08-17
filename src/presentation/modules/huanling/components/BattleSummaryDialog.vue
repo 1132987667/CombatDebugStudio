@@ -171,8 +171,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Dialog from '@/presentation/components/Dialog.vue'
-import Button from '@/presentation/components/Button.vue'
+
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { uiNavBus, OPEN_ANALYSIS_EVENT } from '@/presentation/uiEvents'

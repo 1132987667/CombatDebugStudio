@@ -58,7 +58,7 @@
         "mat_danshuiyu"
       ],
       "rare": [
-        "bp_t1_wp"
+        "bp_t1_eq"
       ],
       "gold": [
         100,
@@ -469,8 +469,8 @@
         "mat_tongjing"
       ],
       "rare": [
-        "bp_t1_wp",
-        "bp_t1_ar"
+        "bp_t1_eq",
+        "bp_t1_eq"
       ],
       "gold": [
         200,

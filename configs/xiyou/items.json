@@ -710,7 +710,7 @@
       "value": 2000
     },
     {
-      "id": "bp_t1_wp",
+      "id": "bp_t1_eq",
       "name": "一阶武器图纸",
       "type": "图纸",
       "rarity": 1,
@@ -718,7 +718,7 @@
       "value": 80
     },
     {
-      "id": "bp_t1_ar",
+      "id": "bp_t1_eq",
       "name": "一阶衣服图纸",
       "type": "图纸",
       "rarity": 1,

@@ -429,7 +429,7 @@
     "cost": 50,
     "craftable": true,
     "recipeId": "forge_wp_t1_light_01",
-    "blueprintId": "bp_t1_wp",
+    "blueprintId": "bp_t1_eq",
     "legacyIds": ["eq_w001"],
     "source": "制造（主线，免图纸）",
     "description": "竹剑，攻击+10速度+10%"
@@ -462,7 +462,7 @@
     "cost": 60,
     "craftable": true,
     "recipeId": "forge_wp_t1_mid_01",
-    "blueprintId": "bp_t1_wp",
+    "blueprintId": "bp_t1_eq",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜棍，攻击+12"
@@ -500,7 +500,7 @@
     "cost": 70,
     "craftable": true,
     "recipeId": "forge_wp_t1_heavy_01",
-    "blueprintId": "bp_t1_wp",
+    "blueprintId": "bp_t1_eq",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜锤，攻击+14速度-5%，格挡率+5%"
@@ -533,7 +533,7 @@
     "cost": 40,
     "craftable": true,
     "recipeId": "forge_ar_t1_light_01",
-    "blueprintId": "bp_t1_ar",
+    "blueprintId": "bp_t1_eq",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "鹿皮甲，防御+6闪避+5%速度+5%"
@@ -566,7 +566,7 @@
     "cost": 50,
     "craftable": true,
     "recipeId": "forge_ar_t1_mid_01",
-    "blueprintId": "bp_t1_ar",
+    "blueprintId": "bp_t1_eq",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜木甲，防御+8气血+5%"
@@ -599,7 +599,7 @@
     "cost": 60,
     "craftable": true,
     "recipeId": "forge_ar_t1_heavy_01",
-    "blueprintId": "bp_t1_ar",
+    "blueprintId": "bp_t1_eq",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "轻铜甲，防御+10伤害减免+5%速度-5%"

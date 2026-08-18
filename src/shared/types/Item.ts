@@ -13,20 +13,32 @@ export const ItemType = {
 export type ItemType = (typeof ItemType)[keyof typeof ItemType]
 
 /**
- * 装备槽位枚举
+ * 装备槽位枚举（8 类标准槽位）
+ * 对应封神榜 equipment 表的 slot 字段，统一使用小写英文作为存储值
  */
 export const EquipmentSlot = {
   WEAPON: 'weapon', // 武器
-  ARMOR: 'armor', // 护甲
-  ACCESSORY: 'accessory', // 饰品
-  HELM: 'helm', // 头盔
-  BOOTS: 'boots', // 鞋子
+  ARMOR: 'armor', // 衣服
+  HELMET: 'helmet', // 头盔
+  BOOTS: 'boots', // 靴子
+  CHARM: 'charm', // 护符
   RING: 'ring', // 戒指
-  NECKLACE: 'necklace', // 项链
-  BRACELET: 'bracelet', // 手镯
-  BELT: 'belt', // 腰带
+  ARTIFACT: 'artifact', // 法宝
+  RELIC: 'relic', // 神器
 }
 export type EquipmentSlot = (typeof EquipmentSlot)[keyof typeof EquipmentSlot]
+
+/** 装备槽位 → 中文显示名（标准 8 槽） */
+export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
+  [EquipmentSlot.WEAPON]: '武器',
+  [EquipmentSlot.ARMOR]: '衣服',
+  [EquipmentSlot.HELMET]: '头盔',
+  [EquipmentSlot.BOOTS]: '靴子',
+  [EquipmentSlot.CHARM]: '护符',
+  [EquipmentSlot.RING]: '戒指',
+  [EquipmentSlot.ARTIFACT]: '法宝',
+  [EquipmentSlot.RELIC]: '神器',
+}
 
 /**
  * 物品效果定义

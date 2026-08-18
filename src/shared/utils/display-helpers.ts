@@ -11,14 +11,13 @@ import { ActionResultType } from '@/domain/skill/types'
 
 export const slotLabels: Record<string, string> = {
   [EquipmentSlot.WEAPON]: '武器',
-  [EquipmentSlot.ARMOR]: '护甲',
-  [EquipmentSlot.ACCESSORY]: '饰品',
-  [EquipmentSlot.HELM]: '头盔',
-  [EquipmentSlot.BOOTS]: '鞋子',
+  [EquipmentSlot.ARMOR]: '衣服',
+  [EquipmentSlot.HELMET]: '头盔',
+  [EquipmentSlot.BOOTS]: '靴子',
+  [EquipmentSlot.CHARM]: '护符',
   [EquipmentSlot.RING]: '戒指',
-  [EquipmentSlot.NECKLACE]: '项链',
-  [EquipmentSlot.BRACELET]: '手镯',
-  [EquipmentSlot.BELT]: '腰带',
+  [EquipmentSlot.ARTIFACT]: '法宝',
+  [EquipmentSlot.RELIC]: '神器',
 }
 
 export function getSlotText(slot: string): string {
@@ -29,9 +28,13 @@ export function getSlotText(slot: string): string {
 
 export const itemTypeLabels: Record<string, string> = {
   [EquipmentSlot.WEAPON]: '武器',
-  [EquipmentSlot.ARMOR]: '防具',
-  [EquipmentSlot.ACCESSORY]: '饰品',
-  [EquipmentSlot.HELM]: '头盔',
+  [EquipmentSlot.ARMOR]: '衣服',
+  [EquipmentSlot.HELMET]: '头盔',
+  [EquipmentSlot.BOOTS]: '靴子',
+  [EquipmentSlot.CHARM]: '护符',
+  [EquipmentSlot.RING]: '戒指',
+  [EquipmentSlot.ARTIFACT]: '法宝',
+  [EquipmentSlot.RELIC]: '神器',
   material: '材料',
   consumable: '消耗品',
   quest: '任务物品',

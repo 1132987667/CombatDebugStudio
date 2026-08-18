@@ -303,8 +303,8 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['name', 'slot', 'rarity', 'requiredLevel'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring'], column: { tagKind: 'slot' }, searchable: true,
-        valueLabel: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指' } },
+      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
+        valueLabel: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指', artifact: '法宝', relic: '神器' } },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'stats', label: '属性加成', type: 'array',
         description: '属性 + 修正类型（flat/percent）+ 数值',
@@ -315,7 +315,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     ],
     uniqueFields: ['name'],
     filters: [
-      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring'] },
+      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],
   },
@@ -456,8 +456,8 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['name', 'slot', 'tier', 'rarity', 'cost'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring'], column: { tagKind: 'slot' }, searchable: true,
-        valueLabel: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指' } },
+      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
+        valueLabel: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指', artifact: '法宝', relic: '神器' } },
       { key: 'subType', label: '子类型', type: 'text', searchable: true },
       { key: 'tier', label: '阶位', type: 'select', enum: ['t1', 't2', 't3', 't4', 't5'], column: { tagKind: 'neutral' }, searchable: true,
         valueLabel: { t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶' } },
@@ -475,7 +475,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     ],
     uniqueFields: ['name'],
     filters: [
-      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring'] },
+      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'] },
       { key: 'tier', label: '阶位', type: 'select', options: ['t1', 't2', 't3', 't4', 't5'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],

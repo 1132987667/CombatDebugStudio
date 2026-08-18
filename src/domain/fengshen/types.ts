@@ -11,8 +11,11 @@ import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { FormationConfig } from '@/shared/types/formation'
-import type { Item, ItemEffect } from '@/shared/types/Item'
+import type { Item, ItemEffect, EquipmentSlot } from '@/shared/types/Item'
 import type { AffixTier, AffixTarget } from '@/shared/constants/affix'
+
+/** 装备槽位类型（8 类标准槽位：武器/衣服/头盔/靴子/护符/戒指/法宝/神器） */
+export type EquipmentSlotType = EquipmentSlot
 
 /** 角色（actors 表）—— 对齐规格说明书 3.1 */
 export interface ActorData {
@@ -48,7 +51,7 @@ export interface EquipmentMaterialEntry {
 export interface EquipmentData {
   id: string
   name: string
-  slot: 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
+  slot: EquipmentSlotType
   /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/头盔/冠冕/靴子） */
   subType?: string
   /** 阶位（t1 凡品 ~ t5 仙品） */
@@ -105,7 +108,7 @@ export interface GearMaterialEntry {
 export interface GearData {
   id: string
   name: string
-  slot: 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
+  slot: EquipmentSlotType
   /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/戒指/头盔/冠冕/靴子） */
   subType?: string
   /** 阶位（t1 凡品 ~ t5 仙品） */

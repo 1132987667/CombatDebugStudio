@@ -58,8 +58,8 @@ export interface GardenPlot {
   cooldownUntil: number | null
 }
 
-/** 装备槽位键（六类装备槽，对齐 equipment.json slot：weapon/armor/helmet/boots/charm/ring） */
-export type GearSlotKey = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
+/** 装备槽位键（8 类装备槽，对齐 equipment.json slot：weapon/armor/helmet/boots/charm/ring/artifact/relic） */
+export type GearSlotKey = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring' | 'artifact' | 'relic'
 
 /** 装备槽位展示名（EquipPanel 用） */
 export const GEAR_SLOT_LABELS: Record<GearSlotKey, string> = {
@@ -69,6 +69,8 @@ export const GEAR_SLOT_LABELS: Record<GearSlotKey, string> = {
   boots: '靴子',
   charm: '护符',
   ring: '戒指',
+  artifact: '法宝',
+  relic: '神器',
 }
 
 /** 装备词条（实例化：制造时从 equipment-affixes.json 抽取并锁定数值） */

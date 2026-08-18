@@ -14,7 +14,7 @@
         { "name": "中府", "level": 5, "maxLevel": 5, "breakthrough": true, "effect": "攻击 +5" },
         { "name": "尺泽", "level": 3, "maxLevel": 5, "breakthrough": false, "effect": "攻击 +3" },
         { "name": "少商", "level": 1, "maxLevel": 5, "breakthrough": false, "effect": "暴击率 +1%" }
-      ]
+      ],
     },
     {
       "name": "任脉",
@@ -23,7 +23,7 @@
         { "name": "气海", "level": 4, "maxLevel": 5, "breakthrough": false, "effect": "能量上限 +10" },
         { "name": "膻中", "level": 2, "maxLevel": 5, "breakthrough": false, "effect": "防御 +4" },
         { "name": "承浆", "level": 0, "maxLevel": 5, "breakthrough": false, "effect": "气血回复 +2/回合" }
-      ]
+      ],
     },
     {
       "name": "督脉",
@@ -31,7 +31,7 @@
         { "name": "长强", "level": 5, "maxLevel": 5, "breakthrough": true, "effect": "速度 +2" },
         { "name": "命门", "level": 2, "maxLevel": 5, "breakthrough": false, "effect": "攻击 +2" },
         { "name": "大椎", "level": 0, "maxLevel": 5, "breakthrough": false, "effect": "防御 +3" }
-      ]
+      ],
     }
   ],
 }

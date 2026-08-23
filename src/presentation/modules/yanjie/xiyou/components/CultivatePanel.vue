@@ -4,11 +4,8 @@
       <template #character>
         <CharacterPanel @go-equip="emit('open-equip')" />
       </template>
-      <template #realm>
-        <RealmPanel />
-      </template>
       <template #school>
-        <SkillTreeView />
+        <SchoolsPanel />
       </template>
     </Tabs>
   </div>
@@ -19,8 +16,7 @@ import { ref } from 'vue'
 
 import type { TabItem } from '@/presentation/components'
 import CharacterPanel from './cultivate/CharacterPanel.vue'
-import RealmPanel from './cultivate/RealmPanel.vue'
-import SkillTreeView from './SkillTreeView.vue'
+import SchoolsPanel from './SchoolsPanel.vue'
 
 const emit = defineEmits<{ 'open-equip': [] }>()
 

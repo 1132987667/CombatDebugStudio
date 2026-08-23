@@ -1,24 +1,27 @@
 [
   {
+    "uid": "A1_01",
     "code": "currentHealth",
-    "name": "当前气血值",
-    "displayName": "当前气血值",
-    "description": "角色当前气血值",
+    "name": "当前气血",
+    "displayName": "当前气血",
+    "description": "角色当前气血",
     "range": "0-最大值",
     "impact": "直接影响角色生存能力，为0时角色死亡",
     "isPercentage": false,
     "isRuntimeState": true
   },
   {
+    "uid": "A1_02",
     "code": "maxHealth",
-    "name": "最大气血值",
-    "displayName": "最大气血值",
-    "description": "最大气血值上限",
+    "name": "最大气血",
+    "displayName": "最大气血",
+    "description": "最大气血上限",
     "range": "1-99999",
-    "impact": "决定角色的气血值上限，影响生存能力",
+    "impact": "决定角色的气血上限，影响生存能力",
     "isPercentage": false
   },
   {
+    "uid": "A1_03",
     "code": "attack",
     "name": "攻击力",
     "displayName": "攻击力",
@@ -28,6 +31,7 @@
     "isPercentage": false
   },
   {
+    "uid": "A1_04",
     "code": "defense",
     "name": "防御力",
     "displayName": "防御力",
@@ -37,6 +41,7 @@
     "isPercentage": false
   },
   {
+    "uid": "A1_07",
     "code": "speed",
     "name": "速度",
     "displayName": "速度",
@@ -46,6 +51,7 @@
     "isPercentage": false
   },
   {
+    "uid": "B1_01",
     "code": "critRate",
     "name": "暴击率",
     "displayName": "暴击率",
@@ -56,6 +62,7 @@
     "defaultValue": 10
   },
   {
+    "uid": "B1_02",
     "code": "critDamage",
     "name": "暴击伤害",
     "displayName": "暴击伤害",
@@ -66,6 +73,7 @@
     "defaultValue": 125
   },
   {
+    "uid": "F1_05",
     "code": "currentEnergy",
     "name": "当前能量",
     "displayName": "当前能量",
@@ -77,6 +85,7 @@
     "isRuntimeState": true
   },
   {
+    "uid": "F1_06",
     "code": "maxEnergy",
     "name": "最大能量",
     "displayName": "最大能量",
@@ -87,6 +96,7 @@
     "defaultValue": 200
   },
   {
+    "uid": "C1_02",
     "code": "damageReduction",
     "name": "免伤率",
     "displayName": "免伤率",
@@ -96,6 +106,7 @@
     "isPercentage": true
   },
   {
+    "uid": "D1_06",
     "code": "normalAtkDmgReduction",
     "name": "普攻伤害减免",
     "displayName": "普攻伤害减免",
@@ -105,6 +116,7 @@
     "isPercentage": true
   },
   {
+    "uid": "D1_07",
     "code": "skillDmgReduction",
     "name": "技能伤害减免",
     "displayName": "技能伤害减免",
@@ -114,6 +126,7 @@
     "isPercentage": true
   },
   {
+    "uid": "D1_04",
     "code": "critDmgTakenReduction",
     "name": "暴击承伤减免",
     "displayName": "暴击承伤减免",
@@ -123,33 +136,37 @@
     "isPercentage": true
   },
   {
+    "uid": "C1_04",
     "code": "hpRegenPercent",
     "name": "气血回复(%)",
     "displayName": "百分比气血回复",
     "description": "每回合恢复最大气血的百分比",
     "range": "0-50%",
-    "impact": "按最大气血值百分比回复气血，适合高血量角色",
+    "impact": "按最大气血百分比回复气血，适合高血量角色",
     "isPercentage": true
   },
   {
+    "uid": "C1_05",
     "code": "hpRegenFlat",
     "name": "气血回复(固定)",
     "displayName": "固定气血回复",
-    "description": "每回合恢复固定的气血值",
+    "description": "每回合恢复固定的气血",
     "range": "0-9999",
-    "impact": "每回合回复固定数值的气血值",
+    "impact": "每回合回复固定数值的气血",
     "isPercentage": false
   },
   {
+    "uid": "A2_01",
     "code": "healthBonus",
-    "name": "气血值加成",
-    "displayName": "气血值加成",
-    "description": "基于基础气血值的加成百分比",
+    "name": "气血加成",
+    "displayName": "气血加成",
+    "description": "基于基础气血的加成百分比",
     "range": "0-500%",
-    "impact": "按百分比提高最大气血值上限",
+    "impact": "按百分比提高最大气血上限",
     "isPercentage": true
   },
   {
+    "uid": "A2_02",
     "code": "attackBonus",
     "name": "攻击力加成",
     "displayName": "攻击力加成",
@@ -159,6 +176,7 @@
     "isPercentage": true
   },
   {
+    "uid": "A2_03",
     "code": "defenseBonus",
     "name": "防御力加成",
     "displayName": "防御力加成",
@@ -168,6 +186,7 @@
     "isPercentage": true
   },
   {
+    "uid": "A2_06",
     "code": "speedBonus",
     "name": "速度加成",
     "displayName": "速度加成",
@@ -177,96 +196,7 @@
     "isPercentage": true
   },
   {
-    "code": "waterAtk",
-    "name": "水属性攻击",
-    "displayName": "水属性攻击力",
-    "description": "水元素属性攻击力",
-    "range": "0-9999",
-    "impact": "对火属性敌人造成额外伤害",
-    "isPercentage": false
-  },
-  {
-    "code": "fireAtk",
-    "name": "火属性攻击",
-    "displayName": "火属性攻击力",
-    "description": "火元素属性攻击力",
-    "range": "0-9999",
-    "impact": "对金属性敌人造成额外伤害",
-    "isPercentage": false
-  },
-  {
-    "code": "metalAtk",
-    "name": "金属性攻击",
-    "displayName": "金属性攻击力",
-    "description": "金元素属性攻击力",
-    "range": "0-9999",
-    "impact": "对木属性敌人造成额外伤害",
-    "isPercentage": false
-  },
-  {
-    "code": "woodAtk",
-    "name": "木属性攻击",
-    "displayName": "木属性攻击力",
-    "description": "木元素属性攻击力",
-    "range": "0-9999",
-    "impact": "对土属性敌人造成额外伤害",
-    "isPercentage": false
-  },
-  {
-    "code": "earthAtk",
-    "name": "土属性攻击",
-    "displayName": "土属性攻击力",
-    "description": "土元素属性攻击力",
-    "range": "0-9999",
-    "impact": "对水属性敌人造成额外伤害",
-    "isPercentage": false
-  },
-  {
-    "code": "metalRes",
-    "name": "金属性抗性",
-    "displayName": "金属性抗性",
-    "description": "对金元素攻击的抗性",
-    "range": "0-100%",
-    "impact": "减少受到的金属性伤害",
-    "isPercentage": true
-  },
-  {
-    "code": "woodRes",
-    "name": "木属性抗性",
-    "displayName": "木属性抗性",
-    "description": "对木元素攻击的抗性",
-    "range": "0-100%",
-    "impact": "减少受到的木属性伤害",
-    "isPercentage": true
-  },
-  {
-    "code": "waterRes",
-    "name": "水属性抗性",
-    "displayName": "水属性抗性",
-    "description": "对水元素攻击的抗性",
-    "range": "0-100%",
-    "impact": "减少受到的水属性伤害",
-    "isPercentage": true
-  },
-  {
-    "code": "fireRes",
-    "name": "火属性抗性",
-    "displayName": "火属性抗性",
-    "description": "对火元素攻击的抗性",
-    "range": "0-100%",
-    "impact": "减少受到的火属性伤害",
-    "isPercentage": true
-  },
-  {
-    "code": "earthRes",
-    "name": "土属性抗性",
-    "displayName": "土属性抗性",
-    "description": "对土元素攻击的抗性",
-    "range": "0-100%",
-    "impact": "减少受到的土属性伤害",
-    "isPercentage": true
-  },
-  {
+    "uid": "A1_05",
     "code": "hitValue",
     "name": "命中值",
     "displayName": "命中值",
@@ -277,6 +207,7 @@
     "defaultValue": 100
   },
   {
+    "uid": "A1_06",
     "code": "dodgeValue",
     "name": "闪避值",
     "displayName": "闪避值",
@@ -287,6 +218,7 @@
     "defaultValue": 0
   },
   {
+    "uid": "D1_02",
     "code": "dodge",
     "name": "闪避率",
     "displayName": "闪避率",
@@ -297,6 +229,7 @@
     "defaultValue": 10
   },
   {
+    "uid": "D1_01",
     "code": "hit",
     "name": "命中率",
     "displayName": "命中率",
@@ -307,6 +240,7 @@
     "defaultValue": 90
   },
   {
+    "uid": "F1_10",
     "code": "controlSuccessRate",
     "name": "控制成功率",
     "displayName": "控制技能成功率",
@@ -316,6 +250,7 @@
     "isPercentage": true
   },
   {
+    "uid": "D1_10",
     "code": "controlDurationReduction",
     "name": "控制时间减免",
     "displayName": "受控制时间减免",
@@ -325,6 +260,7 @@
     "isPercentage": true
   },
   {
+    "uid": "H1_11",
     "code": "damageTakenIncrease",
     "name": "易伤",
     "displayName": "受到伤害增加",
@@ -334,6 +270,7 @@
     "isPercentage": true
   },
   {
+    "uid": "B2_01",
     "code": "damageBoost",
     "name": "伤害提升",
     "displayName": "伤害提升",
@@ -343,6 +280,7 @@
     "isPercentage": true
   },
   {
+    "uid": "D1_11",
     "code": "poisonRes",
     "name": "毒素抗性",
     "displayName": "毒素抗性",
@@ -352,6 +290,7 @@
     "isPercentage": true
   },
   {
+    "uid": "B2_05",
     "code": "fireSkillDmgBonus",
     "name": "火系技能伤害加成",
     "displayName": "火系技能伤害加成",
@@ -361,6 +300,7 @@
     "isPercentage": true
   },
   {
+    "uid": "B2_06",
     "code": "physicalSkillDmgBonus",
     "name": "物理技能伤害加成",
     "displayName": "物理技能伤害加成",
@@ -370,6 +310,7 @@
     "isPercentage": true
   },
   {
+    "uid": "B2_07",
     "code": "damageToDemon",
     "name": "对妖伤害加成",
     "displayName": "对妖魔鬼怪伤害加成",
@@ -379,25 +320,28 @@
     "isPercentage": true
   },
   {
+    "uid": "B2_08",
     "code": "damageToLowHp",
     "name": "对低血量伤害加成",
     "displayName": "对低血量目标伤害加成",
-    "description": "对气血值低于一定比例的目标造成的额外伤害百分比",
+    "description": "对气血低于一定比例的目标造成的额外伤害百分比",
     "range": "0-200%",
     "impact": "提高对低血量目标的伤害输出",
     "isPercentage": true
   },
   {
+    "uid": "C1_01",
     "code": "shield",
     "name": "护盾值",
     "displayName": "护盾值",
     "description": "当前护盾值，受到伤害时优先消耗护盾",
     "range": "0-99999",
-    "impact": "吸收受到的伤害，护盾归零后开始消耗气血值",
+    "impact": "吸收受到的伤害，护盾归零后开始消耗气血",
     "isPercentage": false,
     "isRuntimeState": true
   },
   {
+    "uid": "C1_03",
     "code": "reflectDamagePercent",
     "name": "伤害反弹",
     "displayName": "反弹伤害比例",
@@ -407,6 +351,7 @@
     "isPercentage": true
   },
   {
+    "uid": "D1_09",
     "code": "debuffImmunityRate",
     "name": "减益免疫率",
     "displayName": "减益免疫率",
@@ -416,6 +361,7 @@
     "isPercentage": true
   },
   {
+    "uid": "B2_09",
     "code": "demonDamage",
     "name": "妖魔鬼怪伤害",
     "displayName": "妖魔鬼怪伤害",
@@ -425,6 +371,7 @@
     "isPercentage": false
   },
   {
+    "uid": "F1_07",
     "code": "skillCooldown",
     "name": "技能冷却",
     "displayName": "技能冷却",
@@ -434,6 +381,7 @@
     "isPercentage": false
   },
   {
+    "uid": "D1_12",
     "code": "critDamageTaken",
     "name": "受到暴击伤害",
     "displayName": "受到暴击伤害",
@@ -443,6 +391,7 @@
     "isPercentage": true
   },
   {
+    "uid": "F1_08",
     "code": "burnDuration",
     "name": "灼烧持续时间",
     "displayName": "灼烧持续时间",
@@ -452,6 +401,7 @@
     "isPercentage": false
   },
   {
+    "uid": "E1_11",
     "code": "fireDamage",
     "name": "火属性伤害",
     "displayName": "火属性伤害",
@@ -461,6 +411,7 @@
     "isPercentage": false
   },
   {
+    "uid": "E1_12",
     "code": "fireDamageTaken",
     "name": "受到火属性伤害",
     "displayName": "受到火属性伤害",
@@ -470,6 +421,7 @@
     "isPercentage": true
   },
   {
+    "uid": "E1_13",
     "code": "waterDamageTaken",
     "name": "受到水属性伤害",
     "displayName": "受到水属性伤害",
@@ -479,6 +431,7 @@
     "isPercentage": true
   },
   {
+    "uid": "E1_14",
     "code": "lightningDamageTaken",
     "name": "受到雷属性伤害",
     "displayName": "受到雷属性伤害",
@@ -488,6 +441,7 @@
     "isPercentage": true
   },
   {
+    "uid": "F1_09",
     "code": "webSuccessRate",
     "name": "蛛网成功率",
     "displayName": "蛛网成功率",
@@ -497,6 +451,7 @@
     "isPercentage": true
   },
   {
+    "uid": "B1_04",
     "code": "trueDamageRate",
     "name": "真实伤害率",
     "displayName": "真实伤害率",
@@ -506,6 +461,7 @@
     "isPercentage": true
   },
   {
+    "uid": "H1_12",
     "code": "healReceived",
     "name": "受到治疗加成",
     "displayName": "受到治疗加成",
@@ -515,6 +471,7 @@
     "isPercentage": true
   },
   {
+    "uid": "B1_03",
     "code": "comboRate",
     "name": "连击率",
     "displayName": "连击率",
@@ -524,6 +481,7 @@
     "isPercentage": true
   },
   {
+    "uid": "F1_01",
     "code": "counterRate",
     "name": "反击率",
     "displayName": "反击率",
@@ -533,6 +491,7 @@
     "isPercentage": true
   },
   {
+    "uid": "G2_02",
     "code": "damageDealt",
     "name": "造成伤害",
     "displayName": "造成伤害",
@@ -542,6 +501,7 @@
     "isPercentage": false
   },
   {
+    "uid": "G2_03",
     "code": "damageTaken",
     "name": "受到伤害",
     "displayName": "受到伤害",
@@ -551,6 +511,7 @@
     "isPercentage": false
   },
   {
+    "uid": "F1_04",
     "code": "energyInit",
     "name": "初始能量",
     "displayName": "初始能量",
@@ -561,12 +522,483 @@
     "defaultValue": 30
   },
   {
+    "uid": "F1_02",
     "code": "lifestealRate",
     "name": "吸血率",
     "displayName": "吸血率",
     "description": "造成伤害时按比例回复气血",
     "range": "0-100%",
     "impact": "提高吸血能力，造成伤害时按比例恢复气血",
+    "isPercentage": true
+  },
+  {
+    "uid": "A2_04",
+    "code": "hitBonus",
+    "name": "命中加成",
+    "displayName": "命中加成",
+    "description": "按百分比提高命中",
+    "range": "0-100%",
+    "impact": "百分比提高命中值",
+    "isPercentage": true
+  },
+  {
+    "uid": "A2_05",
+    "code": "dodgeBonus",
+    "name": "闪避加成",
+    "displayName": "闪避加成",
+    "description": "按百分比提高闪避",
+    "range": "0-100%",
+    "impact": "百分比提高闪避值",
+    "isPercentage": true
+  },
+  {
+    "uid": "A3_01",
+    "code": "healthCoefficient",
+    "name": "气血系数",
+    "displayName": "气血系数",
+    "description": "对气血进行独立乘区放大",
+    "range": "0-60%",
+    "impact": "独立乘区放大最大气血",
+    "isPercentage": true
+  },
+  {
+    "uid": "A3_02",
+    "code": "attackCoefficient",
+    "name": "攻击系数",
+    "displayName": "攻击系数",
+    "description": "对攻击进行独立乘区放大",
+    "range": "0-60%",
+    "impact": "独立乘区放大攻击力",
+    "isPercentage": true
+  },
+  {
+    "uid": "A3_03",
+    "code": "defenseCoefficient",
+    "name": "防御系数",
+    "displayName": "防御系数",
+    "description": "对防御进行独立乘区放大",
+    "range": "0-60%",
+    "impact": "独立乘区放大防御力",
+    "isPercentage": true
+  },
+  {
+    "uid": "A3_04",
+    "code": "hitCoefficient",
+    "name": "命中系数",
+    "displayName": "命中系数",
+    "description": "对命中进行独立乘区放大",
+    "range": "0-60%",
+    "impact": "独立乘区放大命中值",
+    "isPercentage": true
+  },
+  {
+    "uid": "A3_05",
+    "code": "dodgeCoefficient",
+    "name": "闪避系数",
+    "displayName": "闪避系数",
+    "description": "对闪避进行独立乘区放大",
+    "range": "0-60%",
+    "impact": "独立乘区放大闪避值",
+    "isPercentage": true
+  },
+  {
+    "uid": "A3_06",
+    "code": "speedCoefficient",
+    "name": "速度系数",
+    "displayName": "速度系数",
+    "description": "对速度进行独立乘区放大",
+    "range": "0-60%",
+    "impact": "独立乘区放大速度",
+    "isPercentage": true
+  },
+  {
+    "uid": "A4_01",
+    "code": "finalAttack",
+    "name": "最终攻击",
+    "displayName": "最终攻击",
+    "description": "最终层提高攻击，不被任何乘区稀释",
+    "range": "0-60%",
+    "impact": "最终乘区提高攻击",
+    "isPercentage": true
+  },
+  {
+    "uid": "A4_02",
+    "code": "finalDefense",
+    "name": "最终防御",
+    "displayName": "最终防御",
+    "description": "最终层提高防御，不被任何乘区稀释",
+    "range": "0-60%",
+    "impact": "最终乘区提高防御",
+    "isPercentage": true
+  },
+  {
+    "uid": "B1_05",
+    "code": "trueDamageFlat",
+    "name": "真伤附加值",
+    "displayName": "真伤附加值",
+    "description": "额外附加的固定真实伤害，不随倍率放大",
+    "range": "0-1000",
+    "impact": "附加固定真实伤害",
+    "isPercentage": false
+  },
+  {
+    "uid": "B2_02",
+    "code": "normalAtkBonus",
+    "name": "普攻加成",
+    "displayName": "普攻加成",
+    "description": "仅按百分比提高普攻伤害",
+    "range": "0-100%",
+    "impact": "提高普攻伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "B2_03",
+    "code": "skillBonus",
+    "name": "技能加成",
+    "displayName": "技能加成",
+    "description": "仅按百分比提高技能伤害",
+    "range": "0-50%",
+    "impact": "提高技能伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "B2_04",
+    "code": "counterDamageBonus",
+    "name": "反击伤害加成",
+    "displayName": "反击伤害加成",
+    "description": "仅按百分比提高反击的伤害",
+    "range": "0-150%",
+    "impact": "提高反击伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "B3_01",
+    "code": "damageCoefficient",
+    "name": "伤害系数",
+    "displayName": "伤害系数",
+    "description": "对造成的伤害进行独立乘区放大",
+    "range": "0-150%",
+    "impact": "独立乘区放大造成伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "B3_02",
+    "code": "counterDamageCoefficient",
+    "name": "反击伤害系数",
+    "displayName": "反击伤害系数",
+    "description": "独立放大反击段的伤害",
+    "range": "0-150%",
+    "impact": "独立乘区放大反击伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "B3_03",
+    "code": "comboDamageCoefficient",
+    "name": "连击伤害系数",
+    "displayName": "连击伤害系数",
+    "description": "独立放大连击段的伤害",
+    "range": "0-150%",
+    "impact": "独立乘区放大连击伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "B3_04",
+    "code": "trueDamageCoefficient",
+    "name": "真伤系数",
+    "displayName": "真伤系数",
+    "description": "独立放大真实伤害",
+    "range": "0-150%",
+    "impact": "独立乘区放大真实伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "B4_01",
+    "code": "finalDamageBoost",
+    "name": "最终伤害提升",
+    "displayName": "最终伤害提升",
+    "description": "最终层提高造成的伤害",
+    "range": "0-150%",
+    "impact": "最终乘区提高造成伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "C3_01",
+    "code": "damageReductionCoefficient",
+    "name": "免伤系数",
+    "displayName": "免伤系数",
+    "description": "独立放大免伤效果",
+    "range": "0-50%",
+    "impact": "独立乘区放大免伤率",
+    "isPercentage": true
+  },
+  {
+    "uid": "C4_01",
+    "code": "finalDamageReduction",
+    "name": "最终伤害减免",
+    "displayName": "最终伤害减免",
+    "description": "最终层减少受到的伤害",
+    "range": "0-40%",
+    "impact": "最终乘区减少受到伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "D1_03",
+    "code": "critResist",
+    "name": "暴击抵抗",
+    "displayName": "暴击抵抗",
+    "description": "降低敌方对自己的暴击率",
+    "range": "0-55%",
+    "impact": "降低被暴击概率",
+    "isPercentage": true
+  },
+  {
+    "uid": "D1_05",
+    "code": "trueDamageResist",
+    "name": "真伤抗性",
+    "displayName": "真伤抗性",
+    "description": "减少受到的真实伤害",
+    "range": "0-62%",
+    "impact": "减少受到的真实伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "D1_08",
+    "code": "controlImmunity",
+    "name": "控制豁免",
+    "displayName": "控制豁免",
+    "description": "降低被敌方控制的概率",
+    "range": "0-62%",
+    "impact": "降低被控制概率",
+    "isPercentage": true
+  },
+  {
+    "uid": "F1_03",
+    "code": "effectHit",
+    "name": "效果命中",
+    "displayName": "效果命中",
+    "description": "提高减益与异常状态的命中概率",
+    "range": "0-50%",
+    "impact": "提高减益与异常状态命中率",
+    "isPercentage": true
+  },
+  {
+    "uid": "F2_01",
+    "code": "energyGainEfficiency",
+    "name": "能量获取效率",
+    "displayName": "能量获取效率",
+    "description": "按百分比放大所有来源获得的能量",
+    "range": "0-100%",
+    "impact": "放大能量获取",
+    "isPercentage": true
+  },
+  {
+    "uid": "G2_01",
+    "code": "splash",
+    "name": "溅射",
+    "displayName": "溅射",
+    "description": "攻击主目标时对相邻目标造成的伤害比例",
+    "range": "0-200%",
+    "impact": "对相邻目标造成溅射伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_01",
+    "code": "armorBreak",
+    "name": "破甲",
+    "displayName": "破甲",
+    "description": "降低目标防御，可叠加层数",
+    "range": "0-50%",
+    "impact": "降低目标防御",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_02",
+    "code": "vulnerability",
+    "name": "易伤",
+    "displayName": "易伤",
+    "description": "提高目标受到的伤害",
+    "range": "0-100%",
+    "impact": "提高目标承伤",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_05",
+    "code": "shieldBonus",
+    "name": "护盾加成",
+    "displayName": "护盾加成",
+    "description": "放大所有来源提供的护盾值",
+    "range": "0-100%",
+    "impact": "放大护盾值",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_06",
+    "code": "shieldReduction",
+    "name": "护盾削减",
+    "displayName": "护盾削减",
+    "description": "降低目标获得的护盾值",
+    "range": "0-50%",
+    "impact": "降低目标护盾值",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_09",
+    "code": "reflectBonus",
+    "name": "伤害反弹加成",
+    "displayName": "伤害反弹加成",
+    "description": "放大反弹伤害的数值",
+    "range": "0-300%",
+    "impact": "放大反弹伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_10",
+    "code": "reflectReduction",
+    "name": "伤害反弹削减",
+    "displayName": "伤害反弹削减",
+    "description": "降低目标反弹伤害的数值",
+    "range": "0-50%",
+    "impact": "降低目标反弹伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_03",
+    "code": "lifestealBonus",
+    "name": "吸血效果加成",
+    "displayName": "吸血效果加成",
+    "description": "放大吸血回复量",
+    "range": "0-100%",
+    "impact": "放大吸血回复量",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_04",
+    "code": "lifestealReduction",
+    "name": "吸血效果削减",
+    "displayName": "吸血效果削减",
+    "description": "降低目标吸血的回复量",
+    "range": "0-50%",
+    "impact": "降低目标吸血回复量",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_07",
+    "code": "healBonus",
+    "name": "治疗强度加成",
+    "displayName": "治疗强度加成",
+    "description": "放大提供的治疗效果",
+    "range": "0-100%",
+    "impact": "放大治疗效果",
+    "isPercentage": true
+  },
+  {
+    "uid": "H1_08",
+    "code": "healReduction",
+    "name": "治疗强度削减",
+    "displayName": "治疗强度削减",
+    "description": "降低目标受到的治疗效果",
+    "range": "0-50%",
+    "impact": "降低目标受到的治疗效果",
+    "isPercentage": true
+  },
+  {
+    "uid": "E1_03",
+    "code": "waterAtk",
+    "name": "水属性攻击",
+    "displayName": "水属性攻击力",
+    "description": "水元素属性攻击力",
+    "range": "0-9999",
+    "impact": "对火属性敌人造成额外伤害",
+    "isPercentage": false
+  },
+  {
+    "uid": "E1_04",
+    "code": "fireAtk",
+    "name": "火属性攻击",
+    "displayName": "火属性攻击力",
+    "description": "火元素属性攻击力",
+    "range": "0-9999",
+    "impact": "对金属性敌人造成额外伤害",
+    "isPercentage": false
+  },
+  {
+    "uid": "E1_01",
+    "code": "metalAtk",
+    "name": "金属性攻击",
+    "displayName": "金属性攻击力",
+    "description": "金元素属性攻击力",
+    "range": "0-9999",
+    "impact": "对木属性敌人造成额外伤害",
+    "isPercentage": false
+  },
+  {
+    "uid": "E1_02",
+    "code": "woodAtk",
+    "name": "木属性攻击",
+    "displayName": "木属性攻击力",
+    "description": "木元素属性攻击力",
+    "range": "0-9999",
+    "impact": "对土属性敌人造成额外伤害",
+    "isPercentage": false
+  },
+  {
+    "uid": "E1_05",
+    "code": "earthAtk",
+    "name": "土属性攻击",
+    "displayName": "土属性攻击力",
+    "description": "土元素属性攻击力",
+    "range": "0-9999",
+    "impact": "对水属性敌人造成额外伤害",
+    "isPercentage": false
+  },
+  {
+    "uid": "E1_06",
+    "code": "metalRes",
+    "name": "金属性抗性",
+    "displayName": "金属性抗性",
+    "description": "对金元素攻击的抗性",
+    "range": "0-100%",
+    "impact": "减少受到的金属性伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "E1_07",
+    "code": "woodRes",
+    "name": "木属性抗性",
+    "displayName": "木属性抗性",
+    "description": "对木元素攻击的抗性",
+    "range": "0-100%",
+    "impact": "减少受到的木属性伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "E1_08",
+    "code": "waterRes",
+    "name": "水属性抗性",
+    "displayName": "水属性抗性",
+    "description": "对水元素攻击的抗性",
+    "range": "0-100%",
+    "impact": "减少受到的水属性伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "E1_09",
+    "code": "fireRes",
+    "name": "火属性抗性",
+    "displayName": "火属性抗性",
+    "description": "对火元素攻击的抗性",
+    "range": "0-100%",
+    "impact": "减少受到的火属性伤害",
+    "isPercentage": true
+  },
+  {
+    "uid": "E1_10",
+    "code": "earthRes",
+    "name": "土属性抗性",
+    "displayName": "土属性抗性",
+    "description": "对土元素攻击的抗性",
+    "range": "0-100%",
+    "impact": "减少受到的土属性伤害",
     "isPercentage": true
   }
 ]

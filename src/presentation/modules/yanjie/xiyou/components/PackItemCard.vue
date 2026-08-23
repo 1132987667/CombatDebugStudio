@@ -176,8 +176,8 @@ onBeforeUnmount(() => {
   &:hover {
     transform: translateY(-4px);
     box-shadow:
-      0 0 0 3px var(--xy-paper),
-      0 0 0 6px var(--ring),
+      0 0 0 2px var(--xy-paper),
+      0 0 0 4px var(--ring),
       0 0 34px var(--glow),
       0 22px 46px rgba(0, 0, 0, 0.4);
 

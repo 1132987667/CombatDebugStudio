@@ -51,6 +51,11 @@ import type {
   XiyouEquippedSkills,
   XiyouStorageCell,
   XiyouTreasure,
+  SchoolsLayer,
+  SchoolsLayerRaw,
+  SchoolsNode,
+  SchoolsSchoolDef,
+  SchoolsSchoolId,
 } from './types'
 
 export const regions: XiyouRegion[] = reactive<XiyouRegion[]>(regionsJson as unknown as XiyouRegion[])
@@ -158,14 +163,72 @@ function toSkillNode(raw: XiyouSkillTreeRawNode): XiyouSkillNode {
 /** 由 skill_tree.json 构建全部技能树节点（按 schoolId 挂到 schools.nodes，configs 兜底数据源） */
 const SKILL_TREE_RAW = (skillTreeJson as { nodes?: XiyouSkillTreeRawNode[] }).nodes ?? []
 
-// NOTE: schools.json 为对象包裹（{ schools: [...] }，与 cultivate/equip/mate 等一致），
-//       需取内层数组——直接 cast 会让 schools 变成非数组对象，.find 等数组方法崩溃。
+// ════════════════════════════════════════════════════════════
+// 旧格式兼容：从 skill_tree.json 提取流派列表（保留 .schools 向后兼容）
+// NOTE: 新 schools.json 的 schools 字段已改为 { id: name } 映射，
+//       旧代码仍需要 XiyouSchool[] 数组（battle.ts / save-bridge.ts / SkillTreeView），
+//       此处从 skill_tree.json 的 schoolId 去重推导流派列表，保持兼容。
+// ════════════════════════════════════════════════════════════
+const SCHOOL_NAME_MAP = (schoolsJson as { schools: Record<string, string> }).schools ?? {}
+const SCHOOL_IDS = [...new Set(SKILL_TREE_RAW.map((n) => n.schoolId))]
+
 export const schools: XiyouSchool[] = reactive<XiyouSchool[]>(
-  ((schoolsJson as unknown as { schools: XiyouSchool[] }).schools ?? []).map((s) => ({
-    ...s,
-    nodes: SKILL_TREE_RAW.filter((n) => n.schoolId === s.id).map(toSkillNode),
+  SCHOOL_IDS.map((id) => ({
+    id,
+    name: SCHOOL_NAME_MAP[id] ?? id,
+    motto: '',
+    branches: [],
+    nodes: SKILL_TREE_RAW.filter((n) => n.schoolId === id).map(toSkillNode),
   })),
 )
+
+// ════════════════════════════════════════════════════════════
+// 新格式：schools.json 天赋树（10 层 × 5 流派，Canvas 渲染）
+// ════════════════════════════════════════════════════════════
+
+/** 流派定义列表（从 schools.json schools 字段派生） */
+export const schoolsDefs: SchoolsSchoolDef[] = Object.entries(
+  (schoolsJson as { schools: Record<string, string> }).schools ?? {},
+).map(([id, name]) => ({ id: id as SchoolsSchoolId, name }))
+
+/** 天赋树层数组（reactive，Canvas 渲染数据源） */
+export const schoolsLayers: SchoolsLayer[] = reactive<SchoolsLayer[]>(
+  ((schoolsJson as { layers: SchoolsLayerRaw[] }).layers ?? []).map((layer) => ({
+    layer: layer.layer,
+    pointsRequired: layer.pointsRequired,
+    nodes: layer.nodes.map((raw, idx) => ({
+      id: `${layer.layer}_${idx}`,
+      school: raw.school as SchoolsSchoolId,
+      type: raw.type as SchoolsNode['type'],
+      name: raw.name,
+      code: raw.code,
+      cost: raw.cost,
+      value: raw.value,
+      suffix: raw.suffix,
+      description: raw.description,
+      skillKind: raw.skillKind,
+      layer: layer.layer,
+      index: idx,
+      learned: false,
+      x: 0,
+      y: 0,
+    })),
+  })),
+)
+
+/** 天赋树节点索引（id → SchoolsNode，用于解锁/查询） */
+export const schoolsNodeMap: Map<string, SchoolsNode> = new Map()
+
+/** 重建天赋树节点索引 */
+export function rebuildSchoolsNodeMap(): void {
+  schoolsNodeMap.clear()
+  for (const layer of schoolsLayers) {
+    for (const node of layer.nodes) {
+      schoolsNodeMap.set(node.id, node)
+    }
+  }
+}
+rebuildSchoolsNodeMap()
 
 /** 流派技能点（v3.0：全局 60 点 = 等级 50 + 悟道丹 10，跨流派共享）
  *  NOTE: earned 初始为初始等级-1（playerConfig.initialLevel=5 → 已获得 4 点），升级/悟道丹累加 */

@@ -1,0 +1,103 @@
+{
+  "schools": [
+    {
+      "id": "linghou",
+      "name": "灵猴道",
+      "motto": "快不是目的，是手段。",
+      "positioning": "高频连击、速度、能量自循环",
+      "unlockScene": "scene_1_1",
+      "unlockNarrative": "小猴子，跑得快不算本事。知道往哪跑，才是。",
+      "pureBonus": {
+        "attribute": "comboRate",
+        "value": 10,
+        "desc": "纯灵猴道加成：连击率 +10%"
+      },
+      "energyRhythm": {
+        "trigger": "连击触发时额外 +5 能量",
+        "ultFrequency": "4-5 回合"
+      },
+      "branches": ["连击", "身法", "灵能"],
+      "style": "轻型",
+      "weaponPreference": "light_weapon"
+    },
+    {
+      "id": "jinxing",
+      "name": "金行道",
+      "motto": "锐不是天赋，是千锤百炼。",
+      "positioning": "单发高伤、暴击、无视防御、蓄力爆发",
+      "unlockScene": "scene_3_2",
+      "unlockNarrative": "一块刻着「金行」的铁片。锐不是天赋，是千锤百炼。",
+      "pureBonus": {
+        "attribute": "critRate",
+        "value": 10,
+        "desc": "纯金行道加成：暴击率 +10%"
+      },
+      "energyRhythm": {
+        "trigger": "暴击时额外 +10 能量",
+        "ultFrequency": "5-6 回合"
+      },
+      "branches": ["锋锐", "破甲", "蓄力"],
+      "style": "中型",
+      "weaponPreference": "medium_weapon"
+    },
+    {
+      "id": "panshi",
+      "name": "磐石道",
+      "motto": "不躲。",
+      "positioning": "格挡、眩晕、护盾、反伤、厚积薄发",
+      "unlockScene": "scene_4_5",
+      "unlockNarrative": "河底石碑上刻着两个字：「不躲。」",
+      "pureBonus": {
+        "attribute": "damageReduction",
+        "value": 10,
+        "desc": "纯磐石道加成：免伤率 +10%"
+      },
+      "energyRhythm": {
+        "trigger": "受击能量获取 +20%",
+        "ultFrequency": "前期 7-8 回合，后期 4-5 回合"
+      },
+      "branches": ["坚壁", "镇岳", "厚土"],
+      "style": "重型",
+      "weaponPreference": "heavy_weapon"
+    }
+  ],
+  "skillPointRules": {
+    "levelPoints": 50,
+    "levelRange": [1, 50],
+    "pillPoints": 10,
+    "pillName": "悟道丹",
+    "totalPoints": 60,
+    "resetCostFormula": "500 × 已分配点数",
+    "pillRefundOnReset": false
+  },
+  "equipSlots": {
+    "passive": 2,
+    "small": 2,
+    "ultimate": 1
+  },
+  "pillSources": [
+    { "source": "三大 BOSS 首杀", "count": 3 },
+    { "source": "妖尊 首杀", "count": 5 },
+    { "source": "西行志终极任务", "count": 1 },
+    { "source": "九转金丹碎片合成（10碎片=1）", "count": 1 }
+  ],
+  "pureSchoolBonusRule": {
+    "condition": "被动 + 2 小技能 + 大招全部来自同一流派",
+    "linghou": { "attribute": "comboRate", "value": 10 },
+    "jinxing": { "attribute": "critRate", "value": 10 },
+    "panshi": { "attribute": "damageReduction", "value": 10 },
+    "mixed": { "desc": "混搭无额外加成" }
+  },
+  "ui": {
+    "theme": "道碑",
+    "description": "技能树界面为一块石碑。已点亮的节点为石碑上的刻痕（墨色），未点亮的节点为石碑上的空白，大招节点为石碑最深处的一道金痕。每点一个节点，主角在道碑上刻一道痕。刻满了，就悟了。",
+    "layout": "全屏覆盖模式（A 方案）",
+    "nodeStates": {
+      "locked": "灰色，不可点击，显示前置要求",
+      "available": "墨色边框，可点击，显示消耗",
+      "active": "墨色填充，已点亮",
+      "ultimate": "金色刻痕"
+    }
+  },
+  "updatedAt": "2026-08-12T00:00:00.000Z"
+}

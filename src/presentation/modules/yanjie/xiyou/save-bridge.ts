@@ -22,7 +22,7 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
-import { materials as packMaterials, packItems, pills as packPills, scenes, schools, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, PILL_POINT_LIMIT } from './xiyouData'
+import { materials as packMaterials, packItems, pills as packPills, scenes, schools, schoolsLayers, schoolsNodeMap, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
 
@@ -127,9 +127,12 @@ export const xiyouSaveBridge: SaveStatePort = {
 
     // school（v3.0 流派：已点亮节点 id + 已用技能点 + 出战装备槽）
     // NOTE: selected 字段保留兼容（旧档读取），新档不再写入选流派（v3.0 跨流派加点无单一流派概念）
+    const oldLearned = schools.flatMap((s) => s.nodes.filter((n) => n.learned).map((n) => n.id))
+    // TODO(P2): schoolsLayers 已解锁节点持久化——ID 体系与旧 nodes 不同（layer_index），追加到同一数组无冲突
+    const newLearned = schoolsLayers.flatMap((l) => l.nodes.filter((n) => n.learned).map((n) => n.id))
     data.school = {
       selected: null,
-      learned: schools.flatMap((s) => s.nodes.filter((n) => n.learned).map((n) => n.id)),
+      learned: [...oldLearned, ...newLearned],
       spent: skillPoints.spent,
       earned: skillPoints.earned,
       totalPillsUsed: skillPoints.totalPillsUsed,
@@ -259,11 +262,18 @@ export const xiyouSaveBridge: SaveStatePort = {
       for (const s of schools) {
         for (const n of s.nodes) n.learned = learnedSet.has(n.id)
       }
+      // TODO(P2): schoolsLayers 已解锁节点恢复——ID 为 `${layer}_${idx}` 格式，与旧 nodes 无冲突
+      for (const layer of schoolsLayers) {
+        for (const node of layer.nodes) node.learned = learnedSet.has(node.id)
+      }
       // 已用技能点以存档为权威（运行时可能有调试加点/重置，节点求和仅作兜底）
       skillPoints.spent = Number.isFinite(schoolState.spent)
         ? Math.min(Math.max(schoolState.spent, 0), skillPoints.max)
         : schools.reduce(
             (sum, s) => sum + s.nodes.filter((n) => n.learned).reduce((acc, n) => acc + n.points, 0),
+            0,
+          ) + schoolsLayers.reduce(
+            (sum, l) => sum + l.nodes.filter((n) => n.learned).reduce((acc, n) => acc + (n.cost?.[0] ?? 0), 0),
             0,
           )
       // 累计获得技能点（旧档缺省：>= 已分配且 >= 初始等级点数 4，保证 available 非负）

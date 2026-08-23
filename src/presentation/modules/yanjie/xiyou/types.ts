@@ -129,6 +129,78 @@ export interface XiyouEquippedSkills {
   ultimate: string | null
 }
 
+// ════════════════════════════════════════════════════════════
+// schools.json 天赋树（v4.0：10 层 × 5 流派，Canvas 渲染）
+// ════════════════════════════════════════════════════════════
+
+/** 天赋树流派 id（schools.json schools 字段的 key，string 以支持未来扩展） */
+export type SchoolsSchoolId = string
+
+/** 天赋树节点类型（schools.json nodes.type） */
+export type SchoolsNodeType = 'attribute' | 'learn' | 'special'
+
+/** 天赋树节点（schools.json 层内节点，运行时附加位置/状态信息） */
+export interface SchoolsNode {
+  /** 唯一 id：layer_index（自动计算） */
+  id: string
+  /** 所属流派 */
+  school: SchoolsSchoolId
+  /** 节点类型 */
+  type: SchoolsNodeType
+  /** 节点名称 */
+  name: string
+  /** 属性 code（attribute/special 节点） */
+  code?: string
+  /** 消耗点数 [每级消耗, 每级消耗] 或 [单次消耗] */
+  cost: number[] | null
+  /** 属性值 [基础值, 满级值] 或 [固定值] */
+  value: number[] | null
+  /** 后缀（如 "%"） */
+  suffix: string
+  /** 描述模板 */
+  description: string
+  /** learn 节点：技能类型（被动/小技能/大技能） */
+  skillKind?: string
+  /** 运行时：所属层号（1-based） */
+  layer: number
+  /** 运行时：层内序号（0-based，用于水平定位） */
+  index: number
+  /** 运行时：已解锁 */
+  learned: boolean
+  /** 运行时：Canvas 布局坐标（像素） */
+  x: number
+  y: number
+}
+
+/** 天赋树层（schools.json layers 数组项） */
+export interface SchoolsLayer {
+  /** 层号（1-based，底部为 1） */
+  layer: number
+  /** 解锁该层所需累计点数 */
+  pointsRequired: number
+  /** 该层所有节点 */
+  nodes: SchoolsNode[]
+}
+
+/** 天赋树流派定义（schools.json schools 字段） */
+export interface SchoolsSchoolDef {
+  id: SchoolsSchoolId
+  /** 中文名 */
+  name: string
+}
+
+/** 天赋树节点原始结构（schools.json JSON 层面，不含运行时字段） */
+export type SchoolsNodeRaw = Omit<SchoolsNode, 'id' | 'layer' | 'index' | 'learned' | 'x' | 'y'>
+
+/** 天赋树层原始结构（schools.json JSON 层面，不含运行时字段） */
+export interface SchoolsLayerRaw {
+  layer: number
+  pointsRequired: number
+  nodes: SchoolsNodeRaw[]
+}
+
+// ════════════════════════════════════════════════════════════
+
 /** 区域（章节）· 对应一张大地图 */
 export interface XiyouRegion {
   id: string

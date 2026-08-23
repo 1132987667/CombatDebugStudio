@@ -55,7 +55,7 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { equipBonuses } from '../battle'
-import { realms, schools } from '../xiyouData'
+import { schools } from '../xiyouData'
 import PackItemCard from './PackItemCard.vue'
 
 const emit = defineEmits<{ 'open-pack': [] }>()
@@ -71,7 +71,6 @@ onMounted(() => {
 const gearBonus = computed(() => equipBonuses(pack.equippedStats(), battleSnapshot.value))
 
 /** 当前境界 / 流派（首个解锁境界 / 已选流派，configs 配置驱动） */
-const realm = computed(() => realms.find((r) => r.unlocked))
 const school = computed(() => schools.find((s) => s.selected))
 
 const expPct = computed(() => {

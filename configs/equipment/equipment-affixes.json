@@ -10,7 +10,7 @@
     },
     "applicableSlots": [
       "weapon",
-      "ring"
+      "glove"
     ],
     "weight": 100,
     "rarity": 1,
@@ -27,7 +27,7 @@
     },
     "applicableSlots": [
       "weapon",
-      "ring",
+      "glove",
       "helmet"
     ],
     "weight": 100,
@@ -147,7 +147,7 @@
       "max": 8
     },
     "applicableSlots": [
-      "ring",
+      "glove",
       "weapon"
     ],
     "weight": 50,
@@ -164,7 +164,7 @@
       "max": 25
     },
     "applicableSlots": [
-      "ring",
+      "glove",
       "weapon:中型"
     ],
     "weight": 50,
@@ -181,7 +181,7 @@
       "max": 12
     },
     "applicableSlots": [
-      "ring"
+      "glove"
     ],
     "weight": 50,
     "rarity": 2,
@@ -248,7 +248,7 @@
       "max": 20
     },
     "applicableSlots": [
-      "ring",
+      "glove",
       "weapon"
     ],
     "weight": 10,

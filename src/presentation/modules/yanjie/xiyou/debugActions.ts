@@ -873,7 +873,7 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 value,
               })
               void pack.flush()
-              // applicableSlots 可能为复合格式（如 'ring:戒指' / 'weapon:轻型'），按 : 前缀匹配槽位
+              // applicableSlots 可能为复合格式（如 'glove:护手' / 'weapon:轻型'），按 : 前缀匹配槽位
               const slotFit = gear
                 ? affix.applicableSlots.some((s) => s.split(':')[0] === gear.slot)
                 : true

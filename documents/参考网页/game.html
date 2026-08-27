@@ -2195,7 +2195,7 @@
             id: 'crys_004',
             name: '一阶清辉晶球',
             type: 'material',
-            description: '强化一阶衣服',
+            description: '强化一阶衣甲',
             rarity: '普通',
             stackable: true,
             max_stack: 99,
@@ -5853,7 +5853,7 @@
 
                     <div class="crafting-category">
                         <div class="category-title">
-                            <span>衣服制作</span>
+                            <span>衣甲制作</span>
                             <span class="crafting-level">等级 ${gameData.skills.armorCrafting.level}</span>
                         </div>
                         <div class="crafting-progress">
@@ -5995,7 +5995,7 @@
       function getSkillTypeName(skillType) {
         const names = {
           weaponCrafting: '武器制作',
-          armorCrafting: '衣服制作',
+          armorCrafting: '衣甲制作',
           accessoryCrafting: '饰品制作',
         }
         return names[skillType] || skillType
@@ -6013,7 +6013,7 @@
                         <div style="font-size: 0.85rem; color: var(--nong-mo); font-weight: bold;">${gameData.player.equipment.weapon ? gameData.equipmentData[gameData.player.equipment.weapon]?.name : '无'}</div>
                     </div>
                     <div class="equipment-slot" data-slot="armor">
-                        <div style="font-size: 0.9rem; color: var(--dan-mo);">衣服</div>
+                        <div style="font-size: 0.9rem; color: var(--dan-mo);">衣甲</div>
                         <div style="font-size: 0.85rem; color: var(--nong-mo); font-weight: bold;">${gameData.player.equipment.armor ? gameData.equipmentData[gameData.player.equipment.armor]?.name : '无'}</div>
                     </div>
                     <div class="equipment-slot" data-slot="accessory1">
@@ -6131,7 +6131,7 @@
                 <div style="margin-bottom: 15px; color: var(--dan-mo);">选择要打造的装备类型：</div>
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <button class="selection-btn forge-type" data-type="weapon">武器</button>
-                    <button class="selection-btn forge-type" data-type="armor">衣服</button>
+                    <button class="selection-btn forge-type" data-type="armor">衣甲</button>
                     <button class="selection-btn forge-type" data-type="accessory">饰品</button>
                 </div>
                 <div id="forge-items-list"></div>

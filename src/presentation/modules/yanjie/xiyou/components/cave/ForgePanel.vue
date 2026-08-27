@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- 部位 Tab：武器 / 衣服 / 头盔 / 靴子 / 护符 / 戒指 -->
+    <!-- 部位 Tab：武器 / 衣甲 / 头盔 / 靴子 / 护符 / 护手 -->
     <Tabs v-model="part" :tabs="PART_TABS" destroy-inactive class="xy-tabs--seal">
       <template v-for="p in PART_TABS" :key="p.id" #[p.id]>
         <div class="xy-cave-forge-list">
@@ -88,17 +88,17 @@ import { catalogById, itemIdByName, itemName, qualityOf } from '../../caveLogic'
 const pack = usePackStore()
 const notification = useNotificationStore()
 
-type ForgePart = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring'
+type ForgePart = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'glove'
 
 const part = ref<ForgePart>('weapon')
 
 const PART_TABS: TabItem[] = [
   { id: 'weapon', label: '武器' },
-  { id: 'armor', label: '衣服' },
+  { id: 'armor', label: '衣甲' },
   { id: 'helmet', label: '头盔' },
   { id: 'boots', label: '靴子' },
   { id: 'charm', label: '护符' },
-  { id: 'ring', label: '戒指' },
+  { id: 'glove', label: '护手' },
 ]
 
 const selected = ref<XiyouRecipe | null>(null)
@@ -111,14 +111,14 @@ watch(part, () => {
 })
 
 // NOTE: 部位以 equipment.json slot 为权威（6 槽）；不用 item.type 判断——
-//       材料与装备存在重名（如「翡翠玉镯」：玉石材料 vs 戒指装备），type 会误判。
+//       材料与装备存在重名（如「翡翠玉镯」：玉石材料 vs 护手装备），type 会误判。
 const SLOT_OF_PART: Record<ForgePart, string> = {
   weapon: 'weapon',
   armor: 'armor',
   helmet: 'helmet',
   boots: 'boots',
   charm: 'charm',
-  ring: 'ring',
+  glove: 'glove',
 }
 
 function partOf(r: XiyouRecipe): ForgePart | null {

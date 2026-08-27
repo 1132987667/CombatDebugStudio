@@ -454,7 +454,7 @@
       "id": "forge_jz_t1_power_01",
       "equipmentId": "jz_t1_power_01",
       "blueprintId": "bp_t1_eq",
-      "name": "贝壳戒指",
+      "name": "贝壳护手",
       "count": 1,
       "cost": 35,
       "materials": [
@@ -724,7 +724,7 @@
       "id": "forge_jz_t2_spirit_01",
       "equipmentId": "jz_t2_spirit_01",
       "blueprintId": "bp_t2_rg",
-      "name": "水灵戒",
+      "name": "水灵护手",
       "count": 1,
       "cost": 110,
       "materials": [
@@ -980,7 +980,7 @@
       "id": "forge_jz_t3_spirit_01",
       "equipmentId": "jz_t3_spirit_01",
       "blueprintId": "bp_t3_rg",
-      "name": "翠玉灵戒",
+      "name": "翠玉灵护手",
       "count": 1,
       "cost": 240,
       "materials": [
@@ -1232,7 +1232,7 @@
       "id": "forge_jz_t4_spirit_01",
       "equipmentId": "jz_t4_spirit_01",
       "blueprintId": "bp_t4_rg",
-      "name": "雾灵戒",
+      "name": "雾灵护手",
       "count": 1,
       "cost": 370,
       "materials": [
@@ -1466,7 +1466,7 @@
       "id": "forge_jz_t5_power_01",
       "equipmentId": "jz_t5_power_01",
       "blueprintId": "bp_t5_rg",
-      "name": "金刚力戒",
+      "name": "金刚力护手",
       "count": 1,
       "cost": 780,
       "materials": [
@@ -1484,7 +1484,7 @@
       "id": "forge_jz_t5_spirit_01",
       "equipmentId": "jz_t5_spirit_01",
       "blueprintId": "bp_t5_rg",
-      "name": "菩提灵戒",
+      "name": "菩提灵护手",
       "count": 1,
       "cost": 800,
       "materials": [
@@ -1812,11 +1812,11 @@
       "effect": "每级提升武器基础属性 5%"
     },
     {
-      "name": "衣服制作",
+      "name": "衣甲制作",
       "level": 2,
       "maxLevel": 10,
       "progress": 0.18,
-      "effect": "每级提升衣服基础属性 5%"
+      "effect": "每级提升衣甲基础属性 5%"
     },
     {
       "name": "饰品制作",

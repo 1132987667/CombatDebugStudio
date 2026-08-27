@@ -58,17 +58,17 @@ export interface GardenPlot {
   cooldownUntil: number | null
 }
 
-/** 装备槽位键（8 类装备槽，对齐 equipment.json slot：weapon/armor/helmet/boots/charm/ring/artifact/relic） */
-export type GearSlotKey = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'ring' | 'artifact' | 'relic'
+/** 装备槽位键（8 类装备槽，对齐 equipment.json slot：weapon/armor/helmet/boots/charm/glove/artifact/relic） */
+export type GearSlotKey = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'glove' | 'artifact' | 'relic'
 
 /** 装备槽位展示名（EquipPanel 用） */
 export const GEAR_SLOT_LABELS: Record<GearSlotKey, string> = {
   weapon: '武器',
-  armor: '衣服',
+  armor: '衣甲',
   helmet: '头盔',
   boots: '靴子',
   charm: '护符',
-  ring: '戒指',
+  glove: '护手',
   artifact: '法宝',
   relic: '神器',
 }
@@ -453,7 +453,7 @@ export const usePackStore = defineStore('pack', () => {
     return equipmentCatalog.find((g) => g.id === itemId)
   }
 
-  /** 装备对应的槽位键（weapon/armor/helmet/boots/charm/ring）；非装备返回 null */
+  /** 装备对应的槽位键（weapon/armor/helmet/boots/charm/glove）；非装备返回 null */
   function slotKeyOf(itemId: string): GearSlotKey | null {
     return gearById(itemId)?.slot ?? null
   }

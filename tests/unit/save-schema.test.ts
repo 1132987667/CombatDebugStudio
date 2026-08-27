@@ -17,7 +17,7 @@ describe('createInitialGameState', () => {
     const s = createInitialGameState()
     expect(s.meta.version).toBe(SAVE_VERSION)
     expect(s.player).toMatchObject({ level: 1, exp: 0, hp_max: 100, energy_max: 150, base_atk: [5, 8] })
-    expect(s.equipment).toEqual({ weapon: null, armor: null, helmet: null, boots: null, charm: null, ring: null })
+    expect(s.equipment).toEqual({ weapon: null, armor: null, helmet: null, boots: null, charm: null, glove: null })
     expect(validateSaveData(s).ok).toBe(true)
   })
 })
@@ -78,7 +78,7 @@ describe('migrateEquipmentSlots（v1.x → v2.0.0）', () => {
       helmet: 'neck_old',
       boots: 'belt_old',
       charm: 'brace_old',
-      ring: 'ring_old',
+      glove: 'ring_old',
     })
     // crown 未入 helmet 的旧饰品移入背包，防丢失
     expect(out.inventory.equipments['crown_old']).toBe(1)

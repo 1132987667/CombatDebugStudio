@@ -171,7 +171,7 @@ const SUBS: TabItem[] = [
 ]
 
 /** 六类装备槽键（顺序 = 展示顺序） */
-const GEAR_SLOT_KEYS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring']
+const GEAR_SLOT_KEYS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
 
 /** 背包装备实例视图（含装备定义名，供模板展示） */
 interface GearPackView extends GearInstance {

@@ -1,11 +1,11 @@
 {
   "gearSlots": [
     { "slot": "武器", "item": "松木棍", "rarity": 1, "enhance": 6, "maxEnhance": 10, "star": 1, "effect": "攻击 +24", "equipped": true },
-    { "slot": "衣服", "item": "鹿皮甲", "rarity": 2, "enhance": 4, "maxEnhance": 10, "star": 0, "effect": "防御 +12", "equipped": true },
+    { "slot": "衣甲", "item": "鹿皮甲", "rarity": 2, "enhance": 4, "maxEnhance": 10, "star": 0, "effect": "防御 +12", "equipped": true },
     { "slot": "头盔", "item": "藤蔓箍", "rarity": 3, "enhance": 2, "maxEnhance": 10, "star": 0, "effect": "气血 +60", "equipped": true },
     { "slot": "靴子", "item": "草编履", "rarity": 4, "enhance": 3, "maxEnhance": 10, "star": 0, "effect": "速度 +5", "equipped": true },
     { "slot": "护符", "item": "淡水玉护符", "rarity": 5, "enhance": 5, "maxEnhance": 10, "star": 1, "effect": "气血 +3%", "equipped": true },
-    { "slot": "戒指", "item": "空位", "rarity": 1, "enhance": 0, "maxEnhance": 10, "star": 0, "effect": "未装备", "equipped": false }
+    { "slot": "护手", "item": "空位", "rarity": 1, "enhance": 0, "maxEnhance": 10, "star": 0, "effect": "未装备", "equipped": false }
   ],
   "treasures": [
     { "name": "如意金箍棒", "rarity": 5, "level": 8, "maxLevel": 20, "progress": 0.4, "skill": "每次攻击后提升 3% 攻击，可叠 5 层", "active": true },

@@ -461,15 +461,15 @@ describe("装备穿戴（背包实例化闭环）", () => {
     expect(pack.countOf("wp_t1_light_01")).toBe(1)
   })
 
-  it("六槽穿戴：helmet/boots/charm/ring 均可穿戴/强化/计入总属性", async () => {
+  it("六槽穿戴：helmet/boots/charm/glove 均可穿戴/强化/计入总属性", async () => {
     const pack = usePackStore()
     await pack.init()
-    // hd/bt/hf/jz 为文档主线一阶配件（头盔/靴子/护符/戒指）
+    // hd/bt/hf/jz 为文档主线一阶配件（头盔/靴子/护符/护手）
     const slots = [
       { id: "hd_t1_war_01", slot: "helmet" },
       { id: "bt_t1_light_01", slot: "boots" },
       { id: "hf_t1_life_01", slot: "charm" },
-      { id: "jz_t1_power_01", slot: "ring" },
+      { id: "jz_t1_power_01", slot: "glove" },
     ] as const
     for (const { id, slot } of slots) {
       pack.addItem(id, 1)
@@ -485,7 +485,7 @@ describe("装备穿戴（背包实例化闭环）", () => {
     pack.addItem("mat_enh_02", 10)
     expect(pack.enhanceGear("charm", () => 0)).toBe(true)
     expect(pack.equipped.charm?.enhance).toBe(1)
-    // 总属性包含戒指加成（攻击类）
+    // 总属性包含护手加成（攻击类）
     expect(pack.equippedStats().length).toBeGreaterThan(0)
   })
 

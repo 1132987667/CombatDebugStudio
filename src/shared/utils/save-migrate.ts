@@ -80,7 +80,7 @@ export function migrateEquipmentSlots(oldSave: unknown): SaveData {
       helmet,
       boots: asId(oldEquip.belt),
       charm: asId(oldEquip.bracelet),
-      ring: asId(oldEquip.ring),
+      glove: asId(oldEquip.ring),
     },
   }
 }

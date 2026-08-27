@@ -57,7 +57,7 @@ export interface SaveEquipmentState {
   helmet: string | null
   boots: string | null
   charm: string | null
-  ring: string | null
+  glove: string | null
 }
 
 /**
@@ -138,7 +138,7 @@ export function createInitialGameState(): SaveData {
       helmet: null,
       boots: null,
       charm: null,
-      ring: null,
+      glove: null,
     },
   }
 }

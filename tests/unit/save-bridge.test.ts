@@ -75,7 +75,7 @@ describe('collect 状态映射', () => {
     expect(data.inventory.misc['quest_001']).toBe(2) // 初始 1 + 1
   })
 
-  it('已穿戴装备映射到 6 槽（weapon/armor/helmet/boots/charm/ring 一一对应）', async () => {
+  it('已穿戴装备映射到 6 槽（weapon/armor/helmet/boots/charm/glove 一一对应）', async () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip('wp_t1_light_01') // 竹剑 → weapon
@@ -86,7 +86,7 @@ describe('collect 状态映射', () => {
     expect(data.equipment.charm).toBe(pack.equipped.charm?.instanceId)
     expect(data.equipment.helmet).toBeNull()
     expect(data.equipment.boots).toBeNull()
-    expect(data.equipment.ring).toBeNull()
+    expect(data.equipment.glove).toBeNull()
     // 实例化装备带词缀（凡品 1 条）与强化等级，可还原
     expect(data.equipment_instances?.some((i) => i.itemId === 'wp_t1_light_01')).toBe(true)
     expect(data.equipment_instances?.some((i) => i.itemId === 'hf_t1_life_01')).toBe(true)
@@ -126,7 +126,7 @@ describe('restore 状态恢复', () => {
         helmet: null,
         boots: null,
         charm: null,
-        ring: null,
+        glove: null,
       },
     }
     await xiyouSaveBridge.restore(data)

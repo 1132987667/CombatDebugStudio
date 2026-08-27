@@ -673,7 +673,7 @@ select {
     <div class="modal-body">
       <div class="inv-tabs" style="margin-bottom:12px">
         <div class="inv-tab active" data-ctype="weapon" onclick="switchCraftType('weapon')">武器</div>
-        <div class="inv-tab" data-ctype="armor" onclick="switchCraftType('armor')">衣服</div>
+        <div class="inv-tab" data-ctype="armor" onclick="switchCraftType('armor')">衣甲</div>
         <div class="inv-tab" data-ctype="accessory" onclick="switchCraftType('accessory')">饰品</div>
       </div>
       <div class="recipe-list" id="craftRecipeList"></div>
@@ -890,9 +890,9 @@ const ITEMS = {
     {id:'crys_001',name:'一阶灿金晶球',type:'晶球',rarity:'普通',desc:'蕴含金属性灵气的晶球，可用于强化一阶武器。',use:'强化一阶武器，每级提升攻击力5%',sell:50,buy:100,count:2},
     {id:'crys_002',name:'二阶灿金晶球',type:'晶球',rarity:'普通',desc:'蕴含更浓郁金属性灵气的晶球，可用于强化二阶武器。',use:'强化二阶武器，每级提升攻击力5%',sell:100,buy:200,count:1},
     {id:'crys_003',name:'三阶灿金晶球',type:'晶球',rarity:'稀有',desc:'蕴含纯粹金属性灵气的晶球，可用于强化三阶武器。',use:'强化三阶武器，每级提升攻击力5%',sell:200,buy:400,count:0},
-    {id:'crys_004',name:'一阶清辉晶球',type:'晶球',rarity:'普通',desc:'蕴含木属性灵气的晶球，可用于强化一阶衣服。',use:'强化一阶衣服，每级提升防御力5%',sell:40,buy:80,count:1},
-    {id:'crys_005',name:'二阶清辉晶球',type:'晶球',rarity:'普通',desc:'蕴含更浓郁木属性灵气的晶球，可用于强化二阶衣服。',use:'强化二阶衣服，每级提升防御力5%',sell:80,buy:160,count:0},
-    {id:'crys_006',name:'三阶清辉晶球',type:'晶球',rarity:'稀有',desc:'蕴含纯粹木属性灵气的晶球，可用于强化三阶衣服。',use:'强化三阶衣服，每级提升防御力5%',sell:160,buy:320,count:0},
+    {id:'crys_004',name:'一阶清辉晶球',type:'晶球',rarity:'普通',desc:'蕴含木属性灵气的晶球，可用于强化一阶衣甲。',use:'强化一阶衣甲，每级提升防御力5%',sell:40,buy:80,count:1},
+    {id:'crys_005',name:'二阶清辉晶球',type:'晶球',rarity:'普通',desc:'蕴含更浓郁木属性灵气的晶球，可用于强化二阶衣甲。',use:'强化二阶衣甲，每级提升防御力5%',sell:80,buy:160,count:0},
+    {id:'crys_006',name:'三阶清辉晶球',type:'晶球',rarity:'稀有',desc:'蕴含纯粹木属性灵气的晶球，可用于强化三阶衣甲。',use:'强化三阶衣甲，每级提升防御力5%',sell:160,buy:320,count:0},
     {id:'crys_007',name:'一阶玲珑晶球',type:'晶球',rarity:'普通',desc:'蕴含水属性灵气的晶球，可用于强化一阶饰品。',use:'强化一阶饰品，每级提升属性加成3%',sell:60,buy:120,count:1},
     {id:'crys_008',name:'二阶玲珑晶球',type:'晶球',rarity:'普通',desc:'蕴含更浓郁水属性灵气的晶球，可用于强化二阶饰品。',use:'强化二阶饰品，每级提升属性加成3%',sell:120,buy:240,count:0},
     {id:'crys_009',name:'三阶玲珑晶球',type:'晶球',rarity:'稀有',desc:'蕴含纯粹水属性灵气的晶球，可用于强化三阶饰品。',use:'强化三阶饰品，每级提升属性加成3%',sell:240,buy:480,count:0}
@@ -1326,7 +1326,7 @@ function showItemDetail(id, category){
 function renderCraftLevels(el){
   const crafts = [
     {key:'weapon',name:'武器制作',desc:'提升武器属性加成'},
-    {key:'armor',name:'衣服制作',desc:'提升衣服属性加成'},
+    {key:'armor',name:'衣甲制作',desc:'提升衣甲属性加成'},
     {key:'accessory',name:'饰品制作',desc:'提升饰品属性加成'}
   ];
   const expReq = [2,3,5,8,12,17,23,30,38,47];

@@ -6,7 +6,7 @@
  *
  * 映射要点：
  * - 货币三币种 → player.gold/silver/jade（PRD 仅 gold，扩展防止丢失）
- * - 装备 6 槽（weapon/armor/helmet/boots/charm/ring）一一对应
+ * - 装备 6 槽（weapon/armor/helmet/boots/charm/glove）一一对应
  * - 物品按 type 分类到 inventory 四类（装备 → equipments，材料/丹药 → materials/elixirs，其余 → misc）
  */
 

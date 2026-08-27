@@ -8,7 +8,7 @@
 import type { EquipmentAffixData } from '@/domain/fengshen/types'
 
 /** 装备部位枚举（与 equipment.json slot 字段一致） */
-export const EQUIPMENT_SLOTS = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring'] as const
+export const EQUIPMENT_SLOTS = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove'] as const
 
 /** 部位 → 合法子类型（子类型为自由中文名，此处以 equipment.json 现有数据为权威枚举） */
 export const SLOT_SUB_TYPES: Record<string, readonly string[]> = {
@@ -17,7 +17,7 @@ export const SLOT_SUB_TYPES: Record<string, readonly string[]> = {
   helmet: ['头盔', '冠冕'],
   boots: ['靴子'],
   charm: ['护符'],
-  ring: ['戒指'],
+  glove: ['护手'],
 }
 
 /** 通配 slotKey：适用全部位 */

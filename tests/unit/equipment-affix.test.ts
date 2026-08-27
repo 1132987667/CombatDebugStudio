@@ -128,13 +128,13 @@ describe('validateSlotKey（部位枚举强校验）', () => {
     expect(validateSlotKey('weapon')).toBeNull()
     expect(validateSlotKey('weapon:轻型')).toBeNull()
     expect(validateSlotKey('helmet:冠冕')).toBeNull()
-    expect(validateSlotKey('ring:戒指')).toBeNull()
+    expect(validateSlotKey('glove:护手')).toBeNull()
   })
   it('拒绝未知部位 / 未知子类型 / 部位与子类型交叉', () => {
     expect(validateSlotKey('hat')).not.toBeNull()
     expect(validateSlotKey('weapon:布甲')).not.toBeNull()
     expect(validateSlotKey('weapon:皮甲')).not.toBeNull()
-    expect(validateSlotKey('armor:戒指')).not.toBeNull()
+    expect(validateSlotKey('armor:护手')).not.toBeNull()
     expect(validateSlotKey('accessory')).not.toBeNull()
   })
 })
@@ -142,7 +142,7 @@ describe('validateSlotKey（部位枚举强校验）', () => {
 describe('affixAppliesTo（部位匹配）', () => {
   it('* 通配匹配任何部位', () => {
     expect(affixAppliesTo(affixAttack, 'weapon', '轻型')).toBe(true)
-    expect(affixAppliesTo(affixAttack, 'ring', '戒指')).toBe(true)
+    expect(affixAppliesTo(affixAttack, 'glove', '护手')).toBe(true)
   })
   it('部位级匹配该部位全部子类型', () => {
     expect(affixAppliesTo(affixArmor, 'armor', '铠甲')).toBe(true)
@@ -171,12 +171,12 @@ describe('rollEquipmentAffix（按部位抽池）', () => {
   it('weight=0 的词条不参与随机', () => {
     const zero = { ...affixAttack, id: 'eqaff_zero', weight: 0 }
     const rng = () => 0.5
-    const result = rollEquipmentAffix([affixAttack, zero], 'ring', '戒指', rng)
+    const result = rollEquipmentAffix([affixAttack, zero], 'glove', '护手', rng)
     expect(result?.id).toBe('eqaff_test_atk')
   })
   it('候选全为 weight=0 时返回 null（weight=0 语义：不参与随机）', () => {
     const zero = { ...affixAttack, weight: 0 }
-    expect(rollEquipmentAffix([zero], 'ring', '戒指')).toBeNull()
+    expect(rollEquipmentAffix([zero], 'glove', '护手')).toBeNull()
   })
   it('抽池权重越大越容易被抽中', () => {
     const heavy = { ...affixAttack, id: 'eqaff_heavy', weight: 1000 }
@@ -224,7 +224,7 @@ describe('affixConflictFor / affixEffectiveWeight（§14.9 部位冲突检测）
   })
   it('未指定子类型或无匹配规则返回 null', () => {
     expect(affixConflictFor('weapon', undefined, 'blockRate')).toBeNull()
-    expect(affixConflictFor('ring', '戒指', 'blockRate')).toBeNull()
+    expect(affixConflictFor('glove', '护手', 'blockRate')).toBeNull()
   })
   it('生效权重：禁止 → 0，减半 → 减半（保底 1），无冲突原样', () => {
     expect(affixEffectiveWeight('weapon', '轻型', { attribute: 'blockRate', weight: 50 })).toBe(0)
@@ -281,7 +281,7 @@ describe('DataIntegrityService 装备词条强校验', () => {
     attribute: 'attack',
     modifierType: 'flat',
     valueRange: { min: 1, max: 5 },
-    applicableSlots: ['weapon', 'ring:戒指'],
+    applicableSlots: ['weapon', 'glove:护手'],
     school: '金行道',
     weight: 50,
     rarity: 1,

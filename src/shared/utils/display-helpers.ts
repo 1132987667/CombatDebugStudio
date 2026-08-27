@@ -11,11 +11,11 @@ import { ActionResultType } from '@/domain/skill/types'
 
 export const slotLabels: Record<string, string> = {
   [EquipmentSlot.WEAPON]: '武器',
-  [EquipmentSlot.ARMOR]: '衣服',
+  [EquipmentSlot.ARMOR]: '衣甲',
   [EquipmentSlot.HELMET]: '头盔',
   [EquipmentSlot.BOOTS]: '靴子',
   [EquipmentSlot.CHARM]: '护符',
-  [EquipmentSlot.RING]: '戒指',
+  [EquipmentSlot.GLOVE]: '护手',
   [EquipmentSlot.ARTIFACT]: '法宝',
   [EquipmentSlot.RELIC]: '神器',
 }
@@ -28,11 +28,11 @@ export function getSlotText(slot: string): string {
 
 export const itemTypeLabels: Record<string, string> = {
   [EquipmentSlot.WEAPON]: '武器',
-  [EquipmentSlot.ARMOR]: '衣服',
+  [EquipmentSlot.ARMOR]: '衣甲',
   [EquipmentSlot.HELMET]: '头盔',
   [EquipmentSlot.BOOTS]: '靴子',
   [EquipmentSlot.CHARM]: '护符',
-  [EquipmentSlot.RING]: '戒指',
+  [EquipmentSlot.GLOVE]: '护手',
   [EquipmentSlot.ARTIFACT]: '法宝',
   [EquipmentSlot.RELIC]: '神器',
   material: '材料',

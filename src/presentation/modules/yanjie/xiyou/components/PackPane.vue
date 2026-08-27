@@ -153,7 +153,7 @@ const tabs = computed<TabItem[]>(() =>
  */
 const PACK_CATEGORIES = [
   { id: 'all', label: '全部', types: [] as string[] },
-  { id: 'equip', label: '装备', types: ['武器', '衣服', '头盔', '靴子', '护符', '戒指', '法宝', '神器'] },
+  { id: 'equip', label: '装备', types: ['武器', '衣甲', '头盔', '靴子', '护符', '护手', '法宝', '神器'] },
   { id: 'consumable', label: '消耗', types: ['丹药', '永久丹药', '符箓', '晶球', '药引', '经验丹', '卷轴'] },
   { id: 'material', label: '材料', types: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '图纸', '草药', '制造辅助'] },
   { id: 'essence', label: '灵气', types: ['灵气', '碎片'] },

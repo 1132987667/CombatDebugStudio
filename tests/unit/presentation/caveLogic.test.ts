@@ -59,13 +59,13 @@ describe('强化数值', () => {
     expect(enhanceCost(19, 5)).toBe(4000) // 仙品 19→20 花 200×20
   })
 
-  it('槽位 → 强化材料映射（六槽：weapon/armor/helmet/boots/charm/ring）', () => {
+  it('槽位 → 强化材料映射（六槽：weapon/armor/helmet/boots/charm/glove）', () => {
     expect(enhanceMaterialOf('weapon')).toMatchObject({ itemId: 'mat_enh_01', count: 1 })
     expect(enhanceMaterialOf('armor')).toMatchObject({ itemId: 'mat_enh_03' })
     expect(enhanceMaterialOf('helmet')).toMatchObject({ itemId: 'mat_enh_02' })
     expect(enhanceMaterialOf('boots')).toMatchObject({ itemId: 'mat_enh_02' })
     expect(enhanceMaterialOf('charm')).toMatchObject({ itemId: 'mat_enh_02' })
-    expect(enhanceMaterialOf('ring')).toMatchObject({ itemId: 'mat_enh_02' })
+    expect(enhanceMaterialOf('glove')).toMatchObject({ itemId: 'mat_enh_02' })
     expect(enhanceMaterialOf('未知槽')).toBeNull()
   })
 

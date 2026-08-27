@@ -64,7 +64,7 @@ const canUse = computed(() => (props.itemId ? pack.canUseOutOfBattle(props.itemI
 /** 恢复/增益类丹药（有 effects）：战斗外禁用，仅快捷栏战斗中可用 */
 const inBattleOnly = computed(() => !!eff.value && !canUse.value)
 
-// NOTE: 装备判断以 equipment.json 槽位为权威（6 槽：weapon/armor/helmet/boots/charm/ring），
+// NOTE: 装备判断以 equipment.json 槽位为权威（6 槽：weapon/armor/helmet/boots/charm/glove），
 //       items.json type 已无「饰品」分类，不能用旧 3 类白名单判断
 const canEquip = computed(() => (props.itemId ? !!pack.slotKeyOf(props.itemId) : false))
 

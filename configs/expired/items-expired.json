@@ -458,14 +458,14 @@
   },
   {
     "id": "recipe_armor_t6",
-    "name": "六阶衣服图纸",
+    "name": "六阶衣甲图纸",
     "type": "图纸",
     "rarity": 5,
     "source": "三大王 掉落"
   },
   {
     "id": "recipe_armor_t7",
-    "name": "七阶衣服图纸",
+    "name": "七阶衣甲图纸",
     "type": "图纸",
     "rarity": 5,
     "source": "最终BOSS 掉落"

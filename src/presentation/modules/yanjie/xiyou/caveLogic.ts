@@ -43,14 +43,14 @@ export interface MaterialCost {
   count: number
 }
 
-/** 装备槽位 → 强化材料（设计：武器异矿 / 衣服灵气·强化 / 头盔/靴子/护符/戒指 灵水） */
+/** 装备槽位 → 强化材料（设计：武器异矿 / 衣甲灵气·强化 / 头盔/靴子/护符/护手 灵水） */
 const ENHANCE_MATERIAL_BY_SLOT: Record<string, MaterialCost> = {
   weapon: { name: '异矿', itemId: 'mat_yikuang', count: 1 },
   armor: { name: '灵气·强化', itemId: 'mat_lingqi', count: 1 },
   helmet: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
   boots: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
   charm: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
-  ring: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
+  glove: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
 }
 
 export function enhanceMaterialOf(slot: string): MaterialCost | null {

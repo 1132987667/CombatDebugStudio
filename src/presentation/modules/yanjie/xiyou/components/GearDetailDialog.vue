@@ -75,7 +75,7 @@ const emit = defineEmits<{
 const pack = usePackStore()
 
 /** 六槽键（详情对比仅对可穿戴槽位生效） */
-const SLOT_KEYS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring']
+const SLOT_KEYS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
 
 const gear = computed(() => (props.instance ? pack.gearById(props.instance.itemId) : undefined))
 

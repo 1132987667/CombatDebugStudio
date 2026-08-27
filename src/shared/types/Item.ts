@@ -18,11 +18,11 @@ export type ItemType = (typeof ItemType)[keyof typeof ItemType]
  */
 export const EquipmentSlot = {
   WEAPON: 'weapon', // 武器
-  ARMOR: 'armor', // 衣服
+  ARMOR: 'armor', // 衣甲
   HELMET: 'helmet', // 头盔
   BOOTS: 'boots', // 靴子
   CHARM: 'charm', // 护符
-  RING: 'ring', // 戒指
+  GLOVE: 'glove', // 护手
   ARTIFACT: 'artifact', // 法宝
   RELIC: 'relic', // 神器
 }
@@ -31,11 +31,11 @@ export type EquipmentSlot = (typeof EquipmentSlot)[keyof typeof EquipmentSlot]
 /** 装备槽位 → 中文显示名（标准 8 槽） */
 export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
   [EquipmentSlot.WEAPON]: '武器',
-  [EquipmentSlot.ARMOR]: '衣服',
+  [EquipmentSlot.ARMOR]: '衣甲',
   [EquipmentSlot.HELMET]: '头盔',
   [EquipmentSlot.BOOTS]: '靴子',
   [EquipmentSlot.CHARM]: '护符',
-  [EquipmentSlot.RING]: '戒指',
+  [EquipmentSlot.GLOVE]: '护手',
   [EquipmentSlot.ARTIFACT]: '法宝',
   [EquipmentSlot.RELIC]: '神器',
 }

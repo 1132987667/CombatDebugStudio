@@ -303,8 +303,8 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['name', 'slot', 'rarity', 'requiredLevel'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
-        valueLabel: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指', artifact: '法宝', relic: '神器' } },
+      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
+        valueLabel: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手', artifact: '法宝', relic: '神器' } },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'stats', label: '属性加成', type: 'array',
         description: '属性 + 修正类型（flat/percent）+ 数值',
@@ -315,7 +315,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     ],
     uniqueFields: ['name'],
     filters: [
-      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'] },
+      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove', 'artifact', 'relic'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],
   },
@@ -386,7 +386,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
         objectTemplate: { min: 5, max: 15 } },
       { key: 'applicableSlots', label: '适用部位', type: 'array', required: true, searchable: true,
         description: "slotKey 数组：'*' 通配 / 'weapon' 部位 / 'weapon:轻型' 部位+子类型",
-        arrayTemplate: ['weapon:轻型', 'ring:戒指'] },
+        arrayTemplate: ['weapon:轻型', 'glove:护手'] },
       { key: 'school', label: '流派绑定', type: 'text', searchable: true,
         description: 'schools.json 流派名（如 金行道）；缺省为通用词条' },
       { key: 'weight', label: '抽池权重', type: 'number', required: true, min: 0, max: 99999, column: { format: 'number' },
@@ -436,7 +436,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'type', label: '类型', type: 'select',
-        enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣服', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'],
+        enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'],
         column: { tagKind: 'type' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'value', label: '实际价值', type: 'number', min: 0, max: 999999, column: { format: 'number' },
@@ -446,7 +446,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     filters: [
-      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣服', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'] },
+      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '晶球', '丹药', '永久丹药', '图纸', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],
   },
@@ -456,8 +456,8 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['name', 'slot', 'tier', 'rarity', 'cost'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
-        valueLabel: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指', artifact: '法宝', relic: '神器' } },
+      { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
+        valueLabel: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手', artifact: '法宝', relic: '神器' } },
       { key: 'subType', label: '子类型', type: 'text', searchable: true },
       { key: 'tier', label: '阶位', type: 'select', enum: ['t1', 't2', 't3', 't4', 't5'], column: { tagKind: 'neutral' }, searchable: true,
         valueLabel: { t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶' } },
@@ -475,7 +475,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     ],
     uniqueFields: ['name'],
     filters: [
-      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'ring', 'artifact', 'relic'] },
+      { key: 'slot', label: '部位', type: 'select', options: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove', 'artifact', 'relic'] },
       { key: 'tier', label: '阶位', type: 'select', options: ['t1', 't2', 't3', 't4', 't5'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],

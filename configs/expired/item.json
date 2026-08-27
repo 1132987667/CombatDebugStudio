@@ -210,7 +210,7 @@
   {
     "id": "ar_t4_light_01",
     "name": "影豹皮甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "制造（主线，免图纸）",
     "value": 360
@@ -218,7 +218,7 @@
   {
     "id": "ar_t4_mid_01",
     "name": "瘴木甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "制造（主线，免图纸）",
     "value": 380
@@ -226,7 +226,7 @@
   {
     "id": "ar_t4_heavy_01",
     "name": "幻岩铠",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "制造（主线，免图纸）",
     "value": 400
@@ -322,7 +322,7 @@
   {
     "id": "ar_t5_light_01",
     "name": "天蚕仙衣",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 5,
     "source": "制造（主线，免图纸）",
     "value": 780
@@ -330,7 +330,7 @@
   {
     "id": "ar_t5_mid_01",
     "name": "菩提道袍",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 5,
     "source": "制造（主线，免图纸）",
     "value": 820
@@ -338,7 +338,7 @@
   {
     "id": "ar_t5_heavy_01",
     "name": "金刚不坏甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 5,
     "source": "制造（主线，免图纸）",
     "value": 860
@@ -418,7 +418,7 @@
   {
     "id": "ar_sb02",
     "name": "沧浪涌潮甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "河伯首杀掉落",
     "value": 0
@@ -442,7 +442,7 @@
   {
     "id": "ar_sb05",
     "name": "龙鳞逆甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "浊浪龙王掉落",
     "value": 0
@@ -570,7 +570,7 @@
   {
     "id": "ar_sp_03",
     "name": "不灭战甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "成就「百战不殆」奖励",
     "value": 0
@@ -610,7 +610,7 @@
   {
     "id": "wt_02",
     "name": "试炼布甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 1,
     "source": "无尽塔第2层首通掉落",
     "value": 0
@@ -658,7 +658,7 @@
   {
     "id": "wt_08",
     "name": "铁壁甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 1,
     "source": "无尽塔第8层首通掉落",
     "value": 0
@@ -690,7 +690,7 @@
   {
     "id": "wt_12",
     "name": "玄铁甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 2,
     "source": "无尽塔第12层首通掉落",
     "value": 0
@@ -738,7 +738,7 @@
   {
     "id": "wt_18",
     "name": "磐石铠",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 2,
     "source": "无尽塔第18层首通掉落",
     "value": 0
@@ -770,7 +770,7 @@
   {
     "id": "wt_22",
     "name": "龙鳞甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 3,
     "source": "无尽塔第22层首通掉落",
     "value": 0
@@ -818,7 +818,7 @@
   {
     "id": "wt_28",
     "name": "玄武甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 3,
     "source": "无尽塔第28层首通掉落",
     "value": 0
@@ -850,7 +850,7 @@
   {
     "id": "wt_32",
     "name": "混元甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "无尽塔第32层首通掉落",
     "value": 0
@@ -898,7 +898,7 @@
   {
     "id": "wt_38",
     "name": "须弥铠",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 4,
     "source": "无尽塔第38层首通掉落",
     "value": 0
@@ -930,7 +930,7 @@
   {
     "id": "wt_42",
     "name": "天蚕仙袍",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 5,
     "source": "无尽塔第42层首通掉落",
     "value": 0
@@ -978,7 +978,7 @@
   {
     "id": "wt_48",
     "name": "劫灭·燃血甲",
-    "type": "衣服",
+    "type": "衣甲",
     "rarity": 5,
     "source": "无尽塔第48层首通掉落",
     "value": 0

@@ -13,7 +13,7 @@
       "enhance_material": ["灿金晶球", "异矿"]
     },
     "armor": {
-      "label": "衣服",
+      "label": "衣甲",
       "sub_types": [
         { "id": "leather_armor", "name": "皮甲", "style": "灵猴道", "desc": "轻装闪避" },
         { "id": "wood_armor", "name": "木甲", "style": "通用", "desc": "均衡防御" },
@@ -44,10 +44,10 @@
       ],
       "enhance_material": ["玲珑晶球", "灵水"]
     },
-    "ring": {
-      "label": "戒指",
+    "glove": {
+      "label": "护手",
       "sub_types": [
-        { "id": "ring", "name": "戒指", "enhance_attribute": "attackPercent", "desc": "输出向（并入原手镯）" }
+        { "id": "glove", "name": "护手", "enhance_attribute": "attackPercent", "desc": "输出向（并入原手镯）" }
       ],
       "enhance_material": ["玲珑晶球", "灵水"]
     }
@@ -67,7 +67,7 @@
   "slot_migration": {
     "necklace": "helmet",
     "belt": "boots",
-    "bracelet": "ring",
+    "bracelet": "glove",
     "crown": "helmet"
   },
   "enhance_rules": {
@@ -76,7 +76,7 @@
     "helmet": { "enhance_content": "防御加成提升", "material": ["玲珑晶球", "灵水"] },
     "boots": { "enhance_content": "速度加成提升", "material": ["玲珑晶球", "灵水"] },
     "charm": { "enhance_content": "气血加成提升", "material": ["玲珑晶球", "灵水"] },
-    "ring": { "enhance_content": "攻击 / 暴击率加成提升", "material": ["玲珑晶球", "灵水"] }
+    "glove": { "enhance_content": "攻击 / 暴击率加成提升", "material": ["玲珑晶球", "灵水"] }
   },
   "enhance_max_by_tier": {
     "fan": 5,
@@ -112,8 +112,8 @@
     "residue_rules": {
       "source": ["分解同名装备", "击败对应关卡守护者", "完成西行志悬赏"],
       "conversion": "1件同名装备 = 1点装备残魂",
-      "mix_allowed": true,
-      "example": "流云剑升1星：需3点残魂，可以是3件流云剑，也可以是2件流云剑+1点残魂"
+      "mii_allowed": true,
+      "eiample": "流云剑升1星：需3点残魂，可以是3件流云剑，也可以是2件流云剑+1点残魂"
     },
     "does_not_change": ["装备品质", "装备阶位", "随机词条数量", "随机词条内容", "固定特效"]
   },
@@ -151,7 +151,7 @@
       "regenerates": ["所有随机词条"]
     }
   },
-  "affix_generation": {
+  "affii_generation": {
     "step_1": "确定装备阶位",
     "step_2": "根据品质确定词条数量",
     "step_3": "根据装备部位选择对应词条池",
@@ -160,26 +160,26 @@
     "step_6": "生成数值",
     "no_duplicate": "同一件装备不允许出现两条同名词条"
   },
-  "material_affix_bias": [
+  "material_affii_bias": [
     { "materials": ["桃木", "松木", "铁木"], "equipment_type": "light_weapon", "bias_school": "灵猴道", "desc": "灵猴道词条权重提升" },
     { "materials": ["铜精", "铁精", "金精"], "equipment_type": "medium_weapon", "bias_school": "金行道", "desc": "金行道词条权重提升" },
     { "materials": ["粗石", "铁焰矿", "金阳矿"], "equipment_type": "heavy_weapon", "bias_school": "磐石道", "desc": "磐石道词条权重提升" },
     { "materials": ["鹿皮", "虎皮", "仙云皮"], "equipment_type": "leather_armor", "bias_school": "灵猴道", "desc": "灵猴道词条权重提升" },
     { "materials": ["圣水玉", "玉佛像"], "equipment_type": "charm", "bias_school": "佛门/生存", "desc": "佛门/生存词条权重提升" },
-    { "materials": ["毒液", "寒潭水"], "equipment_type": "ring", "bias_school": "元素/异常", "desc": "元素/异常词条权重提升" }
+    { "materials": ["毒液", "寒潭水"], "equipment_type": "glove", "bias_school": "元素/异常", "desc": "元素/异常词条权重提升" }
   ],
   "xian_equipment": [
     {
-      "id": "xian_hunyuan_ring",
+      "id": "xian_hunyuan_glove",
       "name": "混元无极环",
       "tier": "xian",
       "quality": "shen",
       "material_source": "混元灵气",
       "positioning": "终局全属性",
-      "fixed_effect": "提升全属性并增强大招伤害",
-      "enhance_max": 20,
+      "fiied_effect": "提升全属性并增强大招伤害",
+      "enhance_mai": 20,
       "enchant_slots": 3,
-      "affix_count": 5,
+      "affii_count": 5,
       "can_reforge": true,
       "can_star": false,
       "can_inherit": false,

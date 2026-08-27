@@ -198,7 +198,7 @@ const KIND_LABEL: Record<string, Record<string, string>> = {
     shield: '护盾', control: '控制', immunity: '免疫', trigger: '触发',
   },
   type: { small: '小技能', ultimate: '大技能', passive: '被动', material: '材料', consumable: '消耗品' },
-  slot: { weapon: '武器', armor: '衣服', helmet: '头盔', boots: '靴子', charm: '护符', ring: '戒指' },
+  slot: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手' },
   rank: {
     normal: '小妖', yaobing: '妖兵', yaotu: '妖徒',
     yaokui: '妖魁', yaowang: '妖王', yaozun: '妖尊',

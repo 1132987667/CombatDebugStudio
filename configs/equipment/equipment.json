@@ -37,9 +37,9 @@
   },
   {
     "id": "ac_t4_01",
-    "name": "万毒蚀心镯",
-    "slot": "ring",
-    "subType": "戒指",
+    "name": "万毒蚀心护手",
+    "slot": "glove",
+    "subType": "护手",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 35,
@@ -804,9 +804,9 @@
   },
   {
     "id": "jz_t1_power_01",
-    "name": "贝壳戒指",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "贝壳护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
@@ -833,13 +833,13 @@
     "blueprintId": "bp_t1_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "贝壳戒指，攻击+5%命中+3%"
+    "description": "贝壳护手，攻击+5%命中+3%"
   },
   {
     "id": "jz_t1_spirit_01",
-    "name": "桃核戒",
-    "slot": "ring",
-    "subType": "灵戒",
+    "name": "桃核护手",
+    "slot": "glove",
+    "subType": "灵护手",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
@@ -866,7 +866,7 @@
     "blueprintId": "bp_t1_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "桃核戒，技能伤害+5%能量+3%"
+    "description": "桃核护手，技能伤害+5%能量+3%"
   },
   {
     "id": "wp_t2_light_01",
@@ -1276,9 +1276,9 @@
   },
   {
     "id": "jz_t2_power_01",
-    "name": "铁精戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "铁精护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
@@ -1305,13 +1305,13 @@
     "blueprintId": "bp_t2_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铁精戒，攻击+8%暴击伤害+10%"
+    "description": "铁精护手，攻击+8%暴击伤害+10%"
   },
   {
     "id": "jz_t2_spirit_01",
-    "name": "水灵戒",
-    "slot": "ring",
-    "subType": "灵戒",
+    "name": "水灵护手",
+    "slot": "glove",
+    "subType": "灵护手",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
@@ -1338,7 +1338,7 @@
     "blueprintId": "bp_t2_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "水灵戒，技能伤害+8%能量+5%"
+    "description": "水灵护手，技能伤害+8%能量+5%"
   },
   {
     "id": "wp_t3_light_01",
@@ -1752,9 +1752,9 @@
   },
   {
     "id": "jz_t3_power_01",
-    "name": "金精戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "金精护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
@@ -1781,13 +1781,13 @@
     "blueprintId": "bp_t3_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金精戒，攻击+12%暴击伤害+15%破甲+5%"
+    "description": "金精护手，攻击+12%暴击伤害+15%破甲+5%"
   },
   {
     "id": "jz_t3_spirit_01",
-    "name": "翠玉灵戒",
-    "slot": "ring",
-    "subType": "灵戒",
+    "name": "翠玉灵护手",
+    "slot": "glove",
+    "subType": "灵护手",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
@@ -1814,7 +1814,7 @@
     "blueprintId": "bp_t3_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "翠玉灵戒，技能伤害+12%能量+8%大招伤害+8%"
+    "description": "翠玉灵护手，技能伤害+12%能量+8%大招伤害+8%"
   },
   {
     "id": "wp_t4_light_01",
@@ -2224,9 +2224,9 @@
   },
   {
     "id": "jz_t4_power_01",
-    "name": "毒牙戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "毒牙护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 30,
@@ -2253,13 +2253,13 @@
     "blueprintId": "bp_t4_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "毒牙戒，攻击+15%暴击伤害+20%"
+    "description": "毒牙护手，攻击+15%暴击伤害+20%"
   },
   {
     "id": "jz_t4_spirit_01",
-    "name": "雾灵戒",
-    "slot": "ring",
-    "subType": "灵戒",
+    "name": "雾灵护手",
+    "slot": "glove",
+    "subType": "灵护手",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 30,
@@ -2286,7 +2286,7 @@
     "blueprintId": "bp_t4_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "雾灵戒，技能伤害+15%能量+10%大招伤害+12%"
+    "description": "雾灵护手，技能伤害+15%能量+10%大招伤害+12%"
   },
   {
     "id": "wp_t5_light_01",
@@ -2696,9 +2696,9 @@
   },
   {
     "id": "jz_t5_power_01",
-    "name": "金刚力戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "金刚力护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t5",
     "rarity": 5,
     "requiredLevel": 40,
@@ -2725,13 +2725,13 @@
     "blueprintId": "bp_t5_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金刚力戒，攻击+18%暴击伤害+25%破甲+10%"
+    "description": "金刚力护手，攻击+18%暴击伤害+25%破甲+10%"
   },
   {
     "id": "jz_t5_spirit_01",
-    "name": "菩提灵戒",
-    "slot": "ring",
-    "subType": "灵戒",
+    "name": "菩提灵护手",
+    "slot": "glove",
+    "subType": "灵护手",
     "tier": "t5",
     "rarity": 5,
     "requiredLevel": 40,
@@ -2758,7 +2758,7 @@
     "blueprintId": "bp_t5_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "菩提灵戒，技能伤害+18%能量+12%大招伤害+15%"
+    "description": "菩提灵护手，技能伤害+18%能量+12%大招伤害+15%"
   },
   {
     "id": "wp_sb01",
@@ -2828,9 +2828,9 @@
   },
   {
     "id": "jz_sb04",
-    "name": "幻瞳迷心戒",
-    "slot": "ring",
-    "subType": "灵戒",
+    "name": "幻瞳迷心护手",
+    "slot": "glove",
+    "subType": "灵护手",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 30,
@@ -2846,7 +2846,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "迷雾妖主首杀掉落",
-    "description": "幻瞳迷心戒，技能伤害+18%"
+    "description": "幻瞳迷心护手，技能伤害+18%"
   },
   {
     "id": "ar_sb05",
@@ -3026,9 +3026,9 @@
   },
   {
     "id": "jz_hb03",
-    "name": "九齿破甲戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "九齿破甲护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 30,
@@ -3044,7 +3044,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "朱刚鬣掉落",
-    "description": "九齿破甲戒，攻击+16%"
+    "description": "九齿破甲护手，攻击+16%"
   },
   {
     "id": "hd_hb04",
@@ -3191,9 +3191,9 @@
   },
   {
     "id": "jz_sp_02",
-    "name": "寒潭玉戒",
-    "slot": "ring",
-    "subType": "灵戒",
+    "name": "寒潭玉护手",
+    "slot": "glove",
+    "subType": "灵护手",
     "tier": "t4",
     "rarity": 3,
     "requiredLevel": 30,
@@ -3209,7 +3209,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "百眼魔君掉落",
-    "description": "寒潭玉戒，技能伤害+15%"
+    "description": "寒潭玉护手，技能伤害+15%"
   },
   {
     "id": "wp_sp_02",
@@ -3301,9 +3301,9 @@
   },
   {
     "id": "jz_sp_06",
-    "name": "万妖臣服戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "万妖臣服护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t5",
     "rarity": 4,
     "requiredLevel": 40,
@@ -3319,7 +3319,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "成就「降妖除魔」奖励",
-    "description": "万妖臣服戒，攻击+20%"
+    "description": "万妖臣服护手，攻击+20%"
   },
   {
     "id": "wt_01",
@@ -3428,9 +3428,9 @@
   },
   {
     "id": "wt_06",
-    "name": "试炼铜戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "试炼铜护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t1",
     "rarity": 1,
     "requiredLevel": 1,
@@ -3445,7 +3445,7 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第6层首通掉落",
-    "description": "无尽塔第6层装备试炼铜戒"
+    "description": "无尽塔第6层装备试炼铜护手"
   },
   {
     "id": "wt_07",
@@ -3638,9 +3638,9 @@
   },
   {
     "id": "wt_16",
-    "name": "破军戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "破军护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t2",
     "rarity": 2,
     "requiredLevel": 10,
@@ -3655,7 +3655,7 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第16层首通掉落",
-    "description": "无尽塔第16层装备破军戒"
+    "description": "无尽塔第16层装备破军护手"
   },
   {
     "id": "wt_17",
@@ -3848,9 +3848,9 @@
   },
   {
     "id": "wt_26",
-    "name": "碎星戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "碎星护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t3",
     "rarity": 3,
     "requiredLevel": 20,
@@ -3865,7 +3865,7 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第26层首通掉落",
-    "description": "无尽塔第26层装备碎星戒"
+    "description": "无尽塔第26层装备碎星护手"
   },
   {
     "id": "wt_27",
@@ -4058,9 +4058,9 @@
   },
   {
     "id": "wt_36",
-    "name": "灭世戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "灭世护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t4",
     "rarity": 4,
     "requiredLevel": 30,
@@ -4075,7 +4075,7 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第36层首通掉落",
-    "description": "无尽塔第36层装备灭世戒"
+    "description": "无尽塔第36层装备灭世护手"
   },
   {
     "id": "wt_37",
@@ -4298,9 +4298,9 @@
   },
   {
     "id": "wt_46",
-    "name": "天罡战戒",
-    "slot": "ring",
-    "subType": "力戒",
+    "name": "天罡战护手",
+    "slot": "glove",
+    "subType": "力护手",
     "tier": "t5",
     "rarity": 5,
     "requiredLevel": 40,
@@ -4320,7 +4320,7 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第46层首通掉落",
-    "description": "天罡战戒，攻击+18%，暴击率+10%"
+    "description": "天罡战护手，攻击+18%，暴击率+10%"
   },
   {
     "id": "wt_47",

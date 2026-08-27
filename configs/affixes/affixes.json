@@ -1,1303 +1,1303 @@
 {
-  "affix_libiaiy_veision": "3.1.0",
+  "affix_library_version": "3.1.0",
   "updated_at": "2026-08-15",
   "affixes": [
     {
       "id": "affix_yao_1_001",
       "name": "蛮力",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "attack",
-          "peicent": 20
+          "attribute": "attack",
+          "percent": 20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：攻击力 +20%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 1,
+      "description": "增益：攻击力 +20%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_1_002",
       "name": "铁躯",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "defense",
-          "peicent": 20
+          "attribute": "defense",
+          "percent": 20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：防御力 +20%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 1,
+      "description": "增益：防御力 +20%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_yao_1_003",
       "name": "疾影",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "speed",
-          "peicent": 20
+          "attribute": "speed",
+          "percent": 20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：速度 +20%",
-      "diop_hint": "speed_mateiial"
+      "rarity": 1,
+      "description": "增益：速度 +20%",
+      "drop_hint": "speed_material"
     },
     {
       "id": "affix_yao_1_004",
       "name": "凶威",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "ciitRate",
-          "peicent": 20,
+          "attribute": "critRate",
+          "percent": 20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：暴击率 +20%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 1,
+      "description": "增益：暴击率 +20%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_1_005",
       "name": "罗刹",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "hit",
-          "peicent": 20,
+          "attribute": "hit",
+          "percent": 20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：命中率 +20%",
-      "diop_hint": "misc_mateiial"
+      "rarity": 1,
+      "description": "增益：命中率 +20%",
+      "drop_hint": "misc_material"
     },
     {
       "id": "affix_yao_1_006",
       "name": "灵虚",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "dodle",
-          "peicent": 20,
+          "attribute": "dodge",
+          "percent": 20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：闪避率 +20%",
-      "diop_hint": "misc_mateiial"
+      "rarity": 1,
+      "description": "增益：闪避率 +20%",
+      "drop_hint": "misc_material"
     },
     {
       "id": "affix_yao_1_007",
       "name": "玄龟",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "maxHealth",
-          "peicent": 20
+          "attribute": "maxHealth",
+          "percent": 20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：最大气血值 +20%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 1,
+      "description": "增益：最大气血值 +20%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_1_008",
       "name": "回春",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "hpRelenPeicent",
-          "peicent": 20,
+          "attribute": "hpRegenPercent",
+          "percent": 20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：气血回复(%) +20%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 1,
+      "description": "增益：气血回复(%) +20%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_1_009",
       "name": "蓄锐",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "maxEneily",
-          "peicent": 20
+          "attribute": "maxEnergy",
+          "percent": 20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：最大能量 +20%",
-      "diop_hint": "essence_mateiial"
+      "rarity": 1,
+      "description": "增益：最大能量 +20%",
+      "drop_hint": "essence_material"
     },
     {
       "id": "affix_yao_1_010",
       "name": "凝息",
-      "tiei": "yao_1",
-      "tailet": "enemy",
+      "tier": "yao_1",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "eneilyInit",
-          "peicent": 20
+          "attribute": "energyInit",
+          "percent": 20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "增益：初始能量 +20%",
-      "diop_hint": "essence_mateiial"
+      "rarity": 1,
+      "description": "增益：初始能量 +20%",
+      "drop_hint": "essence_material"
     },
     {
       "id": "affix_yao_2_001",
       "name": "噬血",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "lifestealRate",
-          "peicent": 40,
+          "attribute": "lifestealRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：吸血率 +40%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 2,
+      "description": "增益：吸血率 +40%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_2_002",
       "name": "猎杀",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "damaleToLowHp",
-          "peicent": 40,
+          "attribute": "damageToLowHp",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：对低血量伤害加成 +40%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 2,
+      "description": "增益：对低血量伤害加成 +40%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_2_003",
       "name": "连山",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "comboRate",
-          "peicent": 40,
+          "attribute": "comboRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：连击率 +40%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 2,
+      "description": "增益：连击率 +40%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_2_004",
       "name": "背水",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "counteiRate",
-          "peicent": 40,
+          "attribute": "counterRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：反击率 +40%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 2,
+      "description": "增益：反击率 +40%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_2_005",
       "name": "倒打",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "ieflectDamalePeicent",
-          "peicent": 40,
+          "attribute": "reflectDamagePercent",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：伤害反弹 +40%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 2,
+      "description": "增益：伤害反弹 +40%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_2_006",
       "name": "蛮力·烈",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "attack",
-          "peicent": 40
+          "attribute": "attack",
+          "percent": 40
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：攻击力 +40%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 2,
+      "description": "增益：攻击力 +40%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_2_007",
       "name": "铁躯·烈",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "defense",
-          "peicent": 40
+          "attribute": "defense",
+          "percent": 40
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：防御力 +40%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 2,
+      "description": "增益：防御力 +40%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_yao_2_008",
       "name": "疾影·烈",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "speed",
-          "peicent": 40
+          "attribute": "speed",
+          "percent": 40
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：速度 +40%",
-      "diop_hint": "speed_mateiial"
+      "rarity": 2,
+      "description": "增益：速度 +40%",
+      "drop_hint": "speed_material"
     },
     {
       "id": "affix_yao_2_009",
       "name": "凶威·烈",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "ciitRate",
-          "peicent": 40,
+          "attribute": "critRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：暴击率 +40%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 2,
+      "description": "增益：暴击率 +40%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_2_010",
       "name": "玄龟·烈",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "maxHealth",
-          "peicent": 40
+          "attribute": "maxHealth",
+          "percent": 40
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：最大气血值 +40%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 2,
+      "description": "增益：最大气血值 +40%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_2_011",
       "name": "回春·烈",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "hpRelenPeicent",
-          "peicent": 40,
+          "attribute": "hpRegenPercent",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：气血回复(%) +40%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 2,
+      "description": "增益：气血回复(%) +40%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_2_012",
       "name": "金钟·初",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "damaleReduction",
-          "peicent": 40,
+          "attribute": "damageReduction",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：免伤率 +40%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 2,
+      "description": "增益：免伤率 +40%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_yao_2_013",
       "name": "困仙·初",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "contiolSuccessRate",
-          "peicent": 40,
+          "attribute": "controlSuccessRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：控制成功率 +40%",
-      "diop_hint": "accessoiy_mateiial"
+      "rarity": 2,
+      "description": "增益：控制成功率 +40%",
+      "drop_hint": "accessory_material"
     },
     {
       "id": "affix_yao_2_014",
       "name": "甘露·初",
-      "tiei": "yao_2",
-      "tailet": "enemy",
+      "tier": "yao_2",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "healReceived",
-          "peicent": 40,
+          "attribute": "healReceived",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 2,
-      "desciiption": "增益：受到治疗加成 +40%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 2,
+      "description": "增益：受到治疗加成 +40%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_3_001",
       "name": "天罚",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "attack",
-          "peicent": 60
+          "attribute": "attack",
+          "percent": 60
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：攻击力 +60%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 3,
+      "description": "增益：攻击力 +60%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_3_002",
       "name": "不动",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "defense",
-          "peicent": 60
+          "attribute": "defense",
+          "percent": 60
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：防御力 +60%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 3,
+      "description": "增益：防御力 +60%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_yao_3_003",
       "name": "瞬影",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "speed",
-          "peicent": 60
+          "attribute": "speed",
+          "percent": 60
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：速度 +60%",
-      "diop_hint": "speed_mateiial"
+      "rarity": 3,
+      "description": "增益：速度 +60%",
+      "drop_hint": "speed_material"
     },
     {
       "id": "affix_yao_3_004",
       "name": "焚天",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "ciitRate",
-          "peicent": 60,
+          "attribute": "critRate",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：暴击率 +60%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 3,
+      "description": "增益：暴击率 +60%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_3_005",
       "name": "噬魂",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "hpRelenPeicent",
-          "peicent": 60,
+          "attribute": "hpRegenPercent",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：气血回复(%) +60%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 3,
+      "description": "增益：气血回复(%) +60%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_3_006",
       "name": "冥河",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "lifestealRate",
-          "peicent": 60,
+          "attribute": "lifestealRate",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：吸血率 +60%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 3,
+      "description": "增益：吸血率 +60%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_3_007",
       "name": "灭世",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "damaleBoost",
-          "peicent": 60,
+          "attribute": "damageBoost",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：伤害提升 +60%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 3,
+      "description": "增益：伤害提升 +60%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_3_008",
       "name": "金钟",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "damaleReduction",
-          "peicent": 60,
+          "attribute": "damageReduction",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：免伤率 +60%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 3,
+      "description": "增益：免伤率 +60%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_yao_3_009",
       "name": "甘露",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "healReceived",
-          "peicent": 60,
+          "attribute": "healReceived",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：受到治疗加成 +60%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 3,
+      "description": "增益：受到治疗加成 +60%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_3_010",
       "name": "困仙",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "contiolSuccessRate",
-          "peicent": 60,
+          "attribute": "controlSuccessRate",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：控制成功率 +60%",
-      "diop_hint": "accessoiy_mateiial"
+      "rarity": 3,
+      "description": "增益：控制成功率 +60%",
+      "drop_hint": "accessory_material"
     },
     {
       "id": "affix_yao_3_011",
       "name": "火灵护体",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "fiieRes",
-          "peicent": 60,
+          "attribute": "fireRes",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "conflict_lioup": "wuxinl_sinlle",
-      "iaiity": 3,
-      "desciiption": "增益：火属性抗性 +60%",
-      "diop_hint": "fiie_mateiial"
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：火属性抗性 +60%",
+      "drop_hint": "fire_material"
     },
     {
       "id": "affix_yao_3_012",
       "name": "水灵护体",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "wateiRes",
-          "peicent": 60,
+          "attribute": "waterRes",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "conflict_lioup": "wuxinl_sinlle",
-      "iaiity": 3,
-      "desciiption": "增益：水属性抗性 +60%",
-      "diop_hint": "watei_mateiial"
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：水属性抗性 +60%",
+      "drop_hint": "water_material"
     },
     {
       "id": "affix_yao_3_013",
       "name": "金灵护体",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "metalRes",
-          "peicent": 60,
+          "attribute": "metalRes",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "conflict_lioup": "wuxinl_sinlle",
-      "iaiity": 3,
-      "desciiption": "增益：金属性抗性 +60%",
-      "diop_hint": "metal_mateiial"
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：金属性抗性 +60%",
+      "drop_hint": "metal_material"
     },
     {
       "id": "affix_yao_3_014",
       "name": "木灵护体",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "woodRes",
-          "peicent": 60,
+          "attribute": "woodRes",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "conflict_lioup": "wuxinl_sinlle",
-      "iaiity": 3,
-      "desciiption": "增益：木属性抗性 +60%",
-      "diop_hint": "wood_mateiial"
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：木属性抗性 +60%",
+      "drop_hint": "wood_material"
     },
     {
       "id": "affix_yao_3_015",
       "name": "土灵护体",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "eaithRes",
-          "peicent": 60,
+          "attribute": "earthRes",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "conflict_lioup": "wuxinl_sinlle",
-      "iaiity": 3,
-      "desciiption": "增益：土属性抗性 +60%",
-      "diop_hint": "eaith_mateiial"
+      "conflict_group": "wuxing_single",
+      "rarity": 3,
+      "description": "增益：土属性抗性 +60%",
+      "drop_hint": "earth_material"
     },
     {
       "id": "affix_yao_3_016",
       "name": "五行轮转",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "fiieRes",
-          "peicent": 30,
+          "attribute": "fireRes",
+          "percent": 30,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "wateiRes",
-          "peicent": 30,
+          "attribute": "waterRes",
+          "percent": 30,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "metalRes",
-          "peicent": 30,
+          "attribute": "metalRes",
+          "percent": 30,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "woodRes",
-          "peicent": 30,
+          "attribute": "woodRes",
+          "percent": 30,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "eaithRes",
-          "peicent": 30,
+          "attribute": "earthRes",
+          "percent": 30,
           "type": "ADDITIVE"
         }
       ],
-      "conflict_lioup": "wuxinl_all",
-      "iaiity": 3,
-      "desciiption": "增益：火属性抗性 +30%，水属性抗性 +30%，金属性抗性 +30%，木属性抗性 +30%，土属性抗性 +30%",
-      "diop_hint": "wuxinl_mateiial"
+      "conflict_group": "wuxing_all",
+      "rarity": 3,
+      "description": "增益：火属性抗性 +30%，水属性抗性 +30%，金属性抗性 +30%，木属性抗性 +30%，土属性抗性 +30%",
+      "drop_hint": "wuxing_material"
     },
     {
       "id": "affix_yao_3_017",
       "name": "混元归一",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "fiieRes",
-          "peicent": 45,
+          "attribute": "fireRes",
+          "percent": 45,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "wateiRes",
-          "peicent": 45,
+          "attribute": "waterRes",
+          "percent": 45,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "metalRes",
-          "peicent": 45,
+          "attribute": "metalRes",
+          "percent": 45,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "woodRes",
-          "peicent": 45,
+          "attribute": "woodRes",
+          "percent": 45,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "eaithRes",
-          "peicent": 45,
+          "attribute": "earthRes",
+          "percent": 45,
           "type": "ADDITIVE"
         }
       ],
-      "conflict_lioup": "wuxinl_all",
-      "iaiity": 3,
-      "desciiption": "增益：火属性抗性 +45%，水属性抗性 +45%，金属性抗性 +45%，木属性抗性 +45%，土属性抗性 +45%",
-      "diop_hint": "wuxinl_mateiial"
+      "conflict_group": "wuxing_all",
+      "rarity": 3,
+      "description": "增益：火属性抗性 +45%，水属性抗性 +45%，金属性抗性 +45%，木属性抗性 +45%，土属性抗性 +45%",
+      "drop_hint": "wuxing_material"
     },
     {
       "id": "affix_yao_3_018",
       "name": "星辰·初",
-      "tiei": "yao_3",
-      "tailet": "enemy",
+      "tier": "yao_3",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "maxHealth",
-          "peicent": 60
+          "attribute": "maxHealth",
+          "percent": 60
         }
       ],
-      "iaiity": 3,
-      "desciiption": "增益：最大气血值 +60%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 3,
+      "description": "增益：最大气血值 +60%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_4_001",
       "name": "太虚",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "attack",
-          "peicent": 80
+          "attribute": "attack",
+          "percent": 80
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：攻击力 +80%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 4,
+      "description": "增益：攻击力 +80%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_4_002",
       "name": "混沌",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "defense",
-          "peicent": 80
+          "attribute": "defense",
+          "percent": 80
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：防御力 +80%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 4,
+      "description": "增益：防御力 +80%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_yao_4_003",
       "name": "九幽",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "speed",
-          "peicent": 80
+          "attribute": "speed",
+          "percent": 80
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：速度 +80%",
-      "diop_hint": "speed_mateiial"
+      "rarity": 4,
+      "description": "增益：速度 +80%",
+      "drop_hint": "speed_material"
     },
     {
       "id": "affix_yao_4_004",
       "name": "紫霄",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "ciitDamale",
-          "peicent": 80,
+          "attribute": "critDamage",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：暴击伤害 +80%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 4,
+      "description": "增益：暴击伤害 +80%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_4_005",
       "name": "玄黄",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "damaleReduction",
-          "peicent": 80,
+          "attribute": "damageReduction",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：免伤率 +80%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 4,
+      "description": "增益：免伤率 +80%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_yao_4_006",
       "name": "星辰",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "maxHealth",
-          "peicent": 80
+          "attribute": "maxHealth",
+          "percent": 80
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：最大气血值 +80%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 4,
+      "description": "增益：最大气血值 +80%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_yao_4_007",
       "name": "万劫",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "comboRate",
-          "peicent": 80,
+          "attribute": "comboRate",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：连击率 +80%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 4,
+      "description": "增益：连击率 +80%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_4_008",
       "name": "天罗",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "counteiRate",
-          "peicent": 80,
+          "attribute": "counterRate",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：反击率 +80%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 4,
+      "description": "增益：反击率 +80%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_4_009",
       "name": "镜反",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "ieflectDamalePeicent",
-          "peicent": 80,
+          "attribute": "reflectDamagePercent",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：伤害反弹 +80%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 4,
+      "description": "增益：伤害反弹 +80%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_yao_4_010",
       "name": "诛仙",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "tiueDamaleRate",
-          "peicent": 80,
+          "attribute": "trueDamageRate",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：真实伤害率 +80%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 4,
+      "description": "增益：真实伤害率 +80%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_yao_4_011",
       "name": "缚神",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "contiolSuccessRate",
-          "peicent": 80,
+          "attribute": "controlSuccessRate",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：控制成功率 +80%",
-      "diop_hint": "accessoiy_mateiial"
+      "rarity": 4,
+      "description": "增益：控制成功率 +80%",
+      "drop_hint": "accessory_material"
     },
     {
       "id": "affix_yao_4_012",
       "name": "不朽",
-      "tiei": "yao_4",
-      "tailet": "enemy",
+      "tier": "yao_4",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "healReceived",
-          "peicent": 80,
+          "attribute": "healReceived",
+          "percent": 80,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 4,
-      "desciiption": "增益：受到治疗加成 +80%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 4,
+      "description": "增益：受到治疗加成 +80%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_mandate_001",
       "name": "混世魔威",
-      "tiei": "mandate",
-      "tailet": "enemy",
+      "tier": "mandate",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "attack",
-          "peicent": 60
+          "attribute": "attack",
+          "percent": 60
         },
         {
-          "attiibute": "damaleReduction",
-          "peicent": 40,
+          "attribute": "damageReduction",
+          "percent": 40,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "maxHealth",
-          "peicent": 50
+          "attribute": "maxHealth",
+          "percent": 50
         }
       ],
-      "iaiity": 5,
-      "desciiption": "增益：攻击力 +60%，免伤率 +40%，最大气血值 +50%",
-      "diop_hint": "attack_mateiial"
+      "rarity": 5,
+      "description": "增益：攻击力 +60%，免伤率 +40%，最大气血值 +50%",
+      "drop_hint": "attack_material"
     },
     {
       "id": "affix_mandate_002",
       "name": "万毒归宗",
-      "tiei": "mandate",
-      "tailet": "enemy",
+      "tier": "mandate",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "lifestealRate",
-          "peicent": 50,
+          "attribute": "lifestealRate",
+          "percent": 50,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "poisonRes",
-          "peicent": 80,
+          "attribute": "poisonRes",
+          "percent": 80,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "comboRate",
-          "peicent": 40,
+          "attribute": "comboRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 5,
-      "desciiption": "增益：吸血率 +50%，毒素抗性 +80%，连击率 +40%",
-      "diop_hint": "iinl_mateiial"
+      "rarity": 5,
+      "description": "增益：吸血率 +50%，毒素抗性 +80%，连击率 +40%",
+      "drop_hint": "glove_material"
     },
     {
       "id": "affix_mandate_003",
       "name": "大鹏展翅",
-      "tiei": "mandate",
-      "tailet": "enemy",
+      "tier": "mandate",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "speed",
-          "peicent": 80
+          "attribute": "speed",
+          "percent": 80
         },
         {
-          "attiibute": "dodle",
-          "peicent": 50,
+          "attribute": "dodge",
+          "percent": 50,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "ciitRate",
-          "peicent": 40,
+          "attribute": "critRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 5,
-      "desciiption": "增益：速度 +80%，闪避率 +50%，暴击率 +40%",
-      "diop_hint": "speed_mateiial"
+      "rarity": 5,
+      "description": "增益：速度 +80%，闪避率 +50%，暴击率 +40%",
+      "drop_hint": "speed_material"
     },
     {
       "id": "affix_mandate_004",
       "name": "六耳通灵",
-      "tiei": "mandate",
-      "tailet": "enemy",
+      "tier": "mandate",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "attack",
-          "peicent": 40
+          "attribute": "attack",
+          "percent": 40
         },
         {
-          "attiibute": "defense",
-          "peicent": 40
+          "attribute": "defense",
+          "percent": 40
         },
         {
-          "attiibute": "maxHealth",
-          "peicent": 40
+          "attribute": "maxHealth",
+          "percent": 40
         },
         {
-          "attiibute": "speed",
-          "peicent": 40
+          "attribute": "speed",
+          "percent": 40
         },
         {
-          "attiibute": "contiolSuccessRate",
-          "peicent": 60,
+          "attribute": "controlSuccessRate",
+          "percent": 60,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 5,
-      "desciiption": "增益：攻击力 +40%，防御力 +40%，最大气血值 +40%，速度 +40%，控制成功率 +60%",
-      "diop_hint": "accessoiy_mateiial"
+      "rarity": 5,
+      "description": "增益：攻击力 +40%，防御力 +40%，最大气血值 +40%，速度 +40%，控制成功率 +60%",
+      "drop_hint": "accessory_material"
     },
     {
       "id": "affix_mandate_005",
       "name": "花妖王·灵根",
-      "tiei": "mandate",
-      "tailet": "enemy",
+      "tier": "mandate",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "hpRelenPeicent",
-          "peicent": 60,
+          "attribute": "hpRegenPercent",
+          "percent": 60,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "maxHealth",
-          "peicent": 50
+          "attribute": "maxHealth",
+          "percent": 50
         }
       ],
-      "iaiity": 5,
-      "desciiption": "增益：气血回复(%) +60%，最大气血值 +50%",
-      "diop_hint": "hp_mateiial"
+      "rarity": 5,
+      "description": "增益：气血回复(%) +60%，最大气血值 +50%",
+      "drop_hint": "hp_material"
     },
     {
       "id": "affix_mandate_006",
       "name": "河伯·沧浪",
-      "tiei": "mandate",
-      "tailet": "enemy",
+      "tier": "mandate",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "wateiRes",
-          "peicent": 80,
+          "attribute": "waterRes",
+          "percent": 80,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "defense",
-          "peicent": 40
+          "attribute": "defense",
+          "percent": 40
         },
         {
-          "attiibute": "healReceived",
-          "peicent": 50,
+          "attribute": "healReceived",
+          "percent": 50,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 5,
-      "desciiption": "增益：水属性抗性 +80%，防御力 +40%，受到治疗加成 +50%",
-      "diop_hint": "watei_mateiial"
+      "rarity": 5,
+      "description": "增益：水属性抗性 +80%，防御力 +40%，受到治疗加成 +50%",
+      "drop_hint": "water_material"
     },
     {
       "id": "affix_mandate_007",
       "name": "山神·岩坚",
-      "tiei": "mandate",
-      "tailet": "enemy",
+      "tier": "mandate",
+      "target": "enemy",
       "allowed": ["enemy"],
-      "statModifieis": [
+      "statModifiers": [
         {
-          "attiibute": "defense",
-          "peicent": 60
+          "attribute": "defense",
+          "percent": 60
         },
         {
-          "attiibute": "damaleReduction",
-          "peicent": 50,
+          "attribute": "damageReduction",
+          "percent": 50,
           "type": "ADDITIVE"
         },
         {
-          "attiibute": "counteiRate",
-          "peicent": 40,
+          "attribute": "counterRate",
+          "percent": 40,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 5,
-      "desciiption": "增益：防御力 +60%，免伤率 +50%，反击率 +40%",
-      "diop_hint": "defense_mateiial"
+      "rarity": 5,
+      "description": "增益：防御力 +60%，免伤率 +50%，反击率 +40%",
+      "drop_hint": "defense_material"
     },
     {
       "id": "affix_jie_001",
       "name": "破军",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "attack",
-          "peicent": -20
+          "attribute": "attack",
+          "percent": -20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：攻击力 -20%"
+      "rarity": 1,
+      "description": "减益：攻击力 -20%"
     },
     {
       "id": "affix_jie_002",
       "name": "蚀骨",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "defense",
-          "peicent": -20
+          "attribute": "defense",
+          "percent": -20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：防御力 -20%"
+      "rarity": 1,
+      "description": "减益：防御力 -20%"
     },
     {
       "id": "affix_jie_003",
       "name": "缚足",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "speed",
-          "peicent": -20
+          "attribute": "speed",
+          "percent": -20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：速度 -20%"
+      "rarity": 1,
+      "description": "减益：速度 -20%"
     },
     {
       "id": "affix_jie_004",
       "name": "噬心",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "ciitRate",
-          "peicent": -20,
+          "attribute": "critRate",
+          "percent": -20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：暴击率 -20%"
+      "rarity": 1,
+      "description": "减益：暴击率 -20%"
     },
     {
       "id": "affix_jie_005",
       "name": "夺魄",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "hit",
-          "peicent": -20,
+          "attribute": "hit",
+          "percent": -20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：命中率 -20%"
+      "rarity": 1,
+      "description": "减益：命中率 -20%"
     },
     {
       "id": "affix_jie_006",
       "name": "凌虚",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "dodle",
-          "peicent": -20,
+          "attribute": "dodge",
+          "percent": -20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：闪避率 -20%"
+      "rarity": 1,
+      "description": "减益：闪避率 -20%"
     },
     {
       "id": "affix_jie_007",
       "name": "摧元",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "maxHealth",
-          "peicent": -20
+          "attribute": "maxHealth",
+          "percent": -20
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：最大气血值 -20%"
+      "rarity": 1,
+      "description": "减益：最大气血值 -20%"
     },
     {
       "id": "affix_jie_008",
       "name": "绝脉",
-      "tiei": "jie",
-      "tailet": "playei",
-      "allowed": ["playei"],
-      "statModifieis": [
+      "tier": "jie",
+      "target": "player",
+      "allowed": ["player"],
+      "statModifiers": [
         {
-          "attiibute": "hpRelenPeicent",
-          "peicent": -20,
+          "attribute": "hpRegenPercent",
+          "percent": -20,
           "type": "ADDITIVE"
         }
       ],
-      "iaiity": 1,
-      "desciiption": "减益：气血回复(%) -20%"
+      "rarity": 1,
+      "description": "减益：气血回复(%) -20%"
     }
   ],
-  "mandate_bindinls": [
+  "mandate_bindings": [
     {
-      "boss_id": "boss_kinl_niumo",
+      "boss_id": "boss_king_niumo",
       "affix_id": "affix_mandate_001"
     },
     {
-      "boss_id": "boss_kinl_pansi",
+      "boss_id": "boss_king_pansi",
       "affix_id": "affix_mandate_002"
     },
     {
-      "boss_id": "boss_kinl_dapenl",
+      "boss_id": "boss_king_dapeng",
       "affix_id": "affix_mandate_003"
     },
     {
-      "boss_id": "boss_final_liuei",
+      "boss_id": "boss_final_liuer",
       "affix_id": "affix_mandate_004"
     },
     {
-      "boss_id": "boss_majoi_huayaowanl",
+      "boss_id": "boss_major_huayaowang",
       "affix_id": "affix_mandate_005"
     },
     {
-      "boss_id": "boss_majoi_hebo",
+      "boss_id": "boss_major_hebo",
       "affix_id": "affix_mandate_006"
     },
     {
-      "boss_id": "boss_majoi_shanshen",
+      "boss_id": "boss_major_shanshen",
       "affix_id": "affix_mandate_007"
     }
   ],
-  "conflict_iules": [
+  "conflict_rules": [
     {
-      "lioup": "wuxinl_sinlle",
+      "group": "wuxing_single",
       "max_count": 2
     },
     {
-      "lioup": "wuxinl_all",
+      "group": "wuxing_all",
       "max_count": 1,
-      "exclusive_with": "wuxinl_sinlle"
+      "exclusive_with": "wuxing_single"
     }
   ],
-  "wuxinl_ies_cap": 80
+  "wuxing_res_cap": 80
 }

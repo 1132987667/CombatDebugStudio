@@ -632,16 +632,6 @@
     "isPercentage": true
   },
   {
-    "uid": "B1_05",
-    "code": "trueDamageFlat",
-    "name": "真伤附加值",
-    "displayName": "真伤附加值",
-    "description": "额外附加的固定真实伤害，不随倍率放大",
-    "range": "0-1000",
-    "impact": "附加固定真实伤害",
-    "isPercentage": false
-  },
-  {
     "uid": "B2_02",
     "code": "normalAtkBonus",
     "name": "普攻加成",

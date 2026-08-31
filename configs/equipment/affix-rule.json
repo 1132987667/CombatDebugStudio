@@ -1,0 +1,121 @@
+{
+  "rule_version": "1.0",
+  "updated_at": "2026-08-31",
+  "description": "附加属性（词条）投放规则：定义各装备部位/子类型允许投放的属性组池。属性组码约定见 attribute_groups。",
+  "attribute_groups": {
+    "ATK-ADD": {
+      "label": "攻击系·百分比加成",
+      "attributes": ["attackBonus", "hitBonus", "speedBonus", "damageBoost", "normalAtkBonus", "skillBonus"],
+      "names": ["攻击加成", "命中加成", "速度加成", "伤害加成", "普攻加成", "技能加成"]
+    },
+    "DEF-ADD": {
+      "label": "防御系·百分比加成",
+      "attributes": ["healthBonus", "defenseBonus", "dodgeBonus", "shieldBonus", "healBonus", "reflectBonus"],
+      "names": ["气血加成", "防御加成", "闪避加成", "护盾加成", "治疗强度加成", "伤害反弹加成"]
+    }
+  },
+  "sub_type_groups": {
+    "weapon": {
+      "label": "武器",
+      "sub_types": [
+        { "id": "sword", "name": "剑" },
+        { "id": "staff", "name": "棍" },
+        { "id": "hammer", "name": "锤" }
+      ]
+    },
+    "armor": {
+      "label": "衣甲",
+      "sub_types": [
+        { "id": "cloth_armor", "name": "布甲" },
+        { "id": "leather_armor", "name": "皮甲" },
+        { "id": "plate_armor", "name": "盔甲" }
+      ]
+    },
+    "helmet": {
+      "label": "头部",
+      "sub_types": [
+        { "id": "face_guard", "name": "面" },
+        { "id": "crown", "name": "冠" },
+        { "id": "helmet", "name": "头盔" }
+      ]
+    },
+    "boots": {
+      "label": "脚部",
+      "sub_types": [
+        { "id": "cloth_boots", "name": "布鞋" },
+        { "id": "leather_boots", "name": "皮鞋" },
+        { "id": "battle_boots", "name": "战靴" }
+      ]
+    },
+    "charm": {
+      "label": "护符",
+      "sub_types": [
+        { "id": "charm", "name": "护符" }
+      ]
+    },
+    "glove": {
+      "label": "护腕",
+      "sub_types": [
+        { "id": "glove", "name": "护腕" }
+      ]
+    }
+  },
+  "affix_rows": [
+    {
+      "row": 1,
+      "name": "基础属性",
+      "pool": {
+        "ATK": ["ATK-L1"],
+        "DEF": ["DEF-L1"]
+      }
+    },
+    {
+      "row": 2,
+      "name": "百分比加成",
+      "pool": {
+        "ATK": ["ATK-ADD"],
+        "DEF": ["DEF-ADD"]
+      }
+    },
+    {
+      "row": 3,
+      "name": "生存对抗",
+      "pool": {
+        "ATK": ["ATK-MEC", "SHD-L2"],
+        "DEF": ["DEF-MEC", "ALL-MEC"]
+      }
+    },
+    {
+      "row": 4,
+      "name": "机制功能",
+      "pool": {
+        "ATK": ["ATK-ALL"],
+        "DEF": ["DEF-ALL"]
+      }
+    },
+    {
+      "row": 5,
+      "name": "独立系数",
+      "pool": {
+        "ATK": ["L3-通用", "ATK-L3"],
+        "DEF": ["L4-通用", "DEF-L3"]
+      }
+    }
+  ],
+  "slot_side": {
+    "weapon": "ATK",
+    "armor": "DEF",
+    "helmet": "DEF",
+    "boots": "DEF",
+    "charm": "ATK",
+    "glove": "ATK"
+  },
+  "forbidden": {
+    "rules": [
+      "武器禁止洗出免伤率",
+      "护甲禁止洗出暴击率",
+      "脚部禁止洗出暴击伤害",
+      "护符禁止洗出防御"
+    ]
+  }
+}

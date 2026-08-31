@@ -279,8 +279,72 @@ export interface BattleParamData {
   range?: { min: number; max: number }
   /** 结构化参数数据（经验/金钱表，value 为 undefined 时使用） */
   data?: ExpTableConfig | EnemyRewardTableConfig | LevelDiffBonusConfig | EconomyRatiosConfig
+    | PlayerGrowthConfig | SystemBudgetConfig | EquipFormulaConfig
   description?: string
   updatedAt: string
+}
+
+/** 玩家基础属性六维（对齐 attributes.json code：命中/闪避取"值"，对应 1 SAP = 12气血 = 2攻 = 2防 = 2命中 = 2闪避 = 2速度） */
+export type PlayerBaseAttrCode = 'maxHealth' | 'attack' | 'defense' | 'hitValue' | 'dodgeValue' | 'speed'
+
+/** 玩家成长配置（params 域，key=player_config）—— 对齐 PRD §19 / SAP 六维模型，策划数值体系闭环起点。
+ * 每级固定成长合计 = 12 属性点（24/12 + 8/2 + 4/2 + 3/2 + 3/2 + 2/2 = 12）；每级自由点 4；
+ * 满级总量 = (12 + 4) × 50 + 丹药 100 = 900。 */
+export interface PlayerGrowthConfig {
+  id: 'player_config'
+  /** 最高等级 */
+  maxLevel: number
+  /** 经验公式（仅展示 + fillExpFromFormula 解析；'round(50 × L^1.35 + 60 × L)'） */
+  expFormula: string
+  /** 1 级基础属性 */
+  base: Record<PlayerBaseAttrCode, number>
+  /** 每级固定成长（合计 12 属性点，按 SAP 转化率折算） */
+  growth: Record<PlayerBaseAttrCode, number>
+  /** 每级自由属性点 */
+  freePointsPerLevel: number
+  /** 1 属性点 → 各属性数值（SAP 定义：12/2/2/2/2/2） */
+  conversion: Record<PlayerBaseAttrCode, number>
+  /** 丹药带来的额外属性点（计入等级总属性点） */
+  pillBonusPoints: number
+  /** 仅预览用当前等级（不参与存储语义） */
+  currentLevel?: number
+}
+
+/** 养成系统预算权重条目（对齐 §2.3 策划新表，随策划调整只改 JSON） */
+export interface SystemBudgetEntry {
+  system: 'level' | 'equipment' | 'school' | 'pet' | 'mount' | 'talent' | 'artifact' | 'relic'
+  label: string
+  /** 等级域总属性点（900 = 800 成长 + 100 丹药） */
+  totalSap?: number
+  /** 预算权重（等级 120 / 装备 240 / 其余 60） */
+  weight: number
+  note?: string
+}
+
+/** 养成系统预算（params 域，key=system_budget） */
+export interface SystemBudgetConfig {
+  id: 'system_budget'
+  systems: SystemBudgetEntry[]
+}
+
+/** 装备品阶权重区间（对齐 PRD §21 品阶表） */
+export interface EquipTierWeight { min: number; max: number }
+
+/** 装备数值公式模板（params 域，key=equip_formula）—— §3.7 策划公式存档，随策划调整只改 JSON。
+ * 单位基数 = baseSap ÷ slotCount ÷ weightPerSlot ÷ maxLevel = 900/6/3/50 = 1；
+ * 属性值 = 单位基数 × 装备等级 × 属性权重 × 品阶权重 × 属性转化系数，浮动 floatRange。 */
+export interface EquipFormulaConfig {
+  id: 'equip_formula'
+  baseSap: number
+  slotCount: number
+  /** 每部位权重和（核心 2 + 附加 1 = 3） */
+  weightPerSlot: number
+  maxLevel: number
+  coreWeight: number
+  affixWeight: number
+  /** 浮动范围（0.5 ~ 1.1，即 50%~110%） */
+  floatRange: { min: number; max: number }
+  tierWeight: Record<string, EquipTierWeight>
 }
 
 /** 玩家升级经验表（params 域，key=exp_table）—— 每个等级升至下一级所需经验 */

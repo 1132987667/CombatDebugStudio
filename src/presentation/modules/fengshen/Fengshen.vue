@@ -41,10 +41,11 @@
     <main class="fs-content">
       <ListView v-if="store.activeView === 'domain'" />
       <FormulasView v-else-if="store.activeView === 'formulas'" />
+      <PlayerConfigView v-else-if="store.activeView === 'playerconfig'" />
+      <ExpGoldView v-else-if="store.activeView === 'expgold'" />
       <HealthView v-else-if="store.activeView === 'health'" />
       <LogsView v-else-if="store.activeView === 'logs'" />
       <PackagesView v-else-if="store.activeView === 'packages'" />
-      <ExpGoldView v-else-if="store.activeView === 'expgold'" />
     </main>
 
     <ConfirmDialog v-model="confirmReload" title="从项目文件重载"
@@ -60,6 +61,7 @@ import type { FengshenTableName } from '@/domain/fengshen/types'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import ListView from '@/presentation/modules/fengshen/views/ListView.vue'
 import FormulasView from '@/presentation/modules/fengshen/views/FormulasView.vue'
+import PlayerConfigView from '@/presentation/modules/fengshen/views/PlayerConfigView.vue'
 import HealthView from '@/presentation/modules/fengshen/views/HealthView.vue'
 import LogsView from '@/presentation/modules/fengshen/views/LogsView.vue'
 import PackagesView from '@/presentation/modules/fengshen/views/PackagesView.vue'
@@ -112,6 +114,7 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
 
 const SYSTEM_VIEWS: Array<{ view: FengshenView; label: string }> = [
   { view: 'formulas', label: '属性与公式' },
+  { view: 'playerconfig', label: '玩家配置' },
   { view: 'expgold', label: '经验与金钱管理' },
   { view: 'packages', label: '数据包管理' },
   { view: 'health', label: '健康检查' },

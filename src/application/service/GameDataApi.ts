@@ -12,6 +12,7 @@ import type {
   BattleParamData,
   ElementsData,
   EnemyRewardTableConfig,
+  EquipFormulaConfig,
   EquipmentData,
   ExpTableConfig,
   GrowthCurveData,
@@ -19,6 +20,8 @@ import type {
   LineupData,
   MetaDataVersion,
   OperationLogEntry,
+  PlayerGrowthConfig,
+  SystemBudgetConfig,
   FengshenTableName,
   XiyouData,
 } from '@/domain/fengshen/types'
@@ -121,6 +124,28 @@ export class GameDataApi {
   async getLevelDiffBonus(): Promise<LevelDiffBonusConfig | null> {
     const rec = await this.getBattleParam('level_diff_bonus')
     return rec?.data && typeof rec.data === 'object' && 'rules' in rec.data ? (rec.data as LevelDiffBonusConfig) : null
+  }
+
+  /** 玩家成长配置（params 域 player_config 的 data） */
+  async getPlayerConfig(): Promise<PlayerGrowthConfig | null> {
+    const rec = await this.getBattleParam('player_config')
+    return rec?.data && typeof rec.data === 'object' && 'maxLevel' in rec.data && 'growth' in rec.data
+      ? (rec.data as PlayerGrowthConfig)
+      : null
+  }
+
+  /** 养成系统预算权重（params 域 system_budget 的 data） */
+  async getSystemBudget(): Promise<SystemBudgetConfig | null> {
+    const rec = await this.getBattleParam('system_budget')
+    return rec?.data && typeof rec.data === 'object' && 'systems' in rec.data ? (rec.data as SystemBudgetConfig) : null
+  }
+
+  /** 装备数值公式（params 域 equip_formula 的 data） */
+  async getEquipFormula(): Promise<EquipFormulaConfig | null> {
+    const rec = await this.getBattleParam('equip_formula')
+    return rec?.data && typeof rec.data === 'object' && 'baseSap' in rec.data && 'tierWeight' in rec.data
+      ? (rec.data as EquipFormulaConfig)
+      : null
   }
 
   async listBattleParams(): Promise<BattleParamData[]> {

@@ -20,12 +20,15 @@ import type {
   AffixLibraryData,
   BattleParamData,
   ElementsData,
+  EquipFormulaConfig,
   EquipmentAffixData,
   EquipmentData,
   GearData,
   GrowthCurveData,
   ItemData,
   LineupData,
+  PlayerGrowthConfig,
+  SystemBudgetConfig,
   XiyouData,
 } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
@@ -225,6 +228,77 @@ function buildLevelDiffBonus(): BattleParamData {
   }
 }
 
+/** 玩家成长配置种子（params 域，key=player_config）—— SAP 六维模型，对齐 PRD §19 / 数值体系构建计划 D1。
+ * 每级固定成长合计 12 属性点（24/12+8/2+4/2+3/2+3/2+2/2=12）；每级自由点 4；丹药 +100 → 满级总量 900。 */
+function buildPlayerConfig(): BattleParamData {
+  return {
+    id: 'player_config',
+    name: '玩家成长配置',
+    description: '玩家初始属性 / 每级成长 / 自由属性点 / SAP 转化 / 丹药加成（数值体系闭环起点）',
+    data: {
+      id: 'player_config',
+      maxLevel: 50,
+      expFormula: 'round(50 × L^1.35 + 60 × L)',
+      base: { maxHealth: 60, attack: 15, defense: 10, hitValue: 10, dodgeValue: 10, speed: 10 },
+      growth: { maxHealth: 24, attack: 8, defense: 4, hitValue: 3, dodgeValue: 3, speed: 2 },
+      freePointsPerLevel: 4,
+      conversion: { maxHealth: 12, attack: 2, defense: 2, hitValue: 2, dodgeValue: 2, speed: 2 },
+      pillBonusPoints: 100,
+      currentLevel: 1,
+    } as PlayerGrowthConfig,
+    updatedAt: nowIso(),
+  }
+}
+
+/** 养成系统预算种子（params 域，key=system_budget）—— §2.3 策划新表，随策划调整只改 JSON */
+function buildSystemBudget(): BattleParamData {
+  return {
+    id: 'system_budget',
+    name: '养成系统预算权重',
+    description: '各养成系统属性预算权重（等级总属性点 900 = 每级16点×50 + 丹药100）',
+    data: {
+      id: 'system_budget',
+      systems: [
+        { system: 'level', label: '等级', totalSap: 900, weight: 120, note: '800（每级16属性点 × 50）+ 丹药100' },
+        { system: 'equipment', label: '装备', weight: 240, note: '100% × 强化15(1.6) × 满级升星(1.25)' },
+        { system: 'school', label: '流派树', weight: 60 },
+        { system: 'pet', label: '宠物', weight: 60 },
+        { system: 'mount', label: '坐骑', weight: 60 },
+        { system: 'artifact', label: '法宝', weight: 60 },
+        { system: 'relic', label: '神器', weight: 60 },
+      ],
+    } as SystemBudgetConfig,
+    updatedAt: nowIso(),
+  }
+}
+
+/** 装备数值公式种子（params 域，key=equip_formula）—— §3.7 策划公式存档，随策划调整只改 JSON */
+function buildEquipFormula(): BattleParamData {
+  return {
+    id: 'equip_formula',
+    name: '装备数值公式',
+    description: '装备基础属性投放公式：单位基数 × 等级 × 属性权重 × 品阶权重 × 转化系数，浮动 50%~110%',
+    data: {
+      id: 'equip_formula',
+      baseSap: 900,
+      slotCount: 6,
+      weightPerSlot: 3,
+      maxLevel: 50,
+      coreWeight: 2,
+      affixWeight: 1,
+      floatRange: { min: 0.5, max: 1.1 },
+      tierWeight: {
+        fan: { min: 0.5, max: 0.6 },
+        xuan: { min: 0.6, max: 0.7 },
+        di: { min: 0.7, max: 0.8 },
+        tian: { min: 0.8, max: 0.9 },
+        xian: { min: 0.9, max: 1.0 },
+      },
+    } as EquipFormulaConfig,
+    updatedAt: nowIso(),
+  }
+}
+
 /** 西游数据种子：configs/xiyou/*.json 单文档导入（演劫台经封神榜读取，需求说明 §5.1 方案 B） */
 function buildXiyou(): XiyouData[] {
   const now = nowIso()
@@ -312,7 +386,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
       [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
-      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus()]],
+      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula()]],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
       [FENGSHEN_STORE.GEARS, (equipmentDataRaw as EquipmentData[]).filter((e) => e.craftable) as GearData[]],

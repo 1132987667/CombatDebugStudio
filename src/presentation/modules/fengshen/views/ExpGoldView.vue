@@ -535,52 +535,8 @@ void load()
 </script>
 
 <style scoped lang="scss">
-.fs-exp-tabs {
-  display: inline-flex;
-  gap: var(--space-1);
-  margin-bottom: var(--space-3);
-  padding: var(--space-1);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-}
-
-.fs-exp-tab {
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-secondary);
-  letter-spacing: 1px;
-  cursor: pointer;
-  font-size: var(--font-size-md);
-  transition: background var(--transition-fast), color var(--transition-fast);
-
-  &:hover {
-    background: var(--color-bg-hover);
-    color: var(--color-text-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--color-energy);
-    outline-offset: -2px;
-  }
-
-  &.active {
-    background: var(--color-energy);
-    color: var(--color-bg-primary);
-    font-weight: var(--font-weight-bold);
-  }
-}
-
-.fs-exp-panel {
-  min-width: 0;
-}
-
-.fs-exp-block {
-  margin-bottom: var(--space-4);
-}
-
+/* NOTE: 共用布局类 fs-exp-tabs/tab/panel/block/sim-row/sim-result/field-label/num/num-sm
+   已上移至 styles/fengshen.scss（三个视图共用）；此处只保留本视图专用类。 */
 .fs-exp-mult-row {
   display: flex;
   flex-wrap: wrap;
@@ -601,41 +557,6 @@ void load()
     white-space: nowrap;
     min-width: 4em;
   }
-}
-
-.fs-exp-sim-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-}
-
-.fs-exp-sim-result {
-  margin-top: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-left: 3px solid var(--color-energy);
-  background: rgba(var(--rgb-energy), var(--alpha-tint));
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-}
-
-.fs-exp-field-label {
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-}
-
-.fs-exp-num {
-  width: 90px;
-  font-family: var(--font-family-mono);
-}
-
-.fs-exp-num-sm {
-  width: 64px;
-  font-family: var(--font-family-mono);
 }
 
 .fs-exp-cond {

@@ -2,7 +2,6 @@
   <div class="fs-list-view">
     <div class="fs-page-title">
       玩家配置
-      <span class="fs-page-hint">玩家成长（SAP 六维模型）· 系统预算 · 装备数值公式（IndexedDB params 域，保存后引擎数据源重载）</span>
     </div>
 
     <!-- 统计卡片 -->
@@ -45,7 +44,9 @@
           <span class="fs-exp-field-label">自由点</span><span class="fs-cell-num">{{ totalSap.free }}</span>
           <span class="fs-exp-field-label">丹药</span><span class="fs-cell-num">{{ totalSap.pill }}</span>
           <span class="fs-exp-field-label">满级总量</span><span class="fs-cell-num">{{ totalSap.total }}</span>
-          <span v-if="totalSap.total !== 900" class="fs-form-error">预期 900（固定+自由+丹药）</span>
+          <span class="fs-exp-field-label">预期总量</span>
+          <input v-model.number="expectedTotalSap" type="number" class="fs-input fs-exp-num-sm" min="0" />
+          <span v-if="totalSap.total !== expectedTotalSap" class="fs-form-error">预期 {{ expectedTotalSap }}（固定+自由+丹药）</span>
         </div>
       </div>
 
@@ -54,13 +55,9 @@
         <div class="fs-exp-sim-row">
           <span class="fs-exp-field-label">最高等级</span>
           <input v-model.number="cfg.maxLevel" type="number" class="fs-input fs-exp-num-sm" min="1" max="100" />
-          <span class="fs-exp-field-label">经验公式</span>
-          <input v-model="cfg.expFormula" type="text" class="fs-input fs-exp-formula" placeholder="round(50 × L^1.35 + 60 × L)" />
           <span class="fs-exp-field-label">丹药加成</span>
           <input v-model.number="cfg.pillBonusPoints" type="number" class="fs-input fs-exp-num-sm" min="0" />
-          <Button size="small" variant="primary" @click="applyFormula">按公式展开经验表</Button>
         </div>
-        <div v-if="expRows.length" class="fs-form-hint">经验表预览（仅展示）：{{ expRows[0].level }} 级 {{ expRows[0].expRequired }} → {{ expRows[expRows.length - 1].level }} 级 {{ expRows[expRows.length - 1].expRequired }}</div>
       </div>
 
       <div class="fs-exp-block">
@@ -94,7 +91,37 @@
       </div>
     </section>
 
-    <!-- Tab2 属性预览 -->
+    <!-- Tab2 经验公式 -->
+    <section v-else-if="activeTab === 'exp'" class="fs-exp-panel" role="tabpanel">
+      <div class="fs-exp-block">
+        <div class="fs-block-title">经验公式</div>
+        <div class="fs-exp-sim-row">
+          <span class="fs-exp-field-label">公式</span>
+          <input v-model="cfg.expFormula" type="text" class="fs-input fs-exp-formula" placeholder="round(50 × L^1.35 + 60 × L)" />
+        </div>
+        <div v-if="!expRows.length" class="fs-form-hint">公式格式不匹配（支持 round(A × L^B + C × L)），无法展开经验表。</div>
+      </div>
+
+      <div class="fs-exp-block">
+        <div class="fs-block-title">升级所需经验（{{ expRows.length ? expRows[0].level + '~' + expRows[expRows.length - 1].level + ' 级' : '—' }}）</div>
+        <div class="fs-table-wrap">
+          <table v-if="expRows.length" class="fs-table fs-exp-grid">
+            <thead>
+              <tr>
+                <th v-for="n in 10" :key="'h' + n">Lv.{{ n }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in expGridRows" :key="row[0].level">
+                <td v-for="cell in row" :key="cell.level" class="fs-cell-num">{{ cell.expRequired }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab3 属性预览 -->
     <section v-else-if="activeTab === 'preview'" class="fs-exp-panel" role="tabpanel">
       <div class="fs-exp-block">
         <div class="fs-block-title">属性预览（配置推算，非引擎结算）</div>
@@ -125,7 +152,7 @@
       </div>
     </section>
 
-    <!-- Tab3 系统预算 + 装备公式 -->
+    <!-- Tab4 系统预算 + 装备公式 -->
     <section v-else class="fs-exp-panel" role="tabpanel">
       <div class="fs-exp-block">
         <div class="fs-block-title">养成系统预算权重</div>
@@ -241,6 +268,7 @@ import Dialog from '@/presentation/components/Dialog.vue'
 
 const TABS = [
   { id: 'growth', label: '成长配置' },
+  { id: 'exp', label: '经验公式' },
   { id: 'preview', label: '属性预览' },
   { id: 'budget', label: '系统预算/装备公式' },
 ] as const
@@ -262,6 +290,7 @@ function defaultGrowth(): PlayerGrowthConfig {
     freePointsPerLevel: 4,
     conversion: { maxHealth: 12, attack: 2, defense: 2, hitValue: 2, dodgeValue: 2, speed: 2 },
     pillBonusPoints: 100,
+    expectedTotalSap: 900,
     currentLevel: 1,
   }
 }
@@ -315,7 +344,25 @@ const preview = computed(() => computePlayerPreview(cfg, previewLevel.value, all
 
 // Tab1 总量
 const totalSap = computed(() => calcTotalSap(cfg))
-const expRows = ref<Array<{ level: number; expRequired: number }>>([])
+const expectedTotalSap = computed({
+  get: () => cfg.expectedTotalSap ?? 900,
+  set: (v: number) => {
+    cfg.expectedTotalSap = v
+    const levelEntry = budget.systems.find((s) => s.system === 'level')
+    if (levelEntry) levelEntry.totalSap = v
+  },
+})
+/** 经验表：由公式实时推导，随 expFormula/maxLevel 变化自动刷新 */
+const expRows = computed(() => fillExpFromFormula(cfg.expFormula, cfg.maxLevel))
+
+/** 经验表网格：10 列/行，每列 1 个等级（行1=1-10级 ... 行5=41-50级） */
+const expGridRows = computed(() => {
+  const rows: Array<Array<{ level: number; expRequired: number }>> = []
+  for (let i = 0; i < expRows.value.length; i += 10) {
+    rows.push(expRows.value.slice(i, i + 10))
+  }
+  return rows
+})
 
 // Tab3 装备验算
 const simLevel = ref(10)
@@ -372,10 +419,6 @@ async function load(): Promise<void> {
     resetInto(budget, defaultBudget())
     resetInto(equipFormula, defaultFormula())
   }
-}
-
-function applyFormula(): void {
-  expRows.value = fillExpFromFormula(cfg.expFormula, cfg.maxLevel)
 }
 
 async function saveGrowth(): Promise<void> {

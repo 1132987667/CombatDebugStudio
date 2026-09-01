@@ -2,7 +2,7 @@
   <div class="fs-list-view">
     <div class="fs-page-title">
       来源审计
-      <span class="fs-page-hint">属性 × 系统投放矩阵（只读视图）</span>
+      <span class="fs-page-hint">64 项核心数值属性 × 系统投放矩阵（只读视图）</span>
     </div>
 
     <div class="fs-block">
@@ -56,8 +56,12 @@ import { onMounted, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import type { AttributeDef, SystemBudgetConfig } from '@/domain/fengshen/types'
+import { getCoreAttributes } from '@/domain/fengshen/attribute-dictionary'
 
 const api = container.resolve<GameDataApi>('GameDataApi')
+
+/** 64 项核心数值属性 code（权威字典）；审计矩阵只投这些 */
+const CORE_CODES = new Set(getCoreAttributes().map((e) => e.code))
 
 const attributes = ref<AttributeDef[]>([])
 const budget = ref<SystemBudgetConfig>({ id: 'system_budget', systems: [] })
@@ -93,7 +97,7 @@ function isForbidden(_attr: AttributeDef, _system: string): boolean {
 
 onMounted(async () => {
   const [attrs, sb] = await Promise.all([api.listAttributes(), api.getSystemBudget()])
-  attributes.value = attrs.filter((a) => !a.isRuntimeState)
+  attributes.value = attrs.filter((a) => !a.isRuntimeState && CORE_CODES.has(a.code))
   budget.value = sb ?? { id: 'system_budget', systems: [] }
   totalWeight.value = budget.value.systems.reduce((sum, s) => sum + s.weight, 0)
 })

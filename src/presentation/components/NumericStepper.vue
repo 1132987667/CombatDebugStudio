@@ -1,22 +1,33 @@
 <!--
  * 文件: NumericStepper.vue
  * 功能: 数值微调组件
- * 描述: -100 -10 -1 [输入框] +1 +10 +100
- *       步进值、min/max 均由传入参数控制，按钮超出范围自动禁用
+ * 描述: 默认多档步进：-100 -10 -1 [输入框] +1 +10 +100
+ *       步进值、min/max 均由传入参数控制，按钮超出范围自动禁用。
+ *       compact 模式：裸 −/+ 单档步进（step 控制粒度），一次点击增减一个 step。
 -->
 <template>
-  <div class="numeric-stepper" :class="{ 'ns-disabled': disabled }">
-    <button v-for="s in leftSteps" :key="'l-' + s" class="ns-btn ns-btn-dec"
-      :disabled="disabled || innerValue - s < min" @click="adjust(-s)" :title="`减少 ${s}`">
-      −{{ s }}
-    </button>
-    <input ref="inputRef" type="number" class="ns-input" :value="innerValue"
-      :min="min" :max="max" :disabled="disabled" @input="onInput" @blur="onBlur"
-      @keydown.enter="onBlur" />
-    <button v-for="s in rightSteps" :key="'r-' + s" class="ns-btn ns-btn-inc"
-      :disabled="disabled || innerValue + s > max" @click="adjust(s)" :title="`增加 ${s}`">
-      +{{ s }}
-    </button>
+  <div class="numeric-stepper" :class="{ 'ns-disabled': disabled, 'ns-compact': compact }">
+    <template v-if="compact">
+      <button class="ns-btn ns-btn-dec" :disabled="disabled || innerValue - step < min" @click="adjust(-step)"
+        :title="`减少 ${step}`">−</button>
+      <input ref="inputRef" type="number" class="ns-input" :value="innerValue" :min="min" :max="max" :step="step"
+        :disabled="disabled" @input="onInput" @blur="onBlur" @keydown.enter="onBlur" />
+      <button class="ns-btn ns-btn-inc" :disabled="disabled || innerValue + step > max" @click="adjust(step)"
+        :title="`增加 ${step}`">+</button>
+    </template>
+    <template v-else>
+      <button v-for="s in leftSteps" :key="'l-' + s" class="ns-btn ns-btn-dec"
+        :disabled="disabled || innerValue - s < min" @click="adjust(-s)" :title="`减少 ${s}`">
+        −{{ s }}
+      </button>
+      <input ref="inputRef" type="number" class="ns-input" :value="innerValue"
+        :min="min" :max="max" :disabled="disabled" @input="onInput" @blur="onBlur"
+        @keydown.enter="onBlur" />
+      <button v-for="s in rightSteps" :key="'r-' + s" class="ns-btn ns-btn-inc"
+        :disabled="disabled || innerValue + s > max" @click="adjust(s)" :title="`增加 ${s}`">
+        +{{ s }}
+      </button>
+    </template>
   </div>
 </template>
 
@@ -30,6 +41,10 @@ interface Props {
   max?: number
   /** 步进值数组，如 [1, 10, 100] — 组件自动排列为 -100 -10 -1 [输入] +1 +10 +100 */
   steps?: number[]
+  /** compact 模式下单档步进粒度；一次点击增减一个 step */
+  step?: number
+  /** 精简模式：裸 −/+ 按钮，忽略 steps 数组，改用 step */
+  compact?: boolean
   disabled?: boolean
 }
 
@@ -37,6 +52,8 @@ const props = withDefaults(defineProps<Props>(), {
   min: 0,
   max: 99999,
   steps: () => [1, 10, 100],
+  step: 1,
+  compact: false,
   disabled: false,
 })
 
@@ -62,8 +79,22 @@ const leftSteps = computed(() => [...sortedSteps.value].reverse())
 /** 右侧按钮：小 → 大 */
 const rightSteps = computed(() => sortedSteps.value)
 
+/** 参与步进的所有粒度值（compact 用单一 step，否则用 steps 数组） */
+const effectiveSteps = computed(() => (props.compact ? [props.step] : props.steps))
+
+/** 步进粒度中最长的小数位数——用于消除浮点累加尾数 */
+function decimalsOf(n: number): number {
+  const s = String(n)
+  const dot = s.indexOf('.')
+  return dot < 0 ? 0 : s.length - dot - 1
+}
+const precision = computed(() => effectiveSteps.value.reduce((p, s) => Math.max(p, decimalsOf(s)), 0))
+function round(v: number): number {
+  return Number(v.toFixed(precision.value))
+}
+
 function adjust(delta: number) {
-  const next = clamp(innerValue.value + delta, props.min, props.max)
+  const next = clamp(round(innerValue.value + delta), props.min, props.max)
   innerValue.value = next
   emit('update:modelValue', next)
 }
@@ -103,6 +134,17 @@ function onBlur() {
 .ns-disabled {
   opacity: 0.5;
   pointer-events: none;
+}
+
+.ns-compact .ns-btn {
+  min-width: 22px;
+  padding: 0 2px;
+  font-size: var(--font-size-md);
+}
+
+.ns-compact .ns-input {
+  width: 48px;
+  font-size: var(--font-size-md);
 }
 
 .ns-btn {

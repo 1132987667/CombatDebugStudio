@@ -331,6 +331,89 @@
   flex: 1;
 }
 
+/* ── Tab 面板布局（ExpGoldView / PlayerConfigView / AffixRuleView 共用）── */
+.fs-exp-tabs {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  padding: var(--space-1);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.fs-exp-tab {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  letter-spacing: 1px;
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  transition: background var(--transition-fast), color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-energy);
+    outline-offset: -2px;
+  }
+
+  &.active {
+    background: var(--color-energy);
+    color: var(--color-bg-primary);
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+.fs-exp-panel {
+  min-width: 0;
+}
+
+.fs-exp-block {
+  margin-bottom: var(--space-4);
+}
+
+.fs-exp-sim-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.fs-exp-sim-result {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-energy);
+  background: rgba(var(--rgb-energy), var(--alpha-tint));
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
+
+.fs-exp-field-label {
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.fs-exp-num {
+  width: 90px;
+  font-family: var(--font-family-mono);
+}
+
+.fs-exp-num-sm {
+  width: 64px;
+  font-family: var(--font-family-mono);
+}
+
+
 .fs-version {
   color: var(--color-energy);
   white-space: nowrap;
@@ -542,7 +625,9 @@
 }
 
 /* ── 输入 ── */
-.fs-input {
+/* NOTE: base.scss 表单重置 input[type=…] { border: none; background: none } 特异性 (0,1,1)
+   高于单类选择器，双写类名提升到 (0,2,0)，否则边框/背景永远被重置压掉（输入框看起来像纯文本） */
+.fs-input.fs-input {
   padding: var(--space-2) var(--space-2) var(--space-2) var(--space-2);
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-default);
@@ -889,6 +974,100 @@ input[type='checkbox'] {
 .fs-formula {
   font-family: var(--font-family-mono);
   color: var(--color-energy);
+}
+
+/* ── 属性与公式页（FormulasView 重设计）── */
+.fs-zone-desc {
+  margin-left: var(--space-2);
+  font-weight: normal;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+}
+
+.fs-note {
+  margin-top: var(--space-1);
+  color: var(--color-text-tertiary);
+}
+
+.fs-cell-dim {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
+}
+
+.fs-col-label {
+  white-space: nowrap;
+}
+
+.fs-col-prd {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.fs-col-num {
+  white-space: nowrap;
+}
+
+.fs-callout {
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-energy);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
+  color: var(--color-text-secondary);
+}
+
+.fs-trace-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin-bottom: var(--space-3);
+}
+
+.fs-trace-input-group {
+  min-width: 160px;
+}
+
+.fs-trace-input-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.fs-trace-input-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.fs-trace-input-label {
+  color: var(--color-text-tertiary);
+}
+
+/* 折叠属性字典 */
+.fs-dict > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.fs-dict > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fs-dict-group {
+  margin-top: var(--space-3);
+}
+
+.fs-dict-group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.fs-dict-count {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
 }
 
 /* ── 数据包管理 ── */

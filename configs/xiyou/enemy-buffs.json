@@ -291,10 +291,8 @@
     "tags": ["hot", "heal"],
     "effects": [
       {
-        "type": "hot",
-        "healPercent": 0.03,
-        "healBase": "maxHealth",
-        "perStack": false
+        "type": "heal",
+        "params": { "healType": "percent", "value": 3, "resource": "health" }
       }
     ],
     "description": "每回合恢复3%最大气血。"
@@ -313,11 +311,10 @@
     "effects": [
       {
         "type": "heal",
-        "healPercent": 0.1,
-        "healBase": "maxHealth"
+        "params": { "healType": "percent", "value": 10, "resource": "health" }
       }
     ],
-    "description": "立即恢复10%最大气血。"
+    "description": "恢复10%最大气血（持续1回合结算）。"
   },
   {
     "id": "buff_energy_drain",
@@ -624,10 +621,8 @@
     },
     "effects": [
       {
-        "type": "hot",
-        "healPercent": 0.02,
-        "healBase": "maxHealth",
-        "perStack": false
+        "type": "heal",
+        "params": { "healType": "percent", "value": 2, "resource": "health" }
       }
     ],
     "description": "六耳猕猴最终形态：全属性大幅提升，攻击+100%，防御+50%，速度+60%，暴击率+30%，暴击伤害+50%，每回合恢复2%气血。"

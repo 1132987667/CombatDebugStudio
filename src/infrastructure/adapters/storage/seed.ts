@@ -1,7 +1,8 @@
 /**
  * seed.ts — 封神榜种子数据导入（封神榜开发计划 §3.2）
  *
- * 首次启动将 configs/ JSON 写入 IndexedDB 封神榜 store，幂等（标记 `cds:fengshen-seed-v2`）。
+ * 首次启动将 configs/ JSON 写入 IndexedDB 封神榜 store，幂等（标记 `cds:fengshen-seed-v27`）。
+ * 种子内容变更时递增该标记版本号即可让存量库重新种子（configs 为权威源，覆盖用户在 CRUD 的手工改动）。
  * configs 仅作种子源，运行期以 IndexedDB 为唯一权威。
  *
  * 种子内容：
@@ -37,6 +38,7 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig } from '@/domain/skill/types'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 import { deriveMaterials } from '@/domain/fengshen/derive-materials'
+import { getAttributeDict } from '@/domain/fengshen/attribute-dictionary'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { EffectsJsonEntry } from '@/shared/types/effects-json'
 import formationsDataRaw from '@configs/formations/formations.json'
@@ -60,7 +62,7 @@ import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 import attributesDataRaw from '@configs/attributes/attributes.json'
 import affixRuleDataRaw from '@configs/equipment/affix-rule.json'
 
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v26'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v27'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -248,6 +250,7 @@ function buildPlayerConfig(): BattleParamData {
       freePointsPerLevel: 4,
       conversion: { maxHealth: 12, attack: 2, defense: 2, hitValue: 2, dodgeValue: 2, speed: 2 },
       pillBonusPoints: 100,
+      expectedTotalSap: 900,
       currentLevel: 1,
     } as PlayerGrowthConfig,
     updatedAt: nowIso(),
@@ -312,9 +315,11 @@ function buildAffixRule(): BattleParamData {
     description: '定义各装备部位/子类型允许投放的属性组池（5行×14子类型矩阵）',
     data: {
       id: 'affix_rule',
-      rule_version: String(raw.rule_version ?? '1.0'),
-      updated_at: String(raw.updated_at ?? ''),
       description: String(raw.description ?? ''),
+      fixed_attributes: (raw.fixed_attributes ?? {}) as AffixRuleConfig['fixed_attributes'],
+      tier_weight: (raw.tier_weight ?? {}) as AffixRuleConfig['tier_weight'],
+      core_affix_ratio: (raw.core_affix_ratio ?? {}) as AffixRuleConfig['core_affix_ratio'],
+      affix_value_curve: (raw.affix_value_curve ?? {}) as AffixRuleConfig['affix_value_curve'],
       attribute_groups: (raw.attribute_groups ?? {}) as AffixRuleConfig['attribute_groups'],
       sub_type_groups: (raw.sub_type_groups ?? {}) as AffixRuleConfig['sub_type_groups'],
       slot_side: (raw.slot_side ?? {}) as AffixRuleConfig['slot_side'],
@@ -353,18 +358,24 @@ function buildAttributes(): AttributeDef[] {
   const now = nowIso()
   return raw
     .filter((r) => !r.isRuntimeState)
-    .map((r) => ({
-      id: String(r.code),
-      name: String(r.name ?? r.displayName ?? r.code),
-      code: String(r.code),
-      isPercentage: Boolean(r.isPercentage),
-      sapMultiplier: SAP_MULTIPLIER_MAP[String(r.code)] ?? 1,
-      valueTier: 'L1' as const,
-      systems: SYSTEMS_MAP[String(r.code)] ?? [],
-      isRuntimeState: false,
-      description: String(r.description ?? r.impact ?? ''),
-      updatedAt: now,
-    }))
+    .map((r) => {
+      const code = String(r.code)
+      const dict = getAttributeDict(code)
+      return {
+        id: code,
+        name: dict?.name ?? String(r.name ?? r.displayName ?? r.code),
+        code,
+        isPercentage: Boolean(r.isPercentage),
+        sapMultiplier: SAP_MULTIPLIER_MAP[code] ?? 1,
+        valueTier: dict?.tier ?? ('L1' as const),
+        systems: SYSTEMS_MAP[code] ?? [],
+        category: dict?.category ?? '状态修正',
+        numeric: dict?.numeric ?? false,
+        isRuntimeState: false,
+        description: String(r.description ?? r.impact ?? ''),
+        updatedAt: now,
+      }
+    })
 }
 
 /** 西游数据种子：configs/xiyou/*.json 单文档导入（演劫台经封神榜读取，需求说明 §5.1 方案 B） */

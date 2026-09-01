@@ -165,11 +165,15 @@ function onClick(e: MouseEvent) {
   box-shadow: 0 4px 0 0 var(--color-energy-deep);
 
   &:hover:not(:disabled):not(.is-loading) {
-    background: var(--color-energy-deep);
+    /* NOTE: 保持亮体（energy），阴影 4→3 + 下沉 1px 做按压预览，
+       与 primary 对齐；若把 body 也刷成 energy-deep 会和硬阴影同色、立体感消失 */
+    box-shadow: 0 3px 0 0 var(--color-energy-deep);
+    transform: translateY(1px);
   }
 
   &:active:not(:disabled):not(.is-loading) {
-    box-shadow: 0 1px 0 0 var(--color-energy-deep);
+    box-shadow: 0 0px 0 0 var(--color-energy-deep);
+    transform: translateY(4px);
   }
 }
 

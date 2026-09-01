@@ -2,7 +2,6 @@
   <div class="fs-list-view">
     <div class="fs-page-title">
       词条投放规则
-      <span class="fs-page-hint">装备附加属性（词条）投放规则 — 词条池设计 / 属性组配置 / 禁止规则 / 导出</span>
     </div>
 
     <!-- Tab 切换 -->
@@ -11,38 +10,128 @@
         :role="'tab'" :aria-selected="activeTab === t.id" @click="activeTab = t.id">{{ t.label }}</button>
     </div>
 
-    <!-- ═══ Tab1: 词条池设计 ═══ -->
+    <!-- ═══ Tab1: 装备设计 ═══ -->
     <section v-if="activeTab === 'matrix'" class="fs-exp-panel" role="tabpanel">
       <div class="fs-exp-block">
-        <div class="fs-block-title">规则版本</div>
-        <div class="fs-exp-sim-row">
-          <span class="fs-exp-field-label">版本</span>
-          <input v-model="cfg.rule_version" type="text" class="fs-input fs-exp-num-sm" />
-          <span class="fs-exp-field-label">更新日期</span>
-          <input v-model="cfg.updated_at" type="text" class="fs-input fs-exp-num-sm" />
+        <div class="fs-block-title">装备部位阵营归属</div>
+        <div class="fs-form-hint">每个装备部位归属于攻击系（ATK）或防御系（DEF），决定该部位可抽取的词条池。</div>
+        <div class="fs-slot-side-readonly">
+          <div class="fs-slot-side-row"><span class="fs-slot-side-label">攻击装备</span> {{ atkSlotLabels }}</div>
+          <div class="fs-slot-side-row"><span class="fs-slot-side-label">防御装备</span> {{ defSlotLabels }}</div>
+        </div>
+      </div>
+
+      <!-- 部位固定属性 -->
+      <div class="fs-exp-block">
+        <div class="fs-block-title">部位固定属性</div>
+        <div class="fs-form-hint">每个装备部位必然提供的主属性（武器=攻击、护甲=防御、头部=气血、脚部=闪避、护符=命中、护腕=速度）。</div>
+        <div class="fs-rule-wrap is-capped">
+          <table class="fs-table fs-rule">
+            <colgroup>
+              <col style="width:16%" /><col style="width:36%" />
+              <col style="width:16%" /><col style="width:16%" /><col style="width:16%" />
+            </colgroup>
+            <thead><tr><th>部位</th><th>固定属性</th><th class="fs-th-center">轻</th><th class="fs-th-center">中</th><th class="fs-th-center">重</th></tr></thead>
+            <tbody>
+              <tr v-for="slot in fixedSlotOrder" :key="slot">
+                <td class="fs-td-strong">{{ slotGroupLabel(slot) }}</td>
+                <td>
+                  <TacticalSelect :model-value="cfg.fixed_attributes[slot]" size="md" searchable
+                    :options="coreAttrOptions(slot)"
+                    @update:model-value="(v: string | number | null) => { if (v) cfg.fixed_attributes[slot] = v as string }" />
+                </td>
+                <td v-for="(st, stIdx) in slotSubTypes(slot)" :key="st ? st.id : 'empty-' + stIdx" class="fs-td-center">
+                  <span v-if="st">{{ st.name }}</span><span v-else class="fs-cell-dim">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="fs-rule-grid">
+      <!-- 子类型核心属性词条系数 -->
+      <div class="fs-exp-block">
+        <div class="fs-block-title">子类型核心属性词条系数</div>
+        <div class="fs-form-hint">核心属性词条的数值系数：基础值 × 系数（剑=攻击×85%、棍=×100%、锤=×115%）。</div>
+        <div class="fs-rule-wrap">
+          <table class="fs-table fs-rule">
+            <colgroup><col style="width:18%" /><col style="width:18%" /><col style="width:14%" /><col style="width:28%" /><col style="width:22%" /></colgroup>
+            <thead><tr><th>子类型</th><th>部位</th><th class="fs-th-center">阵营</th><th>核心属性</th><th class="fs-th-right">系数</th></tr></thead>
+            <tbody>
+              <tr v-for="st in allSubTypes" :key="st.id">
+                <td class="fs-td-strong">{{ st.name }}</td>
+                <td>{{ slotGroupLabel(st.slotKey) }}</td>
+                <td class="fs-td-center"><span class="fs-affix-tag-sm" :class="st.side === 'ATK' ? 'side-atk' : 'side-def'">{{ st.side }}</span></td>
+                <td>
+                  <TacticalSelect :model-value="cfg.core_affix_ratio[st.id]?.attribute" size="md" searchable
+                    :options="coreAttrOptions(st.slotKey)"
+                    @update:model-value="(v: string | number | null) => { if (v) ensureCoreRatio(st.id).attribute = v as string }" />
+                </td>
+                <td class="fs-td-right">
+                  <NumericStepper compact :step="0.05" :min="0" :max="9.95"
+                    :model-value="ensureCoreRatio(st.id).ratio"
+                    @update:model-value="(v: number) => { ensureCoreRatio(st.id).ratio = v }" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 装备品阶权重 -->
+      <div class="fs-exp-block">
+        <div class="fs-block-title">装备品阶权重</div>
+        <div class="fs-form-hint">装备基础属性投放的品阶权重区间（凡品 0.5~0.6 … 仙品 0.9~1.0），取区间上限参与计算。</div>
+        <div class="fs-rule-wrap">
+          <table class="fs-table fs-rule">
+            <colgroup><col style="width:25%" /><col style="width:25%" /><col style="width:25%" /><col style="width:25%" /></colgroup>
+            <thead><tr><th>阶位</th><th class="fs-th-center">强化上限</th><th class="fs-th-right">权重下限</th><th class="fs-th-right">权重上限</th></tr></thead>
+            <tbody>
+              <tr v-for="(tw, tier) in cfg.tier_weight" :key="tier">
+                <td class="fs-td-strong">{{ tierLabel(tier) }}</td>
+                <td class="fs-cell-num fs-td-center">{{ tierEnhanceCap(tier) }}</td>
+                <td class="fs-td-right"><input v-model.number="tw.min" type="number" step="0.1" min="0" max="1" class="fs-input fs-exp-num fs-num-right" /></td>
+                <td class="fs-td-right"><input v-model.number="tw.max" type="number" step="0.1" min="0" max="1" class="fs-input fs-exp-num fs-num-right" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+
+      <!-- 词条数值曲线 -->
+      <div class="fs-exp-block">
+        <div class="fs-block-title">词条数值曲线</div>
+        <div class="fs-form-hint">按来源系统定义各属性组的词条数值区间，随等级线性成长：满级值 ≈ 基础 + 每级成长 × (等级-1)。</div>
+        <div v-for="(rows, sysKey) in cfg.affix_value_curve" :key="sysKey" class="fs-curve-system">
+          <div class="fs-block-title" style="margin-top: var(--space-3);">{{ valueCurveSystemLabel(sysKey) }}</div>
+          <div class="fs-rule-wrap is-scroll">
+            <table class="fs-table fs-rule">
+              <colgroup><col style="width:280px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /></colgroup>
+              <thead>
+                <tr><th>属性组</th><th class="fs-th-center">下限基础</th><th class="fs-th-center">下限成长</th><th class="fs-th-center">下限满级</th><th class="fs-th-center">上限基础</th><th class="fs-th-center">上限成长</th><th class="fs-th-center">上限满级</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, i) in rows" :key="i">
+                  <td>{{ attrNames(row.attributes) }}</td>
+                  <td class="fs-td-center"><input v-model.number="row.min.base" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.min.perLevel" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.min.full" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.max.base" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.max.perLevel" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.max.full" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <div class="fs-exp-block">
-        <div class="fs-block-title">装备部位阵营归属</div>
-        <div class="fs-form-hint">每个装备部位归属于攻击系（ATK）或防御系（DEF），决定该部位可抽取的词条池。</div>
-        <table class="fs-table">
-          <thead><tr><th>装备部位</th><th>阵营归属</th></tr></thead>
-          <tbody>
-            <tr v-for="(side, slot) in cfg.slot_side" :key="slot">
-              <td>{{ slotGroupLabel(slot) }}</td>
-              <td>
-                <TacticalSelect :model-value="cfg.slot_side[slot]" size="md" :options="SIDE_OPTIONS"
-                  @update:model-value="(v: string | number | null) => { if (v) cfg.slot_side[slot] = v as 'ATK' | 'DEF' }" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="fs-exp-block">
-        <div class="fs-block-title">词条池配置（行 × 阵营）</div>
+        <div class="fs-block-title">装备附加词条</div>
         <div class="fs-form-hint">每行定义一条词条槽位的属性组来源池。ATK 侧行从攻击系属性组抽池，DEF 侧行从防御系属性组抽池。同一行同一侧不可重复选择相同属性组。</div>
+        <div class="fs-rule-wrap is-scroll">
         <table class="fs-table">
           <thead>
             <tr><th style="width:40px">行</th><th style="width:120px">词条名称</th><th>ATK 侧属性组池</th><th>DEF 侧属性组池</th></tr>
@@ -72,8 +161,6 @@
             </tr>
           </tbody>
         </table>
-        <div class="fs-toolbar" style="margin-top: var(--space-2);">
-          <Button size="small" variant="primary" @click="addRow">添加词条行</Button>
         </div>
       </div>
 
@@ -81,7 +168,7 @@
       <div class="fs-exp-block">
         <div class="fs-block-title">装备子类型词条矩阵预览</div>
         <div class="fs-form-hint">每个子类型的可用属性组 = 所属阵营对应的组池。</div>
-        <div class="fs-table-scroll">
+        <div class="fs-rule-wrap is-scroll">
           <table class="fs-table fs-affix-matrix">
             <thead>
               <tr>
@@ -104,38 +191,61 @@
       </div>
     </section>
 
-    <!-- ═══ Tab2: 属性组配置 ═══ -->
+    <!-- ═══ Tab2: 宠物与坐骑 ═══ -->
+    <section v-else-if="activeTab === 'pet_mount'" class="fs-exp-panel" role="tabpanel">
+      <div class="fs-exp-block">
+        <div class="fs-block-title">宠物与坐骑词条数值曲线</div>
+        <div class="fs-form-hint">定义宠物与坐骑的词条数值区间，随等级线性成长：满级值 ≈ 基础 + 每级成长 × (等级-1)。</div>
+        <div v-for="(rows, sysKey) in cfg.affix_value_curve" :key="sysKey" class="fs-curve-system">
+          <div v-if="sysKey === 'pet_mount'" class="fs-block-title" style="margin-top: var(--space-3);">{{ valueCurveSystemLabel(sysKey) }}</div>
+          <div v-if="sysKey === 'pet_mount'" class="fs-rule-wrap is-scroll">
+            <table class="fs-table fs-rule">
+              <colgroup><col style="width:280px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /><col style="width:110px" /></colgroup>
+              <thead>
+                <tr><th>属性组</th><th class="fs-th-center">下限基础</th><th class="fs-th-center">下限成长</th><th class="fs-th-center">下限满级</th><th class="fs-th-center">上限基础</th><th class="fs-th-center">上限成长</th><th class="fs-th-center">上限满级</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, i) in rows" :key="i">
+                  <td>{{ attrNames(row.attributes) }}</td>
+                  <td class="fs-td-center"><input v-model.number="row.min.base" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.min.perLevel" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.min.full" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.max.base" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.max.perLevel" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                  <td class="fs-td-center"><input v-model.number="row.max.full" type="number" step="0.01" class="fs-input fs-exp-num" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ Tab3: 属性组配置 ═══ -->
     <section v-else-if="activeTab === 'groups'" class="fs-exp-panel" role="tabpanel">
       <div class="fs-exp-block">
         <div class="fs-block-title">属性组列表（{{ Object.keys(cfg.attribute_groups).length }} 组）</div>
-        <div class="fs-form-hint">每个属性组定义一组同阵营、同层级的属性集合。编辑标签、阵营归属、层级；管理组内包含的属性。</div>
+        <div class="fs-form-hint">每个属性组定义一组同阵营、同层级的属性集合。点击「编辑」管理组内属性。</div>
 
-        <div v-for="(group, code) in cfg.attribute_groups" :key="code" class="fs-group-card">
-          <div class="fs-group-header">
-            <span class="fs-mono fs-group-code">{{ code }}</span>
-            <input v-model="group.label" type="text" class="fs-input fs-group-label" placeholder="组标签" />
-            <TacticalSelect :model-value="group.side" size="md" :options="SIDE_OPTIONS"
-              @update:model-value="(v: string | number | null) => { if (v) group.side = v as 'ATK' | 'DEF' }" />
-            <TacticalSelect :model-value="group.tier" size="md" :options="TIER_OPTIONS"
-              @update:model-value="(v: string | number | null) => { if (v) group.tier = v as string }" />
-            <button type="button" class="fs-btn-danger-sm" @click="removeGroup(code)">删除组</button>
-          </div>
-
-          <div class="fs-group-attrs">
-            <span v-for="(attr, i) in group.attributes" :key="i" class="fs-attr-chip">
-              <span class="fs-attr-name">{{ group.names[i] ?? attr }}</span>
-              <span class="fs-attr-code">{{ attr }}</span>
-              <button type="button" class="fs-chip-remove" @click="removeAttr(code, i)">x</button>
-            </span>
-          </div>
-
-          <div class="fs-group-add-attr">
-            <TacticalSelect :model-value="addAttrSelection[code] ?? null" size="md" searchable placeholder="选择属性…"
-              :options="availableAttrsOptions(code)"
-              @update:model-value="(v: string | number | null) => { addAttrSelection[code] = v as string }" />
-            <input v-model="addAttrNameSelection[code]" type="text" class="fs-input" placeholder="显示名称" style="width:120px" />
-            <Button size="small" @click="addAttr(code)">添加属性</Button>
-          </div>
+        <div class="fs-table-wrap">
+          <table class="fs-table">
+            <thead>
+              <tr><th>组码</th><th>标签</th><th>阵营</th><th>层级</th><th>属性数</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="(group, code) in cfg.attribute_groups" :key="code">
+                <td class="fs-mono">{{ code }}</td>
+                <td>{{ group.label }}</td>
+                <td><span class="fs-affix-tag-sm" :class="group.side === 'ATK' ? 'side-atk' : 'side-def'">{{ group.side }}</span></td>
+                <td><span class="fs-affix-tag-sm">{{ group.tier }}</span></td>
+                <td class="fs-cell-num">{{ group.attributes.length }}</td>
+                <td class="fs-col-actions">
+                  <Button size="small" @click="openEditGroup(code)">编辑</Button>
+                  <Button size="small" variant="danger" @click="removeGroup(code)">删除</Button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="fs-toolbar" style="margin-top: var(--space-3);">
@@ -143,6 +253,49 @@
           <Button size="small" variant="primary" @click="addGroup">添加属性组</Button>
         </div>
       </div>
+
+      <!-- 编辑属性组弹窗 -->
+      <Dialog v-model="editGroupOpen" title="编辑属性组" width="560px" :esc-closable="false" :mask-closable="false">
+        <div v-if="editingGroup" class="fs-group-edit">
+          <div class="fs-edit-row">
+            <span class="fs-exp-field-label">组码</span>
+            <span class="fs-mono">{{ editingCode }}</span>
+            <span class="fs-exp-field-label">标签</span>
+            <input v-model="editingGroup.label" type="text" class="fs-input fs-exp-formula" />
+          </div>
+          <div class="fs-edit-row">
+            <span class="fs-exp-field-label">阵营</span>
+            <TacticalSelect :model-value="editingGroup.side" size="md" :options="SIDE_OPTIONS"
+              @update:model-value="(v: string | number | null) => { if (v) editingGroup.side = v as 'ATK' | 'DEF' }" />
+            <span class="fs-exp-field-label">层级</span>
+            <TacticalSelect :model-value="editingGroup.tier" size="md" :options="TIER_OPTIONS"
+              @update:model-value="(v: string | number | null) => { if (v) editingGroup.tier = v as string }" />
+          </div>
+
+          <div class="fs-edit-attrs">
+            <div class="fs-block-title">组内属性（{{ editingGroup.attributes.length }}）</div>
+            <div class="fs-group-attrs">
+              <span v-for="(attr, i) in editingGroup.attributes" :key="i" class="fs-attr-chip">
+                <span class="fs-attr-name">{{ editingGroup.names[i] ?? attr }}</span>
+                <span class="fs-attr-code">{{ attr }}</span>
+                <button type="button" class="fs-chip-remove" @click="removeAttr(editingCode, i)">x</button>
+              </span>
+            </div>
+            <div class="fs-group-add-attr">
+              <TacticalSelect :model-value="addAttrSelection[editingCode] ?? null" size="md" searchable placeholder="选择属性…"
+                :options="availableAttrsOptions(editingCode)"
+                @update:model-value="(v: string | number | null) => { addAttrSelection[editingCode] = v as string }" />
+              <input v-model="addAttrNameSelection[editingCode]" type="text" class="fs-input" placeholder="显示名称" style="width:120px" />
+              <Button size="small" @click="addAttr(editingCode)">添加属性</Button>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <div class="fs-edit-footer">
+            <Button variant="ghost" @click="editGroupOpen = false">关闭</Button>
+          </div>
+        </template>
+      </Dialog>
     </section>
 
     <!-- ═══ Tab3: 禁止规则 ═══ -->
@@ -150,7 +303,9 @@
       <div class="fs-exp-block">
         <div class="fs-block-title">词条禁止规则</div>
         <div class="fs-form-hint">指定装备部位不允许洗出的属性词条。例如武器不出免伤率、护甲不出暴击率等。</div>
-        <table class="fs-table">
+        <div class="fs-rule-wrap">
+        <table class="fs-table fs-rule">
+          <colgroup><col style="width:180px" /><col /><col style="width:220px" /><col style="width:72px" /></colgroup>
           <thead>
             <tr><th>装备部位</th><th>禁止属性</th><th>显示名称</th><th></th></tr>
           </thead>
@@ -180,6 +335,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
         <div class="fs-toolbar" style="margin-top: var(--space-2);">
           <Button size="small" variant="primary" @click="addForbiddenRule">添加禁止规则</Button>
         </div>
@@ -222,6 +378,8 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import type { AffixRuleConfig } from '@/domain/fengshen/types'
 import Button from '@/presentation/components/Button.vue'
 import TacticalSelect from '@/presentation/components/TacticalSelect.vue'
+import NumericStepper from '@/presentation/components/NumericStepper.vue'
+import Dialog from '@/presentation/components/Dialog.vue'
 import type { TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const api = container.resolve<GameDataApi>('GameDataApi')
@@ -229,7 +387,8 @@ const write = container.resolve<FengshenDataService>('FengshenDataService')
 const notification = useNotificationStore()
 
 const TABS = [
-  { id: 'matrix', label: '词条池设计' },
+  { id: 'matrix', label: '装备设计' },
+  { id: 'pet_mount', label: '宠物与坐骑' },
   { id: 'groups', label: '属性组配置' },
   { id: 'forbidden', label: '禁止规则' },
   { id: 'export', label: '导出配置' },
@@ -316,13 +475,80 @@ const ALL_ATTRS: AttrInfo[] = [
   { code: 'finalDamageReduction', name: '最终伤害减免', isPercentage: true },
 ]
 
+// ── 词条数值曲线默认值（对齐 configs/equipment/affix-rule.json 的 affix_value_curve） ──
+const DEFAULT_VALUE_CURVE: AffixRuleConfig['affix_value_curve'] = {
+  equipment: [
+    { attributes: ['attackBonus', 'hitBonus', 'speedBonus', 'healthBonus', 'defenseBonus', 'dodgeBonus'], min: { base: 1, perLevel: 0.1, full: 6 }, max: { base: 10, perLevel: 0.2, full: 20 } },
+    { attributes: ['attackCoefficient', 'hitCoefficient', 'speedCoefficient', 'healthCoefficient', 'defenseCoefficient', 'dodgeCoefficient'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
+    { attributes: ['hit', 'dodge', 'lifestealRate', 'effectHit', 'controlSuccessRate'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
+    { attributes: ['counterRate', 'trueDamageRate', 'critRate', 'reflectDamagePercent', 'critResist'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
+    { attributes: ['critDamage', 'critDmgTakenReduction', 'damageCoefficient', 'comboDamageCoefficient', 'counterDamageCoefficient', 'trueDamageCoefficient', 'finalAttack', 'finalDefense'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
+    { attributes: ['comboRate'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
+    { attributes: ['damageBoost', 'normalAtkBonus', 'skillBonus', 'shieldBonus', 'healBonus', 'reflectBonus', 'finalDamageBoost', 'lifestealBonus'], min: { base: 1, perLevel: 0.1, full: 6 }, max: { base: 10, perLevel: 0.2, full: 20 } },
+    { attributes: ['trueDamageResist', 'normalAtkDmgReduction', 'skillDmgReduction', 'controlImmunity', 'debuffImmunityRate', 'armorBreak'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
+    { attributes: ['energyGainEfficiency'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
+    { attributes: ['shieldReduction', 'healReduction', 'lifestealReduction', 'reflectReduction'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
+    { attributes: ['damageReduction', 'damageReductionCoefficient', 'finalDamageReduction'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
+    { attributes: ['hpRegenPercent'], min: { base: 1, perLevel: 0.02, full: 2 }, max: { base: 3, perLevel: 0.04, full: 5 } },
+    { attributes: ['energyInit'], min: { base: 5, perLevel: 0.1, full: 10 }, max: { base: 15, perLevel: 0.2, full: 25 } },
+    { attributes: ['splash'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
+  ],
+  pet_mount: [
+    { attributes: ['attackBonus', 'hitBonus', 'speedBonus', 'healthBonus', 'defenseBonus', 'dodgeBonus'], min: { base: 6, perLevel: 0.16, full: 14 }, max: { base: 15, perLevel: 0.3, full: 30 } },
+    { attributes: ['attackCoefficient', 'hitCoefficient', 'speedCoefficient', 'healthCoefficient', 'defenseCoefficient', 'dodgeCoefficient'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
+    { attributes: ['hit', 'dodge', 'lifestealRate', 'effectHit', 'controlSuccessRate'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
+    { attributes: ['counterRate', 'trueDamageRate', 'critRate', 'reflectDamagePercent', 'critResist'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
+    { attributes: ['critDamage', 'critDmgTakenReduction', 'damageCoefficient', 'comboDamageCoefficient', 'counterDamageCoefficient', 'trueDamageCoefficient', 'finalAttack', 'finalDefense'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
+    { attributes: ['comboRate'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
+    { attributes: ['damageBoost', 'normalAtkBonus', 'skillBonus', 'shieldBonus', 'healBonus', 'reflectBonus', 'finalDamageBoost', 'lifestealBonus'], min: { base: 1, perLevel: 0.1, full: 6 }, max: { base: 10, perLevel: 0.2, full: 20 } },
+    { attributes: ['trueDamageResist', 'normalAtkDmgReduction', 'skillDmgReduction', 'controlImmunity', 'debuffImmunityRate', 'armorBreak'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
+    { attributes: ['energyGainEfficiency'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
+    { attributes: ['shieldReduction', 'healReduction', 'lifestealReduction', 'reflectReduction'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
+    { attributes: ['damageReduction', 'damageReductionCoefficient', 'finalDamageReduction'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
+    { attributes: ['hpRegenPercent'], min: { base: 1, perLevel: 0.02, full: 2 }, max: { base: 3, perLevel: 0.04, full: 5 } },
+    { attributes: ['energyInit'], min: { base: 5, perLevel: 0.1, full: 10 }, max: { base: 15, perLevel: 0.2, full: 25 } },
+    { attributes: ['splash'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
+  ],
+}
+
 // ── 默认配置 ──
 function defaultConfig(): AffixRuleConfig {
   return {
     id: 'affix_rule',
-    rule_version: '1.0',
-    updated_at: '2026-09-01',
     description: '附加属性（词条）投放规则',
+    fixed_attributes: {
+      weapon: 'attack',
+      armor: 'defense',
+      helmet: 'maxHealth',
+      boots: 'dodgeValue',
+      charm: 'hitValue',
+      glove: 'speed',
+    },
+    tier_weight: {
+      fan: { min: 0.5, max: 0.6 },
+      xuan: { min: 0.6, max: 0.7 },
+      di: { min: 0.7, max: 0.8 },
+      tian: { min: 0.8, max: 0.9 },
+      xian: { min: 0.9, max: 1.0 },
+    },
+    core_affix_ratio: {
+      sword: { attribute: 'attack', ratio: 0.85 },
+      dagger: { attribute: 'attack', ratio: 0.85 },
+      staff: { attribute: 'attack', ratio: 1.0 },
+      blade: { attribute: 'attack', ratio: 1.0 },
+      cloth_armor: { attribute: 'defense', ratio: 0.85 },
+      leather_armor: { attribute: 'defense', ratio: 1.0 },
+      plate_armor: { attribute: 'defense', ratio: 1.15 },
+      face_guard: { attribute: 'maxHealth', ratio: 0.85 },
+      crown: { attribute: 'maxHealth', ratio: 1.0 },
+      helmet: { attribute: 'maxHealth', ratio: 1.15 },
+      cloth_boots: { attribute: 'dodgeValue', ratio: 1.15 },
+      leather_boots: { attribute: 'dodgeValue', ratio: 1.0 },
+      battle_boots: { attribute: 'dodgeValue', ratio: 0.85 },
+      charm: { attribute: 'hitValue', ratio: 1.0 },
+      glove: { attribute: 'speed', ratio: 1.0 },
+    },
+    affix_value_curve: DEFAULT_VALUE_CURVE,
     attribute_groups: {
       'ATK-L1': { label: '攻击系·基础数值', side: 'ATK', tier: 'L1', attributes: ['attack', 'hitValue', 'speed'], names: ['攻击', '命中', '速度'] },
       'ATK-L2': { label: '攻击系·百分比加成', side: 'ATK', tier: 'L2', attributes: ['attackBonus', 'hitBonus', 'speedBonus'], names: ['攻击加成', '命中加成', '速度加成'] },
@@ -346,7 +572,7 @@ function defaultConfig(): AffixRuleConfig {
       weapon: { label: '武器', sub_types: [{ id: 'sword', name: '剑' }, { id: 'staff', name: '棍' }, { id: 'hammer', name: '锤' }] },
       armor: { label: '衣甲', sub_types: [{ id: 'cloth_armor', name: '布甲' }, { id: 'leather_armor', name: '皮甲' }, { id: 'plate_armor', name: '盔甲' }] },
       helmet: { label: '头部', sub_types: [{ id: 'face_guard', name: '面' }, { id: 'crown', name: '冠' }, { id: 'helmet', name: '头盔' }] },
-      boots: { label: '脚部', sub_types: [{ id: 'cloth_boots', name: '布鞋' }, { id: 'leather_boots', name: '皮鞋' }, { id: 'battle_boots', name: '战靴' }] },
+      boots: { label: '脚部', sub_types: [{ id: 'cloth_boots', name: '布靴' }, { id: 'leather_boots', name: '皮靴' }, { id: 'battle_boots', name: '战靴' }] },
       charm: { label: '护符', sub_types: [{ id: 'charm', name: '护符' }] },
       glove: { label: '护腕', sub_types: [{ id: 'glove', name: '护腕' }] },
     },
@@ -370,29 +596,90 @@ function defaultConfig(): AffixRuleConfig {
 // ── 状态 ──
 const cfg = reactive<AffixRuleConfig>(defaultConfig())
 const errors = ref<string[]>([])
-const activeTab = ref<'matrix' | 'groups' | 'forbidden' | 'export'>('matrix')
+const activeTab = ref<'matrix' | 'pet_mount' | 'groups' | 'forbidden' | 'export'>('matrix')
 const newGroupCode = ref('')
 const addAttrSelection = ref<Record<string, string>>({})
 const addAttrNameSelection = ref<Record<string, string>>({})
+
+// 属性组编辑弹窗
+const editGroupOpen = ref(false)
+const editingCode = ref('')
+const editingGroup = computed(() => (editingCode.value ? (cfg.attribute_groups[editingCode.value] ?? null) : null))
 
 // ── 计算 ──
 const allGroupCodes = computed(() => Object.keys(cfg.attribute_groups))
 
 const allSubTypes = computed(() => {
-  const result: Array<{ id: string; name: string; side: 'ATK' | 'DEF' }> = []
+  const result: Array<{ id: string; name: string; side: 'ATK' | 'DEF'; slotKey: string }> = []
   for (const [groupId, group] of Object.entries(cfg.sub_type_groups)) {
     const side = cfg.slot_side[groupId] ?? 'ATK'
-    for (const st of group.sub_types) result.push({ id: st.id, name: st.name, side })
+    for (const st of group.sub_types) result.push({ id: st.id, name: st.name, side, slotKey: groupId })
   }
   return result
 })
 
+/** 部位展示顺序（固定属性表行序） */
+const fixedSlotOrder = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
+
+/** 部位下子类型（对齐 轻/中/重 三列；护符/护腕无子类型显示 —） */
+function slotSubTypes(slot: string): Array<{ id: string; name: string } | null> {
+  const sts = cfg.sub_type_groups[slot]?.sub_types ?? []
+  return [sts[0] ?? null, sts[1] ?? null, sts[2] ?? null]
+}
+
+/** 核心属性选项（固定属性 / 子类型核心词条共用：六维基础属性 + 百分比加成） */
+function coreAttrOptions(slot: string): TSelectOption[] {
+  return ALL_ATTRS.filter((a) => ['attack', 'defense', 'maxHealth', 'dodgeValue', 'hitValue', 'speed', 'attackBonus', 'defenseBonus', 'healthBonus', 'dodgeBonus', 'hitBonus', 'speedBonus'].includes(a.code))
+    .map((a) => ({ value: a.code, label: a.name, hint: a.code }))
+}
+
+/** 确保子类型核心词条系数存在（编辑时惰性初始化） */
+function ensureCoreRatio(subTypeId: string): { attribute: string; ratio: number } {
+  const existing = cfg.core_affix_ratio[subTypeId]
+  if (existing) return existing
+  const ratio = { attribute: 'attack', ratio: 1 }
+  cfg.core_affix_ratio[subTypeId] = ratio
+  return ratio
+}
+
+/** 品阶中文名 */
+function tierLabel(tier: string): string {
+  return ({ fan: '凡品', xuan: '玄品', di: '地品', tian: '天品', xian: '仙品' } as Record<string, string>)[tier] ?? tier
+}
+
+/** 品阶强化上限（对齐 PRD §21） */
+function tierEnhanceCap(tier: string): number {
+  return ({ fan: 3, xuan: 6, di: 9, tian: 12, xian: 15 } as Record<string, number>)[tier] ?? 0
+}
+
+/** 词条数值曲线：来源系统中文名 */
+function valueCurveSystemLabel(sysKey: string): string {
+  return ({ equipment: '装备', pet_mount: '宠物与坐骑' } as Record<string, string>)[sysKey] ?? sysKey
+}
+
+/** 词条数值曲线：属性 code 列表 → 中文名串 */
+function attrNames(codes: string[]): string {
+  return codes.map((c) => attrNameByCode(c)).join('、')
+}
+
+const atkSlotLabels = computed(() =>
+  Object.entries(cfg.slot_side)
+    .filter(([, side]) => side === 'ATK')
+    .map(([slot]) => slotGroupLabel(slot))
+    .join('、')
+)
+const defSlotLabels = computed(() =>
+  Object.entries(cfg.slot_side)
+    .filter(([, side]) => side === 'DEF')
+    .map(([slot]) => slotGroupLabel(slot))
+    .join('、')
+)
 const allAttrsFlat = computed(() => ALL_ATTRS)
 
 const exportJson = computed(() => JSON.stringify(toPlain(cfg), null, 2))
 
 const allAttrsOptions = computed<TSelectOption[]>(() =>
-  ALL_ATTRS.map((a) => ({ value: a.code, label: `${a.name}（${a.code}）` }))
+  ALL_ATTRS.map((a) => ({ value: a.code, label: a.name, hint: a.code }))
 )
 
 const forbiddenSlotOptions = computed<TSelectOption[]>(() =>
@@ -419,7 +706,7 @@ function nextGroupCode(side: 'ATK' | 'DEF', row: AffixRuleConfig['affix_rows'][n
 // ── 属性组：可用属性选项 ──
 function availableAttrsOptions(groupCode: string): TSelectOption[] {
   const used = new Set(cfg.attribute_groups[groupCode]?.attributes ?? [])
-  return ALL_ATTRS.filter((a) => !used.has(a.code)).map((a) => ({ value: a.code, label: `${a.name}（${a.code}）` }))
+  return ALL_ATTRS.filter((a) => !used.has(a.code)).map((a) => ({ value: a.code, label: a.name, hint: a.code }))
 }
 
 // ── 方法 ──
@@ -440,17 +727,17 @@ function attrNameByCode(code: string): string {
   return ALL_ATTRS.find((a) => a.code === code)?.name ?? code
 }
 
-function addRow(): void {
-  const maxRow = Math.max(0, ...cfg.affix_rows.map((r) => r.row))
-  cfg.affix_rows.push({ row: maxRow + 1, name: '新词条行', pool: { ATK: ['ATK-L1'], DEF: ['DEF-L1'] } })
-}
-
 function addGroup(): void {
   const code = newGroupCode.value.trim()
   if (!code || cfg.attribute_groups[code]) { notification.notify('错误', '组码为空或已存在', 'error'); return }
   cfg.attribute_groups[code] = { label: code, side: 'ATK', tier: 'L1', attributes: [], names: [] }
   newGroupCode.value = ''
   notification.notify('已添加', `属性组 ${code}`, 'success')
+}
+
+function openEditGroup(code: string): void {
+  editingCode.value = code
+  editGroupOpen.value = true
 }
 
 function removeGroup(code: string): void {
@@ -487,14 +774,13 @@ function addForbiddenAttr(idx: number): void {
 async function load(): Promise<void> {
   try {
     const data = await api.getAffixRule()
-    if (data) resetInto(cfg, data)
+    // 合并 defaultConfig 兜底：旧数据缺新字段（fixed_attributes/tier_weight/core_affix_ratio）时补齐
+    resetInto(cfg, { ...defaultConfig(), ...(data ?? {}) })
   } catch { resetInto(cfg, defaultConfig()) }
 }
 
 async function save(): Promise<void> {
   errors.value = []
-  if (!cfg.rule_version) errors.value.push('规则版本不能为空')
-  if (errors.value.length) { notification.notify('保存失败', errors.value.join('\n'), 'error'); return }
   const result = await write.save('params', { id: 'affix_rule', name: '装备词条投放规则', data: toPlain(cfg) })
   if (result.ok) notification.notify('已保存', `词条投放规则已保存 · v${await api.getDataVersion()}`, 'success')
   else notification.notify('保存失败', result.errors?.join('\n') ?? '', 'error')
@@ -520,24 +806,24 @@ void load()
 </script>
 
 <style scoped lang="scss">
-.fs-group-card {
-  border: 1px solid var(--color-border, #e8e8e8);
-  border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+.fs-group-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
-.fs-group-header {
+.fs-edit-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
-.fs-group-code {
-  font-weight: 600;
-  min-width: 80px;
+.fs-edit-attrs {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border, #e8e8e8);
 }
-.fs-group-label {
-  flex: 1;
+.fs-edit-footer {
+  display: flex;
+  justify-content: flex-end;
 }
 .fs-group-attrs {
   display: flex;
@@ -579,6 +865,11 @@ void load()
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
+
+  :deep(.t-select) {
+    min-width: 220px;
+    flex: 1 1 220px;
+  }
 }
 .fs-tag-add {
   background: none;
@@ -646,5 +937,122 @@ void load()
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-all;
+}
+.fs-slot-side-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.fs-slot-side-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-md);
+}
+.fs-slot-side-label {
+  font-weight: 500;
+  min-width: 5em;
+}
+.fs-exp-num {
+  width: 90px;
+  font-family: var(--font-family-mono);
+}
+.fs-curve-system {
+  padding-top: var(--space-1);
+}
+
+/* ── 表格美化：外框 / 固定列宽 / 下拉撑满 / 对齐 / 斑马纹 ── */
+.fs-rule-wrap {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.fs-rule-wrap.is-scroll {
+  overflow-x: auto;
+}
+
+.fs-rule {
+  table-layout: fixed;
+}
+
+/* 稀疏表两列并排：宽屏用内容填满而非拉伸单表 */
+.fs-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+  margin-bottom: var(--space-4);
+}
+
+.fs-rule-grid > .fs-exp-block {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1180px) {
+  .fs-rule-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 单列满屏但列少的表：限宽，避免列被撑成巨槽 */
+.fs-rule-wrap.is-capped {
+  max-width: 780px;
+}
+
+/* 单元格内单选下拉撑满列宽（仅直接置于 td 的单选，池编辑器的多选不受影响） */
+.fs-rule td > :deep(.t-select) {
+  width: 100%;
+}
+
+/* 含控件的行：垂直居中 + 呼吸感 */
+.fs-rule tbody td {
+  vertical-align: middle;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+/* 斑马纹（hover 仍高亮） */
+.fs-rule-wrap .fs-table tbody tr:nth-child(even) td {
+  background: rgba(var(--rgb-white), 0.02);
+}
+
+.fs-rule-wrap .fs-table tbody tr:hover td {
+  background: var(--color-bg-hover);
+}
+
+/* 列对齐 */
+.fs-rule thead th.fs-th-center { text-align: center; }
+.fs-rule thead th.fs-th-right { text-align: right; }
+.fs-rule tbody td.fs-td-center { text-align: center; }
+.fs-rule tbody td.fs-td-right { text-align: right; }
+
+/* 首列强调 */
+.fs-td-strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 数字输入右对齐 */
+.fs-num-right {
+  text-align: right;
+}
+
+/* 区块标题左侧 accent 竖条，强化分区 */
+.fs-exp-block > .fs-block-title {
+  position: relative;
+  padding-left: var(--space-3);
+}
+
+.fs-exp-block > .fs-block-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.1em;
+  bottom: 0.1em;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-energy);
 }
 </style>

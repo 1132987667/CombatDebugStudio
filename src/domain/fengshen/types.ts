@@ -300,8 +300,12 @@ export interface AttributeDef {
   sapMultiplier: number
   /** 属性层级 */
   valueTier: AttributeValueTier
-  /** 归属系统 */
+  /** 归属系统（等级/装备/流派/宠物/坐骑/法宝/神器） */
   systems: string[]
+  /** 分组标签（来自权威字典 attribute-dictionary：核心=基础数值/输出转化/生存对抗/状态机制/机制节奏；归档=五行元素/战斗上下文/…） */
+  category?: string
+  /** 是否属于 64 项「数值体系」核心字典（false = 归档/运行时，数值视图不展示） */
+  numeric?: boolean
   /** 是否运行时状态（currentHealth 等，不参与配置） */
   isRuntimeState?: boolean
   description?: string
@@ -329,6 +333,8 @@ export interface PlayerGrowthConfig {
   conversion: Record<PlayerBaseAttrCode, number>
   /** 丹药带来的额外属性点（计入等级总属性点） */
   pillBonusPoints: number
+  /** 满级总属性点目标值（固定+自由+丹药），用于总量校验；默认 900 */
+  expectedTotalSap?: number
   /** 仅预览用当前等级（不参与存储语义） */
   currentLevel?: number
 }
@@ -447,9 +453,20 @@ export interface EconomyRatiosConfig {
 /** 装备词条投放规则（params 域，key=affix_rule）—— 定义各装备部位/子类型允许投放的属性组池 */
 export interface AffixRuleConfig {
   id: 'affix_rule'
-  rule_version: string
-  updated_at: string
   description?: string
+  /** 部位固定属性（slot → 该部位必然提供的主属性 code） */
+  fixed_attributes: Record<string, string>
+  /** 子类型核心属性词条系数（sub_type id → 核心属性 code + 词条系数；剑=攻击85% → { attribute, ratio }） */
+  core_affix_ratio: Record<string, { attribute: string; ratio: number }>
+  /** 装备品阶权重（凡品/玄品/地品/天品/仙品 → [min, max]，对齐 PRD §21） */
+  tier_weight: Record<string, { min: number; max: number }>
+  /** 词条数值曲线（来源系统 → 属性组数值区间；属性组 = 一组属性 code + 下限/上限 {base, perLevel, full}）。
+   *  base=1 级基础值，perLevel=每级成长，full=满级值（策划给表，满级约 50 级）。 */
+  affix_value_curve: Record<string, Array<{
+    attributes: string[]
+    min: { base: number; perLevel: number; full: number }
+    max: { base: number; perLevel: number; full: number }
+  }>>
   attribute_groups: Record<string, {
     label: string
     side: 'ATK' | 'DEF'

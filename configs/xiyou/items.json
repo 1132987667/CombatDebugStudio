@@ -1117,6 +1117,38 @@
       "value": 1000
     },
     {
+      "id": "wp_t1_dagger_01",
+      "name": "竹刺",
+      "type": "武器",
+      "rarity": 1,
+      "source": "制造（主线，免图纸）",
+      "value": 150
+    },
+    {
+      "id": "wp_t2_dagger_01",
+      "name": "双刺",
+      "type": "武器",
+      "rarity": 2,
+      "source": "关卡4-6 制造",
+      "value": 400
+    },
+    {
+      "id": "wp_t3_dagger_01",
+      "name": "峨眉刺",
+      "type": "武器",
+      "rarity": 3,
+      "source": "关卡7-9 制造",
+      "value": 1000
+    },
+    {
+      "id": "wp_t4_dagger_01",
+      "name": "影刃",
+      "type": "武器",
+      "rarity": 4,
+      "source": "制造（天品合成）",
+      "value": 4000
+    },
+    {
       "id": "wp_t4_01",
       "name": "牛魔撼天锤",
       "type": "武器",

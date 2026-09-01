@@ -1,7 +1,71 @@
 {
-  "rule_version": "1.0",
-  "updated_at": "2026-09-01",
   "description": "附加属性（词条）投放规则：定义各装备部位/子类型允许投放的属性组池。属性组码约定见 attribute_groups。矩阵见 affix_rows（按 side 抽池）。",
+  "fixed_attributes": {
+    "weapon": "attack",
+    "armor": "defense",
+    "helmet": "maxHealth",
+    "boots": "dodgeValue",
+    "charm": "hitValue",
+    "glove": "speed"
+  },
+  "tier_weight": {
+    "fan": { "min": 0.5, "max": 0.6 },
+    "xuan": { "min": 0.6, "max": 0.7 },
+    "di": { "min": 0.7, "max": 0.8 },
+    "tian": { "min": 0.8, "max": 0.9 },
+    "xian": { "min": 0.9, "max": 1.0 }
+  },
+  "core_affix_ratio": {
+    "sword": { "attribute": "attack", "ratio": 0.85 },
+    "dagger": { "attribute": "attack", "ratio": 0.85 },
+    "staff": { "attribute": "attack", "ratio": 1.0 },
+    "blade": { "attribute": "attack", "ratio": 1.0 },
+    "cloth_armor": { "attribute": "defense", "ratio": 0.85 },
+    "leather_armor": { "attribute": "defense", "ratio": 1.0 },
+    "plate_armor": { "attribute": "defense", "ratio": 1.15 },
+    "face_guard": { "attribute": "maxHealth", "ratio": 0.85 },
+    "crown": { "attribute": "maxHealth", "ratio": 1.0 },
+    "helmet": { "attribute": "maxHealth", "ratio": 1.15 },
+    "cloth_boots": { "attribute": "dodgeValue", "ratio": 1.15 },
+    "leather_boots": { "attribute": "dodgeValue", "ratio": 1.0 },
+    "battle_boots": { "attribute": "dodgeValue", "ratio": 0.85 },
+    "charm": { "attribute": "hitValue", "ratio": 1.0 },
+    "glove": { "attribute": "speed", "ratio": 1.0 }
+  },
+  "affix_value_curve": {
+    "equipment": [
+      { "attributes": ["attackBonus", "hitBonus", "speedBonus", "healthBonus", "defenseBonus", "dodgeBonus"], "min": { "base": 1, "perLevel": 0.1, "full": 6 }, "max": { "base": 10, "perLevel": 0.2, "full": 20 } },
+      { "attributes": ["attackCoefficient", "hitCoefficient", "speedCoefficient", "healthCoefficient", "defenseCoefficient", "dodgeCoefficient"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
+      { "attributes": ["hit", "dodge", "lifestealRate", "effectHit", "controlSuccessRate"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
+      { "attributes": ["counterRate", "trueDamageRate", "critRate", "reflectDamagePercent", "critResist"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
+      { "attributes": ["critDamage", "critDmgTakenReduction", "damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient", "finalAttack", "finalDefense"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
+      { "attributes": ["comboRate"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } },
+      { "attributes": ["damageBoost", "normalAtkBonus", "skillBonus", "shieldBonus", "healBonus", "reflectBonus", "finalDamageBoost", "lifestealBonus"], "min": { "base": 1, "perLevel": 0.1, "full": 6 }, "max": { "base": 10, "perLevel": 0.2, "full": 20 } },
+      { "attributes": ["trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate", "armorBreak"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
+      { "attributes": ["energyGainEfficiency"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
+      { "attributes": ["shieldReduction", "healReduction", "lifestealReduction", "reflectReduction"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
+      { "attributes": ["damageReduction", "damageReductionCoefficient", "finalDamageReduction"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
+      { "attributes": ["hpRegenPercent"], "min": { "base": 1, "perLevel": 0.02, "full": 2 }, "max": { "base": 3, "perLevel": 0.04, "full": 5 } },
+      { "attributes": ["energyInit"], "min": { "base": 5, "perLevel": 0.1, "full": 10 }, "max": { "base": 15, "perLevel": 0.2, "full": 25 } },
+      { "attributes": ["splash"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } }
+    ],
+    "pet_mount": [
+      { "attributes": ["attackBonus", "hitBonus", "speedBonus", "healthBonus", "defenseBonus", "dodgeBonus"], "min": { "base": 6, "perLevel": 0.16, "full": 14 }, "max": { "base": 15, "perLevel": 0.3, "full": 30 } },
+      { "attributes": ["attackCoefficient", "hitCoefficient", "speedCoefficient", "healthCoefficient", "defenseCoefficient", "dodgeCoefficient"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
+      { "attributes": ["hit", "dodge", "lifestealRate", "effectHit", "controlSuccessRate"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
+      { "attributes": ["counterRate", "trueDamageRate", "critRate", "reflectDamagePercent", "critResist"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
+      { "attributes": ["critDamage", "critDmgTakenReduction", "damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient", "finalAttack", "finalDefense"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
+      { "attributes": ["comboRate"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } },
+      { "attributes": ["damageBoost", "normalAtkBonus", "skillBonus", "shieldBonus", "healBonus", "reflectBonus", "finalDamageBoost", "lifestealBonus"], "min": { "base": 1, "perLevel": 0.1, "full": 6 }, "max": { "base": 10, "perLevel": 0.2, "full": 20 } },
+      { "attributes": ["trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate", "armorBreak"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
+      { "attributes": ["energyGainEfficiency"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
+      { "attributes": ["shieldReduction", "healReduction", "lifestealReduction", "reflectReduction"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
+      { "attributes": ["damageReduction", "damageReductionCoefficient", "finalDamageReduction"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
+      { "attributes": ["hpRegenPercent"], "min": { "base": 1, "perLevel": 0.02, "full": 2 }, "max": { "base": 3, "perLevel": 0.04, "full": 5 } },
+      { "attributes": ["energyInit"], "min": { "base": 5, "perLevel": 0.1, "full": 10 }, "max": { "base": 15, "perLevel": 0.2, "full": 25 } },
+      { "attributes": ["splash"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } }
+    ]
+  },
   "attribute_groups": {
     "ATK-L1": {
       "label": "攻击系·基础数值",
@@ -128,8 +192,9 @@
       "label": "武器",
       "sub_types": [
         { "id": "sword", "name": "剑" },
+        { "id": "dagger", "name": "刺" },
         { "id": "staff", "name": "棍" },
-        { "id": "hammer", "name": "锤" }
+        { "id": "blade", "name": "刀" }
       ]
     },
     "armor": {
@@ -151,8 +216,8 @@
     "boots": {
       "label": "脚部",
       "sub_types": [
-        { "id": "cloth_boots", "name": "布鞋" },
-        { "id": "leather_boots", "name": "皮鞋" },
+        { "id": "cloth_boots", "name": "布靴" },
+        { "id": "leather_boots", "name": "皮靴" },
         { "id": "battle_boots", "name": "战靴" }
       ]
     },
@@ -225,6 +290,14 @@
       "slotLabel": "武器",
       "attributes": ["damageReduction"],
       "attributeLabels": ["免伤率"]
+    },
+    {
+      "slot": "weapon",
+      "slotLabel": "武器",
+      "subType": "刺",
+      "subTypeLabel": "刺",
+      "attributes": ["comboRate", "comboDamageCoefficient", "armorBreak", "vulnerability"],
+      "attributeLabels": ["连击率", "连击伤害系数", "破甲", "易伤"]
     },
     {
       "slot": "armor",

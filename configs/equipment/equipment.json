@@ -4450,5 +4450,152 @@
     "craftable": false,
     "source": "无尽塔第50层首通掉落",
     "description": "劫灭·焚魄珠，气血+25%，全属性+8%，每回合恢复3%气血；气血低于20%时进入「焚魄」状态（全属性+15%但无法被治疗）"
+  },
+  {
+    "id": "wp_t1_dagger_01",
+    "name": "竹刺",
+    "slot": "weapon",
+    "subType": "刺",
+    "tier": "t1",
+    "rarity": 1,
+    "requiredLevel": 1,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 10
+      },
+      {
+        "attribute": "dodgeValue",
+        "modifierType": "flat",
+        "value": 5
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_taomu",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 1
+      }
+    ],
+    "cost": 50,
+    "craftable": true,
+    "recipeId": "forge_wp_t1_dagger_01",
+    "blueprintId": "bp_t1_eq",
+    "source": "制造（主线，免图纸）",
+    "description": "竹刺，闪避流专属武器，攻击+10闪避+5"
+  },
+  {
+    "id": "wp_t2_dagger_01",
+    "name": "双刺",
+    "slot": "weapon",
+    "subType": "刺",
+    "tier": "t2",
+    "rarity": 2,
+    "requiredLevel": 10,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 25
+      },
+      {
+        "attribute": "dodgeValue",
+        "modifierType": "flat",
+        "value": 12
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_tiejing",
+        "count": 3
+      },
+      {
+        "itemId": "mat_tongjing",
+        "count": 2
+      }
+    ],
+    "cost": 150,
+    "craftable": true,
+    "recipeId": "forge_wp_t2_dagger_01",
+    "blueprintId": "bp_t2_eq",
+    "source": "制造（关卡4-6）",
+    "description": "双刺，闪避流专属武器，攻击+25闪避+12"
+  },
+  {
+    "id": "wp_t3_dagger_01",
+    "name": "峨眉刺",
+    "slot": "weapon",
+    "subType": "刺",
+    "tier": "t3",
+    "rarity": 3,
+    "requiredLevel": 20,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 45
+      },
+      {
+        "attribute": "dodgeValue",
+        "modifierType": "flat",
+        "value": 22
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_jinjing",
+        "count": 5
+      },
+      {
+        "itemId": "mat_tiejing",
+        "count": 3
+      }
+    ],
+    "cost": 400,
+    "craftable": true,
+    "recipeId": "forge_wp_t3_dagger_01",
+    "blueprintId": "bp_t3_eq",
+    "source": "制造（关卡7-9）",
+    "description": "峨眉刺，闪避流专属武器，攻击+45闪避+22"
+  },
+  {
+    "id": "wp_t4_dagger_01",
+    "name": "影刃",
+    "slot": "weapon",
+    "subType": "刺",
+    "tier": "t4",
+    "rarity": 4,
+    "requiredLevel": 35,
+    "stats": [
+      {
+        "attribute": "attack",
+        "modifierType": "flat",
+        "value": 70
+      },
+      {
+        "attribute": "dodgeValue",
+        "modifierType": "flat",
+        "value": 35
+      }
+    ],
+    "materials": [
+      {
+        "itemId": "mat_boss_01",
+        "count": 1
+      },
+      {
+        "itemId": "mat_jinjing",
+        "count": 10
+      }
+    ],
+    "cost": 600,
+    "craftable": true,
+    "blueprintId": "bp_legend_01",
+    "source": "制造（天品合成）",
+    "description": "影刃，闪避流专属武器，攻击+70闪避+35"
   }
 ]

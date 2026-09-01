@@ -6,8 +6,9 @@
       "label": "武器",
       "sub_types": [
         { "id": "light_weapon", "name": "轻型武器", "style": "灵猴道", "desc": "高频连击，速度优先" },
+        { "id": "dagger_weapon", "name": "刺", "style": "灵猴道", "desc": "闪避专属，闪避率/反击率/速度" },
         { "id": "medium_weapon", "name": "中型武器", "style": "金行道", "desc": "爆发输出，暴击优先" },
-        { "id": "heavy_weapon", "name": "重型武器", "style": "磐石道", "desc": "重击控制，生存优先" }
+        { "id": "blade_weapon", "name": "重型武器", "style": "磐石道", "desc": "重击控制，生存优先" }
       ],
       "enhance_attribute": "attack",
       "enhance_material": ["灿金晶球", "异矿"]

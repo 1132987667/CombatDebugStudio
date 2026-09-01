@@ -37,7 +37,7 @@ export function freePointsTotal(config: PlayerGrowthConfig): number {
   return (config.freePointsPerLevel ?? 0) * config.maxLevel
 }
 
-/** 满级属性点总量 = 固定成长 SAP × 满级 + 自由点总量 + 丹药（预期 12×50 + 4×50 + 100 = 900） */
+/** 满级属性点总量 = 固定成长 SAP × 满级 + 自由点总量 + 丹药（预期值由 PlayerGrowthConfig.expectedTotalSap 决定） */
 export function calcTotalSap(config: PlayerGrowthConfig): { fixed: number; free: number; pill: number; total: number } {
   const fixed = fixedGrowthSap(config) * config.maxLevel
   const free = freePointsTotal(config)

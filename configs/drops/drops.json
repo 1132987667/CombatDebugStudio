@@ -443,7 +443,11 @@
     "entries": [
       {
         "itemId": "wp_t1_light_01",
-        "probability": 20
+        "probability": 15
+      },
+      {
+        "itemId": "wp_t1_dagger_01",
+        "probability": 10
       },
       {
         "itemId": "ar_t1_light_01",
@@ -465,7 +469,11 @@
     "entries": [
       {
         "itemId": "wp_t2_light_01",
-        "probability": 15
+        "probability": 10
+      },
+      {
+        "itemId": "wp_t2_dagger_01",
+        "probability": 8
       },
       {
         "itemId": "ar_t2_light_01",
@@ -487,7 +495,11 @@
     "entries": [
       {
         "itemId": "wp_t3_light_01",
-        "probability": 10
+        "probability": 8
+      },
+      {
+        "itemId": "wp_t3_dagger_01",
+        "probability": 6
       },
       {
         "itemId": "ar_t3_light_01",

@@ -12,7 +12,7 @@ export const EQUIPMENT_SLOTS = ['weapon', 'armor', 'helmet', 'boots', 'charm', '
 
 /** 部位 → 合法子类型（子类型为自由中文名，此处以 equipment.json 现有数据为权威枚举） */
 export const SLOT_SUB_TYPES: Record<string, readonly string[]> = {
-  weapon: ['轻型', '中型', '重型'],
+  weapon: ['轻型', '中型', '重型', '刺'],
   armor: ['皮甲', '木甲', '铠甲', '天衣'],
   helmet: ['头盔', '冠冕'],
   boots: ['靴子'],
@@ -61,12 +61,13 @@ export interface EquipmentConflictRule {
 }
 
 /** 冲突规则表（设计稿 v2.0 §14.9）：
- * 轻型武器：格挡率禁止；重型武器：连击率权重减半（不禁止）；
+ * 轻型武器：格挡率禁止；重型武器：连击率权重减半（不禁止）；刺：连击率/连击伤害系数/破甲/易伤禁止；
  * 皮甲：格挡率禁止；铠甲：闪避率禁止；
  * 护符：暴击率、暴击伤害禁止；靴子：暴击伤害禁止。 */
 export const EQUIPMENT_CONFLICT_RULES: EquipmentConflictRule[] = [
   { slot: 'weapon', subType: '轻型', forbidden: ['blockRate'] },
-  { slot: 'weapon', subType: '重型', halved: ['comboRate'] },
+  { slot: 'weapon', subType: '刀', halved: ['comboRate'] },
+  { slot: 'weapon', subType: '刺', forbidden: ['comboRate', 'comboDamageCoefficient', 'armorBreak', 'vulnerability'] },
   { slot: 'armor', subType: '皮甲', forbidden: ['blockRate'] },
   { slot: 'armor', subType: '铠甲', forbidden: ['dodge'] },
   { slot: 'charm', subType: '护符', forbidden: ['critRate', 'critDamage'] },

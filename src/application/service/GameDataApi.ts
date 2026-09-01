@@ -9,6 +9,7 @@ import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersis
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
+  AffixRuleConfig,
   AttributeDef,
   BattleParamData,
   ElementsData,
@@ -146,6 +147,14 @@ export class GameDataApi {
     const rec = await this.getBattleParam('equip_formula')
     return rec?.data && typeof rec.data === 'object' && 'baseSap' in rec.data && 'tierWeight' in rec.data
       ? (rec.data as EquipFormulaConfig)
+      : null
+  }
+
+  /** 装备词条投放规则（params 域 affix_rule 的 data） */
+  async getAffixRule(): Promise<AffixRuleConfig | null> {
+    const rec = await this.getBattleParam('affix_rule')
+    return rec?.data && typeof rec.data === 'object' && 'attribute_groups' in rec.data && 'affix_rows' in rec.data
+      ? (rec.data as AffixRuleConfig)
       : null
   }
 

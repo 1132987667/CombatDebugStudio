@@ -444,7 +444,7 @@
   display: inline-block;
   padding: 1px 8px;
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   white-space: nowrap;
 }
 .fs-kind-integrity { background: var(--color-danger-bg); color: var(--color-danger); }
@@ -453,7 +453,7 @@
 .fs-kind-detail {
   display: block;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   margin-top: 2px;
 }
 

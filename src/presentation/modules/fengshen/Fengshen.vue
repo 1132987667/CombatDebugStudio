@@ -11,9 +11,9 @@
             {{ d.label }}
           </button>
         </div>
-        <div class="fs-side-group">
-          <div class="fs-side-title">系统功能</div>
-          <button v-for="s in SYSTEM_VIEWS" :key="s.view" type="button" class="fs-side-item"
+        <div v-for="group in SYSTEM_GROUPS" :key="group.label" class="fs-side-group">
+          <div class="fs-side-title">{{ group.label }}</div>
+          <button v-for="s in group.items" :key="s.view" type="button" class="fs-side-item"
             :class="{ active: store.activeView === s.view }" @click="store.setView(s.view)">
             {{ s.label }}
           </button>
@@ -42,6 +42,7 @@
       <ListView v-if="store.activeView === 'domain'" />
       <FormulasView v-else-if="store.activeView === 'formulas'" />
       <PlayerConfigView v-else-if="store.activeView === 'playerconfig'" />
+      <AffixRuleView v-else-if="store.activeView === 'affixrule'" />
       <AuditView v-else-if="store.activeView === 'audit'" />
       <ExpGoldView v-else-if="store.activeView === 'expgold'" />
       <HealthView v-else-if="store.activeView === 'health'" />
@@ -68,6 +69,7 @@ import HealthView from '@/presentation/modules/fengshen/views/HealthView.vue'
 import LogsView from '@/presentation/modules/fengshen/views/LogsView.vue'
 import PackagesView from '@/presentation/modules/fengshen/views/PackagesView.vue'
 import ExpGoldView from '@/presentation/modules/fengshen/views/ExpGoldView.vue'
+import AffixRuleView from '@/presentation/modules/fengshen/views/AffixRuleView.vue'
 
 /** 数据域按子领域分组（侧栏导航层次） */
 const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableName; label: string }> }> = [
@@ -120,14 +122,35 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
   },
 ]
 
-const SYSTEM_VIEWS: Array<{ view: FengshenView; label: string }> = [
-  { view: 'formulas', label: '属性与公式' },
-  { view: 'playerconfig', label: '玩家配置' },
-  { view: 'audit', label: '来源审计' },
-  { view: 'expgold', label: '经验与金钱管理' },
-  { view: 'packages', label: '数据包管理' },
-  { view: 'health', label: '健康检查' },
-  { view: 'logs', label: '操作日志' },
+const SYSTEM_GROUPS: Array<{ label: string; items: Array<{ view: FengshenView; label: string }> }> = [
+  {
+    label: '数值体系',
+    items: [
+      { view: 'playerconfig', label: '玩家配置' },
+      { view: 'formulas', label: '属性与公式' },
+      { view: 'affixrule', label: '词条投放规则' },
+      { view: 'audit', label: '来源审计' },
+    ],
+  },
+  {
+    label: '经济系统',
+    items: [
+      { view: 'expgold', label: '经验与金钱管理' },
+    ],
+  },
+  {
+    label: '校验工具',
+    items: [
+      { view: 'health', label: '健康检查' },
+    ],
+  },
+  {
+    label: '系统工具',
+    items: [
+      { view: 'packages', label: '数据包管理' },
+      { view: 'logs', label: '操作日志' },
+    ],
+  },
 ]
 
 const store = useFengshenStore()

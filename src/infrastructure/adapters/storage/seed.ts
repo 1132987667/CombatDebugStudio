@@ -18,6 +18,7 @@ import type {
   ActorData,
   AffixData,
   AffixLibraryData,
+  AffixRuleConfig,
   AttributeDef,
   BattleParamData,
   ElementsData,
@@ -57,8 +58,9 @@ import xiyouCaveJson from '@configs/xiyou/cave.json'
 import itemsDataRaw from '@configs/xiyou/items.json'
 import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 import attributesDataRaw from '@configs/attributes/attributes.json'
+import affixRuleDataRaw from '@configs/equipment/affix-rule.json'
 
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v25'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v26'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -301,6 +303,28 @@ function buildEquipFormula(): BattleParamData {
   }
 }
 
+/** 装备词条投放规则种子（params 域，key=affix_rule）—— configs/equipment/affix-rule.json 策划定稿 */
+function buildAffixRule(): BattleParamData {
+  const raw = affixRuleDataRaw as Record<string, unknown>
+  return {
+    id: 'affix_rule',
+    name: '装备词条投放规则',
+    description: '定义各装备部位/子类型允许投放的属性组池（5行×14子类型矩阵）',
+    data: {
+      id: 'affix_rule',
+      rule_version: String(raw.rule_version ?? '1.0'),
+      updated_at: String(raw.updated_at ?? ''),
+      description: String(raw.description ?? ''),
+      attribute_groups: (raw.attribute_groups ?? {}) as AffixRuleConfig['attribute_groups'],
+      sub_type_groups: (raw.sub_type_groups ?? {}) as AffixRuleConfig['sub_type_groups'],
+      slot_side: (raw.slot_side ?? {}) as AffixRuleConfig['slot_side'],
+      affix_rows: (raw.affix_rows ?? []) as AffixRuleConfig['affix_rows'],
+      forbidden: (raw.forbidden ?? []) as AffixRuleConfig['forbidden'],
+    } as AffixRuleConfig,
+    updatedAt: nowIso(),
+  }
+}
+
 /** SAP 价值倍数映射（§3.4 / D1：12 气血 = 2 攻 = 2 防 = 2 命中 = 2 闪避 = 2 速度） */
 const SAP_MULTIPLIER_MAP: Record<string, number> = {
   maxHealth: 12,
@@ -431,7 +455,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
       [FENGSHEN_STORE.ATTRIBUTES, buildAttributes()],
-      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula()]],
+      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule()]],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
       [FENGSHEN_STORE.GEARS, (equipmentDataRaw as EquipmentData[]).filter((e) => e.craftable) as GearData[]],

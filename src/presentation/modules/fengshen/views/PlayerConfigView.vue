@@ -5,10 +5,35 @@
       <span class="fs-page-hint">玩家成长（SAP 六维模型）· 系统预算 · 装备数值公式（IndexedDB params 域，保存后引擎数据源重载）</span>
     </div>
 
-    <!-- 三 Tab 切换 -->
-    <div class="fs-exp-tabs" role="tablist" aria-label="玩家配置">
-      <button v-for="t in TABS" :key="t.id" type="button" class="fs-exp-tab" :class="{ active: activeTab === t.id }"
-        :role="'tab'" :aria-selected="activeTab === t.id" @click="activeTab = t.id">{{ t.label }}</button>
+    <!-- 统计卡片 -->
+    <div class="fs-stat-cards">
+      <div class="fs-stat-card">
+        <div class="fs-stat-num">{{ totalSap.total }}</div>
+        <div class="fs-stat-label">满级总SAP</div>
+      </div>
+      <div class="fs-stat-card">
+        <div class="fs-stat-num">{{ cfg.maxLevel }}</div>
+        <div class="fs-stat-label">最高等级</div>
+      </div>
+      <div class="fs-stat-card">
+        <div class="fs-stat-num">{{ totalBudgetWeight }}</div>
+        <div class="fs-stat-label">预算总权重</div>
+      </div>
+      <div class="fs-stat-card">
+        <div class="fs-stat-num">{{ equipFormula.maxLevel }}</div>
+        <div class="fs-stat-label">装备等级上限</div>
+      </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="fs-toolbar">
+      <div class="fs-exp-tabs" role="tablist" aria-label="玩家配置">
+        <button v-for="t in TABS" :key="t.id" type="button" class="fs-exp-tab" :class="{ active: activeTab === t.id }"
+          :role="'tab'" :aria-selected="activeTab === t.id" @click="activeTab = t.id">{{ t.label }}</button>
+      </div>
+      <span class="fs-spacer"></span>
+      <Button variant="ghost" size="small" @click="exportConfig">导出配置</Button>
+      <Button variant="ghost" size="small" @click="importConfig">导入配置</Button>
     </div>
 
     <!-- Tab1 成长配置 -->
@@ -146,6 +171,51 @@
         </div>
       </div>
     </section>
+
+    <!-- 导出弹窗 -->
+    <Dialog v-model="showExportDialog" title="导出玩家配置" width="500px">
+      <div class="fs-export-options">
+        <div class="fs-option-cards">
+          <div class="fs-option-card" :class="{ selected: exportType === 'growth' }" @click="exportType = 'growth'">
+            <div class="fs-opt-name">成长配置</div>
+            <div class="fs-opt-desc">玩家成长参数（等级/经验/属性/转化）</div>
+          </div>
+          <div class="fs-option-card" :class="{ selected: exportType === 'budget' }" @click="exportType = 'budget'">
+            <div class="fs-opt-name">系统预算</div>
+            <div class="fs-opt-desc">养成系统权重分配</div>
+          </div>
+          <div class="fs-option-card" :class="{ selected: exportType === 'formula' }" @click="exportType = 'formula'">
+            <div class="fs-opt-name">装备公式</div>
+            <div class="fs-opt-desc">装备数值计算公式</div>
+          </div>
+          <div class="fs-option-card" :class="{ selected: exportType === 'all' }" @click="exportType = 'all'">
+            <div class="fs-opt-name">全部配置</div>
+            <div class="fs-opt-desc">包含以上所有配置</div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <Button variant="ghost" @click="showExportDialog = false">取消</Button>
+        <Button variant="primary" @click="doExport">导出 JSON</Button>
+      </template>
+    </Dialog>
+
+    <!-- 导入弹窗 -->
+    <Dialog v-model="showImportDialog" title="导入玩家配置" width="500px">
+      <div class="fs-import-zone">
+        <div class="fs-drop-zone" role="button" tabindex="0" aria-label="选择 JSON 文件"
+          @click="fileInput?.click()" @dragover.prevent @drop.prevent="onDrop"
+          @keydown.enter.prevent="fileInput?.click()" @keydown.space.prevent="fileInput?.click()">
+          <div class="fs-dz-main">将 JSON 文件拖拽到此处，或点击选择文件</div>
+          <div class="fs-form-hint">支持 .json 格式的玩家配置文件</div>
+        </div>
+        <input ref="fileInput" type="file" accept=".json" style="display: none" @change="onPick" />
+      </div>
+      <template #footer>
+        <Button variant="ghost" @click="showImportDialog = false">取消</Button>
+        <Button variant="primary" :disabled="!pendingImportData" @click="doImport">开始导入</Button>
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -167,6 +237,7 @@ import {
   tierWeightValue,
   validatePlayerConfig,
 } from '@/domain/fengshen/player-config'
+import Dialog from '@/presentation/components/Dialog.vue'
 
 const TABS = [
   { id: 'growth', label: '成长配置' },
@@ -343,6 +414,119 @@ function runEquipSim(): void {
   }
 }
 
+// ════════════ 导出 / 导入 ════════════
+
+const showExportDialog = ref(false)
+const showImportDialog = ref(false)
+const exportType = ref<'growth' | 'budget' | 'formula' | 'all'>('all')
+const pendingImportData = ref<unknown>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
+
+function exportConfig(): void {
+  showExportDialog.value = true
+}
+
+function importConfig(): void {
+  showImportDialog.value = true
+}
+
+function doExport(): void {
+  let data: unknown
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
+  
+  switch (exportType.value) {
+    case 'growth':
+      data = { type: 'player_config', data: toPlain(cfg) }
+      break
+    case 'budget':
+      data = { type: 'system_budget', data: toPlain(budget) }
+      break
+    case 'formula':
+      data = { type: 'equip_formula', data: toPlain(equipFormula) }
+      break
+    case 'all':
+      data = {
+        type: 'player_config_all',
+        data: {
+          growth: toPlain(cfg),
+          budget: toPlain(budget),
+          formula: toPlain(equipFormula),
+        },
+      }
+      break
+  }
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `player_config_${exportType.value}_${timestamp}.json`
+  a.click()
+  URL.revokeObjectURL(a.href)
+  
+  showExportDialog.value = false
+  notification.notify('导出成功', `玩家配置已导出为 ${exportType.value} 格式`, 'success')
+}
+
+function onDrop(e: DragEvent): void {
+  const file = e.dataTransfer?.files[0]
+  if (!file) return
+  readFile(file)
+}
+
+function onPick(e: Event): void {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) readFile(file)
+  input.value = ''
+}
+
+function readFile(file: File): void {
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const json = JSON.parse(reader.result as string)
+      pendingImportData.value = json
+      notification.notify('文件已加载', `准备导入: ${file.name}`, 'info')
+    } catch {
+      notification.notify('文件格式错误', '请选择有效的 JSON 文件', 'error')
+    }
+  }
+  reader.readAsText(file)
+}
+
+function doImport(): void {
+  if (!pendingImportData.value) return
+  
+  const data = pendingImportData.value as Record<string, unknown>
+  
+  try {
+    if (data.type === 'player_config' && data.data) {
+      resetInto(cfg, data.data as PlayerGrowthConfig)
+      notification.notify('导入成功', '成长配置已导入', 'success')
+    } else if (data.type === 'system_budget' && data.data) {
+      resetInto(budget, data.data as SystemBudgetConfig)
+      notification.notify('导入成功', '系统预算已导入', 'success')
+    } else if (data.type === 'equip_formula' && data.data) {
+      resetInto(equipFormula, data.data as EquipFormulaConfig)
+      notification.notify('导入成功', '装备公式已导入', 'success')
+    } else if (data.type === 'player_config_all' && data.data) {
+      const allData = data.data as Record<string, unknown>
+      if (allData.growth) resetInto(cfg, allData.growth as PlayerGrowthConfig)
+      if (allData.budget) resetInto(budget, allData.budget as SystemBudgetConfig)
+      if (allData.formula) resetInto(equipFormula, allData.formula as EquipFormulaConfig)
+      notification.notify('导入成功', '全部配置已导入', 'success')
+    } else {
+      notification.notify('导入失败', '无法识别的配置格式', 'error')
+      return
+    }
+    
+    showImportDialog.value = false
+    pendingImportData.value = null
+  } catch {
+    notification.notify('导入失败', '配置数据格式错误', 'error')
+  }
+}
+
 void load()
 </script>
 
@@ -351,7 +535,101 @@ void load()
   width: 240px;
   font-family: var(--font-family-mono);
 }
+
 .warn {
   border-left-color: #ff4d4f;
+}
+
+.fs-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.fs-stat-card {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  text-align: center;
+}
+
+.fs-stat-num {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-mono);
+  color: var(--color-energy);
+}
+
+.fs-stat-label {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+  letter-spacing: 1px;
+}
+
+.fs-export-options {
+  margin-bottom: var(--space-4);
+}
+
+.fs-option-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.fs-option-card {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  
+  &:hover {
+    border-color: var(--color-border-tertiary);
+  }
+  
+  &.selected {
+    border-color: var(--color-energy);
+    background: rgba(var(--rgb-energy), var(--alpha-tint));
+  }
+}
+
+.fs-opt-name {
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-1);
+}
+
+.fs-opt-desc {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+}
+
+.fs-import-zone {
+  margin-bottom: var(--space-4);
+}
+
+.fs-drop-zone {
+  border: 1.5px dashed var(--color-border-tertiary);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  
+  &:hover {
+    border-color: var(--color-energy);
+    background: rgba(var(--rgb-energy), var(--alpha-tint));
+  }
+}
+
+.fs-dz-main {
+  color: var(--color-energy);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-2);
 }
 </style>

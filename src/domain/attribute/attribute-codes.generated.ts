@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-08-22T11:33:22.809Z
+// 生成时间: 2026-09-01T08:29:34.124Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -71,7 +71,6 @@ export const ATTRIBUTE_CODE = {
   speedCoefficient: 'speedCoefficient',
   finalAttack: 'finalAttack',
   finalDefense: 'finalDefense',
-  trueDamageFlat: 'trueDamageFlat',
   normalAtkBonus: 'normalAtkBonus',
   skillBonus: 'skillBonus',
   counterDamageBonus: 'counterDamageBonus',
@@ -682,15 +681,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: true,
     range: '0-60%',
     impact: '最终乘区提高防御',
-  },
-  trueDamageFlat: {
-    code: 'trueDamageFlat',
-    name: '真伤附加值',
-    displayName: '真伤附加值',
-    description: '额外附加的固定真实伤害，不随倍率放大',
-    isPercentage: false,
-    range: '0-1000',
-    impact: '附加固定真实伤害',
   },
   normalAtkBonus: {
     code: 'normalAtkBonus',

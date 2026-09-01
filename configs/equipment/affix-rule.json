@@ -1,17 +1,126 @@
 {
   "rule_version": "1.0",
-  "updated_at": "2026-08-31",
-  "description": "附加属性（词条）投放规则：定义各装备部位/子类型允许投放的属性组池。属性组码约定见 attribute_groups。",
+  "updated_at": "2026-09-01",
+  "description": "附加属性（词条）投放规则：定义各装备部位/子类型允许投放的属性组池。属性组码约定见 attribute_groups。矩阵见 affix_rows（按 side 抽池）。",
   "attribute_groups": {
-    "ATK-ADD": {
+    "ATK-L1": {
+      "label": "攻击系·基础数值",
+      "side": "ATK",
+      "tier": "L1",
+      "attributes": ["attack", "hitValue", "speed"],
+      "names": ["攻击", "命中", "速度"]
+    },
+    "ATK-L2": {
       "label": "攻击系·百分比加成",
+      "side": "ATK",
+      "tier": "L2",
+      "attributes": ["attackBonus", "hitBonus", "speedBonus"],
+      "names": ["攻击加成", "命中加成", "速度加成"]
+    },
+    "ATK-L3": {
+      "label": "攻击系·独立系数",
+      "side": "ATK",
+      "tier": "L3",
+      "attributes": ["attackCoefficient", "hitCoefficient", "speedCoefficient"],
+      "names": ["攻击系数", "命中系数", "速度系数"]
+    },
+    "ATK-MEC": {
+      "label": "攻击系·机制对抗",
+      "side": "ATK",
+      "tier": "L1",
+      "attributes": ["critRate", "critDamage", "hit", "comboRate", "trueDamageRate", "damageBoost", "normalAtkBonus", "skillBonus", "counterRate", "lifestealRate", "effectHit", "controlSuccessRate", "lifestealBonus"],
+      "names": ["暴击率", "暴击伤害", "命中率", "连击率", "真伤率", "伤害加成", "普攻加成", "技能加成", "反击率", "吸血率", "效果命中", "控制命中", "吸血效果加成"]
+    },
+    "SHD-L1": {
+      "label": "破甲·易伤",
+      "side": "ATK",
+      "tier": "L1",
+      "attributes": ["armorBreak", "vulnerability"],
+      "names": ["破甲", "易伤"]
+    },
+    "SHD-L2": {
+      "label": "削减类",
+      "side": "ATK",
+      "tier": "L2",
+      "attributes": ["shieldReduction", "healReduction", "lifestealReduction", "reflectReduction"],
+      "names": ["护盾削减", "治疗强度削减", "吸血效果削减", "伤害反弹削减"]
+    },
+    "DEF-L1": {
+      "label": "防御系·基础数值",
+      "side": "DEF",
+      "tier": "L1",
+      "attributes": ["maxHealth", "defense", "dodgeValue"],
+      "names": ["气血", "防御", "闪避"]
+    },
+    "DEF-L2": {
+      "label": "防御系·百分比加成",
+      "side": "DEF",
+      "tier": "L2",
+      "attributes": ["healthBonus", "defenseBonus", "dodgeBonus"],
+      "names": ["气血加成", "防御加成", "闪避加成"]
+    },
+    "DEF-L3": {
+      "label": "防御系·独立系数",
+      "side": "DEF",
+      "tier": "L3",
+      "attributes": ["healthCoefficient", "defenseCoefficient", "dodgeCoefficient"],
+      "names": ["气血系数", "防御系数", "闪避系数"]
+    },
+    "DEF-MEC": {
+      "label": "防御系·机制对抗",
+      "side": "DEF",
+      "tier": "L1",
+      "attributes": ["damageReduction", "shield", "reflectDamagePercent", "hpRegenPercent", "shieldBonus", "healBonus", "reflectBonus", "dodge", "critResist", "critDmgTakenReduction", "trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate"],
+      "names": ["免伤率", "护盾", "伤害反弹", "气血回复(%)", "护盾加成", "治疗强度加成", "伤害反弹加成", "闪避率", "暴击抵抗", "暴伤减免", "真伤抗性", "普攻抵抗", "技能抵抗", "控制豁免", "效果抵抗"]
+    },
+    "ALL-MEC": {
+      "label": "通用·机制节奏",
+      "side": "DEF",
+      "tier": "L1",
+      "attributes": ["energyInit", "energyGainEfficiency", "splash"],
+      "names": ["初始能量", "能量获取效率", "溅射"]
+    },
+    "L3-通用": {
+      "label": "通用·独立乘区",
+      "side": "ATK",
+      "tier": "L3",
+      "attributes": ["damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient"],
+      "names": ["伤害系数", "连击伤害系数", "反击伤害系数", "真伤系数"]
+    },
+    "L4-通用": {
+      "label": "通用·最终乘区",
+      "side": "DEF",
+      "tier": "L4",
+      "attributes": ["damageReductionCoefficient", "finalAttack", "finalDefense", "finalDamageBoost", "finalDamageReduction"],
+      "names": ["免伤系数", "最终攻击", "最终防御", "最终伤害提升", "最终伤害减免"]
+    },
+    "ATK-ADD": {
+      "label": "攻击系·百分比加成（完整）",
+      "side": "ATK",
+      "tier": "L2",
       "attributes": ["attackBonus", "hitBonus", "speedBonus", "damageBoost", "normalAtkBonus", "skillBonus"],
       "names": ["攻击加成", "命中加成", "速度加成", "伤害加成", "普攻加成", "技能加成"]
     },
     "DEF-ADD": {
-      "label": "防御系·百分比加成",
+      "label": "防御系·百分比加成（完整）",
+      "side": "DEF",
+      "tier": "L2",
       "attributes": ["healthBonus", "defenseBonus", "dodgeBonus", "shieldBonus", "healBonus", "reflectBonus"],
       "names": ["气血加成", "防御加成", "闪避加成", "护盾加成", "治疗强度加成", "伤害反弹加成"]
+    },
+    "ATK-ALL": {
+      "label": "攻击系·全部属性",
+      "side": "ATK",
+      "tier": "L1",
+      "attributes": ["critRate", "critDamage", "hit", "comboRate", "trueDamageRate", "damageBoost", "normalAtkBonus", "skillBonus", "counterRate", "lifestealRate", "effectHit", "controlSuccessRate", "lifestealBonus", "armorBreak", "vulnerability", "damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient", "shieldReduction", "healReduction", "lifestealReduction", "reflectReduction", "finalAttack", "finalDamageBoost"],
+      "names": ["暴击率", "暴击伤害", "命中率", "连击率", "真伤率", "伤害加成", "普攻加成", "技能加成", "反击率", "吸血率", "效果命中", "控制命中", "吸血效果加成", "破甲", "易伤", "伤害系数", "连击伤害系数", "反击伤害系数", "真伤系数", "护盾削减", "治疗强度削减", "吸血效果削减", "伤害反弹削减", "最终攻击", "最终伤害提升"]
+    },
+    "DEF-ALL": {
+      "label": "防御系·全部属性",
+      "side": "DEF",
+      "tier": "L1",
+      "attributes": ["damageReduction", "shield", "reflectDamagePercent", "hpRegenPercent", "shieldBonus", "healBonus", "reflectBonus", "dodge", "critResist", "critDmgTakenReduction", "trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate", "energyInit", "energyGainEfficiency", "damageReductionCoefficient", "finalDefense", "finalDamageReduction"],
+      "names": ["免伤率", "护盾", "伤害反弹", "气血回复(%)", "护盾加成", "治疗强度加成", "伤害反弹加成", "闪避率", "暴击抵抗", "暴伤减免", "真伤抗性", "普攻抵抗", "技能抵抗", "控制豁免", "效果抵抗", "初始能量", "能量获取效率", "免伤系数", "最终防御", "最终伤害减免"]
     }
   },
   "sub_type_groups": {
@@ -60,6 +169,14 @@
       ]
     }
   },
+  "slot_side": {
+    "weapon": "ATK",
+    "armor": "DEF",
+    "helmet": "DEF",
+    "boots": "DEF",
+    "charm": "ATK",
+    "glove": "ATK"
+  },
   "affix_rows": [
     {
       "row": 1,
@@ -102,20 +219,30 @@
       }
     }
   ],
-  "slot_side": {
-    "weapon": "ATK",
-    "armor": "DEF",
-    "helmet": "DEF",
-    "boots": "DEF",
-    "charm": "ATK",
-    "glove": "ATK"
-  },
-  "forbidden": {
-    "rules": [
-      "武器禁止洗出免伤率",
-      "护甲禁止洗出暴击率",
-      "脚部禁止洗出暴击伤害",
-      "护符禁止洗出防御"
-    ]
-  }
+  "forbidden": [
+    {
+      "slot": "weapon",
+      "slotLabel": "武器",
+      "attributes": ["damageReduction"],
+      "attributeLabels": ["免伤率"]
+    },
+    {
+      "slot": "armor",
+      "slotLabel": "护甲",
+      "attributes": ["critRate"],
+      "attributeLabels": ["暴击率"]
+    },
+    {
+      "slot": "boots",
+      "slotLabel": "脚部",
+      "attributes": ["critDamage"],
+      "attributeLabels": ["暴击伤害"]
+    },
+    {
+      "slot": "charm",
+      "slotLabel": "护符",
+      "attributes": ["defense", "defenseBonus", "defenseCoefficient"],
+      "attributeLabels": ["防御", "防御加成", "防御系数"]
+    }
+  ]
 }

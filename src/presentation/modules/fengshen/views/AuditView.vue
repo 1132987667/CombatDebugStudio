@@ -117,7 +117,7 @@ onMounted(async () => {
   width: 48px;
   text-align: right;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
 }
 
 .fs-audit-budget-bar {
@@ -173,7 +173,7 @@ onMounted(async () => {
   height: 16px;
   line-height: 16px;
   text-align: center;
-  font-size: 12px;
+  font-size: var(--font-size-md);
   border-radius: 50%;
 
   &.primary {
@@ -197,7 +197,7 @@ onMounted(async () => {
 .fs-audit-warning {
   color: var(--color-warning);
   font-weight: bold;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
 }
 
 .fs-audit-missing-label {

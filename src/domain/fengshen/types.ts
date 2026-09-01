@@ -279,7 +279,7 @@ export interface BattleParamData {
   range?: { min: number; max: number }
   /** 结构化参数数据（经验/金钱表，value 为 undefined 时使用） */
   data?: ExpTableConfig | EnemyRewardTableConfig | LevelDiffBonusConfig | EconomyRatiosConfig
-    | PlayerGrowthConfig | SystemBudgetConfig | EquipFormulaConfig
+    | PlayerGrowthConfig | SystemBudgetConfig | EquipFormulaConfig | AffixRuleConfig
   description?: string
   updatedAt: string
 }
@@ -442,6 +442,37 @@ export interface EconomyRatiosConfig {
   buyPercent: number
   /** 出售系数（百分比）：出售价 = 物品实际价值 × sellPercent / 100（56 = 56%） */
   sellPercent: number
+}
+
+/** 装备词条投放规则（params 域，key=affix_rule）—— 定义各装备部位/子类型允许投放的属性组池 */
+export interface AffixRuleConfig {
+  id: 'affix_rule'
+  rule_version: string
+  updated_at: string
+  description?: string
+  attribute_groups: Record<string, {
+    label: string
+    side: 'ATK' | 'DEF'
+    tier: string
+    attributes: string[]
+    names: string[]
+  }>
+  sub_type_groups: Record<string, {
+    label: string
+    sub_types: Array<{ id: string; name: string }>
+  }>
+  slot_side: Record<string, 'ATK' | 'DEF'>
+  affix_rows: Array<{
+    row: number
+    name: string
+    pool: Record<string, string[]>
+  }>
+  forbidden: Array<{
+    slot: string
+    slotLabel: string
+    attributes: string[]
+    attributeLabels: string[]
+  }>
 }
 
 /** 西游数据域（xiyou 表）—— configs/xiyou/*.json 单文档种子，供演劫台经封神榜读取（需求说明 §5.1 方案 B） */

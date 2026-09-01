@@ -284,6 +284,29 @@ export interface BattleParamData {
   updatedAt: string
 }
 
+/** 属性层级（对齐 §3.4 属性定义表） */
+export type AttributeValueTier = 'L1' | 'L2' | 'L3' | 'L4'
+
+/** 属性定义（attributes 表）—— 对齐 HTML「属性定义」模块，从 attributes.json 迁移 + 补策划维度字段。
+ * sapMultiplier: SAP 价值倍数（12 气血 / 2 攻 / 2 防 / 2 命中 / 2 闪避 / 2 速度）。
+ * valueTier: 属性层级（L1 基础 / L2 百分比 / L3 独立乘 / L4 最终乘）。
+ * systems: 归属系统（等级/装备/流派/宠物/坐骑/法宝/神器）。 */
+export interface AttributeDef {
+  id: string
+  name: string
+  code: string
+  isPercentage: boolean
+  /** SAP 价值倍数（基础值换算） */
+  sapMultiplier: number
+  /** 属性层级 */
+  valueTier: AttributeValueTier
+  /** 归属系统 */
+  systems: string[]
+  /** 是否运行时状态（currentHealth 等，不参与配置） */
+  isRuntimeState?: boolean
+  description?: string
+}
+
 /** 玩家基础属性六维（对齐 attributes.json code：命中/闪避取"值"，对应 1 SAP = 12气血 = 2攻 = 2防 = 2命中 = 2闪避 = 2速度） */
 export type PlayerBaseAttrCode = 'maxHealth' | 'attack' | 'defense' | 'hitValue' | 'dodgeValue' | 'speed'
 
@@ -446,6 +469,7 @@ export interface FengshenTables {
   growth: GrowthCurveData
   affixes: AffixData
   equipment_affixes: EquipmentAffixData
+  attributes: AttributeDef
   params: BattleParamData
   xiyou: XiyouData
   items: ItemData

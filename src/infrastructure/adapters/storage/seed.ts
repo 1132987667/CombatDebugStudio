@@ -18,6 +18,7 @@ import type {
   ActorData,
   AffixData,
   AffixLibraryData,
+  AttributeDef,
   BattleParamData,
   ElementsData,
   EquipFormulaConfig,
@@ -55,6 +56,7 @@ import xiyouQuestJson from '@configs/xiyou/quest.json'
 import xiyouCaveJson from '@configs/xiyou/cave.json'
 import itemsDataRaw from '@configs/xiyou/items.json'
 import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
+import attributesDataRaw from '@configs/attributes/attributes.json'
 
 export const SEED_FLAG_ID = 'cds:fengshen-seed-v25'
 
@@ -299,6 +301,48 @@ function buildEquipFormula(): BattleParamData {
   }
 }
 
+/** SAP 价值倍数映射（§3.4 / D1：12 气血 = 2 攻 = 2 防 = 2 命中 = 2 闪避 = 2 速度） */
+const SAP_MULTIPLIER_MAP: Record<string, number> = {
+  maxHealth: 12,
+  attack: 2,
+  defense: 2,
+  hitValue: 2,
+  dodgeValue: 2,
+  speed: 2,
+}
+
+/** 属性代码 → 归属系统推导（核心六维属性的默认来源系统） */
+const SYSTEMS_MAP: Record<string, string[]> = {
+  maxHealth: ['level', 'equipment'],
+  attack: ['level', 'equipment'],
+  defense: ['level', 'equipment'],
+  hitValue: ['level', 'equipment'],
+  dodgeValue: ['level', 'equipment'],
+  speed: ['level', 'equipment'],
+}
+
+/** 属性定义种子（attributes 表）—— 从 attributes.json 迁移，补 SAP 价值倍数 / 层级 / 归属系统。
+ * id 直接用 code（与 equipment_affixes.attribute 代码值对齐，支持声明式引用规则和 refTable 翻译）；
+ * 跳过 isRuntimeState=true 的运行时属性。 */
+function buildAttributes(): AttributeDef[] {
+  const raw = attributesDataRaw as Array<Record<string, unknown>>
+  const now = nowIso()
+  return raw
+    .filter((r) => !r.isRuntimeState)
+    .map((r) => ({
+      id: String(r.code),
+      name: String(r.name ?? r.displayName ?? r.code),
+      code: String(r.code),
+      isPercentage: Boolean(r.isPercentage),
+      sapMultiplier: SAP_MULTIPLIER_MAP[String(r.code)] ?? 1,
+      valueTier: 'L1' as const,
+      systems: SYSTEMS_MAP[String(r.code)] ?? [],
+      isRuntimeState: false,
+      description: String(r.description ?? r.impact ?? ''),
+      updatedAt: now,
+    }))
+}
+
 /** 西游数据种子：configs/xiyou/*.json 单文档导入（演劫台经封神榜读取，需求说明 §5.1 方案 B） */
 function buildXiyou(): XiyouData[] {
   const now = nowIso()
@@ -386,6 +430,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.GROWTH, buildGrowth()],
       [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
+      [FENGSHEN_STORE.ATTRIBUTES, buildAttributes()],
       [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula()]],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],

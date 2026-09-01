@@ -26,6 +26,7 @@ export const FENGSHEN_STORE = {
   GROWTH: 'growth',
   AFFIXES: 'affixes',
   EQUIPMENT_AFFIXES: 'equipment_affixes',
+  ATTRIBUTES: 'attributes',
   PARAMS: 'params',
   XIYOU: 'xiyou',
   ITEMS: 'items',

@@ -100,6 +100,7 @@ export const REFERENCE_RULES: ReferenceRule[] = [
   { sourceTable: 'enemies', path: 'affixes', targetTables: ['affixes'], optional: true },
   { sourceTable: 'equipment', path: 'factionRestriction', targetTables: ['elements'], optional: true },
   { sourceTable: 'gears', path: 'materials[].itemId', targetTables: ['items', 'materials'] },
+  { sourceTable: 'equipment_affixes', path: 'attribute', targetTables: ['attributes'] },
   { sourceTable: 'elements', path: 'matrix[].attackerId', targetTables: ['elements'], optional: true },
   { sourceTable: 'elements', path: 'matrix[].defenderId', targetTables: ['elements'], optional: true },
 ]
@@ -377,8 +378,8 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['name', 'attribute', 'modifierType', 'school', 'rarity'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'attribute', label: '属性', type: 'text', required: true, searchable: true,
-        description: '属性代码（必须存在于 attributes.json，强校验）' },
+      { key: 'attribute', label: '属性', type: 'text', required: true, searchable: true, refTable: 'attributes',
+        description: '属性代码（引用 attributes 表 code，强校验）' },
       { key: 'modifierType', label: '修正类型', type: 'select', enum: ['flat', 'percent'], column: { tagKind: 'neutral' }, searchable: true,
         valueLabel: { flat: '固定值', percent: '百分比' } },
       { key: 'valueRange', label: '数值区间', type: 'object', required: true,
@@ -398,6 +399,30 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     filters: [
       { key: 'modifierType', label: '修正类型', type: 'select', options: ['flat', 'percent'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
+    ],
+  },
+  attributes: {
+    table: 'attributes',
+    label: '属性定义',
+    columns: ['name', 'code', 'valueTier', 'sapMultiplier'],
+    fields: [
+      { key: 'name', label: '名称', type: 'text', required: true, searchable: true },
+      { key: 'code', label: '代码', type: 'text', required: true, searchable: true },
+      { key: 'isPercentage', label: '百分比属性', type: 'boolean' },
+      { key: 'sapMultiplier', label: 'SAP 价值倍数', type: 'number', min: 0, max: 999, column: { format: 'number' },
+        description: '1 SAP = X 属性值（12 气血 / 2 攻 / 2 防 / 2 命中 / 2 闪避 / 2 速度）' },
+      { key: 'valueTier', label: '属性层级', type: 'select', enum: ['L1', 'L2', 'L3', 'L4'], column: { tagKind: 'neutral' }, searchable: true,
+        valueLabel: { L1: '基础值', L2: '百分比', L3: '独立乘', L4: '最终乘' } },
+      { key: 'systems', label: '归属系统', type: 'multi', searchable: true,
+        description: '等级/装备/流派/宠物/坐骑/法宝/神器' },
+      { key: 'isRuntimeState', label: '运行时状态', type: 'boolean',
+        description: 'true = 运行时状态属性（如 currentHealth），不参与配置' },
+      { key: 'description', label: '描述', type: 'text', searchable: true },
+    ],
+    uniqueFields: ['code'],
+    filters: [
+      { key: 'valueTier', label: '层级', type: 'select', options: ['L1', 'L2', 'L3', 'L4'] },
+      { key: 'isPercentage', label: '百分比', type: 'select', options: ['true', 'false'], labelMap: { true: '百分比', false: '固定值' } },
     ],
   },
   params: {

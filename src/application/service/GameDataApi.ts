@@ -9,6 +9,7 @@ import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersis
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import type {
   ActorData,
+  AttributeDef,
   BattleParamData,
   ElementsData,
   EnemyRewardTableConfig,
@@ -146,6 +147,11 @@ export class GameDataApi {
     return rec?.data && typeof rec.data === 'object' && 'baseSap' in rec.data && 'tierWeight' in rec.data
       ? (rec.data as EquipFormulaConfig)
       : null
+  }
+
+  /** 属性定义列表（attributes 表） */
+  async listAttributes(): Promise<AttributeDef[]> {
+    return this.listByTable<AttributeDef>('attributes', { limit: 1000 })
   }
 
   async listBattleParams(): Promise<BattleParamData[]> {

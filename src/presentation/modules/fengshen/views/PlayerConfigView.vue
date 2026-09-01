@@ -250,7 +250,7 @@ const expRows = ref<Array<{ level: number; expRequired: number }>>([])
 const simLevel = ref(10)
 const simTier = ref('xian')
 const simConvert = ref(2)
-const equipSim = ref<ReturnType<typeof calcEquipBaseValue> | null>(null)
+const equipSim = ref<{ core: ReturnType<typeof calcEquipBaseValue>; affix: ReturnType<typeof calcEquipBaseValue> } | null>(null)
 
 const totalBudgetWeight = computed(() => budget.systems.reduce((s, e) => s + e.weight, 0))
 

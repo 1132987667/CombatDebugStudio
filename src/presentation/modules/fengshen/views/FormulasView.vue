@@ -10,13 +10,15 @@
       <div class="fs-table-wrap">
         <table class="fs-table">
           <thead>
-            <tr><th>属性</th><th>级别</th><th>说明</th></tr>
+            <tr><th>属性</th><th>代码</th><th>层级</th><th>SAP 倍数</th><th>说明</th></tr>
           </thead>
           <tbody>
-            <tr v-for="attr in ATTRIBUTES" :key="attr.name">
+            <tr v-for="attr in attributes" :key="attr.id">
               <td>{{ attr.name }}</td>
-              <td><span class="fs-tag" :class="attr.tier === 'primary' ? 'fs-tag-aura' : 'fs-tag-buff'">{{ attr.tier === 'primary' ? '一级' : '二级' }}</span></td>
-              <td class="fs-cell-num">{{ attr.desc }}</td>
+              <td class="fs-cell-num">{{ attr.code }}</td>
+              <td><span class="fs-tag" :class="tierClass(attr.valueTier)">{{ tierLabel(attr.valueTier) }}</span></td>
+              <td class="fs-cell-num">{{ attr.sapMultiplier }}</td>
+              <td>{{ attr.description }}</td>
             </tr>
           </tbody>
         </table>
@@ -45,16 +47,35 @@
 </template>
 
 <script setup lang="ts">
-const ATTRIBUTES = [
-  { name: '气血', tier: 'primary', desc: '0 时死亡' },
-  { name: '攻击（最小–最大）', tier: 'primary', desc: '决定伤害波动' },
-  { name: '防御', tier: 'primary', desc: '减伤 = 防御 × 0.01' },
-  { name: '速度', tier: 'primary', desc: '决定行动顺序' },
-  { name: '命中值 / 闪避值', tier: 'primary', desc: '对抗基础，决定基础命中率' },
-  { name: '暴击率', tier: 'secondary', desc: '0–100%，攻击产生暴击的概率' },
-  { name: '暴击伤害', tier: 'secondary', desc: '暴击时伤害倍率' },
-  { name: '命中率 / 闪避率', tier: 'secondary', desc: '进阶属性，命中公式修正项' },
-] as const
+import { onMounted, ref } from 'vue'
+import { container } from '@/infrastructure/di/Container'
+import { GameDataApi } from '@/application/service/GameDataApi'
+import type { AttributeDef, AttributeValueTier } from '@/domain/fengshen/types'
+
+const api = container.resolve<GameDataApi>('GameDataApi')
+const attributes = ref<AttributeDef[]>([])
+
+const TIER_LABELS: Record<AttributeValueTier, string> = {
+  L1: '基础值',
+  L2: '百分比',
+  L3: '独立乘',
+  L4: '最终乘',
+}
+
+const TIER_CLASSES: Record<AttributeValueTier, string> = {
+  L1: 'fs-tag-aura',
+  L2: 'fs-tag-buff',
+  L3: 'fs-tag-dot',
+  L4: 'fs-tag-control',
+}
+
+function tierLabel(tier: AttributeValueTier): string {
+  return TIER_LABELS[tier] ?? tier
+}
+
+function tierClass(tier: AttributeValueTier): string {
+  return TIER_CLASSES[tier] ?? 'fs-tag-neutral'
+}
 
 const FORMULAS = [
   { name: '基础伤害', formula: 'rand(攻击最小, 攻击最大) × Σ修正系数', source: 'DamageCalculator' },
@@ -63,4 +84,8 @@ const FORMULAS = [
   { name: '计算命中率', formula: '命中值 ÷ (命中值 + 闪避值) × 100%', source: 'DamageCalculator' },
   { name: '实际命中', formula: 'clamp(计算命中率 + 命中率 − 闪避率, 10%, 95%)', source: 'DamageCalculator' },
 ] as const
+
+onMounted(async () => {
+  attributes.value = await api.listAttributes()
+})
 </script>

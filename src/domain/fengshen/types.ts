@@ -456,8 +456,12 @@ export interface AffixRuleConfig {
   description?: string
   /** 部位固定属性（slot → 该部位必然提供的主属性 code） */
   fixed_attributes: Record<string, string>
-  /** 子类型核心属性词条系数（sub_type id → 核心属性 code + 词条系数；剑=攻击85% → { attribute, ratio }） */
+  /** 子类型核心属性词条系数（sub_type id → 核心属性 code + 词条系数；剑=攻击90% → { attribute, ratio }） */
   core_affix_ratio: Record<string, { attribute: string; ratio: number }>
+  /** 子类型主要属性池（sub_type id → 第 1 条固定属性 + 第 2 条随机池）。
+   *  random_pool 元素可为属性组码（如 `ALL-MEC`，整组展开取一）或单个属性码（如 `comboRate`）；
+   *  解析时先查 attribute_groups 命中即按组展开，否则视为单属性。主要属性不含基础六维（PRD §21）。 */
+  main_affix_pool?: Record<string, { fixed: string; random_pool: string[] }>
   /** 装备品阶权重（凡品/玄品/地品/天品/仙品 → [min, max]，对齐 PRD §21） */
   tier_weight: Record<string, { min: number; max: number }>
   /** 词条数值曲线（来源系统 → 属性组数值区间；属性组 = 一组属性 code + 下限/上限 {base, perLevel, full}）。
@@ -487,6 +491,9 @@ export interface AffixRuleConfig {
   forbidden: Array<{
     slot: string
     slotLabel: string
+    /** 限定子类型（缺省 = 整个部位生效）；存 sub_type_groups 里的中文名 */
+    subType?: string
+    subTypeLabel?: string
     attributes: string[]
     attributeLabels: string[]
   }>

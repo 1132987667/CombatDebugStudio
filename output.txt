@@ -4088,8 +4088,8 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   normalAtkDmgReduction: {
     code: 'normalAtkDmgReduction',
-    name: '普攻伤害减免',
-    displayName: '普攻伤害减免',
+    name: '普攻抵抗',
+    displayName: '普攻抵抗',
     description: '仅对普通攻击有效的伤害减免',
     isPercentage: true,
     range: '0-100%',
@@ -4097,8 +4097,8 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   skillDmgReduction: {
     code: 'skillDmgReduction',
-    name: '技能伤害减免',
-    displayName: '技能伤害减免',
+    name: '技能抵抗',
+    displayName: '技能抵抗',
     description: '仅对技能攻击有效的伤害减免',
     isPercentage: true,
     range: '0-100%',

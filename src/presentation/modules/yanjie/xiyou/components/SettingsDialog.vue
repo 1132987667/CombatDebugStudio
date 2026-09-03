@@ -112,22 +112,22 @@
               </button>
             </div>
           </div>
-          <div v-if="showExitConfirm" class="xy-settings-dlg__confirm" role="alertdialog" aria-modal="true"
-            aria-label="确认退出演劫台？" tabindex="-1">
-            <div class="xy-settings-dlg__confirm-panel">
-              <h3 class="xy-settings-dlg__confirm-title">战斗进行中，确认退出？</h3>
-              <p class="xy-settings-dlg__confirm-text">
-                当前战斗尚未结束，退出后战斗进度将保留（自动存档），但战场现场不会继续。确定返回唤灵台吗？
-              </p>
-              <div class="xy-settings-dlg__confirm-actions">
-                <button type="button" class="xy-settings-dlg__confirm-btn xy-settings-dlg__confirm-btn--primary"
-                  @click="confirmExit">
-                  确认退出
-                </button>
-                <button type="button" class="xy-settings-dlg__confirm-btn" @click="showExitConfirm = false">
-                  留在演劫台
-                </button>
-              </div>
+        </div>
+        <div v-if="showExitConfirm" class="xy-settings-dlg__confirm" role="alertdialog" aria-modal="true"
+          aria-label="确认退出演劫台？" tabindex="-1">
+          <div class="xy-settings-dlg__confirm-panel">
+            <h3 class="xy-settings-dlg__confirm-title">战斗进行中，确认退出？</h3>
+            <p class="xy-settings-dlg__confirm-text">
+              当前战斗尚未结束，退出后战斗进度将保留（自动存档），但战场现场不会继续。确定返回唤灵台吗？
+            </p>
+            <div class="xy-settings-dlg__confirm-actions">
+              <button type="button" class="xy-settings-dlg__confirm-btn xy-settings-dlg__confirm-btn--primary"
+                @click="confirmExit">
+                确认退出
+              </button>
+              <button type="button" class="xy-settings-dlg__confirm-btn" @click="showExitConfirm = false">
+                留在演劫台
+              </button>
             </div>
           </div>
         </div>

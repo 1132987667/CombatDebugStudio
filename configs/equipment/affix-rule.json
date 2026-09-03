@@ -16,13 +16,13 @@
     "xian": { "min": 0.9, "max": 1.0 }
   },
   "core_affix_ratio": {
-    "sword": { "attribute": "attack", "ratio": 0.85 },
-    "dagger": { "attribute": "attack", "ratio": 0.85 },
+    "sword": { "attribute": "attack", "ratio": 0.9 },
+    "dagger": { "attribute": "attack", "ratio": 0.9 },
     "staff": { "attribute": "attack", "ratio": 1.0 },
     "blade": { "attribute": "attack", "ratio": 1.0 },
-    "cloth_armor": { "attribute": "defense", "ratio": 0.85 },
-    "leather_armor": { "attribute": "defense", "ratio": 1.0 },
-    "plate_armor": { "attribute": "defense", "ratio": 1.15 },
+    "cloth_armor": { "attribute": "defense", "ratio": 0.8 },
+    "leather_armor": { "attribute": "defense", "ratio": 0.9 },
+    "plate_armor": { "attribute": "defense", "ratio": 1.0 },
     "face_guard": { "attribute": "maxHealth", "ratio": 0.85 },
     "crown": { "attribute": "maxHealth", "ratio": 1.0 },
     "helmet": { "attribute": "maxHealth", "ratio": 1.15 },
@@ -31,6 +31,13 @@
     "battle_boots": { "attribute": "dodgeValue", "ratio": 0.85 },
     "charm": { "attribute": "hitValue", "ratio": 1.0 },
     "glove": { "attribute": "speed", "ratio": 1.0 }
+  },
+  "main_affix_pool": {
+    "sword": { "fixed": "comboRate", "random_pool": ["speedBonus", "hitBonus", "comboRate", "normalAtkBonus"] },
+    "staff": { "fixed": "counterRate", "random_pool": [] },
+    "blade": { "fixed": "critRate", "random_pool": [] },
+    "charm": { "fixed": "hitBonus", "random_pool": ["effectHit", "lifestealRate", "healBonus", "healReduction", "trueDamageResist"] },
+    "glove": { "fixed": "", "random_pool": ["ALL-MEC", "SHD-L2"] }
   },
   "affix_value_curve": {
     "equipment": [

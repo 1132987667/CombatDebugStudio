@@ -4,14 +4,168 @@
       词条投放规则
     </div>
 
+    <!-- 存档与 configs 定稿不一致：种子一次性写入，改 JSON 不会自动下发到已有存档 -->
+    <div v-if="driftFromConfigs" class="fs-ov-drift" role="status">
+      <span class="fs-ov-drift-text">当前存档的投放规则与 <code>configs/equipment/affix-rule.json</code> 定稿不一致（子类型、核心系数等可能仍是旧值）。</span>
+      <Button size="small" @click="reset">载入定稿</Button>
+    </div>
+
     <!-- Tab 切换 -->
     <div class="fs-exp-tabs" role="tablist" aria-label="词条投放规则">
       <button v-for="t in TABS" :key="t.id" type="button" class="fs-exp-tab" :class="{ active: activeTab === t.id }"
         :role="'tab'" :aria-selected="activeTab === t.id" @click="activeTab = t.id">{{ t.label }}</button>
     </div>
 
+    <!-- ═══ Tab0: 装备总览 ═══ -->
+    <section v-if="activeTab === 'overview'" class="fs-exp-panel" role="tabpanel">
+      <!-- 推算参数：工具输入条，不属于任何一张卡片 -->
+      <div class="fs-ov-params">
+        <div class="fs-ov-params-head">
+          <span class="fs-block-title">推算参数</span>
+          <span class="fs-form-hint">按当前投放规则反推一件装备可产出的全部属性区间。数值为规则推算，非引擎结算，也不读取已配置装备的具体属性。悬停数值可展开分步推导。</span>
+        </div>
+        <div class="fs-ov-filters">
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">装备等级</span>
+            <NumericStepper compact :step="1" :min="1" :max="ovMaxLevel" :model-value="ovLevel"
+              @update:model-value="(v: number) => { ovLevel = v }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">装备类型</span>
+            <TacticalSelect :model-value="ovSlot" size="md" :options="ovSlotOptions"
+              @update:model-value="(v: string | number | null) => { if (v) onOvSlotChange(v as string) }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">装备子类型</span>
+            <TacticalSelect :model-value="ovSubType" size="md" :options="ovSubTypeOptions"
+              @update:model-value="(v: string | number | null) => { if (v) { ovSubType = v as string; ovPool = 'row-1' } }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">装备品阶</span>
+            <TacticalSelect :model-value="ovTier" size="md" :options="ovTierOptions"
+              @update:model-value="(v: string | number | null) => { if (v) ovTier = v as string }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">装备品质</span>
+            <TacticalSelect :model-value="ovQuality" size="md" :options="ovQualityOptions"
+              @update:model-value="(v: string | number | null) => { if (v !== null && v !== '') ovQuality = Number(v) }" />
+          </div>
+        </div>
+      </div>
+
+      <div v-if="overview" class="fs-ov-grid">
+        <!-- 左卡：三段属性分区 -->
+        <div class="fs-ov-card fs-ov-main">
+          <div class="fs-ov-subject">
+            <span class="fs-affix-tag-sm" :class="ovSide === 'ATK' ? 'side-atk' : 'side-def'">{{ ovSide }}</span>
+            <span class="fs-ov-subject-text">{{ slotGroupLabel(ovSlot) }} · {{ (cfg.sub_type_groups[ovSlot]?.sub_types.find(s => s.id === ovSubType))?.name ?? ovSubType }} · Lv.{{ ovLevel }} · {{ tierLabel(ovTier) }} · 附加 {{ ovQuality }} 条</span>
+          </div>
+
+          <div class="fs-ov-section">
+            <div class="fs-block-title">核心属性</div>
+            <div class="fs-form-hint">由装备子类型决定，取部位固定属性 × 词条系数；装备公式权重 {{ equipFormula?.coreWeight ?? 2 }}。</div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>属性</th><th class="fs-td-right">可获得区间</th><th class="fs-td-center">来源</th></tr></thead>
+              <tbody>
+                <tr v-if="overview.core">
+                  <td class="fs-td-strong">{{ attrNameByCode(overview.core.attribute) }}</td>
+                  <td class="fs-td-right fs-cell-num"><CalcBreakdown :value="fmtRange(overview.core)" :steps="calcSteps(overview.core, '未配置核心属性系数')" :unit="rangeUnit(overview.core)" /></td>
+                  <td class="fs-td-center"><span class="fs-ov-src">装备公式</span></td>
+                </tr>
+                <tr v-else><td colspan="3" class="fs-cell-dim">未配置核心属性系数</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="fs-ov-section">
+            <div class="fs-block-title">主要属性（2 条）</div>
+            <div class="fs-form-hint">第 1 条按子类型固定，第 2 条从子类型随机池取一条。主要属性不含基础六维，一律走词条曲线。</div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>词条</th><th>内容</th><th class="fs-td-right">数值区间</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>第 1 条 · 固定</td>
+                  <td v-if="overview.mainFixed" class="fs-td-strong">{{ attrNameByCode(overview.mainFixed.attribute) }}</td>
+                  <td v-else class="fs-cell-dim">未配置</td>
+                  <td class="fs-td-right fs-cell-num"><CalcBreakdown :value="fmtRange(overview.mainFixed)" :steps="calcSteps(overview.mainFixed, '子类型主要属性第 1 条未配置')" :unit="rangeUnit(overview.mainFixed)" /></td>
+                </tr>
+                <tr class="fs-ov-clickable" :class="{ 'is-active': ovPool === 'main' }" tabindex="0" role="button"
+                  aria-label="展开主要属性随机池"
+                  @click="ovPool = 'main'" @keydown.enter.prevent="ovPool = 'main'" @keydown.space.prevent="ovPool = 'main'">
+                  <td>第 2 条 · 随机</td>
+                  <td>
+                    <span v-if="overview.mainRandom.length">池内 {{ overview.mainRandom.length }} 项，点击查看全部</span>
+                    <span v-else class="fs-cell-dim">随机池未配置</span>
+                  </td>
+                  <td class="fs-td-right fs-cell-num">{{ overview.mainRandom.length ? '见右侧' : '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="fs-ov-section">
+            <div class="fs-block-title">附加属性（{{ ovQuality }} 条）</div>
+            <div class="fs-form-hint">每行随装备产出 1 条，从该行属性池中抽取。点击行可在右侧查看该池全部候选属性及各自可获得区间。</div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>行</th><th>名称</th><th>属性池</th><th class="fs-td-center">本品质</th></tr></thead>
+              <tbody>
+                <tr v-for="row in overview.affixRows" :key="row.row" class="fs-ov-clickable"
+                  :class="{ 'is-active': ovPool === `row-${row.row}`, 'is-muted': !row.included }" tabindex="0" role="button"
+                  :aria-label="`展开第 ${row.row} 行 ${row.name} 词条池`" :aria-pressed="ovPool === `row-${row.row}`"
+                  @click="ovPool = `row-${row.row}`" @keydown.enter.prevent="ovPool = `row-${row.row}`" @keydown.space.prevent="ovPool = `row-${row.row}`">
+                  <td class="fs-cell-num">{{ row.row }}</td>
+                  <td class="fs-td-strong">{{ row.name }}</td>
+                  <td>{{ ovPoolGroupsText(row.groups) }}</td>
+                  <td class="fs-td-center">
+                    <span v-if="row.included" class="fs-ov-on">投放</span>
+                    <span v-else class="fs-cell-dim">不投放</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 右卡：词条池明细 -->
+        <aside class="fs-ov-card fs-ov-detail">
+          <template v-if="ovPoolDetail">
+            <div class="fs-block-title">{{ ovPoolDetail.title }}</div>
+            <div class="fs-form-hint">{{ ovPoolDetail.hint }}</div>
+            <div class="fs-ov-groups">
+              <span v-for="g in ovPoolDetail.groups" :key="g" class="fs-ov-group-chip">{{ g }}</span>
+              <span v-if="!ovPoolDetail.groups.length" class="fs-cell-dim">池为空</span>
+            </div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>属性</th><th class="fs-td-right">可获得区间</th><th class="fs-td-center">来源</th></tr></thead>
+              <tbody>
+                <tr v-for="c in ovPoolDetail.candidates" :key="c.attribute" :class="{ 'is-none': c.source === 'none' }">
+                  <td>{{ attrNameByCode(c.attribute) }}</td>
+                  <td class="fs-td-right fs-cell-num"><CalcBreakdown :value="fmtRange(c)" :steps="c.calc" :unit="rangeUnit(c)" /></td>
+                  <td class="fs-td-center"><span class="fs-ov-src">{{ c.source === 'formula' ? '装备公式' : c.source === 'curve' ? '曲线' : '缺曲线' }}</span></td>
+                </tr>
+                <tr v-if="!ovPoolDetail.candidates.length"><td colspan="3" class="fs-cell-dim">该池下无可投放属性</td></tr>
+              </tbody>
+            </table>
+          </template>
+          <!-- 空态：说明 + 建议动作 -->
+          <div v-else class="fs-ov-empty">
+            <div class="fs-block-title">词条池明细</div>
+            <p>左侧选择一个词条池后，这里会列出池内全部候选属性及各自的可获得区间。</p>
+            <p class="fs-cell-dim">点击「附加属性」表中的任意一行即可展开。</p>
+          </div>
+        </aside>
+      </div>
+
+      <div v-if="overview?.warnings.length" class="fs-ov-warnings">
+        <div class="fs-block-title">配置缺口</div>
+        <div class="fs-form-errors">
+          <div v-for="w in overview.warnings" :key="w" class="fs-form-error">{{ w }}</div>
+        </div>
+      </div>
+    </section>
+
     <!-- ═══ Tab1: 装备设计 ═══ -->
-    <section v-if="activeTab === 'matrix'" class="fs-exp-panel" role="tabpanel">
+    <section v-else-if="activeTab === 'matrix'" class="fs-exp-panel" role="tabpanel">
       <div class="fs-exp-block">
         <div class="fs-block-title">装备部位阵营归属</div>
         <div class="fs-form-hint">每个装备部位归属于攻击系（ATK）或防御系（DEF），决定该部位可抽取的词条池。</div>
@@ -28,10 +182,9 @@
         <div class="fs-rule-wrap is-capped">
           <table class="fs-table fs-rule">
             <colgroup>
-              <col style="width:16%" /><col style="width:36%" />
-              <col style="width:16%" /><col style="width:16%" /><col style="width:16%" />
+              <col style="width:16%" /><col style="width:36%" /><col style="width:48%" />
             </colgroup>
-            <thead><tr><th>部位</th><th>固定属性</th><th class="fs-th-center">轻</th><th class="fs-th-center">中</th><th class="fs-th-center">重</th></tr></thead>
+            <thead><tr><th>部位</th><th>固定属性</th><th>子类型</th></tr></thead>
             <tbody>
               <tr v-for="slot in fixedSlotOrder" :key="slot">
                 <td class="fs-td-strong">{{ slotGroupLabel(slot) }}</td>
@@ -40,8 +193,9 @@
                     :options="coreAttrOptions(slot)"
                     @update:model-value="(v: string | number | null) => { if (v) cfg.fixed_attributes[slot] = v as string }" />
                 </td>
-                <td v-for="(st, stIdx) in slotSubTypes(slot)" :key="st ? st.id : 'empty-' + stIdx" class="fs-td-center">
-                  <span v-if="st">{{ st.name }}</span><span v-else class="fs-cell-dim">—</span>
+                <td>
+                  <span v-if="cfg.sub_type_groups[slot]?.sub_types?.length">{{ cfg.sub_type_groups[slot].sub_types.map((s) => s.name).join('、') }}</span>
+                  <span v-else class="fs-cell-dim">无子类型</span>
                 </td>
               </tr>
             </tbody>
@@ -53,7 +207,7 @@
       <!-- 子类型核心属性词条系数 -->
       <div class="fs-exp-block">
         <div class="fs-block-title">子类型核心属性词条系数</div>
-        <div class="fs-form-hint">核心属性词条的数值系数：基础值 × 系数（剑=攻击×85%、棍=×100%、锤=×115%）。</div>
+        <div class="fs-form-hint">核心属性词条的数值系数：基础值 × 系数（剑=攻击×90%、棍=×100%、头盔=气血×115%）。</div>
         <div class="fs-rule-wrap">
           <table class="fs-table fs-rule">
             <colgroup><col style="width:18%" /><col style="width:18%" /><col style="width:14%" /><col style="width:28%" /><col style="width:22%" /></colgroup>
@@ -82,7 +236,7 @@
       <!-- 装备品阶权重 -->
       <div class="fs-exp-block">
         <div class="fs-block-title">装备品阶权重</div>
-        <div class="fs-form-hint">装备基础属性投放的品阶权重区间（凡品 0.5~0.6 … 仙品 0.9~1.0），取区间上限参与计算。</div>
+        <div class="fs-form-hint">装备基础属性投放的品阶权重区间（凡品 0.5~0.6 … 仙品 0.9~1.0）。每件装备在区间内随机取一次，故「装备总览」按区间上下界给出可获得范围；「玩家配置 → 装备公式」验算取区间上限作单值示例。</div>
         <div class="fs-rule-wrap">
           <table class="fs-table fs-rule">
             <colgroup><col style="width:25%" /><col style="width:25%" /><col style="width:25%" /><col style="width:25%" /></colgroup>
@@ -364,7 +518,7 @@
 
     <div class="fs-toolbar" style="margin-top: var(--space-3);">
       <Button variant="energy" @click="save">保存到封神榜</Button>
-      <Button variant="danger" size="small" @click="reset">重置默认</Button>
+      <Button variant="ghost" size="small" @click="reset">载入 configs 定稿</Button>
     </div>
   </div>
 </template>
@@ -375,11 +529,20 @@ import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { AffixRuleConfig } from '@/domain/fengshen/types'
+import type { AffixRuleConfig, EquipFormulaConfig } from '@/domain/fengshen/types'
+import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
+import {
+  buildEquipmentOverview,
+  QUALITY_LABELS,
+  type CalcStep,
+  type EquipmentOverview,
+  type OverviewAttrRange,
+} from '@/domain/fengshen/equipment-overview'
 import Button from '@/presentation/components/Button.vue'
 import TacticalSelect from '@/presentation/components/TacticalSelect.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import CalcBreakdown from '@/presentation/modules/fengshen/components/CalcBreakdown.vue'
 import type { TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const api = container.resolve<GameDataApi>('GameDataApi')
@@ -387,6 +550,7 @@ const write = container.resolve<FengshenDataService>('FengshenDataService')
 const notification = useNotificationStore()
 
 const TABS = [
+  { id: 'overview', label: '装备总览' },
   { id: 'matrix', label: '装备设计' },
   { id: 'pet_mount', label: '宠物与坐骑' },
   { id: 'groups', label: '属性组配置' },
@@ -475,128 +639,12 @@ const ALL_ATTRS: AttrInfo[] = [
   { code: 'finalDamageReduction', name: '最终伤害减免', isPercentage: true },
 ]
 
-// ── 词条数值曲线默认值（对齐 configs/equipment/affix-rule.json 的 affix_value_curve） ──
-const DEFAULT_VALUE_CURVE: AffixRuleConfig['affix_value_curve'] = {
-  equipment: [
-    { attributes: ['attackBonus', 'hitBonus', 'speedBonus', 'healthBonus', 'defenseBonus', 'dodgeBonus'], min: { base: 1, perLevel: 0.1, full: 6 }, max: { base: 10, perLevel: 0.2, full: 20 } },
-    { attributes: ['attackCoefficient', 'hitCoefficient', 'speedCoefficient', 'healthCoefficient', 'defenseCoefficient', 'dodgeCoefficient'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
-    { attributes: ['hit', 'dodge', 'lifestealRate', 'effectHit', 'controlSuccessRate'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
-    { attributes: ['counterRate', 'trueDamageRate', 'critRate', 'reflectDamagePercent', 'critResist'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
-    { attributes: ['critDamage', 'critDmgTakenReduction', 'damageCoefficient', 'comboDamageCoefficient', 'counterDamageCoefficient', 'trueDamageCoefficient', 'finalAttack', 'finalDefense'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
-    { attributes: ['comboRate'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
-    { attributes: ['damageBoost', 'normalAtkBonus', 'skillBonus', 'shieldBonus', 'healBonus', 'reflectBonus', 'finalDamageBoost', 'lifestealBonus'], min: { base: 1, perLevel: 0.1, full: 6 }, max: { base: 10, perLevel: 0.2, full: 20 } },
-    { attributes: ['trueDamageResist', 'normalAtkDmgReduction', 'skillDmgReduction', 'controlImmunity', 'debuffImmunityRate', 'armorBreak'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
-    { attributes: ['energyGainEfficiency'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
-    { attributes: ['shieldReduction', 'healReduction', 'lifestealReduction', 'reflectReduction'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
-    { attributes: ['damageReduction', 'damageReductionCoefficient', 'finalDamageReduction'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
-    { attributes: ['hpRegenPercent'], min: { base: 1, perLevel: 0.02, full: 2 }, max: { base: 3, perLevel: 0.04, full: 5 } },
-    { attributes: ['energyInit'], min: { base: 5, perLevel: 0.1, full: 10 }, max: { base: 15, perLevel: 0.2, full: 25 } },
-    { attributes: ['splash'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
-  ],
-  pet_mount: [
-    { attributes: ['attackBonus', 'hitBonus', 'speedBonus', 'healthBonus', 'defenseBonus', 'dodgeBonus'], min: { base: 6, perLevel: 0.16, full: 14 }, max: { base: 15, perLevel: 0.3, full: 30 } },
-    { attributes: ['attackCoefficient', 'hitCoefficient', 'speedCoefficient', 'healthCoefficient', 'defenseCoefficient', 'dodgeCoefficient'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
-    { attributes: ['hit', 'dodge', 'lifestealRate', 'effectHit', 'controlSuccessRate'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
-    { attributes: ['counterRate', 'trueDamageRate', 'critRate', 'reflectDamagePercent', 'critResist'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
-    { attributes: ['critDamage', 'critDmgTakenReduction', 'damageCoefficient', 'comboDamageCoefficient', 'counterDamageCoefficient', 'trueDamageCoefficient', 'finalAttack', 'finalDefense'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
-    { attributes: ['comboRate'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
-    { attributes: ['damageBoost', 'normalAtkBonus', 'skillBonus', 'shieldBonus', 'healBonus', 'reflectBonus', 'finalDamageBoost', 'lifestealBonus'], min: { base: 1, perLevel: 0.1, full: 6 }, max: { base: 10, perLevel: 0.2, full: 20 } },
-    { attributes: ['trueDamageResist', 'normalAtkDmgReduction', 'skillDmgReduction', 'controlImmunity', 'debuffImmunityRate', 'armorBreak'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
-    { attributes: ['energyGainEfficiency'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 4, perLevel: 0.12, full: 10 } },
-    { attributes: ['shieldReduction', 'healReduction', 'lifestealReduction', 'reflectReduction'], min: { base: 1, perLevel: 0.06, full: 4 }, max: { base: 3, perLevel: 0.1, full: 8 } },
-    { attributes: ['damageReduction', 'damageReductionCoefficient', 'finalDamageReduction'], min: { base: 1, perLevel: 0.04, full: 3 }, max: { base: 3, perLevel: 0.06, full: 6 } },
-    { attributes: ['hpRegenPercent'], min: { base: 1, perLevel: 0.02, full: 2 }, max: { base: 3, perLevel: 0.04, full: 5 } },
-    { attributes: ['energyInit'], min: { base: 5, perLevel: 0.1, full: 10 }, max: { base: 15, perLevel: 0.2, full: 25 } },
-    { attributes: ['splash'], min: { base: 3, perLevel: 0.06, full: 6 }, max: { base: 8, perLevel: 0.12, full: 14 } },
-  ],
-}
-
-// ── 默认配置 ──
-function defaultConfig(): AffixRuleConfig {
-  return {
-    id: 'affix_rule',
-    description: '附加属性（词条）投放规则',
-    fixed_attributes: {
-      weapon: 'attack',
-      armor: 'defense',
-      helmet: 'maxHealth',
-      boots: 'dodgeValue',
-      charm: 'hitValue',
-      glove: 'speed',
-    },
-    tier_weight: {
-      fan: { min: 0.5, max: 0.6 },
-      xuan: { min: 0.6, max: 0.7 },
-      di: { min: 0.7, max: 0.8 },
-      tian: { min: 0.8, max: 0.9 },
-      xian: { min: 0.9, max: 1.0 },
-    },
-    core_affix_ratio: {
-      sword: { attribute: 'attack', ratio: 0.85 },
-      dagger: { attribute: 'attack', ratio: 0.85 },
-      staff: { attribute: 'attack', ratio: 1.0 },
-      blade: { attribute: 'attack', ratio: 1.0 },
-      cloth_armor: { attribute: 'defense', ratio: 0.85 },
-      leather_armor: { attribute: 'defense', ratio: 1.0 },
-      plate_armor: { attribute: 'defense', ratio: 1.15 },
-      face_guard: { attribute: 'maxHealth', ratio: 0.85 },
-      crown: { attribute: 'maxHealth', ratio: 1.0 },
-      helmet: { attribute: 'maxHealth', ratio: 1.15 },
-      cloth_boots: { attribute: 'dodgeValue', ratio: 1.15 },
-      leather_boots: { attribute: 'dodgeValue', ratio: 1.0 },
-      battle_boots: { attribute: 'dodgeValue', ratio: 0.85 },
-      charm: { attribute: 'hitValue', ratio: 1.0 },
-      glove: { attribute: 'speed', ratio: 1.0 },
-    },
-    affix_value_curve: DEFAULT_VALUE_CURVE,
-    attribute_groups: {
-      'ATK-L1': { label: '攻击系·基础数值', side: 'ATK', tier: 'L1', attributes: ['attack', 'hitValue', 'speed'], names: ['攻击', '命中', '速度'] },
-      'ATK-L2': { label: '攻击系·百分比加成', side: 'ATK', tier: 'L2', attributes: ['attackBonus', 'hitBonus', 'speedBonus'], names: ['攻击加成', '命中加成', '速度加成'] },
-      'ATK-L3': { label: '攻击系·独立系数', side: 'ATK', tier: 'L3', attributes: ['attackCoefficient', 'hitCoefficient', 'speedCoefficient'], names: ['攻击系数', '命中系数', '速度系数'] },
-      'ATK-MEC': { label: '攻击系·机制对抗', side: 'ATK', tier: 'L1', attributes: ['critRate', 'critDamage', 'hit', 'comboRate', 'trueDamageRate', 'damageBoost', 'normalAtkBonus', 'skillBonus', 'counterRate', 'lifestealRate', 'effectHit', 'controlSuccessRate', 'lifestealBonus'], names: ['暴击率', '暴击伤害', '命中率', '连击率', '真伤率', '伤害加成', '普攻加成', '技能加成', '反击率', '吸血率', '效果命中', '控制命中', '吸血效果加成'] },
-      'SHD-L1': { label: '破甲·易伤', side: 'ATK', tier: 'L1', attributes: ['armorBreak', 'vulnerability'], names: ['破甲', '易伤'] },
-      'SHD-L2': { label: '削减类', side: 'ATK', tier: 'L2', attributes: ['shieldReduction', 'healReduction', 'lifestealReduction', 'reflectReduction'], names: ['护盾削减', '治疗强度削减', '吸血效果削减', '伤害反弹削减'] },
-      'DEF-L1': { label: '防御系·基础数值', side: 'DEF', tier: 'L1', attributes: ['maxHealth', 'defense', 'dodgeValue'], names: ['气血', '防御', '闪避'] },
-      'DEF-L2': { label: '防御系·百分比加成', side: 'DEF', tier: 'L2', attributes: ['healthBonus', 'defenseBonus', 'dodgeBonus'], names: ['气血加成', '防御加成', '闪避加成'] },
-      'DEF-L3': { label: '防御系·独立系数', side: 'DEF', tier: 'L3', attributes: ['healthCoefficient', 'defenseCoefficient', 'dodgeCoefficient'], names: ['气血系数', '防御系数', '闪避系数'] },
-      'DEF-MEC': { label: '防御系·机制对抗', side: 'DEF', tier: 'L1', attributes: ['damageReduction', 'shield', 'reflectDamagePercent', 'hpRegenPercent', 'shieldBonus', 'healBonus', 'reflectBonus', 'dodge', 'critResist', 'critDmgTakenReduction', 'trueDamageResist', 'normalAtkDmgReduction', 'skillDmgReduction', 'controlImmunity', 'debuffImmunityRate'], names: ['免伤率', '护盾', '伤害反弹', '气血回复(%)', '护盾加成', '治疗强度加成', '伤害反弹加成', '闪避率', '暴击抵抗', '暴伤减免', '真伤抗性', '普攻抵抗', '技能抵抗', '控制豁免', '效果抵抗'] },
-      'ALL-MEC': { label: '通用·机制节奏', side: 'DEF', tier: 'L1', attributes: ['energyInit', 'energyGainEfficiency', 'splash'], names: ['初始能量', '能量获取效率', '溅射'] },
-      'L3-通用': { label: '通用·独立乘区', side: 'ATK', tier: 'L3', attributes: ['damageCoefficient', 'comboDamageCoefficient', 'counterDamageCoefficient', 'trueDamageCoefficient'], names: ['伤害系数', '连击伤害系数', '反击伤害系数', '真伤系数'] },
-      'L4-通用': { label: '通用·最终乘区', side: 'DEF', tier: 'L4', attributes: ['damageReductionCoefficient', 'finalAttack', 'finalDefense', 'finalDamageBoost', 'finalDamageReduction'], names: ['免伤系数', '最终攻击', '最终防御', '最终伤害提升', '最终伤害减免'] },
-      'ATK-ADD': { label: '攻击系·百分比加成（完整）', side: 'ATK', tier: 'L2', attributes: ['attackBonus', 'hitBonus', 'speedBonus', 'damageBoost', 'normalAtkBonus', 'skillBonus'], names: ['攻击加成', '命中加成', '速度加成', '伤害加成', '普攻加成', '技能加成'] },
-      'DEF-ADD': { label: '防御系·百分比加成（完整）', side: 'DEF', tier: 'L2', attributes: ['healthBonus', 'defenseBonus', 'dodgeBonus', 'shieldBonus', 'healBonus', 'reflectBonus'], names: ['气血加成', '防御加成', '闪避加成', '护盾加成', '治疗强度加成', '伤害反弹加成'] },
-      'ATK-ALL': { label: '攻击系·全部属性', side: 'ATK', tier: 'L1', attributes: ['critRate', 'critDamage', 'hit', 'comboRate', 'trueDamageRate', 'damageBoost', 'normalAtkBonus', 'skillBonus', 'counterRate', 'lifestealRate', 'effectHit', 'controlSuccessRate', 'lifestealBonus', 'armorBreak', 'vulnerability', 'damageCoefficient', 'comboDamageCoefficient', 'counterDamageCoefficient', 'trueDamageCoefficient', 'shieldReduction', 'healReduction', 'lifestealReduction', 'reflectReduction', 'finalAttack', 'finalDamageBoost'], names: ['暴击率', '暴击伤害', '命中率', '连击率', '真伤率', '伤害加成', '普攻加成', '技能加成', '反击率', '吸血率', '效果命中', '控制命中', '吸血效果加成', '破甲', '易伤', '伤害系数', '连击伤害系数', '反击伤害系数', '真伤系数', '护盾削减', '治疗强度削减', '吸血效果削减', '伤害反弹削减', '最终攻击', '最终伤害提升'] },
-      'DEF-ALL': { label: '防御系·全部属性', side: 'DEF', tier: 'L1', attributes: ['damageReduction', 'shield', 'reflectDamagePercent', 'hpRegenPercent', 'shieldBonus', 'healBonus', 'reflectBonus', 'dodge', 'critResist', 'critDmgTakenReduction', 'trueDamageResist', 'normalAtkDmgReduction', 'skillDmgReduction', 'controlImmunity', 'debuffImmunityRate', 'energyInit', 'energyGainEfficiency', 'damageReductionCoefficient', 'finalDefense', 'finalDamageReduction'], names: ['免伤率', '护盾', '伤害反弹', '气血回复(%)', '护盾加成', '治疗强度加成', '伤害反弹加成', '闪避率', '暴击抵抗', '暴伤减免', '真伤抗性', '普攻抵抗', '技能抵抗', '控制豁免', '效果抵抗', '初始能量', '能量获取效率', '免伤系数', '最终防御', '最终伤害减免'] },
-    },
-    sub_type_groups: {
-      weapon: { label: '武器', sub_types: [{ id: 'sword', name: '剑' }, { id: 'staff', name: '棍' }, { id: 'hammer', name: '锤' }] },
-      armor: { label: '衣甲', sub_types: [{ id: 'cloth_armor', name: '布甲' }, { id: 'leather_armor', name: '皮甲' }, { id: 'plate_armor', name: '盔甲' }] },
-      helmet: { label: '头部', sub_types: [{ id: 'face_guard', name: '面' }, { id: 'crown', name: '冠' }, { id: 'helmet', name: '头盔' }] },
-      boots: { label: '脚部', sub_types: [{ id: 'cloth_boots', name: '布靴' }, { id: 'leather_boots', name: '皮靴' }, { id: 'battle_boots', name: '战靴' }] },
-      charm: { label: '护符', sub_types: [{ id: 'charm', name: '护符' }] },
-      glove: { label: '护腕', sub_types: [{ id: 'glove', name: '护腕' }] },
-    },
-    slot_side: { weapon: 'ATK', armor: 'DEF', helmet: 'DEF', boots: 'DEF', charm: 'ATK', glove: 'ATK' },
-    affix_rows: [
-      { row: 1, name: '基础属性', pool: { ATK: ['ATK-L1'], DEF: ['DEF-L1'] } },
-      { row: 2, name: '百分比加成', pool: { ATK: ['ATK-ADD'], DEF: ['DEF-ADD'] } },
-      { row: 3, name: '生存对抗', pool: { ATK: ['ATK-MEC', 'SHD-L2'], DEF: ['DEF-MEC', 'ALL-MEC'] } },
-      { row: 4, name: '机制功能', pool: { ATK: ['ATK-ALL'], DEF: ['DEF-ALL'] } },
-      { row: 5, name: '独立系数', pool: { ATK: ['L3-通用', 'ATK-L3'], DEF: ['L4-通用', 'DEF-L3'] } },
-    ],
-    forbidden: [
-      { slot: 'weapon', slotLabel: '武器', attributes: ['damageReduction'], attributeLabels: ['免伤率'] },
-      { slot: 'armor', slotLabel: '护甲', attributes: ['critRate'], attributeLabels: ['暴击率'] },
-      { slot: 'boots', slotLabel: '脚部', attributes: ['critDamage'], attributeLabels: ['暴击伤害'] },
-      { slot: 'charm', slotLabel: '护符', attributes: ['defense', 'defenseBonus', 'defenseCoefficient'], attributeLabels: ['防御', '防御加成', '防御系数'] },
-    ],
-  }
-}
-
 // ── 状态 ──
-const cfg = reactive<AffixRuleConfig>(defaultConfig())
+const cfg = reactive<AffixRuleConfig>(affixRuleDefaults())
 const errors = ref<string[]>([])
-const activeTab = ref<'matrix' | 'pet_mount' | 'groups' | 'forbidden' | 'export'>('matrix')
+/** 存档规则与 configs/equipment/affix-rule.json 定稿不一致（种子一次性写入，改配置不会自动下发） */
+const driftFromConfigs = ref(false)
+const activeTab = ref<(typeof TABS)[number]['id']>('overview')
 const newGroupCode = ref('')
 const addAttrSelection = ref<Record<string, string>>({})
 const addAttrNameSelection = ref<Record<string, string>>({})
@@ -620,12 +668,6 @@ const allSubTypes = computed(() => {
 
 /** 部位展示顺序（固定属性表行序） */
 const fixedSlotOrder = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
-
-/** 部位下子类型（对齐 轻/中/重 三列；护符/护腕无子类型显示 —） */
-function slotSubTypes(slot: string): Array<{ id: string; name: string } | null> {
-  const sts = cfg.sub_type_groups[slot]?.sub_types ?? []
-  return [sts[0] ?? null, sts[1] ?? null, sts[2] ?? null]
-}
 
 /** 核心属性选项（固定属性 / 子类型核心词条共用：六维基础属性 + 百分比加成） */
 function coreAttrOptions(slot: string): TSelectOption[] {
@@ -709,6 +751,106 @@ function availableAttrsOptions(groupCode: string): TSelectOption[] {
   return ALL_ATTRS.filter((a) => !used.has(a.code)).map((a) => ({ value: a.code, label: a.name, hint: a.code }))
 }
 
+// ── 装备总览：按规则反推一件装备的属性区间 ──
+const ovLevel = ref(50)
+const ovSlot = ref('weapon')
+const ovSubType = ref('sword')
+const ovTier = ref('xian')
+const ovQuality = ref(5)
+/** 当前展开的词条池：'main' = 主要属性随机池，`row-N` = 附加第 N 行 */
+const ovPool = ref<string>('row-1')
+
+const equipFormula = ref<EquipFormulaConfig | null>(null)
+const playerConversion = ref<Record<string, number>>({})
+
+const ovSubTypeOptions = computed<TSelectOption[]>(() =>
+  (cfg.sub_type_groups[ovSlot.value]?.sub_types ?? []).map((s) => ({ value: s.id, label: s.name, hint: s.id }))
+)
+
+const ovSlotOptions = computed<TSelectOption[]>(() =>
+  fixedSlotOrder.map((slot) => ({ value: slot, label: cfg.sub_type_groups[slot]?.label ?? slot, hint: cfg.slot_side[slot] ?? '' }))
+)
+
+const ovTierOptions = computed<TSelectOption[]>(() =>
+  Object.keys(cfg.tier_weight).map((t) => ({ value: t, label: tierLabel(t), hint: `${cfg.tier_weight[t].min}~${cfg.tier_weight[t].max}` }))
+)
+
+const ovQualityOptions = computed<TSelectOption[]>(() =>
+  QUALITY_LABELS.map((label, i) => ({ value: i + 1, label: `${label}（${i + 1} 条）` }))
+)
+
+const ovMaxLevel = computed(() => equipFormula.value?.maxLevel ?? 50)
+
+const ovSide = computed<'ATK' | 'DEF'>(() => cfg.slot_side[ovSlot.value] ?? 'ATK')
+
+const overview = computed<EquipmentOverview | null>(() => {
+  const formula = equipFormula.value
+  if (!formula) return null
+  return buildEquipmentOverview(cfg, formula, playerConversion.value, {
+    level: ovLevel.value,
+    slot: ovSlot.value,
+    subType: ovSubType.value,
+    tier: ovTier.value,
+    quality: ovQuality.value,
+  })
+})
+
+/** 切换部位后子类型必须落在该部位的真实子类型上，否则会算出不存在的组合 */
+function onOvSlotChange(slot: string): void {
+  ovSlot.value = slot
+  const first = cfg.sub_type_groups[slot]?.sub_types?.[0]
+  ovSubType.value = first ? first.id : slot
+}
+
+/** 右侧详情面板：选中的词条池标题 + 候选属性 */
+const ovPoolDetail = computed<{ title: string; groups: string[]; candidates: OverviewAttrRange[]; hint: string } | null>(() => {
+  const o = overview.value
+  if (!o) return null
+  if (ovPool.value === 'main') {
+    const pool = cfg.main_affix_pool?.[ovSubType.value]
+    return {
+      title: '主要属性 · 第 2 条随机池',
+      groups: pool?.random_pool ?? [],
+      candidates: o.mainRandom,
+      hint: '随机池中取一条，下列为各条目的可获得区间',
+    }
+  }
+  const row = o.affixRows.find((r) => `row-${r.row}` === ovPool.value)
+  if (!row) return null
+  return {
+    title: `附加属性 · 第 ${row.row} 行 ${row.name}`,
+    groups: row.groups,
+    candidates: row.candidates,
+    hint: row.included ? '本行随装备产出 1 条，从下列属性中等概率抽取' : `当前品质不投放本行（需 ${row.row} 条以上）`,
+  }
+})
+
+function isPercentAttr(code: string): boolean {
+  return ALL_ATTRS.find((a) => a.code === code)?.isPercentage ?? false
+}
+
+/** 区间文案：百分比属性带 % 后缀；无曲线属性显示占位而非 0~0 */
+function fmtRange(r: OverviewAttrRange | null): string {
+  if (!r) return '—'
+  if (r.source === 'none') return '无曲线'
+  const suffix = isPercentAttr(r.attribute) ? '%' : ''
+  return `${r.min} ~ ${r.max}${suffix}`
+}
+
+/** 算不出区间时也要给一条说得清缺什么的推导，不留空白气泡 */
+function calcSteps(r: OverviewAttrRange | null, missing: string): CalcStep[] {
+  return r?.calc ?? [{ label: '缺口', expr: missing }]
+}
+
+/** 结论行单位：沿用 isPercentAttr 单一判据，与单元格文案同源 */
+function rangeUnit(r: OverviewAttrRange | null): string {
+  return r && isPercentAttr(r.attribute) ? '%' : ''
+}
+
+function ovPoolGroupsText(groups: string[]): string {
+  return groups.map((g) => cfg.attribute_groups[g]?.label ?? attrNameByCode(g)).join('、')
+}
+
 // ── 方法 ──
 function slotGroupLabel(slot: string): string {
   return cfg.sub_type_groups[slot]?.label ?? slot
@@ -773,20 +915,55 @@ function addForbiddenAttr(idx: number): void {
 
 async function load(): Promise<void> {
   try {
-    const data = await api.getAffixRule()
-    // 合并 defaultConfig 兜底：旧数据缺新字段（fixed_attributes/tier_weight/core_affix_ratio）时补齐
-    resetInto(cfg, { ...defaultConfig(), ...(data ?? {}) })
-  } catch { resetInto(cfg, defaultConfig()) }
+    const [data, formula, player] = await Promise.all([
+      api.getAffixRule(),
+      api.getEquipFormula(),
+      api.getPlayerConfig(),
+    ])
+    // 合并定稿兜底：旧存档缺新字段（fixed_attributes/tier_weight/core_affix_ratio）时补齐
+    resetInto(cfg, { ...affixRuleDefaults(), ...(data ?? {}) } as AffixRuleConfig)
+    equipFormula.value = formula
+    playerConversion.value = player?.conversion ?? {}
+    driftFromConfigs.value = !!data && canonicalJson(toPlain(cfg)) !== canonicalJson(affixRuleDefaults())
+    syncOverviewSelection()
+  } catch { driftFromConfigs.value = false; resetInto(cfg, affixRuleDefaults()) }
+}
+
+/**
+ * 键序无关的深比较序列化。存档经过 spread 后键序可能与定稿不同，直接 stringify 会误报。
+ */
+function canonicalJson(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(canonicalJson).join(',')}]`
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>
+    return `{${Object.keys(o).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(o[k])}`).join(',')}}`
+  }
+  return JSON.stringify(v ?? null)
+}
+
+/** 存档里的子类型/品阶集合可能与当前默认值不匹配，载入后收口到真实存在的选项 */
+function syncOverviewSelection(): void {
+  if (!cfg.sub_type_groups[ovSlot.value]) { onOvSlotChange(fixedSlotOrder[0]); return }
+  const ids = cfg.sub_type_groups[ovSlot.value].sub_types.map((s) => s.id)
+  if (!ids.includes(ovSubType.value)) ovSubType.value = ids[0] ?? ovSlot.value
+  if (!cfg.tier_weight[ovTier.value]) ovTier.value = Object.keys(cfg.tier_weight)[0] ?? ovTier.value
 }
 
 async function save(): Promise<void> {
   errors.value = []
   const result = await write.save('params', { id: 'affix_rule', name: '装备词条投放规则', data: toPlain(cfg) })
-  if (result.ok) notification.notify('已保存', `词条投放规则已保存 · v${await api.getDataVersion()}`, 'success')
-  else notification.notify('保存失败', result.errors?.join('\n') ?? '', 'error')
+  if (result.ok) {
+    driftFromConfigs.value = canonicalJson(toPlain(cfg)) !== canonicalJson(affixRuleDefaults())
+    notification.notify('已保存', `词条投放规则已保存 · v${await api.getDataVersion()}`, 'success')
+  } else notification.notify('保存失败', result.errors?.join('\n') ?? '', 'error')
 }
 
-function reset(): void { resetInto(cfg, defaultConfig()) }
+function reset(): void {
+  resetInto(cfg, affixRuleDefaults())
+  driftFromConfigs.value = false
+  syncOverviewSelection()
+  notification.notify('已载入定稿', '当前编辑已替换为 configs/equipment/affix-rule.json，确认无误后点「保存到封神榜」', 'info', 6000)
+}
 
 function downloadJson(): void {
   const blob = new Blob([exportJson.value], { type: 'application/json' })
@@ -1054,5 +1231,192 @@ void load()
   width: 3px;
   border-radius: 2px;
   background: var(--color-energy);
+}
+
+/* ── 装备总览 ── */
+
+/* 存档与 configs 定稿不一致的提示条 */
+.fs-ov-drift {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+}
+
+.fs-ov-drift-text {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+}
+
+/* 推算参数：卡片外的工具输入条 */
+.fs-ov-params {
+  margin-bottom: var(--space-4);
+}
+
+.fs-ov-params-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+
+  .fs-block-title { margin-bottom: 0; }
+}
+
+.fs-ov-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.fs-ov-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 120px;
+}
+
+.fs-ov-field-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}
+
+/* 左卡卡头：本件装备的主语（参数条只留控件） */
+.fs-ov-subject {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.fs-ov-subject-text {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 左右两张卡片，6:4 */
+.fs-ov-grid {
+  display: grid;
+  grid-template-columns: 6fr 4fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 1180px) {
+  .fs-ov-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.fs-ov-card {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.fs-ov-detail {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+/* 卡内分区：用分隔线代替再套一层卡片，避免卡片套卡片 */
+.fs-ov-section {
+  & + .fs-ov-section {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-default);
+  }
+}
+
+.fs-ov-empty {
+  p {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+  }
+}
+
+.fs-ov-warnings {
+  margin-top: var(--space-4);
+}
+
+.fs-ov-table {
+  margin-top: var(--space-2);
+
+  tbody td.fs-td-center,
+  thead th.fs-td-center { text-align: center; }
+
+  tbody td.fs-td-right,
+  thead th.fs-td-right { text-align: right; }
+}
+
+/* 可点击展开词条池的行：hover / pressed / 选中三态齐备 */
+.fs-ov-clickable {
+  cursor: pointer;
+
+  td { transition: background var(--transition-fast); }
+
+  &:hover td { background: var(--color-bg-hover); }
+
+  &:active td { background: var(--color-bg-hover-accent); }
+
+  &.is-muted td { color: var(--color-text-secondary); }
+}
+
+.fs-ov-clickable.is-active td {
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
+  box-shadow: inset 3px 0 0 var(--color-energy);
+}
+
+.fs-ov-clickable:focus-visible {
+  outline: 2px solid var(--color-info);
+  outline-offset: -2px;
+}
+
+.fs-ov-detail .fs-ov-table tbody tr.is-none td {
+  color: var(--color-warning);
+}
+
+.fs-ov-src,
+.fs-ov-on {
+  display: inline-block;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+}
+
+.fs-ov-on {
+  border-color: var(--color-energy-deep);
+  color: var(--color-energy);
+}
+
+.fs-ov-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-2) 0;
+}
+
+.fs-ov-group-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
 }
 </style>

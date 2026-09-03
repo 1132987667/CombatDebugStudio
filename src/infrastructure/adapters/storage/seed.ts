@@ -19,7 +19,6 @@ import type {
   ActorData,
   AffixData,
   AffixLibraryData,
-  AffixRuleConfig,
   AttributeDef,
   BattleParamData,
   ElementsData,
@@ -39,6 +38,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 import { deriveMaterials } from '@/domain/fengshen/derive-materials'
 import { getAttributeDict } from '@/domain/fengshen/attribute-dictionary'
+import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { EffectsJsonEntry } from '@/shared/types/effects-json'
 import formationsDataRaw from '@configs/formations/formations.json'
@@ -60,7 +60,6 @@ import xiyouCaveJson from '@configs/xiyou/cave.json'
 import itemsDataRaw from '@configs/xiyou/items.json'
 import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 import attributesDataRaw from '@configs/attributes/attributes.json'
-import affixRuleDataRaw from '@configs/equipment/affix-rule.json'
 
 export const SEED_FLAG_ID = 'cds:fengshen-seed-v27'
 
@@ -308,24 +307,11 @@ function buildEquipFormula(): BattleParamData {
 
 /** 装备词条投放规则种子（params 域，key=affix_rule）—— configs/equipment/affix-rule.json 策划定稿 */
 function buildAffixRule(): BattleParamData {
-  const raw = affixRuleDataRaw as Record<string, unknown>
   return {
     id: 'affix_rule',
     name: '装备词条投放规则',
     description: '定义各装备部位/子类型允许投放的属性组池（5行×14子类型矩阵）',
-    data: {
-      id: 'affix_rule',
-      description: String(raw.description ?? ''),
-      fixed_attributes: (raw.fixed_attributes ?? {}) as AffixRuleConfig['fixed_attributes'],
-      tier_weight: (raw.tier_weight ?? {}) as AffixRuleConfig['tier_weight'],
-      core_affix_ratio: (raw.core_affix_ratio ?? {}) as AffixRuleConfig['core_affix_ratio'],
-      affix_value_curve: (raw.affix_value_curve ?? {}) as AffixRuleConfig['affix_value_curve'],
-      attribute_groups: (raw.attribute_groups ?? {}) as AffixRuleConfig['attribute_groups'],
-      sub_type_groups: (raw.sub_type_groups ?? {}) as AffixRuleConfig['sub_type_groups'],
-      slot_side: (raw.slot_side ?? {}) as AffixRuleConfig['slot_side'],
-      affix_rows: (raw.affix_rows ?? []) as AffixRuleConfig['affix_rows'],
-      forbidden: (raw.forbidden ?? []) as AffixRuleConfig['forbidden'],
-    } as AffixRuleConfig,
+    data: affixRuleDefaults(),
     updatedAt: nowIso(),
   }
 }

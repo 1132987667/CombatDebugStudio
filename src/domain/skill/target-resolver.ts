@@ -123,6 +123,16 @@ export function resolveSkillTargets(
       }
       return [candidates[candidates.length - 1]]
     }
+    case TargetStrategy.LOWEST_SPEED: {
+      if (candidates.length === 0) return [source]
+      const slowest = candidates.reduce((min, p) =>
+        p.getAttribute(ATTRIBUTE_CODE.speed) <
+        min.getAttribute(ATTRIBUTE_CODE.speed)
+          ? p
+          : min,
+      )
+      return [slowest]
+    }
     case TargetStrategy.ADJACENT: {
       const sourceSeat = source.seatIndex
       return candidates.filter(

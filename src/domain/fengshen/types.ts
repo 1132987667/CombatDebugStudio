@@ -525,6 +525,20 @@ export interface PetMountRulesConfig {
   /** 第 n 次突破需等级 level，倍率累计 1 + Σbonus（3 次共 1.6 倍） */
   breakthroughs: Array<{ level: number; bonus: number }>
   rows: PetMountRuleRow[]
+  /** 流派特性池（按个体 category 分键；宠物取 attack 组、坐骑取 defense 组，随机获取一种） */
+  trait_pools?: Record<string, PetMountTraitPool>
+}
+
+/** 特性池条目——宠物/坐骑获得时从所属流派池随机一条作为特性 */
+export interface PetMountTraitEntry {
+  name: string
+  desc: string
+}
+
+/** 单个流派的特性池：宠物侧（攻/命/速）取 attack，坐骑侧（防/闪/血）取 defense */
+export interface PetMountTraitPool {
+  attack: PetMountTraitEntry[]
+  defense: PetMountTraitEntry[]
 }
 
 /** 宠物/坐骑个体（configs/pets/pets.json、configs/mounts/mounts.json）—— 主要 3 条权重分布 + 特性文本 */
@@ -537,8 +551,8 @@ export interface PetMountIndividual {
   category: string
   /** 主要 3 条基础属性权重（和应为 7）：宠物 attack/hit/speed，坐骑 defense/dodge/maxHealth */
   weights: Record<string, number>
-  /** 特性文本（品质 3 起投放的独立被动，不参与数值反推） */
-  trait: string
+  /** 固定特性文本——仅尚未池化的流派保留；已入特性池的个体（如 combo）不再配置，特性改为获得时从池随机 */
+  trait?: string
 }
 
 /** 西游数据域（xiyou 表）—— configs/xiyou/*.json 单文档种子，供演劫台经封神榜读取（需求说明 §5.1 方案 B） */

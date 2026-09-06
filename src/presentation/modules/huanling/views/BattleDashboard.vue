@@ -26,18 +26,7 @@
           </div>
         </div>
       </div>
-      <div class="monitor-group">
-        <div class="monitor-subtitle">属性加成</div>
-        <div class="monitor-grid" @mouseleave="hideAttrTooltip">
-          <div class="monitor-item" v-for="a in bonusAttrs" :key="a.code"
-            @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)" @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">{{ a.meta.displayName }}:</span>
-            <span class="monitor-value bonus">{{ formatBonusValue(attrVal(a.code as ATTRIBUTE_CODE)) }}</span>
-          </div>
-        </div>
-      </div>
-      <!-- 进阶属性（折叠） -->
+      <!-- 进阶属性（折叠）：*Bonus 已通过展示配置归入属性族分组，不再单列「属性加成」组 -->
       <div class="monitor-group">
         <div class="monitor-subtitle" role="button" tabindex="0" style="cursor:pointer"
           @click="advancedExpanded = !advancedExpanded"
@@ -190,7 +179,6 @@ import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from 
 import { container } from '@/infrastructure/di/Container';
 import type { TabItem } from '@/presentation/components'
 import { useBattleStore } from '@/presentation/stores';
-import { formatBonusValue } from '@/shared/utils/format';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
@@ -252,14 +240,22 @@ const attrVal = (code: ATTRIBUTE_CODE): number => {
 
 // 进阶属性配置
 const groupLabels: Record<string, string> = {
-  defense: '防御',
+  vitality: '生命',
   offense: '攻击',
-  elemental: '元素',
+  defense: '防御',
+  speed: '速度',
+  crit: '暴击',
+  accuracy: '命中闪避',
+  mechanic: '机制',
   control: '控制',
-  utility: '辅助',
+  elemental: '元素',
+  support: '辅助',
+  energy: '能量',
+  utility: '其他',
 }
 const advancedExpanded = ref(false)
-// 基础属性区（core tier，排除气血/能量/护盾等 hidden 语义项与加成属性）— 元数据驱动
+// 基础属性区（core tier，排除气血/能量/护盾等 hidden 语义项）— 元数据驱动
+// NOTE: *Bonus 已改 advanced tier 归属性族分组，不会进 core 过滤，无需在此排除
 const coreAttrs = computed(() => {
   const excluded = new Set([
     ATTRIBUTE_CODE.currentHealth,
@@ -267,10 +263,6 @@ const coreAttrs = computed(() => {
     ATTRIBUTE_CODE.maxHealth,
     ATTRIBUTE_CODE.maxEnergy,
     ATTRIBUTE_CODE.shield,
-    ATTRIBUTE_CODE.healthBonus,
-    ATTRIBUTE_CODE.attackBonus,
-    ATTRIBUTE_CODE.defenseBonus,
-    ATTRIBUTE_CODE.speedBonus,
   ])
   return Object.entries(AttributeMetaMap)
     .filter(([code]) =>
@@ -283,24 +275,7 @@ const coreAttrs = computed(() => {
     }))
 })
 
-// 属性加成区（formatBonusValue 专用格式化）— 元数据驱动
-const bonusAttrs = computed(() => {
-  const codes = [
-    ATTRIBUTE_CODE.healthBonus,
-    ATTRIBUTE_CODE.attackBonus,
-    ATTRIBUTE_CODE.defenseBonus,
-    ATTRIBUTE_CODE.speedBonus,
-  ]
-  return codes
-    .filter(code => AttributeMetaMap[code])
-    .map(code => ({
-      code,
-      meta: {
-        displayName: AttributeMetaMap[code].displayName,
-        isPercentage: !!AttributeMetaMap[code].isPercentage,
-      },
-    }))
-})
+// 属性加成区已随「属性族」分组重构并入进阶属性（*Bonus 的展示配置改归对应族）
 
 const advancedAttributes = computed(() => {
   const groups: Record<string, Array<{ code: string; meta: { displayName: string; isPercentage: boolean } }>> = {}

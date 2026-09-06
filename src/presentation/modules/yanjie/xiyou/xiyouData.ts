@@ -106,6 +106,25 @@ const SKILL_TREE_ID_MAP: Record<string, string> = {
   skill_ps_quake: 'skill_xiyou_earthquake',
   skill_ps_mountain_ult: 'skill_xiyou_mountain_crush',
   skill_ps_diamond_ult: 'skill_xiyou_diamond_body',
+  // 连击流（斗战）——组合被动用逗号分隔多条配置 id
+  lianji_fengsuo_core: 'school_fengsuo_bounce,school_fengsuo_bind,school_fengsuo_fengzhu',
+  lianji_fufengbian: 'skill_school_fufengbian',
+  lianji_fengliantanshe: 'skill_school_fengliantanshe',
+  lianji_fenghen_a: 'school_fenghen_jiban_apply,school_fenghen_jiban_heal',
+  lianji_yufeng: 'school_yufeng_hitdown,school_yufeng_attack',
+  lianji_tianwang: 'skill_school_fengsuotianwang',
+  lianji_fengshi_core: 'school_lianzhan_fengshi_apply,school_lianzhan_fengshi_transform,school_fengshi_combo_rate',
+  lianji_xunfengji: 'skill_school_xunfengji',
+  lianji_fengshiyong: 'school_fengshiyong_apply',
+  lianji_fengyibaofa: 'skill_school_fengyibaofa',
+  lianji_qishi: 'school_lianshi_qishi,school_fengshi_liejia_link',
+  lianji_kuangfeng: 'skill_school_kuangfengjuexi',
+  lianji_liejia_core: 'school_lianzhan_liejia_apply,school_lianzhan_liejia_burst',
+  lianji_liejiaji: 'skill_school_liejiaji',
+  lianji_tougu: 'school_liejia_tougu',
+  lianji_liejiabaofa: 'skill_school_liejiabaofa',
+  lianji_baolie: 'school_lianzhan_liejia_burst',
+  lianji_tianbeng: 'skill_school_liejiatianbeng',
 }
 
 /** 技能树能量消耗（skill_tree 节点未带，取映射后技能配置的 energyCost；非技能节点为 0） */
@@ -122,6 +141,16 @@ const SKILL_ENERGY_COST: Record<string, number> = {
   skill_xiyou_earthquake: 50,
   skill_xiyou_mountain_crush: 150,
   skill_xiyou_diamond_body: 150,
+  // 连击流（斗战）
+  skill_school_fufengbian: 50,
+  skill_school_fengliantanshe: 70,
+  skill_school_fengsuotianwang: 150,
+  skill_school_xunfengji: 50,
+  skill_school_fengyibaofa: 70,
+  skill_school_kuangfengjuexi: 150,
+  skill_school_liejiaji: 50,
+  skill_school_liejiabaofa: 70,
+  skill_school_liejiatianbeng: 150,
 }
 
 /** 原始 skill_tree 节点 → XiyouSkillNode（映射字段 + 保留 effect/skillId 供注入） */

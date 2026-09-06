@@ -25,6 +25,7 @@ import type {
 import { ActionResultType, StepEffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
+import { nextRandom, type SeededRandom } from '@/shared/utils/SeededRandom'
 import {
   syncBonusAttribute,
   syncReverseBonusAttribute,
@@ -50,6 +51,14 @@ export class SkillExecutor {
 
   /** 连击追踪状态（key = 攻击者 entity ID） */
   private comboStates = new Map<string, ComboState>()
+
+  /** 确定性随机源 — 由 BattleSystem.initialize 注入 battleData.rng；未注入时回退 Math.random */
+  private rng?: SeededRandom
+
+  /** 注入确定性随机源（弹射等 custom 步骤的概率判定走此实例） */
+  setRng(rng: SeededRandom): void {
+    this.rng = rng
+  }
 
   /** 轮转 buff 追踪状态（key = 施法者 entity ID；值 = 下一次轮转到 buffIds 的下标） */
   private rotatingBuffIndex = new Map<string, number>()
@@ -599,6 +608,9 @@ export class SkillExecutor {
     } else if (customType === 'fengshi_detonate') {
       // 风意爆发 / 狂风绝息 — 引爆目标全部【风势】：每层伤害加成 + 按 2 层转化 1 层裂甲
       this.handleFengshiDetonate(action, source, target, customParams, context?.token)
+    } else if (customType === 'fengsuo_bounce') {
+      // 风锁连环·弹射 — 动态概率（基础 20% + 速度差加成、上限 40%），天网/风逐联动
+      this.handleFengsuoBounce(action, source, target, customParams)
     } else if (customType === 'liejia_detonate') {
       // 裂甲爆发 / 裂甲天崩 — 引爆目标全部【裂甲】：每层伤害加成 + 每层一段真实伤害 + 碎甲
       this.handleLiejiaDetonate(action, source, target, customParams, context?.token)
@@ -717,6 +729,76 @@ export class SkillExecutor {
   }
 
   /**
+   * 风锁连环·弹射 — 连击段对随机敌方单位的额外射击（不消耗连击判定）。
+   * params:
+   * - damageRatio: 弹射伤害系数（×攻击力，默认 0.6）
+   * - baseProbability: 基础概率（默认 0.2）
+   * - speedUnit / speedBonusPerUnit: 每 10 点速度差 +5%（默认）
+   * - maxProbability: 概率上限（默认 0.4）
+   * 联动：【天网】概率 +20%、弹射伤害 +30%；【风逐】使本次弹射概率翻倍并消耗 1 层。
+   * 命中后施加 1 层【风锁】（风锁后遗症经 blockedByTag 自动阻止）。
+   */
+  private handleFengsuoBounce(
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    params: CustomStepParams | undefined,
+  ): void {
+    const damageRatio = (params?.damageRatio as number) ?? 0.6
+    const baseProbability = (params?.baseProbability as number) ?? 0.2
+    const speedUnit = (params?.speedUnit as number) ?? 10
+    const speedBonusPerUnit = (params?.speedBonusPerUnit as number) ?? 0.05
+    const maxProbability = (params?.maxProbability as number) ?? 0.4
+
+    const mySpeed = source.getAttribute(ATTRIBUTE_CODE.speed)
+    const tgtSpeed = target.getAttribute(ATTRIBUTE_CODE.speed)
+    let probability =
+      baseProbability +
+      (Math.max(0, mySpeed - tgtSpeed) / speedUnit) * speedBonusPerUnit
+
+    // 天网联动：弹射概率 +20%、弹射伤害 +30%
+    const tianwangActive = this.buffSystem.hasBuff(source.id, 'buff_tianwang')
+    if (tianwangActive) probability += 0.2
+
+    // 风逐联动：该次弹射概率翻倍，消耗 1 层
+    const fengzhuStacks = this.buffSystem.getBuffStackCount(source.id, 'buff_fengzhu')
+    const fengzhuConsumed = fengzhuStacks > 0
+    if (fengzhuConsumed) {
+      probability *= 2
+      const inst = this.buffSystem
+        .getBuffInstances(source.id)
+        .find((i) => i.buffId === 'buff_fengzhu')
+      if (inst) this.buffSystem.removeBuff(inst.id)
+    }
+
+    probability = Math.min(probability, maxProbability + (tianwangActive ? 0.2 : 0))
+
+    if (nextRandom(this.rng) >= probability) {
+      action.effects.push({
+        type: ActionResultType.STATUS,
+        targetId: target.id,
+        description: `弹射未触发（概率 ${Math.round(probability * 100)}%）`,
+      })
+      return
+    }
+
+    const damage = Math.round(
+      source.getAttribute(ATTRIBUTE_CODE.attack) * damageRatio * (tianwangActive ? 1.3 : 1),
+    )
+    if (damage > 0) {
+      this.damageCalculator.applyDamage(target, damage)
+    }
+    this.buffSystem.addBuff(target.id, 'buff_fengsuo', {}, action.turn ?? 0)
+    action.effects.push({
+      type: ActionResultType.DAMAGE,
+      targetId: target.id,
+      value: damage,
+      damage,
+      description: `风锁弹射命中 ${target.name}：${damage} 伤害并附加 1 层【风锁】`,
+    })
+  }
+
+  /**
    * 风意爆发 / 狂风绝息 — 引爆目标全部【风势】。
    * params:
    * - damagePercentPerStack: 每层风势追加的伤害系数（×攻击力，默认 0.10）
@@ -735,6 +817,45 @@ export class SkillExecutor {
     const applyBuffId = (params?.applyBuffId as string) ?? 'buff_liejia'
 
     const stacks = this.buffSystem.getBuffStackCount(target.id, 'buff_fengshi')
+    const attack = source.getAttribute(ATTRIBUTE_CODE.attack)
+
+    // 风绝：每层风痕追加一段真实伤害（上限 fenghenMaxSegments 段）并消耗全部风痕。
+    // NOTE: 独立于风势层数——狂风绝息场景可能只耗风痕（风势已被先行引爆）
+    const fenghenPerStack = (params?.fenghenTrueDamagePerStack as number) ?? 0
+    if (fenghenPerStack > 0) {
+      const fenghenStacks = this.buffSystem.getBuffStackCount(target.id, 'buff_fenghen')
+      if (fenghenStacks > 0) {
+        const fenghenMax = (params?.fenghenMaxSegments as number) ?? 8
+        const trueDamage = Math.round(
+          attack * fenghenPerStack * Math.min(fenghenStacks, fenghenMax),
+        )
+        if (trueDamage > 0) {
+          if (token) {
+            token.record(target, trueDamage)
+            action.damage = (action.damage ?? 0) + trueDamage
+          } else {
+            this.damageCalculator.applyDamage(target, trueDamage)
+          }
+        }
+        for (const inst of this.buffSystem
+          .getBuffInstances(target.id)
+          .filter((i) => i.buffId === 'buff_fenghen')) {
+          this.buffSystem.removeBuff(inst.id)
+        }
+        // 风绝触发后施加碎甲（狂风绝息：2 回合内无法获得护盾）
+        if (applyBuffId) {
+          this.buffSystem.addBuff(target.id, applyBuffId, {}, action.turn ?? 0)
+        }
+        action.effects.push({
+          type: ActionResultType.DAMAGE,
+          targetId: target.id,
+          value: trueDamage,
+          damage: trueDamage,
+          description: `风绝：引爆 ${fenghenStacks} 层【风痕】追加 ${trueDamage} 真实伤害`,
+        })
+      }
+    }
+
     if (stacks <= 0) {
       action.effects.push({
         type: ActionResultType.STATUS,
@@ -744,7 +865,6 @@ export class SkillExecutor {
       return
     }
 
-    const attack = source.getAttribute(ATTRIBUTE_CODE.attack)
     const bonusDamage = Math.round(attack * perStack * stacks)
     if (bonusDamage > 0) {
       if (token) {

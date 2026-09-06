@@ -44,9 +44,9 @@ const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
 
 const pack = usePackStore()
 
-/** 可装入快捷栏的消耗品（丹药/永久丹药/符箓/晶球，且持有 > 0） */
+/** 可装入快捷栏的消耗品（丹药/永久丹药/符箓，且持有 > 0） */
 const consumables = computed(() => {
-  const types = new Set(['丹药', '永久丹药', '符箓', '晶球'])
+  const types = new Set(['丹药', '永久丹药', '符箓'])
   return pack.ownedItems
     .filter((it) => types.has(it.type))
     .sort((a, b) => a.rarity - b.rarity)

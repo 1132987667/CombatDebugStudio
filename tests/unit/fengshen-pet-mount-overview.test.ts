@@ -23,6 +23,7 @@ import { mountIndividuals, petIndividuals } from '@/domain/fengshen/affix-rule-d
 import {
   buildPetMountOverview,
   curveClosureWarnings,
+  pickPetMountTrait,
   resolveAttrRange,
   resolveCurveAttrRange,
 } from '@/domain/fengshen/equipment-overview'
@@ -169,12 +170,12 @@ describe('品质门槛（2026-09-06 裁定表）', () => {
 })
 
 describe('附加行 = pet_mount 曲线（§5.2）', () => {
-  it('L1 行候选走曲线通路，速度加成 Lv.50 仙品 = 6.2 ~ 32.7', () => {
+  it('L1 行候选走曲线通路，基础速度 Lv.50 仙品 = 6.2 ~ 32.7（ATK-L1 池：攻/命/速基础值）', () => {
     const o = overview(purple(), { level: 50 })
     const l1 = o.rows.find((r) => r.id === 'l1')!
     expect(l1.candidates.length).toBeGreaterThan(0)
     for (const c of l1.candidates) expect(c.source, `${c.attribute} 应为曲线`).toBe('curve')
-    const speed = l1.candidates.find((c) => c.attribute === 'speedBonus')!
+    const speed = l1.candidates.find((c) => c.attribute === 'speed')!
     // min: 6 + 0.16×49 = 13.84 ×0.9×0.5 = 6.228 → 6.2；max: 15 + 0.3×49 = 29.7 ×1.1 = 32.67 → 32.7
     expect(speed).toMatchObject({ min: 6.2, max: 32.7 })
   })
@@ -200,9 +201,16 @@ describe('曲线闭合校验（发现 A 的自动化）', () => {
     expect(warnings[0]).toContain('≠ 满级')
   })
 
-  it('总览内置闭合校验：warnings 常驻池映射草案提示', () => {
+  it('池映射已拍板（2026-09-06）：无草案提示，仅保留闭合校验 warning', () => {
     const o = overview(purple())
-    expect(o.warnings.some((w) => w.includes('映射为草案'))).toBe(true)
+    expect(o.warnings.some((w) => w.includes('映射为草案'))).toBe(false)
+    expect(o.warnings.some((w) => w.includes('L1→ATK-L2'))).toBe(false)
+  })
+
+  it('附加 L1 行池 = ATK-L1/DEF-L1（行名与属性组码同源，原 L2 草案作废）', () => {
+    const l1 = cfg.pet_mount_rules?.rows.find((r) => r.id === 'l1')
+    expect(l1?.pool?.ATK).toEqual(['ATK-L1'])
+    expect(l1?.pool?.DEF).toEqual(['DEF-L1'])
   })
 })
 
@@ -239,12 +247,62 @@ describe('缺口显式化（绝不静默为 0）', () => {
   })
 })
 
+describe('特性随机获取（2026-09-06 口径变更：固定 trait → 流派特性池随机）', () => {
+  const rules = () => cfg.pet_mount_rules!
+
+  it('连击流个体走池：宠物取 attack 组、坐骑取 defense 组，抽到的条目在池内', () => {
+    const petTrait = pickPetMountTrait(rules(), 'pet', 'combo')
+    expect(petTrait).not.toBeNull()
+    expect(rules().trait_pools!.combo!.attack).toContainEqual(petTrait)
+    const mountTrait = pickPetMountTrait(rules(), 'mount', 'combo')
+    expect(mountTrait).not.toBeNull()
+    expect(rules().trait_pools!.combo!.defense).toContainEqual(mountTrait)
+  })
+
+  it('rng 注入确定性：rng=0 取第 1 条，rng≈1 取最后一条（不越界）', () => {
+    const attack = rules().trait_pools!.combo!.attack
+    expect(pickPetMountTrait(rules(), 'pet', 'combo', () => 0)).toEqual(attack[0])
+    expect(pickPetMountTrait(rules(), 'pet', 'combo', () => 0.9999)).toEqual(attack[attack.length - 1])
+  })
+
+  it('未池化流派回落固定 trait：pickPetMountTrait 返回 null，个体 trait 文本保留', () => {
+    const crit = petIndividuals().find((i) => i.category === 'crit')!
+    expect(pickPetMountTrait(rules(), 'pet', crit.category)).toBeNull()
+    expect(crit.trait).toBeTruthy()
+  })
+
+  it('连击流池各 10 条，条目 name/desc 非空（数据健全性）', () => {
+    const pool = rules().trait_pools!.combo!
+    expect(pool.attack).toHaveLength(10)
+    expect(pool.defense).toHaveLength(10)
+    for (const e of [...pool.attack, ...pool.defense]) {
+      expect(e.name.trim()).toBeTruthy()
+      expect(e.desc.trim()).toBeTruthy()
+    }
+  })
+
+  it('configs 全部 combo 个体已删除固定 trait（池化完整性，防双口径漂移）', () => {
+    for (const i of [...petIndividuals(), ...mountIndividuals()].filter((x) => x.category === 'combo')) {
+      expect(i.trait, `${i.name} 不应再带固定 trait`).toBeUndefined()
+    }
+  })
+
+  it('多轮随机抽取不越界且始终落在池内', () => {
+    const attack = rules().trait_pools!.combo!.attack
+    for (let k = 0; k < 200; k++) {
+      const t = pickPetMountTrait(rules(), 'pet', 'combo')
+      expect(attack).toContainEqual(t)
+    }
+  })
+})
+
 describe('装备侧不回归', () => {
-  it('同一基础六维属性：装备侧走装备公式，宠物侧附加曲线无行（六维只走主要位公式）', () => {
+  it('同一基础六维属性：装备侧走装备公式；宠物侧附加 L1 行走曲线（2026-09-06 拍板，六维基础值入附加曲线）', () => {
     const equipSide = resolveAttrRange(cfg, formula, conv, 'attack', 50, 'xian', 1)
     const petCurveSide = resolveCurveAttrRange(cfg, 'pet_mount', formula, conv, 'attack', 50, 'xian', 0)
     expect(equipSide.source).toBe('formula')
-    expect(petCurveSide.source).toBe('none')
+    // 原「发现 C」守卫（宠物侧曲线无六维行）随附加 L1 行池 = ATK-L1 拍板作废：基础值走第 1 行曲线
+    expect(petCurveSide.source).toBe('curve')
   })
 
   it('装备侧曲线属性的行号仍取 equipment 表（critRate = 第 4 行）', () => {

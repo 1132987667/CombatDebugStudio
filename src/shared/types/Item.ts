@@ -1,7 +1,7 @@
 /**
  * 物品类型枚举
  * 对应 materials.json 中的 type 字段
- * NOTE: 斗战西游物品分类（木材/矿石/金属/玉石/丹药/晶球/灵气/碎片/货币等）为自由字符串，
+ * NOTE: 斗战西游物品分类（木材/矿石/金属/玉石/丹药/强化/灵气/碎片/货币等）为自由字符串，
  *       枚举保留通用二分（material/consumable）供旧消费方兼容，新数据直接使用语义化分类。
  */
 export const ItemType = {
@@ -89,7 +89,7 @@ export interface Item {
   /** 物品名称 */
   name: string
 
-  /** 物品类型（分类自由字符串：material/consumable 或语义化中文分类如 木材/丹药/晶球） */
+  /** 物品类型（分类自由字符串：material/consumable 或语义化中文分类如 木材/丹药/强化） */
   type: string
 
   /** 物品描述 */

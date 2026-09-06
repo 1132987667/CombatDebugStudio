@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "物品主键索引：全部物品的唯一 ID 注册表。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / crys_ 晶球 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 精锻 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣甲 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/glove）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册。装备经 equipment.json legacyIds 映射。",
+  "description": "物品主键索引：全部物品的唯一 ID 注册表。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / ench_ 精锻 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣甲 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/glove）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册。装备经 equipment.json legacyIds 映射。",
   "items": [
     {
       "id": "mat_taomu",
@@ -424,96 +424,6 @@
       "usage": "购买与制作消耗"
     },
     {
-      "id": "crys_001",
-      "name": "一阶灿金晶球",
-      "type": "晶球",
-      "rarity": 1,
-      "source": "武器强化（一阶）",
-      "description": "蕴含金属性灵气的晶球，可用于强化一阶武器。开启后获得异矿",
-      "value": 60,
-      "usage": "强化一阶武器，每级提升攻击力5%"
-    },
-    {
-      "id": "crys_002",
-      "name": "二阶灿金晶球",
-      "type": "晶球",
-      "rarity": 1,
-      "source": "武器强化（二阶）",
-      "description": "蕴含更浓郁金属性灵气的晶球，可用于强化二阶武器。开启后获得异矿",
-      "value": 60,
-      "usage": "强化二阶武器，每级提升攻击力5%"
-    },
-    {
-      "id": "crys_003",
-      "name": "三阶灿金晶球",
-      "type": "晶球",
-      "rarity": 2,
-      "source": "武器强化（三阶）",
-      "description": "蕴含纯粹金属性灵气的晶球，可用于强化三阶武器。开启后获得异矿",
-      "value": 120,
-      "usage": "强化三阶武器，每级提升攻击力5%"
-    },
-    {
-      "id": "crys_004",
-      "name": "一阶清辉晶球",
-      "type": "晶球",
-      "rarity": 1,
-      "source": "衣甲强化（一阶）",
-      "description": "蕴含木属性灵气的晶球，可用于强化一阶衣甲。开启后获得灵水",
-      "value": 60,
-      "usage": "强化一阶衣甲，每级提升防御力5%"
-    },
-    {
-      "id": "crys_005",
-      "name": "二阶清辉晶球",
-      "type": "晶球",
-      "rarity": 1,
-      "source": "衣甲强化（二阶）",
-      "description": "蕴含更浓郁木属性灵气的晶球，可用于强化二阶衣甲。开启后获得灵水",
-      "value": 60,
-      "usage": "强化二阶衣甲，每级提升防御力5%"
-    },
-    {
-      "id": "crys_006",
-      "name": "三阶清辉晶球",
-      "type": "晶球",
-      "rarity": 2,
-      "source": "衣甲强化（三阶）",
-      "description": "蕴含纯粹木属性灵气的晶球，可用于强化三阶衣甲。开启后获得灵水",
-      "value": 120,
-      "usage": "强化三阶衣甲，每级提升防御力5%"
-    },
-    {
-      "id": "crys_007",
-      "name": "一阶玲珑晶球",
-      "type": "晶球",
-      "rarity": 1,
-      "source": "配件强化（一阶）",
-      "description": "蕴含水属性灵气的晶球，可用于强化一阶配件。开启后获得灵气",
-      "value": 60,
-      "usage": "强化一阶配件，每级提升属性加成3%"
-    },
-    {
-      "id": "crys_008",
-      "name": "二阶玲珑晶球",
-      "type": "晶球",
-      "rarity": 1,
-      "source": "配件强化（二阶）",
-      "description": "蕴含更浓郁水属性灵气的晶球，可用于强化二阶配件。开启后获得灵气",
-      "value": 60,
-      "usage": "强化二阶配件，每级提升属性加成3%"
-    },
-    {
-      "id": "crys_009",
-      "name": "三阶玲珑晶球",
-      "type": "晶球",
-      "rarity": 2,
-      "source": "配件强化（三阶）",
-      "description": "蕴含纯粹水属性灵气的晶球，可用于强化三阶配件。开启后获得灵气",
-      "value": 120,
-      "usage": "强化三阶配件，每级提升属性加成3%"
-    },
-    {
       "id": "elix_001",
       "name": "疗伤丹",
       "type": "丹药",
@@ -916,30 +826,6 @@
       "rarity": 5,
       "source": "六耳猕猴首杀",
       "value": 3000
-    },
-    {
-      "id": "mat_yikuang",
-      "name": "异矿",
-      "type": "强化",
-      "rarity": 1,
-      "source": "灿金晶球开启（武器强化）",
-      "value": 60
-    },
-    {
-      "id": "mat_lingshui",
-      "name": "灵水",
-      "type": "强化",
-      "rarity": 1,
-      "source": "玲珑晶球开启（配件强化）",
-      "value": 60
-    },
-    {
-      "id": "mat_lingqi",
-      "name": "灵气·强化",
-      "type": "强化",
-      "rarity": 1,
-      "source": "清辉晶球开启（衣甲强化）",
-      "value": 60
     },
     {
       "id": "star_soul_01",
@@ -1881,66 +1767,6 @@
       "usage": "制造辅助材料，超品概率+5%（二至三阶）"
     },
     {
-      "id": "crys_010",
-      "name": "四阶灿金晶球",
-      "type": "晶球",
-      "rarity": 3,
-      "source": "关卡4-x 掉落",
-      "description": "蕴含浓郁金属性灵气的晶球，强化四阶武器，+9",
-      "value": 200,
-      "usage": "四阶武器强化"
-    },
-    {
-      "id": "crys_011",
-      "name": "五阶灿金晶球",
-      "type": "晶球",
-      "rarity": 4,
-      "source": "关卡5-x 掉落",
-      "description": "蕴含至纯金属性灵气的晶球，强化五阶武器，+12",
-      "value": 400,
-      "usage": "五阶武器强化"
-    },
-    {
-      "id": "crys_012",
-      "name": "四阶清辉晶球",
-      "type": "晶球",
-      "rarity": 3,
-      "source": "关卡4-x 掉落",
-      "description": "蕴含浓郁木属性灵气的晶球，强化四阶衣甲，+9",
-      "value": 200,
-      "usage": "四阶衣甲强化"
-    },
-    {
-      "id": "crys_013",
-      "name": "五阶清辉晶球",
-      "type": "晶球",
-      "rarity": 4,
-      "source": "关卡5-x 掉落",
-      "description": "蕴含至纯木属性灵气的晶球，强化五阶衣甲，+12",
-      "value": 400,
-      "usage": "五阶衣甲强化"
-    },
-    {
-      "id": "crys_014",
-      "name": "四阶玲珑晶球",
-      "type": "晶球",
-      "rarity": 3,
-      "source": "关卡4-x 掉落",
-      "description": "蕴含浓郁水属性灵气的晶球，强化四阶配件，+9",
-      "value": 200,
-      "usage": "四阶饰品强化"
-    },
-    {
-      "id": "crys_015",
-      "name": "五阶玲珑晶球",
-      "type": "晶球",
-      "rarity": 4,
-      "source": "关卡5-x 掉落",
-      "description": "蕴含至纯水属性灵气的晶球，强化五阶配件，+12",
-      "value": 400,
-      "usage": "五阶饰品强化"
-    },
-    {
       "id": "star_up_low",
       "name": "升星石·下",
       "type": "升星",
@@ -1969,6 +1795,16 @@
       "description": "地品→天品装备升星（2→3星）",
       "value": 500,
       "usage": "装备升星"
+    },
+    {
+      "id": "enh_stone",
+      "name": "强化石",
+      "type": "强化",
+      "rarity": 1,
+      "source": "全关卡掉落 / 分解产出",
+      "value": 60,
+      "description": "蕴含精纯灵力的强化石，六部位通用，用于装备强化",
+      "usage": "强化消耗：+1~5 每次1个 / +6~10 每次2个 / +11~15 每次3个"
     },
     {
       "id": "wash_stone",

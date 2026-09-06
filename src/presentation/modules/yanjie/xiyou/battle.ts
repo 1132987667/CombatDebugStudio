@@ -302,17 +302,20 @@ export function equipBonuses(
  */
 export function equippedPlayerSkills(): EnemySkills {
   const out: EnemySkills = { small: [], passive: [], ultimate: [] }
+  // 组合被动：映射值为逗号分隔的多条配置 id，逐个展开注入
+  const expand = (skillId: string): string[] =>
+    skillId.split(',').map((s) => s.trim()).filter(Boolean)
   for (const id of equippedSkills.passive) {
     const skillId = skillNodeMap.get(id)?.skillId
-    if (skillId) out.passive!.push(skillId)
+    if (skillId) out.passive!.push(...expand(skillId))
   }
   for (const id of equippedSkills.small) {
     const skillId = skillNodeMap.get(id)?.skillId
-    if (skillId) out.small!.push(skillId)
+    if (skillId) out.small!.push(...expand(skillId))
   }
   if (equippedSkills.ultimate) {
     const skillId = skillNodeMap.get(equippedSkills.ultimate)?.skillId
-    if (skillId) out.ultimate!.push(skillId)
+    if (skillId) out.ultimate!.push(...expand(skillId))
   }
   return out
 }

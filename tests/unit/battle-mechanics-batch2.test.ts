@@ -433,7 +433,7 @@ describe('BattleExecutor 溅射（splash 属性）', () => {
     expect(adjacent.currentHealth).toBe(500)
   })
 
-  it('MAX_COMBO_SEGMENTS 常量为 4（连击引擎上限）', () => {
-    expect(BATTLE_CONSTANTS.MAX_COMBO_SEGMENTS).toBe(4)
+  it('MAX_COMBO_SEGMENTS 常量为 6（1 段普攻 + 5 段连击上限）', () => {
+    expect(BATTLE_CONSTANTS.MAX_COMBO_SEGMENTS).toBe(6)
   })
 })

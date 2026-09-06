@@ -127,14 +127,14 @@ describe('createDebugCategories', () => {
     expect(imp?.input && !Array.isArray(imp.input)).toBe(true)
   })
 
-  it('拓展功能：词缀注入 / 二阶材料 / 晶球 / 品质锁定 / 敌人词缀 / 掉落锁定 / 刷关模拟均已定义', () => {
+  it('拓展功能：词缀注入 / 二阶材料 / 强化石 / 品质锁定 / 敌人词缀 / 掉落锁定 / 刷关模拟均已定义', () => {
     const cats = createDebugCategories(makeEnv())
     const ids = cats.flatMap((c) => c.groups.flatMap((g) => g.actions.map((a) => a.id)))
     for (const id of [
       'gear_affix_inject',
       'gear_craft_quality',
       'pack_mat_all_t2',
-      'pack_orb_all',
+      'pack_enh_stone',
       'econ_enemy_affix',
       'econ_enemy_affix_clear',
       'econ_force_drop',

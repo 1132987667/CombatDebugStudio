@@ -162,7 +162,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_001",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -261,7 +261,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_007",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -441,7 +441,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_004",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -540,7 +540,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_007",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -700,7 +700,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_001",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -789,7 +789,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_004",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -959,7 +959,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_002",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -1048,7 +1048,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_005",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -1223,7 +1223,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_008",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -1317,7 +1317,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_002",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -1487,7 +1487,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -1581,7 +1581,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_006",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -1746,7 +1746,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_009",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -1840,7 +1840,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -2020,7 +2020,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_006",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -2119,7 +2119,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_009",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -2299,7 +2299,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -2398,7 +2398,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_006",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -2516,7 +2516,7 @@
         "chance": 0.75
       },
       {
-        "itemId": "crys_001",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.25
       }
@@ -2547,7 +2547,7 @@
         "chance": 0.7
       },
       {
-        "itemId": "crys_004",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       }
@@ -2578,7 +2578,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_007",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }
@@ -2609,7 +2609,7 @@
         "chance": 0.7
       },
       {
-        "itemId": "crys_001",
+        "itemId": "enh_stone",
         "quantity": 2,
         "chance": 0.3
       }
@@ -2643,7 +2643,7 @@
         "chance": 0.65
       },
       {
-        "itemId": "crys_004",
+        "itemId": "enh_stone",
         "quantity": 2,
         "chance": 0.35
       }
@@ -2677,7 +2677,7 @@
         "chance": 0.6
       },
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.05
       }

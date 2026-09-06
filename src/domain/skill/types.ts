@@ -120,6 +120,7 @@ export const TargetStrategy = {
   RANDOM: 'random', // 随机
   LOWEST_HP: 'lowest_hp', // 最低血量
   HIGHEST_HP: 'highest_hp', // 最高血量
+  LOWEST_SPEED: 'lowest_speed', // 最低速度
   FRONT: 'front', // 前排
   BACK: 'back', // 后排
   ADJACENT: 'adjacent', // 相邻
@@ -642,6 +643,20 @@ export interface CustomStepParams {
   trueDamagePerStack?: number
   /** liejia_detonate：真实伤害段数上限（默认 8） */
   maxSegments?: number
+  /** fengshi_detonate：每层风痕追加真实伤害系数（×攻击力，默认 0；狂风绝息「风绝」用） */
+  fenghenTrueDamagePerStack?: number
+  /** fengshi_detonate：风痕真实伤害段数上限（默认 8） */
+  fenghenMaxSegments?: number
+  /** fengsuo_bounce：弹射伤害系数（×攻击力，默认 0.6） */
+  damageRatio?: number
+  /** fengsuo_bounce：基础弹射概率（默认 0.2） */
+  baseProbability?: number
+  /** fengsuo_bounce：速度差单位（点，默认 10） */
+  speedUnit?: number
+  /** fengsuo_bounce：每单位速度差的概率加成（默认 0.05） */
+  speedBonusPerUnit?: number
+  /** fengsuo_bounce：概率上限（默认 0.4） */
+  maxProbability?: number
 }
 
 /** 步骤参数：按步骤类型判别，业务参数全部显式类型化 */

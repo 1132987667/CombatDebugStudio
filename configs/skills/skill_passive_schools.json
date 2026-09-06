@@ -76,6 +76,82 @@
     ]
   },
   {
+    "id": "school_lianzhan_liejia_burst",
+    "name": "裂甲刻印·碎甲爆发",
+    "description": "裂甲满 5 层后的下一次普攻命中：追加 75% 攻击力伤害与 2 段 50% 连击，消耗全部裂甲并使目标进入碎甲（2 回合）；追加 60% 攻击真实伤害，20% 概率使目标减速",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "condition": "target_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_liejia",
+      "min": 5
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.75
+            }
+          ]
+        }
+      },
+      {
+        "type": "deal_damage",
+        "damageCategory": "physical",
+        "repeat": 2,
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.5
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_suijia",
+        "stacks": 1
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_liejia"
+      },
+      {
+        "type": "deal_damage",
+        "damageCategory": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.6
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_speed_down",
+        "stacks": 1,
+        "probability": 0.2
+      }
+    ],
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
     "id": "school_lianzhan_fengyi_apply",
     "name": "连击风暴·风意",
     "description": "每次触发连击后，自身获得 1 层【风意】（每层连击率 +5%、连击伤害系数 +5%，上限 5 层）",
@@ -107,7 +183,7 @@
   {
     "id": "school_fengsuo_bounce",
     "name": "风锁连环·弹射",
-    "description": "连击触发时对随机敌人弹射 60% 攻击伤害（基础 20% 概率，速度加成待速度条件落地），命中施加 1 层风锁",
+    "description": "连击触发时对随机敌人弹射 60% 攻击伤害（基础 20%，速度每高 10 点 +5%、上限 40%；天网 +20% 概率与 +30% 伤害；风逐翻倍并消耗）。命中施加 1 层风锁",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -117,29 +193,21 @@
     },
     "steps": [
       {
-        "type": "deal_damage",
-        "damageCategory": "physical",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "attribute": "attack",
-              "ratio": 0.6
-            }
-          ]
+        "type": "custom",
+        "parameters": {
+          "customType": "fengsuo_bounce",
+          "damageRatio": 0.6,
+          "baseProbability": 0.2,
+          "speedUnit": 10,
+          "speedBonusPerUnit": 0.05,
+          "maxProbability": 0.4
         }
-      },
-      {
-        "type": "apply_buff",
-        "buffId": "buff_fengsuo",
-        "stacks": 1
       }
     ],
     "condition": "combo_segment_min",
     "conditionParams": {
       "min": 2
     },
-    "triggerProbability": 0.2,
     "triggerTimes": [
       "on_hit"
     ],
@@ -210,7 +278,7 @@
   {
     "id": "school_fenghen_jiban_apply",
     "name": "风痕羁绊·风缚",
-    "description": "每次攻击 30% 概率使目标获得风缚：速度 -10%、受到的伤害 +5%，1 回合",
+    "description": "每次攻击速度低于自身的目标时，30% 概率使目标获得风缚：速度 -10%、受到的伤害 +5%，1 回合",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -227,7 +295,11 @@
     ],
     "passiveCategory": [
       "trigger"
-    ]
+    ],
+    "condition": "target_speed_lower",
+    "conditionParams": {
+      "gap": 0
+    }
   },
   {
     "id": "school_fenghen_jiban_heal",
@@ -291,6 +363,40 @@
     ],
     "passiveCategory": [
       "trigger"
+    ]
+  },
+  {
+    "id": "school_yufeng_attack",
+    "name": "驭风之力·迎风",
+    "description": "存在速度高于自身的敌人时，自身攻击 +5%（幂等生效；「每个更快敌人 +5%、上限 15%」的多目标计数待收窄）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "condition": "exists_faster_enemy",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "yufeng_atk5",
+            "targetAttribute": "attack",
+            "type": "ADDITIVE",
+            "value": 5,
+            "sourceName": "驭风之力"
+          }
+        ]
+      }
+    ],
+    "triggerTimes": [
+      "turn_start",
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "attribute"
     ]
   },
   {

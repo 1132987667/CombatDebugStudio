@@ -220,7 +220,7 @@
               <td class="fs-td-strong">{{ i.name }}</td>
               <td>{{ pmCategoryLabel(i.category) }}</td>
               <td>{{ pmWeightText(i) }}</td>
-              <td class="fs-cell-dim">{{ i.trait }}</td>
+              <td class="fs-cell-dim">{{ pmTraitText(i) }}</td>
             </tr>
             <tr v-if="!pmIndividuals.length"><td colspan="4" class="fs-cell-dim">configs 个体表为空</td></tr>
           </tbody>
@@ -256,8 +256,17 @@
           <div class="fs-ov-section">
             <div class="fs-block-title">特性（品质 {{ pmTraitRow?.minQuality ?? 3 }} 起投放）</div>
             <template v-if="pmTraitRow?.included">
-              <div class="fs-form-hint">{{ pmOverview.individual.trait }}</div>
-              <div class="fs-ov-pool-gap">机制条，不参与数值反推</div>
+              <template v-if="pmRolledTrait">
+                <div class="fs-form-hint">【{{ pmRolledTrait.name }}】{{ pmRolledTrait.desc }}</div>
+                <div class="fs-ov-pool-gap">
+                  {{ pmTraitPoolHint }}
+                  <Button variant="ghost" size="tiny" @click="pmRerollTrait">重抽</Button>
+                </div>
+              </template>
+              <template v-else>
+                <div class="fs-form-hint">{{ pmOverview.individual.trait ?? '未配置' }}</div>
+                <div class="fs-ov-pool-gap">{{ pmTraitPoolHint }}</div>
+              </template>
             </template>
             <div v-else class="fs-ov-pool-gap">当前品质 {{ pmOverview.quality }} 不投放（品质 {{ pmTraitRow?.minQuality ?? 3 }} 起）</div>
           </div>
@@ -678,16 +687,17 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { AffixRuleConfig, EquipFormulaConfig, PetMountIndividual } from '@/domain/fengshen/types'
+import type { AffixRuleConfig, EquipFormulaConfig, PetMountIndividual, PetMountTraitEntry } from '@/domain/fengshen/types'
 import { affixRuleDefaults, mountIndividuals, petIndividuals } from '@/domain/fengshen/affix-rule-defaults'
 import {
   buildEquipmentOverview,
   buildPetMountOverview,
+  pickPetMountTrait,
   QUALITY_LABELS,
   type CalcStep,
   type EquipmentOverview,
@@ -1053,6 +1063,47 @@ function onPmSystemChange(system: 'pet' | 'mount'): void {
 function pmWeightText(i: PetMountIndividual): string {
   return Object.entries(i.weights).map(([k, w]) => `${PM_WEIGHT_LABELS[k] ?? k}${w}`).join(' / ')
 }
+
+// ── 特性随机获取（2026-09-06 口径变更：个体固定 trait → 流派特性池随机一种）──
+
+/** 抽取缓存（个体 id → 结果）：惰性抽一次后保持稳定，切换等级/品质等轴不跳变；重抽按钮显式刷新 */
+const pmTraitRolls = reactive(new Map<string, PetMountTraitEntry | null>())
+
+/** 配置整体替换（载入存档 / 载入定稿，resetInto 换引用）后池内容可能变化，清空缓存保证读到最新池 */
+watch(() => cfg.pet_mount_rules?.trait_pools, () => pmTraitRolls.clear())
+
+function pmTraitOf(i: PetMountIndividual): PetMountTraitEntry | null {
+  if (!pmTraitRolls.has(i.id)) {
+    const rules = cfg.pet_mount_rules
+    pmTraitRolls.set(i.id, rules ? pickPetMountTrait(rules, pmSystem.value, i.category) : null)
+  }
+  return pmTraitRolls.get(i.id) ?? null
+}
+
+function pmRerollTrait(): void {
+  const i = pmIndividual.value
+  if (!i) return
+  pmTraitRolls.delete(i.id)
+  pmTraitOf(i)
+}
+
+/** 当前选中个体抽到的特性（特性分区渲染用） */
+const pmRolledTrait = computed(() => (pmIndividual.value ? pmTraitOf(pmIndividual.value) : null))
+
+/** 一览表特性列：池化个体显示抽到的特性，未池化流派回落固定文本，两者皆无则显式标缺 */
+function pmTraitText(i: PetMountIndividual): string {
+  const rolled = pmTraitOf(i)
+  if (rolled) return `【${rolled.name}】${rolled.desc}`
+  return i.trait ?? '未配置特性池'
+}
+
+/** 特性分区的来源说明（缺口显式化：无池无固定文本也明说） */
+const pmTraitPoolHint = computed(() => {
+  const i = pmIndividual.value
+  if (!i) return ''
+  if (pmRolledTrait.value) return `从${pmCategoryLabel(i.category)}流特性池（${pmSystem.value === 'pet' ? '攻击' : '防御'}组）随机获取 · 不参与数值反推`
+  return i.trait ? '固定特性（该流派尚未配置特性池）· 不参与数值反推' : '该流派尚未配置特性池，个体也无固定特性'
+})
 
 const pmQualityOptions = computed<TSelectOption[]>(() =>
   QUALITY_LABELS.map((label, i) => ({ value: i + 1, label: `${label}（品质 ${i + 1}）` }))

@@ -164,7 +164,7 @@ tests/               # 测试（unit / e2e / factories / fixtures / mocks）
 ## 当前状态
 
 - 技能系统：已完成 P0/P1 批次重构（差异计算器、步骤类型、战斗文本显示）
-- 日志系统：三层架构（LogCollector → LogParser → LogRenderer）已落地
+- 日志系统：已落地（`BattleLogManager` 统一收集器 + `IDebugTracePort`/`TraceEventCollector` 结构化追踪体系；规范见 documents/需求文档/调试日志改造.md）
 - Buff 系统：响应式链路（事件桥接 + Store 层 Proxy）已修复
 - 属性系统：审计 + 设计文档已归档
 - 领域层反向依赖：已修复（eventBus 迁入 infrastructure/adapters/event/）

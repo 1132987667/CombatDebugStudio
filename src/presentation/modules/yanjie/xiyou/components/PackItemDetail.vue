@@ -58,7 +58,7 @@ const askDiscard = ref(false)
 const item = computed(() => (props.itemId ? pack.catalogById(props.itemId) : undefined))
 const eff = computed(() => item.value?.effects?.[0])
 
-/** 战斗外可即时生效（永久丹药[已实现] / 晶球） */
+/** 战斗外可即时生效（永久丹药[已实现]） */
 const canUse = computed(() => (props.itemId ? pack.canUseOutOfBattle(props.itemId) : false))
 
 /** 恢复/增益类丹药（有 effects）：战斗外禁用，仅快捷栏战斗中可用 */

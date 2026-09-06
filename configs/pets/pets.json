@@ -4,40 +4,35 @@
     "name": "紫电骅",
     "scene": 1,
     "category": "combo",
-    "weights": { "speed": 1, "attack": 4, "hit": 2 },
-    "trait": "连击时，每段连击有 30% 概率使目标防御 -3%，持续 1 回合（可叠 2 层）"
+    "weights": { "speed": 1, "attack": 4, "hit": 2 }
   },
   {
     "id": "pet_02",
     "name": "赤羽凤",
     "scene": 2,
     "category": "combo",
-    "weights": { "speed": 1, "attack": 4, "hit": 2 },
-    "trait": "每次触发连击，自身攻击 +5%，持续 1 回合（可叠 2 层）"
+    "weights": { "speed": 1, "attack": 4, "hit": 2 }
   },
   {
     "id": "pet_03",
     "name": "金铃鹿",
     "scene": 3,
     "category": "combo",
-    "weights": { "speed": 4, "attack": 2, "hit": 1 },
-    "trait": "战斗开始时速度 +5，且首次连击率 +10%"
+    "weights": { "speed": 4, "attack": 2, "hit": 1 }
   },
   {
     "id": "pet_04",
     "name": "风鸣鸟",
     "scene": 4,
     "category": "combo",
-    "weights": { "speed": 4, "attack": 2, "hit": 1 },
-    "trait": "连击时额外造成攻击力 20% 的固定伤害"
+    "weights": { "speed": 4, "attack": 2, "hit": 1 }
   },
   {
     "id": "pet_05",
     "name": "竹里猱",
     "scene": 5,
     "category": "combo",
-    "weights": { "speed": 4, "attack": 2, "hit": 1 },
-    "trait": "连击段数达到 3 段时，下次普攻伤害 +30%"
+    "weights": { "speed": 4, "attack": 2, "hit": 1 }
   },
   {
     "id": "pet_06",

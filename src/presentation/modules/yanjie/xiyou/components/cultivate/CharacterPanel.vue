@@ -37,17 +37,6 @@
       </div>
 
       <div class="xy-attr-group">
-        <p class="xy-attr-sub">属性加成</p>
-        <div class="xy-attr-grid" @mouseleave="hideAttrTooltip">
-          <div class="xy-attr-item" v-for="item in bonusAttrs" :key="item.code"
-            @mouseenter="showAttrTooltip($event, item.code, attrVal(item.code))" @mousemove="updateTooltipPosition">
-            <span class="xy-attr-label">{{ item.displayName }}</span>
-            <span class="xy-attr-value" :class="{ 'xy-attr-value--pct': item.isPercentage }">{{ attrText(item) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="xy-attr-group">
         <button type="button" class="xy-attr-sub xy-attr-sub--toggle" :aria-expanded="advancedExpanded"
           @click="advancedExpanded = !advancedExpanded">
           <span>进阶属性</span>
@@ -111,16 +100,17 @@ import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
-import { getAttributeDisplayConfig, ATTRIBUTE_DISPLAY_CONFIG } from '@/presentation/config/attributeDisplay'
+import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
+import { equipBonuses } from '../../battle'
 import { qualityClass, qualityOf } from '../../quality'
 
 defineEmits<{ goEquip: [] }>()
 
 const notification = useNotificationStore()
 
-const { player, statPoints, playerAttributes } = storeToRefs(usePlayerStore())
+const { player, statPoints, playerAttributes, battleSnapshot } = storeToRefs(usePlayerStore())
 
 const expPct = computed(() => (player.value.exp / player.value.expNeed) * 100)
 
@@ -142,10 +132,6 @@ const EXCLUDED_CORE = new Set([
   ATTRIBUTE_CODE.maxHealth,
   ATTRIBUTE_CODE.maxEnergy,
   ATTRIBUTE_CODE.shield,
-  ATTRIBUTE_CODE.healthBonus,
-  ATTRIBUTE_CODE.attackBonus,
-  ATTRIBUTE_CODE.defenseBonus,
-  ATTRIBUTE_CODE.speedBonus,
 ])
 
 const coreAttrs = computed<AttrEntry[]>(() =>
@@ -158,24 +144,15 @@ const coreAttrs = computed<AttrEntry[]>(() =>
     .map(([code, meta]) => toEntry(code as ATTRIBUTE_CODE, meta)),
 )
 
-const bonusAttrs = computed<AttrEntry[]>(() =>
-  [
-    ATTRIBUTE_CODE.healthBonus,
-    ATTRIBUTE_CODE.attackBonus,
-    ATTRIBUTE_CODE.defenseBonus,
-    ATTRIBUTE_CODE.speedBonus,
-  ]
-    .filter((code) => AttributeMetaMap[code])
-    .map((code) => toEntry(code, AttributeMetaMap[code])),
-)
-
 const advancedGroups = computed<Record<string, AttrEntry[]>>(() => {
   const groups: Record<string, AttrEntry[]> = {}
   for (const [code, meta] of Object.entries(AttributeMetaMap)) {
     const display = getAttributeDisplayConfig(code)
-    if (display.displayTier !== 'advanced') continue
-    // NOTE: 仅展示显式配置的进阶项（未配置的默认归 utility，多为 0/1 抗性噪音，不进玩家面板）
-    if (!(code in ATTRIBUTE_DISPLAY_CONFIG)) continue
+    // NOTE: 未配置项（displayTier 默认 advanced）对齐唤灵台一并展示——流派增量/装备词缀可携带
+    //       进阶属性（如 armorBreak/lifestealRate），不再当 0 值噪音隐藏；situational（五行抗性、
+    //       情境增伤）并入折叠区按组展示；hidden（currentHealth/shield 等运行时资源）不进面板。
+    //       分组轴为属性族（*Bonus/系数/最终值与基础属性同族），非计算层
+    if (display.displayTier !== 'advanced' && display.displayTier !== 'situational') continue
     const entry = toEntry(code as ATTRIBUTE_CODE, meta)
     const list = groups[display.group] ?? (groups[display.group] = [])
     list.push(entry)
@@ -184,11 +161,18 @@ const advancedGroups = computed<Record<string, AttrEntry[]>>(() => {
 })
 
 const groupLabels: Record<string, string> = {
-  defense: '防御',
+  vitality: '生命',
   offense: '攻击',
-  elemental: '元素',
+  defense: '防御',
+  speed: '速度',
+  crit: '暴击',
+  accuracy: '命中闪避',
+  mechanic: '机制',
   control: '控制',
-  utility: '辅助',
+  elemental: '元素',
+  support: '辅助',
+  energy: '能量',
+  utility: '其他',
 }
 
 const advancedExpanded = ref(false)
@@ -196,13 +180,19 @@ const advancedExpanded = ref(false)
 const advancedCount = computed(() =>
   Object.values(advancedGroups.value).reduce((sum, list) => sum + list.length, 0),
 )
-const attrTotal = computed(() => 2 + coreAttrs.value.length + bonusAttrs.value.length + advancedCount.value)
+// 属性加成（*Bonus）已通过展示配置归入进阶区属性族分组，此处 advancedCount 已含
+const attrTotal = computed(() => 2 + coreAttrs.value.length + advancedCount.value)
 
 const hpText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentHealth)}/${attrVal(ATTRIBUTE_CODE.maxHealth)}`)
 const energyText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentEnergy)}/${attrVal(ATTRIBUTE_CODE.maxEnergy)}`)
 
+// NOTE: 装备加成与战斗主角同口径（BattleZen.initBattle / BattleRoster 均 equipBonuses(equippedStats, battleSnapshot)），
+//       面板数值 = 实时快照（基础+加点+流派）+ 已穿戴装备词缀增量，否则面板与战斗数值不同源
+const pack = usePackStore()
+const gearBonus = computed(() => equipBonuses(pack.equippedStats(), battleSnapshot.value))
+
 function attrVal(code: ATTRIBUTE_CODE): number {
-  return playerAttributes.value[code] ?? getAttrDv(code)
+  return (playerAttributes.value[code] ?? getAttrDv(code)) + (gearBonus.value[code] ?? 0)
 }
 
 function attrText(item: AttrEntry): string {
@@ -272,8 +262,6 @@ function resetStats() {
     statPoints.value[s.key] = 0
   })
 }
-
-const pack = usePackStore()
 
 // NOTE: 装备总览 = 真实穿戴（pack.equipped），与装备/强化/升星面板同源，不再读静态 gearSlots
 interface EquipOverviewRow {

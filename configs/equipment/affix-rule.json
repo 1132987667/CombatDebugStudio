@@ -57,7 +57,7 @@
       { "attributes": ["splash"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } }
     ],
     "pet_mount": [
-      { "attributes": ["attackBonus", "hitBonus", "speedBonus", "healthBonus", "defenseBonus", "dodgeBonus"], "min": { "base": 6, "perLevel": 0.16, "full": 14 }, "max": { "base": 15, "perLevel": 0.3, "full": 30 } },
+      { "attributes": ["attack", "hitValue", "speed", "maxHealth", "defense", "dodgeValue", "attackBonus", "hitBonus", "speedBonus", "healthBonus", "defenseBonus", "dodgeBonus"], "min": { "base": 6, "perLevel": 0.16, "full": 14 }, "max": { "base": 15, "perLevel": 0.3, "full": 30 } },
       { "attributes": ["attackCoefficient", "hitCoefficient", "speedCoefficient", "healthCoefficient", "defenseCoefficient", "dodgeCoefficient"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
       { "attributes": ["hit", "dodge", "lifestealRate", "effectHit", "controlSuccessRate"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
       { "attributes": ["counterRate", "trueDamageRate", "critRate", "reflectDamagePercent", "critResist"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
@@ -339,10 +339,38 @@
       { "id": "main", "nameAtk": "主要属性", "nameDef": "主要属性", "minQuality": 1 },
       { "id": "trait", "nameAtk": "特性", "nameDef": "特性", "minQuality": 3 },
       { "id": "side_all", "nameAtk": "ATK-ALL", "nameDef": "DEF-ALL", "minQuality": 4, "pool": { "ATK": ["ATK-ALL"], "DEF": ["DEF-ALL"] } },
-      { "id": "l1", "nameAtk": "ATK-L1", "nameDef": "DEF-L1", "minQuality": 1, "pool": { "ATK": ["ATK-L2"], "DEF": ["DEF-L2"] } },
+      { "id": "l1", "nameAtk": "ATK-L1", "nameDef": "DEF-L1", "minQuality": 1, "pool": { "ATK": ["ATK-L1"], "DEF": ["DEF-L1"] } },
       { "id": "l3c", "nameAtk": "L3-通用", "nameDef": "L4-通用", "minQuality": 2, "pool": { "ATK": ["L3-通用"], "DEF": ["L4-通用"] } },
       { "id": "l3", "nameAtk": "ATK-L3", "nameDef": "DEF-L3", "minQuality": 3, "pool": { "ATK": ["ATK-L3"], "DEF": ["DEF-L3"] } },
       { "id": "all", "nameAtk": "ATK-ALL", "nameDef": "DEF-ALL", "minQuality": 4, "pool": { "ATK": ["ATK-ALL"], "DEF": ["DEF-ALL"] } }
-    ]
+    ],
+    "trait_pools": {
+      "combo": {
+        "attack": [
+          { "name": "斩魂", "desc": "造成的伤害会额外扣除目标1%最大气血（对Boss减半）" },
+          { "name": "风之怒", "desc": "每次连击未暴击时，自身获得 1 层【风怒】（上限 5 层），每层使暴击率 +3%。风怒满 5 层时，下一次连击必定暴击，且暴击伤害 +30%，触发后风怒清零。暴击后的下一段连击伤害 +10%。" },
+          { "name": "裂风之刃", "desc": "每段连击命中时，有 15% 概率追加一段 40% 攻击的风刃伤害（每回合上限 3 段）。风刃命中速度低于自身的目标时，伤害翻倍。风刃暴击时，目标速度 -5%（1 回合，可叠 2 层）。" },
+          { "name": "必中之意", "desc": "连续命中同一目标3次后，第4次必定暴击且暴伤+30%" },
+          { "name": "连势追击", "desc": "连击段数≥3时，最后一段伤害翻倍" },
+          { "name": "战意高涨", "desc": "对速度低于自身目标伤害+20%，且命中后目标无法闪避（1回合）" },
+          { "name": "影杀标记", "desc": "每回合攻击后伤害系数+3%，最多叠10层" },
+          { "name": "蚀甲深化", "desc": "攻击命中后，目标防御-2%（叠5层，持续2回合）" },
+          { "name": "风怒连斩", "desc": "连击达4段时，追加1次无视防御的50%真伤攻击" },
+          { "name": "凝锋", "desc": "每次普攻命中，为自己增加标记:锋煞，每层标记伤害加成+1%" }
+        ],
+        "defense": [
+          { "name": "灵息", "desc": "受击后能量+2，闪避后能量+3（每回合上限+5）" },
+          { "name": "连击余韵", "desc": "战斗开始时，消耗一层风势来获得10%最大气血护盾" },
+          { "name": "风之能", "desc": "每触发 1 段连击，有 30% 概率获得 1 层【风能】（上限 4 层），每层使能量获取效率 +5%。风能满 4 层时，消耗全部风能：立即回复 10 点能量，并使下一个技能伤害 +15%。" },
+          { "name": "疾影步", "desc": "速度高于攻击者时，闪避率+10%" },
+          { "name": "先手之盾", "desc": "本回合最先行动时，获得5%最大气血护盾" },
+          { "name": "疾风之蹄", "desc": "速度高于攻击者时，闪避率+8%" },
+          { "name": "风之识破", "desc": "速度高于攻击者时，闪避率+10%" },
+          { "name": "风之破绽", "desc": "命中同一目标3次后，第4次必定暴击且暴伤+25%" },
+          { "name": "风之守护", "desc": "每触发 1 段连击，获得 1 层【风护】（上限 5 层），每层使自身受到的下一次伤害 -4%。风护满 5 层时，消耗全部风护获得最大气血 8% 的护盾。" },
+          { "name": "连击回能", "desc": "每次连击判定成功能量+3；连击段数≥4时额外+5" }
+        ]
+      }
+    }
   }
 }

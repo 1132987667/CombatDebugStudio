@@ -1926,7 +1926,7 @@
         "probability": 0.4
       },
       {
-        "itemId": "crys_004",
+        "itemId": "enh_stone",
         "probability": 0.3
       },
       {
@@ -2812,7 +2812,7 @@
         "probability": 0.3
       },
       {
-        "itemId": "crys_005",
+        "itemId": "enh_stone",
         "probability": 0.3
       }
     ],

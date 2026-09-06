@@ -201,25 +201,6 @@ const PERM_PILL_EFFECTS: Record<string, { attrs: Array<{ attr: NumericPlayerKey;
   ], label: '全属性' },
 }
 
-/** 晶球开启产出（crys_* → 强化材料 mat_enh_*） */
-const ORB_DROPS: Record<string, string[]> = {
-  crys_001: ['mat_yikuang'],
-  crys_002: ['mat_yikuang'],
-  crys_003: ['mat_yikuang'],
-  crys_004: ['mat_lingqi'],
-  crys_005: ['mat_lingqi'],
-  crys_006: ['mat_lingqi'],
-  crys_007: ['mat_lingshui'],
-  crys_008: ['mat_lingshui'],
-  crys_009: ['mat_lingshui'],
-  crys_010: ['mat_yikuang'],
-  crys_011: ['mat_yikuang'],
-  crys_012: ['mat_lingqi'],
-  crys_013: ['mat_lingqi'],
-  crys_014: ['mat_lingshui'],
-  crys_015: ['mat_lingshui'],
-}
-
 /** 悟道丹物品 id（items.json；服用 +1 技能点，全存档最多 10 颗，需求 §2.1.2） */
 const WUDAO_PILL_ID = 'mat_wudao_dan'
 
@@ -576,11 +557,7 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast('已达强化上限')
       return false
     }
-    const mat = enhanceMaterialOf(slot)
-    if (!mat) {
-      notification.toast('该部位暂不支持强化')
-      return false
-    }
+    const mat = enhanceMaterialOf(inst.enhance)
     if ((inventory.value[mat.itemId] ?? 0) < mat.count) {
       notification.toast(`强化材料不足（需要「${mat.name}」×${mat.count}）`, 'warning')
       return false
@@ -701,6 +678,15 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast('请先选择要操作的词条', 'warning')
       return false
     }
+    const matId = WASH_MATERIALS[mode]
+    if ((inventory.value[matId] ?? 0) < 1) {
+      notification.toast(`洗练材料不足（需要「${WASH_MATERIAL_NAMES[mode]}」×1）`, 'warning')
+      return false
+    }
+    if (currency.copper < WASH_COST_GOLD) {
+      notification.toast(`铜钱不足（需要 ${WASH_COST_GOLD}）`, 'warning')
+      return false
+    }
     const keyOf = (a: GearAffix): string => `${a.attribute}:${a.modifierType}`
     // 先 roll（纯计算，不消耗）——池耗尽直接拒绝
     let next: GearAffix[]
@@ -729,7 +715,6 @@ export const usePackStore = defineStore('pack', () => {
       }
     }
     // roll 成功后扣消耗
-    const matId = WASH_MATERIALS[mode]
     inventory.value[matId] = (inventory.value[matId] ?? 0) - 1
     if (inventory.value[matId]! <= 0) delete inventory.value[matId]
     currency.copper -= WASH_COST_GOLD
@@ -1176,7 +1161,7 @@ export const usePackStore = defineStore('pack', () => {
 
   // ════════════ 战斗外使用 ════════════
 
-  /** 战斗外使用：悟道丹加技能点、永久丹药提升属性、晶球开启产出；其余（heal/energy/buff 丹药）提示仅战斗中可用 */
+  /** 战斗外使用：悟道丹加技能点、永久丹药提升属性；其余（heal/energy/buff 丹药）提示仅战斗中可用 */
   function useItem(itemId: string): boolean {
     const item = catalogById(itemId)
     const count = countOf(itemId)
@@ -1220,35 +1205,18 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
 
-    if (item.type === '晶球') {
-      const got = openOrb(itemId)
-      if (got) {
-        removeItem(itemId, 1)
-        addItem(got, 1)
-        notification.toast(`开启「${item.name}」，获得「${catalogById(got)?.name}」×1`, 'success')
-        return true
-      }
-    }
-
     notification.toast('该物品仅可在战斗中作为消耗品使用')
     return false
   }
 
   /** 战斗外可即时生效（有实现）：
    *  - 悟道丹：服用 +1 技能点
-   *  - 晶球：开启产出
    *  - 永久丹药：仅已在 PERM_PILL_EFFECTS 中实现者（洗髓丹等未实现者不显示使用） */
   function canUseOutOfBattle(itemId: string): boolean {
     const item = catalogById(itemId)
     if (!item) return false
     if (itemId === WUDAO_PILL_ID) return true
-    if (item.type === '晶球') return true
     return item.type === '永久丹药' && !!PERM_PILL_EFFECTS[itemId]
-  }
-
-  function openOrb(itemId: string): string | null {
-    const pool = ORB_DROPS[itemId]
-    return pool?.[Math.floor(Math.random() * pool.length)] ?? null
   }
 
   /**

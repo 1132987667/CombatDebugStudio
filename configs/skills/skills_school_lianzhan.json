@@ -1,0 +1,371 @@
+[
+  {
+    "id": "skill_school_fufengbian",
+    "name": "缚风鞭",
+    "description": "对单体造成 100% 攻击伤害，目标速度 -10 持续 2 回合；50% 概率附加 1 层风锁（速度低于自身时必定附加——速度条件待落地）",
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1.0
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fufeng_slow",
+        "stacks": 1
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengsuo",
+        "stacks": 1,
+        "probability": 0.5
+      }
+    ],
+    "energyCost": 50,
+    "skillType": "small"
+  },
+  {
+    "id": "skill_school_fengliantanshe",
+    "name": "风链弹射",
+    "description": "对单体造成 110% 攻击伤害并必定对随机敌人弹射一段 80% 攻击伤害，弹射命中后自身速度 +5（1 回合，可叠 2 层）；速度最低目标加成与二次弹射待速度条件落地",
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1.1
+            }
+          ]
+        }
+      },
+      {
+        "type": "deal_damage",
+        "damageCategory": "physical",
+        "targetConfig": {
+          "faction": "enemy",
+          "strategy": "random"
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.8
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_speed_up5",
+        "stacks": 1,
+        "targetConfig": {
+          "faction": "self"
+        }
+      }
+    ],
+    "energyCost": 70,
+    "skillType": "small"
+  },
+  {
+    "id": "skill_school_fengsuotianwang",
+    "name": "风锁天网",
+    "description": "对全体敌人造成 150% 攻击伤害，每个目标获得 1 层风锁；释放后获得【天网】2 回合（弹射强化待收窄）。每场战斗限 1 次（以长冷却近似）",
+    "cooldown": 99,
+    "maxUses": 1,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1.5
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengsuo",
+        "stacks": 1
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_tianwang",
+        "stacks": 1,
+        "targetConfig": {
+          "faction": "self"
+        }
+      }
+    ],
+    "energyCost": 150,
+    "skillType": "ultimate"
+  },
+  {
+    "id": "skill_school_xunfengji",
+    "name": "迅风击",
+    "description": "对单体造成 130% 攻击伤害（普攻判定），并为目标叠加 1 层风势；目标已有风势 ≥4 层时的额外伤害与追加连击段待条件步骤落地",
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1.3
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengshi",
+        "stacks": 1
+      }
+    ],
+    "energyCost": 50,
+    "skillType": "small"
+  },
+  {
+    "id": "skill_school_fengyibaofa",
+    "name": "风意爆发",
+    "description": "对单体造成 120% 攻击伤害，消耗目标全部【风势】：每层使伤害 +10%（按追加伤害结算），每 2 层施加 1 层裂甲",
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1.2
+            }
+          ]
+        }
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fengshi_detonate",
+          "damagePercentPerStack": 0.1,
+          "stacksPerDebuff": 2,
+          "applyBuffId": "buff_liejia"
+        }
+      }
+    ],
+    "energyCost": 70,
+    "skillType": "small"
+  },
+  {
+    "id": "skill_school_kuangfengjuexi",
+    "name": "狂风绝息",
+    "description": "对单体造成 260% 攻击伤害，消耗目标全部【风势】（每层 +8% 伤害按追加结算），并触发风绝：每层【风痕】追加一段 40% 攻击真实伤害（上限 8 段），使目标 2 回合内无法获得护盾；击杀追击待实现",
+    "cooldown": 99,
+    "maxUses": 1,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 2.6
+            }
+          ]
+        }
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fengshi_detonate",
+          "damagePercentPerStack": 0.08,
+          "stacksPerDebuff": 0,
+          "fenghenTrueDamagePerStack": 0.4,
+          "fenghenMaxSegments": 8,
+          "applyBuffId": "buff_suijia"
+        }
+      }
+    ],
+    "energyCost": 150,
+    "skillType": "ultimate"
+  },
+  {
+    "id": "skill_school_liejiaji",
+    "name": "裂甲击",
+    "description": "对单体造成 140% 攻击伤害（普攻判定），并为目标叠加 1 层裂甲；目标已有裂甲 ≥2 层时的额外效果待条件步骤落地",
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1.4
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_liejia",
+        "stacks": 1
+      }
+    ],
+    "energyCost": 50,
+    "skillType": "small"
+  },
+  {
+    "id": "skill_school_liejiabaofa",
+    "name": "裂甲爆发",
+    "description": "对单体造成 120% 攻击伤害并引爆其全部【裂甲】（每层 +8% 伤害按追加结算），释放后自身获得 1 层【战意】（下次普攻伤害 +10%，上限 3 层）",
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1.2
+            }
+          ]
+        }
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "liejia_detonate",
+          "damagePercentPerStack": 0.08,
+          "trueDamagePerStack": 0,
+          "applyBuffId": ""
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_zhanyi",
+        "stacks": 1,
+        "targetConfig": {
+          "faction": "self"
+        }
+      }
+    ],
+    "energyCost": 70,
+    "skillType": "small"
+  },
+  {
+    "id": "skill_school_liejiatianbeng",
+    "name": "裂甲天崩",
+    "description": "对单体造成 280% 攻击伤害并引爆其全部【裂甲】：每层 +12% 伤害、每层追加一段 60% 攻击真实伤害（上限 5 段），并使目标进入碎甲 2 回合；完全无视防御与碎甲翻倍/溅射待收窄。每场战斗限 1 次（以长冷却近似）",
+    "cooldown": 99,
+    "maxUses": 1,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 2.8
+            }
+          ]
+        }
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "liejia_detonate",
+          "damagePercentPerStack": 0.12,
+          "trueDamagePerStack": 0.6,
+          "maxSegments": 5,
+          "applyBuffId": "buff_suijia"
+        }
+      }
+    ],
+    "energyCost": 150,
+    "skillType": "ultimate"
+  }
+]

@@ -32,6 +32,7 @@ import passiveSkillsData from '@configs/skills/skill_passive.json'
 import yaotuPassiveSkillsData from '@configs/skills/skill_passive_yaotu.json'
 import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import passiveSchoolSkillsData from '@configs/skills/skill_passive_schools.json'
+import schoolActiveSkillsData from '@configs/skills/skills_school_lianzhan.json'
 import skillsData from '@configs/skills/skills.json'
 import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
 import hiddenBossSkillsData from '@configs/skills/skill_yaozun.json'
@@ -130,6 +131,7 @@ const skills = [
   ...yaotuPassiveSkillsData,
   ...passiveTestSkillsData,
   ...passiveSchoolSkillsData,
+  ...schoolActiveSkillsData,
   ...(playerXiyouSkillsData as SkillConfig[]),
   ...(hiddenBossSkillsData as SkillConfig[]),
   ...(enemySkillsData as SkillConfig[]),

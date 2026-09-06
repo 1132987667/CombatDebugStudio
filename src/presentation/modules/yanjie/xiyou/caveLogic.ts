@@ -43,18 +43,13 @@ export interface MaterialCost {
   count: number
 }
 
-/** 装备槽位 → 强化材料（设计：武器异矿 / 衣甲灵气·强化 / 头盔/靴子/护符/护手 灵水） */
-const ENHANCE_MATERIAL_BY_SLOT: Record<string, MaterialCost> = {
-  weapon: { name: '异矿', itemId: 'mat_yikuang', count: 1 },
-  armor: { name: '灵气·强化', itemId: 'mat_lingqi', count: 1 },
-  helmet: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
-  boots: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
-  charm: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
-  glove: { name: '灵水', itemId: 'mat_lingshui', count: 1 },
-}
+/** 强化材料：统一强化石（六部位/全品阶通用；2026-09-06 裁定，晶球与替代材料已移除）
+ *  数量按强化等级段对齐成功率分档：目标 +1~5 ×1 / +6~10 ×2 / +11~15 ×3（equipment-system.json enhance_rules.count_by_stage） */
+const ENHANCE_STONE_ID = 'enh_stone'
 
-export function enhanceMaterialOf(slot: string): MaterialCost | null {
-  return ENHANCE_MATERIAL_BY_SLOT[slot] ?? null
+export function enhanceMaterialOf(enhance: number): MaterialCost {
+  const count = enhance <= 4 ? 1 : enhance <= 9 ? 2 : 3
+  return { name: '强化石', itemId: ENHANCE_STONE_ID, count }
 }
 
 /** 强化成功率：分档制（P0 裁定，失败不降级）——+1~+5:80%、+6~+10:70%、+11~+15:60%；上限 +15（equipment-system.json enhance_max_by_tier），超限输入属非法，clamp 最高档 */

@@ -20,7 +20,7 @@
       <p v-if="gears.length === 0" class="xy-cave-enh-empty">尚未穿戴任何装备</p>
     </div>
 
-    <template v-if="gear && mat">
+    <template v-if="gear">
       <div class="xy-cave-enh-compare">
         <div class="xy-cave-enh-row">
           <span class="xy-cave-enh-row__name">当前属性</span>
@@ -113,19 +113,19 @@ function usable(_g: EnhanceGearView): boolean {
 
 const gear = computed<EnhanceGearView | null>(() => (idx.value >= 0 ? gears.value[idx.value] ?? null : null))
 
-const mat = computed<MaterialCost | null>(() =>
-  gear.value ? enhanceMaterialOf(gear.value.slot) : null,
+const mat = computed<MaterialCost>(() =>
+  enhanceMaterialOf(gear.value?.enhance ?? 0),
 )
 
 const cost = computed(() => (gear.value ? enhanceCost(gear.value.enhance) : 0))
 const rate = computed(() => (gear.value ? enhanceSuccessRate(gear.value.enhance) : 0))
 const maxed = computed(() => !!gear.value && gear.value.enhance >= gear.value.maxEnhance)
 
-const hasMat = computed(() => !!mat.value?.itemId && pack.countOf(mat.value.itemId) >= mat.value.count)
+const hasMat = computed(() => pack.countOf(mat.value.itemId) >= mat.value.count)
 const hasMoney = computed(() => pack.currency.copper >= cost.value)
 
 const canEnhance = computed(
-  () => !!gear.value && !!mat.value && !maxed.value && hasMat.value && hasMoney.value,
+  () => !!gear.value && !maxed.value && hasMat.value && hasMoney.value,
 )
 
 const curEffect = computed(() => (gear.value ? statText(gear.value.stats) : ''))

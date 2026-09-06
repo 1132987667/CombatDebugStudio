@@ -286,16 +286,6 @@ describe('战斗外使用', () => {
     expect(pack.countOf('elix_perm_01')).toBe(0)
   })
 
-  it('晶球开启获得强化材料', async () => {
-    const pack = usePackStore()
-    await pack.init()
-    // 异矿（mat_yikuang）初始持有 6（pack.json materials），开晶球 +1 → 7
-    pack.addItem('crys_001', 1) // 灿金晶球 → 异矿 mat_yikuang
-    expect(pack.useItem('crys_001')).toBe(true)
-    expect(pack.countOf('crys_001')).toBe(0)
-    expect(pack.countOf('mat_yikuang')).toBe(6 + 1)
-  })
-
   it('heal/energy 丹药战斗外不可用（返回 false 且不消耗）', async () => {
     const pack = usePackStore()
     await pack.init()
@@ -325,7 +315,7 @@ describe('战斗外使用', () => {
     await pack.init()
     expect(pack.canUseOutOfBattle('elix_perm_01')).toBe(true) // 铁骨丹
     expect(pack.canUseOutOfBattle('elix_perm_05')).toBe(true) // 洗髓丹已实现
-    expect(pack.canUseOutOfBattle('crys_001')).toBe(true) // 晶球
+    expect(pack.canUseOutOfBattle('enh_stone')).toBe(false) // 强化石非战斗外消耗品
     expect(pack.canUseOutOfBattle('elix_001')).toBe(false) // 恢复丹战斗外不可用
   })
 })
@@ -481,8 +471,8 @@ describe("装备穿戴（背包实例化闭环）", () => {
     pack.equip("wp_t1_light_01")
     pack.equip("ar_t1_light_01")
     expect(Object.keys(pack.equipped)).toHaveLength(6)
-    // 强化护符走 charm 材料（灵水 mat_enh_02）
-    pack.addItem("mat_enh_02", 10)
+    // 强化护符消耗强化石（六部位通用）
+    pack.addItem("enh_stone", 10)
     expect(pack.enhanceGear("charm", () => 0)).toBe(true)
     expect(pack.equipped.charm?.enhance).toBe(1)
     // 总属性包含护手加成（攻击类）
@@ -614,14 +604,14 @@ describe("装备制造与强化（实例化）", () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_light_01")
-    const enh0 = pack.countOf("mat_yikuang")
-    pack.addItem("mat_yikuang", 10) // 武器强化材料：异矿
+    const enh0 = pack.countOf("enh_stone")
+    pack.addItem("enh_stone", 10) // 强化材料：强化石
     const beforeCopper = pack.currency.copper
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // rng 0 → 100% 成功
     expect(pack.equipped.weapon?.enhance).toBe(1)
     expect(pack.currency.copper).toBe(beforeCopper - 20) // 20 + 20×0
-    expect(pack.countOf("mat_yikuang")).toBe(enh0 + 9)
+    expect(pack.countOf("enh_stone")).toBe(enh0 + 9)
     const atk1 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(atk1).toBe(Math.round(atk0 * 1.05)) // 每级 +5%
   })
@@ -630,14 +620,14 @@ describe("装备制造与强化（实例化）", () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_light_01")
-    pack.addItem("mat_yikuang", 10)
+    pack.addItem("enh_stone", 10)
     expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // → Lv.1（rate 95%）
     const copper1 = pack.currency.copper
-    const mat1 = pack.countOf("mat_yikuang")
+    const mat1 = pack.countOf("enh_stone")
     expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false) // 99 ≥ 95 → 失败
     expect(pack.equipped.weapon?.enhance).toBe(1)
     expect(pack.currency.copper).toBe(copper1 - 40) // 40 = 20 + 20×1
-    expect(pack.countOf("mat_yikuang")).toBe(mat1 - 1)
+    expect(pack.countOf("enh_stone")).toBe(mat1 - 1)
   })
 
   it("强化材料/金钱不足时不扣任何消耗", async () => {
@@ -645,10 +635,10 @@ describe("装备制造与强化（实例化）", () => {
     await pack.init()
     pack.equip("wp_t1_light_01")
     pack.currency.copper = 0 // 材料充足但金钱不足
-    const mat0 = pack.countOf("mat_yikuang")
+    const mat0 = pack.countOf("enh_stone")
     expect(pack.enhanceGear("weapon", () => 0)).toBe(false)
     expect(pack.currency.copper).toBe(0)
-    expect(pack.countOf("mat_yikuang")).toBe(mat0)
+    expect(pack.countOf("enh_stone")).toBe(mat0)
     expect(pack.equipped.weapon?.enhance).toBe(0)
   })
 
@@ -656,7 +646,7 @@ describe("装备制造与强化（实例化）", () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_light_01") // rarity 1 → 上限 3
-    pack.addItem("mat_yikuang", 100)
+    pack.addItem("enh_stone", 100)
     pack.currency.copper = 999999
     let guard = 0
     while (pack.equipped.weapon!.enhance < 3 && guard < 10) {
@@ -846,17 +836,17 @@ describe("强化保护符", () => {
     pack.equip("wp_t1_light_01")
     pack.addItem("enh_protect", 1)
     expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // 0→1 必成（rate 100%）
-    const mat1 = pack.countOf("mat_yikuang")
+    const mat1 = pack.countOf("enh_stone")
 
     // 失败（rate 95%，rng 0.99）：保护符保住材料，仅消耗保护符
     expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
     expect(pack.equipped.weapon?.enhance).toBe(1)
-    expect(pack.countOf("mat_yikuang")).toBe(mat1)
+    expect(pack.countOf("enh_stone")).toBe(mat1)
     expect(pack.countOf("enh_protect")).toBe(0)
 
     // 再无保护符：失败则材料照扣
     expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
-    expect(pack.countOf("mat_yikuang")).toBe(mat1 - 1)
+    expect(pack.countOf("enh_stone")).toBe(mat1 - 1)
   })
 
   it("强化成功不消耗保护符", async () => {

@@ -41,27 +41,34 @@ export const usePlayerStore = defineStore('player', () => {
       speed: player.speed + (bonus[ATTRIBUTE_CODE.speed] ?? 0),
       maxHp: player.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0),
     })
-    // NOTE: school 为流派属性增量（schoolAttributeBonuses 已归一为绝对增量：percent 属性加百分点、
-    //       数值属性按基础值换算），此处统一加在基础值之上
-    const withSchool = (code: ATTRIBUTE_CODE, base: number): number =>
-      base + ((school as Partial<Record<string, number>>)[code] ?? 0)
-    return {
+    // NOTE: 基础快照只含 player 基础值 + 加点；流派增量统一由下方全键循环叠加（此前逐键
+    //       withSchool 只覆盖 9 个键，lifestealRate/critResist/armorBreak 等进阶属性节点
+    //       增量被丢弃，面板与战斗快照都看不到）
+    const snapshot: Partial<Record<ATTRIBUTE_CODE, number>> = {
       [ATTRIBUTE_CODE.currentHealth]: player.hp,
-      [ATTRIBUTE_CODE.maxHealth]: withSchool(ATTRIBUTE_CODE.maxHealth, player.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0)),
+      [ATTRIBUTE_CODE.maxHealth]: player.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0),
       [ATTRIBUTE_CODE.currentEnergy]: player.energy,
       [ATTRIBUTE_CODE.maxEnergy]: player.maxEnergy + (bonus[ATTRIBUTE_CODE.maxEnergy] ?? 0),
-      [ATTRIBUTE_CODE.attack]: withSchool(ATTRIBUTE_CODE.attack, player.attackMax + (bonus[ATTRIBUTE_CODE.attack] ?? 0)),
-      [ATTRIBUTE_CODE.defense]: withSchool(ATTRIBUTE_CODE.defense, player.defense + (bonus[ATTRIBUTE_CODE.defense] ?? 0)),
-      [ATTRIBUTE_CODE.speed]: withSchool(ATTRIBUTE_CODE.speed, player.speed + (bonus[ATTRIBUTE_CODE.speed] ?? 0)),
-      [ATTRIBUTE_CODE.critRate]: withSchool(ATTRIBUTE_CODE.critRate, player.critRate),
-      [ATTRIBUTE_CODE.critDamage]: withSchool(ATTRIBUTE_CODE.critDamage, player.critDamage),
-      [ATTRIBUTE_CODE.comboRate]: withSchool(ATTRIBUTE_CODE.comboRate, playerConfig.base.comboRate ?? 0),
-      [ATTRIBUTE_CODE.damageReduction]: withSchool(ATTRIBUTE_CODE.damageReduction, playerConfig.base.damageReduction ?? 0),
+      [ATTRIBUTE_CODE.attack]: player.attackMax + (bonus[ATTRIBUTE_CODE.attack] ?? 0),
+      [ATTRIBUTE_CODE.defense]: player.defense + (bonus[ATTRIBUTE_CODE.defense] ?? 0),
+      [ATTRIBUTE_CODE.speed]: player.speed + (bonus[ATTRIBUTE_CODE.speed] ?? 0),
+      [ATTRIBUTE_CODE.critRate]: player.critRate,
+      [ATTRIBUTE_CODE.critDamage]: player.critDamage,
+      [ATTRIBUTE_CODE.comboRate]: playerConfig.base.comboRate ?? 0,
+      [ATTRIBUTE_CODE.damageReduction]: playerConfig.base.damageReduction ?? 0,
       [ATTRIBUTE_CODE.hit]: player.hitRate,
-      [ATTRIBUTE_CODE.dodge]: withSchool(ATTRIBUTE_CODE.dodge, player.dodgeRate),
+      [ATTRIBUTE_CODE.dodge]: player.dodgeRate,
       [ATTRIBUTE_CODE.hitValue]: playerConfig.base.hitValue,
       [ATTRIBUTE_CODE.dodgeValue]: playerConfig.base.dodgeValue,
     }
+    // NOTE: school 为流派属性增量（schoolAttributeBonuses 已归一为绝对增量：percent 属性
+    //       已是百分点、数值属性已按基础值换算），逐键直接叠加
+    for (const [attr, inc] of Object.entries(school)) {
+      if (!inc) continue
+      const code = attr as ATTRIBUTE_CODE
+      snapshot[code] = (snapshot[code] ?? 0) + inc
+    }
+    return snapshot
   })
 
   /** 主角实时战斗快照（战斗主角属性权威：加点/丹药/流派/等级变化反映到战斗；数值取 playerAttributes 含加成） */

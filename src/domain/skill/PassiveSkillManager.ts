@@ -790,6 +790,35 @@ export class PassiveSkillManager {
         case 'source_shield_empty':
           // 持有者当前无护盾（磐石壁垒"每回合开始无盾则上盾"）
           return this.buffSystem.getShieldValue(source.id) <= 0
+        case 'target_speed_lower': {
+          // 目标速度低于持有者：params.gap 为至少相差的点数（默认 0，即任一低于）
+          const gapLower = (params?.gap as number) ?? 0
+          if (!target) return false
+          return (
+            target.getAttribute(ATTRIBUTE_CODE.speed) +
+              gapLower <=
+            source.getAttribute(ATTRIBUTE_CODE.speed)
+          )
+        }
+        case 'target_speed_higher': {
+          // 目标速度高于持有者：params.gap 为至少相差的点数（默认 0）
+          const gapHigher = (params?.gap as number) ?? 0
+          if (!target) return false
+          return (
+            target.getAttribute(ATTRIBUTE_CODE.speed) -
+              gapHigher >=
+            source.getAttribute(ATTRIBUTE_CODE.speed)
+          )
+        }
+        case 'exists_faster_enemy': {
+          // 存在速度高于持有者的存活敌方单位（驭风之力等群体速度比较条件）
+          const mySpeed = source.getAttribute(ATTRIBUTE_CODE.speed)
+          for (const p of context?.participants?.values() ?? []) {
+            if (p.team === source.team || !p.isAlive()) continue
+            if (p.getAttribute(ATTRIBUTE_CODE.speed) > mySpeed) return true
+          }
+          return false
+        }
 
         // 废弃的旧条件名——直接报错
         case 'source_has_debuff_count_3':

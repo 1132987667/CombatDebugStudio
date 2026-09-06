@@ -11,7 +11,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_007",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       },
@@ -43,7 +43,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_008",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       },
@@ -75,7 +75,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_001",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       }
@@ -102,7 +102,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_002",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       }
@@ -129,7 +129,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_008",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       },
@@ -161,7 +161,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       },
@@ -193,7 +193,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_009",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       },
@@ -225,7 +225,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       },
@@ -257,7 +257,7 @@
     },
     "drops": [
       {
-        "itemId": "crys_006",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.3
       },
@@ -299,7 +299,7 @@
         "chance": 0.3
       },
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "quantity": 1,
         "chance": 0.4
       }

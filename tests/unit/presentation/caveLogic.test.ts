@@ -63,14 +63,13 @@ describe('强化数值', () => {
     expect(enhanceCost(14, 5)).toBe(3000) // 仙品 14→15（上限）花 200×15
   })
 
-  it('槽位 → 强化材料映射（六槽：武器异矿 / 衣甲灵气 / 头靴符手灵水，对齐 §4.1.2）', () => {
-    expect(enhanceMaterialOf('weapon')).toMatchObject({ itemId: 'mat_yikuang', count: 1 })
-    expect(enhanceMaterialOf('armor')).toMatchObject({ itemId: 'mat_lingqi' })
-    expect(enhanceMaterialOf('helmet')).toMatchObject({ itemId: 'mat_lingshui' })
-    expect(enhanceMaterialOf('boots')).toMatchObject({ itemId: 'mat_lingshui' })
-    expect(enhanceMaterialOf('charm')).toMatchObject({ itemId: 'mat_lingshui' })
-    expect(enhanceMaterialOf('glove')).toMatchObject({ itemId: 'mat_lingshui' })
-    expect(enhanceMaterialOf('未知槽')).toBeNull()
+  it('强化材料统一：强化石六部位通用，数量按等级段（+1~5 ×1 / +6~10 ×2 / +11~15 ×3）', () => {
+    expect(enhanceMaterialOf(0)).toMatchObject({ itemId: 'enh_stone', count: 1 })
+    expect(enhanceMaterialOf(4)).toMatchObject({ itemId: 'enh_stone', count: 1 })
+    expect(enhanceMaterialOf(5)).toMatchObject({ itemId: 'enh_stone', count: 2 })
+    expect(enhanceMaterialOf(9)).toMatchObject({ itemId: 'enh_stone', count: 2 })
+    expect(enhanceMaterialOf(10)).toMatchObject({ itemId: 'enh_stone', count: 3 })
+    expect(enhanceMaterialOf(14)).toMatchObject({ itemId: 'enh_stone', count: 3 })
   })
 
   it('强化上限按阶位（equipment-system.json enhance_max_by_tier：凡+3/玄+6/地+9/天+12/仙+15，对齐 §21 品阶表）', () => {

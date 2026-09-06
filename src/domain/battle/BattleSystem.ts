@@ -1430,6 +1430,7 @@ export class BattleSystem {
     this.damageCalculator.setRng(rng)
     this.buffSystem.setRng(rng)
     this.passiveSkillManager.setRng(rng)
+    this.skillManager.getExecutor().setRng(rng)
     this.aiSystem.setRng(rng)
   }
 

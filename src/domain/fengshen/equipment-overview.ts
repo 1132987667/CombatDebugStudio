@@ -14,7 +14,7 @@
  * 取「最小品阶权重 × 最小浮动」到「最大品阶权重 × 最大浮动」的外包络。
  */
 
-import type { AffixRuleConfig, EquipFormulaConfig, PetMountIndividual, PetMountRulesConfig } from '@/domain/fengshen/types'
+import type { AffixRuleConfig, EquipFormulaConfig, PetMountIndividual, PetMountRulesConfig, PetMountTraitEntry } from '@/domain/fengshen/types'
 import { equipBaseUnit } from '@/domain/fengshen/player-config'
 
 /** 基础六维：有属性点转化系数、走装备公式；其余属性一律走词条曲线 */
@@ -384,7 +384,7 @@ export function buildEquipmentOverview(
 //   值 = 单位基数 × 等级 × 个体权重 × 资质倍率(资质 ÷ aptitude.base) × 突破倍率(1 + Σbonus)
 //        × 转化系数 × 品阶权重 × 浮动（品阶与装备共用 tier_weight，PRD 明文）
 // - 附加行走 pet_mount 曲线；品质 ≥ 行 minQuality 才投放（品质 1~5，不随曲线增减）
-// - 行→属性组池映射为草案，待策划确认，常驻 warning（需求 §八遗留 1）
+// - 行→属性组池映射：2026-09-06 策划拍板，行名与属性组码逐字同源（原 §八遗留 1 已关闭）
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 个体 weights 键 → 属性 code（configs 用短名 hit / dodge，属性系统用 hitValue / dodgeValue） */
@@ -446,6 +446,24 @@ function breakthroughRatio(rules: PetMountRulesConfig, times: number): number {
   return 1 + rules.breakthroughs
     .slice(0, Math.max(0, Math.trunc(times)))
     .reduce((sum, b) => sum + b.bonus, 0)
+}
+
+/**
+ * 特性随机获取（2026-09-06 口径变更）：特性不再由个体固定配置，获得时从所属流派特性池
+ * 随机一种——宠物取 attack 组、坐骑取 defense 组（与 ATK/DEF 行侧对称）。
+ * 个体 category 无池或池为空时返回 null，调用方回落到个体固定 trait（尚未池化的流派）。
+ * rng 参数供测试注入确定性序列；抽到的条目由调用方缓存，保证同一会话展示稳定。
+ */
+export function pickPetMountTrait(
+  rules: PetMountRulesConfig,
+  system: 'pet' | 'mount',
+  category: string,
+  rng: () => number = Math.random,
+): PetMountTraitEntry | null {
+  const pool = rules.trait_pools?.[category]
+  const entries = pool ? (system === 'pet' ? pool.attack : pool.defense) : []
+  if (!entries.length) return null
+  return entries[Math.min(entries.length - 1, Math.floor(rng() * entries.length))] ?? null
 }
 
 /**
@@ -552,7 +570,7 @@ export function buildPetMountOverview(
     return { attribute: code, label: MAIN_ATTR_LABELS[code] ?? code, weight, range }
   })
 
-  // ── 词条行：品质门槛 + 曲线池（池映射草案，待策划确认） ──
+  // ── 词条行：品质门槛 + 曲线池（池映射已拍板，见 §八遗留 1 关闭记录） ──
   const rows: PetMountRuleRowResult[] = rules.rows.map((r) => {
     const included = quality >= r.minQuality
     const candidates: OverviewAttrRange[] = []
@@ -569,7 +587,7 @@ export function buildPetMountOverview(
     return { id: r.id, name: side === 'ATK' ? r.nameAtk : r.nameDef, minQuality: r.minQuality, included, candidates }
   })
 
-  warnings.push('附加行→属性组池映射为草案（L1→ATK-L2/DEF-L2 等），待策划确认（需求 §八遗留 1）')
+  // 2026-09-06 策划拍板：行名与属性组码逐字同源（L1 行池 = ATK-L1/DEF-L1），池映射草案 warning 关闭（需求 §八遗留 1）
   warnings.push(...curveClosureWarnings(cfg, 'pet_mount', rules.max_level))
 
   const activeSlotCount = 3 + rows.filter((r) => r.included && r.id !== 'main').length

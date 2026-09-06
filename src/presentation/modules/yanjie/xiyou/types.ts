@@ -264,7 +264,7 @@ export interface XiyouCatalogItem {
   value?: number
   source?: string
   description?: string
-  /** 使用效果（仅丹药/符箓/晶球类，来自 items.json effects） */
+  /** 使用效果（仅丹药/符箓类，来自 items.json effects） */
   effects?: ItemEffect[]
 }
 

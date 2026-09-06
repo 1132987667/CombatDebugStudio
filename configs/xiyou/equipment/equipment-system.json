@@ -5,59 +5,137 @@
     "weapon": {
       "label": "武器",
       "sub_types": [
-        { "id": "light_weapon", "name": "轻型武器", "style": "灵猴道", "desc": "高频连击，速度优先" },
-        { "id": "dagger_weapon", "name": "刺", "style": "灵猴道", "desc": "闪避专属，闪避率/反击率/速度" },
-        { "id": "medium_weapon", "name": "中型武器", "style": "金行道", "desc": "爆发输出，暴击优先" },
-        { "id": "blade_weapon", "name": "重型武器", "style": "磐石道", "desc": "重击控制，生存优先" }
+        {
+          "id": "light_weapon",
+          "name": "轻型武器",
+          "style": "灵猴道",
+          "desc": "高频连击，速度优先"
+        },
+        {
+          "id": "dagger_weapon",
+          "name": "刺",
+          "style": "灵猴道",
+          "desc": "闪避专属，闪避率/反击率/速度"
+        },
+        {
+          "id": "medium_weapon",
+          "name": "中型武器",
+          "style": "金行道",
+          "desc": "爆发输出，暴击优先"
+        },
+        {
+          "id": "blade_weapon",
+          "name": "重型武器",
+          "style": "磐石道",
+          "desc": "重击控制，生存优先"
+        }
       ],
       "enhance_attribute": "attack",
-      "enhance_material": ["灿金晶球", "异矿"]
+      "enhance_material": [
+        "强化石"
+      ]
     },
     "armor": {
       "label": "衣甲",
       "sub_types": [
-        { "id": "leather_armor", "name": "皮甲", "style": "灵猴道", "desc": "轻装闪避" },
-        { "id": "wood_armor", "name": "木甲", "style": "通用", "desc": "均衡防御" },
-        { "id": "plate_armor", "name": "铠甲", "style": "磐石道", "desc": "重装格挡" }
+        {
+          "id": "leather_armor",
+          "name": "皮甲",
+          "style": "灵猴道",
+          "desc": "轻装闪避"
+        },
+        {
+          "id": "wood_armor",
+          "name": "木甲",
+          "style": "通用",
+          "desc": "均衡防御"
+        },
+        {
+          "id": "plate_armor",
+          "name": "铠甲",
+          "style": "磐石道",
+          "desc": "重装格挡"
+        }
       ],
       "enhance_attribute": "defense",
-      "enhance_material": ["清辉晶球", "灵气"]
+      "enhance_material": [
+        "强化石"
+      ]
     },
     "helmet": {
       "label": "头盔",
       "sub_types": [
-        { "id": "helmet", "name": "头盔", "enhance_attribute": "defensePercent", "desc": "防御向（并入原项链）" },
-        { "id": "crown", "name": "冠冕", "enhance_attribute": "allPercent", "desc": "综合向（并入原冠冕）" }
+        {
+          "id": "helmet",
+          "name": "头盔",
+          "enhance_attribute": "defensePercent",
+          "desc": "防御向（并入原项链）"
+        },
+        {
+          "id": "crown",
+          "name": "冠冕",
+          "enhance_attribute": "allPercent",
+          "desc": "综合向（并入原冠冕）"
+        }
       ],
-      "enhance_material": ["玲珑晶球", "灵水"]
+      "enhance_material": [
+        "强化石"
+      ]
     },
     "boots": {
       "label": "靴子",
       "sub_types": [
-        { "id": "boots", "name": "靴子", "enhance_attribute": "speedPercent", "desc": "速度向（并入原腰带）" }
+        {
+          "id": "boots",
+          "name": "靴子",
+          "enhance_attribute": "speedPercent",
+          "desc": "速度向（并入原腰带）"
+        }
       ],
-      "enhance_material": ["玲珑晶球", "灵水"]
+      "enhance_material": [
+        "强化石"
+      ]
     },
     "charm": {
       "label": "护符",
       "sub_types": [
-        { "id": "charm", "name": "护符", "enhance_attribute": "healthPercent", "desc": "生存向" }
+        {
+          "id": "charm",
+          "name": "护符",
+          "enhance_attribute": "healthPercent",
+          "desc": "生存向"
+        }
       ],
-      "enhance_material": ["玲珑晶球", "灵水"]
+      "enhance_material": [
+        "强化石"
+      ]
     },
     "glove": {
       "label": "护手",
       "sub_types": [
-        { "id": "glove", "name": "护手", "enhance_attribute": "attackPercent", "desc": "输出向（并入原手镯）" }
+        {
+          "id": "glove",
+          "name": "护手",
+          "enhance_attribute": "attackPercent",
+          "desc": "输出向（并入原手镯）"
+        }
       ],
-      "enhance_material": ["玲珑晶球", "灵水"]
+      "enhance_material": [
+        "强化石"
+      ]
     }
   },
   "independent_types": {
     "treasure": {
       "label": "法宝",
       "desc": "成长型战力，喂养升级，不占槽位",
-      "examples": ["如意金箍棒", "九齿钉耙", "降妖宝杖", "芭蕉扇", "紫金红葫芦"]
+      "examples": [
+        "如意金箍棒",
+        "九齿钉耙",
+        "降妖宝杖",
+        "芭蕉扇",
+        "紫金红葫芦"
+      ]
     },
     "artifact": {
       "label": "神器",
@@ -72,12 +150,28 @@
     "crown": "helmet"
   },
   "enhance_rules": {
-    "weapon": { "enhance_content": "攻击力提升", "material": ["灿金晶球", "异矿"] },
-    "armor": { "enhance_content": "防御力提升", "material": ["清辉晶球", "灵气"] },
-    "helmet": { "enhance_content": "防御加成提升", "material": ["玲珑晶球", "灵水"] },
-    "boots": { "enhance_content": "速度加成提升", "material": ["玲珑晶球", "灵水"] },
-    "charm": { "enhance_content": "气血加成提升", "material": ["玲珑晶球", "灵水"] },
-    "glove": { "enhance_content": "攻击 / 暴击率加成提升", "material": ["玲珑晶球", "灵水"] }
+    "enhance_content_by_slot": {
+      "weapon": "攻击力提升",
+      "armor": "防御力提升",
+      "helmet": "防御加成提升",
+      "boots": "速度加成提升",
+      "charm": "气血加成提升",
+      "glove": "攻击 / 暴击率加成提升"
+    },
+    "material": "强化石",
+    "material_id": "enh_stone",
+    "count_by_stage": {
+      "+1~5": 1,
+      "+6~10": 2,
+      "+11~15": 3
+    },
+    "success_rate_by_stage": {
+      "+1~5": 80,
+      "+6~10": 70,
+      "+11~15": 60
+    },
+    "failure_rule": "失败不降级，只消耗材料",
+    "note": "2026-09-06 裁定：强化材料统一为强化石（六部位/全品阶通用），晶球（灿金/清辉/玲珑 ×一~五阶）与替代材料（异矿/灵气·强化/灵水）作废移除"
   },
   "enhance_max_by_tier": {
     "fan": 3,
@@ -95,60 +189,147 @@
     "xian": 200
   },
   "inheritance": {
-    "allowed_tiers": ["fan", "xuan", "di", "tian", "xian"],
-    "conditions": ["同部位", "同阶位", "目标装备未强化或强化等级低于来源装备"],
-    "transfers": ["强化等级"],
-    "does_not_transfer": ["品质", "星级", "随机词条", "固定特效", "精锻"]
+    "allowed_tiers": [
+      "fan",
+      "xuan",
+      "di",
+      "tian",
+      "xian"
+    ],
+    "conditions": [
+      "同部位",
+      "同阶位",
+      "目标装备未强化或强化等级低于来源装备"
+    ],
+    "transfers": [
+      "强化等级"
+    ],
+    "does_not_transfer": [
+      "品质",
+      "星级",
+      "随机词条",
+      "固定特效",
+      "精锻"
+    ]
   },
   "star_system": {
     "star_bonuses": [
-      { "star": 0, "base_bonus": 0 },
-      { "star": 1, "base_bonus": 5 },
-      { "star": 2, "base_bonus": 15 },
-      { "star": 3, "base_bonus": 25 }
+      {
+        "star": 0,
+        "base_bonus": 0
+      },
+      {
+        "star": 1,
+        "base_bonus": 5
+      },
+      {
+        "star": 2,
+        "base_bonus": 15
+      },
+      {
+        "star": 3,
+        "base_bonus": 25
+      }
     ],
-    "cost_by_star": { "1": 3, "2": 6, "3": 9 },
+    "cost_by_star": {
+      "1": 3,
+      "2": 6,
+      "3": 9
+    },
     "cost_type": "升星石（上3/中2/下1 点）、装备残魂（1 点/个）或同名未穿戴装备（1 点/件），混合支付",
     "residue_rules": {
-      "source": ["分解同名装备", "击败对应关卡守护者", "完成西行志悬赏"],
+      "source": [
+        "分解同名装备",
+        "击败对应关卡守护者",
+        "完成西行志悬赏"
+      ],
       "conversion": "1件同名装备 = 1点装备残魂",
       "mii_allowed": true,
       "eiample": "流云剑升1星：需3点残魂，可以是3件流云剑，也可以是2件流云剑+1点残魂"
     },
-    "does_not_change": ["装备品质", "装备阶位", "随机词条数量", "随机词条内容", "固定特效"]
+    "does_not_change": [
+      "装备品质",
+      "装备阶位",
+      "随机词条数量",
+      "随机词条内容",
+      "固定特效"
+    ]
   },
   "reforge_system": {
     "quality_permissions": {
-      "fan": ["normal"],
-      "jing": ["normal", "directed"],
-      "chao": ["normal", "directed", "locked"],
-      "jue": ["limited"],
-      "shen": ["limited"]
+      "fan": [
+        "normal"
+      ],
+      "jing": [
+        "normal",
+        "directed"
+      ],
+      "chao": [
+        "normal",
+        "directed",
+        "locked"
+      ],
+      "jue": [
+        "limited"
+      ],
+      "shen": [
+        "limited"
+      ]
     },
     "normal_reforge": {
       "effect": "随机重置装备上的1条词条",
-      "cost": { "寒潭水": 1, "gold": "当前阶位基础费用" },
+      "cost": {
+        "寒潭水": 1,
+        "gold": "当前阶位基础费用"
+      },
       "player_choice": "可保留旧词条或替换为新词条"
     },
     "directed_reforge": {
       "effect": "将1条词条替换为指定类型词条",
-      "cost": { "寒潭水": 2, "special_material": 1, "gold": "较高费用" },
+      "cost": {
+        "寒潭水": 2,
+        "special_material": 1,
+        "gold": "较高费用"
+      },
       "note": "不保证数值满值，只保证词条类型"
     },
     "locked_reforge": {
       "effect": "洗练时锁定1条词条，不被重置",
-      "cost": { "天罡灵气碎片": 3, "寒潭水": 3, "gold": "高费用" },
-      "alternative_cost": { "天罡灵气": 1 },
+      "cost": {
+        "天罡灵气碎片": 3,
+        "寒潭水": 3,
+        "gold": "高费用"
+      },
+      "alternative_cost": {
+        "天罡灵气": 1
+      },
       "limit": "最多锁定1条词条",
       "restriction": "天品、仙品装备不可锁定固定特效"
     },
     "full_reforge": {
       "effect": "重新生成整件装备的所有随机词条",
-      "allowed_qualities": ["chao", "jue", "shen"],
-      "cost": { "混元灵气碎片": 5, "tier_crystal": 1, "gold": "大量" },
-      "alternative_cost": { "混元灵气": 1 },
-      "preserves": ["装备品质", "强化等级", "精锻", "星级"],
-      "regenerates": ["所有随机词条"]
+      "allowed_qualities": [
+        "chao",
+        "jue",
+        "shen"
+      ],
+      "cost": {
+        "混元灵气碎片": 5,
+        "tier_crystal": 1,
+        "gold": "大量"
+      },
+      "alternative_cost": {
+        "混元灵气": 1
+      },
+      "preserves": [
+        "装备品质",
+        "强化等级",
+        "精锻",
+        "星级"
+      ],
+      "regenerates": [
+        "所有随机词条"
+      ]
     }
   },
   "affii_generation": {
@@ -161,12 +342,64 @@
     "no_duplicate": "同一件装备不允许出现两条同名词条"
   },
   "material_affii_bias": [
-    { "materials": ["桃木", "松木", "铁木"], "equipment_type": "light_weapon", "bias_school": "灵猴道", "desc": "灵猴道词条权重提升" },
-    { "materials": ["铜精", "铁精", "金精"], "equipment_type": "medium_weapon", "bias_school": "金行道", "desc": "金行道词条权重提升" },
-    { "materials": ["粗石", "铁焰矿", "金阳矿"], "equipment_type": "heavy_weapon", "bias_school": "磐石道", "desc": "磐石道词条权重提升" },
-    { "materials": ["鹿皮", "虎皮", "仙云皮"], "equipment_type": "leather_armor", "bias_school": "灵猴道", "desc": "灵猴道词条权重提升" },
-    { "materials": ["圣水玉", "玉佛像"], "equipment_type": "charm", "bias_school": "佛门/生存", "desc": "佛门/生存词条权重提升" },
-    { "materials": ["毒液", "寒潭水"], "equipment_type": "glove", "bias_school": "元素/异常", "desc": "元素/异常词条权重提升" }
+    {
+      "materials": [
+        "桃木",
+        "松木",
+        "铁木"
+      ],
+      "equipment_type": "light_weapon",
+      "bias_school": "灵猴道",
+      "desc": "灵猴道词条权重提升"
+    },
+    {
+      "materials": [
+        "铜精",
+        "铁精",
+        "金精"
+      ],
+      "equipment_type": "medium_weapon",
+      "bias_school": "金行道",
+      "desc": "金行道词条权重提升"
+    },
+    {
+      "materials": [
+        "粗石",
+        "铁焰矿",
+        "金阳矿"
+      ],
+      "equipment_type": "heavy_weapon",
+      "bias_school": "磐石道",
+      "desc": "磐石道词条权重提升"
+    },
+    {
+      "materials": [
+        "鹿皮",
+        "虎皮",
+        "仙云皮"
+      ],
+      "equipment_type": "leather_armor",
+      "bias_school": "灵猴道",
+      "desc": "灵猴道词条权重提升"
+    },
+    {
+      "materials": [
+        "圣水玉",
+        "玉佛像"
+      ],
+      "equipment_type": "charm",
+      "bias_school": "佛门/生存",
+      "desc": "佛门/生存词条权重提升"
+    },
+    {
+      "materials": [
+        "毒液",
+        "寒潭水"
+      ],
+      "equipment_type": "glove",
+      "bias_school": "元素/异常",
+      "desc": "元素/异常词条权重提升"
+    }
   ],
   "xian_equipment": [
     {

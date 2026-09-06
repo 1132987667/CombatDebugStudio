@@ -38,7 +38,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_007",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -78,7 +78,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_007",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -118,7 +118,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_001",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -162,7 +162,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_002",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -206,7 +206,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_008",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -250,7 +250,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -290,7 +290,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_009",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -334,7 +334,7 @@
         "probability": 35
       },
       {
-        "itemId": "crys_006",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -378,7 +378,7 @@
         "probability": 60
       },
       {
-        "itemId": "crys_003",
+        "itemId": "enh_stone",
         "probability": 5
       }
     ]
@@ -428,7 +428,7 @@
     "name": "关卡守护者掉落",
     "entries": [
       {
-        "itemId": "crys_009",
+        "itemId": "enh_stone",
         "probability": 30
       },
       {

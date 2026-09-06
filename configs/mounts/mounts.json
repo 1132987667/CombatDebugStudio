@@ -4,40 +4,35 @@
     "name": "踏云灵驹",
     "scene": 1,
     "category": "combo",
-    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
-    "trait": "每次触发连击后，自身速度+3，持续1回合（可叠加2层）"
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 }
   },
   {
     "id": "mount_02",
     "name": "幻影妖狼",
     "scene": 2,
     "category": "combo",
-    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
-    "trait": "连击伤害的 10% 转化为自身气血回复"
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 }
   },
   {
     "id": "mount_03",
     "name": "追星鹿",
     "scene": 3,
     "category": "combo",
-    "weights": { "defense": 2, "dodge": 2, "maxHealth": 3 },
-    "trait": "连击段数上限+1，但每段连击伤害衰减额外降低 5%"
+    "weights": { "defense": 2, "dodge": 2, "maxHealth": 3 }
   },
   {
     "id": "mount_04",
     "name": "御风青隼",
     "scene": 4,
     "category": "combo",
-    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
-    "trait": "回合开始时若自身速度高于敌方全体，则本回合连击率+10%"
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 }
   },
   {
     "id": "mount_05",
     "name": "惊雷猎豹",
     "scene": 5,
     "category": "combo",
-    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
-    "trait": "普攻或连击命中时，有 20% 概率使目标防御-5%，持续1回合"
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 }
   },
   {
     "id": "mount_06",

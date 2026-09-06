@@ -1069,20 +1069,15 @@ function buildPackCategory(env: PlayerStoreDebugEnv): DebugCategory {
         ],
       },
       {
-        id: 'orb',
-        label: '晶球',
+        id: 'enh_stone',
+        label: '强化',
         actions: [
           {
-            id: 'pack_orb_all',
-            label: '给予全部晶球（各 10）',
+            id: 'pack_enh_stone',
+            label: '给予强化石 ×50',
             execute: () => {
-              const orbs = env.items.filter((it) => it.id.startsWith('crys_'))
-              let n = 0
-              for (const o of orbs) {
-                pack.addItem(o.id, 10)
-                n++
-              }
-              return ok(`已给予 ${n} 种晶球各 10`, orbs.map((o) => ({ id: o.id, name: o.name })))
+              pack.addItem('enh_stone', 50)
+              return ok('「强化石」×50 已入背包', [{ id: 'enh_stone', name: '强化石' }])
             },
           },
         ],

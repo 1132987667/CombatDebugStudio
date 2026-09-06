@@ -7,33 +7,123 @@
       "layer": 1,
       "requiredPoints": 4,
       "commonAttributes": [
-        { "attribute": "maxHealth", "name": "气血", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 24 },
-        { "attribute": "attack", "name": "攻击", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 24 },
-        { "attribute": "defense", "name": "防御", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 24 },
-        { "attribute": "speed", "name": "速度", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 24 },
-        { "attribute": "hit", "name": "命中", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 24 },
-        { "attribute": "dodge", "name": "闪避", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 24 }
+        {
+          "attribute": "maxHealth",
+          "name": "气血",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 12,
+          "totalValue": 24
+        },
+        {
+          "attribute": "attack",
+          "name": "攻击",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 12,
+          "totalValue": 24
+        },
+        {
+          "attribute": "defense",
+          "name": "防御",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 12,
+          "totalValue": 24
+        },
+        {
+          "attribute": "speed",
+          "name": "速度",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 12,
+          "totalValue": 24
+        },
+        {
+          "attribute": "hit",
+          "name": "命中",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 12,
+          "totalValue": 24
+        },
+        {
+          "attribute": "dodge",
+          "name": "闪避",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 12,
+          "totalValue": 24
+        }
       ],
       "schools": {
         "lianji": [
-          { "type": "passive", "name": "连击被动", "description": "解锁连击流被动技能" },
-          { "type": "small_skill", "name": "连击小技能", "description": "解锁连击流小技能" },
-          { "type": "ultimate", "name": "连击大技能", "description": "解锁连击流大技能" }
+          {
+            "type": "passive",
+            "name": "连击被动",
+            "description": "解锁连击流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "连击小技能",
+            "description": "解锁连击流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "连击大技能",
+            "description": "解锁连击流大技能"
+          }
         ],
         "pojun": [
-          { "type": "passive", "name": "破军被动", "description": "解锁破军流被动技能" },
-          { "type": "small_skill", "name": "破军小技能", "description": "解锁破军流小技能" },
-          { "type": "ultimate", "name": "破军大技能", "description": "解锁破军流大技能" }
+          {
+            "type": "passive",
+            "name": "破军被动",
+            "description": "解锁破军流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "破军小技能",
+            "description": "解锁破军流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "破军大技能",
+            "description": "解锁破军流大技能"
+          }
         ],
         "budong": [
-          { "type": "passive", "name": "不动被动", "description": "解锁不动流被动技能" },
-          { "type": "small_skill", "name": "不动小技能", "description": "解锁不动流小技能" },
-          { "type": "ultimate", "name": "不动大技能", "description": "解锁不动流大技能" }
+          {
+            "type": "passive",
+            "name": "不动被动",
+            "description": "解锁不动流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "不动小技能",
+            "description": "解锁不动流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "不动大技能",
+            "description": "解锁不动流大技能"
+          }
         ],
         "huanying": [
-          { "type": "passive", "name": "幻影被动", "description": "解锁幻影流被动技能" },
-          { "type": "small_skill", "name": "幻影小技能", "description": "解锁幻影流小技能" },
-          { "type": "ultimate", "name": "幻影大技能", "description": "解锁幻影流大技能" }
+          {
+            "type": "passive",
+            "name": "幻影被动",
+            "description": "解锁幻影流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "幻影小技能",
+            "description": "解锁幻影流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "幻影大技能",
+            "description": "解锁幻影流大技能"
+          }
         ]
       }
     },
@@ -41,33 +131,159 @@
       "layer": 2,
       "requiredPoints": 4,
       "commonAttributes": [
-        { "attribute": "maxHealthPercent", "name": "气血加成", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 12 },
-        { "attribute": "attackPercent", "name": "攻击加成", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 12 },
-        { "attribute": "defensePercent", "name": "防御加成", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 12 },
-        { "attribute": "speedPercent", "name": "速度加成", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 12 },
-        { "attribute": "hitPercent", "name": "命中加成", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 12 },
-        { "attribute": "dodgePercent", "name": "闪避加成", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 12 }
+        {
+          "attribute": "maxHealthPercent",
+          "name": "气血加成",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 12
+        },
+        {
+          "attribute": "attackPercent",
+          "name": "攻击加成",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 12
+        },
+        {
+          "attribute": "defensePercent",
+          "name": "防御加成",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 12
+        },
+        {
+          "attribute": "speedPercent",
+          "name": "速度加成",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 12
+        },
+        {
+          "attribute": "hitPercent",
+          "name": "命中加成",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 12
+        },
+        {
+          "attribute": "dodgePercent",
+          "name": "闪避加成",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 12
+        }
       ],
       "schools": {
         "lianji": [
-          { "attribute": "lifestealRate", "name": "吸血率", "cost": 1, "value": 1, "totalNodes": 3, "totalValue": 3 },
-          { "attribute": "normalAttackPercent", "name": "普攻加成", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 12 },
-          { "attribute": "comboRate", "name": "连击率", "cost": 1, "value": 1, "totalNodes": 12, "totalValue": 12 }
+          {
+            "attribute": "lifestealRate",
+            "name": "吸血率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 3,
+            "totalValue": 3
+          },
+          {
+            "attribute": "normalAttackPercent",
+            "name": "普攻加成",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 12,
+            "totalValue": 12
+          },
+          {
+            "attribute": "comboRate",
+            "name": "连击率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 12,
+            "totalValue": 12
+          }
         ],
         "pojun": [
-          { "attribute": "critDamage", "name": "暴伤", "cost": 1, "value": 1, "totalNodes": 10, "totalValue": 10 },
-          { "attribute": "lifestealRate", "name": "吸血率", "cost": 1, "value": 1, "totalNodes": 3, "totalValue": 3 },
-          { "attribute": "critRate", "name": "暴击率", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+          {
+            "attribute": "critDamage",
+            "name": "暴伤",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 10,
+            "totalValue": 10
+          },
+          {
+            "attribute": "lifestealRate",
+            "name": "吸血率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 3,
+            "totalValue": 3
+          },
+          {
+            "attribute": "critRate",
+            "name": "暴击率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          }
         ],
         "budong": [
-          { "attribute": "damageReflection", "name": "反弹伤害", "cost": 1, "value": 1, "totalNodes": 25, "totalValue": 25 },
-          { "attribute": "defensePercent", "name": "防御加成", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-          { "attribute": "shieldStrength", "name": "护盾强度", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+          {
+            "attribute": "damageReflection",
+            "name": "反弹伤害",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 25,
+            "totalValue": 25
+          },
+          {
+            "attribute": "defensePercent",
+            "name": "防御加成",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          },
+          {
+            "attribute": "shieldStrength",
+            "name": "护盾强度",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          }
         ],
         "huanying": [
-          { "attribute": "dodgeRate", "name": "闪避率", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-          { "attribute": "effectResist", "name": "效果抵抗", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-          { "attribute": "trueDamageRate", "name": "真伤率", "cost": 1, "value": 1, "totalNodes": 4, "totalValue": 8 }
+          {
+            "attribute": "dodgeRate",
+            "name": "闪避率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          },
+          {
+            "attribute": "effectResist",
+            "name": "效果抵抗",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          },
+          {
+            "attribute": "trueDamageRate",
+            "name": "真伤率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 4,
+            "totalValue": 8
+          }
         ]
       }
     },
@@ -75,28 +291,95 @@
       "layer": 3,
       "requiredPoints": 4,
       "commonAttributes": [
-        { "attribute": "healthRecoveryPercent", "name": "气血回复%", "cost": 1, "value": 1, "totalNodes": 1, "totalValue": 3 },
-        { "attribute": "critResist", "name": "暴击抵抗", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "critDamageReduce", "name": "暴伤减免", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "normalAttackReduce", "name": "普攻免伤", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "skillDamageReduce", "name": "技能免伤", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+        {
+          "attribute": "healthRecoveryPercent",
+          "name": "气血回复%",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 1,
+          "totalValue": 3
+        },
+        {
+          "attribute": "critResist",
+          "name": "暴击抵抗",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "critDamageReduce",
+          "name": "暴伤减免",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "normalAttackReduce",
+          "name": "普攻免伤",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "skillDamageReduce",
+          "name": "技能免伤",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        }
       ],
       "schools": {
         "lianji": [
-          { "type": "passive", "name": "连击被动", "description": "解锁连击流被动技能" },
-          { "type": "small_skill", "name": "连击小技能", "description": "解锁连击流小技能" }
+          {
+            "type": "passive",
+            "name": "连击被动",
+            "description": "解锁连击流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "连击小技能",
+            "description": "解锁连击流小技能"
+          }
         ],
         "pojun": [
-          { "type": "passive", "name": "破军被动", "description": "解锁破军流被动技能" },
-          { "type": "small_skill", "name": "破军小技能", "description": "解锁破军流小技能" }
+          {
+            "type": "passive",
+            "name": "破军被动",
+            "description": "解锁破军流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "破军小技能",
+            "description": "解锁破军流小技能"
+          }
         ],
         "budong": [
-          { "type": "passive", "name": "不动被动", "description": "解锁不动流被动技能" },
-          { "type": "small_skill", "name": "不动小技能", "description": "解锁不动流小技能" }
+          {
+            "type": "passive",
+            "name": "不动被动",
+            "description": "解锁不动流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "不动小技能",
+            "description": "解锁不动流小技能"
+          }
         ],
         "huanying": [
-          { "type": "passive", "name": "幻影被动", "description": "解锁幻影流被动技能" },
-          { "type": "small_skill", "name": "幻影小技能", "description": "解锁幻影流小技能" }
+          {
+            "type": "passive",
+            "name": "幻影被动",
+            "description": "解锁幻影流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "幻影小技能",
+            "description": "解锁幻影流小技能"
+          }
         ]
       }
     },
@@ -104,23 +387,79 @@
       "layer": 4,
       "requiredPoints": 4,
       "commonAttributes": [
-        { "attribute": "hitRate", "name": "命中率%", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "dodgeRate", "name": "闪避率", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "armorPen", "name": "破甲", "cost": 1, "value": 1, "totalNodes": 3, "totalValue": 3 },
-        { "attribute": "critRate", "name": "暴击率", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+        {
+          "attribute": "hitRate",
+          "name": "命中率%",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "dodgeRate",
+          "name": "闪避率",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "armorPen",
+          "name": "破甲",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 3,
+          "totalValue": 3
+        },
+        {
+          "attribute": "critRate",
+          "name": "暴击率",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        }
       ],
       "schools": {
         "lianji": [
-          { "attribute": "comboDamage", "name": "连击伤害", "cost": 1, "value": 1, "totalNodes": 10, "totalValue": 10 }
+          {
+            "attribute": "comboDamage",
+            "name": "连击伤害",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 10,
+            "totalValue": 10
+          }
         ],
         "pojun": [
-          { "attribute": "hitRate", "name": "命中率%", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+          {
+            "attribute": "hitRate",
+            "name": "命中率%",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          }
         ],
         "budong": [
-          { "attribute": "damageReduceRate", "name": "免伤率", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+          {
+            "attribute": "damageReduceRate",
+            "name": "免伤率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          }
         ],
         "huanying": [
-          { "attribute": "effectHit", "name": "效果命中", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+          {
+            "attribute": "effectHit",
+            "name": "效果命中",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          }
         ]
       }
     },
@@ -128,30 +467,135 @@
       "layer": 5,
       "requiredPoints": 4,
       "commonAttributes": [
-        { "attribute": "maxHealthCoefficient", "name": "气血系数", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 10 },
-        { "attribute": "attackCoefficient", "name": "攻击系数", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 10 },
-        { "attribute": "defenseCoefficient", "name": "防御系数", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 10 },
-        { "attribute": "speedCoefficient", "name": "速度系数", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 10 },
-        { "attribute": "hitCoefficient", "name": "命中系数", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 10 },
-        { "attribute": "dodgeCoefficient", "name": "闪避系数", "cost": 1, "value": 1, "totalNodes": 6, "totalValue": 10 }
+        {
+          "attribute": "maxHealthCoefficient",
+          "name": "气血系数",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 10
+        },
+        {
+          "attribute": "attackCoefficient",
+          "name": "攻击系数",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 10
+        },
+        {
+          "attribute": "defenseCoefficient",
+          "name": "防御系数",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 10
+        },
+        {
+          "attribute": "speedCoefficient",
+          "name": "速度系数",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 10
+        },
+        {
+          "attribute": "hitCoefficient",
+          "name": "命中系数",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 10
+        },
+        {
+          "attribute": "dodgeCoefficient",
+          "name": "闪避系数",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 6,
+          "totalValue": 10
+        }
       ],
       "schools": {
         "lianji": [
-          { "attribute": "speedCoefficient", "name": "速度系数", "cost": 1, "value": 1, "totalNodes": 8, "totalValue": 8 },
-          { "attribute": "armorPen", "name": "破甲", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+          {
+            "attribute": "speedCoefficient",
+            "name": "速度系数",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 8,
+            "totalValue": 8
+          },
+          {
+            "attribute": "armorPen",
+            "name": "破甲",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          }
         ],
         "pojun": [
-          { "attribute": "speedCoefficient", "name": "速度系数", "cost": 1, "value": 1, "totalNodes": 8, "totalValue": 8 },
-          { "attribute": "counterRate", "name": "反击率", "cost": 1, "value": 1, "totalNodes": 10, "totalValue": 10 }
+          {
+            "attribute": "speedCoefficient",
+            "name": "速度系数",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 8,
+            "totalValue": 8
+          },
+          {
+            "attribute": "counterRate",
+            "name": "反击率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 10,
+            "totalValue": 10
+          }
         ],
         "budong": [
-          { "attribute": "maxHealthPercent", "name": "气血加成", "cost": 1, "value": 1, "totalNodes": 10, "totalValue": 10 },
-          { "attribute": "critResist", "name": "暴击抵抗", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+          {
+            "attribute": "maxHealthPercent",
+            "name": "气血加成",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 10,
+            "totalValue": 10
+          },
+          {
+            "attribute": "critResist",
+            "name": "暴击抵抗",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 5,
+            "totalValue": 5
+          }
         ],
         "huanying": [
-          { "attribute": "speedCoefficient", "name": "速度系数", "cost": 1, "value": 1, "totalNodes": 8, "totalValue": 8 },
-          { "attribute": "dodgePercent", "name": "闪避加成", "cost": 1, "value": 1, "totalNodes": 10, "totalValue": 10 },
-          { "attribute": "speedPercent", "name": "速度加成", "cost": 1, "value": 1, "totalNodes": 8, "totalValue": 8 }
+          {
+            "attribute": "speedCoefficient",
+            "name": "速度系数",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 8,
+            "totalValue": 8
+          },
+          {
+            "attribute": "dodgePercent",
+            "name": "闪避加成",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 10,
+            "totalValue": 10
+          },
+          {
+            "attribute": "speedPercent",
+            "name": "速度加成",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 8,
+            "totalValue": 8
+          }
         ]
       }
     },
@@ -159,32 +603,115 @@
       "layer": 6,
       "requiredPoints": 6,
       "commonAttributes": [
-        { "attribute": "lifestealReduce", "name": "吸血削减%", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "healReduce", "name": "治疗削减%", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "reflectionReduce", "name": "反伤削减%", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "shieldReduce", "name": "护盾削减%", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 },
-        { "attribute": "effectResist", "name": "效果抵抗", "cost": 1, "value": 1, "totalNodes": 5, "totalValue": 5 }
+        {
+          "attribute": "lifestealReduce",
+          "name": "吸血削减%",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "healReduce",
+          "name": "治疗削减%",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "reflectionReduce",
+          "name": "反伤削减%",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "shieldReduce",
+          "name": "护盾削减%",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        },
+        {
+          "attribute": "effectResist",
+          "name": "效果抵抗",
+          "cost": 1,
+          "value": 1,
+          "totalNodes": 5,
+          "totalValue": 5
+        }
       ],
       "schools": {
         "lianji": [
-          { "type": "passive", "name": "连击被动", "description": "解锁连击流被动技能" },
-          { "type": "small_skill", "name": "连击小技能", "description": "解锁连击流小技能" },
-          { "type": "ultimate", "name": "连击大技能", "description": "解锁连击流大技能" }
+          {
+            "type": "passive",
+            "name": "连击被动",
+            "description": "解锁连击流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "连击小技能",
+            "description": "解锁连击流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "连击大技能",
+            "description": "解锁连击流大技能"
+          }
         ],
         "pojun": [
-          { "type": "passive", "name": "破军被动", "description": "解锁破军流被动技能" },
-          { "type": "small_skill", "name": "破军小技能", "description": "解锁破军流小技能" },
-          { "type": "ultimate", "name": "破军大技能", "description": "解锁破军流大技能" }
+          {
+            "type": "passive",
+            "name": "破军被动",
+            "description": "解锁破军流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "破军小技能",
+            "description": "解锁破军流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "破军大技能",
+            "description": "解锁破军流大技能"
+          }
         ],
         "budong": [
-          { "type": "passive", "name": "不动被动", "description": "解锁不动流被动技能" },
-          { "type": "small_skill", "name": "不动小技能", "description": "解锁不动流小技能" },
-          { "type": "ultimate", "name": "不动大技能", "description": "解锁不动流大技能" }
+          {
+            "type": "passive",
+            "name": "不动被动",
+            "description": "解锁不动流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "不动小技能",
+            "description": "解锁不动流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "不动大技能",
+            "description": "解锁不动流大技能"
+          }
         ],
         "huanying": [
-          { "type": "passive", "name": "幻影被动", "description": "解锁幻影流被动技能" },
-          { "type": "small_skill", "name": "幻影小技能", "description": "解锁幻影流小技能" },
-          { "type": "ultimate", "name": "幻影大技能", "description": "解锁幻影流大技能" }
+          {
+            "type": "passive",
+            "name": "幻影被动",
+            "description": "解锁幻影流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "幻影小技能",
+            "description": "解锁幻影流小技能"
+          },
+          {
+            "type": "ultimate",
+            "name": "幻影大技能",
+            "description": "解锁幻影流大技能"
+          }
         ]
       }
     },
@@ -192,32 +719,151 @@
       "layer": 7,
       "requiredPoints": 6,
       "commonAttributes": [
-        { "attribute": "maxHealth", "name": "气血", "cost": 2, "value": 2, "totalNodes": 192, "totalValue": 384 },
-        { "attribute": "attack", "name": "攻击", "cost": 2, "value": 2, "totalNodes": 24, "totalValue": 48 },
-        { "attribute": "defense", "name": "防御", "cost": 2, "value": 2, "totalNodes": 24, "totalValue": 48 },
-        { "attribute": "speed", "name": "速度", "cost": 2, "value": 2, "totalNodes": 24, "totalValue": 48 },
-        { "attribute": "hit", "name": "命中", "cost": 2, "value": 2, "totalNodes": 24, "totalValue": 48 },
-        { "attribute": "dodge", "name": "闪避", "cost": 2, "value": 2, "totalNodes": 24, "totalValue": 48 }
+        {
+          "attribute": "maxHealth",
+          "name": "气血",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 192,
+          "totalValue": 384
+        },
+        {
+          "attribute": "attack",
+          "name": "攻击",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 24,
+          "totalValue": 48
+        },
+        {
+          "attribute": "defense",
+          "name": "防御",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 24,
+          "totalValue": 48
+        },
+        {
+          "attribute": "speed",
+          "name": "速度",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 24,
+          "totalValue": 48
+        },
+        {
+          "attribute": "hit",
+          "name": "命中",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 24,
+          "totalValue": 48
+        },
+        {
+          "attribute": "dodge",
+          "name": "闪避",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 24,
+          "totalValue": 48
+        }
       ],
       "schools": {
         "lianji": [
-          { "attribute": "comboRate", "name": "连击率", "cost": 2, "value": 2, "totalNodes": 24, "totalValue": 48 },
-          { "attribute": "comboDamageCoefficient", "name": "连击伤害系数", "cost": 1, "value": 1, "totalNodes": 8, "totalValue": 8 }
+          {
+            "attribute": "comboRate",
+            "name": "连击率",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 24,
+            "totalValue": 48
+          },
+          {
+            "attribute": "comboDamageCoefficient",
+            "name": "连击伤害系数",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 8,
+            "totalValue": 8
+          }
         ],
         "pojun": [
-          { "attribute": "critDamage", "name": "暴伤", "cost": 1, "value": 1, "totalNodes": 24, "totalValue": 48 },
-          { "attribute": "critRate", "name": "暴击率", "cost": 1, "value": 1, "totalNodes": 8, "totalValue": 8 },
-          { "attribute": "lifestealEffectBonus", "name": "吸血效果加成%", "cost": 2, "value": 2, "totalNodes": 10, "totalValue": 20 }
+          {
+            "attribute": "critDamage",
+            "name": "暴伤",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 24,
+            "totalValue": 48
+          },
+          {
+            "attribute": "critRate",
+            "name": "暴击率",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 8,
+            "totalValue": 8
+          },
+          {
+            "attribute": "lifestealEffectBonus",
+            "name": "吸血效果加成%",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 10,
+            "totalValue": 20
+          }
         ],
         "budong": [
-          { "attribute": "damageReduceCoefficient", "name": "免伤系数", "cost": 1, "value": 1, "totalNodes": 4, "totalValue": 8 },
-          { "attribute": "maxHealthCoefficient", "name": "气血系数", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 16 },
-          { "attribute": "shieldCoefficient", "name": "护盾系数", "cost": 2, "value": 2, "totalNodes": 10, "totalValue": 20 }
+          {
+            "attribute": "damageReduceCoefficient",
+            "name": "免伤系数",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 4,
+            "totalValue": 8
+          },
+          {
+            "attribute": "maxHealthCoefficient",
+            "name": "气血系数",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 8,
+            "totalValue": 16
+          },
+          {
+            "attribute": "shieldCoefficient",
+            "name": "护盾系数",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 10,
+            "totalValue": 20
+          }
         ],
         "huanying": [
-          { "attribute": "dodgeRate", "name": "闪避率", "cost": 2, "value": 2, "totalNodes": 10, "totalValue": 20 },
-          { "attribute": "dodgeCoefficient", "name": "闪避系数", "cost": 1, "value": 1, "totalNodes": 8, "totalValue": 16 },
-          { "attribute": "trueDamageRate", "name": "真伤率", "cost": 2, "value": 2, "totalNodes": 0, "totalValue": 0 }
+          {
+            "attribute": "dodgeRate",
+            "name": "闪避率",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 10,
+            "totalValue": 20
+          },
+          {
+            "attribute": "dodgeCoefficient",
+            "name": "闪避系数",
+            "cost": 1,
+            "value": 1,
+            "totalNodes": 8,
+            "totalValue": 16
+          },
+          {
+            "attribute": "trueDamageRate",
+            "name": "真伤率",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 0,
+            "totalValue": 0
+          }
         ]
       }
     },
@@ -225,25 +871,71 @@
       "layer": 8,
       "requiredPoints": 6,
       "commonAttributes": [
-        { "attribute": "damageCoefficient", "name": "伤害系数", "cost": 2, "value": 2, "totalNodes": 5, "totalValue": 10 },
-        { "attribute": "healBonus", "name": "治疗加成", "cost": 2, "value": 2, "totalNodes": 10, "totalValue": 20 }
+        {
+          "attribute": "damageCoefficient",
+          "name": "伤害系数",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 5,
+          "totalValue": 10
+        },
+        {
+          "attribute": "healBonus",
+          "name": "治疗加成",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 10,
+          "totalValue": 20
+        }
       ],
       "schools": {
         "lianji": [
-          { "type": "passive", "name": "连击被动", "description": "解锁连击流被动技能" },
-          { "type": "small_skill", "name": "连击小技能", "description": "解锁连击流小技能" }
+          {
+            "type": "passive",
+            "name": "连击被动",
+            "description": "解锁连击流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "连击小技能",
+            "description": "解锁连击流小技能"
+          }
         ],
         "pojun": [
-          { "type": "passive", "name": "破军被动", "description": "解锁破军流被动技能" },
-          { "type": "small_skill", "name": "破军小技能", "description": "解锁破军流小技能" }
+          {
+            "type": "passive",
+            "name": "破军被动",
+            "description": "解锁破军流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "破军小技能",
+            "description": "解锁破军流小技能"
+          }
         ],
         "budong": [
-          { "type": "passive", "name": "不动被动", "description": "解锁不动流被动技能" },
-          { "type": "small_skill", "name": "不动小技能", "description": "解锁不动流小技能" }
+          {
+            "type": "passive",
+            "name": "不动被动",
+            "description": "解锁不动流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "不动小技能",
+            "description": "解锁不动流小技能"
+          }
         ],
         "huanying": [
-          { "type": "passive", "name": "幻影被动", "description": "解锁幻影流被动技能" },
-          { "type": "small_skill", "name": "幻影小技能", "description": "解锁幻影流小技能" }
+          {
+            "type": "passive",
+            "name": "幻影被动",
+            "description": "解锁幻影流被动技能"
+          },
+          {
+            "type": "small_skill",
+            "name": "幻影小技能",
+            "description": "解锁幻影流小技能"
+          }
         ]
       }
     },
@@ -251,21 +943,78 @@
       "layer": 9,
       "requiredPoints": 6,
       "commonAttributes": [
-        { "attribute": "damageReduce", "name": "免伤", "cost": 2, "value": 0, "totalNodes": 0, "totalValue": 8 },
-        { "attribute": "finalDamage", "name": "最终伤害", "cost": 2, "value": 0, "totalNodes": 0, "totalValue": 20 },
-        { "attribute": "doubleDrop", "name": "双倍掉落", "cost": 2, "value": 0, "totalNodes": 0, "totalValue": 20, "unit": "%" },
-        { "attribute": "vulnerable", "name": "易伤", "cost": 2, "value": 2, "totalNodes": 10, "totalValue": 10 }
+        {
+          "attribute": "damageReduce",
+          "name": "免伤",
+          "cost": 2,
+          "value": 0,
+          "totalNodes": 0,
+          "totalValue": 8
+        },
+        {
+          "attribute": "finalDamage",
+          "name": "最终伤害",
+          "cost": 2,
+          "value": 0,
+          "totalNodes": 0,
+          "totalValue": 20
+        },
+        {
+          "attribute": "doubleDrop",
+          "name": "双倍掉落",
+          "cost": 2,
+          "value": 0,
+          "totalNodes": 0,
+          "totalValue": 20,
+          "unit": "%"
+        },
+        {
+          "attribute": "vulnerable",
+          "name": "易伤",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 10,
+          "totalValue": 10
+        }
       ],
       "schools": {
         "lianji": [
-          { "attribute": "normalAttackCoefficient", "name": "普攻系数", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 16 }
+          {
+            "attribute": "normalAttackCoefficient",
+            "name": "普攻系数",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 8,
+            "totalValue": 16
+          }
         ],
         "pojun": [
-          { "attribute": "attackCoefficient", "name": "攻击系数", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 16 }
+          {
+            "attribute": "attackCoefficient",
+            "name": "攻击系数",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 8,
+            "totalValue": 16
+          }
         ],
         "budong": [
-          { "attribute": "critResist", "name": "暴击抵抗", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 16 },
-          { "attribute": "critDamageResist", "name": "暴伤抵抗", "cost": 2, "value": 2, "totalNodes": 16, "totalValue": 32 }
+          {
+            "attribute": "critResist",
+            "name": "暴击抵抗",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 8,
+            "totalValue": 16
+          },
+          {
+            "attribute": "critDamageResist",
+            "name": "暴伤抵抗",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 16,
+            "totalValue": 32
+          }
         ],
         "huanying": []
       }
@@ -274,20 +1023,71 @@
       "layer": 10,
       "requiredPoints": 6,
       "commonAttributes": [
-        { "attribute": "finalDamageReduce", "name": "最终伤害减免", "cost": 2, "value": 2, "totalNodes": 4, "totalValue": 8 },
-        { "attribute": "finalAttack", "name": "最终攻击", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 16 },
-        { "attribute": "finalDefense", "name": "最终防御", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 16 }
+        {
+          "attribute": "finalDamageReduce",
+          "name": "最终伤害减免",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 4,
+          "totalValue": 8
+        },
+        {
+          "attribute": "finalAttack",
+          "name": "最终攻击",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 8,
+          "totalValue": 16
+        },
+        {
+          "attribute": "finalDefense",
+          "name": "最终防御",
+          "cost": 2,
+          "value": 2,
+          "totalNodes": 8,
+          "totalValue": 16
+        }
       ],
       "schools": {
         "lianji": [
-          { "attribute": "armorPen", "name": "破甲", "cost": 2, "value": 2, "totalNodes": 4, "totalValue": 8 },
-          { "attribute": "finalDamage", "name": "最终伤害", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 16 }
+          {
+            "attribute": "armorPen",
+            "name": "破甲",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 4,
+            "totalValue": 8
+          },
+          {
+            "attribute": "finalDamage",
+            "name": "最终伤害",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 8,
+            "totalValue": 16
+          }
         ],
         "pojun": [
-          { "attribute": "dodgeTrueDamage", "name": "闪避后真伤攻击", "cost": 0, "value": 50, "totalNodes": 0, "totalValue": 0, "unit": "%", "description": "闪避后造成一次50%的真伤攻击" }
+          {
+            "attribute": "dodgeTrueDamage",
+            "name": "闪避后真伤攻击",
+            "cost": 0,
+            "value": 50,
+            "totalNodes": 0,
+            "totalValue": 0,
+            "unit": "%",
+            "description": "闪避后造成一次50%的真伤攻击"
+          }
         ],
         "budong": [
-          { "attribute": "trueDamageCoefficient", "name": "真伤系数", "cost": 2, "value": 2, "totalNodes": 8, "totalValue": 18 }
+          {
+            "attribute": "trueDamageCoefficient",
+            "name": "真伤系数",
+            "cost": 2,
+            "value": 2,
+            "totalNodes": 8,
+            "totalValue": 18
+          }
         ],
         "huanying": []
       }
@@ -297,31 +1097,399 @@
     "lianji": {
       "name": "连击流",
       "description": "高频输出/削甲",
-      "coreMechanics": ["连击", "风势", "裂甲"],
+      "coreMechanics": [
+        "连击",
+        "风势",
+        "裂甲"
+      ],
       "totalLayers": 10
     },
     "pojun": {
       "name": "破军流",
       "description": "爆发/斩杀",
-      "coreMechanics": ["暴击", "破绽", "斩杀", "破盾"],
+      "coreMechanics": [
+        "暴击",
+        "破绽",
+        "斩杀",
+        "破盾"
+      ],
       "totalLayers": 10
     },
     "budong": {
       "name": "不动流",
       "description": "承伤/反伤",
-      "coreMechanics": ["护盾", "嘲讽", "反伤", "怒目"],
+      "coreMechanics": [
+        "护盾",
+        "嘲讽",
+        "反伤",
+        "怒目"
+      ],
       "totalLayers": 10
     },
     "huanying": {
       "name": "幻影流",
       "description": "闪避/反击",
-      "coreMechanics": ["残影", "影袭", "致盲", "反击"],
+      "coreMechanics": [
+        "残影",
+        "影袭",
+        "致盲",
+        "反击"
+      ],
       "totalLayers": 10
     }
   },
   "costSummary": {
     "totalLayers": 10,
-    "pointsPerLayer": [4, 4, 4, 4, 4, 6, 6, 6, 6, 6],
+    "pointsPerLayer": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      6,
+      6,
+      6,
+      6,
+      6
+    ],
     "totalPointsRequired": 50
-  }
+  },
+  "nodes": [
+    {
+      "id": "lianji_fengsuo_core",
+      "name": "风锁连环",
+      "schoolId": "lianji",
+      "branch": "fengsuo",
+      "layer": 1,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_fengsuo_bounce,school_fengsuo_bind,school_fengsuo_fengzhu",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·风锁连环：核心被动：连击弹射 + 风锁束缚 + 风逐"
+    },
+    {
+      "id": "lianji_fufengbian",
+      "name": "缚风鞭",
+      "schoolId": "lianji",
+      "branch": "fufengbian",
+      "layer": 2,
+      "type": "small_skill",
+      "cost": 2,
+      "skillId": "skill_school_fufengbian",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·缚风鞭：小技能：单体伤害 + 减速 + 概率风锁"
+    },
+    {
+      "id": "lianji_fengliantanshe",
+      "name": "风链弹射",
+      "schoolId": "lianji",
+      "branch": "fengliantanshe",
+      "layer": 3,
+      "type": "small_skill",
+      "cost": 2,
+      "skillId": "skill_school_fengliantanshe",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·风链弹射：小技能：单体伤害 + 必定弹射"
+    },
+    {
+      "id": "lianji_fenghen_a",
+      "name": "风痕羁绊",
+      "schoolId": "lianji",
+      "branch": "fenghen",
+      "layer": 4,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_fenghen_jiban_apply,school_fenghen_jiban_heal",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·风痕羁绊：普通被动A：风缚 + 缠风回息"
+    },
+    {
+      "id": "lianji_yufeng",
+      "name": "驭风之力",
+      "schoolId": "lianji",
+      "branch": "yufeng",
+      "layer": 5,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_yufeng_hitdown,school_yufeng_attack",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·驭风之力：普通被动B：乱影 + 迎风"
+    },
+    {
+      "id": "lianji_tianwang",
+      "name": "风锁天网",
+      "schoolId": "lianji",
+      "branch": "tianwang",
+      "layer": 6,
+      "type": "ultimate",
+      "cost": 2,
+      "skillId": "skill_school_fengsuotianwang",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·风锁天网：大技能：全体伤害 + 全体风锁 + 天网"
+    },
+    {
+      "id": "lianji_fengshi_core",
+      "name": "风势缠身",
+      "schoolId": "lianji",
+      "branch": "fengshi",
+      "layer": 1,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_lianzhan_fengshi_apply,school_lianzhan_fengshi_transform,school_fengshi_combo_rate",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·风势缠身：核心被动：风势叠层 + 风痕转化 + 满势连击"
+    },
+    {
+      "id": "lianji_xunfengji",
+      "name": "迅风击",
+      "schoolId": "lianji",
+      "branch": "xunfengji",
+      "layer": 2,
+      "type": "small_skill",
+      "cost": 2,
+      "skillId": "skill_school_xunfengji",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·迅风击：小技能：130% 普攻判定 + 风势"
+    },
+    {
+      "id": "lianji_fengshiyong",
+      "name": "风势涌",
+      "schoolId": "lianji",
+      "branch": "fengshiyong",
+      "layer": 3,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_fengshiyong_apply",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·风势涌：普通被动A：连击强化下次普攻"
+    },
+    {
+      "id": "lianji_fengyibaofa",
+      "name": "风意爆发",
+      "schoolId": "lianji",
+      "branch": "fengyibaofa",
+      "layer": 4,
+      "type": "small_skill",
+      "cost": 2,
+      "skillId": "skill_school_fengyibaofa",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·风意爆发：小技能：引爆全部风势 + 转化裂甲"
+    },
+    {
+      "id": "lianji_qishi",
+      "name": "连击气势",
+      "schoolId": "lianji",
+      "branch": "qishi",
+      "layer": 5,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_lianshi_qishi,school_fengshi_liejia_link",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·连击气势：普通被动B：气势连击率 + 风裂联动"
+    },
+    {
+      "id": "lianji_kuangfeng",
+      "name": "狂风绝息",
+      "schoolId": "lianji",
+      "branch": "kuangfeng",
+      "layer": 6,
+      "type": "ultimate",
+      "cost": 2,
+      "skillId": "skill_school_kuangfengjuexi",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·狂风绝息：大技能：260% 单体 + 风绝真伤"
+    },
+    {
+      "id": "lianji_liejia_core",
+      "name": "裂甲刻印",
+      "schoolId": "lianji",
+      "branch": "liejia",
+      "layer": 1,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_lianzhan_liejia_apply,school_lianzhan_liejia_burst",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·裂甲刻印：核心被动：裂甲叠层 + 碎甲爆发"
+    },
+    {
+      "id": "lianji_liejiaji",
+      "name": "裂甲击",
+      "schoolId": "lianji",
+      "branch": "liejiaji",
+      "layer": 2,
+      "type": "small_skill",
+      "cost": 2,
+      "skillId": "skill_school_liejiaji",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·裂甲击：小技能：140% 普攻判定 + 裂甲"
+    },
+    {
+      "id": "lianji_tougu",
+      "name": "裂甲透骨",
+      "schoolId": "lianji",
+      "branch": "tougu",
+      "layer": 3,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_liejia_tougu",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·裂甲透骨：普通被动A：碎甲目标无视防御"
+    },
+    {
+      "id": "lianji_liejiabaofa",
+      "name": "裂甲爆发",
+      "schoolId": "lianji",
+      "branch": "liejiabaofa",
+      "layer": 4,
+      "type": "small_skill",
+      "cost": 2,
+      "skillId": "skill_school_liejiabaofa",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·裂甲爆发：小技能：引爆裂甲 + 战意"
+    },
+    {
+      "id": "lianji_baolie",
+      "name": "裂甲爆裂",
+      "schoolId": "lianji",
+      "branch": "baolie",
+      "layer": 5,
+      "type": "passive",
+      "cost": 2,
+      "skillId": "school_lianzhan_liejia_burst",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·裂甲爆裂：普通被动B：爆裂追伤与减速（与核心爆发共享配置）"
+    },
+    {
+      "id": "lianji_tianbeng",
+      "name": "裂甲天崩",
+      "schoolId": "lianji",
+      "branch": "tianbeng",
+      "layer": 6,
+      "type": "ultimate",
+      "cost": 2,
+      "skillId": "skill_school_liejiatianbeng",
+      "buffId": null,
+      "effect": null,
+      "description": "学习连击流·裂甲天崩：大技能：280% 单体 + 裂甲真伤引爆"
+    },
+    {
+      "id": "lianji_fengsuo_attr1",
+      "name": "速度",
+      "schoolId": "lianji",
+      "branch": "fengsuo",
+      "layer": 1,
+      "type": "attribute",
+      "cost": 1,
+      "skillId": null,
+      "buffId": null,
+      "effect": {
+        "attribute": "speed",
+        "value": 3,
+        "calc": "additive"
+      },
+      "description": "连击流·速度 +3"
+    },
+    {
+      "id": "lianji_fengsuo_attr2",
+      "name": "连击率",
+      "schoolId": "lianji",
+      "branch": "fengsuo",
+      "layer": 3,
+      "type": "attribute",
+      "cost": 1,
+      "skillId": null,
+      "buffId": null,
+      "effect": {
+        "attribute": "comboRate",
+        "value": 2,
+        "calc": "additive"
+      },
+      "description": "连击流·连击率 +2"
+    },
+    {
+      "id": "lianji_fengshi_attr1",
+      "name": "攻击",
+      "schoolId": "lianji",
+      "branch": "fengshi",
+      "layer": 1,
+      "type": "attribute",
+      "cost": 1,
+      "skillId": null,
+      "buffId": null,
+      "effect": {
+        "attribute": "attack",
+        "value": 3,
+        "calc": "additive"
+      },
+      "description": "连击流·攻击 +3"
+    },
+    {
+      "id": "lianji_fengshi_attr2",
+      "name": "连击率",
+      "schoolId": "lianji",
+      "branch": "fengshi",
+      "layer": 3,
+      "type": "attribute",
+      "cost": 1,
+      "skillId": null,
+      "buffId": null,
+      "effect": {
+        "attribute": "comboRate",
+        "value": 2,
+        "calc": "additive"
+      },
+      "description": "连击流·连击率 +2"
+    },
+    {
+      "id": "lianji_liejia_attr1",
+      "name": "攻击",
+      "schoolId": "lianji",
+      "branch": "liejia",
+      "layer": 1,
+      "type": "attribute",
+      "cost": 1,
+      "skillId": null,
+      "buffId": null,
+      "effect": {
+        "attribute": "attack",
+        "value": 3,
+        "calc": "additive"
+      },
+      "description": "连击流·攻击 +3"
+    },
+    {
+      "id": "lianji_liejia_attr2",
+      "name": "破甲",
+      "schoolId": "lianji",
+      "branch": "liejia",
+      "layer": 3,
+      "type": "attribute",
+      "cost": 1,
+      "skillId": null,
+      "buffId": null,
+      "effect": {
+        "attribute": "armorBreak",
+        "value": 2,
+        "calc": "additive"
+      },
+      "description": "连击流·破甲 +2"
+    }
+  ]
 }

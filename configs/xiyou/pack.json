@@ -1,63 +1,206 @@
 {
   "materials": [
-    { "name": "桃木", "count": 24},
-    { "name": "铜精", "count": 12},
-    { "name": "粗石", "count": 8},
-    { "name": "淡水玉", "count": 6},
-    { "name": "贝壳", "count": 15},
-    { "name": "松木", "count": 3},
-    { "name": "玄铁", "count": 2},
-    { "name": "妖丹", "count": 1},
-    { "name": "鹿皮", "count": 5},
-    { "name": "异矿", "count": 6},
-    { "name": "灵气·强化", "count": 6},
-    { "name": "灵水", "count": 6},
-    { "name": "小魂玉", "count": 6},
-    { "name": "灵芝", "count": 2 }
+    {
+      "name": "桃木",
+      "count": 24
+    },
+    {
+      "name": "铜精",
+      "count": 12
+    },
+    {
+      "name": "粗石",
+      "count": 8
+    },
+    {
+      "name": "淡水玉",
+      "count": 6
+    },
+    {
+      "name": "贝壳",
+      "count": 15
+    },
+    {
+      "name": "松木",
+      "count": 3
+    },
+    {
+      "name": "玄铁",
+      "count": 2
+    },
+    {
+      "name": "妖丹",
+      "count": 1
+    },
+    {
+      "name": "鹿皮",
+      "count": 5
+    },
+    {
+      "name": "小魂玉",
+      "count": 6
+    },
+    {
+      "name": "灵芝",
+      "count": 2
+    },
+    {
+      "name": "强化石",
+      "count": 18
+    }
   ],
   "equipment": [
-    { "name": "竹剑", "count": 1},
-    { "name": "鹿皮甲", "count": 1},
-    { "name": "淡水玉护符", "count": 1},
-    { "name": "铜棍", "count": 1 }
+    {
+      "name": "竹剑",
+      "count": 1
+    },
+    {
+      "name": "鹿皮甲",
+      "count": 1
+    },
+    {
+      "name": "淡水玉护符",
+      "count": 1
+    },
+    {
+      "name": "铜棍",
+      "count": 1
+    }
   ],
   "pills": [
-    { "name": "疗伤丹", "count": 5},
-    { "name": "破障丹", "count": 3},
-    { "name": "铁壁丹", "count": 2},
-    { "name": "疾风丹", "count": 1},
-    { "name": "洗髓丹", "count": 1 }
+    {
+      "name": "疗伤丹",
+      "count": 5
+    },
+    {
+      "name": "破障丹",
+      "count": 3
+    },
+    {
+      "name": "铁壁丹",
+      "count": 2
+    },
+    {
+      "name": "疾风丹",
+      "count": 1
+    },
+    {
+      "name": "洗髓丹",
+      "count": 1
+    }
   ],
   "consumables": [
-    { "name": "桃符", "count": 4},
-    { "name": "引路香", "count": 9},
-    { "name": "捆妖索", "count": 2},
-    { "name": "水帘洞藏宝图", "count": 1 }
+    {
+      "name": "桃符",
+      "count": 4
+    },
+    {
+      "name": "引路香",
+      "count": 9
+    },
+    {
+      "name": "捆妖索",
+      "count": 2
+    },
+    {
+      "name": "水帘洞藏宝图",
+      "count": 1
+    }
   ],
   "shopGoods": [
-    { "name": "疗伤丹", "stock": 99, "tag": "常售" },
-    { "name": "破障丹", "stock": 20, "tag": "常售" },
-    { "name": "桃木", "stock": 200 },
-    { "name": "铜精", "stock": 120 },
-    { "name": "淡水玉", "stock": 40, "tag": "限量" },
-    { "name": "竹剑", "stock": 5 },
-    { "name": "鹿皮甲", "stock": 5 },
-    { "name": "洗髓丹", "stock": 2, "tag": "限量" },
-    { "name": "玄铁", "stock": 8 },
-    { "name": "引路香", "stock": 99 }
+    {
+      "name": "疗伤丹",
+      "stock": 99,
+      "tag": "常售"
+    },
+    {
+      "name": "破障丹",
+      "stock": 20,
+      "tag": "常售"
+    },
+    {
+      "name": "桃木",
+      "stock": 200
+    },
+    {
+      "name": "铜精",
+      "stock": 120
+    },
+    {
+      "name": "淡水玉",
+      "stock": 40,
+      "tag": "限量"
+    },
+    {
+      "name": "竹剑",
+      "stock": 5
+    },
+    {
+      "name": "鹿皮甲",
+      "stock": 5
+    },
+    {
+      "name": "洗髓丹",
+      "stock": 2,
+      "tag": "限量"
+    },
+    {
+      "name": "玄铁",
+      "stock": 8
+    },
+    {
+      "name": "引路香",
+      "stock": 99
+    }
   ],
   "storageCells": [
-    { "name": "鹿皮", "count": 12},
-    { "name": "桃符", "count": 4},
-    { "name": "引路香", "count": 9},
-    { "name": "粗石", "count": 26},
-    { "name": "铜精", "count": 11},
-    { "name": "玄铁", "count": 2},
-    { "name": "松木", "count": 3},
-    { "name": "水帘洞藏宝图", "count": 1},
-    { "name": "空位", "count": 0},
-    { "name": "空位", "count": 0},
-    { "name": "空位", "count": 0},
-    { "name": "空位", "count": 0 }
+    {
+      "name": "鹿皮",
+      "count": 12
+    },
+    {
+      "name": "桃符",
+      "count": 4
+    },
+    {
+      "name": "引路香",
+      "count": 9
+    },
+    {
+      "name": "粗石",
+      "count": 26
+    },
+    {
+      "name": "铜精",
+      "count": 11
+    },
+    {
+      "name": "玄铁",
+      "count": 2
+    },
+    {
+      "name": "松木",
+      "count": 3
+    },
+    {
+      "name": "水帘洞藏宝图",
+      "count": 1
+    },
+    {
+      "name": "空位",
+      "count": 0
+    },
+    {
+      "name": "空位",
+      "count": 0
+    },
+    {
+      "name": "空位",
+      "count": 0
+    },
+    {
+      "name": "空位",
+      "count": 0
+    }
   ]
 }

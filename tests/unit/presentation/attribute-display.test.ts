@@ -36,4 +36,17 @@ describe('属性展示配置（attributeDisplay）', () => {
     const stale = Object.keys(ATTRIBUTE_DISPLAY_CONFIG).filter((code) => !(code in AttributeMetaMap))
     expect(stale).toEqual([])
   })
+
+  it('五行属性在「五行暂不启用」裁定期间一律 hidden（不进任何属性面板与情境高亮）', () => {
+    const fiveElementCodes = [
+      'waterAtk', 'fireAtk', 'metalAtk', 'woodAtk', 'earthAtk',
+      'fireDamage', 'fireDamageTaken', 'waterDamageTaken', 'lightningDamageTaken',
+      'metalRes', 'woodRes', 'waterRes', 'fireRes', 'earthRes',
+      'fireSkillDmgBonus',
+    ]
+    const notHidden = fiveElementCodes.filter(
+      (code) => getAttributeDisplayConfig(code).displayTier !== 'hidden',
+    )
+    expect(notHidden).toEqual([])
+  })
 })

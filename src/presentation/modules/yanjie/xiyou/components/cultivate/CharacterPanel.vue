@@ -149,8 +149,8 @@ const advancedGroups = computed<Record<string, AttrEntry[]>>(() => {
   for (const [code, meta] of Object.entries(AttributeMetaMap)) {
     const display = getAttributeDisplayConfig(code)
     // NOTE: 未配置项（displayTier 默认 advanced）对齐唤灵台一并展示——流派增量/装备词缀可携带
-    //       进阶属性（如 armorBreak/lifestealRate），不再当 0 值噪音隐藏；situational（五行抗性、
-    //       情境增伤）并入折叠区按组展示；hidden（currentHealth/shield 等运行时资源）不进面板。
+    //       进阶属性（如 armorBreak/lifestealRate），不再当 0 值噪音隐藏；situational（情境增伤、
+    //       毒抗等）并入折叠区按组展示；hidden（运行时资源与五行属性）不进面板。
     //       分组轴为属性族（*Bonus/系数/最终值与基础属性同族），非计算层
     if (display.displayTier !== 'advanced' && display.displayTier !== 'situational') continue
     const entry = toEntry(code as ATTRIBUTE_CODE, meta)

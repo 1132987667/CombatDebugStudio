@@ -12,7 +12,7 @@
  * 展示层级
  * core        — 始终展示（攻击、防御等）
  * advanced    — 折叠/进阶（暴击承伤减免等）
- * situational — 情境高亮（五行抗性、特殊伤害加成）
+ * situational — 情境高亮（特殊伤害加成、毒抗等）
  * hidden      — 独立 UI 处理（血量、能量、护盾）
  */
 export type DisplayTier = 'core' | 'advanced' | 'situational' | 'hidden'
@@ -27,7 +27,7 @@ export type DisplayTier = 'core' | 'advanced' | 'situational' | 'hidden'
  * accuracy  命中闪避（含效果命中）
  * mechanic  机制（连击/反击/真伤/溅射）
  * control   控制（成功率/豁免/免疫）
- * elemental 元素（五行攻抗、元素伤害）
+ * elemental 元素（五行攻抗；五行暂不启用期间整体 hidden）
  * support   辅助（吸血、治疗）
  * energy    能量/资源（初始能量、冷却、获取效率）
  * utility   兜底（未归类属性）
@@ -150,20 +150,23 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   burnDuration:                { displayTier: 'advanced',    group: 'control' },
 
   // ── 元素族 ──
-  waterAtk:                    { displayTier: 'advanced',    group: 'elemental' },
-  fireAtk:                     { displayTier: 'advanced',    group: 'elemental' },
-  metalAtk:                    { displayTier: 'advanced',    group: 'elemental' },
-  woodAtk:                     { displayTier: 'advanced',    group: 'elemental' },
-  earthAtk:                    { displayTier: 'advanced',    group: 'elemental' },
-  fireDamage:                  { displayTier: 'advanced',    group: 'elemental' },
-  fireDamageTaken:             { displayTier: 'advanced',    group: 'elemental' },
-  waterDamageTaken:            { displayTier: 'advanced',    group: 'elemental' },
-  lightningDamageTaken:        { displayTier: 'advanced',    group: 'elemental' },
-  metalRes:                    { displayTier: 'situational', group: 'elemental' },
-  woodRes:                     { displayTier: 'situational', group: 'elemental' },
-  waterRes:                    { displayTier: 'situational', group: 'elemental' },
-  fireRes:                     { displayTier: 'situational', group: 'elemental' },
-  earthRes:                    { displayTier: 'situational', group: 'elemental' },
+  // NOTE: 五行系统暂不启用（《完整项目说明.md》附注裁定，完整设计保留在《五行系统.md》），
+  //       对应属性一律 hidden 不显示。不可删除条目走 fallback——fallback 是 advanced，
+  //       删了反而会重新显示。启用五行时改回 advanced（攻/伤）与 situational（抗性）。
+  waterAtk:                    { displayTier: 'hidden',      group: 'elemental' },
+  fireAtk:                     { displayTier: 'hidden',      group: 'elemental' },
+  metalAtk:                    { displayTier: 'hidden',      group: 'elemental' },
+  woodAtk:                     { displayTier: 'hidden',      group: 'elemental' },
+  earthAtk:                    { displayTier: 'hidden',      group: 'elemental' },
+  fireDamage:                  { displayTier: 'hidden',      group: 'elemental' },
+  fireDamageTaken:             { displayTier: 'hidden',      group: 'elemental' },
+  waterDamageTaken:            { displayTier: 'hidden',      group: 'elemental' },
+  lightningDamageTaken:        { displayTier: 'hidden',      group: 'elemental' },
+  metalRes:                    { displayTier: 'hidden',      group: 'elemental' },
+  woodRes:                     { displayTier: 'hidden',      group: 'elemental' },
+  waterRes:                    { displayTier: 'hidden',      group: 'elemental' },
+  fireRes:                     { displayTier: 'hidden',      group: 'elemental' },
+  earthRes:                    { displayTier: 'hidden',      group: 'elemental' },
 
   // ── 辅助族（吸血/治疗） ──
   lifestealRate:               { displayTier: 'advanced',    group: 'support' },
@@ -180,7 +183,8 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
 
   // ── situational：情境高亮（group 被 useSituationalAttributes 消费，勿随意调整） ──
   poisonRes:                   { displayTier: 'situational', group: 'control' },
-  fireSkillDmgBonus:           { displayTier: 'situational', group: 'offense' },
+  // NOTE: 火系技能伤害加成随五行暂不启用（《完整项目说明.md》附注），启用时改回 situational
+  fireSkillDmgBonus:           { displayTier: 'hidden',      group: 'offense' },
   physicalSkillDmgBonus:       { displayTier: 'situational', group: 'offense' },
   damageToDemon:               { displayTier: 'situational', group: 'offense' },
   damageToLowHp:               { displayTier: 'situational', group: 'offense' },

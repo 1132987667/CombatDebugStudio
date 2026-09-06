@@ -158,6 +158,7 @@ export class BuffConfigResolver {
       stackRule: (raw.stackRule ?? 'LIMITED') as StackRule,
       controlType: (raw.controlType ?? 'NONE') as ControlType,
       dispellable: raw.dispellable ?? true,
+      blockedByTag: raw.blockedByTag ?? undefined,
       tags: raw.tags ?? [],
       immunities: raw.immunities ?? undefined,
       parameters: raw.parameters ?? undefined,

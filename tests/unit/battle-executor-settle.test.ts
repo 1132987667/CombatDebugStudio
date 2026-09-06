@@ -182,4 +182,148 @@ describe('BattleExecutor.settleDamage 结算序列', () => {
     expect(mockEventBus.emit).toHaveBeenCalled()
     expect(recordThreat).toHaveBeenCalled()
   })
+
+  it('暴击结算：发射 CRIT 事件，被动序列 ON_HIT → CRIT → DAMAGE_TAKEN', () => {
+    mockEventBus.emit.mockClear()
+    const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
+    const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50)
+    const battle = makeBattle()
+
+    executor.settleDamage(source, target, 30, 35, true, battle)
+
+    const critEmit = mockEventBus.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === BattleTriggerPhase.CRIT,
+    )
+    expect(critEmit).toBeTruthy()
+    expect(critEmit[1]).toMatchObject({
+      phase: BattleTriggerPhase.CRIT,
+      sourceId: 's1',
+      targetId: 't1',
+      value: 30,
+      extra: { damage: 30, rawDamage: 35, isCritical: true },
+    })
+    // 暴击时来源侧追加 CRIT 被动（破军系"暴击时附加破绽"挂载点）
+    const phases = triggerPassives.mock.calls.map(
+      (c: unknown[]) => (c[1] as { phase: string }).phase,
+    )
+    expect(phases).toEqual([
+      BattleTriggerPhase.ON_HIT,
+      BattleTriggerPhase.CRIT,
+      BattleTriggerPhase.DAMAGE_TAKEN,
+    ])
+  })
+
+  it('非暴击：不发射 CRIT 事件，被动序列仅 ON_HIT → DAMAGE_TAKEN', () => {
+    mockEventBus.emit.mockClear()
+    const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
+    const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50)
+    const battle = makeBattle()
+
+    executor.settleDamage(source, target, 30, 35, false, battle)
+
+    const critEmit = mockEventBus.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === BattleTriggerPhase.CRIT,
+    )
+    expect(critEmit).toBeFalsy()
+    const phases = triggerPassives.mock.calls.map(
+      (c: unknown[]) => (c[1] as { phase: string }).phase,
+    )
+    expect(phases).toEqual([BattleTriggerPhase.ON_HIT, BattleTriggerPhase.DAMAGE_TAKEN])
+  })
+
+  it('护盾破碎（伤害完全被吸收）：仍发射 SHIELD_BREAK 事件并触发持有者被动', () => {
+    mockEventBus.emit.mockClear()
+    let shield = 10
+    buffSystem.getShieldValue = vi.fn(() => shield)
+    buffSystem.setShieldValue = vi.fn((_id: string, v: number) => {
+      shield = v
+    })
+    const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
+    const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50, {
+      // 盾 10 全部吸收 30 伤害：盾清零、实际扣血 0
+      takeDamage: () => {
+        shield = 0
+        return 0
+      },
+    })
+    const battle = makeBattle()
+
+    const actual = executor.settleDamage(source, target, 30, 35, false, battle)
+
+    expect(actual).toBe(0)
+    // 破碎事件先于"完全吸收提前返回"，保证盾被打空必触发
+    const breakEmit = mockEventBus.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === BattleTriggerPhase.SHIELD_BREAK,
+    )
+    expect(breakEmit).toBeTruthy()
+    expect(breakEmit[1]).toMatchObject({
+      phase: BattleTriggerPhase.SHIELD_BREAK,
+      sourceId: 's1',
+      targetId: 't1',
+    })
+    // 双向触发：持有者侧 + 攻击者侧（斩灭之锋"暴击击破护盾"类被动挂在攻击者身上）
+    expect(triggerPassives).toHaveBeenCalledTimes(2)
+    expect(triggerPassives.mock.calls[0][1].phase).toBe(BattleTriggerPhase.SHIELD_BREAK)
+    expect(triggerPassives.mock.calls[0][0].id).toBe('t1')
+    expect(triggerPassives.mock.calls[1][1].phase).toBe(BattleTriggerPhase.SHIELD_BREAK)
+    expect(triggerPassives.mock.calls[1][0].id).toBe('s1')
+  })
+
+  it('护盾破碎（击穿）：SHIELD_BREAK 在 ON_HIT/DAMAGE_TAKEN 之前触发', () => {
+    mockEventBus.emit.mockClear()
+    let shield = 10
+    buffSystem.getShieldValue = vi.fn(() => shield)
+    buffSystem.setShieldValue = vi.fn((_id: string, v: number) => {
+      shield = v
+    })
+    const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
+    const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50, {
+      takeDamage: (n: number) => {
+        shield = 0
+        return n - 10 // 10 点被盾吸收，剩余扣血
+      },
+    })
+    const battle = makeBattle()
+
+    executor.settleDamage(source, target, 30, 35, false, battle)
+
+    const phases = triggerPassives.mock.calls.map(
+      (c: unknown[]) => (c[1] as { phase: string }).phase,
+    )
+    expect(phases).toEqual([
+      BattleTriggerPhase.SHIELD_BREAK,
+      BattleTriggerPhase.SHIELD_BREAK,
+      BattleTriggerPhase.ON_HIT,
+      BattleTriggerPhase.DAMAGE_TAKEN,
+    ])
+    const breakEmit = mockEventBus.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === BattleTriggerPhase.SHIELD_BREAK,
+    )
+    expect(breakEmit[1].value).toBe(20)
+  })
+
+  it('盾未破（部分吸收后仍有余盾）：不触发 SHIELD_BREAK', () => {
+    mockEventBus.emit.mockClear()
+    let shield = 50
+    buffSystem.getShieldValue = vi.fn(() => shield)
+    buffSystem.setShieldValue = vi.fn((_id: string, v: number) => {
+      shield = v
+    })
+    const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
+    const target = makeEntity('t1', '史莱姆', ParticipantSide.ENEMY, 50, {
+      takeDamage: (n: number) => {
+        shield -= 10
+        return n - 10
+      },
+    })
+    const battle = makeBattle()
+
+    executor.settleDamage(source, target, 30, 35, false, battle)
+
+    const breakEmit = mockEventBus.emit.mock.calls.find(
+      (c: unknown[]) => c[0] === BattleTriggerPhase.SHIELD_BREAK,
+    )
+    expect(breakEmit).toBeFalsy()
+    expect(triggerPassives).toHaveBeenCalledTimes(2)
+  })
 })

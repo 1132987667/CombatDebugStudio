@@ -2156,5 +2156,814 @@
     ],
     "polarity": "positive",
     "description": "提升 50% 攻击力和 30% 暴击率"
+  },
+  {
+    "id": "buff_guaranteed_hit",
+    "polarity": "positive",
+    "name": "必中",
+    "description": "下一次攻击必定命中（无视闪避判定）",
+    "duration": 1,
+    "maxStacks": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "hit": {
+              "value": 100,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "buff_blind",
+    "name": "致盲",
+    "category": "debuff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "hit": {
+              "value": -30,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "命中率-30"
+  },
+  {
+    "id": "buff_suijia",
+    "name": "碎甲",
+    "category": "debuff",
+    "maxStacks": 1,
+    "duration": 2,
+    "tags": [
+      "no_shield"
+    ],
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageTakenIncrease": {
+              "value": 10,
+              "type": "ADDITIVE"
+            },
+            "defenseBonus": {
+              "value": -10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "受到的所有伤害 +10%，无法获得护盾，防御额外 -10%，持续 2 回合"
+  },
+  {
+    "id": "buff_guardian",
+    "name": "守护",
+    "category": "buff",
+    "duration": -1,
+    "tags": [
+      "guardian"
+    ],
+    "parameters": {
+      "percent": 0.5,
+      "reduction": 0.1,
+      "requireShield": true
+    },
+    "polarity": "positive",
+    "description": "守护队友：护盾存在时，队友受到的伤害降低10%，自身承受减伤后伤害的50%",
+    "executionMode": "marker"
+  },
+  {
+    "id": "buff_fengshi",
+    "name": "风势",
+    "category": "debuff",
+    "maxStacks": 8,
+    "stackRule": "limited",
+    "duration": -1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageTakenIncrease": {
+              "value": 3,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每层使受到的伤害 +3%（连击伤害乘区待落地，暂以全伤害表达）"
+  },
+  {
+    "id": "buff_fenghen",
+    "name": "风痕",
+    "category": "debuff",
+    "maxStacks": 10,
+    "stackRule": "limited",
+    "duration": -1,
+    "dispellable": false,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageTakenIncrease": {
+              "value": 5,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每层使受到的所有伤害 +5%，持续到战斗结束且不可驱散"
+  },
+  {
+    "id": "buff_liejia",
+    "name": "裂甲",
+    "category": "debuff",
+    "maxStacks": 5,
+    "stackRule": "limited",
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "defenseBonus": {
+              "value": -4,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每层使防御 -4%"
+  },
+  {
+    "id": "buff_fengyi",
+    "name": "风意",
+    "category": "buff",
+    "maxStacks": 5,
+    "stackRule": "limited",
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "comboRate": {
+              "value": 3,
+              "type": "ADDITIVE"
+            },
+            "comboDamageCoefficient": {
+              "value": 3,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每层使连击率 +3%、连击伤害系数 +3%，持续 2 回合（刷新制）"
+  },
+  {
+    "id": "buff_jifeng",
+    "name": "疾风",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "comboRate": {
+              "value": 30,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "连击率 +30%，持续 1 回合"
+  },
+  {
+    "id": "buff_pozhan",
+    "name": "破绽",
+    "category": "debuff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": -1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageReduction": {
+              "value": -3,
+              "type": "ADDITIVE"
+            },
+            "critDmgTakenReduction": {
+              "value": -8,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每层使免伤 -3%、受到的暴击伤害 +8%"
+  },
+  {
+    "id": "buff_baolu",
+    "name": "暴露",
+    "category": "debuff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "critDmgTakenReduction": {
+              "value": -10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "受到的暴击伤害 +10%（受暴击率提升待属性落地），持续 1 回合"
+  },
+  {
+    "id": "buff_baonu",
+    "name": "暴怒",
+    "category": "buff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "critDamage": {
+              "value": 5,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每层使暴击伤害 +5%，持续 2 回合"
+  },
+  {
+    "id": "buff_nuyi",
+    "name": "怒意",
+    "category": "buff",
+    "maxStacks": 2,
+    "stackRule": "limited",
+    "duration": -1,
+    "executionMode": "marker",
+    "polarity": "positive",
+    "description": "连续未暴击的计数标记（满 2 层触发必暴）"
+  },
+  {
+    "id": "buff_zhanmie_healcut",
+    "name": "斩灭重伤",
+    "category": "debuff",
+    "maxStacks": 1,
+    "duration": 1,
+    "tags": [
+      "heal_reduction"
+    ],
+    "parameters": {
+      "healReductionPct": 30
+    },
+    "polarity": "negative",
+    "description": "受到的治疗效果 -30%，持续 1 回合",
+    "executionMode": "marker"
+  },
+  {
+    "id": "buff_crit_up_short",
+    "name": "嗜杀",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "critDamage": {
+              "value": 10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "暴击伤害 +10%，持续 1 回合"
+  },
+  {
+    "id": "buff_panshi_shield",
+    "name": "磐石壁垒",
+    "category": "shield",
+    "maxStacks": 1,
+    "duration": 2,
+    "effects": [
+      {
+        "type": "shield",
+        "params": {
+          "value": 8,
+          "valueType": "percent_max_hp"
+        }
+      },
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageTakenIncrease": {
+              "value": -8,
+              "type": "ADDITIVE"
+            },
+            "damageReduction": {
+              "value": 6,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "获得 8% 最大气血护盾（受 shieldBonus 加成）；护盾存续期间受伤 -8%、免伤 +6%"
+  },
+  {
+    "id": "buff_numu",
+    "name": "怒目",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 2,
+    "tags": [
+      "taunt"
+    ],
+    "triggers": [
+      {
+        "phase": "ON_DAMAGE_TAKEN",
+        "scriptId": "reflect_damage",
+        "params": {
+          "percent": 0.4
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "嘲讽敌方并反弹所受伤害的 40%，持续 2 回合"
+  },
+  {
+    "id": "buff_jingji_body",
+    "name": "荆棘反噬",
+    "category": "trigger",
+    "duration": -1,
+    "triggers": [
+      {
+        "phase": "ON_DAMAGE_TAKEN",
+        "scriptId": "reflect_damage",
+        "params": {
+          "percent": 0.15
+        }
+      },
+      {
+        "phase": "ON_DAMAGE_TAKEN",
+        "scriptId": "apply_debuff_to_attacker",
+        "params": {
+          "buffId": "buff_speed_down",
+          "duration": 2
+        },
+        "probability": 0.3
+      }
+    ],
+    "polarity": "positive",
+    "description": "受到攻击时反弹 15% 伤害；30% 概率使攻击者速度 -10%（可叠 2 层）"
+  },
+  {
+    "id": "buff_jingji_stack",
+    "name": "荆棘",
+    "category": "buff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": 2,
+    "executionMode": "marker",
+    "polarity": "positive",
+    "description": "每层使反伤伤害 +5%（反伤比例动态提升待接线，暂为标记）"
+  },
+  {
+    "id": "buff_mingwang_guarddr",
+    "name": "明王庇佑",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageReduction": {
+              "value": 20,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "免伤 +20%，持续 1 回合"
+  },
+  {
+    "id": "buff_speed_down",
+    "name": "迟缓",
+    "category": "debuff",
+    "maxStacks": 2,
+    "stackRule": "limited",
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speedBonus": {
+              "value": -10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每层使速度 -10%，持续 2 回合"
+  },
+  {
+    "id": "buff_canying",
+    "name": "残影",
+    "category": "buff",
+    "maxStacks": 5,
+    "stackRule": "limited",
+    "duration": -1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "dodge": {
+              "value": 3,
+              "type": "ADDITIVE"
+            },
+            "speedBonus": {
+              "value": 2,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每层使闪避率 +3%、速度 +2%，持续到战斗结束（受击消耗 1 层）"
+  },
+  {
+    "id": "buff_yingbi",
+    "name": "影蔽",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageReduction": {
+              "value": 25,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "受到的伤害降低 25%，持续 1 回合"
+  },
+  {
+    "id": "buff_yingxi",
+    "name": "影袭",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageBoost": {
+              "value": 10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "下一次攻击伤害 +10%，持续 1 回合"
+  },
+  {
+    "id": "buff_huanying_speed",
+    "name": "疾风残步",
+    "category": "buff",
+    "maxStacks": 2,
+    "stackRule": "limited",
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speed": {
+              "value": 5,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每层使速度 +5，持续 1 回合"
+  },
+  {
+    "id": "buff_fengsuo",
+    "name": "风锁",
+    "category": "debuff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": 2,
+    "blockedByTag": "no_fengsuo",
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speedBonus": {
+              "value": -6,
+              "type": "ADDITIVE"
+            },
+            "damageTakenIncrease": {
+              "value": 4,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每层使速度 -6%、受到的伤害 +4%（连击伤害乘区待收窄），满 3 层触发束缚"
+  },
+  {
+    "id": "buff_shufu",
+    "name": "束缚",
+    "category": "control",
+    "maxStacks": 1,
+    "duration": 1,
+    "controlType": "stun",
+    "effects": [
+      {
+        "type": "control",
+        "params": {
+          "controlType": "stun"
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "无法行动 1 回合（Boss 抗性待实现，当前一律束缚）"
+  },
+  {
+    "id": "buff_fengsuo_aftermath",
+    "name": "风锁后遗症",
+    "category": "debuff",
+    "maxStacks": 1,
+    "duration": 1,
+    "tags": [
+      "no_fengsuo"
+    ],
+    "executionMode": "marker",
+    "polarity": "negative",
+    "description": "束缚解除后的 1 回合内无法获得新的风锁"
+  },
+  {
+    "id": "buff_fengfu",
+    "name": "风缚",
+    "category": "debuff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speedBonus": {
+              "value": -10,
+              "type": "ADDITIVE"
+            },
+            "damageTakenIncrease": {
+              "value": 5,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "下回合速度 -10%，受到的伤害 +5%"
+  },
+  {
+    "id": "buff_fengzhu",
+    "name": "风逐",
+    "category": "buff",
+    "maxStacks": 5,
+    "stackRule": "limited",
+    "duration": -1,
+    "executionMode": "marker",
+    "polarity": "positive",
+    "description": "下次连击段数 +1 且该次连击弹射概率翻倍（段数+1 待连击引擎消费，暂为计数标记）"
+  },
+  {
+    "id": "buff_tianwang",
+    "name": "天网",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 2,
+    "executionMode": "marker",
+    "polarity": "positive",
+    "description": "所有弹射概率 +20%、弹射伤害 +30%、风锁层数上限临时 +1（弹射参数联动待收窄）"
+  },
+  {
+    "id": "buff_fengshiyong",
+    "name": "风势涌",
+    "category": "buff",
+    "maxStacks": 2,
+    "stackRule": "limited",
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "normalAtkBonus": {
+              "value": 15,
+              "type": "ADDITIVE"
+            },
+            "hit": {
+              "value": 10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每层使下次普攻伤害 +15%、命中 +10%，持续 1 回合"
+  },
+  {
+    "id": "buff_zhanyi",
+    "name": "战意",
+    "category": "buff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "normalAtkBonus": {
+              "value": 10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每层使下次普攻伤害 +10%（上限 3 层，持续 2 回合）"
+  },
+  {
+    "id": "buff_fufeng_slow",
+    "name": "缚风",
+    "category": "debuff",
+    "maxStacks": 1,
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speed": {
+              "value": -10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "速度 -10，持续 2 回合"
+  },
+  {
+    "id": "buff_hit_down",
+    "name": "视线干扰",
+    "category": "debuff",
+    "maxStacks": 2,
+    "stackRule": "limited",
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "hit": {
+              "value": -10,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "每层使命中率 -10%，持续 1 回合"
+  },
+  {
+    "id": "buff_speed_up5",
+    "name": "风行",
+    "category": "buff",
+    "maxStacks": 2,
+    "stackRule": "limited",
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speed": {
+              "value": 5,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每层使速度 +5，持续 1 回合"
   }
 ]

@@ -497,6 +497,48 @@ export interface AffixRuleConfig {
     attributes: string[]
     attributeLabels: string[]
   }>
+  /** 宠物与坐骑投放规则（8.16 口径：个体驱动 + 品质门槛 1~5），缺省视为未配置 */
+  pet_mount_rules?: PetMountRulesConfig
+}
+
+/** 宠物与坐骑投放行——词条位 + 品质门槛（PRD《完整项目说明》§宠物与坐骑系统，2026-09-06 裁定表） */
+export interface PetMountRuleRow {
+  id: string
+  /** 宠物侧（ATK）行名，如 ATK-L1 */
+  nameAtk: string
+  /** 坐骑侧（DEF）行名，如 DEF-L1 */
+  nameDef: string
+  /** 品质 ≥ minQuality 才投放本行（品质 1~5） */
+  minQuality: number
+  /** 本行可抽属性池（属性组码，经 attribute_groups 展开）；main/trait 行缺省 */
+  pool?: Record<'ATK' | 'DEF', string[]>
+}
+
+export interface PetMountRulesConfig {
+  max_level: number
+  /** 浮动区间（50%~110%），与装备同值但独立配置，改数互不牵连 */
+  float_range: { min: number; max: number }
+  /** 六维公式：单位基数 = base_sap ÷ system_count ÷ total_weight ÷ max_level（900/2/9/50 = 1） */
+  formula: { base_sap: number; system_count: number; total_weight: number; main_weight_sum: number }
+  /** 资质倍率 = 资质 ÷ base（400 → 1.0，cap 500 → 1.25）；捕捉范围 [min, max]，最高 cap */
+  aptitude: { min: number; max: number; cap: number; base: number }
+  /** 第 n 次突破需等级 level，倍率累计 1 + Σbonus（3 次共 1.6 倍） */
+  breakthroughs: Array<{ level: number; bonus: number }>
+  rows: PetMountRuleRow[]
+}
+
+/** 宠物/坐骑个体（configs/pets/pets.json、configs/mounts/mounts.json）—— 主要 3 条权重分布 + 特性文本 */
+export interface PetMountIndividual {
+  id: string
+  name: string
+  /** 获取场景编号（管理用，不参与反推） */
+  scene: number
+  /** 个体分类（如 combo，管理用） */
+  category: string
+  /** 主要 3 条基础属性权重（和应为 7）：宠物 attack/hit/speed，坐骑 defense/dodge/maxHealth */
+  weights: Record<string, number>
+  /** 特性文本（品质 3 起投放的独立被动，不参与数值反推） */
+  trait: string
 }
 
 /** 西游数据域（xiyou 表）—— configs/xiyou/*.json 单文档种子，供演劫台经封神榜读取（需求说明 §5.1 方案 B） */

@@ -80,11 +80,11 @@
     "glove": { "enhance_content": "攻击 / 暴击率加成提升", "material": ["玲珑晶球", "灵水"] }
   },
   "enhance_max_by_tier": {
-    "fan": 5,
-    "xuan": 10,
-    "di": 15,
-    "tian": 15,
-    "xian": 20
+    "fan": 3,
+    "xuan": 6,
+    "di": 9,
+    "tian": 12,
+    "xian": 15
   },
   "gold_cost_formula": "阶位基础金钱 × 当前强化等级",
   "gold_cost_by_tier": {
@@ -95,21 +95,20 @@
     "xian": 200
   },
   "inheritance": {
-    "allowed_tiers": ["fan", "xuan", "di"],
-    "forbidden_tiers": ["tian", "xian"],
+    "allowed_tiers": ["fan", "xuan", "di", "tian", "xian"],
     "conditions": ["同部位", "同阶位", "目标装备未强化或强化等级低于来源装备"],
     "transfers": ["强化等级"],
     "does_not_transfer": ["品质", "星级", "随机词条", "固定特效", "精锻"]
   },
   "star_system": {
     "star_bonuses": [
-      { "star": 0, "base_bonus": 0, "enchant_bonus": 0 },
-      { "star": 1, "base_bonus": 10, "enchant_bonus": 5 },
-      { "star": 2, "base_bonus": 20, "enchant_bonus": 10 },
-      { "star": 3, "base_bonus": 30, "enchant_bonus": 15 }
+      { "star": 0, "base_bonus": 0 },
+      { "star": 1, "base_bonus": 5 },
+      { "star": 2, "base_bonus": 15 },
+      { "star": 3, "base_bonus": 25 }
     ],
     "cost_by_star": { "1": 3, "2": 6, "3": 9 },
-    "cost_type": "同名装备或装备残魂",
+    "cost_type": "升星石（上3/中2/下1 点）、装备残魂（1 点/个）或同名未穿戴装备（1 点/件），混合支付",
     "residue_rules": {
       "source": ["分解同名装备", "击败对应关卡守护者", "完成西行志悬赏"],
       "conversion": "1件同名装备 = 1点装备残魂",

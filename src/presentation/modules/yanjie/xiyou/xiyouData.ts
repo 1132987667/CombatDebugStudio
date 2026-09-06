@@ -8,7 +8,6 @@
 
 import caveJson from '@configs/xiyou/cave.json'
 import collectJson from '@configs/xiyou/collect.json'
-import cultivateJson from '@configs/xiyou/cultivate.json'
 import equipmentJson from '@configs/equipment/equipment.json'
 import equipJson from '@configs/xiyou/equip.json'
 import itemsJson from '@configs/xiyou/items.json'
@@ -32,9 +31,7 @@ import type {
   XiyouEvent,
   XiyouGardenCrop,
   XiyouItem,
-  XiyouMartial,
   XiyouMate,
-  XiyouMeridian,
   XiyouMount,
   XiyouNodeType,
   XiyouPet,
@@ -308,14 +305,21 @@ syncSceneUnlocks()
 
 /**
  * 通关标记：解锁本关并解锁 unlockCondition.sceneId 指向它的后续关卡（V08 难度递进）。
+ * 星级记录：stars 取历史最高（runFlow.clearStars 评定，玩法主循环设计.md §七.1）。
  * NOTE: clear_boss 前置（boss_major_*）当前无对应 BOSS 场景，保持锁定；平铺链内按顺序解锁。
+ * @returns 是否首次通关（stars 此前为 0），供大结算首杀标记
  */
-export function markSceneCleared(sceneId: string): void {
+export function markSceneCleared(sceneId: string, stars = 1): boolean {
   const target = scenes.find((s) => s.id === sceneId)
-  if (target) target.unlocked = true
+  const firstClear = !!target && target.stars === 0
+  if (target) {
+    target.unlocked = true
+    target.stars = Math.max(target.stars, stars)
+  }
   for (const s of scenes) {
     if (s.unlockCondition?.sceneId === sceneId) s.unlocked = true
   }
+  return firstClear
 }
 
 export const materials: XiyouItem[] = reactive<XiyouItem[]>(packJson.materials as unknown as XiyouItem[])
@@ -325,9 +329,6 @@ export const consumables: XiyouItem[] = reactive<XiyouItem[]>(packJson.consumabl
 export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.shopGoods as unknown as XiyouShopGood[])
 export const storageCells: XiyouStorageCell[] = reactive<XiyouStorageCell[]>(packJson.storageCells as unknown as XiyouStorageCell[])
 export const packItems: XiyouCatalogItem[] = itemsJson.items as unknown as XiyouCatalogItem[]
-
-export const martialArts: XiyouMartial[] = reactive<XiyouMartial[]>(cultivateJson.martialArts as unknown as XiyouMartial[])
-export const meridians: XiyouMeridian[] = reactive<XiyouMeridian[]>(cultivateJson.meridians as unknown as XiyouMeridian[])
 
 export const treasures: XiyouTreasure[] = reactive<XiyouTreasure[]>(equipJson.treasures as unknown as XiyouTreasure[])
 export const mounts: XiyouMount[] = reactive<XiyouMount[]>(equipJson.mounts as unknown as XiyouMount[])
@@ -428,9 +429,6 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(consumables, 'pack', 'consumables')
   aIn(shopGoods, 'pack', 'shopGoods')
   aIn(storageCells, 'pack', 'storageCells')
-  aIn(martialArts, 'cultivate', 'martialArts')
-  migrateRarity(martialArts)
-  aIn(meridians, 'cultivate', 'meridians')
   aIn(treasures, 'equip', 'treasures')
   migrateRarity(treasures)
   aIn(mounts, 'equip', 'mounts')

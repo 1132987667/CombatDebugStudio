@@ -33,8 +33,16 @@ export class ShieldBuff extends BaseBuffScript {
     context.setVariable('shieldRegen', this.getConfigValue(context, 'shieldRegen', 0))
 
     // 同步护盾值到 BuffSystem（供 takeDamage 吸收伤害）
+    // 「无法获得护盾」禁用检查：碎甲类 debuff 存在时跳过上盾（维持效果但无盾值）
+    const buffSystem = context.getBuffSystem()
+    if (!buffSystem) return
+    if (!buffSystem.canGainShield(context.characterId)) {
+      this.log(context, '目标无法获得护盾，护盾效果被禁用')
+      context.setVariable('maxShieldValue', 0)
+      return
+    }
     const actualShield = context.getVariable<number>('maxShieldValue') ?? 0
-    context.getBuffSystem()?.setShieldValue(context.characterId, actualShield)
+    buffSystem.setShieldValue(context.characterId, actualShield)
   }
 
   protected _onRemove(context: BuffContext): void {

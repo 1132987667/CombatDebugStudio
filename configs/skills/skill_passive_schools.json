@@ -1,0 +1,461 @@
+[
+  {
+    "id": "school_lianzhan_fengshi_apply",
+    "name": "风势缠身·叠风",
+    "description": "每次普攻或连击命中，为目标叠加 1 层【风势】（上限 8 层）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengshi",
+        "stacks": 1
+      }
+    ],
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_lianzhan_fengshi_transform",
+    "name": "风势缠身·风痕转化",
+    "description": "风势达到 8 层后，继续叠加的风势转化为【风痕】（每层受到的所有伤害 +5%，上限 10 层，持续到战斗结束且不可驱散）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "condition": "target_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fengshi",
+      "min": 8
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fenghen",
+        "stacks": 1
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fengshi"
+      }
+    ],
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_lianzhan_liejia_apply",
+    "name": "裂甲刻印·叠裂甲",
+    "description": "连击第 3 段及以后，每次命中为目标叠加 1 层【裂甲】（每层防御 -4%，持续 2 回合，上限 5 层）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "condition": "combo_segment_min",
+    "conditionParams": {
+      "min": 3
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_liejia",
+        "stacks": 1
+      }
+    ],
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_lianzhan_fengyi_apply",
+    "name": "连击风暴·风意",
+    "description": "每次触发连击后，自身获得 1 层【风意】（每层连击率 +5%、连击伤害系数 +5%，上限 5 层）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "condition": "combo_segment_min",
+    "conditionParams": {
+      "min": 2
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengyi",
+        "stacks": 1
+      }
+    ],
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "school_fengsuo_bounce",
+    "name": "风锁连环·弹射",
+    "description": "连击触发时对随机敌人弹射 60% 攻击伤害（基础 20% 概率，速度加成待速度条件落地），命中施加 1 层风锁",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "random"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.6
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengsuo",
+        "stacks": 1
+      }
+    ],
+    "condition": "combo_segment_min",
+    "conditionParams": {
+      "min": 2
+    },
+    "triggerProbability": 0.2,
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_fengsuo_bind",
+    "name": "风锁连环·束缚",
+    "description": "风锁满 3 层时立即触发束缚：无法行动 1 回合，解除后 1 回合内无法获得新的风锁",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_shufu",
+        "stacks": 1
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fengsuo"
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengsuo_aftermath",
+        "stacks": 1
+      }
+    ],
+    "condition": "target_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fengsuo",
+      "min": 3
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_fengsuo_fengzhu",
+    "name": "风锁连环·风逐",
+    "description": "弹射击杀目标后获得 1 层风逐（按击杀近似：下次连击段数 +1、弹射概率翻倍待连击引擎消费）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengzhu",
+        "stacks": 1
+      }
+    ],
+    "triggerTimes": [
+      "on_kill"
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "school_fenghen_jiban_apply",
+    "name": "风痕羁绊·风缚",
+    "description": "每次攻击 30% 概率使目标获得风缚：速度 -10%、受到的伤害 +5%，1 回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengfu",
+        "stacks": 1
+      }
+    ],
+    "triggerProbability": 0.3,
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_fenghen_jiban_heal",
+    "name": "风痕羁绊·缠风回息",
+    "description": "风缚目标被连击命中时回复 2% 最大气血（每回合上限 6%）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.02
+            }
+          ]
+        }
+      }
+    ],
+    "condition": "combo_segment_min&&target_has_buff_id",
+    "conditionParams": {
+      "min": 2,
+      "buffId": "buff_fengfu"
+    },
+    "maxTriggersPerRound": 3,
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "heal"
+    ]
+  },
+  {
+    "id": "school_yufeng_hitdown",
+    "name": "驭风之力·乱影",
+    "description": "弹射段命中时 20% 概率使目标命中率 -10%（1 回合，可叠 2 层）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_hit_down",
+        "stacks": 1
+      }
+    ],
+    "condition": "combo_segment_min",
+    "conditionParams": {
+      "min": 2
+    },
+    "triggerProbability": 0.2,
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_fengshi_combo_rate",
+    "name": "风势缠身·满势",
+    "description": "目标风势满 8 层时，自身对其连击率 +20%（幂等生效）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "fengshi_combo20",
+            "targetAttribute": "comboRate",
+            "type": "ADDITIVE",
+            "value": 20,
+            "sourceName": "风势缠身"
+          }
+        ]
+      }
+    ],
+    "condition": "target_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fengshi",
+      "min": 8
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "school_fengshiyong_apply",
+    "name": "风势涌",
+    "description": "每次连击使下次普攻伤害 +15%、命中 +10%（1 回合，可叠 2 层）；单次连击达 4 段的第 5 段强化待连击引擎分段结算",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fengshiyong",
+        "stacks": 1
+      }
+    ],
+    "condition": "combo_segment_min",
+    "conditionParams": {
+      "min": 2
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "school_lianshi_qishi",
+    "name": "连击气势",
+    "description": "攻击身上有风势的目标时，自身连击率 +5%（层数缩放待收窄，幂等生效）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "lianshi_combo5",
+            "targetAttribute": "comboRate",
+            "type": "ADDITIVE",
+            "value": 5,
+            "sourceName": "连击气势"
+          }
+        ]
+      }
+    ],
+    "condition": "target_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fengshi",
+      "min": 1
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  },
+  {
+    "id": "school_fengshi_liejia_link",
+    "name": "连击气势·风裂联动",
+    "description": "目标风势 ≥4 层时，连击命中额外追加 1 层裂甲（连击伤害系数 +10% 待乘区）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_liejia",
+        "stacks": 1
+      }
+    ],
+    "condition": "target_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fengshi",
+      "min": 4
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_liejia_tougu",
+    "name": "裂甲透骨",
+    "description": "攻击碎甲状态的目标时，额外无视其 10% 防御（幂等生效；裂甲层数普攻系数待乘区）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "tougu_armor10",
+            "targetAttribute": "armorBreak",
+            "type": "ADDITIVE",
+            "value": 10,
+            "sourceName": "裂甲透骨"
+          }
+        ]
+      }
+    ],
+    "condition": "target_has_buff_id",
+    "conditionParams": {
+      "buffId": "buff_suijia"
+    },
+    "triggerTimes": [
+      "on_hit"
+    ],
+    "passiveCategory": [
+      "attribute"
+    ]
+  }
+]

@@ -20,7 +20,7 @@ import {
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { KNOWN_BUFF_IDS } from '@/domain/buff/types'
+import { BUFF_TAGS, KNOWN_BUFF_IDS } from '@/domain/buff/types'
 import {
   BATTLE_LOG_CATEGORIES,
   LogLevel,
@@ -39,6 +39,7 @@ import {
 } from '@/domain/battle/ai/AIPriorityStrategy'
 
 import {
+  BATTLE_CONSTANTS,
   BattleActionHelper,
   ParticipantSide,
   ActionTypes,
@@ -51,6 +52,7 @@ import {
   DamageCategory,
   ActionResultType,
   StepEffectType,
+  TargetStrategy,
   convertSkillConfigToSkill,
   type BuffConfigLookup,
 } from '@/domain/skill/types'
@@ -74,6 +76,8 @@ import {
   createEmptyRecord,
   type CombatRecord,
 } from '@/domain/battle/combat-record'
+import { nextRandom } from '@/shared/utils/SeededRandom'
+import { round } from '@/shared/utils/math'
 
 /**
  * 目标结算结果 —— 仅用于日志渲染的局部视图模型（ViewModel）。
@@ -283,6 +287,26 @@ export class BattleExecutor {
         ? { actionType: decision.type === 'skill' ? 'skill' : 'attack' }
         : undefined
     actionScope = this.emitActionExecution(battle, participant, baseScope, execPayload, decision?.targetId)
+
+    // 行动开始触发（行动者本人）——被控制 / SKIP 分支已在上方返回，不会到达这里。
+    // 连击风暴「下一次行动开始时消耗风意」等被动的挂载点。
+    {
+      const eventBus = this.buffSystem.getEventBus()
+      eventBus.emit(BattleTriggerPhase.ACTION_START, {
+        phase: BattleTriggerPhase.ACTION_START,
+        sourceId: participant.id,
+        targetId: participant.id,
+        currentTurn: battle.currentTurn,
+      } as TriggerEventContext)
+      this.passiveSkillManager.triggerPassives(
+        participant,
+        createPassiveContext(BattleTriggerPhase.ACTION_START, battle, {
+          sourceId: participant.id,
+          trace: actionScope,
+          parentTraceId: actionScope?.parentId,
+        }),
+      )
+    }
 
     switch (participant.controlMode) {
       case 'AI': {
@@ -942,7 +966,8 @@ export class BattleExecutor {
   /**
    * 伤害结算 — 所有伤害路径的唯一执行入口
    *
-   * 不变量序列（调用方不可重排）：扣血 → TriggerEventBus(DAMAGE_TAKEN) → 仇恨 → 被动(ON_HIT/DAMAGE_TAKEN) → pendingDeaths
+   * 不变量序列（调用方不可重排）：
+   *   守护转移检查 → 扣血 → 护盾破碎检测 → TriggerEventBus(DAMAGE_TAKEN/CRIT) → 仇恨 → 被动(ON_HIT/CRIT/DAMAGE_TAKEN) → pendingDeaths
    * 调用方负责：动画编排、日志、CombatRecord
    *
    * @returns 实际扣除的 HP（经过护盾/能量吸收后），0 表示完全吸收
@@ -956,8 +981,28 @@ export class BattleExecutor {
     battle: BattleData,
     deferHitPassives = false,
   ): number {
+    // 0. 守护转移检查 — 队友中的守护者（guardian tag buff）代为承受部分伤害
+    //    （不动明王「护盾存在时，队友受到的伤害降低 10%，自身承受该伤害的 50%」）
+    const redirect = this.resolveDamageRedirect(target, battle)
+    let damageForTarget = finalDamage
+    if (redirect) {
+      const totalAfterReduction = finalDamage * (1 - redirect.reduction)
+      const toGuardian = Math.round(totalAfterReduction * redirect.percent)
+      damageForTarget = Math.max(0, Math.round(totalAfterReduction - toGuardian))
+      this.settleGuardianDamage(source, redirect.guardian, toGuardian, battle)
+    }
+
     // 1. 扣血（内部处理护盾吸收、背水护甲能量抵扣）
-    const actualDamage = target.takeDamage(finalDamage)
+    const shieldBefore = this.buffSystem.getShieldValue(target.id)
+    const actualDamage = target.takeDamage(damageForTarget)
+
+    // 1.5 护盾破碎检测 — 盾被打空即触发（含伤害被完全吸收、下方提前返回的场景）。
+    // NOTE: 破碎被动必须立即触发、不参与 deferHitPassives —— 完全吸收路径（actualDamage=0）
+    //       不会走到 triggerHitPassives，若 defer 则"盾被打空但无扣血"时破碎被动永不触发。
+    if (shieldBefore > 0 && this.buffSystem.getShieldValue(target.id) <= 0) {
+      this.triggerShieldBreak(source, target, actualDamage, rawDamage, isCritical, battle)
+    }
+
     if (actualDamage <= 0) return 0
 
     // 2. 向 TriggerEventBus 发射 DAMAGE_TAKEN（驱动反伤/荆棘等 Buff 触发器）
@@ -971,6 +1016,18 @@ export class BattleExecutor {
       extra: { damage: actualDamage, rawDamage, isCritical },
     } as TriggerEventContext)
 
+    // 2.5 向 TriggerEventBus 发射 CRIT（驱动"暴击时"类 Buff 触发器）
+    if (isCritical && source) {
+      eventBus.emit(BattleTriggerPhase.CRIT, {
+        phase: BattleTriggerPhase.CRIT,
+        sourceId: source.id,
+        targetId: target.id,
+        value: actualDamage,
+        currentTurn: battle.currentTurn,
+        extra: { damage: actualDamage, rawDamage, isCritical },
+      } as TriggerEventContext)
+    }
+
     // 3. 仇恨记录（无来源时跳过）
     if (this.threatManager && source) {
       const targetHasTaunt = this.buffSystem.hasBuffWithTag(target.id, 'taunt')
@@ -981,7 +1038,7 @@ export class BattleExecutor {
     // NOTE: deferHitPassives 时由调用方在攻击日志（emitAttackLog/emitSkillLog）之后
     //       调用 triggerHitPassives，保证被动效果显示在"受到伤害"结算之后。
     if (!deferHitPassives) {
-      this.triggerHitPassives(source, target, actualDamage, battle)
+      this.triggerHitPassives(source, target, actualDamage, battle, isCritical)
     }
 
     // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
@@ -1001,7 +1058,7 @@ export class BattleExecutor {
   }
 
   /**
-   * 攻击命中后的被动触发（ON_HIT 来源 + DAMAGE_TAKEN 目标）
+   * 攻击命中后的被动触发（ON_HIT 来源 + DAMAGE_TAKEN 目标，暴击时追加 CRIT 来源）
    * 从 settleDamage 抽出，供日志发射后再调用以维持"受到伤害 → 被动"的显示顺序。
    */
   private triggerHitPassives(
@@ -1009,14 +1066,27 @@ export class BattleExecutor {
     target: BattleEntity,
     actualDamage: number,
     battle: BattleData,
+    isCritical = false,
+    comboSegment?: number,
   ): void {
     if (source) {
       this.passiveSkillManager.triggerPassives(
         source,
         createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
           target, sourceId: source.id, damage: actualDamage,
+          isCritical, comboSegment,
         }),
       )
+      // 暴击触发（来源侧）— 破军系"暴击时附加破绽"类被动的挂载点
+      if (isCritical) {
+        this.passiveSkillManager.triggerPassives(
+          source,
+          createPassiveContext(BattleTriggerPhase.CRIT, battle, {
+            target, sourceId: source.id, damage: actualDamage,
+            isCritical: true, comboSegment,
+          }),
+        )
+      }
     }
     this.passiveSkillManager.triggerPassives(
       target,
@@ -1026,6 +1096,144 @@ export class BattleExecutor {
         damage: actualDamage,
       }),
     )
+  }
+
+  /**
+   * 护盾破碎处理 — 由 settleDamage 在扣血后、DAMAGE_TAKEN 前调用。
+   * 发射 TriggerEventBus 事件（驱动 Buff 触发器）+ 立即触发持有者侧 SHIELD_BREAK 被动
+   * （磐石壁垒"破碎时对全体敌人反震"、不动明王"破碎后获免伤"等挂载点）。
+   */
+  private triggerShieldBreak(
+    source: BattleEntity | null,
+    target: BattleEntity,
+    actualDamage: number,
+    rawDamage: number,
+    isCritical: boolean,
+    battle: BattleData,
+  ): void {
+    const eventBus = this.buffSystem.getEventBus()
+    eventBus.emit(BattleTriggerPhase.SHIELD_BREAK, {
+      phase: BattleTriggerPhase.SHIELD_BREAK,
+      sourceId: source?.id ?? '',
+      targetId: target.id,
+      value: actualDamage,
+      currentTurn: battle.currentTurn,
+      extra: { damage: actualDamage, rawDamage, isCritical },
+    } as TriggerEventContext)
+
+    this.passiveSkillManager.triggerPassives(
+      target,
+      createPassiveContext(BattleTriggerPhase.SHIELD_BREAK, battle, {
+        target: source ?? target,
+        sourceId: target.id,
+        damage: actualDamage,
+      }),
+    )
+
+    // 攻击者侧同步触发（斩灭之锋"暴击击破护盾时追加真实伤害"等被动挂在攻击者身上，
+    // 需感知自己击碎了谁的盾；isCritical 随上下文下发供 last_attack_crit 条件判定）
+    if (source && source.id !== target.id) {
+      this.passiveSkillManager.triggerPassives(
+        source,
+        createPassiveContext(BattleTriggerPhase.SHIELD_BREAK, battle, {
+          target,
+          targetId: target.id,
+          sourceId: source.id,
+          damage: actualDamage,
+          isCritical,
+        }),
+      )
+    }
+  }
+
+  /**
+   * 守护转移解析 — 在目标存活队友中查找可承接伤害的守护者
+   *
+   * 守护者 buff 携带 guardian tag（BUFF_TAGS.GUARDIAN），配置参数（BuffConfig.parameters）：
+   * - percent: 守护者承担比例（减伤后伤害的份额，0-1，默认 0.5）
+   * - reduction: 队友减伤比例（0-1，默认 0.1，即"队友受到的伤害降低 10%"）
+   * - requireShield: 仅在守护者护盾存在时生效（默认 true；磐石壁垒守护语义）
+   *
+   * 多个守护者时取第一个；口径（已确认）：减伤后由队友与守护者五五分摊。
+   */
+  private resolveDamageRedirect(
+    target: BattleEntity,
+    battle: BattleData,
+  ): { guardian: BattleEntity; percent: number; reduction: number } | null {
+    for (const p of battle.participants.values()) {
+      if (p.id === target.id || p.team !== target.team || !p.isAlive()) continue
+      const params = this.buffSystem.findBuffParamsByTag(p.id, BUFF_TAGS.GUARDIAN)
+      if (!params) continue
+
+      const requireShield = params.requireShield !== false
+      if (requireShield && this.buffSystem.getShieldValue(p.id) <= 0) continue
+
+      const percentRaw = typeof params.percent === 'number' ? params.percent : 0.5
+      const reductionRaw = typeof params.reduction === 'number' ? params.reduction : 0.1
+      return {
+        guardian: p,
+        percent: Math.min(Math.max(percentRaw, 0), 1),
+        reduction: Math.min(Math.max(reductionRaw, 0), 1),
+      }
+    }
+    return null
+  }
+
+  /**
+   * 守护者侧伤害结算 — 承接转移伤害（护盾吸收由 takeDamage 内部处理）。
+   *
+   * HACK: 天花板 — 该份伤害基于目标侧免伤后的数值，守护者自身免伤率不重算；
+   * 若将来需要"按守护者面板重算免伤"，需把此调用前移到 DamageCalculator 管线内。
+   */
+  private settleGuardianDamage(
+    source: BattleEntity | null,
+    guardian: BattleEntity,
+    damage: number,
+    battle: BattleData,
+  ): void {
+    if (damage <= 0) return
+
+    const shieldBefore = this.buffSystem.getShieldValue(guardian.id)
+    const actual = guardian.takeDamage(damage)
+
+    // 守护者护盾被本次打空 → 破碎事件（与目标侧同语义）
+    if (shieldBefore > 0 && this.buffSystem.getShieldValue(guardian.id) <= 0) {
+      this.triggerShieldBreak(source, guardian, actual, damage, false, battle)
+    }
+
+    if (actual > 0) {
+      const eventBus = this.buffSystem.getEventBus()
+      eventBus.emit(BattleTriggerPhase.DAMAGE_TAKEN, {
+        phase: BattleTriggerPhase.DAMAGE_TAKEN,
+        sourceId: source?.id ?? '',
+        targetId: guardian.id,
+        value: actual,
+        currentTurn: battle.currentTurn,
+        extra: { damage: actual, rawDamage: damage, isCritical: false },
+      } as TriggerEventContext)
+      this.passiveSkillManager.triggerPassives(
+        guardian,
+        createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
+          target: source ?? guardian,
+          sourceId: source?.id ?? '',
+          damage: actual,
+        }),
+      )
+      if (this.threatManager && source) {
+        const guardianHasTaunt = this.buffSystem.hasBuffWithTag(guardian.id, 'taunt')
+        this.threatManager.recordThreat(source.id, guardian.id, actual, guardianHasTaunt)
+      }
+    }
+
+    if (!guardian.isAlive()) {
+      this.skillManager.getExecutor().cleanupComboState(guardian.id)
+      this.skillManager.getExecutor().cleanupRotatingState(guardian.id)
+      this.pendingDeaths.push({
+        deadId: guardian.id,
+        killerId: source?.id ?? 'system',
+        battle,
+      })
+    }
   }
 
   /**
@@ -1099,6 +1307,7 @@ export class BattleExecutor {
 
   /**
    * 处理攻击命中的情况
+   * @param options.comboSegment 连击段序号（≥2 表示连击段，日志与被动上下文携带）
    */
   async handleHitAttack(
     action: BattleAction,
@@ -1107,21 +1316,24 @@ export class BattleExecutor {
     damageResult: { damage: number; isCritical: boolean; rawDamage: number },
     battle: BattleData,
     record?: CombatRecord,
+    options?: { comboSegment?: number },
   ): Promise<void> {
     const { damage, isCritical, rawDamage } = damageResult
-    action.damage = damage
+    const comboSegment = options?.comboSegment
+    const attackName = comboSegment ? `普通攻击·连击${comboSegment}` : '普通攻击'
+    action.damage = (action.damage ?? 0) + damage
 
     action.effects.push({
       type: ActionResultType.DAMAGE,
       value: damage,
-      description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
+      description: `${source.name} ${attackName} 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
 
     // 飞行阶段（0→50%T）：蓄力 + 技能名/光弹飞行
     await this.animationManager.triggerFlightPhaseAndWait({
       sourceId: source.id,
       targetId: target.id,
-      skillName: '普通攻击',
+      skillName: attackName,
       effectType: 'attack',
       damageCategory: DamageCategory.PHYSICAL,
     })
@@ -1152,7 +1364,7 @@ export class BattleExecutor {
       type: 'attack',
       source,
       targets: [target],
-      skillName: '普通攻击',
+      skillName: attackName,
       isMiss: false,
       isCrit: isCritical,
       totalDamage: damage,
@@ -1169,13 +1381,119 @@ export class BattleExecutor {
       ],
     })
 
-    // 攻击日志（含"受到伤害"sub）已发射，再触发 ON_HIT/DAMAGE_TAKEN 被动，
+    // 攻击日志（含"受到伤害"sub）已发射，再触发 ON_HIT/CRIT/DAMAGE_TAKEN 被动，
     // 使其效果日志排在"受到伤害"之后（pending 缓冲顺序）
     if (actualDamage > 0) {
-      this.triggerHitPassives(source, target, actualDamage, battle)
+      this.triggerHitPassives(source, target, actualDamage, battle, isCritical, comboSegment)
     }
 
     // settleDamage 内部已处理：DAMAGE_TAKEN 事件、仇恨、pendingDeaths
+  }
+
+  /**
+   * 溅射结算 — 普攻第一段命中后，按 splash 属性（百分比）对主目标的相邻敌人追加比例伤害。
+   *
+   * - 溅射基数为对主目标的第一段实际伤害；只溅射一次（连击段不重复溅射）
+   * - 相邻定义复用 TargetStrategy.ADJACENT（seatIndex ± 1 的存活队友）
+   * - 溅射走 settleDamage 完整结算（可被护盾吸收、触发受击侧被动/反伤），但不暴击、不触发连击
+   *
+   * HACK: 天花板 — 溅射伤害不进入攻击日志/动画编排，仅记入 action.effects；
+   * 若 UI 需要溅射飞行表现，需扩展 BattleAnimationManager 的多目标编排。
+   */
+  private executeSplash(
+    source: BattleEntity,
+    mainTarget: BattleEntity,
+    baseDamage: number,
+    battle: BattleData,
+    action: BattleAction,
+  ): void {
+    if (baseDamage <= 0) return
+    const splash = source.getAttribute(ATTRIBUTE_CODE.splash)
+    if (Number.isNaN(splash) || splash <= 0) return
+
+    const adjacents = resolveStepTargets(
+      battle.participants,
+      mainTarget,
+      TargetStrategy.ADJACENT,
+      battle.rng,
+    )
+    const ratio = Math.min(splash, 100) / 100
+    for (const adjacent of adjacents) {
+      const splashDamage = round(baseDamage * ratio)
+      if (splashDamage <= 0) continue
+      const actual = this.settleDamage(
+        source,
+        adjacent,
+        splashDamage,
+        splashDamage,
+        false,
+        battle,
+      )
+      action.effects.push({
+        type: ActionResultType.DAMAGE,
+        value: splashDamage,
+        targetId: adjacent.id,
+        description: `${adjacent.name} 受到溅射伤害 ${actual}`,
+      })
+    }
+  }
+
+  /**
+   * 连击引擎 — 普攻命中后按 comboRate（连击率，百分比）追加连击段
+   *
+   * - 链式判定：每段命中后可继续判定连击率，总段数上限 BATTLE_CONSTANTS.MAX_COMBO_SEGMENTS
+   * - 连击段伤害 = 伤害计算结果 × comboDamageCoefficient%（未配置默认 100%）
+   * - 连击段被闪避则中断；目标死亡中断；comboRate 未配置（0/NaN）不触发
+   * - 每段完整走 handleHitAttack（结算/日志/动画/ON_HIT·CRIT·DAMAGE_TAKEN 被动），
+   *   被动上下文携带 comboSegment 供"连击第 N 段"类条件使用
+   */
+  private async executeComboSegments(
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    battle: BattleData,
+    record?: CombatRecord,
+    attackStep?: ExtendedSkillStep,
+  ): Promise<void> {
+    if (!attackStep) return
+
+    for (
+      let segment = 2;
+      segment <= BATTLE_CONSTANTS.MAX_COMBO_SEGMENTS && target.isAlive();
+      segment++
+    ) {
+      const comboRate = source.getAttribute(ATTRIBUTE_CODE.comboRate)
+      if (Number.isNaN(comboRate) || comboRate <= 0) break
+      if (nextRandom(battle.rng) * 100 > comboRate) break
+
+      const base = this.damageCalculator.calculateDamage(
+        attackStep,
+        source,
+        target,
+        createStepContext(record, undefined, false, undefined),
+      )
+      if (base.isMiss) {
+        await this.handleMissAttack(action, source, target, battle)
+        break
+      }
+
+      let coeff = source.getAttribute(ATTRIBUTE_CODE.comboDamageCoefficient)
+      if (Number.isNaN(coeff) || coeff <= 0) coeff = 100
+
+      await this.handleHitAttack(
+        action,
+        source,
+        target,
+        {
+          damage: round(base.damage * (coeff / 100)),
+          isCritical: base.isCritical,
+          rawDamage: round(base.rawDamage * (coeff / 100)),
+        },
+        battle,
+        record,
+        { comboSegment: segment },
+      )
+    }
   }
 
   /**
@@ -1258,10 +1576,23 @@ export class BattleExecutor {
       if (critBuff) this.buffSystem.removeBuff(critBuff.id)
     }
 
+    // 消耗必中标记（buff_guaranteed_hit）——本次攻击已结算（无论命中/闪避/是否暴击）即消耗，
+    // 连击段不再继承必中
+    if (this.buffSystem.hasBuff(source.id, KNOWN_BUFF_IDS.GUARANTEED_HIT)) {
+      const hitBuff = this.buffSystem
+        .getBuffInstances(source.id)
+        .find((b) => b.buffId === KNOWN_BUFF_IDS.GUARANTEED_HIT)
+      if (hitBuff) this.buffSystem.removeBuff(hitBuff.id)
+    }
+
     if (damageResult.isMiss) {
       await this.handleMissAttack(action, source, target, battle)
     } else {
       await this.handleHitAttack(action, source, target, damageResult, battle, record)
+      // 溅射：按 splash 属性对主目标的相邻敌人追加比例伤害（基于第一段实际伤害）
+      this.executeSplash(source, target, action.damage ?? 0, battle, action)
+      // 连击引擎：普攻命中后按 comboRate 追加连击段（伤害按 comboDamageCoefficient 缩放）
+      await this.executeComboSegments(action, source, target, battle, record, attackStep)
     }
 
     //  action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志

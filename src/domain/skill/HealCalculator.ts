@@ -161,8 +161,10 @@ export class HealCalculator {
   /**
    * 计算减益效果对治疗的影响
    */
-  /** 每个 debuff 的减治疗效果（20%） */
+  /** 每个 debuff 的默认减治疗效果（20%），可被 buff 配置 parameters.healReductionPct 覆盖 */
   private static readonly HEAL_REDUCTION_PER_DEBUFF = 0.2
+  /** 默认减治疗效果（百分比数值，与默认系数换算一致） */
+  private static readonly DEFAULT_HEAL_REDUCTION_PCT = 20
   /** 最大减治疗效果上限（80%） */
   private static readonly MAX_HEAL_REDUCTION = 0.8
 
@@ -171,6 +173,21 @@ export class HealCalculator {
     buffSystem?: BuffSystem,
   ): number {
     if (!buffSystem) return 0
+    // 优先按 buff 配置参数（parameters.healReductionPct）逐实例结算；无该方法（测试桩）时回退计数
+    if (typeof buffSystem.getBuffParamsListByTag === 'function') {
+      const paramList = buffSystem.getBuffParamsListByTag(
+        target.id,
+        STATUS_CODE.HEAL_REDUCTION,
+      )
+      const debuffEffect = paramList.reduce((sum, params) => {
+        const pct =
+          typeof params.healReductionPct === 'number'
+            ? params.healReductionPct
+            : HealCalculator.DEFAULT_HEAL_REDUCTION_PCT
+        return sum + pct / 100
+      }, 0)
+      return Math.min(debuffEffect, HealCalculator.MAX_HEAL_REDUCTION)
+    }
     const reductionInstances = buffSystem.getBuffInstancesWithTag(
       target.id,
       STATUS_CODE.HEAL_REDUCTION,

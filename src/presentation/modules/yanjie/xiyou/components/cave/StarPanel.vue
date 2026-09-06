@@ -34,14 +34,11 @@
           </span>
         </p>
         <div class="xy-cave-star-cost">
-          <span class="xy-cave-mat" :class="{ 'is-low': !hasSame }">
-            同名装备 「{{ gear.item }}」 ×1
-            <span v-if="!hasSame" class="xy-cave-mat__tag">不足</span>
+          <span class="xy-cave-mat" :class="{ 'is-low': pointPool < pointNeed }">
+            残魂点 {{ pointPool }} / {{ pointNeed }}
+            <span v-if="pointPool < pointNeed" class="xy-cave-mat__tag">不足</span>
           </span>
-          <span class="xy-cave-mat" :class="{ 'is-low': !hasSoul }">
-            小魂玉 ×{{ soulNeed }}
-            <span v-if="!hasSoul" class="xy-cave-mat__tag">不足</span>
-          </span>
+          <span class="xy-cave-card__desc">升星石 · 装备残魂 · 同名装备（各 1 点，升星石上/中/下 = 3/2/1 点）</span>
         </div>
         <div :class="{ 'xy-cave-ripple': rippling, 'xy-cave-shake': shaking }">
           <button type="button" class="xy-cave-action" :disabled="!canStar" @click="doStar">
@@ -103,14 +100,14 @@ function usable(_g: StarGearView): boolean {
 
 const gear = computed<StarGearView | null>(() => (idx.value >= 0 ? gears.value[idx.value] ?? null : null))
 
-const sameId = computed(() => (gear.value ? itemIdByName(gear.value.item) : null))
-const soulNeed = computed(() => (gear.value ? starCost(gear.value.star) : 0))
+const pointNeed = computed(() => (gear.value ? starCost(gear.value.star + 1) : 0))
+const pointPool = computed(() => {
+  if (!gear.value) return 0
+  return pack.starPointsAvailable(itemIdByName(gear.value.item) ?? gear.value.item)
+})
 const maxed = computed(() => !!gear.value && gear.value.star >= STAR_MAX)
 
-const hasSame = computed(() => !!sameId.value && pack.countOf(sameId.value) >= 1)
-const hasSoul = computed(() => pack.countOf('star_soul_01') >= soulNeed.value)
-
-const canStar = computed(() => !!gear.value && !maxed.value && !!sameId.value && hasSame.value && hasSoul.value)
+const canStar = computed(() => !!gear.value && !maxed.value && pointPool.value >= pointNeed.value)
 
 function doStar(): void {
   const g = gear.value

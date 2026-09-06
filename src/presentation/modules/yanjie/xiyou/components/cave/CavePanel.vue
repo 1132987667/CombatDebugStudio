@@ -39,6 +39,7 @@
           <GardenPanel v-else-if="active === 'garden'" />
           <EnhancePanel v-else-if="active === 'enhance'" />
           <StarPanel v-else-if="active === 'star'" />
+          <WashPanel v-else-if="active === 'wash'" />
           <FragmentPanel v-else-if="active === 'fragment'" />
         </div>
 
@@ -61,6 +62,7 @@ import IconNavTalisman from '~icons/app/nav-talisman'
 import IconNavGarden from '~icons/app/nav-garden'
 import IconNavEnhance from '~icons/app/nav-enhance'
 import IconNavStar from '~icons/app/nav-star'
+import IconNavWash from '~icons/app/nav-wash'
 import IconNavFragment from '~icons/app/nav-fragment'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { crafts } from '../../xiyouData'
@@ -70,6 +72,7 @@ import ForgePanel from './ForgePanel.vue'
 import FragmentPanel from './FragmentPanel.vue'
 import GardenPanel from './GardenPanel.vue'
 import StarPanel from './StarPanel.vue'
+import WashPanel from './WashPanel.vue'
 import TalismanPanel from './TalismanPanel.vue'
 
 const pack = usePackStore()
@@ -78,7 +81,7 @@ onMounted(() => {
   void pack.init()
 })
 
-type CaveNavId = 'forge' | 'alchemy' | 'talisman' | 'garden' | 'enhance' | 'star' | 'fragment'
+type CaveNavId = 'forge' | 'alchemy' | 'talisman' | 'garden' | 'enhance' | 'star' | 'wash' | 'fragment'
 
 const active = ref<CaveNavId>('forge')
 
@@ -90,6 +93,7 @@ const NAVS: Array<{ id: CaveNavId; label: string }> = [
   { id: 'garden', label: '药园灵田' },
   { id: 'enhance', label: '强化装备' },
   { id: 'star', label: '装备升星' },
+  { id: 'wash', label: '词条洗练' },
   { id: 'fragment', label: '碎片合成' },
 ]
 
@@ -101,6 +105,7 @@ const NAV_ICONS: Record<CaveNavId, Component> = {
   garden: IconNavGarden,
   enhance: IconNavEnhance,
   star: IconNavStar,
+  wash: IconNavWash,
   fragment: IconNavFragment,
 }
 
@@ -111,7 +116,8 @@ const ACTIVE_NAV = computed(() => {
     talisman: { label: '炼制符箓', sub: '符炉 · 炼制强化保护符' },
     garden: { label: '药园灵田', sub: '灵田 · 种植收获灵草仙果' },
     enhance: { label: '强化装备', sub: '砺台 · 消耗晶球与金钱强化' },
-    star: { label: '装备升星', sub: '星台 · 消耗同名装备突破星级' },
+    star: { label: '装备升星', sub: '星台 · 消耗残魂点突破星级' },
+    wash: { label: '词条洗练', sub: '灵泉 · 消耗洗练材料更换词条' },
     fragment: { label: '碎片合成', sub: '熔炼 · 碎片合成为完整之物' },
   }
   return map[active.value]

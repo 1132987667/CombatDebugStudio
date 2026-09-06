@@ -26,7 +26,7 @@ import type {
   TriggerAction,
   TriggerEventContext,
 } from '@/domain/buff/types'
-import { BUFF_ID_PREFIX, ControlType, StackRule } from '@/domain/buff/types'
+import { BUFF_ID_PREFIX, BUFF_TAGS, ControlType, StackRule } from '@/domain/buff/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type {
   ResolvedBuffConfig,
@@ -489,6 +489,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable:
         config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
+      blockedByTag:
+        config.blockedByTag ?? jsonConfig?.blockedByTag ?? undefined,
       immunities:
         config.immunities ??
         scriptDefaultConfig?.immunities ??
@@ -506,6 +508,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       triggers: config.triggers ?? jsonConfig?.triggers as TriggerAction[] | undefined,
       cascadeRemove:
         config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
+    }
+
+    // 施加阻挡检查：目标身上存在携带 blockedByTag 标记的 buff 时拒绝施加（返回 ''）
+    if (
+      resolvedConfig.blockedByTag &&
+      this.hasBuffWithTag(characterId, resolvedConfig.blockedByTag)
+    ) {
+      return ''
     }
 
     // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immunities 免疫则跳过施加
@@ -1241,6 +1251,41 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   getShieldValue(characterId: string): number {
     return this.shieldValues.get(characterId) ?? 0
+  }
+
+  /** 护盾获得禁用检查：目标身上存在「无法获得护盾」debuff（no_shield tag）时禁止获得护盾 */
+  canGainShield(characterId: string): boolean {
+    return !this.hasBuffWithTag(characterId, BUFF_TAGS.NO_SHIELD)
+  }
+
+  /** 查找角色身上第一个携带指定 tag 的 buff 配置参数（无则 null）；守护转移等按 tag 驱动的机制使用 */
+  findBuffParamsByTag(characterId: string, tag: string): Record<string, unknown> | null {
+    for (const instance of this.buffInstances.values()) {
+      if (instance.characterId !== characterId || !instance.isActive) continue
+      const config = this.scriptRegistry.getBuffConfig(instance.buffId)
+      if (!config?.tags?.includes(tag)) continue
+      return (config.parameters ?? {}) as Record<string, unknown>
+    }
+    return null
+  }
+
+  /** 查询角色身上指定 buff 的当前层数（LIMITED 叠层为单实例 currentStacks；无实例返回 0） */
+  getBuffStackCount(characterId: string, buffId: string): number {
+    const instance = this.getBuffInstances(characterId).find(
+      (i) => i.buffId === buffId,
+    )
+    return instance?.currentStacks ?? 0
+  }
+
+  /** 获取角色身上带指定 tag 的所有 buff 配置参数列表（减治疗参数化等按实例结算的机制使用） */
+  getBuffParamsListByTag(characterId: string, tag: string): Array<Record<string, unknown>> {
+    const result: Array<Record<string, unknown>> = []
+    for (const instance of this.getBuffInstances(characterId)) {
+      const config = this.scriptRegistry.getBuffConfig(instance.buffId)
+      if (!config?.tags?.includes(tag)) continue
+      result.push((config.parameters ?? {}) as Record<string, unknown>)
+    }
+    return result
   }
 
   setShieldValue(characterId: string, value: number): void {

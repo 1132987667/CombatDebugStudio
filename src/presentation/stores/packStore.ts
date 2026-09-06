@@ -39,7 +39,14 @@ import {
   enhanceMaxByRarity,
   enhanceSuccessRate,
   STAR_MAX,
+  STAR_STONES,
   starCost,
+  starFactor,
+  WASH_COST_GOLD,
+  WASH_MATERIAL_NAMES,
+  WASH_MATERIALS,
+  washAllowed,
+  type WashMode,
 } from '@/presentation/modules/yanjie/xiyou/caveLogic'
 import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/quality'
 import { useNotificationStore } from './notificationStore'
@@ -535,8 +542,8 @@ export const usePackStore = defineStore('pack', () => {
   function instanceStats(inst: GearInstance): EquipmentData['stats'] {
     const g = gearById(inst.itemId)
     if (!g) return []
-    // 基础属性 = 原始 × 品质系数 × 强化倍率 × 星级倍率（设计稿 §8.1：每星 +10%）
-    const factor = inst.qualityFactor * enhanceFactor(inst.enhance) * (1 + 0.1 * (inst.star ?? 0))
+    // 基础属性 = 原始 × 品质系数 × 强化倍率 × 星级倍率（§21 升星表：+5%/+10%/+10% 累计 25%）
+    const factor = inst.qualityFactor * enhanceFactor(inst.enhance) * starFactor(inst.star ?? 0)
     const base = g.stats.map((s) => ({ ...s, value: Math.round(s.value * factor) }))
     const affixStats: EquipmentData['stats'] = inst.affixes.map((a) => ({
       attribute: a.attribute,
@@ -607,8 +614,9 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 升星当前槽位装备：扣同名装备一件 + 魂玉 → 星级 +1（设计稿 §8：0-3 星，每星基础属性 +10%）
-   * NOTE: 升星只增强基础属性，不改词条内容/数量（与强化独立成长线）
+   * 升星当前槽位装备：残魂点支付（每星 3 点，累计 3/6/9）→ 星级 +1（§21 装备养成操作与材料）
+   * 点源混合支付，优先级：升星石（上3/中2/下1，贪心）→ 装备残魂（1 点/个）→ 同名未穿戴装备（1 点/件，被消耗）
+   * NOTE: 升星只增强基础属性（+5%/+10%/+10% 累计 25%），不改词条内容/数量与精锻
    */
   function starGear(slot: GearSlotKey): boolean {
     const inst = equipped[slot]
@@ -622,23 +630,112 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast('已达满星')
       return false
     }
-    // 同名装备 ×1（背包中未穿戴的同款，从 gearInstances 移除）
-    const sameIdx = gearInstances.value.findIndex((x) => x.itemId === inst.itemId)
-    if (sameIdx < 0) {
-      notification.toast('需要同名装备一件（当前升星消耗）', 'warning')
+    const need = starCost(cur + 1)
+    if (starPointsAvailable(inst.itemId) < need) {
+      notification.toast(`残魂点不足（需 ${need} 点：升星石 / 装备残魂 / 同名装备均可）`, 'warning')
       return false
     }
-    const need = starCost(cur)
-    if ((inventory.value['star_soul_01'] ?? 0) < need) {
-      notification.toast(`魂玉不足（需要 ${need}）`, 'warning')
-      return false
-    }
-    gearInstances.value.splice(sameIdx, 1)
-    inventory.value['star_soul_01'] = (inventory.value['star_soul_01'] ?? 0) - need
-    if (inventory.value['star_soul_01']! <= 0) delete inventory.value['star_soul_01']
+    consumeStarPoints(inst.itemId, need)
     inst.star = cur + 1
     scheduleSave()
     notification.toast(`升星成功！「${g.name}」升至 ${inst.star} 星`, 'success')
+    return true
+  }
+
+  /** 升星可用残魂点：升星石（上3/中2/下1）+ 装备残魂 decomp_soul（1/个）+ 同名未穿戴装备（1/件） */
+  function starPointsAvailable(itemId: string): number {
+    const stonePts = STAR_STONES.reduce((sum, [id, pts]) => sum + (inventory.value[id] ?? 0) * pts, 0)
+    const souls = inventory.value['decomp_soul'] ?? 0
+    const sameCount = gearInstances.value.filter((x) => x.itemId === itemId).length
+    return stonePts + souls + sameCount
+  }
+
+  /** 按优先级扣减残魂点（调用方先以 starPointsAvailable 校验充足），支付顺序见 starGear 注释 */
+  function consumeStarPoints(itemId: string, need: number): void {
+    let remain = need
+    const takeItem = (id: string, count: number): number => {
+      const use = Math.min(inventory.value[id] ?? 0, count)
+      if (use > 0) {
+        inventory.value[id] = (inventory.value[id] ?? 0) - use
+        if (inventory.value[id]! <= 0) delete inventory.value[id]
+      }
+      return use
+    }
+    for (const [id, pts] of STAR_STONES) {
+      if (remain <= 0) break
+      const use = takeItem(id, Math.floor(remain / pts))
+      remain -= use * pts
+    }
+    if (remain > 0) remain -= takeItem('decomp_soul', remain)
+    while (remain > 0) {
+      const sameIdx = gearInstances.value.findIndex((x) => x.itemId === itemId)
+      if (sameIdx < 0) break
+      gearInstances.value.splice(sameIdx, 1)
+      remain--
+    }
+  }
+
+  /**
+   * 洗练当前槽位装备词条（§21 装备养成操作与材料）：
+   * normal 全部重 roll / directed 指定 1 条重 roll / locked 锁 1 条（种类+数值不变）其余重 roll。
+   * 词条数不变、同部位池内抽取、结果可能更差；开放品质 washAllowed（§8.4.4：凡普通/精定向/超锁词条）。
+   * 消耗：对应洗练材料 ×1 + 200 铜钱；先 roll 后扣（池耗尽不扣消耗）。
+   */
+  function washGear(slot: GearSlotKey, mode: WashMode, targetIndex: number, rng: Rng = Math.random): boolean {
+    const inst = equipped[slot]
+    const g = inst ? gearById(inst.itemId) : undefined
+    if (!inst || !g) {
+      notification.toast('该槽位未穿戴装备')
+      return false
+    }
+    if (!washAllowed(mode, inst.quality)) {
+      notification.toast(`品质不足，「${WASH_MATERIAL_NAMES[mode]}」洗练未开放`, 'warning')
+      return false
+    }
+    const affixes = inst.affixes
+    if (affixes.length === 0) {
+      notification.toast('该装备没有词条，无需洗练', 'warning')
+      return false
+    }
+    if (mode !== 'normal' && (targetIndex < 0 || targetIndex >= affixes.length)) {
+      notification.toast('请先选择要操作的词条', 'warning')
+      return false
+    }
+    const keyOf = (a: GearAffix): string => `${a.attribute}:${a.modifierType}`
+    // 先 roll（纯计算，不消耗）——池耗尽直接拒绝
+    let next: GearAffix[]
+    if (mode === 'normal') {
+      next = rollAffixes(inst.itemId, inst.quality, rng)
+    } else if (mode === 'directed') {
+      const exclude = new Set(affixes.filter((_, i) => i !== targetIndex).map(keyOf))
+      const rolled = rollAffixes(inst.itemId, inst.quality, rng, { count: 1, excludeKeys: exclude })
+      if (rolled.length === 0) {
+        notification.toast('词条池已无可替换词条', 'warning')
+        return false
+      }
+      next = [...affixes]
+      next[targetIndex] = rolled[0]
+    } else {
+      const exclude = new Set([keyOf(affixes[targetIndex])])
+      const rolled = rollAffixes(inst.itemId, inst.quality, rng, { count: affixes.length - 1, excludeKeys: exclude })
+      if (rolled.length < affixes.length - 1) {
+        notification.toast('词条池不足以完成锁词条洗练', 'warning')
+        return false
+      }
+      next = [...affixes]
+      let ri = 0
+      for (let i = 0; i < next.length; i++) {
+        if (i !== targetIndex) next[i] = rolled[ri++]
+      }
+    }
+    // roll 成功后扣消耗
+    const matId = WASH_MATERIALS[mode]
+    inventory.value[matId] = (inventory.value[matId] ?? 0) - 1
+    if (inventory.value[matId]! <= 0) delete inventory.value[matId]
+    currency.copper -= WASH_COST_GOLD
+    inst.affixes = next
+    scheduleSave()
+    notification.toast(`洗练完成！「${g.name}」词条已更新`, 'success')
     return true
   }
 
@@ -692,14 +789,20 @@ export const usePackStore = defineStore('pack', () => {
     return inst
   }
 
-  /** 从词条库按部位/子类型抽取词缀（weight 加权随机，词条数按品质 1/2/3/4/5） */
-  function rollAffixes(itemId: string, quality: number, rng: Rng = Math.random): GearAffix[] {
+  /** 从词条库按部位/子类型抽取词缀（weight 加权随机，词条数按品质 1/2/3/4/5）。
+   *  opts.count 覆盖条数、opts.excludeKeys 排除的属性键（洗练锁词条/定向时保持去重约束）。 */
+  function rollAffixes(
+    itemId: string,
+    quality: number,
+    rng: Rng = Math.random,
+    opts?: { count?: number; excludeKeys?: ReadonlySet<string> },
+  ): GearAffix[] {
     const g = gearById(itemId)
     if (!g) return []
     const pool = EQUIP_AFFIXES.filter((a) => affixAppliesTo(a, g.slot, g.subType))
     const out: GearAffix[] = []
-    const seen = new Set<string>()
-    let count = affixCountByQuality(quality)
+    const seen = new Set<string>(opts?.excludeKeys ?? [])
+    let count = opts?.count ?? affixCountByQuality(quality)
     // 词缀质量随品质抬升：凡品取 rarity=1 的词条（weight>0），高品质全池
     const source = quality === 1
       ? pool.filter((a) => a.rarity === 1)
@@ -1202,6 +1305,8 @@ export const usePackStore = defineStore('pack', () => {
     unequip,
     enhanceGear,
     starGear,
+    starPointsAvailable,
+    washGear,
     blueprintUnlocked,
     craftEquipment,
     rollAffixes,

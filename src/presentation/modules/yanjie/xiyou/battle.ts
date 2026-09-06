@@ -16,6 +16,7 @@ import bossesJson from '@configs/xiyou/bosses.json'
 import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
 import type { ProtagonistSnapshot, XiyouCombatant, XiyouScene } from './types'
 import { equippedSkills, pureSchoolBonus, schools, skillNodeMap } from './xiyouData'
+import type { RunNode } from './runFlow'
 
 /** 我方初始阵容：仅主角一人（孙小圣/八戒/悟净等伙伴在 mate.json 队友表，初始不上阵） */
 export const playerParty: XiyouCombatant[] = [
@@ -27,29 +28,31 @@ export const playerParty: XiyouCombatant[] = [
  * 妖徒（yaotu）参战：scenes.json yaotu.id 关联 enemies.json 完整定义，追加在普通敌人之后。
  * 技能按 enemy-skills.json 的 skillType 分桶（与 ConfigDataSource.normalizeEnemy 同口径），
  * passiveSkillIds 归被动、skillType=ultimate 归大招、其余归小技能。
+ * @param node 关卡推进节点（runFlow.ts）：传入时按节点编成与妖气增幅构造；缺省 = 整场景合编一场（历史行为）
  */
-export function buildEnemyTeam(scene: XiyouScene): BattleEntity[] {
-  const rowOf = (id?: string): EnemyRow | null => (id ? (enemyById.get(id) ?? null) : null)
-  const rows: EnemyRow[] = scene.enemies
-    .map((e) => rowOf(e.id))
+export function buildEnemyTeam(scene: XiyouScene, node?: RunNode): BattleEntity[] {
+  const ids = node ? node.enemyIds : [...scene.enemies.map((e) => e.id), scene.yaotu?.id]
+  const rows = ids
+    .map((id) => (id ? (enemyById.get(id) ?? null) : null))
     .filter((r): r is EnemyRow => !!r)
-  const yaotuRow = scene.yaotu ? rowOf(scene.yaotu.id) : null
-  if (yaotuRow) rows.push(yaotuRow)
+  const amp = node?.amp ?? 1
   return rows.slice(0, 4).map((row, i) => {
     const st = row.stats ?? {}
     const s = (v?: number): number => Math.round(v ?? 0)
+    // NOTE: 妖气增幅只缩放战斗数值（气血/攻击/防御/速度），命中率/闪避/暴击等百分比类不缩放
+    const scaled = (v?: number): number => Math.round((v ?? 0) * amp)
     const enemy: Enemy = {
       id: row.id,
       name: row.name,
       level: row.level,
       stats: {
-        [ATTRIBUTE_CODE.currentHealth]: s(st.maxHealth),
-        [ATTRIBUTE_CODE.maxHealth]: s(st.maxHealth),
+        [ATTRIBUTE_CODE.currentHealth]: scaled(st.maxHealth),
+        [ATTRIBUTE_CODE.maxHealth]: scaled(st.maxHealth),
         [ATTRIBUTE_CODE.currentEnergy]: s(st.maxEnergy ?? 150),
         [ATTRIBUTE_CODE.maxEnergy]: s(st.maxEnergy ?? 150),
-        [ATTRIBUTE_CODE.attack]: s(st.attack),
-        [ATTRIBUTE_CODE.defense]: s(st.defense),
-        [ATTRIBUTE_CODE.speed]: s(st.speed),
+        [ATTRIBUTE_CODE.attack]: scaled(st.attack),
+        [ATTRIBUTE_CODE.defense]: scaled(st.defense),
+        [ATTRIBUTE_CODE.speed]: scaled(st.speed),
         [ATTRIBUTE_CODE.critRate]: st.critRate ?? 5,
         [ATTRIBUTE_CODE.critDamage]: (st.critDamage ?? 120) / 100,
         [ATTRIBUTE_CODE.hit]: st.hit ?? 10,
@@ -187,24 +190,59 @@ function dropsFromRow(row: EnemyRow): EnemyDrop[] {
   }))
 }
 
-/** 战斗胜利掉落：聚合场景全部敌人的掉落条目 + 场景掉落表材料（configs/enemies/enemies.json 与 scenes.json 权威，供 BattleZen 结算入包） */
-export function dropsForScene(scene: XiyouScene): EnemyDrop[] {
+/** 敌情横幅用敌方简报（推进演出展示名称/等级/是否关底） */
+export interface EnemyBrief {
+  id: string
+  name: string
+  level: number
+  isBoss: boolean
+}
+
+export function enemyBriefById(id: string): EnemyBrief {
+  const row = enemyById.get(id)
+  return { id, name: row?.name ?? id, level: row?.level ?? 0, isBoss: id.startsWith('boss_') }
+}
+
+/** 单个敌人金币/经验奖励区间（按敌人 id，供单敌击杀结算；缺省无奖励） */
+export function rewardForEnemyById(enemyId: string): { gold: [number, number]; exp: [number, number] } {
+  const row = enemyById.get(enemyId)
+  return {
+    gold: row?.gold ?? [0, 0],
+    exp: row?.exp ?? [0, 0],
+  }
+}
+
+/** 按敌方 id 列表聚合掉落条目（多场推进的逐场结算口径；materials 为关卡必掉，随关底场入包） */
+export function dropsForEnemyIds(enemyIds: string[], materials?: string[]): EnemyDrop[] {
   const out: EnemyDrop[] = []
-  for (const e of scene.enemies) {
-    const row = e.id ? enemyById.get(e.id) : undefined
+  for (const id of enemyIds) {
+    const row = enemyById.get(id)
     if (row) out.push(...dropsFromRow(row))
   }
-  // 妖徒掉落并入（yaotu 已参战，胜利结算应含其掉落）
-  if (scene.yaotu) {
-    const row = enemyById.get(scene.yaotu.id)
-    if (row) out.push(...dropsFromRow(row))
-  }
-  // NOTE: 场景掉落表 materials（scenes.json drops.materials）为关卡必掉材料，补并入包；
-  //       否则该字段不参与任何结算，章节材料（beike/songmu 等）永远无法获得
-  for (const m of scene.drops?.materials ?? []) {
+  for (const m of materials ?? []) {
     out.push({ itemId: m, quantity: 1, chance: 1 })
   }
   return out
+}
+
+/** 按敌方 id 列表聚合金币/经验区间（多场推进的逐场结算口径） */
+export function rewardForEnemyIds(enemyIds: string[]): { gold: [number, number]; exp: [number, number] } {
+  let g0 = 0
+  let g1 = 0
+  let e0 = 0
+  let e1 = 0
+  for (const id of enemyIds) {
+    const row = enemyById.get(id)
+    if (row?.gold) {
+      g0 += row.gold[0]
+      g1 += row.gold[1]
+    }
+    if (row?.exp) {
+      e0 += row.exp[0]
+      e1 += row.exp[1]
+    }
+  }
+  return { gold: [g0, g1], exp: [e0, e1] }
 }
 
 /** 单个敌人掉落条目（按敌人 id，供 BattleZen 头部按敌人展示掉落概率，缺省无掉落） */
@@ -217,47 +255,6 @@ export function dropsForEnemyById(enemyId: string): EnemyDrop[] {
 export function dropsForEnemy(name: string): EnemyDrop[] {
   const row = enemyRows.find((r) => r.name === name)
   return row ? dropsFromRow(row) : []
-}
-
-/** 单个敌人金币/经验奖励区间（按敌人 id，供单敌击杀结算；缺省无奖励） */
-export function rewardForEnemyById(enemyId: string): { gold: [number, number]; exp: [number, number] } {
-  const row = enemyById.get(enemyId)
-  return {
-    gold: row?.gold ?? [0, 0],
-    exp: row?.exp ?? [0, 0],
-  }
-}
-
-/** 场景金币/经验奖励区间（per-enemy gold/exp 区间加和；供战前预览与结算入账） */
-export function rewardForScene(scene: XiyouScene): { gold: [number, number]; exp: [number, number] } {
-  let g0 = 0
-  let g1 = 0
-  let e0 = 0
-  let e1 = 0
-  for (const en of scene.enemies) {
-    const row = en.id ? enemyById.get(en.id) : undefined
-    if (row?.gold) {
-      g0 += row.gold[0]
-      g1 += row.gold[1]
-    }
-    if (row?.exp) {
-      e0 += row.exp[0]
-      e1 += row.exp[1]
-    }
-  }
-  // 妖徒奖励并入（yaotu 已参战，结算与预览一致）
-  if (scene.yaotu) {
-    const row = enemyById.get(scene.yaotu.id)
-    if (row?.gold) {
-      g0 += row.gold[0]
-      g1 += row.gold[1]
-    }
-    if (row?.exp) {
-      e0 += row.exp[0]
-      e1 += row.exp[1]
-    }
-  }
-  return { gold: [g0, g1], exp: [e0, e1] }
 }
 
 /**
@@ -381,12 +378,14 @@ export function schoolAttributeBonuses(base: {
  * NOTE: 经 GameDataProcessor.enemyToParticipant 构造 BattleEntity，消费引擎而非直接 new 领域实现，
  *       与唤灵台演武台同数据源；技能留空（引擎普攻兜底），后续技能接入随 configs/skills 扩展。
  * @param allyBonuses 主角属性加成（已穿戴装备 stats，flat/percent 归一到最终数值），缺省无加成
- * @param protagonist 主角实时战斗快照（playerStore.player 派生），缺省回退 playerParty[0] 演示值
+ * @param protagonist 主角实时战斗快照（playerStore 派生），缺省回退 playerParty[0] 演示值
+ * @param node 关卡推进节点（runFlow.ts）：传入时敌方按节点编成 + 妖气增幅；缺省 = 整场景合编一场
  */
 export function buildBattleTeams(
   scene: XiyouScene,
   allyBonuses?: Partial<Record<string, number>>,
   protagonist?: ProtagonistSnapshot,
+  node?: RunNode,
 ): { ally: BattleEntity[]; enemy: BattleEntity[] } {
   const toEnemy = (c: XiyouCombatant & { critRate?: number; critDamage?: number; hitRate?: number; dodge?: number; damageReduction?: number }, player: boolean): Enemy => ({
     id: c.id,
@@ -424,6 +423,6 @@ export function buildBattleTeams(
     const boosted: Enemy = { ...enemy, stats: boostedStats }
     return GameDataProcessor.enemyToParticipant(boosted, ParticipantSide.ALLY, i)
   })
-  const enemy = buildEnemyTeam(scene)
+  const enemy = buildEnemyTeam(scene, node)
   return { ally, enemy }
 }

@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-09-02T10:49:25.682Z
+// 生成时间: 2026-09-06T10:41:16.647Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -210,8 +210,8 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   normalAtkDmgReduction: {
     code: 'normalAtkDmgReduction',
-    name: '普攻伤害减免',
-    displayName: '普攻伤害减免',
+    name: '普攻抵抗',
+    displayName: '普攻抵抗',
     description: '仅对普通攻击有效的伤害减免',
     isPercentage: true,
     range: '0-100%',
@@ -219,8 +219,8 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   skillDmgReduction: {
     code: 'skillDmgReduction',
-    name: '技能伤害减免',
-    displayName: '技能伤害减免',
+    name: '技能抵抗',
+    displayName: '技能抵抗',
     description: '仅对技能攻击有效的伤害减免',
     isPercentage: true,
     range: '0-100%',

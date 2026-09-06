@@ -324,5 +324,25 @@
       "attributes": ["defense", "defenseBonus", "defenseCoefficient"],
       "attributeLabels": ["防御", "防御加成", "防御系数"]
     }
-  ]
+  ],
+  "pet_mount_rules": {
+    "max_level": 50,
+    "float_range": { "min": 0.5, "max": 1.1 },
+    "formula": { "base_sap": 900, "system_count": 2, "total_weight": 9, "main_weight_sum": 7 },
+    "aptitude": { "min": 280, "max": 440, "cap": 500, "base": 400 },
+    "breakthroughs": [
+      { "level": 10, "bonus": 0.1 },
+      { "level": 30, "bonus": 0.2 },
+      { "level": 50, "bonus": 0.3 }
+    ],
+    "rows": [
+      { "id": "main", "nameAtk": "主要属性", "nameDef": "主要属性", "minQuality": 1 },
+      { "id": "trait", "nameAtk": "特性", "nameDef": "特性", "minQuality": 3 },
+      { "id": "side_all", "nameAtk": "ATK-ALL", "nameDef": "DEF-ALL", "minQuality": 4, "pool": { "ATK": ["ATK-ALL"], "DEF": ["DEF-ALL"] } },
+      { "id": "l1", "nameAtk": "ATK-L1", "nameDef": "DEF-L1", "minQuality": 1, "pool": { "ATK": ["ATK-L2"], "DEF": ["DEF-L2"] } },
+      { "id": "l3c", "nameAtk": "L3-通用", "nameDef": "L4-通用", "minQuality": 2, "pool": { "ATK": ["L3-通用"], "DEF": ["L4-通用"] } },
+      { "id": "l3", "nameAtk": "ATK-L3", "nameDef": "DEF-L3", "minQuality": 3, "pool": { "ATK": ["ATK-L3"], "DEF": ["DEF-L3"] } },
+      { "id": "all", "nameAtk": "ATK-ALL", "nameDef": "DEF-ALL", "minQuality": 4, "pool": { "ATK": ["ATK-ALL"], "DEF": ["DEF-ALL"] } }
+    ]
+  }
 }

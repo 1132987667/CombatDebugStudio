@@ -86,6 +86,8 @@ export interface BuffJsonEntry {
   cooldown?: number
   // 是否可驱散
   dispellable?: boolean
+  /** 施加阻挡标记：目标身上存在携带该 tag 的 buff 时，本 buff 无法施加（如风锁后遗症阻止新风锁） */
+  blockedByTag?: string
 }
 
 import rawBuffsData from '@configs/buffs/buffs.json'

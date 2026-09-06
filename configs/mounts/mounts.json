@@ -1,0 +1,202 @@
+[
+  {
+    "id": "mount_01",
+    "name": "踏云灵驹",
+    "scene": 1,
+    "category": "combo",
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
+    "trait": "每次触发连击后，自身速度+3，持续1回合（可叠加2层）"
+  },
+  {
+    "id": "mount_02",
+    "name": "幻影妖狼",
+    "scene": 2,
+    "category": "combo",
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
+    "trait": "连击伤害的 10% 转化为自身气血回复"
+  },
+  {
+    "id": "mount_03",
+    "name": "追星鹿",
+    "scene": 3,
+    "category": "combo",
+    "weights": { "defense": 2, "dodge": 2, "maxHealth": 3 },
+    "trait": "连击段数上限+1，但每段连击伤害衰减额外降低 5%"
+  },
+  {
+    "id": "mount_04",
+    "name": "御风青隼",
+    "scene": 4,
+    "category": "combo",
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
+    "trait": "回合开始时若自身速度高于敌方全体，则本回合连击率+10%"
+  },
+  {
+    "id": "mount_05",
+    "name": "惊雷猎豹",
+    "scene": 5,
+    "category": "combo",
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
+    "trait": "普攻或连击命中时，有 20% 概率使目标防御-5%，持续1回合"
+  },
+  {
+    "id": "mount_06",
+    "name": "狂血巨狼",
+    "scene": 1,
+    "category": "crit",
+    "weights": { "defense": 2, "dodge": 1, "maxHealth": 4 },
+    "trait": "气血高于 70% 时，暴击伤害+15%"
+  },
+  {
+    "id": "mount_07",
+    "name": "烈焰狮",
+    "scene": 2,
+    "category": "crit",
+    "weights": { "defense": 2, "dodge": 1, "maxHealth": 4 },
+    "trait": "每损失 10% 气血，暴击率+1.5%"
+  },
+  {
+    "id": "mount_08",
+    "name": "赤焰凶虎",
+    "scene": 3,
+    "category": "crit",
+    "weights": { "defense": 2, "dodge": 1, "maxHealth": 4 },
+    "trait": "暴击时附加目标已损失气血 4% 的真实伤害（最多不超过攻击力 50%）"
+  },
+  {
+    "id": "mount_09",
+    "name": "焚天火鹏",
+    "scene": 4,
+    "category": "crit",
+    "weights": { "defense": 3, "dodge": 1, "maxHealth": 3 },
+    "trait": "击杀单位后，回复自身最大气血 8% 并获得 1 回合暴伤+10%"
+  },
+  {
+    "id": "mount_10",
+    "name": "玄冥螭龙",
+    "scene": 5,
+    "category": "crit",
+    "weights": { "defense": 2, "dodge": 2, "maxHealth": 3 },
+    "trait": "暴击时对目标施加灼烧（每回合 15% 攻击伤害，持续 2 回合，不可叠加）"
+  },
+  {
+    "id": "mount_11",
+    "name": "玄甲鳄龟",
+    "scene": 1,
+    "category": "shield_reflect",
+    "weights": { "defense": 5, "dodge": 1, "maxHealth": 1 },
+    "trait": "获得护盾时，护盾值额外+15%"
+  },
+  {
+    "id": "mount_12",
+    "name": "磐石灰牛",
+    "scene": 2,
+    "category": "shield_reflect",
+    "weights": { "defense": 5, "dodge": 1, "maxHealth": 1 },
+    "trait": "受到攻击时，有 25% 概率获得防御×200% 的护盾，持续1回合"
+  },
+  {
+    "id": "mount_13",
+    "name": "铁壁白象",
+    "scene": 3,
+    "category": "shield_reflect",
+    "weights": { "defense": 4, "dodge": 1, "maxHealth": 2 },
+    "trait": "护盾存在期间，受到的所有伤害额外降低 8%"
+  },
+  {
+    "id": "mount_14",
+    "name": "震地玄犀",
+    "scene": 4,
+    "category": "shield_reflect",
+    "weights": { "defense": 4, "dodge": 1, "maxHealth": 2 },
+    "trait": "受到近战攻击时，对攻击者造成防御值 30% 的固定反伤"
+  },
+  {
+    "id": "mount_15",
+    "name": "万花玄蛟",
+    "scene": 5,
+    "category": "shield_reflect",
+    "weights": { "defense": 5, "dodge": 1, "maxHealth": 1 },
+    "trait": "每回合开始时，若自身没有护盾，则获得最大气血 10% 的护盾"
+  },
+  {
+    "id": "mount_16",
+    "name": "穿云雨燕",
+    "scene": 1,
+    "category": "dodge",
+    "weights": { "defense": 1, "dodge": 5, "maxHealth": 1 },
+    "trait": "成功闪避后，下一次攻击必定命中，且伤害+10%"
+  },
+  {
+    "id": "mount_17",
+    "name": "清风白鹤",
+    "scene": 2,
+    "category": "dodge",
+    "weights": { "defense": 1, "dodge": 5, "maxHealth": 1 },
+    "trait": "成功闪避后，速度+5，持续1回合（可叠加2层）"
+  },
+  {
+    "id": "mount_18",
+    "name": "御风青隼",
+    "scene": 3,
+    "category": "dodge",
+    "weights": { "defense": 2, "dodge": 4, "maxHealth": 1 },
+    "trait": "成功闪避时，对攻击者造成 30% 攻击力的闪电伤害（每回合最多 2 次）"
+  },
+  {
+    "id": "mount_19",
+    "name": "逐月玉兔",
+    "scene": 4,
+    "category": "dodge",
+    "weights": { "defense": 1, "dodge": 5, "maxHealth": 1 },
+    "trait": "闪避率低于 30% 时，额外获得 10% 闪避率"
+  },
+  {
+    "id": "mount_20",
+    "name": "追日大鹏",
+    "scene": 5,
+    "category": "dodge",
+    "weights": { "defense": 1, "dodge": 5, "maxHealth": 1 },
+    "trait": "每回合第一次成功闪避后，回复自身最大气血 3%"
+  },
+  {
+    "id": "mount_21",
+    "name": "疾风马",
+    "scene": 1,
+    "category": "universal",
+    "weights": { "defense": 2, "dodge": 3, "maxHealth": 2 },
+    "trait": "战斗开始时，速度+8，持续 2 回合"
+  },
+  {
+    "id": "mount_22",
+    "name": "镇海蛟",
+    "scene": 2,
+    "category": "universal",
+    "weights": { "defense": 3, "dodge": 2, "maxHealth": 2 },
+    "trait": "回合结束时，若气血低于 50%，回复最大气血 6%"
+  },
+  {
+    "id": "mount_23",
+    "name": "破军马",
+    "scene": 3,
+    "category": "universal",
+    "weights": { "defense": 3, "dodge": 2, "maxHealth": 2 },
+    "trait": "对气血高于 50% 的目标伤害+8%"
+  },
+  {
+    "id": "mount_24",
+    "name": "战地猛虎",
+    "scene": 4,
+    "category": "universal",
+    "weights": { "defense": 3, "dodge": 2, "maxHealth": 2 },
+    "trait": "受到技能伤害时，有 15% 概率使该次伤害降低 20%"
+  },
+  {
+    "id": "mount_25",
+    "name": "苍雷青龙",
+    "scene": 5,
+    "category": "universal",
+    "weights": { "defense": 3, "dodge": 2, "maxHealth": 2 },
+    "trait": "每 4 回合开始，自身获得 1 层\"龙威\"，使下一次攻击伤害+20%"
+  }
+]

@@ -55,6 +55,59 @@
       </div>
     </header>
 
+    <!-- 关卡推进 HUD（非阻塞内嵌条，玩法主循环设计.md §四/§六/§七：推进/小结算/大结算/战败，禁用弹窗战报） -->
+    <div v-if="run.phase === 'advancing'" class="xy-run xy-run--advance" aria-label="关卡推进">
+      <div class="xy-run-head">
+        <span class="xy-run-title">推进中 · 第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场</span>
+        <span class="xy-run-meta">妖气增幅 ×{{ currentNode?.amp ?? 1 }}</span>
+      </div>
+      <div class="xy-run-enemies">
+        <span v-for="e in currentNodeBriefs" :key="e.id" class="xy-run-enemy"
+          :class="{ 'xy-run-enemy--boss': e.isBoss }">{{ e.name }}<span class="xy-run-lv">Lv.{{ e.level }}</span></span>
+      </div>
+      <div class="xy-run-progress">
+        <span class="xy-run-progress-fill" :style="{ animationDuration: `${RUN_TIMING.ADVANCE_MS}ms` }"></span>
+      </div>
+    </div>
+
+    <div v-else-if="run.phase === 'settling'" class="xy-run xy-run--settle" aria-label="收拾战利品">
+      <div class="xy-run-head">
+        <span class="xy-run-title">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场胜利 · 收拾战利品</span>
+        <span class="xy-run-meta">气血回复中 · {{ regenLeftSec }}s</span>
+        <button type="button" class="xy-run-btn" @click="skipWait">加速</button>
+      </div>
+      <div class="xy-run-loot">
+        <span class="xy-run-gain">经验 +{{ lastSettle.exp }}</span>
+        <span class="xy-run-gain">金钱 +{{ lastSettle.gold }}</span>
+        <span v-for="(d, i) in lastSettle.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
+        }}</span>
+        <span v-if="!lastSettle.drops.length" class="xy-run-meta">本场无掉落</span>
+      </div>
+    </div>
+
+    <div v-else-if="run.phase === 'finished'" class="xy-run xy-run--finish" aria-label="整关大结算">
+      <div class="xy-run-head">
+        <span class="xy-run-title">{{ scene.name }} · 通关</span>
+        <span class="xy-run-stars">{{ starsText }}</span>
+        <span v-if="run.firstClear" class="xy-run-first">首杀</span>
+        <span class="xy-run-meta">{{ finishLeftSec }}s 后自动再战</span>
+        <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
+        <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
+      </div>
+      <div class="xy-run-loot">
+        <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
+        <span class="xy-run-gain">金钱 +{{ run.totals.gold }}</span>
+        <span v-for="(d, i) in run.totals.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
+        }}</span>
+      </div>
+    </div>
+
+    <div v-else-if="run.phase === 'failed'" class="xy-run xy-run--fail" aria-label="战败结算">
+      <span class="xy-run-title">战败 · 已获战利品保留</span>
+      <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
+      <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
+    </div>
+
     <!-- 中上部：4v4 角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard） -->
     <div class="xy-vitals">
       <div class="xy-vitals-row xy-vitals-row--enemy" role="list" aria-label="敌方阵容">
@@ -101,22 +154,28 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
 import { PLAYER_ID } from '@/shared/constants/player'
+import type { EnemyDrop } from '@/shared/types/enemy'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import {
   buildBattleTeams,
   dropsForEnemy,
-  dropsForScene,
+  dropsForEnemyIds,
+  enemyBriefById,
   equipBonuses,
-  rewardForScene,
+  rewardForEnemyIds,
+  type EnemyBrief,
 } from '../battle'
 import { itemName } from '../caveLogic'
 import { saveManager } from '../save-bridge'
+import { buildRunNodes, clearStars, RUN_TIMING, settleSeconds, type RunNode } from '../runFlow'
 import type { XiyouScene } from '../types'
-import { markSceneCleared } from '../xiyouData'
+import { markSceneCleared, scenes } from '../xiyouData'
 import QuickSlotBar from './QuickSlotBar.vue'
 
 const props = defineProps<{ scene: XiyouScene }>()
+
+const emit = defineEmits<{ 'open-map': [] }>()
 
 const store = useBattleStore()
 const battleService = container.resolve<BattleService>('BattleService')
@@ -246,7 +305,7 @@ function pctClass(chance: number): string {
 /** 是否接受胜利结算掉落：仅当前战斗自然胜利时置 true，防切场景重置旧战斗误触发 */
 let acceptingDrops = false
 
-async function initBattle(): Promise<void> {
+async function initBattle(node: RunNode): Promise<void> {
   acceptingDrops = false
   // NOTE: 已穿戴装备属性注入主角（背包实例化闭环：制造 → 装备 → 战斗生效）
   // 先确保 packStore 已 init（玩家可能未开行囊/洞府直接战斗：背包/装备/掉落都要就绪）
@@ -254,10 +313,10 @@ async function initBattle(): Promise<void> {
   await pack.init()
   const protagonist = usePlayerStore().battleSnapshot
   const allyBonuses = equipBonuses(pack.equippedStats(), protagonist)
-  const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses, protagonist)
+  const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses, protagonist, node)
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()
-  // NOTE: 切场景收尾旧战斗用 reset（静默清场）而非 endBattle——endBattle 会广播 BATTLE_ENDED，
+  // NOTE: 切场景/切节点收尾旧战斗用 reset（静默清场）而非 endBattle——endBattle 会广播 BATTLE_ENDED，
   //       被全局 battleStore 当成一场战斗结算并弹出战报（唤灵台 BattleField 常驻监听）。未打完的
   //       旧战斗不应触发战报，reset + clearParticipants 已覆盖停自动战斗/清 buff/清录制。
   battleService.reset()
@@ -267,10 +326,158 @@ async function initBattle(): Promise<void> {
   store.selectCharacter(ally[0]?.id ?? '')
   await store.startBattle()
   acceptingDrops = true
-  // NOTE: 进入斗战西游只建战斗不强制自动打，玩家点技能/自动按钮后才行动
+  // NOTE: 全自动循环（2026-09-06 裁定）：战斗开始即自动出手，无需玩家点技能/自动按钮
+  await battleService.startAutoBattle()
+  store.setAutoPlayMode(true)
+  store.setBattleActive(true)
 }
 
-/** 战斗结束：回写主角当前血/能量 → 结算经验/金钱/掉落入账（W16 经济闭环）→ 上报结算结果 */
+// ════════════ 关卡推进状态机（玩法主循环设计.md §二/§三.2/§六/§七） ════════════
+type RunPhase = 'advancing' | 'battle' | 'settling' | 'finished' | 'failed'
+
+const run = reactive({
+  phase: 'advancing' as RunPhase,
+  nodeIndex: 0,
+  total: 1,
+  totals: { exp: 0, gold: 0, drops: [] as EnemyDrop[] },
+  firstClear: false,
+  stars: 0,
+})
+
+/** 上一场（当前节点）小结算数据（HUD 内嵌展示） */
+const lastSettle = reactive({ exp: 0, gold: 0, drops: [] as EnemyDrop[] })
+
+/** 缓回剩余秒数 / 自动再战倒计时（HUD 展示） */
+const regenLeftSec = ref(0)
+const finishLeftSec = ref(0)
+
+let runNodes: RunNode[] = []
+let phaseTimer: ReturnType<typeof setTimeout> | null = null
+let regenTimer: ReturnType<typeof setInterval> | null = null
+let finishTicker: ReturnType<typeof setInterval> | null = null
+
+const currentNode = computed<RunNode | null>(() => runNodes[run.nodeIndex] ?? null)
+
+const currentNodeBriefs = computed<EnemyBrief[]>(() =>
+  (currentNode.value?.enemyIds ?? []).map((id) => enemyBriefById(id)),
+)
+
+const starsText = computed(() => {
+  const max = props.scene.maxStars ?? 3
+  return '★'.repeat(run.stars) + '☆'.repeat(Math.max(0, max - run.stars))
+})
+
+function clearRunTimers(): void {
+  if (phaseTimer) { clearTimeout(phaseTimer); phaseTimer = null }
+  if (regenTimer) { clearInterval(regenTimer); regenTimer = null }
+  if (finishTicker) { clearInterval(finishTicker); finishTicker = null }
+}
+
+/** 主角持久状态 → 战斗快照同步（缓回期间卡片血条流动） */
+function syncAllyVitals(): void {
+  const player = usePlayerStore()
+  for (const p of store.allyTeam) {
+    if (p.id === PLAYER_ID) {
+      p.currentHealth = Math.round(player.player.hp)
+      p.currentEnergy = Math.round(player.player.energy)
+    }
+  }
+}
+
+/** 开新局（进关/切关/再战）：节点序列重建，主角状态回满（局边界重置） */
+function startRun(): void {
+  clearRunTimers()
+  runNodes = buildRunNodes(props.scene, scenes)
+  run.nodeIndex = 0
+  run.total = runNodes.length
+  run.totals = { exp: 0, gold: 0, drops: [] }
+  run.firstClear = false
+  run.stars = 0
+  const player = usePlayerStore()
+  player.player.hp = player.player.maxHp
+  player.player.energy = player.player.maxEnergy
+  startNode(0)
+}
+
+/** 推进过渡（固定 3 秒，含敌情横幅演出）→ 自动开战 */
+function startNode(index: number): void {
+  run.nodeIndex = index
+  run.phase = 'advancing'
+  phaseTimer = setTimeout(() => {
+    phaseTimer = null
+    void runBattle(index)
+  }, RUN_TIMING.ADVANCE_MS)
+}
+
+async function runBattle(index: number): Promise<void> {
+  const node = runNodes[index]
+  if (!node) return
+  run.phase = 'battle'
+  await initBattle(node)
+}
+
+/** 结算期缓回（§六.2.1）：每秒 +10% 最大气血 / 能量 +5，窗口上限 10 秒，结束自动推进 */
+function settleThenAdvance(): void {
+  run.phase = 'settling'
+  const player = usePlayerStore()
+  const hpCap = player.battleSnapshot.maxHp
+  const needSec = settleSeconds(hpCap > 0 ? player.player.hp / hpCap : 1)
+  regenLeftSec.value = needSec
+  if (needSec <= 0) {
+    advance()
+    return
+  }
+  regenTimer = setInterval(() => {
+    const cap = player.battleSnapshot.maxHp
+    if (player.player.hp < cap) {
+      player.player.hp = Math.min(cap, player.player.hp + cap * RUN_TIMING.REGEN_HP_RATIO_PER_SEC)
+    }
+    player.player.energy = Math.min(player.player.maxEnergy, player.player.energy + RUN_TIMING.REGEN_ENERGY_PER_SEC)
+    syncAllyVitals()
+    regenLeftSec.value = Math.max(0, regenLeftSec.value - 1)
+    if (regenLeftSec.value <= 0) {
+      clearRunTimers()
+      advance()
+    }
+  }, 1000)
+}
+
+/** 缓回结束 → 推进下一场（关底场胜利不会走到这里，走 finishRun） */
+function advance(): void {
+  if (run.nodeIndex + 1 < run.total) startNode(run.nodeIndex + 1)
+}
+
+/** 等待态加速：跳过推进演出或剩余回血（§四.2/§六.2.1 不阻塞语义） */
+function skipWait(): void {
+  if (run.phase === 'advancing') {
+    clearRunTimers()
+    void runBattle(run.nodeIndex)
+  } else if (run.phase === 'settling') {
+    clearRunTimers()
+    const player = usePlayerStore()
+    player.player.hp = player.battleSnapshot.maxHp
+    player.player.energy = player.player.maxEnergy
+    syncAllyVitals()
+    advance()
+  }
+}
+
+/** 关底胜利 → 大结算：星级评定 + 首杀标记 + 解锁链，展示 5 秒后自动再战（全自动循环） */
+function finishRun(bossTurns: number, aliveCount: number): void {
+  run.stars = clearStars(aliveCount, Math.max(1, store.allyTeam.length), bossTurns)
+  run.firstClear = markSceneCleared(props.scene.id, run.stars)
+  run.phase = 'finished'
+  finishLeftSec.value = RUN_TIMING.FINISH_SHOW_MS / 1000
+  finishTicker = setInterval(() => {
+    finishLeftSec.value = Math.max(0, finishLeftSec.value - 1)
+    if (finishLeftSec.value <= 0) {
+      clearRunTimers()
+      startRun()
+    }
+  }, 1000)
+}
+
+/** 战斗结束：回写主角当前血/能量 → 逐场结算入账（W16 经济闭环）→ 状态机推进 */
 function onBattleEnded(data: BattleEndedEventData): void {
   const victory = data.winner === ParticipantSide.ALLY
   const player = usePlayerStore()
@@ -285,34 +492,53 @@ function onBattleEnded(data: BattleEndedEventData): void {
 
   if (victory && acceptingDrops) {
     acceptingDrops = false
-    // 通关解锁链：胜利解锁本关与依赖它的后续关卡（V08）
-    markSceneCleared(props.scene.id)
-    // 奖励：场景敌人 gold/exp 区间随机加总（configs/enemies/enemies.json 权威）
-    const reward = rewardForScene(props.scene)
+    // 逐场结算：本节点敌方 gold/exp/drops（configs/enemies/enemies.json 权威；关卡必掉材料随关底场）
+    const node = runNodes[run.nodeIndex]
+    const reward = rewardForEnemyIds(node?.enemyIds ?? [])
     const roll = (range: [number, number] | undefined): number =>
       range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
     const exp = roll(reward.exp)
     const gold = roll(reward.gold)
     if (exp > 0) player.gainExp(exp)
     if (gold > 0) player.gainCurrency('copper', gold)
-    // 掉落：入包（applyDrops 内部逐条 roll + toast）
-    pack.applyDrops(dropsForScene(props.scene))
+    // 掉落：入包（applyDrops 内部逐条 roll + toast），返回命中列表供小结算展示
+    const hits = pack.applyDrops(
+      dropsForEnemyIds(node?.enemyIds ?? [], node?.isBoss ? props.scene.drops?.materials : undefined),
+    )
+    run.totals.exp += exp
+    run.totals.gold += gold
+    run.totals.drops.push(...hits)
+    lastSettle.exp = exp
+    lastSettle.gold = gold
+    lastSettle.drops = hits
+
+    if (node?.isBoss) {
+      const alive = store.allyTeam.filter((p) => p.currentHealth > 0).length
+      finishRun(store.currentTurn, alive)
+    } else {
+      settleThenAdvance()
+    }
+  } else if (!victory) {
+    // 战败：停止自动循环（防无限送死）；已入包资源保留，等待玩家再战或换关
+    clearRunTimers()
+    run.phase = 'failed'
   }
 
   // NOTE: 胜负结算完成后自动存档（PRD §5.3 关键节点触发；含失败局，保证最近进度可恢复）
   void saveManager.autoSave()
 }
 
-watch(() => props.scene.id, () => { void initBattle() })
+watch(() => props.scene.id, () => { startRun() })
 
 onMounted(() => {
   battleService.on(BattleEventCodes.BATTLE_ENDED, onBattleEnded)
-  void initBattle()
+  startRun()
 })
 
 onUnmounted(() => {
   // NOTE: 必须按 callback 注销——off(event) 不带 callback 会清空该事件全部监听（含 battleStore 的）
   battleService.off(BattleEventCodes.BATTLE_ENDED, onBattleEnded)
+  clearRunTimers()
   stopAllAnimations()
   participantCardRefs.value = {}
 })
@@ -499,6 +725,141 @@ onUnmounted(() => {
   flex-direction: column;
   gap: var(--space-2);
   margin-bottom: var(--space-4);
+}
+
+/* ═══ 关卡推进 HUD（非阻塞内嵌条：推进/小结算/大结算/战败，玩法主循环设计.md §四/§六/§七） ═══ */
+.xy-run {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-sm);
+  background: var(--xy-paper-warm);
+}
+
+.xy-run--finish {
+  border-color: var(--xy-gold);
+}
+
+.xy-run--fail {
+  border-color: var(--xy-seal);
+}
+
+.xy-run-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.xy-run-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--xy-ink-1);
+  letter-spacing: 1px;
+}
+
+.xy-run-meta {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-run-enemies {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.xy-run-enemy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding: 1px var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-full);
+  background: var(--xy-paper);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+  white-space: nowrap;
+}
+
+.xy-run-enemy--boss {
+  border-color: var(--xy-gold);
+  color: var(--xy-gold);
+}
+
+.xy-run-lv {
+  color: var(--xy-seal);
+}
+
+.xy-run-progress {
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--xy-ink-line);
+  overflow: hidden;
+}
+
+.xy-run-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--xy-jade);
+  animation: xy-run-advance linear forwards;
+}
+
+@keyframes xy-run-advance {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+.xy-run-loot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.xy-run-gain {
+  font-size: var(--font-size-md);
+  color: var(--xy-jade);
+  font-variant-numeric: tabular-nums;
+}
+
+.xy-run-stars {
+  font-size: var(--font-size-md);
+  color: var(--xy-gold);
+  letter-spacing: 2px;
+}
+
+.xy-run-first {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--xy-gold);
+  border-radius: 3px;
+  background: var(--xy-gold-soft);
+  font-size: var(--font-size-md);
+  color: var(--xy-gold);
+}
+
+.xy-run-btn {
+  padding: 2px var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-sm);
+  background: var(--xy-paper);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-2);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--xy-gold);
+    color: var(--xy-gold);
+  }
 }
 
 .xy-vitals-row {

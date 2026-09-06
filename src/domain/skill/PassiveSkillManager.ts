@@ -48,6 +48,12 @@ export interface PassiveSkillConfig {
   lastTriggeredTurn?: number
   triggerCount?: number
   maxTriggerCount?: number
+  /** 每回合最多触发次数（回合以 battle.currentTurn 计，回合切换自动重置计数） */
+  maxTriggersPerRound?: number
+  /** 运行时状态：上次触发所在回合（配合 maxTriggersPerRound） */
+  lastRoundNumber?: number
+  /** 运行时状态：本回合已触发次数（配合 maxTriggersPerRound） */
+  roundTriggerCount?: number
   // 触发概率
   triggerProbability?: number
   hpThreshold?: number
@@ -196,6 +202,28 @@ export class PassiveSkillManager {
       })
       return false
     }
+    // 检查每回合触发次数是否超过（回合切换时重置计数）
+    if (config.maxTriggersPerRound) {
+      if (config.lastRoundNumber !== context.currentTurn) {
+        config.lastRoundNumber = context.currentTurn
+        config.roundTriggerCount = 0
+      }
+      if ((config.roundTriggerCount ?? 0) >= config.maxTriggersPerRound) {
+        this.emitPassiveSkipped(
+          config,
+          entity,
+          context,
+          PassiveSkipReason.MAX_TRIGGERS_PER_ROUND,
+          {
+            maxTriggersPerRound: {
+              limit: config.maxTriggersPerRound,
+              used: config.roundTriggerCount ?? 0,
+            },
+          },
+        )
+        return false
+      }
+    }
     // 检查触发概率是否命中
     if (config.triggerProbability && nextRandom(this.rng) > config.triggerProbability) {
       this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.PROBABILITY, {
@@ -240,6 +268,9 @@ export class PassiveSkillManager {
         : undefined,
       maxTriggers: config.maxTriggerCount
         ? { limit: config.maxTriggerCount, used: config.triggerCount ?? 0 }
+        : undefined,
+      maxTriggersPerRound: config.maxTriggersPerRound
+        ? { limit: config.maxTriggersPerRound, used: config.roundTriggerCount ?? 0 }
         : undefined,
       condition: config.condition
         ? { expr: config.condition, passed: true }
@@ -368,6 +399,13 @@ export class PassiveSkillManager {
       if (hasExecuted) {
         config.lastTriggeredTurn = context.currentTurn
         config.triggerCount = (config.triggerCount || 0) + 1
+        if (config.maxTriggersPerRound) {
+          if (config.lastRoundNumber !== context.currentTurn) {
+            config.lastRoundNumber = context.currentTurn
+            config.roundTriggerCount = 0
+          }
+          config.roundTriggerCount = (config.roundTriggerCount ?? 0) + 1
+        }
       }
 
       // 记录触发信息（供 ActionContext 使用）
@@ -617,17 +655,29 @@ export class PassiveSkillManager {
     params?: Record<string, number | string | boolean>,
   ): boolean {
     try {
+      // 组合条件：以 "&&" 分割的子条件全部满足才通过（参数共享 conditionParams）
+      if (condition.includes('&&')) {
+        return condition
+          .split('&&')
+          .map((c) => c.trim())
+          .every((c) =>
+            this.evaluateCondition(c, source, target, context, params),
+          )
+      }
       switch (condition) {
         case 'target_has_buff':
           return target ? target.getBuffInstanceIds().length > 0 : false
         case 'source_has_buff':
           return source.getBuffInstanceIds().length > 0
-        case 'target_low_hp':
+        case 'target_low_hp': {
+          // 目标气血低于阈值：params.pct（百分比，默认 30）——攻击者视角的斩杀线条件
+          const pct = (params?.pct as number) ?? 30
           return target
             ? target.getAttribute('currentHealth') /
                 Math.max(1, target.getAttribute('maxHealth')) <
-                BATTLE_CONSTANTS.HEAL_THRESHOLD
+                pct / 100
             : false
+        }
         // 守护者被动技能专用条件
         case 'target_has_poison':
           return target
@@ -683,6 +733,63 @@ export class PassiveSkillManager {
             (context?.currentTurn ?? 0) > 0
           )
         }
+        case 'combo_segment_min': {
+          // 连击段条件：params.min=2 表示"任意连击段（非普攻首段）"，min=3 表示"第 3 段及以后"
+          // 非连击触发（comboSegment 缺省/为 1）时不满足
+          const minSegment = params?.min as number | undefined
+          if (minSegment == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.min`
+            )
+          }
+          const segment = context?.comboSegment
+          return segment !== undefined && segment >= minSegment
+        }
+        case 'source_buff_stack_min': {
+          // 持有者指定 buff 层数下限：params.buffId + params.min
+          const buffId = params?.buffId as string | undefined
+          const min = params?.min as number | undefined
+          if (!buffId || min == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.buffId 与 params.min`
+            )
+          }
+          return this.buffSystem.getBuffStackCount(source.id, buffId) >= min
+        }
+        case 'target_buff_stack_min': {
+          // 上下文目标指定 buff 层数下限：params.buffId + params.min
+          const buffId = params?.buffId as string | undefined
+          const min = params?.min as number | undefined
+          if (!buffId || min == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.buffId 与 params.min`
+            )
+          }
+          return target
+            ? this.buffSystem.getBuffStackCount(target.id, buffId) >= min
+            : false
+        }
+        case 'source_has_buff_id':
+          return source.hasBuff(params?.buffId as string)
+        case 'target_has_buff_id':
+          return target ? target.hasBuff(params?.buffId as string) : false
+        case 'last_attack_crit':
+          // 本次攻击是否暴击（AFTER_ATTACK / CRIT / SHIELD_BREAK 等携带 isCritical 的时机）
+          return context?.isCritical === true
+        case 'last_attack_not_crit':
+          return context?.isCritical === false
+        case 'source_low_hp': {
+          // 持有者气血低于 params.pct%（默认 50）
+          const pct = (params?.pct as number) ?? 50
+          return (
+            source.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+              Math.max(1, source.getAttribute(ATTRIBUTE_CODE.maxHealth)) <
+            pct / 100
+          )
+        }
+        case 'source_shield_empty':
+          // 持有者当前无护盾（磐石壁垒"每回合开始无盾则上盾"）
+          return this.buffSystem.getShieldValue(source.id) <= 0
 
         // 废弃的旧条件名——直接报错
         case 'source_has_debuff_count_3':

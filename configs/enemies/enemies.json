@@ -5023,6 +5023,14 @@
       {
         "itemId": "recipe_armor_t1",
         "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
       }
     ],
     "gold": [
@@ -5102,6 +5110,14 @@
       {
         "itemId": "mat_sp_06",
         "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
       }
     ],
     "gold": [
@@ -5177,6 +5193,18 @@
       {
         "itemId": "recipe_armor_t3",
         "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
+      },
+      {
+        "itemId": "pet_break_pill_1",
+        "probability": 0.3
       }
     ],
     "gold": [
@@ -5253,6 +5281,14 @@
       {
         "itemId": "recipe_armor_t4",
         "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
       }
     ],
     "gold": [
@@ -5332,6 +5368,14 @@
       {
         "itemId": "mat_sp_05",
         "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
       }
     ],
     "gold": [
@@ -6296,6 +6340,10 @@
       {
         "itemId": "mat_jiuzhuan_jindan",
         "probability": 0.1
+      },
+      {
+        "itemId": "pet_break_pill_2",
+        "probability": 0.15
       }
     ],
     "gold": [
@@ -6458,6 +6506,10 @@
       {
         "itemId": "mat_jiuzhuan_jindan",
         "probability": 0.1
+      },
+      {
+        "itemId": "pet_break_pill_2",
+        "probability": 0.15
       }
     ],
     "gold": [

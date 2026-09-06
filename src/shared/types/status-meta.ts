@@ -77,6 +77,8 @@ export const STATUS_CODE = {
   BUFF: 'buff',
   DEBUFF: 'debuff',
   HEAL_REDUCTION: 'heal_reduction',
+  /** 致盲（命中率下降，非硬控；表现为携带者命中率 -30%） */
+  BLIND: 'blind',
   // ── 动作类 ──
   DEAL_DAMAGE: 'deal_damage',
   KNOCKBACK: 'knockback',
@@ -621,6 +623,22 @@ export const STATUS_META: Record<StatusCode, StatusMeta> = {
     dispellable: true,
     stackable: false,
     defaultDuration: 2,
+  },
+
+  [STATUS_CODE.BLIND]: {
+    code: STATUS_CODE.BLIND,
+    category: StatusCategory.MODIFIER,
+    name: '致盲',
+    playerDescription: '命中率大幅下降，攻击容易落空。',
+    mechanicDescription:
+      '持续期间，目标发起攻击的命中率 -30%（通过 hit 属性修正实现，非硬控）。' +
+      '闪避方仍按常规闪避判定；不阻止行动或技能释放。' +
+      '典型来源：幻影系闪避反击的概率致盲。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 1,
   },
 
   // ═══════════════════════════════════════════

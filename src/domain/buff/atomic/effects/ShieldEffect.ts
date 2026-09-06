@@ -1,5 +1,6 @@
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { round } from '@/shared/utils/math'
 
 /**
@@ -23,12 +24,21 @@ export class ShieldEffect implements IAtomicEffect {
     const buffSystem = ctx.getBuffSystem()
     if (!buffSystem) return
 
+    // 「无法获得护盾」禁用检查：碎甲类 debuff 存在时跳过上盾
+    if (!buffSystem.canGainShield(ctx.characterId)) return
+
     let shieldAmount: number
     if (valueType === 'percent_max_hp') {
       const maxHp = ctx.getAttrVal('maxHealth')
       shieldAmount = round(maxHp * value / 100)
     } else {
       shieldAmount = value
+    }
+
+    // 护盾加成（shieldBonus，持有者属性百分比）：上盾量放大
+    const shieldBonus = ctx.getAttrVal(ATTRIBUTE_CODE.shieldBonus)
+    if (!Number.isNaN(shieldBonus) && shieldBonus > 0) {
+      shieldAmount = round(shieldAmount * (1 + shieldBonus / 100))
     }
 
     // 存储实际护盾值，供 onRemove 精确回收

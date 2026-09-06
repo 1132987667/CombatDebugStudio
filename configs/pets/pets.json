@@ -1,0 +1,202 @@
+[
+  {
+    "id": "pet_01",
+    "name": "紫电骅",
+    "scene": 1,
+    "category": "combo",
+    "weights": { "speed": 1, "attack": 4, "hit": 2 },
+    "trait": "连击时，每段连击有 30% 概率使目标防御 -3%，持续 1 回合（可叠 2 层）"
+  },
+  {
+    "id": "pet_02",
+    "name": "赤羽凤",
+    "scene": 2,
+    "category": "combo",
+    "weights": { "speed": 1, "attack": 4, "hit": 2 },
+    "trait": "每次触发连击，自身攻击 +5%，持续 1 回合（可叠 2 层）"
+  },
+  {
+    "id": "pet_03",
+    "name": "金铃鹿",
+    "scene": 3,
+    "category": "combo",
+    "weights": { "speed": 4, "attack": 2, "hit": 1 },
+    "trait": "战斗开始时速度 +5，且首次连击率 +10%"
+  },
+  {
+    "id": "pet_04",
+    "name": "风鸣鸟",
+    "scene": 4,
+    "category": "combo",
+    "weights": { "speed": 4, "attack": 2, "hit": 1 },
+    "trait": "连击时额外造成攻击力 20% 的固定伤害"
+  },
+  {
+    "id": "pet_05",
+    "name": "竹里猱",
+    "scene": 5,
+    "category": "combo",
+    "weights": { "speed": 4, "attack": 2, "hit": 1 },
+    "trait": "连击段数达到 3 段时，下次普攻伤害 +30%"
+  },
+  {
+    "id": "pet_06",
+    "name": "金风白鹤",
+    "scene": 1,
+    "category": "crit",
+    "weights": { "speed": 1, "attack": 5, "hit": 1 },
+    "trait": "暴击时，暴击伤害额外 +20%"
+  },
+  {
+    "id": "pet_07",
+    "name": "焚天猊",
+    "scene": 2,
+    "category": "crit",
+    "weights": { "speed": 1, "attack": 5, "hit": 1 },
+    "trait": "每次暴击后，自身暴击率 +5%，持续 2 回合（可叠 2 层）"
+  },
+  {
+    "id": "pet_08",
+    "name": "碧落瑶鸾",
+    "scene": 3,
+    "category": "crit",
+    "weights": { "speed": 1, "attack": 4, "hit": 2 },
+    "trait": "对气血低于 50% 的目标，暴击率 +10%"
+  },
+  {
+    "id": "pet_09",
+    "name": "月照犀",
+    "scene": 4,
+    "category": "crit",
+    "weights": { "speed": 1, "attack": 4, "hit": 2 },
+    "trait": "暴击伤害的 5% 转化为自身气血回复"
+  },
+  {
+    "id": "pet_10",
+    "name": "洪荒火蚁",
+    "scene": 5,
+    "category": "crit",
+    "weights": { "speed": 1, "attack": 4, "hit": 2 },
+    "trait": "首次暴击后，获得 1 层\"狂怒\"，使下一次暴击伤害额外 +15%"
+  },
+  {
+    "id": "pet_11",
+    "name": "玄霜月鹿",
+    "scene": 1,
+    "category": "shield_reflect",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "受到攻击时，有 20% 概率获得最大气血 5% 的护盾，持续 1 回合"
+  },
+  {
+    "id": "pet_12",
+    "name": "寒潭玉鲤",
+    "scene": 2,
+    "category": "shield_reflect",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "获得护盾时，护盾值额外 +20%"
+  },
+  {
+    "id": "pet_13",
+    "name": "日游神",
+    "scene": 3,
+    "category": "shield_reflect",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "护盾存在期间，受到伤害的 15% 反弹给攻击者"
+  },
+  {
+    "id": "pet_14",
+    "name": "墨雨鲛",
+    "scene": 4,
+    "category": "shield_reflect",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "每回合开始时，若自身没有护盾，则获得最大气血 6% 的护盾"
+  },
+  {
+    "id": "pet_15",
+    "name": "荷露蛇",
+    "scene": 5,
+    "category": "shield_reflect",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "受到近战攻击时，对攻击者造成攻击力 20% 的固定反伤"
+  },
+  {
+    "id": "pet_16",
+    "name": "天岚隼",
+    "scene": 1,
+    "category": "dodge",
+    "weights": { "speed": 4, "attack": 2, "hit": 1 },
+    "trait": "成功闪避后，下一次攻击必定命中，且伤害 +10%"
+  },
+  {
+    "id": "pet_17",
+    "name": "桃夭鲤",
+    "scene": 2,
+    "category": "dodge",
+    "weights": { "speed": 4, "attack": 2, "hit": 1 },
+    "trait": "成功闪避后，自身速度 +5，持续 1 回合（可叠 2 层）"
+  },
+  {
+    "id": "pet_18",
+    "name": "瀛洲蟾",
+    "scene": 3,
+    "category": "dodge",
+    "weights": { "speed": 4, "attack": 2, "hit": 1 },
+    "trait": "闪避时，对攻击者造成攻击力 30% 的伤害（每回合最多 1 次）"
+  },
+  {
+    "id": "pet_19",
+    "name": "广寒兔",
+    "scene": 4,
+    "category": "dodge",
+    "weights": { "speed": 4, "attack": 2, "hit": 1 },
+    "trait": "闪避率低于 20% 时，额外获得 8% 闪避率"
+  },
+  {
+    "id": "pet_20",
+    "name": "露冷蟾",
+    "scene": 5,
+    "category": "dodge",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "成功闪避后，回复自身最大气血 3%"
+  },
+  {
+    "id": "pet_21",
+    "name": "苍梧青雀",
+    "scene": 1,
+    "category": "universal",
+    "weights": { "speed": 1, "attack": 4, "hit": 2 },
+    "trait": "战斗开始时，攻击 +5%，持续 3 回合"
+  },
+  {
+    "id": "pet_22",
+    "name": "赤霄猊",
+    "scene": 2,
+    "category": "universal",
+    "weights": { "speed": 1, "attack": 4, "hit": 2 },
+    "trait": "对气血高于 70% 的目标，伤害 +8%"
+  },
+  {
+    "id": "pet_23",
+    "name": "太古冰蝉",
+    "scene": 3,
+    "category": "universal",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "回合开始时，若命中率低于 90%，则命中率 +10%，持续 1 回合"
+  },
+  {
+    "id": "pet_24",
+    "name": "青冥鹤",
+    "scene": 4,
+    "category": "universal",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "受到技能伤害时，有 15% 概率降低该伤害 20%"
+  },
+  {
+    "id": "pet_25",
+    "name": "松间麋",
+    "scene": 5,
+    "category": "universal",
+    "weights": { "speed": 1, "attack": 2, "hit": 4 },
+    "trait": "每 4 回合，自身速度 +10，持续 1 回合"
+  }
+]

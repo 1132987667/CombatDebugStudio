@@ -129,6 +129,8 @@ export const BATTLE_CONSTANTS = {
   THREAT_BUFF_WEIGHT: 10,
   /** 技能选择威胁阈值 */
   SKILL_SELECTION_THREAT_THRESHOLD: 50,
+  /** 连击总段数上限（1 段普攻 + 最多 5 段连击；风势涌第 5 段强化、段数+1 类效果需要） */
+  MAX_COMBO_SEGMENTS: 6,
 } as const
 
 /** 自动战斗速度到延迟(ms)的映射 */
@@ -729,6 +731,8 @@ export const BattleTriggerPhase = {
   AFTER_ATTACK: 'after_attack',
   /** 行动完成时（每次行动后，仅行动者本人；与 TURN_END 回合末全量区分） */
   ACTION_END: 'action_end',
+  /** 行动开始时（仅行动者本人；被控制/跳过不触发；在行动内容决策后、执行前发射） */
+  ACTION_START: 'action_start',
   DAMAGE_TAKEN: 'damage_taken',
   ON_KILL: 'on_kill',
   ON_DEATH: 'on_death',
@@ -748,6 +752,10 @@ export const BattleTriggerPhase = {
   DODGE: 'dodge',
   /** 复活时 */
   ON_REVIVE: 'on_revive',
+  /** 暴击时（来源侧，与 ON_HIT 同点触发） */
+  CRIT: 'on_crit',
+  /** 护盾破碎时（持有者侧，盾值被打空即触发，含完全吸收场景） */
+  SHIELD_BREAK: 'shield_break',
 } as const
 
 export type BattleTriggerPhase =
@@ -805,6 +813,7 @@ export const BattleTriggerPhaseName: Record<BattleTriggerPhase, string> = {
   [BattleTriggerPhase.ON_HIT]: '命中时',
   [BattleTriggerPhase.AFTER_ATTACK]: '攻击后',
   [BattleTriggerPhase.ACTION_END]: '行动完成',
+  [BattleTriggerPhase.ACTION_START]: '行动开始',
   [BattleTriggerPhase.DAMAGE_TAKEN]: '受击时',
   [BattleTriggerPhase.ON_KILL]: '击杀时',
   [BattleTriggerPhase.ON_DEATH]: '死亡时',
@@ -818,6 +827,8 @@ export const BattleTriggerPhaseName: Record<BattleTriggerPhase, string> = {
   [BattleTriggerPhase.CONDITION_CHANGED]: '条件变化',
   [BattleTriggerPhase.DODGE]: '闪避时',
   [BattleTriggerPhase.ON_REVIVE]: '复活时',
+  [BattleTriggerPhase.CRIT]: '暴击时',
+  [BattleTriggerPhase.SHIELD_BREAK]: '护盾破碎',
 }
 
 /** 事件类型枚举 */
@@ -866,6 +877,8 @@ export interface PassiveTriggerContext {
   readonly isCritical?: boolean
   readonly cause?: string
   readonly parentTraceId?: string
+  /** 连击段序号（普攻首段为 1；由连击引擎传入，"连击第 N 段及以后"类条件依赖此字段） */
+  readonly comboSegment?: number
   /** 因果链作用域（文档 §4.5）— P1 起由 createPassiveContext 的 overrides 传入 */
   readonly trace?: TraceScope
 }

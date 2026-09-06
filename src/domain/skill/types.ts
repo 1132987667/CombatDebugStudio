@@ -322,6 +322,8 @@ export const StepEffectType = {
   CUSTOM: 'custom',
   STUN: 'stun',
   SILENCE: 'silence',
+  /** 按 buffId 移除目标身上指定 buff（count 指定层数，缺省移除全部实例） */
+  REMOVE_BUFF: 'remove_buff',
 } as const
 export type StepEffectType = (typeof StepEffectType)[keyof typeof StepEffectType]
 
@@ -472,12 +474,16 @@ export interface SkillConfig {
   selector: SkillTargetConfig // 目标选择配置
   steps: SkillStep[] // 技能步骤列表
   condition?: string // 施放条件
+  /** 条件参数（参数化条件如 source_has_debuff_count/combo_segment_min 的阈值；兼容 parameters.conditionParams） */
+  conditionParams?: Record<string, number | string | boolean>
   skillType?: SkillType // 技能类型
   /** 是否为普通攻击（显式契约，替代名称/结构启发式猜测） */
   isNormalAttack?: boolean // 普通攻击标志
   triggerTimes?: string[] // 触发时机（被动技能专用）
   /** 触发概率（被动技能专用；兼容 parameters.triggerProbability 旧写法，两处皆可） */
   triggerProbability?: number
+  /** 每回合最多触发次数（被动技能专用；兼容 parameters.maxTriggersPerRound 旧写法，两处皆可） */
+  maxTriggersPerRound?: number
   passiveCategory?: AtomicEffectType[] // 被动技能分类（数组，支持多分类）
   level?: number // 技能等级
   levelValue?: number // 技能等级成长值
@@ -626,6 +632,16 @@ export interface CustomStepParams {
   burnDamagePercent?: number
   /** rotating_apply_buff 轮转施加的 buff 列表 */
   buffIds?: string[]
+  /** fengshi_detonate：每层风势追加伤害系数（×攻击力，默认 0.10） */
+  damagePercentPerStack?: number
+  /** fengshi_detonate：每 N 层风势转化 1 层裂甲（默认 2，0 表示不转化） */
+  stacksPerDebuff?: number
+  /** fengshi_detonate / liejia_detonate：引爆后施加的 buff id */
+  applyBuffId?: string
+  /** liejia_detonate：每层裂甲追加真实伤害系数（×攻击力，默认 0） */
+  trueDamagePerStack?: number
+  /** liejia_detonate：真实伤害段数上限（默认 8） */
+  maxSegments?: number
 }
 
 /** 步骤参数：按步骤类型判别，业务参数全部显式类型化 */

@@ -379,6 +379,9 @@ export class GameDataProcessor {
       skill_use: BattleTriggerPhase.SKILL_USE,
       hp_lower_than: BattleTriggerPhase.HP_LOWER_THAN,
       dodge: BattleTriggerPhase.DODGE,
+      on_crit: BattleTriggerPhase.CRIT,
+      shield_break: BattleTriggerPhase.SHIELD_BREAK,
+      action_start: BattleTriggerPhase.ACTION_START,
     }
 
   /**
@@ -424,6 +427,14 @@ export class GameDataProcessor {
               | number
               | undefined) ?? skill.triggerProbability,
           hpThreshold: skill.parameters?.hpThreshold as number | undefined,
+          maxTriggersPerRound:
+            (skill.parameters?.maxTriggersPerRound as
+              | number
+              | undefined) ?? skill.maxTriggersPerRound,
+          conditionParams:
+            (skill.parameters?.conditionParams as
+              | Record<string, number | string | boolean>
+              | undefined) ?? skill.conditionParams,
         }
 
         passiveSkillManager.registerPassive(entity.id, config)

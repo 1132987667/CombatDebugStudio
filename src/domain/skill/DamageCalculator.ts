@@ -121,12 +121,13 @@ export class DamageCalculator {
       rawDamage: 0,
     }
 
-    //  检测必暴标记：必暴意味着必中+必暴
+    //  检测必暴/必中标记：必暴意味着必中+必暴；必中仅跳过闪避判定
     const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff(KNOWN_BUFF_IDS.GUARANTEED_CRIT)
+    const hasGuaranteedHit = typeof source.hasBuff === 'function' && source.hasBuff(KNOWN_BUFF_IDS.GUARANTEED_HIT)
 
     // 命中/闪避判定 — 默认命中率由攻防命中值/闪避值对抗，命中率/闪避率作为修正项
     // 闪避门控：仅当 enableDodge 为 true 时执行闪避判定
-    if (!hasGuaranteedCrit && this.config.enableDodge) {
+    if (!hasGuaranteedCrit && !hasGuaranteedHit && this.config.enableDodge) {
       const hitValue = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hitValue)
       const dodgeValue = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodgeValue)
       // 计算命中率 = 命中值 / (命中值 + 闪避值) × 100%；分母为 0 时按 0 处理（无对抗基础）
@@ -359,13 +360,21 @@ export class DamageCalculator {
     // 防御计算（减法公式）— 真实伤害跳过
     if (damageCategory !== DamageCategory.TRUE) {
       breakdown.defenseValue = target.getAttribute(ATTRIBUTE_CODE.defense)
-      breakdown.effectiveDefense = breakdown.defenseValue
+      // 无视防御（armorBreak，攻击者侧百分比）：目标防御按比例缩放（"无视 20% 防御"= 防御视为 80%）
+      const armorBreak = source.getAttribute(ATTRIBUTE_CODE.armorBreak)
+      const armorBreakRatio =
+        Number.isNaN(armorBreak) || armorBreak <= 0
+          ? 0
+          : Math.min(armorBreak, 100) / 100
+      breakdown.effectiveDefense = Math.round(
+        breakdown.defenseValue * (1 - armorBreakRatio),
+      )
       breakdown.defenseMultiplier = Math.max(
         0,
-        1 - breakdown.defenseValue / Math.max(1, damage),
+        1 - breakdown.effectiveDefense / Math.max(1, damage),
       )
       const beforeDef = damage
-      damage = Math.max(0, damage - breakdown.defenseValue)
+      damage = Math.max(0, damage - breakdown.effectiveDefense)
       damage = floor(damage)
       if (damage !== beforeDef) {
         breakdown.steps.push({
@@ -374,7 +383,10 @@ export class DamageCalculator {
           before: beforeDef,
           after: damage,
           sourceType: 'system',
-          description: `防御减免(-${breakdown.defenseValue}): ${beforeDef} → ${damage}`,
+          description:
+            armorBreakRatio > 0
+              ? `防御减免(无视${Math.round(armorBreakRatio * 100)}%，防御 ${breakdown.defenseValue}→${breakdown.effectiveDefense}): ${beforeDef} → ${damage}`
+              : `防御减免(-${breakdown.effectiveDefense}): ${beforeDef} → ${damage}`,
         })
       }
     }

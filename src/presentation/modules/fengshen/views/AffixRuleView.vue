@@ -164,6 +164,160 @@
       </div>
     </section>
 
+    <!-- ═══ Tab0b: 宠物与坐骑总览（8.16 口径：个体驱动 + 品质门槛） ═══ -->
+    <section v-else-if="activeTab === 'pet_mount_overview'" class="fs-exp-panel" role="tabpanel">
+      <div class="fs-ov-params">
+        <div class="fs-ov-params-head">
+          <span class="fs-block-title">推算参数</span>
+          <span class="fs-form-hint">按当前投放规则反推一只宠物/一匹坐骑可产出的全部属性区间。数值为规则推算，非引擎结算；个体权重与特性读取自 configs 个体表。悬停数值可查看推导过程。</span>
+        </div>
+        <div class="fs-ov-filters">
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">系统</span>
+            <TacticalSelect :model-value="pmSystem" size="md" :options="pmSystemOptions"
+              @update:model-value="(v: string | number | null) => { if (v) onPmSystemChange(v as 'pet' | 'mount') }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">个体</span>
+            <TacticalSelect :model-value="pmIndividual?.id ?? ''" size="md" :options="pmIndividualOptions"
+              @update:model-value="(v: string | number | null) => { pmIndividualId = String(v ?? '') }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">等级</span>
+            <NumericStepper compact :step="1" :min="1" :max="pmMaxLevel" :model-value="pmLevel"
+              @update:model-value="(v: number) => { pmLevel = v }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">品阶</span>
+            <TacticalSelect :model-value="pmTier" size="md" :options="ovTierOptions"
+              @update:model-value="(v: string | number | null) => { if (v) pmTier = v as string }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">品质</span>
+            <TacticalSelect :model-value="pmQuality" size="md" :options="pmQualityOptions"
+              @update:model-value="(v: string | number | null) => { if (v) pmQuality = v as number }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">资质</span>
+            <NumericStepper compact :step="10" :min="pmAptitudeMin" :max="pmAptitudeMax" :model-value="pmAptitude"
+              @update:model-value="(v: number) => { pmAptitude = v }" />
+          </div>
+          <div class="fs-ov-field">
+            <span class="fs-ov-field-label">突破</span>
+            <NumericStepper compact :step="1" :min="0" :max="pmBreakthroughMax" :model-value="pmBreakthrough"
+              @update:model-value="(v: number) => { pmBreakthrough = v }" />
+          </div>
+        </div>
+
+        <!-- 个体一览：当前系统全部个体（就是「宠物与坐骑列表」），点击行选中 -->
+        <table class="fs-table fs-ov-table">
+          <thead><tr><th>个体</th><th>分类</th><th>主要属性权重</th><th>特性</th></tr></thead>
+          <tbody>
+            <tr v-for="i in pmIndividuals" :key="i.id" class="fs-ov-clickable"
+              :class="{ 'is-active': pmIndividual?.id === i.id }" tabindex="0" role="button"
+              :aria-label="`选择个体 ${i.name}`" :aria-pressed="pmIndividual?.id === i.id"
+              @click="pmIndividualId = i.id" @keydown.enter.prevent="pmIndividualId = i.id" @keydown.space.prevent="pmIndividualId = i.id">
+              <td class="fs-td-strong">{{ i.name }}</td>
+              <td>{{ pmCategoryLabel(i.category) }}</td>
+              <td>{{ pmWeightText(i) }}</td>
+              <td class="fs-cell-dim">{{ i.trait }}</td>
+            </tr>
+            <tr v-if="!pmIndividuals.length"><td colspan="4" class="fs-cell-dim">configs 个体表为空</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="pmOverview" class="fs-ov-grid">
+        <!-- 左卡：主语行 + 三区 -->
+        <div class="fs-ov-card fs-ov-main">
+          <div class="fs-ov-subject">
+            <span class="fs-affix-tag-sm" :class="pmSystem === 'pet' ? 'side-atk' : 'side-def'">{{ pmSystem === 'pet' ? '宠物' : '坐骑' }}</span>
+            <span class="fs-ov-subject-text">{{ pmOverview.individual.name }} · Lv.{{ pmOverview.level }} · {{ tierLabel(pmTier) }} · 品质 {{ pmOverview.quality }}（{{ pmQualityLabel }}）· 资质 {{ pmOverview.aptitude }} · 词条 {{ pmOverview.activeSlotCount }} 条</span>
+          </div>
+
+          <div class="fs-ov-section">
+            <div class="fs-block-title">主要属性（3 条基础属性，公式区间）</div>
+            <div class="fs-form-hint">权重取自个体配置，资质与突破合成养成倍率。点击行可在右侧查看逐步推导。</div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>属性</th><th class="fs-td-right">个体权重</th><th class="fs-td-right">可获得区间</th></tr></thead>
+              <tbody>
+                <tr v-for="(s, idx) in pmOverview.mainSlots" :key="s.attribute" class="fs-ov-clickable"
+                  :class="{ 'is-active': pmPool === `main-${idx}` }" tabindex="0" role="button"
+                  :aria-label="`展开主要属性 ${s.label} 推导`" :aria-pressed="pmPool === `main-${idx}`"
+                  @click="pmPool = `main-${idx}`" @keydown.enter.prevent="pmPool = `main-${idx}`" @keydown.space.prevent="pmPool = `main-${idx}`">
+                  <td class="fs-td-strong">{{ s.label }}</td>
+                  <td class="fs-td-right fs-cell-num">{{ s.weight }}</td>
+                  <td class="fs-td-right fs-cell-num"><CalcBreakdown :value="fmtRange(s.range)" :steps="s.range.calc" :unit="rangeUnit(s.range)" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="fs-ov-section">
+            <div class="fs-block-title">特性（品质 {{ pmTraitRow?.minQuality ?? 3 }} 起投放）</div>
+            <template v-if="pmTraitRow?.included">
+              <div class="fs-form-hint">{{ pmOverview.individual.trait }}</div>
+              <div class="fs-ov-pool-gap">机制条，不参与数值反推</div>
+            </template>
+            <div v-else class="fs-ov-pool-gap">当前品质 {{ pmOverview.quality }} 不投放（品质 {{ pmTraitRow?.minQuality ?? 3 }} 起）</div>
+          </div>
+
+          <div class="fs-ov-section">
+            <div class="fs-block-title">附加行（品质门槛投放）</div>
+            <div class="fs-form-hint">每行随个体产出 1 条，从该行属性池中抽取。点击行可在右侧查看该池全部候选属性及各自可获得区间。</div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>行</th><th class="fs-td-center">品质门槛</th><th class="fs-td-center">本品质</th><th class="fs-td-right">属性数</th></tr></thead>
+              <tbody>
+                <tr v-for="row in pmExtraRows" :key="row.id" class="fs-ov-clickable"
+                  :class="{ 'is-active': pmPool === `row-${row.id}`, 'is-muted': !row.included }" tabindex="0" role="button"
+                  :aria-label="`展开 ${row.name} 词条池`" :aria-pressed="pmPool === `row-${row.id}`"
+                  @click="pmPool = `row-${row.id}`" @keydown.enter.prevent="pmPool = `row-${row.id}`" @keydown.space.prevent="pmPool = `row-${row.id}`">
+                  <td class="fs-td-strong">{{ row.name }}</td>
+                  <td class="fs-td-center fs-cell-num">品质 {{ row.minQuality }} 起</td>
+                  <td class="fs-td-center">
+                    <span v-if="row.included" class="fs-ov-on">投放</span>
+                    <span v-else class="fs-cell-dim">不投放</span>
+                  </td>
+                  <td class="fs-td-right fs-cell-num">{{ row.included ? row.candidates.length : '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 右卡：词条池明细 -->
+        <aside class="fs-ov-card fs-ov-detail">
+          <template v-if="pmPoolDetail">
+            <div class="fs-block-title">{{ pmPoolDetail.title }}</div>
+            <div class="fs-form-hint">{{ pmPoolDetail.hint }}</div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>属性</th><th class="fs-td-right">可获得区间</th><th class="fs-td-center">来源</th></tr></thead>
+              <tbody>
+                <tr v-for="c in pmPoolDetail.candidates" :key="c.attribute" :class="{ 'is-none': c.source === 'none' }">
+                  <td>{{ attrNameByCode(c.attribute) }}</td>
+                  <td class="fs-td-right fs-cell-num"><CalcBreakdown :value="fmtRange(c)" :steps="c.calc" :unit="rangeUnit(c)" /></td>
+                  <td class="fs-td-center"><span class="fs-ov-src">{{ c.source === 'formula' ? '公式' : c.source === 'curve' ? '曲线' : '缺曲线' }}</span></td>
+                </tr>
+                <tr v-if="!pmPoolDetail.candidates.length"><td colspan="3" class="fs-cell-dim">该行下无可投放属性</td></tr>
+              </tbody>
+            </table>
+          </template>
+          <div v-else class="fs-ov-empty">
+            <div class="fs-block-title">词条池明细</div>
+            <p>左侧选择一个词条行后，这里会列出池内全部候选属性及各自的可获得区间。</p>
+            <p class="fs-cell-dim">点击「主要属性」或「附加行」表中的任意一行即可展开。</p>
+          </div>
+        </aside>
+      </div>
+
+      <div v-if="pmOverview?.warnings.length" class="fs-ov-warnings">
+        <div class="fs-block-title">配置缺口</div>
+        <div class="fs-form-errors">
+          <div v-for="w in pmOverview.warnings" :key="w" class="fs-form-error">{{ w }}</div>
+        </div>
+      </div>
+    </section>
+
     <!-- ═══ Tab1: 装备设计 ═══ -->
     <section v-else-if="activeTab === 'matrix'" class="fs-exp-panel" role="tabpanel">
       <div class="fs-exp-block">
@@ -529,10 +683,11 @@ import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { AffixRuleConfig, EquipFormulaConfig } from '@/domain/fengshen/types'
-import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
+import type { AffixRuleConfig, EquipFormulaConfig, PetMountIndividual } from '@/domain/fengshen/types'
+import { affixRuleDefaults, mountIndividuals, petIndividuals } from '@/domain/fengshen/affix-rule-defaults'
 import {
   buildEquipmentOverview,
+  buildPetMountOverview,
   QUALITY_LABELS,
   type CalcStep,
   type EquipmentOverview,
@@ -551,6 +706,7 @@ const notification = useNotificationStore()
 
 const TABS = [
   { id: 'overview', label: '装备总览' },
+  { id: 'pet_mount_overview', label: '宠物与坐骑总览' },
   { id: 'matrix', label: '装备设计' },
   { id: 'pet_mount', label: '宠物与坐骑' },
   { id: 'groups', label: '属性组配置' },
@@ -851,6 +1007,105 @@ function ovPoolGroupsText(groups: string[]): string {
   return groups.map((g) => cfg.attribute_groups[g]?.label ?? attrNameByCode(g)).join('、')
 }
 
+// ── 宠物与坐骑总览：个体驱动反推（8.16 口径，个体权重 + 品质门槛） ──
+const pmSystem = ref<'pet' | 'mount'>('pet')
+const pmIndividualId = ref('')
+const pmLevel = ref(50)
+const pmTier = ref('xian')
+const pmQuality = ref(5)
+const pmAptitude = ref(400)
+const pmBreakthrough = ref(0)
+/** 当前展开的词条行：`main-N` = 主要第 N 条，`row-${id}` = 附加/特性行 */
+const pmPool = ref('main-0')
+
+const pmSystemOptions: TSelectOption[] = [
+  { value: 'pet', label: '宠物' },
+  { value: 'mount', label: '坐骑' },
+]
+
+/** 个体权重短名（表头展示用；configs 键是短名 hit/dodge） */
+const PM_WEIGHT_LABELS: Record<string, string> = { attack: '攻', hit: '命', speed: '速', defense: '防', dodge: '闪', maxHealth: '血' }
+
+/** 个体分类中文（configs 存英文码 combo/crit/shield_reflect/dodge/universal） */
+const PM_CATEGORY_LABELS: Record<string, string> = { combo: '连击', crit: '暴击', shield_reflect: '盾反', dodge: '闪避', universal: '通用' }
+
+function pmCategoryLabel(category: string): string {
+  return PM_CATEGORY_LABELS[category] ?? category
+}
+
+const pmIndividuals = computed<PetMountIndividual[]>(() => (pmSystem.value === 'pet' ? petIndividuals() : mountIndividuals()))
+
+const pmIndividualOptions = computed<TSelectOption[]>(() =>
+  pmIndividuals.value.map((i) => ({ value: i.id, label: i.name, hint: pmCategoryLabel(i.category) }))
+)
+
+/** 个体 id 失效（切换系统/配置变更）时回落到第一个，避免整个面板空白 */
+const pmIndividual = computed<PetMountIndividual | null>(() =>
+  pmIndividuals.value.find((i) => i.id === pmIndividualId.value) ?? pmIndividuals.value[0] ?? null
+)
+
+function onPmSystemChange(system: 'pet' | 'mount'): void {
+  pmSystem.value = system
+  pmIndividualId.value = ''
+  pmPool.value = 'main-0'
+}
+
+function pmWeightText(i: PetMountIndividual): string {
+  return Object.entries(i.weights).map(([k, w]) => `${PM_WEIGHT_LABELS[k] ?? k}${w}`).join(' / ')
+}
+
+const pmQualityOptions = computed<TSelectOption[]>(() =>
+  QUALITY_LABELS.map((label, i) => ({ value: i + 1, label: `${label}（品质 ${i + 1}）` }))
+)
+
+const pmQualityLabel = computed(() => QUALITY_LABELS[pmQuality.value - 1] ?? '')
+
+const pmMaxLevel = computed(() => cfg.pet_mount_rules?.max_level ?? 50)
+const pmAptitudeMin = computed(() => cfg.pet_mount_rules?.aptitude.min ?? 280)
+const pmAptitudeMax = computed(() => cfg.pet_mount_rules?.aptitude.cap ?? 500)
+const pmBreakthroughMax = computed(() => cfg.pet_mount_rules?.breakthroughs.length ?? 3)
+
+const pmOverview = computed(() => {
+  const individual = pmIndividual.value
+  if (!individual) return null
+  return buildPetMountOverview(cfg, playerConversion.value, {
+    system: pmSystem.value,
+    individual,
+    level: pmLevel.value,
+    tier: pmTier.value,
+    quality: pmQuality.value,
+    aptitude: pmAptitude.value,
+    breakthrough: pmBreakthrough.value,
+  })
+})
+
+const pmTraitRow = computed(() => pmOverview.value?.rows.find((r) => r.id === 'trait') ?? null)
+
+/** 附加行（不含 main / trait，两者各自单独渲染） */
+const pmExtraRows = computed(() => pmOverview.value?.rows.filter((r) => r.id !== 'main' && r.id !== 'trait') ?? [])
+
+/** 右侧详情面板：选中的词条行标题 + 候选属性 */
+const pmPoolDetail = computed<{ title: string; candidates: OverviewAttrRange[]; hint: string } | null>(() => {
+  const o = pmOverview.value
+  if (!o) return null
+  if (pmPool.value.startsWith('main-')) {
+    const slot = o.mainSlots[Number(pmPool.value.slice(5))]
+    if (!slot) return null
+    return {
+      title: `主要属性 · ${slot.label}`,
+      candidates: [slot.range],
+      hint: `个体权重 ${slot.weight}；区间 = 公式基准 × 品阶 × 浮动的外包络`,
+    }
+  }
+  const row = o.rows.find((r) => `row-${r.id}` === pmPool.value)
+  if (!row) return null
+  return {
+    title: `${row.name}（品质 ${row.minQuality} 起）`,
+    candidates: row.candidates,
+    hint: row.included ? '本行随个体产出 1 条，从下列属性中等概率抽取' : `当前品质不投放本行（品质 ${row.minQuality} 起）`,
+  }
+})
+
 // ── 方法 ──
 function slotGroupLabel(slot: string): string {
   return cfg.sub_type_groups[slot]?.label ?? slot
@@ -947,6 +1202,7 @@ function syncOverviewSelection(): void {
   const ids = cfg.sub_type_groups[ovSlot.value].sub_types.map((s) => s.id)
   if (!ids.includes(ovSubType.value)) ovSubType.value = ids[0] ?? ovSlot.value
   if (!cfg.tier_weight[ovTier.value]) ovTier.value = Object.keys(cfg.tier_weight)[0] ?? ovTier.value
+  if (!cfg.tier_weight[pmTier.value]) pmTier.value = Object.keys(cfg.tier_weight)[0] ?? pmTier.value
 }
 
 async function save(): Promise<void> {
@@ -1349,6 +1605,16 @@ void load()
 
 .fs-ov-warnings {
   margin-top: var(--space-4);
+}
+
+/* 未配置投放池的显式缺口块：红边警示，绝不与「已配置但为 0」混淆 */
+.fs-ov-pool-gap {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-warning);
+  border-radius: var(--radius-sm);
+  color: var(--color-warning);
+  font-size: var(--font-size-md);
 }
 
 .fs-ov-table {

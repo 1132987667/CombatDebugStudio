@@ -139,6 +139,9 @@ export class SkillExecutor {
       case StepEffectType.REVIVE:
         this.executeRevive(skillStep, action, source, target, context)
         break
+      case StepEffectType.REMOVE_BUFF:
+        this.executeRemoveBuff(skillStep, action, target)
+        break
       default: {
         throw new Error(
           `[SkillExecutor] 未实现的技能步骤类型: ${skillStep.type}。` +
@@ -208,6 +211,15 @@ export class SkillExecutor {
         (i) => i.buffId === KNOWN_BUFF_IDS.GUARANTEED_CRIT,
       )
       for (const instance of critBuffInstances) {
+        this.buffSystem.removeBuff(instance.id)
+      }
+    }
+    // 消耗必中标记（buff_guaranteed_hit）：首个伤害步骤结算后消耗，后续步骤不再继承
+    if (source.hasBuff?.(KNOWN_BUFF_IDS.GUARANTEED_HIT)) {
+      const hitInstances = this.buffSystem
+        .getBuffInstances(source.id)
+        .filter((i) => i.buffId === KNOWN_BUFF_IDS.GUARANTEED_HIT)
+      for (const instance of hitInstances) {
         this.buffSystem.removeBuff(instance.id)
       }
     }
@@ -284,14 +296,15 @@ export class SkillExecutor {
 
     const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
+    // NOTE: duration/maxStacks/stackRule 均不在此处填充默认值——
+    // addBuff 合并链是"调用方配置 > 脚本默认 > JSON 配置"，步骤未显式声明时
+    // 传 -1/1 等默认值会短路覆盖 buffs.json 的权威配置（曾导致叠层 buff 卡在 1 层）
     const buffConfig: Partial<BuffConfig> = {
       id: buffId,
       // 不传 name/description，让 addBuff() 从 JSON 配置中解析展示名称
       description: '',
-      duration: skillStep.duration ?? -1,
-      maxStacks: skillStep.stacks, // undefined 时让 addBuff 合并链回退到 JSON 配置
+      duration: skillStep.duration,
       cooldown: 0,
-      stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
     }
 
@@ -583,6 +596,12 @@ export class SkillExecutor {
     } else if (customType === 'overflow_shield') {
       // 回春护盾溢出转盾 — 从 action.extra.healOverflow 按目标ID查找溢出量
       this.handleOverflowShield(skillStep, action, target)
+    } else if (customType === 'fengshi_detonate') {
+      // 风意爆发 / 狂风绝息 — 引爆目标全部【风势】：每层伤害加成 + 按 2 层转化 1 层裂甲
+      this.handleFengshiDetonate(action, source, target, customParams, context?.token)
+    } else if (customType === 'liejia_detonate') {
+      // 裂甲爆发 / 裂甲天崩 — 引爆目标全部【裂甲】：每层伤害加成 + 每层一段真实伤害 + 碎甲
+      this.handleLiejiaDetonate(action, source, target, customParams, context?.token)
     } else {
       throw new Error(
         `[SkillExecutor] 未实现的自定义步骤类型: ${desc}（${customType}）。` +
@@ -697,9 +716,144 @@ export class SkillExecutor {
     }
   }
 
+  /**
+   * 风意爆发 / 狂风绝息 — 引爆目标全部【风势】。
+   * params:
+   * - damagePercentPerStack: 每层风势追加的伤害系数（×攻击力，默认 0.10）
+   * - stacksPerDebuff: 每 N 层风势转化 1 层 applyBuffId（默认 2，0 表示不转化）
+   * - applyBuffId: 转化目标 buff（默认 buff_liejia）
+   */
+  private handleFengshiDetonate(
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    params: CustomStepParams | undefined,
+    token?: DeferredDamageToken,
+  ): void {
+    const perStack = (params?.damagePercentPerStack as number) ?? 0.1
+    const stacksPerDebuff = (params?.stacksPerDebuff as number) ?? 2
+    const applyBuffId = (params?.applyBuffId as string) ?? 'buff_liejia'
+
+    const stacks = this.buffSystem.getBuffStackCount(target.id, 'buff_fengshi')
+    if (stacks <= 0) {
+      action.effects.push({
+        type: ActionResultType.STATUS,
+        targetId: target.id,
+        description: `${target.name} 身上没有【风势】可引爆`,
+      })
+      return
+    }
+
+    const attack = source.getAttribute(ATTRIBUTE_CODE.attack)
+    const bonusDamage = Math.round(attack * perStack * stacks)
+    if (bonusDamage > 0) {
+      if (token) {
+        token.record(target, bonusDamage)
+        action.damage = (action.damage ?? 0) + bonusDamage
+      } else {
+        this.damageCalculator.applyDamage(target, bonusDamage)
+      }
+    }
+
+    // 消耗全部风势
+    for (const inst of this.buffSystem
+      .getBuffInstances(target.id)
+      .filter((i) => i.buffId === 'buff_fengshi')) {
+      this.buffSystem.removeBuff(inst.id)
+    }
+
+    // 每 N 层转化 1 层裂甲
+    if (stacksPerDebuff > 0 && applyBuffId) {
+      const debuffStacks = Math.floor(stacks / stacksPerDebuff)
+      for (let i = 0; i < debuffStacks; i++) {
+        this.buffSystem.addBuff(target.id, applyBuffId, {}, action.turn ?? 0)
+      }
+    }
+
+    action.effects.push({
+      type: ActionResultType.DAMAGE,
+      targetId: target.id,
+      value: bonusDamage,
+      damage: bonusDamage,
+      description: `引爆 ${target.name} 的 ${stacks} 层【风势】：追加 ${bonusDamage} 伤害`,
+    })
+  }
+
+  /**
+   * 裂甲爆发 / 裂甲天崩 — 引爆目标全部【裂甲】。
+   * params:
+   * - damagePercentPerStack: 每层裂甲追加的伤害系数（×攻击力，默认 0.08）
+   * - trueDamagePerStack: 每层裂甲追加的真实伤害系数（×攻击力，默认 0；上限 maxSegments × 该值）
+   * - maxSegments: 真实伤害段数上限（默认 8）
+   * - applyBuffId: 引爆后施加的 buff（默认 buff_suijia 碎甲）
+   */
+  private handleLiejiaDetonate(
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    params: CustomStepParams | undefined,
+    token?: DeferredDamageToken,
+  ): void {
+    const perStack = (params?.damagePercentPerStack as number) ?? 0.08
+    const truePerStack = (params?.trueDamagePerStack as number) ?? 0
+    const maxSegments = (params?.maxSegments as number) ?? 8
+    const applyBuffId = (params?.applyBuffId as string) ?? 'buff_suijia'
+
+    const stacks = this.buffSystem.getBuffStackCount(target.id, 'buff_liejia')
+    if (stacks <= 0) {
+      action.effects.push({
+        type: ActionResultType.STATUS,
+        targetId: target.id,
+        description: `${target.name} 身上没有【裂甲】可引爆`,
+      })
+      return
+    }
+
+    const attack = source.getAttribute(ATTRIBUTE_CODE.attack)
+
+    // 每层伤害加成（追加伤害）
+    const bonusDamage = Math.round(attack * perStack * stacks)
+    if (bonusDamage > 0) {
+      if (token) {
+        token.record(target, bonusDamage)
+        action.damage = (action.damage ?? 0) + bonusDamage
+      } else {
+        this.damageCalculator.applyDamage(target, bonusDamage)
+      }
+    }
+
+    // 每层一段真实伤害（上限 maxSegments 段，同层数封顶）
+    const trueDamage = Math.round(attack * truePerStack * Math.min(stacks, maxSegments))
+    if (trueDamage > 0) {
+      if (token) {
+        token.record(target, trueDamage)
+        action.damage = (action.damage ?? 0) + trueDamage
+      } else {
+        this.damageCalculator.applyDamage(target, trueDamage)
+      }
+    }
+
+    // 消耗全部裂甲并施加碎甲
+    for (const inst of this.buffSystem
+      .getBuffInstances(target.id)
+      .filter((i) => i.buffId === 'buff_liejia')) {
+      this.buffSystem.removeBuff(inst.id)
+    }
+    if (applyBuffId) {
+      this.buffSystem.addBuff(target.id, applyBuffId, {}, action.turn ?? 0)
+    }
+
+    action.effects.push({
+      type: ActionResultType.DAMAGE,
+      targetId: target.id,
+      value: bonusDamage + trueDamage,
+      damage: bonusDamage + trueDamage,
+      description: `引爆 ${target.name} 的 ${stacks} 层【裂甲】：追加 ${bonusDamage} 伤害与 ${trueDamage} 真实伤害`,
+    })
+  }
+
   /** 第三连击：每第3次普攻伤害+50% */
-  private handleThirdStrike(action: BattleAction, source: BattleEntity): void {
-    let state = this.comboStates.get(source.id)
+  private handleThirdStrike(action: BattleAction, source: BattleEntity): void {    let state = this.comboStates.get(source.id)
     if (!state) {
       state = { lastTargetId: '', streak: 0, totalAttacks: 0 }
       this.comboStates.set(source.id, state)
@@ -844,13 +998,48 @@ export class SkillExecutor {
   }
 
   /** 护盾（shield 步骤）— 委托给 buff_shield */
+  /**
+   * remove_buff 步骤 — 按 buffId 移除目标身上的指定 buff。
+   * count 指定移除的实例数（层数），缺省移除全部实例；用于层满消耗（裂甲/风意/怒意）等。
+   */
+  private executeRemoveBuff(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    target: BattleEntity,
+  ): void {
+    const buffId = skillStep.buffId || skillStep.effectId || ''
+    if (!buffId) {
+      LoggerProvider.logger.addDebugLog(
+        'executeRemoveBuff: 缺少 buffId，跳过',
+        { level: LogLevel.WARN },
+      )
+      return
+    }
+    const instances = this.buffSystem
+      .getBuffInstances(target.id)
+      .filter((i) => i.buffId === buffId)
+    if (instances.length === 0) return
+
+    const count = skillStep.count ?? instances.length
+    let removed = 0
+    for (const instance of instances) {
+      if (removed >= count) break
+      this.buffSystem.removeBuff(instance.id)
+      removed++
+    }
+    action.effects.push({
+      type: ActionResultType.STATUS,
+      targetId: target.id,
+      description: `${target.name} 的【${buffId}】移除 ${removed} 层`,
+    })
+  }
+
   private executeShield(
     skillStep: ExtendedSkillStep,
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-  ): void {
-    const buffTarget =
+  ): void {    const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
     // 从 calculation 计算护盾值
     const { heal: shieldValue } = this.healCalculator.calculateHeal(

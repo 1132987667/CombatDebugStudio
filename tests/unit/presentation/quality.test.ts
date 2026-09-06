@@ -21,7 +21,6 @@ import {
 import packJson from '@configs/xiyou/pack.json'
 import mateJson from '@configs/xiyou/mate.json'
 import equipJson from '@configs/xiyou/equip.json'
-import cultivateJson from '@configs/xiyou/cultivate.json'
 
 describe('品级映射 RARITY_NAMES', () => {
   it('rarity 1-5 → 凡品/玄品/地品/天品/仙品', () => {
@@ -147,7 +146,7 @@ describe('数据层统一：configs 全数字 rarity', () => {
     }
   })
 
-  it('mate/equip/cultivate 品级字段为 rarity 数字 1-5（无中文 quality/tier）', () => {
+  it('mate/equip 品级字段为 rarity 数字 1-5（无中文 quality/tier）', () => {
     const check = (rows: Array<{ rarity: unknown }>, max = 5): void => {
       for (const row of rows) {
         expect(typeof row.rarity).toBe('number')
@@ -160,6 +159,5 @@ describe('数据层统一：configs 全数字 rarity', () => {
     check(equipJson.gearSlots as Array<{ rarity: unknown }>)
     check(equipJson.treasures as Array<{ rarity: unknown }>)
     check(equipJson.mounts as Array<{ rarity: unknown }>)
-    check(cultivateJson.martialArts as Array<{ rarity: unknown }>)
   })
 })

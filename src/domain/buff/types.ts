@@ -13,11 +13,16 @@ export const BUFF_ID_PREFIX = 'buff_'
 /** 配置驱动的常用 Buff ID（buffs.json 定义，代码引用避免魔法字符串） */
 export const KNOWN_BUFF_IDS = {
   GUARANTEED_CRIT: 'buff_guaranteed_crit',
+  GUARANTEED_HIT: 'buff_guaranteed_hit',
 } as const
 
 /** 常用 Buff 标签（hasBuffWithTag 匹配，代码引用避免魔法字符串） */
 export const BUFF_TAGS = {
   ENERGY_ABSORPTION: 'energy_absorption',
+  /** 「无法获得护盾」禁用标记（碎甲类 debuff 携带；护盾获得路径检查） */
+  NO_SHIELD: 'no_shield',
+  /** 守护者标记（携带者代队友承受部分伤害，参数见 BuffConfig.parameters） */
+  GUARDIAN: 'guardian',
 } as const
 
 /**
@@ -204,6 +209,8 @@ export interface BuffConfig {
    * true表示此Buff可被驱散技能移除
    */
   dispellable?: boolean
+  /** 施加阻挡标记：目标身上存在携带该 tag 的 buff 时无法施加本 buff */
+  blockedByTag?: string
 
   /**
    * 图标路径

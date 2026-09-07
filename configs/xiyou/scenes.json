@@ -107,7 +107,7 @@
       "type": "clear_scene",
       "sceneId": "scene_1_1"
     },
-    "narrativeHook": "灵猴道入门：老猴说，棍不在重，在心。"
+    "narrativeHook": "连战入门：老猴说，棍不在重，在心。"
   },
   {
     "id": "scene_1_3",
@@ -728,7 +728,7 @@
       "type": "clear_scene",
       "sceneId": "scene_3_1"
     },
-    "narrativeHook": "金行道传承：铁砧下的遗物中藏着一卷棍法残篇，以金入道，以刚克柔。"
+    "narrativeHook": "破军传承：铁砧下的遗物中藏着一卷棍法残篇，以金入道，以刚克柔。"
   },
   {
     "id": "scene_3_3",
@@ -1156,7 +1156,7 @@
       39,
       40
     ],
-    "desc": "谷底的河水中立着一块石碑，碑文记载着磐石道的真意。迷雾妖主在此等候。",
+    "desc": "谷底的河水中立着一块石碑，碑文记载着不动的真意。迷雾妖主在此等候。",
     "enemies": [
       {
         "id": "enemy_s4_5_a",
@@ -1202,7 +1202,7 @@
       "type": "clear_scene",
       "sceneId": "scene_4_4"
     },
-    "narrativeHook": "磐石道传承：河底石碑上刻着——不动如山，不动于心。"
+    "narrativeHook": "不动传承：河底石碑上刻着——不动如山，不动于心。"
   },
   {
     "id": "scene_4_boss",

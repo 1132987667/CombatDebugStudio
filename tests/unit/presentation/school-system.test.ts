@@ -1,5 +1,5 @@
 /**
- * school-system.test.ts — 流派系统闭环验证
+ * school-system.test.ts — 流派系统闭环验证（连战·连击流体系）
  * 覆盖：skill_tree 数据挂载到 schools.nodes、属性注入（playerAttributes）、
  *       战斗技能注入（equippedPlayerSkills / buildBattleTeams 主角）、存档持久化（save-bridge）。
  */
@@ -14,6 +14,7 @@ import {
   equippedSkills,
   pureSchoolBonus,
   schools,
+  schoolsLayers,
   scenes,
   skillPoints,
 } from '@/presentation/modules/yanjie/xiyou/xiyouData'
@@ -24,6 +25,9 @@ function resetSkillTree(): void {
   for (const s of schools) {
     s.selected = false
     for (const n of s.nodes) n.learned = false
+  }
+  for (const layer of schoolsLayers) {
+    for (const n of layer.nodes) n.learned = false
   }
   skillPoints.spent = 0
   skillPoints.earned = 4
@@ -40,47 +44,40 @@ beforeEach(() => {
 })
 
 describe('skill_tree 数据挂载', () => {
-  it('schools[].nodes 由 skill_tree.json 构建（含 effect/skillId 映射）', () => {
-    expect(schools.length).toBe(3)
-    for (const s of schools) {
-      expect(s.nodes.length).toBeGreaterThan(0)
-      expect(s.branches.length).toBe(3)
-    }
-    // 灵猴道：连击分支属性节点带 effect
-    const linghou = schools.find((s) => s.id === 'linghou')!
-    const atkNode = linghou.nodes.find((n) => n.id === 'lh_node_1_1')
-    expect(atkNode?.effect).toMatchObject({ attribute: 'attack', value: 5, calc: 'percentage' })
-    // 技能节点 skillId 已映射为 configs/skills 实际 id（命名体系对齐）
-    const combo = linghou.nodes.find((n) => n.id === 'lh_node_1_3')
-    expect(combo?.skillId).toBe('skill_xiyou_swift_combo')
-    expect(combo?.energyCost).toBe(0)
-    const gale = linghou.nodes.find((n) => n.id === 'lh_node_2_3')
-    expect(gale?.skillId).toBe('skill_xiyou_swift_step')
-    expect(gale?.energyCost).toBe(50)
+  it('schools[].nodes 由 skill_tree.json 构建（连战流派，3 分支 24 节点，含 effect/skillId 映射）', () => {
+    expect(schools.length).toBe(1) // 当前仅连战（斗战·连击）配置了技能树
+    const lianzhan = schools[0]!
+    expect(lianzhan.id).toBe('lianji')
+    expect(lianzhan.nodes.length).toBe(24)
+    expect(new Set(lianzhan.nodes.map((n) => n.branch))).toEqual(new Set(['fengsuo', 'fengshi', 'liejia']))
+    // 属性节点带 effect（裂甲破甲 +2 加法）
+    const armorNode = lianzhan.nodes.find((n) => n.id === 'lianji_liejia_attr2')
+    expect(armorNode?.effect).toMatchObject({ attribute: 'armorBreak', value: 2, calc: 'additive' })
+    // 技能节点 skillId 已映射为 configs/skills 实际 id（组合被动为逗号分隔配置串）
+    const core = lianzhan.nodes.find((n) => n.id === 'lianji_fengsuo_core')
+    expect(core?.skillId).toBe('school_fengsuo_bounce,school_fengsuo_bind,school_fengsuo_fengzhu')
+    const whip = lianzhan.nodes.find((n) => n.id === 'lianji_fufengbian')
+    expect(whip?.skillId).toBe('skill_school_fufengbian')
+    // 连战纯流派加成（连击率 +10%）
+    expect(lianzhan.pureBonus).toMatchObject({ attribute: 'comboRate', value: 10 })
   })
 })
 
 describe('流派属性注入', () => {
-  it('已点亮 attribute 节点 effect 注入（攻击 +5% 按基础换算，跨流派累加）', () => {
+  it('已点亮 attribute 节点 effect 注入（加法属性直接累加）', () => {
     const store = usePlayerStore()
-    const linghou = schools.find((s) => s.id === 'linghou')!
-    const jinxing = schools.find((s) => s.id === 'jinxing')!
-    linghou.nodes.find((n) => n.id === 'lh_node_1_1')!.learned = true // attack +5%
-    jinxing.nodes.find((n) => n.id === 'jx_node_1_1')!.learned = true // critRate +3%
-    const base = { attack: store.player.attackMax, defense: store.player.defense, speed: store.player.speed, maxHp: store.player.maxHp }
-    const bonus = schoolAttributeBonuses(base)
-    // 跨流派节点均注入（不需要选中流派）
-    expect(bonus[ATTRIBUTE_CODE.attack]).toBe(Math.round(base.attack * 0.05))
-    expect(bonus[ATTRIBUTE_CODE.critRate]).toBe(3)
+    const lianzhan = schools[0]!
+    lianzhan.nodes.find((n) => n.id === 'lianji_liejia_attr2')!.learned = true // 破甲 +2（additive）
+    const bonus = schoolAttributeBonuses({ attack: 100, defense: 50, speed: 20, maxHp: 500 })
+    expect(bonus[ATTRIBUTE_CODE.armorBreak]).toBe(2)
     // playerAttributes 联动
     const attr = store.playerAttributes
-    expect(attr[ATTRIBUTE_CODE.attack]).toBeGreaterThan(0)
+    expect(attr[ATTRIBUTE_CODE.armorBreak]).toBeGreaterThanOrEqual(2)
   })
 
-  it('纯流派加成：equipped 技能全同流派时注入（灵猴道 comboRate +10）', () => {
+  it('纯流派加成：equipped 技能全同流派时注入（连战 comboRate +10）', () => {
     const store = usePlayerStore()
-    const linghou = schools.find((s) => s.id === 'linghou')!
-    pureSchoolBonus.value = 'linghou'
+    pureSchoolBonus.value = 'lianji'
     expect(store.playerAttributes[ATTRIBUTE_CODE.comboRate]).toBeCloseTo(10)
     // 基础 comboRate 之上 +10 百分点
     pureSchoolBonus.value = null
@@ -92,15 +89,6 @@ describe('流派属性注入', () => {
     expect(bonus['tenacity']).toBeUndefined()
     expect(bonus['blockRate']).toBeUndefined()
   })
-
-  it('磐石道 damageReduction 纯流派加成 + 已点亮节点效果叠加', () => {
-    const store = usePlayerStore()
-    const panshi = schools.find((s) => s.id === 'panshi')!
-    panshi.nodes.find((n) => n.id === 'ps_node_3_1')!.learned = true // 铁壁功 damageReduction +3%
-    pureSchoolBonus.value = 'panshi' // pureBonus damageReduction +10
-    expect(store.playerAttributes[ATTRIBUTE_CODE.damageReduction]).toBe(13)
-    expect(store.battleSnapshot.damageReduction).toBe(13)
-  })
 })
 
 describe('战斗技能注入', () => {
@@ -108,30 +96,47 @@ describe('战斗技能注入', () => {
     expect(equippedPlayerSkills()).toEqual({ small: [], passive: [], ultimate: [] })
   })
 
-  it('装备槽中的技能按类型分桶（节点 id → 技能配置 id）', () => {
-    const linghou = schools.find((s) => s.id === 'linghou')!
-    linghou.nodes.find((n) => n.id === 'lh_node_2_3')!.learned = true // 疾风步 small
-    linghou.nodes.find((n) => n.id === 'lh_node_3_4')!.learned = true // 千影绝杀 ultimate
-    linghou.nodes.find((n) => n.id === 'lh_node_1_3')!.learned = true // 迅捷连击 passive
-    equippedSkills.small = ['lh_node_2_3']
-    equippedSkills.ultimate = 'lh_node_3_4'
-    equippedSkills.passive = ['lh_node_1_3']
+  it('装备槽中的技能按类型分桶（节点 id → 技能配置 id，组合被动展开）', () => {
+    const lianzhan = schools[0]!
+    lianzhan.nodes.find((n) => n.id === 'lianji_fufengbian')!.learned = true // 缚风鞭 small
+    lianzhan.nodes.find((n) => n.id === 'lianji_tianwang')!.learned = true // 风锁天网 ultimate
+    lianzhan.nodes.find((n) => n.id === 'lianji_fengsuo_core')!.learned = true // 风锁连环 passive
+    equippedSkills.small = ['lianji_fufengbian']
+    equippedSkills.ultimate = 'lianji_tianwang'
+    equippedSkills.passive = ['lianji_fengsuo_core']
     const skills = equippedPlayerSkills()
-    expect(skills.small).toContain('skill_xiyou_swift_step')
-    expect(skills.ultimate).toContain('skill_xiyou_thousand_shadow')
-    expect(skills.passive).toContain('skill_xiyou_swift_combo')
+    expect(skills.small).toContain('skill_school_fufengbian')
+    expect(skills.ultimate).toContain('skill_school_fengsuotianwang')
+    // 组合被动展开为多条配置
+    expect(skills.passive).toContain('school_fengsuo_bounce')
+    expect(skills.passive).toContain('school_fengsuo_bind')
+    expect(skills.passive).toContain('school_fengsuo_fengzhu')
   })
 
-  it('纯流派判定（calcPureSchool）：同流派装备返回流派 id，混搭返回 null', () => {
-    const linghou = schools.find((s) => s.id === 'linghou')!
-    const panshi = schools.find((s) => s.id === 'panshi')!
-    const ult = linghou.nodes.find((n) => n.id === 'lh_node_3_4')!.id
-    const psUlt = panshi.nodes.find((n) => n.id === 'ps_node_2_4')!.id
-    expect(calcPureSchool({ passive: [], small: [], ultimate: ult })).toBe('linghou')
-    expect(calcPureSchool({ passive: [], small: [], ultimate: psUlt })).toBe('panshi')
+  it('纯流派判定（calcPureSchool）：同流派装备返回流派 id，空装备返回 null', () => {
+    const lianzhan = schools[0]!
+    const ult = lianzhan.nodes.find((n) => n.id === 'lianji_tianwang')!.id
+    expect(calcPureSchool({ passive: [], small: [], ultimate: ult })).toBe('lianji')
     expect(calcPureSchool({ passive: [], small: [], ultimate: null })).toBeNull()
-    // 混搭（灵猴道被动 + 磐石道大招）→ null
-    expect(calcPureSchool({ passive: ['lh_node_1_3'], small: [], ultimate: psUlt })).toBeNull()
+    // 单流派体系下混搭场景不存在（破军/不动/幻影节点未配置）
+  })
+})
+
+describe('天赋树学习格注入（schools.json skillIds）', () => {
+  it('点亮连战学习格后，技能配置自动注入出战桶（组合被动展开）', () => {
+    const layer1 = schoolsLayers.find((l) => l.layer === 1)!
+    const passiveCell = layer1.nodes.find((n) => n.school === 'lianzhan' && n.skillKind === '被动')!
+    expect(passiveCell.skillIds).toEqual(['school_fengsuo_bounce,school_fengsuo_bind,school_fengsuo_fengzhu'])
+    passiveCell.learned = true
+    const layer6 = schoolsLayers.find((l) => l.layer === 6)!
+    const ultCell = layer6.nodes.find((n) => n.school === 'lianzhan' && n.skillKind === '大技能')!
+    ultCell.learned = true
+    const skills = equippedPlayerSkills()
+    expect(skills.passive).toContain('school_fengsuo_bounce')
+    expect(skills.passive).toContain('school_fengsuo_fengzhu')
+    expect(skills.ultimate).toContain('skill_school_fengsuotianwang')
+    // 未点亮的小技能格不注入
+    expect(skills.small).toEqual([])
   })
 })
 
@@ -139,32 +144,32 @@ describe('存档持久化闭环', () => {
   it('collect 写入流派状态（含技能点/装备槽），restore 还原', async () => {
     const pack = usePackStore()
     await pack.init()
-    const linghou = schools.find((s) => s.id === 'linghou')!
-    linghou.nodes.find((n) => n.id === 'lh_node_2_3')!.learned = true
+    const lianzhan = schools[0]!
+    lianzhan.nodes.find((n) => n.id === 'lianji_fufengbian')!.learned = true
     skillPoints.spent = 3
     skillPoints.earned = 7
     skillPoints.totalPillsUsed = 1
-    equippedSkills.small = ['lh_node_2_3']
+    equippedSkills.small = ['lianji_fufengbian']
 
     const data = await xiyouSaveBridge.collect({ currentSceneId: scenes[0].id })
     expect(data.school).toEqual({
       selected: null,
-      learned: ['lh_node_2_3'],
+      learned: ['lianji_fufengbian'],
       spent: 3,
       earned: 7,
       totalPillsUsed: 1,
-      equipped: { passive: [], small: ['lh_node_2_3'], ultimate: null },
+      equipped: { passive: [], small: ['lianji_fufengbian'], ultimate: null },
     })
 
     // 清空运行时状态，restore 应还原
     resetSkillTree()
     await xiyouSaveBridge.restore(data)
-    const after = schools.find((s) => s.id === 'linghou')!
-    expect(after.nodes.find((n) => n.id === 'lh_node_2_3')?.learned).toBe(true)
+    const after = schools[0]!
+    expect(after.nodes.find((n) => n.id === 'lianji_fufengbian')?.learned).toBe(true)
     expect(skillPoints.spent).toBe(3)
     expect(skillPoints.earned).toBe(7)
     expect(skillPoints.totalPillsUsed).toBe(1)
-    expect(equippedSkills.small).toEqual(['lh_node_2_3'])
+    expect(equippedSkills.small).toEqual(['lianji_fufengbian'])
   })
 
   it('旧档（无 earned/equipped 字段）恢复兜底：earned >= spent，装备槽清空', async () => {
@@ -196,9 +201,9 @@ describe('存档持久化闭环', () => {
       earned: 4,
       totalPillsUsed: 0,
       equipped: {
-        passive: ['lh_node_1_3'], // 未解锁 → 过滤
+        passive: ['lianji_fengsuo_core'], // 未解锁 → 过滤
         small: ['ghost'], // 不存在 → 过滤
-        ultimate: 'lh_node_2_3', // small 技能放 ultimate 槽 → 过滤
+        ultimate: 'lianji_fufengbian', // small 技能放 ultimate 槽 → 过滤
       },
     }
     resetSkillTree()

@@ -4,11 +4,10 @@
 
 import type { ItemEffect } from '@/shared/types/Item'
 
-/** 玩家货币（运行时状态 · 持有在 playerStore） */
+/** 玩家货币（运行时状态 · 持有在 playerStore；金钱/仙缘双货币，完整项目说明 §11） */
 export interface XiyouCurrency {
-  copper: number // 铜币
-  silver: number // 银币
-  jade: number // 金币
+  money: number // 金钱（通用货币：购买、强化、洗练等一切基础消耗）
+  xianyuan: number // 仙缘（战斗胜利获得，药园催熟消耗；完整项目说明 §10.1）
 }
 
 /** 玩家属性快照（运行时状态 · 持有在 playerStore） */
@@ -157,6 +156,8 @@ export interface SchoolsNode {
   value: number[] | null
   /** 后缀（如 "%"） */
   suffix: string
+  /** 学习格点亮的技能配置 id（组合被动为逗号分隔串；预留格缺省） */
+  skillIds?: string[]
   /** 描述模板 */
   description: string
   /** learn 节点：技能类型（被动/小技能/大技能） */
@@ -260,7 +261,7 @@ export interface XiyouCatalogItem {
   name: string
   type: string
   rarity: number
-  /** 实际价值（单位：铜钱口径）；>0 即可出售，出售价/坊市购买价由价值 × 全局系数派生 */
+  /** 实际价值（单位：金钱口径）；>0 即可出售，出售价/坊市购买价由价值 × 全局系数派生 */
   value?: number
   source?: string
   description?: string
@@ -269,14 +270,13 @@ export interface XiyouCatalogItem {
 }
 
 /** 坊市商品（商店子系统）。有 itemId 的商品价格 = 物品实际价值 × 购买系数（params 域 economy_ratios），
- *  无 itemId（如引路香、跨货币单位商品）保留 price 手写兜底价 */
+ *  无 itemId（如引路香）保留 price 手写兜底价；货币统一为金钱（单一结算单位） */
 export interface XiyouShopGood {
   name: string
   type: '杂货' | '材料' | '丹药' | '装备'
   /** 关联物品（items.json 主键）；存在时价格由 价值×购买系数 派生，price 仅兜底 */
   itemId?: string
   price: number
-  unit: '铜钱' | '银两' | '灵石'
   stock: number
   tag?: string
 }
@@ -429,10 +429,14 @@ export interface XiyouGardenCrop {
   /** 作物物品 id（items.json 注册；种植与产出共用该 id） */
   id: string
   name: string
-  /** 单次收获产出数量 */
+  /** 单次收获产出数量（产量表，完整项目说明 §10.1） */
   yield: number
   /** 收获后冷却时长（秒） */
   cooldown: number
+  /** 催熟消耗仙缘（种植时一次扣清，投入完成立即采收） */
+  xianyuan: number
+  /** 种植时需投入同 id 作物株数（灵植无来源不投入，缺省 0） */
+  input?: number
 }
 
 /** 技艺（百艺子系统） */

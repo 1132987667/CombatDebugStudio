@@ -42,7 +42,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
           <div class="xy-storage-head">
             <p class="xy-panel-hint">仓库 {{ pack.storageCapacity }}/{{ MAX_STORAGE }} 格</p>
             <Button size="small" variant="energy" :disabled="pack.storageCapacity >= MAX_STORAGE" @click="pack.expandStorage()">
-              扩容 · {{ pack.expandCost() }} 灵石
+              扩容 · {{ pack.expandCost() }} 金钱
             </Button>
           </div>
           <div class="xy-storage-grid">
@@ -67,7 +67,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
               <span class="xy-row-name">{{ g.name }}</span>
               <span class="xy-chip xy-chip--jade">{{ g.type }}</span>
               <span v-if="g.tag" class="xy-chip" :class="g.tag === '限量' ? 'xy-chip--gold' : 'xy-chip--seal'">{{ g.tag }}</span>
-              <span class="xy-shop-price" :class="`xy-shop-price--${g.unit}`">{{ pack.shopPrice(g) }} {{ g.unit }}</span>
+              <span class="xy-shop-price">{{ pack.shopPrice(g) }} 金钱</span>
             </div>
             <div class="xy-row-bottom">
               <p class="xy-row-desc">库存 {{ g.stock }}</p>
@@ -81,13 +81,13 @@ export type PackSub = 'pack' | 'storage' | 'shop'
                 <span class="xy-shop-qty-num">{{ buyState.count }}</span>
                 <Button size="small" :disabled="buyState.count >= buyMax(g)" @click="buyState.count++">＋</Button>
               </div>
-              <p class="xy-shop-total">总价 {{ pack.shopPrice(g) * buyState.count }} {{ g.unit }}</p>
+              <p class="xy-shop-total">总价 {{ pack.shopPrice(g) * buyState.count }} 金钱</p>
               <Button size="small" variant="primary" :disabled="walletShort(g) !== null" @click="doBuy(g)">确认购买</Button>
-              <p v-if="walletShort(g)" class="xy-shop-diff">差额 {{ walletShort(g) }} {{ g.unit }}</p>
+              <p v-if="walletShort(g)" class="xy-shop-diff">差额 {{ walletShort(g) }} 金钱</p>
             </div>
           </div>
           <p class="xy-panel-hint">
-            铜钱 {{ pack.currency.copper.toLocaleString() }} · 银两 {{ pack.currency.silver }} · 灵石 {{ pack.currency.jade }}
+            金钱 {{ pack.currency.money.toLocaleString() }} · 仙缘 {{ pack.currency.xianyuan }}
           </p>
         </div>
       </template>
@@ -238,18 +238,16 @@ function toggleBuy(g: XiyouShopGood): void {
 }
 
 function buyMax(g: XiyouShopGood): number {
-  const key = UNIT_KEY[g.unit]
   const price = pack.shopPrice(g)
-  const byMoney = price > 0 ? Math.floor(pack.currency[key] / price) : 0
+  const byMoney = price > 0 ? Math.floor(pack.currency.money / price) : 0
   const byStock = g.stock < 0 ? Infinity : g.stock
   return Math.max(1, Math.min(byMoney, byStock))
 }
 
 /** 余额差额（不足返回正数，足够返回 null） */
 function walletShort(g: XiyouShopGood): number | null {
-  const key = UNIT_KEY[g.unit]
   const total = pack.shopPrice(g) * buyState.value!.count
-  const short = total - pack.currency[key]
+  const short = total - pack.currency.money
   return short > 0 ? short : null
 }
 
@@ -259,11 +257,6 @@ function doBuy(g: XiyouShopGood): void {
   if (err === null) buyState.value = null
 }
 
-const UNIT_KEY: Record<XiyouShopGood['unit'], 'copper' | 'silver' | 'jade'> = {
-  铜钱: 'copper',
-  银两: 'silver',
-  灵石: 'jade',
-}
 </script>
 
 <style scoped lang="scss">
@@ -443,17 +436,6 @@ const UNIT_KEY: Record<XiyouShopGood['unit'], 'copper' | 'silver' | 'jade'> = {
   font-weight: var(--font-weight-medium);
   color: var(--xy-ink-2);
 
-  &--灵石 {
-    color: var(--xy-gold);
-  }
-
-  &--银两 {
-    color: var(--color-skill-active);
-  }
-
-  &--铜钱 {
-    color: var(--xy-ink-2);
-  }
 }
 
 .xy-row-bottom {

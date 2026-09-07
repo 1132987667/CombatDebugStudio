@@ -32,9 +32,10 @@ export interface SavePlayerState {
   hp_max: number
   energy_max: number
   base_atk: [number, number]
-  gold: number
-  silver: number
-  jade: number
+  /** 金钱（通用货币；v6 收缩自 gold/silver/jade 三币合并，curr_001 换算 1:1/×100/×1000） */
+  money: number
+  /** 仙缘（药园催熟资源，战斗胜利获得；v6 收缩自 lingyun；旧档缺省，恢复时兜底初始值） */
+  xianyuan?: number
   statBonuses?: Record<string, number>
 }
 
@@ -122,9 +123,7 @@ export function createInitialGameState(): SaveData {
       hp_max: 100,
       energy_max: 150,
       base_atk: [5, 8],
-      gold: 0,
-      silver: 0,
-      jade: 0,
+      money: 0,
       statBonuses: { available: 3, strength: 0, vitality: 0, agility: 0, spirit: 0 },
     },
     progress: {

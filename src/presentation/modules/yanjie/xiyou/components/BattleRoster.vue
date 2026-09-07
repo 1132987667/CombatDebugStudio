@@ -6,7 +6,7 @@
         <span class="xy-row-name">{{ player.name }}</span>
       </div>
       <div class="xy-row-desc mt-2">
-        <span class="xy-chip xy-chip--gold">金钱: {{ currency.copper }}</span>
+        <span class="xy-chip xy-chip--gold">金钱: {{ currency.money }}</span>
       </div>
       <div class="xy-row-desc mt-2">
         <span class="xy-chip xy-chip--gold">Lv.{{ player.level }}</span>

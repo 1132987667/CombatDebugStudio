@@ -17,7 +17,7 @@ import type { AffixData } from '@/domain/fengshen/types'
 import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
 import { createPlayerProfile } from './playerProfile'
-import { dropsForEnemyById, rewardForEnemyById } from './battle'
+import { dropsForEnemyById, xianyuanForEnemyIds, rewardForEnemyById } from './battle'
 import { equippedSkills, grantPillPoint, pureSchoolBonus } from './xiyouData'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
@@ -355,21 +355,27 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
               const reward = rewardForEnemyById(enemyId)
               const enemyDrops = dropsForEnemyById(enemyId)
+              const xianyuanPerBattle = xianyuanForEnemyIds([enemyId])
               const enemyName =
                 env.scenes.flatMap((s) => [...s.enemies, ...(s.yaotu ? [s.yaotu] : [])]).find((e) => e.id === enemyId)?.name ??
                 enemyId
               let totalExp = 0
-              let totalGold = 0
+              let totalMoney = 0
+              let totalXianyuan = 0
               let totalLevel = 0
               const drops = new Map<string, { name: string; quantity: number; times: number }>()
               const levelBefore = player.player.level
               for (let i = 0; i < n; i++) {
                 const exp = roll(reward.exp)
-                const gold = roll(reward.gold)
+                const money = roll(reward.money)
                 totalExp += exp
-                totalGold += gold
+                totalMoney += money
                 if (exp > 0) player.gainExp(exp)
-                if (gold > 0) player.gainCurrency('copper', gold)
+                if (money > 0) player.gainCurrency('money', money)
+                if (xianyuanPerBattle > 0) {
+                  player.gainCurrency('xianyuan', xianyuanPerBattle)
+                  totalXianyuan += xianyuanPerBattle
+                }
                 // 掉落：仅 roll 所选敌人的掉落（含「掉落率锁定」联动，silent 抑制逐条 toast 刷屏）
                 for (const d of pack.applyDrops(enemyDrops, true)) {
                   const key = d.itemId
@@ -384,13 +390,14 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 enemy: enemyName,
                 battles: n,
                 exp: totalExp,
-                gold: totalGold,
+                money: totalMoney,
+                xianyuan: totalXianyuan,
                 leveled: totalLevel,
                 drops: [...drops.values()],
                 dropVariety: drops.size,
               }
               return ok(
-                `「${enemyName}」×${n}：经验+${totalExp} · 金钱+${totalGold} · 升级${totalLevel} · 掉落${drops.size}种`,
+                `「${enemyName}」×${n}：经验+${totalExp} · 金钱+${totalMoney} · 仙缘+${totalXianyuan} · 升级${totalLevel} · 掉落${drops.size}种`,
                 summary,
               )
             },
@@ -439,24 +446,24 @@ function buildPlayerCategory(env: PlayerStoreDebugEnv): DebugCategory {
             id: 'player_gold_1000',
             label: '金钱 +1000',
             execute: () => {
-              player.gainCurrency('copper', 1000)
-              return ok(`铜钱 +1000（当前 ${player.currency.copper}）`)
+              player.gainCurrency('money', 1000)
+              return ok(`金钱 +1000（当前 ${player.currency.money}）`)
             },
           },
           {
             id: 'player_gold_10000',
             label: '金钱 +10000',
             execute: () => {
-              player.gainCurrency('copper', 10000)
-              return ok(`铜钱 +10000（当前 ${player.currency.copper}）`)
+              player.gainCurrency('money', 10000)
+              return ok(`金钱 +10000（当前 ${player.currency.money}）`)
             },
           },
           {
             id: 'player_gold_zero',
             label: '金钱清零',
             execute: () => {
-              player.currency.copper = 0
-              return ok('铜钱已清零')
+              player.currency.money = 0
+              return ok('金钱已清零')
             },
           },
         ],
@@ -548,9 +555,7 @@ function buildPlayerCategory(env: PlayerStoreDebugEnv): DebugCategory {
               player.statPoints.vitality = 0
               player.statPoints.agility = 0
               player.statPoints.spirit = 0
-              player.currency.copper = 0
-              player.currency.silver = 0
-              player.currency.jade = 0
+              player.currency.money = 0
               return ok('玩家已重置为初始状态')
             },
           },
@@ -1398,10 +1403,10 @@ function buildEconomyCategory(env: PlayerStoreDebugEnv): DebugCategory {
           {
             id: 'econ_gold_set',
             label: '金钱设为指定值',
-            input: { type: 'number', min: 0, max: 999999, placeholder: '目标铜钱数', required: true },
+            input: { type: 'number', min: 0, max: 999999, placeholder: '目标金钱数', required: true },
             execute: (v) => {
-              player.currency.copper = Number(v)
-              return ok(`铜钱已设为 ${v}`)
+              player.currency.money = Number(v)
+              return ok(`金钱已设为 ${v}`)
             },
           },
           {

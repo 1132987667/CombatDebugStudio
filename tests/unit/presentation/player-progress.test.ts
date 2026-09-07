@@ -45,10 +45,10 @@ describe('经验与升级（gainExp）', () => {
 
   it('金币入账（gainCurrency）', () => {
     const player = usePlayerStore()
-    player.gainCurrency('copper', 100)
-    expect(player.currency.copper).toBe(12880 + 100)
-    player.gainCurrency('copper', 0) // 非正值忽略
-    expect(player.currency.copper).toBe(12880 + 100)
+    player.gainCurrency('money', 100)
+    expect(player.currency.money).toBe(536480 + 100)
+    player.gainCurrency('money', 0) // 非正值忽略
+    expect(player.currency.money).toBe(536480 + 100)
   })
 })
 
@@ -61,13 +61,13 @@ describe('掉落与奖励数据源（configs/enemies/enemies.json）', () => {
     expect(drops.some((d) => d.itemId === 'mat_taomu')).toBe(true)
     const reward = rewardForScene(s1!)
     expect(reward.exp[1]).toBeGreaterThan(0)
-    expect(reward.gold[1]).toBeGreaterThan(0)
+    expect(reward.money[1]).toBeGreaterThan(0)
   })
 
   it('未知敌人 id 不掉落、无奖励', () => {
     const fake = { id: 'scene_x', regionId: 'r', name: 'x', desc: '', enemies: [{ id: 'ghost_enemy', name: '鬼', level: 1 }], unlocked: true, difficulty: 'easy' as const, stars: 0, maxStars: 3 }
     expect(dropsForScene(fake)).toEqual([])
-    expect(rewardForScene(fake)).toEqual({ gold: [0, 0], exp: [0, 0] })
+    expect(rewardForScene(fake)).toEqual({ money: [0, 0], exp: [0, 0] })
   })
 
   it('boots 词条唯一组合 ≥5，支撑神品 5 条词缀抽满（P0-3）', () => {

@@ -285,7 +285,7 @@
       "weapon:中型",
       "weapon:重型"
     ],
-    "school": "金行道",
+    "school": "破军",
     "weight": 30,
     "rarity": 3,
     "description": "攻击加成 +6%~15%"
@@ -303,7 +303,7 @@
       "weapon:轻型",
       "armor:皮甲"
     ],
-    "school": "灵猴道",
+    "school": "连战",
     "weight": 30,
     "rarity": 2,
     "description": "连击率 +5%~15%"
@@ -321,7 +321,7 @@
       "weapon:轻型",
       "boots"
     ],
-    "school": "灵猴道",
+    "school": "连战",
     "weight": 30,
     "rarity": 2,
     "description": "速度 +4%~10%"
@@ -339,7 +339,7 @@
       "weapon:轻型",
       "armor:皮甲"
     ],
-    "school": "灵猴道",
+    "school": "幻影",
     "weight": 20,
     "rarity": 3,
     "description": "闪避率 +3%~8%"
@@ -357,7 +357,7 @@
       "armor",
       "charm"
     ],
-    "school": "磐石道",
+    "school": "不动",
     "weight": 30,
     "rarity": 2,
     "description": "防御加成 +8%~18%"
@@ -376,7 +376,7 @@
       "charm",
       "helmet"
     ],
-    "school": "磐石道",
+    "school": "不动",
     "weight": 30,
     "rarity": 3,
     "description": "气血 +8%~20%"
@@ -394,7 +394,7 @@
       "armor:铠甲",
       "helmet"
     ],
-    "school": "磐石道",
+    "school": "不动",
     "weight": 20,
     "rarity": 3,
     "description": "反弹伤害 +3%~10%"

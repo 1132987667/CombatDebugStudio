@@ -60,9 +60,9 @@
       <button
         type="button"
         class="xy-btn xy-btn--ghost"
-        :disabled="spentPoints === 0 || resetCost() > player.currency.copper"
+        :disabled="spentPoints === 0 || resetCost() > player.currency.money"
         @click="doReset"
-      >重置天赋树（{{ resetCost() }} 铜钱）</button>
+      >重置天赋树（{{ resetCost() }} 金钱）</button>
     </section>
   </div>
 </template>
@@ -79,6 +79,7 @@ import {
 } from '../xiyouData'
 import type { SchoolsNode } from '../types'
 import { RESET_PRICE_PER_POINT } from '@/presentation/stores/cultivateStore'
+import { saveManager } from '../save-bridge'
 
 const player = usePlayerStore()
 const notification = useNotificationStore()
@@ -342,7 +343,8 @@ function onCanvasClick(e: MouseEvent): void {
   const cost = node.cost?.[0] ?? 1
   skillPoints.spent += cost
   node.learned = true
-  notification.toast(`已解锁「${node.name}」`, 'success')
+  saveManager.autoSave()
+  notification.toast(`已解锁「${node.name}」${node.skillIds?.length ? '，习得新技能' : ''}`, 'success')
   drawCanvas()
 }
 
@@ -411,17 +413,17 @@ function resetCost(): number {
 function doReset(): void {
   const cost = resetCost()
   if (cost <= 0) return
-  if (!confirm(`确认重置天赋树？消耗 ${cost} 铜钱，全部节点清空，技能点返还。`)) return
-  if (player.currency.copper < cost) {
-    notification.toast('铜钱不足', 'error')
+  if (!confirm(`确认重置天赋树？消耗 ${cost} 金钱，全部节点清空，技能点返还。`)) return
+  if (player.currency.money < cost) {
+    notification.toast('金钱不足', 'error')
     return
   }
-  player.currency.copper -= cost
+  player.currency.money -= cost
   for (const l of schoolsLayers) {
     for (const n of l.nodes) n.learned = false
   }
   skillPoints.spent = 0
-  notification.toast(`天赋树已重置，消耗 ${cost} 铜钱`, 'success')
+  notification.toast(`天赋树已重置，消耗 ${cost} 金钱`, 'success')
   drawCanvas()
 }
 

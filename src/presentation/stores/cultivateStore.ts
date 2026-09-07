@@ -62,13 +62,14 @@ export const useCultivateStore = defineStore('cultivate', () => {
   /** 节点是否已解锁 */
   const isNodeUnlocked = (nodeId: string): boolean => !!skillNodeMap.get(nodeId)?.learned
 
-  /** 节点前置判定：同分支上一层已点亮（第 1 层无前置，允许跨流派直接点亮） */
+  /** 节点前置判定：同分支上一层任一节点已点亮（第 1 层无前置；上层可有被动+属性多节点） */
   function prereqMet(node: XiyouSkillNode): boolean {
     if (node.tier === 1) return true
-    const prev = schools
-      .find((s) => s.id === node.schoolId)
-      ?.nodes.find((p) => p.branch === node.branch && p.tier === node.tier - 1)
-    return prev ? prev.learned === true : false
+    return (
+      schools
+        .find((s) => s.id === node.schoolId)
+        ?.nodes.some((p) => p.branch === node.branch && p.tier === node.tier - 1 && p.learned === true) ?? false
+    )
   }
 
   /** 已解锁大招数量（跨流派合计，设计稿 §6.3 上限 2） */
@@ -113,8 +114,8 @@ export const useCultivateStore = defineStore('cultivate', () => {
   /** 洗点：消耗 500×已分配点数 金钱，清空全部解锁节点与装备槽，返还技能点 */
   function resetNodes(): boolean {
     const cost = RESET_PRICE_PER_POINT * skillPoints.spent
-    if (cost <= 0 || player.currency.copper < cost) return false
-    player.currency.copper -= cost
+    if (cost <= 0 || player.currency.money < cost) return false
+    player.currency.money -= cost
     for (const s of schools) for (const nd of s.nodes) nd.learned = false
     skillPoints.spent = 0
     clearEquipped()

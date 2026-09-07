@@ -178,33 +178,69 @@ export interface DamageTraceStep {
 }
 
 export interface DamageTraceSample {
-  /** 输入面板：攻击方/目标/技能关键参数 */
-  inputs: { group: string; label: string; value: string }[]
+  /** 输入面板：攻击方/目标/技能关键参数（key 供表单回写 what-if 输入） */
+  inputs: { group: string; label: string; key: keyof DamageTraceInputs; value: string }[]
   steps: DamageTraceStep[]
   result: { rawDamage: number; finalDamage: number; isCritical: boolean; isMiss: boolean }
 }
 
-/** 一条覆盖 来源加成 + 目标减免 + 防御(减法) + 免伤 + 易伤 的确定性演算（无暴击/闪避随机）。 */
-export function buildSampleDamageTrace(): DamageTraceSample {
+/** 演算输入（what-if 计算器表单字段；百分比字段以数值表示 20 = +20%） */
+export interface DamageTraceInputs {
+  /** 技能威力 baseValue */
+  baseValue: number
+  /** 攻击力（extraValues ratio 0.5 关联） */
+  attack: number
+  /** 伤害提升% */
+  damageBoost: number
+  /** 物理技能加成% */
+  physicalSkillDmgBonus: number
+  /** 目标防御 */
+  defense: number
+  /** 技能减免% */
+  skillDmgReduction: number
+  /** 免伤率% */
+  damageReduction: number
+  /** 易伤% */
+  vulnerability: number
+  /** 目标当前气血（低血量判定/展示用） */
+  targetCurrentHealth: number
+}
+
+export const DAMAGE_TRACE_INPUT_DEFAULTS: DamageTraceInputs = {
+  baseValue: 600,
+  attack: 100,
+  damageBoost: 20,
+  physicalSkillDmgBonus: 15,
+  defense: 120,
+  skillDmgReduction: 10,
+  damageReduction: 8,
+  vulnerability: 15,
+  targetCurrentHealth: 800,
+}
+
+/** 一条覆盖 来源加成 + 目标减免 + 防御(减法) + 免伤 + 易伤 的确定性演算（无暴击/闪避随机）。
+ * 传入部分输入即 what-if 演算（FormulasView 计算器表单），缺省用默认样本值。 */
+export function buildSampleDamageTrace(override?: Partial<DamageTraceInputs>): DamageTraceSample {
+  const input = { ...DAMAGE_TRACE_INPUT_DEFAULTS, ...override }
   const source = makeSampleEntity('attacker', {
-    attack: 100,
+    attack: input.attack,
     critRate: 0,
-    damageBoost: 20,
-    physicalSkillDmgBonus: 15,
+    damageBoost: input.damageBoost,
+    physicalSkillDmgBonus: input.physicalSkillDmgBonus,
   })
   const target = makeSampleEntity('defender', {
-    defense: 120,
-    skillDmgReduction: 10,
-    damageReduction: 8,
-    vulnerability: 15,
-  }, { maxHealth: 1000, currentHealth: 800 })
+    defense: input.defense,
+    skillDmgReduction: input.skillDmgReduction,
+    damageReduction: input.damageReduction,
+    vulnerability: input.vulnerability,
+  }, { maxHealth: 1000, currentHealth: input.targetCurrentHealth })
 
   const skillStep = {
     type: 'deal_damage',
     damageCategory: DamageCategory.PHYSICAL,
     attackType: AttackType.SKILL,
     calculation: {
-      baseValue: 600,
+      baseValue: input.baseValue,
       extraValues: [{ attribute: 'attack', ratio: 0.5 }],
     },
   } as unknown as ExtendedSkillStep
@@ -216,14 +252,14 @@ export function buildSampleDamageTrace(): DamageTraceSample {
 
   return {
     inputs: [
-      { group: '攻击方', label: '技能威力 baseValue', value: '600' },
-      { group: '攻击方', label: 'attack（extra 0.5）', value: '100' },
-      { group: '攻击方', label: '伤害提升', value: '20%' },
-      { group: '攻击方', label: '物理技能加成', value: '15%' },
-      { group: '目标', label: '防御', value: '120' },
-      { group: '目标', label: '技能减免', value: '10%' },
-      { group: '目标', label: '免伤率', value: '8%' },
-      { group: '目标', label: '受伤增加（易伤）', value: '15%' },
+      { group: '攻击方', label: '技能威力 baseValue', key: 'baseValue', value: String(input.baseValue) },
+      { group: '攻击方', label: 'attack（extra 0.5）', key: 'attack', value: String(input.attack) },
+      { group: '攻击方', label: '伤害提升 %', key: 'damageBoost', value: String(input.damageBoost) },
+      { group: '攻击方', label: '物理技能加成 %', key: 'physicalSkillDmgBonus', value: String(input.physicalSkillDmgBonus) },
+      { group: '目标', label: '防御', key: 'defense', value: String(input.defense) },
+      { group: '目标', label: '技能减免 %', key: 'skillDmgReduction', value: String(input.skillDmgReduction) },
+      { group: '目标', label: '免伤率 %', key: 'damageReduction', value: String(input.damageReduction) },
+      { group: '目标', label: '受伤增加（易伤）%', key: 'vulnerability', value: String(input.vulnerability) },
     ],
     steps: traceSteps,
     result: {

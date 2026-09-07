@@ -419,7 +419,7 @@
       "name": "金钱",
       "type": "货币",
       "rarity": 1,
-      "source": "通用货币（原铜钱 1:1、银两 ×100、灵石 ×1000 换算）",
+      "source": "通用货币（游戏内唯一基础货币，战斗/任务/出售产出）",
       "description": "游戏中的通用货币，可用于购买物品、制作装备等",
       "usage": "购买与制作消耗"
     },
@@ -1493,7 +1493,7 @@
       "source": "关卡1-4 灵猴妖掉落",
       "description": "灵猴的毛发，蕴含灵性",
       "value": 8,
-      "usage": "灵猴道专属词条材料"
+      "usage": "连战专属词条材料"
     },
     {
       "id": "mat_lingtaohe",
@@ -1550,7 +1550,7 @@
       "name": "止血草",
       "type": "草药",
       "rarity": 1,
-      "source": "药园种植（灵韵20）",
+      "source": "药园种植（仙缘20）",
       "description": "普通的止血草药",
       "value": 8,
       "usage": "炼制疗伤丹"
@@ -1560,7 +1560,7 @@
       "name": "清心叶",
       "type": "草药",
       "rarity": 1,
-      "source": "药园种植（灵韵20）",
+      "source": "药园种植（仙缘20）",
       "description": "清心凝神的灵叶",
       "value": 8,
       "usage": "炼制解毒散"
@@ -1570,7 +1570,7 @@
       "name": "水灵参",
       "type": "草药",
       "rarity": 2,
-      "source": "药园种植（灵韵60）",
+      "source": "药园种植（仙缘60）",
       "description": "蕴含水灵气的参",
       "value": 20,
       "usage": "炼制大疗伤丹/聚气丹"
@@ -1580,7 +1580,7 @@
       "name": "铁皮石斛",
       "type": "草药",
       "rarity": 2,
-      "source": "药园种植（灵韵60）",
+      "source": "药园种植（仙缘60）",
       "description": "质地如铁的石斛",
       "value": 20,
       "usage": "炼制铁壁丹/固本丹"
@@ -1590,7 +1590,7 @@
       "name": "赤血藤",
       "type": "草药",
       "rarity": 3,
-      "source": "药园种植（灵韵120）",
+      "source": "药园种植（仙缘120）",
       "description": "赤红如血的灵藤",
       "value": 40,
       "usage": "炼制强体丹/锐锋丹"
@@ -1600,7 +1600,7 @@
       "name": "紫猴花",
       "type": "草药",
       "rarity": 3,
-      "source": "药园种植（灵韵120）",
+      "source": "药园种植（仙缘120）",
       "description": "紫色灵猴栖息的奇花",
       "value": 40,
       "usage": "炼制疾风丹/轻身丹"
@@ -1610,7 +1610,7 @@
       "name": "幽兰草",
       "type": "草药",
       "rarity": 4,
-      "source": "药园种植（灵韵240）",
+      "source": "药园种植（仙缘240）",
       "description": "幽谷深兰的灵草",
       "value": 80,
       "usage": "炼制净化丹"
@@ -1620,7 +1620,7 @@
       "name": "鬼面菇",
       "type": "草药",
       "rarity": 4,
-      "source": "药园种植（灵韵240）",
+      "source": "药园种植（仙缘240）",
       "description": "状如鬼面的毒菇",
       "value": 80,
       "usage": "炼制破障丹/凝血丹"
@@ -1630,7 +1630,7 @@
       "name": "九叶灵芝",
       "type": "草药",
       "rarity": 5,
-      "source": "药园种植（灵韵600）",
+      "source": "药园种植（仙缘600）",
       "description": "九叶灵芝，千年一遇",
       "value": 200,
       "usage": "炼制九转金丹/超疗伤丹"
@@ -1701,7 +1701,7 @@
       "type": "BOSS材料",
       "rarity": 3,
       "source": "关卡2-5 河伯首杀",
-      "description": "河伯沧浪凝成的灵石",
+      "description": "河伯沧浪凝成的玉石",
       "value": 200,
       "usage": "二阶BOSS装备合成/洗练"
     },
@@ -2098,12 +2098,12 @@
     {
       "id": "misc_lingshi",
       "name": "灵石",
-      "type": "货币",
+      "type": "杂物",
       "rarity": 3,
       "source": "BOSS掉落/成就/任务",
-      "description": "高级货币，购买稀有物品",
+      "description": "蕴含灵气的晶石，可售换取大笔金钱",
       "value": 1000,
-      "usage": "高级交易"
+      "usage": "出售"
     },
     {
       "id": "misc_shougu",
@@ -2127,11 +2127,11 @@
     },
     {
       "id": "misc_gutong",
-      "name": "古铜钱",
+      "name": "古钱",
       "type": "杂物",
       "rarity": 2,
       "source": "隐藏BOSS朱刚鬣掉落(50%)",
-      "description": "高价杂物，可出售",
+      "description": "前朝古钱，高价杂物，可出售换取金钱",
       "value": 50,
       "usage": "出售"
     },
@@ -2168,101 +2168,11 @@
       "value": 3000
     },
     {
-      "id": "seed_zhixuecao",
-      "name": "止血草种子",
-      "type": "种子",
-      "rarity": 1,
-      "source": "坊市购买20铜钱/关卡1敌人掉落(10%)/初始赠送×3",
-      "description": "止血草种子，种植可得止血草",
-      "value": 20,
-      "usage": "药园种植，炼制疗伤丹"
-    },
-    {
-      "id": "seed_qingxinye",
-      "name": "清心叶种子",
-      "type": "种子",
-      "rarity": 1,
-      "source": "坊市购买20铜钱/关卡1敌人掉落(10%)/初始赠送×3",
-      "description": "清心叶种子，种植可得清心叶",
-      "value": 20,
-      "usage": "药园种植，炼制回元丹"
-    },
-    {
-      "id": "seed_shuilingshen",
-      "name": "水灵参种子",
-      "type": "种子",
-      "rarity": 2,
-      "source": "坊市购买60铜钱/通关场景2解锁/关卡2敌人掉落(10%)",
-      "description": "水灵参种子，种植可得水灵参",
-      "value": 60,
-      "usage": "药园种植，炼制大疗伤丹/培元丹"
-    },
-    {
-      "id": "seed_tiepishihu",
-      "name": "铁皮石斛种子",
-      "type": "种子",
-      "rarity": 2,
-      "source": "坊市购买60铜钱/通关场景2解锁/关卡2敌人掉落(10%)",
-      "description": "铁皮石斛种子，种植可得铁皮石斛",
-      "value": 60,
-      "usage": "药园种植，炼制铁壁丹/固本丹"
-    },
-    {
-      "id": "seed_chixueteng",
-      "name": "赤血藤种子",
-      "type": "种子",
-      "rarity": 3,
-      "source": "坊市购买120铜钱/通关场景3解锁/关卡3敌人掉落(10%)",
-      "description": "赤血藤种子，种植可得赤血藤",
-      "value": 120,
-      "usage": "药园种植，炼制强体丹/锐锋丹"
-    },
-    {
-      "id": "seed_zihouhua",
-      "name": "紫猴花种子",
-      "type": "种子",
-      "rarity": 3,
-      "source": "坊市购买120铜钱/通关场景3解锁/关卡3敌人掉落(10%)",
-      "description": "紫猴花种子，种植可得紫猴花",
-      "value": 120,
-      "usage": "药园种植，炼制疾风丹/轻身丹"
-    },
-    {
-      "id": "seed_youlancao",
-      "name": "幽兰草种子",
-      "type": "种子",
-      "rarity": 4,
-      "source": "坊市购买240铜钱/通关场景4解锁/关卡4敌人掉落(10%)",
-      "description": "幽兰草种子，种植可得幽兰草",
-      "value": 240,
-      "usage": "药园种植，炼制净化丹"
-    },
-    {
-      "id": "seed_guimiangu",
-      "name": "鬼面菇种子",
-      "type": "种子",
-      "rarity": 4,
-      "source": "坊市购买240铜钱/通关场景4解锁/关卡4敌人掉落(10%)",
-      "description": "鬼面菇种子，种植可得鬼面菇",
-      "value": 240,
-      "usage": "药园种植，炼制破障丹/凝血丹"
-    },
-    {
-      "id": "seed_jiuyelingzhi",
-      "name": "九叶灵芝种子",
-      "type": "种子",
-      "rarity": 5,
-      "source": "坊市购买600铜钱/通关场景5解锁/关卡5敌人掉落(10%)",
-      "description": "九叶灵芝种子，种植可得九叶灵芝",
-      "value": 600,
-      "usage": "药园种植，炼制九转金丹/超疗伤丹"
-    },
-    {
       "id": "pet_aptitude_pill",
       "name": "资质丹",
       "type": "宠物养成",
       "rarity": 3,
-      "source": "炼丹(水灵参×2+地脉石乳×1)/商店300铜钱/场景BOSS掉落(15%)",
+      "source": "炼丹(水灵参×2+地脉石乳×1)/商店300金钱/场景BOSS掉落(15%)",
       "description": "凝天地灵机而成的丹药，喂食宠物坐骑可提升资质",
       "value": 200,
       "usage": "宠物坐骑资质提升 +2（上限500）"
@@ -2302,7 +2212,7 @@
       "name": "灵尘",
       "type": "功能道具",
       "rarity": 3,
-      "source": "无尽塔15层起每5层×2/妖王及隐藏BOSS掉落(20%)/坊市500铜钱",
+      "source": "无尽塔15层起每5层×2/妖王及隐藏BOSS掉落(20%)/坊市500金钱",
       "description": "法宝神器强化所用的灵性粉尘",
       "value": 150,
       "usage": "法宝/神器强化材料（必成，每级基础属性+4%）"

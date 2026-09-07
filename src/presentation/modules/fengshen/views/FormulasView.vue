@@ -38,21 +38,25 @@
 
     <div class="fs-callout">{{ L4_NOTE }}</div>
 
-    <!-- ===== 二、引擎实例演算 ===== -->
+    <!-- ===== 二、引擎实例演算（what-if 计算器） ===== -->
     <div class="fs-block">
       <div class="fs-block-title">
         实例演算
-        <span class="fs-zone-desc">现场调用 DamageCalculator（默认关闭暴击/闪避随机，结果可复算）</span>
+        <span class="fs-zone-desc">现场调用 DamageCalculator（默认关闭暴击/闪避随机，结果可复算）· 修改任一输入即时重演</span>
       </div>
 
       <div class="fs-trace-inputs">
-        <div v-for="g in traceInputs" :key="g.group" class="fs-trace-input-group">
+        <div v-for="g in editableInputs" :key="g.group" class="fs-trace-input-group">
           <div class="fs-trace-input-title">{{ g.group }}</div>
-          <div v-for="item in g.items" :key="item.label" class="fs-trace-input-row">
+          <div v-for="item in g.items" :key="item.key" class="fs-trace-input-row">
             <span class="fs-trace-input-label">{{ item.label }}</span>
-            <span class="fs-cell-num">{{ item.value }}</span>
+            <TacticalInput type="number" size="md" :model-value="calcInputs[item.key]"
+              :aria-label="item.label" @update:model-value="setInput(item.key, $event)" />
           </div>
         </div>
+      </div>
+      <div class="fs-form-hint">
+        <Button size="small" @click="resetInputs">恢复默认演算</Button>
       </div>
 
       <div class="fs-table-wrap">
@@ -106,16 +110,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import type { AttributeValueTier } from '@/domain/fengshen/types'
 import {
   FORMULA_ZONES,
   DAMAGE_FORMULA_STEPS,
   L4_NOTE,
   buildSampleDamageTrace,
+  DAMAGE_TRACE_INPUT_DEFAULTS,
+  type DamageTraceInputs,
   type FormulaStep,
 } from '@/domain/fengshen/damage-formula-reference'
 import { getCoreAttributes, CORE_CATEGORY_ORDER, type AttributeDictEntry } from '@/domain/fengshen/attribute-dictionary'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 
 const TIER_CLASSES: Record<AttributeValueTier, string> = {
   L1: 'fs-tag-aura',
@@ -145,16 +152,30 @@ const zones = computed(() =>
   })).filter((z) => z.steps.length > 0),
 )
 
-const trace = buildSampleDamageTrace()
-const traceInputs = computed(() => {
+/** what-if 演算输入：表单驱动，任一改动即时重演（trace 保持引擎实算，非 JS 复刻） */
+const calcInputs = reactive<DamageTraceInputs>({ ...DAMAGE_TRACE_INPUT_DEFAULTS })
+
+function setInput(key: keyof DamageTraceInputs, v: unknown): void {
+  const n = Number(v)
+  calcInputs[key] = Number.isFinite(n) ? n : 0
+}
+
+function resetInputs(): void {
+  Object.assign(calcInputs, DAMAGE_TRACE_INPUT_DEFAULTS)
+}
+
+const trace = computed(() => buildSampleDamageTrace(calcInputs))
+
+/** 表单分组渲染顺序（沿 trace.inputs 的分组语义） */
+const editableInputs = computed(() => {
   const order: string[] = []
-  const map = new Map<string, { label: string; value: string }[]>()
-  for (const row of trace.inputs) {
+  const map = new Map<string, { key: keyof DamageTraceInputs; label: string }[]>()
+  for (const row of trace.value.inputs) {
     if (!map.has(row.group)) {
       map.set(row.group, [])
       order.push(row.group)
     }
-    map.get(row.group)!.push({ label: row.label, value: row.value })
+    map.get(row.group)!.push({ key: row.key, label: row.label })
   }
   return order.map((group) => ({ group, items: map.get(group)! }))
 })

@@ -47,7 +47,7 @@
         <span class="xy-cave-mat" :class="{ 'is-low': !hasMat('locked') }" v-if="washModes.locked">
           锁词条符 ×1（持 {{ matCount('locked') }}）
         </span>
-        <span class="xy-cave-mat">铜钱 {{ WASH_COST_GOLD }}（每次）</span>
+        <span class="xy-cave-mat">金钱 {{ WASH_COST_GOLD }}（每次）</span>
       </div>
 
       <div class="xy-cave-wash-actions">
@@ -133,7 +133,7 @@ function matCount(mode: WashMode): number {
 function hasMat(mode: WashMode): boolean {
   return matCount(mode) >= 1
 }
-const hasGold = computed(() => pack.currency.copper >= WASH_COST_GOLD)
+const hasGold = computed(() => pack.currency.money >= WASH_COST_GOLD)
 
 function canWash(mode: WashMode): boolean {
   if (!gear.value || !washModes.value[mode] || !hasGold.value || !hasMat(mode)) return false

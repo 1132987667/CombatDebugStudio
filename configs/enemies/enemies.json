@@ -33,9 +33,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       5,
       15
     ],
@@ -79,9 +87,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       5,
       15
     ],
@@ -125,9 +141,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       6,
       18
     ],
@@ -177,9 +201,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.2
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       15,
       30
     ],
@@ -223,9 +255,17 @@
       {
         "itemId": "mat_taomu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       7,
       20
     ],
@@ -269,9 +309,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.2
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       7,
       20
     ],
@@ -315,9 +363,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       8,
       22
     ],
@@ -367,9 +423,17 @@
       {
         "itemId": "mat_taomu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       18,
       35
     ],
@@ -413,9 +477,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       9,
       24
     ],
@@ -459,9 +531,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       9,
       24
     ],
@@ -505,9 +585,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       10,
       26
     ],
@@ -557,9 +645,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.25
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       20,
       40
     ],
@@ -604,9 +700,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       11,
       28
     ],
@@ -650,9 +754,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       11,
       28
     ],
@@ -696,9 +808,17 @@
       {
         "itemId": "mat_taomu",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       12,
       30
     ],
@@ -749,9 +869,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       25,
       45
     ],
@@ -795,9 +923,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       13,
       32
     ],
@@ -841,9 +977,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       13,
       32
     ],
@@ -887,9 +1031,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       14,
       34
     ],
@@ -939,9 +1091,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_zhixuecao",
+        "probability": 0.04
+      },
+      {
+        "itemId": "mat_qingxinye",
+        "probability": 0.04
       }
     ],
-    "gold": [
+    "money": [
       28,
       50
     ],
@@ -989,9 +1149,17 @@
       {
         "itemId": "mat_songmu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       15,
       36
     ],
@@ -1043,9 +1211,17 @@
       {
         "itemId": "mat_qinggang",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       15,
       36
     ],
@@ -1093,9 +1269,17 @@
       {
         "itemId": "mat_songmu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       16,
       38
     ],
@@ -1141,9 +1325,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       30,
       55
     ],
@@ -1191,9 +1383,17 @@
       {
         "itemId": "mat_songmu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       17,
       40
     ],
@@ -1241,9 +1441,17 @@
       {
         "itemId": "mat_qinggang",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       17,
       40
     ],
@@ -1292,9 +1500,17 @@
       {
         "itemId": "mat_songmu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       18,
       42
     ],
@@ -1344,9 +1560,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       32,
       58
     ],
@@ -1390,9 +1614,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       19,
       44
     ],
@@ -1436,9 +1668,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       19,
       44
     ],
@@ -1482,9 +1722,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       20,
       46
     ],
@@ -1538,9 +1786,17 @@
       {
         "itemId": "mat_xiongpi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       35,
       60
     ],
@@ -1584,9 +1840,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       21,
       48
     ],
@@ -1631,9 +1895,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       21,
       48
     ],
@@ -1678,9 +1950,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       22,
       50
     ],
@@ -1730,9 +2010,17 @@
       {
         "itemId": "mat_tiejing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       38,
       65
     ],
@@ -1776,9 +2064,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       23,
       52
     ],
@@ -1826,9 +2122,17 @@
       {
         "itemId": "mat_qinggang",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       23,
       52
     ],
@@ -1872,9 +2176,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       24,
       54
     ],
@@ -1932,9 +2244,17 @@
       {
         "itemId": "mat_xiongpi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_shuilingshen",
+        "probability": 0.03
+      },
+      {
+        "itemId": "mat_tiepishihu",
+        "probability": 0.03
       }
     ],
-    "gold": [
+    "money": [
       40,
       70
     ],
@@ -1974,9 +2294,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.7
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       25,
       56
     ],
@@ -2020,9 +2348,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.2
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       25,
       56
     ],
@@ -2062,9 +2398,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       26,
       58
     ],
@@ -2110,9 +2454,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       42,
       75
     ],
@@ -2152,9 +2504,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       27,
       60
     ],
@@ -2195,9 +2555,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       27,
       60
     ],
@@ -2238,9 +2606,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       28,
       62
     ],
@@ -2286,9 +2662,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       45,
       80
     ],
@@ -2328,9 +2712,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.7
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       29,
       64
     ],
@@ -2370,9 +2762,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       29,
       64
     ],
@@ -2412,9 +2812,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.6
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       30,
       66
     ],
@@ -2460,9 +2868,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       48,
       85
     ],
@@ -2503,9 +2919,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       31,
       68
     ],
@@ -2545,9 +2969,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       31,
       68
     ],
@@ -2587,9 +3019,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       32,
       70
     ],
@@ -2635,9 +3075,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       50,
       90
     ],
@@ -2677,9 +3125,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.6
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       33,
       72
     ],
@@ -2719,9 +3175,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.8
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       33,
       72
     ],
@@ -2762,9 +3226,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.6
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       34,
       74
     ],
@@ -2814,9 +3286,17 @@
       {
         "itemId": "enh_stone",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_chixueteng",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_zihouhua",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       52,
       95
     ],
@@ -2860,9 +3340,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       35,
       76
     ],
@@ -2906,9 +3394,17 @@
       {
         "itemId": "mat_taomu",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       35,
       76
     ],
@@ -2952,9 +3448,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       36,
       78
     ],
@@ -3000,9 +3504,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       55,
       100
     ],
@@ -3046,9 +3558,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       37,
       80
     ],
@@ -3092,9 +3612,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       37,
       80
     ],
@@ -3138,9 +3666,17 @@
       {
         "itemId": "mat_danshuiyu",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       38,
       82
     ],
@@ -3186,9 +3722,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       58,
       105
     ],
@@ -3232,9 +3776,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       39,
       84
     ],
@@ -3278,9 +3830,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       39,
       84
     ],
@@ -3324,9 +3884,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       40,
       86
     ],
@@ -3372,9 +3940,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       60,
       110
     ],
@@ -3418,9 +3994,17 @@
       {
         "itemId": "mat_taomu",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       41,
       88
     ],
@@ -3461,9 +4045,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.6
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       41,
       88
     ],
@@ -3504,9 +4096,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.6
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       42,
       90
     ],
@@ -3552,9 +4152,17 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       62,
       115
     ],
@@ -3598,9 +4206,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       43,
       92
     ],
@@ -3644,9 +4260,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       43,
       92
     ],
@@ -3687,9 +4311,17 @@
       {
         "itemId": "mat_taomu",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       44,
       94
     ],
@@ -3735,9 +4367,17 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_youlancao",
+        "probability": 0.02
+      },
+      {
+        "itemId": "mat_guimiangu",
+        "probability": 0.02
       }
     ],
-    "gold": [
+    "money": [
       65,
       120
     ],
@@ -3777,9 +4417,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.6
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       45,
       96
     ],
@@ -3823,9 +4467,13 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       45,
       96
     ],
@@ -3866,9 +4514,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       46,
       98
     ],
@@ -3914,9 +4566,13 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       68,
       125
     ],
@@ -3956,9 +4612,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.6
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       47,
       100
     ],
@@ -4002,9 +4662,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       47,
       100
     ],
@@ -4045,9 +4709,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       48,
       102
     ],
@@ -4093,9 +4761,13 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       70,
       130
     ],
@@ -4135,9 +4807,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       49,
       104
     ],
@@ -4177,9 +4853,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.4
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       49,
       104
     ],
@@ -4220,9 +4900,13 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       50,
       106
     ],
@@ -4268,9 +4952,13 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       72,
       135
     ],
@@ -4310,9 +4998,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       51,
       108
     ],
@@ -4356,9 +5048,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       51,
       108
     ],
@@ -4399,9 +5095,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       52,
       110
     ],
@@ -4447,9 +5147,13 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       75,
       140
     ],
@@ -4489,9 +5193,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.5
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       53,
       112
     ],
@@ -4535,9 +5243,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       53,
       112
     ],
@@ -4578,9 +5290,13 @@
       {
         "itemId": "mat_cushi",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       54,
       114
     ],
@@ -4626,9 +5342,13 @@
       {
         "itemId": "mat_tongjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_jiuyelingzhi",
+        "probability": 0.01
       }
     ],
-    "gold": [
+    "money": [
       78,
       145
     ],
@@ -4685,7 +5405,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       50,
       80
     ],
@@ -4755,7 +5475,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       80,
       120
     ],
@@ -4820,7 +5540,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       110,
       160
     ],
@@ -4885,7 +5605,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       140,
       200
     ],
@@ -4951,7 +5671,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       170,
       240
     ],
@@ -5033,7 +5753,7 @@
         "probability": 0.2
       }
     ],
-    "gold": [
+    "money": [
       100,
       150
     ],
@@ -5120,7 +5840,7 @@
         "probability": 0.2
       }
     ],
-    "gold": [
+    "money": [
       150,
       220
     ],
@@ -5207,7 +5927,7 @@
         "probability": 0.3
       }
     ],
-    "gold": [
+    "money": [
       200,
       300
     ],
@@ -5291,7 +6011,7 @@
         "probability": 0.2
       }
     ],
-    "gold": [
+    "money": [
       250,
       380
     ],
@@ -5378,7 +6098,7 @@
         "probability": 0.2
       }
     ],
-    "gold": [
+    "money": [
       300,
       450
     ],
@@ -5458,7 +6178,7 @@
         "probability": 0.1
       }
     ],
-    "gold": [
+    "money": [
       400,
       600
     ],
@@ -5543,7 +6263,7 @@
         "probability": 0.1
       }
     ],
-    "gold": [
+    "money": [
       400,
       600
     ],
@@ -5628,7 +6348,7 @@
         "probability": 0.1
       }
     ],
-    "gold": [
+    "money": [
       400,
       600
     ],
@@ -5714,7 +6434,7 @@
         "probability": 0.1
       }
     ],
-    "gold": [
+    "money": [
       400,
       600
     ],
@@ -5799,7 +6519,7 @@
         "probability": 0.1
       }
     ],
-    "gold": [
+    "money": [
       400,
       600
     ],
@@ -5893,7 +6613,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       500,
       750
     ],
@@ -5987,7 +6707,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       500,
       750
     ],
@@ -6081,7 +6801,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       500,
       750
     ],
@@ -6171,7 +6891,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       500,
       750
     ],
@@ -6261,7 +6981,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       500,
       750
     ],
@@ -6346,7 +7066,7 @@
         "probability": 0.15
       }
     ],
-    "gold": [
+    "money": [
       800,
       1200
     ],
@@ -6427,7 +7147,7 @@
         "probability": 0.1
       }
     ],
-    "gold": [
+    "money": [
       800,
       1200
     ],
@@ -6512,7 +7232,7 @@
         "probability": 0.15
       }
     ],
-    "gold": [
+    "money": [
       800,
       1200
     ],
@@ -6604,7 +7324,7 @@
         "probability": 0.5
       }
     ],
-    "gold": [
+    "money": [
       2000,
       3000
     ],

@@ -1048,8 +1048,9 @@
 
 .xy-garden-seed {
   display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--xy-ink-line);
   border-radius: 2px;
@@ -1065,7 +1066,7 @@
     outline-offset: 2px;
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: var(--xy-ink-2);
     color: var(--xy-ink-1);
   }
@@ -1076,6 +1077,12 @@
     color: var(--xy-seal);
     font-weight: var(--font-weight-bold);
   }
+
+  /* 作物不可种（灵韵/存量不足）：置灰 */
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
 .xy-garden-seed__name {
@@ -1083,9 +1090,35 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.xy-garden-seed__yield {
+.xy-garden-seed__stock {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+  font-weight: var(--font-weight-normal);
+}
+
+.xy-garden-seed__cost {
   font-size: var(--font-size-md);
   color: var(--xy-gold);
+  letter-spacing: 1px;
+}
+
+/* 灵韵资源条（催熟消耗，战斗胜利获得） */
+.xy-garden-bank {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.xy-garden-bank__value {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--xy-gold);
+}
+
+.xy-garden-bank__hint {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
 }
 
 .xy-garden-grid {
@@ -1134,6 +1167,12 @@
 
   /* 冷却中：置灰不可点 */
   &.is-cooling {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* 不可交互（冷却 / 作物不可种）：置灰 */
+  &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }

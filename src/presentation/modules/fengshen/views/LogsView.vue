@@ -9,8 +9,15 @@
     <div class="fs-toolbar">
       <TacticalSelect v-model="tableFilter" size="md" :options="tableOptions" />
       <TacticalSelect v-model="opFilter" size="md" :options="opOptions" />
+      <TacticalInput :model-value="keyword" placeholder="按实体名 / ID 搜索…" aria-label="搜索日志实体"
+        @update:model-value="keyword = String($event ?? '')">
+        <template #icon>
+          <IconSearch />
+        </template>
+      </TacticalInput>
       <span class="fs-spacer"></span>
       <span class="fs-version">共 {{ filtered.length }} 条</span>
+      <Button size="small" :disabled="!filtered.length" title="导出当前筛选结果为 CSV" @click="exportCsv">导出 CSV</Button>
     </div>
 
     <div v-if="paged.length" class="fs-timeline">
@@ -51,18 +58,22 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import IconSearch from '~icons/app/search'
 
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import type { OperationKind, OperationLogEntry } from '@/domain/fengshen/types'
 import type { FieldDiff } from '@/shared/utils/entity-diff'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
+import { downloadCsv } from '@/shared/utils/csv'
 
 const PAGE_SIZE = 50
 
 const store = useFengshenStore()
 const tableFilter = ref('')
 const opFilter = ref('')
+const keyword = ref('')
 const page = ref(1)
 const expandedId = ref<string | null>(null)
 
@@ -119,23 +130,31 @@ function tableLabel(table: string): string {
 }
 
 const filtered = computed(() =>
-  store.logs.filter(
-    (l) =>
-      (!tableFilter.value || l.table === tableFilter.value) &&
-      (!opFilter.value || l.op === opFilter.value),
-  ),
+  store.logs.filter((l) => {
+    if (tableFilter.value && l.table !== tableFilter.value) return false
+    if (opFilter.value && l.op !== opFilter.value) return false
+    const kw = keyword.value.trim().toLowerCase()
+    if (!kw) return true
+    return [l.entityName, l.entityId, l.table].some((v) => v != null && String(v).toLowerCase().includes(kw))
+  }),
 )
 
 const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)))
 const paged = computed(() => filtered.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
 
 // 筛选变化回到首页；日志刷新后页码越界兜底
-watch([tableFilter, opFilter], () => {
+watch([tableFilter, opFilter, keyword], () => {
   page.value = 1
 })
 watch(pages, (p) => {
   if (page.value > p) page.value = p
 })
+
+/** 导出当前筛选结果（detail 为字段级 diff JSON，保留便于离线排查） */
+function exportCsv(): void {
+  downloadCsv('operation-logs.csv', ['时间', '表', '操作', '实体 ID', '实体名', '详情'],
+    filtered.value.map((l) => [formatTime(l.timestamp), tableLabel(l.table), opLabel(l.op), l.entityId, l.entityName ?? '', l.detail ?? '']))
+}
 
 function go(p: number): void {
   if (p < 1 || p > pages.value) return

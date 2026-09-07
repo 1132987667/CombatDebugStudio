@@ -36,7 +36,7 @@
           <span v-if="!hasMat" class="xy-cave-mat__tag">不足</span>
         </span>
         <span class="xy-cave-mat" :class="{ 'is-low': !hasMoney }">
-          铜钱 {{ cost }}
+          金钱 {{ cost }}
           <span v-if="!hasMoney" class="xy-cave-mat__tag">不足</span>
         </span>
       </div>
@@ -124,7 +124,7 @@ const rate = computed(() => (gear.value ? enhanceSuccessRate(gear.value.enhance,
 const maxed = computed(() => !!gear.value && gear.value.enhance >= gear.value.maxEnhance)
 
 const hasMat = computed(() => pack.countOf(mat.value.itemId) >= mat.value.count)
-const hasMoney = computed(() => pack.currency.copper >= cost.value)
+const hasMoney = computed(() => pack.currency.money >= cost.value)
 
 const canEnhance = computed(
   () => !!gear.value && !maxed.value && hasMat.value && hasMoney.value,

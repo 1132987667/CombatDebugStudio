@@ -59,7 +59,7 @@
       "rare": [
         "bp_t1_eq"
       ],
-      "gold": [
+      "money": [
         100,
         200
       ],
@@ -138,7 +138,7 @@
       "rare": [
         "bp_t2_ar"
       ],
-      "gold": [
+      "money": [
         200,
         380
       ],
@@ -217,7 +217,7 @@
       "rare": [
         "bp_t2_wp"
       ],
-      "gold": [
+      "money": [
         320,
         520
       ],
@@ -298,7 +298,7 @@
         "mat_bizhanglingye"
       ],
       "rare": [],
-      "gold": [
+      "money": [
         450,
         680
       ],
@@ -381,7 +381,7 @@
       "rare": [
         "recipe_weapon_t4"
       ],
-      "gold": [
+      "money": [
         580,
         850
       ],
@@ -466,7 +466,7 @@
         "bp_t1_eq",
         "bp_t1_eq"
       ],
-      "gold": [
+      "money": [
         200,
         400
       ],
@@ -549,7 +549,7 @@
         "mat_shenshuiyu"
       ],
       "rare": [],
-      "gold": [
+      "money": [
         350,
         600
       ],
@@ -635,7 +635,7 @@
         "bp_t3_wp",
         "bp_t3_ar"
       ],
-      "gold": [
+      "money": [
         500,
         800
       ],
@@ -720,7 +720,7 @@
       "rare": [
         "bp_t3_wp"
       ],
-      "gold": [
+      "money": [
         650,
         950
       ],
@@ -810,7 +810,7 @@
         "recipe_weapon_t5",
         "recipe_armor_t5"
       ],
-      "gold": [
+      "money": [
         800,
         1200
       ],
@@ -900,7 +900,7 @@
         "recipe_weapon_t5",
         "mat_wudao_dan"
       ],
-      "gold": [
+      "money": [
         1200,
         1800
       ],
@@ -988,7 +988,7 @@
       "rare": [
         "mat_wudao_dan"
       ],
-      "gold": [
+      "money": [
         1300,
         1900
       ],
@@ -1077,7 +1077,7 @@
         "recipe_weapon_t5",
         "mat_wudao_dan"
       ],
-      "gold": [
+      "money": [
         1400,
         2000
       ],
@@ -1165,7 +1165,7 @@
       "rare": [
         "mat_wudao_dan"
       ],
-      "gold": [
+      "money": [
         1350,
         1950
       ],
@@ -1254,7 +1254,7 @@
         "recipe_weapon_t5",
         "mat_wudao_dan"
       ],
-      "gold": [
+      "money": [
         1500,
         2200
       ],
@@ -1342,7 +1342,7 @@
       "rare": [
         "recipe_weapon_t6"
       ],
-      "gold": [
+      "money": [
         2500,
         3500
       ],
@@ -1427,7 +1427,7 @@
         "mat_wudao_dan"
       ],
       "rare": [],
-      "gold": [
+      "money": [
         2500,
         3500
       ],
@@ -1514,7 +1514,7 @@
       "rare": [
         "recipe_armor_t6"
       ],
-      "gold": [
+      "money": [
         2500,
         3500
       ],
@@ -1609,7 +1609,7 @@
         "recipe_weapon_t7",
         "recipe_armor_t7"
       ],
-      "gold": [
+      "money": [
         5000,
         8000
       ],

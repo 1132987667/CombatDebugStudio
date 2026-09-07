@@ -78,7 +78,8 @@
       </div>
       <div class="xy-run-loot">
         <span class="xy-run-gain">经验 +{{ lastSettle.exp }}</span>
-        <span class="xy-run-gain">金钱 +{{ lastSettle.gold }}</span>
+        <span class="xy-run-gain">金钱 +{{ lastSettle.money }}</span>
+        <span v-if="lastSettle.xianyuan > 0" class="xy-run-gain">仙缘 +{{ lastSettle.xianyuan }}</span>
         <span v-for="(d, i) in lastSettle.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
         }}</span>
         <span v-if="!lastSettle.drops.length" class="xy-run-meta">本场无掉落</span>
@@ -96,7 +97,8 @@
       </div>
       <div class="xy-run-loot">
         <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
-        <span class="xy-run-gain">金钱 +{{ run.totals.gold }}</span>
+        <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
+        <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">仙缘 +{{ run.totals.xianyuan }}</span>
         <span v-for="(d, i) in run.totals.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
         }}</span>
       </div>
@@ -163,6 +165,7 @@ import {
   dropsForEnemyIds,
   enemyBriefById,
   equipBonuses,
+  xianyuanForEnemyIds,
   rewardForEnemyIds,
   type EnemyBrief,
 } from '../battle'
@@ -339,13 +342,13 @@ const run = reactive({
   phase: 'advancing' as RunPhase,
   nodeIndex: 0,
   total: 1,
-  totals: { exp: 0, gold: 0, drops: [] as EnemyDrop[] },
+  totals: { exp: 0, money: 0, xianyuan: 0, drops: [] as EnemyDrop[] },
   firstClear: false,
   stars: 0,
 })
 
 /** 上一场（当前节点）小结算数据（HUD 内嵌展示） */
-const lastSettle = reactive({ exp: 0, gold: 0, drops: [] as EnemyDrop[] })
+const lastSettle = reactive({ exp: 0, money: 0, xianyuan: 0, drops: [] as EnemyDrop[] })
 
 /** 缓回剩余秒数 / 自动再战倒计时（HUD 展示） */
 const regenLeftSec = ref(0)
@@ -390,7 +393,7 @@ function startRun(): void {
   runNodes = buildRunNodes(props.scene, scenes)
   run.nodeIndex = 0
   run.total = runNodes.length
-  run.totals = { exp: 0, gold: 0, drops: [] }
+  run.totals = { exp: 0, money: 0, xianyuan: 0, drops: [] }
   run.firstClear = false
   run.stars = 0
   const player = usePlayerStore()
@@ -492,24 +495,29 @@ function onBattleEnded(data: BattleEndedEventData): void {
 
   if (victory && acceptingDrops) {
     acceptingDrops = false
-    // 逐场结算：本节点敌方 gold/exp/drops（configs/enemies/enemies.json 权威；关卡必掉材料随关底场）
+    // 逐场结算：本节点敌方 money/exp/drops（configs/enemies/enemies.json 权威；关卡必掉材料随关底场）
     const node = runNodes[run.nodeIndex]
     const reward = rewardForEnemyIds(node?.enemyIds ?? [])
     const roll = (range: [number, number] | undefined): number =>
       range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
     const exp = roll(reward.exp)
-    const gold = roll(reward.gold)
+    const money = roll(reward.money)
+    // 仙缘：按本节点敌方分级聚合（§10.1，战斗胜利获得，药园催熟资源）
+    const xianyuan = xianyuanForEnemyIds(node?.enemyIds ?? [])
     if (exp > 0) player.gainExp(exp)
-    if (gold > 0) player.gainCurrency('copper', gold)
+    if (money > 0) player.gainCurrency('money', money)
+    if (xianyuan > 0) player.gainCurrency('xianyuan', xianyuan)
     // 掉落：入包（applyDrops 内部逐条 roll + toast），返回命中列表供小结算展示
     const hits = pack.applyDrops(
       dropsForEnemyIds(node?.enemyIds ?? [], node?.isBoss ? props.scene.drops?.materials : undefined),
     )
     run.totals.exp += exp
-    run.totals.gold += gold
+    run.totals.money += money
+    run.totals.xianyuan += xianyuan
     run.totals.drops.push(...hits)
     lastSettle.exp = exp
-    lastSettle.gold = gold
+    lastSettle.money = money
+    lastSettle.xianyuan = xianyuan
     lastSettle.drops = hits
 
     if (node?.isBoss) {

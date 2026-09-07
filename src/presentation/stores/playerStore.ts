@@ -29,8 +29,9 @@ export const usePlayerStore = defineStore('player', () => {
     spirit: 0,
   })
 
-  /** 玩家货币（运行时状态） */
-  const currency = reactive<XiyouCurrency>({ copper: 12880, silver: 36, jade: 520 })
+  /** 玩家货币（运行时状态；金钱 = 原铜钱12880 + 银两36×100 + 灵石520×1000 等值换算；
+   *  仙缘初始 100 ≈ 5 次一阶催熟，保证新手首日能体验"种1收3"循环） */
+  const currency = reactive<XiyouCurrency>({ money: 536480, xianyuan: 100 })
 
   /** 玩家属性值快照（实时计算：player 基础 + 等级成长 + 加点 + 流派加成；缺省走领域默认值 getAttrDv） */
   const playerAttributes = computed<Partial<Record<ATTRIBUTE_CODE, number>>>(() => {
@@ -95,7 +96,7 @@ export const usePlayerStore = defineStore('player', () => {
 
   // ════════════ 经济与成长（战斗结算入口） ════════════
 
-  /** 战斗胜利结算：金币入账（copper） */
+  /** 战斗胜利结算：金钱入账（money） */
   function gainCurrency(unit: keyof XiyouCurrency, amount: number): void {
     if (amount <= 0) return
     currency[unit] += amount

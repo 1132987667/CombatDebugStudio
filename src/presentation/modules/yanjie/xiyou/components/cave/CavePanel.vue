@@ -7,9 +7,8 @@
         <span class="xy-cave-top-sub">工坊 / 丹炉 / 修炼之所</span>
       </h3>
       <div class="xy-cave-top-coins">
-        <span class="xy-cave-coin">铜钱 {{ pack.currency.copper.toLocaleString() }}</span>
-        <span class="xy-cave-coin xy-cave-coin--gold">灵石 {{ pack.currency.jade }}</span>
-        <span class="xy-cave-coin xy-cave-coin--jade">银两 {{ pack.currency.silver }}</span>
+        <span class="xy-cave-coin">金钱 {{ pack.currency.money.toLocaleString() }}</span>
+        <span class="xy-cave-coin xy-cave-coin--gold">仙缘 {{ pack.currency.xianyuan }}</span>
       </div>
     </div>
 

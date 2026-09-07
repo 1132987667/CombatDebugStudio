@@ -45,15 +45,15 @@ describe('collect 状态映射', () => {
     const player = usePlayerStore()
     const pack = usePackStore()
     player.player.level = 6
-    player.currency.copper = 200
-    player.currency.jade = 30
+    player.currency.money = 5360
+    player.currency.xianyuan = 40
     player.statPoints.strength = 2
     await pack.init()
 
     const data = await xiyouSaveBridge.collect({ currentSceneId: 'scene_1_1' })
     expect(data.player.level).toBe(6)
-    expect(data.player.gold).toBe(200)
-    expect(data.player.jade).toBe(30)
+    expect(data.player.money).toBe(5360)
+    expect(data.player.xianyuan).toBe(40)
     expect(data.player.base_atk).toEqual([player.player.attackMin, player.player.attackMax])
     expect(data.player.statBonuses?.strength).toBe(2)
     expect(data.progress.current_scene).toBe('scene_1_1')
@@ -101,9 +101,8 @@ describe('restore 状态恢复', () => {
         ...createInitialGameState().player,
         level: 9,
         exp: 500,
-        gold: 300,
-        silver: 5,
-        jade: 10,
+        money: 10300,
+        xianyuan: 88,
         base_atk: [20, 30],
         hp_max: 900,
         energy_max: 250,
@@ -136,12 +135,34 @@ describe('restore 状态恢复', () => {
     expect(player.player.level).toBe(9)
     expect(player.player.maxHp).toBe(900)
     expect(player.player.energy).toBe(250)
-    expect(player.currency.copper).toBe(300)
+    expect(player.currency.money).toBe(10300)
+    expect(player.currency.xianyuan).toBe(88)
     expect(pack.countOf('mat_taomu')).toBe(5)
     expect(pack.countOf('elix_001')).toBe(3)
     expect(pack.countOf('quest_001')).toBe(1)
     expect(pack.equipped.weapon?.itemId).toBe('wp_t1_light_01')
     expect(scenes.find(s => s.id === 'scene_1_2')?.unlocked).toBe(true)
+  })
+  it('v6 旧档迁移：gold/silver/jade 三币按 1:1/×100/×1000 合并为金钱，lingyun → 仙缘', async () => {
+    const base = createInitialGameState()
+    // 剔除新档 money 字段，构造 v6 前存档形状：gold/silver/jade/lingyun
+    const { money: _drop, ...legacyPlayer } = base.player
+    const data: SaveData = {
+      ...base,
+      player: {
+        ...legacyPlayer,
+        gold: 300,
+        silver: 5,
+        jade: 10,
+        lingyun: 40,
+      } as SaveData['player'],
+    }
+    await xiyouSaveBridge.restore(data)
+
+    const player = usePlayerStore()
+    // 300 + 5×100 + 10×1000 = 10800
+    expect(player.currency.money).toBe(10800)
+    expect(player.currency.xianyuan).toBe(40)
   })
 })
 
@@ -152,7 +173,7 @@ describe('手动存档全链路（真实 bridge → 落盘）', () => {
     const pack = usePackStore()
     player.player.level = 5
     player.player.exp = 360
-    player.currency.copper = 999
+    player.currency.money = 999
     await pack.init()
     pack.equip('wp_t1_light_01')
 
@@ -165,7 +186,7 @@ describe('手动存档全链路（真实 bridge → 落盘）', () => {
     expect(saved).toBeTruthy()
     expect(saved?.player.level).toBe(5)
     expect(saved?.player.exp).toBe(360)
-    expect(saved?.player.gold).toBe(999)
+    expect(saved?.player.money).toBe(999)
     // 装备：equipment.weapon 存 instanceId，equipment_instances 存完整实例（含词缀/强化）
     const wp = saved?.equipment_instances?.find((i) => i.itemId === 'wp_t1_light_01')
     expect(wp).toBeTruthy()
@@ -195,7 +216,7 @@ describe('collect → restore 往返', () => {
     const player = usePlayerStore()
     const pack = usePackStore()
     player.player.level = 5
-    player.currency.copper = 777
+    player.currency.money = 777
     await pack.init()
     pack.addItem('elix_perm_01', 1)
     pack.equip('wp_t1_light_01')
@@ -210,12 +231,12 @@ describe('collect → restore 往返', () => {
     const player2 = usePlayerStore()
     const pack2 = usePackStore()
     expect(player2.player.level).toBe(5)
-    expect(player2.currency.copper).toBe(777)
+    expect(player2.currency.money).toBe(777)
     expect(pack2.equipped.weapon?.itemId).toBe('wp_t1_light_01')
     // 往返后再次收集应一致（装备仍在穿戴上，背包无该装备）
     const data2 = await xiyouSaveBridge.collect({ currentSceneId: 'scene_1_1' })
     expect(data2.player.level).toBe(5)
-    expect(data2.player.gold).toBe(777)
+    expect(data2.player.money).toBe(777)
     expect(data2.equipment.weapon).toBe(pack2.equipped.weapon?.instanceId)
   })
 })

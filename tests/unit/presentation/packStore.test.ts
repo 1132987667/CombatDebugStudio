@@ -34,7 +34,6 @@ function makeGood(overrides: Partial<XiyouShopGood> = {}): XiyouShopGood {
     name: '疗伤丹',
     type: '丹药',
     price: 50,
-    unit: '铜钱',
     stock: 99,
     ...overrides,
   }
@@ -128,13 +127,13 @@ describe('仓库存取', () => {
 })
 
 describe('仓库扩容', () => {
-  it('灵石足够时扩容 +6 格，容量递增；灵石不足拒绝', async () => {
+  it('金钱足够时扩容 +6 格，容量递增；金钱不足拒绝', async () => {
     const pack = usePackStore()
     await pack.init()
     expect(pack.expandCost()).toBe(50)
     expect(pack.expandStorage()).toBe(true)
     expect(pack.storageCapacity).toBe(18)
-    expect(pack.currency.jade).toBe(520 - 50)
+    expect(pack.currency.money).toBe(536480 - 50)
     // 第二次扩容价格 100
     expect(pack.expandCost()).toBe(100)
   })
@@ -142,7 +141,7 @@ describe('仓库扩容', () => {
   it('扩容至 36 格上限后拒绝', async () => {
     const pack = usePackStore()
     await pack.init()
-    pack.currency.jade = 99999
+    pack.currency.money = 999999
     let guard = 0
     while (pack.storageCapacity < 36 && guard < 10) {
       pack.expandStorage()
@@ -152,10 +151,10 @@ describe('仓库扩容', () => {
     expect(pack.expandStorage()).toBe(false)
   })
 
-  it('灵石不足时扩容失败', async () => {
+  it('金钱不足时扩容失败', async () => {
     const pack = usePackStore()
     await pack.init()
-    pack.currency.jade = 10
+    pack.currency.money = 10
     expect(pack.expandStorage()).toBe(false)
     expect(pack.storageCapacity).toBe(12)
   })
@@ -166,12 +165,12 @@ describe('货币扣减 spend', () => {
     const pack = usePackStore()
     const player = usePlayerStore()
     await pack.init()
-    const before = pack.currency.copper
-    expect(pack.spend('copper', 140)).toBe(true)
-    expect(pack.currency.copper).toBe(before - 140)
-    expect(player.currency.copper).toBe(before - 140)
-    expect(pack.spend('copper', 99999999)).toBe(false)
-    expect(pack.currency.copper).toBe(before - 140)
+    const before = pack.currency.money
+    expect(pack.spend('money', 140)).toBe(true)
+    expect(pack.currency.money).toBe(before - 140)
+    expect(player.currency.money).toBe(before - 140)
+    expect(pack.spend('money', 99999999)).toBe(false)
+    expect(pack.currency.money).toBe(before - 140)
   })
 })
 
@@ -181,7 +180,7 @@ describe('坊市购买', () => {
     await pack.init()
     const good = makeGood()
     expect(pack.purchase(good, 2)).toBeNull()
-    expect(pack.currency.copper).toBe(12880 - 100)
+    expect(pack.currency.money).toBe(536480 - 100)
     expect(good.stock).toBe(97)
     expect(pack.countOf('elix_001')).toBe(5 + 2)
   })
@@ -190,8 +189,8 @@ describe('坊市购买', () => {
     const pack = usePackStore()
     await pack.init()
     const good = makeGood({ price: 999999 })
-    expect(pack.purchase(good, 1)).toBe('货币不足')
-    expect(pack.currency.copper).toBe(12880)
+    expect(pack.purchase(good, 1)).toBe('金钱不足')
+    expect(pack.currency.money).toBe(536480)
     expect(pack.countOf('elix_001')).toBe(5)
   })
 
@@ -200,7 +199,7 @@ describe('坊市购买', () => {
     await pack.init()
     const good = makeGood({ stock: 1 })
     expect(pack.purchase(good, 2)).toBe('库存不足')
-    expect(pack.currency.copper).toBe(12880)
+    expect(pack.currency.money).toBe(536480)
   })
 
   it('无限库存（stock=-1）购买后不递减', async () => {
@@ -211,13 +210,13 @@ describe('坊市购买', () => {
     expect(good.stock).toBe(-1)
   })
 
-  it('灵石商品扣灵石（凝神丹 3 灵石）', async () => {
+  it('商品按金钱结算（凝神丹 单价 3000）', async () => {
     const pack = usePackStore()
     await pack.init()
     // 凝神丹（elix_perm_05）初始不持有，购 2 → 2
-    const good = makeGood({ name: '凝神丹', unit: '灵石', price: 3, stock: 2 })
+    const good = makeGood({ name: '凝神丹', price: 3000, stock: 2 })
     expect(pack.purchase(good, 2)).toBeNull()
-    expect(pack.currency.jade).toBe(520 - 6)
+    expect(pack.currency.money).toBe(536480 - 6000)
     expect(pack.countOf('elix_perm_05')).toBe(2)
   })
 })
@@ -230,10 +229,10 @@ describe('坊市经济（价值 × 全局系数）', () => {
     const good = makeGood({ name: '桃木', itemId: 'mat_taomu', price: 8 })
     expect(pack.shopPrice(good)).toBe(16)
     expect(pack.purchase(good, 1)).toBeNull()
-    expect(pack.currency.copper).toBe(12880 - 16)
+    expect(pack.currency.money).toBe(536480 - 16)
   })
 
-  it('无 itemId 商品（引路香/跨货币）回退配置价', async () => {
+  it('无 itemId 商品（引路香）回退配置价', async () => {
     const pack = usePackStore()
     await pack.init()
     const good = makeGood({ name: '引路香', price: 20 })
@@ -247,13 +246,13 @@ describe('坊市经济（价值 × 全局系数）', () => {
     expect(pack.sellPriceOf('mat_taomu')).toBe(4)
   })
 
-  it('出售成功：扣物品、按出售价入账铜钱', async () => {
+  it('出售成功：扣物品、按出售价入账金钱', async () => {
     const pack = usePackStore()
     await pack.init()
-    const before = pack.currency.copper
+    const before = pack.currency.money
     expect(pack.sell('mat_taomu', 10)).toBeNull()
     expect(pack.countOf('mat_taomu')).toBe(24 - 10)
-    expect(pack.currency.copper).toBe(before + 4 * 10)
+    expect(pack.currency.money).toBe(before + 4 * 10)
   })
 
   it('无价值物品（任务/钥匙）不可出售', async () => {
@@ -267,9 +266,9 @@ describe('坊市经济（价值 × 全局系数）', () => {
   it('数量不足出售失败且不扣货币', async () => {
     const pack = usePackStore()
     await pack.init()
-    const before = pack.currency.copper
+    const before = pack.currency.money
     expect(pack.sell('mat_taomu', 999)).toBe('数量不足')
-    expect(pack.currency.copper).toBe(before)
+    expect(pack.currency.money).toBe(before)
     expect(pack.countOf('mat_taomu')).toBe(24)
   })
 })
@@ -393,10 +392,10 @@ describe('持久化', () => {
     pack.purchase(makeGood(), 1)
     await pack.flush()
 
-    const doc = __mem.get('xiyou')?.get('pack_runtime') as { data: { inventory: Record<string, number>; storage: unknown[]; quickSlots: (string | null)[]; currency: { copper: number } } }
+    const doc = __mem.get('xiyou')?.get('pack_runtime') as { data: { inventory: Record<string, number>; storage: unknown[]; quickSlots: (string | null)[]; currency: { money: number } } }
     expect(doc.data.inventory['mat_taomu']).toBe(29)
     expect(doc.data.quickSlots[0]).toBe('elix_001')
-    expect(doc.data.currency.copper).toBe(12880 - 50)
+    expect(doc.data.currency.money).toBe(536480 - 50)
 
     // 新 store 实例从 IDB 恢复
     setActivePinia(createPinia())
@@ -404,13 +403,51 @@ describe('持久化', () => {
     await pack2.init()
     expect(pack2.countOf('mat_taomu')).toBe(29)
     expect(pack2.quickSlots[0]).toBe('elix_001')
-    expect(pack2.currency.copper).toBe(12880 - 50)
+    expect(pack2.currency.money).toBe(536480 - 50)
   })
 
   it('无存档时保持 configs 兜底', async () => {
     const pack = usePackStore()
     await pack.init()
     expect(pack.countOf('mat_taomu')).toBe(24)
+  })
+
+  it('v4→v5 迁移：补发启动草药、清理种子残留；旧档三币合并为金钱、仙缘兜底初始值', async () => {
+    // 预置一份 v4 旧档（种子体系时代的快照：残留种子、无启动草药、currency 为旧三币形状）
+    __mem.set('xiyou', new Map([['pack_runtime', {
+      id: 'pack_runtime',
+      name: '行囊运行时',
+      data: {
+        version: 4,
+        inventory: { seed_zhixuecao: 2, mat_lingzhi: 1 },
+        storage: [],
+        quickSlots: [null, null, null, null],
+        currency: { copper: 100, silver: 0, jade: 0 },
+        gearInstances: [],
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }]]))
+
+    const pack = usePackStore()
+    await pack.init()
+    // 补发一阶启动草药（对齐 pack.json 初始量）；二阶以上母株靠场景关卡草药掉落
+    expect(pack.countOf('mat_zhixuecao')).toBe(3)
+    expect(pack.countOf('mat_qingxinye')).toBe(3)
+    expect(pack.countOf('mat_shuilingshen')).toBe(0)
+    // seed_* 残留被清理；原有物品保留
+    expect(pack.countOf('seed_zhixuecao')).toBe(0)
+    expect(pack.countOf('mat_lingzhi')).toBe(1)
+    // 货币恢复：旧档三币按换算合并（100+0+0=100）；无仙缘字段时兜底初始值
+    expect(pack.currency.money).toBe(100)
+    expect(pack.currency.xianyuan).toBe(100)
+
+    // 迁移后落盘升版：v5 快照不再重复补发
+    await pack.flush()
+    setActivePinia(createPinia())
+    const pack2 = usePackStore()
+    await pack2.init()
+    expect(pack2.countOf('mat_zhixuecao')).toBe(3)
   })
 })
 
@@ -617,11 +654,11 @@ describe("装备制造与强化（实例化）", () => {
     pack.equip("wp_t1_light_01")
     const enh0 = pack.countOf("enh_stone")
     pack.addItem("enh_stone", 10) // 强化材料：强化石
-    const beforeCopper = pack.currency.copper
+    const beforeMoney = pack.currency.money
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // rng 0 → 100% 成功
     expect(pack.equipped.weapon?.enhance).toBe(1)
-    expect(pack.currency.copper).toBe(beforeCopper - 50) // ⌊50×1²×1.0⌋（凡品 K=1.0）
+    expect(pack.currency.money).toBe(beforeMoney - 50) // ⌊50×1²×1.0⌋（凡品 K=1.0）
     expect(pack.countOf("enh_stone")).toBe(enh0 + 9) // L=1 消耗 1
     const atk1 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(atk1).toBe(Math.round(atk0 * 1.04)) // 每级 +4%
@@ -633,12 +670,12 @@ describe("装备制造与强化（实例化）", () => {
     pack.equip("wp_t1_light_01")
     pack.addItem("enh_stone", 10)
     expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // → Lv.1（rate 100%）
-    const copper1 = pack.currency.copper
+    const money1 = pack.currency.money
     const mat1 = pack.countOf("enh_stone")
     expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false) // L=2 rate 95%，99 ≥ 95 → 失败
     expect(pack.equipped.weapon?.enhance).toBe(1)
     expect(pack.equipped.weapon?.enhanceFails).toBe(1) // 连败 +1（下次 rate +10%）
-    expect(pack.currency.copper).toBe(copper1 - 200) // ⌊50×2²×1.0⌋
+    expect(pack.currency.money).toBe(money1 - 200) // ⌊50×2²×1.0⌋
     expect(pack.countOf("enh_stone")).toBe(mat1 - 2) // L=2 消耗 2
   })
 
@@ -646,10 +683,10 @@ describe("装备制造与强化（实例化）", () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_light_01")
-    pack.currency.copper = 0 // 材料充足但金钱不足
+    pack.currency.money = 0 // 材料充足但金钱不足
     const mat0 = pack.countOf("enh_stone")
     expect(pack.enhanceGear("weapon", () => 0)).toBe(false)
-    expect(pack.currency.copper).toBe(0)
+    expect(pack.currency.money).toBe(0)
     expect(pack.countOf("enh_stone")).toBe(mat0)
     expect(pack.equipped.weapon?.enhance).toBe(0)
   })
@@ -659,7 +696,7 @@ describe("装备制造与强化（实例化）", () => {
     await pack.init()
     pack.equip("wp_t1_light_01") // rarity 1 → 上限 3
     pack.addItem("enh_stone", 100)
-    pack.currency.copper = 999999
+    pack.currency.money = 9999999
     let guard = 0
     while (pack.equipped.weapon!.enhance < 3 && guard < 10) {
       pack.enhanceGear("weapon", () => 0)
@@ -744,12 +781,12 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     const pack = await equipChaoLiuyun()
     const before = [...pack.equipped.weapon!.affixes]
     pack.addItem("wash_stone", 1)
-    pack.currency.copper += 200
-    const copper0 = pack.currency.copper
+    pack.currency.money += 200
+    const money0 = pack.currency.money
     expect(pack.washGear("weapon", "normal", -1, () => 0.3)).toBe(true)
     expect(pack.equipped.weapon!.affixes.length).toBe(3) // 词条数不变
     expect(pack.countOf("wash_stone")).toBe(0)
-    expect(pack.currency.copper).toBe(copper0 - 200)
+    expect(pack.currency.money).toBe(money0 - 200)
     // rng 0.3 vs 制造 rng 0.8 → 至少一条属性或数值变化
     const after = pack.equipped.weapon!.affixes
     expect(after.some((a, i) => a.attribute !== before[i].attribute || a.value !== before[i].value)).toBe(true)
@@ -759,7 +796,7 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     const pack = await equipChaoLiuyun()
     const before = [...pack.equipped.weapon!.affixes]
     pack.addItem("wash_directed", 1)
-    pack.currency.copper += 200
+    pack.currency.money += 200
     expect(pack.washGear("weapon", "directed", 0, () => 0.3)).toBe(true)
     const after = pack.equipped.weapon!.affixes
     expect(after.length).toBe(3)
@@ -773,7 +810,7 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     const pack = await equipChaoLiuyun()
     const before = [...pack.equipped.weapon!.affixes]
     pack.addItem("wash_lock", 1)
-    pack.currency.copper += 200
+    pack.currency.money += 200
     expect(pack.washGear("weapon", "locked", 1, () => 0.3)).toBe(true)
     const after = pack.equipped.weapon!.affixes
     expect(after.length).toBe(3)
@@ -792,7 +829,7 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     const q = pack.equipped.weapon!.quality
     pack.addItem("wash_directed", 1)
     pack.addItem("wash_lock", 1)
-    const copper0 = pack.currency.copper
+    const money0 = pack.currency.money
     const dOk = pack.washGear("weapon", "directed", 0, () => 0.3)
     const lOk = pack.washGear("weapon", "locked", 0, () => 0.3)
     if (q < 2) {
@@ -803,7 +840,7 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
       expect(lOk).toBe(false)
       expect(pack.countOf("wash_lock")).toBe(1)
     }
-    expect(pack.currency.copper).toBe(copper0) // 被拒操作不扣金钱
+    expect(pack.currency.money).toBe(money0) // 被拒操作不扣金钱
   })
 
   it("洗练材料/金钱不足或未选目标时拒绝且不扣消耗", async () => {
@@ -812,14 +849,14 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     expect(pack.washGear("weapon", "normal", -1, () => 0.3)).toBe(false)
     // 有材料无金钱
     pack.addItem("wash_stone", 1)
-    pack.currency.copper = 0
+    pack.currency.money = 0
     expect(pack.washGear("weapon", "normal", -1, () => 0.3)).toBe(false)
     expect(pack.countOf("wash_stone")).toBe(1)
     // 有材料有金钱，定向未选目标
-    pack.currency.copper = 1000
+    pack.currency.money = 1000
     expect(pack.washGear("weapon", "directed", -1, () => 0.3)).toBe(false)
     expect(pack.countOf("wash_stone")).toBe(1)
-    expect(pack.currency.copper).toBe(1000)
+    expect(pack.currency.money).toBe(1000)
   })
 })
 
@@ -876,52 +913,81 @@ describe("强化保护符", () => {
   })
 })
 
-describe("药园", () => {
+describe("药园（仙缘催熟制：投入 1 株草药 + 仙缘，按产量表收获）", () => {
   const T0 = 1_000_000_000_000
 
-  it("种植→收获材料入包→地块进入冷却，冷却后可再种", async () => {
+  /** 充值仙缘，隔离 playerStore 初始值对用例的影响 */
+  function grantXianyuan(n: number): void {
+    usePlayerStore().currency.xianyuan = n
+  }
+
+  it("草药：投入 1 株 + 仙缘 20，收 3 株（种 1 收多）", async () => {
+    grantXianyuan(100)
     const pack = usePackStore()
     await pack.init()
-    // pack.json 初始灵芝 ×2
-    expect(pack.countOf("mat_lingzhi")).toBe(2)
+    // pack.json 初始止血草 ×3
+    expect(pack.countOf("mat_zhixuecao")).toBe(3)
 
-    expect(pack.plantCrop(0, "mat_lingzhi", T0)).toBe(true)
-    expect(pack.garden[0].cropId).toBe("mat_lingzhi")
+    expect(pack.plantCrop(0, "mat_zhixuecao", T0)).toBe(true)
+    // 种植即扣：1 株草药 + 20 仙缘
+    expect(pack.countOf("mat_zhixuecao")).toBe(2)
+    expect(usePlayerStore().currency.xianyuan).toBe(80)
 
-    // 立即可收获：灵芝 +3
+    // 立即可收获：产量表 ×3（净增 2 株）
     expect(pack.harvestCrop(0, T0)).toBe(true)
-    expect(pack.countOf("mat_lingzhi")).toBe(5)
+    expect(pack.countOf("mat_zhixuecao")).toBe(5)
     expect(pack.garden[0].cropId).toBeNull()
 
     // 冷却 300s
     expect(pack.gardenCooldown(0, T0)).toBe(300)
-    expect(pack.plantCrop(0, "mat_zhuguo", T0 + 1000)).toBe(false)
-
-    // 冷却结束后可再种
-    expect(pack.plantCrop(0, "mat_zhuguo", T0 + 300_001)).toBe(true)
-    expect(pack.garden[0].cropId).toBe("mat_zhuguo")
+    expect(pack.plantCrop(0, "mat_zhixuecao", T0 + 1000)).toBe(false)
   })
 
-  it("已种植地块不可重复种植；空地块收获无效果", async () => {
+  it("灵植：无需投入只扣仙缘；仙缘不足拒绝种植", async () => {
+    grantXianyuan(100)
     const pack = usePackStore()
     await pack.init()
-    pack.plantCrop(0, "mat_xiantao", T0)
+
+    // 灵芝（仙缘 60）：初始 ×2，不投入株数
+    expect(pack.plantCrop(0, "mat_lingzhi", T0)).toBe(true)
+    expect(pack.countOf("mat_lingzhi")).toBe(2)
+    expect(usePlayerStore().currency.xianyuan).toBe(40)
+
+    // 仙缘 40 < 朱果 120 → 拒绝且不扣
+    expect(pack.plantCrop(1, "mat_zhuguo", T0)).toBe(false)
+    expect(pack.garden[1].cropId).toBeNull()
+    expect(usePlayerStore().currency.xianyuan).toBe(40)
+  })
+
+  it("草药存量不足拒绝种植；已种植地块不可重复种植；空地块收获无效果", async () => {
+    grantXianyuan(1000)
+    const pack = usePackStore()
+    await pack.init()
+
+    // 清空止血草后存量不足 → 拒绝
+    pack.removeItem("mat_zhixuecao", pack.countOf("mat_zhixuecao"))
+    expect(pack.plantCrop(0, "mat_zhixuecao", T0)).toBe(false)
+    expect(pack.garden[0].cropId).toBeNull()
+
+    // 正常种植后：同地块不可重复种植；空地块收获无效果
+    pack.addItem("mat_xiantao", 1)
+    expect(pack.plantCrop(0, "mat_xiantao", T0)).toBe(true)
     expect(pack.plantCrop(0, "mat_lingzhi", T0)).toBe(false)
-    // 空地块收获返回 false 且不改状态
     expect(pack.harvestCrop(1, T0)).toBe(false)
-    expect(pack.countOf("mat_xiantao")).toBe(0)
   })
 
-  it("药园状态随 flush/load 持久化", async () => {
+  it("药园与仙缘随 flush/load 持久化", async () => {
+    grantXianyuan(777)
     const pack = usePackStore()
     await pack.init()
-    pack.plantCrop(0, "mat_lingzhi", T0)
+    expect(pack.plantCrop(0, "mat_lingzhi", T0)).toBe(true)
     await pack.flush()
 
     setActivePinia(createPinia())
     const pack2 = usePackStore()
     await pack2.init()
     expect(pack2.garden[0].cropId).toBe("mat_lingzhi")
+    expect(usePlayerStore().currency.xianyuan).toBe(777 - 60)
   })
 })
 

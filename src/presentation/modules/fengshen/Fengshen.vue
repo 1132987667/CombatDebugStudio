@@ -40,6 +40,7 @@
     <!-- 主内容 -->
     <main class="fs-content">
       <ListView v-if="store.activeView === 'domain'" />
+      <GrowthCurveView v-else-if="store.activeView === 'curves'" />
       <FormulasView v-else-if="store.activeView === 'formulas'" />
       <PlayerConfigView v-else-if="store.activeView === 'playerconfig'" />
       <AffixRuleView v-else-if="store.activeView === 'affixrule'" />
@@ -62,6 +63,7 @@ import { useFengshenStore, type FengshenView } from '@/presentation/modules/feng
 import type { FengshenTableName } from '@/domain/fengshen/types'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import ListView from '@/presentation/modules/fengshen/views/ListView.vue'
+import GrowthCurveView from '@/presentation/modules/fengshen/views/GrowthCurveView.vue'
 import FormulasView from '@/presentation/modules/fengshen/views/FormulasView.vue'
 import PlayerConfigView from '@/presentation/modules/fengshen/views/PlayerConfigView.vue'
 import AuditView from '@/presentation/modules/fengshen/views/AuditView.vue'
@@ -103,6 +105,7 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
       { table: 'materials', label: '材料' },
       { table: 'equipment', label: '装备' },
       { table: 'gears', label: '装备详情' },
+      { table: 'equipment_affixes', label: '装备词条' },
     ],
   },
   {
@@ -127,6 +130,7 @@ const SYSTEM_GROUPS: Array<{ label: string; items: Array<{ view: FengshenView; l
     label: '数值体系',
     items: [
       { view: 'playerconfig', label: '玩家配置' },
+      { view: 'curves', label: '成长曲线' },
       { view: 'formulas', label: '属性与公式' },
       { view: 'affixrule', label: '词条投放规则' },
       { view: 'audit', label: '来源审计' },

@@ -106,11 +106,11 @@
       <button
         type="button"
         class="xy-btn xy-btn--ghost xy-st-reset"
-        :disabled="cultivate.spentPoints === 0 || cultivate.resetCost() > player.currency.copper"
+        :disabled="cultivate.spentPoints === 0 || cultivate.resetCost() > player.currency.money"
         @click="doReset"
       >
-        重置技能点（{{ cultivate.resetCost() }} 铜钱）
-        <span v-if="cultivate.spentPoints > 0 && cultivate.resetCost() > player.currency.copper" class="xy-st-reset-warn">铜钱不足</span>
+        重置技能点（{{ cultivate.resetCost() }} 金钱）
+        <span v-if="cultivate.spentPoints > 0 && cultivate.resetCost() > player.currency.money" class="xy-st-reset-warn">金钱不足</span>
       </button>
     </section>
   </div>
@@ -194,8 +194,11 @@ function prereqName(n: XiyouSkillNode): string {
 /** 前置是否满足（同分支上一层已点亮；第 1 层无前置） */
 function prereqMet(n: XiyouSkillNode): boolean {
   if (n.tier === 1) return true
-  const prev = currentSchool.value?.nodes.find((p) => p.branch === n.branch && p.tier === n.tier - 1)
-  return prev ? prev.learned === true : false
+  return (
+    currentSchool.value?.nodes.some(
+      (p) => p.branch === n.branch && p.tier === n.tier - 1 && p.learned,
+    ) ?? false
+  )
 }
 
 function nodeClass(n: XiyouSkillNode): Record<string, boolean> {
@@ -246,11 +249,11 @@ const pureClass = computed(() => ({ active: !!pureSchool.value }))
 function doReset(): void {
   const cost = cultivate.resetCost()
   if (cost <= 0) return
-  if (!confirm(`确认重置技能树？消耗 ${cost} 铜钱，全部节点与装备槽清空，技能点返还（悟道丹获得的技能点不返还）。`)) return
+  if (!confirm(`确认重置技能树？消耗 ${cost} 金钱，全部节点与装备槽清空，技能点返还（悟道丹获得的技能点不返还）。`)) return
   if (cultivate.resetNodes()) {
-    notification.toast(`技能树已重置，消耗 ${cost} 铜钱`, 'success')
+    notification.toast(`技能树已重置，消耗 ${cost} 金钱`, 'success')
   } else {
-    notification.toast('铜钱不足，无法重置技能树', 'error')
+    notification.toast('金钱不足，无法重置技能树', 'error')
   }
 }
 

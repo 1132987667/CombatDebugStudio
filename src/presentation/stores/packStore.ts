@@ -129,9 +129,9 @@ export function makeInstance(
   return { instanceId: newInstanceId(), itemId, enhance, quality, qualityFactor, star, affixes }
 }
 
-/** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 新增实例 quality/qualityFactor） */
+/** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 实例品质；v5 药园迁移；v6 货币收缩 money/xianyuan） */
 export interface PackRuntimeSnapshot {
-  version: 4
+  version: 6
   inventory: Record<string, number>
   storage: StorageSlot[]
   quickSlots: (string | null)[]
@@ -154,7 +154,7 @@ const QUICK_SLOT_COUNT = 4
 const STORAGE_BASE = 12
 const STORAGE_EXPAND_STEP = 6
 const MAX_STORAGE = 36
-/** 扩容消耗（灵石），按扩容次数取档 */
+/** 扩容消耗（金钱），按扩容次数取档 */
 const EXPAND_COSTS = [50, 100, 200, 400]
 
 /** 药园地块数量（对齐 cave.json crops 六格） */
@@ -163,13 +163,6 @@ const GARDEN_PLOT_COUNT = 6
 const SHOP_PICK_COUNT = 6
 /** 强化保护符物品 id（强化失败时消耗一张保住材料） */
 const ENH_PROTECT_ID = 'enh_protect'
-
-/** 坊市货币单位 → 货币字段 */
-const UNIT_KEY: Record<XiyouShopGood['unit'], keyof XiyouCurrency> = {
-  铜钱: 'copper',
-  银两: 'silver',
-  灵石: 'jade',
-}
 
 /** 目录索引（items.json 静态，模块级构建一次） */
 const catalogMap = new Map<string, XiyouCatalogItem>()
@@ -268,11 +261,11 @@ export const usePackStore = defineStore('pack', () => {
     // 未 init（从未打开行囊）时跳过：避免把空快照写入覆盖 configs 初始持有
     if (!initialized) return
     const snapshot: PackRuntimeSnapshot = {
-      version: 4,
+      version: 6,
       inventory: { ...inventory.value },
       storage: storage.value.map((s) => ({ itemId: s.itemId, count: s.count })),
       quickSlots: [...quickSlots.value],
-      currency: { copper: currency.copper, silver: currency.silver, jade: currency.jade },
+      currency: { money: currency.money, xianyuan: currency.xianyuan },
       gearInstances: gearInstances.value.map((g) => ({
         instanceId: g.instanceId,
         itemId: g.itemId,
@@ -311,6 +304,9 @@ export const usePackStore = defineStore('pack', () => {
       const snap = doc?.data as PackRuntimeSnapshot | undefined
       if (!snap?.inventory) return
       inventory.value = { ...snap.inventory }
+      snapshotVersion = snap.version as number
+      // v4 旧档在无主存档恢复路径下于此处直接迁移；有主存档时 restore 覆盖后再补
+      migrateV5StarterHerbs()
       // NOTE: v1 旧档装备计数在 inventory 中；升级到实例模型前先迁移（幂等：仅当快照无 gearInstances 时）
       if (!Array.isArray(snap.gearInstances) || snap.gearInstances.length === 0) {
         const migrated = new Map<string, number>()
@@ -334,9 +330,15 @@ export const usePackStore = defineStore('pack', () => {
         while (quickSlots.value.length < QUICK_SLOT_COUNT) quickSlots.value.push(null)
       }
       if (snap.currency) {
-        currency.copper = snap.currency.copper
-        currency.silver = snap.currency.silver
-        currency.jade = snap.currency.jade
+        const c = snap.currency as XiyouCurrency & { copper?: number; silver?: number; jade?: number; lingyun?: number }
+        if (typeof c.money === 'number') {
+          currency.money = c.money
+        } else {
+          // v6 货币收缩迁移：旧档铜钱/银两/灵石按 curr_001 换算（1:1 / ×100 / ×1000）合并为金钱
+          currency.money = (c.copper ?? 0) + (c.silver ?? 0) * 100 + (c.jade ?? 0) * 1000
+        }
+        // 旧档无仙缘字段（灵韵/缺省）时保持初始值，让老玩家同样能体验药园催熟
+        currency.xianyuan = c.xianyuan ?? c.lingyun ?? currency.xianyuan
       }
       // NOTE: v1 旧档 equipped 为槽位 → itemId；升级为实例（无词缀、enhance 0、凡品）。v2 起存实例。
       //       三槽时代的 accessory 键迁移到六槽 charm（对齐 save-bridge 的 accessory → charm 映射）。
@@ -428,6 +430,24 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   let initialized = false
+
+  /**
+   * v5 药园（仙缘催熟制）迁移：种子体系移除后，v4 旧档既没有启动草药也拿不到种子——补发一阶启动草药
+   * （对齐 pack.json 初始量）并清理 seed_* 残留条目。二阶以上母株靠对应场景关卡草药掉落
+   * （enemies.json drops，"杀敌即成长"），不在此补发。
+   * NOTE: restore 会用主存档整表覆盖 inventory（抹掉 load 时补的株数），覆盖后需再调一次；
+   *       故本函数只读判断不写版本号，落盘升版由 flush 的 version 常量承担。
+   */
+  let snapshotVersion = 0
+  function migrateV5StarterHerbs(): void {
+    if (snapshotVersion >= 5) return
+    inventory.value['mat_zhixuecao'] = (inventory.value['mat_zhixuecao'] ?? 0) + 3
+    inventory.value['mat_qingxinye'] = (inventory.value['mat_qingxinye'] ?? 0) + 3
+    for (const id of Object.keys(inventory.value)) {
+      if (id.startsWith('seed_')) delete inventory.value[id]
+    }
+    scheduleSave()
+  }
 
   /** 初始化（幂等）：configs 兜底 + IDB 覆盖 */
   async function init(): Promise<void> {
@@ -568,13 +588,13 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     const cost = enhanceCost(inst.enhance, g.rarity)
-    if (currency.copper < cost) {
-      notification.toast(`铜钱不足（需要 ${cost}）`, 'warning')
+    if (currency.money < cost) {
+      notification.toast(`金钱不足（需要 ${cost}）`, 'warning')
       return false
     }
     inventory.value[mat.itemId] = (inventory.value[mat.itemId] ?? 0) - mat.count
     if (inventory.value[mat.itemId]! <= 0) delete inventory.value[mat.itemId]
-    currency.copper -= cost
+    currency.money -= cost
     if (rng() * 100 < enhanceSuccessRate(inst.enhance, inst.enhanceFails ?? 0)) {
       inst.enhance += 1
       inst.enhanceFails = 0
@@ -663,7 +683,7 @@ export const usePackStore = defineStore('pack', () => {
    * 洗练当前槽位装备词条（§21 装备养成操作与材料）：
    * normal 全部重 roll / directed 指定 1 条重 roll / locked 锁 1 条（种类+数值不变）其余重 roll。
    * 词条数不变、同部位池内抽取、结果可能更差；开放品质 washAllowed（§8.4.4：凡普通/精定向/超锁词条）。
-   * 消耗：对应洗练材料 ×1 + 200 铜钱；先 roll 后扣（池耗尽不扣消耗）。
+   * 消耗：对应洗练材料 ×1 + 200 金钱；先 roll 后扣（池耗尽不扣消耗）。
    */
   function washGear(slot: GearSlotKey, mode: WashMode, targetIndex: number, rng: Rng = Math.random): boolean {
     const inst = equipped[slot]
@@ -690,8 +710,8 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast(`洗练材料不足（需要「${WASH_MATERIAL_NAMES[mode]}」×1）`, 'warning')
       return false
     }
-    if (currency.copper < WASH_COST_GOLD) {
-      notification.toast(`铜钱不足（需要 ${WASH_COST_GOLD}）`, 'warning')
+    if (currency.money < WASH_COST_GOLD) {
+      notification.toast(`金钱不足（需要 ${WASH_COST_GOLD}）`, 'warning')
       return false
     }
     const keyOf = (a: GearAffix): string => `${a.attribute}:${a.modifierType}`
@@ -724,7 +744,7 @@ export const usePackStore = defineStore('pack', () => {
     // roll 成功后扣消耗
     inventory.value[matId] = (inventory.value[matId] ?? 0) - 1
     if (inventory.value[matId]! <= 0) delete inventory.value[matId]
-    currency.copper -= WASH_COST_GOLD
+    currency.money -= WASH_COST_GOLD
     inst.affixes = next
     scheduleSave()
     notification.toast(`洗练完成！「${g.name}」词条已更新`, 'success')
@@ -914,11 +934,11 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     const cost = expandCost()
-    if (currency.jade < cost) {
-      notification.toast('灵石不足')
+    if (currency.money < cost) {
+      notification.toast('金钱不足')
       return false
     }
-    currency.jade -= cost
+    currency.money -= cost
     const added = Math.min(STORAGE_EXPAND_STEP, MAX_STORAGE - storage.value.length)
     for (let i = 0; i < added; i++) storage.value.push({ itemId: null, count: 0 })
     scheduleSave()
@@ -957,7 +977,7 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /** 坊市商品单价：有 itemId 的物品按 实际价值 × 购买系数 派生（四舍五入）；
-   *  无 itemId（引路香 / 跨货币单位商品如灵石、银两）用配置兜底价 */
+   *  无 itemId（引路香）用配置兜底价；货币统一为金钱 */
   function shopPrice(good: XiyouShopGood): number {
     if (good.itemId) {
       const value = catalogById(good.itemId)?.value
@@ -973,17 +993,17 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /** 出售物品（背包普通物品或未穿戴装备实例）；返回失败原因文案（成功返回 null）。
-   *  入账货币为铜钱（价值 × 出售系数），普通物品扣 inventory、装备移除对应数量实例 */
+   *  入账货币为金钱（价值 × 出售系数），普通物品扣 inventory、装备移除对应数量实例 */
   function sell(itemId: string, count: number): string | null {
     if (count <= 0) return '数量无效'
     const price = sellPriceOf(itemId)
     if (price <= 0) return '该物品不可出售'
     if (countOf(itemId) < count) return '数量不足'
     if (!removeItem(itemId, count)) return '数量不足'
-    currency.copper += price * count
+    currency.money += price * count
     scheduleSave()
     const item = catalogById(itemId)
-    notification.toast(`出售「${item?.name ?? itemId}」×${count}，获得 ${price * count} 铜钱`)
+    notification.toast(`出售「${item?.name ?? itemId}」×${count}，获得 ${price * count} 金钱`)
     return null
   }
 
@@ -994,11 +1014,10 @@ export const usePackStore = defineStore('pack', () => {
     const itemId = nameToId.get(good.name)
     if (!itemId) return '商品未收录'
     if (good.stock >= 0 && good.stock < count) return '库存不足'
-    const unit = UNIT_KEY[good.unit]
-    const wallet = currency[unit]
+    const wallet = currency.money
     const total = shopPrice(good) * count
-    if (wallet < total) return '货币不足'
-    currency[unit] = wallet - total
+    if (wallet < total) return '金钱不足'
+    currency.money = wallet - total
     if (good.stock >= 0) good.stock -= count
     addItem(itemId, count)
     scheduleSave()
@@ -1019,7 +1038,10 @@ export const usePackStore = defineStore('pack', () => {
     return Math.max(0, Math.ceil((plot.cooldownUntil - now) / 1000))
   }
 
-  /** 种植：空置（且冷却已结束）地块种下作物，立即可收获 */
+  /**
+   * 种植（仙缘催熟制）：空置（且冷却已结束）地块投入 input 株作物 + 仙缘一次催熟，种下即可收获。
+   * 草药需背包先有 1 株（种 1 收多，§10.1 产量表）；灵植（灵芝/朱果/仙桃）无来源不投入，只耗仙缘。
+   */
   function plantCrop(plotIdx: number, cropId: string, now = Date.now()): boolean {
     const plot = garden.value[plotIdx]
     if (!plot) return false
@@ -1036,6 +1058,17 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast('未知作物')
       return false
     }
+    const inputCount = crop.input ?? 0
+    if (inputCount > 0 && countOf(crop.id) < inputCount) {
+      notification.toast(`「${crop.name}」数量不足（需投入 ${inputCount} 株）`, 'warning')
+      return false
+    }
+    if (currency.xianyuan < crop.xianyuan) {
+      notification.toast(`仙缘不足（需 ${crop.xianyuan}，战斗胜利可获得）`, 'warning')
+      return false
+    }
+    if (inputCount > 0) removeItem(crop.id, inputCount)
+    currency.xianyuan -= crop.xianyuan
     plot.cropId = cropId
     plot.cooldownUntil = null
     scheduleSave()
@@ -1315,6 +1348,7 @@ export const usePackStore = defineStore('pack', () => {
     gardenCooldown,
     plantCrop,
     harvestCrop,
+    migrateV5StarterHerbs,
     refreshShop,
     isNewDay,
     setQuickSlot,

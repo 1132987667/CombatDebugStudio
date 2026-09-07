@@ -179,18 +179,18 @@ describe('刷关模拟（battle_grind）真实行为', () => {
     const grind = battleCat.groups.flatMap((g) => g.actions).find((a) => a.id === 'battle_grind')!
     const firstScene = scenes.find((s) => s.id)!
     const expBefore = env.player.player.exp
-    const goldBefore = env.player.currency.copper
+    const goldBefore = env.player.currency.money
     const invBefore = Object.keys(pack.inventory).length
     // random 返回 0 保证掉落命中（确定性断言），也固定经验/金钱取区间下限
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const r = await grind.execute({ scene: firstScene.id, count: '5' })
     expect(r.success).toBe(true)
     expect(env.player.player.exp).toBeGreaterThanOrEqual(expBefore)
-    expect(env.player.currency.copper).toBeGreaterThanOrEqual(goldBefore)
+    expect(env.player.currency.money).toBeGreaterThanOrEqual(goldBefore)
     const summary = r.payload as { battles: number; exp: number; gold: number; dropVariety: number }
     expect(summary.battles).toBe(5)
     expect(summary.exp).toBeGreaterThanOrEqual(0)
-    expect(summary.gold).toBeGreaterThanOrEqual(0)
+    expect(summary.money).toBeGreaterThanOrEqual(0)
     // 有掉落时背包出现新物品
     if (summary.dropVariety > 0) {
       expect(Object.keys(pack.inventory).length).toBeGreaterThanOrEqual(invBefore)
@@ -256,11 +256,11 @@ describe('玩家状态动作真实行为', () => {
     const reset = acts.find((a) => a.id === 'player_reset')!
     // 先抬高等级与货币
     await setLevel.execute('20')
-    env.player.currency.copper = 99999
+    env.player.currency.money = 99999
     const r = await reset.execute()
     expect(r.success).toBe(true)
     expect(env.player.player.level).toBe(1)
-    expect(env.player.currency.copper).toBe(0)
+    expect(env.player.currency.money).toBe(0)
   })
 })
 

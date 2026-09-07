@@ -5,12 +5,12 @@
  * 与 SaveManager（shared/utils/save-manager.ts）解耦：此处持有 store 依赖，manager 保持纯编排。
  *
  * 映射要点：
- * - 货币三币种 → player.gold/silver/jade（PRD 仅 gold，扩展防止丢失）
+ * - 货币双币种 → player.money/xianyuan（v6 收缩：旧档 gold/silver/jade 按换算合并恢复）
  * - 装备 6 槽（weapon/armor/helmet/boots/charm/glove）一一对应
  * - 物品按 type 分类到 inventory 四类（装备 → equipments，材料/丹药 → materials/elixirs，其余 → misc）
  */
 
-import { createInitialGameState, type SaveData, type SaveEquipmentInstance } from '@/shared/utils/save-schema'
+import { createInitialGameState, type SaveData, type SaveEquipmentInstance, type SavePlayerState } from '@/shared/utils/save-schema'
 import type { SaveStatePort } from '@/shared/utils/save-manager'
 import { SaveManager } from '@/shared/utils/save-manager'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
@@ -96,9 +96,8 @@ export const xiyouSaveBridge: SaveStatePort = {
     data.player.hp_max = player.player.maxHp
     data.player.energy_max = player.player.maxEnergy
     data.player.base_atk = [player.player.attackMin, player.player.attackMax]
-    data.player.gold = player.currency.copper
-    data.player.silver = player.currency.silver
-    data.player.jade = player.currency.jade
+    data.player.money = player.currency.money
+    data.player.xianyuan = player.currency.xianyuan
     data.player.statBonuses = {
       available: player.statPoints.available,
       strength: player.statPoints.strength,
@@ -187,10 +186,15 @@ export const xiyouSaveBridge: SaveStatePort = {
     player.statPoints.agility = bonuses?.agility ?? 0
     player.statPoints.spirit = bonuses?.spirit ?? 0
 
-    // currency
-    player.currency.copper = data.player.gold
-    player.currency.silver = data.player.silver ?? 0
-    player.currency.jade = data.player.jade ?? 0
+    // currency（v6 货币收缩：旧档 gold/silver/jade 按 curr_001 换算 1:1/×100/×1000 合并为金钱；lingyun → 仙缘）
+    const legacyCurrency = data.player as SavePlayerState & { gold?: number; silver?: number; jade?: number; lingyun?: number }
+    if (typeof data.player.money === 'number') {
+      player.currency.money = data.player.money
+    } else {
+      player.currency.money =
+        (legacyCurrency.gold ?? 0) + (legacyCurrency.silver ?? 0) * 100 + (legacyCurrency.jade ?? 0) * 1000
+    }
+    player.currency.xianyuan = data.player.xianyuan ?? legacyCurrency.lingyun ?? player.currency.xianyuan
 
     // inventory（材料/丹药/杂物合并回持有量；装备实例化，不落入 inventory）
     const merged: Record<string, number> = {
@@ -212,6 +216,8 @@ export const xiyouSaveBridge: SaveStatePort = {
       }
     }
     pack.inventory = merged
+    // v5 药园（仙缘催熟制）迁移：上面整表覆盖会抹掉 packStore.load 时补发的启动草药，覆盖后需再补一次
+    pack.migrateV5StarterHerbs()
 
     if (hasInstances) {
       for (const inst of data.equipment_instances ?? []) {
@@ -266,6 +272,10 @@ export const xiyouSaveBridge: SaveStatePort = {
       const learnedSet = new Set(schoolState.learned ?? [])
       for (const s of schools) {
         for (const n of s.nodes) n.learned = learnedSet.has(n.id)
+      }
+      // 天赋树（schools.json layers）学习格还原：合成 id（layer_index）与技能树 id 同集存档
+      for (const layer of schoolsLayers) {
+        for (const n of layer.nodes) n.learned = learnedSet.has(n.id)
       }
       // TODO(P2): schoolsLayers 已解锁节点恢复——ID 为 `${layer}_${idx}` 格式，与旧 nodes 无冲突
       for (const layer of schoolsLayers) {

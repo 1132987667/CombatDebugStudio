@@ -60,8 +60,8 @@ export const scenes: XiyouScene[] = reactive<XiyouScene[]>(scenesJson as unknown
 
 /**
  * 技能树原始节点（skill_tree.json 结构）
- * NOTE: skill_tree 的 skillId 为「设计层 id」（skill_lh_gale_step 等），与 configs/skills 实际配置 id
- *       （skill_xiyou_swift_step 等）命名体系不同，需经 SKILL_TREE_ID_MAP 映射后再注入战斗。
+ * NOTE: skill_tree 的 skillId 为「设计层 id」，与 configs/skills 实际配置 id 命名体系不同，
+ *       skillId 直接透传注入战斗（组合被动为逗号分隔多条配置 id）。
  */
 interface XiyouSkillTreeRawNode {
   id: string
@@ -84,47 +84,6 @@ const SKILL_TREE_TYPE_MAP: Record<string, XiyouNodeType> = {
   small_skill: 'skill',
   ultimate: 'ultimate',
   enhance: 'enhance',
-}
-
-/** skill_tree 设计层 skillId → configs/skills 实际配置 id（无对应技能配置的节点不映射，注入时跳过） */
-const SKILL_TREE_ID_MAP: Record<string, string> = {
-  // 灵猴道
-  passive_lh_combo: 'skill_xiyou_swift_combo',
-  skill_lh_gale_step: 'skill_xiyou_swift_step',
-  skill_lh_dance: 'skill_xiyou_whirlwind',
-  skill_lh_clone_slash: 'skill_xiyou_shadow_slash',
-  skill_lh_shadow_ult: 'skill_xiyou_thousand_shadow',
-  // 金行道
-  passive_jx_precision: 'skill_xiyou_deadly_aim',
-  skill_jx_weakpoint: 'skill_xiyou_weak_point',
-  skill_jx_armor_break: 'skill_xiyou_armor_pierce',
-  skill_jx_charge: 'skill_xiyou_gathering_strike',
-  skill_jx_tiangang_ult: 'skill_xiyou_heaven_destroy',
-  // 磐石道
-  passive_ps_block: 'skill_xiyou_stone_unshakable',
-  skill_ps_iron_wall: 'skill_xiyou_iron_wall',
-  skill_ps_quake: 'skill_xiyou_earthquake',
-  skill_ps_mountain_ult: 'skill_xiyou_mountain_crush',
-  skill_ps_diamond_ult: 'skill_xiyou_diamond_body',
-  // 连击流（斗战）——组合被动用逗号分隔多条配置 id
-  lianji_fengsuo_core: 'school_fengsuo_bounce,school_fengsuo_bind,school_fengsuo_fengzhu',
-  lianji_fufengbian: 'skill_school_fufengbian',
-  lianji_fengliantanshe: 'skill_school_fengliantanshe',
-  lianji_fenghen_a: 'school_fenghen_jiban_apply,school_fenghen_jiban_heal',
-  lianji_yufeng: 'school_yufeng_hitdown,school_yufeng_attack',
-  lianji_tianwang: 'skill_school_fengsuotianwang',
-  lianji_fengshi_core: 'school_lianzhan_fengshi_apply,school_lianzhan_fengshi_transform,school_fengshi_combo_rate',
-  lianji_xunfengji: 'skill_school_xunfengji',
-  lianji_fengshiyong: 'school_fengshiyong_apply',
-  lianji_fengyibaofa: 'skill_school_fengyibaofa',
-  lianji_qishi: 'school_lianshi_qishi,school_fengshi_liejia_link',
-  lianji_kuangfeng: 'skill_school_kuangfengjuexi',
-  lianji_liejia_core: 'school_lianzhan_liejia_apply,school_lianzhan_liejia_burst',
-  lianji_liejiaji: 'skill_school_liejiaji',
-  lianji_tougu: 'school_liejia_tougu',
-  lianji_liejiabaofa: 'skill_school_liejiabaofa',
-  lianji_baolie: 'school_lianzhan_liejia_burst',
-  lianji_tianbeng: 'skill_school_liejiatianbeng',
 }
 
 /** 技能树能量消耗（skill_tree 节点未带，取映射后技能配置的 energyCost；非技能节点为 0） */
@@ -155,7 +114,8 @@ const SKILL_ENERGY_COST: Record<string, number> = {
 
 /** 原始 skill_tree 节点 → XiyouSkillNode（映射字段 + 保留 effect/skillId 供注入） */
 function toSkillNode(raw: XiyouSkillTreeRawNode): XiyouSkillNode {
-  const mappedSkillId = raw.skillId ? SKILL_TREE_ID_MAP[raw.skillId] : undefined
+  // skill_tree 的 skillId 已是 configs/skills 配置 id（组合被动为逗号分隔多条配置 id），直接透传
+  const mappedSkillId = raw.skillId ?? undefined
   return {
     id: raw.id,
     schoolId: raw.schoolId,
@@ -198,12 +158,22 @@ const SKILL_TREE_RAW = (skillTreeJson as { nodes?: XiyouSkillTreeRawNode[] }).no
 const SCHOOL_NAME_MAP = (schoolsJson as { schools: Record<string, string> }).schools ?? {}
 const SCHOOL_IDS = [...new Set(SKILL_TREE_RAW.map((n) => n.schoolId))]
 
+/** 纯流派加成（流派定位对齐 §7：连战·连击 / 破军·暴伤 / 不动·护盾反伤 / 幻影·闪避） */
+const SCHOOL_PURE_BONUS: Record<string, { attribute: string; value: number; desc: string }> = {
+  // NOTE: skill_tree 的 schoolId 为 lianji（schools.json 字典键为 lianzhan，两套 id 以 skill_tree 为运行时权威）
+  lianji: { attribute: 'comboRate', value: 10, desc: '连击率 +10%' },
+  pojun: { attribute: 'critDamage', value: 15, desc: '暴击伤害 +15%' },
+  budong: { attribute: 'damageReduction', value: 10, desc: '免伤率 +10%' },
+  huanying: { attribute: 'dodge', value: 10, desc: '闪避率 +10%' },
+}
+
 export const schools: XiyouSchool[] = reactive<XiyouSchool[]>(
   SCHOOL_IDS.map((id) => ({
     id,
     name: SCHOOL_NAME_MAP[id] ?? id,
     motto: '',
     branches: [],
+    pureBonus: SCHOOL_PURE_BONUS[id],
     nodes: SKILL_TREE_RAW.filter((n) => n.schoolId === id).map(toSkillNode),
   })),
 )
@@ -231,6 +201,7 @@ export const schoolsLayers: SchoolsLayer[] = reactive<SchoolsLayer[]>(
       cost: raw.cost,
       value: raw.value,
       suffix: raw.suffix,
+      skillIds: raw.skillIds,
       description: raw.description,
       skillKind: raw.skillKind,
       layer: layer.layer,
@@ -472,7 +443,10 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(alchemyRecipes, 'cave', 'alchemyRecipes')
   aIn(forgeRecipes, 'cave', 'forgeRecipes')
   aIn(talismanRecipes, 'cave', 'talismanRecipes')
-  aIn(gardenCrops, 'cave', 'gardenCrops')
+  // NOTE: gardenCrops 不从存档恢复——仙缘催熟制后它是纯静态设计数值（configs/xiyou/cave.json 唯一权威），
+  //       旧档的 3 作物快照会盖住新配置（无 xianyuan/input 字段直接让药园不可用）。
+  //       天花板：若未来给作物加运行时状态（如生长进度），需改为按 id 合并而非整表恢复。
+  // aIn(gardenCrops, 'cave', 'gardenCrops')
   aIn(retreats, 'cave', 'retreats')
   aIn(crops, 'cave', 'crops')
   aIn(crafts, 'cave', 'crafts')

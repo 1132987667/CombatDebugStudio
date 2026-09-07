@@ -8,25 +8,25 @@
         {
           "id": "light_weapon",
           "name": "轻型武器",
-          "style": "灵猴道",
+          "style": "连战",
           "desc": "高频连击，速度优先"
         },
         {
           "id": "dagger_weapon",
           "name": "刺",
-          "style": "灵猴道",
+          "style": "幻影",
           "desc": "闪避专属，闪避率/反击率/速度"
         },
         {
           "id": "medium_weapon",
           "name": "中型武器",
-          "style": "金行道",
+          "style": "破军",
           "desc": "爆发输出，暴击优先"
         },
         {
           "id": "blade_weapon",
           "name": "重型武器",
-          "style": "磐石道",
+          "style": "不动",
           "desc": "重击控制，生存优先"
         }
       ],
@@ -41,7 +41,7 @@
         {
           "id": "leather_armor",
           "name": "皮甲",
-          "style": "灵猴道",
+          "style": "幻影",
           "desc": "轻装闪避"
         },
         {
@@ -53,7 +53,7 @@
         {
           "id": "plate_armor",
           "name": "铠甲",
-          "style": "磐石道",
+          "style": "不动",
           "desc": "重装格挡"
         }
       ],
@@ -340,8 +340,8 @@
         "铁木"
       ],
       "equipment_type": "light_weapon",
-      "bias_school": "灵猴道",
-      "desc": "灵猴道词条权重提升"
+      "bias_school": "连战",
+      "desc": "连战词条权重提升"
     },
     {
       "materials": [
@@ -350,8 +350,8 @@
         "金精"
       ],
       "equipment_type": "medium_weapon",
-      "bias_school": "金行道",
-      "desc": "金行道词条权重提升"
+      "bias_school": "破军",
+      "desc": "破军词条权重提升"
     },
     {
       "materials": [
@@ -360,8 +360,8 @@
         "金阳矿"
       ],
       "equipment_type": "heavy_weapon",
-      "bias_school": "磐石道",
-      "desc": "磐石道词条权重提升"
+      "bias_school": "不动",
+      "desc": "不动词条权重提升"
     },
     {
       "materials": [
@@ -370,8 +370,8 @@
         "仙云皮"
       ],
       "equipment_type": "leather_armor",
-      "bias_school": "灵猴道",
-      "desc": "灵猴道词条权重提升"
+      "bias_school": "幻影",
+      "desc": "幻影词条权重提升"
     },
     {
       "materials": [

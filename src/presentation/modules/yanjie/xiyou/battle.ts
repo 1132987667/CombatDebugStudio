@@ -15,7 +15,7 @@ import enemiesJson from '@configs/enemies/enemies.json'
 import bossesJson from '@configs/xiyou/bosses.json'
 import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
 import type { ProtagonistSnapshot, XiyouCombatant, XiyouScene } from './types'
-import { equippedSkills, pureSchoolBonus, schools, skillNodeMap } from './xiyouData'
+import { equippedSkills, pureSchoolBonus, schools, schoolsLayers, skillNodeMap } from './xiyouData'
 import type { RunNode } from './runFlow'
 
 /** 我方初始阵容：仅主角一人（孙小圣/八戒/悟净等伙伴在 mate.json 队友表，初始不上阵） */
@@ -95,9 +95,11 @@ interface EnemyRow {
   level: number
   type?: string
   faction?: string
+  /** 敌人分级（enemies.json role：xiaoyao 小妖 / yaotu 妖徒 / yaokui 妖魁 / yaowang 妖王 / yaozun 妖尊） */
+  role?: string
   stats?: Partial<Record<ATTRIBUTE_CODE, number>>
   drops?: EnemyDropRow[]
-  gold?: [number, number]
+  money?: [number, number]
   exp?: [number, number]
   skillIds?: string[]
   passiveSkillIds?: string[]
@@ -125,7 +127,7 @@ interface BossRow {
   passive?: { id?: string }
   ultimate?: { id?: string }
   affixPool?: EnemyAffixPool
-  drops?: { guaranteed?: string[]; rare?: string[]; gold?: [number, number]; exp?: [number, number] }
+  drops?: { guaranteed?: string[]; rare?: string[]; money?: [number, number]; exp?: [number, number] }
   phases?: Array<{ threshold: number; trigger: string }>
   unlockCondition?: { sceneId?: string }
   description?: string
@@ -159,7 +161,7 @@ function bossToRow(b: BossRow): EnemyRow | null {
       ...guaranteed.map((id) => ({ itemId: id, probability: 1 })),
       ...rare.map((id) => ({ itemId: id, probability: 0.3 })),
     ],
-    gold: b.drops?.gold,
+    money: b.drops?.money,
     exp: b.drops?.exp,
     sceneId: b.unlockCondition?.sceneId,
     description: b.description,
@@ -203,11 +205,11 @@ export function enemyBriefById(id: string): EnemyBrief {
   return { id, name: row?.name ?? id, level: row?.level ?? 0, isBoss: id.startsWith('boss_') }
 }
 
-/** 单个敌人金币/经验奖励区间（按敌人 id，供单敌击杀结算；缺省无奖励） */
-export function rewardForEnemyById(enemyId: string): { gold: [number, number]; exp: [number, number] } {
+/** 单个敌人金钱/经验奖励区间（按敌人 id，供单敌击杀结算；缺省无奖励） */
+export function rewardForEnemyById(enemyId: string): { money: [number, number]; exp: [number, number] } {
   const row = enemyById.get(enemyId)
   return {
-    gold: row?.gold ?? [0, 0],
+    money: row?.money ?? [0, 0],
     exp: row?.exp ?? [0, 0],
   }
 }
@@ -225,24 +227,43 @@ export function dropsForEnemyIds(enemyIds: string[], materials?: string[]): Enem
   return out
 }
 
-/** 按敌方 id 列表聚合金币/经验区间（多场推进的逐场结算口径） */
-export function rewardForEnemyIds(enemyIds: string[]): { gold: [number, number]; exp: [number, number] } {
+/** 按敌方 id 列表聚合金钱/经验区间（多场推进的逐场结算口径） */
+export function rewardForEnemyIds(enemyIds: string[]): { money: [number, number]; exp: [number, number] } {
   let g0 = 0
   let g1 = 0
   let e0 = 0
   let e1 = 0
   for (const id of enemyIds) {
     const row = enemyById.get(id)
-    if (row?.gold) {
-      g0 += row.gold[0]
-      g1 += row.gold[1]
+    if (row?.money) {
+      g0 += row.money[0]
+      g1 += row.money[1]
     }
     if (row?.exp) {
       e0 += row.exp[0]
       e1 += row.exp[1]
     }
   }
-  return { gold: [g0, g1], exp: [e0, e1] }
+  return { money: [g0, g1], exp: [e0, e1] }
+}
+
+/** 敌人分级 → 战胜仙缘（完整项目说明 §10.1：小妖 2 / 妖徒（精英）10 / 妖魁·妖王（BOSS）50 / 妖尊 150） */
+const ROLE_XIANYUAN: Record<string, number> = {
+  xiaoyao: 2,
+  yaotu: 10,
+  yaokui: 50,
+  yaowang: 50,
+  yaozun: 150,
+}
+
+/** 按敌方 id 列表聚合战斗胜利仙缘（药园催熟资源；多场推进的逐场结算口径） */
+export function xianyuanForEnemyIds(enemyIds: string[]): number {
+  let sum = 0
+  for (const id of enemyIds) {
+    const row = enemyById.get(id)
+    sum += row ? (ROLE_XIANYUAN[row.role ?? ''] ?? 0) : 0
+  }
+  return sum
 }
 
 /** 单个敌人掉落条目（按敌人 id，供 BattleZen 头部按敌人展示掉落概率，缺省无掉落） */
@@ -305,6 +326,14 @@ export function equippedPlayerSkills(): EnemySkills {
   // 组合被动：映射值为逗号分隔的多条配置 id，逐个展开注入
   const expand = (skillId: string): string[] =>
     skillId.split(',').map((s) => s.trim()).filter(Boolean)
+  // 天赋树（schools.json layers）学习格：点亮即解锁，skillIds 逐条展开注入
+  for (const layer of schoolsLayers) {
+    for (const node of layer.nodes) {
+      if (!node.learned || !node.skillIds?.length) continue
+      const bucket = node.skillKind === '被动' ? out.passive! : node.skillKind === '小技能' ? out.small! : out.ultimate!
+      for (const skillId of node.skillIds) bucket.push(...expand(skillId))
+    }
+  }
   for (const id of equippedSkills.passive) {
     const skillId = skillNodeMap.get(id)?.skillId
     if (skillId) out.passive!.push(...expand(skillId))

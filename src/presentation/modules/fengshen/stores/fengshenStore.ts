@@ -22,7 +22,7 @@ import type { OperationLogEntry } from '@/domain/fengshen/types'
 import { useBattleStore } from '@/presentation/stores'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
-export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule'
+export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule' | 'curves'
 
 export interface OptionItem {
   id: string

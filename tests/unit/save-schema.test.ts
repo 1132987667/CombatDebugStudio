@@ -31,7 +31,7 @@ describe('checksum 附着与校验', () => {
 
   it('篡改任意字段后校验失败', () => {
     const data = attachChecksum(createInitialGameState())
-    data.player.gold = 999
+    data.player.money = 999
     expect(verifySaveChecksum(data)).toBe(false)
   })
 

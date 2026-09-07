@@ -1,13 +1,13 @@
 {
   "achievements": [
-    { "name": "初出茅庐", "desc": "完成第一章主线剧情", "progress": 1, "target": 1, "reward": "铜钱×500", "done": true },
-    { "name": "百妖斩", "desc": "击败 100 只妖怪", "progress": 34, "target": 100, "reward": "灵石×10", "done": false },
+    { "name": "初出茅庐", "desc": "完成第一章主线剧情", "progress": 1, "target": 1, "reward": "金钱×500", "done": true },
+    { "name": "百妖斩", "desc": "击败 100 只妖怪", "progress": 34, "target": 100, "reward": "金钱×10000", "done": false },
     { "name": "百炼成钢", "desc": "任意装备强化至 +10", "progress": 6, "target": 10, "reward": "玄铁×5", "done": false },
     { "name": "丹道入门", "desc": "炼制 10 次丹药", "progress": 4, "target": 10, "reward": "凝神丹×1", "done": false },
     { "name": "三宝归位", "desc": "收集三件天品及以上法宝", "progress": 1, "target": 3, "reward": "称号·法宝显圣", "done": false },
-    { "name": "结伴同行", "desc": "同时上阵 3 名伙伴", "progress": 3, "target": 3, "reward": "灵石×5", "done": true },
+    { "name": "结伴同行", "desc": "同时上阵 3 名伙伴", "progress": 3, "target": 3, "reward": "金钱×5000", "done": true },
     { "name": "问道长生", "desc": "境界突破至金丹", "progress": 1, "target": 1, "reward": "称号·金丹真人", "done": false },
-    { "name": "富甲一方", "desc": "累计获得 10 万铜钱", "progress": 12880, "target": 100000, "reward": "铜钱×2000", "done": false }
+    { "name": "富甲一方", "desc": "累计获得 10 万金钱", "progress": 12880, "target": 100000, "reward": "金钱×2000", "done": false }
   ],
   "titles": [
     { "name": "降妖者", "bonus": "攻击 +2", "desc": "最初的称号，人人可得", "owned": true, "equipped": true },

@@ -23,6 +23,8 @@
         <div class="fs-ov-params-head">
           <span class="fs-block-title">推算参数</span>
           <span class="fs-form-hint">按当前投放规则反推一件装备可产出的全部属性区间。数值为规则推算，非引擎结算，也不读取已配置装备的具体属性。悬停数值可展开分步推导。</span>
+          <Button size="small" :disabled="!overview" title="缓存当前推算参数供并排对比（最多 3 份）"
+            @click="saveOvSnapshot">存为对比快照（{{ ovSnapshots.length }}/3）</Button>
         </div>
         <div class="fs-ov-filters">
           <div class="fs-ov-field">
@@ -160,6 +162,41 @@
         <div class="fs-block-title">配置缺口</div>
         <div class="fs-form-errors">
           <div v-for="w in overview.warnings" :key="w" class="fs-form-error">{{ w }}</div>
+        </div>
+      </div>
+
+      <!-- 对比快照：缓存推算参数并排显示（如"天阶 vs 地阶同部位差多少"），最多 3 份 -->
+      <div v-if="ovSnapshots.length" class="fs-ov-snapshots">
+        <div class="fs-ov-snapshots-head">
+          <span class="fs-block-title">对比快照</span>
+          <span class="fs-form-hint">改参数前先「存为对比快照」，改完再存一份即可并排对照；随投放规则修改即时重算。</span>
+        </div>
+        <div class="fs-ov-snapshot-grid">
+          <div v-for="(item, i) in snapshotOverviews" :key="i" class="fs-ov-card">
+            <div class="fs-ov-subject">
+              <span class="fs-affix-tag-sm" :class="snapshotSide(item.snap) === 'ATK' ? 'side-atk' : 'side-def'">{{ snapshotSide(item.snap) }}</span>
+              <span class="fs-ov-subject-text">{{ snapshotTitle(item.snap) }}</span>
+              <Button size="small" variant="ghost" title="移除该快照" @click="ovSnapshots.splice(i, 1)">移除</Button>
+            </div>
+            <table class="fs-table fs-ov-table">
+              <thead><tr><th>分区</th><th class="fs-td-right">可获得区间</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>核心属性</td>
+                  <td class="fs-td-right fs-cell-num">{{ snapshotCoreText(item) }}</td>
+                </tr>
+                <tr>
+                  <td>主要·固定</td>
+                  <td class="fs-td-right fs-cell-num">{{ fmtRange(item.overview.mainFixed) }}</td>
+                </tr>
+                <tr v-for="row in item.overview.affixRows" :key="row.row"
+                  :class="{ 'is-none': !row.included }">
+                  <td>{{ row.name }}{{ row.included ? '' : '（本品质不投放）' }}</td>
+                  <td class="fs-td-right fs-cell-num">{{ rowEnvelope(row) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -947,6 +984,63 @@ const ovQualityOptions = computed<TSelectOption[]>(() =>
 
 const ovMaxLevel = computed(() => equipFormula.value?.maxLevel ?? 50)
 
+// ── 对比快照：缓存推算参数并排重算（规则/公式改动即时生效，最多 3 份防刷屏） ──
+interface OvSnapshot {
+  level: number
+  slot: string
+  subType: string
+  tier: string
+  quality: number
+}
+const ovSnapshots = ref<OvSnapshot[]>([])
+
+function saveOvSnapshot(): void {
+  if (!overview.value || !equipFormula.value) return
+  if (ovSnapshots.value.length >= 3) ovSnapshots.value.shift()
+  ovSnapshots.value.push({
+    level: ovLevel.value,
+    slot: ovSlot.value,
+    subType: ovSubType.value,
+    tier: ovTier.value,
+    quality: ovQuality.value,
+  })
+}
+
+const snapshotOverviews = computed(() =>
+  ovSnapshots.value
+    .filter((s) => equipFormula.value)
+    .map((snap) => ({
+      snap,
+      overview: buildEquipmentOverview(cfg, equipFormula.value!, playerConversion.value, snap),
+    })),
+)
+
+function snapshotSide(snap: OvSnapshot): 'ATK' | 'DEF' {
+  return cfg.slot_side[snap.slot] ?? 'ATK'
+}
+
+function snapshotTitle(snap: OvSnapshot): string {
+  const sub = cfg.sub_type_groups[snap.slot]?.sub_types.find((s) => s.id === snap.subType)?.name ?? snap.subType
+  return `${slotGroupLabel(snap.slot)} · ${sub} · Lv.${snap.level} · ${tierLabel(snap.tier)} · 附加 ${snap.quality} 条`
+}
+
+/** 核心属性单元格：属性名 + 区间（无核心配置时给缺口占位） */
+function snapshotCoreText(item: { overview: EquipmentOverview }): string {
+  const core = item.overview.core
+  if (!core) return '—'
+  return `${attrNameByCode(core.attribute)} ${fmtRange(core)}`
+}
+
+/** 附加行候选包络：全部候选属性的 min 下界 / max 上界（行内属性各曲线不同，取总跨度） */
+function rowEnvelope(row: EquipmentOverview['affixRows'][number]): string {
+  const live = row.candidates.filter((c) => c.source !== 'none')
+  if (!live.length) return '—'
+  const min = Math.min(...live.map((c) => c.min))
+  const max = Math.max(...live.map((c) => c.max))
+  const suffix = live.some((c) => isPercentAttr(c.attribute)) ? '%' : ''
+  return `${live.length} 项 ${min} ~ ${max}${suffix}`
+}
+
 const ovSide = computed<'ATK' | 'DEF'>(() => cfg.slot_side[ovSlot.value] ?? 'ATK')
 
 const overview = computed<EquipmentOverview | null>(() => {
@@ -1643,6 +1737,31 @@ void load()
     margin-top: var(--space-4);
     padding-top: var(--space-4);
     border-top: 1px solid var(--color-border-default);
+  }
+}
+
+/* 对比快照：并排小卡（2~3 份），窄屏纵向堆叠 */
+.fs-ov-snapshots {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.fs-ov-snapshots-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.fs-ov-snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+
+  .fs-ov-subject-text {
+    flex: 1;
   }
 }
 

@@ -22,6 +22,11 @@
         <Button variant="energy" size="small" @click="saveExpTable">保存</Button>
       </div>
 
+      <div v-if="expTable.entries.length" class="fs-block">
+        <div class="fs-block-title">升级曲线总览 <span class="fs-page-hint">左轴升级经验 · 右轴约需击败同等级敌人数（肝度陡增一目了然）</span></div>
+        <LineChart :labels="chartLabels" :series="chartSeries" :x-step="5" :height="240" aria-label="升级经验与击杀数曲线" />
+      </div>
+
       <div class="fs-table-wrap">
         <table class="fs-table">
           <thead>
@@ -195,6 +200,7 @@ import {
   matchLevelDiffCondition,
   matchLevelDiffRule,
 } from '@/domain/fengshen/exp-reward'
+import LineChart, { type ChartSeries } from '@/presentation/modules/fengshen/components/LineChart.vue'
 
 const TABS = [
   { id: 'exp_table', label: '升级经验表' },
@@ -304,6 +310,25 @@ async function saveLevelDiff(): Promise<void> {
 }
 
 // ════════════ Tab1 交互 ════════════
+
+/** 曲线 x 轴：等级序列（entries 顺序即等级序，编辑中缺行时按现有行画） */
+const chartLabels = computed(() => expTable.entries.map((e) => String(e.level)))
+
+/** 双轴曲线：升级经验（左）与约需击败敌人数（右），直接复用表格同源换算 */
+const chartSeries = computed<ChartSeries[]>(() => [
+  {
+    name: '升级所需经验',
+    color: 'var(--color-primary)',
+    points: expTable.entries.map((e) => e.expRequired),
+  },
+  {
+    name: '约需击败敌人数',
+    color: 'var(--color-warning)',
+    points: expTable.entries.map((e) => enemiesToLevelUp(e)),
+    axis: 'right',
+    dashed: true,
+  },
+])
 
 function cumulativeExp(idx: number): number {
   let sum = 0

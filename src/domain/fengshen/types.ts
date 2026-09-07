@@ -87,7 +87,7 @@ export interface ItemData {
   type: string
   /** 稀有度（1 普通 ~ 5 仙品） */
   rarity: number
-  /** 实际价值（铜钱口径；出售价 / 坊市购买价 = 价值 × 全局系数） */
+  /** 实际价值（金钱口径；出售价 / 坊市购买价 = 价值 × 全局系数） */
   value?: number
   /** 获取来源 */
   source?: string

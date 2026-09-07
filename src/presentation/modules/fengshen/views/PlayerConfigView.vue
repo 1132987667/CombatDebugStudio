@@ -537,32 +537,64 @@ function readFile(file: File): void {
   reader.readAsText(file)
 }
 
-function doImport(): void {
+async function doImport(): Promise<void> {
   if (!pendingImportData.value) return
-  
+
   const data = pendingImportData.value as Record<string, unknown>
-  
+
+  // NOTE: 导入必须经 write.save 落盘（递增 dataVersion + 触发引擎重载），只 resetInto 灌
+  //       本地草稿的话关页即丢。成长配置沿用保存时的校验：不过校验保留草稿供修正，不写库。
+  const saved: string[] = []
+  const failed: string[] = []
+
+  async function apply(id: 'player_config' | 'system_budget' | 'equip_formula', raw: unknown): Promise<void> {
+    if (id === 'player_config') {
+      resetInto(cfg, raw as PlayerGrowthConfig)
+      const errs = validatePlayerConfig(cfg)
+      if (errs.length) {
+        failed.push(`成长配置（${errs[0]}；未落盘，可修正后点「保存成长配置」）`)
+        return
+      }
+    } else if (id === 'system_budget') {
+      resetInto(budget, raw as SystemBudgetConfig)
+    } else {
+      resetInto(equipFormula, raw as EquipFormulaConfig)
+    }
+
+    const meta = {
+      player_config: { name: '玩家成长配置', label: '成长配置' },
+      system_budget: { name: '养成系统预算权重', label: '系统预算' },
+      equip_formula: { name: '装备数值公式', label: '装备公式' },
+    }[id]
+    const payload = id === 'player_config' ? cfg : id === 'system_budget' ? budget : equipFormula
+    const result = await write.save('params', { id, name: meta.name, data: toPlain(payload) })
+    if (result.ok) saved.push(meta.label)
+    else failed.push(`${meta.label}（${result.errors?.join('；') ?? '保存失败'}）`)
+  }
+
   try {
     if (data.type === 'player_config' && data.data) {
-      resetInto(cfg, data.data as PlayerGrowthConfig)
-      notification.notify('导入成功', '成长配置已导入', 'success')
+      await apply('player_config', data.data)
     } else if (data.type === 'system_budget' && data.data) {
-      resetInto(budget, data.data as SystemBudgetConfig)
-      notification.notify('导入成功', '系统预算已导入', 'success')
+      await apply('system_budget', data.data)
     } else if (data.type === 'equip_formula' && data.data) {
-      resetInto(equipFormula, data.data as EquipFormulaConfig)
-      notification.notify('导入成功', '装备公式已导入', 'success')
+      await apply('equip_formula', data.data)
     } else if (data.type === 'player_config_all' && data.data) {
       const allData = data.data as Record<string, unknown>
-      if (allData.growth) resetInto(cfg, allData.growth as PlayerGrowthConfig)
-      if (allData.budget) resetInto(budget, allData.budget as SystemBudgetConfig)
-      if (allData.formula) resetInto(equipFormula, allData.formula as EquipFormulaConfig)
-      notification.notify('导入成功', '全部配置已导入', 'success')
+      if (allData.growth) await apply('player_config', allData.growth)
+      if (allData.budget) await apply('system_budget', allData.budget)
+      if (allData.formula) await apply('equip_formula', allData.formula)
     } else {
       notification.notify('导入失败', '无法识别的配置格式', 'error')
       return
     }
-    
+
+    const version = await api.getDataVersion()
+    if (failed.length === 0) {
+      notification.notify('导入成功', `${saved.join('、')}已导入并保存 · 数据版本 v${version}`, 'success')
+    } else {
+      notification.notify('导入部分完成', `已保存：${saved.join('、') || '无'}；未落盘：${failed.join('；')}`, 'warning')
+    }
     showImportDialog.value = false
     pendingImportData.value = null
   } catch {

@@ -185,7 +185,7 @@ describe('load', () => {
     await f.manager.save('auto')
     // 篡改主档（写入不同的 main 数据使 checksum 失效）
     const corrupted = JSON.parse(JSON.stringify(f.storage.raw(SAVE_STORE.SAVES, SAVE_MAIN_KEY))) as SaveData
-    corrupted.player.gold = 99999
+    corrupted.player.money = 99999
     await f.storage.set(SAVE_STORE.SAVES, SAVE_MAIN_KEY, corrupted)
 
     // 新 manager 复用同一 storage，从 auto 备份恢复
@@ -250,11 +250,11 @@ describe('export / import', () => {
 
   it('importSave 导入合法存档并恢复', async () => {
     const f = makeFixture()
-    const data = attachChecksum({ ...createInitialGameState(), player: { ...createInitialGameState().player, level: 8, gold: 500 } })
+    const data = attachChecksum({ ...createInitialGameState(), player: { ...createInitialGameState().player, level: 8, money: 500 } })
     const file = new File([JSON.stringify(data)], 'save.json', { type: 'application/json' })
     const r = await f.manager.importSave(file)
     expect(r.ok).toBe(true)
-    expect(f.restored.at(-1)).toMatchObject({ player: { level: 8, gold: 500 } })
+    expect(f.restored.at(-1)).toMatchObject({ player: { level: 8, money: 500 } })
     expect(f.storage.raw(SAVE_STORE.SAVES, SAVE_MAIN_KEY)).toBeTruthy()
   })
 
@@ -278,12 +278,12 @@ describe('reset（新游戏）', () => {
     const main = f.storage.raw(SAVE_STORE.SAVES, SAVE_MAIN_KEY) as SaveData
     const auto = f.storage.raw(SAVE_STORE.SAVES, SAVE_AUTO_KEY) as SaveData
     expect(main.player.level).toBe(1)
-    expect(main.player.gold).toBe(0)
+    expect(main.player.money).toBe(0)
     expect(auto.player.level).toBe(1)
     // 初始档也必须带有效 checksum，保证下次加载的完整性校验成立
     expect(main.meta.checksum).toBeTruthy()
     expect(JSON.parse(localStorage.getItem(LOCAL_MAIN_KEY)!).player.level).toBe(1)
-    expect(f.restored.at(-1)).toMatchObject({ player: { level: 1, gold: 0 } })
+    expect(f.restored.at(-1)).toMatchObject({ player: { level: 1, money: 0 } })
   })
 })
 

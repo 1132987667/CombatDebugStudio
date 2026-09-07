@@ -1904,7 +1904,7 @@
       "level": 1,
       "maxLevel": 10,
       "progress": 0.08,
-      "effect": "每级减少灵韵消耗 5%"
+      "effect": "每级减少仙缘消耗 5%"
     }
   ],
   "talismanRecipes": [
@@ -1927,22 +1927,97 @@
   ],
   "gardenCrops": [
     {
+      "id": "mat_zhixuecao",
+      "name": "止血草",
+      "yield": 3,
+      "cooldown": 300,
+      "xianyuan": 20,
+      "input": 1
+    },
+    {
+      "id": "mat_qingxinye",
+      "name": "清心叶",
+      "yield": 3,
+      "cooldown": 300,
+      "xianyuan": 20,
+      "input": 1
+    },
+    {
+      "id": "mat_shuilingshen",
+      "name": "水灵参",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 60,
+      "input": 1
+    },
+    {
+      "id": "mat_tiepishihu",
+      "name": "铁皮石斛",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 60,
+      "input": 1
+    },
+    {
+      "id": "mat_chixueteng",
+      "name": "赤血藤",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 120,
+      "input": 1
+    },
+    {
+      "id": "mat_zihouhua",
+      "name": "紫猴花",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 120,
+      "input": 1
+    },
+    {
+      "id": "mat_youlancao",
+      "name": "幽兰草",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 240,
+      "input": 1
+    },
+    {
+      "id": "mat_guimiangu",
+      "name": "鬼面菇",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 240,
+      "input": 1
+    },
+    {
+      "id": "mat_jiuyelingzhi",
+      "name": "九叶灵芝",
+      "yield": 1,
+      "cooldown": 300,
+      "xianyuan": 600,
+      "input": 1
+    },
+    {
       "id": "mat_lingzhi",
       "name": "灵芝",
       "yield": 3,
-      "cooldown": 300
+      "cooldown": 300,
+      "xianyuan": 60
     },
     {
       "id": "mat_zhuguo",
       "name": "朱果",
       "yield": 2,
-      "cooldown": 300
+      "cooldown": 300,
+      "xianyuan": 120
     },
     {
       "id": "mat_xiantao",
       "name": "仙桃",
       "yield": 1,
-      "cooldown": 300
+      "cooldown": 300,
+      "xianyuan": 240
     }
   ]
 }

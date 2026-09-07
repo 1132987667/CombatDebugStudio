@@ -93,20 +93,10 @@ import TacticalSelect, { type TSelectOption } from '@/presentation/components/Ta
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import type { FengshenTableName } from '@/domain/fengshen/types'
 
-const TABLE_OPTIONS: Array<{ table: FengshenTableName; label: string }> = [
-  { table: 'actors', label: '角色' },
-  { table: 'skills', label: '技能' },
-  { table: 'buffs', label: 'Buff' },
-  { table: 'enemies', label: '敌人' },
-  { table: 'scenes', label: '场景' },
-  { table: 'formations', label: '阵型' },
-  { table: 'lineups', label: '预设阵容' },
-  { table: 'materials', label: '材料' },
-  { table: 'equipment', label: '装备' },
-  { table: 'elements', label: '阵营克制' },
-  { table: 'growth', label: '成长曲线' },
-  { table: 'affixes', label: '词缀' },
-]
+// NOTE: 导出清单从 schema 派生，新增表自动进入"全量备份"，避免硬编码漏表
+const TABLE_OPTIONS: Array<{ table: FengshenTableName; label: string }> = Object.values(
+  TABLE_SCHEMAS,
+).map((s) => ({ table: s.table, label: s.label }))
 
 const store = useFengshenStore()
 const pkgService = container.resolve<DataPackageService>('DataPackageService')

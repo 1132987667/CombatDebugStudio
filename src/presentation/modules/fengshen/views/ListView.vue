@@ -39,6 +39,9 @@
         @click="duplicateFirst">复制为模板</Button>
       <Button size="small" title="批量修改选中记录的同一字段" :disabled="!store.selectedIds.length"
         @click="batchDialogOpen = true">批量编辑</Button>
+      <Button v-if="store.currentTable === 'enemies'" size="small" title="并排对比所选敌人的属性（2~4 条）"
+        :disabled="compareRows.length < 2 || compareRows.length > 4" @click="compareOpen = true">对比所选（{{
+        compareRows.length }}）</Button>
       <Button v-if="store.selectedIds.length" variant="danger" size="small" @click="requestRemoveSelected">删除所选（{{
         store.selectedIds.length }}）</Button>
     </div>
@@ -78,6 +81,9 @@
     <BatchEditDialog :open="batchDialogOpen" :schema="schema" :count="store.selectedIds.length"
       :load-options="store.loadOptions" @close="batchDialogOpen = false" @apply="onBatchApply" />
 
+    <!-- 敌人横向对比（仅 enemies 表；勾选 2~4 行并排） -->
+    <EnemyCompareDialog :open="compareOpen" :rows="compareRows" @close="compareOpen = false" />
+
     <!-- 危险操作二次确认 + 统一提示 -->
     <ConfirmDialog v-model="confirmRemove" :title="`删除${schema.label}`" :message="removeMessage"
       confirm-text="删除" danger @confirm="doRemove" />
@@ -93,6 +99,7 @@ import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshen
 import DataTable from '@/presentation/modules/fengshen/components/DataTable.vue'
 import EntityDrawer from '@/presentation/modules/fengshen/components/EntityDrawer.vue'
 import BatchEditDialog from '@/presentation/modules/fengshen/components/BatchEditDialog.vue'
+import EnemyCompareDialog from '@/presentation/modules/fengshen/components/EnemyCompareDialog.vue'
 import EntityDetailPanel from '@/presentation/modules/fengshen/components/EntityDetailPanel.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
@@ -305,6 +312,14 @@ async function onSave(): Promise<void> {
 
 /** 批量编辑弹窗 */
 const batchDialogOpen = ref(false)
+
+/** 敌人横向对比：选中行按当前列表顺序取行实体（跨页勾选保留，超 4 条由按钮禁用兜底） */
+const compareOpen = ref(false)
+const compareRows = computed(() =>
+  store.selectedIds
+    .map((id) => store.rows.find((r) => String(r.id) === id))
+    .filter((r): r is Record<string, unknown> => !!r),
+)
 
 /** 批量应用字段值：成功通知 + 失败列出 ID */
 async function onBatchApply(field: string, value: unknown): Promise<void> {

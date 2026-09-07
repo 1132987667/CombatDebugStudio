@@ -75,6 +75,7 @@ interface EnhanceGearView {
   item: string
   rarity: number
   enhance: number
+  failStreak: number
   maxEnhance: number
   stats: EquipmentData['stats']
   nextStats: EquipmentData['stats']
@@ -100,6 +101,7 @@ const gears = computed<EnhanceGearView[]>(() =>
         item: g.name,
         rarity: g.rarity,
         enhance: inst.enhance,
+        failStreak: inst.enhanceFails ?? 0,
         maxEnhance: enhanceMaxByRarity(g.rarity),
         stats: pack.instanceStats(inst),
         nextStats: pack.instanceStats({ ...inst, enhance: inst.enhance + 1 }),
@@ -117,8 +119,8 @@ const mat = computed<MaterialCost>(() =>
   enhanceMaterialOf(gear.value?.enhance ?? 0),
 )
 
-const cost = computed(() => (gear.value ? enhanceCost(gear.value.enhance) : 0))
-const rate = computed(() => (gear.value ? enhanceSuccessRate(gear.value.enhance) : 0))
+const cost = computed(() => (gear.value ? enhanceCost(gear.value.enhance, gear.value.rarity) : 0))
+const rate = computed(() => (gear.value ? enhanceSuccessRate(gear.value.enhance, gear.value.failStreak) : 0))
 const maxed = computed(() => !!gear.value && gear.value.enhance >= gear.value.maxEnhance)
 
 const hasMat = computed(() => pack.countOf(mat.value.itemId) >= mat.value.count)

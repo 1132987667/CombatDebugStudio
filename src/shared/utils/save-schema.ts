@@ -74,6 +74,8 @@ export interface SaveEquipmentInstance {
   qualityFactor?: number
   /** 星级（0-3，缺省 0） */
   star?: number
+  /** 强化连败次数（成功率保底 +10%/次，成功清零；缺省 0） */
+  enhanceFails?: number
   affixes: { id: string; attribute: string; modifierType: string; value: number }[]
 }
 
@@ -100,6 +102,10 @@ export interface SaveData {
   equipment_instances?: SaveEquipmentInstance[]
   /** 流派（v3.0；旧档无此字段，恢复时按缺省无选择） */
   school?: SaveSchoolState
+  /** 永久丹药服用计数：itemId → 已服颗数（次数上限校验；旧档缺省空） */
+  pill_uses?: Record<string, number>
+  /** 永久丹药属性累计增量：attr → 总和（恢复时叠回 player；maxHp/attackMin 已含于 hp_max/base_atk，恢复时跳过防双算） */
+  pill_bonuses?: Record<string, number>
 }
 
 /** 初始状态工厂（新游戏 / 无档兜底，PRD §6.4） */

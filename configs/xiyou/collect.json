@@ -3,7 +3,7 @@
     { "name": "初出茅庐", "desc": "完成第一章主线剧情", "progress": 1, "target": 1, "reward": "铜钱×500", "done": true },
     { "name": "百妖斩", "desc": "击败 100 只妖怪", "progress": 34, "target": 100, "reward": "灵石×10", "done": false },
     { "name": "百炼成钢", "desc": "任意装备强化至 +10", "progress": 6, "target": 10, "reward": "玄铁×5", "done": false },
-    { "name": "丹道入门", "desc": "炼制 10 次丹药", "progress": 4, "target": 10, "reward": "洗髓丹×1", "done": false },
+    { "name": "丹道入门", "desc": "炼制 10 次丹药", "progress": 4, "target": 10, "reward": "凝神丹×1", "done": false },
     { "name": "三宝归位", "desc": "收集三件天品及以上法宝", "progress": 1, "target": 3, "reward": "称号·法宝显圣", "done": false },
     { "name": "结伴同行", "desc": "同时上阵 3 名伙伴", "progress": 3, "target": 3, "reward": "灵石×5", "done": true },
     { "name": "问道长生", "desc": "境界突破至金丹", "progress": 1, "target": 1, "reward": "称号·金丹真人", "done": false },

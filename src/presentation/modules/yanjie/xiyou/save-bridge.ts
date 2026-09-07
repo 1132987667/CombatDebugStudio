@@ -53,12 +53,12 @@ function serializeInstances(): SaveEquipmentInstance[] {
   const pack = usePackStore()
   const out: SaveEquipmentInstance[] = []
   for (const g of pack.gearInstances) {
-    out.push({ instanceId: g.instanceId, itemId: g.itemId, enhance: g.enhance, quality: g.quality, qualityFactor: g.qualityFactor, star: g.star ?? 0, affixes: g.affixes.map((a) => ({ ...a })) })
+    out.push({ instanceId: g.instanceId, itemId: g.itemId, enhance: g.enhance, enhanceFails: g.enhanceFails ?? 0, quality: g.quality, qualityFactor: g.qualityFactor, star: g.star ?? 0, affixes: g.affixes.map((a) => ({ ...a })) })
   }
   for (const slot of Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[]) {
     const inst = pack.equipped[slot]
     if (inst) {
-      out.push({ instanceId: inst.instanceId, itemId: inst.itemId, enhance: inst.enhance, quality: inst.quality, qualityFactor: inst.qualityFactor, star: inst.star ?? 0, affixes: inst.affixes.map((a) => ({ ...a })) })
+      out.push({ instanceId: inst.instanceId, itemId: inst.itemId, enhance: inst.enhance, enhanceFails: inst.enhanceFails ?? 0, quality: inst.quality, qualityFactor: inst.qualityFactor, star: inst.star ?? 0, affixes: inst.affixes.map((a) => ({ ...a })) })
     }
   }
   return out
@@ -143,6 +143,10 @@ export const xiyouSaveBridge: SaveStatePort = {
       },
     }
 
+    // 永久丹药服用计数与属性累计增量
+    data.pill_uses = { ...pack.pillUses }
+    data.pill_bonuses = { ...pack.pillBonuses }
+
     return data
   },
 
@@ -217,6 +221,7 @@ export const xiyouSaveBridge: SaveStatePort = {
           instanceId: inst.instanceId,
           itemId: inst.itemId,
           enhance: Number.isFinite(inst.enhance) ? inst.enhance : 0,
+          enhanceFails: Number.isInteger(inst.enhanceFails) && (inst.enhanceFails as number) >= 0 ? (inst.enhanceFails as number) : 0,
           quality,
           qualityFactor: Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality),
           star: Number.isInteger(inst.star) && (inst.star as number) >= 0 ? (inst.star as number) : 0,
@@ -291,6 +296,18 @@ export const xiyouSaveBridge: SaveStatePort = {
       restoreEquipped(schoolState.equipped)
       // 纯流派加成重算
       pureSchoolBonus.value = calcPureSchool(equippedSkills)
+    }
+
+    // 永久丹药：服用计数（上限校验权威）+ 属性增量叠回。
+    // NOTE: maxHp/attackMin 的丹药增量已包含在 hp_max/base_atk 绝对值里（上方 player 重建时覆盖），
+    //       再叠加会双算，故跳过；defense/speed/hitRate/dodgeRate 无存档通道，必须在此补齐。
+    pack.pillUses = { ...(data.pill_uses ?? {}) }
+    for (const [attr, val] of Object.entries(data.pill_bonuses ?? {})) {
+      if (!Number.isFinite(val) || attr === 'maxHp' || attr === 'attackMin') continue
+      const key = attr as keyof typeof player.player
+      if (typeof player.player[key] === 'number') {
+        ;(player.player as unknown as Record<string, number>)[key] = (player.player[key] as number) + (val as number)
+      }
     }
 
     // 同步行囊运行时落盘（防止旧 pack_runtime 覆盖恢复结果）

@@ -41,35 +41,31 @@ describe('物品索引与品质', () => {
 })
 
 describe('强化数值', () => {
-  it('成功率分档制（P0 裁定）：+1~+5:80 / +6~+10:70 / +11~+15:60；上限 +15，超限非法输入 clamp 最高档', () => {
-    expect(enhanceSuccessRate(0)).toBe(80)
-    expect(enhanceSuccessRate(1)).toBe(80)
-    expect(enhanceSuccessRate(5)).toBe(80)
-    expect(enhanceSuccessRate(6)).toBe(70)
-    expect(enhanceSuccessRate(10)).toBe(70)
-    expect(enhanceSuccessRate(11)).toBe(60)
-    expect(enhanceSuccessRate(15)).toBe(60)
-    expect(enhanceSuccessRate(16)).toBe(60)
-    expect(enhanceSuccessRate(99)).toBe(60)
+  it('成功率公式：P = min(100, max(40, 100 − 5×(L−1)) + 10×F)，L=目标等级（当前+1）、F=连败次数', () => {
+    expect(enhanceSuccessRate(0)).toBe(100) // L=1 基础 100
+    expect(enhanceSuccessRate(1)).toBe(95) // L=2
+    expect(enhanceSuccessRate(4)).toBe(80) // L=5：100 − 5×4
+    expect(enhanceSuccessRate(12)).toBe(40) // L=13：基础 40 锁底
+    expect(enhanceSuccessRate(14)).toBe(40) // L=15：基础 40
+    // 连败保底：每败 +10%
+    expect(enhanceSuccessRate(14, 1)).toBe(50)
+    expect(enhanceSuccessRate(14, 3)).toBe(70)
+    expect(enhanceSuccessRate(14, 6)).toBe(100) // +15 最多尝试 7 次必成
+    expect(enhanceSuccessRate(14, 9)).toBe(100) // 上限 100
   })
 
-  it('金钱消耗按阶位单价 × (强化前等级+1)', () => {
-    expect(enhanceCost(0, 1)).toBe(20) // 凡品 0→1 花 20
-    expect(enhanceCost(6, 1)).toBe(140) // 凡品 6→7 花 20×7
-    expect(enhanceCost(0, 2)).toBe(50) // 玄品 0→1 花 50
-    expect(enhanceCost(0, 3)).toBe(100) // 地品
-    expect(enhanceCost(0, 4)).toBe(150) // 天品
-    expect(enhanceCost(0, 5)).toBe(200) // 仙品
-    expect(enhanceCost(14, 5)).toBe(3000) // 仙品 14→15（上限）花 200×15
+  it('金钱消耗 ⌊50 × L² × K⌋（K：凡1.0/玄1.2/地1.4/天1.6/仙1.8）', () => {
+    expect(enhanceCost(0, 1)).toBe(50) // 凡品 L=1：50×1×1.0
+    expect(enhanceCost(0, 5)).toBe(90) // 仙品 L=1：50×1×1.8
+    expect(enhanceCost(6, 1)).toBe(2450) // 凡品 L=7：50×49×1.0
+    expect(enhanceCost(9, 3)).toBe(7000) // 地品 L=10：50×100×1.4
+    expect(enhanceCost(14, 5)).toBe(20250) // 仙品 L=15：⌊50×225×1.8⌋
   })
 
-  it('强化材料统一：强化石六部位通用，数量按等级段（+1~5 ×1 / +6~10 ×2 / +11~15 ×3）', () => {
-    expect(enhanceMaterialOf(0)).toMatchObject({ itemId: 'enh_stone', count: 1 })
-    expect(enhanceMaterialOf(4)).toMatchObject({ itemId: 'enh_stone', count: 1 })
-    expect(enhanceMaterialOf(5)).toMatchObject({ itemId: 'enh_stone', count: 2 })
-    expect(enhanceMaterialOf(9)).toMatchObject({ itemId: 'enh_stone', count: 2 })
-    expect(enhanceMaterialOf(10)).toMatchObject({ itemId: 'enh_stone', count: 3 })
-    expect(enhanceMaterialOf(14)).toMatchObject({ itemId: 'enh_stone', count: 3 })
+  it('强化材料统一：强化石六部位通用，消耗 = 目标强化等级 L（线性）', () => {
+    expect(enhanceMaterialOf(0)).toMatchObject({ itemId: 'enh_stone', count: 1 }) // 0→1
+    expect(enhanceMaterialOf(4)).toMatchObject({ itemId: 'enh_stone', count: 5 }) // 4→5
+    expect(enhanceMaterialOf(14)).toMatchObject({ itemId: 'enh_stone', count: 15 }) // 14→15
   })
 
   it('强化上限按阶位（equipment-system.json enhance_max_by_tier：凡+3/玄+6/地+9/天+12/仙+15，对齐 §21 品阶表）', () => {

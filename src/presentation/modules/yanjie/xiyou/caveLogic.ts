@@ -43,20 +43,20 @@ export interface MaterialCost {
   count: number
 }
 
-/** 强化材料：统一强化石（六部位/全品阶通用；2026-09-06 裁定，晶球与替代材料已移除）
- *  数量按强化等级段对齐成功率分档：目标 +1~5 ×1 / +6~10 ×2 / +11~15 ×3（equipment-system.json enhance_rules.count_by_stage） */
+/** 强化材料：统一强化石（六部位/全品阶通用；2026-09-06 裁定）
+ *  消耗 = 目标强化等级 L（当前 enhance + 1），线性增长（§21 装备强化） */
 const ENHANCE_STONE_ID = 'enh_stone'
 
 export function enhanceMaterialOf(enhance: number): MaterialCost {
-  const count = enhance <= 4 ? 1 : enhance <= 9 ? 2 : 3
-  return { name: '强化石', itemId: ENHANCE_STONE_ID, count }
+  return { name: '强化石', itemId: ENHANCE_STONE_ID, count: enhance + 1 }
 }
 
-/** 强化成功率：分档制（P0 裁定，失败不降级）——+1~+5:80%、+6~+10:70%、+11~+15:60%；上限 +15（equipment-system.json enhance_max_by_tier），超限输入属非法，clamp 最高档 */
-export function enhanceSuccessRate(enhance: number): number {
-  if (enhance <= 5) return 80
-  if (enhance <= 10) return 70
-  return 60
+/** 强化成功率（%）：P = min(100, max(40, 100 − 5×(L−1)) + 10×F)
+ *  L = 目标强化等级（当前 enhance + 1），F = 连败次数（成功清零；失败 +1）。
+ *  保底：+15 基础 40%，失败 6 次后 100%，即最多尝试 7 次必成（§21 装备强化）。失败不降级。 */
+export function enhanceSuccessRate(enhance: number, failStreak = 0): number {
+  const L = enhance + 1
+  return Math.min(100, Math.max(40, 100 - 5 * (L - 1)) + 10 * failStreak)
 }
 
 /** 强化上限按阶位（equipment-system.json enhance_max_by_tier：凡+3 玄+6 地+9 天+12 仙+15） */
@@ -67,12 +67,13 @@ export function enhanceMaxByRarity(rarity: number): number {
   return ENHANCE_MAX_BY_TIER[TIER_KEY_BY_RARITY[rarity] ?? 'fan'] ?? 5
 }
 
-/** 强化金钱单价按阶位（凡/玄/地/天/仙 → 20/50/100/150/200 铜钱 × 强化次数） */
-const ENHANCE_COST_BY_RARITY: Record<number, number> = { 1: 20, 2: 50, 3: 100, 4: 150, 5: 200 }
+/** 强化品阶系数 K（凡/玄/地/天/仙 → 1.0/1.2/1.4/1.6/1.8，§21 装备强化） */
+const ENHANCE_TIER_K: Record<number, number> = { 1: 1, 2: 1.2, 3: 1.4, 4: 1.6, 5: 1.8 }
 
-/** 强化金钱消耗：阶位单价 × (强化前等级 + 1)，即第 n 次强化花 单价×n */
+/** 强化金钱消耗：⌊50 × L² × K⌋（L = 目标强化等级 = 当前 enhance + 1；二次方增长，品阶越高倍数越大） */
 export function enhanceCost(enhance: number, rarity: number): number {
-  return (ENHANCE_COST_BY_RARITY[rarity] ?? 20) * (enhance + 1)
+  const L = enhance + 1
+  return Math.floor(50 * L * L * (ENHANCE_TIER_K[rarity] ?? 1))
 }
 
 /** 装备属性提升倍率：每级 +4%（§21 装备强化：4%/级 × 上限+15 = 总效果 60%，锚定 §18 养成权重 强化15(1.6)） */

@@ -99,6 +99,8 @@ export interface GearInstance {
   qualityFactor: number
   /** 星级（0-3，设计稿补充-装备 §8：每星基础属性 +10%）；升星消耗同名装备 + 魂玉 */
   star: number
+  /** 强化连败次数（成功率保底：每连败 1 次 +10%，成功清零；§21 装备强化） */
+  enhanceFails?: number
   affixes: GearAffix[]
 }
 
@@ -182,23 +184,20 @@ type NumericPlayerKey = {
   [K in keyof XiyouPlayer]: XiyouPlayer[K] extends number ? K : never
 }[keyof XiyouPlayer]
 
-/** 永久丹药效果表（items.json 未给 effects，此处按《全物品文档-8.16》第四章补齐，供战斗外使用） */
-const PERM_PILL_EFFECTS: Record<string, { attrs: Array<{ attr: NumericPlayerKey; value: number }>; label: string }> = {
-  // 铁骨丹 防御+5
-  elix_perm_01: { attrs: [{ attr: 'defense', value: 5 }], label: '防御' },
-  // 灵犀丹 速度+3
-  elix_perm_02: { attrs: [{ attr: 'speed', value: 3 }], label: '速度' },
-  // 破境丹 攻击+5
-  elix_perm_03: { attrs: [{ attr: 'attackMin', value: 5 }], label: '攻击' },
-  // 固本丹 气血+30
-  elix_perm_04: { attrs: [{ attr: 'maxHp', value: 30 }], label: '气血上限' },
-  // 洗髓丹 全属性+2
-  elix_perm_05: { attrs: [
-    { attr: 'maxHp', value: 2 },
-    { attr: 'attackMin', value: 2 },
-    { attr: 'defense', value: 2 },
-    { attr: 'speed', value: 2 },
-  ], label: '全属性' },
+/** 永久丹药效果表（items.json 未给 effects，此处按《完整项目说明.md》§永久丹药补齐，供战斗外使用；limit = 服用次数上限，防属性溢出） */
+const PERM_PILL_EFFECTS: Record<string, { attrs: Array<{ attr: NumericPlayerKey; value: number }>; label: string; limit: number }> = {
+  // 铁骨丹 防御+2
+  elix_perm_01: { attrs: [{ attr: 'defense', value: 2 }], label: '防御', limit: 10 },
+  // 灵犀丹 速度+2
+  elix_perm_02: { attrs: [{ attr: 'speed', value: 2 }], label: '速度', limit: 10 },
+  // 破境丹 攻击+2
+  elix_perm_03: { attrs: [{ attr: 'attackMin', value: 2 }], label: '攻击', limit: 10 },
+  // 固本丹 气血+12
+  elix_perm_04: { attrs: [{ attr: 'maxHp', value: 12 }], label: '气血上限', limit: 10 },
+  // 凝神丹 命中+2
+  elix_perm_05: { attrs: [{ attr: 'hitRate', value: 2 }], label: '命中', limit: 10 },
+  // 凌波丹 闪避+2
+  elix_perm_06: { attrs: [{ attr: 'dodgeRate', value: 2 }], label: '闪避', limit: 10 },
 }
 
 /** 悟道丹物品 id（items.json；服用 +1 技能点，全存档最多 10 颗，需求 §2.1.2） */
@@ -210,6 +209,10 @@ export const usePackStore = defineStore('pack', () => {
 
   /** 背包持有量：itemId → count（仅记录 >0 的条目；装备不在此列，见 gearInstances） */
   const inventory = ref<Record<string, number>>({})
+  /** 永久丹药服用计数：itemId → 已服颗数（上限校验；save-bridge 持久化到存档 pill_uses） */
+  const pillUses = ref<Record<string, number>>({})
+  /** 永久丹药属性累计增量：attr → 总和（save-bridge 持久化到存档 pill_bonuses，恢复时叠回 player） */
+  const pillBonuses = ref<Record<string, number>>({})
   /** 仓库格子（长度即容量） */
   const storage = ref<StorageSlot[]>([])
   /** 快捷栏（固定 4 格，存 itemId） */
@@ -274,6 +277,7 @@ export const usePackStore = defineStore('pack', () => {
         instanceId: g.instanceId,
         itemId: g.itemId,
         enhance: g.enhance,
+        enhanceFails: g.enhanceFails ?? 0,
         quality: g.quality,
         qualityFactor: g.qualityFactor,
         star: g.star ?? 0,
@@ -369,6 +373,7 @@ export const usePackStore = defineStore('pack', () => {
             instanceId: g.instanceId ?? newInstanceId(),
             itemId: g.itemId,
             enhance: Number.isFinite(g.enhance) ? g.enhance : 0,
+            enhanceFails: Number.isInteger(g.enhanceFails) && (g.enhanceFails as number) >= 0 ? (g.enhanceFails as number) : 0,
             quality: Number.isInteger(g.quality) && g.quality >= 1 && g.quality <= 5 ? g.quality : 1,
             qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1),
             star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
@@ -570,12 +575,14 @@ export const usePackStore = defineStore('pack', () => {
     inventory.value[mat.itemId] = (inventory.value[mat.itemId] ?? 0) - mat.count
     if (inventory.value[mat.itemId]! <= 0) delete inventory.value[mat.itemId]
     currency.copper -= cost
-    if (rng() * 100 < enhanceSuccessRate(inst.enhance)) {
+    if (rng() * 100 < enhanceSuccessRate(inst.enhance, inst.enhanceFails ?? 0)) {
       inst.enhance += 1
+      inst.enhanceFails = 0
       scheduleSave()
       notification.toast(`强化成功！「${g.name}」强化 +${inst.enhance}`, 'success')
       return true
     }
+    inst.enhanceFails = (inst.enhanceFails ?? 0) + 1
     // 失败：持有强化保护符则回退材料并消耗一张（金钱照扣），否则材料损失
     if ((inventory.value[ENH_PROTECT_ID] ?? 0) > 0) {
       inventory.value[mat.itemId] = (inventory.value[mat.itemId] ?? 0) + mat.count
@@ -586,7 +593,7 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     scheduleSave()
-    notification.toast(`强化失败，「${g.name}」等级不变`, 'error')
+    notification.toast(`强化失败，「${g.name}」等级不变（连败 ${inst.enhanceFails}，下次成功率 +10%）`, 'error')
     return false
   }
 
@@ -1180,6 +1187,11 @@ export const usePackStore = defineStore('pack', () => {
 
     const perm = PERM_PILL_EFFECTS[itemId]
     if (perm) {
+      const used = pillUses.value[itemId] ?? 0
+      if (used >= perm.limit) {
+        notification.toast(`「${item.name}」已服满 ${perm.limit} 颗，无法再服用`, 'warning')
+        return false
+      }
       const p = playerStore.player as XiyouPlayer
       const applied: string[] = []
       for (const a of perm.attrs) {
@@ -1194,7 +1206,10 @@ export const usePackStore = defineStore('pack', () => {
           p[a.attr] += a.value
           applied.push(`${a.attr}+${a.value}`)
         }
+        // 记录全量累计增量（恢复时 save-bridge 只叠非 hp_max/base_atk 键，防双算）
+        pillBonuses.value[a.attr] = (pillBonuses.value[a.attr] ?? 0) + a.value
       }
+      pillUses.value[itemId] = used + 1
       removeItem(itemId, 1)
       notification.toast(`使用了「${item.name}」，${perm.label} ${applied.join('，')}`, 'success')
       return true
@@ -1211,7 +1226,7 @@ export const usePackStore = defineStore('pack', () => {
 
   /** 战斗外可即时生效（有实现）：
    *  - 悟道丹：服用 +1 技能点
-   *  - 永久丹药：仅已在 PERM_PILL_EFFECTS 中实现者（洗髓丹等未实现者不显示使用） */
+   *  - 永久丹药：PERM_PILL_EFFECTS 已登记的 6 种（服用受次数上限约束） */
   function canUseOutOfBattle(itemId: string): boolean {
     const item = catalogById(itemId)
     if (!item) return false
@@ -1251,6 +1266,8 @@ export const usePackStore = defineStore('pack', () => {
 
   return {
     inventory,
+    pillUses,
+    pillBonuses,
     storage,
     storageCapacity,
     quickSlots,

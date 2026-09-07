@@ -211,14 +211,14 @@ describe('坊市购买', () => {
     expect(good.stock).toBe(-1)
   })
 
-  it('灵石商品扣灵石（洗髓丹 3 灵石）', async () => {
+  it('灵石商品扣灵石（凝神丹 3 灵石）', async () => {
     const pack = usePackStore()
     await pack.init()
-    // 洗髓丹（elix_perm_05）初始持有 1，再购 2 → 3
-    const good = makeGood({ name: '洗髓丹', unit: '灵石', price: 3, stock: 2 })
+    // 凝神丹（elix_perm_05）初始不持有，购 2 → 2
+    const good = makeGood({ name: '凝神丹', unit: '灵石', price: 3, stock: 2 })
     expect(pack.purchase(good, 2)).toBeNull()
     expect(pack.currency.jade).toBe(520 - 6)
-    expect(pack.countOf('elix_perm_05')).toBe(3)
+    expect(pack.countOf('elix_perm_05')).toBe(2)
   })
 })
 
@@ -279,10 +279,10 @@ describe('战斗外使用', () => {
     const pack = usePackStore()
     const player = usePlayerStore()
     await pack.init()
-    pack.addItem('elix_perm_01', 1) // 铁骨丹：防御 +5
+    pack.addItem('elix_perm_01', 1) // 铁骨丹：防御 +2
     const before = player.player.defense
     expect(pack.useItem('elix_perm_01')).toBe(true)
-    expect(player.player.defense).toBe(before + 5)
+    expect(player.player.defense).toBe(before + 2)
     expect(pack.countOf('elix_perm_01')).toBe(0)
   })
 
@@ -293,28 +293,39 @@ describe('战斗外使用', () => {
     expect(pack.countOf('elix_001')).toBe(5)
   })
 
-  it('洗髓丹（永久丹药）全属性 +2 并消耗', async () => {
+  it('凝神丹（永久丹药）命中 +2 并消耗', async () => {
     const pack = usePackStore()
     const player = usePlayerStore()
     await pack.init()
-    expect(pack.countOf('elix_perm_05')).toBe(1)
-    const m = player.player.maxHp
-    const a = player.player.attackMin
-    const d = player.player.defense
-    const s = player.player.speed
+    pack.addItem('elix_perm_05', 1)
+    const h = player.player.hitRate
     expect(pack.useItem('elix_perm_05')).toBe(true)
-    expect(player.player.maxHp).toBe(m + 2)
-    expect(player.player.attackMin).toBe(a + 2)
-    expect(player.player.defense).toBe(d + 2)
-    expect(player.player.speed).toBe(s + 2)
+    expect(player.player.hitRate).toBe(h + 2)
     expect(pack.countOf('elix_perm_05')).toBe(0)
+    expect(pack.pillUses['elix_perm_05']).toBe(1)
+    expect(pack.pillBonuses['hitRate']).toBe(2)
+  })
+
+  it('凌波丹（永久丹药）闪避 +2；服满 10 颗后拒绝且不消耗', async () => {
+    const pack = usePackStore()
+    const player = usePlayerStore()
+    await pack.init()
+    pack.addItem('elix_perm_06', 12)
+    const d = player.player.dodgeRate
+    for (let i = 0; i < 10; i++) expect(pack.useItem('elix_perm_06')).toBe(true)
+    expect(player.player.dodgeRate).toBe(d + 20)
+    expect(pack.useItem('elix_perm_06')).toBe(false)
+    expect(player.player.dodgeRate).toBe(d + 20) // 超限不再加成
+    expect(pack.countOf('elix_perm_06')).toBe(2) // 拒绝时不消耗
+    expect(pack.pillUses['elix_perm_06']).toBe(10)
   })
 
   it('canUseOutOfBattle 只对已实现效果放行', async () => {
     const pack = usePackStore()
     await pack.init()
     expect(pack.canUseOutOfBattle('elix_perm_01')).toBe(true) // 铁骨丹
-    expect(pack.canUseOutOfBattle('elix_perm_05')).toBe(true) // 洗髓丹已实现
+    expect(pack.canUseOutOfBattle('elix_perm_05')).toBe(true) // 凝神丹已实现
+    expect(pack.canUseOutOfBattle('elix_perm_06')).toBe(true) // 凌波丹已实现
     expect(pack.canUseOutOfBattle('enh_stone')).toBe(false) // 强化石非战斗外消耗品
     expect(pack.canUseOutOfBattle('elix_001')).toBe(false) // 恢复丹战斗外不可用
   })
@@ -610,10 +621,10 @@ describe("装备制造与强化（实例化）", () => {
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // rng 0 → 100% 成功
     expect(pack.equipped.weapon?.enhance).toBe(1)
-    expect(pack.currency.copper).toBe(beforeCopper - 20) // 20 + 20×0
-    expect(pack.countOf("enh_stone")).toBe(enh0 + 9)
+    expect(pack.currency.copper).toBe(beforeCopper - 50) // ⌊50×1²×1.0⌋（凡品 K=1.0）
+    expect(pack.countOf("enh_stone")).toBe(enh0 + 9) // L=1 消耗 1
     const atk1 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
-    expect(atk1).toBe(Math.round(atk0 * 1.05)) // 每级 +5%
+    expect(atk1).toBe(Math.round(atk0 * 1.04)) // 每级 +4%
   })
 
   it("强化失败：扣消耗但等级不变", async () => {
@@ -621,13 +632,14 @@ describe("装备制造与强化（实例化）", () => {
     await pack.init()
     pack.equip("wp_t1_light_01")
     pack.addItem("enh_stone", 10)
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // → Lv.1（rate 95%）
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // → Lv.1（rate 100%）
     const copper1 = pack.currency.copper
     const mat1 = pack.countOf("enh_stone")
-    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false) // 99 ≥ 95 → 失败
+    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false) // L=2 rate 95%，99 ≥ 95 → 失败
     expect(pack.equipped.weapon?.enhance).toBe(1)
-    expect(pack.currency.copper).toBe(copper1 - 40) // 40 = 20 + 20×1
-    expect(pack.countOf("enh_stone")).toBe(mat1 - 1)
+    expect(pack.equipped.weapon?.enhanceFails).toBe(1) // 连败 +1（下次 rate +10%）
+    expect(pack.currency.copper).toBe(copper1 - 200) // ⌊50×2²×1.0⌋
+    expect(pack.countOf("enh_stone")).toBe(mat1 - 2) // L=2 消耗 2
   })
 
   it("强化材料/金钱不足时不扣任何消耗", async () => {
@@ -838,15 +850,20 @@ describe("强化保护符", () => {
     expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // 0→1 必成（rate 100%）
     const mat1 = pack.countOf("enh_stone")
 
-    // 失败（rate 95%，rng 0.99）：保护符保住材料，仅消耗保护符
+    // 失败（L=2 rate 95%，rng 0.99）：保护符保住材料，仅消耗保护符
     expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
     expect(pack.equipped.weapon?.enhance).toBe(1)
     expect(pack.countOf("enh_stone")).toBe(mat1)
     expect(pack.countOf("enh_protect")).toBe(0)
 
-    // 再无保护符：失败则材料照扣
+    // 连败后保底 100%：L=2 rate 100% 必成，连败清零
+    expect(pack.enhanceGear("weapon", () => 0)).toBe(true)
+    expect(pack.equipped.weapon?.enhanceFails).toBe(0)
+
+    // 再无保护符：L=3 rate 90%，rng 0.99 失败 → 材料 ×3 照扣
+    const mat2 = pack.countOf("enh_stone")
     expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
-    expect(pack.countOf("enh_stone")).toBe(mat1 - 1)
+    expect(pack.countOf("enh_stone")).toBe(mat2 - 3)
   })
 
   it("强化成功不消耗保护符", async () => {
@@ -912,7 +929,7 @@ describe("坊市刷新", () => {
   it("初始全量上架；刷新后抽取 6 种，列表变化", async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.shopGoods.length).toBe(10)
+    expect(pack.shopGoods.length).toBe(9) // 商品池 9 种（洗髓丹移除后）
 
     const before = new Set(pack.shopGoods.map((g) => g.name))
     pack.refreshShop(new Date(), () => 0)
@@ -930,7 +947,7 @@ describe("坊市刷新", () => {
   it("限量商品刷新后库存重置为 1-5", async () => {
     const pack = usePackStore()
     await pack.init()
-    // 洗髓丹（tag 限量）在池中；rng 0 时库存 = 1
+    // 淡水玉（tag 限量）在池中；rng 0 时库存 = 1
     pack.refreshShop(new Date(), () => 0)
     for (const g of pack.shopGoods) {
       if (g.tag === "限量") expect(g.stock).toBeGreaterThanOrEqual(1)

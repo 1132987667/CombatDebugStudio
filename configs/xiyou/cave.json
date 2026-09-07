@@ -181,7 +181,7 @@
           "count": 2
         }
       ],
-      "effect": "基础防御+5",
+      "effect": "基础防御+2",
       "count": 1
     },
     {
@@ -197,7 +197,7 @@
           "count": 2
         }
       ],
-      "effect": "基础速度+3",
+      "effect": "基础速度+2",
       "count": 1
     },
     {
@@ -213,7 +213,7 @@
           "count": 2
         }
       ],
-      "effect": "基础攻击+5",
+      "effect": "基础攻击+2",
       "count": 1
     },
     {
@@ -229,7 +229,39 @@
           "count": 2
         }
       ],
-      "effect": "基础气血+30",
+      "effect": "基础气血+12",
+      "count": 1
+    },
+    {
+      "name": "凝神丹",
+      "level": 2,
+      "materials": [
+        {
+          "itemId": "mat_tiepishihu",
+          "count": 3
+        },
+        {
+          "itemId": "mat_dimaishiru",
+          "count": 2
+        }
+      ],
+      "effect": "基础命中+2",
+      "count": 1
+    },
+    {
+      "name": "凌波丹",
+      "level": 3,
+      "materials": [
+        {
+          "itemId": "mat_zihouhua",
+          "count": 3
+        },
+        {
+          "itemId": "mat_dimaishiru",
+          "count": 2
+        }
+      ],
+      "effect": "基础闪避+2",
       "count": 1
     },
     {

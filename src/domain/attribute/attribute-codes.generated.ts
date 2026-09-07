@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-09-06T15:57:17.645Z
+// 生成时间: 2026-09-07T04:16:32.302Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -34,7 +34,6 @@ export const ATTRIBUTE_CODE = {
   hit: 'hit',
   controlSuccessRate: 'controlSuccessRate',
   controlDurationReduction: 'controlDurationReduction',
-  damageTakenIncrease: 'damageTakenIncrease',
   damageBoost: 'damageBoost',
   poisonRes: 'poisonRes',
   fireSkillDmgBonus: 'fireSkillDmgBonus',
@@ -73,7 +72,6 @@ export const ATTRIBUTE_CODE = {
   finalDefense: 'finalDefense',
   normalAtkBonus: 'normalAtkBonus',
   skillBonus: 'skillBonus',
-  counterDamageBonus: 'counterDamageBonus',
   damageCoefficient: 'damageCoefficient',
   counterDamageCoefficient: 'counterDamageCoefficient',
   comboDamageCoefficient: 'comboDamageCoefficient',
@@ -346,15 +344,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: true,
     range: '0-100%',
     impact: '降低被眩晕、沉默等控制的持续时间',
-  },
-  damageTakenIncrease: {
-    code: 'damageTakenIncrease',
-    name: '易伤',
-    displayName: '受到伤害增加',
-    description: '受到的所有伤害增加的比例（易伤状态）',
-    isPercentage: true,
-    range: '0-200%',
-    impact: '增加受到的伤害，通常由debuff引起',
   },
   damageBoost: {
     code: 'damageBoost',
@@ -699,15 +688,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: true,
     range: '0-50%',
     impact: '提高技能伤害',
-  },
-  counterDamageBonus: {
-    code: 'counterDamageBonus',
-    name: '反击伤害加成',
-    displayName: '反击伤害加成',
-    description: '仅按百分比提高反击的伤害',
-    isPercentage: true,
-    range: '0-150%',
-    impact: '提高反击伤害',
   },
   damageCoefficient: {
     code: 'damageCoefficient',

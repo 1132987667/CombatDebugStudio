@@ -260,16 +260,6 @@
     "isPercentage": true
   },
   {
-    "uid": "H1_11",
-    "code": "damageTakenIncrease",
-    "name": "易伤",
-    "displayName": "受到伤害增加",
-    "description": "受到的所有伤害增加的比例（易伤状态）",
-    "range": "0-200%",
-    "impact": "增加受到的伤害，通常由debuff引起",
-    "isPercentage": true
-  },
-  {
     "uid": "B2_01",
     "code": "damageBoost",
     "name": "伤害提升",
@@ -649,16 +639,6 @@
     "description": "仅按百分比提高技能伤害",
     "range": "0-50%",
     "impact": "提高技能伤害",
-    "isPercentage": true
-  },
-  {
-    "uid": "B2_04",
-    "code": "counterDamageBonus",
-    "name": "反击伤害加成",
-    "displayName": "反击伤害加成",
-    "description": "仅按百分比提高反击的伤害",
-    "range": "0-150%",
-    "impact": "提高反击伤害",
     "isPercentage": true
   },
   {

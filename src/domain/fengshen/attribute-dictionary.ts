@@ -7,7 +7,7 @@ import type { AttributeValueTier } from './types'
  * attributes.json 仍是 code / isPercentage / defaultValue / description 的底层注册表（引擎只认它），
  * 本字典不复制那些字段，只补充「层级」等 PRD 权威信息，供封神榜各视图统一消费。
  *
- * 覆盖全部 98 个 code：64 项核心（numeric=true）+ 31 项归档（numeric=false）+ 3 项运行时。
+ * 覆盖全部 96 个 code：64 项核心（numeric=true）+ 29 项归档（numeric=false）+ 3 项运行时。
  * 归档 ≠ 删除：引擎/配置仍引用这些 code（如 maxEnergy 引用 82 处），仅从「数值体系」视图排除，
  * 并作为「扩展预留」写入 documents/新需求/完整项目说明.md。
  */
@@ -175,15 +175,13 @@ export const ATTRIBUTE_DICTIONARY: AttributeDictEntry[] = [
   archived('webSuccessRate', '蛛网成功率', 'L1', '技能机制', '待确认→归档：技能专属，扩展预留'),
   archived('maxEnergy', '最大能量', 'L1', '技能机制', '用户剔除：能量上限固定，引擎强引用(82处)，仅移出数值视图'),
 
-  // ===== 归档：状态修正 / 边缘输出 / 重复投放 =====
+  // ===== 归档：状态修正 / 条件增伤 =====
   archived('controlDurationReduction', '受控时间减免', 'L2', '状态修正', '用户剔除：控制对抗细节，扩展预留'),
   archived('critDamageTaken', '受到暴击伤害', 'L2', '状态修正', '用户剔除：与暴伤减免重叠，扩展预留'),
   archived('healReceived', '受到治疗加成', 'L2', '状态修正', '边缘项：与削减对成对补全，扩展预留'),
   archived('poisonRes', '毒素抗性', 'L2', '状态修正', '待确认→归档：DOT 专属抗性，扩展预留'),
   archived('fireSkillDmgBonus', '火系技能伤害加成', 'L2', '条件增伤', '用户剔除：属性技能加成，随五行暂不启用'),
   archived('physicalSkillDmgBonus', '物理技能伤害加成', 'L2', '条件增伤', '用户剔除：伤害大类技能加成，扩展预留'),
-  archived('counterDamageBonus', '反击伤害加成', 'L2', '输出转化', '用户剔除：与反击伤害系数重叠，扩展预留'),
-  archived('damageTakenIncrease', '受到伤害增加', 'L1', '重复投放', '用户剔除：与易伤(vulnerability)重复'),
 ]
 
 const DICT_BY_CODE = new Map<string, AttributeDictEntry>(

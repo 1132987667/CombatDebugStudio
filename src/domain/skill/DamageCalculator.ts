@@ -166,7 +166,7 @@ export class DamageCalculator {
       defenseValue: 0,
       effectiveDefense: 0,
       defenseMultiplier: 1,
-      damageTakenIncrease: 0,
+      vulnerability: 0,
       targetModifierEffects: [],
       minDamageThreshold: this.config.minDamageThreshold ?? 1,
       maxDamageThreshold: this.config.maxDamageThreshold ?? 9999,
@@ -503,20 +503,18 @@ export class DamageCalculator {
     }
     // TRUE 伤害跳过伤害减免：无数值变换，不记录步骤
 
-    // 受到伤害增加
-    breakdown.damageTakenIncrease = target.getAttribute(
-      ATTRIBUTE_CODE.damageTakenIncrease,
-    )
-    if (breakdown.damageTakenIncrease > 0) {
+    // 易伤
+    breakdown.vulnerability = target.getAttribute(ATTRIBUTE_CODE.vulnerability)
+    if (breakdown.vulnerability > 0) {
       const before = damage
-      damage = floor(damage * (1 + breakdown.damageTakenIncrease / 100))
+      damage = floor(damage * (1 + breakdown.vulnerability / 100))
       breakdown.steps.push({
-        stepName: 'dmgTakenIncrease',
+        stepName: 'vulnerability',
         value: damage,
         before,
         after: damage,
         sourceType: 'system',
-        description: `受伤增加(${breakdown.damageTakenIncrease}%): ${before} → ${damage}`,
+        description: `易伤(${breakdown.vulnerability}%): ${before} → ${damage}`,
       })
     }
 

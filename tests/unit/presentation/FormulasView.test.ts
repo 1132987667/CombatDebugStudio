@@ -50,7 +50,7 @@ describe('FormulasView', () => {
     expect(text).toContain('896')
     expect(text).toContain('738')
     // 步骤表出现变换环节名
-    for (const step of ['damageBoost', 'defense', 'skillDmgReduction', 'dmgTakenIncrease']) {
+    for (const step of ['damageBoost', 'defense', 'skillDmgReduction', 'vulnerability']) {
       expect(text).toContain(step)
     }
   })

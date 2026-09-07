@@ -94,7 +94,7 @@ const STEP_NAME_CN: Record<string, string> = {
   elementalResistance: '元素抗性',
   fieldElemental: '场地元素',
   damageReduction: '减伤',
-  dmgTakenIncrease: '受伤害增加',
+  vulnerability: '易伤',
   targetModifier: '目标修正',
   elementMatrix: '元素矩阵',
   clamp: '钳制',

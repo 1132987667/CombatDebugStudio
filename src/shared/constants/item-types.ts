@@ -18,7 +18,7 @@ export const SPECIAL_MATERIAL_TYPES = [
 
 /** 功能性物品类型（强化/升级/合成相关） */
 export const FUNCTIONAL_ITEM_TYPES = [
-  '碎片', '强化', '升星', '精锻', '洗炼', '重铸', '传承', '分解',
+  '碎片', '强化', '升星', '洗炼', '重铸', '传承', '分解',
   '突破', '技能书', '经验', '图纸',
 ] as const
 

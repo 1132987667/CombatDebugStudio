@@ -1,6 +1,6 @@
 {
   "affix_library_version": "3.1.0",
-  "updated_at": "2026-08-15",
+  "updated_at": "2026-09-07",
   "affixes": [
     {
       "id": "affix_yao_1_001",
@@ -568,172 +568,6 @@
       "drop_hint": "accessory_material"
     },
     {
-      "id": "affix_yao_3_011",
-      "name": "火灵护体",
-      "tier": "yao_3",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "fireRes",
-          "percent": 60,
-          "type": "ADDITIVE"
-        }
-      ],
-      "conflict_group": "wuxing_single",
-      "rarity": 3,
-      "description": "增益：火属性抗性 +60%",
-      "drop_hint": "fire_material"
-    },
-    {
-      "id": "affix_yao_3_012",
-      "name": "水灵护体",
-      "tier": "yao_3",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "waterRes",
-          "percent": 60,
-          "type": "ADDITIVE"
-        }
-      ],
-      "conflict_group": "wuxing_single",
-      "rarity": 3,
-      "description": "增益：水属性抗性 +60%",
-      "drop_hint": "water_material"
-    },
-    {
-      "id": "affix_yao_3_013",
-      "name": "金灵护体",
-      "tier": "yao_3",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "metalRes",
-          "percent": 60,
-          "type": "ADDITIVE"
-        }
-      ],
-      "conflict_group": "wuxing_single",
-      "rarity": 3,
-      "description": "增益：金属性抗性 +60%",
-      "drop_hint": "metal_material"
-    },
-    {
-      "id": "affix_yao_3_014",
-      "name": "木灵护体",
-      "tier": "yao_3",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "woodRes",
-          "percent": 60,
-          "type": "ADDITIVE"
-        }
-      ],
-      "conflict_group": "wuxing_single",
-      "rarity": 3,
-      "description": "增益：木属性抗性 +60%",
-      "drop_hint": "wood_material"
-    },
-    {
-      "id": "affix_yao_3_015",
-      "name": "土灵护体",
-      "tier": "yao_3",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "earthRes",
-          "percent": 60,
-          "type": "ADDITIVE"
-        }
-      ],
-      "conflict_group": "wuxing_single",
-      "rarity": 3,
-      "description": "增益：土属性抗性 +60%",
-      "drop_hint": "earth_material"
-    },
-    {
-      "id": "affix_yao_3_016",
-      "name": "五行轮转",
-      "tier": "yao_3",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "fireRes",
-          "percent": 30,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "waterRes",
-          "percent": 30,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "metalRes",
-          "percent": 30,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "woodRes",
-          "percent": 30,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "earthRes",
-          "percent": 30,
-          "type": "ADDITIVE"
-        }
-      ],
-      "conflict_group": "wuxing_all",
-      "rarity": 3,
-      "description": "增益：火属性抗性 +30%，水属性抗性 +30%，金属性抗性 +30%，木属性抗性 +30%，土属性抗性 +30%",
-      "drop_hint": "wuxing_material"
-    },
-    {
-      "id": "affix_yao_3_017",
-      "name": "混元归一",
-      "tier": "yao_3",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "fireRes",
-          "percent": 45,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "waterRes",
-          "percent": 45,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "metalRes",
-          "percent": 45,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "woodRes",
-          "percent": 45,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "earthRes",
-          "percent": 45,
-          "type": "ADDITIVE"
-        }
-      ],
-      "conflict_group": "wuxing_all",
-      "rarity": 3,
-      "description": "增益：火属性抗性 +45%，水属性抗性 +45%，金属性抗性 +45%，木属性抗性 +45%，土属性抗性 +45%",
-      "drop_hint": "wuxing_material"
-    },
-    {
       "id": "affix_yao_3_018",
       "name": "星辰·初",
       "tier": "yao_3",
@@ -1082,32 +916,6 @@
       "drop_hint": "hp_material"
     },
     {
-      "id": "affix_mandate_006",
-      "name": "河伯·沧浪",
-      "tier": "mandate",
-      "target": "enemy",
-      "allowed": ["enemy"],
-      "statModifiers": [
-        {
-          "attribute": "waterRes",
-          "percent": 80,
-          "type": "ADDITIVE"
-        },
-        {
-          "attribute": "defense",
-          "percent": 40
-        },
-        {
-          "attribute": "healReceived",
-          "percent": 50,
-          "type": "ADDITIVE"
-        }
-      ],
-      "rarity": 5,
-      "description": "增益：水属性抗性 +80%，防御力 +40%，受到治疗加成 +50%",
-      "drop_hint": "water_material"
-    },
-    {
       "id": "affix_mandate_007",
       "name": "山神·岩坚",
       "tier": "mandate",
@@ -1278,10 +1086,6 @@
     {
       "boss_id": "boss_major_huayaowang",
       "affix_id": "affix_mandate_005"
-    },
-    {
-      "boss_id": "boss_major_hebo",
-      "affix_id": "affix_mandate_006"
     },
     {
       "boss_id": "boss_major_shanshen",

@@ -2216,7 +2216,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "damageTakenIncrease": {
+            "vulnerability": {
               "value": 10,
               "type": "ADDITIVE"
             },
@@ -2261,7 +2261,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "damageTakenIncrease": {
+            "vulnerability": {
               "value": 3,
               "type": "ADDITIVE"
             }
@@ -2286,7 +2286,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "damageTakenIncrease": {
+            "vulnerability": {
               "value": 5,
               "type": "ADDITIVE"
             }
@@ -2516,7 +2516,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "damageTakenIncrease": {
+            "vulnerability": {
               "value": -8,
               "type": "ADDITIVE"
             },
@@ -2752,7 +2752,7 @@
               "value": -6,
               "type": "ADDITIVE"
             },
-            "damageTakenIncrease": {
+            "vulnerability": {
               "value": 4,
               "type": "ADDITIVE"
             }
@@ -2810,7 +2810,7 @@
               "value": -10,
               "type": "ADDITIVE"
             },
-            "damageTakenIncrease": {
+            "vulnerability": {
               "value": 5,
               "type": "ADDITIVE"
             }

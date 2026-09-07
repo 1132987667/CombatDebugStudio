@@ -208,8 +208,7 @@
       "品质",
       "星级",
       "随机词条",
-      "固定特效",
-      "精锻"
+      "固定特效"
     ]
   },
   "star_system": {
@@ -324,7 +323,6 @@
       "preserves": [
         "装备品质",
         "强化等级",
-        "精锻",
         "星级"
       ],
       "regenerates": [
@@ -411,7 +409,6 @@
       "positioning": "终局全属性",
       "fiied_effect": "提升全属性并增强大招伤害",
       "enhance_mai": 20,
-      "enchant_slots": 3,
       "affii_count": 5,
       "can_reforge": true,
       "can_star": false,

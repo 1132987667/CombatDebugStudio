@@ -126,9 +126,8 @@ export const DAMAGE_FORMULA_STEPS: FormulaStep[] = [
     expr: '× (1 − 免伤率%)', attrs: ['damageReduction'], prd: '§11', align: 'ok',
   },
   {
-    zoneId: 'target', key: 'dmgTakenIncrease', label: '受伤增加（易伤）',
-    expr: '× (1 + 受到伤害增加%)', attrs: ['damageTakenIncrease'], prd: '§11', align: 'ok',
-    note: '引擎此步读取 damageTakenIncrease（归档名易伤），故该 code 不可物理删除。',
+    zoneId: 'target', key: 'vulnerability', label: '易伤',
+    expr: '× (1 + 易伤%)', attrs: ['vulnerability'], prd: '§11', align: 'ok',
   },
   {
     zoneId: 'target', key: 'targetModifier', label: '目标修正',
@@ -197,7 +196,7 @@ export function buildSampleDamageTrace(): DamageTraceSample {
     defense: 120,
     skillDmgReduction: 10,
     damageReduction: 8,
-    damageTakenIncrease: 15,
+    vulnerability: 15,
   }, { maxHealth: 1000, currentHealth: 800 })
 
   const skillStep = {

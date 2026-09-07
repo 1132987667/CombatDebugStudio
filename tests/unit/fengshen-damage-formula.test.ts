@@ -24,7 +24,7 @@ describe('伤害公式参考', () => {
     const names = t.steps.map((s) => s.stepName)
     // 覆盖关键乘区环节
     expect(names).toEqual(
-      expect.arrayContaining(['base', 'extra', 'damageBoost', 'defense', 'skillDmgReduction', 'damageReduction', 'dmgTakenIncrease']),
+      expect.arrayContaining(['base', 'extra', 'damageBoost', 'defense', 'skillDmgReduction', 'damageReduction', 'vulnerability']),
     )
     // 引擎每步 floor：600→(+50)650→×1.2=780→×1.15 因浮点 896.99…→raw 896
     expect(t.result.rawDamage).toBe(896)

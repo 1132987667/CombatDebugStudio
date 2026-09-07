@@ -285,7 +285,7 @@ describe('DamageCalculator', () => {
       expect(result.damage).toBe(240)
     })
 
-    it('should apply damageTakenIncrease to TRUE damage', () => {
+    it('should apply vulnerability to TRUE damage', () => {
       // 真实伤害 + 易伤：易伤在目标方减免阶段，真实伤害仍应受易伤影响
       const source = createMockEntity()
       const target = createMockEntity()
@@ -298,7 +298,7 @@ describe('DamageCalculator', () => {
       }
       const origTgtGetAttr = target.getAttribute
       target.getAttribute = (attr: string) => {
-        if (attr === ATTRIBUTE_CODE.damageTakenIncrease) return 25
+        if (attr === ATTRIBUTE_CODE.vulnerability) return 25
         return origTgtGetAttr(attr)
       }
 
@@ -553,7 +553,7 @@ describe('DamageCalculator', () => {
         if (attr === ATTRIBUTE_CODE.skillDmgReduction) return 15
         if (attr === ATTRIBUTE_CODE.fireRes) return 5
         if (attr === ATTRIBUTE_CODE.damageReduction) return 10
-        if (attr === ATTRIBUTE_CODE.damageTakenIncrease) return 20
+        if (attr === ATTRIBUTE_CODE.vulnerability) return 20
         return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
       }
 
@@ -581,7 +581,7 @@ describe('DamageCalculator', () => {
         'base', 'extra', 'preCrit', 'crit', 'damageBoost', 'fireSkillDmgBonus',
         'damageToLowHp',
         'critDmgTakenReduction', 'defense', 'skillDmgReduction',
-        'elementalResistance', 'damageReduction', 'dmgTakenIncrease',
+        'elementalResistance', 'damageReduction', 'vulnerability',
       ]
       const filtered = stepNames.filter((n: string) => expectedOrder.includes(n))
       expect(filtered).toEqual(expectedOrder)

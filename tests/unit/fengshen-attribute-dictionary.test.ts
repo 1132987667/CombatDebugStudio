@@ -56,11 +56,11 @@ describe('属性权威字典', () => {
   })
 
   it('运行时与剔除项不进入数值体系（numeric=false）', () => {
-    for (const code of ['currentHealth', 'currentEnergy', 'shield', 'maxEnergy', 'damageTakenIncrease']) {
+    for (const code of ['currentHealth', 'currentEnergy', 'shield', 'maxEnergy']) {
       expect(getAttributeDict(code)?.numeric).toBe(false)
     }
-    // 易伤唯一权威归 vulnerability，damageTakenIncrease 归档为重复投放
+    // 易伤唯一权威归 vulnerability（引擎逐击乘区读取），重复 code damageTakenIncrease 已物理删除
     expect(getAttributeDict('vulnerability')?.numeric).toBe(true)
-    expect(getAttributeDict('damageTakenIncrease')?.category).toBe('重复投放')
+    expect(getAttributeDict('damageTakenIncrease')).toBeUndefined()
   })
 })

@@ -99,7 +99,8 @@ export interface DamageBreakdown {
   skillDmgReduction?: number
   /** 通用减免（免伤率，百分比点） */
   damageReduction?: number
-  damageTakenIncrease?: number
+  /** 易伤（目标受伤增加，百分比点） */
+  vulnerability?: number
   /** 来源方伤害提升（在原始伤害阶段生效） */
   damageBoost?: number
   /** 暴击承伤减免（目标方） */

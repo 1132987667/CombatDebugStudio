@@ -593,7 +593,7 @@ export const usePackStore = defineStore('pack', () => {
   /**
    * 升星当前槽位装备：残魂点支付（每星 3 点，累计 3/6/9）→ 星级 +1（§21 装备养成操作与材料）
    * 点源混合支付，优先级：升星石（上3/中2/下1，贪心）→ 装备残魂（1 点/个）→ 同名未穿戴装备（1 点/件，被消耗）
-   * NOTE: 升星只增强基础属性（+5%/+10%/+10% 累计 25%），不改词条内容/数量与精锻
+   * NOTE: 升星只增强基础属性（+5%/+10%/+10% 累计 25%），不改词条内容/数量
    */
   function starGear(slot: GearSlotKey): boolean {
     const inst = equipped[slot]

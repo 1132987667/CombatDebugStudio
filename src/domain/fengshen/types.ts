@@ -356,7 +356,7 @@ export interface SystemBudgetConfig {
   systems: SystemBudgetEntry[]
 }
 
-/** 装备品阶权重区间（对齐 PRD §21 品阶表） */
+/** 装备阶位权重区间（对齐 PRD §21 品阶表） */
 export interface EquipTierWeight { min: number; max: number }
 
 /** 装备数值公式模板（params 域，key=equip_formula）—— §3.7 策划公式存档，随策划调整只改 JSON。
@@ -462,7 +462,7 @@ export interface AffixRuleConfig {
    *  random_pool 元素可为属性组码（如 `ALL-MEC`，整组展开取一）或单个属性码（如 `comboRate`）；
    *  解析时先查 attribute_groups 命中即按组展开，否则视为单属性。主要属性不含基础六维（PRD §21）。 */
   main_affix_pool?: Record<string, { fixed: string; random_pool: string[] }>
-  /** 装备品阶权重（凡品/玄品/地品/天品/仙品 → [min, max]，对齐 PRD §21） */
+  /** 装备阶位权重（凡品/玄品/地品/天品/仙品 → [min, max]，对齐 PRD §21） */
   tier_weight: Record<string, { min: number; max: number }>
   /** 词条数值曲线（来源系统 → 属性组数值区间；属性组 = 一组属性 code + 下限/上限 {base, perLevel, full}）。
    *  base=1 级基础值，perLevel=每级成长，full=满级值（策划给表，满级约 50 级）。 */

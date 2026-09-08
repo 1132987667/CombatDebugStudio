@@ -834,7 +834,7 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: (instId) => {
               const inst = pack.gearInstances.find((g) => g.instanceId === instId)
               if (!inst) return fail('未找到该装备实例')
-              // NOTE: 用实例品质 inst.quality（而非装备品阶 rarityOf）——制造品质锁定后两者可不同，
+              // NOTE: 用实例品质 inst.quality（而非装备阶位 rarityOf）——制造品质锁定后两者可不同，
               //       重roll应保持实例词缀数量语义（affixCountByQuality）
               inst.affixes = pack.rollAffixes(inst.itemId, inst.quality)
               void pack.flush()

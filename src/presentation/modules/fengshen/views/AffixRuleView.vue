@@ -43,7 +43,7 @@
               @update:model-value="(v: string | number | null) => { if (v) { ovSubType = v as string; ovPool = 'row-1' } }" />
           </div>
           <div class="fs-ov-field">
-            <span class="fs-ov-field-label">装备品阶</span>
+            <span class="fs-ov-field-label">装备阶位</span>
             <TacticalSelect :model-value="ovTier" size="md" :options="ovTierOptions"
               @update:model-value="(v: string | number | null) => { if (v) ovTier = v as string }" />
           </div>
@@ -433,9 +433,9 @@
         </div>
       </div>
 
-      <!-- 装备品阶权重 -->
+      <!-- 装备阶位权重 -->
       <div class="fs-exp-block">
-        <div class="fs-block-title">装备品阶权重</div>
+        <div class="fs-block-title">装备阶位权重</div>
         <div class="fs-form-hint">装备基础属性投放的品阶权重区间（凡品 0.5~0.6 … 仙品 0.9~1.0）。每件装备在区间内随机取一次，故「装备总览」按区间上下界给出可获得范围；「玩家配置 → 装备公式」验算取区间上限作单值示例。</div>
         <div class="fs-rule-wrap">
           <table class="fs-table fs-rule">

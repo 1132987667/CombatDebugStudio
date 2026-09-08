@@ -122,7 +122,7 @@ export function calcEquipBaseValue(
   return { base, min: Math.round(min), max: Math.round(max) }
 }
 
-/** 装备品阶权重取值：取区间上限（对齐策划示例：仙品 0.9~1.0 取 1.0）；无档位返回 1 兜底 */
+/** 装备阶位权重取值：取区间上限（对齐策划示例：仙品 0.9~1.0 取 1.0）；无档位返回 1 兜底 */
 export function tierWeightValue(cfg: EquipFormulaConfig, tier: string): number {
   const range = cfg.tierWeight?.[tier]
   if (!range) return 1

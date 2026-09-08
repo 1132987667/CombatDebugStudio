@@ -3,12 +3,13 @@
  *
  * 对齐 exp-reward.ts 模式：全部纯函数、无 IO、数据形态对齐封神榜各表行结构。
  * - enemyMeanStatsByLevel：敌人按等级聚合属性均值（成长曲线的敌人侧序列）
- * - equipmentAffixFrequency：装备词条属性出现频次（投放总账）
  * - dropOwnership：敌人掉落 → 物品归属矩阵（独家投放 / 零投放定位）
+ *
+ * NOTE：equipmentAffixFrequency（装备静态 stats 频次）已随 PRD §21 改造删除——
+ * 装备属性不再写死在 equipment.json，由运行时按公式生成（gear-generate.ts），静态表无频次可统计。
  */
 
 import type { Enemy } from '@/shared/types/enemy'
-import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import type { PlayerBaseAttrCode } from '@/domain/fengshen/types'
 
 /** 玩家六维 → 敌人 stats 键映射（敌人命中/闪避键名不同：hit / dodge） */
@@ -54,34 +55,6 @@ export function enemyMeanStatsByLevel(
       }
       return { level, stats }
     })
-}
-
-/** 装备词条属性频次行（count 为出现次数，flat/percent 为修正类型拆分计数） */
-export interface AffixFrequencyRow {
-  attribute: string
-  count: number
-  flat: number
-  percent: number
-}
-
-/** 装备 stats 属性出现频次聚合，按 count 降序（投放总账：哪个属性投得过多/过少） */
-export function equipmentAffixFrequency(
-  equipments: Array<{ stats?: EquipmentStatEntry[] }>,
-): AffixFrequencyRow[] {
-  const byAttr = new Map<string, AffixFrequencyRow>()
-  for (const eq of equipments) {
-    for (const s of eq.stats ?? []) {
-      let row = byAttr.get(s.attribute)
-      if (!row) {
-        row = { attribute: s.attribute, count: 0, flat: 0, percent: 0 }
-        byAttr.set(s.attribute, row)
-      }
-      row.count++
-      if (s.modifierType === 'percent') row.percent++
-      else row.flat++
-    }
-  }
-  return [...byAttr.values()].sort((a, b) => b.count - a.count || a.attribute.localeCompare(b.attribute))
 }
 
 /** 掉落归属行：itemId → 掉落它的敌人列表（enemyCount=1 为独家投放） */

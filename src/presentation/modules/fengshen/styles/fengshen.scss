@@ -522,6 +522,60 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── 表格分组行（区域→场景等上级分组） ── */
+.fs-group-row {
+  cursor: pointer;
+  user-select: none;
+
+  td {
+    background: var(--color-bg-tertiary);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  &:hover td {
+    background: var(--color-bg-hover);
+  }
+}
+
+.fs-group-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fs-group-arrow {
+  display: inline-block;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  transition: transform 0.15s ease;
+
+  &.is-collapsed {
+    transform: rotate(-90deg);
+  }
+}
+
+.fs-group-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.fs-group-hint {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+}
+
+.fs-group-count {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-hover);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+}
+
+.fs-group-edit {
+  margin-left: auto;
+}
+
 /* 健康检查问题类别标签 */
 .fs-kind {
   display: inline-block;

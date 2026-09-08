@@ -110,6 +110,12 @@
       <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
     </div>
 
+    <!-- 战斗就绪待命条：关闭"进入即自动开战"后，由玩家手动点「开战」启动循环 -->
+    <div v-else-if="run.phase === 'battle' && !store.autoPlayMode" class="xy-run xy-run--ready" aria-label="战斗就绪">
+      <span class="xy-run-title">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 战斗就绪</span>
+      <button type="button" class="xy-run-btn" @click="beginBattle">开战</button>
+    </div>
+
     <!-- 中上部：4v4 角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard） -->
     <div class="xy-vitals">
       <div class="xy-vitals-row xy-vitals-row--enemy" role="list" aria-label="敌方阵容">
@@ -329,14 +335,18 @@ async function initBattle(node: RunNode): Promise<void> {
   store.selectCharacter(ally[0]?.id ?? '')
   await store.startBattle()
   acceptingDrops = true
-  // NOTE: 全自动循环（2026-09-06 裁定）：战斗开始即自动出手，无需玩家点技能/自动按钮
-  await battleService.startAutoBattle()
-  store.setAutoPlayMode(true)
-  store.setBattleActive(true)
+  // NOTE: 2026-09-08 调整：关闭"进入即自动开战"（原 2026-09-06 全自动循环裁定）。
+  //       战斗就绪后停在待命态，由玩家点 HUD「开战」按钮（beginBattle）启动自动循环。
+  //       store.startBattle 内部已置 isBattleActive 并按引擎实际值同步 autoPlayMode（false）。
 }
 
 // ════════════ 关卡推进状态机（玩法主循环设计.md §二/§三.2/§六/§七） ════════════
 type RunPhase = 'advancing' | 'battle' | 'settling' | 'finished' | 'failed'
+
+/** 手动开战：战斗就绪待命时由 HUD「开战」按钮触发，启动自动战斗循环 */
+async function beginBattle(): Promise<void> {
+  await store.toggleAutoPlay()
+}
 
 const run = reactive({
   phase: 'advancing' as RunPhase,
@@ -754,6 +764,10 @@ onUnmounted(() => {
 
 .xy-run--fail {
   border-color: var(--xy-seal);
+}
+
+.xy-run--ready {
+  border-color: var(--xy-jade);
 }
 
 .xy-run-head {

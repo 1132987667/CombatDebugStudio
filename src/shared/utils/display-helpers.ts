@@ -4,21 +4,13 @@
  * 集中管理展示层的中文映射，避免每个组件各自定义一份 Record。
  * 键名优先使用现有枚举常量，无枚举覆盖的保留字符串字面量。
  */
-import { EquipmentSlot } from '@/shared/types/Item'
+import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import { ActionResultType } from '@/domain/skill/types'
 
 // ───── 装备槽位 ─────
 
-export const slotLabels: Record<string, string> = {
-  [EquipmentSlot.WEAPON]: '武器',
-  [EquipmentSlot.ARMOR]: '衣甲',
-  [EquipmentSlot.HELMET]: '头盔',
-  [EquipmentSlot.BOOTS]: '靴子',
-  [EquipmentSlot.CHARM]: '护符',
-  [EquipmentSlot.GLOVE]: '护手',
-  [EquipmentSlot.ARTIFACT]: '法宝',
-  [EquipmentSlot.RELIC]: '神器',
-}
+/** 槽位中文标签单一来源：@/shared/types/Item 的 EQUIPMENT_SLOT_LABELS */
+export const slotLabels: Record<string, string> = EQUIPMENT_SLOT_LABELS
 
 export function getSlotText(slot: string): string {
   return slotLabels[slot] || slot
@@ -27,14 +19,7 @@ export function getSlotText(slot: string): string {
 // ───── 物品类型 ─────
 
 export const itemTypeLabels: Record<string, string> = {
-  [EquipmentSlot.WEAPON]: '武器',
-  [EquipmentSlot.ARMOR]: '衣甲',
-  [EquipmentSlot.HELMET]: '头盔',
-  [EquipmentSlot.BOOTS]: '靴子',
-  [EquipmentSlot.CHARM]: '护符',
-  [EquipmentSlot.GLOVE]: '护手',
-  [EquipmentSlot.ARTIFACT]: '法宝',
-  [EquipmentSlot.RELIC]: '神器',
+  ...EQUIPMENT_SLOT_LABELS,
   material: '材料',
   consumable: '消耗品',
   quest: '任务物品',

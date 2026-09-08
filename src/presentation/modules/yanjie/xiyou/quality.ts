@@ -130,6 +130,21 @@ export function qualityOf(rarity: number): XiyouQuality {
   return RARITY_NAMES[rarity] ?? '凡品'
 }
 
+/** 阶位名（装备 tier t1-5 → 一阶/二阶/三阶/天品/仙品，与 GearDetailDialog 既有叫法一致） */
+export const TIER_NAMES: Record<string, string> = {
+  t1: '一阶',
+  t2: '二阶',
+  t3: '三阶',
+  t4: '天品',
+  t5: '仙品',
+}
+
+/** 阶位名（未知阶位原样返回） */
+export function tierName(tier: string | undefined): string {
+  if (!tier) return ''
+  return TIER_NAMES[tier] ?? tier
+}
+
 /** 品级色 CSS 值（未知品级回退次要文字色） */
 export function qualityColor(rarity: number): string {
   return QUALITY_COLORS[rarity] ?? 'var(--color-text-secondary)'

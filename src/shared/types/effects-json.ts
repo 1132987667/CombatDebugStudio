@@ -6,7 +6,8 @@
  */
 export interface EffectsJsonEntry {
   id: string
-  type: string
+  /** 仅两种取值（configs/effects/effects.json 全量值域），转 BuffJsonEntry 时决定正负极性 */
+  type: 'buff' | 'debuff'
   params: Record<string, unknown>
   description?: string
 }
@@ -58,6 +59,8 @@ export function normalizeBuffEntries(entries: unknown[]): BuffJsonEntry[] {
     if (!raw || typeof raw !== 'object') continue
     const entry = raw as { id?: unknown; type?: unknown; effects?: unknown }
     if (typeof entry.id !== 'string' || !entry.id) continue
+    // 宽容点：混合格式归一化边界，条目其余字段已由 BuffJsonEntry 全可选承载，
+    // 深度校验在 buffConfigValidation 阶段进行，此处不做逐字段守卫
     if (entry.type !== undefined && entry.effects === undefined) {
       out.push(effectsEntryToBuffConfig(entry as unknown as EffectsJsonEntry))
     } else {

@@ -41,6 +41,7 @@
 import { ref, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import Button from '@/presentation/components/Button.vue'
+import { ENEMY_ROLE_LABELS } from '@/domain/fengshen/role-grades'
 
 const props = defineProps<{
   open: boolean
@@ -56,17 +57,8 @@ watch(() => props.rows, (rows) => {
   if (baseIdx.value >= rows.length) baseIdx.value = 0
 })
 
-/** 品阶码 → 中文名（对齐 enemies.json 的 role 值） */
-const ROLE_LABELS: Record<string, string> = {
-  xiaoyao: '小妖',
-  normal: '小妖',
-  elite: '妖兵',
-  yaobing: '妖兵',
-  yaotu: '妖徒',
-  yaokui: '妖魁',
-  yaowang: '妖王',
-  yaozun: '妖尊',
-}
+/** 品阶码 → 中文名（单一来源 role-grades） */
+const ROLE_LABELS: Record<string, string> = ENEMY_ROLE_LABELS
 
 function stat(r: Record<string, unknown>, key: string): number {
   const stats = r.stats as Record<string, number> | undefined

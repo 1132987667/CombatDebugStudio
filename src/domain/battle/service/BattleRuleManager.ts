@@ -107,8 +107,8 @@ export interface BattleRulesConfig {
       turnInterval: number
     }
   }
-  /** 场景相关配置（键为场景标识，值为该场景的自定义规则） */
-  scenes: Record<string, any>
+  /** 场景相关配置（键为场景标识，值为该场景的自定义规则；规则体结构随场景而异，消费方自行收窄） */
+  scenes: Record<string, unknown>
 }
 
 /**
@@ -237,6 +237,8 @@ export class BattleRuleManager {
 
   /**
    * 深度合并对象
+   * NOTE: 泛型约束用 Record<string, any> 是递归合并的惯用写法，
+   * 递归分支对 unknown 值无法直接展开合并，收紧到 unknown 会破坏整个合并链
    */
   private deepMerge<T extends Record<string, any>>(
     target: T,

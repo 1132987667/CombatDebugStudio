@@ -63,7 +63,7 @@
 
 .xy-topbar-title {
   margin: 0;
-  
+
   font-size: var(--font-size-xxxl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 4px;
@@ -180,7 +180,6 @@
         .xy-quest-cat,
         .xy-codex-chapter,
         .xy-school-block,
-        .xy-meridian,
         .xy-card-grid,
         .xy-gear-grid,
         .xy-codex-grid,
@@ -217,15 +216,13 @@
         }
 
         /* 任务分类 / 经脉：分组内部列表也多列 */
-        .xy-quest-cat,
-        .xy-meridian {
+        .xy-quest-cat {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
           gap: var(--space-2);
           align-items: start;
 
-          .xy-sec-title,
-          .xy-meridian-chain {
+          .xy-sec-title {
             grid-column: 1 / -1;
           }
         }
@@ -268,7 +265,10 @@
   min-height: 0;
 }
 
-.xy-panel-scroll:not(.xy-pack-host) > .tabs-root .flex-col-fill > [role='tabpanel'] {
+.xy-panel-scroll:not(.xy-pack-host)
+  > .tabs-root
+  .flex-col-fill
+  > [role='tabpanel'] {
   /* 覆盖 .flex-col-fill 的 flex column：内容块走普通流超高才溢出滚动（flex 容器会压缩子级而非滚动） */
   display: block;
   overflow-y: auto;
@@ -283,7 +283,7 @@
   margin: 0 0 var(--space-3);
   padding: var(--space-1) 0 var(--space-2);
   border-bottom: 2px solid var(--xy-ink-line);
-  
+
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 3px;

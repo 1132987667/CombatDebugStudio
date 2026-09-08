@@ -3,22 +3,11 @@
     "id": "wp_t4_01",
     "name": "牛魔撼天锤",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 40,
     "requiredLevel": 35,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 60
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -20
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_boss_01",
@@ -39,17 +28,11 @@
     "id": "ac_t4_01",
     "name": "万毒蚀心护手",
     "slot": "glove",
-    "subType": "护手",
+    "subType": "glove",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 40,
     "requiredLevel": 35,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tianxiewangdu",
@@ -70,32 +53,11 @@
     "id": "ac_t4_02",
     "name": "大鹏逐日冠",
     "slot": "helmet",
-    "subType": "冠冕",
+    "subType": "crown",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 40,
     "requiredLevel": 35,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 8
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 8
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 8
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_boss_03",
@@ -116,27 +78,11 @@
     "id": "wp_t5_01",
     "name": "混元无极环",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 50,
     "requiredLevel": 50,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 80
-      },
-      {
-        "attribute": "critRate",
-        "modifierType": "percent",
-        "value": 10
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_hunyuan",
@@ -157,22 +103,11 @@
     "id": "ar_t5_01",
     "name": "混沌天衣",
     "slot": "armor",
-    "subType": "天衣",
+    "subType": "cloth_armor",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 50,
     "requiredLevel": 50,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 50
-      },
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_hunyuan",
@@ -193,32 +128,11 @@
     "id": "ac_t5_01",
     "name": "太初道冠",
     "slot": "helmet",
-    "subType": "冠冕",
+    "subType": "crown",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 50,
     "requiredLevel": 50,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "damageReduction",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_hunyuan",
@@ -239,27 +153,11 @@
     "id": "ac_t5_02",
     "name": "混元灵珠",
     "slot": "charm",
-    "subType": "护符",
+    "subType": "charm",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 50,
     "requiredLevel": 50,
-    "stats": [
-      {
-        "attribute": "critRate",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_hunyuan",
@@ -280,22 +178,11 @@
     "id": "wp_sp_01",
     "name": "烈焰斩",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 38
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_sp_03",
@@ -320,22 +207,11 @@
     "id": "ar_sp_01",
     "name": "风灵袍",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 24
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_sp_04",
@@ -360,22 +236,11 @@
     "id": "ac_sp_01",
     "name": "地灵护符",
     "slot": "charm",
-    "subType": "护符",
+    "subType": "charm",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 6
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_sp_05",
@@ -400,22 +265,11 @@
     "id": "wp_t1_light_01",
     "name": "竹剑",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 10
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -440,17 +294,11 @@
     "id": "wp_t1_mid_01",
     "name": "铜棍",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -473,22 +321,11 @@
     "id": "wp_t1_heavy_01",
     "name": "铜锤",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 14
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tongjing",
@@ -511,17 +348,11 @@
     "id": "ar_t1_light_01",
     "name": "鹿皮甲",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 6
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_lupi",
@@ -544,17 +375,11 @@
     "id": "ar_t1_mid_01",
     "name": "铜木甲",
     "slot": "armor",
-    "subType": "木甲",
+    "subType": "plate_armor",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -577,17 +402,11 @@
     "id": "ar_t1_heavy_01",
     "name": "轻铜甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tongjing",
@@ -610,17 +429,11 @@
     "id": "hd_t1_war_01",
     "name": "藤蔓箍",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -643,17 +456,11 @@
     "id": "hd_t1_spirit_01",
     "name": "灵桃冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -676,17 +483,11 @@
     "id": "bt_t1_light_01",
     "name": "草编履",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -709,17 +510,11 @@
     "id": "bt_t1_heavy_01",
     "name": "粗石靴",
     "slot": "boots",
-    "subType": "重靴",
+    "subType": "battle_boots",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_cushi",
@@ -742,17 +537,11 @@
     "id": "hf_t1_life_01",
     "name": "淡水玉护符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_danshuiyu",
@@ -775,17 +564,11 @@
     "id": "hf_t1_war_01",
     "name": "桃木战符",
     "slot": "charm",
-    "subType": "战意护符",
+    "subType": "charm",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -808,17 +591,11 @@
     "id": "jz_t1_power_01",
     "name": "贝壳护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_beike",
@@ -841,17 +618,11 @@
     "id": "jz_t1_spirit_01",
     "name": "桃核护手",
     "slot": "glove",
-    "subType": "灵护手",
+    "subType": "glove",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -874,22 +645,11 @@
     "id": "wp_t2_light_01",
     "name": "迅风剑",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 22
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_songmu",
@@ -912,17 +672,11 @@
     "id": "wp_t2_mid_01",
     "name": "铁棒",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 27
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_songmu",
@@ -945,22 +699,11 @@
     "id": "wp_t2_heavy_01",
     "name": "铁锤",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 32
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiejing",
@@ -983,17 +726,11 @@
     "id": "ar_t2_light_01",
     "name": "熊皮甲",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xiongpi",
@@ -1016,17 +753,11 @@
     "id": "ar_t2_mid_01",
     "name": "铁木甲",
     "slot": "armor",
-    "subType": "木甲",
+    "subType": "plate_armor",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 16
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_songmu",
@@ -1049,17 +780,11 @@
     "id": "ar_t2_heavy_01",
     "name": "重铁甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 20
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiejing",
@@ -1082,17 +807,11 @@
     "id": "hd_t2_war_01",
     "name": "铁战盔",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiejing",
@@ -1115,17 +834,11 @@
     "id": "hd_t2_spirit_01",
     "name": "河伯灵冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_shenshuiyu",
@@ -1148,17 +861,11 @@
     "id": "bt_t2_light_01",
     "name": "踏浪靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xiongpi",
@@ -1181,17 +888,11 @@
     "id": "bt_t2_heavy_01",
     "name": "铁蹄靴",
     "slot": "boots",
-    "subType": "重靴",
+    "subType": "battle_boots",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiejing",
@@ -1214,17 +915,11 @@
     "id": "hf_t2_life_01",
     "name": "深水玉符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_shenshuiyu",
@@ -1247,17 +942,11 @@
     "id": "hf_t2_war_01",
     "name": "河铁战符",
     "slot": "charm",
-    "subType": "战意护符",
+    "subType": "charm",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiejing",
@@ -1280,17 +969,11 @@
     "id": "jz_t2_power_01",
     "name": "铁精护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiejing",
@@ -1313,17 +996,11 @@
     "id": "jz_t2_spirit_01",
     "name": "水灵护手",
     "slot": "glove",
-    "subType": "灵护手",
+    "subType": "glove",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_shenshuiyu",
@@ -1346,22 +1023,11 @@
     "id": "wp_t3_light_01",
     "name": "流云剑",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 35
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiemu",
@@ -1384,17 +1050,11 @@
     "id": "wp_t3_mid_01",
     "name": "伏魔杖",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 42
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiemu",
@@ -1417,22 +1077,11 @@
     "id": "wp_t3_heavy_01",
     "name": "撼地锤",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 50
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_jinjing",
@@ -1459,17 +1108,11 @@
     "id": "ar_t3_light_01",
     "name": "虎威甲",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 20
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_hupi",
@@ -1492,17 +1135,11 @@
     "id": "ar_t3_mid_01",
     "name": "金木甲",
     "slot": "armor",
-    "subType": "木甲",
+    "subType": "plate_armor",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 26
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiemu",
@@ -1525,17 +1162,11 @@
     "id": "ar_t3_heavy_01",
     "name": "神金甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 32
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_jinjing",
@@ -1558,17 +1189,11 @@
     "id": "hd_t3_war_01",
     "name": "钢战盔",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_gangjing",
@@ -1591,17 +1216,11 @@
     "id": "hd_t3_spirit_01",
     "name": "岩灵冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_yanxin",
@@ -1624,17 +1243,11 @@
     "id": "bt_t3_light_01",
     "name": "疾风靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xianyun",
@@ -1657,17 +1270,11 @@
     "id": "bt_t3_heavy_01",
     "name": "磐石靴",
     "slot": "boots",
-    "subType": "重靴",
+    "subType": "battle_boots",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xuantie",
@@ -1690,17 +1297,11 @@
     "id": "hf_t3_life_01",
     "name": "翠玉护符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_cuiyu",
@@ -1723,17 +1324,11 @@
     "id": "hf_t3_war_01",
     "name": "金精战符",
     "slot": "charm",
-    "subType": "战意护符",
+    "subType": "charm",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_jinjing",
@@ -1756,17 +1351,11 @@
     "id": "jz_t3_power_01",
     "name": "金精护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_jinjing",
@@ -1789,17 +1378,11 @@
     "id": "jz_t3_spirit_01",
     "name": "翠玉灵护手",
     "slot": "glove",
-    "subType": "灵护手",
+    "subType": "glove",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_cuiyu",
@@ -1822,22 +1405,11 @@
     "id": "wp_t4_light_01",
     "name": "幽影刃",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 48
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_youmu",
@@ -1860,17 +1432,11 @@
     "id": "wp_t4_mid_01",
     "name": "破幻杖",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 55
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_youmu",
@@ -1893,22 +1459,11 @@
     "id": "wp_t4_heavy_01",
     "name": "碎岳锤",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 65
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_huancai",
@@ -1931,17 +1486,11 @@
     "id": "ar_t4_light_01",
     "name": "影豹皮甲",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 26
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_yingbao",
@@ -1964,17 +1513,11 @@
     "id": "ar_t4_mid_01",
     "name": "瘴木甲",
     "slot": "armor",
-    "subType": "木甲",
+    "subType": "plate_armor",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 32
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_youmu",
@@ -1997,17 +1540,11 @@
     "id": "ar_t4_heavy_01",
     "name": "幻岩铠",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 40
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_huancai",
@@ -2030,17 +1567,11 @@
     "id": "hd_t4_war_01",
     "name": "幻岩战盔",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_huancai",
@@ -2063,17 +1594,11 @@
     "id": "hd_t4_spirit_01",
     "name": "幽兰灵冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_youlan",
@@ -2096,17 +1621,11 @@
     "id": "bt_t4_light_01",
     "name": "影步靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_yingbao",
@@ -2129,17 +1648,11 @@
     "id": "bt_t4_heavy_01",
     "name": "幻岩重靴",
     "slot": "boots",
-    "subType": "重靴",
+    "subType": "battle_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_huancai",
@@ -2162,17 +1675,11 @@
     "id": "hf_t4_life_01",
     "name": "翡翠护符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_feicui",
@@ -2195,17 +1702,11 @@
     "id": "hf_t4_war_01",
     "name": "毒牙战符",
     "slot": "charm",
-    "subType": "战意护符",
+    "subType": "charm",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_bizhanglingye",
@@ -2228,17 +1729,11 @@
     "id": "jz_t4_power_01",
     "name": "毒牙护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_bizhanglingye",
@@ -2261,17 +1756,11 @@
     "id": "jz_t4_spirit_01",
     "name": "雾灵护手",
     "slot": "glove",
-    "subType": "灵护手",
+    "subType": "glove",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_wuling",
@@ -2294,22 +1783,11 @@
     "id": "wp_t5_light_01",
     "name": "菩提降龙剑",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 62
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_puti",
@@ -2332,17 +1810,11 @@
     "id": "wp_t5_mid_01",
     "name": "天罡伏魔杖",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 72
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_puti",
@@ -2365,22 +1837,11 @@
     "id": "wp_t5_heavy_01",
     "name": "须弥碎天锤",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 85
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": -12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xumi",
@@ -2403,17 +1864,11 @@
     "id": "ar_t5_light_01",
     "name": "天蚕仙衣",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 32
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiancan",
@@ -2436,17 +1891,11 @@
     "id": "ar_t5_mid_01",
     "name": "菩提道袍",
     "slot": "armor",
-    "subType": "木甲",
+    "subType": "plate_armor",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 40
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_puti",
@@ -2469,17 +1918,11 @@
     "id": "ar_t5_heavy_01",
     "name": "金刚不坏甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 50
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xumi",
@@ -2502,17 +1945,11 @@
     "id": "hd_t5_war_01",
     "name": "金刚战盔",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xumi",
@@ -2535,17 +1972,11 @@
     "id": "hd_t5_spirit_01",
     "name": "菩提道冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_puti",
@@ -2568,17 +1999,11 @@
     "id": "bt_t5_light_01",
     "name": "仙云靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiancan",
@@ -2601,17 +2026,11 @@
     "id": "bt_t5_heavy_01",
     "name": "金刚重靴",
     "slot": "boots",
-    "subType": "重靴",
+    "subType": "battle_boots",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xumi",
@@ -2634,17 +2053,11 @@
     "id": "hf_t5_life_01",
     "name": "琉璃净符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_shengshui",
@@ -2667,17 +2080,11 @@
     "id": "hf_t5_war_01",
     "name": "天罡战符",
     "slot": "charm",
-    "subType": "战意护符",
+    "subType": "charm",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiangang",
@@ -2700,17 +2107,11 @@
     "id": "jz_t5_power_01",
     "name": "金刚力护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_xumi",
@@ -2733,17 +2134,11 @@
     "id": "jz_t5_spirit_01",
     "name": "菩提灵护手",
     "slot": "glove",
-    "subType": "灵护手",
+    "subType": "glove",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_puti",
@@ -2766,17 +2161,11 @@
     "id": "wp_sb01",
     "name": "灵根缠藤鞭",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t1",
     "rarity": 4,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 18
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2788,17 +2177,11 @@
     "id": "ar_sb02",
     "name": "沧浪涌潮甲",
     "slot": "armor",
-    "subType": "木甲",
+    "subType": "plate_armor",
     "tier": "t2",
     "rarity": 4,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 22
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2810,17 +2193,11 @@
     "id": "hd_sb03",
     "name": "磐石不动盔",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t3",
     "rarity": 4,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 14
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2832,17 +2209,11 @@
     "id": "jz_sb04",
     "name": "幻瞳迷心护手",
     "slot": "glove",
-    "subType": "灵护手",
+    "subType": "glove",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2854,17 +2225,11 @@
     "id": "ar_sb05",
     "name": "龙鳞逆甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 38
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2876,17 +2241,11 @@
     "id": "wp_sb06",
     "name": "炽焰焚天刃",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t3",
     "rarity": 4,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 48
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2898,17 +2257,11 @@
     "id": "hf_sb07",
     "name": "千丝缚灵索",
     "slot": "charm",
-    "subType": "战意护符",
+    "subType": "charm",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2920,17 +2273,11 @@
     "id": "bt_sb08",
     "name": "裂风疾羽靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2942,17 +2289,11 @@
     "id": "hf_sb09",
     "name": "金身不破符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t5",
     "rarity": 4,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2964,17 +2305,11 @@
     "id": "hd_sb10",
     "name": "法相金莲冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t5",
     "rarity": 4,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -2986,17 +2321,11 @@
     "id": "bt_hb01",
     "name": "黑风疾行靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t5",
     "rarity": 4,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3008,17 +2337,11 @@
     "id": "bt_hb02",
     "name": "遁地重靴",
     "slot": "boots",
-    "subType": "重靴",
+    "subType": "battle_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3030,17 +2353,11 @@
     "id": "jz_hb03",
     "name": "九齿破甲护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 16
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3052,17 +2369,11 @@
     "id": "hd_hb04",
     "name": "百眼灵冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "hit",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3074,17 +2385,11 @@
     "id": "hf_hb05",
     "name": "净坛护符",
     "slot": "charm",
-    "subType": "元素护符",
+    "subType": "charm",
     "tier": "t5",
     "rarity": 4,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3096,17 +2401,11 @@
     "id": "hd_t4_war_02",
     "name": "牛魔战盔",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 40,
     "requiredLevel": 35,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_boss_01",
@@ -3129,17 +2428,11 @@
     "id": "bt_t4_02",
     "name": "蝎尾灵靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 40,
     "requiredLevel": 35,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tianxiewangdu",
@@ -3162,17 +2455,11 @@
     "id": "bt_t4_03",
     "name": "鹏翼轻靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 40,
     "requiredLevel": 35,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 22
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_boss_03",
@@ -3195,17 +2482,11 @@
     "id": "jz_sp_02",
     "name": "寒潭玉护手",
     "slot": "glove",
-    "subType": "灵护手",
+    "subType": "glove",
     "tier": "t4",
     "rarity": 3,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3217,17 +2498,11 @@
     "id": "wp_sp_02",
     "name": "噬魂刃",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 40
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3239,17 +2514,11 @@
     "id": "ar_sp_03",
     "name": "不灭战甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 45
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3261,17 +2530,11 @@
     "id": "hd_sp_04",
     "name": "轮回之冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3283,17 +2546,11 @@
     "id": "bt_sp_05",
     "name": "追风逐电靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t5",
     "rarity": 4,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 25
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3305,17 +2562,11 @@
     "id": "jz_sp_06",
     "name": "万妖臣服护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t5",
     "rarity": 4,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3327,17 +2578,11 @@
     "id": "wt_01",
     "name": "试炼木剑",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 8
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3348,17 +2593,11 @@
     "id": "wt_02",
     "name": "试炼布甲",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 5
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3369,17 +2608,11 @@
     "id": "wt_03",
     "name": "试炼草帽",
     "slot": "helmet",
-    "subType": "战盔",
+    "subType": "helmet",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3390,17 +2623,11 @@
     "id": "wt_04",
     "name": "试炼布鞋",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3411,17 +2638,11 @@
     "id": "wt_05",
     "name": "试炼玉佩",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3432,17 +2653,11 @@
     "id": "wt_06",
     "name": "试炼铜护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3453,17 +2668,11 @@
     "id": "wt_07",
     "name": "破风刃",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3474,17 +2683,11 @@
     "id": "wt_08",
     "name": "铁壁甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 8
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3495,17 +2698,11 @@
     "id": "wt_09",
     "name": "鹰眼盔",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "hit",
-        "modifierType": "percent",
-        "value": 5
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3516,17 +2713,11 @@
     "id": "wt_10",
     "name": "疾行靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 6
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3537,17 +2728,11 @@
     "id": "wt_11",
     "name": "寒铁剑",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 20
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3558,17 +2743,11 @@
     "id": "wt_12",
     "name": "玄铁甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 14
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3579,17 +2758,11 @@
     "id": "wt_13",
     "name": "灵犀冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 4
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3600,17 +2773,11 @@
     "id": "wt_14",
     "name": "风行靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3621,17 +2788,11 @@
     "id": "wt_15",
     "name": "守心符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3642,17 +2803,11 @@
     "id": "wt_16",
     "name": "破军护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3663,17 +2818,11 @@
     "id": "wt_17",
     "name": "裂空刃",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 24
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3684,17 +2833,11 @@
     "id": "wt_18",
     "name": "磐石铠",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 18
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3705,17 +2848,11 @@
     "id": "wt_19",
     "name": "慧眼冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 8
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3726,17 +2863,11 @@
     "id": "wt_20",
     "name": "踏云靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3747,17 +2878,11 @@
     "id": "wt_21",
     "name": "金刚杵",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 35
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3768,17 +2893,11 @@
     "id": "wt_22",
     "name": "龙鳞甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 22
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3789,17 +2908,11 @@
     "id": "wt_23",
     "name": "天灵冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 6
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3810,17 +2923,11 @@
     "id": "wt_24",
     "name": "逐风靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3831,17 +2938,11 @@
     "id": "wt_25",
     "name": "不灭符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3852,17 +2953,11 @@
     "id": "wt_26",
     "name": "碎星护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3873,17 +2968,11 @@
     "id": "wt_27",
     "name": "噬魂刀",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 38
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3894,17 +2983,11 @@
     "id": "wt_28",
     "name": "玄武甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 26
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3915,17 +2998,11 @@
     "id": "wt_29",
     "name": "通灵冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3936,17 +3013,11 @@
     "id": "wt_30",
     "name": "瞬影靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 14
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3957,17 +3028,11 @@
     "id": "wt_31",
     "name": "天罡剑",
     "slot": "weapon",
-    "subType": "轻型",
+    "subType": "sword",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 45
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3978,17 +3043,11 @@
     "id": "wt_32",
     "name": "混元甲",
     "slot": "armor",
-    "subType": "木甲",
+    "subType": "plate_armor",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 30
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -3999,17 +3058,11 @@
     "id": "wt_33",
     "name": "法相冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4020,17 +3073,11 @@
     "id": "wt_34",
     "name": "凌波靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 16
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4041,17 +3088,11 @@
     "id": "wt_35",
     "name": "金刚符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4062,17 +3103,11 @@
     "id": "wt_36",
     "name": "灭世护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4083,17 +3118,11 @@
     "id": "wt_37",
     "name": "诛仙剑",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 52
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4104,17 +3133,11 @@
     "id": "wt_38",
     "name": "须弥铠",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 36
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4125,17 +3148,11 @@
     "id": "wt_39",
     "name": "天眼冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 15
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4146,17 +3163,11 @@
     "id": "wt_40",
     "name": "风火靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 35,
     "requiredLevel": 30,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4167,22 +3178,11 @@
     "id": "wt_41",
     "name": "降魔杵",
     "slot": "weapon",
-    "subType": "重型",
+    "subType": "staff",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 60
-      },
-      {
-        "attribute": "controlSuccessRate",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4193,27 +3193,11 @@
     "id": "wt_42",
     "name": "天蚕仙袍",
     "slot": "armor",
-    "subType": "皮甲",
+    "subType": "leather_armor",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 35
-      },
-      {
-        "attribute": "dodge",
-        "modifierType": "percent",
-        "value": 15
-      },
-      {
-        "attribute": "speedBonus",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4224,32 +3208,11 @@
     "id": "wt_43",
     "name": "菩提慧冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 12
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 12
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4260,17 +3223,11 @@
     "id": "wt_44",
     "name": "金乌靴",
     "slot": "boots",
-    "subType": "轻靴",
+    "subType": "cloth_boots",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 20
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4281,17 +3238,11 @@
     "id": "wt_45",
     "name": "琉璃护心符",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4302,22 +3253,11 @@
     "id": "wt_46",
     "name": "天罡战护手",
     "slot": "glove",
-    "subType": "力护手",
+    "subType": "glove",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 18
-      },
-      {
-        "attribute": "critRate",
-        "modifierType": "percent",
-        "value": 10
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4328,17 +3268,11 @@
     "id": "wt_47",
     "name": "太虚·燃魂刃",
     "slot": "weapon",
-    "subType": "中型",
+    "subType": "blade",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 75
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4349,22 +3283,11 @@
     "id": "wt_48",
     "name": "劫灭·燃血甲",
     "slot": "armor",
-    "subType": "铠甲",
+    "subType": "plate_armor",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "defense",
-        "modifierType": "flat",
-        "value": 48
-      },
-      {
-        "attribute": "damageReduction",
-        "modifierType": "percent",
-        "value": 18
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4375,37 +3298,11 @@
     "id": "wt_49",
     "name": "太虚·燃魂冠",
     "slot": "helmet",
-    "subType": "灵冠",
+    "subType": "crown",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 18
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 18
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 18
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 18
-      },
-      {
-        "attribute": "skillCooldown",
-        "modifierType": "flat",
-        "value": -1
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4416,37 +3313,11 @@
     "id": "wt_50",
     "name": "劫灭·焚魄珠",
     "slot": "charm",
-    "subType": "生命护符",
+    "subType": "charm",
     "tier": "t5",
     "rarity": 5,
+    "itemLevel": 45,
     "requiredLevel": 40,
-    "stats": [
-      {
-        "attribute": "maxHealth",
-        "modifierType": "percent",
-        "value": 25
-      },
-      {
-        "attribute": "attack",
-        "modifierType": "percent",
-        "value": 8
-      },
-      {
-        "attribute": "defense",
-        "modifierType": "percent",
-        "value": 8
-      },
-      {
-        "attribute": "speed",
-        "modifierType": "percent",
-        "value": 8
-      },
-      {
-        "attribute": "hpRegenPercent",
-        "modifierType": "percent",
-        "value": 3
-      }
-    ],
     "materials": [],
     "cost": 0,
     "craftable": false,
@@ -4457,22 +3328,11 @@
     "id": "wp_t1_dagger_01",
     "name": "竹刺",
     "slot": "weapon",
-    "subType": "刺",
+    "subType": "dagger",
     "tier": "t1",
     "rarity": 1,
+    "itemLevel": 6,
     "requiredLevel": 1,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 10
-      },
-      {
-        "attribute": "dodgeValue",
-        "modifierType": "flat",
-        "value": 5
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_taomu",
@@ -4494,22 +3354,11 @@
     "id": "wp_t2_dagger_01",
     "name": "双刺",
     "slot": "weapon",
-    "subType": "刺",
+    "subType": "dagger",
     "tier": "t2",
     "rarity": 2,
+    "itemLevel": 15,
     "requiredLevel": 10,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 25
-      },
-      {
-        "attribute": "dodgeValue",
-        "modifierType": "flat",
-        "value": 12
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_tiejing",
@@ -4531,22 +3380,11 @@
     "id": "wp_t3_dagger_01",
     "name": "峨眉刺",
     "slot": "weapon",
-    "subType": "刺",
+    "subType": "dagger",
     "tier": "t3",
     "rarity": 3,
+    "itemLevel": 25,
     "requiredLevel": 20,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 45
-      },
-      {
-        "attribute": "dodgeValue",
-        "modifierType": "flat",
-        "value": 22
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_jinjing",
@@ -4568,22 +3406,11 @@
     "id": "wp_t4_dagger_01",
     "name": "影刃",
     "slot": "weapon",
-    "subType": "刺",
+    "subType": "dagger",
     "tier": "t4",
     "rarity": 4,
+    "itemLevel": 40,
     "requiredLevel": 35,
-    "stats": [
-      {
-        "attribute": "attack",
-        "modifierType": "flat",
-        "value": 70
-      },
-      {
-        "attribute": "dodgeValue",
-        "modifierType": "flat",
-        "value": 35
-      }
-    ],
     "materials": [
       {
         "itemId": "mat_boss_01",

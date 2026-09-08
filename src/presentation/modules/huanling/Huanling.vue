@@ -35,11 +35,6 @@
     <BattleRulesDialog v-model="showRulesDialog" :rules="battleStore.rules" :speed="battleStore.battleSpeed"
       @update:rules="battleStore.updateRules" @update:speed="updateSpeed" @rule-change="handleRuleChange" />
 
-    <SceneManagementDialog v-model="showSceneDialog" :scene-name="sceneName" :selected-scene="selectedScene"
-      :saved-scenes="savedScenes" @update:scene-name="val => sceneName = val"
-      @update:selected-scene="val => selectedScene = val" @save="handleSaveScene" @load="handleLoadScene"
-      @delete="handleDeleteScene" />
-
     <CharacterEditor v-model="showStatusDialog" :characters="characterOptions"
       :selected-char-id="selectedCharacterId || ''" :current-attrs="currentAttrs"
       @update:selected-char-id="val => battleStore.selectCharacter(val)" @apply-buffs="handleApplyBuffs"
@@ -86,7 +81,6 @@ import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import type { CharacterOption } from "./components/CharacterEditor.vue";
 import CharacterEditor from "./components/CharacterEditor.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
-import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import ControlBar from "./views/ControlBar.vue";
 import ParticipantPanel from "./views/ParticipantPanel.vue";
 
@@ -99,10 +93,7 @@ const battleStore = useBattleStore();
 // BattleService 响应式实例
 const battleService = shallowReactive(container.resolve<BattleService>('BattleService'));
 
-const selectedScene = ref("");
-const sceneName = ref("");
 const showRulesDialog = ref(false);
-const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const showDebugControlDialog = ref(false);
 
@@ -256,30 +247,6 @@ const handleDebugAction = async (action: string) => {
 
 const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
 
-// ==================== 场景管理（localStorage 持久化） ====================
-const SCENE_STORAGE_KEY = 'huanling.scenes.v1'
-/** 场景名列表（UI 下拉展示；内容实体在 sceneStorage 中） */
-const savedScenes = ref<string[]>([])
-/** 场景内容：名称 → { 我方/敌方角色 id 快照 } */
-const sceneStorage = ref<Record<string, { allyIds: string[]; enemyIds: string[] }>>({})
-
-/** 从 localStorage 恢复场景列表 */
-const loadScenes = () => {
-  try {
-    const raw = localStorage.getItem(SCENE_STORAGE_KEY)
-    sceneStorage.value = raw ? JSON.parse(raw) : {}
-    savedScenes.value = Object.keys(sceneStorage.value)
-  } catch {
-    sceneStorage.value = {}
-    savedScenes.value = []
-  }
-}
-
-/** 场景列表写回 localStorage */
-const persistScenes = () => {
-  localStorage.setItem(SCENE_STORAGE_KEY, JSON.stringify(sceneStorage.value))
-}
-
 // ==================== 为角色编辑弹窗提供数据 ====================
 
 /** 所有参战角色列表（用于弹窗内下拉选择） */
@@ -416,8 +383,6 @@ onMounted(() => {
   // 初始化战斗管理器
   battleStore.initializeBattleService(battleService);
   battleService.loadSkillConfigs();
-  // 恢复持久化场景列表
-  loadScenes();
   // 初始化队伍数据
   void initBattle();
 });
@@ -446,75 +411,6 @@ const updateSpeed = (speed: number) => {
 const handleRuleChange = (key: string, value: boolean) => {
   battleLogManager.addSystemLog({
     message: `战斗规则已更新: ${key} = ${value}`,
-  });
-};
-
-// 场景管理组件事件处理
-/** 保存场景：记录当前参战阵容（我方/敌方角色 id）为场景快照并持久化 */
-const handleSaveScene = (sceneNameValue: string) => {
-  const allyIds = battleService.getAllyTeam().map(p => p.id)
-  const enemyIds = battleService.getEnemyTeam().map(p => p.id)
-  sceneStorage.value[sceneNameValue] = { allyIds, enemyIds }
-  persistScenes()
-  savedScenes.value = Object.keys(sceneStorage.value)
-  battleLogManager.addSystemLog({
-    message: `保存场景: ${sceneNameValue}（我方${allyIds.length} / 敌方${enemyIds.length}）`,
-  });
-};
-
-/** 加载场景：按阵容快照重建双方队伍（roleId 先按我方角色、再按敌人解析；失配角色打日志跳过，避免"少人"静默开战） */
-const handleLoadScene = async (sceneNameValue: string) => {
-  const scene = sceneStorage.value[sceneNameValue]
-  if (!scene) {
-    battleLogManager.addSystemLog({ message: `加载场景失败: ${sceneNameValue} 不存在` })
-    return
-  }
-  // 先停掉可能进行中的战斗并清空当前编成
-  if (battleStore.isBattleActive) await battleStore.endBattle(ParticipantSide.ALLY)
-  battleStore.resetBattle()
-  battleService.clearParticipants()
-  // 我方角色（actors 表）解析失败只影响"我方角色"加载，不回退整个场景（敌人路径不依赖 actors）
-  let actors: ActorData[] = []
-  try {
-    actors = await container.resolve<GameDataApi>('GameDataApi').listByTable<ActorData>('actors', { limit: 1000 })
-  } catch {
-    actors = []
-  }
-  let skipped = 0
-  scene.allyIds.forEach((id, index) => {
-    const roleId = GameDataProcessor.sourceRoleIdOf({ id })
-    const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ALLY, index, actors)
-    if (entity) {
-      battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
-    } else {
-      skipped++
-      battleLogManager.addSystemLog({ message: `加载场景：角色未找到，已跳过: ${id}` })
-    }
-  })
-  scene.enemyIds.forEach((id, index) => {
-    const roleId = GameDataProcessor.sourceRoleIdOf({ id })
-    const entity = GameDataProcessor.resolveRoleToParticipant(roleId, ParticipantSide.ENEMY, index, actors)
-    if (entity) {
-      battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
-    } else {
-      skipped++
-      battleLogManager.addSystemLog({ message: `加载场景：角色未找到，已跳过: ${id}` })
-    }
-  })
-  battleStore.syncTeams()
-  const firstAlly = battleService.getAllyTeam()[0]
-  if (firstAlly) battleStore.selectCharacter(firstAlly.id)
-  battleLogManager.addSystemLog({
-    message: `加载场景: ${sceneNameValue}（我方${scene.allyIds.length} / 敌方${scene.enemyIds.length}）${skipped ? `，${skipped} 个角色未找到` : ''}`,
-  });
-};
-
-const handleDeleteScene = (sceneNameValue: string) => {
-  delete sceneStorage.value[sceneNameValue]
-  persistScenes()
-  savedScenes.value = Object.keys(sceneStorage.value)
-  battleLogManager.addSystemLog({
-    message: `删除场景: ${sceneNameValue}`,
   });
 };
 
@@ -813,12 +709,11 @@ const selectCharacter = (characterId: string) => {
   battleStore.selectCharacter(characterId);
 };
 
-// NOTE: 顶部模块栏唤灵台专属操作（战斗规则/调试面板/角色编辑/场景管理/保存战斗记录）经此暴露给容器层 ModuleHeader actions slot
+// NOTE: 顶部模块栏唤灵台专属操作（战斗规则/调试面板/角色编辑/保存战斗记录）经此暴露给容器层 ModuleHeader actions slot
 defineExpose({
   openRulesDialog: () => { showRulesDialog.value = true },
   openDebugDialog: () => { showDebugControlDialog.value = true },
   openStatusDialog: () => { showStatusDialog.value = true },
-  openSceneDialog: () => { showSceneDialog.value = true },
   saveRecording,
 })
 

@@ -6,6 +6,7 @@
  */
 
 import type { FengshenTableName } from '@/domain/fengshen/types'
+import { ENEMY_ROLE_LABELS, ENEMY_ROLES } from '@/domain/fengshen/role-grades'
 
 export type FieldType = 'text' | 'number' | 'select' | 'multi' | 'map' | 'array' | 'object' | 'boolean'
 
@@ -90,8 +91,10 @@ export const REFERENCE_RULES: ReferenceRule[] = [
   { sourceTable: 'skills', path: 'steps[].buffId', targetTables: ['buffs'], optional: true },
   { sourceTable: 'scenes', path: 'enemies[].id', targetTables: ['enemies'], optional: true },
   { sourceTable: 'scenes', path: 'yaotu.id', targetTables: ['enemies'], optional: true },
+  { sourceTable: 'scenes', path: 'regionId', targetTables: ['regions'] },
   { sourceTable: 'scenes', path: 'unlockCondition.sceneId', targetTables: ['scenes', 'enemies'], optional: true },
   { sourceTable: 'scenes', path: 'drops.materials', targetTables: ['items'], optional: true },
+  { sourceTable: 'regions', path: 'schoolUnlock.sceneId', targetTables: ['scenes'], optional: true },
   { sourceTable: 'lineups', path: 'formationId', targetTables: ['formations'] },
   { sourceTable: 'lineups', path: 'roles[].roleId', targetTables: ['actors', 'enemies'] },
   { sourceTable: 'enemies', path: 'drops[].itemId', targetTables: ['materials', 'equipment', 'items'], optional: true },
@@ -190,9 +193,9 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['name', 'role', 'level', 'skills'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'role', label: '品阶', type: 'select', enum: ['normal', 'elite', 'yaotu', 'yaokui', 'yaowang', 'yaozun'], column: { tagKind: 'rank' }, searchable: true,
-        description: '小妖/yaobing/妖徒/妖魁/妖王/妖尊',
-        valueLabel: { normal: '小妖', elite: 'yaobing', yaotu: '妖徒', yaokui: '妖魁', yaowang: '妖王', yaozun: '妖尊' },
+      { key: 'role', label: '品阶', type: 'select', enum: [...ENEMY_ROLES], column: { tagKind: 'rank' }, searchable: true,
+        description: '小妖/妖兵/妖徒/妖魁/妖王/妖尊',
+        valueLabel: { ...ENEMY_ROLE_LABELS },
       },
       { key: 'level', label: '等级', type: 'number', required: true, min: 1, max: 99, column: { format: 'number' } },
       { key: 'stats', label: '属性', type: 'map' },
@@ -217,28 +220,43 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     filters: [
       {
         key: 'role', label: '品阶', type: 'select',
-        options: ['normal', 'elite', 'yaotu', 'yaokui', 'yaowang', 'yaozun'],
-        labelMap: {
-          normal: '小妖',
-          yaobing: '妖兵',
-          yaotu: '妖徒',
-          yaokui: '妖魁',
-          yaowang: '妖王',
-          yaozun: '妖尊',
-        },
+        options: [...ENEMY_ROLES],
+        labelMap: { ...ENEMY_ROLE_LABELS },
       },
       { key: 'level', label: '等级', type: 'range', min: 1, max: 99 },
+      { key: 'regionId', label: '区域', type: 'select', refTable: 'regions' },
       { key: 'sceneId', label: '场景', type: 'select', refTable: 'scenes' },
     ],
+  },
+  regions: {
+    table: 'regions',
+    label: '区域',
+    columns: ['name', 'sub', 'levelRange'],
+    fields: [
+      { key: 'name', label: '名称', type: 'text', required: true },
+      { key: 'sub', label: '副标题', type: 'text', searchable: true },
+      { key: 'levelRange', label: '等级区间', type: 'array',
+        description: '[min, max]',
+        arrayTemplate: [1, 10] },
+      { key: 'resourceTheme', label: '资源主题', type: 'array',
+        description: '区域特产材料名（展示用）',
+        arrayTemplate: ['桃木', '粗石'] },
+      { key: 'schoolUnlock', label: '流派解锁', type: 'object',
+        description: 'schoolId = 演劫台流派名；sceneId = 触发解锁的场景（引用 scenes 表）',
+        objectTemplate: { schoolId: 'linghou', sceneId: 'scene_1_1' } },
+      { key: 'narrative', label: '剧情', type: 'text', searchable: true },
+    ],
+    uniqueFields: ['name'],
   },
   scenes: {
     table: 'scenes',
     label: '场景',
-    columns: ['name'],
+    columns: ['name', 'regionId'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'background', label: '背景描述', type: 'text', searchable: true },
-      { key: 'regionId', label: '区域', type: 'text', searchable: true },
+      { key: 'regionId', label: '区域', type: 'select', required: true, refTable: 'regions',
+        description: '所属大场景（区域表）' },
       { key: 'levelRange', label: '等级范围', type: 'array',
         description: '[min, max]',
         arrayTemplate: [1, 99] },
@@ -261,6 +279,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
         ] },
     ],
     uniqueFields: ['name'],
+    // NOTE: 区域筛选由列表的「区域分组」呈现替代（DataTable groupBy），下拉冗余故不设
   },
   formations: {
     table: 'formations',
@@ -301,7 +320,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     columns: ['name', 'type', 'rarity', 'usage'],
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
-      { key: 'type', label: '类型', type: 'select', enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '碎片', '货币', '草药', '药引', '种子'], column: { tagKind: 'type' }, searchable: true },
+      { key: 'type', label: '类型', type: 'select', enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '灵气', '碎片', '货币', '草药', '药引', '种子'], column: { tagKind: 'type' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'effects', label: '使用效果', type: 'array',
         description: '效果类型 + 数值（heal/buff/...）',
@@ -311,7 +330,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     ],
     uniqueFields: ['name'],
     filters: [
-      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '灵气', '碎片', '货币', '草药', '药引', '种子'] },
+      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '灵气', '碎片', '货币', '草药', '药引', '种子'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],
   },
@@ -478,7 +497,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'type', label: '类型', type: 'select',
-        enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '丹药', '永久丹药', '图纸', '强化', '升星', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'],
+        enum: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '丹药', '永久丹药', '图纸', '强化', '升星', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'],
         column: { tagKind: 'type' }, searchable: true },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'value', label: '实际价值', type: 'number', min: 0, max: 999999, column: { format: 'number' },
@@ -488,7 +507,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     filters: [
-      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '古董', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '丹药', '永久丹药', '图纸', '强化', '升星', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'] },
+      { key: 'type', label: '类型', type: 'select', options: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '丹药', '永久丹药', '图纸', '强化', '升星', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱'] },
       { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
     ],
   },

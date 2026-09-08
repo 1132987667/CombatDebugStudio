@@ -166,8 +166,8 @@ export interface LogEntry {
   message?: string
   /** 操作类型 */
   action?: string
-  /** 额外的上下文数据 */
-  context?: Record<string, any>
+  /** 额外的上下文数据（动态键，消费方自行收窄） */
+  context?: Record<string, unknown>
   /** 日志来源标识 */
   source?: string
   /** 目标标识 */

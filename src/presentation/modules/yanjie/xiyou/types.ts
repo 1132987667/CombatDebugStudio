@@ -288,33 +288,6 @@ export interface XiyouStorageCell {
   locked: boolean
 }
 
-/** 功法（功法子系统） */
-export interface XiyouMartial {
-  name: string
-  rarity: number
-  level: number
-  maxLevel: number
-  slot: string
-  effect: string
-  equipped: boolean
-}
-
-/** 经脉穴位（经脉子系统） */
-export interface XiyouMeridianNode {
-  name: string
-  level: number
-  maxLevel: number
-  breakthrough: boolean
-  effect: string
-}
-
-export interface XiyouMeridian {
-  name: string
-  nodes: XiyouMeridianNode[]
-}
-
-
-
 /** 法宝（法宝子系统） */
 export interface XiyouTreasure {
   name: string
@@ -371,12 +344,34 @@ export interface XiyouAchievement {
 
 /** 任务（任务子系统） */
 export interface XiyouQuest {
-  type: '主线' | '日常'
+  type: '主线' | '日常' | '周常'
   name: string
   desc: string
   progress: number
   target: number
   reward: string
+}
+
+/** 志怪录条目（图鉴子系统；captured 暂无击杀记录源，恒为 false） */
+export interface XiyouCodexEntry {
+  name: string
+  level: number
+  captured: boolean
+}
+
+/** 志怪录章节（按区域分章，条目为区域内场景敌人去重） */
+export interface XiyouCodexChapter {
+  name: string
+  entries: XiyouCodexEntry[]
+}
+
+/** 称号（称号子系统；equipped 为本地佩戴状态，加成生效逻辑待接战斗属性） */
+export interface XiyouTitle {
+  name: string
+  bonus: string
+  desc: string
+  owned: boolean
+  equipped: boolean
 }
 
 /** 活动（活动子系统） */

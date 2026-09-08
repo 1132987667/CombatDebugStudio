@@ -20,7 +20,8 @@ const DB_NAME = 'combat-debug-studio'
 //       v4 = 新增 items（物品主键索引）/ gears（装备详情）表；
 //       v5 = 新增 equipment_affixes（装备词条库，独立于敌人词缀）；
 //       v6 = 新增 saves（演劫台存档）表
-const DB_VERSION = 6
+//       v7 = 新增 regions（区域，scenes.regionId 引用目标）表
+const DB_VERSION = 7
 
 /** 存储迁移历史（PackagesView「版本迁移记录」读取；新增迁移在此追加即可，UI 自动更新） */
 export const STORAGE_MIGRATIONS: Array<{ version: number; note: string }> = [
@@ -30,6 +31,7 @@ export const STORAGE_MIGRATIONS: Array<{ version: number; note: string }> = [
   { version: 4, note: '新增 items（物品主键索引）/ gears（装备详情）数据表' },
   { version: 5, note: '新增 equipment_affixes（装备词条库）数据表' },
   { version: 6, note: '新增 saves（演劫台存档）数据表' },
+  { version: 7, note: '新增 regions（区域）数据表' },
 ]
 
 export class IndexedDbStorage implements IPersistentStorage {

@@ -27,12 +27,15 @@ export function diffValueText(v: unknown): string {
 /**
  * 计算字段级 diff。before 为空（新增）时返回空列表；
  * 排除 updatedAt（存储层时间戳，非业务字段）。
+ * NOTE: 入参收窄为 object 由本函数内部统一断言，调用方无需逐处 as unknown as
  */
 export function computeFieldDiff(
-  before: Record<string, unknown> | null | undefined,
-  after: Record<string, unknown> | null | undefined,
+  beforeInput: object | null | undefined,
+  afterInput: object | null | undefined,
 ): FieldDiff[] {
-  if (!after) return []
+  if (!afterInput) return []
+  const before = beforeInput as Record<string, unknown> | null | undefined
+  const after = afterInput as Record<string, unknown>
   const keys = new Set([...Object.keys(before ?? {}), ...Object.keys(after)])
   keys.delete('updatedAt')
 

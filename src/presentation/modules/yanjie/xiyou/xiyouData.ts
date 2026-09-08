@@ -18,7 +18,7 @@ import regionsJson from '@configs/xiyou/regions.json'
 import scenesJson from '@configs/xiyou/scenes.json'
 import schoolsJson from '@configs/xiyou/schools.json'
 import skillTreeJson from '@configs/xiyou/skill_tree.json'
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
@@ -26,6 +26,7 @@ import { migrateRarityField } from './quality'
 import type {
   XiyouAchievement,
   XiyouCatalogItem,
+  XiyouCodexChapter,
   XiyouCraft,
   XiyouCrop,
   XiyouEvent,
@@ -47,6 +48,7 @@ import type {
   XiyouSkillPoints,
   XiyouEquippedSkills,
   XiyouStorageCell,
+  XiyouTitle,
   XiyouTreasure,
   SchoolsLayer,
   SchoolsLayerRaw,
@@ -337,6 +339,27 @@ export const mates: XiyouMate[] = reactive<XiyouMate[]>(mateJson.mates as unknow
 export const pets: XiyouPet[] = reactive<XiyouPet[]>(mateJson.pets as unknown as XiyouPet[])
 
 export const achievements: XiyouAchievement[] = reactive<XiyouAchievement[]>(collectJson.achievements as unknown as XiyouAchievement[])
+export const titles: XiyouTitle[] = reactive<XiyouTitle[]>(collectJson.titles as unknown as XiyouTitle[])
+
+/**
+ * 志怪录（图鉴）：按区域分章，条目为区域内场景敌人去重（同名取首次出现等级）。
+ * HACK: captured 恒为 false——战斗系统尚无击杀记录可查；接通后在此按敌人 id 汇入收录状态，
+ *       天花板：玩家期望「打过即收录」，若后续只记录 BOSS 击杀需调整判定粒度。
+ */
+export const codexChapters = computed<XiyouCodexChapter[]>(() =>
+  regions.map((rg) => {
+    const seen = new Set<string>()
+    const entries: XiyouCodexChapter['entries'] = []
+    for (const sc of scenes.filter((s) => s.regionId === rg.id)) {
+      for (const e of sc.enemies) {
+        if (seen.has(e.name)) continue
+        seen.add(e.name)
+        entries.push({ name: e.name, level: e.level, captured: false })
+      }
+    }
+    return { name: rg.name, entries }
+  }),
+)
 
 export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(questJson.quests as unknown as XiyouQuest[])
 export const events: XiyouEvent[] = reactive<XiyouEvent[]>(questJson.events as unknown as XiyouEvent[])
@@ -438,6 +461,7 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(pets, 'mate', 'pets')
   migrateRarity(pets)
   aIn(achievements, 'collect', 'achievements')
+  aIn(titles, 'collect', 'titles')
   aIn(quests, 'quest', 'quests')
   aIn(events, 'quest', 'events')
   aIn(alchemyRecipes, 'cave', 'alchemyRecipes')

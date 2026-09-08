@@ -144,13 +144,13 @@
     },
     {
       "id": "mat_gutongjing",
-      "name": "古铜镜",
-      "type": "古董",
+      "name": "古铜精",
+      "type": "天材地宝",
       "rarity": 2,
       "source": "关卡6-8 掉落",
-      "description": "古老的铜镜，蕴含着神秘的灵气，可用于制作高级配件",
+      "description": "上古铜脉凝结的金属精华，蕴含神秘的灵气",
       "value": 150,
-      "usage": "制作三阶靴子"
+      "usage": "制作特殊装备"
     },
     {
       "id": "mat_jinjing",
@@ -254,11 +254,11 @@
     },
     {
       "id": "mat_yufoxiang",
-      "name": "玉佛像",
-      "type": "古董",
+      "name": "玉佛舍利",
+      "type": "天材地宝",
       "rarity": 2,
       "source": "关卡9 BOSS / 碎片合成",
-      "description": "雕刻精美的玉佛像，蕴含强大的佛门灵气",
+      "description": "天地佛门灵气凝结而成的舍利，蕴含强大的佛门灵气",
       "value": 150,
       "usage": "制作顶级配件或特殊装备"
     },
@@ -406,13 +406,13 @@
     },
     {
       "id": "frag_004",
-      "name": "玉佛像碎片",
+      "name": "玉佛舍利碎片",
       "type": "碎片",
       "rarity": 2,
       "source": "关卡9 高难敌人（5:1 合成）",
-      "description": "玉佛像的碎片，收集一定数量可合成完整的玉佛像",
+      "description": "玉佛舍利崩解后的碎片，收集一定数量可凝合成完整的玉佛舍利",
       "value": 100,
-      "usage": "5个碎片可合成1个玉佛像"
+      "usage": "5个碎片可合成1个玉佛舍利"
     },
     {
       "id": "curr_001",
@@ -1685,13 +1685,13 @@
     },
     {
       "id": "mat_yufo_suipian",
-      "name": "玉佛碎片",
+      "name": "玉佛残片",
       "type": "碎片",
       "rarity": 5,
       "source": "关卡5-3 禅音崖护法掉落(10%)",
-      "description": "玉佛像的碎片，5片合成1尊玉佛像",
+      "description": "玉佛舍利崩解后的残片，5片合成1尊玉佛舍利",
       "value": 30,
-      "usage": "合成玉佛像"
+      "usage": "合成玉佛舍利"
     },
     {
       "id": "pill_quality_fine",
@@ -1735,11 +1735,11 @@
     },
     {
       "id": "mat_feicuiyuzhuo",
-      "name": "翡翠玉镯",
-      "type": "玉石",
+      "name": "翡翠玉髓",
+      "type": "天材地宝",
       "rarity": 3,
       "source": "关卡4-5 迷雾妖主掉落(20%)",
-      "description": "翡翠制成的玉镯，蕴含强大灵气",
+      "description": "天地灵气滋养千年的翡翠玉髓，蕴含强大灵气",
       "value": 72,
       "usage": "制造辅助材料，超品概率+5%（二至三阶）"
     },

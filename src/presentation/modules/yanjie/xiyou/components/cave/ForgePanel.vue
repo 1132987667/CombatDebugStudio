@@ -84,6 +84,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 import { forgeRecipes, equipmentCatalog } from '../../xiyouData'
 import { catalogById, itemIdByName, itemName, qualityOf } from '../../caveLogic'
+import { tierName } from '../../quality'
 
 const pack = usePackStore()
 const notification = useNotificationStore()
@@ -111,7 +112,7 @@ watch(part, () => {
 })
 
 // NOTE: 部位以 equipment.json slot 为权威（6 槽）；不用 item.type 判断——
-//       材料与装备存在重名（如「翡翠玉镯」：玉石材料 vs 护手装备），type 会误判。
+//       材料与装备可能重名，type 会误判。
 const SLOT_OF_PART: Record<ForgePart, string> = {
   weapon: 'weapon',
   armor: 'armor',
@@ -133,7 +134,9 @@ function recipesOf(id: string): XiyouRecipe[] {
 }
 
 function tierOf(r: XiyouRecipe): string {
-  return `器方 Lv.${r.level}`
+  // 配方无 level 字段，阶位以装备定义 tier 为权威（t1-5 → 一阶…仙品）
+  const t = tierName(gearOf(r)?.tier)
+  return t ? `${t}器方` : '器方'
 }
 
 function qualityOfOut(r: XiyouRecipe): string {

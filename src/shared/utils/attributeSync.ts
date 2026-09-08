@@ -7,8 +7,8 @@
 import { ATTRIBUTE_CODE, ModifierType, type Modifier } from '@/domain/attribute/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 
-/** 主属性 → 加成属性映射 */
-export const BONUS_ATTR_MAP: Partial<Record<string, string>> = {
+/** 主属性 → 加成属性映射（键为调用方传入的属性码，运行时校验命中） */
+export const BONUS_ATTR_MAP: Partial<Record<string, ATTRIBUTE_CODE>> = {
   [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
   [ATTRIBUTE_CODE.attack]: ATTRIBUTE_CODE.attackBonus,
   [ATTRIBUTE_CODE.defense]: ATTRIBUTE_CODE.defenseBonus,
@@ -16,7 +16,7 @@ export const BONUS_ATTR_MAP: Partial<Record<string, string>> = {
 }
 
 /** 加成属性 → 主属性映射（反向传播用） */
-export const REVERSE_BONUS_ATTR_MAP: Partial<Record<string, string>> = {
+export const REVERSE_BONUS_ATTR_MAP: Partial<Record<string, ATTRIBUTE_CODE>> = {
   [ATTRIBUTE_CODE.healthBonus]: ATTRIBUTE_CODE.maxHealth,
   [ATTRIBUTE_CODE.attackBonus]: ATTRIBUTE_CODE.attack,
   [ATTRIBUTE_CODE.defenseBonus]: ATTRIBUTE_CODE.defense,
@@ -35,10 +35,10 @@ export function syncBonusAttribute(
 ): void {
   const bonusAttr = BONUS_ATTR_MAP[attrCode]
   if (!bonusAttr) return
-  const bonusData = participant.getAttrValue(bonusAttr as ATTRIBUTE_CODE)
+  const bonusData = participant.getAttrValue(bonusAttr)
   if (!bonusData) return
   bonusData.modifiers = bonusData.modifiers.filter(m => m.sourceKey !== sourceKey)
-  bonusData.modifiers.push({ ...mod, attribute: bonusAttr as ATTRIBUTE_CODE, type: ModifierType.ADDITIVE })
+  bonusData.modifiers.push({ ...mod, attribute: bonusAttr, type: ModifierType.ADDITIVE })
   bonusData.cachedVersion = -1
 }
 
@@ -54,9 +54,9 @@ export function syncReverseBonusAttribute(
 ): void {
   const mainAttr = REVERSE_BONUS_ATTR_MAP[attrCode]
   if (!mainAttr) return
-  const mainData = participant.getAttrValue(mainAttr as ATTRIBUTE_CODE)
+  const mainData = participant.getAttrValue(mainAttr)
   if (!mainData) return
   mainData.modifiers = mainData.modifiers.filter(m => m.sourceKey !== sourceKey)
-  mainData.modifiers.push({ ...mod, attribute: mainAttr as ATTRIBUTE_CODE })
+  mainData.modifiers.push({ ...mod, attribute: mainAttr })
   mainData.cachedVersion = -1
 }

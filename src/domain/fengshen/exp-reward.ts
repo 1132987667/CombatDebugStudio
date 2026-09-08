@@ -137,7 +137,7 @@ export function interpolateEnemyReward(
 export function calcEnemyReward(
   table: EnemyRewardTableConfig,
   enemyLevel: number,
-  role = 'normal',
+  role = 'xiaoyao',
 ): { baseExp: number; goldMin: number; goldMax: number; exp: number; goldMinFinal: number; goldMaxFinal: number } {
   const base = interpolateEnemyReward(table, enemyLevel)
   const roleMult = table.roleMultiplier[role] ?? 1

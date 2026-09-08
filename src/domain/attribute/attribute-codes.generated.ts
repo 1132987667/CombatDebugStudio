@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-09-07T17:06:03.108Z
+// 生成时间: 2026-09-08T14:47:43.995Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -105,6 +105,7 @@ export const ATTRIBUTE_CODE = {
   waterRes: 'waterRes',
   fireRes: 'fireRes',
   earthRes: 'earthRes',
+  luck: 'luck',
 } as const
 
 export type ATTRIBUTE_CODE = (typeof ATTRIBUTE_CODE)[keyof typeof ATTRIBUTE_CODE]
@@ -985,5 +986,15 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: true,
     range: '0-100%',
     impact: '减少受到的土属性伤害',
+  },
+  luck: {
+    code: 'luck',
+    name: '幸运',
+    displayName: '幸运',
+    description: '角色气运的体现，影响随机事件的偏向：幸运越高，越容易获得掉落与稀有产出',
+    isPercentage: false,
+    defaultValue: 0,
+    range: '0-3000',
+    impact: '提升击败掉落率与稀有物品获取概率，影响获得品质；当前生效于宠物/坐骑获得（见《完整项目说明.md》§幸运值），后续可扩展至宝箱、采集、制作暴击等随机判定',
   },
 } as const

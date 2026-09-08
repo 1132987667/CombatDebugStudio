@@ -3,16 +3,16 @@
  *
  * 覆盖：
  * - enemyMeanStatsByLevel：同等级均值 / 属性键并集 / 等级升序 / 边界
- * - equipmentAffixFrequency：计数与 flat/percent 拆分 / 降序稳定性
  * - dropOwnership：独家投放排序 / 同怪重复去重 / 非法条目跳过
  * - zeroDropItemIds：全集求差
+ *
+ * NOTE: equipmentAffixFrequency 已随 PRD §21 装备属性公式化删除（静态表无 stats 可统计）。
  *
  * 运行: npx vitest run tests/unit/fengshen-data-insight.test.ts
  */
 import { describe, it, expect } from 'vitest'
 import {
   enemyMeanStatsByLevel,
-  equipmentAffixFrequency,
   dropOwnership,
   zeroDropItemIds,
   ENEMY_STAT_KEY_BY_PLAYER_ATTR,
@@ -62,32 +62,6 @@ describe('enemyMeanStatsByLevel', () => {
   it('空输入返回空数组；stats 缺失不崩溃', () => {
     expect(enemyMeanStatsByLevel([])).toEqual([])
     expect(enemyMeanStatsByLevel([makeEnemy({ id: 'x', level: 1 })])[0].stats).toEqual({})
-  })
-})
-
-describe('equipmentAffixFrequency', () => {
-  it('按属性计数并拆分 flat/percent', () => {
-    const rows = equipmentAffixFrequency([
-      { stats: [{ attribute: 'attack', modifierType: 'flat', value: 10 }, { attribute: 'speed', modifierType: 'percent', value: -20 }] },
-      { stats: [{ attribute: 'attack', modifierType: 'percent', value: 5 }] },
-      { stats: [{ attribute: 'attack', modifierType: 'flat', value: 3 }] },
-    ])
-    expect(rows).toEqual([
-      { attribute: 'attack', count: 3, flat: 2, percent: 1 },
-      { attribute: 'speed', count: 1, flat: 0, percent: 1 },
-    ])
-  })
-
-  it('同频次按属性码字典序稳定排序', () => {
-    const rows = equipmentAffixFrequency([
-      { stats: [{ attribute: 'speed', modifierType: 'flat', value: 1 }, { attribute: 'attack', modifierType: 'flat', value: 1 }] },
-    ])
-    expect(rows.map((r) => r.attribute)).toEqual(['attack', 'speed'])
-  })
-
-  it('空 stats / 空装备列表返回空', () => {
-    expect(equipmentAffixFrequency([])).toEqual([])
-    expect(equipmentAffixFrequency([{ stats: [] }])).toEqual([])
   })
 })
 

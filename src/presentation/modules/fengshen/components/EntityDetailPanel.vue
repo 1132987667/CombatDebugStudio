@@ -9,12 +9,11 @@
 <template>
   <div v-if="entity" class="fs-detail">
     <header class="fs-detail-head">
-      <span class="fs-detail-id">{{ entity.id }}</span>
-      <h3 class="fs-detail-title">{{ detailName }}</h3>
-      <span class="fs-detail-table">{{ schema.label }}</span>
-      <Button v-if="schema.table === 'lineups'" size="small" title="切换到唤灵台并加载该预设阵容"
-        @click="emit('openInHuanling')">在唤灵台打开</Button>
-      <Button size="small" title="在编辑器中打开该实体" @click="emit('edit')">编辑</Button>
+      <span class="fs-detail-id">{{ entity.id }} <span class="fs-detail-table">{{ schema.label }}</span></span>
+      <h3 class="fs-detail-title">{{ detailName }} <Button v-if="schema.table === 'lineups'" size="small"
+          title="切换到唤灵台并加载该预设阵容" @click="emit('openInHuanling')">在唤灵台打开</Button>
+        <Button size="small" title="在编辑器中打开该实体" @click="emit('edit')">编辑</Button>
+      </h3>
     </header>
 
     <dl class="fs-detail-body">
@@ -23,12 +22,16 @@
           <dt class="fs-detail-label">{{ field.label }}</dt>
           <dd class="fs-detail-value">
             <template v-if="isEmpty(entity[field.key])">—</template>
+            <template v-else-if="isRangeArray(entity[field.key])">{{ rangeText(entity[field.key] as [number, number]) }}</template>
             <template v-else-if="Array.isArray(entity[field.key])">
-              <ul class="fs-detail-list">
+              <ul class="fs-detail-list" :class="{ 'fs-detail-list--grid2': isTwoColList(field) }">
                 <li v-for="(item, i) in entity[field.key] as unknown[]" :key="i" class="fs-detail-list-item">
                   <template v-if="isGearStatsItem(field, item)">{{ gearStatText(item) }}</template>
                   <template v-else-if="isGearMaterialsItem(field, item)">{{ gearMatText(item) }}</template>
                   <template v-else-if="isEnemyDropItem(field, item)">{{ enemyDropText(item) }}</template>
+                  <template v-else-if="isActorEntry(item)">
+                    <span :title="`id: ${item.id}`">{{ actorEntryText(item) }}</span>
+                  </template>
                   <template v-else-if="isObject(item)">
                     <dl class="fs-detail-map">
                       <div v-for="(v, k) in item as Record<string, unknown>" :key="k" class="fs-detail-map-row">
@@ -45,7 +48,7 @@
               </ul>
             </template>
             <template v-else-if="isStatsField(field)">
-              <dl class="fs-detail-map">
+              <dl class="fs-detail-map fs-detail-map--grid2">
                 <div v-for="(v, k) in entity[field.key] as Record<string, unknown>" :key="k" class="fs-detail-map-row">
                   <dt class="fs-detail-map-key">{{ attrLabel(String(k)) }}</dt>
                   <dd class="fs-detail-map-val">{{ attrValue(String(k), v) }}</dd>
@@ -69,9 +72,16 @@
                 </div>
               </dl>
             </template>
+            <template v-else-if="isActorEntry(entity[field.key])">
+              <span :title="actorEntryTitle(entity[field.key])">{{ actorEntryText(entity[field.key]) }}</span>
+            </template>
+            <template v-else-if="isUnlockCondition(entity[field.key])">
+              <span :title="unlockConditionTitle(entity[field.key])">{{
+                unlockConditionText(entity[field.key]) }}</span>
+            </template>
             <template v-else-if="isObject(entity[field.key])">
               <dl class="fs-detail-map">
-                <div v-for="(v, k) in entity[field.key] as Record<string, unknown>" :key="k" class="fs-detail-map-row">
+                <div v-for="[k, v] in objectEntries(entity[field.key])" :key="k" class="fs-detail-map-row">
                   <dt class="fs-detail-map-key">{{ keyLabel(k) }}</dt>
                   <dd class="fs-detail-map-val" :title="refTitle(k, v)">{{ nestedVal(k, v) }}</dd>
                 </div>
@@ -79,7 +89,7 @@
             </template>
             <template v-else>
               <span v-if="isRefKey(field.key)" :title="`id: ${String(entity[field.key])}`">{{ refName(entity[field.key])
-                }}</span>
+              }}</span>
               <template v-else>{{ topLevelValue(field, entity[field.key]) }}</template>
             </template>
           </dd>
@@ -96,9 +106,8 @@
           g.ids.map(refName).join('、') }}</span>
         <span v-else class="fs-detail-refs-ids">
           <template v-for="(id, i) in g.ids" :key="id">
-            <span class="fs-ref-gear" :title="`id: ${id}`"
-              @mouseenter="showGearTip($event, id)" @mouseleave="hideGearTip">{{ gearName(id) }}</span>{{ i < g.ids.length - 1 ? '、' : '' }}
-          </template>
+            <span class="fs-ref-gear" :title="`id: ${id}`" @mouseenter="showGearTip($event, id)"
+              @mouseleave="hideGearTip">{{ gearName(id) }}</span>{{ i < g.ids.length - 1 ? '、' : '' }} </template>
         </span>
       </div>
     </div>
@@ -232,7 +241,7 @@ const NESTED_VALUE_LABEL: Record<string, Record<string, string>> = {
   stackRule: { replace: '替换', stack: '叠加', independent: '独立' },
   row: { front: '前排', back: '后排' },
   target: { player: '玩家', enemy: '敌人' },
-  slot: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手' },
+  slot: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手', artifact: '法宝', relic: '神器' },
   tier: {
     yao_1: '一档·妖气', yao_2: '二档·妖性', yao_3: '三档·妖道', yao_4: '四档·妖圣', mandate: '天命', jie: '劫数',
     t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶',
@@ -274,6 +283,22 @@ function isStatsField(field: TableSchema['fields'][number]): boolean {
   return field.type === 'map' && field.key === 'stats'
 }
 
+/** 敌人掉落数组（enemies.drops）→ 两列网格展示，减少纵向滚动 */
+function isTwoColList(field: TableSchema['fields'][number]): boolean {
+  return field.key === 'drops' && field.type === 'array'
+}
+
+/** 二元数字数组 = 闭区间 [min, max]（敌人 exp/money 奖励：战斗结算时在区间内随机取值） */
+function isRangeArray(v: unknown): v is [number, number] {
+  return Array.isArray(v) && v.length === 2
+    && typeof v[0] === 'number' && typeof v[1] === 'number'
+}
+
+/** 区间 → "10 ~ 20"；上下限相等时只显示单值 */
+function rangeText([min, max]: [number, number]): string {
+  return min === max ? String(min) : `${min} ~ ${max}`
+}
+
 /** 属性 code → 展示名（无元数据时回退原 code） */
 function attrLabel(code: string): string {
   return getAttrMeta(code as ATTRIBUTE_CODE)?.displayName ?? code
@@ -289,6 +314,11 @@ function attrValue(code: string, v: unknown): string {
 
 function isEmpty(v: unknown): boolean {
   return v === undefined || v === null || v === ''
+}
+
+/** 模板 v-for 源：对象 → 键值对数组（模板表达式不能写含 Record 的内联断言，收口到 script） */
+function objectEntries(v: unknown): Array<[string, unknown]> {
+  return isObject(v) ? Object.entries(v) : []
 }
 
 /** gear 表 stats 数组元素（{attribute, modifierType, value}）类型守卫 */
@@ -323,6 +353,54 @@ function enemyDropText(item: { itemId: string; quantity: number; chance: number 
   const qty = item.quantity && item.quantity > 1 ? ` ×${item.quantity}` : ''
   const chance = item.chance != null ? ` · ${Math.round(item.chance * 100)}%` : ''
   return `${refName(item.itemId)}${qty}${chance}`
+}
+
+/** 敌人条目形状（{id, name?, level?}）：scenes.enemies 数组项 / scenes.yaotu 对象，单行化避免键值竖排冗余 */
+function isActorEntry(v: unknown): v is { id: string; name?: string; level?: number } {
+  if (!isObject(v)) return false
+  return typeof v.id === 'string'
+    && Object.keys(v).every((k) => k === 'id' || k === 'name' || k === 'level')
+    && (v.name === undefined || typeof v.name === 'string')
+}
+
+/** 敌人条目 → 单行文本「花妖幼芽 Lv.2」；name 缺失回退引用翻译（id → 敌人名） */
+function actorEntryTextOf(item: { id: string; name?: string; level?: number }): string {
+  const name = item.name || refName(item.id)
+  const lv = item.level != null ? ` Lv.${item.level}` : ''
+  return `${name}${lv}`
+}
+
+/** 解锁条件形状（{type, sceneId}）：scenes.unlockCondition */
+function isUnlockCondition(v: unknown): v is { type: string; sceneId?: string } {
+  return isObject(v) && typeof v.type === 'string'
+    && Object.keys(v).every((k) => k === 'type' || k === 'sceneId')
+    && (v.sceneId === undefined || typeof v.sceneId === 'string')
+}
+
+/** 解锁条件 → 单行文本「通关前置：桃林小径」（类型走枚举翻译，场景走引用翻译） */
+function unlockConditionTextOf(v: { type: string; sceneId?: string }): string {
+  const typeLabel = NESTED_VALUE_LABEL.type[v.type] ?? v.type
+  return v.sceneId ? `${typeLabel}：${refName(v.sceneId)}` : typeLabel
+}
+
+/** 解锁条件 title：保留原始场景 id（调试语义） */
+function unlockConditionTitleOf(v: { type: string; sceneId?: string }): string | undefined {
+  return v.sceneId ? `id: ${v.sceneId}` : undefined
+}
+
+// ── 模板入口（模板表达式无法依赖 v-else-if 的 predicate 收窄，收口到 script 内部守卫） ──
+
+function actorEntryText(v: unknown): string {
+  return isActorEntry(v) ? actorEntryTextOf(v) : ''
+}
+function actorEntryTitle(v: unknown): string | undefined {
+  return isActorEntry(v) ? `id: ${v.id}` : undefined
+}
+function unlockConditionText(v: unknown): string {
+  return isUnlockCondition(v) ? unlockConditionTextOf(v) : ''
+}
+function unlockConditionTitle(v: unknown): string | undefined {
+  return isUnlockCondition(v) ? unlockConditionTitleOf(v) : undefined
 }
 
 /** 敌人表 skills 对象（{ small/passive/ultimate: string[] }）类型守卫 */
@@ -498,6 +576,13 @@ const refCount = computed(() => props.references?.reduce((n, g) => n + g.ids.len
   padding-left: var(--space-4);
 }
 
+/* 敌人掉落两列网格：右栏详情宽度有限，两列减少纵向滚动 */
+.fs-detail-list--grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-3);
+}
+
 .fs-detail-list-item {
   line-height: var(--line-height-md);
 }
@@ -507,6 +592,13 @@ const refCount = computed(() => props.references?.reduce((n, g) => n + g.ids.len
   flex-direction: column;
   gap: var(--space-1);
   margin: 0;
+}
+
+/* 属性统计两列网格（enemies/actors 的 stats） */
+.fs-detail-map--grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-3);
 }
 
 .fs-detail-map-row {

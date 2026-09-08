@@ -17,6 +17,7 @@ export const FENGSHEN_STORE = {
   SKILLS: 'skills',
   BUFFS: 'buffs',
   ENEMIES: 'enemies',
+  REGIONS: 'regions',
   SCENES: 'scenes',
   FORMATIONS: 'formations',
   LINEUPS: 'lineups',

@@ -8,6 +8,7 @@ import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
 import { SkillType } from '@/domain/skill/types'
 import type { EquipmentData } from '@/domain/fengshen/types'
+import type { EnemyRole } from '@/domain/fengshen/role-grades'
 import { PLAYER_ID } from '@/shared/constants/player'
 import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -95,8 +96,8 @@ interface EnemyRow {
   level: number
   type?: string
   faction?: string
-  /** 敌人分级（enemies.json role：xiaoyao 小妖 / yaotu 妖徒 / yaokui 妖魁 / yaowang 妖王 / yaozun 妖尊） */
-  role?: string
+  /** 敌人品阶（EnemyRole 六档，单一来源见 @/domain/fengshen/role-grades） */
+  role?: EnemyRole
   stats?: Partial<Record<ATTRIBUTE_CODE, number>>
   drops?: EnemyDropRow[]
   money?: [number, number]
@@ -247,9 +248,10 @@ export function rewardForEnemyIds(enemyIds: string[]): { money: [number, number]
   return { money: [g0, g1], exp: [e0, e1] }
 }
 
-/** 敌人分级 → 战胜仙缘（完整项目说明 §10.1：小妖 2 / 妖徒（精英）10 / 妖魁·妖王（BOSS）50 / 妖尊 150） */
+/** 敌人分级 → 战胜仙缘（六档：小妖 2 / 妖兵 5 / 妖徒 10 / 妖魁·妖王（BOSS）50 / 妖尊 150） */
 const ROLE_XIANYUAN: Record<string, number> = {
   xiaoyao: 2,
+  yaobing: 5,
   yaotu: 10,
   yaokui: 50,
   yaowang: 50,

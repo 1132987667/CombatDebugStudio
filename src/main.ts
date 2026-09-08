@@ -38,7 +38,7 @@ async function bootstrapFengshen(): Promise<void> {
 }
 
 
-import { createApp } from 'vue'
+import { createApp, type Component } from 'vue'
 import { createPinia } from 'pinia'
 import BattleArena from '@/presentation/views/BattleArena.vue'
 import './presentation/styles/main.scss'
@@ -66,7 +66,7 @@ import {
   ItemDetail,
 } from '@/presentation/components'
 
-const globalComponents: Record<string, any> = {
+const globalComponents: Record<string, Component> = {
   Button,
   NumericStepper,
   ToggleSwitch,

@@ -267,8 +267,9 @@ function subTypeName(cfg: AffixRuleConfig, slot: string, subType: string): strin
  * 本装备适用的禁止词条。forbidden 支持两种粒度：
  * 部位级（仅 slot）与子类型级（slot + subType，配置里存的是中文名）。
  * 只按 slot 匹配会把子类型级规则误加到同部位其他子类型上。
+ * （gear-generate.ts 实例生成共用此过滤，保证验证器与实际产出同口径。）
  */
-function forbiddenAttrs(cfg: AffixRuleConfig, slot: string, subType: string): Set<string> {
+export function forbiddenAttrs(cfg: AffixRuleConfig, slot: string, subType: string): Set<string> {
   const name = subTypeName(cfg, slot, subType)
   const set = new Set<string>()
   for (const rule of cfg.forbidden ?? []) {

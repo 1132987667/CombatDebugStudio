@@ -1,10 +1,11 @@
 /**
  * 场景数据接口定义
  */
+import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /** 场地效果修饰符 */
 export interface FieldEffectModifier {
-  attribute: string
+  attribute: ATTRIBUTE_CODE
   value: number
   type: 'ADDITIVE' | 'PERCENTAGE'
 }

@@ -93,6 +93,7 @@ const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableN
   {
     label: '世界编组',
     items: [
+      // NOTE: 区域不单独占菜单——场景表按区域分组呈现（分组头可编辑区域），大场景与关卡一体管理
       { table: 'scenes', label: '场景' },
       { table: 'formations', label: '阵型' },
       { table: 'lineups', label: '预设阵容' },

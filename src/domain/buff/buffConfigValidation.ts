@@ -16,8 +16,10 @@ const PHASES = new Set<string>(Object.values(BattleTriggerPhase))
 /**
  * 校验单个 Buff 配置结构（接受 BuffJsonEntry 或归一化后的配置）。
  * 返回可读错误列表；空数组表示结构合法。
+ * NOTE: 入参收窄为 object 由本函数内部统一断言，调用方无需逐处 as unknown as
  */
-export function validateBuffConfigShape(raw: Record<string, unknown>): string[] {
+export function validateBuffConfigShape(input: object): string[] {
+  const raw = input as Record<string, unknown>
   const errors: string[] = []
   const buffId = String(raw.id ?? 'unknown')
 

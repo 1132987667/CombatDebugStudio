@@ -201,6 +201,7 @@ import {
   matchLevelDiffCondition,
   matchLevelDiffRule,
 } from '@/domain/fengshen/exp-reward'
+import { ENEMY_ROLE_MULTIPLIERS } from '@/domain/fengshen/role-grades'
 import LineChart, { type ChartSeries } from '@/presentation/modules/fengshen/components/LineChart.vue'
 
 const TABS = [
@@ -233,7 +234,7 @@ const enemyReward = reactive<EnemyRewardTableConfig>({
 })
 const roleKeys = ref<string[]>([])
 const simEnemyLevel = ref(10)
-const simRole = ref('normal')
+const simRole = ref('xiaoyao')
 const simResult = ref<ReturnType<typeof calcEnemyReward> | null>(null)
 
 /** 等级差规则草稿 */
@@ -337,11 +338,11 @@ function cumulativeExp(idx: number): number {
   return sum
 }
 
-/** 该等级升级约需击败的同等级普通敌人数量：升级经验 ÷ 同等级普通敌人基础经验（normal 倍率） */
+/** 该等级升级约需击败的同等级普通敌人数量：升级经验 ÷ 同等级普通敌人基础经验（xiaoyao 倍率） */
 function enemiesToLevelUp(entry: ExpTableConfig['entries'][number]): number | null {
   if (!entry || !entry.expRequired || entry.expRequired <= 0) return null
   const base = interpolateEnemyReward(enemyReward, entry.level)
-  const expPerKill = Math.max(1, Math.round(base.baseExp * (enemyReward.roleMultiplier['normal'] ?? 1)))
+  const expPerKill = Math.max(1, Math.round(base.baseExp * (enemyReward.roleMultiplier['xiaoyao'] ?? 1)))
   return Math.ceil(entry.expRequired / expPerKill)
 }
 
@@ -430,14 +431,7 @@ function defaultEnemyReward(): EnemyRewardTableConfig {
     id: 'enemy_reward_table',
     baseExpFormula: 'enemyLevel × 10',
     baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
-    roleMultiplier: {
-      normal: 1.0,
-      elite: 1.15,
-      yaotu: 1.2,
-      yaokui: 2.0,
-      yaowang: 3.0,
-      yaozun: 5.0,
-    },
+    roleMultiplier: { ...ENEMY_ROLE_MULTIPLIERS },
     entries: [
       { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
       { enemyLevel: 5, baseExp: 50, goldMin: 15, goldMax: 25, note: '小花山后期' },

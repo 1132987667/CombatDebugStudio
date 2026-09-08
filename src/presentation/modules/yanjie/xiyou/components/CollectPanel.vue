@@ -2,6 +2,7 @@
   <div class="xy-panel-scroll">
     <Tabs v-model="sub" :tabs="SUBS" destroy-inactive class="xy-tabs--seal">
       <template #codex>
+        <p class="xy-panel-hint">击败妖怪后收录 · 当前收录 {{ codexChapters.reduce((n, ch) => n + ch.entries.filter(e => e.captured).length, 0) }} 种</p>
         <div v-for="ch in codexChapters" :key="ch.name" class="xy-codex-chapter">
           <h4 class="xy-sec-title">
             {{ ch.name }}
@@ -43,7 +44,7 @@
           <div class="xy-row-top">
             <span class="xy-row-name">{{ t.name }}</span>
             <button v-if="t.equipped" type="button" class="xy-chip xy-chip--gold xy-title-btn" :disabled="true">佩戴中</button>
-            <button v-else-if="t.owned" type="button" class="xy-chip xy-chip--jade xy-title-btn">佩戴</button>
+            <button v-else-if="t.owned" type="button" class="xy-chip xy-chip--jade xy-title-btn" @click="equipTitle(t)">佩戴</button>
             <span v-else class="xy-chip xy-chip--muted">未解锁</span>
           </div>
           <p class="xy-row-desc xy-row-desc--key">{{ t.bonus }}</p>
@@ -59,14 +60,21 @@ import { ref } from 'vue'
 
 import type { TabItem } from '@/presentation/components'
 import { achievements, codexChapters, titles } from '../xiyouData'
+import type { XiyouTitle } from '../types'
 
 const sub = ref<'codex' | 'achievement' | 'title'>('codex')
 
 const SUBS: TabItem[] = [
-  { id: 'codex', label: '图鉴' },
+  { id: 'codex', label: '志怪录' },
   { id: 'achievement', label: '成就' },
   { id: 'title', label: '称号' },
 ]
+
+/** 佩戴称号互斥：仅本地状态切换，加成数值待称号系统接入战斗属性 */
+function equipTitle(t: XiyouTitle): void {
+  for (const other of titles) other.equipped = false
+  t.equipped = true
+}
 </script>
 
 <style scoped lang="scss">

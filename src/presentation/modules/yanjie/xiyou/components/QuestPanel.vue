@@ -54,7 +54,7 @@ const SUBS: TabItem[] = [
 ]
 
 const questCats = computed(() => {
-  const order: Array<XiyouQuest['type']> = ['主线', '日常']
+  const order: Array<XiyouQuest['type']> = ['主线', '日常', '周常']
   return order.map(type => {
     const items = quests.filter(q => q.type === type)
     return { label: type, items, done: items.filter(q => q.progress >= q.target).length }

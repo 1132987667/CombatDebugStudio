@@ -53,9 +53,9 @@ export class FieldEffectManager {
         for (const mod of eff.config.modifiers) {
           stack.addModifier(
             `${FieldEffectManager.SOURCE_PREFIX}${eff.config.id}`,
-            mod.attribute as ATTRIBUTE_CODE,
+            mod.attribute,
             mod.value,
-            mod.type as ModifierType,
+            mod.type,
           )
         }
       }

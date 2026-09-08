@@ -41,6 +41,7 @@ import { enemyMeanStatsByLevel, ENEMY_STAT_KEY_BY_PLAYER_ATTR } from '@/domain/f
 import type { PlayerBaseAttrCode } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { PlayerGrowthConfig } from '@/domain/fengshen/types'
+import { ENEMY_ROLE_LABELS } from '@/domain/fengshen/role-grades'
 import type { TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import LineChart, { type ChartSeries } from '@/presentation/modules/fengshen/components/LineChart.vue'
 
@@ -61,17 +62,8 @@ const ATTR_LABELS: Record<PlayerBaseAttrCode, string> = {
   speed: '速度',
 }
 
-/** 品阶码 → 中文名（对齐 enemies.json role 值） */
-const ROLE_LABELS: Record<string, string> = {
-  xiaoyao: '小妖',
-  normal: '小妖',
-  elite: '妖兵',
-  yaobing: '妖兵',
-  yaotu: '妖徒',
-  yaokui: '妖魁',
-  yaowang: '妖王',
-  yaozun: '妖尊',
-}
+/** 品阶码 → 中文名（单一来源 role-grades） */
+const ROLE_LABELS: Record<string, string> = ENEMY_ROLE_LABELS
 
 const attrOptions: TSelectOption[] = PLAYER_BASE_ATTRS.map((code) => ({ value: code, label: ATTR_LABELS[code] }))
 const attrLabel = computed(() => ATTR_LABELS[attrCode.value])

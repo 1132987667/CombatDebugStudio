@@ -1,7 +1,7 @@
 /**
  * seed.ts — 封神榜种子数据导入（封神榜开发计划 §3.2）
  *
- * 首次启动将 configs/ JSON 写入 IndexedDB 封神榜 store，幂等（标记 `cds:fengshen-seed-v27`）。
+ * 首次启动将 configs/ JSON 写入 IndexedDB 封神榜 store，幂等（标记 `cds:fengshen-seed-v28`）。
  * 种子内容变更时递增该标记版本号即可让存量库重新种子（configs 为权威源，覆盖用户在 CRUD 的手工改动）。
  * configs 仅作种子源，运行期以 IndexedDB 为唯一权威。
  *
@@ -30,6 +30,7 @@ import type {
   ItemData,
   LineupData,
   PlayerGrowthConfig,
+  RegionData,
   SystemBudgetConfig,
   XiyouData,
 } from '@/domain/fengshen/types'
@@ -37,6 +38,7 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig } from '@/domain/skill/types'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 import { deriveMaterials } from '@/domain/fengshen/derive-materials'
+import { ENEMY_ROLE_MULTIPLIERS } from '@/domain/fengshen/role-grades'
 import { getAttributeDict } from '@/domain/fengshen/attribute-dictionary'
 import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
 import { buffsData } from '@/shared/types/buffs-json'
@@ -61,7 +63,7 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 import attributesDataRaw from '@configs/attributes/attributes.json'
 
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v27'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v28'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
@@ -183,14 +185,7 @@ function buildEnemyRewardTable(): BattleParamData {
       id: 'enemy_reward_table',
       baseExpFormula: 'enemyLevel × 10',
       baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
-      roleMultiplier: {
-        xiaoyao: 1.0,
-        elite: 1.15,
-        yaotu: 1.2,
-        yaokui: 2.0,
-        yaowang: 3.0,
-        yaozun: 5.0,
-      },
+      roleMultiplier: { ...ENEMY_ROLE_MULTIPLIERS },
       entries: [
         { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
         { enemyLevel: 5, baseExp: 50, goldMin: 15, goldMax: 25, note: '小花山后期' },
@@ -236,7 +231,7 @@ function buildLevelDiffBonus(): BattleParamData {
 
 /** 玩家成长配置种子（params 域，key=player_config）—— SAP 六维模型，对齐 PRD §19 / 数值体系构建计划 D1。
  * 每级固定成长合计 12 属性点（24/12+8/2+4/2+3/2+3/2+2/2=12）；每级自由点 4；丹药 +100 → 满级总量 900。 */
-function buildPlayerConfig(): BattleParamData {
+export function buildPlayerConfig(): BattleParamData {
   return {
     id: 'player_config',
     name: '玩家成长配置',
@@ -280,7 +275,7 @@ function buildSystemBudget(): BattleParamData {
 }
 
 /** 装备数值公式种子（params 域，key=equip_formula）—— §3.7 策划公式存档，随策划调整只改 JSON */
-function buildEquipFormula(): BattleParamData {
+export function buildEquipFormula(): BattleParamData {
   return {
     id: 'equip_formula',
     name: '装备数值公式',
@@ -373,7 +368,7 @@ function buildXiyou(): XiyouData[] {
     { id: 'scenes', name: '场景', description: '西游·关卡卡片', data: xiyouScenesJson, updatedAt: now },
     { id: 'schools', name: '流派', description: '西游·三流派技能', data: xiyouSchoolsJson, updatedAt: now },
     { id: 'pack', name: '背包', description: '西游·乾坤袋/坊市/仓库', data: xiyouPackJson, updatedAt: now },
-    { id: 'cultivate', name: '养成', description: '西游·境界/功法/经脉', data: xiyouCultivateJson, updatedAt: now },
+    { id: 'cultivate', name: '养成', description: '西游·境界/流派', data: xiyouCultivateJson, updatedAt: now },
     { id: 'equip', name: '装备', description: '西游·装备槽/法宝/坐骑', data: xiyouEquipJson, updatedAt: now },
     { id: 'mate', name: '伙伴', description: '西游·伙伴/灵宠/缘分', data: xiyouMateJson, updatedAt: now },
     { id: 'collect', name: '图鉴', description: '西游·图鉴/成就/称号', data: xiyouCollectJson, updatedAt: now },
@@ -425,6 +420,28 @@ function buildGrowth(): GrowthCurveData[] {
 }
 
 /**
+ * 空表增量补种：仅当 store 无任何键时导入种子行，已有数据一律不动。
+ * 新增表在 seedFengshenData 的已播种分支登记即可（幂等：补过后 keys 非空不再触发）。
+ */
+async function backfillEmptyStores(
+  storage: IPersistentStorage,
+  stores: Array<[store: StorageStoreName, rows: () => readonly unknown[]]>,
+): Promise<boolean> {
+  let backfilled = false
+  for (const [store, rows] of stores) {
+    const keys = await storage.keys(store)
+    if (keys.length > 0) continue
+    for (const row of rows()) {
+      const entity = row as { id: string }
+      if (!entity || typeof entity.id !== 'string' || !entity.id) continue
+      await storage.set(store, entity.id, { ...(row as object), updatedAt: nowIso() })
+    }
+    backfilled = true
+  }
+  return backfilled
+}
+
+/**
  * 执行种子导入（幂等）。
  * 底层 storage 不可用时（如无 IndexedDB 环境）由调用方容错，此处不预检。
  */
@@ -432,7 +449,13 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
   try {
     const flag = await storage.get<{ id: string; appliedAt: string }>(FENGSHEN_STORE.META, SEED_FLAG_ID)
     if (flag) {
-      return { imported: false, reason: 'already-seeded' }
+      // 已播种：仅补种空的新增 store（用户编辑过的表绝不覆盖）——SEED_FLAG_ID bump 语义是全量重播，新增表走此路径接入
+      const backfilled = await backfillEmptyStores(storage, [
+        [FENGSHEN_STORE.REGIONS, () => xiyouRegionsJson as RegionData[]],
+      ])
+      return backfilled
+        ? { imported: true, reason: 'backfilled-new-stores' }
+        : { imported: false, reason: 'already-seeded' }
     }
 
     const config = new ConfigDataSource()
@@ -442,6 +465,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
     const tables: Array<[StorageStoreName, readonly unknown[]]> = [
       [FENGSHEN_STORE.ENEMIES, enemies],
       [FENGSHEN_STORE.SKILLS, skills],
+      [FENGSHEN_STORE.REGIONS, xiyouRegionsJson],
       [FENGSHEN_STORE.SCENES, config.getScenes()],
       [FENGSHEN_STORE.BUFFS, buffsWithEffects],
       [FENGSHEN_STORE.FORMATIONS, formationsDataRaw],

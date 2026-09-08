@@ -48,12 +48,7 @@ export class FengshenDataService {
       return { ok: false, errors: ['数据写入失败（存储已满或数据库不可用），请清理数据后重试'] }
     }
     await this.bumpVersion()
-    const diffs: FieldDiff[] = existed
-      ? computeFieldDiff(
-          existed as unknown as Record<string, unknown>,
-          entity as unknown as Record<string, unknown>,
-        )
-      : []
+    const diffs: FieldDiff[] = existed ? computeFieldDiff(existed, entity) : []
     await this.logOp(existed ? 'update' : 'create', table, entity.id, (entity as { name?: string }).name, diffs)
     return { ok: true }
   }

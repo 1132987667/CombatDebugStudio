@@ -37,11 +37,25 @@ export interface ActorData {
 
 /** 装备（equipment 表）—— 对齐规格说明书 3.6。
  * 统一装备定义表：configs/equipment/equipment.json（旧 eq_* 与西游 wp_/ar_/ac_ 已合并为唯一数据源）。
- * 可打造装备含 tier/materials/cost；无法匹配新体系的旧版 eq_* 保留原 ID（craftable 缺省 false）。 */
+ * 可打造装备含 tier/materials/cost；无法匹配新体系的旧版 eq_* 保留原 ID（craftable 缺省 false）。
+ * NOTE（PRD §21）：静态定义不再携带写死 stats——核心/主要/附加属性全部由运行时按
+ * 「单位基数 × itemLevel × 权重 × 品阶权重 × 转化系数 × 浮动」公式与 affix-rule 池生成（gear-generate.ts）。 */
 export interface EquipmentStatEntry {
   attribute: string
   modifierType: 'flat' | 'percent'
   value: number
+}
+/** 装备词条（实例化：制造/掉落时从 affix-rule 池抽取并锁定数值；洗练/重铸时重 roll） */
+export interface GearAffix {
+  /** 属性码（同件装备内唯一；来源 affix-rule 的 attribute_groups 属性） */
+  id: string
+  attribute: string
+  modifierType: 'flat' | 'percent'
+  value: number
+  /** 主要属性第 1 条（子类型固定，PRD §21）——洗练不可替换 */
+  fixed?: boolean
+  /** 主要属性第 2 条（随机池，PRD §21）——与附加词条区分，洗练不作用于主要属性 */
+  main?: boolean
 }
 export interface EquipmentMaterialEntry {
   /** 材料物品 ID（引用 items 表） */
@@ -52,12 +66,13 @@ export interface EquipmentData {
   id: string
   name: string
   slot: EquipmentSlotType
-  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/护手/头盔/冠冕/靴子） */
+  /** 子类型 id（affix-rule.json sub_type_groups：sword/dagger/staff/blade、cloth_armor/leather_armor/plate_armor、face_guard/crown/helmet、cloth_boots/leather_boots/battle_boots；护符/护手无子类型 = charm/glove） */
   subType?: string
   /** 阶位（t1 凡品 ~ t5 仙品） */
   tier?: 't1' | 't2' | 't3' | 't4' | 't5'
   rarity: number
-  stats: EquipmentStatEntry[]
+  /** 装备等级 1~50（数值锚点，装备公式按它线性成长；requiredLevel 缺省 = itemLevel − 5） */
+  itemLevel?: number
   /** 穿戴等级门槛 */
   requiredLevel?: number
   /** 阵营限制（引用 elements 表） */
@@ -409,7 +424,7 @@ export interface EnemyRewardTableConfig {
   description?: string
   baseExpFormula?: string
   baseGoldFormula?: string
-  /** 敌人角色倍率（键对齐 enemies.json role 品阶：normal/elite/yaotu/yaowang/yaozun） */
+  /** 敌人角色倍率（键为敌人品阶 EnemyRole，定义见 role-grades；保持 string 键以宽容存量库历史键） */
   roleMultiplier: Record<string, number>
   entries: EnemyRewardEntry[]
   /** 未列出等级的插值方式：linear（线性插值）/ nearest（取最近档） */
@@ -555,6 +570,29 @@ export interface PetMountIndividual {
   trait?: string
 }
 
+/** 区域流派解锁条件（schoolId 为演劫台流派名，sceneId 为触发解锁的场景） */
+export interface RegionSchoolUnlock {
+  schoolId: string
+  sceneId: string
+}
+
+/** 区域（regions 表）—— 西游章节大场景，scenes.regionId 的引用目标（configs/xiyou/regions.json） */
+export interface RegionData {
+  id: string
+  name: string
+  /** 副标题（如「桃林初劫」） */
+  sub: string
+  /** 区域等级区间 [min, max] */
+  levelRange: [number, number]
+  /** 区域特产材料名（展示用） */
+  resourceTheme: string[]
+  /** 流派解锁（schoolId + 触发场景）；无解锁为 null */
+  schoolUnlock: RegionSchoolUnlock | null
+  /** 区域剧情文本 */
+  narrative: string
+  updatedAt?: string
+}
+
 /** 西游数据域（xiyou 表）—— configs/xiyou/*.json 单文档种子，供演劫台经封神榜读取（需求说明 §5.1 方案 B） */
 export interface XiyouData {
   id: string
@@ -571,6 +609,7 @@ export interface FengshenTables {
   skills: SkillConfig
   buffs: BuffJsonEntry
   enemies: Enemy
+  regions: RegionData
   scenes: SceneData
   formations: FormationConfig
   lineups: LineupData

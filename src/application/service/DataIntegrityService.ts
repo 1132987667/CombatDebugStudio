@@ -91,7 +91,7 @@ export class DataIntegrityService {
     // 拦截引擎运行期会抛错的坏数据（未知效果类型 / polarity 缺失 / 非法触发阶段）
     if (table === 'buffs') {
       const [normalized] = normalizeBuffEntries([entity as unknown])
-      if (normalized) errors.push(...validateBuffConfigShape(normalized as unknown as Record<string, unknown>))
+      if (normalized) errors.push(...validateBuffConfigShape(normalized))
     }
 
     // 装备词条强校验：attribute 必须存在于 attributes.json / slotKey 合法 / school 存在于 schools.json / valueRange 完整

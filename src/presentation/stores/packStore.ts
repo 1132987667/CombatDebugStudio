@@ -24,13 +24,15 @@ import {
   gardenCrops,
   shopGoods as shopPool,
 } from '@/presentation/modules/yanjie/xiyou/xiyouData'
-import type { EquipmentAffixData, EquipmentData } from '@/domain/fengshen/types'
+import type { EquipmentData, EquipmentStatEntry, GearAffix } from '@/domain/fengshen/types'
 import type { XiyouData } from '@/domain/fengshen/types'
 import type { EnemyDrop } from '@/shared/types/enemy'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
-import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
-import { affixAppliesTo, rollAffixStat, rollEquipmentAffix } from '@/shared/utils/equipmentAffix'
+import { buildEquipFormula, buildPlayerConfig } from '@/infrastructure/adapters/storage/seed'
+import { rollGearStats, rollAppendAffixes } from '@/domain/fengshen/gear-generate'
+import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
+import type { AffixRuleConfig, EquipFormulaConfig } from '@/domain/fengshen/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import {
   enhanceCost,
@@ -104,8 +106,8 @@ export interface GearInstance {
   affixes: GearAffix[]
 }
 
-/** 装备词条库（equipment-affixes.json 静态索引，模块级构建一次） */
-const EQUIP_AFFIXES = equipmentAffixesJson as unknown as EquipmentAffixData[]
+/** 装备词条（实例化：制造/掉落时从 affix-rule 池抽取并锁定数值）——结构定义见 domain/fengshen/types */
+export type { GearAffix } from '@/domain/fengshen/types'
 
 /** 随机数生成器（可注入做确定性测试） */
 export type Rng = () => number
@@ -117,7 +119,44 @@ export function newInstanceId(): string {
   return `inst_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
 
-/** 创建装备实例（默认无词缀、enhance 0、品质 1 凡品、系数取品质区间中值） */
+// ════════════ §21 装备属性生成（制造/掉落时刻 roll 并锁存） ════════════
+
+/** 阶位 t1~t5 → affix-rule tier_weight 键（凡/玄/地/天/仙） */
+const TIER_KEY: Record<string, string> = { t1: 'fan', t2: 'xuan', t3: 'di', t4: 'tian', t5: 'xian' }
+
+/** 词条投放规则 + 装备公式 + 转化系数（configs 权威源，与封神榜验证器同口径；模块级只构建一次） */
+const AFFIX_RULE: AffixRuleConfig = affixRuleDefaults()
+const EQUIP_FORMULA: EquipFormulaConfig = buildEquipFormula().data as unknown as EquipFormulaConfig
+const PLAYER_CONVERSION: Record<string, number> = (buildPlayerConfig().data as unknown as { conversion: Record<string, number> }).conversion
+
+/** 按实例品质 roll 一件装备的全部属性（核心 1 条 + 主要/附加词条；§21 三属性固定/随机边界） */
+function rollInstanceParts(
+  itemId: string,
+  quality: number,
+  qualityFactor: number,
+  rng: Rng = Math.random,
+): { stats: EquipmentStatEntry[]; affixes: GearAffix[] } {
+  const g = equipmentCatalog.find((e) => e.id === itemId)
+  if (!g) return { stats: [], affixes: [] }
+  const r = rollGearStats(
+    {
+      slot: g.slot,
+      subType: g.subType ?? g.slot,
+      tier: TIER_KEY[g.tier ?? 't1'] ?? 'fan',
+      itemLevel: Math.max(1, g.itemLevel ?? 1),
+      quality,
+      qualityFactor,
+    },
+    AFFIX_RULE,
+    EQUIP_FORMULA,
+    PLAYER_CONVERSION,
+    rng,
+  )
+  return { stats: r.core ? [r.core] : [], affixes: r.affixes }
+}
+
+/** 创建装备实例（enhance 0、品质 1 凡品、系数取品质区间中值；属性按公式 roll 锁存）。
+ *  affixes 传入时沿用调用方词条（stats 仍按公式 roll）；未传入时主要/附加词条一并 roll。 */
 export function makeInstance(
   itemId: string,
   affixes: GearAffix[] = [],
@@ -126,7 +165,37 @@ export function makeInstance(
   qualityFactor = qualityFactorOf(quality),
   star = 0,
 ): GearInstance {
-  return { instanceId: newInstanceId(), itemId, enhance, quality, qualityFactor, star, affixes }
+  const parts = rollInstanceParts(itemId, quality, qualityFactor)
+  return {
+    instanceId: newInstanceId(),
+    itemId,
+    enhance,
+    quality,
+    qualityFactor,
+    star,
+    stats: parts.stats,
+    affixes: affixes.length ? affixes : parts.affixes,
+  }
+}
+
+/** 装备实例（唯一 id；核心属性/词条/强化等级/品质/品质系数为实例属性，独立于 equipment.json 静态定义。
+ *  PRD §21：静态定义不携带写死 stats，核心/主要/附加属性在制造时刻按公式 roll 并锁存于本实例） */
+export interface GearInstance {
+  instanceId: string
+  itemId: string
+  enhance: number
+  /** 品质（1-5 → 凡/精/超/绝/神，制造/掉落时 roll；决定附加词条行数与核心属性品质系数） */
+  quality: number
+  /** 品质系数（制造时品质区间内 roll 并锁存；旧档/未锁定实例用区间中值兜底） */
+  qualityFactor: number
+  /** 星级（0-3，§21 升星表：+5%/+10%/+10%）；升星消耗同名装备 + 残魂点 */
+  star: number
+  /** 强化连败次数（成功率保底：每连败 1 次 +10%，成功清零；§21 装备强化） */
+  enhanceFails?: number
+  /** 核心属性 0~1 条（制造时公式 roll 锁存；子类型缺 core_affix_ratio 时为空 = 显式缺口） */
+  stats: EquipmentStatEntry[]
+  /** 主要（fixed 标记第 1 条固定）+ 附加词条（制造时 roll 锁存；洗练/重铸重 roll） */
+  affixes: GearAffix[]
 }
 
 /** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 实例品质；v5 药园迁移；v6 货币收缩 money/xianyuan） */
@@ -363,6 +432,8 @@ export const usePackStore = defineStore('pack', () => {
               quality,
               qualityFactor: Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality),
               star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
+              // 旧档无锁存属性（写死 stats 时代的实例）→ 按公式补 roll 一次
+              stats: Array.isArray(g.stats) ? g.stats.map((s) => ({ ...s })) : rollInstanceParts(g.itemId as string, quality, Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality)).stats,
               affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
             }
           }
@@ -371,16 +442,21 @@ export const usePackStore = defineStore('pack', () => {
       if (Array.isArray(snap.gearInstances)) {
         gearInstances.value = snap.gearInstances
           .filter((g): g is GearInstance => !!g && typeof g.itemId === 'string')
-          .map((g) => ({
-            instanceId: g.instanceId ?? newInstanceId(),
-            itemId: g.itemId,
-            enhance: Number.isFinite(g.enhance) ? g.enhance : 0,
-            enhanceFails: Number.isInteger(g.enhanceFails) && (g.enhanceFails as number) >= 0 ? (g.enhanceFails as number) : 0,
-            quality: Number.isInteger(g.quality) && g.quality >= 1 && g.quality <= 5 ? g.quality : 1,
-            qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1),
-            star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
-            affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
-          }))
+          .map((g) => {
+            const quality = Number.isInteger(g.quality) && g.quality >= 1 && g.quality <= 5 ? g.quality : 1
+            return {
+              instanceId: g.instanceId ?? newInstanceId(),
+              itemId: g.itemId,
+              enhance: Number.isFinite(g.enhance) ? g.enhance : 0,
+              enhanceFails: Number.isInteger(g.enhanceFails) && (g.enhanceFails as number) >= 0 ? (g.enhanceFails as number) : 0,
+              quality,
+              qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1),
+              star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
+              // 旧档无锁存属性（写死 stats 时代）→ 按公式补 roll 一次
+              stats: Array.isArray(g.stats) ? g.stats.map((s) => ({ ...s })) : rollInstanceParts(g.itemId, quality, Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1)).stats,
+              affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
+            }
+          })
       }
       // v4 药园：恢复地块（缺省补满空置地块）
       garden.value = Array.from({ length: GARDEN_PLOT_COUNT }, (_, i) => {
@@ -545,14 +621,12 @@ export const usePackStore = defineStore('pack', () => {
     return true
   }
 
-  /** 实例最终属性（基础 stats × 品质系数 × 强化倍率 + 词缀；未穿戴/未定义返回空） */
+  /** 实例最终属性（锁存核心 stats × 强化倍率 × 星级倍率 + 词条；未穿戴/未定义返回空） */
   function instanceStats(inst: GearInstance): EquipmentData['stats'] {
-    const g = gearById(inst.itemId)
-    if (!g) return []
-    // 基础属性 = 原始 × 品质系数 × 强化倍率 × 星级倍率（§21 升星表：+5%/+10%/+10% 累计 25%）
-    const factor = inst.qualityFactor * enhanceFactor(inst.enhance) * starFactor(inst.star ?? 0)
-    const base = g.stats.map((s) => ({ ...s, value: Math.round(s.value * factor) }))
-    const affixStats: EquipmentData['stats'] = inst.affixes.map((a) => ({
+    // 强化 ×(1+4%×L)、升星 ×(5%/10%/10% 累计 25%) 只增强基础属性（§21）；词条不吃养成倍率
+    const factor = enhanceFactor(inst.enhance) * starFactor(inst.star ?? 0)
+    const base = (inst.stats ?? []).map((s) => ({ ...s, value: Math.round(s.value * factor) }))
+    const affixStats = (inst.affixes ?? []).map((a) => ({
       attribute: a.attribute,
       modifierType: a.modifierType,
       value: a.value,
@@ -697,12 +771,14 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast(`品质不足，「${WASH_MATERIAL_NAMES[mode]}」洗练未开放`, 'warning')
       return false
     }
+    // 洗练只作用于附加词条；主要属性（fixed 第 1 条 / main 第 2 条，§21）不可洗
     const affixes = inst.affixes
-    if (affixes.length === 0) {
-      notification.toast('该装备没有词条，无需洗练', 'warning')
+    const appendIdxs = affixes.map((a, i) => (a.fixed || a.main ? -1 : i)).filter((i) => i >= 0)
+    if (appendIdxs.length === 0) {
+      notification.toast('该装备没有可洗练的附加词条', 'warning')
       return false
     }
-    if (mode !== 'normal' && (targetIndex < 0 || targetIndex >= affixes.length)) {
+    if (mode !== 'normal' && (targetIndex < 0 || targetIndex >= appendIdxs.length)) {
       notification.toast('请先选择要操作的词条', 'warning')
       return false
     }
@@ -715,38 +791,41 @@ export const usePackStore = defineStore('pack', () => {
       notification.toast(`金钱不足（需要 ${WASH_COST_GOLD}）`, 'warning')
       return false
     }
-    const keyOf = (a: GearAffix): string => `${a.attribute}:${a.modifierType}`
-    // 先 roll（纯计算，不消耗）——池耗尽直接拒绝
-    let next: GearAffix[]
+    const keyOf = (a: GearAffix): string => a.attribute
+    // 先 roll（纯计算，不消耗）——池耗尽直接拒绝；targetIndex 为附加词条数组下标（UI 仅列附加条）
+    let nextAppend: GearAffix[]
     if (mode === 'normal') {
-      next = rollAffixes(inst.itemId, inst.quality, rng)
+      nextAppend = rollAffixes(inst.itemId, appendIdxs.length, rng, { count: appendIdxs.length })
     } else if (mode === 'directed') {
-      const exclude = new Set(affixes.filter((_, i) => i !== targetIndex).map(keyOf))
-      const rolled = rollAffixes(inst.itemId, inst.quality, rng, { count: 1, excludeKeys: exclude })
+      const keepKeys = new Set(appendIdxs.filter((i) => i !== appendIdxs[targetIndex]).map((i) => keyOf(affixes[i])))
+      const rolled = rollAffixes(inst.itemId, 1, rng, { count: 1, excludeKeys: keepKeys })
       if (rolled.length === 0) {
         notification.toast('词条池已无可替换词条', 'warning')
         return false
       }
-      next = [...affixes]
-      next[targetIndex] = rolled[0]
+      nextAppend = appendIdxs.map((i) => affixes[i])
+      nextAppend[targetIndex] = rolled[0]
     } else {
-      const exclude = new Set([keyOf(affixes[targetIndex])])
-      const rolled = rollAffixes(inst.itemId, inst.quality, rng, { count: affixes.length - 1, excludeKeys: exclude })
-      if (rolled.length < affixes.length - 1) {
+      const keepKey = keyOf(affixes[appendIdxs[targetIndex]])
+      const rolled = rollAffixes(inst.itemId, appendIdxs.length - 1, rng, {
+        count: appendIdxs.length - 1,
+        excludeKeys: new Set([keepKey]),
+      })
+      if (rolled.length < appendIdxs.length - 1) {
         notification.toast('词条池不足以完成锁词条洗练', 'warning')
         return false
       }
-      next = [...affixes]
+      nextAppend = appendIdxs.map((i) => affixes[i])
       let ri = 0
-      for (let i = 0; i < next.length; i++) {
-        if (i !== targetIndex) next[i] = rolled[ri++]
+      for (let i = 0; i < nextAppend.length; i++) {
+        if (i !== targetIndex) nextAppend[i] = rolled[ri++]
       }
     }
-    // roll 成功后扣消耗
+    // roll 成功后扣消耗；主要条（fixed/main）保持在前，附加条整体替换
     inventory.value[matId] = (inventory.value[matId] ?? 0) - 1
     if (inventory.value[matId]! <= 0) delete inventory.value[matId]
     currency.money -= WASH_COST_GOLD
-    inst.affixes = next
+    inst.affixes = [...affixes.filter((a) => a.fixed || a.main), ...nextAppend]
     scheduleSave()
     notification.toast(`洗练完成！「${g.name}」词条已更新`, 'success')
     return true
@@ -795,15 +874,17 @@ export const usePackStore = defineStore('pack', () => {
     }
     const quality = rollQuality(g.rarity, rng)
     const qualityFactor = rollQualityFactor(quality, rng)
-    const inst = makeInstance(itemId, rollAffixes(itemId, quality, rng), 0, quality, qualityFactor)
+    // 词条与核心属性在 makeInstance 内按 affix-rule 公式一次 roll 并锁存（§21；品质定词条行数）
+    const inst = makeInstance(itemId, [], 0, quality, qualityFactor)
     gearInstances.value.push(inst)
     scheduleSave()
     notification.toast(`铸造成功！获得「${g.name}」`, 'success')
     return inst
   }
 
-  /** 从词条库按部位/子类型抽取词缀（weight 加权随机，词条数按品质 1/2/3/4/5）。
-   *  opts.count 覆盖条数、opts.excludeKeys 排除的属性键（洗练锁词条/定向时保持去重约束）。 */
+  /** 附加词条抽取（affix-rule 投放矩阵前 N 行按 side 池，N=品质档；§21 附加属性投放）。
+   *  opts.count 覆盖条数、opts.excludeKeys 排除的属性码（洗练锁词条/定向时保持去重约束）。
+   *  主要属性（fixed/random）不参与洗练，仅附加走本函数。 */
   function rollAffixes(
     itemId: string,
     quality: number,
@@ -812,28 +893,25 @@ export const usePackStore = defineStore('pack', () => {
   ): GearAffix[] {
     const g = gearById(itemId)
     if (!g) return []
-    const pool = EQUIP_AFFIXES.filter((a) => affixAppliesTo(a, g.slot, g.subType))
-    const out: GearAffix[] = []
-    const seen = new Set<string>(opts?.excludeKeys ?? [])
-    let count = opts?.count ?? affixCountByQuality(quality)
-    // 词缀质量随品质抬升：凡品取 rarity=1 的词条（weight>0），高品质全池
-    const source = quality === 1
-      ? pool.filter((a) => a.rarity === 1)
-      : pool
-    // NOTE: 去重不放回——每次从「键未使用」的候选中加权抽取，保证绝/神品词条数达标，
-    //       且 rng 单调（固定值）时无死循环（remaining 单调缩小）。同键词条同装备不重复（设计稿 §9.4）
-    let remaining = source
-    while (count > 0 && remaining.length > 0) {
-      const affix = rollEquipmentAffix(remaining, g.slot, g.subType, rng)
-      if (!affix) break
-      const key = `${affix.attribute}:${affix.modifierType}`
-      seen.add(key)
-      const stat = rollAffixStat(affix, rng)
-      out.push({ id: affix.id, attribute: stat.attribute, modifierType: stat.modifierType, value: stat.value })
-      remaining = source.filter((a) => !seen.has(`${a.attribute}:${a.modifierType}`))
-      count--
+    const warnings: string[] = []
+    const rolled = rollAppendAffixes(
+      {
+        slot: g.slot,
+        subType: g.subType ?? g.slot,
+        tier: TIER_KEY[g.tier ?? 't1'] ?? 'fan',
+        itemLevel: Math.max(1, g.itemLevel ?? 1),
+        quality: opts?.count ?? quality,
+        qualityFactor: 1,
+      },
+      { cfg: AFFIX_RULE, formula: EQUIP_FORMULA, conversion: PLAYER_CONVERSION, rng },
+      opts?.excludeKeys,
+      warnings,
+    )
+    if (opts?.count != null) {
+      // count 语义 = 精确条数（洗练锁词条/定向按现有附加数补齐）：行矩阵耗尽时按品质行收口
+      return rolled.affixes.slice(0, opts.count)
     }
-    return out
+    return rolled.affixes
   }
 
   // ════════════ 背包操作 ════════════

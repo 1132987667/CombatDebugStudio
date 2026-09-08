@@ -1,6 +1,8 @@
 import { BuffPolarity } from '@/shared/types/buff-classification'
 import { StatusCategory, ControlKind } from '@/shared/types/status-meta'
 import { StackRule } from '@/domain/buff/types'
+import type { ModifierType } from '@/domain/attribute/types'
+import type { AtomicEffectType } from '@/domain/buff/atomic/types'
 
 
 /**
@@ -14,7 +16,7 @@ import { StackRule } from '@/domain/buff/types'
 export interface BuffJsonAuraModifier {
   id?: string
   targetAttribute: string
-  type: string
+  type: ModifierType
   value: number
   condition?: string
 }
@@ -72,8 +74,8 @@ export interface BuffJsonEntry {
   // --- 补全遗漏字段 ---
   immunities?: string[] // 免疫标签
   effects?: Array<{
-    // 原子效果系统配置
-    type: string
+    // 原子效果系统配置（type 为原子效果原语，见 AtomicEffectType）
+    type: AtomicEffectType
     params?: Record<string, unknown>
   }>
   cascadeRemove?: boolean // 级联移除标记

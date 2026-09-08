@@ -32,6 +32,7 @@ import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
 import {
   BattleState,
   BattleAction,
+  ActionTypes,
   ParticipantSide,
   ParticipantSideName,
   BattleStateSnapshot,
@@ -537,7 +538,7 @@ export class BattleRecorder {
   private recordEvent(
     battleId: string,
     type: ReplayBattleEvent['type'],
-    data: any,
+    data: Record<string, unknown>,
     turn: number,
     roundNumber: number,
   ) {
@@ -573,13 +574,14 @@ export class BattleRecorder {
    */
   private deriveCategory(
     type: ReplayBattleEvent['type'],
-    data: Record<string, any>,
+    data: Record<string, unknown>,
   ): BattleLogCategory {
     if (type !== BattleEventType.ACTION) return BATTLE_LOG_CATEGORIES.STATUS
-    const action = data?.action
+    // data.action 由 recordAction 写入，结构为 BattleAction
+    const action = data?.action as BattleAction | undefined
     if (!action) return BATTLE_LOG_CATEGORIES.STATUS
     const effectTypes: string[] =
-      action.effects?.map((e: { type: string }) => e.type) ?? []
+      action.effects?.map((e) => e.type) ?? []
     if (
       effectTypes.includes(ActionResultType.HEAL) &&
       !effectTypes.includes(ActionResultType.DAMAGE)
@@ -598,7 +600,7 @@ export class BattleRecorder {
    */
   private deriveSeverity(
     type: ReplayBattleEvent['type'],
-    data: Record<string, any>,
+    data: Record<string, unknown>,
   ): 'high' | 'medium' | 'low' {
     if (
       type === BattleEventType.BATTLE_START ||
@@ -607,7 +609,9 @@ export class BattleRecorder {
       return 'high'
     }
     if (type === BattleEventType.STATE_CHANGE) return 'medium'
-    if (type === BattleEventType.ACTION && data?.action?.type === 'skill') {
+    // data.action 由 recordAction 写入，结构为 BattleAction
+    const action = data?.action as BattleAction | undefined
+    if (type === BattleEventType.ACTION && action?.type === ActionTypes.SKILL) {
       return 'medium'
     }
     return 'low'

@@ -218,9 +218,11 @@ describe('seed：params 域三条结构化种子', () => {
     const er = await api.getEnemyRewardTable()
     expect(er?.entries.length).toBeGreaterThanOrEqual(7)
     expect(er?.roleMultiplier).toHaveProperty('xiaoyao')
+    expect(er?.roleMultiplier).toHaveProperty('yaobing')
     expect(er?.roleMultiplier).toHaveProperty('yaokui')
     expect(er?.roleMultiplier).toHaveProperty('yaozun')
     expect(er?.roleMultiplier).not.toHaveProperty('normal')
+    expect(er?.roleMultiplier).not.toHaveProperty('elite')
     expect(er?.interpolation).toBe('linear')
 
     const ld = await api.getLevelDiffBonus()

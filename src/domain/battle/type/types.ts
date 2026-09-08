@@ -858,7 +858,8 @@ export interface ReplayBattleEvent {
   roundNumber: number
   sourceId?: string
   targetId?: string
-  data: Record<string, any>
+  /** 事件载荷为异构动态结构（BATTLE_START/ACTION/TURN_END 等各不相同），消费方自行收窄 */
+  data: Record<string, unknown>
 }
 
 /**

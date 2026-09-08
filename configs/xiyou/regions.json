@@ -37,7 +37,7 @@
     "name": "迷雾谷",
     "sub": "听风迷途",
     "levelRange": [31, 40],
-    "resourceTheme": ["熊皮", "虎皮", "寒潭水", "毒液", "翡翠玉镯"],
+    "resourceTheme": ["熊皮", "虎皮", "寒潭水", "毒液", "翡翠玉髓"],
     "schoolUnlock": {
       "schoolId": "panshi",
       "sceneId": "scene_4_5"
@@ -49,7 +49,7 @@
     "name": "灵霄台",
     "sub": "假佛真魔",
     "levelRange": [41, 50],
-    "resourceTheme": ["圣水玉", "玉佛像", "天罡灵气", "混元灵气"],
+    "resourceTheme": ["圣水玉", "玉佛舍利", "天罡灵气", "混元灵气"],
     "schoolUnlock": null,
     "narrative": "西行路的终点，灵山脚下。佛光被六耳残魂污染为假佛音，诵经声中藏着六耳的低语。这里是六耳猕猴的巢穴，也是它证明自己比孙悟空更像孙悟空的祭坛。"
   },

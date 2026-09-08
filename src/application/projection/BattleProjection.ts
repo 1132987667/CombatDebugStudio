@@ -35,7 +35,8 @@ interface DirtyObservable {
 }
 
 function isDirtyObservable(entity: BattleEntity): entity is BattleEntity & DirtyObservable {
-  return typeof (entity as any).setDirtyCallback === 'function'
+  // 能力探测：实体是否实现可选的 setDirtyCallback（鸭子类型，避免为可选能力改 BattleEntity 接口）
+  return typeof (entity as Partial<DirtyObservable>).setDirtyCallback === 'function'
 }
 
 export class BattleProjection {

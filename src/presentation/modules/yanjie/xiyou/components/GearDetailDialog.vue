@@ -61,7 +61,7 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import type { EquipmentData } from '@/domain/fengshen/types'
-import { equipQualityClass, equipQualityColor, qualityClass, qualityName, qualityOf } from '../quality'
+import { equipQualityClass, equipQualityColor, qualityClass, qualityName, qualityOf, tierName } from '../quality'
 
 const props = defineProps<{
   instance: GearInstance | null
@@ -86,14 +86,7 @@ const slot = computed<GearSlotKey | null>(() => {
 
 const slotLabel = computed(() => (slot.value ? GEAR_SLOT_LABELS[slot.value] : gear.value?.slot ?? '—'))
 
-const TIER_LABELS: Record<string, string> = {
-  t1: '一阶',
-  t2: '二阶',
-  t3: '三阶',
-  t4: '天品',
-  t5: '仙品',
-}
-const tierLabel = computed(() => (gear.value?.tier ? TIER_LABELS[gear.value.tier] ?? gear.value.tier : '—'))
+const tierLabel = computed(() => (gear.value?.tier ? tierName(gear.value.tier) : '—'))
 
 const oldInst = computed(() => (slot.value ? pack.equippedInstance(slot.value) : null))
 const oldGear = computed(() => (oldInst.value ? pack.gearById(oldInst.value.itemId) : undefined))

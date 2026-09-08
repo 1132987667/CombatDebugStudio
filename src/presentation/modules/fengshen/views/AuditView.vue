@@ -50,37 +50,6 @@
 
     <div class="fs-block">
       <div class="fs-block-title">
-        装备词条投放频次
-        <span class="fs-page-hint">{{ equipments.length }} 件装备的 stats 属性出现次数（哪个属性投得过多/过少）</span>
-      </div>
-      <div class="fs-table-wrap fs-audit-scroll">
-        <table class="fs-table">
-          <thead>
-            <tr><th>属性</th><th class="fs-col-num">出现次数</th><th class="fs-col-num">固定值</th><th class="fs-col-num">百分比</th><th>占比</th></tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in affixFreq" :key="row.attribute">
-              <td>{{ attrName(row.attribute) }}</td>
-              <td class="fs-cell-num">{{ row.count }}</td>
-              <td class="fs-cell-dim">{{ row.flat }}</td>
-              <td class="fs-cell-dim">{{ row.percent }}</td>
-              <td class="fs-audit-freq-cell">
-                <div class="fs-audit-budget-bar">
-                  <div class="fs-audit-budget-fill" :style="{ width: freqPercent(row.count) }"></div>
-                </div>
-                <span class="fs-audit-freq-num">{{ freqPercent(row.count) }}</span>
-              </td>
-            </tr>
-            <tr v-if="!affixFreq.length">
-              <td colspan="5" class="fs-empty">{{ equipments.length ? '装备未配置任何 stats' : '装备表为空' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="fs-block">
-      <div class="fs-block-title">
         掉落归属总账
         <span class="fs-page-hint">enemies.drops → 物品归属（独家投放 = 只由一只怪掉落；零投放 = 全集中无任何敌人掉落）</span>
       </div>
@@ -148,13 +117,12 @@ import { computed, onMounted, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
-import type { AttributeDef, EquipmentData, SystemBudgetConfig } from '@/domain/fengshen/types'
+import type { AttributeDef, SystemBudgetConfig } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { getCoreAttributes } from '@/domain/fengshen/attribute-dictionary'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import {
   dropOwnership,
-  equipmentAffixFrequency,
   zeroDropItemIds,
 } from '@/domain/fengshen/data-insight'
 
@@ -167,16 +135,13 @@ const CORE_CODES = new Set(getCoreAttributes().map((e) => e.code))
 const attributes = ref<AttributeDef[]>([])
 const budget = ref<SystemBudgetConfig>({ id: 'system_budget', systems: [] })
 
-// ── 投放总账：装备词条频次 + 掉落归属 ──
-const equipments = ref<EquipmentData[]>([])
+// ── 投放总账：掉落归属（装备属性频次已随 PRD §21 公式化删除，静态表无 stats 可统计） ──
 const enemies = ref<Enemy[]>([])
 /** 物品全集 id → 名称 + 所在表（items/materials/equipment），供跳转定位 */
 interface ItemRef { name: string; table: 'items' | 'materials' | 'equipment' }
 const itemIndex = ref<Record<string, ItemRef>>({})
 const zeroFilter = ref('')
 
-const affixFreq = computed(() => equipmentAffixFrequency(equipments.value))
-const affixMax = computed(() => affixFreq.value[0]?.count ?? 0)
 const ownership = computed(() => dropOwnership(enemies.value))
 const exclusiveDrops = computed(() => ownership.value.filter((r) => r.enemies.length === 1))
 const zeroDrops = computed(() => {
@@ -199,11 +164,6 @@ const dropSpread = computed(() => {
   return buckets
 })
 
-function freqPercent(count: number): string {
-  const max = affixMax.value || 1
-  return `${((count / max) * 100).toFixed(0)}%`
-}
-
 function itemName(id: string): string {
   return itemIndex.value[id]?.name ?? id
 }
@@ -221,11 +181,6 @@ function gotoItem(id: string): void {
 
 function gotoEnemy(id: string): void {
   store.navigateTo('enemies', id)
-}
-
-/** 装备 stats 的属性名翻译（基础六维走核心字典，未知 code 回退原值） */
-function attrName(code: string): string {
-  return getCoreAttributes().find((a) => a.code === code)?.name ?? code
 }
 
 const SYSTEM_LABELS = [
@@ -265,7 +220,6 @@ onMounted(async () => {
   attributes.value = attrs.filter((a) => !a.isRuntimeState && CORE_CODES.has(a.code))
   budget.value = sb ?? { id: 'system_budget', systems: [] }
   totalWeight.value = budget.value.systems.reduce((sum, s) => sum + s.weight, 0)
-  equipments.value = eqs
   enemies.value = enm
   const index: Record<string, ItemRef> = {}
   for (const it of items) index[it.id] = { name: String(it.name ?? it.id), table: 'items' }

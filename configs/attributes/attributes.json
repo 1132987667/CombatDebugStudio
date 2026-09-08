@@ -970,5 +970,16 @@
     "range": "0-100%",
     "impact": "减少受到的土属性伤害",
     "isPercentage": true
+  },
+  {
+    "uid": "I1_01",
+    "code": "luck",
+    "name": "幸运",
+    "displayName": "幸运",
+    "description": "角色气运的体现，影响随机事件的偏向：幸运越高，越容易获得掉落与稀有产出",
+    "range": "0-3000",
+    "impact": "提升击败掉落率与稀有物品获取概率，影响获得品质；当前生效于宠物/坐骑获得（见《完整项目说明.md》§幸运值），后续可扩展至宝箱、采集、制作暴击等随机判定",
+    "isPercentage": false,
+    "defaultValue": 0
   }
 ]

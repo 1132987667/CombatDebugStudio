@@ -1,145 +1,114 @@
 /**
- * 文件: validate_skills.js
- * 功能: 技能与Buff配置验证工具
- * 描述: 检查 skills.json 中引用的 Buff ID 是否在已实现的脚本中存在
- * 用法: node scripts/tools/validate_skills.js
+ * 文件: validate_skills.cjs
+ * 功能: 技能与 Buff 配置验证工具
+ * 描述: 检查全部技能配置中引用的 Buff ID 是否可解析——
+ *       Buff 现为三轨体系（需求调整历史 #9 时代重构）：
+ *       ① 配置轨 buffs/buffs.json + xiyou/enemy-buffs.json + effects/effects.json（effectPlan 原子效果）
+ *       ② 脚本轨 src/domain/buff/scripts 的 BUFF_ID 静态类
+ *       引用命中任一轨即合法。
+ * 用法: npm run validate
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// 路径配置
-const SKILLS_CONFIG_PATH = path.join(__dirname, '../../configs/skills/skills.json');
-const SCRIPTS_DIR = path.join(__dirname, '../../src/scripts');
+const ROOT = path.join(__dirname, '../..');
+const SKILLS_DIR = path.join(ROOT, 'configs/skills');
+const ENEMY_SKILLS_PATH = path.join(ROOT, 'configs/xiyou/enemy-skills.json');
+const BUFFS_PATH = path.join(ROOT, 'configs/buffs/buffs.json');
+const ENEMY_BUFFS_PATH = path.join(ROOT, 'configs/xiyou/enemy-buffs.json');
+const EFFECTS_PATH = path.join(ROOT, 'configs/effects/effects.json');
+const SCRIPTS_DIR = path.join(ROOT, 'src/domain/buff/scripts');
 
-// 读取JSON文件
 function readJson(filePath) {
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(content);
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   } catch (error) {
     console.error(`Failed to read ${filePath}:`, error.message);
     process.exit(1);
   }
 }
 
-// 扫描Buff脚本目录，获取所有已实现的Buff ID
+function listIds(doc) {
+  const entries = Array.isArray(doc) ? doc : doc.items || doc.buffs || doc.effects || [];
+  return entries.filter((e) => e && typeof e.id === 'string').map((e) => e.id);
+}
+
+/** 已实现/已注册 Buff ID：配置三源 + 脚本 BUFF_ID */
 function getImplementedBuffIds() {
-  const buffIds = new Set();
-  
-  // 扫描所有子目录
-  const subdirs = ['combat', 'support'];
-  
-  for (const subdir of subdirs) {
-    const dirPath = path.join(SCRIPTS_DIR, subdir);
-    if (!fs.existsSync(dirPath)) continue;
-    
-    const files = fs.readdirSync(dirPath);
-    for (const file of files) {
+  const ids = new Set();
+  for (const p of [BUFFS_PATH, ENEMY_BUFFS_PATH, EFFECTS_PATH]) {
+    for (const id of listIds(readJson(p))) ids.add(id);
+  }
+  // 脚本轨：src/domain/buff/scripts/*.ts 的静态 BUFF_ID
+  if (fs.existsSync(SCRIPTS_DIR)) {
+    for (const file of fs.readdirSync(SCRIPTS_DIR)) {
       if (!file.endsWith('.ts')) continue;
-      
-      const filePath = path.join(dirPath, file);
-      const content = fs.readFileSync(filePath, 'utf-8');
-      
-      // 查找 BUFF_ID 定义
+      const content = fs.readFileSync(path.join(SCRIPTS_DIR, file), 'utf-8');
       const match = content.match(/BUFF_ID\s*=\s*['"]([^'"]+)['"]/);
-      if (match) {
-        buffIds.add(match[1]);
-      }
+      if (match) ids.add(match[1]);
     }
   }
-  
-  return buffIds;
+  return ids;
 }
 
-// 从skills.json中提取所有使用的Buff ID
-function getUsedBuffIds(skills) {
-  const buffIds = new Set();
-  
-  function extractBuffIds(obj) {
+/** 技能配置文件清单：configs/skills/*.json + 西游敌人技能 */
+function skillDocs() {
+  const docs = [];
+  for (const file of fs.readdirSync(SKILLS_DIR).filter((f) => f.endsWith('.json'))) {
+    docs.push([`skills/${file}`, readJson(path.join(SKILLS_DIR, file))]);
+  }
+  docs.push(['xiyou/enemy-skills.json', readJson(ENEMY_SKILLS_PATH)]);
+  return docs;
+}
+
+/** 递归提取配置里的 buffId / effectId 引用 */
+function getUsedBuffIds(doc) {
+  const ids = new Set();
+  function walk(obj) {
     if (!obj) return;
-    
     if (Array.isArray(obj)) {
-      obj.forEach(item => extractBuffIds(item));
+      obj.forEach(walk);
     } else if (typeof obj === 'object') {
-      // 检查 effectId 字段（技能配置中使用此字段）
-      if (obj.effectId) {
-        buffIds.add(obj.effectId);
-      }
-      // 也检查 buffId 字段（兼容）
-      if (obj.buffId) {
-        buffIds.add(obj.buffId);
-      }
-      // 递归检查所有属性
-      for (const key in obj) {
-        extractBuffIds(obj[key]);
-      }
+      if (typeof obj.effectId === 'string') ids.add(obj.effectId);
+      if (typeof obj.buffId === 'string') ids.add(obj.buffId);
+      for (const key in obj) walk(obj[key]);
     }
   }
-  
-  extractBuffIds(skills);
-  return buffIds;
+  walk(doc);
+  return ids;
 }
 
-// 主函数
 function validate() {
   console.log('=== Skill & Buff Configuration Validator ===\n');
-  
-  // 读取技能配置
-  console.log('Reading skills config...');
-  const skills = readJson(SKILLS_CONFIG_PATH);
-  console.log(`Found ${skills.length} skills\n`);
-  
-  // 获取已实现的Buff ID
-  console.log('Scanning implemented Buff scripts...');
-  const implementedBuffIds = getImplementedBuffIds();
-  console.log(`Found ${implementedBuffIds.size} implemented Buff scripts\n`);
-  
-  // 获取使用的Buff ID
-  console.log('Extracting used Buff IDs from skills config...');
-  const usedBuffIds = getUsedBuffIds(skills);
-  console.log(`Found ${usedBuffIds.size} Buff IDs referenced in skills\n`);
-  
-  // 检查未实现的Buff
+
+  const implemented = getImplementedBuffIds();
+  console.log(`Registered/implemented Buff IDs: ${implemented.size}\n`);
+
+  const missing = new Map();
+  let skillCount = 0;
+  let usedCount = 0;
+  for (const [name, doc] of skillDocs()) {
+    const entries = Array.isArray(doc) ? doc : [];
+    skillCount += entries.length;
+    for (const id of getUsedBuffIds(doc)) {
+      usedCount++;
+      if (!implemented.has(id) && !missing.has(id)) missing.set(id, name);
+    }
+  }
+  console.log(`Skills scanned: ${skillCount}; buff references: ${usedCount}\n`);
+
   console.log('=== Validation Results ===\n');
-  
-  const missingBuffs = [];
-  for (const buffId of usedBuffIds) {
-    if (!implementedBuffIds.has(buffId)) {
-      missingBuffs.push(buffId);
-    }
-  }
-  
-  if (missingBuffs.length > 0) {
-    console.log('❌ Missing Buff implementations:');
-    missingBuffs.forEach(id => console.log(`   - ${id}`));
+  if (missing.size > 0) {
+    console.log('❌ Unresolvable Buff references:');
+    for (const [id, from] of missing) console.log(`   - ${id}  (first seen: ${from})`);
     console.log('');
-  } else {
-    console.log('✅ All Buff IDs are properly implemented!\n');
-  }
-  
-  // 列出已实现但未使用的Buff（可选信息）
-  const unusedBuffs = [];
-  for (const buffId of implementedBuffIds) {
-    if (!usedBuffIds.has(buffId)) {
-      unusedBuffs.push(buffId);
-    }
-  }
-  
-  if (unusedBuffs.length > 0) {
-    console.log('ℹ️  Implemented but unused Buffs:');
-    unusedBuffs.forEach(id => console.log(`   - ${id}`));
-    console.log('');
-  }
-  
-  // 返回状态码
-  if (missingBuffs.length > 0) {
-    console.log(`Validation FAILED: ${missingBuffs.length} missing Buff implementation(s)`);
+    console.log(`Validation FAILED: ${missing.size} unresolvable reference(s)`);
     process.exit(1);
-  } else {
-    console.log('Validation PASSED');
-    process.exit(0);
   }
+  console.log('✅ All Buff references resolve to configs or scripts!');
+  console.log('Validation PASSED');
+  process.exit(0);
 }
 
 validate();

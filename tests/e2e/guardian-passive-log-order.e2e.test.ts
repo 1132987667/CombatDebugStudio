@@ -8,7 +8,7 @@
  *   导致被动日志排在所属攻击日志之前，渲染时变成独立行/挂错攻击块。
  * - 修复：addBattleLog 在缓冲期间暂存 role='sub' 日志，攻击主日志后统一 flush。
  *
- * 另：连击之心（guardian_combo_heart）与毒素浸染（guardian_toxin_soak）原 selector 为
+ * 另：连击之心（yaotu_combo_heart）与毒素浸染（yaotu_toxin_soak）原 selector 为
  * faction:'self'，on_hit 的 deal_damage 会打在自己身上；已改为 faction:'enemy'。
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -38,8 +38,8 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
 
   it('能量过载/疾风叠步作为火护法攻击的 sub 显示，复仇怒火作为金护法攻击的 sub 显示', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -187,8 +187,8 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
         BATTLE_SYSTEM_TOKEN.toString(),
       )
       const { allies, enemies } = createTestParticipantsFromConfig(
-        ['guardian_fire'],
-        ['guardian_gold'],
+        ['yaotu_fire'],
+        ['yaotu_gold'],
       )
       battleSystem.initialize(allies, enemies)
       battleSystem.setBattleState(BattleStatus.ACTIVE)

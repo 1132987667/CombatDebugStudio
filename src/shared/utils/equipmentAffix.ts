@@ -66,7 +66,7 @@ export interface EquipmentConflictRule {
  * 护符：暴击率、暴击伤害禁止；靴子：暴击伤害禁止。 */
 export const EQUIPMENT_CONFLICT_RULES: EquipmentConflictRule[] = [
   { slot: 'weapon', subType: '轻型', forbidden: ['blockRate'] },
-  { slot: 'weapon', subType: '刀', halved: ['comboRate'] },
+  { slot: 'weapon', subType: '重型', halved: ['comboRate'] },
   { slot: 'weapon', subType: '刺', forbidden: ['comboRate', 'comboDamageCoefficient', 'armorBreak', 'vulnerability'] },
   { slot: 'armor', subType: '皮甲', forbidden: ['blockRate'] },
   { slot: 'armor', subType: '铠甲', forbidden: ['dodge'] },

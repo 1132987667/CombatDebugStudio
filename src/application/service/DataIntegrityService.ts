@@ -281,7 +281,7 @@ export class DataIntegrityService {
 
   // ── 内部工具 ────────────────────────────────────────────────
 
-  /** 学校（流派）name 集合：读封神榜 xiyou 表 schools 文档（seed 自 configs/xiyou/schools.json，data 为 { schools: [...] } 包裹） */
+  /** 学校（流派）name 集合：读封神榜 xiyou 表 schools 文档（seed 自 configs/xiyou/schools.json） */
   private async getSchoolNames(): Promise<Set<string>> {
     const doc = await this.storage.get<XiyouData>(FENGSHEN_STORE.XIYOU, 'schools')
     const data = doc?.data
@@ -293,6 +293,13 @@ export class DataIntegrityService {
         : []
     for (const s of rows) {
       if (s && typeof (s as Record<string, unknown>).name === 'string') names.add((s as { name: string }).name)
+    }
+    // NOTE: schools.json 现行为 { schools: { lianzhan: '连战', ... } }（id → 中文名 map），词条 school 字段存中文名
+    const schoolMap = (data as { schools?: Record<string, unknown> } | undefined)?.schools
+    if (!Array.isArray(schoolMap) && schoolMap && typeof schoolMap === 'object') {
+      for (const v of Object.values(schoolMap)) {
+        if (typeof v === 'string') names.add(v)
+      }
     }
     return names
   }

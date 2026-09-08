@@ -19,35 +19,6 @@
       </div>
     </div>
 
-    <div class="fs-table-wrap">
-      <table class="fs-table">
-        <thead>
-          <tr><th>类别</th><th>引用方</th><th>引用字段</th><th>问题对象</th><th>目标表</th><th>操作</th></tr>
-        </thead>
-        <tbody>
-          <tr v-for="(issue, i) in report?.issues ?? []" :key="i">
-            <td><span class="fs-kind" :class="`fs-kind-${issue.kind}`">{{ kindLabel(issue.kind) }}</span></td>
-            <td class="fs-cell-id">{{ issue.sourceId }}</td>
-            <td>{{ issue.field }}</td>
-            <td class="fs-cell-missing">
-              {{ issue.missingId }}
-              <span v-if="issue.detail" class="fs-kind-detail">{{ issue.detail }}</span>
-            </td>
-            <td :title="`表名：${issue.targetTable}`">{{ tableLabel(issue.targetTable) }}</td>
-            <td class="fs-col-actions">
-              <Button size="small" :title="`跳转到「${tableLabel(issue.sourceTable)}」表并定位该实体`"
-                @click="store.navigateTo(issue.sourceTable, issue.sourceId)">定位引用方</Button>
-              <Button size="small" :title="`跳转到「${tableLabel(issue.targetTable)}」表`"
-                @click="store.navigateTo(issue.targetTable)">目标表</Button>
-            </td>
-          </tr>
-          <tr v-if="!report?.issues?.length">
-            <td colspan="6" class="fs-empty">{{ report ? '未发现问题，数据自洽' : '尚未扫描，点击「重新扫描」' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
     <div class="fs-toolbar">
       <TacticalSelect v-model="kindFilter" size="md" :options="kindOptions" />
       <TacticalInput :model-value="search" placeholder="按 ID / 字段 / 目标搜索…" aria-label="搜索问题条目"
@@ -57,6 +28,7 @@
         </template>
       </TacticalInput>
       <span class="fs-spacer"></span>
+      <span class="fs-version">问题 {{ filtered.length }} 条</span>
       <Button size="small" :disabled="!filtered.length" title="导出当前筛选结果为 CSV"
         @click="exportCsv">导出 CSV</Button>
       <Button variant="primary" @click="store.runHealth">重新扫描</Button>

@@ -267,29 +267,117 @@
     {
       "name": "资质丹",
       "level": 2,
-      "materials": [{ "itemId": "mat_shuilingshen", "count": 2 }, { "itemId": "mat_dimaishiru", "count": 1 }],
+      "materials": [
+        {
+          "itemId": "mat_shuilingshen",
+          "count": 2
+        },
+        {
+          "itemId": "mat_dimaishiru",
+          "count": 1
+        }
+      ],
       "effect": "宠物坐骑资质 +2",
       "count": 1
     },
     {
       "name": "突破丹·壹",
       "level": 3,
-      "materials": [{ "itemId": "mat_shuilingshen", "count": 3 }, { "itemId": "mat_youmingxuelian", "count": 1 }],
+      "materials": [
+        {
+          "itemId": "mat_shuilingshen",
+          "count": 3
+        },
+        {
+          "itemId": "mat_youmingxuelian",
+          "count": 1
+        }
+      ],
       "effect": "宠物坐骑10级一阶突破",
       "count": 1
     },
     {
       "name": "突破丹·贰",
       "level": 4,
-      "materials": [{ "itemId": "mat_chixueteng", "count": 3 }, { "itemId": "mat_youmingxuelian", "count": 2 }],
+      "materials": [
+        {
+          "itemId": "mat_chixueteng",
+          "count": 3
+        },
+        {
+          "itemId": "mat_youmingxuelian",
+          "count": 2
+        }
+      ],
       "effect": "宠物坐骑30级二阶突破",
       "count": 1
     },
     {
       "name": "突破丹·叁",
       "level": 5,
-      "materials": [{ "itemId": "mat_jiuyelingzhi", "count": 1 }, { "itemId": "mat_putiganiu", "count": 1 }],
+      "materials": [
+        {
+          "itemId": "mat_jiuyelingzhi",
+          "count": 1
+        },
+        {
+          "itemId": "mat_putiganiu",
+          "count": 1
+        }
+      ],
       "effect": "宠物坐骑50级三阶突破",
+      "count": 1
+    },
+    {
+      "name": "品质丹·精",
+      "level": 2,
+      "materials": [
+        {
+          "itemId": "mat_zhixuecao",
+          "count": 2
+        },
+        {
+          "itemId": "mat_qingxinye",
+          "count": 2
+        },
+        {
+          "itemId": "mat_chenlutaozhi",
+          "count": 1
+        }
+      ],
+      "effect": "制造辅助：精品概率+15%，凡品-15%（一至三阶）",
+      "count": 1
+    },
+    {
+      "name": "品质丹·超",
+      "level": 3,
+      "materials": [
+        {
+          "itemId": "mat_youlancao",
+          "count": 2
+        },
+        {
+          "itemId": "mat_hantanyusui",
+          "count": 1
+        }
+      ],
+      "effect": "制造辅助：超品概率+12%，凡品-12%（二至三阶）",
+      "count": 1
+    },
+    {
+      "name": "品质丹·绝",
+      "level": 4,
+      "materials": [
+        {
+          "itemId": "mat_jiuyelingzhi",
+          "count": 1
+        },
+        {
+          "itemId": "mat_putiganiu",
+          "count": 1
+        }
+      ],
+      "effect": "制造辅助：绝品概率+8%，凡品、精品各-4%（仅三阶）",
       "count": 1
     }
   ],
@@ -1789,6 +1877,60 @@
         {
           "itemId": "mat_shengshui",
           "count": 1
+        }
+      ]
+    },
+    {
+      "id": "forge_wp_t1_dagger_01",
+      "equipmentId": "wp_t1_dagger_01",
+      "blueprintId": "bp_t1_wp",
+      "name": "竹刺",
+      "count": 1,
+      "cost": 50,
+      "materials": [
+        {
+          "itemId": "mat_taomu",
+          "count": 3
+        },
+        {
+          "itemId": "mat_tongjing",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "forge_wp_t2_dagger_01",
+      "equipmentId": "wp_t2_dagger_01",
+      "blueprintId": "bp_t2_wp",
+      "name": "双刺",
+      "count": 1,
+      "cost": 150,
+      "materials": [
+        {
+          "itemId": "mat_tiejing",
+          "count": 3
+        },
+        {
+          "itemId": "mat_tongjing",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "forge_wp_t3_dagger_01",
+      "equipmentId": "wp_t3_dagger_01",
+      "blueprintId": "bp_t3_wp",
+      "name": "峨眉刺",
+      "count": 1,
+      "cost": 400,
+      "materials": [
+        {
+          "itemId": "mat_jinjing",
+          "count": 5
+        },
+        {
+          "itemId": "mat_tiejing",
+          "count": 3
         }
       ]
     }

@@ -44,10 +44,10 @@ describe('BattleSystem E2E', () => {
 
   it('光环 buff 的修饰符分发给同队参与者（首领光环攻击+15%）', () => {
     const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
-    // guardian_gold（金护法）与 enemy_079 同队，均携带 skill_enemy_079_passive（首领光环）
+    // yaotu_gold（金护法）与 enemy_079 同队，均携带 skill_enemy_079_passive（首领光环）
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold', 'enemy_079'],
+      ['yaotu_fire'],
+      ['yaotu_gold', 'enemy_079'],
     )
 
     battleSystem.initialize(allies, enemies)

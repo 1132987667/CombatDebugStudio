@@ -183,11 +183,23 @@
               <tbody>
                 <tr>
                   <td>核心属性</td>
-                  <td class="fs-td-right fs-cell-num">{{ snapshotCoreText(item) }}</td>
+                  <td class="fs-td-right fs-cell-num">
+                    {{ snapshotCoreText(item) }}
+                    <span v-if="snapshotDelta(item.overview.core?.max ?? null, snapshotOverviews[0]?.overview.core?.max ?? null)"
+                      class="fs-ov-snap-delta" :class="{ neg: (item.overview.core?.max ?? 0) < (snapshotOverviews[0]?.overview.core?.max ?? 0) }">
+                      vs 首份 {{ snapshotDelta(item.overview.core?.max ?? null, snapshotOverviews[0]?.overview.core?.max ?? null) }}
+                    </span>
+                  </td>
                 </tr>
                 <tr>
                   <td>主要·固定</td>
-                  <td class="fs-td-right fs-cell-num">{{ fmtRange(item.overview.mainFixed) }}</td>
+                  <td class="fs-td-right fs-cell-num">
+                    {{ fmtRange(item.overview.mainFixed) }}
+                    <span v-if="snapshotDelta(item.overview.mainFixed?.max ?? null, snapshotOverviews[0]?.overview.mainFixed?.max ?? null)"
+                      class="fs-ov-snap-delta" :class="{ neg: (item.overview.mainFixed?.max ?? 0) < (snapshotOverviews[0]?.overview.mainFixed?.max ?? 0) }">
+                      vs 首份 {{ snapshotDelta(item.overview.mainFixed?.max ?? null, snapshotOverviews[0]?.overview.mainFixed?.max ?? null) }}
+                    </span>
+                  </td>
                 </tr>
                 <tr v-for="row in item.overview.affixRows" :key="row.row"
                   :class="{ 'is-none': !row.included }">
@@ -1031,6 +1043,14 @@ function snapshotCoreText(item: { overview: EquipmentOverview }): string {
   return `${attrNameByCode(core.attribute)} ${fmtRange(core)}`
 }
 
+/** 快照差值：以区间上界为口径相对首份的百分比；首份/缺失/相等返回 null */
+function snapshotDelta(value: number | null, firstValue: number | null): string | null {
+  if (value == null || firstValue == null || firstValue === 0) return null
+  const pct = Math.round(((value - firstValue) / firstValue) * 100)
+  if (pct === 0) return null
+  return `${pct > 0 ? '+' : ''}${pct}%`
+}
+
 /** 附加行候选包络：全部候选属性的 min 下界 / max 上界（行内属性各曲线不同，取总跨度） */
 function rowEnvelope(row: EquipmentOverview['affixRows'][number]): string {
   const live = row.candidates.filter((c) => c.source !== 'none')
@@ -1762,6 +1782,17 @@ void load()
 
   .fs-ov-subject-text {
     flex: 1;
+  }
+}
+
+/* 快照差值小字：vs 首份 +25% / −20% */
+.fs-ov-snap-delta {
+  display: block;
+  color: var(--color-success);
+  font-size: var(--font-size-md);
+
+  &.neg {
+    color: var(--color-danger);
   }
 }
 

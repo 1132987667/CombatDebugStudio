@@ -28,7 +28,7 @@ export { default as GlobalNotifications } from './GlobalNotifications.vue'
 
 // ── 布局 / 导航 ──
 export { default as ModuleHeader } from './ModuleHeader.vue'
-export type { TabItem } from './Tabs.vue'
+export type { TabItem } from './tabs-types'
 
 // ── 详情 / Tooltip ──
 export { default as AttributeTooltip } from './AttributeTooltip.vue'

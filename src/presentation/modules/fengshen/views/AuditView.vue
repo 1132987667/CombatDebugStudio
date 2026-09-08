@@ -84,16 +84,30 @@
         掉落归属总账
         <span class="fs-page-hint">enemies.drops → 物品归属（独家投放 = 只由一只怪掉落；零投放 = 全集中无任何敌人掉落）</span>
       </div>
+      <div class="fs-audit-spread">
+        <span class="fs-audit-spread-item"><b>{{ dropSpread.one }}</b> 种仅 1 只怪掉</span>
+        <span class="fs-audit-spread-item"><b>{{ dropSpread.two }}</b> 种 2 只怪掉</span>
+        <span class="fs-audit-spread-item"><b>{{ dropSpread.few }}</b> 种 3~5 只怪掉</span>
+        <span class="fs-audit-spread-item"><b>{{ dropSpread.many }}</b> 种 6+ 只怪掉</span>
+        <span class="fs-audit-spread-item">投放物品共 {{ ownership.length }} 种</span>
+      </div>
       <div class="fs-audit-drop-grid">
         <div>
-          <div class="fs-form-hint">独家投放（{{ exclusiveDrops.length }} 种）</div>
+          <div class="fs-form-hint">独家投放（{{ exclusiveDrops.length }} 种，点击物品/敌人定位）</div>
           <div class="fs-table-wrap fs-audit-scroll">
             <table class="fs-table">
               <thead><tr><th>物品</th><th>掉落敌人</th></tr></thead>
               <tbody>
                 <tr v-for="row in exclusiveDrops" :key="row.itemId">
-                  <td>{{ itemName(row.itemId) }}<span class="fs-audit-item-id">{{ row.itemId }}</span></td>
-                  <td>{{ row.enemies[0]?.name ?? '—' }}</td>
+                  <td>
+                    <button type="button" class="fs-audit-link" :title="`点击在「${itemTableLabel(row.itemId)}」表定位`"
+                      @click="gotoItem(row.itemId)">{{ itemName(row.itemId) }}</button>
+                    <span class="fs-audit-item-id">{{ row.itemId }}</span>
+                  </td>
+                  <td>
+                    <button type="button" class="fs-audit-link" title="点击在敌人表定位"
+                      @click="gotoEnemy(row.enemies[0]!.id)">{{ row.enemies[0]?.name ?? '—' }}</button>
+                  </td>
                 </tr>
                 <tr v-if="!exclusiveDrops.length">
                   <td colspan="2" class="fs-empty">无独家投放物品</td>
@@ -103,16 +117,22 @@
           </div>
         </div>
         <div>
-          <div class="fs-form-hint">零投放（{{ zeroDrops.length }} 种）</div>
-          <div class="fs-table-wrap fs-audit-scroll">
+          <div class="fs-form-hint">零投放（{{ zeroDrops.length }} 种，无任何敌人掉落）</div>
+          <TacticalInput :model-value="zeroFilter" placeholder="过滤物品名 / ID…" aria-label="过滤零投放物品"
+            @update:model-value="zeroFilter = String($event ?? '')" />
+          <div class="fs-table-wrap fs-audit-scroll fs-audit-zero-scroll">
             <table class="fs-table">
               <thead><tr><th>物品</th></tr></thead>
               <tbody>
                 <tr v-for="id in zeroDrops" :key="id">
-                  <td>{{ itemName(id) }}<span class="fs-audit-item-id">{{ id }}</span></td>
+                  <td>
+                    <button type="button" class="fs-audit-link" title="点击在对应表定位"
+                      @click="gotoItem(id)">{{ itemName(id) }}</button>
+                    <span class="fs-audit-item-id">{{ id }}</span>
+                  </td>
                 </tr>
                 <tr v-if="!zeroDrops.length">
-                  <td class="fs-empty">全部物品均有敌人投放</td>
+                  <td class="fs-empty">{{ zeroFilter ? '过滤后无匹配物品' : '全部物品均有敌人投放' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -127,9 +147,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
+import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import type { AttributeDef, EquipmentData, SystemBudgetConfig } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { getCoreAttributes } from '@/domain/fengshen/attribute-dictionary'
+import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import {
   dropOwnership,
   equipmentAffixFrequency,
@@ -137,6 +159,7 @@ import {
 } from '@/domain/fengshen/data-insight'
 
 const api = container.resolve<GameDataApi>('GameDataApi')
+const store = useFengshenStore()
 
 /** 64 项核心数值属性 code（权威字典）；审计矩阵只投这些 */
 const CORE_CODES = new Set(getCoreAttributes().map((e) => e.code))
@@ -147,14 +170,34 @@ const budget = ref<SystemBudgetConfig>({ id: 'system_budget', systems: [] })
 // ── 投放总账：装备词条频次 + 掉落归属 ──
 const equipments = ref<EquipmentData[]>([])
 const enemies = ref<Enemy[]>([])
-/** 物品全集 id → 中文名（items + materials 两表；装备自身走装备名兜底） */
-const itemNames = ref<Record<string, string>>({})
+/** 物品全集 id → 名称 + 所在表（items/materials/equipment），供跳转定位 */
+interface ItemRef { name: string; table: 'items' | 'materials' | 'equipment' }
+const itemIndex = ref<Record<string, ItemRef>>({})
+const zeroFilter = ref('')
 
 const affixFreq = computed(() => equipmentAffixFrequency(equipments.value))
 const affixMax = computed(() => affixFreq.value[0]?.count ?? 0)
 const ownership = computed(() => dropOwnership(enemies.value))
 const exclusiveDrops = computed(() => ownership.value.filter((r) => r.enemies.length === 1))
-const zeroDrops = computed(() => zeroDropItemIds(Object.keys(itemNames.value).map((id) => ({ id })), enemies.value))
+const zeroDrops = computed(() => {
+  const ids = zeroDropItemIds(Object.keys(itemIndex.value).map((id) => ({ id })), enemies.value)
+  const kw = zeroFilter.value.trim().toLowerCase()
+  if (!kw) return ids
+  return ids.filter((id) => id.toLowerCase().includes(kw) || (itemIndex.value[id]?.name ?? '').toLowerCase().includes(kw))
+})
+
+/** 掉落分布：按"掉落怪数量"分桶统计物品种类数（投放集中度一眼可见） */
+const dropSpread = computed(() => {
+  const buckets = { one: 0, two: 0, few: 0, many: 0 }
+  for (const row of ownership.value) {
+    const n = row.enemies.length
+    if (n === 1) buckets.one++
+    else if (n === 2) buckets.two++
+    else if (n <= 5) buckets.few++
+    else buckets.many++
+  }
+  return buckets
+})
 
 function freqPercent(count: number): string {
   const max = affixMax.value || 1
@@ -162,7 +205,22 @@ function freqPercent(count: number): string {
 }
 
 function itemName(id: string): string {
-  return itemNames.value[id] ?? id
+  return itemIndex.value[id]?.name ?? id
+}
+
+function itemTableLabel(id: string): string {
+  const table = itemIndex.value[id]?.table
+  return table === 'items' ? '物品' : table === 'materials' ? '材料' : '装备'
+}
+
+/** 点击物品 → 跳到其所在表并定位（引用断裂同款跳转） */
+function gotoItem(id: string): void {
+  const item = itemIndex.value[id]
+  if (item) store.navigateTo(item.table, id)
+}
+
+function gotoEnemy(id: string): void {
+  store.navigateTo('enemies', id)
 }
 
 /** 装备 stats 的属性名翻译（基础六维走核心字典，未知 code 回退原值） */
@@ -201,17 +259,19 @@ onMounted(async () => {
     api.getSystemBudget(),
     api.listEquipment(),
     api.listByTable<Enemy>('enemies', { limit: 1000 }),
-    api.listByTable<{ id: string }>('items', { limit: 5000 }),
-    api.listByTable<{ id: string }>('materials', { limit: 5000 }),
+    api.listByTable<{ id: string; name?: string }>('items', { limit: 5000 }),
+    api.listByTable<{ id: string; name?: string }>('materials', { limit: 5000 }),
   ])
   attributes.value = attrs.filter((a) => !a.isRuntimeState && CORE_CODES.has(a.code))
   budget.value = sb ?? { id: 'system_budget', systems: [] }
   totalWeight.value = budget.value.systems.reduce((sum, s) => sum + s.weight, 0)
   equipments.value = eqs
   enemies.value = enm
-  const names: Record<string, string> = {}
-  for (const it of [...items, ...materials]) names[it.id] = String((it as { name?: string }).name ?? it.id)
-  itemNames.value = names
+  const index: Record<string, ItemRef> = {}
+  for (const it of items) index[it.id] = { name: String(it.name ?? it.id), table: 'items' }
+  for (const it of materials) index[it.id] = { name: String(it.name ?? it.id), table: 'materials' }
+  for (const eq of eqs) index[eq.id] = { name: eq.name, table: 'equipment' }
+  itemIndex.value = index
 })
 </script>
 
@@ -246,7 +306,7 @@ onMounted(async () => {
 
 .fs-audit-budget-fill {
   height: 100%;
-  background: var(--color-primary);
+  background: var(--color-info);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -293,7 +353,7 @@ onMounted(async () => {
   border-radius: 50%;
 
   &.primary {
-    color: var(--color-primary);
+    color: var(--color-info);
     font-weight: bold;
   }
 
@@ -350,5 +410,43 @@ onMounted(async () => {
   color: var(--color-text-tertiary);
   font-size: var(--font-size-md);
   font-family: var(--font-family-mono);
+}
+
+.fs-audit-spread {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.fs-audit-spread-item {
+  color: var(--color-text-secondary);
+
+  b {
+    color: var(--color-info);
+  }
+}
+
+.fs-audit-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-info);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.fs-audit-zero-scroll {
+  max-height: 240px;
+  margin-top: var(--space-2);
 }
 </style>

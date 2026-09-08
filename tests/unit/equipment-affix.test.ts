@@ -78,7 +78,7 @@ const affixLightWeapon: EquipmentAffixData = {
   modifierType: 'percent',
   valueRange: { min: 5, max: 15 },
   applicableSlots: ['weapon:轻型'],
-  school: '灵猴道',
+  school: '连战',
   weight: 60,
   rarity: 2,
 }
@@ -282,7 +282,7 @@ describe('DataIntegrityService 装备词条强校验', () => {
     modifierType: 'flat',
     valueRange: { min: 1, max: 5 },
     applicableSlots: ['weapon', 'glove:护手'],
-    school: '金行道',
+    school: '连战',
     weight: 50,
     rarity: 1,
   })

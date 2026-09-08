@@ -429,8 +429,10 @@
     "cost": 50,
     "craftable": true,
     "recipeId": "forge_wp_t1_light_01",
-    "blueprintId": "bp_t1_eq",
-    "legacyIds": ["eq_w001"],
+    "blueprintId": "bp_t1_wp",
+    "legacyIds": [
+      "eq_w001"
+    ],
     "source": "制造（主线，免图纸）",
     "description": "竹剑，攻击+10速度+10%"
   },
@@ -462,7 +464,7 @@
     "cost": 60,
     "craftable": true,
     "recipeId": "forge_wp_t1_mid_01",
-    "blueprintId": "bp_t1_eq",
+    "blueprintId": "bp_t1_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜棍，攻击+12"
@@ -500,7 +502,7 @@
     "cost": 70,
     "craftable": true,
     "recipeId": "forge_wp_t1_heavy_01",
-    "blueprintId": "bp_t1_eq",
+    "blueprintId": "bp_t1_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜锤，攻击+14速度-5%，格挡率+5%"
@@ -533,7 +535,7 @@
     "cost": 40,
     "craftable": true,
     "recipeId": "forge_ar_t1_light_01",
-    "blueprintId": "bp_t1_eq",
+    "blueprintId": "bp_t1_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "鹿皮甲，防御+6闪避+5%速度+5%"
@@ -566,7 +568,7 @@
     "cost": 50,
     "craftable": true,
     "recipeId": "forge_ar_t1_mid_01",
-    "blueprintId": "bp_t1_eq",
+    "blueprintId": "bp_t1_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜木甲，防御+8气血+5%"
@@ -599,7 +601,7 @@
     "cost": 60,
     "craftable": true,
     "recipeId": "forge_ar_t1_heavy_01",
-    "blueprintId": "bp_t1_eq",
+    "blueprintId": "bp_t1_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "轻铜甲，防御+10伤害减免+5%速度-5%"
@@ -4220,7 +4222,7 @@
   },
   {
     "id": "wt_43",
-    "name": "菩提道冠",
+    "name": "菩提慧冠",
     "slot": "helmet",
     "subType": "灵冠",
     "tier": "t5",
@@ -4277,7 +4279,7 @@
   },
   {
     "id": "wt_45",
-    "name": "琉璃净符",
+    "name": "琉璃护心符",
     "slot": "charm",
     "subType": "生命护符",
     "tier": "t5",
@@ -4484,7 +4486,7 @@
     "cost": 50,
     "craftable": true,
     "recipeId": "forge_wp_t1_dagger_01",
-    "blueprintId": "bp_t1_eq",
+    "blueprintId": "bp_t1_wp",
     "source": "制造（主线，免图纸）",
     "description": "竹刺，闪避流专属武器，攻击+10闪避+5"
   },
@@ -4521,7 +4523,7 @@
     "cost": 150,
     "craftable": true,
     "recipeId": "forge_wp_t2_dagger_01",
-    "blueprintId": "bp_t2_eq",
+    "blueprintId": "bp_t2_wp",
     "source": "制造（关卡4-6）",
     "description": "双刺，闪避流专属武器，攻击+25闪避+12"
   },
@@ -4558,7 +4560,7 @@
     "cost": 400,
     "craftable": true,
     "recipeId": "forge_wp_t3_dagger_01",
-    "blueprintId": "bp_t3_eq",
+    "blueprintId": "bp_t3_wp",
     "source": "制造（关卡7-9）",
     "description": "峨眉刺，闪避流专属武器，攻击+45闪避+22"
   },

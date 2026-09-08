@@ -2965,5 +2965,41 @@
     ],
     "polarity": "positive",
     "description": "每层使速度 +5，持续 1 回合"
+  },
+  {
+    "id": "buff_freeze",
+    "name": "冰冻",
+    "category": "control",
+    "maxStacks": 1,
+    "duration": 2,
+    "controlType": "freeze",
+    "effects": [
+      {
+        "type": "control",
+        "params": {
+          "controlType": "freeze"
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "使目标冰冻，无法行动；受到任何伤害时立即解除"
+  },
+  {
+    "id": "buff_sleep",
+    "name": "睡眠",
+    "category": "control",
+    "maxStacks": 1,
+    "duration": 2,
+    "controlType": "sleep",
+    "effects": [
+      {
+        "type": "control",
+        "params": {
+          "controlType": "sleep"
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "使目标睡眠，无法行动；受到伤害时解除，且该次伤害额外增加20%"
   }
 ]

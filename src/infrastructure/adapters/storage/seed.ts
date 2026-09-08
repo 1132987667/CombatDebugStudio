@@ -119,7 +119,8 @@ function buildElements(): ElementsData {
       { id: 'metal', name: '金' },
     ],
     matrix: [
-      { attackerId: 'fire', defenderId: 'wood', coefficient: 1.2 },
+      // 五行相克：火克金、水克火、木克土、土克水、金克木（每个防御元素只被一个攻击元素克制）
+      { attackerId: 'fire', defenderId: 'metal', coefficient: 1.2 },
       { attackerId: 'water', defenderId: 'fire', coefficient: 1.2 },
       { attackerId: 'wood', defenderId: 'earth', coefficient: 1.2 },
       { attackerId: 'earth', defenderId: 'water', coefficient: 1.2 },
@@ -183,7 +184,7 @@ function buildEnemyRewardTable(): BattleParamData {
       baseExpFormula: 'enemyLevel × 10',
       baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
       roleMultiplier: {
-        normal: 1.0,
+        xiaoyao: 1.0,
         elite: 1.15,
         yaotu: 1.2,
         yaokui: 2.0,

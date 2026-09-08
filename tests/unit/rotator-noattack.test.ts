@@ -22,7 +22,7 @@ describe('noAttack 木人', () => {
   it('enemyToParticipant 传递 noAttack 标志（木人为 true，普通单位为 false）', () => {
     const dummy = createParticipantFromEnemy('test_dummy_low', ParticipantSide.ENEMY)
     expect(dummy?.noAttack).toBe(true)
-    const normal = createParticipantFromEnemy('guardian_wood', ParticipantSide.ENEMY)
+    const normal = createParticipantFromEnemy('yaotu_wood', ParticipantSide.ENEMY)
     expect(normal?.noAttack).toBeFalsy()
   })
 
@@ -36,7 +36,7 @@ describe('noAttack 木人', () => {
   })
 
   it('普通单位 AI 决策不返回 skip', () => {
-    const normal = createParticipantFromEnemy('guardian_wood', ParticipantSide.ENEMY)
+    const normal = createParticipantFromEnemy('yaotu_wood', ParticipantSide.ENEMY)
     if (!normal) return
     const ai = new BaseBattleAI()
     const action = ai.makeDecision({ currentTurn: 3 } as any, normal)

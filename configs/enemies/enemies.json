@@ -5401,7 +5401,7 @@
         "probability": 0.3
       },
       {
-        "itemId": "recipe_weapon_t1",
+        "itemId": "bp_t1_wp",
         "probability": 0.5
       }
     ],
@@ -5471,7 +5471,7 @@
         "probability": 0.3
       },
       {
-        "itemId": "recipe_weapon_t2",
+        "itemId": "bp_t2_wp",
         "probability": 0.5
       }
     ],
@@ -5536,7 +5536,7 @@
         "probability": 0.3
       },
       {
-        "itemId": "recipe_weapon_t3",
+        "itemId": "bp_t3_wp",
         "probability": 0.5
       }
     ],
@@ -5601,7 +5601,7 @@
         "probability": 0.3
       },
       {
-        "itemId": "recipe_weapon_t4",
+        "itemId": "bp_t4_wp",
         "probability": 0.5
       }
     ],
@@ -5667,7 +5667,7 @@
         "probability": 0.3
       },
       {
-        "itemId": "recipe_weapon_t5",
+        "itemId": "bp_t5_wp",
         "probability": 0.5
       }
     ],
@@ -5737,11 +5737,11 @@
         "probability": 0.4
       },
       {
-        "itemId": "recipe_weapon_t1",
+        "itemId": "bp_t1_wp",
         "probability": 0.5
       },
       {
-        "itemId": "recipe_armor_t1",
+        "itemId": "bp_t1_ar",
         "probability": 0.5
       },
       {
@@ -5820,11 +5820,11 @@
         "probability": 0.6
       },
       {
-        "itemId": "recipe_weapon_t2",
+        "itemId": "bp_t2_wp",
         "probability": 0.5
       },
       {
-        "itemId": "recipe_armor_t2",
+        "itemId": "bp_t2_ar",
         "probability": 0.5
       },
       {
@@ -5907,11 +5907,11 @@
         "probability": 0.4
       },
       {
-        "itemId": "recipe_weapon_t3",
+        "itemId": "bp_t3_wp",
         "probability": 0.5
       },
       {
-        "itemId": "recipe_armor_t3",
+        "itemId": "bp_t3_ar",
         "probability": 0.5
       },
       {
@@ -5995,11 +5995,11 @@
         "probability": 0.4
       },
       {
-        "itemId": "recipe_weapon_t4",
+        "itemId": "bp_t4_wp",
         "probability": 0.5
       },
       {
-        "itemId": "recipe_armor_t4",
+        "itemId": "bp_t4_ar",
         "probability": 0.5
       },
       {
@@ -6078,11 +6078,11 @@
         "probability": 0.4
       },
       {
-        "itemId": "recipe_weapon_t5",
+        "itemId": "bp_t5_wp",
         "probability": 0.5
       },
       {
-        "itemId": "recipe_armor_t5",
+        "itemId": "bp_t5_ar",
         "probability": 0.5
       },
       {
@@ -6166,11 +6166,11 @@
         "probability": 0.6
       },
       {
-        "itemId": "recipe_weapon_t1",
+        "itemId": "bp_t1_wp",
         "probability": 0.6
       },
       {
-        "itemId": "recipe_armor_t1",
+        "itemId": "bp_t1_ar",
         "probability": 0.6
       },
       {
@@ -6251,11 +6251,11 @@
         "probability": 0.6
       },
       {
-        "itemId": "recipe_weapon_t2",
+        "itemId": "bp_t2_wp",
         "probability": 0.6
       },
       {
-        "itemId": "recipe_armor_t2",
+        "itemId": "bp_t2_ar",
         "probability": 0.6
       },
       {
@@ -6336,11 +6336,11 @@
         "probability": 0.6
       },
       {
-        "itemId": "recipe_weapon_t3",
+        "itemId": "bp_t3_wp",
         "probability": 0.6
       },
       {
-        "itemId": "recipe_armor_t3",
+        "itemId": "bp_t3_ar",
         "probability": 0.6
       },
       {
@@ -6422,11 +6422,11 @@
         "probability": 0.6
       },
       {
-        "itemId": "recipe_weapon_t4",
+        "itemId": "bp_t4_wp",
         "probability": 0.6
       },
       {
-        "itemId": "recipe_armor_t4",
+        "itemId": "bp_t4_ar",
         "probability": 0.6
       },
       {
@@ -6507,11 +6507,11 @@
         "probability": 0.6
       },
       {
-        "itemId": "recipe_weapon_t5",
+        "itemId": "bp_t5_wp",
         "probability": 0.6
       },
       {
-        "itemId": "recipe_armor_t5",
+        "itemId": "bp_t5_ar",
         "probability": 0.6
       },
       {

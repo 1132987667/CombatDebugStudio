@@ -22,11 +22,11 @@ const CONTROL_BUFF_IDS = [
   'buff_bind',
   'buff_guard_web',
   'buff_lava_bind',
-  'guardian_buff_random_taunt',
+  'yaotu_buff_random_taunt',
   'buff_confusion',
   'buff_petrify',
   'buff_stun',
-  'guardian_buff_paralyze',
+  'yaotu_buff_paralyze',
 ]
 
 const DOT_BUFF_IDS = [

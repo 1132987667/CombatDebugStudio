@@ -221,12 +221,10 @@ export class SkillManager {
       })
     }
 
-    const sourceControl = this.buffSystem.getHighestPriorityControlEffect(
-      source.id,
-    )
-    if (sourceControl !== ControlType.NONE) {
+    // §6.4 G1：施法者是否被禁止技能由 blocksSkill 标志驱动（沉默禁技能可普攻；混乱不禁）
+    if (!this.buffSystem.canUseSkill(source.id)) {
       LoggerProvider.logger.addDebugLog(
-        `技能 ${skillId} 取消：施法者 ${source.name} 已被控制`,
+        `技能 ${skillId} 取消：施法者 ${source.name} 被禁止使用技能`,
         { level: LogLevel.WARN },
       )
       const action = BattleActionHelper.createSkill({
@@ -245,34 +243,6 @@ export class SkillManager {
         ],
       })
       return action
-    }
-
-    if (target) {
-      const targetControl = this.buffSystem.getHighestPriorityControlEffect(
-        target.id,
-      )
-      if (targetControl !== ControlType.NONE) {
-        LoggerProvider.logger.addDebugLog(
-          `技能 ${skillId} 取消：目标 ${target.name} 已被控制`,
-          { level: LogLevel.WARN },
-        )
-        const action = BattleActionHelper.createSkill({
-          sourceId: source.id,
-          targetId: target.id,
-          skillId,
-          skillName: config.name || '',
-          turn: currentTurn,
-          success: false,
-          effects: [
-            {
-              type: 'status',
-              targetId: target.id,
-              description: `${target.name} 已被控制，技能取消`,
-            },
-          ],
-        })
-        return action
-      }
     }
 
     // 在执行前消耗能量——如果失败则无法恢复，但

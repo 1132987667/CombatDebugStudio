@@ -19,6 +19,7 @@ import {
   rollQualityFactor,
 } from '@/presentation/modules/yanjie/xiyou/quality'
 import packJson from '@configs/xiyou/pack.json'
+import itemsJson from '@configs/xiyou/items.json'
 import mateJson from '@configs/xiyou/mate.json'
 import equipJson from '@configs/xiyou/equip.json'
 
@@ -130,19 +131,25 @@ describe('旧版数据迁移 migrateRarityField', () => {
 })
 
 describe('数据层统一：configs 全数字 rarity', () => {
-  it('pack.json 各组 rarity 均为 1-4 数字（不再有中文 4 档）', () => {
+  it('pack.json 各组条目均能解析到 items.json，且 rarity 为 1-4 数字（不再有中文 4 档）', () => {
+    // pack.json 现为 { name, count } 引用结构，rarity 权威在 items.json
     const groups = [
       packJson.materials,
       packJson.equipment,
       packJson.pills,
       packJson.consumables,
     ]
-    const items = groups.flat() as Array<{ rarity: unknown }>
-    expect(items.length).toBeGreaterThan(0)
-    for (const it of items) {
-      expect(typeof it.rarity).toBe('number')
-      expect(it.rarity).toBeGreaterThanOrEqual(1)
-      expect(it.rarity).toBeLessThanOrEqual(4)
+    const entries = groups.flat() as Array<{ name: string }>
+    expect(entries.length).toBeGreaterThan(0)
+    const byName = new Map<string, number>()
+    for (const it of itemsJson.items as Array<{ name: string; rarity: number }>) {
+      if (!byName.has(it.name)) byName.set(it.name, it.rarity)
+    }
+    for (const it of entries) {
+      const rarity = byName.get(it.name)
+      expect(rarity, `「${it.name}」应存在于 items.json`).toBeDefined()
+      expect(rarity as number).toBeGreaterThanOrEqual(1)
+      expect(rarity as number).toBeLessThanOrEqual(4)
     }
   })
 

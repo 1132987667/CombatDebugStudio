@@ -30,8 +30,8 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
 
   it('requestDamage(origin=dot) 补发 dot 事件，战报承伤/HP 计入持续伤害', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -69,8 +69,8 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
 
   it('触发器脚本伤害（无 origin）不误标为 dot', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -95,8 +95,8 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
 
   it('origin=trigger 补发普通伤害事件：计承伤、不计命中/技能、不误标 dot', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -130,8 +130,8 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
 
   it('脚本型毒（buff_poison）伤害补发 dot 事件进入战报', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -178,8 +178,8 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
 
   it('JSON 触发器型毒（deal_dot_damage）真实触发链路：伤害产生并进战报', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -217,8 +217,8 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
 
   it('剧毒（buff_strong_poison，脚本型）伤害经 dot 事件进战报', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)

@@ -26,8 +26,8 @@ describe('BattleSystem.executeManualAction 手动干预', () => {
 
   function startBattle() {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.loadSkillConfigs(GameDataProcessor.getSkillsData())
     battleSystem.initialize(allies, enemies)

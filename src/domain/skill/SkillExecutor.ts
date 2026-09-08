@@ -314,7 +314,8 @@ export class SkillExecutor {
       description: '',
       duration: skillStep.duration,
       cooldown: 0,
-      controlType: ControlType.NONE,
+      // 不传 controlType——由 addBuff 合并链从 buffs.json 权威配置解析；
+      // 硬编码 NONE 会短路覆盖（曾导致全部控制类 buff 的控制状态不生效）
     }
 
     const instanceId = this.buffSystem.addBuff(

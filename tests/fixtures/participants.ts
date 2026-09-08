@@ -91,11 +91,11 @@ export function createParticipantFromEnemy(
 
 /**
  * 创建一套标准对战参与者（2v2，基于真实敌人配置）。
- * 默认用 guardian_fire vs guardian_gold 的测试守护者组合。
+ * 默认用 yaotu_fire vs yaotu_gold 的测试守护者组合。
  */
 export function createTestParticipantsFromConfig(
-  allyIds: string[] = ['guardian_fire'],
-  enemyIds: string[] = ['guardian_gold'],
+  allyIds: string[] = ['yaotu_fire'],
+  enemyIds: string[] = ['yaotu_gold'],
 ): { allies: BattleParticipantImpl[]; enemies: BattleParticipantImpl[] } {
   const allies = allyIds
     .map((id) => createParticipantFromEnemy(id, ParticipantSide.ALLY))

@@ -10,8 +10,8 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
 import {
   buildEnemyTeam,
-  dropsForScene,
-  rewardForScene,
+  dropsForEnemyIds,
+  rewardForEnemyIds,
 } from '@/presentation/modules/yanjie/xiyou/battle'
 import { markSceneCleared, scenes } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 
@@ -56,18 +56,18 @@ describe('掉落与奖励数据源（configs/enemies/enemies.json）', () => {
   it('scene_1_1 敌人按 id 关联掉落（花妖幼芽 → 桃木），奖励区间为正', () => {
     const s1 = scenes.find((s) => s.id === 'scene_1_1')
     expect(s1).toBeDefined()
-    const drops = dropsForScene(s1!)
+    const enemyIds = s1!.enemies.map((e) => e.id)
+    const drops = dropsForEnemyIds(enemyIds)
     expect(drops.length).toBeGreaterThan(0)
     expect(drops.some((d) => d.itemId === 'mat_taomu')).toBe(true)
-    const reward = rewardForScene(s1!)
+    const reward = rewardForEnemyIds(enemyIds)
     expect(reward.exp[1]).toBeGreaterThan(0)
     expect(reward.money[1]).toBeGreaterThan(0)
   })
 
   it('未知敌人 id 不掉落、无奖励', () => {
-    const fake = { id: 'scene_x', regionId: 'r', name: 'x', desc: '', enemies: [{ id: 'ghost_enemy', name: '鬼', level: 1 }], unlocked: true, difficulty: 'easy' as const, stars: 0, maxStars: 3 }
-    expect(dropsForScene(fake)).toEqual([])
-    expect(rewardForScene(fake)).toEqual({ money: [0, 0], exp: [0, 0] })
+    expect(dropsForEnemyIds(['ghost_enemy'])).toEqual([])
+    expect(rewardForEnemyIds(['ghost_enemy'])).toEqual({ money: [0, 0], exp: [0, 0] })
   })
 
   it('boots 词条唯一组合 ≥5，支撑神品 5 条词缀抽满（P0-3）', () => {
@@ -97,15 +97,13 @@ describe('敌方参战者（R22 敌人数据加载）与难度倍率（R19）', 
     expect(guard).toBeDefined()
   })
 
-  it('难度倍率：普通 ×1.5 / 困难 ×2（作用于主要数值属性）', () => {
+  it('妖气增幅：节点 amp 等比缩放主要数值属性（玩法主循环 #10：1+0.15×(k-1) 逐场递增）', () => {
     const s1 = scenes.find((s) => s.id === 'scene_1_1')!
-    const normal = buildEnemyTeam({ ...s1, difficulty: 'normal' })
-    const hard = buildEnemyTeam({ ...s1, difficulty: 'hard' })
-    const n = normal.find((e) => e.name === '花妖幼芽')!
-    const h = hard.find((e) => e.name === '花妖幼芽')!
+    const node = { index: 1, total: 4, isBoss: false, enemyIds: s1.enemies.map((e) => e.id), amp: 1.5 }
+    const team = buildEnemyTeam(s1, node)
+    const n = team.find((e) => e.name === '花妖幼芽')!
     expect(n.getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(Math.round(82 * 1.5))
     expect(n.getAttribute(ATTRIBUTE_CODE.attack)).toBe(Math.round(11 * 1.5))
-    expect(h.getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(82 * 2)
   })
 
   it('critDamage 百分制 → 引擎比例（120 → 1.2）', () => {

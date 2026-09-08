@@ -8,15 +8,15 @@ import { resolveBuffMeta } from '@/shared/utils/buff-meta'
 
 describe('resolveBuffMeta（存档 Buff → 正负/属性明细）', () => {
   it('按中文名反查：减益 buff 标 isNegative 且带属性明细', () => {
-    // 破甲打击：guardian_buff_armor_break，defense -20% PERCENTAGE，negative
+    // 破甲打击：yaotu_buff_armor_break，defense -20% PERCENTAGE，negative
     const meta = resolveBuffMeta('破甲打击')
     expect(meta.isNegative).toBe(true)
     expect(meta.attributes?.defense).toMatchObject({ value: -20, type: 'PERCENTAGE' })
   })
 
   it('按 id 反查：正向 buff 不标 isNegative', () => {
-    // 复仇怒火：guardian_buff_revenge_rage，attack +5%/层，positive
-    const meta = resolveBuffMeta('guardian_buff_revenge_rage')
+    // 复仇怒火：yaotu_buff_revenge_rage，attack +5%/层，positive
+    const meta = resolveBuffMeta('yaotu_buff_revenge_rage')
     expect(meta.isNegative).toBe(false)
     expect(meta.attributes?.attack).toMatchObject({ value: 5, type: 'PERCENTAGE' })
   })

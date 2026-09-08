@@ -1024,7 +1024,7 @@ input[type='checkbox'] {
 }
 
 .fs-trace-input-group {
-  min-width: 160px;
+  min-width: 220px;
 }
 
 .fs-trace-input-title {
@@ -1033,14 +1033,18 @@ input[type='checkbox'] {
   margin-bottom: var(--space-1);
 }
 
+/* 标签不折行：长标签（如「受伤增加（易伤）%」）保持单行，输入框右对齐 */
 .fs-trace-input-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .fs-trace-input-label {
   color: var(--color-text-tertiary);
+  white-space: nowrap;
 }
 
 /* 折叠属性字典 */

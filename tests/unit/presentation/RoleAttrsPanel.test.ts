@@ -13,6 +13,8 @@ import { createPinia } from 'pinia'
 
 import RoleAttrsPanel from '@/presentation/modules/haotian/views/RoleAttrsPanel.vue'
 import { useHaotianStore } from '@/presentation/modules/haotian/stores/haotianStore'
+// RoleAttrsPanel 使用 main.ts 全局注册的 Tabs 组件，测试环境同样注册
+import { Tabs } from '@/presentation/components'
 
 let app: App | null = null
 let host: HTMLElement | null = null
@@ -23,6 +25,7 @@ async function mountPanel(eventId?: string): Promise<HTMLElement> {
   const pinia = createPinia()
   app = createApp({ render: () => h(RoleAttrsPanel) })
   app.use(pinia)
+  app.component('Tabs', Tabs)
   app.mount(host)
   const store = useHaotianStore()
   await store.loadDemo()

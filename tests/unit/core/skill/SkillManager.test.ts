@@ -55,9 +55,9 @@ describe('SkillManager 溅射步骤', () => {
   })
 
   function setup() {
-    const source = createParticipantFromEnemy('guardian_fire', ParticipantSide.ALLY)!
-    const mainTarget = createParticipantFromEnemy('guardian_gold', ParticipantSide.ENEMY)!
-    const adjacent = createParticipantFromEnemy('guardian_wood', ParticipantSide.ENEMY)!
+    const source = createParticipantFromEnemy('yaotu_fire', ParticipantSide.ALLY)!
+    const mainTarget = createParticipantFromEnemy('yaotu_gold', ParticipantSide.ENEMY)!
+    const adjacent = createParticipantFromEnemy('yaotu_wood', ParticipantSide.ENEMY)!
     source.setAttribute(ATTRIBUTE_CODE.critRate, 0)
     for (const p of [mainTarget, adjacent]) {
       p.setAttribute(ATTRIBUTE_CODE.defense, 0)

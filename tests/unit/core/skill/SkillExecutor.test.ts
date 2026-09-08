@@ -25,7 +25,7 @@ describe('SkillExecutor gainEnergy', () => {
   })
 
   it('should add energy to target', () => {
-    const target = createParticipantFromEnemy('guardian_wood', ParticipantSide.ALLY)
+    const target = createParticipantFromEnemy('yaotu_wood', ParticipantSide.ALLY)
     if (!target) return
 
     target.setAttribute(ATTRIBUTE_CODE.maxEnergy, TEST_MAX_ENERGY)
@@ -38,7 +38,7 @@ describe('SkillExecutor gainEnergy', () => {
   })
 
   it('should not exceed max energy', () => {
-    const target = createParticipantFromEnemy('guardian_wood', ParticipantSide.ALLY)
+    const target = createParticipantFromEnemy('yaotu_wood', ParticipantSide.ALLY)
     if (!target) return
 
     target.setAttribute(ATTRIBUTE_CODE.maxEnergy, TEST_MAX_ENERGY)

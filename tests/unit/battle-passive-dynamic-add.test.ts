@@ -54,7 +54,7 @@ describe('战斗中动态添加角色触发被动', () => {
     battleManager.addCharacterToTeam(bard, ParticipantSide.ENEMY)
 
     // 被动「战斗鼓舞」已生效：攻击 +10%
-    // NOTE: 战斗已开始后才入队，guardian_gold 首领光环已于 startBattle 时施加完毕，
+    // NOTE: 战斗已开始后才入队，yaotu_gold 首领光环已于 startBattle 时施加完毕，
     //       故只吃到自身 +10%（aura 不追溯后来加入者）。
     expect(bard.getAttribute(ATTRIBUTE_CODE.attack)).toBeCloseTo(baseAttack * 1.1, 5)
   })

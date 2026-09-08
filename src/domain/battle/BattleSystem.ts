@@ -64,6 +64,7 @@ import { ActionResultType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import type { LogSegment } from '@/shared/types/battle-log'
 import { Counter } from '@/shared/utils/Counter'
+import { getItemDef } from '@/shared/types/items-json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { RAFTimer } from '@/shared/utils/RAF'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
@@ -1656,6 +1657,66 @@ export class BattleSystem {
    * @param targetId 目标 id
    * @returns 失败原因字符串；成功返回 null
    */
+  /**
+   * 战斗中使用物品（统一战斗系统文档 §11 G5）：
+   * - 占用一次行动轮（§11 决策 1），调用方负责行动节奏；
+   * - 完全控制（blocksAction=true）不可使用，沉默（仅禁技能）可用（§6.5）；
+   * - 效果走标准管线：heal=百分比最大气血 / energy=固定能量 / buff=标准 Buff 管线（sourceType 标记丹药来源）。
+   * 返回 null 表示成功，否则为失败原因。
+   */
+  public executeItem(userId: string, itemId: string, targetId?: string): string | null {
+    const battle = this.battleData
+    const user = battle?.participants.get(userId)
+    if (!battle || !user) return '使用者不存在'
+    if (!user.isAlive()) return '使用者已阵亡'
+    if (this.buffSystem.isCharacterControlled(userId)) {
+      return '完全控制状态下无法使用物品'
+    }
+
+    const item = getItemDef(itemId)
+    if (!item) return '物品不存在'
+    if (!item.effects?.length) return '该物品无法在战斗中使用'
+
+    // 丹药默认作用于使用者自身（targetId 预留给友方目标类物品）
+    const effectTarget = targetId ? battle.participants.get(targetId) ?? user : user
+    if (!effectTarget.isAlive()) return '目标已阵亡'
+
+    const applied: string[] = []
+    for (const effect of item.effects) {
+      if (effect.type === 'heal') {
+        const maxHealth = effectTarget.getAttribute(ATTRIBUTE_CODE.maxHealth)
+        const amount = Math.floor((maxHealth * (effect.value ?? 0)) / 100)
+        if (amount <= 0) continue
+        const current = effectTarget.getAttribute(ATTRIBUTE_CODE.currentHealth)
+        effectTarget.setAttribute(ATTRIBUTE_CODE.currentHealth, Math.min(current + amount, maxHealth))
+        applied.push(`恢复气血 ${amount}`)
+      } else if (effect.type === 'energy') {
+        const maxEnergy = effectTarget.getAttribute(ATTRIBUTE_CODE.maxEnergy)
+        const amount = effect.value ?? 0
+        if (amount <= 0) continue
+        const current = effectTarget.getAttribute(ATTRIBUTE_CODE.currentEnergy)
+        effectTarget.setAttribute(ATTRIBUTE_CODE.currentEnergy, Math.min(current + amount, maxEnergy))
+        applied.push(`恢复能量 ${amount}`)
+      } else if (effect.type === 'buff' && effect.buffId) {
+        const ok = this.buffSystem.addBuff(
+          effectTarget.id,
+          effect.buffId,
+          {},
+          battle.currentTurn,
+        )
+        applied.push(ok ? `获得增益 ${effect.buffId}` : `增益 ${effect.buffId} 未生效`)
+      }
+    }
+
+    if (applied.length === 0) return '物品无可用效果'
+    const message = `${user.name} 使用了「${item.name}」（${applied.join('、')}）`
+    LoggerProvider.logger.addItemLog({
+      message,
+      segments: [{ text: message, classStr: 'log-item' }],
+    })
+    return null
+  }
+
   public async executeManualAction(
     participantId: string,
     skillId: string | null,

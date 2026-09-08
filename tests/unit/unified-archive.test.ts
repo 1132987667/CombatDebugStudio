@@ -392,7 +392,7 @@ describe('unified-steps（结算步骤展示辅助）', () => {
       { n: '攻击力', op: '+', v: 65, src: 'unit.atk' },
       { n: '防御减免', op: '−', v: 15, src: 'target.def' },
       { n: '暴击倍率', op: '×', v: 1.5, src: 'crit_rate' },
-      { n: '复仇怒火', op: '+', v: 8, src: 'buff_guardian_revenge_rage' },
+      { n: '复仇怒火', op: '+', v: 8, src: 'buff_yaotu_revenge_rage' },
     ])
     expect(out.map((s) => s.running)).toEqual([20, 85, 70, 105, 113])
     expect(out.map((s) => s.op)).toEqual(['', '+', '−', '×', '+'])
@@ -416,7 +416,7 @@ describe('unified-steps（结算步骤展示辅助）', () => {
     expect(describeSrc('skill_cfg.base')).toBe('技能基础值')
     expect(describeSrc('unit.atk')).toBe('攻击者攻击力')
     expect(describeSrc('target.def')).toBe('目标防御力')
-    expect(describeSrc('buff_guardian_revenge_rage')).toBe('复仇怒火')
+    expect(describeSrc('buff_yaotu_revenge_rage')).toBe('复仇怒火')
     expect(describeSrc('unit.spd')).toBe('攻击者属性 · spd')
     expect(describeSrc('passive.combo_heart')).toBe('连击之心被动')
     expect(describeSrc('foo.bar')).toBeNull()

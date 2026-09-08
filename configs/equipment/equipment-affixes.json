@@ -421,7 +421,7 @@
   {
     "id": "eqaff_shield_effect",
     "name": "灵盾",
-    "attribute": "shield",
+    "attribute": "shieldBonus",
     "modifierType": "percent",
     "valueRange": {
       "min": 5,

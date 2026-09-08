@@ -28,8 +28,8 @@ describe('真实战斗端到端战报（七层自洽与数值合理）', () => {
 
   it('1v1 真实战斗到结束 → 战报覆盖全部参战者、判定/阵营/HP 自洽', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -120,8 +120,8 @@ describe('真实战斗端到端战报（七层自洽与数值合理）', () => {
 
   it('2v2 真实战斗 → 战报在 2v2 下同样自洽', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire', 'guardian_gold'],
-      ['guardian_fire', 'guardian_gold'],
+      ['yaotu_fire', 'yaotu_gold'],
+      ['yaotu_fire', 'yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)

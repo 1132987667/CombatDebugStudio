@@ -36,7 +36,7 @@ import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { ActionResultType, StepEffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
-import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
+import { STATUS_META, StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
 import { Counter } from '@/shared/utils/Counter'
 import { ConditionState } from '@/shared/types/buff-display'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
@@ -483,6 +483,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       controlType:
         config.controlType ??
         scriptDefaultConfig?.controlType ??
+        (jsonConfig?.controlType as ControlType | undefined) ??
         ControlType.NONE,
       isPermanent:
         config.isPermanent ?? scriptDefaultConfig?.isPermanent ?? false,
@@ -1236,15 +1237,62 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return highestControlType
   }
 
+  /**
+   * 是否完全无法行动（统一战斗系统 §6.4 G1）：仅由 blocksAction=true 的控制
+   * （眩晕/冰冻/睡眠/束缚/恐惧/石化等）驱动；沉默（blocksAction=false）不在此列，仍可普攻。
+   */
   public isCharacterControlled(characterId: string): boolean {
-    return (
-      this.getHighestPriorityControlEffect(characterId) !== ControlType.NONE
-    )
+    return this.hasControlWithFlag(characterId, 'blocksAction')
   }
 
+  /**
+   * 是否禁止使用技能（统一战斗系统 §6.4 G1）：由 blocksSkill=true 的控制
+   * （沉默/眩晕/冰冻等）驱动；混乱等 blocksSkill=false 的控制不禁止技能。
+   */
   public canUseSkill(characterId: string): boolean {
-    // 任何控制效果都阻止使用技能
-    return this.getHighestPriorityControlEffect(characterId) === ControlType.NONE
+    return !this.hasControlWithFlag(characterId, 'blocksSkill')
+  }
+
+  /** 目标身上是否存在任一控制 Buff 携带指定 status-meta 标志 */
+  private hasControlWithFlag(
+    characterId: string,
+    flag: 'blocksAction' | 'blocksSkill',
+  ): boolean {
+    for (const instance of this.buffInstances.values()) {
+      if (!instance.isActive || instance.characterId !== characterId) continue
+      const controlType = instance.context.config.controlType
+      if (controlType === ControlType.NONE) continue
+      if (STATUS_META[controlType as StatusCode]?.[flag]) return true
+    }
+    return false
+  }
+
+  /**
+   * 受击唤醒（统一战斗系统 §6.4 G2）：移除目标身上的冰冻/睡眠控制 Buff。
+   * 在 settleDamage 实际扣血后调用（伤害被完全吸收/闪避时不唤醒）。
+   */
+  public wakeOnDamage(targetId: string): void {
+    const toRemove: string[] = []
+    this.buffInstances.forEach((instance) => {
+      if (!instance.isActive || instance.characterId !== targetId) return
+      const controlType = instance.context.config.controlType
+      if (
+        controlType === (ControlType.FREEZE as string) ||
+        controlType === (ControlType.SLEEP as string)
+      ) {
+        toRemove.push(instance.id)
+      }
+    })
+    toRemove.forEach((instanceId) => this.removeBuff(instanceId))
+  }
+
+  /** 目标是否处于睡眠（受击 +20% 承伤判定用，§6.4 G2） */
+  public isSleeping(targetId: string): boolean {
+    for (const instance of this.buffInstances.values()) {
+      if (!instance.isActive || instance.characterId !== targetId) continue
+      if (instance.context.config.controlType === (ControlType.SLEEP as string)) return true
+    }
+    return false
   }
 
   // ─── 护盾值管理 ────────────────────────────────────────

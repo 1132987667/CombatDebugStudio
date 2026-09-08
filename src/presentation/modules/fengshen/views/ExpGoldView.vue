@@ -24,7 +24,8 @@
 
       <div v-if="expTable.entries.length" class="fs-block">
         <div class="fs-block-title">升级曲线总览 <span class="fs-page-hint">左轴升级经验 · 右轴约需击败同等级敌人数（肝度陡增一目了然）</span></div>
-        <LineChart :labels="chartLabels" :series="chartSeries" :x-step="5" :height="240" aria-label="升级经验与击杀数曲线" />
+        <LineChart :labels="chartLabels" :series="chartSeries" :x-step="5" :height="240"
+          :value-formatter="(v) => String(Math.round(v))" aria-label="升级经验与击杀数曲线" />
       </div>
 
       <div class="fs-table-wrap">
@@ -186,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
@@ -318,7 +319,7 @@ const chartLabels = computed(() => expTable.entries.map((e) => String(e.level)))
 const chartSeries = computed<ChartSeries[]>(() => [
   {
     name: '升级所需经验',
-    color: 'var(--color-primary)',
+    color: 'var(--color-info)',
     points: expTable.entries.map((e) => e.expRequired),
   },
   {

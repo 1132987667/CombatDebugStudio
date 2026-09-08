@@ -94,10 +94,10 @@ describe('种子导入 seedFengshenData', () => {
     expect(enemyKeys.length).toBeGreaterThan(0)
     expect(skillKeys.length).toBeGreaterThan(0)
 
-    // actors 从 guardian_* 派生 5 个，id 与敌人保持一致
+    // actors 从 yaotu_* 派生 5 个，id 与敌人保持一致
     const actorKeys = await storage.keys(FENGSHEN_STORE.ACTORS)
-    expect(actorKeys).toContain('guardian_fire')
-    expect(actorKeys).toContain('guardian_gold')
+    expect(actorKeys).toContain('yaotu_fire')
+    expect(actorKeys).toContain('yaotu_gold')
 
     // 装备独立成表（configs/equipment），材料域不再含装备条目
     const materialKeys = await storage.keys(FENGSHEN_STORE.MATERIALS)
@@ -117,12 +117,12 @@ describe('种子导入 seedFengshenData', () => {
 
     // 装备详情（gears 表）：全量可打造装备（equipment.json 中 craftable 的装备）
     const gearKeys = await storage.keys(FENGSHEN_STORE.GEARS)
-    expect(gearKeys).toHaveLength(83)
+    expect(gearKeys).toHaveLength(87)
     expect(gearKeys).toContain('hf_t1_life_01')
 
-    // 词缀表：69 种种子词缀齐全（妖气 10 + 妖性 14 + 妖道 18 + 妖圣 12 + 天命 7 + 劫数 8）
+    // 词缀表：61 种种子词缀齐全（需求调整历史 #16：移除 8 条五行词条后 69-8=61）
     const affixKeys = await storage.keys(FENGSHEN_STORE.AFFIXES)
-    expect(affixKeys).toHaveLength(69)
+    expect(affixKeys).toHaveLength(61)
     expect(affixKeys).toContain('affix_yao_1_001')
     expect(affixKeys).toContain('affix_yao_1_010')
     expect(affixKeys).toContain('affix_yao_2_014')
@@ -403,14 +403,14 @@ describe('DataPackageService 导入导出', () => {
     // 修改一条 actor 后再导入同一包：merge-keep-existing 应保留修改
     const api = new GameDataApi(storage)
     const write = new FengshenDataService(storage, new DataIntegrityService(storage))
-    await write.save('actors', { id: 'guardian_fire', name: '火护法·已修改', level: 10, stats: {}, skillIds: [] })
+    await write.save('actors', { id: 'yaotu_fire', name: '火护法·已修改', level: 10, stats: {}, skillIds: [] })
 
     const pkgService = new DataPackageService(storage, new DataIntegrityService(storage))
     const result = await pkgService.importPackage(pkg, 'merge-keep-existing')
     expect(result.importedCount).toBe(0) // 全部冲突跳过
     expect(result.skippedCount).toBeGreaterThan(0)
 
-    const actor = await api.getActorById('guardian_fire')
+    const actor = await api.getActorById('yaotu_fire')
     expect(actor?.name).toBe('火护法·已修改')
   })
 
@@ -615,7 +615,7 @@ describe('纯函数', () => {
     expect(keys).toContain('actors.skillIds')
     expect(keys).toContain('skills.steps[].effectId')
     expect(keys).toContain('scenes.enemies[].id')
-    expect(keys).toContain('scenes.guardian.id')
+    expect(keys).toContain('scenes.yaotu.id')
     expect(keys).toContain('scenes.unlockCondition.sceneId')
     expect(keys).toContain('lineups.formationId')
     expect(keys).toContain('lineups.roles[].roleId')
@@ -646,11 +646,15 @@ describe('GameDataApi.listByTable id 排序', () => {
     await storage.set(FENGSHEN_STORE.ACTORS, 'hero_002', { ...validActor, id: 'hero_002', name: '丙' })
 
     const rows = await new GameDataApi(storage).listByTable<{ id: string }>('actors')
-    const nums = rows.map((r) => Number(r.id.match(/(\d+)$/)?.[1] ?? 0))
-    expect([...nums].sort((a, b) => a - b)).toEqual(nums)
+    // 数字感知排序（Intl.Collator numeric）：hero_002 < hero_010 < hero_100，且与无数字后缀 id（yaotu_*）整体有序
+    const ids = rows.map((r) => r.id)
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+    expect([...ids].sort((a, b) => collator.compare(a, b))).toEqual(ids)
+    expect(ids.indexOf('hero_002')).toBeLessThan(ids.indexOf('hero_010'))
+    expect(ids.indexOf('hero_010')).toBeLessThan(ids.indexOf('hero_100'))
   })
 
-  it('无数字后缀 id（seed 常见，如 growth_* / guardian_*）按字典序排列', async () => {
+  it('无数字后缀 id（seed 常见，如 growth_* / yaotu_*）按字典序排列', async () => {
     const storage = new MemoryStorage()
     // 按乱序写入四条 growth（与 seed 写入顺序相反），列表应呈现字典序
     await storage.set(FENGSHEN_STORE.GROWTH, 'growth_speed', { id: 'growth_speed', name: '速度' })

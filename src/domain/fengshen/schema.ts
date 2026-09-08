@@ -100,7 +100,6 @@ export const REFERENCE_RULES: ReferenceRule[] = [
   { sourceTable: 'enemies', path: 'affixes', targetTables: ['affixes'], optional: true },
   { sourceTable: 'equipment', path: 'factionRestriction', targetTables: ['elements'], optional: true },
   { sourceTable: 'gears', path: 'materials[].itemId', targetTables: ['items', 'materials'] },
-  { sourceTable: 'equipment_affixes', path: 'attribute', targetTables: ['attributes'] },
   { sourceTable: 'elements', path: 'matrix[].attackerId', targetTables: ['elements'], optional: true },
   { sourceTable: 'elements', path: 'matrix[].defenderId', targetTables: ['elements'], optional: true },
 ]

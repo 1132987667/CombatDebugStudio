@@ -32,8 +32,8 @@ describe('战斗结束 trace 收尾（battle_end 事件补发 + 落盘）', () =
 
   function startBattle(): string {
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     battleSystem.initialize(allies, enemies)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
@@ -92,8 +92,8 @@ describe('战斗结束 trace 收尾（battle_end 事件补发 + 落盘）', () =
     const traceSpy = vi.spyOn(battleSystem, 'finalizeBattleTrace')
     const bs = battleSystem
     const { allies, enemies } = createTestParticipantsFromConfig(
-      ['guardian_fire'],
-      ['guardian_gold'],
+      ['yaotu_fire'],
+      ['yaotu_gold'],
     )
     bs.initialize(allies, enemies)
     bs.setBattleState(BattleStatus.ACTIVE)

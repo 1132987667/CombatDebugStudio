@@ -60,7 +60,7 @@ describe('方案 B 战斗验证：光环分发', () => {
   it('金护法在战斗开始后应有首领光环 buff', () => {
     if (!auraPassive) return // skip if config not found
 
-    const gold = createParticipantFromEnemy('guardian_gold', ParticipantSide.ENEMY)
+    const gold = createParticipantFromEnemy('yaotu_gold', ParticipantSide.ENEMY)
     if (!gold) return // skip if enemy not found
 
     gold.setModifierProvider(buffSystem)
@@ -83,8 +83,8 @@ describe('方案 B 战斗验证：光环分发', () => {
   it('多个参与者都能获得光环', () => {
     if (!auraPassive) return
 
-    // guardian_gold 和 enemy_079 都有 skill_enemy_079_passive
-    const gold = createParticipantFromEnemy('guardian_gold', ParticipantSide.ENEMY)
+    // yaotu_gold 和 enemy_079 都有 skill_enemy_079_passive
+    const gold = createParticipantFromEnemy('yaotu_gold', ParticipantSide.ENEMY)
     const enemy079 = createParticipantFromEnemy('enemy_079', ParticipantSide.ENEMY)
     if (!gold || !enemy079) return
 

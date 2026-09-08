@@ -47,7 +47,7 @@ describe('SummaryDialog 七层模型完整展示', () => {
   it('L4 判定健康度：攻击/命中/暴击/闪避/抵抗 汇总呈现', async () => {
     const root = await mountDialog()
     const text = root.textContent ?? ''
-    expect(text).toContain('战斗摘要')
+    expect(text).toContain('整场统计')
     expect(text).toContain('判定健康度')
     expect(text).toContain('攻击 2') // demo 2 次行动（ev04 / ev10）
     expect(text).toContain('命中')

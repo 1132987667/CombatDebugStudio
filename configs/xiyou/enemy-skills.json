@@ -5,14 +5,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.8, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.8,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -30,14 +39,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -49,14 +67,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -68,14 +95,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -87,14 +123,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -106,14 +151,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -131,14 +185,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -150,14 +213,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -169,14 +241,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.8, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.8,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -194,14 +275,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -213,14 +303,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -232,14 +331,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -257,14 +365,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -276,14 +393,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -301,14 +427,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -320,14 +455,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -339,14 +483,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -358,14 +511,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -377,14 +539,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -396,14 +567,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -415,14 +595,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -440,14 +629,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -459,14 +657,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -484,14 +691,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -503,14 +719,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -522,14 +747,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -547,14 +781,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -566,14 +809,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -585,14 +837,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -604,14 +865,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -623,14 +893,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -642,14 +921,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -661,14 +949,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -686,14 +983,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -711,14 +1017,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -736,14 +1051,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -755,14 +1079,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -774,14 +1107,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -793,14 +1135,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -812,14 +1163,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -831,14 +1191,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -850,14 +1219,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -875,14 +1253,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -894,14 +1281,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -913,14 +1309,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -932,14 +1337,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -951,14 +1365,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -976,14 +1399,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1001,14 +1433,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1020,14 +1461,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1045,14 +1495,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1070,14 +1529,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1095,14 +1563,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.85, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.85,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1120,14 +1597,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1145,14 +1631,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1164,14 +1659,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1183,14 +1687,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1202,14 +1715,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1227,14 +1749,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1252,14 +1783,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1271,14 +1811,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1290,14 +1839,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1309,14 +1867,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 0.9, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1334,14 +1901,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1353,14 +1929,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1372,14 +1957,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1391,14 +1985,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1410,14 +2013,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1429,14 +2041,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1454,14 +2075,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1473,14 +2103,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1492,14 +2131,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1517,14 +2165,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1536,14 +2193,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1555,14 +2221,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.1, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1574,14 +2249,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.2,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1609,14 +2293,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1644,14 +2337,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1685,14 +2387,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1726,14 +2437,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1767,14 +2487,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.2,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1802,14 +2531,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1837,14 +2575,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -1878,14 +2625,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1913,14 +2669,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1948,14 +2713,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.2,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -1983,14 +2757,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2024,14 +2807,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2065,14 +2857,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -2100,14 +2901,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2141,14 +2951,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2182,14 +3001,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2223,14 +3051,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2264,14 +3101,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2305,14 +3151,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2346,14 +3201,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.2,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -2381,14 +3245,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2422,14 +3295,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -2457,14 +3339,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2498,14 +3389,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2539,14 +3439,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2564,14 +3473,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2605,14 +3523,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2630,14 +3557,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2671,14 +3607,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2696,14 +3641,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2737,14 +3691,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2762,14 +3725,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2803,14 +3775,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -2822,14 +3803,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2863,14 +3853,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2888,7 +3887,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -2905,14 +3908,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2946,14 +3958,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -2971,7 +3992,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -2988,14 +4013,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3029,14 +4063,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -3048,7 +4091,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3065,14 +4112,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.8, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.8,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3106,7 +4162,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3123,14 +4183,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.3, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3148,14 +4217,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 2.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 2.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3189,14 +4267,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -3208,7 +4295,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3231,14 +4322,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3272,14 +4372,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3297,7 +4406,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3320,14 +4433,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3377,14 +4499,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3402,7 +4533,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3419,14 +4554,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3476,14 +4620,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3501,7 +4654,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3524,14 +4681,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3581,14 +4747,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3606,7 +4781,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3623,14 +4802,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3680,14 +4868,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -3699,7 +4896,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3722,14 +4923,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.2, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.2,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3779,14 +4989,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3804,7 +5023,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3821,14 +5044,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3878,14 +5110,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3903,7 +5144,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -3926,14 +5171,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -3983,14 +5237,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4008,7 +5271,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -4025,14 +5292,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4082,14 +5358,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.4, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.4,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4107,7 +5392,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -4124,14 +5413,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4181,14 +5479,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
         }
       }
     ],
@@ -4200,7 +5507,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -4223,14 +5534,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4280,14 +5600,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.7, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.7,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4305,7 +5634,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -4328,14 +5661,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 4.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 4.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4385,14 +5727,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.6, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4410,7 +5761,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -4433,14 +5788,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 3.8, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 3.8,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4490,14 +5854,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4515,7 +5888,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -4538,14 +5915,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 4.0, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 4.0,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4595,14 +5981,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.8, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.8,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4620,7 +6015,11 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 3,
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
+    "selector": {
+      "faction": "self",
+      "strategy": "first",
+      "count": 1
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -4643,14 +6042,23 @@
     "skillType": "small",
     "energyCost": 50,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 1.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 1.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4668,14 +6076,23 @@
     "skillType": "ultimate",
     "energyCost": 150,
     "cooldown": 5,
-    "selector": { "faction": "enemy", "strategy": "all", "count": 3 },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all",
+      "count": 3
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "ratio": 4.5, "attribute": "attack" }]
+          "extraValues": [
+            {
+              "ratio": 4.5,
+              "attribute": "attack"
+            }
+          ]
         }
       },
       {
@@ -4746,5 +6163,301 @@
       }
     ],
     "description": "击杀目标后提升自身攻击3回合。"
+  },
+  {
+    "id": "skill_boss_minor_taoyao_s1",
+    "name": "毒花粉",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 0.8,
+              "attribute": "attack"
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 2
+      }
+    ],
+    "description": "喷洒毒花粉，对目标造成80%攻击力伤害并施加中毒，持续2回合。"
+  },
+  {
+    "id": "skill_boss_minor_taoyao_ult",
+    "name": "百花齐放",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 1.8,
+              "attribute": "attack"
+            }
+          ]
+        }
+      }
+    ],
+    "description": "花瓣风暴席卷全场，对全体敌人造成180%攻击力伤害。"
+  },
+  {
+    "id": "skill_boss_minor_liuyao_s1",
+    "name": "断柳横扫",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "front"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 1.0,
+              "attribute": "attack"
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_slow_heavy",
+        "duration": 2,
+        "probability": 0.2
+      }
+    ],
+    "description": "柳枝横扫前排敌人，造成100%攻击力伤害，20%概率使其速度降低，持续2回合。"
+  },
+  {
+    "id": "skill_boss_minor_liuyao_ult",
+    "name": "断桥残影",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 1.6,
+              "attribute": "attack"
+            }
+          ]
+        }
+      }
+    ],
+    "description": "残影重重，对全体敌人造成160%攻击力伤害。"
+  },
+  {
+    "id": "skill_boss_minor_yanjing_s1",
+    "name": "碎石飞射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "random",
+      "count": 2
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 0.9,
+              "attribute": "attack"
+            }
+          ]
+        }
+      }
+    ],
+    "description": "激射碎石，对随机2个敌人各造成90%攻击力伤害。"
+  },
+  {
+    "id": "skill_boss_minor_yanjing_ult",
+    "name": "山崩地裂",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 2.0,
+              "attribute": "attack"
+            }
+          ]
+        }
+      }
+    ],
+    "description": "大地崩裂，对全体敌人造成200%攻击力伤害。"
+  },
+  {
+    "id": "skill_boss_minor_zhuyao_s1",
+    "name": "毒丝喷射",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 1.1,
+              "attribute": "attack"
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_dot_poison",
+        "duration": 3
+      }
+    ],
+    "description": "喷射毒丝，对目标造成110%攻击力伤害并施加中毒，持续3回合。"
+  },
+  {
+    "id": "skill_boss_minor_zhuyao_ult",
+    "name": "千丝万缕",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 1.7,
+              "attribute": "attack"
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_bind",
+        "duration": 1,
+        "probability": 0.3
+      }
+    ],
+    "description": "蛛网漫天，对全体敌人造成170%攻击力伤害，30%概率束缚1回合。"
+  },
+  {
+    "id": "skill_boss_minor_panseng_s1",
+    "name": "伪佛掌",
+    "skillType": "small",
+    "energyCost": 50,
+    "cooldown": 2,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first",
+      "count": 1
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 1.3,
+              "attribute": "attack"
+            }
+          ]
+        }
+      }
+    ],
+    "description": "掌力沉猛，对目标造成130%攻击力伤害。"
+  },
+  {
+    "id": "skill_boss_minor_panseng_ult",
+    "name": "破戒真言",
+    "skillType": "ultimate",
+    "energyCost": 150,
+    "cooldown": 5,
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all"
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "attackType": "normal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "ratio": 2.2,
+              "attribute": "attack"
+            }
+          ]
+        }
+      }
+    ],
+    "description": "诵动破戒真言，对全体敌人造成220%攻击力伤害。"
   }
 ]

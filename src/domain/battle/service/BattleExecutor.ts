@@ -981,10 +981,13 @@ export class BattleExecutor {
     battle: BattleData,
     deferHitPassives = false,
   ): number {
+    // G2（统一战斗系统 §6.4）：睡眠目标受击该次伤害 ×1.2（先探测，扣血成立后唤醒）
+    const wasSleeping = this.buffSystem.isSleeping(target.id)
+
     // 0. 守护转移检查 — 队友中的守护者（guardian tag buff）代为承受部分伤害
     //    （不动明王「护盾存在时，队友受到的伤害降低 10%，自身承受该伤害的 50%」）
     const redirect = this.resolveDamageRedirect(target, battle)
-    let damageForTarget = finalDamage
+    let damageForTarget = Math.round(finalDamage * (wasSleeping ? 1.2 : 1))
     if (redirect) {
       const totalAfterReduction = finalDamage * (1 - redirect.reduction)
       const toGuardian = Math.round(totalAfterReduction * redirect.percent)
@@ -1004,6 +1007,11 @@ export class BattleExecutor {
     }
 
     if (actualDamage <= 0) return 0
+
+    // G2（统一战斗系统 §6.4）：伤害成立即解除冰冻/睡眠（DOT/触发器伤害同走此处，天然覆盖）
+    if (wasSleeping || this.buffSystem.isCharacterControlled(target.id)) {
+      this.buffSystem.wakeOnDamage(target.id)
+    }
 
     // 2. 向 TriggerEventBus 发射 DAMAGE_TAKEN（驱动反伤/荆棘等 Buff 触发器）
     const eventBus = this.buffSystem.getEventBus()

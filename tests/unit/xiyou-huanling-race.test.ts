@@ -62,7 +62,7 @@ describe('唤灵台 × 斗战西游 初始化竞态', () => {
 
   /** 唤灵台默认阵容（合并 lineups 后）：5 我方护法 + 8 敌方（花妖王/蟹将系列） */
   function huanlingDefaultTeams(): { ally: BattleEntity[]; enemy: BattleEntity[] } {
-    const allyIds = ['guardian_fire', 'guardian_gold', 'guardian_water', 'guardian_wood', 'guardian_earth']
+    const allyIds = ['yaotu_fire', 'yaotu_gold', 'yaotu_water', 'yaotu_wood', 'yaotu_earth']
     const enemyIds = ['enemy_007', 'enemy_001', 'enemy_004', 'enemy_002', 'enemy_016', 'enemy_013', 'enemy_010', 'enemy_015']
     const ally = allyIds.map((id, i) =>
       GameDataProcessor.enemyToParticipant(
@@ -105,8 +105,8 @@ describe('唤灵台 × 斗战西游 初始化竞态', () => {
       for (const role of roles) {
         if (seen.has(role.roleId)) continue
         seen.add(role.roleId)
-        // 唤灵台判据：actors 命中归我方（guardian_* 属 actors 表）、enemies 命中归敌方
-        if (role.roleId.startsWith('guardian_')) allyIds.push(role.roleId)
+        // 唤灵台判据：actors 命中归我方（yaotu_* 属 actors 表）、enemies 命中归敌方
+        if (role.roleId.startsWith('yaotu_')) allyIds.push(role.roleId)
         else enemyIds.push(role.roleId)
       }
     }

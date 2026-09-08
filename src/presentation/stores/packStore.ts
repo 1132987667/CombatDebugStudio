@@ -468,7 +468,8 @@ export const usePackStore = defineStore('pack', () => {
 
   /** 装备对应的槽位键（weapon/armor/helmet/boots/charm/glove）；非装备返回 null */
   function slotKeyOf(itemId: string): GearSlotKey | null {
-    return gearById(itemId)?.slot ?? null
+    // EquipmentData.slot 为 string（引擎口径），此处收窄为背包八槽 union
+    return (gearById(itemId)?.slot as GearSlotKey | undefined) ?? null
   }
 
   /** 当前槽位已穿戴的装备定义（基础属性，不含强化/词缀） */

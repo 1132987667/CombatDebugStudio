@@ -37,7 +37,7 @@ export function createTestBattleParticipants() {
 
 /**
  * 从真实敌人配置创建对战参与者（替代 createTestBattleParticipants）。
- * 默认阵容：guardian_fire vs guardian_gold。
+ * 默认阵容：yaotu_fire vs yaotu_gold。
  */
 export function createBattleParticipantsFromConfig(
   allyIds?: string[],

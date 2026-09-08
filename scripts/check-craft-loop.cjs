@@ -86,8 +86,15 @@ for (const e of equipment) {
   }
 }
 for (const r of recipes) {
-  for (const name of materialNames(r.materials)) {
-    if (!nameToId.has(name)) report.missingMaterials.push(`${r.id}.materials → ${name}`)
+  // 新格式 materials 为 [{ itemId, count }]；旧格式为 "名×N + 名×M" 文本（残留兼容）
+  if (Array.isArray(r.materials)) {
+    for (const m of r.materials) {
+      if (!itemIds.has(m.itemId)) report.missingMaterials.push(`${r.id}.materials → ${m.itemId}`)
+    }
+  } else {
+    for (const name of materialNames(r.materials)) {
+      if (!nameToId.has(name)) report.missingMaterials.push(`${r.id}.materials → ${name}`)
+    }
   }
 }
 

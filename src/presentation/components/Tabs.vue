@@ -9,17 +9,11 @@
 * 版本: 2.0.0
 -->
 <script lang="ts">
-// NOTE: 类型导出必须放在独立 script 块 —— <script setup> 内的 export 需要
-// Vue 3.3+ 编译器才稳定（依赖声明 ^3.5.x，已满足）。
-export interface TabItem {
-  /** 页签唯一标识，同时作为内容插槽名 */
-  id: string
-  /** 显示文本 */
-  label: string
-  /** 计数徽章（定义即显示，含 0）；数值变化时触发弹跳动画 */
-  count?: number
-  /** 禁用该页签（点击与键盘导航均跳过） */
-  disabled?: boolean
+// NOTE: TabItem 定义在 tabs-types.ts（strict typecheck 不编译 .vue），此处 re-export 供 SFC 消费方
+export type { TabItem } from './tabs-types'
+import type { TabItem } from './tabs-types'
+/* 原 TabItem 结构（保留注释说明字段语义）：
+   id: 页签唯一标识/插槽名；label: 显示文本；count?: 计数徽章；disabled?: 禁用
 }
 
 /** 模块级实例序号（Vue 3.5 已提供 useId，此处用自增 seq 保持无环境假设） */

@@ -47,6 +47,28 @@ vi.mock('@/presentation/modules/yanjie/xiyou/components/PackItemCard.vue', () =>
 }))
 
 import PackPanel from '@/presentation/modules/yanjie/xiyou/components/PackPanel.vue'
+// PackPanel/PackPane 依赖 main.ts 全局注册的通用组件（Tabs/TacticalInput 等），测试环境同样注册
+import {
+  Button,
+  NumericStepper,
+  ToggleSwitch,
+  RadioButtonGroup,
+  Tabs,
+  SpeedSelector,
+  TacticalInput,
+  TacticalSelect,
+} from '@/presentation/components'
+
+const globalComponents: Record<string, unknown> = {
+  Button,
+  NumericStepper,
+  ToggleSwitch,
+  RadioButtonGroup,
+  Tabs,
+  SpeedSelector,
+  TacticalInput,
+  TacticalSelect,
+}
 
 let app: App | null = null
 let host: HTMLElement | null = null
@@ -57,6 +79,9 @@ function mountPackPanel(): Promise<HTMLElement> {
   const pinia = createPinia()
   app = createApp({ render: () => h(PackPanel) })
   app.use(pinia)
+  for (const [name, component] of Object.entries(globalComponents)) {
+    app.component(name, component as never)
+  }
   app.mount(host)
   return new Promise((r) => setTimeout(() => r(host!), 30))
 }

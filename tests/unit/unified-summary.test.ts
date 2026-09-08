@@ -99,7 +99,7 @@ describe('summarizeBattle（战斗摘要统计）', () => {
   it('L6 被动触发：demo 契约字段（verdict/passiveId/owner）统计触发次数', () => {
     const sum = summarizeBattle(createDemoArchive())
     expect(sum.passives).toHaveLength(1)
-    expect(sum.passives[0].passiveId).toBe('buff_guardian_revenge_rage')
+    expect(sum.passives[0].passiveId).toBe('buff_yaotu_revenge_rage')
     expect(sum.passives[0].name).toBe('复仇怒火')
     expect(sum.passives[0].owner).toBe('火护法')
     expect(sum.passives[0].triggered).toBe(1)

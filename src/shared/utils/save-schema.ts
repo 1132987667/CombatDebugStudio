@@ -59,6 +59,9 @@ export interface SaveEquipmentState {
   boots: string | null
   charm: string | null
   glove: string | null
+  /** 法宝/神器槽（#22 八槽扩展；旧档无此字段视为空） */
+  artifact?: string | null
+  relic?: string | null
 }
 
 /**

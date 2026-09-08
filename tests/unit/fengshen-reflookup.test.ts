@@ -1,7 +1,7 @@
 /**
  * GameDataApi 引用字典 / 元素选项测试（纯逻辑可运行检查）
  *
- * 覆盖：loadRefNameIndex 全局 id→中文 字典（含 elements 元素、guardian_* 跨表同 id）、
+ * 覆盖：loadRefNameIndex 全局 id→中文 字典（含 elements 元素、yaotu_* 跨表同 id）、
  *       listElementDefs 元素选项（编辑下拉数据源修复）。
  *
  * 运行: npx vitest run tests/unit/fengshen-reflookup.test.ts
@@ -59,7 +59,7 @@ describe('GameDataApi 引用字典 / 元素选项', () => {
 
     expect(idx['crane_wing']).toBe('鹤翼阵')
     expect(idx['growth_balanced']).toBe('均衡型')
-    expect(idx['guardian_fire']).toBe('火护法')
+    expect(idx['yaotu_fire']).toBe('火护法')
     expect(idx['enemy_001']).toBe('花妖')
     expect(idx['fire']).toBe('火')
     expect(idx['buff_hit_reduction']).toBeDefined()

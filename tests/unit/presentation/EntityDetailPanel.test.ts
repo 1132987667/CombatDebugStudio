@@ -92,7 +92,7 @@ describe('EntityDetailPanel 只读详情', () => {
 
   it('stats 属性面板：label 用元数据 displayName，百分比属性追加 %', () => {
     const root = mount({ id: 'h1', name: '甲', stats: { maxHealth: 100, attack: 5, critRate: 20 } })
-    expect(root.textContent).toContain('最大气血值')
+    expect(root.textContent).toContain('最大气血')
     expect(root.textContent).toContain('100')
     expect(root.textContent).toContain('攻击力')
     expect(root.textContent).toContain('5')

@@ -144,11 +144,11 @@ describe('createDebugCategories', () => {
     }
   })
 
-  it('battle_grind 为多输入（场景 + 次数）', () => {
+  it('battle_grind 为多输入（场景 + 敌人 + 次数）', () => {
     const battle = createDebugCategories(makeEnv()).find((c) => c.id === 'battle') as DebugCategory
     const grind = battle.groups.flatMap((g) => g.actions).find((a) => a.id === 'battle_grind')!
     expect(Array.isArray(grind.input)).toBe(true)
-    expect((grind.input as unknown[]).length).toBe(2)
+    expect((grind.input as unknown[]).length).toBe(3)
   })
 
   it('状态分类覆盖等级 / 金钱 / 经验 / 成长 / 危险操作 / 诊断', () => {
@@ -183,7 +183,8 @@ describe('刷关模拟（battle_grind）真实行为', () => {
     const invBefore = Object.keys(pack.inventory).length
     // random 返回 0 保证掉落命中（确定性断言），也固定经验/金钱取区间下限
     vi.spyOn(Math, 'random').mockReturnValue(0)
-    const r = await grind.execute({ scene: firstScene.id, count: '5' })
+    const firstEnemy = firstScene.enemies[0]!.id
+    const r = await grind.execute({ scene: firstScene.id, enemy: firstEnemy, count: '5' })
     expect(r.success).toBe(true)
     expect(env.player.player.exp).toBeGreaterThanOrEqual(expBefore)
     expect(env.player.currency.money).toBeGreaterThanOrEqual(goldBefore)
@@ -216,12 +217,13 @@ describe('刷关模拟（battle_grind）真实行为', () => {
     // random 返回 0.99（正常会 miss 低概率掉落），锁定后仍全部命中
     pack.setDebugForceDrops(true)
     vi.spyOn(Math, 'random').mockReturnValue(0.99)
-    const locked = await grind.execute({ scene: firstScene.id, count: '5' })
+    const firstEnemy = firstScene.enemies[0]!.id
+    const locked = await grind.execute({ scene: firstScene.id, enemy: firstEnemy, count: '5' })
     const lockedSummary = locked.payload as { dropVariety: number }
     const lockedVariety = lockedSummary.dropVariety
     // 关闭锁定，同样 random=0.99 → 低概率掉落 miss
     pack.setDebugForceDrops(false)
-    const unlocked = await grind.execute({ scene: firstScene.id, count: '5' })
+    const unlocked = await grind.execute({ scene: firstScene.id, enemy: firstEnemy, count: '5' })
     const unlockedSummary = unlocked.payload as { dropVariety: number }
     // 场景存在 >0 概率掉落时，锁定态掉落种类应不少于非锁定态
     expect(lockedVariety).toBeGreaterThanOrEqual(unlockedSummary.dropVariety)

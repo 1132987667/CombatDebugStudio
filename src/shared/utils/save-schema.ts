@@ -34,7 +34,7 @@ export interface SavePlayerState {
   base_atk: [number, number]
   /** 金钱（通用货币；v6 收缩自 gold/silver/jade 三币合并，curr_001 换算 1:1/×100/×1000） */
   money: number
-  /** 仙缘（药园催熟资源，战斗胜利获得；v6 收缩自 lingyun；旧档缺省，恢复时兜底初始值） */
+  /** 灵韵（药园催熟资源，战斗胜利获得；v6 收缩自 lingyun；旧档缺省，恢复时兜底初始值） */
   xianyuan?: number
   statBonuses?: Record<string, number>
 }

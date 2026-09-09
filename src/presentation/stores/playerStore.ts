@@ -30,7 +30,7 @@ export const usePlayerStore = defineStore('player', () => {
   })
 
   /** 玩家货币（运行时状态；金钱 = 原铜钱12880 + 银两36×100 + 灵石520×1000 等值换算；
-   *  仙缘初始 100 ≈ 5 次一阶催熟，保证新手首日能体验"种1收3"循环） */
+   *  灵韵初始 100 ≈ 5 次一阶催熟，保证新手首日能体验"种1收3"循环） */
   const currency = reactive<XiyouCurrency>({ money: 536480, xianyuan: 100 })
 
   /** 玩家属性值快照（实时计算：player 基础 + 等级成长 + 加点 + 流派加成；缺省走领域默认值 getAttrDv） */

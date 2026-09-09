@@ -186,7 +186,7 @@ export const xiyouSaveBridge: SaveStatePort = {
     player.statPoints.agility = bonuses?.agility ?? 0
     player.statPoints.spirit = bonuses?.spirit ?? 0
 
-    // currency（v6 货币收缩：旧档 gold/silver/jade 按 curr_001 换算 1:1/×100/×1000 合并为金钱；lingyun → 仙缘）
+    // currency（v6 货币收缩：旧档 gold/silver/jade 按 curr_001 换算 1:1/×100/×1000 合并为金钱；lingyun → 灵韵）
     const legacyCurrency = data.player as SavePlayerState & { gold?: number; silver?: number; jade?: number; lingyun?: number }
     if (typeof data.player.money === 'number') {
       player.currency.money = data.player.money
@@ -216,7 +216,7 @@ export const xiyouSaveBridge: SaveStatePort = {
       }
     }
     pack.inventory = merged
-    // v5 药园（仙缘催熟制）迁移：上面整表覆盖会抹掉 packStore.load 时补发的启动草药，覆盖后需再补一次
+    // v5 药园（灵韵催熟制）迁移：上面整表覆盖会抹掉 packStore.load 时补发的启动草药，覆盖后需再补一次
     pack.migrateV5StarterHerbs()
 
     if (hasInstances) {

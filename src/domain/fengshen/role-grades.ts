@@ -24,9 +24,9 @@ export const ENEMY_ROLE_LABELS: Record<EnemyRole, string> = {
 /** 品阶倍率（敌人经验与金钱基准表 roleMultiplier 的种子/默认值） */
 export const ENEMY_ROLE_MULTIPLIERS: Record<EnemyRole, number> = {
   xiaoyao: 1.0,
-  yaobing: 1.15,
+  yaobing: 1.1,
   yaotu: 1.2,
-  yaokui: 2.0,
-  yaowang: 3.0,
-  yaozun: 5.0,
+  yaokui: 1.3,
+  yaowang: 1.4,
+  yaozun: 1.5,
 }

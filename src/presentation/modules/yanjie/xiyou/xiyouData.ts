@@ -467,7 +467,7 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(alchemyRecipes, 'cave', 'alchemyRecipes')
   aIn(forgeRecipes, 'cave', 'forgeRecipes')
   aIn(talismanRecipes, 'cave', 'talismanRecipes')
-  // NOTE: gardenCrops 不从存档恢复——仙缘催熟制后它是纯静态设计数值（configs/xiyou/cave.json 唯一权威），
+  // NOTE: gardenCrops 不从存档恢复——灵韵催熟制后它是纯静态设计数值（configs/xiyou/cave.json 唯一权威），
   //       旧档的 3 作物快照会盖住新配置（无 xianyuan/input 字段直接让药园不可用）。
   //       天花板：若未来给作物加运行时状态（如生长进度），需改为按 id 合并而非整表恢复。
   // aIn(gardenCrops, 'cave', 'gardenCrops')

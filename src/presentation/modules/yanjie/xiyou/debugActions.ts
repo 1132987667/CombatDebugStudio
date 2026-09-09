@@ -401,7 +401,7 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 dropVariety: drops.size,
               }
               return ok(
-                `「${enemyName}」×${n}：经验+${totalExp} · 金钱+${totalMoney} · 仙缘+${totalXianyuan} · 升级${totalLevel} · 掉落${drops.size}种`,
+                `「${enemyName}」×${n}：经验+${totalExp} · 金钱+${totalMoney} · 灵韵+${totalXianyuan} · 升级${totalLevel} · 掉落${drops.size}种`,
                 summary,
               )
             },

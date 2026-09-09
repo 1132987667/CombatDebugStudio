@@ -8,7 +8,7 @@
       </h3>
       <div class="xy-cave-top-coins">
         <span class="xy-cave-coin">金钱 {{ pack.currency.money.toLocaleString() }}</span>
-        <span class="xy-cave-coin xy-cave-coin--gold">仙缘 {{ pack.currency.xianyuan }}</span>
+        <span class="xy-cave-coin xy-cave-coin--gold">灵韵 {{ pack.currency.xianyuan }}</span>
       </div>
     </div>
 

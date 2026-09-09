@@ -103,7 +103,7 @@ export function formatEffect(effect: string, level: number): string {
 }
 
 /** 升星残魂点需求：升到 targetStar 星的本次消耗 = 配置累计值差值（cost_by_star 3/6/9 → 每星 3 点）。
- *  点源 = 升星石（上3/中2/下1 点）+ 装备残魂 decomp_soul（1 点/个）+ 同名未穿戴装备（1 点/件），可混合支付（§21 装备养成操作与材料）。 */
+ *  点源 = 破境耀星石（上3/中2/下1 点）+ 兵解残魄晶 decomp_soul（1 点/个）+ 同名未穿戴装备（1 点/件），可混合支付（§21 装备养成操作与材料）。 */
 const STAR_COST_BY_STAR = (equipmentSystemJson as unknown as { star_system: { cost_by_star: Record<string, number> } }).star_system.cost_by_star
 
 export function starCost(targetStar: number): number {
@@ -121,7 +121,7 @@ export function starFactor(star: number): number {
   return STAR_FACTOR[Math.min(Math.max(star, 0), STAR_MAX)]!
 }
 
-/** 升星石点数（附录B 升星石·上/中/下 → 3/2/1 点，贪心支付不溢出） */
+/** 破境耀星石点数（附录B 破境耀星石·上/中/下 → 3/2/1 点，贪心支付不溢出） */
 export const STAR_STONES: ReadonlyArray<readonly [string, number]> = [
   ['star_up_high', 3],
   ['star_up_mid', 2],
@@ -141,8 +141,8 @@ export const WASH_MATERIALS: Record<WashMode, string> = {
 
 export const WASH_MATERIAL_NAMES: Record<WashMode, string> = {
   normal: '洗练石',
-  directed: '定向洗练石',
-  locked: '锁词条符',
+  directed: '天衍定元玉',
+  locked: '九宫锁灵印',
 }
 
 /** 洗练金钱：每档统一 200 金/次 */

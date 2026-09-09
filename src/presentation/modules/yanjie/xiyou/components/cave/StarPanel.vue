@@ -38,7 +38,7 @@
             残魂点 {{ pointPool }} / {{ pointNeed }}
             <span v-if="pointPool < pointNeed" class="xy-cave-mat__tag">不足</span>
           </span>
-          <span class="xy-cave-card__desc">升星石 · 装备残魂 · 同名装备（各 1 点，升星石上/中/下 = 3/2/1 点）</span>
+          <span class="xy-cave-card__desc">破境耀星石 · 兵解残魄晶 · 同名装备（各 1 点，破境耀星石上/中/下 = 3/2/1 点）</span>
         </div>
         <div :class="{ 'xy-cave-ripple': rippling, 'xy-cave-shake': shaking }">
           <button type="button" class="xy-cave-action" :disabled="!canStar" @click="doStar">

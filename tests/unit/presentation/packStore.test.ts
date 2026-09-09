@@ -720,7 +720,7 @@ describe("装备制造与强化（实例化）", () => {
     // t3 流云剑（itemLevel 25，核心攻击 ≥34）：t1 低值 +5% 会被整数取整吞掉，基数高才可观测
     pack.addItem("wp_t3_light_01", 2)
     pack.equip("wp_t3_light_01")
-    pack.addItem("decomp_soul", 3) // 装备残魂 ×3 = 3 点
+    pack.addItem("decomp_soul", 3) // 兵解残魄晶 ×3 = 3 点
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(pack.starGear("weapon")).toBe(true)
     expect(pack.equipped.weapon?.star).toBe(1)
@@ -730,7 +730,7 @@ describe("装备制造与强化（实例化）", () => {
     expect(atk1).toBeGreaterThan(atk0) // 1 星 +5% 基础属性
   })
 
-  it("升星同名装备兜底支付：无残魂/升星石时消耗同名 3 件（1 点/件）", async () => {
+  it("升星同名装备兜底支付：无残魂/破境耀星石时消耗同名 3 件（1 点/件）", async () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_mid_01")
@@ -740,7 +740,7 @@ describe("装备制造与强化（实例化）", () => {
     expect(pack.countOf("wp_t1_mid_01")).toBe(0)
   })
 
-  it("升星石支付：升星石·上 1 颗 = 3 点，不消耗同名与残魂", async () => {
+  it("破境耀星石支付：破境耀星石·上 1 颗 = 3 点，不消耗同名与残魂", async () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_mid_01")

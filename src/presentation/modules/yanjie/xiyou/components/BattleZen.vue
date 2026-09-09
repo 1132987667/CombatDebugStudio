@@ -79,7 +79,7 @@
       <div class="xy-run-loot">
         <span class="xy-run-gain">经验 +{{ lastSettle.exp }}</span>
         <span class="xy-run-gain">金钱 +{{ lastSettle.money }}</span>
-        <span v-if="lastSettle.xianyuan > 0" class="xy-run-gain">仙缘 +{{ lastSettle.xianyuan }}</span>
+        <span v-if="lastSettle.xianyuan > 0" class="xy-run-gain">灵韵 +{{ lastSettle.xianyuan }}</span>
         <span v-for="(d, i) in lastSettle.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
         }}</span>
         <span v-if="!lastSettle.drops.length" class="xy-run-meta">本场无掉落</span>
@@ -98,7 +98,7 @@
       <div class="xy-run-loot">
         <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
         <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
-        <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">仙缘 +{{ run.totals.xianyuan }}</span>
+        <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">灵韵 +{{ run.totals.xianyuan }}</span>
         <span v-for="(d, i) in run.totals.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
         }}</span>
       </div>
@@ -512,7 +512,7 @@ function onBattleEnded(data: BattleEndedEventData): void {
       range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
     const exp = roll(reward.exp)
     const money = roll(reward.money)
-    // 仙缘：按本节点敌方分级聚合（§10.1，战斗胜利获得，药园催熟资源）
+    // 灵韵：按本节点敌方分级聚合（§10.1，战斗胜利获得，药园催熟资源）
     const xianyuan = xianyuanForEnemyIds(node?.enemyIds ?? [])
     if (exp > 0) player.gainExp(exp)
     if (money > 0) player.gainCurrency('money', money)

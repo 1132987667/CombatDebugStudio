@@ -191,6 +191,13 @@
     "source": "守护者掉落"
   },
   {
+    "id": "inherit_stone",
+    "name": "强化传承石",
+    "type": "功能道具",
+    "rarity": 4,
+    "source": "三大BOSS掉落(25%)"
+  },
+  {
     "id": "decomp_hammer",
     "name": "分解锤",
     "type": "分解",

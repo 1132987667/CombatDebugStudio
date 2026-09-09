@@ -248,7 +248,7 @@ export function rewardForEnemyIds(enemyIds: string[]): { money: [number, number]
   return { money: [g0, g1], exp: [e0, e1] }
 }
 
-/** 敌人分级 → 战胜仙缘（六档：小妖 2 / 妖兵 5 / 妖徒 10 / 妖魁·妖王（BOSS）50 / 妖尊 150） */
+/** 敌人分级 → 战胜灵韵（六档：小妖 2 / 妖兵 5 / 妖徒 10 / 妖魁·妖王（BOSS）50 / 妖尊 150） */
 const ROLE_XIANYUAN: Record<string, number> = {
   xiaoyao: 2,
   yaobing: 5,
@@ -258,7 +258,7 @@ const ROLE_XIANYUAN: Record<string, number> = {
   yaozun: 150,
 }
 
-/** 按敌方 id 列表聚合战斗胜利仙缘（药园催熟资源；多场推进的逐场结算口径） */
+/** 按敌方 id 列表聚合战斗胜利灵韵（药园催熟资源；多场推进的逐场结算口径） */
 export function xianyuanForEnemyIds(enemyIds: string[]): number {
   let sum = 0
   for (const id of enemyIds) {

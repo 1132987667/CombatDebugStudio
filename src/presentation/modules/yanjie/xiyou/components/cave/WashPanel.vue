@@ -42,10 +42,10 @@
           <span v-if="!hasMat('normal')" class="xy-cave-mat__tag">不足</span>
         </span>
         <span class="xy-cave-mat" :class="{ 'is-low': !hasMat('directed') }" v-if="washModes.directed">
-          定向洗练石 ×1（持 {{ matCount('directed') }}）
+          天衍定元玉 ×1（持 {{ matCount('directed') }}）
         </span>
         <span class="xy-cave-mat" :class="{ 'is-low': !hasMat('locked') }" v-if="washModes.locked">
-          锁词条符 ×1（持 {{ matCount('locked') }}）
+          九宫锁灵印 ×1（持 {{ matCount('locked') }}）
         </span>
         <span class="xy-cave-mat">金钱 {{ WASH_COST_GOLD }}（每次）</span>
       </div>

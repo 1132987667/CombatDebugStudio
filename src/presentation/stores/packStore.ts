@@ -375,7 +375,7 @@ export const usePackStore = defineStore('pack', () => {
           // v6 货币收缩迁移：旧档铜钱/银两/灵石按 curr_001 换算（1:1 / ×100 / ×1000）合并为金钱
           currency.money = (c.copper ?? 0) + (c.silver ?? 0) * 100 + (c.jade ?? 0) * 1000
         }
-        // 旧档无仙缘字段（灵韵/缺省）时保持初始值，让老玩家同样能体验药园催熟
+        // 旧档无灵韵字段（灵韵/缺省）时保持初始值，让老玩家同样能体验药园催熟
         currency.xianyuan = c.xianyuan ?? c.lingyun ?? currency.xianyuan
       }
       // NOTE: v1 旧档 equipped 为槽位 → itemId；升级为实例（无词缀、enhance 0、凡品）。v2 起存实例。
@@ -477,7 +477,7 @@ export const usePackStore = defineStore('pack', () => {
   let initialized = false
 
   /**
-   * v5 药园（仙缘催熟制）迁移：种子体系移除后，v4 旧档既没有启动草药也拿不到种子——补发一阶启动草药
+   * v5 药园（灵韵催熟制）迁移：种子体系移除后，v4 旧档既没有启动草药也拿不到种子——补发一阶启动草药
    * （对齐 pack.json 初始量）并清理 seed_* 残留条目。二阶以上母株靠对应场景关卡草药掉落
    * （enemies.json drops，"杀敌即成长"），不在此补发。
    * NOTE: restore 会用主存档整表覆盖 inventory（抹掉 load 时补的株数），覆盖后需再调一次；
@@ -663,7 +663,7 @@ export const usePackStore = defineStore('pack', () => {
 
   /**
    * 升星当前槽位装备：残魂点支付（每星 3 点，累计 3/6/9）→ 星级 +1（§21 装备养成操作与材料）
-   * 点源混合支付，优先级：升星石（上3/中2/下1，贪心）→ 装备残魂（1 点/个）→ 同名未穿戴装备（1 点/件，被消耗）
+   * 点源混合支付，优先级：破境耀星石（上3/中2/下1，贪心）→ 兵解残魄晶（1 点/个）→ 同名未穿戴装备（1 点/件，被消耗）
    * NOTE: 升星只增强基础属性（+5%/+10%/+10% 累计 25%），不改词条内容/数量
    */
   function starGear(slot: GearSlotKey): boolean {
@@ -680,7 +680,7 @@ export const usePackStore = defineStore('pack', () => {
     }
     const need = starCost(cur + 1)
     if (starPointsAvailable(inst.itemId) < need) {
-      notification.toast(`残魂点不足（需 ${need} 点：升星石 / 装备残魂 / 同名装备均可）`, 'warning')
+      notification.toast(`残魂点不足（需 ${need} 点：破境耀星石 / 兵解残魄晶 / 同名装备均可）`, 'warning')
       return false
     }
     consumeStarPoints(inst.itemId, need)
@@ -690,7 +690,7 @@ export const usePackStore = defineStore('pack', () => {
     return true
   }
 
-  /** 升星可用残魂点：升星石（上3/中2/下1）+ 装备残魂 decomp_soul（1/个）+ 同名未穿戴装备（1/件） */
+  /** 升星可用残魂点：破境耀星石（上3/中2/下1）+ 兵解残魄晶 decomp_soul（1/个）+ 同名未穿戴装备（1/件） */
   function starPointsAvailable(itemId: string): number {
     const stonePts = STAR_STONES.reduce((sum, [id, pts]) => sum + (inventory.value[id] ?? 0) * pts, 0)
     const souls = inventory.value['decomp_soul'] ?? 0
@@ -1087,8 +1087,8 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 种植（仙缘催熟制）：空置（且冷却已结束）地块投入 input 株作物 + 仙缘一次催熟，种下即可收获。
-   * 草药需背包先有 1 株（种 1 收多，§10.1 产量表）；灵植（灵芝/朱果/仙桃）无来源不投入，只耗仙缘。
+   * 种植（灵韵催熟制）：空置（且冷却已结束）地块投入 input 株作物 + 灵韵一次催熟，种下即可收获。
+   * 草药需背包先有 1 株（种 1 收多，§10.1 产量表）；灵植（灵芝/朱果/仙桃）无来源不投入，只耗灵韵。
    */
   function plantCrop(plotIdx: number, cropId: string, now = Date.now()): boolean {
     const plot = garden.value[plotIdx]
@@ -1112,7 +1112,7 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     if (currency.xianyuan < crop.xianyuan) {
-      notification.toast(`仙缘不足（需 ${crop.xianyuan}，战斗胜利可获得）`, 'warning')
+      notification.toast(`灵韵不足（需 ${crop.xianyuan}，战斗胜利可获得）`, 'warning')
       return false
     }
     if (inputCount > 0) removeItem(crop.id, inputCount)

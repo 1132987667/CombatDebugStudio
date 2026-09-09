@@ -87,7 +87,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
             </div>
           </div>
           <p class="xy-panel-hint">
-            金钱 {{ pack.currency.money.toLocaleString() }} · 仙缘 {{ pack.currency.xianyuan }}
+            金钱 {{ pack.currency.money.toLocaleString() }} · 灵韵 {{ pack.currency.xianyuan }}
           </p>
         </div>
       </template>

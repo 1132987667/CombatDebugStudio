@@ -1,9 +1,9 @@
 <template>
   <div>
-    <!-- 仙缘（催熟资源，战斗胜利获得） -->
-    <div class="xy-garden-bank" role="status" aria-label="当前仙缘">
-      <span class="xy-garden-bank__value">仙缘 {{ pack.currency.xianyuan }}</span>
-      <span class="xy-garden-bank__hint">投入作物与仙缘催熟，种 1 株收多株；仙缘靠战斗胜利积累</span>
+    <!-- 灵韵（催熟资源，战斗胜利获得） -->
+    <div class="xy-garden-bank" role="status" aria-label="当前灵韵">
+      <span class="xy-garden-bank__value">灵韵 {{ pack.currency.xianyuan }}</span>
+      <span class="xy-garden-bank__hint">投入作物与灵韵催熟，种 1 株收多株；灵韵靠战斗胜利积累</span>
     </div>
 
     <!-- 作物选择 -->
@@ -24,7 +24,7 @@
           {{ c.name }}
           <span v-if="needInput(c)" class="xy-garden-seed__stock">存{{ pack.countOf(c.id) }}</span>
         </span>
-        <span class="xy-garden-seed__cost">仙缘{{ c.xianyuan }} · 收{{ c.yield }}</span>
+        <span class="xy-garden-seed__cost">灵韵{{ c.xianyuan }} · 收{{ c.yield }}</span>
       </button>
     </div>
 
@@ -93,7 +93,7 @@ function canPlant(c: XiyouGardenCrop): boolean {
 }
 
 function plantBlockReason(c: XiyouGardenCrop): string {
-  if (pack.currency.xianyuan < c.xianyuan) return `仙缘不足（需 ${c.xianyuan}）`
+  if (pack.currency.xianyuan < c.xianyuan) return `灵韵不足（需 ${c.xianyuan}）`
   if (needInput(c) && pack.countOf(c.id) < (c.input ?? 0)) return `「${c.name}」数量不足`
   return ''
 }

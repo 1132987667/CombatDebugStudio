@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "物品主键索引：全部物品的唯一 ID 注册表。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / wash_ 洗炼 / reforge_ 重铸 / inherit_ 传承 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣甲 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/glove）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册。装备经 equipment.json legacyIds 映射。",
+  "description": "物品主键索引：全部物品的唯一 ID 注册表。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / wash_ 洗炼 / reforge_ 重铸 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣甲 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/glove）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册。装备经 equipment.json legacyIds 映射。",
   "items": [
     {
       "id": "mat_taomu",
@@ -1518,7 +1518,7 @@
       "name": "止血草",
       "type": "草药",
       "rarity": 1,
-      "source": "药园种植（仙缘20）",
+      "source": "药园种植（灵韵20）",
       "description": "普通的止血草药",
       "value": 8,
       "usage": "炼制疗伤丹"
@@ -1528,7 +1528,7 @@
       "name": "清心叶",
       "type": "草药",
       "rarity": 1,
-      "source": "药园种植（仙缘20）",
+      "source": "药园种植（灵韵20）",
       "description": "清心凝神的灵叶",
       "value": 8,
       "usage": "炼制解毒散"
@@ -1538,7 +1538,7 @@
       "name": "水灵参",
       "type": "草药",
       "rarity": 2,
-      "source": "药园种植（仙缘60）",
+      "source": "药园种植（灵韵60）",
       "description": "蕴含水灵气的参",
       "value": 20,
       "usage": "炼制大疗伤丹/聚气丹"
@@ -1548,7 +1548,7 @@
       "name": "铁皮石斛",
       "type": "草药",
       "rarity": 2,
-      "source": "药园种植（仙缘60）",
+      "source": "药园种植（灵韵60）",
       "description": "质地如铁的石斛",
       "value": 20,
       "usage": "炼制铁壁丹/固本丹"
@@ -1558,7 +1558,7 @@
       "name": "赤血藤",
       "type": "草药",
       "rarity": 3,
-      "source": "药园种植（仙缘120）",
+      "source": "药园种植（灵韵120）",
       "description": "赤红如血的灵藤",
       "value": 40,
       "usage": "炼制强体丹/锐锋丹"
@@ -1568,7 +1568,7 @@
       "name": "紫猴花",
       "type": "草药",
       "rarity": 3,
-      "source": "药园种植（仙缘120）",
+      "source": "药园种植（灵韵120）",
       "description": "紫色灵猴栖息的奇花",
       "value": 40,
       "usage": "炼制疾风丹/轻身丹"
@@ -1578,7 +1578,7 @@
       "name": "幽兰草",
       "type": "草药",
       "rarity": 4,
-      "source": "药园种植（仙缘240）",
+      "source": "药园种植（灵韵240）",
       "description": "幽谷深兰的灵草",
       "value": 80,
       "usage": "炼制净化丹"
@@ -1588,7 +1588,7 @@
       "name": "鬼面菇",
       "type": "草药",
       "rarity": 4,
-      "source": "药园种植（仙缘240）",
+      "source": "药园种植（灵韵240）",
       "description": "状如鬼面的毒菇",
       "value": 80,
       "usage": "炼制破障丹/凝血丹"
@@ -1598,7 +1598,7 @@
       "name": "九叶灵芝",
       "type": "草药",
       "rarity": 5,
-      "source": "药园种植（仙缘600）",
+      "source": "药园种植（灵韵600）",
       "description": "九叶灵芝，千年一遇",
       "value": 200,
       "usage": "炼制九转金丹/超疗伤丹"
@@ -1745,7 +1745,7 @@
     },
     {
       "id": "star_up_low",
-      "name": "升星石·下",
+      "name": "破境耀星石·下",
       "type": "升星",
       "rarity": 2,
       "source": "场景BOSS首杀",
@@ -1755,7 +1755,7 @@
     },
     {
       "id": "star_up_mid",
-      "name": "升星石·中",
+      "name": "破境耀星石·中",
       "type": "升星",
       "rarity": 3,
       "source": "三大BOSS掉落(30%)",
@@ -1765,7 +1765,7 @@
     },
     {
       "id": "star_up_high",
-      "name": "升星石·上",
+      "name": "破境耀星石·上",
       "type": "升星",
       "rarity": 4,
       "source": "最终BOSS掉落(20%)",
@@ -1795,7 +1795,7 @@
     },
     {
       "id": "wash_directed",
-      "name": "定向洗练石",
+      "name": "天衍定元玉",
       "type": "洗练",
       "rarity": 3,
       "source": "关卡4-5 BOSS掉落(20%)",
@@ -1805,7 +1805,7 @@
     },
     {
       "id": "wash_lock",
-      "name": "锁词条符",
+      "name": "九宫锁灵印",
       "type": "洗练",
       "rarity": 3,
       "source": "隐藏BOSS掉落(15%)",
@@ -1815,7 +1815,7 @@
     },
     {
       "id": "reforge_core",
-      "name": "重铸之核",
+      "name": "混沌洗髓核",
       "type": "洗练",
       "rarity": 4,
       "source": "最终BOSS掉落(10%)",
@@ -1925,7 +1925,7 @@
     },
     {
       "id": "wash_extract",
-      "name": "词条萃取液",
+      "name": "太古汲灵符",
       "type": "功能道具",
       "rarity": 5,
       "source": "隐藏BOSS极低概率(5%)/分解神品装备",
@@ -1934,18 +1934,8 @@
       "usage": "终局定制"
     },
     {
-      "id": "inherit_stone",
-      "name": "强化传承石",
-      "type": "功能道具",
-      "rarity": 4,
-      "source": "三大BOSS掉落(25%)",
-      "description": "将强化等级从旧装备转移到新装备",
-      "value": 400,
-      "usage": "装备传承"
-    },
-    {
       "id": "decomp_soul",
-      "name": "装备残魂",
+      "name": "兵解残魄晶",
       "type": "功能道具",
       "rarity": 3,
       "source": "分解绝品装备得×1/神品×3",

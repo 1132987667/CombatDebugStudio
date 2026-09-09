@@ -4,10 +4,10 @@
 
 import type { ItemEffect } from '@/shared/types/Item'
 
-/** 玩家货币（运行时状态 · 持有在 playerStore；金钱/仙缘双货币，完整项目说明 §11） */
+/** 玩家货币（运行时状态 · 持有在 playerStore；金钱/灵韵双货币，完整项目说明 §11） */
 export interface XiyouCurrency {
   money: number // 金钱（通用货币：购买、强化、洗练等一切基础消耗）
-  xianyuan: number // 仙缘（战斗胜利获得，药园催熟消耗；完整项目说明 §10.1）
+  xianyuan: number // 灵韵（战斗胜利获得，药园催熟消耗；完整项目说明 §10.1）
 }
 
 /** 玩家属性快照（运行时状态 · 持有在 playerStore） */
@@ -428,7 +428,7 @@ export interface XiyouGardenCrop {
   yield: number
   /** 收获后冷却时长（秒） */
   cooldown: number
-  /** 催熟消耗仙缘（种植时一次扣清，投入完成立即采收） */
+  /** 催熟消耗灵韵（种植时一次扣清，投入完成立即采收） */
   xianyuan: number
   /** 种植时需投入同 id 作物株数（灵植无来源不投入，缺省 0） */
   input?: number

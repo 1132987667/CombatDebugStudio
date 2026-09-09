@@ -22,7 +22,8 @@
     "craftable": true,
     "blueprintId": "bp_legend_01",
     "source": "牛魔王首杀（天品合成）",
-    "description": "以牛魔角为核、金精淬炼，撼天动地。攻击 +60，速度 -20%。固定天品特效。"
+    "description": "以牛魔角为核、金精淬炼，撼天动地。攻击 +60，速度 -20%。固定天品特效。",
+    "value": 4000
   },
   {
     "id": "ac_t4_01",
@@ -47,7 +48,8 @@
     "craftable": true,
     "blueprintId": "bp_legend_02",
     "source": "蝎子精首杀（天品合成）",
-    "description": "蝎毒入魂，蚀心蚀骨。攻击 +15%（毒伤 +20% 为固定天品特效）。固定天品特效。"
+    "description": "蝎毒入魂，蚀心蚀骨。攻击 +15%（毒伤 +20% 为固定天品特效）。固定天品特效。",
+    "value": 4000
   },
   {
     "id": "ac_t4_02",
@@ -72,7 +74,8 @@
     "craftable": true,
     "blueprintId": "bp_legend_03",
     "source": "金翅大鹏首杀（天品合成）",
-    "description": "大鹏展翅，逐日追光。全属性 +8%，速度 +10%。固定天品特效。"
+    "description": "大鹏展翅，逐日追光。全属性 +8%，速度 +10%。固定天品特效。",
+    "value": 4000
   },
   {
     "id": "wp_t5_01",
@@ -97,7 +100,8 @@
     "craftable": true,
     "blueprintId": "bp_immortal_01",
     "source": "六耳猕猴首杀（仙品合成）",
-    "description": "混沌之气所凝，无坚不摧。攻击 +80，暴击率 +10%，速度 +15%。固定仙品特效。"
+    "description": "混沌之气所凝，无坚不摧。攻击 +80，暴击率 +10%，速度 +15%。固定仙品特效。",
+    "value": 8000
   },
   {
     "id": "ar_t5_01",
@@ -122,7 +126,8 @@
     "craftable": true,
     "blueprintId": "bp_immortal_02",
     "source": "六耳猕猴首杀（仙品合成）",
-    "description": "混沌天丝织就，万法不侵。防御 +50，气血 +15%。固定仙品特效。"
+    "description": "混沌天丝织就，万法不侵。防御 +50，气血 +15%。固定仙品特效。",
+    "value": 8000
   },
   {
     "id": "ac_t5_01",
@@ -147,7 +152,8 @@
     "craftable": true,
     "blueprintId": "bp_immortal_03",
     "source": "六耳猕猴首杀（仙品合成）",
-    "description": "太初之冠，道韵流转。全属性 +12%，伤害减免 +10%。固定仙品特效。"
+    "description": "太初之冠，道韵流转。全属性 +12%，伤害减免 +10%。固定仙品特效。",
+    "value": 8000
   },
   {
     "id": "ac_t5_02",
@@ -172,7 +178,8 @@
     "craftable": true,
     "blueprintId": "bp_immortal_04",
     "source": "六耳猕猴首杀（仙品合成）",
-    "description": "混元灵珠，气运加身。暴击率 +12%，攻击 +12%，气血 +10%。固定仙品特效。"
+    "description": "混元灵珠，气运加身。暴击率 +12%，攻击 +12%，气血 +10%。固定仙品特效。",
+    "value": 8000
   },
   {
     "id": "wp_sp_01",
@@ -201,7 +208,8 @@
     "craftable": true,
     "blueprintId": "bp_sp_01",
     "source": "妖尊（特殊装备制造）",
-    "description": "火灵淬刃，烈焰焚身。攻击 +38，速度 +10%。"
+    "description": "火灵淬刃，烈焰焚身。攻击 +38，速度 +10%。",
+    "value": 2000
   },
   {
     "id": "ar_sp_01",
@@ -230,7 +238,8 @@
     "craftable": true,
     "blueprintId": "bp_sp_01",
     "source": "妖尊（特殊装备制造）",
-    "description": "风灵织就，身轻如燕。防御 +24，速度 +15%。"
+    "description": "风灵织就，身轻如燕。防御 +24，速度 +15%。",
+    "value": 2000
   },
   {
     "id": "ac_sp_01",
@@ -259,7 +268,8 @@
     "craftable": true,
     "blueprintId": "bp_sp_01",
     "source": "妖尊（特殊装备制造）",
-    "description": "地灵护体，厚德载物。防御 +12%，气血 +6%。"
+    "description": "地灵护体，厚德载物。防御 +12%，气血 +6%。",
+    "value": 2000
   },
   {
     "id": "wp_t1_light_01",
@@ -288,7 +298,8 @@
       "eq_w001"
     ],
     "source": "制造（主线，免图纸）",
-    "description": "竹剑，攻击+10速度+10%"
+    "description": "竹剑，攻击+10速度+10%",
+    "value": 150
   },
   {
     "id": "wp_t1_mid_01",
@@ -315,7 +326,8 @@
     "blueprintId": "bp_t1_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铜棍，攻击+12"
+    "description": "铜棍，攻击+12",
+    "value": 150
   },
   {
     "id": "wp_t1_heavy_01",
@@ -342,7 +354,8 @@
     "blueprintId": "bp_t1_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铜锤，攻击+14速度-5%，格挡率+5%"
+    "description": "铜锤，攻击+14速度-5%，格挡率+5%",
+    "value": 150
   },
   {
     "id": "ar_t1_light_01",
@@ -369,7 +382,8 @@
     "blueprintId": "bp_t1_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "鹿皮甲，防御+6闪避+5%速度+5%"
+    "description": "鹿皮甲，防御+6闪避+5%速度+5%",
+    "value": 150
   },
   {
     "id": "ar_t1_mid_01",
@@ -396,7 +410,8 @@
     "blueprintId": "bp_t1_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铜木甲，防御+8气血+5%"
+    "description": "铜木甲，防御+8气血+5%",
+    "value": 150
   },
   {
     "id": "ar_t1_heavy_01",
@@ -423,7 +438,8 @@
     "blueprintId": "bp_t1_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "轻铜甲，防御+10伤害减免+5%速度-5%"
+    "description": "轻铜甲，防御+10伤害减免+5%速度-5%",
+    "value": 150
   },
   {
     "id": "hd_t1_war_01",
@@ -450,7 +466,8 @@
     "blueprintId": "bp_t1_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "藤蔓箍，防御+5%韧性+3%"
+    "description": "藤蔓箍，防御+5%韧性+3%",
+    "value": 150
   },
   {
     "id": "hd_t1_spirit_01",
@@ -477,7 +494,8 @@
     "blueprintId": "bp_t1_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "灵桃冠，全属性+3%能量获取+5%"
+    "description": "灵桃冠，全属性+3%能量获取+5%",
+    "value": 150
   },
   {
     "id": "bt_t1_light_01",
@@ -504,7 +522,8 @@
     "blueprintId": "bp_t1_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "草编履，速度+5%闪避+3%"
+    "description": "草编履，速度+5%闪避+3%",
+    "value": 150
   },
   {
     "id": "bt_t1_heavy_01",
@@ -531,7 +550,8 @@
     "blueprintId": "bp_t1_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "粗石靴，防御+3%韧性+3%"
+    "description": "粗石靴，防御+3%韧性+3%",
+    "value": 150
   },
   {
     "id": "hf_t1_life_01",
@@ -558,7 +578,8 @@
     "blueprintId": "bp_t1_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "淡水玉护符，气血+5%治疗效果+3%"
+    "description": "淡水玉护符，气血+5%治疗效果+3%",
+    "value": 150
   },
   {
     "id": "hf_t1_war_01",
@@ -585,7 +606,8 @@
     "blueprintId": "bp_t1_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "桃木战符，气血+3%攻击+3%暴击率+2%"
+    "description": "桃木战符，气血+3%攻击+3%暴击率+2%",
+    "value": 150
   },
   {
     "id": "jz_t1_power_01",
@@ -612,7 +634,8 @@
     "blueprintId": "bp_t1_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "贝壳护手，攻击+5%命中+3%"
+    "description": "贝壳护手，攻击+5%命中+3%",
+    "value": 150
   },
   {
     "id": "jz_t1_spirit_01",
@@ -639,7 +662,8 @@
     "blueprintId": "bp_t1_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "桃核护手，技能伤害+5%能量+3%"
+    "description": "桃核护手，技能伤害+5%能量+3%",
+    "value": 150
   },
   {
     "id": "wp_t2_light_01",
@@ -666,7 +690,8 @@
     "blueprintId": "bp_t2_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "迅风剑，攻击+22速度+12%连击率+5%"
+    "description": "迅风剑，攻击+22速度+12%连击率+5%",
+    "value": 400
   },
   {
     "id": "wp_t2_mid_01",
@@ -693,7 +718,8 @@
     "blueprintId": "bp_t2_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铁棒，攻击+27暴击率+4%"
+    "description": "铁棒，攻击+27暴击率+4%",
+    "value": 400
   },
   {
     "id": "wp_t2_heavy_01",
@@ -720,7 +746,8 @@
     "blueprintId": "bp_t2_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铁锤，攻击+32速度-8%格挡率+8%眩晕+5%"
+    "description": "铁锤，攻击+32速度-8%格挡率+8%眩晕+5%",
+    "value": 400
   },
   {
     "id": "ar_t2_light_01",
@@ -747,7 +774,8 @@
     "blueprintId": "bp_t2_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "熊皮甲，防御+12闪避+8%速度+8%"
+    "description": "熊皮甲，防御+12闪避+8%速度+8%",
+    "value": 400
   },
   {
     "id": "ar_t2_mid_01",
@@ -774,7 +802,8 @@
     "blueprintId": "bp_t2_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铁木甲，防御+16气血+8%"
+    "description": "铁木甲，防御+16气血+8%",
+    "value": 400
   },
   {
     "id": "ar_t2_heavy_01",
@@ -801,7 +830,8 @@
     "blueprintId": "bp_t2_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "重铁甲，防御+20伤害减免+8%速度-5%"
+    "description": "重铁甲，防御+20伤害减免+8%速度-5%",
+    "value": 400
   },
   {
     "id": "hd_t2_war_01",
@@ -828,7 +858,8 @@
     "blueprintId": "bp_t2_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铁战盔，防御+8%韧性+5%"
+    "description": "铁战盔，防御+8%韧性+5%",
+    "value": 400
   },
   {
     "id": "hd_t2_spirit_01",
@@ -855,7 +886,8 @@
     "blueprintId": "bp_t2_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "河伯灵冠，全属性+5%技能伤害+8%"
+    "description": "河伯灵冠，全属性+5%技能伤害+8%",
+    "value": 400
   },
   {
     "id": "bt_t2_light_01",
@@ -882,7 +914,8 @@
     "blueprintId": "bp_t2_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "踏浪靴，速度+8%闪避+5%"
+    "description": "踏浪靴，速度+8%闪避+5%",
+    "value": 400
   },
   {
     "id": "bt_t2_heavy_01",
@@ -909,7 +942,8 @@
     "blueprintId": "bp_t2_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铁蹄靴，防御+5%格挡率+5%"
+    "description": "铁蹄靴，防御+5%格挡率+5%",
+    "value": 400
   },
   {
     "id": "hf_t2_life_01",
@@ -936,7 +970,8 @@
     "blueprintId": "bp_t2_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "深水玉符，气血+8%治疗效果+5%"
+    "description": "深水玉符，气血+8%治疗效果+5%",
+    "value": 400
   },
   {
     "id": "hf_t2_war_01",
@@ -963,7 +998,8 @@
     "blueprintId": "bp_t2_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "河铁战符，气血+5%攻击+5%暴击率+3%"
+    "description": "河铁战符，气血+5%攻击+5%暴击率+3%",
+    "value": 400
   },
   {
     "id": "jz_t2_power_01",
@@ -990,7 +1026,8 @@
     "blueprintId": "bp_t2_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "铁精护手，攻击+8%暴击伤害+10%"
+    "description": "铁精护手，攻击+8%暴击伤害+10%",
+    "value": 400
   },
   {
     "id": "jz_t2_spirit_01",
@@ -1017,7 +1054,8 @@
     "blueprintId": "bp_t2_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "水灵护手，技能伤害+8%能量+5%"
+    "description": "水灵护手，技能伤害+8%能量+5%",
+    "value": 400
   },
   {
     "id": "wp_t3_light_01",
@@ -1044,7 +1082,8 @@
     "blueprintId": "bp_t3_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "流云剑，攻击+35速度+15%连击率+8%"
+    "description": "流云剑，攻击+35速度+15%连击率+8%",
+    "value": 1000
   },
   {
     "id": "wp_t3_mid_01",
@@ -1071,7 +1110,8 @@
     "blueprintId": "bp_t3_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "伏魔杖，攻击+42暴击率+6%暴击伤害+15%"
+    "description": "伏魔杖，攻击+42暴击率+6%暴击伤害+15%",
+    "value": 1000
   },
   {
     "id": "wp_t3_heavy_01",
@@ -1102,7 +1142,8 @@
     "blueprintId": "bp_t3_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "撼地锤，攻击+50速度-10%格挡率+10%眩晕+10%"
+    "description": "撼地锤，攻击+50速度-10%格挡率+10%眩晕+10%",
+    "value": 1000
   },
   {
     "id": "ar_t3_light_01",
@@ -1129,7 +1170,8 @@
     "blueprintId": "bp_t3_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "虎威甲，防御+20闪避+10%暴击率+3%"
+    "description": "虎威甲，防御+20闪避+10%暴击率+3%",
+    "value": 1000
   },
   {
     "id": "ar_t3_mid_01",
@@ -1156,7 +1198,8 @@
     "blueprintId": "bp_t3_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金木甲，防御+26气血+10%韧性+5%"
+    "description": "金木甲，防御+26气血+10%韧性+5%",
+    "value": 1000
   },
   {
     "id": "ar_t3_heavy_01",
@@ -1183,7 +1226,8 @@
     "blueprintId": "bp_t3_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "神金甲，防御+32伤害减免+10%速度-8%"
+    "description": "神金甲，防御+32伤害减免+10%速度-8%",
+    "value": 1000
   },
   {
     "id": "hd_t3_war_01",
@@ -1210,7 +1254,8 @@
     "blueprintId": "bp_t3_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "钢战盔，防御+12%韧性+8%"
+    "description": "钢战盔，防御+12%韧性+8%",
+    "value": 1000
   },
   {
     "id": "hd_t3_spirit_01",
@@ -1237,7 +1282,8 @@
     "blueprintId": "bp_t3_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "岩灵冠，全属性+8%技能伤害+12%能量+8%"
+    "description": "岩灵冠，全属性+8%技能伤害+12%能量+8%",
+    "value": 1000
   },
   {
     "id": "bt_t3_light_01",
@@ -1264,7 +1310,8 @@
     "blueprintId": "bp_t3_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "疾风靴，速度+12%闪避+8%先手+5%"
+    "description": "疾风靴，速度+12%闪避+8%先手+5%",
+    "value": 1000
   },
   {
     "id": "bt_t3_heavy_01",
@@ -1291,7 +1338,8 @@
     "blueprintId": "bp_t3_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "磐石靴，防御+8%格挡率+8%受击回能+10%"
+    "description": "磐石靴，防御+8%格挡率+8%受击回能+10%",
+    "value": 1000
   },
   {
     "id": "hf_t3_life_01",
@@ -1318,7 +1366,8 @@
     "blueprintId": "bp_t3_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "翠玉护符，气血+12%治疗效果+8%护盾+5%"
+    "description": "翠玉护符，气血+12%治疗效果+8%护盾+5%",
+    "value": 1000
   },
   {
     "id": "hf_t3_war_01",
@@ -1345,7 +1394,8 @@
     "blueprintId": "bp_t3_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金精战符，气血+8%攻击+8%暴击率+5%"
+    "description": "金精战符，气血+8%攻击+8%暴击率+5%",
+    "value": 1000
   },
   {
     "id": "jz_t3_power_01",
@@ -1372,7 +1422,8 @@
     "blueprintId": "bp_t3_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金精护手，攻击+12%暴击伤害+15%破甲+5%"
+    "description": "金精护手，攻击+12%暴击伤害+15%破甲+5%",
+    "value": 1000
   },
   {
     "id": "jz_t3_spirit_01",
@@ -1399,7 +1450,8 @@
     "blueprintId": "bp_t3_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "翠玉灵护手，技能伤害+12%能量+8%大招伤害+8%"
+    "description": "翠玉灵护手，技能伤害+12%能量+8%大招伤害+8%",
+    "value": 1000
   },
   {
     "id": "wp_t4_light_01",
@@ -1426,7 +1478,8 @@
     "blueprintId": "bp_t4_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "幽影刃，攻击+48速度+18%连击率+10%"
+    "description": "幽影刃，攻击+48速度+18%连击率+10%",
+    "value": 2500
   },
   {
     "id": "wp_t4_mid_01",
@@ -1453,7 +1506,8 @@
     "blueprintId": "bp_t4_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "破幻杖，攻击+55暴击率+8%命中+10%"
+    "description": "破幻杖，攻击+55暴击率+8%命中+10%",
+    "value": 2500
   },
   {
     "id": "wp_t4_heavy_01",
@@ -1480,7 +1534,8 @@
     "blueprintId": "bp_t4_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "碎岳锤，攻击+65速度-10%格挡率+12%反伤+8%"
+    "description": "碎岳锤，攻击+65速度-10%格挡率+12%反伤+8%",
+    "value": 2500
   },
   {
     "id": "ar_t4_light_01",
@@ -1507,7 +1562,8 @@
     "blueprintId": "bp_t4_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "影豹皮甲，防御+26闪避+12%速度+10%"
+    "description": "影豹皮甲，防御+26闪避+12%速度+10%",
+    "value": 2500
   },
   {
     "id": "ar_t4_mid_01",
@@ -1534,7 +1590,8 @@
     "blueprintId": "bp_t4_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "瘴木甲，防御+32气血+12%异常抗性+10%"
+    "description": "瘴木甲，防御+32气血+12%异常抗性+10%",
+    "value": 2500
   },
   {
     "id": "ar_t4_heavy_01",
@@ -1561,7 +1618,8 @@
     "blueprintId": "bp_t4_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "幻岩铠，防御+40伤害减免+12%韧性+10%"
+    "description": "幻岩铠，防御+40伤害减免+12%韧性+10%",
+    "value": 2500
   },
   {
     "id": "hd_t4_war_01",
@@ -1588,7 +1646,8 @@
     "blueprintId": "bp_t4_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "幻岩战盔，防御+15%韧性+10%控制抗性+8%"
+    "description": "幻岩战盔，防御+15%韧性+10%控制抗性+8%",
+    "value": 2500
   },
   {
     "id": "hd_t4_spirit_01",
@@ -1615,7 +1674,8 @@
     "blueprintId": "bp_t4_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "幽兰灵冠，全属性+10%技能伤害+15%能量+10%"
+    "description": "幽兰灵冠，全属性+10%技能伤害+15%能量+10%",
+    "value": 2500
   },
   {
     "id": "bt_t4_light_01",
@@ -1642,7 +1702,8 @@
     "blueprintId": "bp_t4_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "影步靴，速度+15%闪避+10%先手+8%"
+    "description": "影步靴，速度+15%闪避+10%先手+8%",
+    "value": 2500
   },
   {
     "id": "bt_t4_heavy_01",
@@ -1669,7 +1730,8 @@
     "blueprintId": "bp_t4_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "幻岩重靴，防御+10%格挡率+10%受击回能+15%"
+    "description": "幻岩重靴，防御+10%格挡率+10%受击回能+15%",
+    "value": 2500
   },
   {
     "id": "hf_t4_life_01",
@@ -1696,7 +1758,8 @@
     "blueprintId": "bp_t4_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "翡翠护符，气血+15%治疗效果+10%护盾+8%"
+    "description": "翡翠护符，气血+15%治疗效果+10%护盾+8%",
+    "value": 2500
   },
   {
     "id": "hf_t4_war_01",
@@ -1723,7 +1786,8 @@
     "blueprintId": "bp_t4_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "毒牙战符，气血+10%攻击+10%暴击率+6%"
+    "description": "毒牙战符，气血+10%攻击+10%暴击率+6%",
+    "value": 2500
   },
   {
     "id": "jz_t4_power_01",
@@ -1750,7 +1814,8 @@
     "blueprintId": "bp_t4_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "毒牙护手，攻击+15%暴击伤害+20%"
+    "description": "毒牙护手，攻击+15%暴击伤害+20%",
+    "value": 2500
   },
   {
     "id": "jz_t4_spirit_01",
@@ -1777,7 +1842,8 @@
     "blueprintId": "bp_t4_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "雾灵护手，技能伤害+15%能量+10%大招伤害+12%"
+    "description": "雾灵护手，技能伤害+15%能量+10%大招伤害+12%",
+    "value": 2500
   },
   {
     "id": "wp_t5_light_01",
@@ -1804,7 +1870,8 @@
     "blueprintId": "bp_t5_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "菩提降龙剑，攻击+62速度+20%连击率+12%"
+    "description": "菩提降龙剑，攻击+62速度+20%连击率+12%",
+    "value": 6000
   },
   {
     "id": "wp_t5_mid_01",
@@ -1831,7 +1898,8 @@
     "blueprintId": "bp_t5_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "天罡伏魔杖，攻击+72暴击率+10%暴击伤害+25%"
+    "description": "天罡伏魔杖，攻击+72暴击率+10%暴击伤害+25%",
+    "value": 6000
   },
   {
     "id": "wp_t5_heavy_01",
@@ -1858,7 +1926,8 @@
     "blueprintId": "bp_t5_wp",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "须弥碎天锤，攻击+85速度-12%格挡率+15%反伤+12%"
+    "description": "须弥碎天锤，攻击+85速度-12%格挡率+15%反伤+12%",
+    "value": 6000
   },
   {
     "id": "ar_t5_light_01",
@@ -1885,7 +1954,8 @@
     "blueprintId": "bp_t5_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "天蚕仙衣，防御+32闪避+15%速度+12%先手+10%"
+    "description": "天蚕仙衣，防御+32闪避+15%速度+12%先手+10%",
+    "value": 6000
   },
   {
     "id": "ar_t5_mid_01",
@@ -1912,7 +1982,8 @@
     "blueprintId": "bp_t5_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "菩提道袍，防御+40气血+15%异常抗性+15%"
+    "description": "菩提道袍，防御+40气血+15%异常抗性+15%",
+    "value": 6000
   },
   {
     "id": "ar_t5_heavy_01",
@@ -1939,7 +2010,8 @@
     "blueprintId": "bp_t5_ar",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金刚不坏甲，防御+50伤害减免+15%韧性+12%"
+    "description": "金刚不坏甲，防御+50伤害减免+15%韧性+12%",
+    "value": 6000
   },
   {
     "id": "hd_t5_war_01",
@@ -1966,7 +2038,8 @@
     "blueprintId": "bp_t5_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金刚战盔，防御+18%韧性+12%控制抗性+12%"
+    "description": "金刚战盔，防御+18%韧性+12%控制抗性+12%",
+    "value": 6000
   },
   {
     "id": "hd_t5_spirit_01",
@@ -1993,7 +2066,8 @@
     "blueprintId": "bp_t5_hl",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "菩提道冠，全属性+12%技能伤害+18%能量+12%"
+    "description": "菩提道冠，全属性+12%技能伤害+18%能量+12%",
+    "value": 6000
   },
   {
     "id": "bt_t5_light_01",
@@ -2020,7 +2094,8 @@
     "blueprintId": "bp_t5_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "仙云靴，速度+18%闪避+12%先手+10%"
+    "description": "仙云靴，速度+18%闪避+12%先手+10%",
+    "value": 6000
   },
   {
     "id": "bt_t5_heavy_01",
@@ -2047,7 +2122,8 @@
     "blueprintId": "bp_t5_bs",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金刚重靴，防御+12%格挡率+12%受击回能+20%"
+    "description": "金刚重靴，防御+12%格挡率+12%受击回能+20%",
+    "value": 6000
   },
   {
     "id": "hf_t5_life_01",
@@ -2074,7 +2150,8 @@
     "blueprintId": "bp_t5_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "琉璃净符，气血+18%治疗效果+12%护盾+10%"
+    "description": "琉璃净符，气血+18%治疗效果+12%护盾+10%",
+    "value": 6000
   },
   {
     "id": "hf_t5_war_01",
@@ -2101,7 +2178,8 @@
     "blueprintId": "bp_t5_ch",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "天罡战符，气血+12%攻击+12%暴击率+8%"
+    "description": "天罡战符，气血+12%攻击+12%暴击率+8%",
+    "value": 6000
   },
   {
     "id": "jz_t5_power_01",
@@ -2128,7 +2206,8 @@
     "blueprintId": "bp_t5_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "金刚力护手，攻击+18%暴击伤害+25%破甲+10%"
+    "description": "金刚力护手，攻击+18%暴击伤害+25%破甲+10%",
+    "value": 6000
   },
   {
     "id": "jz_t5_spirit_01",
@@ -2155,7 +2234,8 @@
     "blueprintId": "bp_t5_rg",
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
-    "description": "菩提灵护手，技能伤害+18%能量+12%大招伤害+15%"
+    "description": "菩提灵护手，技能伤害+18%能量+12%大招伤害+15%",
+    "value": 6000
   },
   {
     "id": "wp_sb01",
@@ -2171,7 +2251,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "花妖王首杀掉落",
-    "description": "灵根缠藤鞭，攻击+18，攻击附带缠绕"
+    "description": "灵根缠藤鞭，攻击+18，攻击附带缠绕",
+    "value": 150
   },
   {
     "id": "ar_sb02",
@@ -2187,7 +2268,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "河伯首杀掉落",
-    "description": "沧浪涌潮甲，防御+22"
+    "description": "沧浪涌潮甲，防御+22",
+    "value": 400
   },
   {
     "id": "hd_sb03",
@@ -2203,7 +2285,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "山神首杀掉落",
-    "description": "磐石不动盔，防御+14%"
+    "description": "磐石不动盔，防御+14%",
+    "value": 1000
   },
   {
     "id": "jz_sb04",
@@ -2219,7 +2302,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "迷雾妖主首杀掉落",
-    "description": "幻瞳迷心护手，技能伤害+18%"
+    "description": "幻瞳迷心护手，技能伤害+18%",
+    "value": 2500
   },
   {
     "id": "ar_sb05",
@@ -2235,7 +2319,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "浊浪龙王掉落",
-    "description": "龙鳞逆甲，防御+38"
+    "description": "龙鳞逆甲，防御+38",
+    "value": 2500
   },
   {
     "id": "wp_sb06",
@@ -2251,7 +2336,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "火焰领主掉落",
-    "description": "炽焰焚天刃，攻击+48，攻击附带灼烧"
+    "description": "炽焰焚天刃，攻击+48，攻击附带灼烧",
+    "value": 1000
   },
   {
     "id": "hf_sb07",
@@ -2267,7 +2353,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "盘丝大仙掉落",
-    "description": "千丝缚灵索，气血+10%攻击+8%"
+    "description": "千丝缚灵索，气血+10%攻击+8%",
+    "value": 2500
   },
   {
     "id": "bt_sb08",
@@ -2283,7 +2370,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "风暴领主掉落",
-    "description": "裂风疾羽靴，速度+18%"
+    "description": "裂风疾羽靴，速度+18%",
+    "value": 2500
   },
   {
     "id": "hf_sb09",
@@ -2299,7 +2387,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "罗汉尊者掉落",
-    "description": "金身不破符，气血+20%"
+    "description": "金身不破符，气血+20%",
+    "value": 6000
   },
   {
     "id": "hd_sb10",
@@ -2315,7 +2404,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "如来法相掉落",
-    "description": "法相金莲冠，全属性+15%"
+    "description": "法相金莲冠，全属性+15%",
+    "value": 6000
   },
   {
     "id": "bt_hb01",
@@ -2331,7 +2421,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "黑风老妖掉落",
-    "description": "黑风疾行靴，速度+20%"
+    "description": "黑风疾行靴，速度+20%",
+    "value": 6000
   },
   {
     "id": "bt_hb02",
@@ -2347,7 +2438,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "土行孙掉落",
-    "description": "遁地重靴，防御+12%"
+    "description": "遁地重靴，防御+12%",
+    "value": 2500
   },
   {
     "id": "jz_hb03",
@@ -2363,7 +2455,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "朱刚鬣掉落",
-    "description": "九齿破甲护手，攻击+16%"
+    "description": "九齿破甲护手，攻击+16%",
+    "value": 2500
   },
   {
     "id": "hd_hb04",
@@ -2379,7 +2472,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "百眼魔君掉落",
-    "description": "百眼灵冠，技能命中+15%"
+    "description": "百眼灵冠，技能命中+15%",
+    "value": 2500
   },
   {
     "id": "hf_hb05",
@@ -2395,7 +2489,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "金蝉长老掉落",
-    "description": "净坛护符，气血+15%"
+    "description": "净坛护符，气血+15%",
+    "value": 6000
   },
   {
     "id": "hd_t4_war_02",
@@ -2422,7 +2517,8 @@
     "blueprintId": "bp_legend_01",
     "legacyIds": [],
     "source": "制造（需图纸 bp_legend_01）",
-    "description": "牛魔战盔，防御+20%，受击30%嘲讽"
+    "description": "牛魔战盔，防御+20%，受击30%嘲讽",
+    "value": 2500
   },
   {
     "id": "bt_t4_02",
@@ -2449,7 +2545,8 @@
     "blueprintId": "bp_legend_02",
     "legacyIds": [],
     "source": "制造（需图纸 bp_legend_02）",
-    "description": "蝎尾灵靴，速度+20%，先手+12%"
+    "description": "蝎尾灵靴，速度+20%，先手+12%",
+    "value": 2500
   },
   {
     "id": "bt_t4_03",
@@ -2476,7 +2573,8 @@
     "blueprintId": "bp_legend_03",
     "legacyIds": [],
     "source": "制造（需图纸 bp_legend_03）",
-    "description": "鹏翼轻靴，速度+22%，闪避+18%"
+    "description": "鹏翼轻靴，速度+22%，闪避+18%",
+    "value": 2500
   },
   {
     "id": "jz_sp_02",
@@ -2492,7 +2590,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "百眼魔君掉落",
-    "description": "寒潭玉护手，技能伤害+15%"
+    "description": "寒潭玉护手，技能伤害+15%",
+    "value": 2500
   },
   {
     "id": "wp_sp_02",
@@ -2508,7 +2607,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "黑风老妖掉落",
-    "description": "噬魂刃，攻击+40，击杀恢复气血"
+    "description": "噬魂刃，攻击+40，击杀恢复气血",
+    "value": 2500
   },
   {
     "id": "ar_sp_03",
@@ -2524,7 +2624,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "成就「百战不殆」奖励",
-    "description": "不灭战甲，防御+45"
+    "description": "不灭战甲，防御+45",
+    "value": 2500
   },
   {
     "id": "hd_sp_04",
@@ -2540,7 +2641,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "成就「九死一生」奖励",
-    "description": "轮回之冠，全属性+10%"
+    "description": "轮回之冠，全属性+10%",
+    "value": 2500
   },
   {
     "id": "bt_sp_05",
@@ -2556,7 +2658,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "风暴领主困难模式掉落",
-    "description": "追风逐电靴，速度+25%，先手+15%"
+    "description": "追风逐电靴，速度+25%，先手+15%",
+    "value": 6000
   },
   {
     "id": "jz_sp_06",
@@ -2572,7 +2675,8 @@
     "craftable": false,
     "legacyIds": [],
     "source": "成就「降妖除魔」奖励",
-    "description": "万妖臣服护手，攻击+20%"
+    "description": "万妖臣服护手，攻击+20%",
+    "value": 6000
   },
   {
     "id": "wt_01",
@@ -2587,7 +2691,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第1层首通掉落",
-    "description": "无尽塔第1层装备试炼木剑"
+    "description": "无尽塔第1层装备试炼木剑",
+    "value": 150
   },
   {
     "id": "wt_02",
@@ -2602,7 +2707,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第2层首通掉落",
-    "description": "无尽塔第2层装备试炼布甲"
+    "description": "无尽塔第2层装备试炼布甲",
+    "value": 150
   },
   {
     "id": "wt_03",
@@ -2617,7 +2723,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第3层首通掉落",
-    "description": "无尽塔第3层装备试炼草帽"
+    "description": "无尽塔第3层装备试炼草帽",
+    "value": 150
   },
   {
     "id": "wt_04",
@@ -2632,7 +2739,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第4层首通掉落",
-    "description": "无尽塔第4层装备试炼布鞋"
+    "description": "无尽塔第4层装备试炼布鞋",
+    "value": 150
   },
   {
     "id": "wt_05",
@@ -2647,7 +2755,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第5层首通掉落",
-    "description": "无尽塔第5层装备试炼玉佩"
+    "description": "无尽塔第5层装备试炼玉佩",
+    "value": 150
   },
   {
     "id": "wt_06",
@@ -2662,7 +2771,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第6层首通掉落",
-    "description": "无尽塔第6层装备试炼铜护手"
+    "description": "无尽塔第6层装备试炼铜护手",
+    "value": 150
   },
   {
     "id": "wt_07",
@@ -2677,7 +2787,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第7层首通掉落",
-    "description": "无尽塔第7层装备破风刃"
+    "description": "无尽塔第7层装备破风刃",
+    "value": 150
   },
   {
     "id": "wt_08",
@@ -2692,7 +2803,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第8层首通掉落",
-    "description": "无尽塔第8层装备铁壁甲"
+    "description": "无尽塔第8层装备铁壁甲",
+    "value": 150
   },
   {
     "id": "wt_09",
@@ -2707,7 +2819,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第9层首通掉落",
-    "description": "无尽塔第9层装备鹰眼盔"
+    "description": "无尽塔第9层装备鹰眼盔",
+    "value": 150
   },
   {
     "id": "wt_10",
@@ -2722,7 +2835,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第10层首通掉落",
-    "description": "无尽塔第10层装备疾行靴"
+    "description": "无尽塔第10层装备疾行靴",
+    "value": 150
   },
   {
     "id": "wt_11",
@@ -2737,7 +2851,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第11层首通掉落",
-    "description": "无尽塔第11层装备寒铁剑"
+    "description": "无尽塔第11层装备寒铁剑",
+    "value": 400
   },
   {
     "id": "wt_12",
@@ -2752,7 +2867,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第12层首通掉落",
-    "description": "无尽塔第12层装备玄铁甲"
+    "description": "无尽塔第12层装备玄铁甲",
+    "value": 400
   },
   {
     "id": "wt_13",
@@ -2767,7 +2883,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第13层首通掉落",
-    "description": "无尽塔第13层装备灵犀冠"
+    "description": "无尽塔第13层装备灵犀冠",
+    "value": 400
   },
   {
     "id": "wt_14",
@@ -2782,7 +2899,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第14层首通掉落",
-    "description": "无尽塔第14层装备风行靴"
+    "description": "无尽塔第14层装备风行靴",
+    "value": 400
   },
   {
     "id": "wt_15",
@@ -2797,7 +2915,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第15层首通掉落",
-    "description": "无尽塔第15层装备守心符"
+    "description": "无尽塔第15层装备守心符",
+    "value": 400
   },
   {
     "id": "wt_16",
@@ -2812,7 +2931,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第16层首通掉落",
-    "description": "无尽塔第16层装备破军护手"
+    "description": "无尽塔第16层装备破军护手",
+    "value": 400
   },
   {
     "id": "wt_17",
@@ -2827,7 +2947,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第17层首通掉落",
-    "description": "无尽塔第17层装备裂空刃"
+    "description": "无尽塔第17层装备裂空刃",
+    "value": 400
   },
   {
     "id": "wt_18",
@@ -2842,7 +2963,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第18层首通掉落",
-    "description": "无尽塔第18层装备磐石铠"
+    "description": "无尽塔第18层装备磐石铠",
+    "value": 400
   },
   {
     "id": "wt_19",
@@ -2857,7 +2979,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第19层首通掉落",
-    "description": "无尽塔第19层装备慧眼冠"
+    "description": "无尽塔第19层装备慧眼冠",
+    "value": 400
   },
   {
     "id": "wt_20",
@@ -2872,7 +2995,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第20层首通掉落",
-    "description": "无尽塔第20层装备踏云靴"
+    "description": "无尽塔第20层装备踏云靴",
+    "value": 400
   },
   {
     "id": "wt_21",
@@ -2887,7 +3011,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第21层首通掉落",
-    "description": "无尽塔第21层装备金刚杵"
+    "description": "无尽塔第21层装备金刚杵",
+    "value": 1000
   },
   {
     "id": "wt_22",
@@ -2902,7 +3027,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第22层首通掉落",
-    "description": "无尽塔第22层装备龙鳞甲"
+    "description": "无尽塔第22层装备龙鳞甲",
+    "value": 1000
   },
   {
     "id": "wt_23",
@@ -2917,7 +3043,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第23层首通掉落",
-    "description": "无尽塔第23层装备天灵冠"
+    "description": "无尽塔第23层装备天灵冠",
+    "value": 1000
   },
   {
     "id": "wt_24",
@@ -2932,7 +3059,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第24层首通掉落",
-    "description": "无尽塔第24层装备逐风靴"
+    "description": "无尽塔第24层装备逐风靴",
+    "value": 1000
   },
   {
     "id": "wt_25",
@@ -2947,7 +3075,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第25层首通掉落",
-    "description": "无尽塔第25层装备不灭符"
+    "description": "无尽塔第25层装备不灭符",
+    "value": 1000
   },
   {
     "id": "wt_26",
@@ -2962,7 +3091,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第26层首通掉落",
-    "description": "无尽塔第26层装备碎星护手"
+    "description": "无尽塔第26层装备碎星护手",
+    "value": 1000
   },
   {
     "id": "wt_27",
@@ -2977,7 +3107,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第27层首通掉落",
-    "description": "无尽塔第27层装备噬魂刀"
+    "description": "无尽塔第27层装备噬魂刀",
+    "value": 1000
   },
   {
     "id": "wt_28",
@@ -2992,7 +3123,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第28层首通掉落",
-    "description": "无尽塔第28层装备玄武甲"
+    "description": "无尽塔第28层装备玄武甲",
+    "value": 1000
   },
   {
     "id": "wt_29",
@@ -3007,7 +3139,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第29层首通掉落",
-    "description": "无尽塔第29层装备通灵冠"
+    "description": "无尽塔第29层装备通灵冠",
+    "value": 1000
   },
   {
     "id": "wt_30",
@@ -3022,7 +3155,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第30层首通掉落",
-    "description": "无尽塔第30层装备瞬影靴"
+    "description": "无尽塔第30层装备瞬影靴",
+    "value": 1000
   },
   {
     "id": "wt_31",
@@ -3037,7 +3171,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第31层首通掉落",
-    "description": "无尽塔第31层装备天罡剑"
+    "description": "无尽塔第31层装备天罡剑",
+    "value": 2500
   },
   {
     "id": "wt_32",
@@ -3052,7 +3187,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第32层首通掉落",
-    "description": "无尽塔第32层装备混元甲"
+    "description": "无尽塔第32层装备混元甲",
+    "value": 2500
   },
   {
     "id": "wt_33",
@@ -3067,7 +3203,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第33层首通掉落",
-    "description": "无尽塔第33层装备法相冠"
+    "description": "无尽塔第33层装备法相冠",
+    "value": 2500
   },
   {
     "id": "wt_34",
@@ -3082,7 +3219,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第34层首通掉落",
-    "description": "无尽塔第34层装备凌波靴"
+    "description": "无尽塔第34层装备凌波靴",
+    "value": 2500
   },
   {
     "id": "wt_35",
@@ -3097,7 +3235,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第35层首通掉落",
-    "description": "无尽塔第35层装备金刚符"
+    "description": "无尽塔第35层装备金刚符",
+    "value": 2500
   },
   {
     "id": "wt_36",
@@ -3112,7 +3251,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第36层首通掉落",
-    "description": "无尽塔第36层装备灭世护手"
+    "description": "无尽塔第36层装备灭世护手",
+    "value": 2500
   },
   {
     "id": "wt_37",
@@ -3127,7 +3267,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第37层首通掉落",
-    "description": "无尽塔第37层装备诛仙剑"
+    "description": "无尽塔第37层装备诛仙剑",
+    "value": 2500
   },
   {
     "id": "wt_38",
@@ -3142,7 +3283,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第38层首通掉落",
-    "description": "无尽塔第38层装备须弥铠"
+    "description": "无尽塔第38层装备须弥铠",
+    "value": 2500
   },
   {
     "id": "wt_39",
@@ -3157,7 +3299,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第39层首通掉落",
-    "description": "无尽塔第39层装备天眼冠"
+    "description": "无尽塔第39层装备天眼冠",
+    "value": 2500
   },
   {
     "id": "wt_40",
@@ -3172,7 +3315,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第40层首通掉落",
-    "description": "无尽塔第40层装备风火靴"
+    "description": "无尽塔第40层装备风火靴",
+    "value": 2500
   },
   {
     "id": "wt_41",
@@ -3187,7 +3331,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第41层首通掉落",
-    "description": "降魔杵，攻击+60，眩晕+12%，格挡+12%"
+    "description": "降魔杵，攻击+60，眩晕+12%，格挡+12%",
+    "value": 6000
   },
   {
     "id": "wt_42",
@@ -3202,7 +3347,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第42层首通掉落",
-    "description": "天蚕仙袍，防御+35，闪避+15%，速度+10%"
+    "description": "天蚕仙袍，防御+35，闪避+15%，速度+10%",
+    "value": 6000
   },
   {
     "id": "wt_43",
@@ -3217,7 +3363,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第43层首通掉落",
-    "description": "菩提道冠，全属性+12%，每回合净化1负面"
+    "description": "菩提道冠，全属性+12%，每回合净化1负面",
+    "value": 6000
   },
   {
     "id": "wt_44",
@@ -3232,7 +3379,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第44层首通掉落",
-    "description": "金乌靴，速度+20%，先手+15%"
+    "description": "金乌靴，速度+20%，先手+15%",
+    "value": 6000
   },
   {
     "id": "wt_45",
@@ -3247,7 +3395,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第45层首通掉落",
-    "description": "琉璃净符，气血+18%，治疗效果+15%"
+    "description": "琉璃净符，气血+18%，治疗效果+15%",
+    "value": 6000
   },
   {
     "id": "wt_46",
@@ -3262,7 +3411,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第46层首通掉落",
-    "description": "天罡战护手，攻击+18%，暴击率+10%"
+    "description": "天罡战护手，攻击+18%，暴击率+10%",
+    "value": 6000
   },
   {
     "id": "wt_47",
@@ -3277,7 +3427,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第47层首通掉落",
-    "description": "太虚·燃魂刃，攻击+75，攻击后攻击+5%（叠5层）；每回合扣除5%最大生命"
+    "description": "太虚·燃魂刃，攻击+75，攻击后攻击+5%（叠5层）；每回合扣除5%最大生命",
+    "value": 6000
   },
   {
     "id": "wt_48",
@@ -3292,7 +3443,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第48层首通掉落",
-    "description": "劫灭·燃血甲，防御+48，受伤减免18%；受击额外扣除2%气血"
+    "description": "劫灭·燃血甲，防御+48，受伤减免18%；受击额外扣除2%气血",
+    "value": 6000
   },
   {
     "id": "wt_49",
@@ -3307,7 +3459,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第49层首通掉落",
-    "description": "太虚·燃魂冠，全属性+18%，技能冷却-1；击杀后获得1回合无敌；每回合扣除5%最大生命"
+    "description": "太虚·燃魂冠，全属性+18%，技能冷却-1；击杀后获得1回合无敌；每回合扣除5%最大生命",
+    "value": 6000
   },
   {
     "id": "wt_50",
@@ -3322,7 +3475,8 @@
     "cost": 0,
     "craftable": false,
     "source": "无尽塔第50层首通掉落",
-    "description": "劫灭·焚魄珠，气血+25%，全属性+8%，每回合恢复3%气血；气血低于20%时进入「焚魄」状态（全属性+15%但无法被治疗）"
+    "description": "劫灭·焚魄珠，气血+25%，全属性+8%，每回合恢复3%气血；气血低于20%时进入「焚魄」状态（全属性+15%但无法被治疗）",
+    "value": 6000
   },
   {
     "id": "wp_t1_dagger_01",
@@ -3348,7 +3502,8 @@
     "recipeId": "forge_wp_t1_dagger_01",
     "blueprintId": "bp_t1_wp",
     "source": "制造（主线，免图纸）",
-    "description": "竹刺，闪避流专属武器，攻击+10闪避+5"
+    "description": "竹刺，闪避流专属武器，攻击+10闪避+5",
+    "value": 150
   },
   {
     "id": "wp_t2_dagger_01",
@@ -3374,7 +3529,8 @@
     "recipeId": "forge_wp_t2_dagger_01",
     "blueprintId": "bp_t2_wp",
     "source": "制造（关卡4-6）",
-    "description": "双刺，闪避流专属武器，攻击+25闪避+12"
+    "description": "双刺，闪避流专属武器，攻击+25闪避+12",
+    "value": 400
   },
   {
     "id": "wp_t3_dagger_01",
@@ -3400,7 +3556,8 @@
     "recipeId": "forge_wp_t3_dagger_01",
     "blueprintId": "bp_t3_wp",
     "source": "制造（关卡7-9）",
-    "description": "峨眉刺，闪避流专属武器，攻击+45闪避+22"
+    "description": "峨眉刺，闪避流专属武器，攻击+45闪避+22",
+    "value": 1000
   },
   {
     "id": "wp_t4_dagger_01",
@@ -3425,6 +3582,7 @@
     "craftable": true,
     "blueprintId": "bp_legend_01",
     "source": "制造（天品合成）",
-    "description": "影刃，闪避流专属武器，攻击+70闪避+35"
+    "description": "影刃，闪避流专属武器，攻击+70闪避+35",
+    "value": 4000
   }
 ]

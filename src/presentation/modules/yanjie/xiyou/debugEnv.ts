@@ -9,7 +9,7 @@ import type { useBattleStore } from '@/presentation/stores/battleStore'
 import type { usePlayerStore } from '@/presentation/stores/playerStore'
 import type { usePackStore } from '@/presentation/stores/packStore'
 import type { SaveManager } from '@/shared/utils/save-manager'
-import type { XiyouCatalogItem, XiyouQuest, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
+import type { XiyouCatalogItem, XiyouForgeRecipe, XiyouQuest, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
 import type { EquipmentData } from '@/domain/fengshen/types'
 
 /** 系统诊断端口（DebugCavePanel 装配：经 DI 容器 resolve application 层服务） */
@@ -38,14 +38,14 @@ export interface PlayerStoreDebugEnv {
   schools: XiyouSchool[]
   /** 流派技能点（reactive） */
   skillPoints: XiyouSkillPoints
-  /** 物品目录（items.json 全量） */
+  /** 物品目录（items.json + equipment.json 合并全量） */
   items: XiyouCatalogItem[]
   /** 坊市商品表 */
   shopGoods: XiyouShopGood[]
   /** 装备定义目录（equipment.json） */
   equipmentCatalog: EquipmentData[]
-  /** 锻造配方表 */
-  forgeRecipes: XiyouRecipe[]
+  /** 锻造配方表（id + equipmentId，装备侧查详情） */
+  forgeRecipes: XiyouForgeRecipe[]
   /** 炼丹配方表 */
   alchemyRecipes: XiyouRecipe[]
   /** Toast 提示 */

@@ -1,21 +1,42 @@
 /**
  * 洞府 · 纯逻辑层
  *
- * 职责：物品名 ↔ items.json ID 索引、配方材料文本解析、强化/升星数值、
- *       碎片合成规则。组件只消费本层导出，不内联解析逻辑。
+ * 职责：物品名 ↔ ID 索引（items.json + equipment.json 合并目录）、配方材料文本解析、
+ *       强化/升星数值、碎片合成规则。组件只消费本层导出，不内联解析逻辑。
  */
+import type { EquipmentData } from '@/domain/fengshen/types'
+import { EquipmentSlot, EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import type { XiyouCatalogItem, XiyouQuality } from './types'
 import itemsJson from '@configs/xiyou/items.json'
+import equipmentJson from '@configs/equipment/equipment.json'
 import equipmentSystemJson from '@configs/xiyou/equipment/equipment-system.json'
 import { qualityOf as qualityByRarity } from './quality'
 
-const ITEMS = itemsJson.items as unknown as XiyouCatalogItem[]
+/** 装备目录条目：由 equipment.json 派生（装备详情唯一数据源；原 items.json 重复内联的
+ *  158 条装备 name/rarity/value 已删除，type 按 slot 映射中文） */
+const EQUIPMENT_CATALOG: XiyouCatalogItem[] = (equipmentJson as unknown as EquipmentData[]).map((e) => ({
+  id: e.id,
+  name: e.name,
+  type: EQUIPMENT_SLOT_LABELS[e.slot] ?? e.slot,
+  rarity: e.rarity,
+  value: e.value,
+  source: e.source,
+  description: e.description,
+}))
+
+/** 物品全量目录：items.json（非装备物品）+ 装备派生条目（行囊展示 / 名字索引共用） */
+export const catalogItems: XiyouCatalogItem[] = [
+  ...(itemsJson.items as unknown as XiyouCatalogItem[]),
+  ...EQUIPMENT_CATALOG,
+]
+
+const ITEMS = catalogItems
 
 const idToItem = new Map<string, XiyouCatalogItem>()
 const nameToId = new Map<string, string>()
 for (const it of ITEMS) {
   idToItem.set(it.id, it)
-  // 同名（如装备在 items/equipment 双注册）取首个，保证引用稳定
+  // 同名取首个，保证引用稳定
   if (!nameToId.has(it.name)) nameToId.set(it.name, it.id)
 }
 

@@ -6,19 +6,19 @@
         <div class="xy-cave-forge-list">
           <button
             v-for="r in recipesOf(p.id)"
-            :key="r.name"
+            :key="r.id"
             type="button"
             class="xy-cave-card"
-            :class="[{ 'is-selected': selected?.name === r.name }, { 'is-locked': !unlockedOf(r) }]"
+            :class="[{ 'is-selected': selected === r }, { 'is-locked': !unlockedOf(r) }]"
             :disabled="!unlockedOf(r)"
             @click="selected = r"
           >
             <span class="xy-cave-card__top">
-              <span class="xy-cave-card__name">{{ r.name }}</span>
+              <span class="xy-cave-card__name">{{ recipeName(r) }}</span>
               <span class="xy-cave-chip xy-cave-chip--jade">{{ tierOf(r) }}</span>
               <span class="xy-cave-card__side">已有 ×{{ countOfOut(r) }}</span>
             </span>
-            <p class="xy-cave-card__desc xy-cave-card__key">{{ r.effect }}</p>
+            <p class="xy-cave-card__desc xy-cave-card__key">{{ recipeDesc(r) }}</p>
             <span class="xy-cave-card__mats">
               <span
                 v-for="m in materialsOf(r)"
@@ -44,11 +44,11 @@
     >
       <div class="xy-cave-forge-detail__info">
         <span class="xy-cave-card__top">
-          <span class="xy-cave-card__name">{{ selected.name }}</span>
+          <span class="xy-cave-card__name">{{ recipeName(selected) }}</span>
           <span class="xy-cave-chip xy-cave-chip--gold">{{ qualityOfOut(selected) }}</span>
           <span class="xy-cave-card__side">{{ typeOfOut(selected) }} · {{ tierOf(selected) }}</span>
         </span>
-        <p class="xy-cave-forge-detail__effect">{{ selected.effect }}</p>
+        <p class="xy-cave-forge-detail__effect">{{ recipeDesc(selected) }}</p>
         <span class="xy-cave-forge-detail__mats">
           <span
             v-for="m in materialsOf(selected)"
@@ -79,11 +79,13 @@
 import { ref, watch } from 'vue'
 
 import type { TabItem } from '@/presentation/components'
+import type { EquipmentSlot } from '@/shared/types/Item'
+import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
-import type { XiyouRecipe } from '../../types'
+import type { XiyouForgeRecipe } from '../../types'
 import { forgeRecipes, equipmentCatalog } from '../../xiyouData'
-import { catalogById, itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
+import { itemName, qualityOf, type MatView } from '../../caveLogic'
 import { tierName } from '../../quality'
 
 const pack = usePackStore()
@@ -102,7 +104,7 @@ const PART_TABS: TabItem[] = [
   { id: 'glove', label: '护手' },
 ]
 
-const selected = ref<XiyouRecipe | null>(null)
+const selected = ref<XiyouForgeRecipe | null>(null)
 const brewing = ref(false)
 const rippling = ref(false)
 const shaking = ref(false)
@@ -111,8 +113,8 @@ watch(part, () => {
   selected.value = null
 })
 
-// NOTE: 部位以 equipment.json slot 为权威（6 槽）；不用 item.type 判断——
-//       材料与装备可能重名，type 会误判。
+// NOTE: 部位以 equipment.json slot 为权威（6 槽），配方经 equipmentId 直查装备——
+//       不按配方名匹配装备（名字会改，ID 不会）。
 const SLOT_OF_PART: Record<ForgePart, string> = {
   weapon: 'weapon',
   armor: 'armor',
@@ -122,43 +124,53 @@ const SLOT_OF_PART: Record<ForgePart, string> = {
   glove: 'glove',
 }
 
-function partOf(r: XiyouRecipe): ForgePart | null {
-  const g = equipmentCatalog.find((eq) => eq.name === r.name)
+/** 配方对应装备（equipmentId 直查；材料/金钱/图纸/名称权威均在 configs/equipment/equipment.json） */
+function gearOf(r: XiyouForgeRecipe) {
+  return r.equipmentId ? equipmentCatalog.find((g) => g.id === r.equipmentId) : undefined
+}
+
+function partOf(r: XiyouForgeRecipe): ForgePart | null {
+  const g = gearOf(r)
   if (!g) return null
   const found = (Object.entries(SLOT_OF_PART) as [ForgePart, string][]).find(([, slot]) => slot === g.slot)
   return found?.[0] ?? null
 }
 
-function recipesOf(id: string): XiyouRecipe[] {
+function recipesOf(id: string): XiyouForgeRecipe[] {
   return forgeRecipes.filter((r) => partOf(r) === id)
 }
 
-function tierOf(r: XiyouRecipe): string {
+function tierOf(r: XiyouForgeRecipe): string {
   // 配方无 level 字段，阶位以装备定义 tier 为权威（t1-5 → 一阶…仙品）
   const t = tierName(gearOf(r)?.tier)
   return t ? `${t}器方` : '器方'
 }
 
-function qualityOfOut(r: XiyouRecipe): string {
-  const outId = itemIdByName(r.name)
-  return outId ? qualityOf(outId) : '凡品'
+function qualityOfOut(r: XiyouForgeRecipe): string {
+  const g = gearOf(r)
+  return g ? qualityOf(g.id) : '凡品'
 }
 
-function typeOfOut(r: XiyouRecipe): string {
-  return catalogById(itemIdByName(r.name) ?? '')?.type ?? '未知'
+function typeOfOut(r: XiyouForgeRecipe): string {
+  const g = gearOf(r)
+  return g ? (EQUIPMENT_SLOT_LABELS[g.slot as EquipmentSlot] ?? g.slot) : '未知'
 }
 
-function countOfOut(r: XiyouRecipe): number {
-  const outId = itemIdByName(r.name)
-  return outId ? pack.countOf(outId) : 0
+function countOfOut(r: XiyouForgeRecipe): number {
+  const g = gearOf(r)
+  return g ? pack.countOf(g.id) : 0
 }
 
-/** 配方对应装备（材料权威在 configs/equipment/equipment.json，forgeRecipes 不再内联） */
-function gearOf(r: XiyouRecipe) {
-  return r.equipmentId ? equipmentCatalog.find((g) => g.id === r.equipmentId) : undefined
+/** 产物名/描述（装备定义为唯一数据源） */
+function recipeName(r: XiyouForgeRecipe): string {
+  return gearOf(r)?.name ?? r.equipmentId
 }
 
-function materialsOf(r: XiyouRecipe): MatView[] {
+function recipeDesc(r: XiyouForgeRecipe): string {
+  return gearOf(r)?.description ?? ''
+}
+
+function materialsOf(r: XiyouForgeRecipe): MatView[] {
   const mats = gearOf(r)?.materials ?? []
   return mats.map((m) => {
     const have = pack.countOf(m.itemId)
@@ -166,7 +178,7 @@ function materialsOf(r: XiyouRecipe): MatView[] {
   })
 }
 
-function canCraft(r: XiyouRecipe): boolean {
+function canCraft(r: XiyouForgeRecipe): boolean {
   const g = gearOf(r)
   if (!g || !pack.blueprintUnlocked(g.id)) return false
   const mats = materialsOf(r)
@@ -174,13 +186,13 @@ function canCraft(r: XiyouRecipe): boolean {
 }
 
 /** 图纸解锁状态（t1 默认解锁；高阶需持有图纸） */
-function unlockedOf(r: XiyouRecipe): boolean {
+function unlockedOf(r: XiyouForgeRecipe): boolean {
   const g = gearOf(r)
   return g ? pack.blueprintUnlocked(g.id) : false
 }
 
 /** 图纸名称（未持有/未注册时兜底 blueprintId） */
-function blueprintNameOf(r: XiyouRecipe): string {
+function blueprintNameOf(r: XiyouForgeRecipe): string {
   const g = gearOf(r)
   if (!g?.blueprintId) return ''
   return itemName(g.blueprintId) ?? g.blueprintId

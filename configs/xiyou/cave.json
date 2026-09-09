@@ -384,1555 +384,347 @@
   "forgeRecipes": [
     {
       "id": "forge_wp_t1_light_01",
-      "equipmentId": "wp_t1_light_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "竹剑",
-      "count": 1,
-      "cost": 50,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tongjing",
-          "count": 1
-        }
-      ]
+      "equipmentId": "wp_t1_light_01"
     },
     {
       "id": "forge_wp_t1_mid_01",
-      "equipmentId": "wp_t1_mid_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "铜棍",
-      "count": 1,
-      "cost": 60,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_tongjing",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t1_mid_01"
     },
     {
       "id": "forge_wp_t1_heavy_01",
-      "equipmentId": "wp_t1_heavy_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "铜锤",
-      "count": 1,
-      "cost": 70,
-      "materials": [
-        {
-          "itemId": "mat_tongjing",
-          "count": 3
-        },
-        {
-          "itemId": "mat_cushi",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t1_heavy_01"
     },
     {
       "id": "forge_ar_t1_light_01",
-      "equipmentId": "ar_t1_light_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "鹿皮甲",
-      "count": 1,
-      "cost": 40,
-      "materials": [
-        {
-          "itemId": "mat_lupi",
-          "count": 3
-        },
-        {
-          "itemId": "mat_taomu",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t1_light_01"
     },
     {
       "id": "forge_ar_t1_mid_01",
-      "equipmentId": "ar_t1_mid_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "铜木甲",
-      "count": 1,
-      "cost": 50,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tongjing",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t1_mid_01"
     },
     {
       "id": "forge_ar_t1_heavy_01",
-      "equipmentId": "ar_t1_heavy_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "轻铜甲",
-      "count": 1,
-      "cost": 60,
-      "materials": [
-        {
-          "itemId": "mat_tongjing",
-          "count": 3
-        },
-        {
-          "itemId": "mat_cushi",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t1_heavy_01"
     },
     {
       "id": "forge_hd_t1_war_01",
-      "equipmentId": "hd_t1_war_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "藤蔓箍",
-      "count": 1,
-      "cost": 35,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_cushi",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hd_t1_war_01"
     },
     {
       "id": "forge_hd_t1_spirit_01",
-      "equipmentId": "hd_t1_spirit_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "灵桃冠",
-      "count": 1,
-      "cost": 40,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 1
-        },
-        {
-          "itemId": "mat_danshuiyu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hd_t1_spirit_01"
     },
     {
       "id": "forge_bt_t1_light_01",
-      "equipmentId": "bt_t1_light_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "草编履",
-      "count": 1,
-      "cost": 30,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_beike",
-          "count": 2
-        }
-      ]
+      "equipmentId": "bt_t1_light_01"
     },
     {
       "id": "forge_bt_t1_heavy_01",
-      "equipmentId": "bt_t1_heavy_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "粗石靴",
-      "count": 1,
-      "cost": 35,
-      "materials": [
-        {
-          "itemId": "mat_cushi",
-          "count": 3
-        },
-        {
-          "itemId": "mat_lupi",
-          "count": 1
-        }
-      ]
+      "equipmentId": "bt_t1_heavy_01"
     },
     {
       "id": "forge_hf_t1_life_01",
-      "equipmentId": "hf_t1_life_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "淡水玉护符",
-      "count": 1,
-      "cost": 40,
-      "materials": [
-        {
-          "itemId": "mat_danshuiyu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_beike",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hf_t1_life_01"
     },
     {
       "id": "forge_hf_t1_war_01",
-      "equipmentId": "hf_t1_war_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "桃木战符",
-      "count": 1,
-      "cost": 35,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_tongjing",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hf_t1_war_01"
     },
     {
       "id": "forge_jz_t1_power_01",
-      "equipmentId": "jz_t1_power_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "贝壳护手",
-      "count": 1,
-      "cost": 35,
-      "materials": [
-        {
-          "itemId": "mat_beike",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tongjing",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t1_power_01"
     },
     {
       "id": "forge_jz_t1_spirit_01",
-      "equipmentId": "jz_t1_spirit_01",
-      "blueprintId": "bp_t1_eq",
-      "name": "桃核戒",
-      "count": 1,
-      "cost": 35,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 1
-        },
-        {
-          "itemId": "mat_danshuiyu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t1_spirit_01"
     },
     {
       "id": "forge_wp_t2_light_01",
-      "equipmentId": "wp_t2_light_01",
-      "blueprintId": "bp_t2_wp",
-      "name": "迅风剑",
-      "count": 1,
-      "cost": 120,
-      "materials": [
-        {
-          "itemId": "mat_songmu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tiejing",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t2_light_01"
     },
     {
       "id": "forge_wp_t2_mid_01",
-      "equipmentId": "wp_t2_mid_01",
-      "blueprintId": "bp_t2_wp",
-      "name": "铁棒",
-      "count": 1,
-      "cost": 140,
-      "materials": [
-        {
-          "itemId": "mat_songmu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_tiejing",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_t2_mid_01"
     },
     {
       "id": "forge_wp_t2_heavy_01",
-      "equipmentId": "wp_t2_heavy_01",
-      "blueprintId": "bp_t2_wp",
-      "name": "铁锤",
-      "count": 1,
-      "cost": 160,
-      "materials": [
-        {
-          "itemId": "mat_tiejing",
-          "count": 3
-        },
-        {
-          "itemId": "mat_qinggang",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_t2_heavy_01"
     },
     {
       "id": "forge_ar_t2_light_01",
-      "equipmentId": "ar_t2_light_01",
-      "blueprintId": "bp_t2_ar",
-      "name": "熊皮甲",
-      "count": 1,
-      "cost": 110,
-      "materials": [
-        {
-          "itemId": "mat_xiongpi",
-          "count": 3
-        },
-        {
-          "itemId": "mat_songmu",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t2_light_01"
     },
     {
       "id": "forge_ar_t2_mid_01",
-      "equipmentId": "ar_t2_mid_01",
-      "blueprintId": "bp_t2_ar",
-      "name": "铁木甲",
-      "count": 1,
-      "cost": 130,
-      "materials": [
-        {
-          "itemId": "mat_songmu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tiejing",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ar_t2_mid_01"
     },
     {
       "id": "forge_ar_t2_heavy_01",
-      "equipmentId": "ar_t2_heavy_01",
-      "blueprintId": "bp_t2_ar",
-      "name": "重铁甲",
-      "count": 1,
-      "cost": 150,
-      "materials": [
-        {
-          "itemId": "mat_tiejing",
-          "count": 4
-        },
-        {
-          "itemId": "mat_qinggang",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ar_t2_heavy_01"
     },
     {
       "id": "forge_hd_t2_war_01",
-      "equipmentId": "hd_t2_war_01",
-      "blueprintId": "bp_t2_hl",
-      "name": "铁战盔",
-      "count": 1,
-      "cost": 100,
-      "materials": [
-        {
-          "itemId": "mat_tiejing",
-          "count": 3
-        },
-        {
-          "itemId": "mat_qinggang",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hd_t2_war_01"
     },
     {
       "id": "forge_hd_t2_spirit_01",
-      "equipmentId": "hd_t2_spirit_01",
-      "blueprintId": "bp_t2_hl",
-      "name": "河伯灵冠",
-      "count": 1,
-      "cost": 110,
-      "materials": [
-        {
-          "itemId": "mat_shenshuiyu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_songmu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hd_t2_spirit_01"
     },
     {
       "id": "forge_bt_t2_light_01",
-      "equipmentId": "bt_t2_light_01",
-      "blueprintId": "bp_t2_bs",
-      "name": "踏浪靴",
-      "count": 1,
-      "cost": 90,
-      "materials": [
-        {
-          "itemId": "mat_xiongpi",
-          "count": 2
-        },
-        {
-          "itemId": "mat_beike",
-          "count": 2
-        }
-      ]
+      "equipmentId": "bt_t2_light_01"
     },
     {
       "id": "forge_bt_t2_heavy_01",
-      "equipmentId": "bt_t2_heavy_01",
-      "blueprintId": "bp_t2_bs",
-      "name": "铁蹄靴",
-      "count": 1,
-      "cost": 100,
-      "materials": [
-        {
-          "itemId": "mat_tiejing",
-          "count": 2
-        },
-        {
-          "itemId": "mat_qinggang",
-          "count": 2
-        }
-      ]
+      "equipmentId": "bt_t2_heavy_01"
     },
     {
       "id": "forge_hf_t2_life_01",
-      "equipmentId": "hf_t2_life_01",
-      "blueprintId": "bp_t2_ch",
-      "name": "深水玉符",
-      "count": 1,
-      "cost": 110,
-      "materials": [
-        {
-          "itemId": "mat_shenshuiyu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_zhenzhu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hf_t2_life_01"
     },
     {
       "id": "forge_hf_t2_war_01",
-      "equipmentId": "hf_t2_war_01",
-      "blueprintId": "bp_t2_ch",
-      "name": "河铁战符",
-      "count": 1,
-      "cost": 100,
-      "materials": [
-        {
-          "itemId": "mat_tiejing",
-          "count": 2
-        },
-        {
-          "itemId": "mat_beike",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hf_t2_war_01"
     },
     {
       "id": "forge_jz_t2_power_01",
-      "equipmentId": "jz_t2_power_01",
-      "blueprintId": "bp_t2_rg",
-      "name": "铁精戒",
-      "count": 1,
-      "cost": 100,
-      "materials": [
-        {
-          "itemId": "mat_tiejing",
-          "count": 2
-        },
-        {
-          "itemId": "mat_qinggang",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t2_power_01"
     },
     {
       "id": "forge_jz_t2_spirit_01",
-      "equipmentId": "jz_t2_spirit_01",
-      "blueprintId": "bp_t2_rg",
-      "name": "水灵护手",
-      "count": 1,
-      "cost": 110,
-      "materials": [
-        {
-          "itemId": "mat_shenshuiyu",
-          "count": 1
-        },
-        {
-          "itemId": "mat_zhenzhu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t2_spirit_01"
     },
     {
       "id": "forge_wp_t3_light_01",
-      "equipmentId": "wp_t3_light_01",
-      "blueprintId": "bp_t3_wp",
-      "name": "流云剑",
-      "count": 1,
-      "cost": 250,
-      "materials": [
-        {
-          "itemId": "mat_tiemu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_jinjing",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t3_light_01"
     },
     {
       "id": "forge_wp_t3_mid_01",
-      "equipmentId": "wp_t3_mid_01",
-      "blueprintId": "bp_t3_wp",
-      "name": "伏魔杖",
-      "count": 1,
-      "cost": 280,
-      "materials": [
-        {
-          "itemId": "mat_tiemu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_jinjing",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_t3_mid_01"
     },
     {
       "id": "forge_wp_t3_heavy_01",
-      "equipmentId": "wp_t3_heavy_01",
-      "blueprintId": "bp_t3_wp",
-      "name": "撼地锤",
-      "count": 1,
-      "cost": 300,
-      "materials": [
-        {
-          "itemId": "mat_jinjing",
-          "count": 3
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 3
-        },
-        {
-          "itemId": "mat_cushi",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t3_heavy_01"
     },
     {
       "id": "forge_ar_t3_light_01",
-      "equipmentId": "ar_t3_light_01",
-      "blueprintId": "bp_t3_ar",
-      "name": "虎威甲",
-      "count": 1,
-      "cost": 240,
-      "materials": [
-        {
-          "itemId": "mat_hupi",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tiemu",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t3_light_01"
     },
     {
       "id": "forge_ar_t3_mid_01",
-      "equipmentId": "ar_t3_mid_01",
-      "blueprintId": "bp_t3_ar",
-      "name": "金木甲",
-      "count": 1,
-      "cost": 260,
-      "materials": [
-        {
-          "itemId": "mat_tiemu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_jinjing",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ar_t3_mid_01"
     },
     {
       "id": "forge_ar_t3_heavy_01",
-      "equipmentId": "ar_t3_heavy_01",
-      "blueprintId": "bp_t3_ar",
-      "name": "神金甲",
-      "count": 1,
-      "cost": 280,
-      "materials": [
-        {
-          "itemId": "mat_jinjing",
-          "count": 4
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ar_t3_heavy_01"
     },
     {
       "id": "forge_hd_t3_war_01",
-      "equipmentId": "hd_t3_war_01",
-      "blueprintId": "bp_t3_hl",
-      "name": "钢战盔",
-      "count": 1,
-      "cost": 220,
-      "materials": [
-        {
-          "itemId": "mat_gangjing",
-          "count": 3
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hd_t3_war_01"
     },
     {
       "id": "forge_hd_t3_spirit_01",
-      "equipmentId": "hd_t3_spirit_01",
-      "blueprintId": "bp_t3_hl",
-      "name": "岩灵冠",
-      "count": 1,
-      "cost": 240,
-      "materials": [
-        {
-          "itemId": "mat_yanxin",
-          "count": 2
-        },
-        {
-          "itemId": "mat_tiemu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hd_t3_spirit_01"
     },
     {
       "id": "forge_bt_t3_light_01",
-      "equipmentId": "bt_t3_light_01",
-      "blueprintId": "bp_t3_bs",
-      "name": "疾风靴",
-      "count": 1,
-      "cost": 200,
-      "materials": [
-        {
-          "itemId": "mat_xianyun",
-          "count": 2
-        },
-        {
-          "itemId": "mat_tiemu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "bt_t3_light_01"
     },
     {
       "id": "forge_bt_t3_heavy_01",
-      "equipmentId": "bt_t3_heavy_01",
-      "blueprintId": "bp_t3_bs",
-      "name": "磐石靴",
-      "count": 1,
-      "cost": 220,
-      "materials": [
-        {
-          "itemId": "mat_xuantie",
-          "count": 3
-        },
-        {
-          "itemId": "mat_cushi",
-          "count": 2
-        }
-      ]
+      "equipmentId": "bt_t3_heavy_01"
     },
     {
       "id": "forge_hf_t3_life_01",
-      "equipmentId": "hf_t3_life_01",
-      "blueprintId": "bp_t3_ch",
-      "name": "翠玉护符",
-      "count": 1,
-      "cost": 240,
-      "materials": [
-        {
-          "itemId": "mat_cuiyu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_shengshui",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hf_t3_life_01"
     },
     {
       "id": "forge_hf_t3_war_01",
-      "equipmentId": "hf_t3_war_01",
-      "blueprintId": "bp_t3_ch",
-      "name": "金精战符",
-      "count": 1,
-      "cost": 220,
-      "materials": [
-        {
-          "itemId": "mat_jinjing",
-          "count": 2
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hf_t3_war_01"
     },
     {
       "id": "forge_jz_t3_power_01",
-      "equipmentId": "jz_t3_power_01",
-      "blueprintId": "bp_t3_rg",
-      "name": "金精戒",
-      "count": 1,
-      "cost": 220,
-      "materials": [
-        {
-          "itemId": "mat_jinjing",
-          "count": 2
-        },
-        {
-          "itemId": "mat_yanxin",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t3_power_01"
     },
     {
       "id": "forge_jz_t3_spirit_01",
-      "equipmentId": "jz_t3_spirit_01",
-      "blueprintId": "bp_t3_rg",
-      "name": "翠玉灵护手",
-      "count": 1,
-      "cost": 240,
-      "materials": [
-        {
-          "itemId": "mat_cuiyu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_shenshuiyu",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t3_spirit_01"
     },
     {
       "id": "forge_wp_t4_light_01",
-      "equipmentId": "wp_t4_light_01",
-      "blueprintId": "bp_t4_wp",
-      "name": "幽影刃",
-      "count": 1,
-      "cost": 380,
-      "materials": [
-        {
-          "itemId": "mat_youmu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_bizhanglingye",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t4_light_01"
     },
     {
       "id": "forge_wp_t4_mid_01",
-      "equipmentId": "wp_t4_mid_01",
-      "blueprintId": "bp_t4_wp",
-      "name": "破幻杖",
-      "count": 1,
-      "cost": 400,
-      "materials": [
-        {
-          "itemId": "mat_youmu",
-          "count": 2
-        },
-        {
-          "itemId": "mat_huancai",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t4_mid_01"
     },
     {
       "id": "forge_wp_t4_heavy_01",
-      "equipmentId": "wp_t4_heavy_01",
-      "blueprintId": "bp_t4_wp",
-      "name": "碎岳锤",
-      "count": 1,
-      "cost": 420,
-      "materials": [
-        {
-          "itemId": "mat_huancai",
-          "count": 3
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_t4_heavy_01"
     },
     {
       "id": "forge_ar_t4_light_01",
-      "equipmentId": "ar_t4_light_01",
-      "blueprintId": "bp_t4_ar",
-      "name": "影豹皮甲",
-      "count": 1,
-      "cost": 360,
-      "materials": [
-        {
-          "itemId": "mat_yingbao",
-          "count": 2
-        },
-        {
-          "itemId": "mat_xianyun",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t4_light_01"
     },
     {
       "id": "forge_ar_t4_mid_01",
-      "equipmentId": "ar_t4_mid_01",
-      "blueprintId": "bp_t4_ar",
-      "name": "瘴木甲",
-      "count": 1,
-      "cost": 380,
-      "materials": [
-        {
-          "itemId": "mat_youmu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_huancai",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t4_mid_01"
     },
     {
       "id": "forge_ar_t4_heavy_01",
-      "equipmentId": "ar_t4_heavy_01",
-      "blueprintId": "bp_t4_ar",
-      "name": "幻岩铠",
-      "count": 1,
-      "cost": 400,
-      "materials": [
-        {
-          "itemId": "mat_huancai",
-          "count": 4
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ar_t4_heavy_01"
     },
     {
       "id": "forge_hd_t4_war_01",
-      "equipmentId": "hd_t4_war_01",
-      "blueprintId": "bp_t4_hl",
-      "name": "幻岩战盔",
-      "count": 1,
-      "cost": 350,
-      "materials": [
-        {
-          "itemId": "mat_huancai",
-          "count": 3
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hd_t4_war_01"
     },
     {
       "id": "forge_hd_t4_spirit_01",
-      "equipmentId": "hd_t4_spirit_01",
-      "blueprintId": "bp_t4_hl",
-      "name": "幽兰灵冠",
-      "count": 1,
-      "cost": 370,
-      "materials": [
-        {
-          "itemId": "mat_youlan",
-          "count": 2
-        },
-        {
-          "itemId": "mat_wuling",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hd_t4_spirit_01"
     },
     {
       "id": "forge_bt_t4_light_01",
-      "equipmentId": "bt_t4_light_01",
-      "blueprintId": "bp_t4_bs",
-      "name": "影步靴",
-      "count": 1,
-      "cost": 340,
-      "materials": [
-        {
-          "itemId": "mat_yingbao",
-          "count": 2
-        },
-        {
-          "itemId": "mat_wuling",
-          "count": 2
-        }
-      ]
+      "equipmentId": "bt_t4_light_01"
     },
     {
       "id": "forge_bt_t4_heavy_01",
-      "equipmentId": "bt_t4_heavy_01",
-      "blueprintId": "bp_t4_bs",
-      "name": "幻岩重靴",
-      "count": 1,
-      "cost": 360,
-      "materials": [
-        {
-          "itemId": "mat_huancai",
-          "count": 3
-        },
-        {
-          "itemId": "mat_xuantie",
-          "count": 2
-        }
-      ]
+      "equipmentId": "bt_t4_heavy_01"
     },
     {
       "id": "forge_hf_t4_life_01",
-      "equipmentId": "hf_t4_life_01",
-      "blueprintId": "bp_t4_ch",
-      "name": "翡翠护符",
-      "count": 1,
-      "cost": 370,
-      "materials": [
-        {
-          "itemId": "mat_feicui",
-          "count": 2
-        },
-        {
-          "itemId": "mat_youlan",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hf_t4_life_01"
     },
     {
       "id": "forge_hf_t4_war_01",
-      "equipmentId": "hf_t4_war_01",
-      "blueprintId": "bp_t4_ch",
-      "name": "毒牙战符",
-      "count": 1,
-      "cost": 350,
-      "materials": [
-        {
-          "itemId": "mat_bizhanglingye",
-          "count": 2
-        },
-        {
-          "itemId": "mat_yingbao",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hf_t4_war_01"
     },
     {
       "id": "forge_jz_t4_power_01",
-      "equipmentId": "jz_t4_power_01",
-      "blueprintId": "bp_t4_rg",
-      "name": "毒牙戒",
-      "count": 1,
-      "cost": 350,
-      "materials": [
-        {
-          "itemId": "mat_bizhanglingye",
-          "count": 2
-        },
-        {
-          "itemId": "mat_huancai",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t4_power_01"
     },
     {
       "id": "forge_jz_t4_spirit_01",
-      "equipmentId": "jz_t4_spirit_01",
-      "blueprintId": "bp_t4_rg",
-      "name": "雾灵护手",
-      "count": 1,
-      "cost": 370,
-      "materials": [
-        {
-          "itemId": "mat_wuling",
-          "count": 2
-        },
-        {
-          "itemId": "mat_youlan",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t4_spirit_01"
     },
     {
       "id": "forge_wp_t5_light_01",
-      "equipmentId": "wp_t5_light_01",
-      "blueprintId": "bp_t5_wp",
-      "name": "菩提降龙剑",
-      "count": 1,
-      "cost": 800,
-      "materials": [
-        {
-          "itemId": "mat_puti",
-          "count": 3
-        },
-        {
-          "itemId": "mat_foguang",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t5_light_01"
     },
     {
       "id": "forge_wp_t5_mid_01",
-      "equipmentId": "wp_t5_mid_01",
-      "blueprintId": "bp_t5_wp",
-      "name": "天罡伏魔杖",
-      "count": 1,
-      "cost": 850,
-      "materials": [
-        {
-          "itemId": "mat_puti",
-          "count": 2
-        },
-        {
-          "itemId": "mat_tiangang",
-          "count": 1
-        }
-      ]
+      "equipmentId": "wp_t5_mid_01"
     },
     {
       "id": "forge_wp_t5_heavy_01",
-      "equipmentId": "wp_t5_heavy_01",
-      "blueprintId": "bp_t5_wp",
-      "name": "须弥碎天锤",
-      "count": 1,
-      "cost": 900,
-      "materials": [
-        {
-          "itemId": "mat_xumi",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tiangang",
-          "count": 1
-        }
-      ]
+      "equipmentId": "wp_t5_heavy_01"
     },
     {
       "id": "forge_ar_t5_light_01",
-      "equipmentId": "ar_t5_light_01",
-      "blueprintId": "bp_t5_ar",
-      "name": "天蚕仙衣",
-      "count": 1,
-      "cost": 780,
-      "materials": [
-        {
-          "itemId": "mat_tiancan",
-          "count": 3
-        },
-        {
-          "itemId": "mat_foguang",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t5_light_01"
     },
     {
       "id": "forge_ar_t5_mid_01",
-      "equipmentId": "ar_t5_mid_01",
-      "blueprintId": "bp_t5_ar",
-      "name": "菩提道袍",
-      "count": 1,
-      "cost": 820,
-      "materials": [
-        {
-          "itemId": "mat_puti",
-          "count": 3
-        },
-        {
-          "itemId": "mat_shengshui",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ar_t5_mid_01"
     },
     {
       "id": "forge_ar_t5_heavy_01",
-      "equipmentId": "ar_t5_heavy_01",
-      "blueprintId": "bp_t5_ar",
-      "name": "金刚不坏甲",
-      "count": 1,
-      "cost": 860,
-      "materials": [
-        {
-          "itemId": "mat_xumi",
-          "count": 4
-        },
-        {
-          "itemId": "mat_tiangang",
-          "count": 1
-        }
-      ]
+      "equipmentId": "ar_t5_heavy_01"
     },
     {
       "id": "forge_hd_t5_war_01",
-      "equipmentId": "hd_t5_war_01",
-      "blueprintId": "bp_t5_hl",
-      "name": "金刚战盔",
-      "count": 1,
-      "cost": 750,
-      "materials": [
-        {
-          "itemId": "mat_xumi",
-          "count": 3
-        },
-        {
-          "itemId": "mat_foguang",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hd_t5_war_01"
     },
     {
       "id": "forge_hd_t5_spirit_01",
-      "equipmentId": "hd_t5_spirit_01",
-      "blueprintId": "bp_t5_hl",
-      "name": "菩提道冠",
-      "count": 1,
-      "cost": 780,
-      "materials": [
-        {
-          "itemId": "mat_puti",
-          "count": 2
-        },
-        {
-          "itemId": "mat_lingxiao",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hd_t5_spirit_01"
     },
     {
       "id": "forge_bt_t5_light_01",
-      "equipmentId": "bt_t5_light_01",
-      "blueprintId": "bp_t5_bs",
-      "name": "仙云靴",
-      "count": 1,
-      "cost": 720,
-      "materials": [
-        {
-          "itemId": "mat_tiancan",
-          "count": 2
-        },
-        {
-          "itemId": "mat_foguang",
-          "count": 2
-        }
-      ]
+      "equipmentId": "bt_t5_light_01"
     },
     {
       "id": "forge_bt_t5_heavy_01",
-      "equipmentId": "bt_t5_heavy_01",
-      "blueprintId": "bp_t5_bs",
-      "name": "金刚重靴",
-      "count": 1,
-      "cost": 750,
-      "materials": [
-        {
-          "itemId": "mat_xumi",
-          "count": 3
-        },
-        {
-          "itemId": "mat_shengshui",
-          "count": 1
-        }
-      ]
+      "equipmentId": "bt_t5_heavy_01"
     },
     {
       "id": "forge_hf_t5_life_01",
-      "equipmentId": "hf_t5_life_01",
-      "blueprintId": "bp_t5_ch",
-      "name": "琉璃净符",
-      "count": 1,
-      "cost": 780,
-      "materials": [
-        {
-          "itemId": "mat_shengshui",
-          "count": 2
-        },
-        {
-          "itemId": "mat_lingxiao",
-          "count": 1
-        }
-      ]
+      "equipmentId": "hf_t5_life_01"
     },
     {
       "id": "forge_hf_t5_war_01",
-      "equipmentId": "hf_t5_war_01",
-      "blueprintId": "bp_t5_ch",
-      "name": "天罡战符",
-      "count": 1,
-      "cost": 800,
-      "materials": [
-        {
-          "itemId": "mat_tiangang",
-          "count": 1
-        },
-        {
-          "itemId": "mat_foguang",
-          "count": 2
-        }
-      ]
+      "equipmentId": "hf_t5_war_01"
     },
     {
       "id": "forge_jz_t5_power_01",
-      "equipmentId": "jz_t5_power_01",
-      "blueprintId": "bp_t5_rg",
-      "name": "金刚力护手",
-      "count": 1,
-      "cost": 780,
-      "materials": [
-        {
-          "itemId": "mat_xumi",
-          "count": 2
-        },
-        {
-          "itemId": "mat_tiangang",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t5_power_01"
     },
     {
       "id": "forge_jz_t5_spirit_01",
-      "equipmentId": "jz_t5_spirit_01",
-      "blueprintId": "bp_t5_rg",
-      "name": "菩提灵护手",
-      "count": 1,
-      "cost": 800,
-      "materials": [
-        {
-          "itemId": "mat_puti",
-          "count": 2
-        },
-        {
-          "itemId": "mat_lingxiao",
-          "count": 1
-        }
-      ]
+      "equipmentId": "jz_t5_spirit_01"
     },
     {
       "id": "forge_wp_t4_01",
-      "equipmentId": "wp_t4_01",
-      "blueprintId": "bp_legend_01",
-      "name": "牛魔撼天锤",
-      "count": 1,
-      "cost": 1000,
-      "materials": [
-        {
-          "itemId": "mat_boss_01",
-          "count": 1
-        },
-        {
-          "itemId": "mat_xumi",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_t4_01"
     },
     {
       "id": "forge_hd_t4_war_02",
-      "equipmentId": "hd_t4_war_02",
-      "blueprintId": "bp_legend_01",
-      "name": "牛魔战盔",
-      "count": 1,
-      "cost": 1000,
-      "materials": [
-        {
-          "itemId": "mat_boss_01",
-          "count": 1
-        },
-        {
-          "itemId": "mat_huancai",
-          "count": 3
-        }
-      ]
+      "equipmentId": "hd_t4_war_02"
     },
     {
       "id": "forge_ac_t4_01",
-      "equipmentId": "ac_t4_01",
-      "blueprintId": "bp_legend_02",
-      "name": "万毒蚀心镯",
-      "count": 1,
-      "cost": 1000,
-      "materials": [
-        {
-          "itemId": "mat_tianxiewangdu",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ac_t4_01"
     },
     {
       "id": "forge_bt_t4_02",
-      "equipmentId": "bt_t4_02",
-      "blueprintId": "bp_legend_02",
-      "name": "蝎尾灵靴",
-      "count": 1,
-      "cost": 1000,
-      "materials": [
-        {
-          "itemId": "mat_tianxiewangdu",
-          "count": 1
-        },
-        {
-          "itemId": "mat_yingbao",
-          "count": 3
-        }
-      ]
+      "equipmentId": "bt_t4_02"
     },
     {
       "id": "forge_ac_t4_02",
-      "equipmentId": "ac_t4_02",
-      "blueprintId": "bp_legend_03",
-      "name": "大鹏逐日冠",
-      "count": 1,
-      "cost": 1000,
-      "materials": [
-        {
-          "itemId": "mat_boss_03",
-          "count": 1
-        },
-        {
-          "itemId": "mat_foguang",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ac_t4_02"
     },
     {
       "id": "forge_bt_t4_03",
-      "equipmentId": "bt_t4_03",
-      "blueprintId": "bp_legend_03",
-      "name": "鹏翼轻靴",
-      "count": 1,
-      "cost": 1000,
-      "materials": [
-        {
-          "itemId": "mat_boss_03",
-          "count": 1
-        },
-        {
-          "itemId": "mat_tiancan",
-          "count": 3
-        }
-      ]
+      "equipmentId": "bt_t4_03"
     },
     {
       "id": "forge_wp_t5_01",
-      "equipmentId": "wp_t5_01",
-      "blueprintId": "bp_immortal_01",
-      "name": "混元无极环",
-      "count": 1,
-      "cost": 2000,
-      "materials": [
-        {
-          "itemId": "mat_hunyuan",
-          "count": 1
-        },
-        {
-          "itemId": "mat_puti",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_t5_01"
     },
     {
       "id": "forge_ar_t5_01",
-      "equipmentId": "ar_t5_01",
-      "blueprintId": "bp_immortal_02",
-      "name": "混沌天衣",
-      "count": 1,
-      "cost": 2000,
-      "materials": [
-        {
-          "itemId": "mat_hunyuan",
-          "count": 1
-        },
-        {
-          "itemId": "mat_tiancan",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ar_t5_01"
     },
     {
       "id": "forge_ac_t5_01",
-      "equipmentId": "ac_t5_01",
-      "blueprintId": "bp_immortal_03",
-      "name": "太初道冠",
-      "count": 1,
-      "cost": 2000,
-      "materials": [
-        {
-          "itemId": "mat_hunyuan",
-          "count": 1
-        },
-        {
-          "itemId": "mat_lingxiao",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ac_t5_01"
     },
     {
       "id": "forge_ac_t5_02",
-      "equipmentId": "ac_t5_02",
-      "blueprintId": "bp_immortal_04",
-      "name": "混元灵珠",
-      "count": 1,
-      "cost": 2000,
-      "materials": [
-        {
-          "itemId": "mat_hunyuan",
-          "count": 1
-        },
-        {
-          "itemId": "mat_shengshui",
-          "count": 2
-        }
-      ]
+      "equipmentId": "ac_t5_02"
     },
     {
       "id": "forge_wp_sp_01",
-      "equipmentId": "wp_sp_01",
-      "blueprintId": "bp_sp_01",
-      "name": "烈焰斩",
-      "count": 1,
-      "cost": 260,
-      "materials": [
-        {
-          "itemId": "mat_sp_03",
-          "count": 1
-        },
-        {
-          "itemId": "mat_tiejing",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_sp_01"
     },
     {
       "id": "forge_ar_sp_01",
-      "equipmentId": "ar_sp_01",
-      "blueprintId": "bp_sp_02",
-      "name": "风灵袍",
-      "count": 1,
-      "cost": 260,
-      "materials": [
-        {
-          "itemId": "mat_sp_04",
-          "count": 1
-        },
-        {
-          "itemId": "mat_xianyun",
-          "count": 3
-        }
-      ]
+      "equipmentId": "ar_sp_01"
     },
     {
       "id": "forge_ac_sp_01",
-      "equipmentId": "ac_sp_01",
-      "blueprintId": "bp_sp_03",
-      "name": "地灵护符",
-      "count": 1,
-      "cost": 260,
-      "materials": [
-        {
-          "itemId": "mat_sp_05",
-          "count": 1
-        },
-        {
-          "itemId": "mat_yufoxiang",
-          "count": 1
-        },
-        {
-          "itemId": "mat_shengshui",
-          "count": 1
-        }
-      ]
+      "equipmentId": "ac_sp_01"
     },
     {
       "id": "forge_wp_t1_dagger_01",
-      "equipmentId": "wp_t1_dagger_01",
-      "blueprintId": "bp_t1_wp",
-      "name": "竹刺",
-      "count": 1,
-      "cost": 50,
-      "materials": [
-        {
-          "itemId": "mat_taomu",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tongjing",
-          "count": 1
-        }
-      ]
+      "equipmentId": "wp_t1_dagger_01"
     },
     {
       "id": "forge_wp_t2_dagger_01",
-      "equipmentId": "wp_t2_dagger_01",
-      "blueprintId": "bp_t2_wp",
-      "name": "双刺",
-      "count": 1,
-      "cost": 150,
-      "materials": [
-        {
-          "itemId": "mat_tiejing",
-          "count": 3
-        },
-        {
-          "itemId": "mat_tongjing",
-          "count": 2
-        }
-      ]
+      "equipmentId": "wp_t2_dagger_01"
     },
     {
       "id": "forge_wp_t3_dagger_01",
-      "equipmentId": "wp_t3_dagger_01",
-      "blueprintId": "bp_t3_wp",
-      "name": "峨眉刺",
-      "count": 1,
-      "cost": 400,
-      "materials": [
-        {
-          "itemId": "mat_jinjing",
-          "count": 5
-        },
-        {
-          "itemId": "mat_tiejing",
-          "count": 3
-        }
-      ]
+      "equipmentId": "wp_t3_dagger_01"
     }
   ],
   "retreats": [

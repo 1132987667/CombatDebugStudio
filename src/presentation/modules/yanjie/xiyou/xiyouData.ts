@@ -10,7 +10,6 @@ import caveJson from '@configs/xiyou/cave.json'
 import collectJson from '@configs/xiyou/collect.json'
 import equipmentJson from '@configs/equipment/equipment.json'
 import equipJson from '@configs/xiyou/equip.json'
-import itemsJson from '@configs/xiyou/items.json'
 import mateJson from '@configs/xiyou/mate.json'
 import packJson from '@configs/xiyou/pack.json'
 import questJson from '@configs/xiyou/quest.json'
@@ -23,6 +22,7 @@ import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
 import { migrateRarityField } from './quality'
+import { catalogItems } from './caveLogic'
 import type {
   XiyouAchievement,
   XiyouCatalogItem,
@@ -38,6 +38,8 @@ import type {
   XiyouPet,
   XiyouQuest,
   XiyouRecipe,
+  XiyouForgeRecipe,
+  XiyouPackedEquipment,
   XiyouRegion,
   XiyouRetreat,
   XiyouScene,
@@ -328,12 +330,12 @@ export function markSceneCleared(sceneId: string, stars = 1): boolean {
 }
 
 export const materials: XiyouItem[] = reactive<XiyouItem[]>(packJson.materials as unknown as XiyouItem[])
-export const equipment: XiyouItem[] = reactive<XiyouItem[]>(packJson.equipment as unknown as XiyouItem[])
+export const equipment: XiyouPackedEquipment[] = reactive<XiyouPackedEquipment[]>(packJson.equipment as unknown as XiyouPackedEquipment[])
 export const pills: XiyouItem[] = reactive<XiyouItem[]>(packJson.pills as unknown as XiyouItem[])
 export const consumables: XiyouItem[] = reactive<XiyouItem[]>(packJson.consumables as unknown as XiyouItem[])
 export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.shopGoods as unknown as XiyouShopGood[])
 export const storageCells: XiyouStorageCell[] = reactive<XiyouStorageCell[]>(packJson.storageCells as unknown as XiyouStorageCell[])
-export const packItems: XiyouCatalogItem[] = itemsJson.items as unknown as XiyouCatalogItem[]
+export const packItems: XiyouCatalogItem[] = catalogItems
 
 export const treasures: XiyouTreasure[] = reactive<XiyouTreasure[]>(equipJson.treasures as unknown as XiyouTreasure[])
 export const mounts: XiyouMount[] = reactive<XiyouMount[]>(equipJson.mounts as unknown as XiyouMount[])
@@ -371,7 +373,7 @@ export const events: XiyouEvent[] = reactive<XiyouEvent[]>(questJson.events as u
 export const equipmentCatalog: EquipmentData[] = equipmentJson as unknown as EquipmentData[]
 
 export const alchemyRecipes: XiyouRecipe[] = reactive<XiyouRecipe[]>(caveJson.alchemyRecipes as unknown as XiyouRecipe[])
-export const forgeRecipes: XiyouRecipe[] = reactive<XiyouRecipe[]>(caveJson.forgeRecipes as unknown as XiyouRecipe[])
+export const forgeRecipes: XiyouForgeRecipe[] = reactive<XiyouForgeRecipe[]>(caveJson.forgeRecipes as unknown as XiyouForgeRecipe[])
 export const talismanRecipes: XiyouRecipe[] = reactive<XiyouRecipe[]>(caveJson.talismanRecipes as unknown as XiyouRecipe[])
 export const gardenCrops: XiyouGardenCrop[] = reactive<XiyouGardenCrop[]>(caveJson.gardenCrops as unknown as XiyouGardenCrop[])
 export const retreats: XiyouRetreat[] = reactive<XiyouRetreat[]>(caveJson.retreats as unknown as XiyouRetreat[])

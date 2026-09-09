@@ -255,6 +255,18 @@ export interface XiyouItem {
   desc: string
 }
 
+/** 初始背包装备（pack.json equipment；按 itemId 引用 equipment.json，开局逐件实例化） */
+export interface XiyouPackedEquipment {
+  itemId: string
+  count: number
+}
+
+/** 锻造配方（cave.json forgeRecipes；名称/材料/金钱/图纸全部以 equipmentId 指向的装备定义为唯一数据源，配方不再内联） */
+export interface XiyouForgeRecipe {
+  id: string
+  equipmentId: string
+}
+
 /** 物品目录条目（items.json 主键索引 · 行囊默认全量展示） */
 export interface XiyouCatalogItem {
   id: string

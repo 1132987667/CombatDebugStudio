@@ -2,8 +2,8 @@
  * packStore.ts — 行囊（背包/仓库/坊市/快捷栏）运行时状态（Pinia Composition API）
  *
  * 设计要点（对照 documents/演劫台/修改意见.md 方案二）：
- * - 目录静态源：items.json（经 mock.ts 的 packItems 全量索引）；持有量（inventory）为运行时状态
- * - 初始持有量：pack.json 的 materials/equipment/pills/consumables 按 name 匹配 items.json 生成
+ * - 目录静态源：caveLogic 合并目录（items.json + equipment.json 派生装备条目，唯一全量索引）
+ * - 初始持有量：pack.json 的 materials/pills/consumables 按 name 匹配目录生成；equipment 按 itemId 逐件实例化
  * - 持久化：封神榜 xiyou 表 id='pack_runtime'（复用现有方案 B 存储路径），防抖 500ms
  * - 货币：引用 playerStore.currency（顶栏/坊市同一货币口径）
  * - 战斗联动：useInBattle 经 BattleSystem.getBuffSystem() 注入 requestHeal/requestEnergy/addBuff
@@ -453,12 +453,11 @@ export const usePackStore = defineStore('pack', () => {
     }
     inventory.value = inv
 
-    // 装备组：每件生成一个实例（无词缀、enhance 0）
+    // 装备组：每件生成一个实例（无词缀、enhance 0；pack.json 按 itemId 引用装备定义）
     const gear: GearInstance[] = []
     for (const item of equipment) {
-      const id = nameToId.get(item.name)
-      if (id && gearById(id)) {
-        for (let i = 0; i < item.count; i++) gear.push(makeInstance(id, [], 0))
+      if (gearById(item.itemId)) {
+        for (let i = 0; i < item.count; i++) gear.push(makeInstance(item.itemId, [], 0))
       }
     }
     gearInstances.value = gear

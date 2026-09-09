@@ -897,13 +897,13 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             label: '制造指定配方',
             input: {
               type: 'select',
-              options: () => env.forgeRecipes.map((r) => ({ value: r.id ?? r.equipmentId ?? '', label: r.name })),
+              options: () => env.forgeRecipes.map((r) => ({ value: r.id, label: env.equipmentCatalog.find((g) => g.id === r.equipmentId)?.name ?? r.equipmentId })),
               placeholder: '选择配方',
               required: true,
             },
             execute: (recipeId) => {
               const r = env.forgeRecipes.find((x) => x.id === recipeId || x.equipmentId === recipeId)
-              const equipmentId = r?.equipmentId ?? (r?.id ?? String(recipeId))
+              const equipmentId = r?.equipmentId ?? String(recipeId)
               if (!pack.gearById(equipmentId)) return fail('配方未对应可用装备')
               const inst = newInstance(equipmentId)
               pack.gearInstances.push(inst)

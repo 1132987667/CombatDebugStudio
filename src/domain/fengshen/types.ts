@@ -93,6 +93,8 @@ export interface EquipmentData {
   /** 获取来源说明 */
   source?: string
   description?: string
+  /** 实际价值（金钱口径，出售/坊市价 = 价值 × 全局系数；原 items.json 装备条目的 value 已迁入，装备详情唯一数据源） */
+  value?: number
 }
 
 /** 物品（items 表）—— 全量物品主键索引（configs/xiyou/items.json）。所有掉落表 / 制造表的 itemId 均须在此注册 */

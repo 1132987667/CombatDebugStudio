@@ -18,7 +18,7 @@ withDefaults(defineProps<{
   options?: readonly number[]
 }>(), {
   label: '速度:',
-  options: SPEED_OPTIONS,
+  options: () => [...SPEED_OPTIONS] as unknown as readonly number[],
 })
 
 defineEmits<{

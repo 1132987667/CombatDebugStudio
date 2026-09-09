@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { TableSchema, FieldSchema } from '@/domain/fengshen/schema'
+import type { FengshenTableName } from '@/domain/fengshen/types'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import FieldEditor from './FieldEditor.vue'
@@ -49,7 +50,7 @@ const props = defineProps<{
   entity: Record<string, unknown> | null
   isNew: boolean
   errors: string[]
-  loadOptions: (table: string) => Promise<OptionItem[]>
+  loadOptions: (table: FengshenTableName) => Promise<OptionItem[]>
 }>()
 
 const emit = defineEmits<{
@@ -114,9 +115,10 @@ watch(
     snapshot = props.entity ? JSON.stringify(props.entity) : null
     // 预载引用字段选项
     for (const field of props.schema.fields) {
-      if (field.refTable && !options.value[field.refTable]) {
-        void props.loadOptions(field.refTable).then((items) => {
-          options.value[field.refTable] = items
+      const rt = field.refTable
+      if (rt && !options.value[rt]) {
+        void props.loadOptions(rt).then((items) => {
+          options.value[rt] = items
         })
       }
     }

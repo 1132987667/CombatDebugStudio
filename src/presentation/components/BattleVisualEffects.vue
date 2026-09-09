@@ -163,13 +163,18 @@ function showProjectile(fromId: string, toId: string, type: ImpactClass, duratio
   const to = cardCenter(toId)
   // duration<=0 防御：避免 (now-start)/0 产生 NaN 坐标（实践中 budget 恒为正，此路径不可达）
   if (!from || !to || duration <= 0) return
+  // rAF 闭包内不保留 null 收窄（vue-tsc/TS 版本差异），起点坐标提前落成局部量
+  const sx = from.x
+  const sy = from.y
+  const tx = to.x
+  const ty = to.y
   const proj = document.createElement('div')
   proj.className = `projectile ${type}`
-  const root = document.getElementById('visual-effects-root')
-  if (!root) return
-  root.appendChild(proj)
-  const dx = to.x - from.x
-  const dy = to.y - from.y
+  const rootEl: HTMLElement | null = document.getElementById('visual-effects-root')
+  if (!rootEl) return
+  rootEl.appendChild(proj)
+  const dx = tx - sx
+  const dy = ty - sy
   const start = performance.now()
   let lastTrail = 0
   function step(now: number) {
@@ -177,13 +182,13 @@ function showProjectile(fromId: string, toId: string, type: ImpactClass, duratio
     if (!proj.isConnected) return
     const t = Math.min(1, (now - start) / duration)
     const arc = Math.sin(t * Math.PI) * 60
-    const x = from.x + dx * t
-    const y = from.y + dy * t - arc
+    const x = sx + dx * t
+    const y = sy + dy * t - arc
     proj.style.left = (x - 7) + 'px'
     proj.style.top = (y - 7) + 'px'
     if (now - lastTrail > TRAIL_INTERVAL_MS) {
       lastTrail = now
-      spawnTrail(root, x, y, type)
+      spawnTrail(rootEl, x, y, type)
     }
     if (t < 1) {
       nextFrame(step)

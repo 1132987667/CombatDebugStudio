@@ -6,12 +6,19 @@
  */
 
 import type { EquipmentAffixData } from '@/domain/fengshen/types'
+import type { EquipmentSlot } from '@/shared/types/Item'
 
-/** 装备部位枚举（与 equipment.json slot 字段一致） */
-export const EQUIPMENT_SLOTS = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove'] as const
+/**
+ * 装备部位枚举（与 equipment.json slot 字段一致）
+ * NOTE: 这是 8 槽 EquipmentSlot（@/shared/types/Item，含 artifact/relic）在现有装备数据上的 6 槽子集，
+ *       词条/洗炼/重铸按此域抽取；新增 artifact/relic 装备时先扩此处。
+ */
+export const EQUIPMENT_SLOTS = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove'] as const satisfies readonly EquipmentSlot[]
+
+type RealEquipmentSlot = (typeof EQUIPMENT_SLOTS)[number]
 
 /** 部位 → 合法子类型（子类型为自由中文名，此处以 equipment.json 现有数据为权威枚举） */
-export const SLOT_SUB_TYPES: Record<string, readonly string[]> = {
+export const SLOT_SUB_TYPES: Record<RealEquipmentSlot, readonly string[]> = {
   weapon: ['轻型', '中型', '重型', '刺'],
   armor: ['皮甲', '木甲', '铠甲', '天衣'],
   helmet: ['头盔', '冠冕'],
@@ -23,11 +30,16 @@ export const SLOT_SUB_TYPES: Record<string, readonly string[]> = {
 /** 通配 slotKey：适用全部位 */
 export const WILDCARD_SLOT = '*'
 
+/** slotKey 拆出的部位段是否为真实装备部位（类型守卫，供 SLOT_SUB_TYPES 索引收窄） */
+function isRealEquipmentSlot(s: string): s is RealEquipmentSlot {
+  return (EQUIPMENT_SLOTS as readonly string[]).includes(s)
+}
+
 /** 校验 slotKey 合法性：'*' 通配 / 'weapon' 部位级 / 'weapon:轻型' 部位+子类型组合。返回错误信息，合法返回 null */
 export function validateSlotKey(key: string): string | null {
   if (key === WILDCARD_SLOT) return null
   const [slot, subType] = key.split(':')
-  if (!EQUIPMENT_SLOTS.includes(slot as (typeof EQUIPMENT_SLOTS)[number])) {
+  if (!isRealEquipmentSlot(slot)) {
     return `非法部位「${slot}」（应为 ${EQUIPMENT_SLOTS.join('/')} 或 *）`
   }
   if (subType !== undefined && !SLOT_SUB_TYPES[slot].includes(subType)) {
@@ -52,7 +64,7 @@ export type AffixConflictKind = 'forbidden' | 'halved'
 
 /** 部位冲突规则（设计稿 v2.0 §14.9）—— 按 slot:subType 维度声明被禁止 / 权重减半的词条 attribute */
 export interface EquipmentConflictRule {
-  slot: string
+  slot: EquipmentSlot
   subType: string
   /** 禁止出现的词条 attribute（如 blockRate 格挡率） */
   forbidden?: string[]

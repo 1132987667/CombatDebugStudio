@@ -65,10 +65,11 @@ const archived = (
 ): AttributeDictEntry => ({ code, name, tier, category, numeric: false, note })
 
 export const ATTRIBUTE_DICTIONARY: AttributeDictEntry[] = [
-  // ===== 运行时（3）：血条/能量条/护盾条，不进数值体系 =====
+  // ===== 运行时（4）：血条/能量条/护盾条 + 账号级 meta，不进战斗数值体系 =====
   archived('currentHealth', '当前气血', 'L1', '运行时', '运行时状态：单位当前生命值'),
   archived('currentEnergy', '当前能量', 'L1', '运行时', '运行时状态：单位当前能量'),
   archived('shield', '护盾值', 'L1', '运行时', '运行时状态：当前护盾条；可投放形态见「护盾加成%」'),
+  archived('luck', '幸运', 'L1', '运行时', '账号级养成属性：提升掉落率与稀有产出概率（PRD §幸运值），不参与战斗数值投放'),
 
   // ===== A 基础数值（20） =====
   core('maxHealth', '气血', 'L1', '基础数值'),

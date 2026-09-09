@@ -519,7 +519,7 @@ function rulesOverlap(a: LevelDiffCondition, b: LevelDiffCondition): boolean {
 
 function runLevelDiffSim(): void {
   const diff = simDiffEnemyLevel.value - simPlayerLevel.value
-  const rule = matchLevelDiffRule({ rules: levelDiff.rules, fallbackMultiplier: levelDiff.fallbackMultiplier, clampRange: levelDiff.clampRange }, diff)
+  const rule = matchLevelDiffRule(levelDiff, diff)
   const mult = calcLevelDiffMultiplier(levelDiff, diff)
   diffSimResult.value = {
     diff,

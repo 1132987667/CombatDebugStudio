@@ -138,7 +138,7 @@ const keyword = ref('')
 /** 战斗页签内的状态明细开关（原 showStatus，降噪用） */
 const showStatus = ref(true)
 
-const SYSTEM_TYPES = [LogType.SYSTEM, LogType.ACTION, LogType.ITEM]
+const SYSTEM_TYPES: LogType[] = [LogType.SYSTEM, LogType.ACTION, LogType.ITEM]
 const DEBUG_DISPLAY_LIMIT = 200
 
 // ───────────────────────── 数据源：全量拉取，本地过滤 ─────────────────────────

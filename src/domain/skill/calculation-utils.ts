@@ -8,14 +8,14 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /** extraValues 中单个条目的处理结果 */
 export interface ExtraValueResult {
-  attribute: string
+  attribute: ATTRIBUTE_CODE | 'level'
   value: number
   ratio: number
 }
 
 /** targetModifiers 中单个条目的处理结果 */
 export interface TargetModifierResult {
-  attribute: string
+  attribute: ATTRIBUTE_CODE
   multiplier: number
   effect: number
 }
@@ -27,8 +27,8 @@ export interface TargetModifierResult {
  * @returns { total, contributions }
  */
 export function processExtraValues(
-  extras: Array<{ attribute: string; ratio: number }>,
-  resolveAttr: (attr: string) => number,
+  extras: Array<{ attribute: ATTRIBUTE_CODE | 'level'; ratio: number }>,
+  resolveAttr: (attr: ATTRIBUTE_CODE | 'level') => number,
 ): { total: number; contributions: ExtraValueResult[] } {
   let total = 0
   const contributions: ExtraValueResult[] = []
@@ -51,7 +51,7 @@ export function processExtraValues(
  * @returns { result, effects }
  */
 export function processTargetModifiers(
-  modifiers: Record<string, number> | undefined,
+  modifiers: Partial<Record<ATTRIBUTE_CODE, number>> | undefined,
   target: BattleEntity,
   baseValue: number,
 ): { result: number; effects: TargetModifierResult[] } {
@@ -60,8 +60,9 @@ export function processTargetModifiers(
   let value = baseValue
   const effects: TargetModifierResult[] = []
 
-  for (const [attr, modifier] of Object.entries(modifiers)) {
-    const targetAttrValue = target.getAttribute(attr as ATTRIBUTE_CODE) || 0
+  for (const [attr, modifier] of Object.entries(modifiers) as Array<[ATTRIBUTE_CODE, number | undefined]>) {
+    if (modifier === undefined) continue
+    const targetAttrValue = target.getAttribute(attr) || 0
     const modifierEffect = (modifier * targetAttrValue) / 100
     value *= 1 + modifierEffect
     value = Math.floor(value)
@@ -76,7 +77,7 @@ export function processTargetModifiers(
  * 各计算器传入自己的特殊处理逻辑（如 damageDealt→context.damage）
  */
 export function resolveAttributeValue(
-  attr: string,
+  attr: ATTRIBUTE_CODE | 'level',
   source: BattleEntity,
   target: BattleEntity,
 ): number {
@@ -84,5 +85,5 @@ export function resolveAttributeValue(
   if (attr === 'level') return source.level
   // 默认：尝试从目标读取，否则从来源读取
   const entity = (attr === 'maxHealth' || attr === 'currentHealth') ? target : source
-  return entity.getAttribute(attr as ATTRIBUTE_CODE) || 0
+  return entity.getAttribute(attr) || 0
 }

@@ -632,10 +632,10 @@
           <div class="fs-edit-row">
             <span class="fs-exp-field-label">阵营</span>
             <TacticalSelect :model-value="editingGroup.side" size="md" :options="SIDE_OPTIONS"
-              @update:model-value="(v: string | number | null) => { if (v) editingGroup.side = v as 'ATK' | 'DEF' }" />
+              @update:model-value="(v: string | number | null) => { if (v && editingGroup) editingGroup.side = v as 'ATK' | 'DEF' }" />
             <span class="fs-exp-field-label">层级</span>
             <TacticalSelect :model-value="editingGroup.tier" size="md" :options="TIER_OPTIONS"
-              @update:model-value="(v: string | number | null) => { if (v) editingGroup.tier = v as string }" />
+              @update:model-value="(v: string | number | null) => { if (v && editingGroup) editingGroup.tier = v as string }" />
           </div>
 
           <div class="fs-edit-attrs">

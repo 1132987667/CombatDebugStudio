@@ -9,18 +9,18 @@
     <TacticalInput v-if="field.type === 'number'" type="number"
       :model-value="(modelValue as number | undefined) ?? null"
       :min="field.min" :max="field.max" :hint="field.description"
-      @update:model-value="(v) => emit('update:modelValue', v)" />
+      @update:model-value="(v: string | number | null) => emit('update:modelValue', v)" />
 
     <!-- 文本 -->
     <TacticalInput v-else-if="field.type === 'text'"
       :model-value="(modelValue as string | undefined) ?? ''" :hint="field.description"
-      @update:model-value="(v) => emit('update:modelValue', v)" />
+      @update:model-value="(v: string | number | null) => emit('update:modelValue', v)" />
 
     <!-- 单选下拉 -->
     <TacticalSelect v-else-if="field.type === 'select'" size="md"
       :model-value="(modelValue as string | undefined) ?? ''"
       :options="tacticalSelectOptions" placeholder="— 未选择 —"
-      @update:model-value="(v) => emit('update:modelValue', v ?? '')" />
+      @update:model-value="(v: string | number | null) => emit('update:modelValue', v ?? '')" />
 
     <!-- 多选（refTable 选项勾选 / 标签文本） -->
     <div v-else-if="field.type === 'multi'" class="fs-multi">
@@ -43,7 +43,7 @@
       <div v-for="(entry, idx) in mapEntries" :key="idx" class="fs-map-row">
         <TacticalInput size="md" :model-value="entry.key" :placeholder="mapKeyPlaceholder"
           :list="mapKeyListId" :aria-label="`${field.label}键名`"
-          @update:model-value="(v) => setMapKey(idx, String(v ?? ''))" />
+          @update:model-value="(v: string | number | null) => setMapKey(idx, String(v ?? ''))" />
         <datalist v-if="mapKeyOptions?.length" :id="mapKeyListId">
           <option v-for="k in mapKeyOptions" :key="k" :value="k"></option>
         </datalist>

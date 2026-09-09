@@ -15,8 +15,8 @@ import type { Item, ItemEffect, EquipmentSlot } from '@/shared/types/Item'
 import type { AffixTier, AffixTarget } from '@/shared/constants/affix'
 import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
-/** 装备槽位类型（8 类标准槽位：武器/衣甲/头盔/靴子/护符/护手/法宝/神器） */
-export type EquipmentSlotType = EquipmentSlot
+/** 装备阶位（t1~t5；阶位码的单一来源，标签文案两套域见 fengshen/schema 与 xiyou/quality 各自注释） */
+export type GearTier = 't1' | 't2' | 't3' | 't4' | 't5'
 
 /** 角色（actors 表）—— 对齐规格说明书 3.1 */
 export interface ActorData {
@@ -42,7 +42,7 @@ export interface ActorData {
  * NOTE（PRD §21）：静态定义不再携带写死 stats——核心/主要/附加属性全部由运行时按
  * 「单位基数 × itemLevel × 权重 × 品阶权重 × 转化系数 × 浮动」公式与 affix-rule 池生成（gear-generate.ts）。 */
 export interface EquipmentStatEntry {
-  attribute: string
+  attribute: ATTRIBUTE_CODE
   modifierType: 'flat' | 'percent'
   value: number
 }
@@ -50,7 +50,7 @@ export interface EquipmentStatEntry {
 export interface GearAffix {
   /** 属性码（同件装备内唯一；来源 affix-rule 的 attribute_groups 属性） */
   id: string
-  attribute: string
+  attribute: ATTRIBUTE_CODE
   modifierType: 'flat' | 'percent'
   value: number
   /** 主要属性第 1 条（子类型固定，PRD §21）——洗练不可替换 */
@@ -66,11 +66,11 @@ export interface EquipmentMaterialEntry {
 export interface EquipmentData {
   id: string
   name: string
-  slot: EquipmentSlotType
+  slot: EquipmentSlot
   /** 子类型 id（affix-rule.json sub_type_groups：sword/dagger/staff/blade、cloth_armor/leather_armor/plate_armor、face_guard/crown/helmet、cloth_boots/leather_boots/battle_boots；护符/护手无子类型 = charm/glove） */
   subType?: string
   /** 阶位（t1 凡品 ~ t5 仙品） */
-  tier?: 't1' | 't2' | 't3' | 't4' | 't5'
+  tier?: GearTier
   rarity: number
   /** 装备等级 1~50（数值锚点，装备公式按它线性成长；requiredLevel 缺省 = itemLevel − 5） */
   itemLevel?: number
@@ -124,11 +124,11 @@ export interface GearMaterialEntry {
 export interface GearData {
   id: string
   name: string
-  slot: EquipmentSlotType
+  slot: EquipmentSlot
   /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/护手/头盔/冠冕/靴子） */
   subType?: string
   /** 阶位（t1 凡品 ~ t5 仙品） */
-  tier: 't1' | 't2' | 't3' | 't4' | 't5'
+  tier: GearTier
   rarity: number
   requiredLevel?: number
   stats: EquipmentStatEntry[]
@@ -158,9 +158,7 @@ export interface ElementsData {
 }
 
 /** 成长曲线（growth 表）—— 对齐规格说明书 3.8 */
-export interface GrowthPerLevel {
-  [attribute: string]: number
-}
+export type GrowthPerLevel = Partial<Record<ATTRIBUTE_CODE, number>>
 export interface GrowthExpEntry {
   level: number
   expRequired: number
@@ -296,6 +294,7 @@ export interface BattleParamData {
   /** 结构化参数数据（经验/金钱表，value 为 undefined 时使用） */
   data?: ExpTableConfig | EnemyRewardTableConfig | LevelDiffBonusConfig | EconomyRatiosConfig
     | PlayerGrowthConfig | SystemBudgetConfig | EquipFormulaConfig | AffixRuleConfig
+    | SystemDistributionConfig | AttributeLimitConfig
   description?: string
   updatedAt: string
 }
@@ -370,6 +369,53 @@ export interface SystemBudgetEntry {
 export interface SystemBudgetConfig {
   id: 'system_budget'
   systems: SystemBudgetEntry[]
+}
+
+/** 系统投放规则（params 域 system_distribution 内条目）——某系统对某属性的投放方式 */
+export interface SystemDistributionRule {
+  /** 属性代码（引用 attributes 表 code） */
+  attribute: string
+  mode: 'fixed' | 'range' | 'formula'
+  /** fixed 模式：固定值 */
+  value?: number
+  /** range 模式：随机区间 */
+  range?: { min: number; max: number }
+  /** formula 模式：预置模板参数（不做表达式 DSL——§七·公式注入风险；Phase 1 仅 linear：value = k × level + b） */
+  formula?: { template: 'linear'; k: number; b: number }
+  /** 抽池权重（0 = 不参与随机） */
+  weight?: number
+}
+
+/** 单个养成系统的投放配置（system 枚举对齐 SystemBudgetEntry 8 系统） */
+export interface SystemDistributionEntry {
+  system: SystemBudgetEntry['system']
+  label: string
+  distributions: SystemDistributionRule[]
+}
+
+/** 系统投放明细配置（params 域，key=system_distribution）——数值体系扩展 3.1 */
+export interface SystemDistributionConfig {
+  id: 'system_distribution'
+  systems: SystemDistributionEntry[]
+}
+
+/** 属性上限条目（params 域 attribute_limit.limits 的值） */
+export interface AttributeLimitEntry {
+  min: number
+  max: number
+  /** 上限口径：base=终值钳制 / percent=百分比属性钳制（如暴击率 ≤ 75） */
+  kind: 'base' | 'percent'
+  /** 违规处置：block=保存拦截 / clamp=自动钳制（提供 quickFix）/ warn=仅提示 */
+  onViolation: 'block' | 'clamp' | 'warn'
+}
+
+/** 属性上限约束配置（params 域，key=attribute_limit）——数值体系扩展 3.3 */
+export interface AttributeLimitConfig {
+  id: 'attribute_limit'
+  /** 属性代码 → 上下限（键引用 attributes 表 code） */
+  limits: Record<string, AttributeLimitEntry>
+  /** 检查口径：满级玩家 / 装备词条 / buff 叠加（最坏情况） */
+  checkScopes: Array<'playerMax' | 'equipAffix' | 'buffStacked'>
 }
 
 /** 装备阶位权重区间（对齐 PRD §21 品阶表） */
@@ -471,19 +517,19 @@ export interface AffixRuleConfig {
   id: 'affix_rule'
   description?: string
   /** 部位固定属性（slot → 该部位必然提供的主属性 code） */
-  fixed_attributes: Record<string, string>
+  fixed_attributes: Partial<Record<EquipmentSlot, ATTRIBUTE_CODE>>
   /** 子类型核心属性词条系数（sub_type id → 核心属性 code + 词条系数；剑=攻击90% → { attribute, ratio }） */
-  core_affix_ratio: Record<string, { attribute: string; ratio: number }>
+  core_affix_ratio: Record<string, { attribute: ATTRIBUTE_CODE; ratio: number }>
   /** 子类型主要属性池（sub_type id → 第 1 条固定属性 + 第 2 条随机池）。
    *  random_pool 元素可为属性组码（如 `ALL-MEC`，整组展开取一）或单个属性码（如 `comboRate`）；
    *  解析时先查 attribute_groups 命中即按组展开，否则视为单属性。主要属性不含基础六维（PRD §21）。 */
-  main_affix_pool?: Record<string, { fixed: string; random_pool: string[] }>
-  /** 装备阶位权重（凡品/玄品/地品/天品/仙品 → [min, max]，对齐 PRD §21） */
-  tier_weight: Record<string, { min: number; max: number }>
+  main_affix_pool?: Record<string, { fixed: ATTRIBUTE_CODE; random_pool: string[] }>
+  /** 品阶码（affix-rule params 域的拼音五档；与装备/存档侧 t1~t5 是两套码系，packStore 负责换算） */
+  tier_weight: Record<AffixQualityCode, { min: number; max: number }>
   /** 词条数值曲线（来源系统 → 属性组数值区间；属性组 = 一组属性 code + 下限/上限 {base, perLevel, full}）。
    *  base=1 级基础值，perLevel=每级成长，full=满级值（策划给表，满级约 50 级）。 */
   affix_value_curve: Record<string, Array<{
-    attributes: string[]
+    attributes: ATTRIBUTE_CODE[]
     min: { base: number; perLevel: number; full: number }
     max: { base: number; perLevel: number; full: number }
   }>>
@@ -491,31 +537,34 @@ export interface AffixRuleConfig {
     label: string
     side: 'ATK' | 'DEF'
     tier: string
-    attributes: string[]
+    attributes: ATTRIBUTE_CODE[]
     names: string[]
   }>
-  sub_type_groups: Record<string, {
+  sub_type_groups: Partial<Record<EquipmentSlot, {
     label: string
     sub_types: Array<{ id: string; name: string }>
-  }>
-  slot_side: Record<string, 'ATK' | 'DEF'>
+  }>>
+  slot_side: Partial<Record<EquipmentSlot, 'ATK' | 'DEF'>>
   affix_rows: Array<{
     row: number
     name: string
     pool: Record<string, string[]>
   }>
   forbidden: Array<{
-    slot: string
+    slot: EquipmentSlot
     slotLabel: string
     /** 限定子类型（缺省 = 整个部位生效）；存 sub_type_groups 里的中文名 */
     subType?: string
     subTypeLabel?: string
-    attributes: string[]
+    attributes: ATTRIBUTE_CODE[]
     attributeLabels: string[]
   }>
   /** 宠物与坐骑投放规则（8.16 口径：个体驱动 + 品质门槛 1~5），缺省视为未配置 */
   pet_mount_rules?: PetMountRulesConfig
 }
+
+/** 品阶码（affix-rule params 域拼音五档：fan 凡/xuan 玄/di 地/tian 天/xian 仙；标签单一来源见 presentation/fengshen/views/AffixRuleView 与 xiyou/quality） */
+export type AffixQualityCode = 'fan' | 'xuan' | 'di' | 'tian' | 'xian'
 
 /** 宠物与坐骑投放行——词条位 + 品质门槛（PRD《完整项目说明》§宠物与坐骑系统，2026-09-06 裁定表） */
 export interface PetMountRuleRow {

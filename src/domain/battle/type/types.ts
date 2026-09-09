@@ -235,16 +235,18 @@ export interface BattleEntity {
 
   /** 获取属性值对象（包含详细信息） */
   getAttrVal(
-    attribute: ATTRIBUTE_CODE | string,
+    attribute: ATTRIBUTE_CODE,
   ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */
-  getAttribute(attribute: ATTRIBUTE_CODE | string): number
+  getAttribute(attribute: ATTRIBUTE_CODE): number
+  /** 获取属性基础值（不含修饰符；注入/对齐类调试用） */
+  getAttributeBase(attr: ATTRIBUTE_CODE): number
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined
   /** 批量预计算所有属性（回合开始时调用）；triggerSource 可选，供 ATTRIBUTE_RECALC 事件溯源 */
   recalcAll(triggerSource?: string): void
   /** 设置属性值 */
-  setAttribute(attribute: string, value: number): void
+  setAttribute(attribute: ATTRIBUTE_CODE, value: number): void
   /** 设置修饰符提供者 */
   setModifierProvider(provider: IModifierProvider): void
 

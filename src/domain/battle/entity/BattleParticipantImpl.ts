@@ -243,10 +243,8 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称
    * @returns 属性最终值
    */
-  getAttribute(attr: ATTRIBUTE_CODE | string): number {
-    const normalizedAttr =
-      typeof attr === 'string' ? (attr as ATTRIBUTE_CODE) : attr
-    const attrValue = this.getAttrVal(normalizedAttr)
+  getAttribute(attr: ATTRIBUTE_CODE): number {
+    const attrValue = this.getAttrVal(attr)
     return attrValue?.value ?? 0
   }
 

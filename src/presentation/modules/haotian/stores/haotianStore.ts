@@ -1305,6 +1305,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     setSourceKey,
     debugEntries,
     debugNodes,
+    debugNodeEvents,
     mode,
     selectedId,
     selectedEvent,

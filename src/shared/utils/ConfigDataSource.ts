@@ -6,7 +6,7 @@
  */
 
 import type { IDataSource } from '@/domain/port/IDataSource'
-import type { Enemy } from '@/shared/types/enemy'
+import type { Enemy, EnemyStats } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData, AffixData, AffixLibraryData, EconomyRatiosConfig } from '@/domain/fengshen/types'
@@ -44,10 +44,12 @@ interface RawEnemyEntry {
   id: string
   name: string
   level: number
-  stats: Record<string, number>
+  stats: EnemyStats
   skillIds?: string[]
   passiveSkillIds?: string[]
   drops?: Array<{ itemId: string; probability?: number }>
+  // HACK: enemies.json 尚有 role/faction/type 等未入 Enemy 接口的原始字段，
+  //       normalizeEnemy 经展开带入运行时（索引签名兜底）；接口收敛前保持开放键
   [key: string]: unknown
 }
 
@@ -62,6 +64,8 @@ function normalizeEnemy(raw: RawEnemyEntry, skillTypeById: ReadonlyMap<string, s
     else if (t === 'passive') passive.push(id)
     else small.push(id)
   }
+  // NOTE: ...raw 保留 role/faction 等原始字段（Enemy 之外的扩展经 RawEnemyEntry 索引签名声明），
+  //       覆写 drops/skills 后结构即 Enemy，双断言只为剥掉索引签名
   return {
     ...raw,
     drops: (raw.drops ?? []).map((d) => ({ itemId: d.itemId, quantity: 1, chance: d.probability ?? 1 })),

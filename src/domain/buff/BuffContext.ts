@@ -116,11 +116,14 @@ export class BuffContext {
     return this._buffSystem ?? undefined
   }
 
-  public getAttrVal(attribute: string): number {
+  public getAttrVal(attribute: ATTRIBUTE_CODE): number {
     const character = this.getCharacter()
     return character ? character.getAttribute(attribute) : 0
   }
 
+  // NOTE: eventName 为触发脚本注册名（BuffSystem.triggerScripts 的键），值域来自脚本注册
+  //       与 JSON 配置 phase 双源（deal_damage/heal/on_hit 等混合命名），无单一联合可收；
+  //       升级路径：triggerScripts 注册处收键类型后此处随之收窄
   public triggerEvent(eventName: string, data?: unknown): void {
     const system = this._buffSystem
     if (system) {

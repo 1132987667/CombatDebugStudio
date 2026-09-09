@@ -25,7 +25,7 @@ export interface XiyouItemDef {
   description?: string
 }
 
-export const itemsData: XiyouItemDef[] = (itemsDataRaw as { items: XiyouItemDef[] }).items
+const itemsData: XiyouItemDef[] = (itemsDataRaw as { items: XiyouItemDef[] }).items
 
 export function getItemDef(itemId: string): XiyouItemDef | undefined {
   return itemsData.find((i) => i.id === itemId)

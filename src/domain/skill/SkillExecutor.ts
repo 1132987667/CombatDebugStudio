@@ -417,7 +417,7 @@ export class SkillExecutor {
     if (!modifiers || modifiers.length === 0) return
 
     for (const mod of modifiers) {
-      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
+      const attrCode = mod.targetAttribute
       const attrData = modTarget.getAttrValue(attrCode)
       if (!attrData) continue
 

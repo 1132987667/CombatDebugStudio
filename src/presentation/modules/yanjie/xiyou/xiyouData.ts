@@ -60,6 +60,9 @@ import type {
 export const regions: XiyouRegion[] = reactive<XiyouRegion[]>(regionsJson as unknown as XiyouRegion[])
 export const scenes: XiyouScene[] = reactive<XiyouScene[]>(scenesJson as unknown as XiyouScene[])
 
+/** 场景类型 re-export（XiyouGame 等消费方统一从 xiyouData 取西游域类型） */
+export type { XiyouScene }
+
 /**
  * 技能树原始节点（skill_tree.json 结构）
  * NOTE: skill_tree 的 skillId 为「设计层 id」，与 configs/skills 实际配置 id 命名体系不同，

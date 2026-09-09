@@ -36,6 +36,8 @@ export interface SavePlayerState {
   money: number
   /** 灵韵（药园催熟资源，战斗胜利获得；v6 收缩自 lingyun；旧档缺省，恢复时兜底初始值） */
   xianyuan?: number
+  // HACK: 键为加点域（available/strength/vitality/agility/spirit）而非属性码；迁移层逐键拷贝旧档，
+  //       历史档可能携带已废弃加点键，故保持开放 Record 而不收窄（save-migrate.toRecord 同因）
   statBonuses?: Record<string, number>
 }
 

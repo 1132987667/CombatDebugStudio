@@ -1,20 +1,8 @@
 /**
- * 物品类型枚举
- * 对应 materials.json 中的 type 字段
- * NOTE: 斗战西游物品分类（木材/矿石/金属/玉石/丹药/强化/灵气/碎片/货币等）为自由字符串，
- *       枚举保留通用二分（material/consumable）供旧消费方兼容，新数据直接使用语义化分类。
- */
-export const ItemType = {
-  MATERIAL: 'material', // 材料
-  CONSUMABLE: 'consumable', // 消耗品
-  EQUIPMENT: 'equipment', // 装备
-  QUEST: 'quest', // 任务物品
-}
-export type ItemType = (typeof ItemType)[keyof typeof ItemType]
-
-/**
  * 装备槽位枚举（8 类标准槽位）
- * 对应封神榜 equipment 表的 slot 字段，统一使用小写英文作为存储值
+ * 对应封神榜 equipment 表的 slot 字段与存档装备栏（SaveEquipmentState 八槽），统一使用小写英文作为存储值
+ * NOTE: equipment.json 现有数据仅用前 6 槽（artifact/relic 尚无装备），运行时 6 槽子集
+ *       的单一来源见 @/shared/utils/equipmentAffix 的 EQUIPMENT_SLOTS。
  */
 export const EquipmentSlot = {
   WEAPON: 'weapon', // 武器

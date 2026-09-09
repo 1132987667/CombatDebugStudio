@@ -25,10 +25,10 @@
           <span class="fs-range-label">{{ f.label }}</span>
           <!-- NOTE: 过滤边界是查询条件而非受校验字段，不传 min/max 避免 blur 时被 clamp 篡改过滤语义 -->
           <TacticalInput type="number" size="md" :model-value="rangeState[f.key]?.min ?? ''" placeholder="最小"
-            @update:model-value="(v) => setRange(f.key, 'min', String(v ?? ''))" />
+            @update:model-value="(v: string | number | null) => setRange(f.key, 'min', String(v ?? ''))" />
           <span class="fs-range-sep">—</span>
           <TacticalInput type="number" size="md" :model-value="rangeState[f.key]?.max ?? ''" placeholder="最大"
-            @update:model-value="(v) => setRange(f.key, 'max', String(v ?? ''))" />
+            @update:model-value="(v: string | number | null) => setRange(f.key, 'max', String(v ?? ''))" />
         </span>
       </template>
 
@@ -278,8 +278,9 @@ const filteredRows = computed(() => {
           })
         } else if (f.labelMap) {
           // 档位过滤：选中项显示名反查该档全部字段值，全匹配
-          const label = f.labelMap[v] ?? v
-          const codes = Object.keys(f.labelMap).filter((k) => f.labelMap[k] === label)
+          const labelMap = f.labelMap
+          const label = labelMap[v] ?? v
+          const codes = Object.keys(labelMap).filter((k) => labelMap[k] === label)
           rows = rows.filter((r) => codes.includes(String(r[f.key] ?? '')))
         } else {
           rows = rows.filter((r) => String(r[f.key] ?? '') === v)
@@ -495,9 +496,10 @@ watch(
       void reloadRegions()
     }
     for (const f of schema.value.filters ?? []) {
-      if (f.refTable && !optionsCache.value[f.refTable]) {
-        void store.loadOptions(f.refTable).then((items) => {
-          optionsCache.value[f.refTable] = items
+      const rt = f.refTable
+      if (rt && !optionsCache.value[rt]) {
+        void store.loadOptions(rt).then((items) => {
+          optionsCache.value[rt] = items
         })
       }
     }

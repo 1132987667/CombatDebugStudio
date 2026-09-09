@@ -208,7 +208,7 @@ const handleDebugAction = async (action: string) => {
     case 'test_heal_num': {
       const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState(SkillStepType.DAMAGE, { targetId: tId, damage: 500, damageCategory: 'heal', isCritical: false, isHeal: true })
+        battleStore.setAnimationState(SkillStepType.DAMAGE, { targetId: tId, damage: 500, damageCategory: 'true', isCritical: false, isHeal: true })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试治疗数字 500` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })

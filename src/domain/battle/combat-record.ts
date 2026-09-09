@@ -8,7 +8,7 @@
  */
 
 import type { BattleEffect } from '@/domain/battle/type/types'
-import type { CalculationStep } from '@/domain/attribute/types'
+import type { CalculationStep, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ActionTypes } from '@/domain/battle/type/types'
 import { DamageSource } from '@/domain/battle/type/types'
 import { DamageCategory, type SkillType } from '@/domain/skill/types'
@@ -55,14 +55,14 @@ export interface ActionContext {
   }>
 }
 export interface ExtraContribution {
-  attribute: string
+  attribute: ATTRIBUTE_CODE | 'level'
   value: number
   ratio: number
 }
 
 /** 目标修正项 */
 export interface TargetModifierEffect {
-  attribute: string
+  attribute: ATTRIBUTE_CODE
   multiplier: number
   effect: number
 }

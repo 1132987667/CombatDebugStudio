@@ -247,7 +247,7 @@ function sortLabels(labels: MergedAttributeLine[]): MergedAttributeLine[] {
  */
 export function useBuffDisplay(
   rawItems: Ref<BuffRawItem[]> | ComputedRef<BuffRawItem[]>,
-  entityId: string,
+  entityId: string | Ref<string> | ComputedRef<string>,
   collapseThreshold: number = 5,
   baseAttributes?:
     | Record<string, number>
@@ -270,7 +270,8 @@ export function useBuffDisplay(
     }
 
     // 1. 转换为标准格式
-    const items = raw.map((item) => toBuffTextItem(item, entityId))
+    const eid = unref(entityId)
+    const items = raw.map((item) => toBuffTextItem(item, eid))
 
     // 2. 排序
     const sorted = sortItems(items)

@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
+import type { FengshenTableName } from '@/domain/fengshen/types'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
@@ -38,7 +39,7 @@ const props = defineProps<{
   open: boolean
   schema: TableSchema
   count: number
-  loadOptions: (table: string) => Promise<OptionItem[]>
+  loadOptions: (table: FengshenTableName) => Promise<OptionItem[]>
 }>()
 
 const emit = defineEmits<{
@@ -79,17 +80,18 @@ watch(
     rawValue.value = ''
     // 预载 refTable 选项
     for (const field of batchFields.value) {
-      if (field.refTable && !refOptions.value[field.refTable]) {
-        void props.loadOptions(field.refTable).then((items) => {
-          refOptions.value[field.refTable] = items
+      const rt = field.refTable
+      if (rt && !refOptions.value[rt]) {
+        void props.loadOptions(rt).then((items) => {
+          refOptions.value[rt] = items
         })
       }
     }
   },
 )
 
-function onFieldChange(v: string): void {
-  fieldKey.value = v ?? ''
+function onFieldChange(v: string | number | null): void {
+  fieldKey.value = String(v ?? '')
   rawValue.value = ''
 }
 

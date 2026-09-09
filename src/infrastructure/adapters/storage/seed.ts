@@ -312,6 +312,32 @@ function buildAffixRule(): BattleParamData {
   }
 }
 
+/** 属性上限约束种子（params 域，key=attribute_limit）—— 数值体系扩展 3.3。
+ * 六维上限推导口径：满级固定值 + 全部自由点/丹药（4×50+100=300 点）投单属性 + 装备预算 240 SAP 全投该属性，取整余量：
+ * 气血 1236+3600+2880≈7716→8000；攻 407+600+480≈1487→2000；防/命/闪/速 1086~1237→1500。
+ * 暴击率为百分比硬顶（kind=percent，clamp 钳回）。种子只给关键项，策划可增删。 */
+function buildAttributeLimit(): BattleParamData {
+  return {
+    id: 'attribute_limit',
+    name: '属性上限约束',
+    description: '各属性合理范围与违规处置（block 拦截保存 / clamp 一键钳回 / warn 仅提示）',
+    data: {
+      id: 'attribute_limit',
+      limits: {
+        maxHealth: { min: 0, max: 8000, kind: 'base', onViolation: 'block' },
+        attack: { min: 0, max: 2000, kind: 'base', onViolation: 'block' },
+        defense: { min: 0, max: 1500, kind: 'base', onViolation: 'block' },
+        hitValue: { min: 0, max: 1500, kind: 'base', onViolation: 'block' },
+        dodgeValue: { min: 0, max: 1500, kind: 'base', onViolation: 'block' },
+        speed: { min: 0, max: 1500, kind: 'base', onViolation: 'block' },
+        critRate: { min: 0, max: 75, kind: 'percent', onViolation: 'clamp' },
+      },
+      checkScopes: ['playerMax', 'equipAffix', 'buffStacked'],
+    },
+    updatedAt: nowIso(),
+  }
+}
+
 /** SAP 价值倍数映射（§3.4 / D1：12 气血 = 2 攻 = 2 防 = 2 命中 = 2 闪避 = 2 速度） */
 const SAP_MULTIPLIER_MAP: Record<string, number> = {
   maxHealth: 12,
@@ -442,6 +468,21 @@ async function backfillEmptyStores(
 }
 
 /**
+ * params 域缺行补种：仅当该 id 的参数行不存在时写入（用户已编辑的行绝不覆盖）。
+ * 与 SEED_FLAG bump 的全量重播互补——新结构化参数走此路径接入存量库。
+ */
+async function backfillMissingParams(storage: IPersistentStorage, rows: BattleParamData[]): Promise<boolean> {
+  let backfilled = false
+  for (const row of rows) {
+    const existing = await storage.get(FENGSHEN_STORE.PARAMS, row.id)
+    if (existing) continue
+    await storage.set(FENGSHEN_STORE.PARAMS, row.id, { ...row, updatedAt: nowIso() })
+    backfilled = true
+  }
+  return backfilled
+}
+
+/**
  * 执行种子导入（幂等）。
  * 底层 storage 不可用时（如无 IndexedDB 环境）由调用方容错，此处不预检。
  */
@@ -449,11 +490,13 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
   try {
     const flag = await storage.get<{ id: string; appliedAt: string }>(FENGSHEN_STORE.META, SEED_FLAG_ID)
     if (flag) {
-      // 已播种：仅补种空的新增 store（用户编辑过的表绝不覆盖）——SEED_FLAG_ID bump 语义是全量重播，新增表走此路径接入
-      const backfilled = await backfillEmptyStores(storage, [
+      // 已播种：空表补种（用户编辑过的表绝不覆盖）+ params 域缺行补种（新结构化参数接入存量库）
+      // ——SEED_FLAG_ID bump 语义是全量重播，新增 params 行走缺行补种路径，不 bump
+      const backfilledStores = await backfillEmptyStores(storage, [
         [FENGSHEN_STORE.REGIONS, () => xiyouRegionsJson as RegionData[]],
       ])
-      return backfilled
+      const backfilledParams = await backfillMissingParams(storage, [buildAttributeLimit()])
+      return backfilledStores || backfilledParams
         ? { imported: true, reason: 'backfilled-new-stores' }
         : { imported: false, reason: 'already-seeded' }
     }
@@ -477,7 +520,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
       [FENGSHEN_STORE.ATTRIBUTES, buildAttributes()],
-      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule()]],
+      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule(), buildAttributeLimit()]],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
       [FENGSHEN_STORE.GEARS, (equipmentDataRaw as EquipmentData[]).filter((e) => e.craftable) as GearData[]],

@@ -8,7 +8,7 @@ import { ATTRIBUTE_CODE, ModifierType, type Modifier } from '@/domain/attribute/
 import type { BattleEntity } from '@/domain/battle/type/types'
 
 /** 主属性 → 加成属性映射（键为调用方传入的属性码，运行时校验命中） */
-export const BONUS_ATTR_MAP: Partial<Record<string, ATTRIBUTE_CODE>> = {
+export const BONUS_ATTR_MAP: Partial<Record<ATTRIBUTE_CODE, ATTRIBUTE_CODE>> = {
   [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
   [ATTRIBUTE_CODE.attack]: ATTRIBUTE_CODE.attackBonus,
   [ATTRIBUTE_CODE.defense]: ATTRIBUTE_CODE.defenseBonus,
@@ -16,7 +16,7 @@ export const BONUS_ATTR_MAP: Partial<Record<string, ATTRIBUTE_CODE>> = {
 }
 
 /** 加成属性 → 主属性映射（反向传播用） */
-export const REVERSE_BONUS_ATTR_MAP: Partial<Record<string, ATTRIBUTE_CODE>> = {
+export const REVERSE_BONUS_ATTR_MAP: Partial<Record<ATTRIBUTE_CODE, ATTRIBUTE_CODE>> = {
   [ATTRIBUTE_CODE.healthBonus]: ATTRIBUTE_CODE.maxHealth,
   [ATTRIBUTE_CODE.attackBonus]: ATTRIBUTE_CODE.attack,
   [ATTRIBUTE_CODE.defenseBonus]: ATTRIBUTE_CODE.defense,
@@ -29,7 +29,7 @@ export const REVERSE_BONUS_ATTR_MAP: Partial<Record<string, ATTRIBUTE_CODE>> = {
  */
 export function syncBonusAttribute(
   participant: BattleEntity,
-  attrCode: string,
+  attrCode: ATTRIBUTE_CODE,
   mod: Modifier,
   sourceKey: string,
 ): void {
@@ -48,7 +48,7 @@ export function syncBonusAttribute(
  */
 export function syncReverseBonusAttribute(
   participant: BattleEntity,
-  attrCode: string,
+  attrCode: ATTRIBUTE_CODE,
   mod: Modifier,
   sourceKey: string,
 ): void {

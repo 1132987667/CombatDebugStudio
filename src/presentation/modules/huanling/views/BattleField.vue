@@ -111,12 +111,13 @@ watch(() => store.battleSpeed, (newSpeed) => {
   }
 }, { immediate: true });
 
-function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantCard> | null) {
-  if (el) {
-    participantCardRefs.value[characterId] = el
-    registerElement(characterId, el.cardRef as HTMLElement | null)
-    if (el?.cardRef) {
-      visualEffectsRef.value?.registerCard(characterId, el.cardRef as HTMLElement)
+function handleCardRef(characterId: string, el: Element | ComponentPublicInstance | null) {
+  const card = el as InstanceType<typeof ParticipantCard> | null
+  if (card) {
+    participantCardRefs.value[characterId] = card
+    registerElement(characterId, card.cardRef as HTMLElement | null)
+    if (card.cardRef) {
+      visualEffectsRef.value?.registerCard(characterId, card.cardRef as HTMLElement)
     }
   } else {
     delete participantCardRefs.value[characterId]

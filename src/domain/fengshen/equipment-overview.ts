@@ -14,7 +14,7 @@
  * 取「最小品阶权重 × 最小浮动」到「最大品阶权重 × 最大浮动」的外包络。
  */
 
-import type { AffixRuleConfig, EquipFormulaConfig, PetMountIndividual, PetMountRulesConfig, PetMountTraitEntry } from '@/domain/fengshen/types'
+import type { AffixRuleConfig, AffixQualityCode, EquipFormulaConfig, PetMountIndividual, PetMountRulesConfig, PetMountTraitEntry } from '@/domain/fengshen/types'
 import { equipBaseUnit } from '@/domain/fengshen/player-config'
 
 /** 基础六维：有属性点转化系数、走装备公式；其余属性一律走词条曲线 */
@@ -84,7 +84,7 @@ function round1(v: number): number {
   return Math.round(v * 10) / 10
 }
 
-function tierRange(cfg: AffixRuleConfig, tier: string): { min: number; max: number } | null {
+function tierRange(cfg: AffixRuleConfig, tier: AffixQualityCode): { min: number; max: number } | null {
   const w = cfg.tier_weight?.[tier]
   if (!w || !Number.isFinite(w.min) || !Number.isFinite(w.max)) return null
   return { min: Math.min(w.min, w.max), max: Math.max(w.min, w.max) }
@@ -119,7 +119,7 @@ export function resolveAttrRange(
   conversion: Record<string, number>,
   attribute: string,
   level: number,
-  tier: string,
+  tier: AffixQualityCode,
   weight: number,
   ratio = 1,
   ratioNote = '',
@@ -140,7 +140,7 @@ export function resolveCurveAttrRange(
   conversion: Record<string, number>,
   attribute: string,
   level: number,
-  tier: string,
+  tier: AffixQualityCode,
   weight: number,
   ratio = 1,
   ratioNote = '',
@@ -259,7 +259,7 @@ export function rowGroups(cfg: AffixRuleConfig, side: 'ATK' | 'DEF', row: number
 }
 
 /** 子类型中文名（配置里 sub_types[].name）；查不到回落 id。装备 UI 展示 subType（id 体系）统一走此函数 */
-export function subTypeName(cfg: AffixRuleConfig, slot: string, subType: string): string {
+export function subTypeName(cfg: AffixRuleConfig, slot: EquipmentSlot, subType: string): string {
   return cfg.sub_type_groups?.[slot]?.sub_types.find((s) => s.id === subType)?.name ?? subType
 }
 
@@ -269,7 +269,7 @@ export function subTypeName(cfg: AffixRuleConfig, slot: string, subType: string)
  * 只按 slot 匹配会把子类型级规则误加到同部位其他子类型上。
  * （gear-generate.ts 实例生成共用此过滤，保证验证器与实际产出同口径。）
  */
-export function forbiddenAttrs(cfg: AffixRuleConfig, slot: string, subType: string): Set<string> {
+export function forbiddenAttrs(cfg: AffixRuleConfig, slot: EquipmentSlot, subType: string): Set<string> {
   const name = subTypeName(cfg, slot, subType)
   const set = new Set<string>()
   for (const rule of cfg.forbidden ?? []) {
@@ -287,7 +287,7 @@ function rowCandidates(
   conversion: Record<string, number>,
   groups: string[],
   level: number,
-  tier: string,
+  tier: AffixQualityCode,
   banned: Set<string>,
 ): OverviewAttrRange[] {
   const seen = new Set<string>()
@@ -312,7 +312,7 @@ export function buildEquipmentOverview(
   cfg: AffixRuleConfig,
   formula: EquipFormulaConfig,
   conversion: Record<string, number>,
-  input: { level: number; slot: string; subType: string; tier: string; quality: number },
+  input: { level: number; slot: EquipmentSlot; subType: string; tier: AffixQualityCode; quality: number },
 ): EquipmentOverview {
   const warnings: string[] = []
   const { level, slot, subType, tier } = input
@@ -501,7 +501,7 @@ export function buildPetMountOverview(
     system: 'pet' | 'mount'
     individual: PetMountIndividual
     level: number
-    tier: string
+    tier: AffixQualityCode
     quality: number
     /** 资质值（aptitude.min ~ cap），缺省 base = 1.0 倍 */
     aptitude?: number

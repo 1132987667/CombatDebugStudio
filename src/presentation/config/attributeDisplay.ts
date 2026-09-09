@@ -195,6 +195,9 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   energyGainEfficiency:        { displayTier: 'advanced',    group: 'energy' },
   skillCooldown:               { displayTier: 'advanced',    group: 'energy' },
 
+  // ── 账号级 meta（无战斗面板语义，独立系统消费） ──
+  luck:                        { displayTier: 'hidden',      group: 'utility' },
+
   // ── situational：情境高亮（group 被 useSituationalAttributes 消费，勿随意调整） ──
   poisonRes:                   { displayTier: 'situational', group: 'control' },
   // NOTE: 火系技能伤害加成随五行暂不启用（《完整项目说明.md》附注），启用时改回 situational

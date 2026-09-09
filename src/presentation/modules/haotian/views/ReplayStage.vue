@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type ComponentPublicInstance } from 'vue'
 import type { ArchiveParticipant, ArchiveBuff, UnifiedEvent } from '@/domain/battle/replay/unified/unified-archive'
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
@@ -246,10 +246,11 @@ const { registerElement, unregisterElement, playAttackAnimation, playHitAnimatio
   useBattleAnimation()
 
 /** 注册单位卡片：cardRef 供 BattleVisualEffects 定位 + GSAP 动画（与唤灵台 BattleField 同模式） */
-function registerUnit(id: string, card: InstanceType<typeof ParticipantCard> | null): void {
-  if (card) {
-    unitCards.set(id, card)
-    const root = card.cardRef as HTMLElement | null
+function registerUnit(id: string, card: Element | ComponentPublicInstance | null): void {
+  const c = card as InstanceType<typeof ParticipantCard> | null
+  if (c) {
+    unitCards.set(id, c)
+    const root = c.cardRef as HTMLElement | null
     if (root) {
       unitEls.set(id, root)
       vfRef.value?.registerCard(id, root)

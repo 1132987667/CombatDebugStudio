@@ -9,13 +9,14 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
-import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
+import { FENGSHEN_STORE, type StorageStoreName } from '@/domain/port/IPersistentStorage'
 import { seedFengshenData } from '@/infrastructure/adapters/storage/seed'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { BattleDataLoader } from '@/application/service/BattleDataLoader'
 import { DataPackageService } from '@/application/service/DataPackageService'
 import { DataIntegrityService, type HealthCheckReport } from '@/application/service/DataIntegrityService'
+import { runValidations, type ValidationIssue, type ValidationReport } from '@/domain/fengshen/validators/registry'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { nextEntityId, type FengshenTableName } from '@/domain/fengshen/types'
 import type { OperationLogEntry } from '@/domain/fengshen/types'
@@ -53,6 +54,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
 
   // 系统视图数据
   const healthReport = ref<HealthCheckReport | null>(null)
+  const numericReport = ref<ValidationReport | null>(null)
   const logs = ref<OperationLogEntry[]>([])
 
   // 引用选项缓存（下拉：技能/阵型/元素/成长曲线等）
@@ -180,7 +182,10 @@ export const useFengshenStore = defineStore('fengshen', () => {
 
   function setView(view: FengshenView): void {
     activeView.value = view
-    if (view === 'health') void runHealth()
+    if (view === 'health') {
+      void runHealth()
+      void runNumericValidation()
+    }
     if (view === 'logs') void loadLogs()
   }
 
@@ -286,6 +291,55 @@ export const useFengshenStore = defineStore('fengshen', () => {
     healthReport.value = await integrity.runHealthCheck()
   }
 
+  /** 数值级校验（§5.5 ValidationRegistry）：组装配置快照 → 跑全量规则 */
+  async function runNumericValidation(): Promise<void> {
+    try {
+      const [playerConfig, attributeLimit, attributes, equipmentAffixes, buffs] = await Promise.all([
+        api.getPlayerConfig(),
+        api.getAttributeLimit(),
+        api.listByTable<Record<string, unknown>>('attributes', { limit: 1000 }),
+        api.listByTable<Record<string, unknown>>('equipment_affixes', { limit: 1000 }),
+        api.listByTable<Record<string, unknown>>('buffs', { limit: 1000 }),
+      ])
+      numericReport.value = runValidations({
+        playerConfig: playerConfig ?? undefined,
+        attributeLimit: attributeLimit ?? undefined,
+        attributes: attributes as never,
+        equipmentAffixes: equipmentAffixes as never,
+        buffs: buffs as never,
+      })
+    } catch {
+      numericReport.value = { issues: [], errorCount: 0, warnCount: 0, infoCount: 0 }
+    }
+  }
+
+  /** 应用 quickFix：按 issue 定位行 → 嵌套写字段（路径由规则生成）→ 走统一保存 → 重跑校验 */
+  async function applyQuickFix(issue: ValidationIssue): Promise<boolean> {
+    if (!issue.quickFix) return false
+    const table = issue.table as FengshenTableName
+    const row = await persistentStorage.get<Record<string, unknown>>(table as StorageStoreName, issue.rowId)
+    if (!row) {
+      useNotificationStore().toast(`目标行 ${issue.rowId} 不存在（可能已被删除）`, 'warn', 3500)
+      return false
+    }
+    const path = issue.quickFix.field.split('.')
+    let target: Record<string, unknown> = row
+    for (let i = 0; i < path.length - 1; i++) {
+      const seg = target[path[i]]
+      if (!seg || typeof seg !== 'object') return false
+      target = seg as Record<string, unknown>
+    }
+    target[path[path.length - 1]] = issue.quickFix.value
+    const result = await write.save(table, row as EntityDraft)
+    if (!result.ok) {
+      useNotificationStore().toast(`修复失败：${result.errors?.[0] ?? '未知错误'}`, 'error', 3500)
+      return false
+    }
+    await runNumericValidation()
+    useNotificationStore().toast(`已修复：${issue.quickFix.label}`, 'success', 3000)
+    return true
+  }
+
   async function loadLogs(): Promise<void> {
     logs.value = await api.listOperationLogs(200)
   }
@@ -322,6 +376,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     isNew,
     formErrors,
     healthReport,
+    numericReport,
     logs,
     optionsCache,
     refIndex,
@@ -349,6 +404,8 @@ export const useFengshenStore = defineStore('fengshen', () => {
     removeSelected,
     batchUpdate,
     runHealth,
+    runNumericValidation,
+    applyQuickFix,
     loadLogs,
     reloadFromProject,
   }

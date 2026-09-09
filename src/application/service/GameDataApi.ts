@@ -11,6 +11,7 @@ import type {
   ActorData,
   AffixRuleConfig,
   AttributeDef,
+  AttributeLimitConfig,
   BattleParamData,
   ElementsData,
   EnemyRewardTableConfig,
@@ -156,6 +157,12 @@ export class GameDataApi {
     return rec?.data && typeof rec.data === 'object' && 'attribute_groups' in rec.data && 'affix_rows' in rec.data
       ? (rec.data as AffixRuleConfig)
       : null
+  }
+
+  /** 属性上限约束（params 域 attribute_limit 的 data） */
+  async getAttributeLimit(): Promise<AttributeLimitConfig | null> {
+    const rec = await this.getBattleParam('attribute_limit')
+    return rec?.data && typeof rec.data === 'object' && 'limits' in rec.data ? (rec.data as AttributeLimitConfig) : null
   }
 
   /** 属性定义列表（attributes 表） */

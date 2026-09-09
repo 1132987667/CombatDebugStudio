@@ -244,7 +244,7 @@ const advancedExpanded = ref(false)
 // 基础属性区（core tier，排除气血/能量/护盾等 hidden 语义项）— 元数据驱动
 // NOTE: *Bonus 已改 advanced tier 归属性族分组，不会进 core 过滤，无需在此排除
 const coreAttrs = computed(() => {
-  const excluded = new Set([
+  const excluded = new Set<ATTRIBUTE_CODE>([
     ATTRIBUTE_CODE.currentHealth,
     ATTRIBUTE_CODE.currentEnergy,
     ATTRIBUTE_CODE.maxHealth,

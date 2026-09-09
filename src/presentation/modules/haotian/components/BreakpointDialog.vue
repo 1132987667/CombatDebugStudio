@@ -27,7 +27,7 @@
         <div v-if="type === 'damage' || type === 'roll'" class="ht-kvrow">
           <span class="k">阈值</span>
           <TacticalInput type="number" integer min="0" size="md" :model-value="value"
-            aria-label="断点阈值" @update:model-value="(v) => (value = (v ?? '') as string | number)" />
+            aria-label="断点阈值" @update:model-value="(v: string | number | null) => (value = (v ?? '') as string | number)" />
         </div>
         <div v-if="type === 'level'" class="ht-kvrow">
           <span class="k">级别</span>

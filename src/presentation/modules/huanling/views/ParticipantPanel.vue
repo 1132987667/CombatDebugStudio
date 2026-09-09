@@ -324,7 +324,7 @@ const presetGroups = computed(() => {
       items: lineups.value.map((l) => ({ id: l.id, name: l.name, description: l.description ?? '封神榜预设阵容', source: 'lineup' as const })),
     })
   }
-  const builtin = presetStore.allPresets.filter(p => !p.custom)
+  const builtin = presetStore.allPresets.filter(p => !p.custom).map((p) => ({ ...p, source: 'builtin' as const }))
   groups.push(
     { label: '调试 · 已有角色基线', items: builtin.filter(p => p.id.startsWith('baseline_')) },
     { label: '调试 · 基础机制', items: builtin.filter(p => ['test_basic_damage', 'test_defense', 'test_crit_vs_anti_crit'].includes(p.id)) },

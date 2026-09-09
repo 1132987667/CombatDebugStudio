@@ -169,10 +169,11 @@ export interface DamageHealCalculationConfig {
    */
   extraValues: Array<{
     /**
-     * 关联属性名称
-     * 如：'attack'、'defense'、'magicPower'等
+     * 关联属性名称（ATTRIBUTE_CODE；'level' 为实体级字段特例——
+     * 非属性系统属性，计算时直接取实体等级，configs 已在使用）
+     * 如：'attack'、'defense'、'level'等
      */
-    attribute: string
+    attribute: ATTRIBUTE_CODE | 'level'
 
     /**
      * 比率系数
@@ -214,7 +215,7 @@ export interface ExtendedSkillStep extends SkillStep {
   id?: string // 步骤ID 用于标识步骤的唯一ID
   targetId?: string // 目标ID 指定该步骤的目标角色ID
   calculation?: DamageHealCalculationConfig // 伤害/治疗计算配置 当type为DAMAGE或HEAL时使用
-  targetModifiers?: Record<string, number> // 目标属性修正（可选） 对目标特定属性的修正系数
+  targetModifiers?: Partial<Record<ATTRIBUTE_CODE, number>> // 目标属性修正（可选） 对目标特定属性的修正系数
   criticalConfig?: CriticalConfig // 暴击配置（可选） 暴击率和倍率
   attackType?: AttackType // 攻击类型（可选） 指定该步骤的攻击类型（普通攻击、技能攻击）
 }

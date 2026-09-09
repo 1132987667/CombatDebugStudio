@@ -120,7 +120,7 @@ import type { DataIntegrityService } from '@/application/service/DataIntegritySe
 import { container } from '@/infrastructure/di/Container'
 import { createDebugCategories, type DebugActionDef, type DebugActionInput, type DebugActionResult, type DebugCategory } from '../debugActions'
 import type { PlayerStoreDebugEnv } from '../debugEnv'
-import { alchemyRecipes, equipmentCatalog, forgeRecipes, loadXiyouData, packItems, quests, realms, scenes, schools, shopGoods, skillPoints } from '../xiyouData'
+import { alchemyRecipes, equipmentCatalog, forgeRecipes, loadXiyouData, packItems, quests, scenes, schools, shopGoods, skillPoints } from '../xiyouData'
 import { saveManager } from '../save-bridge'
 
 interface Props {

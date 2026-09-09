@@ -14,7 +14,11 @@ export interface AttrPatch {
   value: number
 }
 
-/** demo 旧格式缩写 → ATTRIBUTE_CODE（attribute-recalc fields 用大写缩写，如 'ATK'） */
+/**
+ * demo 旧格式缩写 → ATTRIBUTE_CODE（attribute-recalc fields 用大写缩写，如 'ATK'）。
+ * 宽容点：值须覆盖 demo 存档的历史键；RES→'resist' 为码表外遗留值（demo 专用），
+ * 消费端以 ?? f.k.toLowerCase() 兜底，收紧为 ATTRIBUTE_CODE 会破坏旧 demo 存档兼容
+ */
 const SHORT_TO_CODE: Record<string, string> = {
   ATK: 'attack',
   DEF: 'defense',

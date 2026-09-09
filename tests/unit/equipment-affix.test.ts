@@ -13,6 +13,10 @@ import { seedFengshenData } from '@/infrastructure/adapters/storage/seed'
 import { DataIntegrityService } from '@/application/service/DataIntegrityService'
 import type { EquipmentAffixData, EquipmentData } from '@/domain/fengshen/types'
 import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
+import { rollGearStats } from '@/domain/fengshen/gear-generate'
+import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
+import { buildEquipFormula } from '@/infrastructure/adapters/storage/seed'
+import type { EquipFormulaConfig } from '@/domain/fengshen/types'
 import equipmentJson from '@configs/equipment/equipment.json'
 import {
   validateSlotKey,
@@ -361,43 +365,36 @@ describe('DataIntegrityService 装备词条强校验', () => {
   })
 })
 
-describe('天品/仙品词条池充足（P1：品质→词条数 4/5 达标，去重抽满）', () => {
-  it('所有 rarity≥4 装备的可用词条唯一键 ≥ 需求（绝 4 / 神 5）', () => {
-    const affixes = equipmentAffixesJson as unknown as EquipmentAffixData[]
-    const equip = equipmentJson as unknown as EquipmentData[]
-    for (const g of equip) {
-      if (g.rarity < 4) continue
-      const need = g.rarity === 5 ? 5 : 4
-      const pool = affixes.filter((a) => affixAppliesTo(a, g.slot, g.subType) && (a.weight ?? 0) > 0)
-      const unique = new Set(pool.map((a) => `${a.attribute}:${a.modifierType}`)).size
-      expect(unique, `${g.id}「${g.name}」词条唯一键 ${unique} < 需求 ${need}`).toBeGreaterThanOrEqual(need)
-    }
-  })
+describe('天品/仙品附加词条行数充足（§21：品质→投放行数，绝 4 / 神 5 达标）', () => {
+  // NOTE: 旧「equipment-affixes 池去重抽满」用例已随 §21 公式化作废——附加词条改由
+  // affix-rule 投放矩阵（affix_rows × side 池）生成，池充足性以真实生成为准。
+  const TIER_KEY: Record<string, string> = { t1: 'fan', t2: 'xuan', t3: 'di', t4: 'tian', t5: 'xian' }
+  const CONVERSION: Record<string, number> = { maxHealth: 12, attack: 2, defense: 2, hitValue: 2, dodgeValue: 2, speed: 2 }
+  let seq = 0
+  const rng = () => { seq = (seq * 1103515245 + 12345) % 2147483648; return seq / 2147483648 }
 
-  it('去重不放回抽取：池充足时随机 rng 下多次制造均能抽满 4/5 条（无去重截断）', () => {
-    const affixes = equipmentAffixesJson as unknown as EquipmentAffixData[]
+  it('所有 rarity≥4 装备按 affix-rule 生成：附加条数 ≥ 4/5（不依赖旧 equipment-affixes 池）', () => {
+    seq = 7919
     const equip = equipmentJson as unknown as EquipmentData[]
     for (const g of equip) {
       if (g.rarity < 4) continue
       const need = g.rarity === 5 ? 5 : 4
-      const pool = affixes.filter((a) => affixAppliesTo(a, g.slot, g.subType))
-      const source = pool.filter((a) => (a.weight ?? 0) > 0)
-      for (let i = 0; i < 200; i++) {
-        let seed = i * 7919 + 13
-        const rng = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648 }
-        const out: string[] = []
-        const seen = new Set<string>()
-        let remaining = source
-        while (out.length < need && remaining.length > 0) {
-          const affix = rollEquipmentAffix(remaining, g.slot, g.subType, rng)
-          if (!affix) break
-          const key = `${affix.attribute}:${affix.modifierType}`
-          seen.add(key)
-          out.push(key)
-          remaining = source.filter((a) => !seen.has(`${a.attribute}:${a.modifierType}`))
-        }
-        expect(out.length, `${g.id} 第${i}次制造词条数 ${out.length} < ${need}`).toBeGreaterThanOrEqual(need)
-      }
+      const r = rollGearStats(
+        {
+          slot: g.slot,
+          subType: g.subType ?? g.slot,
+          tier: TIER_KEY[g.tier ?? 't1'] ?? 'fan',
+          itemLevel: Math.max(1, g.itemLevel ?? 1),
+          quality: g.rarity,
+          qualityFactor: 1,
+        },
+        affixRuleDefaults(),
+        buildEquipFormula().data as unknown as EquipFormulaConfig,
+        CONVERSION,
+        rng,
+      )
+      const append = r.affixes.filter((a) => !a.fixed && !a.main)
+      expect(append, `${g.id}「${g.name}」附加 ${append.length} 条 < 需求 ${need}`).toHaveLength(need)
     }
   })
 })

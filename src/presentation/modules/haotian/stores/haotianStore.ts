@@ -10,6 +10,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
+import { ParticipantSideName } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { UnifiedArchive, UnifiedEvent, ArchiveParticipant } from '@/domain/battle/replay/unified/unified-archive'
@@ -1014,7 +1015,7 @@ export const useHaotianStore = defineStore('haotian', () => {
    * 统一为可读中文——side 值翻译为 友方/敌方，unit id 走 pnameSide（带阵营前缀）。
    * 修复前 side 值经 pnameSide 查不到参与者、原样返回 'ally'，与实时战报弹窗口径不一致。
    */
-  const SIDE_LABEL: Record<string, string> = { ally: '友方', enemy: '敌方' }
+  const SIDE_LABEL: Record<string, string> = ParticipantSideName
   const winnerLabel = (winner: string): string => SIDE_LABEL[winner] ?? pnameSide(winner)
 
   function summaryMarkdown(): string {

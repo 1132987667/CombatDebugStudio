@@ -238,7 +238,7 @@ export class BuffScriptRegistry {
     if (!raw) return undefined
 
     const resolver = this.ensureResolver()
-    const resolved = resolver.resolve(raw as Record<string, any>)
+    const resolved = resolver.resolve(raw)
     this.resolvedConfigs.set(buffId, resolved)
     return resolved
   }

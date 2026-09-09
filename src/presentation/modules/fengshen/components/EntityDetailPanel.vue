@@ -123,6 +123,19 @@
 import { computed, ref } from 'vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
 import { TABLE_SCHEMAS, REFERENCE_RULES } from '@/domain/fengshen/schema'
+import type { EnemyDrop } from '@/shared/types/enemy'
+import {
+  AFFIX_TARGET_VALUE_LABEL,
+  AFFIX_TIER_VALUE_LABEL,
+  BUFF_CATEGORY_VALUE_LABEL,
+  CONFLICT_GROUP_VALUE_LABEL,
+  GEAR_TIER_VALUE_LABEL,
+  MODIFIER_TYPE_VALUE_LABEL,
+  POLARITY_VALUE_LABEL,
+  SKILL_TYPE_VALUE_LABEL,
+  SLOT_VALUE_LABEL,
+  STACK_RULE_VALUE_LABEL,
+} from '@/domain/fengshen/schema'
 import { resolveRefName } from '@/domain/fengshen/refNames'
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -228,25 +241,20 @@ function keyLabel(key: string): string {
   return NESTED_KEY_LABEL[key] ?? key
 }
 
-/** 嵌套对象枚举值 → 中文（按键名分组；未命中回退原值） */
+/** 嵌套对象枚举值 → 中文（按键名分组；映射统一引用 schema.ts 的单一来源，组件特有键保留本地） */
 const NESTED_VALUE_LABEL: Record<string, Record<string, string>> = {
-  modifierType: { flat: '固定值', percent: '百分比' },
+  modifierType: MODIFIER_TYPE_VALUE_LABEL,
   attackType: { normal: '普攻', skill: '技能' },
-  skillType: { small: '小技能', ultimate: '大招', passive: '被动' },
-  polarity: { positive: '增益', negative: '减益' },
-  category: {
-    attribute: '属性', aura: '光环', dot: '持续伤害', hot: '持续治疗', shield: '护盾',
-    control: '控制', immunity: '免疫', trigger: '触发', action: '动作', modifier: '属性',
-  },
-  stackRule: { replace: '替换', stack: '叠加', independent: '独立' },
+  skillType: SKILL_TYPE_VALUE_LABEL,
+  polarity: POLARITY_VALUE_LABEL,
+  // buff 类别：schema 权威表 + 本面板嵌套场景特有的 action/modifier 两键
+  category: { ...BUFF_CATEGORY_VALUE_LABEL, action: '动作', modifier: '属性' },
+  stackRule: STACK_RULE_VALUE_LABEL,
   row: { front: '前排', back: '后排' },
-  target: { player: '玩家', enemy: '敌人' },
-  slot: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手', artifact: '法宝', relic: '神器' },
-  tier: {
-    yao_1: '一档·妖气', yao_2: '二档·妖性', yao_3: '三档·妖道', yao_4: '四档·妖圣', mandate: '天命', jie: '劫数',
-    t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶',
-  },
-  conflict_group: { wuxing_single: '五行单体', wuxing_all: '五行全抗' },
+  target: AFFIX_TARGET_VALUE_LABEL,
+  slot: SLOT_VALUE_LABEL,
+  tier: { ...AFFIX_TIER_VALUE_LABEL, ...GEAR_TIER_VALUE_LABEL },
+  conflict_group: CONFLICT_GROUP_VALUE_LABEL,
   type: {
     deal_damage: '造成伤害', apply_buff: '施加增益', heal: '治疗', modify_attribute: '属性修正',
     clear_scene: '通关前置', clear_boss: '击败BOSS', modifier: '属性修正',
@@ -343,13 +351,13 @@ function gearMatText(item: { itemId: string; count: number }): string {
   return `${refName(item.itemId)} ×${item.count}`
 }
 
-/** 敌人表 drops 数组元素（{itemId, quantity, chance}）类型守卫 */
-function isEnemyDropItem(field: TableSchema['fields'][number], v: unknown): v is { itemId: string; quantity: number; chance: number } {
+/** 敌人表 drops 数组元素类型守卫（结构 = shared EnemyDrop） */
+function isEnemyDropItem(field: TableSchema['fields'][number], v: unknown): v is EnemyDrop {
   return field.key === 'drops' && isObject(v)
 }
 
 /** 掉落数组项 → 通俗文本："桃木 ×2 · 50%" */
-function enemyDropText(item: { itemId: string; quantity: number; chance: number }): string {
+function enemyDropText(item: EnemyDrop): string {
   const qty = item.quantity && item.quantity > 1 ? ` ×${item.quantity}` : ''
   const chance = item.chance != null ? ` · ${Math.round(item.chance * 100)}%` : ''
   return `${refName(item.itemId)}${qty}${chance}`
@@ -408,10 +416,9 @@ function isEnemySkillsField(field: TableSchema['fields'][number]): boolean {
   return field.type === 'object' && field.key === 'skills'
 }
 
-/** 技能分组键 → 中文（small 小技能 / passive 被动 / ultimate 大招） */
+/** 技能分组键 → 中文（单一来源 schema.SKILL_TYPE_VALUE_LABEL） */
 function skillKindLabel(kind: string): string {
-  const labels: Record<string, string> = { small: '小技能', passive: '被动', ultimate: '大招' }
-  return labels[kind] ?? kind
+  return SKILL_TYPE_VALUE_LABEL[kind] ?? kind
 }
 
 // ════ 技能悬浮详情 ════

@@ -465,8 +465,11 @@ describe("装备穿戴（背包实例化闭环）", () => {
     expect(pack.equippedGear("weapon")?.name).toBe("竹剑")
 
     const stats = pack.equippedStats()
-    // 初始装备为凡品（quality 1，系数 0.85）：攻击 10 → round(10×0.85) = 9
-    expect(stats.some((s) => s.attribute === "attack" && s.value === 9 && s.modifierType === "flat")).toBe(true)
+    // §21 公式：竹剑核心攻击 = 1×6×2×0.9×2 × 品阶[0.5,0.6] × 浮动[0.5,1.1] × 凡品系数0.85 → [5,12]
+    const atk = stats.find((s) => s.attribute === "attack" && s.modifierType === "flat")
+    expect(atk).toBeDefined()
+    expect(atk!.value).toBeGreaterThanOrEqual(4)
+    expect(atk!.value).toBeLessThanOrEqual(13)
   })
 
   it("穿戴非装备物品被拒绝", async () => {
@@ -554,7 +557,8 @@ describe("装备制造与强化（实例化）", () => {
     expect(inst).not.toBeNull()
     expect(inst!.itemId).toBe("wp_t1_light_01")
     expect(inst!.enhance).toBe(0)
-    expect(inst!.affixes).toHaveLength(1) // 凡品 1 条词缀
+    expect(inst!.affixes.filter((a) => a.fixed || a.main)).toHaveLength(2) // §21 主要属性：固定 1 + 随机池 1
+    expect(inst!.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(1) // 凡品 1 条附加
     expect(pack.countOf("mat_taomu")).toBe(taomu0 - 3)
     expect(pack.countOf("mat_tongjing")).toBe(tong0 - 1)
     expect(pack.countOf("wp_t1_light_01")).toBe(2) // 初始 1 + 制造 1
@@ -592,14 +596,17 @@ describe("装备制造与强化（实例化）", () => {
     const inst = pack.craftEquipment("wp_t3_light_01", rng)
     expect(inst).not.toBeNull()
     expect(inst!.quality).toBe(3) // 地品权重表 [10,50,40]，rng 0.99 → 超品
-    expect(inst!.affixes).toHaveLength(3) // 超品 3 条词缀（设计稿品质→词条数）
+    expect(inst!.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(3) // 超品 3 条附加（§21 品质→行数）
     // 品质系数锁存：超品区间 [1.06,1.2]，rng 0.274 → 1.06+0.274×0.14=1.09836
     expect(inst!.qualityFactor).toBeCloseTo(1.098, 2)
     const stats = pack.instanceStats(inst!)
-    // instanceStats 消费锁存的系数：round(35×1.09836) = round(38.44) = 38
-    expect(stats.find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(38)
-    // 同一实例多次计算数值稳定（系数锁定，不随 instanceStats 重 roll）
-    expect(pack.instanceStats(inst!).find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(38)
+    // §21 公式：流云剑核心攻击基准 1×25×2×0.9×2=90 × 品阶[0.7,0.8] × 浮动[0.5,1.1] × 系数1.098 → [35,87]
+    const atk = stats.find((s) => s.attribute === "attack" && s.modifierType === "flat")
+    expect(atk).toBeDefined()
+    expect(atk!.value).toBeGreaterThanOrEqual(34)
+    expect(atk!.value).toBeLessThanOrEqual(88)
+    // 同一实例多次计算数值稳定（roll 锁存于实例，不随 instanceStats 重 roll）
+    expect(pack.instanceStats(inst!).find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(atk!.value)
   })
 
   it("制造天品装备固定绝品（4 条词缀，词条池充足）", async () => {
@@ -618,7 +625,7 @@ describe("装备制造与强化（实例化）", () => {
     const inst = pack.craftEquipment("wp_t4_01", rng)
     expect(inst).not.toBeNull()
     expect(inst!.quality).toBe(4) // 天品固定绝品
-    expect(inst!.affixes).toHaveLength(4) // 绝品 4 条词缀（词条池已补足 6 唯一键）
+    expect(inst!.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(4) // 绝品 4 条附加（§21 品质→行数）
   })
 
   it("图纸解锁：一阶默认解锁；高阶未持有图纸时拒绝制造且不扣材料", async () => {
@@ -710,14 +717,15 @@ describe("装备制造与强化（实例化）", () => {
   it("升星真实生效：残魂点 3 点混合支付 → 星级 +1 → 基础属性提升（残魂优先于同名装备）", async () => {
     const pack = usePackStore()
     await pack.init()
-    pack.equip("wp_t1_mid_01") // 铜棍（攻击 +12，基数高到升星可观测）
-    pack.addItem("wp_t1_mid_01", 1) // 背包 1 件同名（本用例不应被消耗）
+    // t3 流云剑（itemLevel 25，核心攻击 ≥34）：t1 低值 +5% 会被整数取整吞掉，基数高才可观测
+    pack.addItem("wp_t3_light_01", 2)
+    pack.equip("wp_t3_light_01")
     pack.addItem("decomp_soul", 3) // 装备残魂 ×3 = 3 点
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(pack.starGear("weapon")).toBe(true)
     expect(pack.equipped.weapon?.star).toBe(1)
     expect(pack.countOf("decomp_soul")).toBe(0) // 残魂优先消耗
-    expect(pack.countOf("wp_t1_mid_01")).toBe(1) // 同名装备保留
+    expect(pack.countOf("wp_t3_light_01")).toBe(1) // 同名装备保留
     const atk1 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(atk1).toBeGreaterThan(atk0) // 1 星 +5% 基础属性
   })
@@ -772,52 +780,62 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     pack.addItem("mat_xianyun", 1)
     const inst = pack.craftEquipment("wp_t3_light_01", () => 0.8)
     expect(inst?.quality).toBe(3)
-    expect(inst?.affixes.length).toBe(3)
+    expect(inst?.affixes.filter((a) => a.fixed || a.main)).toHaveLength(2)
+    expect(inst?.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(3)
     expect(pack.equip("wp_t3_light_01")).toBe(true)
     return pack
   }
 
-  it("普通洗练：全部词条重 roll，条数不变，扣洗练石+200金", async () => {
+  it("普通洗练：附加词条全部重 roll，条数不变，主要属性不动，扣洗练石+200金", async () => {
     const pack = await equipChaoLiuyun()
     const before = [...pack.equipped.weapon!.affixes]
     pack.addItem("wash_stone", 1)
     pack.currency.money += 200
     const money0 = pack.currency.money
     expect(pack.washGear("weapon", "normal", -1, () => 0.3)).toBe(true)
-    expect(pack.equipped.weapon!.affixes.length).toBe(3) // 词条数不变
+    const after = pack.equipped.weapon!.affixes
+    expect(after.filter((a) => a.fixed || a.main)).toHaveLength(2) // 主要属性不参与洗练
+    expect(after.filter((a) => !a.fixed && !a.main)).toHaveLength(3) // 附加条数不变
     expect(pack.countOf("wash_stone")).toBe(0)
     expect(pack.currency.money).toBe(money0 - 200)
-    // rng 0.3 vs 制造 rng 0.8 → 至少一条属性或数值变化
-    const after = pack.equipped.weapon!.affixes
-    expect(after.some((a, i) => a.attribute !== before[i].attribute || a.value !== before[i].value)).toBe(true)
+    // rng 0.3 vs 制造 rng 0.8 → 附加至少一条属性或数值变化
+    const beforeAppend = before.filter((a) => !a.fixed && !a.main)
+    const afterAppend = after.filter((a) => !a.fixed && !a.main)
+    expect(afterAppend.some((a, i) => a.attribute !== beforeAppend[i].attribute || a.value !== beforeAppend[i].value)).toBe(true)
   })
 
-  it("定向洗练：仅所选词条变化，其余不变（精品起开放）", async () => {
+  it("定向洗练：仅所选附加词条变化，其余词条不动（精品起开放）", async () => {
     const pack = await equipChaoLiuyun()
     const before = [...pack.equipped.weapon!.affixes]
+    const beforeAppend = before.filter((a) => !a.fixed && !a.main)
     pack.addItem("wash_directed", 1)
     pack.currency.money += 200
-    expect(pack.washGear("weapon", "directed", 0, () => 0.3)).toBe(true)
+    expect(pack.washGear("weapon", "directed", 0, () => 0.3)).toBe(true) // 附加下标 0
     const after = pack.equipped.weapon!.affixes
-    expect(after.length).toBe(3)
-    expect(after[1]).toEqual(before[1]) // 未选中词条不动
-    expect(after[2]).toEqual(before[2])
-    expect(after[0].attribute !== before[0].attribute || after[0].value !== before[0].value).toBe(true)
+    expect(after.filter((a) => !a.fixed && !a.main)).toHaveLength(3)
+    expect(after.filter((a) => a.fixed || a.main)).toEqual(before.filter((a) => a.fixed || a.main)) // 主要不动
+    const afterAppend = after.filter((a) => !a.fixed && !a.main)
+    expect(afterAppend[1]).toEqual(beforeAppend[1]) // 未选中附加不动
+    expect(afterAppend[2]).toEqual(beforeAppend[2])
+    expect(afterAppend[0].attribute !== beforeAppend[0].attribute || afterAppend[0].value !== beforeAppend[0].value).toBe(true)
     expect(pack.countOf("wash_directed")).toBe(0)
   })
 
-  it("锁词条洗练：锁定词条不变，其余重 roll（超品起开放）", async () => {
+  it("锁词条洗练：锁定附加词条不变，其余附加重 roll（超品起开放）", async () => {
     const pack = await equipChaoLiuyun()
     const before = [...pack.equipped.weapon!.affixes]
+    const beforeAppend = before.filter((a) => !a.fixed && !a.main)
     pack.addItem("wash_lock", 1)
     pack.currency.money += 200
-    expect(pack.washGear("weapon", "locked", 1, () => 0.3)).toBe(true)
+    expect(pack.washGear("weapon", "locked", 1, () => 0.3)).toBe(true) // 锁附加下标 1
     const after = pack.equipped.weapon!.affixes
-    expect(after.length).toBe(3)
-    expect(after[1]).toEqual(before[1]) // 锁定词条种类+数值不变
+    expect(after.filter((a) => !a.fixed && !a.main)).toHaveLength(3)
+    expect(after.filter((a) => a.fixed || a.main)).toEqual(before.filter((a) => a.fixed || a.main)) // 主要不动
+    const afterAppend = after.filter((a) => !a.fixed && !a.main)
+    expect(afterAppend[1]).toEqual(beforeAppend[1]) // 锁定词条种类+数值不变
     expect(
-      after[0].attribute !== before[0].attribute || after[0].value !== before[0].value ||
-      after[2].attribute !== before[2].attribute || after[2].value !== before[2].value,
+      afterAppend[0].attribute !== beforeAppend[0].attribute || afterAppend[0].value !== beforeAppend[0].value ||
+      afterAppend[2].attribute !== beforeAppend[2].attribute || afterAppend[2].value !== beforeAppend[2].value,
     ).toBe(true)
     expect(pack.countOf("wash_lock")).toBe(0)
   })

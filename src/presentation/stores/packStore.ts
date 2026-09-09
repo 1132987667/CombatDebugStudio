@@ -27,6 +27,7 @@ import {
 import type { EquipmentData, EquipmentStatEntry, GearAffix } from '@/domain/fengshen/types'
 import type { XiyouData } from '@/domain/fengshen/types'
 import type { EnemyDrop } from '@/shared/types/enemy'
+import { EquipmentSlot, EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { buildEquipFormula, buildPlayerConfig } from '@/infrastructure/adapters/storage/seed'
@@ -67,44 +68,11 @@ export interface GardenPlot {
   cooldownUntil: number | null
 }
 
-/** 装备槽位键（8 类装备槽，对齐 equipment.json slot：weapon/armor/helmet/boots/charm/glove/artifact/relic） */
-export type GearSlotKey = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'glove' | 'artifact' | 'relic'
+/** 装备槽位键（8 类装备槽）——单一来源 shared/types/Item 的 EquipmentSlot，别名保留兼容既有调用方 */
+export type GearSlotKey = EquipmentSlot
 
-/** 装备槽位展示名（EquipPanel 用） */
-export const GEAR_SLOT_LABELS: Record<GearSlotKey, string> = {
-  weapon: '武器',
-  armor: '衣甲',
-  helmet: '头盔',
-  boots: '靴子',
-  charm: '护符',
-  glove: '护手',
-  artifact: '法宝',
-  relic: '神器',
-}
-
-/** 装备词条（实例化：制造时从 equipment-affixes.json 抽取并锁定数值） */
-export interface GearAffix {
-  id: string
-  attribute: string
-  modifierType: 'flat' | 'percent'
-  value: number
-}
-
-/** 装备实例（唯一 id；词缀 / 强化等级 / 品质 / 品质系数为实例属性，独立于 equipment.json 静态定义） */
-export interface GearInstance {
-  instanceId: string
-  itemId: string
-  enhance: number
-  /** 品质（1-5 → 凡/精/超/绝/神，制造/掉落时 roll；决定词条数量与基础属性系数） */
-  quality: number
-  /** 品质系数（制造时品质区间内 roll 并锁存；旧档/未锁定实例用区间中值兜底） */
-  qualityFactor: number
-  /** 星级（0-3，设计稿补充-装备 §8：每星基础属性 +10%）；升星消耗同名装备 + 魂玉 */
-  star: number
-  /** 强化连败次数（成功率保底：每连败 1 次 +10%，成功清零；§21 装备强化） */
-  enhanceFails?: number
-  affixes: GearAffix[]
-}
+/** 装备槽位展示名（EquipPanel 用）——单一来源 EQUIPMENT_SLOT_LABELS */
+export const GEAR_SLOT_LABELS: Record<GearSlotKey, string> = EQUIPMENT_SLOT_LABELS
 
 /** 装备词条（实例化：制造/掉落时从 affix-rule 池抽取并锁定数值）——结构定义见 domain/fengshen/types */
 export type { GearAffix } from '@/domain/fengshen/types'
@@ -340,6 +308,7 @@ export const usePackStore = defineStore('pack', () => {
         itemId: g.itemId,
         enhance: g.enhance,
         enhanceFails: g.enhanceFails ?? 0,
+        stats: g.stats,
         quality: g.quality,
         qualityFactor: g.qualityFactor,
         star: g.star ?? 0,
@@ -622,7 +591,7 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /** 实例最终属性（锁存核心 stats × 强化倍率 × 星级倍率 + 词条；未穿戴/未定义返回空） */
-  function instanceStats(inst: GearInstance): EquipmentData['stats'] {
+  function instanceStats(inst: GearInstance): EquipmentStatEntry[] {
     // 强化 ×(1+4%×L)、升星 ×(5%/10%/10% 累计 25%) 只增强基础属性（§21）；词条不吃养成倍率
     const factor = enhanceFactor(inst.enhance) * starFactor(inst.star ?? 0)
     const base = (inst.stats ?? []).map((s) => ({ ...s, value: Math.round(s.value * factor) }))
@@ -635,8 +604,8 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /** 已穿戴装备的 stats 汇总（供 buildBattleTeams 注入主角与属性面板重算，未穿戴返回空） */
-  function equippedStats(): EquipmentData['stats'] {
-    const out: EquipmentData['stats'] = []
+  function equippedStats(): EquipmentStatEntry[] {
+    const out: EquipmentStatEntry[] = []
     for (const slot of Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[]) {
       const inst = equipped[slot]
       if (inst) out.push(...instanceStats(inst))

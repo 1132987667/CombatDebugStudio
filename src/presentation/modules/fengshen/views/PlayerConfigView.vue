@@ -261,6 +261,7 @@ import {
   fillExpFromFormula,
   fixedGrowthSap,
   PLAYER_BASE_ATTRS,
+  PLAYER_BASE_ATTR_LABELS,
   tierWeightValue,
   validatePlayerConfig,
 } from '@/domain/fengshen/player-config'
@@ -372,14 +373,8 @@ const equipSim = ref<{ core: ReturnType<typeof calcEquipBaseValue>; affix: Retur
 
 const totalBudgetWeight = computed(() => budget.systems.reduce((s, e) => s + e.weight, 0))
 
-const ATTR_LABELS: Record<PlayerBaseAttrCode, string> = {
-  maxHealth: '气血',
-  attack: '攻击',
-  defense: '防御',
-  hitValue: '命中',
-  dodgeValue: '闪避',
-  speed: '速度',
-}
+/** 属性中文名（单一来源 player-config） */
+const ATTR_LABELS = PLAYER_BASE_ATTR_LABELS
 
 function attrLabel(attr: PlayerBaseAttrCode): string {
   return ATTR_LABELS[attr] ?? attr

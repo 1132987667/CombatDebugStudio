@@ -862,7 +862,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         modifiers?: Array<{
           id?: string
           targetAttribute: string
-          type: string
+          type: ModifierType
           value: number
           condition?: string
         }>
@@ -872,7 +872,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           targetSelector: params.targetSelector as BuffAuraConfig['targetSelector'],
           modifiers: params.modifiers.map((m) => ({
             ...m,
-            type: m.type as ModifierType,
           })),
         }
       }
@@ -881,14 +880,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     // 旧格式兼容：raw.aura（尚未迁移的 JSON 配置）
     const raw = this.scriptRegistry.getBuffConfig(buffId)
     if (!raw?.aura) return undefined
-    // HACK: BuffJsonAuraModifier.type 是 string，ModifierType 也是 string 字面量，
-    // 运行时值一致（如 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' | 'FINAL'）。
-    // 此处从 `as` 断言改为显式映射，隔离边界。
+    // BuffJsonAuraModifier.type 已收紧为 ModifierType（值域与运行时一致），无需断言
     return {
       targetSelector: raw.aura.targetSelector as BuffAuraConfig['targetSelector'],
       modifiers: raw.aura.modifiers.map((m) => ({
         ...m,
-        type: m.type as ModifierType,
       })),
     }
   }
@@ -1312,7 +1308,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (instance.characterId !== characterId || !instance.isActive) continue
       const config = this.scriptRegistry.getBuffConfig(instance.buffId)
       if (!config?.tags?.includes(tag)) continue
-      return (config.parameters ?? {}) as Record<string, unknown>
+      return config.parameters ?? {}
     }
     return null
   }
@@ -1331,7 +1327,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     for (const instance of this.getBuffInstances(characterId)) {
       const config = this.scriptRegistry.getBuffConfig(instance.buffId)
       if (!config?.tags?.includes(tag)) continue
-      result.push((config.parameters ?? {}) as Record<string, unknown>)
+      result.push(config.parameters ?? {})
     }
     return result
   }

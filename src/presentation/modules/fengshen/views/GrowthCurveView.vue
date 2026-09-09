@@ -36,7 +36,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
-import { computePlayerBase, PLAYER_BASE_ATTRS } from '@/domain/fengshen/player-config'
+import { computePlayerBase, PLAYER_BASE_ATTRS, PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
 import { enemyMeanStatsByLevel, ENEMY_STAT_KEY_BY_PLAYER_ATTR } from '@/domain/fengshen/data-insight'
 import type { PlayerBaseAttrCode } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
@@ -53,14 +53,8 @@ const attrCode = ref<PlayerBaseAttrCode>('attack')
 const roleFilter = ref('')
 const freePoints = ref(false)
 
-const ATTR_LABELS: Record<PlayerBaseAttrCode, string> = {
-  maxHealth: '气血',
-  attack: '攻击',
-  defense: '防御',
-  hitValue: '命中',
-  dodgeValue: '闪避',
-  speed: '速度',
-}
+/** 属性中文名（单一来源 player-config） */
+const ATTR_LABELS = PLAYER_BASE_ATTR_LABELS
 
 /** 品阶码 → 中文名（单一来源 role-grades） */
 const ROLE_LABELS: Record<string, string> = ENEMY_ROLE_LABELS

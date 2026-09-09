@@ -58,7 +58,7 @@ export interface BuffEffectLine {
 /**
  * 增益效果脚本接口
  * 定义了增益效果的气血周期回调函数,用于实现自定义的增益逻辑
- * @template TParams - 增益效果参数类型,默认为any
+ * @template TParams - 增益效果参数类型；默认 any 为兼容存量无参脚本子类，改 unknown 会波及全部脚本
  */
 export interface IBuffScript<TParams = any> {
   /**
@@ -226,9 +226,9 @@ export interface BuffConfig {
 
   /**
    * 增益效果参数配置
-   * 用于存储额外的自定义参数,键值对形式
+   * 用于存储额外的自定义参数,键值对形式（脚本自定义参数，结构随脚本而异）
    */
-  parameters?: Record<string, any>
+  parameters?: Record<string, unknown>
 
   /**
    * 执行模式（显式声明，取代 ID 前缀/字段组合推断）
@@ -275,7 +275,8 @@ export interface ScriptBuffConfig {
   controlType?: ControlType
   iconPath?: string
   dispellable?: boolean
-  parameters?: Record<string, any>
+  /** 脚本自定义参数（结构随脚本而异） */
+  parameters?: Record<string, unknown>
   /** 标记该脚本完全自包含——框架不再从 JSON 读取 attributes 应用修饰符 */
   selfContained?: boolean
   /** 效果标签（同 BuffConfig.tags） */
@@ -289,6 +290,7 @@ export interface ScriptBuffConfig {
 /**
  * 增益效果实例接口
  * 表示一个已应用到角色身上的增益效果实例
+ * @template TParams - 增益效果参数类型；默认 any 为兼容存量无参脚本子类，改 unknown 会波及全部脚本
  */
 export interface BuffInstance<TParams = any> {
   /**

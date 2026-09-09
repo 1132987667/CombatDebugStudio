@@ -35,7 +35,7 @@
           <span v-if="s.isGone" class="gd-row-tag gd-row-tag--gone">移除</span>
         </p>
         <p v-if="instance.affixes.length" class="gd-row gd-row--affix" v-for="a in instance.affixes" :key="a.id">
-          <span class="gd-row-key">词缀</span>
+          <span class="gd-row-key">{{ a.fixed || a.main ? '主要' : '附加' }}</span>
           <span class="gd-row-val gd-row-val--affix">{{ labelOf(a.attribute) }} +{{ a.value }}{{ a.modifierType === 'percent' ? '%' : '' }}</span>
         </p>
         <p v-if="statRows.length === 0 && instance.affixes.length === 0" class="gd-empty">该装备无属性加成</p>
@@ -61,6 +61,8 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import type { EquipmentData } from '@/domain/fengshen/types'
+import type { EquipmentStatEntry } from '@/domain/fengshen/types'
+import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { equipQualityClass, equipQualityColor, qualityClass, qualityName, qualityOf, tierName } from '../quality'
 
 const props = defineProps<{
@@ -92,7 +94,7 @@ const oldInst = computed(() => (slot.value ? pack.equippedInstance(slot.value) :
 const oldGear = computed(() => (oldInst.value ? pack.gearById(oldInst.value.itemId) : undefined))
 
 /** 按 attribute+modifierType 聚合实例 stats（基础×品质×强化 + 词缀） */
-function aggregate(stats: EquipmentData['stats']): Map<string, number> {
+function aggregate(stats: EquipmentStatEntry[]): Map<string, number> {
   const map = new Map<string, number>()
   for (const s of stats) {
     const key = `${s.attribute}:${s.modifierType}`
@@ -115,25 +117,6 @@ interface StatRow {
   isGone: boolean
 }
 
-const STAT_LABELS: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  maxHealth: '气血',
-  speed: '速度',
-  critRate: '暴击率',
-  critDamage: '暴击伤害',
-  hit: '命中',
-  dodge: '闪避',
-  damageReduction: '伤害减免',
-  healReceived: '治疗效果',
-  damageToLowHp: '对低血伤害',
-  damageToDemon: '对妖伤害',
-  attackBonus: '攻击加成',
-  defenseBonus: '防御加成',
-  comboRate: '连击率',
-  reflectDamagePercent: '反弹伤害',
-}
-
 const statRows = computed<StatRow[]>(() => {
   const rows: StatRow[] = []
   const keys = new Set([...newMap.value.keys(), ...oldMap.value.keys()])
@@ -145,7 +128,7 @@ const statRows = computed<StatRow[]>(() => {
       // 候选无、旧装备有 → 穿戴后该属性被移除
       rows.push({
         key,
-        label: STAT_LABELS[attribute] ?? attribute,
+        label: labelOf(attribute),
         value: oldVal ?? 0,
         percent: modifierType === 'percent',
         delta: null,
@@ -156,7 +139,7 @@ const statRows = computed<StatRow[]>(() => {
     }
     rows.push({
       key,
-      label: STAT_LABELS[attribute] ?? attribute,
+      label: labelOf(attribute),
       value: newVal,
       percent: modifierType === 'percent',
       delta: oldVal === undefined ? null : newVal - oldVal,
@@ -167,8 +150,9 @@ const statRows = computed<StatRow[]>(() => {
   return rows.sort((a, b) => a.label.localeCompare(b.label, 'zh'))
 })
 
+/** 属性名：领域字典权威显示名（覆盖全部曲线属性码），未登记回退原 code */
 function labelOf(attribute: string): string {
-  return STAT_LABELS[attribute] ?? attribute
+  return attrShortName(attribute)
 }
 
 /** 品质系数文案：×0.85（两位小数） */

@@ -166,7 +166,8 @@ export interface CombatRecord {
   damageSource?: DamageSource // 伤害来源类型
   message: string
   htmlMessage?: string
-  sourceAction?: Record<string, any>
+  /** 来源动作引用（动态结构，回放诊断用，消费方自行收窄） */
+  sourceAction?: Record<string, unknown>
 }
 
 /**

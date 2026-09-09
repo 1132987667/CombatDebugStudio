@@ -171,7 +171,7 @@
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier } from "@/domain/attribute/types";
-import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay';
+import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay';
 import { BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
@@ -238,21 +238,8 @@ const attrVal = (code: ATTRIBUTE_CODE): number => {
   return char?.getAttrVal(code)?.value ?? getAttrDv(code)
 }
 
-// 进阶属性配置
-const groupLabels: Record<string, string> = {
-  vitality: '生命',
-  offense: '攻击',
-  defense: '防御',
-  speed: '速度',
-  crit: '暴击',
-  accuracy: '命中闪避',
-  mechanic: '机制',
-  control: '控制',
-  elemental: '元素',
-  support: '辅助',
-  energy: '能量',
-  utility: '其他',
-}
+// 进阶属性分组中文名（单一来源 attributeDisplay）
+const groupLabels: Record<string, string> = DISPLAY_GROUP_LABELS
 const advancedExpanded = ref(false)
 // 基础属性区（core tier，排除气血/能量/护盾等 hidden 语义项）— 元数据驱动
 // NOTE: *Bonus 已改 advanced tier 归属性族分组，不会进 core 过滤，无需在此排除

@@ -7,7 +7,7 @@
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
 import { SkillType } from '@/domain/skill/types'
-import type { EquipmentData } from '@/domain/fengshen/types'
+import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import type { EnemyRole } from '@/domain/fengshen/role-grades'
 import { PLAYER_ID } from '@/shared/constants/player'
 import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
@@ -287,7 +287,7 @@ export function dropsForEnemy(name: string): EnemyDrop[] {
  * @param protagonist 主角实时战斗快照（playerStore.player 派生），缺省回退 playerParty[0] 演示值
  */
 export function equipBonuses(
-  stats: EquipmentData['stats'],
+  stats: EquipmentStatEntry[],
   protagonist: ProtagonistSnapshot = { ...playerParty[0], critRate: 0, critDamage: 1.5, dodge: 0, damageReduction: 0 },
 ): Partial<Record<string, number>> {
   const base = protagonist

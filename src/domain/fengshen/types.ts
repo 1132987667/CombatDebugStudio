@@ -13,6 +13,7 @@ import type { SceneData } from '@/shared/types/scene'
 import type { FormationConfig } from '@/shared/types/formation'
 import type { Item, ItemEffect, EquipmentSlot } from '@/shared/types/Item'
 import type { AffixTier, AffixTarget } from '@/shared/constants/affix'
+import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /** 装备槽位类型（8 类标准槽位：武器/衣甲/头盔/靴子/护符/护手/法宝/神器） */
 export type EquipmentSlotType = EquipmentSlot
@@ -173,8 +174,8 @@ export interface GrowthCurveData {
 
 /** 词缀属性修正条目 —— 单个属性按百分比修正 */
 export interface AffixStatModifier {
-  /** 目标属性代码（ATTRIBUTE_CODE，如 attack/defense/speed/critRate） */
-  attribute: string
+  /** 目标属性代码（如 attack/defense/speed/critRate） */
+  attribute: ATTRIBUTE_CODE
   /** 修正百分比（20 表示 +20%，-20 表示 -20%） */
   percent: number
   /** 修正类型：缺省 PERCENTAGE（相对乘区）；对 base=0 的比率/加成型属性用 ADDITIVE（百分点） */
@@ -232,7 +233,7 @@ export interface EquipmentAffixData {
   id: string
   name: string
   /** 属性代码（必须存在于 attributes.json，由 DataIntegrityService 强校验） */
-  attribute: string
+  attribute: ATTRIBUTE_CODE
   /** 修正类型（flat 固定值 / percent 百分比，对齐 EquipmentStatEntry.modifierType） */
   modifierType: 'flat' | 'percent'
   /** 数值区间，策划配置词条时必填 */

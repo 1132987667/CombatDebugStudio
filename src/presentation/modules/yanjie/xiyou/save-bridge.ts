@@ -231,6 +231,8 @@ export const xiyouSaveBridge: SaveStatePort = {
           quality,
           qualityFactor: Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality),
           star: Number.isInteger(inst.star) && (inst.star as number) >= 0 ? (inst.star as number) : 0,
+          // 旧档无锁存核心属性（写死 stats 时代）→ 按公式补 roll 一次
+          stats: makeInstance(inst.itemId, [], 0, quality, Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality)).stats,
           affixes: (inst.affixes ?? []).map((a): GearAffix => ({
             id: a.id,
             attribute: a.attribute,

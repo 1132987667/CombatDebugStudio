@@ -1,8 +1,9 @@
-import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types';
+import type { BattleEntity, ParticipantSide, ActionTypes } from '@/domain/battle/type/types';
 import { BattleTriggerPhase } from '@/domain/battle/type/types';
 import type {
   DamageCategory,
 } from '@/domain/skill/types';
+import type { AnimationType } from '@/domain/battle/type/BattleAnimationType';
 import type { BattleLogEntry } from '@/shared/types/battle-log';
 import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary';
 
@@ -57,8 +58,8 @@ export interface BuffEffectEventData extends BaseEventData {
 export interface SkillEffectEventData extends BaseEventData {
   /** 技能名称 */
   skillName: string
-  /** 效果类型 */
-  effectType: string
+  /** 效果类型（动作类型：attack/heal/...，发射端传 action.type） */
+  effectType: ActionTypes
   /** 伤害大类（physical/elemental/true） */
   damageCategory: DamageCategory
 }
@@ -84,8 +85,8 @@ export interface TeamDataChangedEventData {
 
 /** 动画完成事件数据类型（用于替代定时器清除动画状态） */
 export interface AnimationCompleteEventData {
-  /** 完成的动画类型（与 AnimationType 对应的事件码字符串） */
-  type: string
+  /** 完成的动画类型 */
+  type: AnimationType
 }
 
 

@@ -78,6 +78,7 @@
 import { computed, ref } from 'vue'
 
 import type { TableSchema } from '@/domain/fengshen/schema'
+import { POLARITY_VALUE_LABEL, SLOT_VALUE_LABEL } from '@/domain/fengshen/schema'
 import { resolveRefName, resolveRefNames } from '@/domain/fengshen/refNames'
 import { ENEMY_ROLE_LABELS } from '@/domain/fengshen/role-grades'
 
@@ -269,13 +270,15 @@ interface TagInfo {
 }
 
 const KIND_LABEL: Record<string, Record<string, string>> = {
-  polarity: { positive: '增益', negative: '减益' },
+  polarity: POLARITY_VALUE_LABEL,
+  // 与 schema 权威表文案刻意不同（attribute 显示「属性修正」），属列表标签文案域
   category: {
     attribute: '属性修正', aura: '光环', dot: '持续伤害', hot: '持续治疗',
     shield: '护盾', control: '控制', immunity: '免疫', trigger: '触发',
   },
+  // 与 schema 权威表文案刻意不同（ultimate 显示「大技能」）+ 物品类型键，属列表标签文案域
   type: { small: '小技能', ultimate: '大技能', passive: '被动', material: '材料', consumable: '消耗品' },
-  slot: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手', artifact: '法宝', relic: '神器' },
+  slot: SLOT_VALUE_LABEL,
   rank: { ...ENEMY_ROLE_LABELS },
 }
 

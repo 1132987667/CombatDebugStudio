@@ -21,6 +21,7 @@ import type {
   BattleLogMeta,
 } from '@/shared/types/battle-log'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
+import { ParticipantSideName } from '@/domain/battle/type/types'
 
 // ==================== 渲染器 ====================
 
@@ -205,7 +206,7 @@ export class RoundNarrativeRenderer {
       )
       // winner 可能是单位 id（demo）或阵营 side（真实录制），统一显示为可读名称；
       // 无 winner（平局/截断）显示"未分胜负"，不再输出误导性的"未知胜利"
-      const SIDE_LABEL: Record<string, string> = { ally: '友方', enemy: '敌方' }
+      const SIDE_LABEL: Record<string, string> = ParticipantSideName
       const winnerLabel = summary.winner
         ? SIDE_LABEL[summary.winner] ??
           summary.units[summary.winner]?.name ??

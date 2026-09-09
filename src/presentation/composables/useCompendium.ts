@@ -11,11 +11,13 @@ import { ref, computed } from 'vue'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { EnemyDrop, EnemySkills } from '@/shared/types/enemy'
 
 export interface CompendiumEnemy {
   id: string
   name: string
   level: number
+  /** 图鉴展示仅取固定五键（含 currentHealth 快照），比 EnemyStats(Partial<Record>) 收窄 */
   stats: {
     currentHealth: number
     attack: number
@@ -24,16 +26,8 @@ export interface CompendiumEnemy {
     critRate?: number
     critDamage?: number
   }
-  drops: Array<{
-    itemId: string
-    quantity: number
-    chance: number
-  }>
-  skills: {
-    small?: string[]
-    passive?: string[]
-    ultimate?: string[]
-  }
+  drops: EnemyDrop[]
+  skills: EnemySkills
   description?: string
 }
 

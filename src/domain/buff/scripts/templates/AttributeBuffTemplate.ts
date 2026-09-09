@@ -8,8 +8,8 @@ import type { ModifierType as ModifierTypeEnum } from '@/domain/attribute/types'
  * 描述一个属性修改操作——支持固定值和动态计算两种模式
  */
 export interface AttributeModifier {
-  /** 目标属性代码 */
-  attribute: ATTRIBUTE_CODE | string
+  /** 目标属性代码（码表外值在 applyModifiers 的运行时校验中被跳过） */
+  attribute: ATTRIBUTE_CODE
   /** 修饰值：固定数值或基于上下文动态计算的函数 */
   value: number | ((context: BuffContext) => number)
   /** 修饰类型（ADDITIVE / MULTIPLICATIVE / PERCENTAGE / FINAL） */
@@ -112,7 +112,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     mod: AttributeModifier,
     context: BuffContext,
     key: string,
-    attribute: string,
+    attribute: ATTRIBUTE_CODE,
   ): number {
     if (typeof mod.value !== 'function') return mod.value
 
@@ -201,9 +201,10 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
       description?: string
     }> = []
     for (const mod of declarations) {
-      // NOTE: 运行时校验——仅接受已知 ATTRIBUTE_CODE，非法属性跳过并 warn
+      // NOTE: 运行时校验兜底动态构造的修饰符（接口已收窄为 ATTRIBUTE_CODE，
+      //       静态声明非法码由编译期拦截，此处防御运行时拼接/反射构造的值）
       if (
-        !Object.values(ATTRIBUTE_CODE).includes(mod.attribute as ATTRIBUTE_CODE)
+        !Object.values(ATTRIBUTE_CODE).includes(mod.attribute)
       ) {
         this.log(
           context,
@@ -219,12 +220,12 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
         mod,
         context,
         key,
-        mod.attribute as string,
+        mod.attribute,
       )
       const value = rawValue * stacks
       current.push({
         key,
-        attribute: mod.attribute as ATTRIBUTE_CODE,
+        attribute: mod.attribute,
         value,
         type: mod.type,
         rawValue,

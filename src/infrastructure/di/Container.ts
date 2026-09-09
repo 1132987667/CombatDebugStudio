@@ -15,6 +15,8 @@ interface ServiceDefinition<T> {
 
 export class Container {
   private static instance: Container
+  // NOTE: ServiceDefinition<any> 是 DI 容器的固有边界——容器以 string 键存储异构服务，
+  // 泛型类型由 resolve<T>() 在调用侧收口，容器内部无法预知具体服务类型
   private services = new Map<string, ServiceDefinition<any>>()
 
   private constructor() { }

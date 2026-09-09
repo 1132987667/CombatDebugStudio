@@ -98,7 +98,7 @@ export function rollGearStats(
   const main = rollMainAffixes(input, ctx, warnings)
   const exclude = new Set(main.affixes.map((a) => a.attribute))
   const append = rollAppendAffixes(input, ctx, exclude, warnings)
-  return { core: core.stat, affixes: [...main.affixes, ...append.affixes], warnings: [...warnings, ...append.warnings] }
+  return { core: core.stat, affixes: [...main.affixes, ...append.affixes], warnings }
 }
 
 /** 核心属性 1 条（固定）：core_affix_ratio[子类型]，装备公式权重 2 × 子类型系数 × 品质系数 */
@@ -143,19 +143,37 @@ export function rollMainAffixes(
   }
   const refs = pool.random_pool ?? []
   if (refs.length) {
-    // 组码整卷展开后等概率取一属性（ALL-MEC 这类组先摊平成属性码池）
+    // 组码整卷展开后等概率取一属性（ALL-MEC 这类组先摊平成属性码池）；
+    // 选中属性若无法投放（曲线/转化系数缺口）则剔除重抽，不让配置缺口吃掉整条
     const attrs = refs.flatMap((ref) => expandPoolRef(cfg, ref))
     const banned = forbiddenAttrs(cfg, input.slot, input.subType)
     const candidates = attrs.filter((a) => !banned.has(a))
-    const pick = candidates[Math.min(candidates.length - 1, Math.floor(ctx.rng() * candidates.length))]
-    if (pick) {
-      const v = rollAttrValue(ctx, input, pick, ctx.formula.affixWeight, 1, warnings)
-      if (v !== null) out.push({ id: pick, attribute: pick, modifierType: modifierTypeOf(pick), value: v, main: true })
+    const picked = pickRollable(candidates, input, ctx, warnings)
+    if (picked) {
+      out.push({ id: picked.attribute, attribute: picked.attribute, modifierType: modifierTypeOf(picked.attribute), value: picked.value, main: true })
     }
   } else {
     warnings.push(`子类型 ${input.subType} 主要属性第 2 条（随机池）未配置`)
   }
   return { affixes: out, warnings }
+}
+
+/** 从候选中抽一个可投放属性：选中属性 roll 失败（曲线/转化缺口）时剔除重抽，池空返回 null */
+function pickRollable(
+  candidates: string[],
+  input: GearRollInput,
+  ctx: RollCtx,
+  warnings: string[],
+  weight?: number,
+): { attribute: string; value: number } | null {
+  const pool = [...candidates]
+  while (pool.length) {
+    const idx = Math.min(pool.length - 1, Math.floor(ctx.rng() * pool.length))
+    const cand = pool.splice(idx, 1)[0]
+    const v = rollAttrValue(ctx, input, cand, weight ?? ctx.formula.affixWeight, 1, warnings)
+    if (v !== null) return { attribute: cand, value: v }
+  }
+  return null
 }
 
 /**
@@ -183,11 +201,13 @@ export function rollAppendAffixes(
       warnings.push(`第 ${row.row} 行「${row.name}」在本阵营下无可投放属性（候选耗尽或全被禁止）`)
       continue
     }
-    const pick = candidates[Math.min(candidates.length - 1, Math.floor(ctx.rng() * candidates.length))]
-    const v = rollAttrValue(ctx, input, pick, ctx.formula.affixWeight, 1, warnings)
-    if (v === null) continue
-    used.add(pick)
-    out.push({ id: pick, attribute: pick, modifierType: modifierTypeOf(pick), value: v })
+    const picked = pickRollable(candidates, input, ctx, warnings)
+    if (!picked) {
+      warnings.push(`第 ${row.row} 行「${row.name}」候选属性均无法投放（曲线/转化系数缺口）`)
+      continue
+    }
+    used.add(picked.attribute)
+    out.push({ id: picked.attribute, attribute: picked.attribute, modifierType: modifierTypeOf(picked.attribute), value: picked.value })
   }
   return { affixes: out, warnings }
 }

@@ -7,6 +7,26 @@
 
 import type { FengshenTableName } from '@/domain/fengshen/types'
 import { ENEMY_ROLE_LABELS, ENEMY_ROLES } from '@/domain/fengshen/role-grades'
+import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
+
+/**
+ * 枚举值 → 中文标签（单一来源）
+ *
+ * schema 内联 valueLabel 与 DataTable/EntityDetailPanel 的展示翻译共用此表；
+ * 文案与既有界面保持逐字一致（部分组件对个别键有刻意不同的文案域，见各自注释）。
+ */
+export const SKILL_TYPE_VALUE_LABEL: Record<string, string> = { small: '小技能', ultimate: '大招', passive: '被动' }
+export const POLARITY_VALUE_LABEL: Record<string, string> = { positive: '增益', negative: '减益' }
+export const BUFF_CATEGORY_VALUE_LABEL: Record<string, string> = { attribute: '属性', aura: '光环', dot: '持续伤害', hot: '持续治疗', shield: '护盾', control: '控制', immunity: '免疫', trigger: '触发' }
+export const STACK_RULE_VALUE_LABEL: Record<string, string> = { replace: '替换', stack: '叠加', independent: '独立' }
+export const AFFIX_TIER_VALUE_LABEL: Record<string, string> = { yao_1: '一档·妖气', yao_2: '二档·妖性', yao_3: '三档·妖道', yao_4: '四档·妖圣', mandate: '天命', jie: '劫数' }
+export const AFFIX_TARGET_VALUE_LABEL: Record<string, string> = { player: '玩家', enemy: '敌人' }
+export const CONFLICT_GROUP_VALUE_LABEL: Record<string, string> = { wuxing_single: '五行单体', wuxing_all: '五行全抗' }
+export const MODIFIER_TYPE_VALUE_LABEL: Record<string, string> = { flat: '固定值', percent: '百分比' }
+/** 装备 8 槽标签（与 @/shared/types/Item 的 EQUIPMENT_SLOT_LABELS 同源） */
+export const SLOT_VALUE_LABEL: Record<string, string> = EQUIPMENT_SLOT_LABELS
+/** 装备阶位 t1~t5（xiyou 侧 GearDetailDialog 的 天品/仙品 是另一套文案域，勿混用） */
+export const GEAR_TIER_VALUE_LABEL: Record<string, string> = { t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶' }
 
 export type FieldType = 'text' | 'number' | 'select' | 'multi' | 'map' | 'array' | 'object' | 'boolean'
 
@@ -133,7 +153,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'skillType', label: '类型', type: 'select', enum: ['small', 'ultimate', 'passive'], column: { tagKind: 'type' }, searchable: true,
-        valueLabel: { small: '小技能', ultimate: '大招', passive: '被动' } },
+        valueLabel: SKILL_TYPE_VALUE_LABEL },
       { key: 'energyCost', label: '能量消耗', type: 'number', min: 0, max: 200, column: { format: 'number' } },
       { key: 'cooldown', label: '冷却回合', type: 'number', min: 0, max: 20, column: { format: 'number' } },
       { key: 'description', label: '描述', type: 'text', searchable: true },
@@ -161,13 +181,13 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'polarity', label: '极性', type: 'select', enum: ['positive', 'negative'], column: { tagKind: 'polarity' }, searchable: true,
-        valueLabel: { positive: '增益', negative: '减益' } },
+        valueLabel: POLARITY_VALUE_LABEL },
       { key: 'category', label: '类别', type: 'select', enum: ['attribute', 'aura', 'dot', 'hot', 'shield', 'control', 'immunity', 'trigger'], column: { tagKind: 'category' }, searchable: true,
-        valueLabel: { attribute: '属性', aura: '光环', dot: '持续伤害', hot: '持续治疗', shield: '护盾', control: '控制', immunity: '免疫', trigger: '触发' } },
+        valueLabel: BUFF_CATEGORY_VALUE_LABEL },
       { key: 'duration', label: '持续回合', type: 'number', min: -1, max: 99, description: '-1 为永久', column: { format: 'number' } },
       { key: 'maxStacks', label: '最大叠加', type: 'number', min: 1, max: 99 },
       { key: 'stackRule', label: '叠加规则', type: 'select', enum: ['replace', 'stack', 'independent'],
-        valueLabel: { replace: '替换', stack: '叠加', independent: '独立' } },
+        valueLabel: STACK_RULE_VALUE_LABEL },
       { key: 'effects', label: '效果列表', type: 'array', searchable: true,
         description: '原子效果类型 + params（modifier/aura/...）',
         arrayTemplate: [
@@ -343,9 +363,8 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
         valueLabel: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手', artifact: '法宝', relic: '神器' } },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
-      { key: 'stats', label: '属性加成', type: 'array',
-        description: '属性 + 修正类型（flat/percent）+ 数值',
-        arrayTemplate: [{ attribute: 'attack', modifierType: 'flat', value: 10 }] },
+      { key: 'itemLevel', label: '装备等级', type: 'number', min: 1, max: 50, column: { format: 'number' },
+        description: '数值锚点 1~50，装备公式按它线性成长；requiredLevel 缺省 = itemLevel − 5' },
       { key: 'requiredLevel', label: '穿戴等级门槛', type: 'number', min: 1, max: 99, column: { format: 'number' } },
       { key: 'factionRestriction', label: '阵营限制', type: 'select', refTable: 'elements' },
       { key: 'description', label: '描述', type: 'text', searchable: true },
@@ -390,15 +409,15 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'tier', label: '档位', type: 'select', enum: ['yao_1', 'yao_2', 'yao_3', 'yao_4', 'mandate', 'jie'], column: { tagKind: 'neutral' }, searchable: true,
-        valueLabel: { yao_1: '一档·妖气', yao_2: '二档·妖性', yao_3: '三档·妖道', yao_4: '四档·妖圣', mandate: '天命', jie: '劫数' } },
+        valueLabel: AFFIX_TIER_VALUE_LABEL },
       { key: 'target', label: '作用目标', type: 'select', enum: ['player', 'enemy'], column: { tagKind: 'neutral' }, searchable: true,
-        valueLabel: { player: '玩家', enemy: '敌人' } },
+        valueLabel: AFFIX_TARGET_VALUE_LABEL },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'statModifiers', label: '属性修正', type: 'array',
         description: '属性 + 修正百分比（20=+20%，-20=-20%）',
         arrayTemplate: [{ attribute: 'attack', percent: -20 }] },
       { key: 'conflict_group', label: '冲突组', type: 'select', enum: ['wuxing_single', 'wuxing_all'],
-        valueLabel: { wuxing_single: '五行单体', wuxing_all: '五行全抗' } },
+        valueLabel: CONFLICT_GROUP_VALUE_LABEL },
       { key: 'description', label: '描述', type: 'text', searchable: true },
       { key: 'drop_hint', label: '掉落倾向', type: 'text' },
     ],
@@ -417,7 +436,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'attribute', label: '属性', type: 'text', required: true, searchable: true, refTable: 'attributes',
         description: '属性代码（引用 attributes 表 code，强校验）' },
       { key: 'modifierType', label: '修正类型', type: 'select', enum: ['flat', 'percent'], column: { tagKind: 'neutral' }, searchable: true,
-        valueLabel: { flat: '固定值', percent: '百分比' } },
+        valueLabel: MODIFIER_TYPE_VALUE_LABEL },
       { key: 'valueRange', label: '数值区间', type: 'object', required: true,
         description: '{ min, max }——掉落/洗炼在该区间随机，缺失或 min>max 被拦截',
         objectTemplate: { min: 5, max: 15 } },
@@ -518,16 +537,15 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'slot', label: '部位', type: 'select', enum: ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove', 'artifact', 'relic'], column: { tagKind: 'slot' }, searchable: true,
-        valueLabel: { weapon: '武器', armor: '衣甲', helmet: '头盔', boots: '靴子', charm: '护符', glove: '护手', artifact: '法宝', relic: '神器' } },
+        valueLabel: SLOT_VALUE_LABEL },
       { key: 'subType', label: '子类型', type: 'text', searchable: true },
       { key: 'tier', label: '阶位', type: 'select', enum: ['t1', 't2', 't3', 't4', 't5'], column: { tagKind: 'neutral' }, searchable: true,
-        valueLabel: { t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶' } },
+        valueLabel: GEAR_TIER_VALUE_LABEL },
       { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
+      { key: 'itemLevel', label: '装备等级', type: 'number', min: 1, max: 50, column: { format: 'number' },
+        description: '数值锚点 1~50，装备公式按它线性成长；requiredLevel 缺省 = itemLevel − 5' },
       { key: 'requiredLevel', label: '穿戴等级门槛', type: 'number', min: 1, max: 99, column: { format: 'number' } },
       { key: 'cost', label: '制造金钱', type: 'number', min: 0, max: 999999, column: { format: 'number' } },
-      { key: 'stats', label: '属性加成', type: 'array',
-        description: '属性 + 修正类型（flat/percent）+ 数值',
-        arrayTemplate: [{ attribute: 'attack', modifierType: 'flat', value: 10 }] },
       { key: 'materials', label: '制造材料', type: 'array',
         description: '材料 itemId（引用 items 表）+ 数量',
         arrayTemplate: [{ itemId: 'mat_taomu', count: 3 }] },

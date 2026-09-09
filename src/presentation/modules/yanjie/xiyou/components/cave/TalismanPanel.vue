@@ -63,7 +63,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 import { talismanRecipes } from '../../xiyouData'
-import { itemIdByName, itemName, qualityOf } from '../../caveLogic'
+import { itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
 import { qualityClassOf } from '../../quality'
 
 const pack = usePackStore()
@@ -81,13 +81,6 @@ function qualityOfOut(r: XiyouRecipe): string {
 
 function qualityChip(r: XiyouRecipe): string {
   return qualityClassOf(qualityOfOut(r))
-}
-
-interface MatView {
-  name: string
-  count: number
-  have: number
-  enough: boolean
 }
 
 function materialsOf(r: XiyouRecipe): MatView[] {

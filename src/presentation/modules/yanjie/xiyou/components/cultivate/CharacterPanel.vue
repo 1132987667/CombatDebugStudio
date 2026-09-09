@@ -100,7 +100,7 @@ import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
-import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay'
+import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import { equipBonuses } from '../../battle'
@@ -160,20 +160,8 @@ const advancedGroups = computed<Record<string, AttrEntry[]>>(() => {
   return groups
 })
 
-const groupLabels: Record<string, string> = {
-  vitality: '生命',
-  offense: '攻击',
-  defense: '防御',
-  speed: '速度',
-  crit: '暴击',
-  accuracy: '命中闪避',
-  mechanic: '机制',
-  control: '控制',
-  elemental: '元素',
-  support: '辅助',
-  energy: '能量',
-  utility: '其他',
-}
+// 分组中文名（单一来源 attributeDisplay）
+const groupLabels: Record<string, string> = DISPLAY_GROUP_LABELS
 
 const advancedExpanded = ref(false)
 

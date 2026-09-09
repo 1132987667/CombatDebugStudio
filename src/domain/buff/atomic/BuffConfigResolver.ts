@@ -2,7 +2,7 @@ import { type IAtomicEffect, AtomicEffectType } from './types'
 import { AtomicEffectRegistry } from './AtomicEffectRegistry'
 import type { BuffConfig, StackRule, ControlType, TriggerAction } from '@/domain/buff/types'
 import type { BuffPolarity } from '@/shared/types/buff-classification'
-import type { AttributeValueConfig } from '@/shared/types/buffs-json'
+import type { AttributeValueConfig, BuffJsonEntry } from '@/shared/types/buffs-json'
 import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { normalizeTriggerPhase } from '@/domain/battle/type/types'
 
@@ -47,7 +47,7 @@ export class BuffConfigResolver {
    * 将原始配置解析为运行时配置
    * 可在 BuffScriptRegistry.loadBuffConfigs 之后调用
    */
-  resolve(raw: Record<string, any>): ResolvedBuffConfig {
+  resolve(raw: BuffJsonEntry): ResolvedBuffConfig {
     const effectPlan = this.buildEffectPlan(raw)
     const base = this.buildBaseConfig(raw)
     const effectSummary = this.buildEffectSummary(raw, effectPlan)
@@ -65,7 +65,7 @@ export class BuffConfigResolver {
 
   /** 推导数据侧执行模式：有效果 → effectPlan；仅触发器 → triggerOnly；否则 → marker */
   private deriveExecutionMode(
-    raw: Record<string, any>,
+    raw: BuffJsonEntry,
   ): 'effectPlan' | 'triggerOnly' | 'marker' {
     if (raw.effects?.length) return 'effectPlan'
     if (raw.triggers?.length) return 'triggerOnly'
@@ -73,7 +73,7 @@ export class BuffConfigResolver {
   }
 
   /** 推导显式极性：配置声明优先（校验值域），缺失时从 controlType/tags 推导，仍失败则抛错 */
-  private derivePolarity(raw: Record<string, any>): BuffPolarity {
+  private derivePolarity(raw: BuffJsonEntry): BuffPolarity {
     const VALID = ['positive', 'negative', 'neutral', 'mixed']
     if (raw.polarity) {
       if (!VALID.includes(raw.polarity)) {
@@ -83,7 +83,8 @@ export class BuffConfigResolver {
       }
       return raw.polarity as BuffPolarity
     }
-    if (raw.controlType && raw.controlType !== 'none') {
+    // buffs.json 的 controlType 值域为 ControlKind（状态码），无 'none' 取值
+    if (raw.controlType) {
       return 'negative'
     }
     const tags: string[] = raw.tags ?? []
@@ -97,7 +98,7 @@ export class BuffConfigResolver {
 
   /** 从效果计划派生静态效果摘要（属性修正 + 时长），供日志/UI 直接读取 */
   private buildEffectSummary(
-    raw: Record<string, any>,
+    raw: BuffJsonEntry,
     effectPlan: ResolvedEffectPlan[],
   ): string {
     const parts: string[] = []
@@ -124,20 +125,19 @@ export class BuffConfigResolver {
     return parts.join(' ')
   }
 
-  private buildEffectPlan(raw: Record<string, any>): ResolvedEffectPlan[] {
+  private buildEffectPlan(raw: BuffJsonEntry): ResolvedEffectPlan[] {
     const plan: ResolvedEffectPlan[] = []
 
-    const rawEffects: Array<{ type: string; params: Record<string, unknown> }> =
-      raw.effects ?? []
+    const rawEffects = raw.effects ?? []
     for (const rawEffect of rawEffects) {
-      const handler = this.registry.get(rawEffect.type as AtomicEffectType)
+      const handler = this.registry.get(rawEffect.type)
       if (!handler) {
         throw new Error(
           `[BuffConfigResolver] ${raw.id ?? 'unknown'}: 未知原子效果类型 "${rawEffect.type}"`
         )
       }
       plan.push({
-        type: rawEffect.type as AtomicEffectType,
+        type: rawEffect.type,
         handler,
         params: rawEffect.params ?? {},
       })
@@ -147,7 +147,7 @@ export class BuffConfigResolver {
     return plan
   }
 
-  private buildBaseConfig(raw: Record<string, any>): BuffConfig {
+  private buildBaseConfig(raw: BuffJsonEntry): BuffConfig {
     return {
       id: raw.id,
       name: raw.name ?? raw.id,
@@ -155,6 +155,9 @@ export class BuffConfigResolver {
       duration: raw.duration ?? 1,
       maxStacks: raw.maxStacks ?? 1,
       cooldown: raw.cooldown ?? 0,
+      // HACK: 缺省值为大写字符串 'LIMITED'，与 enum 值 StackRule.LIMITED（'limited'）不一致，
+      // BuffSystem 叠层 switch 不会命中该分支（buffs.json 121/142 条无 stackRule 走此缺省）。
+      // 修正会改变现网叠层行为，须先确认策划语义再统一，见类型收敛报告遗留项
       stackRule: (raw.stackRule ?? 'LIMITED') as StackRule,
       controlType: (raw.controlType ?? 'NONE') as ControlType,
       dispellable: raw.dispellable ?? true,

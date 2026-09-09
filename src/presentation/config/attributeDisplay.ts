@@ -46,6 +46,22 @@ export type DisplayGroup =
   | 'energy'
   | 'utility'
 
+/** 分组 → 中文标签（单一来源，调试面板/战斗总览统一引用此表） */
+export const DISPLAY_GROUP_LABELS: Record<DisplayGroup, string> = {
+  vitality: '生命',
+  offense: '攻击',
+  defense: '防御',
+  speed: '速度',
+  crit: '暴击',
+  accuracy: '命中闪避',
+  mechanic: '机制',
+  control: '控制',
+  elemental: '元素',
+  support: '辅助',
+  energy: '能量',
+  utility: '其他',
+}
+
 /** 属性展示配置 */
 export interface AttributeDisplayConfig {
   displayTier: DisplayTier

@@ -258,8 +258,8 @@ export function rowGroups(cfg: AffixRuleConfig, side: 'ATK' | 'DEF', row: number
   return cfg.affix_rows.find((r) => r.row === row)?.pool[side] ?? []
 }
 
-/** 子类型中文名（配置里 sub_types[].name）；查不到回落 id */
-function subTypeName(cfg: AffixRuleConfig, slot: string, subType: string): string {
+/** 子类型中文名（配置里 sub_types[].name）；查不到回落 id。装备 UI 展示 subType（id 体系）统一走此函数 */
+export function subTypeName(cfg: AffixRuleConfig, slot: string, subType: string): string {
   return cfg.sub_type_groups?.[slot]?.sub_types.find((s) => s.id === subType)?.name ?? subType
 }
 

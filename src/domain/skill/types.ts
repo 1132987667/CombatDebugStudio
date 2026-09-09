@@ -220,41 +220,6 @@ export interface ExtendedSkillStep extends SkillStep {
 }
 
 /**
- * 计算错误接口
- */
-export interface CalculationError {
-  /**
-   * 错误代码
-   */
-  code: string
-
-  /**
-   * 错误信息
-   */
-  message: string
-
-  /**
-   * 相关技能步骤
-   */
-  step: ExtendedSkillStep
-
-  /**
-   * 施放者（可选）
-   */
-  source?: any
-
-  /**
-   * 目标（可选）
-   */
-  target?: any
-
-  /**
-   * 时间戳
-   */
-  timestamp: number
-}
-
-/**
  * 组合式目标配置（新格式，推荐）
  */
 export interface SkillTargetConfig {
@@ -492,7 +457,8 @@ export interface SkillConfig {
   animation?: string // 技能动画
   soundEffect?: string // 技能音效
   tags?: string[] // 技能标签
-  parameters?: Record<string, any> // 自定义参数
+  /** 自定义参数（结构随步骤类型而异，消费方自行收窄） */
+  parameters?: Record<string, unknown>
 }
 
 export interface SkillSet {

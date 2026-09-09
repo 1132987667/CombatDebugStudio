@@ -150,42 +150,4 @@ export class BuffTraceLogger {
       )
     }
   }
-
-  /**
-   * 属性修饰符变更时调用
-   */
-  static onModifier(
-    characterId: string,
-    buffName: string,
-    attribute: string,
-    valueStr: string,
-    currentTotal: number,
-    parentTraceId?: string,
-    trace?: TraceScope,
-  ): void {
-    const id = ++this.counter
-
-    if (this.tracePort && this.tracePort.isEnabled(TracePhase.BUFF_LIFECYCLE)) {
-      this.tracePort.emit(
-        createTraceEvent({
-          correlationId: trace?.correlationId ?? `buff_mod_${id}`,
-          phase: TracePhase.BUFF_LIFECYCLE,
-          parentId: trace?.parentId ?? parentTraceId,
-          battleId: trace?.meta?.battleId,
-          turn: trace?.meta?.turn,
-          sourceId: characterId,
-          targetId: characterId,
-          level: TraceLevel.DEBUG,
-          summary: `【${buffName}】 ${attribute} ${valueStr}`,
-          payload: {
-            buffName,
-            action: BuffAction.MODIFIER,
-            attribute,
-            value: valueStr,
-            currentTotal,
-          },
-        }),
-      )
-    }
-  }
 }

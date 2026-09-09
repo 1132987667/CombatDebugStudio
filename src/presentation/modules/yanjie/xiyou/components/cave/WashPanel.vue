@@ -15,16 +15,16 @@
           <span class="xy-cave-enh-slot__item">{{ g.item }}</span>
           <span class="xy-cave-enh-slot__lv">{{ qualityName(g.quality) }} · {{ g.slotLabel }}</span>
         </span>
-        <p class="xy-cave-enh-slot__effect">{{ g.affixes.length }} 条词条</p>
+        <p class="xy-cave-enh-slot__effect">{{ washable(g).length }} 条词条</p>
       </button>
       <p v-if="gears.length === 0" class="xy-cave-enh-empty">尚未穿戴任何装备</p>
     </div>
 
     <template v-if="gear">
-      <h5 class="xy-cave-sec">词条（{{ washModes.directed ? '点选一条作为定向/锁词条目标' : '定向/锁词条需精/超品质' }}）</h5>
+      <h5 class="xy-cave-sec">附加词条（{{ washModes.directed ? '点选一条作为定向/锁词条目标' : '定向/锁词条需精/超品质' }}）</h5>
       <div class="xy-cave-wash-affixes">
         <button
-          v-for="(a, i) in gear.affixes"
+          v-for="(a, i) in washable(gear)"
           :key="`${a.attribute}:${a.modifierType}:${i}`"
           type="button"
           class="xy-cave-wash-affix"
@@ -70,6 +70,7 @@
 import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey, type GearAffix } from '@/presentation/stores/packStore'
+import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import {
   WASH_COST_GOLD,
   WASH_MATERIAL_NAMES,
@@ -108,8 +109,13 @@ const gears = computed<WashGearView[]>(() =>
     }),
 )
 
+/** 可洗练的附加词条（§21：主要属性 fixed 第 1 条 / main 第 2 条不参与洗练，index 与 washGear 的附加下标一致） */
+function washable(g: WashGearView): GearAffix[] {
+  return g.affixes.filter((a) => !a.fixed && !a.main)
+}
+
 function usable(g: WashGearView): boolean {
-  return g.affixes.length > 0
+  return washable(g).length > 0
 }
 
 const gear = computed<WashGearView | null>(() => (idx.value >= 0 ? gears.value[idx.value] ?? null : null))
@@ -147,24 +153,10 @@ function doWash(mode: WashMode): void {
   pack.washGear(g.slot, mode, targetIdx.value)
 }
 
-/** 词条文案（属性名 + 数值，percent 补 %） */
+/** 词条文案（属性名 + 数值，percent 补 %；属性名走领域字典，覆盖全部曲线属性码） */
 function affixText(a: GearAffix): string {
-  const label: Record<string, string> = {
-    attack: '攻击',
-    defense: '防御',
-    maxHealth: '气血',
-    speed: '速度',
-    critRate: '暴击率',
-    critDamage: '暴击伤害',
-    hitBonus: '命中加成',
-    speedBonus: '速度加成',
-    comboRate: '连击率',
-    counterRate: '反击率',
-    dodge: '闪避',
-    blockRate: '格挡率',
-  }
   const suffix = a.modifierType === 'percent' ? '%' : ''
-  return `${label[a.attribute] ?? a.attribute} +${a.value}${suffix}`
+  return `${attrShortName(a.attribute)} +${a.value}${suffix}`
 }
 </script>
 

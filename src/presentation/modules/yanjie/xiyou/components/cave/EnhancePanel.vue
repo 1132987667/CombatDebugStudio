@@ -59,6 +59,8 @@ import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import type { EquipmentData } from '@/domain/fengshen/types'
+import type { EquipmentStatEntry } from '@/domain/fengshen/types'
+import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { qualityOf } from '../../quality'
 import {
   enhanceCost,
@@ -77,8 +79,8 @@ interface EnhanceGearView {
   enhance: number
   failStreak: number
   maxEnhance: number
-  stats: EquipmentData['stats']
-  nextStats: EquipmentData['stats']
+  stats: EquipmentStatEntry[]
+  nextStats: EquipmentStatEntry[]
 }
 
 const pack = usePackStore()
@@ -151,16 +153,9 @@ function enhance(): void {
 }
 
 /** 装备 stats 文案（"攻击 +12 · 速度 +10%"），供强化对比展示 */
-function statText(stats: EquipmentData['stats']): string {
-  const label: Record<string, string> = {
-    attack: '攻击',
-    defense: '防御',
-    maxHealth: '气血',
-    speed: '速度',
-    critRate: '暴击率',
-  }
+function statText(stats: EquipmentStatEntry[]): string {
   return stats.map((s) => {
-    const n = label[s.attribute] ?? s.attribute
+    const n = attrShortName(s.attribute)
     const suffix = s.modifierType === 'percent' ? '%' : ''
     return `${n} ${s.value >= 0 ? '+' : ''}${s.value}${suffix}`
   }).join(' · ')

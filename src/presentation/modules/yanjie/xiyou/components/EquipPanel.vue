@@ -145,6 +145,7 @@ import type { TabItem } from '@/presentation/components'
 
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import type { EquipmentData } from '@/domain/fengshen/types'
+import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import {
   usePackStore,
   GEAR_SLOT_LABELS,
@@ -153,6 +154,7 @@ import {
 } from '@/presentation/stores/packStore'
 import { mounts, treasures } from '../xiyouData'
 import { equipQualityClass, qualityClass, qualityColor, qualityName, qualityOf } from '../quality'
+import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import GearDetailDialog from './GearDetailDialog.vue'
 
 const pack = usePackStore()
@@ -177,7 +179,7 @@ const GEAR_SLOT_KEYS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'ch
 interface GearPackView extends GearInstance {
   name: string
   rarity: number
-  stats: EquipmentData['stats']
+  stats: EquipmentStatEntry[]
 }
 
 /** 背包装备排序键 */
@@ -232,7 +234,7 @@ const equippedTotal = computed<Array<{ key: string; label: string; value: number
   return [...agg.entries()]
     .map(([key, v]) => {
       const [attribute] = key.split(':')
-      return { key, label: ATTR_LABEL[attribute] ?? attribute, value: v.value, percent: v.percent }
+      return { key, label: attrShortName(attribute), value: v.value, percent: v.percent }
     })
     .sort((a, b) => a.label.localeCompare(b.label, 'zh'))
 })
@@ -276,20 +278,11 @@ const tooltipVisible = ref(false)
 const triggerRect = ref<DOMRect | null>(null)
 const tooltipData = ref<TooltipData | null>(null)
 
-/** 属性代码 → 展示名（与 statsText 共用） */
-const ATTR_LABEL: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  maxHealth: '气血',
-  speed: '速度',
-  critRate: '暴击率',
-}
-
 /** 装备实例 → 悬浮卡片数据（含基础属性×品质×强化、词缀、部位、来源） */
 function gearTooltipData(g: GearPackView): TooltipData {
   const def = pack.gearById(g.itemId)
   const attrRows: { label: string; value: string }[] = g.stats.map((s) => {
-    const n = ATTR_LABEL[s.attribute] ?? s.attribute
+    const n = attrShortName(s.attribute)
     const suffix = s.modifierType === 'percent' ? '%' : ''
     return { label: n, value: `${s.value >= 0 ? '+' : ''}${s.value}${suffix}` }
   })
@@ -301,7 +294,7 @@ function gearTooltipData(g: GearPackView): TooltipData {
     badgeColor: qualityColor(g.rarity),
     durationLabel: def?.subType,
     details: [
-      { label: '部位', value: def ? (GEAR_SLOT_LABELS[def.slot] ?? def.slot) : '未知' },
+      { label: '部位', value: def ? (GEAR_SLOT_LABELS[def.slot as GearSlotKey] ?? def.slot) : '未知' },
       { label: '品质', value: `${qualityName(g.quality)} · ×${factorText(g.qualityFactor)}` },
       { label: '强化', value: g.enhance > 0 ? `+${g.enhance}` : '未强化' },
       { label: '词缀', value: g.affixes.length > 0 ? `×${g.affixes.length}` : '无' },
@@ -380,7 +373,7 @@ onBeforeUnmount(() => {
 /** 装备 stats 文案："攻击 +12"（含强化与词缀） */
 function statsText(g: GearPackView): string {
   return g.stats.map((s) => {
-    const n = ATTR_LABEL[s.attribute] ?? s.attribute
+    const n = attrShortName(s.attribute)
     const suffix = s.modifierType === 'percent' ? '%' : ''
     return `${n} ${s.value >= 0 ? '+' : ''}${s.value}${suffix}`
   }).join(' · ')

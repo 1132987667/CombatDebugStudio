@@ -21,6 +21,10 @@ import { dropsForEnemyById, xianyuanForEnemyIds, rewardForEnemyById } from './ba
 import { equippedSkills, grantPillPoint, pureSchoolBonus } from './xiyouData'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
+import { RARITY_NAMES } from './quality'
+
+/** 品级 1-5 → select options（单一来源 quality.RARITY_NAMES） */
+const RARITY_OPTIONS = Object.entries(RARITY_NAMES).map(([value, label]) => ({ value, label }))
 
 /** 材料类型集合（与 PackPanel 的 material/essence/enhance 分组对齐，供"给予全部N阶材料"按 items.json 全量筛选） */
 const MATERIAL_TYPES = ALL_ITEM_TYPES_SET
@@ -760,13 +764,7 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             label: '给予全槽位装备',
             input: {
               type: 'select',
-              options: [
-                { value: '1', label: '凡品' },
-                { value: '2', label: '玄品' },
-                { value: '3', label: '地品' },
-                { value: '4', label: '天品' },
-                { value: '5', label: '仙品' },
-              ],
+              options: RARITY_OPTIONS,
             },
             execute: (rarity) => {
               const r = Number(rarity ?? 1)
@@ -918,14 +916,7 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             label: '制造品质锁定',
             input: {
               type: 'select',
-              options: [
-                { value: '', label: '不锁定（按稀有度随机）' },
-                { value: '1', label: '凡品' },
-                { value: '2', label: '玄品' },
-                { value: '3', label: '地品' },
-                { value: '4', label: '天品' },
-                { value: '5', label: '仙品' },
-              ],
+              options: [{ value: '', label: '不锁定（按稀有度随机）' }, ...RARITY_OPTIONS],
               placeholder: '选择锁定品质',
             },
             execute: (q) => {

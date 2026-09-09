@@ -57,7 +57,7 @@ export class TriggerEventBus implements IDomainEventBus {
     callback: TriggerEventListener,
     listenerId?: string,
   ): void
-  /** 泛型实现：IDomainEventBus 端口契约 */
+  /** 泛型实现：IDomainEventBus 端口契约（事件载荷随 phase 而异，签名层面为任意参数列表） */
   public on(
     phase: string,
     callback: (...args: any[]) => void,

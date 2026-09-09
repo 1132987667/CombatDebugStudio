@@ -53,7 +53,8 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
     key: string,
     defaultValue: T
   ): T {
-    return context.config.parameters?.[key] ?? defaultValue
+    // 脚本自定义参数为动态 JSON 值，调用方以 defaultValue 的类型声明期望形态
+    return (context.config.parameters?.[key] ?? defaultValue) as T
   }
 
   protected log(context: BuffContext, message: string): void {

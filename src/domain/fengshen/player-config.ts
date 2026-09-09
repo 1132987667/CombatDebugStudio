@@ -22,6 +22,16 @@ export const PLAYER_BASE_ATTRS: readonly PlayerBaseAttrCode[] = [
   'speed',
 ]
 
+/** 玩家基础属性六维 → 中文名（单一来源，UI 标签统一引用此表） */
+export const PLAYER_BASE_ATTR_LABELS: Record<PlayerBaseAttrCode, string> = {
+  maxHealth: '气血',
+  attack: '攻击',
+  defense: '防御',
+  hitValue: '命中',
+  dodgeValue: '闪避',
+  speed: '速度',
+}
+
 function clamp(v: number, min: number, max: number): number {
   if (!Number.isFinite(min) || !Number.isFinite(max) || min > max) return v
   return Math.min(max, Math.max(min, v))

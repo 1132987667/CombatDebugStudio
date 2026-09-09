@@ -7,6 +7,7 @@ import { LogLevel } from '@/shared/types/battle-log'
 
 /** Buff 脚本构造器接口（静态 BUFF_ID 是类的显式身份声明，CONFIG 提供自包含配置） */
 interface BuffScriptConstructor {
+  // NOTE: 构造参数任意——脚本类构造器签名不统一（历史脚本有无参/带参两种），动态实例化边界
   new (...args: any[]): IBuffScript
   BUFF_ID: string
   CONFIG?: ScriptBuffConfig

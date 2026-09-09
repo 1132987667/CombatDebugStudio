@@ -18,6 +18,8 @@ export class UIEventBus implements IUIEventPort {
   }
 
   emit(event: string, payload?: unknown): void {
+    // NOTE: IUIEventPort 契约接受 string 事件名；mitt 的泛型映射要求 payload 与事件码逐一对应，
+    // string → keyof 的宽度差只能经断言弥合，运行时正确性由事件码约定保证
     this.emitter.emit(event as keyof BattleEvents, payload as any)
   }
 

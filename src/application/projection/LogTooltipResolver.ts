@@ -272,7 +272,8 @@ export class LogTooltipResolver {
     }
 
     // 触发概率（从 parameters 或 steps 中推测）
-    const probability = config.parameters?.triggerProbability ?? config.parameters?.probability
+    const rawProbability = config.parameters?.triggerProbability ?? config.parameters?.probability
+    const probability = typeof rawProbability === 'number' ? rawProbability : undefined
     if (probability != null) {
       details.push({ label: '触发概率', value: `${Math.round(probability * 100)}%` })
     }

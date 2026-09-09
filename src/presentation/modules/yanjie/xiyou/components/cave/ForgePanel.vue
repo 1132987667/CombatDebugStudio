@@ -83,7 +83,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 import { forgeRecipes, equipmentCatalog } from '../../xiyouData'
-import { catalogById, itemIdByName, itemName, qualityOf } from '../../caveLogic'
+import { catalogById, itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
 import { tierName } from '../../quality'
 
 const pack = usePackStore()
@@ -151,13 +151,6 @@ function typeOfOut(r: XiyouRecipe): string {
 function countOfOut(r: XiyouRecipe): number {
   const outId = itemIdByName(r.name)
   return outId ? pack.countOf(outId) : 0
-}
-
-interface MatView {
-  name: string
-  count: number
-  have: number
-  enough: boolean
 }
 
 /** 配方对应装备（材料权威在 configs/equipment/equipment.json，forgeRecipes 不再内联） */

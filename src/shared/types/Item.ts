@@ -25,7 +25,7 @@ export const EquipmentSlot = {
   GLOVE: 'glove', // 护手
   ARTIFACT: 'artifact', // 法宝
   RELIC: 'relic', // 神器
-}
+} as const
 export type EquipmentSlot = (typeof EquipmentSlot)[keyof typeof EquipmentSlot]
 
 /** 装备槽位 → 中文显示名（标准 8 槽） */

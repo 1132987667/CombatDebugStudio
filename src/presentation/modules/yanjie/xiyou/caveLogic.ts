@@ -43,6 +43,14 @@ export interface MaterialCost {
   count: number
 }
 
+/** 配方材料行（丹炉/炼器/符纸面板共用的展示行：持有量与是否够用） */
+export interface MatView {
+  name: string
+  count: number
+  have: number
+  enough: boolean
+}
+
 /** 强化材料：统一强化石（六部位/全品阶通用；2026-09-06 裁定）
  *  消耗 = 目标强化等级 L（当前 enhance + 1），线性增长（§21 装备强化） */
 const ENHANCE_STONE_ID = 'enh_stone'

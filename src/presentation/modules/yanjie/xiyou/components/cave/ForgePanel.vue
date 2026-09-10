@@ -81,6 +81,7 @@ import { ref, watch } from 'vue'
 import type { TabItem } from '@/presentation/components'
 import type { EquipmentSlot } from '@/shared/types/Item'
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
+import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouForgeRecipe } from '../../types'
@@ -91,18 +92,12 @@ import { tierName } from '../../quality'
 const pack = usePackStore()
 const notification = useNotificationStore()
 
-type ForgePart = 'weapon' | 'armor' | 'helmet' | 'boots' | 'charm' | 'glove'
+// 部位键序/中文标签单一来源：EQUIPMENT_SLOTS + EQUIPMENT_SLOT_LABELS（equipment.json 6 槽）
+type ForgePart = EquipmentSlot
 
 const part = ref<ForgePart>('weapon')
 
-const PART_TABS: TabItem[] = [
-  { id: 'weapon', label: '武器' },
-  { id: 'armor', label: '衣甲' },
-  { id: 'helmet', label: '头盔' },
-  { id: 'boots', label: '靴子' },
-  { id: 'charm', label: '护符' },
-  { id: 'glove', label: '护手' },
-]
+const PART_TABS: TabItem[] = EQUIPMENT_SLOTS.map((id) => ({ id, label: EQUIPMENT_SLOT_LABELS[id] }))
 
 const selected = ref<XiyouForgeRecipe | null>(null)
 const brewing = ref(false)
@@ -115,14 +110,7 @@ watch(part, () => {
 
 // NOTE: 部位以 equipment.json slot 为权威（6 槽），配方经 equipmentId 直查装备——
 //       不按配方名匹配装备（名字会改，ID 不会）。
-const SLOT_OF_PART: Record<ForgePart, string> = {
-  weapon: 'weapon',
-  armor: 'armor',
-  helmet: 'helmet',
-  boots: 'boots',
-  charm: 'charm',
-  glove: 'glove',
-}
+
 
 /** 配方对应装备（equipmentId 直查；材料/金钱/图纸/名称权威均在 configs/equipment/equipment.json） */
 function gearOf(r: XiyouForgeRecipe) {
@@ -132,8 +120,7 @@ function gearOf(r: XiyouForgeRecipe) {
 function partOf(r: XiyouForgeRecipe): ForgePart | null {
   const g = gearOf(r)
   if (!g) return null
-  const found = (Object.entries(SLOT_OF_PART) as [ForgePart, string][]).find(([, slot]) => slot === g.slot)
-  return found?.[0] ?? null
+  return (EQUIPMENT_SLOTS as readonly string[]).includes(g.slot) ? (g.slot as ForgePart) : null
 }
 
 function recipesOf(id: string): XiyouForgeRecipe[] {

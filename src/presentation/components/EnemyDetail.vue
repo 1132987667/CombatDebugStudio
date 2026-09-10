@@ -98,6 +98,7 @@ import { computed } from 'vue'
 import { useCompendium, type CompendiumEnemy, type CompendiumSkill } from '@/presentation/composables/useCompendium'
 import { formatTargetConfig, type SkillTargetConfig } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
+import { PASSIVE_UNCATEGORIZED, groupPassiveSkills } from '@/presentation/config/passive-skill-categories'
 
 /** 敌人配置中未配置但值得补全默认值的核心属性（图鉴展示默认档位） */
 const CORE_DEFAULT_CODES: ATTRIBUTE_CODE[] = [
@@ -105,19 +106,18 @@ const CORE_DEFAULT_CODES: ATTRIBUTE_CODE[] = [
   ATTRIBUTE_CODE.critDamage,
 ]
 
-/** 被动分类展示配置：优先级从高到低 */
-const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
-  aura: { label: '光环', color: 'var(--cat-aura)', priority: 0 },
-  trigger: { label: '触发', color: 'var(--cat-trigger)', priority: 1 },
-  heal: { label: '治疗', color: 'var(--cat-heal)', priority: 2 },
-  immunity: { label: '免疫', color: 'var(--cat-immunity)', priority: 3 },
-  summon: { label: '召唤', color: 'var(--cat-summon)', priority: 4 },
-  dot: { label: '持续', color: 'var(--cat-dot)', priority: 5 },
-  shield: { label: '护盾', color: 'var(--cat-shield)', priority: 6 },
-  attribute: { label: '属性', color: 'var(--cat-attribute)', priority: 7 },
+/** 分类色板（图鉴卡片用 tokens --cat-* 变量）；分类键序/标签/优先级见 passive-skill-categories 单一来源 */
+const CATEGORY_COLORS: Record<string, string> = {
+  aura: 'var(--cat-aura)',
+  trigger: 'var(--cat-trigger)',
+  heal: 'var(--cat-heal)',
+  immunity: 'var(--cat-immunity)',
+  summon: 'var(--cat-summon)',
+  dot: 'var(--cat-dot)',
+  shield: 'var(--cat-shield)',
+  attribute: 'var(--cat-attribute)',
+  [PASSIVE_UNCATEGORIZED.category]: 'var(--cat-other)',
 }
-
-const UNCATEGORIZED = { label: '未分类', color: 'var(--cat-other)', priority: 99 }
 
 interface Props {
   enemy: CompendiumEnemy
@@ -167,7 +167,7 @@ const allSkills = computed(() => {
     .filter((s): s is CompendiumSkill & { category: string } => s !== undefined)
 })
 
-/** 按 passiveCategory 分组的被动技能 */
+/** 按首个 passiveCategory 分组的被动技能（分组算法单一来源：passive-skill-categories） */
 interface SkillGroup {
   category: string
   label: string
@@ -175,27 +175,12 @@ interface SkillGroup {
   skills: (CompendiumSkill & { category: string })[]
 }
 
-const groupedPassives = computed<SkillGroup[]>(() => {
-  const passives = allSkills.value.filter(s => s.category === 'passive')
-  const groups = new Map<string, SkillGroup>()
-
-  for (const skill of passives) {
-    // 取首个分类为主分类，避免重复展示
-    const primary = skill.passiveCategory?.[0]
-    const cat = primary && CATEGORY_CONFIG[primary] ? primary : '__uncategorized__'
-    if (!groups.has(cat)) {
-      const cfg = CATEGORY_CONFIG[cat] ?? UNCATEGORIZED
-      groups.set(cat, { category: cat, label: cfg.label, color: cfg.color, skills: [] })
-    }
-    groups.get(cat)!.skills.push(skill)
-  }
-
-  return [...groups.values()].sort((a, b) => {
-    const pa = CATEGORY_CONFIG[a.category]?.priority ?? 99
-    const pb = CATEGORY_CONFIG[b.category]?.priority ?? 99
-    return pa - pb
-  })
-})
+const groupedPassives = computed<SkillGroup[]>(() =>
+  groupPassiveSkills(
+    allSkills.value.filter(s => s.category === 'passive'),
+    (s) => s.passiveCategory,
+  ).map((g) => ({ ...g, color: CATEGORY_COLORS[g.category] ?? CATEGORY_COLORS[PASSIVE_UNCATEGORIZED.category] })),
+)
 
 /** 非被动技能（小技能/大招） */
 const otherSkills = computed(() => {

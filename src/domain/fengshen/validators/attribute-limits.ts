@@ -15,11 +15,11 @@
 import type {
   AttributeLimitConfig,
   AttributeLimitEntry,
-  BuffJsonEntry,
   EquipmentAffixData,
   PlayerGrowthConfig,
   PlayerBaseAttrCode,
 } from '@/domain/fengshen/types'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { computePlayerPreview, PLAYER_BASE_ATTRS, PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
 import type { ValidationContext, ValidationIssue } from './registry'
 

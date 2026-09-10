@@ -11,22 +11,27 @@ import { computed, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import type { XiyouCurrency, XiyouPlayer, XiyouStatPoints, ProtagonistSnapshot } from '@/presentation/modules/yanjie/xiyou/types'
 import { computeStatBonuses, createPlayerProfile, expNeedForLevel, playerConfig } from '@/presentation/modules/yanjie/xiyou/playerProfile'
-import { schoolAttributeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
+import { schoolAttributeBonuses, schoolTreeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
 import { grantLevelPoint } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { PLAYER_ID } from '@/shared/constants/player'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+
+/** 每级自由属性点（configs/xiyou/player.json freePointsPerLevel，文档 D1：每级 4 点） */
+const FREE_POINTS_PER_LEVEL = playerConfig.freePointsPerLevel ?? 4
 
 export const usePlayerStore = defineStore('player', () => {
   /** 玩家属性（基础 + 等级成长 + 加点；血量/能量为运行时状态） */
   const player = reactive<XiyouPlayer>(createPlayerProfile({ level: 5, exp: 360 }))
 
-  /** 角色加点（运行时状态） */
+  /** 角色加点（SAP 六维自由点：初始点数 = 初始等级 × 每级 4 点） */
   const statPoints = reactive<XiyouStatPoints>({
-    available: 3,
-    strength: 0,
-    vitality: 0,
-    agility: 0,
-    spirit: 0,
+    available: playerConfig.initialLevel * FREE_POINTS_PER_LEVEL,
+    hp: 0,
+    atk: 0,
+    def: 0,
+    hit: 0,
+    dodge: 0,
+    speed: 0,
   })
 
   /** 玩家货币（运行时状态；金钱 = 原铜钱12880 + 银两36×100 + 灵石520×1000 等值换算；
@@ -65,6 +70,13 @@ export const usePlayerStore = defineStore('player', () => {
     // NOTE: school 为流派属性增量（schoolAttributeBonuses 已归一为绝对增量：percent 属性
     //       已是百分点、数值属性已按基础值换算），逐键直接叠加
     for (const [attr, inc] of Object.entries(school)) {
+      if (!inc) continue
+      const code = attr as ATTRIBUTE_CODE
+      snapshot[code] = (snapshot[code] ?? 0) + inc
+    }
+    // NOTE: 流派树（schools.json）已投属性节点增量：code 即属性码直接累加
+    //       （绝对值节点加绝对值，百分比/率节点 value 已是百分点）
+    for (const [attr, inc] of Object.entries(schoolTreeBonuses())) {
       if (!inc) continue
       const code = attr as ATTRIBUTE_CODE
       snapshot[code] = (snapshot[code] ?? 0) + inc
@@ -113,8 +125,9 @@ export const usePlayerStore = defineStore('player', () => {
     while (player.exp >= player.expNeed && Number.isFinite(player.expNeed)) {
       player.exp -= player.expNeed
       leveled += 1
-      // 每升 1 级 +1 技能点（需求 §2.1.1，等级点上限 50）
+      // 每升 1 级 +1 技能点（需求 §2.1.1，等级点上限 50）、+4 自由属性点（文档 D1）
       grantLevelPoint()
+      statPoints.available += FREE_POINTS_PER_LEVEL
       const profile = createPlayerProfile({
         level: player.level + 1,
         exp: player.exp,

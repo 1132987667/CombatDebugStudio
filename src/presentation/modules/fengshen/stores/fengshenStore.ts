@@ -23,7 +23,7 @@ import type { OperationLogEntry } from '@/domain/fengshen/types'
 import { useBattleStore } from '@/presentation/stores'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
-export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule' | 'curves'
+export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule' | 'curves' | 'equipgen' | 'distribution'
 
 export interface OptionItem {
   id: string
@@ -294,9 +294,11 @@ export const useFengshenStore = defineStore('fengshen', () => {
   /** 数值级校验（§5.5 ValidationRegistry）：组装配置快照 → 跑全量规则 */
   async function runNumericValidation(): Promise<void> {
     try {
-      const [playerConfig, attributeLimit, attributes, equipmentAffixes, buffs] = await Promise.all([
+      const [playerConfig, attributeLimit, systemBudget, systemDistribution, attributes, equipmentAffixes, buffs] = await Promise.all([
         api.getPlayerConfig(),
         api.getAttributeLimit(),
+        api.getSystemBudget(),
+        api.getSystemDistribution(),
         api.listByTable<Record<string, unknown>>('attributes', { limit: 1000 }),
         api.listByTable<Record<string, unknown>>('equipment_affixes', { limit: 1000 }),
         api.listByTable<Record<string, unknown>>('buffs', { limit: 1000 }),
@@ -304,6 +306,8 @@ export const useFengshenStore = defineStore('fengshen', () => {
       numericReport.value = runValidations({
         playerConfig: playerConfig ?? undefined,
         attributeLimit: attributeLimit ?? undefined,
+        systemBudget: systemBudget ?? undefined,
+        systemDistribution: systemDistribution ?? undefined,
         attributes: attributes as never,
         equipmentAffixes: equipmentAffixes as never,
         buffs: buffs as never,
@@ -319,7 +323,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     const table = issue.table as FengshenTableName
     const row = await persistentStorage.get<Record<string, unknown>>(table as StorageStoreName, issue.rowId)
     if (!row) {
-      useNotificationStore().toast(`目标行 ${issue.rowId} 不存在（可能已被删除）`, 'warn', 3500)
+      useNotificationStore().toast(`目标行 ${issue.rowId} 不存在（可能已被删除）`, 'warning', 3500)
       return false
     }
     const path = issue.quickFix.field.split('.')

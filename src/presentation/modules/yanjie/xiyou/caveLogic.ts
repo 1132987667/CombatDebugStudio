@@ -7,6 +7,7 @@
 import type { EquipmentData } from '@/domain/fengshen/types'
 import { EquipmentSlot, EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import type { XiyouCatalogItem, XiyouQuality } from './types'
+// HACK: items.json 无 d.ts，XiyouCatalogItem 为其展示视图子集（结构漂移由封神榜健康检查暴露）
 import itemsJson from '@configs/xiyou/items.json'
 import equipmentJson from '@configs/equipment/equipment.json'
 import equipmentSystemJson from '@configs/xiyou/equipment/equipment-system.json'

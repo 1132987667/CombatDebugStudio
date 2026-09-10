@@ -60,6 +60,7 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
+import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import type { EquipmentData } from '@/domain/fengshen/types'
 import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
@@ -76,8 +77,8 @@ const emit = defineEmits<{
 
 const pack = usePackStore()
 
-/** 六槽键（详情对比仅对可穿戴槽位生效） */
-const SLOT_KEYS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
+/** 六槽键（详情对比仅对可穿戴槽位生效；单一来源 EQUIPMENT_SLOTS） */
+const SLOT_KEYS: GearSlotKey[] = [...EQUIPMENT_SLOTS]
 
 const gear = computed(() => (props.instance ? pack.gearById(props.instance.itemId) : undefined))
 

@@ -222,8 +222,8 @@ export class GameDataProcessor {
       enabled: true,
       seatIndex,
       noAttack: enemy.noAttack ?? false,
-      // NOTE: 阵营元素（克制矩阵用）——configs 敌人暂未建模 faction 字段，读扩展字段兼容
-      faction: (enemy as Enemy & { faction?: string }).faction,
+      // 阵营元素（克制矩阵用）——enemies.json 的 faction 字段已在 Enemy 接口声明
+      faction: enemy.faction,
       skills: {
         small: GameDataProcessor.getSkillByIds(enemy.skills?.small ?? []),
         passive: passiveSkills,

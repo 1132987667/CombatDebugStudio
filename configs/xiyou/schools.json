@@ -140,7 +140,10 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": [
+            "school_pojun_pozhan_apply,school_pojun_baonu_apply,school_pojun_zhanmie_execute"
+          ]
         },
         {
           "school": "pojun",
@@ -161,7 +164,10 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": [
+            "school_budong_panshi_shield,school_budong_jingji_reflect,school_budong_mingwang_regen"
+          ]
         },
         {
           "school": "budong",
@@ -182,7 +188,10 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": [
+            "school_huanying_fanji,school_huanying_canying_apply,school_huanying_jifeng_speed"
+          ]
         },
         {
           "school": "huanying",
@@ -605,7 +614,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "pojun",
@@ -619,7 +629,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "budong",
@@ -633,7 +644,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "huanying",
@@ -1163,7 +1175,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "pojun",
@@ -1184,7 +1197,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "budong",
@@ -1205,7 +1219,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "huanying",
@@ -1562,7 +1577,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "pojun",
@@ -1576,7 +1592,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "budong",
@@ -1590,7 +1607,8 @@
           "type": "learn",
           "name": "学习被动",
           "skillKind": "被动",
-          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}"
+          "description": "达到本层点数要求后解锁，可学习${schoolName}的${skillKind}",
+          "skillIds": null
         },
         {
           "school": "huanying",

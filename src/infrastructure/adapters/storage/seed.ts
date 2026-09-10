@@ -1,7 +1,7 @@
 /**
  * seed.ts — 封神榜种子数据导入（封神榜开发计划 §3.2）
  *
- * 首次启动将 configs/ JSON 写入 IndexedDB 封神榜 store，幂等（标记 `cds:fengshen-seed-v28`）。
+ * 首次启动将 configs/ JSON 写入 IndexedDB 封神榜 store，幂等（标记见 SEED_FLAG_ID）。
  * 种子内容变更时递增该标记版本号即可让存量库重新种子（configs 为权威源，覆盖用户在 CRUD 的手工改动）。
  * configs 仅作种子源，运行期以 IndexedDB 为唯一权威。
  *
@@ -35,9 +35,11 @@ import type {
   XiyouData,
 } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
+import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { SkillConfig } from '@/domain/skill/types'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 import { deriveMaterials } from '@/domain/fengshen/derive-materials'
+import { DEFAULT_ENEMY_REWARD_ENTRIES } from '@/domain/fengshen/exp-reward'
 import { ENEMY_ROLE_MULTIPLIERS } from '@/domain/fengshen/role-grades'
 import { getAttributeDict } from '@/domain/fengshen/attribute-dictionary'
 import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
@@ -63,11 +65,12 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 import attributesDataRaw from '@configs/attributes/attributes.json'
 
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v28'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v29'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [
   ...buffsData,
+  // HACK: enemy-buffs.json 无 d.ts，条目结构与 BuffJsonEntry 同构（键开放），深度校验在 validation 阶段
   ...(enemyBuffsJson as unknown as Array<Record<string, unknown>>),
   ...((effectsDataRaw as { effects: EffectsJsonEntry[] }).effects ?? []),
 ]
@@ -81,6 +84,7 @@ const nowIso = () => new Date().toISOString()
 
 /** yaotu_* 敌人派生角色：id 保持一致，faction 由 id 后缀映射，技能合并 small/passive/ultimate */
 function deriveActors(enemies: Enemy[]): ActorData[] {
+  // NOTE: 敌人 id 后缀 → 阵营码映射（仅覆盖 yaotu_* 五行护法；gold 后缀历史遗留对应 metal）
   const factionMap: Record<string, string> = {
     yaotu_fire: 'fire',
     yaotu_water: 'water',
@@ -91,7 +95,7 @@ function deriveActors(enemies: Enemy[]): ActorData[] {
   return enemies
     .filter((e) => e.id.startsWith('yaotu_'))
     .map((e) => {
-      const stats: Record<string, number> = { ...e.stats }
+      const stats: Partial<Record<ATTRIBUTE_CODE, number>> = { ...e.stats }
       delete stats.currentHealth
       if (stats.maxHealth === undefined && e.stats.currentHealth) {
         stats.maxHealth = e.stats.currentHealth
@@ -186,19 +190,7 @@ function buildEnemyRewardTable(): BattleParamData {
       baseExpFormula: 'enemyLevel × 10',
       baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
       roleMultiplier: { ...ENEMY_ROLE_MULTIPLIERS },
-      entries: [
-        { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
-        { enemyLevel: 5, baseExp: 50, goldMin: 15, goldMax: 25, note: '小花山后期' },
-        { enemyLevel: 10, baseExp: 100, goldMin: 30, goldMax: 50, note: '浅水涧' },
-        { enemyLevel: 15, baseExp: 150, goldMin: 45, goldMax: 75, note: '碎石坡' },
-        { enemyLevel: 20, baseExp: 200, goldMin: 60, goldMax: 100, note: '熔岩洞' },
-        { enemyLevel: 25, baseExp: 250, goldMin: 75, goldMax: 125, note: '蛛丝谷' },
-        { enemyLevel: 30, baseExp: 300, goldMin: 90, goldMax: 150, note: '灵霄台终局' },
-        { enemyLevel: 40, baseExp: 400, goldMin: 120, goldMax: 200, note: '中期深度（插值锚点）' },
-        { enemyLevel: 50, baseExp: 500, goldMin: 150, goldMax: 250, note: '后期深度（插值锚点）' },
-        { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '妖尊 档（插值锚点）' },
-        { enemyLevel: 70, baseExp: 700, goldMin: 210, goldMax: 350, note: '终局档（插值锚点）' },
-      ],
+      entries: DEFAULT_ENEMY_REWARD_ENTRIES.map((e) => ({ ...e })),
       interpolation: 'linear',
     },
     updatedAt: nowIso(),
@@ -333,6 +325,45 @@ function buildAttributeLimit(): BattleParamData {
         critRate: { min: 0, max: 75, kind: 'percent', onViolation: 'clamp' },
       },
       checkScopes: ['playerMax', 'equipAffix', 'buffStacked'],
+    },
+    updatedAt: nowIso(),
+  }
+}
+
+/** 系统投放明细种子（params 域，key=system_distribution）—— 数值体系扩展 3.1。
+ * 样例按 system_budget 占比配平（种子状态偏差 0%，避免一进来满屏预警），
+ * 三种投放模式均有示范：level=formula(linear，对齐 player_config 成长)、equipment=fixed+range、其余 fixed/range。
+ * SAP 折算口径：value ÷ attributes.sapMultiplier（如 attack 1200 ÷ 2 = 600 SAP）。 */
+function buildSystemDistribution(): BattleParamData {
+  return {
+    id: 'system_distribution',
+    name: '系统投放明细',
+    description: '各养成系统的属性投放规则（fixed 定值 / range 区间 / formula 模板），与 system_budget 占比对比输出偏差',
+    data: {
+      id: 'system_distribution',
+      systems: [
+        {
+          system: 'level', label: '等级',
+          distributions: [
+            // linear：value = k × level + b（50 级 ≈ 407 攻击 / 1236 气血 / 202 防御）
+            { attribute: 'attack', mode: 'formula', formula: { template: 'linear', k: 8, b: 7 } },
+            { attribute: 'maxHealth', mode: 'formula', formula: { template: 'linear', k: 24, b: 36 } },
+            { attribute: 'defense', mode: 'formula', formula: { template: 'linear', k: 4, b: 6 } },
+          ],
+        },
+        {
+          system: 'equipment', label: '装备',
+          distributions: [
+            { attribute: 'maxHealth', mode: 'fixed', value: 2400 },
+            { attribute: 'attack', mode: 'range', range: { min: 1000, max: 1400 } },
+          ],
+        },
+        { system: 'school', label: '流派树', distributions: [{ attribute: 'attack', mode: 'fixed', value: 400 }] },
+        { system: 'pet', label: '宠物', distributions: [{ attribute: 'attack', mode: 'range', range: { min: 700, max: 900 } }] },
+        { system: 'mount', label: '坐骑', distributions: [{ attribute: 'defense', mode: 'fixed', value: 800 }] },
+        { system: 'artifact', label: '法宝', distributions: [{ attribute: 'hitValue', mode: 'fixed', value: 400 }] },
+        { system: 'relic', label: '神器', distributions: [{ attribute: 'dodgeValue', mode: 'fixed', value: 400 }] },
+      ],
     },
     updatedAt: nowIso(),
   }
@@ -495,7 +526,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       const backfilledStores = await backfillEmptyStores(storage, [
         [FENGSHEN_STORE.REGIONS, () => xiyouRegionsJson as RegionData[]],
       ])
-      const backfilledParams = await backfillMissingParams(storage, [buildAttributeLimit()])
+      const backfilledParams = await backfillMissingParams(storage, [buildAttributeLimit(), buildSystemDistribution()])
       return backfilledStores || backfilledParams
         ? { imported: true, reason: 'backfilled-new-stores' }
         : { imported: false, reason: 'already-seeded' }
@@ -520,7 +551,7 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
       [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
       [FENGSHEN_STORE.ATTRIBUTES, buildAttributes()],
-      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule(), buildAttributeLimit()]],
+      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule(), buildAttributeLimit(), buildSystemDistribution()]],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
       [FENGSHEN_STORE.GEARS, (equipmentDataRaw as EquipmentData[]).filter((e) => e.craftable) as GearData[]],

@@ -17,18 +17,23 @@
  * rng 全程显式传参，测试可注入确定性序列。
  */
 
-import type { AffixRuleConfig, EquipmentStatEntry, EquipFormulaConfig, GearAffix } from '@/domain/fengshen/types'
+import type { AffixRuleConfig, AffixQualityCode, EquipmentStatEntry, EquipFormulaConfig, GearAffix, GearTier } from '@/domain/fengshen/types'
+import type { EquipmentSlot } from '@/shared/types/Item'
 import { expandPoolRef, forbiddenAttrs, resolveAttrRange, rowGroups, qualityAffixCount } from '@/domain/fengshen/equipment-overview'
 import { getAttrMeta } from '@/domain/attribute/types'
 import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
+/** 阶位换算：装备/存档侧 t1~t5（GearTier）→ affix-rule tier_weight 键（凡/玄/地/天/仙）。
+ *  单一来源：packStore 制造/洗练与批量生成器（equip-generator）共用，勿在消费方复制。 */
+export const TIER_TO_QUALITY: Record<GearTier, AffixQualityCode> = { t1: 'fan', t2: 'xuan', t3: 'di', t4: 'tian', t5: 'xian' }
+
 /** 生成入参：装备静态定义中参与公式的字段 + 实例品质 */
 export interface GearRollInput {
-  slot: string
+  slot: EquipmentSlot
   /** 子类型 id（affix-rule sub_type_groups 体系） */
   subType: string
-  /** 阶位（fan/xuan/di/tian/xian —— equipment.json 存 t1~t5，由 packStore 转换） */
-  tier: string
+  /** 阶位（fan/xuan/di/tian/xian 拼音五档 —— equipment.json 存 t1~t5，由 packStore 的 TIER_KEY 换算） */
+  tier: AffixQualityCode
   itemLevel: number
   /** 品质 1~5：决定附加属性投放行数（洗练场景可直接传目标条数，clamp 后数值等价） */
   quality: number
@@ -52,7 +57,8 @@ interface RollCtx {
   rng: () => number
 }
 
-/** 属性修正类型：以 attributes.json 注册表的 isPercentage 为权威（曲线/机制属性大多为 percent） */
+/** 属性修正类型：以 attributes.json 注册表的 isPercentage 为权威（曲线/机制属性大多为 percent）。
+ *  NOTE: 配置侧属性码是开放 string（注册表外的码合法，查无 isPercentage 兜底 flat） */
 function modifierTypeOf(attribute: string): 'flat' | 'percent' {
   return getAttrMeta(attribute as ATTRIBUTE_CODE)?.isPercentage ? 'percent' : 'flat'
 }
@@ -112,11 +118,13 @@ export function rollCoreStat(
     warnings.push(`子类型 ${input.subType} 未配置核心属性系数（core_affix_ratio），无核心属性`)
     return { stat: null }
   }
-  const v = rollAttrValue(ctx, input, core.attribute, ctx.formula.coreWeight, core.ratio, warnings)
+  // 配置契约：core_affix_ratio.attribute 为属性码（AffixRuleConfig 键值域开放，由策划维护）
+  const coreAttr = core.attribute as ATTRIBUTE_CODE
+  const v = rollAttrValue(ctx, input, coreAttr, ctx.formula.coreWeight, core.ratio, warnings)
   if (v === null) return { stat: null }
   // 品质系数只作用于基础属性（§21 品级四维体系）；区间 roll 后乘，精度随取整收口
   const factor = Math.max(0, input.qualityFactor || 1)
-  return { stat: { attribute: core.attribute, modifierType: modifierTypeOf(core.attribute), value: roundByModifier(core.attribute, v * factor) } }
+  return { stat: { attribute: coreAttr, modifierType: modifierTypeOf(coreAttr), value: roundByModifier(coreAttr, v * factor) } }
 }
 
 /**
@@ -136,8 +144,10 @@ export function rollMainAffixes(
   }
   const out: GearAffix[] = []
   if (pool.fixed) {
-    const v = rollAttrValue(ctx, input, pool.fixed, ctx.formula.affixWeight, 1, warnings)
-    if (v !== null) out.push({ id: pool.fixed, attribute: pool.fixed, modifierType: modifierTypeOf(pool.fixed), value: v, fixed: true })
+    // 配置契约：main_affix_pool.fixed 为属性码
+    const fixedAttr = pool.fixed as ATTRIBUTE_CODE
+    const v = rollAttrValue(ctx, input, fixedAttr, ctx.formula.affixWeight, 1, warnings)
+    if (v !== null) out.push({ id: pool.fixed, attribute: fixedAttr, modifierType: modifierTypeOf(fixedAttr), value: v, fixed: true })
   } else {
     warnings.push(`子类型 ${input.subType} 主要属性第 1 条（固定）未配置`)
   }

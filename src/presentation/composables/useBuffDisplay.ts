@@ -30,8 +30,8 @@ const SECONDARY_THRESHOLD = 20
 function extractAttributesFromConfig(
   attributes: Record<ATTRIBUTE_CODE, AttributeValueConfig>,
   stacks: number,
-): Array<{ attr: string; value: number; isFlat?: boolean }> {
-  const result: Array<{ attr: string; value: number; isFlat?: boolean }> = []
+): Array<{ label: string; value: number; isFlat?: boolean }> {
+  const result: Array<{ label: string; value: number; isFlat?: boolean }> = []
   for (const [code, cfg] of Object.entries(attributes)) {
     const cn = getAttrName(code as ATTRIBUTE_CODE)
     if (!cn) continue
@@ -39,7 +39,7 @@ function extractAttributesFromConfig(
     const isFlat = cfg.type === 'ADDITIVE' ? true : undefined
     // perStack=false 的修饰符叠层不放大（与 ModifierEffect 语义一致），否则 × 层数
     const scaled = cfg.perStack === false ? cfg.value : cfg.value * stacks
-    result.push({ attr: cn, value: Math.round(scaled), isFlat })
+    result.push({ label: cn, value: Math.round(scaled), isFlat })
   }
   return result
 }
@@ -102,7 +102,7 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   const extracted = extractAttributesFromConfig(raw.attributes ?? {} as Record<ATTRIBUTE_CODE, AttributeValueConfig>, stacks)
   const modifiers = extracted.map((e) => ({
     sourceName: name,
-    attribute: e.attr,
+    attribute: e.label,
     value: e.value,
     // isFlat → ADDITIVE（固定数值修正），否则 → PERCENTAGE（百分比修正）
     type: e.isFlat ? ModifierType.ADDITIVE : ModifierType.PERCENTAGE,

@@ -52,7 +52,7 @@
                     <div class="ce-duration-wrap">
                       <TacticalInput type="number" integer size="md" :min="0" :max="99" :model-value="status.duration"
                         :disabled="!innerSelectedCharId" aria-label="状态持续回合数"
-                        @update:model-value="(v) => (status.duration = v === null ? null : Number(v))" />
+                        @update:model-value="(v: string | number | null) => (status.duration = v === null ? null : Number(v))" />
                       <span class="ce-duration-unit">回合</span>
                     </div>
                   </div>
@@ -245,7 +245,7 @@ const attrFields: AttrOverrideItem[] = [
 // ==================== Methods ====================
 
 /** 效果摘要由 BuffConfigResolver 解析时生成（effectSummary），UI 只读取 */
-function buildStatusesFromBuffs() {
+function buildStatusesFromBuffs(): EditorBuffEntry[] {
   const buffList = Array.isArray(buffsData) ? buffsData : []
   const registry = container.resolve<BuffScriptRegistry>('BuffScriptRegistry')
   return buffList.map((buff: BuffJsonEntry) => {
@@ -253,11 +253,11 @@ function buildStatusesFromBuffs() {
     const primaryFacet = classification.facets.length > 0 ? classification.facets[0] : 'other'
     return {
       id: buff.id,
-      name: buff.name,
+      name: buff.name ?? buff.id,
       primaryFacet,
       polarity: classification.polarity,
       duration: buff.duration !== undefined && buff.duration > 0 ? buff.duration : 0,
-      effect: buff.description || registry.getResolvedBuffConfig(buff.id)?.effectSummary || buff.name,
+      effect: buff.description || registry.getResolvedBuffConfig(buff.id)?.effectSummary || buff.name || buff.id,
       active: false,
     }
   })

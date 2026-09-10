@@ -80,7 +80,7 @@ import { computed, ref } from 'vue'
 import type { TableSchema } from '@/domain/fengshen/schema'
 import { POLARITY_VALUE_LABEL, SLOT_VALUE_LABEL } from '@/domain/fengshen/schema'
 import { resolveRefName, resolveRefNames } from '@/domain/fengshen/refNames'
-import { ENEMY_ROLE_LABELS } from '@/domain/fengshen/role-grades'
+import { ENEMY_ROLE_LABELS, type EnemyRole } from '@/domain/fengshen/role-grades'
 
 const props = withDefaults(
   defineProps<{
@@ -282,13 +282,22 @@ const KIND_LABEL: Record<string, Record<string, string>> = {
   rank: { ...ENEMY_ROLE_LABELS },
 }
 
+// 品阶 → 标签色档（灰小妖/绿妖兵/紫妖徒·妖魁/红妖王·妖尊；键域挂 EnemyRole，码的单一来源 role-grades）
+const RANK_TAG_CLS: Record<EnemyRole, string> = {
+  xiaoyao: 'fs-tag-muted',
+  yaobing: 'fs-tag-buff',
+  yaotu: 'fs-tag-aura',
+  yaokui: 'fs-tag-aura',
+  yaowang: 'fs-tag-danger',
+  yaozun: 'fs-tag-danger',
+}
+
 const KIND_CLS: Record<string, (v: string) => string> = {
   polarity: (v) => (v === 'positive' ? 'fs-tag-buff' : 'fs-tag-danger'),
   category: (v) => (v === 'control' || v === 'dot' ? 'fs-tag-danger' : v === 'aura' || v === 'immunity' ? 'fs-tag-aura' : v === 'shield' || v === 'hot' || v === 'trigger' ? 'fs-tag-aura' : 'fs-tag-buff'),
   type: (v) => (v === 'passive' || v === 'material' ? 'fs-tag-muted' : v === 'consumable' ? 'fs-tag-buff' : 'fs-tag-aura'),
   slot: () => 'fs-tag-aura',
-  // 品阶：灰(小妖)→绿(妖兵)→紫(妖徒/妖魁)→红(妖王/妖尊)
-  rank: (v) => (v === 'xiaoyao' ? 'fs-tag-muted' : v === 'yaobing' ? 'fs-tag-buff' : v === 'yaowang' || v === 'yaozun' ? 'fs-tag-danger' : 'fs-tag-aura'),
+  rank: (v) => RANK_TAG_CLS[v as EnemyRole] ?? 'fs-tag-aura',
   neutral: () => 'fs-tag-aura',
 }
 

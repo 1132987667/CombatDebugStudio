@@ -13,6 +13,7 @@
 import { createInitialGameState, type SaveData, type SaveEquipmentInstance, type SavePlayerState } from '@/shared/utils/save-schema'
 import type { SaveStatePort } from '@/shared/utils/save-manager'
 import { SaveManager } from '@/shared/utils/save-manager'
+import type { XiyouStatPoints } from './types'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import {
   GEAR_SLOT_LABELS,
@@ -22,11 +23,11 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
-import { materials as packMaterials, packItems, pills as packPills, scenes, schools, schoolsLayers, schoolsNodeMap, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, PILL_POINT_LIMIT } from './xiyouData'
+import { materials as packMaterials, packItems, pills as packPills, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
 
-const INITIAL_STAT_POINTS = { available: 3, strength: 0, vitality: 0, agility: 0, spirit: 0 }
+const INITIAL_STAT_POINTS: XiyouStatPoints = { available: 4, hp: 0, atk: 0, def: 0, hit: 0, dodge: 0, speed: 0 }
 
 /** pack.json 组（name → id 索引）：材料组 / 丹药组，用于物品四类归属 */
 const PACK_NAME_TO_ID = new Map<string, string>()
@@ -100,10 +101,12 @@ export const xiyouSaveBridge: SaveStatePort = {
     data.player.xianyuan = player.currency.xianyuan
     data.player.statBonuses = {
       available: player.statPoints.available,
-      strength: player.statPoints.strength,
-      vitality: player.statPoints.vitality,
-      agility: player.statPoints.agility,
-      spirit: player.statPoints.spirit,
+      hp: player.statPoints.hp,
+      atk: player.statPoints.atk,
+      def: player.statPoints.def,
+      hit: player.statPoints.hit,
+      dodge: player.statPoints.dodge,
+      speed: player.statPoints.speed,
     }
 
     // progress
@@ -127,11 +130,17 @@ export const xiyouSaveBridge: SaveStatePort = {
     // school（v3.0 流派：已点亮节点 id + 已用技能点 + 出战装备槽）
     // NOTE: selected 字段保留兼容（旧档读取），新档不再写入选流派（v3.0 跨流派加点无单一流派概念）
     const oldLearned = schools.flatMap((s) => s.nodes.filter((n) => n.learned).map((n) => n.id))
-    // TODO(P2): schoolsLayers 已解锁节点持久化——ID 体系与旧 nodes 不同（layer_index），追加到同一数组无冲突
-    const newLearned = schoolsLayers.flatMap((l) => l.nodes.filter((n) => n.learned).map((n) => n.id))
+    // 流派树（schools.json）节点级数（多级属性节点；learned 派生自 ranks>0）
+    const treeRanks: Record<string, number> = {}
+    for (const layer of schoolsLayers) {
+      for (const n of layer.nodes) {
+        if (n.ranks > 0) treeRanks[n.id] = n.ranks
+      }
+    }
     data.school = {
       selected: null,
-      learned: [...oldLearned, ...newLearned],
+      learned: [...oldLearned, ...Object.keys(treeRanks)],
+      tree_ranks: treeRanks,
       spent: skillPoints.spent,
       earned: skillPoints.earned,
       totalPillsUsed: skillPoints.totalPillsUsed,
@@ -146,6 +155,9 @@ export const xiyouSaveBridge: SaveStatePort = {
     data.pill_uses = { ...pack.pillUses }
     data.pill_bonuses = { ...pack.pillBonuses }
 
+    // 上阵伙伴名单（出战阵容 = 主角 + 至多 3 名上阵伙伴）
+    data.mates_active = mates.filter((m) => m.active).map((m) => m.name)
+
     return data
   },
 
@@ -157,18 +169,22 @@ export const xiyouSaveBridge: SaveStatePort = {
 
     // player 重建（level/exp/加点 → 属性，覆盖血量能量上限）
     const bonuses = data.player.statBonuses
+    // v7 六维加点：旧四维档（strength/vitality/agility/spirit）已投点数退还为 available 重分
+    const legacySpent =
+      (bonuses?.strength ?? 0) + (bonuses?.vitality ?? 0) + (bonuses?.agility ?? 0) + (bonuses?.spirit ?? 0)
+    const restoredStats: XiyouStatPoints = {
+      available: (bonuses?.available ?? INITIAL_STAT_POINTS.available) + legacySpent,
+      hp: bonuses?.hp ?? 0,
+      atk: bonuses?.atk ?? 0,
+      def: bonuses?.def ?? 0,
+      hit: bonuses?.hit ?? 0,
+      dodge: bonuses?.dodge ?? 0,
+      speed: bonuses?.speed ?? 0,
+    }
     const profile = createPlayerProfile({
       level: data.player.level,
       exp: data.player.exp,
-      stats: bonuses
-        ? {
-            available: bonuses.available ?? INITIAL_STAT_POINTS.available,
-            strength: bonuses.strength ?? 0,
-            vitality: bonuses.vitality ?? 0,
-            agility: bonuses.agility ?? 0,
-            spirit: bonuses.spirit ?? 0,
-          }
-        : undefined,
+      stats: restoredStats,
     })
     Object.assign(player.player, profile)
     player.player.maxHp = data.player.hp_max
@@ -180,11 +196,7 @@ export const xiyouSaveBridge: SaveStatePort = {
     player.player.attackMax = data.player.base_atk[1]
 
     // statPoints
-    player.statPoints.available = bonuses?.available ?? INITIAL_STAT_POINTS.available
-    player.statPoints.strength = bonuses?.strength ?? 0
-    player.statPoints.vitality = bonuses?.vitality ?? 0
-    player.statPoints.agility = bonuses?.agility ?? 0
-    player.statPoints.spirit = bonuses?.spirit ?? 0
+    Object.assign(player.statPoints, restoredStats)
 
     // currency（v6 货币收缩：旧档 gold/silver/jade 按 curr_001 换算 1:1/×100/×1000 合并为金钱；lingyun → 灵韵）
     const legacyCurrency = data.player as SavePlayerState & { gold?: number; silver?: number; jade?: number; lingyun?: number }
@@ -235,7 +247,9 @@ export const xiyouSaveBridge: SaveStatePort = {
           stats: makeInstance(inst.itemId, [], 0, quality, Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality)).stats,
           affixes: (inst.affixes ?? []).map((a): GearAffix => ({
             id: a.id,
-            attribute: a.attribute,
+            // HACK: 存档词缀的 attribute 为历史持久化字符串（SaveEquipmentInstance 保持宽容键域），
+            //       写入时由 configs 词条库生成，按配置契约视为合法属性码
+            attribute: a.attribute as GearAffix['attribute'],
             modifierType: a.modifierType as GearAffix['modifierType'],
             value: a.value,
           })),
@@ -275,13 +289,13 @@ export const xiyouSaveBridge: SaveStatePort = {
       for (const s of schools) {
         for (const n of s.nodes) n.learned = learnedSet.has(n.id)
       }
-      // 天赋树（schools.json layers）学习格还原：合成 id（layer_index）与技能树 id 同集存档
+      // 流派树（schools.json）节点恢复：级数以 tree_ranks 为权威；旧档无 tree_ranks 按 learned 每节点 1 级
+      const treeRanksSaved = schoolState.tree_ranks ?? {}
       for (const layer of schoolsLayers) {
-        for (const n of layer.nodes) n.learned = learnedSet.has(n.id)
-      }
-      // TODO(P2): schoolsLayers 已解锁节点恢复——ID 为 `${layer}_${idx}` 格式，与旧 nodes 无冲突
-      for (const layer of schoolsLayers) {
-        for (const node of layer.nodes) node.learned = learnedSet.has(node.id)
+        for (const node of layer.nodes) {
+          const saved = treeRanksSaved[node.id]
+          node.ranks = Number.isInteger(saved) && saved > 0 ? saved : learnedSet.has(node.id) ? 1 : 0
+        }
       }
       // 已用技能点以存档为权威（运行时可能有调试加点/重置，节点求和仅作兜底）
       skillPoints.spent = Number.isFinite(schoolState.spent)
@@ -290,7 +304,7 @@ export const xiyouSaveBridge: SaveStatePort = {
             (sum, s) => sum + s.nodes.filter((n) => n.learned).reduce((acc, n) => acc + n.points, 0),
             0,
           ) + schoolsLayers.reduce(
-            (sum, l) => sum + l.nodes.filter((n) => n.learned).reduce((acc, n) => acc + (n.cost?.[0] ?? 0), 0),
+            (sum, l) => sum + l.nodes.reduce((acc, n) => acc + n.ranks * nodeRankCost(n, 1), 0),
             0,
           )
       // 累计获得技能点（旧档缺省：>= 已分配且 >= 初始等级点数 4，保证 available 非负）
@@ -320,6 +334,13 @@ export const xiyouSaveBridge: SaveStatePort = {
       if (typeof player.player[key] === 'number') {
         ;(player.player as unknown as Record<string, number>)[key] = (player.player[key] as number) + (val as number)
       }
+    }
+
+    // 上阵伙伴恢复（缺省保留 mate.json 初始 active）
+    const matesActive = data.mates_active
+    if (Array.isArray(matesActive)) {
+      const activeSet = new Set(matesActive)
+      for (const m of mates) m.active = activeSet.has(m.name)
     }
 
     // 同步行囊运行时落盘（防止旧 pack_runtime 覆盖恢复结果）

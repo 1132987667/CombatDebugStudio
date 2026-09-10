@@ -15,14 +15,48 @@ import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import enemiesJson from '@configs/enemies/enemies.json'
 import bossesJson from '@configs/xiyou/bosses.json'
 import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
-import type { ProtagonistSnapshot, XiyouCombatant, XiyouScene } from './types'
-import { equippedSkills, pureSchoolBonus, schools, schoolsLayers, skillNodeMap } from './xiyouData'
+import type { ProtagonistSnapshot, XiyouCombatant, XiyouMate, XiyouScene } from './types'
+import { equippedSkills, mates, nodeValueAtRank, pureSchoolBonus, schools, schoolsLayers, skillNodeMap } from './xiyouData'
 import type { RunNode } from './runFlow'
 
-/** 我方初始阵容：仅主角一人（孙小圣/八戒/悟净等伙伴在 mate.json 队友表，初始不上阵） */
+/** 主角占位（编队 i=0 会被 protagonist 快照覆盖；缺省时回退此演示值） */
 export const playerParty: XiyouCombatant[] = [
   { id: PLAYER_ID, name: '降妖者', level: 5, hp: 350, maxHp: 420, energy: 120, maxEnergy: 150, speed: 15, attack: 18, defense: 8, side: 'player' },
 ]
+
+/** 上阵伙伴上限（主角 + 3 = 4v4） */
+export const MAX_ACTIVE_MATES = 3
+
+/** 伙伴参战属性：mate.json Lv.1 基准 stats × 等级成长系数（每级 +15%） */
+export function mateToCombatant(m: XiyouMate, slot: number): XiyouCombatant | null {
+  if (!m.stats || m.level <= 0) return null
+  const factor = 1 + (m.level - 1) * 0.15
+  const scaled = (v: number) => Math.round(v * factor)
+  const maxHp = scaled(m.stats.maxHp)
+  return {
+    id: `${PLAYER_ID}_mate_${slot}`,
+    name: m.name,
+    level: m.level,
+    hp: maxHp,
+    maxHp,
+    energy: 0,
+    maxEnergy: 100,
+    speed: scaled(m.stats.speed),
+    attack: scaled(m.stats.attack),
+    defense: scaled(m.stats.defense),
+    side: 'player',
+  }
+}
+
+/** 我方出战阵容（4v4）：主角 + 至多 3 名上阵伙伴（mate.json active 且已激活） */
+export function buildPlayerParty(): XiyouCombatant[] {
+  const partners = mates
+    .filter((m) => m.active && m.stats && m.level > 0)
+    .slice(0, MAX_ACTIVE_MATES)
+    .map((m, i) => mateToCombatant(m, i + 1))
+    .filter((c): c is XiyouCombatant => c !== null)
+  return [playerParty[0], ...partners]
+}
 
 /**
  * 由场景敌人构造敌方阵容（至多 4 个，R22：属性/掉落/技能来自 configs/enemies/enemies.json 按 id 关联）
@@ -248,8 +282,8 @@ export function rewardForEnemyIds(enemyIds: string[]): { money: [number, number]
   return { money: [g0, g1], exp: [e0, e1] }
 }
 
-/** 敌人分级 → 战胜灵韵（六档：小妖 2 / 妖兵 5 / 妖徒 10 / 妖魁·妖王（BOSS）50 / 妖尊 150） */
-const ROLE_XIANYUAN: Record<string, number> = {
+/** 敌人分级 → 战胜灵韵（六档：小妖 2 / 妖兵 5 / 妖徒 10 / 妖魁·妖王（BOSS）50 / 妖尊 150；键域挂 EnemyRole，新增档位漏配即编译错） */
+const ROLE_XIANYUAN: Record<EnemyRole, number> = {
   xiaoyao: 2,
   yaobing: 5,
   yaotu: 10,
@@ -263,7 +297,7 @@ export function xianyuanForEnemyIds(enemyIds: string[]): number {
   let sum = 0
   for (const id of enemyIds) {
     const row = enemyById.get(id)
-    sum += row ? (ROLE_XIANYUAN[row.role ?? ''] ?? 0) : 0
+    sum += row && row.role ? ROLE_XIANYUAN[row.role] : 0
   }
   return sum
 }
@@ -408,6 +442,46 @@ export function schoolAttributeBonuses(base: {
 }
 
 /**
+ * 流派树（schools.json layers）已投属性节点增量（跨流派累加，供面板与战斗注入）
+ * NOTE: 节点 code 即属性码直接累加——绝对值节点（suffix 空）加绝对值，百分比/率节点（suffix %）
+ *       value 即百分点；仅注入属性系统已定义（AttributeMetaMap）的属性码。
+ *       此前属性节点点亮后无任何结算消费方（点而无效），此函数为统一出口。
+ */
+export function schoolTreeBonuses(): Partial<Record<string, number>> {
+  const out: Partial<Record<string, number>> = {}
+  for (const layer of schoolsLayers) {
+    for (const node of layer.nodes) {
+      if (node.type !== 'attribute' || node.ranks <= 0 || !node.code) continue
+      if (!getAttrMeta(node.code as ATTRIBUTE_CODE)) continue
+      out[node.code] = (out[node.code] ?? 0) + nodeValueAtRank(node, node.ranks)
+    }
+  }
+  return out
+}
+
+/** 主角快照（battleSnapshot）已承载的属性键：经 protagonist 生效，战斗注入时排除避免双算 */
+const SNAPSHOT_ATTR_KEYS = new Set<string>([
+  ATTRIBUTE_CODE.maxHealth,
+  ATTRIBUTE_CODE.attack,
+  ATTRIBUTE_CODE.defense,
+  ATTRIBUTE_CODE.speed,
+  ATTRIBUTE_CODE.critRate,
+  ATTRIBUTE_CODE.critDamage,
+  ATTRIBUTE_CODE.dodge,
+  ATTRIBUTE_CODE.damageReduction,
+])
+
+/** 流派树增量中需经 allyBonuses 注入战斗的子集（快照已承载键除外） */
+export function schoolTreeCombatBonuses(): Partial<Record<string, number>> {
+  const out: Partial<Record<string, number>> = {}
+  for (const [code, val] of Object.entries(schoolTreeBonuses())) {
+    if (!val || SNAPSHOT_ATTR_KEYS.has(code)) continue
+    out[code] = val
+  }
+  return out
+}
+
+/**
  * 将斗战西游阵容转换为战斗引擎参与者（真实参战）
  * NOTE: 经 GameDataProcessor.enemyToParticipant 构造 BattleEntity，消费引擎而非直接 new 领域实现，
  *       与唤灵台演武台同数据源；技能留空（引擎普攻兜底），后续技能接入随 configs/skills 扩展。
@@ -443,8 +517,8 @@ export function buildBattleTeams(
     // NOTE: 主角注入装备槽选出的技能（equipped 节点映射后的技能）；伙伴为固定空技能（引擎普攻兜底）
     skills: player ? equippedPlayerSkills() : { small: [], passive: [], ultimate: [] },
   })
-  // NOTE: 主角属性以 protagonist（playerStore 派生）为权威，伙伴为固定出场属性；装备加成仅作用于主角
-  const ally = playerParty.map((c, i) => {
+  // NOTE: 主角属性以 protagonist（playerStore 派生）为权威，伙伴为 mate.json 出战属性；装备加成仅作用于主角
+  const ally = buildPlayerParty().map((c, i) => {
     const src = i === 0 && protagonist ? { ...c, ...protagonist } : c
     if (i !== 0 || !allyBonuses) return GameDataProcessor.enemyToParticipant(toEnemy(src, i === 0), ParticipantSide.ALLY, i)
     const enemy = toEnemy(src, i === 0)

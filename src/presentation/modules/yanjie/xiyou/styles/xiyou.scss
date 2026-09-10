@@ -161,11 +161,12 @@
         min-height: 0;
       }
 
-      /* 任意层级 tabpanel 的直接内容层做多列自适应（跳过嵌套 Tabs 根） */
+      /* 任意层级 tabpanel 的直接内容层做多列自适应（跳过嵌套 Tabs 根）；
+         :not(.xy-tree-panel)——流派树自管 flex 纵向布局（树画布 + 头尾），不参与多列自适应 */
       .tabs-root
         .flex-col-fill
         > [role='tabpanel']
-        > div:not(.tabs-root):not(.xy-panel-tabs) {
+        > div:not(.tabs-root):not(.xy-panel-tabs):not(.xy-tree-panel) {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: var(--space-3);

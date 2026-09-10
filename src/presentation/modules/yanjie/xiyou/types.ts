@@ -31,13 +31,25 @@ export interface XiyouPlayer {
   expNeed: number
 }
 
-/** 角色加点（运行时状态 · 持有在 playerStore；展示态，暂未回灌战斗属性） */
+/**
+ * 角色加点（运行时状态 · 持有在 playerStore）
+ * NOTE: SAP 六维自由点模型（《玩家数值体系构建计划.md》D1）：每级 4 自由点按转化率
+ *       （player.json statBonuses：1 点 = 12 气血 = 2 攻 = 2 防 = 2 命中 = 2 闪避 = 2 速度）直接分配
+ */
 export interface XiyouStatPoints {
   available: number
-  strength: number
-  vitality: number
-  agility: number
-  spirit: number
+  /** 气血 */
+  hp: number
+  /** 攻击 */
+  atk: number
+  /** 防御 */
+  def: number
+  /** 命中 */
+  hit: number
+  /** 闪避 */
+  dodge: number
+  /** 速度 */
+  speed: number
 }
 
 /**
@@ -166,8 +178,10 @@ export interface SchoolsNode {
   layer: number
   /** 运行时：层内序号（0-based，用于水平定位） */
   index: number
-  /** 运行时：已解锁 */
-  learned: boolean
+  /** 运行时：已投级数（0 = 未学习；属性节点按 value 档位可多级投入，learn 节点 1 级） */
+  ranks: number
+  /** 运行时：已解锁（ranks > 0 派生，勿直接赋值） */
+  readonly learned: boolean
   /** 运行时：Canvas 布局坐标（像素） */
   x: number
   y: number
@@ -191,7 +205,7 @@ export interface SchoolsSchoolDef {
 }
 
 /** 天赋树节点原始结构（schools.json JSON 层面，不含运行时字段） */
-export type SchoolsNodeRaw = Omit<SchoolsNode, 'id' | 'layer' | 'index' | 'learned' | 'x' | 'y'>
+export type SchoolsNodeRaw = Omit<SchoolsNode, 'id' | 'layer' | 'index' | 'learned' | 'ranks' | 'x' | 'y'>
 
 /** 天赋树层原始结构（schools.json JSON 层面，不含运行时字段） */
 export interface SchoolsLayerRaw {
@@ -331,6 +345,8 @@ export interface XiyouMate {
   stars: number
   active: boolean
   desc: string
+  /** Lv.1 基准战斗属性（参战时按等级成长系数缩放；缺省不可参战） */
+  stats?: { maxHp: number; attack: number; defense: number; speed: number }
 }
 
 /** 灵宠（灵宠子系统） */

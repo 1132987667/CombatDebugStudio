@@ -31,9 +31,9 @@ import { EquipmentSlot, EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { buildEquipFormula, buildPlayerConfig } from '@/infrastructure/adapters/storage/seed'
-import { rollGearStats, rollAppendAffixes } from '@/domain/fengshen/gear-generate'
+import { rollGearStats, rollAppendAffixes, TIER_TO_QUALITY } from '@/domain/fengshen/gear-generate'
 import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
-import type { AffixRuleConfig, EquipFormulaConfig } from '@/domain/fengshen/types'
+import type { AffixRuleConfig, AffixQualityCode, EquipFormulaConfig, GearTier } from '@/domain/fengshen/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import {
   enhanceCost,
@@ -89,8 +89,8 @@ export function newInstanceId(): string {
 
 // ════════════ §21 装备属性生成（制造/掉落时刻 roll 并锁存） ════════════
 
-/** 阶位 t1~t5 → affix-rule tier_weight 键（凡/玄/地/天/仙） */
-const TIER_KEY: Record<string, string> = { t1: 'fan', t2: 'xuan', t3: 'di', t4: 'tian', t5: 'xian' }
+/** 阶位换算单一来源已上移 domain（gear-generate.TIER_TO_QUALITY）；此处保留本文件惯用短名 */
+const TIER_KEY = TIER_TO_QUALITY
 
 /** 词条投放规则 + 装备公式 + 转化系数（configs 权威源，与封神榜验证器同口径；模块级只构建一次） */
 const AFFIX_RULE: AffixRuleConfig = affixRuleDefaults()
@@ -120,6 +120,12 @@ function rollInstanceParts(
     PLAYER_CONVERSION,
     rng,
   )
+  // 静态定义带 coreStat（§21 部位固定属性标称，批量生成器全量重生成写入）时核心属性直取，
+  // 仅按品质系数缩放（实例维度），不再公式 roll；主要/附加词条照旧 roll。
+  if (g.coreStat) {
+    const factor = Math.max(0, qualityFactor || 1)
+    return { stats: [{ ...g.coreStat, value: Math.round(g.coreStat.value * factor) }], affixes: r.affixes }
+  }
   return { stats: r.core ? [r.core] : [], affixes: r.affixes }
 }
 

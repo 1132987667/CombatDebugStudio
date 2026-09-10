@@ -77,6 +77,9 @@ export function useCompendium() {
   const isLoading = ref(false)
 
   /** 从引擎数据源重新装载（封神榜写操作后数据源已刷新，图鉴打开时调用） */
+  // HACK: 领域实体（Enemy/Item/BuffJsonEntry/SkillConfig）→ CompendiumXxx 展示子集为结构收窄
+  //       （stats 五键固定、effects 去时长等），Partial Record 与固定键不兼容故双断言；
+  //       运行时字段是领域实体的超集，展示层只读子集字段。升级路径：抽 pick 投影函数替代断言
   function refresh(): void {
     enemies.value = GameDataProcessor.getEnemiesData() as unknown as CompendiumEnemy[]
     buffs.value = GameDataProcessor.getBuffsData() as unknown as CompendiumBuff[]

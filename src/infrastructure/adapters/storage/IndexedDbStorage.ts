@@ -113,9 +113,15 @@ export class IndexedDbStorage implements IPersistentStorage {
         const objectStore = tx.objectStore(store)
         objectStore.put(value, key)
         tx.oncomplete = () => resolve(true)
-        tx.onerror = () => reject(tx.error)
+        // NOTE: 上层 UI 只按 false 统一提示「存储已满」，此处打出真实原因
+        //       （QuotaExceeded / DataCloneError / 事务异常等），供控制台定位
+        tx.onerror = () => {
+          console.error(`[IndexedDB] set 写入失败 store=${store} key=${key}`, tx.error)
+          reject(tx.error)
+        }
       }, false)
-    } catch {
+    } catch (e) {
+      console.error(`[IndexedDB] set 无法打开数据库 store=${store} key=${key}`, e)
       return false
     }
   }

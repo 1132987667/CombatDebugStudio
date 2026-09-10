@@ -307,11 +307,12 @@ export class SaveManager {
       player: { ...base.player, level: 7, exp: 120, gold: 5000 },
       equipment: {
         ...base.equipment,
-        weapon: 'wp_001',
-        armor: 'ar_001',
-        necklace: 'ac_001',
+        // 夹具 id 须为 equipment.json 现存装备（迁移映射：necklace→helmet、belt→boots、bracelet→charm）
+        weapon: 'wp_t1_light_01',
+        armor: 'ar_t1_light_01',
+        necklace: 'hd_t1_war_01',
         crown: null,
-        belt: 'ac_002',
+        belt: 'bt_t1_light_01',
         bracelet: null,
       },
     }

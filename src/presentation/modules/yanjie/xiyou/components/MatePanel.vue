@@ -2,9 +2,9 @@
   <div class="xy-panel-scroll">
     <Tabs v-model="sub" :tabs="SUBS" destroy-inactive class="xy-tabs--seal">
       <template #mates>
-        <p class="xy-panel-hint">上阵伙伴上限 3 · 主角 {{ playerStore.player.name }} Lv.{{ playerStore.player.level }}</p>
+        <p class="xy-panel-hint">上阵伙伴上限 {{ MAX_ACTIVE_MATES }} · 主角 {{ playerStore.player.name }} Lv.{{ playerStore.player.level }}</p>
         <div class="xy-card-grid">
-          <div v-for="m in matesWithUnlock" :key="m.name" class="xy-mate-card" :class="{ active: m.active, locked: !m.unlocked }">
+          <div v-for="(m, i) in matesWithUnlock" :key="m.name" class="xy-mate-card" :class="{ active: m.active, locked: !m.unlocked }">
             <div class="xy-mate-head">
               <span class="xy-mate-name" :class="qualityClass(m.rarity)">{{ m.name }}</span>
               <span v-if="m.active" class="xy-chip xy-chip--gold">上阵</span>
@@ -15,6 +15,14 @@
               <IconStar v-for="i in 5" :key="i" class="xy-star" :class="{ on: i <= m.stars }" />
             </div>
             <p class="xy-row-desc">{{ m.desc }}</p>
+            <button
+              v-if="m.unlocked && m.stats && m.level > 0"
+              type="button"
+              class="xy-mate-toggle"
+              :class="{ off: m.active }"
+              :disabled="!m.active && activeMateCount >= MAX_ACTIVE_MATES"
+              @click="toggleMate(m.name)"
+            >{{ m.active ? '下场' : '上阵' }}</button>
           </div>
         </div>
       </template>
@@ -44,16 +52,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import IconStar from '~icons/app/star'
 
 import type { TabItem } from '@/presentation/components'
 import { mates, pets } from '../xiyouData'
+import { MAX_ACTIVE_MATES } from '../battle'
+import { saveManager } from '../save-bridge'
 import type { XiyouMate } from '../types'
 import { qualityClass, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 const playerStore = usePlayerStore()
+const notification = useNotificationStore()
 
 const sub = ref<'mates' | 'pets'>('mates')
 
@@ -64,6 +76,25 @@ const SUBS: TabItem[] = [
 
 /** 伙伴解锁状态：前 4 位已解锁，余下待剧情推进（展示用） */
 const matesWithUnlock: Array<XiyouMate & { unlocked: boolean }> = mates.map((m, i) => ({ ...m, unlocked: i < 4 }))
+
+const activeMateCount = computed(() => mates.filter((m) => m.active).length)
+
+/** 上阵/下场（上限 MAX_ACTIVE_MATES；即时存档，出战阵容随下次战斗生效） */
+function toggleMate(name: string): void {
+  const m = mates.find((x) => x.name === name)
+  if (!m) return
+  if (m.active) {
+    m.active = false
+  } else {
+    if (activeMateCount.value >= MAX_ACTIVE_MATES) {
+      notification.toast(`上阵伙伴最多 ${MAX_ACTIVE_MATES} 名`, 'warning')
+      return
+    }
+    m.active = true
+  }
+  saveManager.autoSave()
+  notification.toast(m.active ? `${m.name} 已上阵` : `${m.name} 已下场`, 'success')
+}
 </script>
 
 <style scoped lang="scss">
@@ -112,6 +143,24 @@ const matesWithUnlock: Array<XiyouMate & { unlocked: boolean }> = mates.map((m, 
 .xy-mate-stars {
   display: flex;
   gap: 2px;
+}
+
+.xy-mate-toggle {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  padding: 2px var(--space-3);
+  border: 1px solid var(--xy-gold);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--xy-gold);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: var(--xy-gold-soft); }
+  &.off { border-color: var(--xy-ink-line); color: var(--xy-ink-3); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 .xy-star {

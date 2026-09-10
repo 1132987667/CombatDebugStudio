@@ -148,7 +148,6 @@ import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
-import type { BuffRawItem } from './ParticipantCard'
 
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'

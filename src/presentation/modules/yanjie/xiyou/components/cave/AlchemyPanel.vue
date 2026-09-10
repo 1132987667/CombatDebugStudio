@@ -75,6 +75,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 import { alchemyRecipes } from '../../xiyouData'
 import { itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
+import type { XiyouQuality } from '../../types'
 import { qualityClassOf } from '../../quality'
 
 const pack = usePackStore()
@@ -90,7 +91,7 @@ function select(r: XiyouRecipe): void {
   selected.value = r
 }
 
-function qualityOfOut(r: XiyouRecipe): string {
+function qualityOfOut(r: XiyouRecipe): XiyouQuality {
   const outId = itemIdByName(r.name)
   return outId ? qualityOf(outId) : '凡品'
 }
@@ -118,11 +119,11 @@ function brew(): void {
   if (!r || brewing.value) return
   const outId = itemIdByName(r.name)
   if (!outId) {
-    notification.toast(`炼制失败：未找到「${r.name}」的产出定义`, 'danger')
+    notification.toast(`炼制失败：未找到「${r.name}」的产出定义`, 'error')
     return
   }
   if (!canCraft(r)) {
-    notification.toast('材料不足，无法开炉', 'danger')
+    notification.toast('材料不足，无法开炉', 'error')
     return
   }
   brewing.value = true

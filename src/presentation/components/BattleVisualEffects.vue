@@ -170,8 +170,9 @@ function showProjectile(fromId: string, toId: string, type: ImpactClass, duratio
   const ty = to.y
   const proj = document.createElement('div')
   proj.className = `projectile ${type}`
-  const rootEl: HTMLElement | null = document.getElementById('visual-effects-root')
-  if (!rootEl) return
+  const rootNode = document.getElementById('visual-effects-root')
+  if (!rootNode) return
+  const rootEl: HTMLElement = rootNode
   rootEl.appendChild(proj)
   const dx = tx - sx
   const dy = ty - sy
@@ -433,7 +434,7 @@ function playFlightSequence(
   targetId: string,
   skillName: string,
   fromSide: 'left' | 'right',
-  impactStyle: 'fire' | 'frost',
+  impactStyle: ImpactClass,
   budget: number,
 ) {
   showSkillName(attackerId, targetId, skillName, fromSide, budget)

@@ -3,6 +3,9 @@
  *
  * 保存校验（必填 / 数值范围 / 唯一性 / 引用完整性）、删除保护（被引用拦截）、
  * 全局健康检查。引用检查与删除保护共享 schema.ts 的 REFERENCE_RULES 注册表。
+ *
+ * NOTE: 实体统一以 Record<string, unknown> 传入——本服务跨全部异构表通用，
+ *       字段结构由 schema.ts 驱动在运行时解析，故不按表收窄实体类型（宽容点）。
  */
 
 import type { IPersistentStorage, StorageStoreName } from '@/domain/port/IPersistentStorage'

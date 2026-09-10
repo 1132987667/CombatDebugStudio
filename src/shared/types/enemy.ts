@@ -39,6 +39,8 @@ export interface Enemy {
   skills: EnemySkills
   /** 敌人品阶（EnemyRole 六档；码/中文标签/奖励倍率的单一来源见 @/domain/fengshen/role-grades） */
   role?: EnemyRole
+  /** 阵营元素（fire/wood/water/earth/metal/neutral，引用 elements 表；阵营克制矩阵消费） */
+  faction?: string
   /** 是否完全不会攻击（木人/训练靶子；AI 回合直接跳过行动） */
   noAttack?: boolean
   /** 词缀 ID 列表（引用 affixes 表，敌人附加的属性修正标签） */

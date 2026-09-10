@@ -26,6 +26,8 @@ const OLD_ENEMIES_FILE = path.join(ROOT, 'configs', 'enemies', 'enemies-old.json
 const CURVES_FILE = path.join(ROOT, 'configs', 'params', 'curves.json')
 const AFFIXES_FILE = path.join(ROOT, 'configs', 'affixes', 'affixes.json')
 const SEED_FILE = path.join(ROOT, 'src', 'infrastructure', 'adapters', 'storage', 'seed.ts')
+const EXP_REWARD_FILE = path.join(ROOT, 'src', 'domain', 'fengshen', 'exp-reward.ts')
+const ROLE_GRADES_FILE = path.join(ROOT, 'src', 'domain', 'fengshen', 'role-grades.ts')
 const DOC_FILE = path.join(ROOT, 'documents', '需求文档', '敌人生成设计.md')
 
 const WRITE = process.argv.includes('--write')
@@ -39,6 +41,9 @@ const curves = JSON.parse(fs.readFileSync(CURVES_FILE, 'utf8'))
 const oldEnemies = JSON.parse(fs.readFileSync(OLD_ENEMIES_FILE, 'utf8'))
 const affixes = JSON.parse(fs.readFileSync(AFFIXES_FILE, 'utf8'))
 const seedSrc = fs.readFileSync(SEED_FILE, 'utf8')
+// 奖励种子已抽到 domain 层单一来源（seed.ts 仅引用）：entries ← exp-reward.ts，倍率 ← role-grades.ts
+const expRewardSrc = fs.readFileSync(EXP_REWARD_FILE, 'utf8')
+const roleGradesSrc = fs.readFileSync(ROLE_GRADES_FILE, 'utf8')
 
 /** 普通品阶（按强度升序，单调性断言依赖此顺序） */
 const ROLES = ['xiaoyao', 'yaotu', 'yaokui', 'yaowang', 'yaozun']
@@ -105,12 +110,17 @@ const expRequiredAt = (L) => {
   return seg ? seg.perLv * L : null
 }
 
-// 敌人奖励基准表种子（buildEnemyRewardTable 的 entries/roleMultiplier 字面量）
-const rwSeg = extractSeedSection('buildEnemyRewardTable')
-const rewardEntries = [...rwSeg.matchAll(/enemyLevel:\s*(\d+),\s*baseExp:\s*(\d+),\s*goldMin:\s*(\d+),\s*goldMax:\s*(\d+)/g)].map(
+// 敌人奖励基准表种子（exp-reward.ts 的 DEFAULT_ENEMY_REWARD_ENTRIES + role-grades.ts 的 ENEMY_ROLE_MULTIPLIERS）
+const rewardEntries = [...expRewardSrc.matchAll(/enemyLevel:\s*(\d+),\s*baseExp:\s*(\d+),\s*goldMin:\s*(\d+),\s*goldMax:\s*(\d+)/g)].map(
   (m) => ({ enemyLevel: +m[1], baseExp: +m[2], goldMin: +m[3], goldMax: +m[4] }),
 )
-const roleMultSeg = grabObject(rwSeg, 'roleMultiplier') ?? {}
+const roleMultBody = roleGradesSrc.slice(roleGradesSrc.indexOf('ENEMY_ROLE_MULTIPLIERS'))
+const objStart = roleMultBody.indexOf('{')
+const roleMultSeg = {}
+for (const part of roleMultBody.slice(objStart + 1, roleMultBody.indexOf('}', objStart)).split(',')) {
+  const kv = part.split(':')
+  if (kv.length === 2 && Number.isFinite(Number(kv[1]))) roleMultSeg[kv[0].trim()] = Number(kv[1].trim())
+}
 const rewardAt = (L) => {
   const exact = rewardEntries.find((e) => e.enemyLevel === L)
   if (exact) return exact
@@ -211,7 +221,7 @@ function expectStats(tier, L) {
 }
 
 // ---------------------------------------------------------------------------
-// TTK 确定性模拟（对齐 balance-check.cjs：atk×(1±15%) 浮动 + 减法防御，速度序行动）
+// TTK 确定性模拟（对齐原 balance-check.cjs，已归档：atk×(1±15%) 浮动 + 减法防御，速度序行动）
 // ---------------------------------------------------------------------------
 
 function lcg(seed) {
@@ -349,13 +359,13 @@ for (let i = 1; i < rewardEntries.length; i++) {
   assert(rewardEntries[i].enemyLevel > rewardEntries[i - 1].enemyLevel, 'A7 奖励基准表等级非严格递增')
   assert(rewardEntries[i].baseExp >= rewardEntries[i - 1].baseExp, 'A7 奖励基准表 baseExp 非单调不减')
 }
-for (const role of ['normal', 'elite', ...ROLES.slice(1)]) {
-  assert(roleMultSeg[role] !== undefined, `A7 roleMultiplier 缺少键: ${role}（xiaoyao 对应 normal 基准）`)
+for (const role of ['xiaoyao', 'yaobing', ...ROLES.slice(1)]) {
+  assert(roleMultSeg[role] !== undefined, `A7 roleMultiplier 缺少键: ${role}（xiaoyao 为普通基准档）`)
 }
 // 击杀数/级（同等级小妖 = normal 基准，无等级差修正）∈ [5,100] 防坏数据；节奏跳变进报告
 const killsAt = (L) => {
   if (expRequiredAt(L) === null) return null
-  return expRequiredAt(L) / Math.max(1, Math.round(rewardAt(L).baseExp * (roleMultSeg.normal ?? 1)))
+  return expRequiredAt(L) / Math.max(1, Math.round(rewardAt(L).baseExp * (roleMultSeg.xiaoyao ?? 1)))
 }
 for (let L = 1; L <= 50; L++) {
   const n = killsAt(L)

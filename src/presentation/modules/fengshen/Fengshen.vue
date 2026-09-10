@@ -47,6 +47,8 @@
       <AuditView v-else-if="store.activeView === 'audit'" />
       <ExpGoldView v-else-if="store.activeView === 'expgold'" />
       <HealthView v-else-if="store.activeView === 'health'" />
+      <EquipGeneratorView v-else-if="store.activeView === 'equipgen'" />
+      <SystemDistributionView v-else-if="store.activeView === 'distribution'" />
       <LogsView v-else-if="store.activeView === 'logs'" />
       <PackagesView v-else-if="store.activeView === 'packages'" />
     </main>
@@ -72,6 +74,8 @@ import LogsView from '@/presentation/modules/fengshen/views/LogsView.vue'
 import PackagesView from '@/presentation/modules/fengshen/views/PackagesView.vue'
 import ExpGoldView from '@/presentation/modules/fengshen/views/ExpGoldView.vue'
 import AffixRuleView from '@/presentation/modules/fengshen/views/AffixRuleView.vue'
+import EquipGeneratorView from '@/presentation/modules/fengshen/views/EquipGeneratorView.vue'
+import SystemDistributionView from '@/presentation/modules/fengshen/views/SystemDistributionView.vue'
 
 /** 数据域按子领域分组（侧栏导航层次） */
 const DOMAIN_GROUPS: Array<{ label: string; items: Array<{ table: FengshenTableName; label: string }> }> = [
@@ -131,10 +135,12 @@ const SYSTEM_GROUPS: Array<{ label: string; items: Array<{ view: FengshenView; l
     label: '数值体系',
     items: [
       { view: 'playerconfig', label: '玩家配置' },
+      { view: 'distribution', label: '系统投放配置' },
       { view: 'curves', label: '成长曲线' },
       { view: 'formulas', label: '属性与公式' },
       { view: 'affixrule', label: '词条投放规则' },
       { view: 'audit', label: '来源审计' },
+      { view: 'equipgen', label: '装备生成器' },
     ],
   },
   {

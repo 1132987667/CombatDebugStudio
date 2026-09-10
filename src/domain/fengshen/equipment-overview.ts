@@ -15,7 +15,10 @@
  */
 
 import type { AffixRuleConfig, AffixQualityCode, EquipFormulaConfig, PetMountIndividual, PetMountRulesConfig, PetMountTraitEntry } from '@/domain/fengshen/types'
-import { equipBaseUnit } from '@/domain/fengshen/player-config'
+import type { EquipmentSlot } from '@/shared/types/Item'
+import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { equipBaseUnit, PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
+import type { PlayerBaseAttrCode } from '@/domain/fengshen/types'
 
 /** 基础六维：有属性点转化系数、走装备公式；其余属性一律走词条曲线 */
 export const BASE_ATTR_CODES: ReadonlySet<string> = new Set([
@@ -84,7 +87,7 @@ function round1(v: number): number {
   return Math.round(v * 10) / 10
 }
 
-function tierRange(cfg: AffixRuleConfig, tier: AffixQualityCode): { min: number; max: number } | null {
+function tierRange(cfg: AffixRuleConfig, tier: string): { min: number; max: number } | null {
   const w = cfg.tier_weight?.[tier]
   if (!w || !Number.isFinite(w.min) || !Number.isFinite(w.max)) return null
   return { min: Math.min(w.min, w.max), max: Math.max(w.min, w.max) }
@@ -119,7 +122,7 @@ export function resolveAttrRange(
   conversion: Record<string, number>,
   attribute: string,
   level: number,
-  tier: AffixQualityCode,
+  tier: string,
   weight: number,
   ratio = 1,
   ratioNote = '',
@@ -140,7 +143,7 @@ export function resolveCurveAttrRange(
   conversion: Record<string, number>,
   attribute: string,
   level: number,
-  tier: AffixQualityCode,
+  tier: string,
   weight: number,
   ratio = 1,
   ratioNote = '',
@@ -246,7 +249,7 @@ export function resolveCurveAttrRange(
 }
 
 /**
- * 词条池引用解析：先按属性组码展开，未命中则视为单个属性码。
+ * 词条池引用解析：先按属性组码展开，未命中则视为单个属性码（配置契约）。
  * 使 main_affix_pool.random_pool 可同时写 `ALL-MEC`（组）与 `comboRate`（单属性）。
  */
 export function expandPoolRef(cfg: AffixRuleConfig, ref: string): string[] {
@@ -259,7 +262,7 @@ export function rowGroups(cfg: AffixRuleConfig, side: 'ATK' | 'DEF', row: number
 }
 
 /** 子类型中文名（配置里 sub_types[].name）；查不到回落 id。装备 UI 展示 subType（id 体系）统一走此函数 */
-export function subTypeName(cfg: AffixRuleConfig, slot: EquipmentSlot, subType: string): string {
+export function subTypeName(cfg: AffixRuleConfig, slot: string, subType: string): string {
   return cfg.sub_type_groups?.[slot]?.sub_types.find((s) => s.id === subType)?.name ?? subType
 }
 
@@ -269,7 +272,7 @@ export function subTypeName(cfg: AffixRuleConfig, slot: EquipmentSlot, subType: 
  * 只按 slot 匹配会把子类型级规则误加到同部位其他子类型上。
  * （gear-generate.ts 实例生成共用此过滤，保证验证器与实际产出同口径。）
  */
-export function forbiddenAttrs(cfg: AffixRuleConfig, slot: EquipmentSlot, subType: string): Set<string> {
+export function forbiddenAttrs(cfg: AffixRuleConfig, slot: string, subType: string): Set<string> {
   const name = subTypeName(cfg, slot, subType)
   const set = new Set<string>()
   for (const rule of cfg.forbidden ?? []) {
@@ -287,7 +290,7 @@ function rowCandidates(
   conversion: Record<string, number>,
   groups: string[],
   level: number,
-  tier: AffixQualityCode,
+  tier: string,
   banned: Set<string>,
 ): OverviewAttrRange[] {
   const seen = new Set<string>()
@@ -312,7 +315,7 @@ export function buildEquipmentOverview(
   cfg: AffixRuleConfig,
   formula: EquipFormulaConfig,
   conversion: Record<string, number>,
-  input: { level: number; slot: EquipmentSlot; subType: string; tier: AffixQualityCode; quality: number },
+  input: { level: number; slot: string; subType: string; tier: string; quality: number },
 ): EquipmentOverview {
   const warnings: string[] = []
   const { level, slot, subType, tier } = input
@@ -389,14 +392,9 @@ export function buildEquipmentOverview(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 个体 weights 键 → 属性 code（configs 用短名 hit / dodge，属性系统用 hitValue / dodgeValue） */
-const INDIVIDUAL_WEIGHT_CODES: Record<string, string> = {
+const INDIVIDUAL_WEIGHT_CODES: Record<string, ATTRIBUTE_CODE> = {
   attack: 'attack', hit: 'hitValue', speed: 'speed',
   defense: 'defense', dodge: 'dodgeValue', maxHealth: 'maxHealth',
-}
-
-/** 主要 3 条显示名（六维绝对值不在曲线短名表里） */
-const MAIN_ATTR_LABELS: Record<string, string> = {
-  attack: '攻击', hitValue: '命中', speed: '速度', defense: '防御', dodgeValue: '闪避', maxHealth: '气血',
 }
 
 /** 主要 3 条的规范键序（PRD 表列序：宠物 攻/命/速，坐骑 防/闪/血）——个体 JSON 键序不可依赖 */
@@ -501,7 +499,7 @@ export function buildPetMountOverview(
     system: 'pet' | 'mount'
     individual: PetMountIndividual
     level: number
-    tier: AffixQualityCode
+    tier: string
     quality: number
     /** 资质值（aptitude.min ~ cap），缺省 base = 1.0 倍 */
     aptitude?: number
@@ -562,13 +560,15 @@ export function buildPetMountOverview(
   }
   const ratioNote = `资质 ${aptitude}÷${rules.aptitude.base}=${round1(aptRatio)} × 突破 ${round1(btRatio)}`
   const mainSlots: PetMountMainSlot[] = weightEntries.map(([key, weight]) => {
-    const code = INDIVIDUAL_WEIGHT_CODES[key] ?? key
+    // HACK: 未知个体权重键原样透传（下游按曲线缺口报告 source none），故此断言是配置信任边界
+    const code = (INDIVIDUAL_WEIGHT_CODES[key] ?? key) as ATTRIBUTE_CODE
     const range = resolveCurveAttrRange(cfg, 'equipment', formula, conversion, code, level, tier, weight, growthRatio, ratioNote, {
       pathLabel: '宠物坐骑公式（基础六维）',
       unitNote: ' 系统',
       weightLabel: `${weight} = 个体权重`,
     })
-    return { attribute: code, label: MAIN_ATTR_LABELS[code] ?? code, weight, range }
+    // 六维中文标签单一来源：player-config.PLAYER_BASE_ATTR_LABELS（code 经 INDIVIDUAL_WEIGHT_CODES 已是属性码）
+    return { attribute: code, label: PLAYER_BASE_ATTR_LABELS[code as PlayerBaseAttrCode] ?? code, weight, range }
   })
 
   // ── 词条行：品质门槛 + 曲线池（池映射已拍板，见 §八遗留 1 关闭记录） ──

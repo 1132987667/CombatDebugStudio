@@ -108,11 +108,10 @@ describe('种子导入 seedFengshenData', () => {
     expect(equipKeys).not.toContain('eq_w001')
     expect(equipKeys).not.toContain('eq_c002')
 
-    // 物品主键索引（items 表）：全量注册新装备（wp_/ar_/ac_）；旧 eq_* 占位已清理（经 equipment legacyIds 映射，不作为 items 主键）
+    // 物品主键索引（items 表）：装备已 itemId 化退出 items.json（rarity 权威在 equipment.json），仅注册非装备物品
     const itemKeys = await storage.keys(FENGSHEN_STORE.ITEMS)
     expect(itemKeys).toContain('mat_taomu')
-    expect(itemKeys).toContain('wp_t1_light_01')
-    expect(itemKeys).toContain('ar_t1_light_01')
+    expect(itemKeys).not.toContain('wp_t1_light_01')
     expect(itemKeys).not.toContain('eq_w001')
 
     // 装备详情（gears 表）：全量可打造装备（equipment.json 中 craftable 的装备）

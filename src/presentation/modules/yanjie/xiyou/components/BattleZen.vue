@@ -171,6 +171,7 @@ import {
   dropsForEnemyIds,
   enemyBriefById,
   equipBonuses,
+  schoolTreeCombatBonuses,
   xianyuanForEnemyIds,
   rewardForEnemyIds,
   type EnemyBrief,
@@ -321,7 +322,8 @@ async function initBattle(node: RunNode): Promise<void> {
   const pack = usePackStore()
   await pack.init()
   const protagonist = usePlayerStore().battleSnapshot
-  const allyBonuses = equipBonuses(pack.equippedStats(), protagonist)
+  // NOTE: 装备加成 + 流派树增量（schoolTreeCombatBonuses 已排除快照承载键，避免双算）一并注入主角
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses() }
   const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses, protagonist, node)
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()

@@ -172,6 +172,7 @@
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier } from "@/domain/attribute/types";
 import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay';
+import { PASSIVE_UNCATEGORIZED, groupPassiveSkills } from '@/presentation/config/passive-skill-categories';
 import { BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
@@ -298,20 +299,20 @@ const buffListItems = computed((): BuffRawItem[] => currentCharacterSnap.value?.
 
 const buffDisplay = useBuffDisplay(buffListItems, computed(() => currentCharacter.value?.id ?? ''), 99)
 
-/** 被动技能分类展示配置
- *  NOTE: 分类色为被动技能专属色板，集中在此配置（不散落），与 tokens 的 --cat-*（数据分类圆点）色板语义不同，故不合并 */
-const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
-  aura: { label: '光环', color: '#34d399', priority: 0 },
-  trigger: { label: '触发', color: '#a78bfa', priority: 1 },
-  heal: { label: '治疗', color: '#f472b6', priority: 2 },
-  immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
-  summon: { label: '召唤', color: '#fb923c', priority: 4 },
-  dot: { label: '持续', color: '#f87171', priority: 5 },
-  shield: { label: '护盾', color: '#0a7f91', priority: 6 },
-  attribute: { label: '属性', color: '#60a5fa', priority: 7 },
+/** 被动技能分类色板
+ *  NOTE: 分类色为被动技能专属色板，集中在此配置（不散落），与 tokens 的 --cat-*（数据分类圆点）色板语义不同，故不合并；
+ *  分类键序/中文标签/优先级/分组算法的单一来源见 @/presentation/config/passive-skill-categories */
+const CATEGORY_COLORS: Record<string, string> = {
+  aura: '#34d399',
+  trigger: '#a78bfa',
+  heal: '#f472b6',
+  immunity: '#fbbf24',
+  summon: '#fb923c',
+  dot: '#f87171',
+  shield: '#0a7f91',
+  attribute: '#60a5fa',
+  [PASSIVE_UNCATEGORIZED.category]: '#94a3b8',
 }
-
-const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
 
 interface PassiveSkillGroup {
   category: string
@@ -320,27 +321,12 @@ interface PassiveSkillGroup {
   skills: SkillConfig[]
 }
 
-const groupedPassives = computed<PassiveSkillGroup[]>(() => {
-  const passives = currentCharacter.value?.skills?.passive ?? []
-  const groups = new Map<string, PassiveSkillGroup>()
-
-  for (const skill of passives) {
-    // 取首个分类为主分类，避免重复展示
-    const primary = skill.passiveCategory?.[0]
-    const cat = primary && CATEGORY_CONFIG[primary] ? primary : '__uncategorized__'
-    if (!groups.has(cat)) {
-      const cfg = CATEGORY_CONFIG[cat] ?? UNCATEGORIZED
-      groups.set(cat, { category: cat, label: cfg.label, color: cfg.color, skills: [] })
-    }
-    groups.get(cat)!.skills.push(skill)
-  }
-
-  return [...groups.values()].sort((a, b) => {
-    const pa = CATEGORY_CONFIG[a.category]?.priority ?? 99
-    const pb = CATEGORY_CONFIG[b.category]?.priority ?? 99
-    return pa - pb
-  })
-})
+const groupedPassives = computed<PassiveSkillGroup[]>(() =>
+  groupPassiveSkills(
+    currentCharacter.value?.skills?.passive ?? [],
+    (s) => s.passiveCategory,
+  ).map((g) => ({ ...g, color: CATEGORY_COLORS[g.category] ?? CATEGORY_COLORS[PASSIVE_UNCATEGORIZED.category] })),
+)
 
 // ------------------------------------------------------------
 // 技能悬浮提示状态

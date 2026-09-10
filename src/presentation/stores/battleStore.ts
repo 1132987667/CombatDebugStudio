@@ -29,6 +29,7 @@ import {
 } from '@/shared/types/battle-log'
 import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive, computed } from 'vue'
 import { SPEED_OPTIONS } from '@/shared/constants/speed'
@@ -358,6 +359,8 @@ export const useBattleStore = defineStore('battle', () => {
   }
   //  3. 事件订阅管理器（防止内存泄漏）
   /** 事件处理器映射表（将事件码与对应的处理函数关联） */
+  // HACK: 各事件码处理器签名互不相同，Map 值只能取 any 宽度；调用点仅透传给
+  //       battleService.on（运行时载荷随事件码而定），升级路径是 on 侧按事件码分型的重载
   const events = new Map<BattleEventCode, (data: any) => void>()
   events.set(BattleEventCodes.BATTLE_ENDED, handleBattleEndEvent)
   events.set(BattleEventCodes.BATTLE_RESET, handleBattleResetEvent)
@@ -612,6 +615,7 @@ export const useBattleStore = defineStore('battle', () => {
       onError?.(errorMsg)
       return typeof failValue === 'function'
         ? (failValue as (message: string) => F)(errorMsg)
+        // HACK: 泛型 F 无统一失败值，缺省按 false 收敛（布尔态消费方语义）；非布尔 F 须显式传 failValue
         : ((failValue as F | undefined) ?? (false as unknown as F))
     } finally {
       if (hasLoading) setLoading(false)
@@ -955,7 +959,7 @@ export const useBattleStore = defineStore('battle', () => {
 
   /**
    * 设置战斗动画播放速度
-   * @param speed 速度倍率（1/2/3/5）
+   * @param speed 速度倍率（1/2/4/5）
    * @returns boolean 操作是否成功
    * @description 调整战斗动画的播放速度，影响所有动画效果的持续时间
    */
@@ -1132,7 +1136,7 @@ export const useBattleStore = defineStore('battle', () => {
       enemy,
       ParticipantSide.ENEMY,
     )
-    const passiveSkillManager = container.resolve<any>('PassiveSkillManager')
+    const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager')
     GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
     previewEntity.value = entity
     selectedCharacterId.value = entity.id

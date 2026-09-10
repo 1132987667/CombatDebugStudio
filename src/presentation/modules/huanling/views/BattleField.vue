@@ -53,6 +53,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType';
 import { ActionResultType, ActionTypes, type BattleEntity } from '@/domain/battle/type/types';
 import { container } from '@/infrastructure/di/Container';
@@ -159,22 +160,26 @@ watch(() => store.currentTurn, (newTurn, oldTurn) => {
 watch(store.animationState, (state) => {
   const budget = getActionBudget(store.battleSpeed)
   if (state.skill) {
-    const key = `${state.skill.sourceId}|${state.skill.targetId}|${state.skill.skillName}`
+    const src = state.skill.sourceId
+    const dst = state.skill.targetId
+    const name = state.skill.skillName
+    if (!src || !dst) return
+    const key = `${src}|${dst}|${name}`
     if (key === lastSkillKey) return
     lastSkillKey = key
 
-    const card = participantCardRefs.value[state.skill.sourceId]
+    const card = participantCardRefs.value[src]
     // 蓄力相 = 20%T
     card?.triggerVisualState('casting', budget * BATTLE_ANIMATION_TIMING.PHASES.windup.end)
-    const side = getCharacterSide(state.skill.sourceId)
+    const side = getCharacterSide(src)
     // GSAP 突进 = 20%T
-    playAttackAnimation(state.skill.sourceId, side, budget)
+    playAttackAnimation(src, side, undefined, budget)
     const isHeal = state.skill.effectType === ActionTypes.HEAL
     const visual = getVisualEffect(state.skill.damageCategory, isHeal)
 
     // 飞行序列：只飞（技能名+光弹），终点 = 50%T
     visualEffectsRef.value?.playFlightSequence(
-      state.skill.sourceId, state.skill.targetId, state.skill.skillName,
+      src, dst, name,
       side as 'left' | 'right', visual.impactClass, budget,
     )
   }

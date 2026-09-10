@@ -36,8 +36,8 @@ export interface SavePlayerState {
   money: number
   /** 灵韵（药园催熟资源，战斗胜利获得；v6 收缩自 lingyun；旧档缺省，恢复时兜底初始值） */
   xianyuan?: number
-  // HACK: 键为加点域（available/strength/vitality/agility/spirit）而非属性码；迁移层逐键拷贝旧档，
-  //       历史档可能携带已废弃加点键，故保持开放 Record 而不收窄（save-migrate.toRecord 同因）
+  // HACK: 键为加点域（v7 起 SAP 六维 hp/atk/def/hit/dodge/speed；旧档 strength/vitality/agility/spirit
+  //       恢复时退还为 available）而非属性码；历史档可能携带已废弃加点键，故保持开放 Record 不收窄
   statBonuses?: Record<string, number>
 }
 
@@ -89,6 +89,8 @@ export interface SaveEquipmentInstance {
 export interface SaveSchoolState {
   selected: string | null
   learned: string[]
+  /** 流派树（schools.json）节点已投级数：节点 id → ranks（旧档缺省按 learned 每节点 1 级恢复） */
+  tree_ranks?: Record<string, number>
   spent: number
   /** 累计获得技能点（等级点 + 悟道丹点；旧档缺省 = max(spent, 初始等级点数)） */
   earned?: number
@@ -110,6 +112,8 @@ export interface SaveData {
   school?: SaveSchoolState
   /** 永久丹药服用计数：itemId → 已服颗数（次数上限校验；旧档缺省空） */
   pill_uses?: Record<string, number>
+  /** 上阵伙伴名单（name；缺省按 mate.json active 初始值） */
+  mates_active?: string[]
   /** 永久丹药属性累计增量：attr → 总和（恢复时叠回 player；maxHp/attackMin 已含于 hp_max/base_atk，恢复时跳过防双算） */
   pill_bonuses?: Record<string, number>
 }
@@ -129,7 +133,7 @@ export function createInitialGameState(): SaveData {
       energy_max: 150,
       base_atk: [5, 8],
       money: 0,
-      statBonuses: { available: 3, strength: 0, vitality: 0, agility: 0, spirit: 0 },
+      statBonuses: { available: 4, hp: 0, atk: 0, def: 0, hit: 0, dodge: 0, speed: 0 },
     },
     progress: {
       max_scene: 1,
@@ -191,5 +195,6 @@ export function validateSaveData(raw: unknown): SaveValidation {
   if (!isObj(raw.inventory)) missing.push('inventory')
   if (!isObj(raw.equipment)) missing.push('equipment')
   if (missing.length > 0) return { ok: false, error: missing.join('、') }
+  // 逐字段校验已通过，raw 即 SaveData 形状；断言仅为收口（上游另有 checksum 兜底）
   return { ok: true, data: raw as unknown as SaveData }
 }

@@ -44,6 +44,11 @@
       <Button v-if="store.currentTable === 'enemies'" size="small" title="并排对比所选敌人的属性（2~4 条）"
         :disabled="compareRows.length < 2 || compareRows.length > 4" @click="compareOpen = true">对比所选（{{
         compareRows.length }}）</Button>
+      <Button v-if="store.currentTable === 'enemies'" size="small" :disabled="rebuilding"
+        title="按生成模型（等级模板曲线 × 品阶系数，见敌人生成设计.md）重算全部敌人的 stats；技能/掉落/奖励/剧情不动"
+        @click="confirmRebuild = true">重算全部敌人属性</Button>
+      <Button v-if="store.currentTable === 'enemies'" size="small" title="导出当前 enemies 表为规范 JSON，可替换 configs/enemies/enemies.json"
+        @click="requestExportEnemiesJson">导出 enemies.json</Button>
       <Button v-if="store.selectedIds.length" variant="danger" size="small" @click="requestRemoveSelected">删除所选（{{
         store.selectedIds.length }}）</Button>
     </div>
@@ -95,6 +100,61 @@
     <!-- 危险操作二次确认 + 统一提示 -->
     <ConfirmDialog v-model="confirmRemove" :title="`删除${schema.label}`" :message="removeMessage"
       confirm-text="删除" danger @confirm="doRemove" />
+
+    <!-- 一键重算敌人属性：覆盖性写二次确认 + 完成后 diff 摘要 -->
+    <ConfirmDialog v-model="confirmRebuild" title="重算全部敌人属性"
+      :message="`将按生成模型（等级模板曲线 × 品阶系数）覆盖 enemies 表全部 ${store.rows.length} 条记录的 stats（血/攻/防/速/命中/闪避/暴击/能量）。
+技能、掉落、经验金钱、剧情与阶段配置保持不变；写库后可通过「导出 enemies.json」回写项目配置。`"
+      confirm-text="重算" @confirm="doRebuildStats" />
+
+    <Dialog v-model="rebuildOpen" title="敌人属性重算结果" width="720px">
+      <div v-if="rebuildReport" class="fs-rebuild">
+        <p class="fs-rebuild-summary">
+          模型管辖 {{ rebuildReport.total }} 只 · 变更 {{ rebuildReport.changedCount }} 只 · 与模型一致的 {{ rebuildReport.total - rebuildReport.changedCount }} 只<template v-if="rebuildReport.skippedCount"> · 跳过 {{ rebuildReport.skippedCount }} 只（非模型管辖，见下方提示）</template>
+        </p>
+        <div v-if="rebuildFailures.length" class="fs-rebuild-fail">
+          <p class="fs-rebuild-fail-title">
+            写入失败 {{ rebuildFailures.length }} 只（数值未落盘；常见原因：与存量数据重名触发唯一性校验）
+          </p>
+          <div class="fs-rebuild-fail-list">
+            <p v-for="f in rebuildFailures" :key="f.id" class="fs-rebuild-warn">{{ f.name }}（{{ f.id }}）：{{ f.reason }}</p>
+          </div>
+        </div>
+        <p v-for="w in rebuildReport.warnings.slice(0, 5)" :key="w" class="fs-rebuild-warn">{{ w }}</p>
+        <p v-if="rebuildReport.warnings.length > 5" class="fs-rebuild-warn">
+          ……等共 {{ rebuildReport.warnings.length }} 条档位回退/等级修正提示
+        </p>
+        <div class="fs-rebuild-table-wrap">
+          <table class="fs-rebuild-table">
+            <thead>
+              <tr>
+                <th>敌人</th><th>等级</th><th>档位</th>
+                <th>血量</th><th>攻击</th><th>防御</th><th>速度</th><th>闪避</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="e in rebuildReport.entries" :key="e.id"
+                :class="{ changed: e.changed && !failedIds.has(e.id), failed: failedIds.has(e.id) }">
+                <td class="fs-rebuild-name">{{ e.name }}<span class="fs-rebuild-id">{{ e.id }}</span></td>
+                <td>L{{ e.level }}</td>
+                <td>{{ tierLabel(e.tier) }}</td>
+                <td v-for="k in ['maxHealth', 'attack', 'defense', 'speed', 'dodge'] as const" :key="k">
+                  <span v-if="e.before[k] !== e.after[k]" class="fs-rebuild-delta">{{ e.before[k] }} → {{ e.after[k] }}</span>
+                  <span v-else>{{ e.after[k] }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <template #footer>
+        <Button variant="ghost" @click="rebuildOpen = false">关闭</Button>
+      </template>
+    </Dialog>
+
+    <!-- 导出防御确认：库与 configs 权威集合存在差异时二次确认，防历史残留污染权威配置 -->
+    <ConfirmDialog v-model="confirmExportAudit" title="导出前提醒" :message="exportAuditMessage"
+      confirm-text="仍要导出" @confirm="exportEnemiesJson" />
   </div>
 </template>
 
@@ -122,6 +182,14 @@ import { resolveRefName } from '@/domain/fengshen/refNames'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { nextEntityId } from '@/domain/fengshen/types'
 import type { RegionData } from '@/domain/fengshen/types'
+import {
+  auditEnemyStore,
+  rebuildAllEnemies,
+  toExportableEnemies,
+  type EnemyStatsRebuildReport,
+  type EnemyStatsRow,
+  type EnemyTier,
+} from '@/domain/fengshen/enemy-generate'
 
 const PAGE_SIZE = 20
 
@@ -142,7 +210,7 @@ const sceneRegionIndex = ref<Map<string, string>>(new Map())
 
 // ── 场景表的区域分组：区域不单独占菜单，与场景一体管理（分组头可编辑区域，工具条可新增） ──
 const gameDataApi = container.resolve<GameDataApi>('GameDataApi')
-const regionWrite = container.resolve<FengshenDataService>('FengshenDataService')
+const writeService = container.resolve<FengshenDataService>('FengshenDataService')
 const regionIntegrity = container.resolve<DataIntegrityService>('DataIntegrityService')
 
 /** 区域行缓存：分组头展示（名称/副标题/等级区间）与区域编辑抽屉的数据源 */
@@ -187,7 +255,7 @@ function openRegionCreate(): void {
 /** 保存区域：走通用写服务（校验/版本/日志同主流程）；成功后刷新分组数据与翻译底表 */
 async function saveRegion(): Promise<void> {
   if (!regionEntity.value) return
-  const result = await regionWrite.save('regions', regionEntity.value as { id: string })
+  const result = await writeService.save('regions', regionEntity.value as { id: string })
   if (!result.ok) {
     regionErrors.value = result.errors ?? []
     return
@@ -552,5 +620,172 @@ function requestRemoveSelected(): void {
 async function doRemove(): Promise<void> {
   await removeTarget?.()
 }
+
+// ── 一键重算全部敌人属性（生成模型见 @/domain/fengshen/enemy-generate） ──
+const confirmRebuild = ref(false)
+const rebuilding = ref(false)
+const rebuildReport = ref<EnemyStatsRebuildReport | null>(null)
+/** 写入被校验拦截的条目（如存量重名数据触发唯一性校验）；失败不中断其余写入 */
+const rebuildFailures = ref<Array<{ id: string; name: string; reason: string }>>([])
+const rebuildOpen = ref(false)
+const failedIds = computed(() => new Set(rebuildFailures.value.map((f) => f.id)))
+
+/** 档位中文（含特殊档；普通档与 ENEMY_ROLE_LABELS 同名） */
+const TIER_LABELS: Record<EnemyTier, string> = {
+  xiaoyao: '小妖',
+  yaotu: '妖徒',
+  yaokui: '妖魁',
+  yaowang: '妖王',
+  yaozun: '妖尊',
+  king: '王级',
+  final: '终局',
+}
+const tierLabel = (tier: EnemyTier): string => TIER_LABELS[tier]
+
+async function doRebuildStats(): Promise<void> {
+  if (rebuilding.value) return
+  rebuilding.value = true
+  try {
+    // 全量取表（与过滤/分页无关）：重算对象是全部敌人
+    const rows = await gameDataApi.listByTable<EnemyStatsRow>('enemies', { limit: 500 })
+    const report = rebuildAllEnemies(rows)
+    if (!report.entries.length) {
+      notification.notify('无可重算数据', 'enemies 表为空', 'warning')
+      return
+    }
+    const byId = new Map(rows.map((r) => [r.id, r]))
+    const failures: Array<{ id: string; name: string; reason: string }> = []
+    let written = 0
+    for (const entry of report.entries) {
+      // 与模型一致的行不写库：避免无意义地递增数据版本 + 刷操作日志
+      if (!entry.changed) continue
+      const row = byId.get(entry.id)
+      if (!row) continue
+      const result = await writeService.save('enemies', { ...row, stats: entry.after })
+      if (result.ok) written++
+      else failures.push({ id: entry.id, name: entry.name, reason: result.errors?.[0] ?? '未知错误' })
+    }
+    await store.refreshVersion()
+    rebuildReport.value = report
+    rebuildFailures.value = failures
+    rebuildOpen.value = true
+    notification.notify(
+      failures.length ? '重算部分完成' : '重算完成',
+      failures.length
+        ? `更新 ${written} 只，${failures.length} 只写入失败（详见结果表，其数值未落盘）`
+        : `共 ${report.total} 只，更新 ${written} 只（其余与模型一致）· 数据版本 v${store.dataVersion}`,
+      failures.length ? 'warning' : 'success',
+    )
+  } finally {
+    rebuilding.value = false
+  }
+}
+
+/** 导出当前 enemies 表为规范 JSON（剥离 updatedAt + id 排序），替换 configs/enemies/enemies.json 后「从项目文件重载」即生效 */
+async function exportEnemiesJson(): Promise<void> {
+  const rows = await gameDataApi.listByTable<EnemyStatsRow>('enemies', { limit: 500 })
+  const json = JSON.stringify(toExportableEnemies(rows), null, 2) + '\n'
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'enemies.json'
+  a.click()
+  URL.revokeObjectURL(url)
+  notification.notify(
+    '已导出规范 enemies.json',
+    '替换 configs/enemies/enemies.json 后，侧栏「从项目文件重载」即全量生效（不替换则重载会还原旧值）',
+    'success',
+  )
+}
+
+// ── 导出防御：运行时表与 configs 权威集合不一致时（历史残留/沙盒新增/缺记录），二次确认防污染权威配置 ──
+const exportAuditMessage = ref('')
+const confirmExportAudit = ref(false)
+
+async function requestExportEnemiesJson(): Promise<void> {
+  const rows = await gameDataApi.listByTable<EnemyStatsRow>('enemies', { limit: 500 })
+  const { extraIds, missingIds } = auditEnemyStore(rows)
+  if (extraIds.length || missingIds.length) {
+    const parts: string[] = []
+    if (extraIds.length) {
+      parts.push(`库中有 ${extraIds.length} 条 configs 权威配置不存在的记录（如 ${extraIds.slice(0, 3).join('、')}——可能是旧体系残留或沙盒新增）`)
+    }
+    if (missingIds.length) {
+      parts.push(`configs 权威配置中有 ${missingIds.length} 条记录不在库中（如 ${missingIds.slice(0, 3).join('、')}）`)
+    }
+    exportAuditMessage.value = `${parts.join('；')}。当前导出将包含库内全部 ${rows.length} 条记录，直接替换 configs 前请确认。建议先「从项目文件重载」同步权威配置后再重算、导出。`
+    confirmExportAudit.value = true
+    return
+  }
+  await exportEnemiesJson()
+}
 </script>
+
+<style scoped>
+.fs-rebuild-summary {
+  margin: 0 0 8px;
+  color: var(--color-text-secondary, #9db4cc);
+  font-size: var(--font-size-md);
+}
+.fs-rebuild-warn {
+  margin: 0 0 6px;
+  color: var(--color-warning, #d9a441);
+  font-size: var(--font-size-md);
+}
+.fs-rebuild-fail {
+  margin-bottom: 8px;
+}
+.fs-rebuild-fail-title {
+  margin: 0 0 4px;
+  color: var(--color-danger, #e06c5a);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+.fs-rebuild-fail-list {
+  max-height: 18vh;
+  overflow: auto;
+}
+.fs-rebuild-table tr.failed td {
+  color: var(--color-text-tertiary, #5f7a99);
+  text-decoration: line-through;
+}
+.fs-rebuild-table-wrap {
+  max-height: 52vh;
+  overflow: auto;
+  border: 1px solid rgba(127, 176, 232, 0.2);
+}
+.fs-rebuild-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-md);
+}
+.fs-rebuild-table th,
+.fs-rebuild-table td {
+  padding: 4px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(127, 176, 232, 0.12);
+  white-space: nowrap;
+}
+.fs-rebuild-table th {
+  position: sticky;
+  top: 0;
+  background: rgba(20, 32, 48, 0.96);
+  color: var(--color-text-secondary, #9db4cc);
+}
+.fs-rebuild-table tr.changed td {
+  color: var(--color-primary, #7fb0e8);
+}
+.fs-rebuild-name {
+  font-weight: 600;
+}
+.fs-rebuild-id {
+  margin-left: 8px;
+  color: var(--color-text-tertiary, #5f7a99);
+  font-size: var(--font-size-sm);
+}
+.fs-rebuild-delta {
+  font-variant-numeric: tabular-nums;
+}
+</style>
 

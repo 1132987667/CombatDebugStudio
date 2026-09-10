@@ -152,6 +152,7 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
+import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import { mounts, treasures } from '../xiyouData'
 import { equipQualityClass, qualityClass, qualityColor, qualityName, qualityOf } from '../quality'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
@@ -172,8 +173,8 @@ const SUBS: TabItem[] = [
   { id: 'mount', label: '坐骑' },
 ]
 
-/** 六类装备槽键（顺序 = 展示顺序） */
-const GEAR_SLOT_KEYS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
+/** 六类装备槽键（顺序 = 展示顺序；单一来源 EQUIPMENT_SLOTS） */
+const GEAR_SLOT_KEYS: GearSlotKey[] = [...EQUIPMENT_SLOTS]
 
 /** 背包装备实例视图（含装备定义名，供模板展示） */
 interface GearPackView extends GearInstance {

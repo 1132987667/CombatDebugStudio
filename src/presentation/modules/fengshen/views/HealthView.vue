@@ -57,7 +57,7 @@
             </td>
             <td :title="`表名：${issue.targetTable}`">{{ tableLabel(issue.targetTable) }}</td>
             <td class="fs-col-actions">
-              <Button v-if="issue.quickFix" size="small" variant="primary"
+              <Button v-if="issue.quickFix && issue.raw" size="small" variant="primary"
                 :title="`应用修复：${issue.quickFix.label}（写入 ${issue.quickFix.field} = ${issue.quickFix.value}）`"
                 @click="store.applyQuickFix(issue.raw)">一键修复</Button>
               <Button size="small" :title="`跳转到「${tableLabel(issue.navTable)}」表并定位该实体`"

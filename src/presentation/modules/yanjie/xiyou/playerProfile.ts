@@ -21,10 +21,13 @@ export interface XiyouPlayerConfig {
   growth: GrowthCurveData['perLevel']
   /** 升级经验表（对齐 GrowthCurveData.expTable，缺档视为封顶） */
   expTable: GrowthCurveData['expTable']
-  /** 加点转换（系统无对应概念，玩家专属） */
+  /** 加点转换（SAP 六维自由点：1 点 = 12 气血 = 2 攻 = 2 防 = 2 命中 = 2 闪避 = 2 速度，《玩家数值体系构建计划.md》D1） */
   statBonuses: Partial<Record<keyof XiyouStatPoints, Partial<Record<AttrCode, number>>>>
+  /** 每级自由属性点（缺省 4） */
+  freePointsPerLevel?: number
 }
 
+// HACK: player.json 无 d.ts；XiyouPlayerConfig 与其同构（growth 键开放），结构漂移由运行时 ?? 兜底
 export const playerConfig = playerConfigJson as unknown as XiyouPlayerConfig
 
 /** 当前等级升级所需经验（expTable 无档位时返回 Infinity，视为封顶） */
@@ -39,12 +42,14 @@ export function computePlayerBase(level: number): Pick<
 > {
   const g = level - 1
   const b = playerConfig.base
+  // growth 键为 Partial（GrowthPerLevel）；configs 实配六键，缺键按 0 成长兜底
+  const growth = playerConfig.growth as Record<string, number>
   return {
-    maxHp: b.maxHealth + g * playerConfig.growth.maxHealth,
-    attackMin: b.attackMin + g * playerConfig.growth.attack,
-    attackMax: b.attackMax + g * playerConfig.growth.attack,
-    defense: b.defense + g * playerConfig.growth.defense,
-    speed: b.speed + g * playerConfig.growth.speed,
+    maxHp: b.maxHealth + g * (growth.maxHealth ?? 0),
+    attackMin: b.attackMin + g * (growth.attack ?? 0),
+    attackMax: b.attackMax + g * (growth.attack ?? 0),
+    defense: b.defense + g * (growth.defense ?? 0),
+    speed: b.speed + g * (growth.speed ?? 0),
     critRate: b.critRate,
     critDamage: b.critDamage,
     maxEnergy: b.maxEnergy,
@@ -69,7 +74,7 @@ export function computeStatBonuses(stats: XiyouStatPoints): Partial<Record<AttrC
 /** 创建玩家快照：满血满能量，属性 = 基础 + 成长 + 加点 */
 export function createPlayerProfile(opts?: { level?: number; exp?: number; stats?: XiyouStatPoints }): XiyouPlayer {
   const level = opts?.level ?? playerConfig.initialLevel
-  const stats: XiyouStatPoints = opts?.stats ?? { available: 0, strength: 0, vitality: 0, agility: 0, spirit: 0 }
+  const stats: XiyouStatPoints = opts?.stats ?? { available: 0, hp: 0, atk: 0, def: 0, hit: 0, dodge: 0, speed: 0 }
   const base = computePlayerBase(level)
   const bonus = computeStatBonuses(stats)
   const maxHp = base.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0)

@@ -5,7 +5,7 @@
  * 引用完整性以声明式 ReferenceRule 注册表表达，保存校验与删除保护共享同一规则表。
  */
 
-import type { FengshenTableName, GearTier } from '@/domain/fengshen/types'
+import type { FengshenTableName, GearTier, AffixQualityCode } from '@/domain/fengshen/types'
 import { ENEMY_ROLE_LABELS, ENEMY_ROLES } from '@/domain/fengshen/role-grades'
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 
@@ -27,6 +27,8 @@ export const MODIFIER_TYPE_VALUE_LABEL: Record<string, string> = { flat: '固定
 export const SLOT_VALUE_LABEL: Record<string, string> = EQUIPMENT_SLOT_LABELS
 /** 装备阶位 t1~t5（xiyou 侧 GearDetailDialog 的 天品/仙品 是另一套文案域，勿混用） */
 export const GEAR_TIER_VALUE_LABEL: Record<GearTier, string> = { t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶' }
+/** 词条品阶拼音五档 → 品质名（affix-rule params 域；与 t1~t5 是两套码系，packStore 的 TIER_KEY 负责换算） */
+export const AFFIX_QUALITY_VALUE_LABEL: Record<AffixQualityCode, string> = { fan: '凡品', xuan: '玄品', di: '地品', tian: '天品', xian: '仙品' }
 
 /** 下拉枚举单一来源派生（键序即选项顺序，与原字面量数组一致） */
 const SLOT_ENUM = Object.keys(EQUIPMENT_SLOT_LABELS)

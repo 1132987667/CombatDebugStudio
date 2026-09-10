@@ -11,12 +11,14 @@
  */
 
 import type {
+  EnemyRewardEntry,
   EnemyRewardTableConfig,
   ExpTableConfig,
   LevelDiffBonusConfig,
   LevelDiffCondition,
   LevelDiffRule,
 } from '@/domain/fengshen/types'
+import type { EnemyRole } from '@/domain/fengshen/role-grades'
 
 /** 钳制数值到 [min, max]（min > max 时返回原值，防御坏数据） */
 function clamp(v: number, min: number, max: number): number {
@@ -137,7 +139,7 @@ export function interpolateEnemyReward(
 export function calcEnemyReward(
   table: EnemyRewardTableConfig,
   enemyLevel: number,
-  role = 'xiaoyao',
+  role: EnemyRole = 'xiaoyao',
 ): { baseExp: number; goldMin: number; goldMax: number; exp: number; goldMinFinal: number; goldMaxFinal: number } {
   const base = interpolateEnemyReward(table, enemyLevel)
   const roleMult = table.roleMultiplier[role] ?? 1
@@ -146,3 +148,19 @@ export function calcEnemyReward(
   const goldMaxFinal = Math.max(1, Math.round(base.goldMax * roleMult))
   return { ...base, exp, goldMinFinal, goldMaxFinal }
 }
+
+/** 敌人奖励基准锚点（等级 → 基础经验/金钱区间，11 档线性插值锚）。
+ *  seed 落库（enemy_reward_table 默认值）与封神榜 ExpGoldView「恢复默认」共用的单一来源。 */
+export const DEFAULT_ENEMY_REWARD_ENTRIES: EnemyRewardEntry[] = [
+  { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
+  { enemyLevel: 5, baseExp: 50, goldMin: 15, goldMax: 25, note: '小花山后期' },
+  { enemyLevel: 10, baseExp: 100, goldMin: 30, goldMax: 50, note: '浅水涧' },
+  { enemyLevel: 15, baseExp: 150, goldMin: 45, goldMax: 75, note: '碎石坡' },
+  { enemyLevel: 20, baseExp: 200, goldMin: 60, goldMax: 100, note: '熔岩洞' },
+  { enemyLevel: 25, baseExp: 250, goldMin: 75, goldMax: 125, note: '蛛丝谷' },
+  { enemyLevel: 30, baseExp: 300, goldMin: 90, goldMax: 150, note: '灵霄台终局' },
+  { enemyLevel: 40, baseExp: 400, goldMin: 120, goldMax: 200, note: '中期深度（插值锚点）' },
+  { enemyLevel: 50, baseExp: 500, goldMin: 150, goldMax: 250, note: '后期深度（插值锚点）' },
+  { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '妖尊 档（插值锚点）' },
+  { enemyLevel: 70, baseExp: 700, goldMin: 210, goldMax: 350, note: '终局档（插值锚点）' },
+]

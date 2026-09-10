@@ -10,7 +10,7 @@
           </div>
 
           <div class="xy-qs-slots" role="list" aria-label="快捷栏">
-            <button v-for="(id, i) in quickSlots" :key="i" type="button" class="xy-qs-slot" :class="{ 'is-filled': !!id }"
+            <button v-for="(id, i) in pack.quickSlots" :key="i" type="button" class="xy-qs-slot" :class="{ 'is-filled': !!id }"
               role="listitem" :disabled="!id" @click="useSlot(i)">
               <template v-if="id">
                 <span class="xy-qs-slot-name">{{ nameOf(id) }}</span>

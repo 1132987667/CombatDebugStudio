@@ -47,7 +47,7 @@ describe('collect 状态映射', () => {
     player.player.level = 6
     player.currency.money = 5360
     player.currency.xianyuan = 40
-    player.statPoints.strength = 2
+    player.statPoints.atk = 2
     await pack.init()
 
     const data = await xiyouSaveBridge.collect({ currentSceneId: 'scene_1_1' })
@@ -55,7 +55,7 @@ describe('collect 状态映射', () => {
     expect(data.player.money).toBe(5360)
     expect(data.player.xianyuan).toBe(40)
     expect(data.player.base_atk).toEqual([player.player.attackMin, player.player.attackMax])
-    expect(data.player.statBonuses?.strength).toBe(2)
+    expect(data.player.statBonuses?.atk).toBe(2)
     expect(data.progress.current_scene).toBe('scene_1_1')
     // 初始档第一关解锁 → max_scene >= 1
     expect(data.progress.max_scene).toBeGreaterThanOrEqual(1)
@@ -106,6 +106,7 @@ describe('restore 状态恢复', () => {
         base_atk: [20, 30],
         hp_max: 900,
         energy_max: 250,
+        // v7 前旧档形状（四维加点）：恢复时旧四维已投点数退还为 available
         statBonuses: { available: 0, strength: 2, vitality: 0, agility: 0, spirit: 0 },
       },
       progress: {
@@ -137,6 +138,9 @@ describe('restore 状态恢复', () => {
     expect(player.player.energy).toBe(250)
     expect(player.currency.money).toBe(10300)
     expect(player.currency.xianyuan).toBe(88)
+    // v7 六维加点迁移：旧四维 strength 2 点退还为 available，六维分配为空
+    expect(player.statPoints.available).toBe(2)
+    expect(player.statPoints.atk).toBe(0)
     expect(pack.countOf('mat_taomu')).toBe(5)
     expect(pack.countOf('elix_001')).toBe(3)
     expect(pack.countOf('quest_001')).toBe(1)

@@ -7,6 +7,9 @@
       <template #school>
         <SchoolsPanel />
       </template>
+      <template empty>
+        暂无内容
+      </template>
     </Tabs>
   </div>
 </template>
@@ -24,8 +27,8 @@ const sub = ref<'character' | 'realm' | 'school' | 'meridian' | 'dharma'>('chara
 
 const SUBS: TabItem[] = [
   { id: 'character', label: '角色' },
+  { id: 'school', label: '流派树' },
   { id: 'realm', label: '境界' },
-  { id: 'school', label: '流派' },
   { id: 'meridian', label: '经脉' },
 ]
 </script>

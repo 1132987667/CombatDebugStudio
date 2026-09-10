@@ -25,6 +25,7 @@ import type {
   OperationLogEntry,
   PlayerGrowthConfig,
   SystemBudgetConfig,
+  SystemDistributionConfig,
   FengshenTableName,
   XiyouData,
 } from '@/domain/fengshen/types'
@@ -163,6 +164,12 @@ export class GameDataApi {
   async getAttributeLimit(): Promise<AttributeLimitConfig | null> {
     const rec = await this.getBattleParam('attribute_limit')
     return rec?.data && typeof rec.data === 'object' && 'limits' in rec.data ? (rec.data as AttributeLimitConfig) : null
+  }
+
+  /** 系统投放明细（params 域 system_distribution 的 data） */
+  async getSystemDistribution(): Promise<SystemDistributionConfig | null> {
+    const rec = await this.getBattleParam('system_distribution')
+    return rec?.data && typeof rec.data === 'object' && 'systems' in rec.data ? (rec.data as SystemDistributionConfig) : null
   }
 
   /** 属性定义列表（attributes 表） */

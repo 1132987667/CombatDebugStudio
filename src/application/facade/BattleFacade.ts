@@ -72,8 +72,8 @@ export class BattleService {
     this.battleManager.on(event, callback)
   }
 
-  off<T extends BattleEventName>(event: T) {
-    this.battleManager.off(event)
+  off<T extends BattleEventName>(event: T, callback?: BattleEventCallback<T>) {
+    this.battleManager.off(event, callback)
   }
 
   // ==================== 状态同步 ====================

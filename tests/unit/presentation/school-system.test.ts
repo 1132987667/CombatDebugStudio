@@ -26,8 +26,9 @@ function resetSkillTree(): void {
     s.selected = false
     for (const n of s.nodes) n.learned = false
   }
+  // 流派树（schools.json）：learned 为 ranks>0 派生只读，重置走 ranks
   for (const layer of schoolsLayers) {
-    for (const n of layer.nodes) n.learned = false
+    for (const n of layer.nodes) n.ranks = 0
   }
   skillPoints.spent = 0
   skillPoints.earned = 4
@@ -127,16 +128,28 @@ describe('天赋树学习格注入（schools.json skillIds）', () => {
     const layer1 = schoolsLayers.find((l) => l.layer === 1)!
     const passiveCell = layer1.nodes.find((n) => n.school === 'lianzhan' && n.skillKind === '被动')!
     expect(passiveCell.skillIds).toEqual(['school_fengsuo_bounce,school_fengsuo_bind,school_fengsuo_fengzhu'])
-    passiveCell.learned = true
+    passiveCell.ranks = 1
     const layer6 = schoolsLayers.find((l) => l.layer === 6)!
     const ultCell = layer6.nodes.find((n) => n.school === 'lianzhan' && n.skillKind === '大技能')!
-    ultCell.learned = true
+    ultCell.ranks = 1
+    // learned 为派生只读
+    expect(passiveCell.learned).toBe(true)
     const skills = equippedPlayerSkills()
     expect(skills.passive).toContain('school_fengsuo_bounce')
     expect(skills.passive).toContain('school_fengsuo_fengzhu')
     expect(skills.ultimate).toContain('skill_school_fengsuotianwang')
     // 未点亮的小技能格不注入
     expect(skills.small).toEqual([])
+  })
+
+  it('属性节点 ranks 多级投入：效果按级取值并注入 playerAttributes（此前点而无效）', () => {
+    const store = usePlayerStore()
+    const layer1 = schoolsLayers.find((l) => l.layer === 1)!
+    const hpNode = layer1.nodes.find((n) => n.school === 'common' && n.code === 'maxHealth')!
+    hpNode.ranks = 1
+    expect(store.playerAttributes[ATTRIBUTE_CODE.maxHealth]).toBe(store.player.maxHp + 12)
+    hpNode.ranks = 2
+    expect(store.playerAttributes[ATTRIBUTE_CODE.maxHealth]).toBe(store.player.maxHp + 24)
   })
 })
 
@@ -155,6 +168,7 @@ describe('存档持久化闭环', () => {
     expect(data.school).toEqual({
       selected: null,
       learned: ['lianji_fufengbian'],
+      tree_ranks: {},
       spent: 3,
       earned: 7,
       totalPillsUsed: 1,
@@ -170,6 +184,28 @@ describe('存档持久化闭环', () => {
     expect(skillPoints.earned).toBe(7)
     expect(skillPoints.totalPillsUsed).toBe(1)
     expect(equippedSkills.small).toEqual(['lianji_fufengbian'])
+  })
+
+  it('collect 持久化流派树 ranks，restore 还原级数（旧档无 tree_ranks 按 learned 1 级兜底）', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const layer1 = schoolsLayers.find((l) => l.layer === 1)!
+    const hpNode = layer1.nodes.find((n) => n.school === 'common' && n.code === 'maxHealth')!
+    hpNode.ranks = 2
+
+    const data = await xiyouSaveBridge.collect({ currentSceneId: scenes[0].id })
+    expect(data.school?.tree_ranks?.[hpNode.id]).toBe(2)
+
+    resetSkillTree()
+    expect(hpNode.ranks).toBe(0)
+    await xiyouSaveBridge.restore(data)
+    expect(hpNode.ranks).toBe(2)
+
+    // 旧档兼容：learned 有 id 但无 tree_ranks → 1 级
+    const legacy = { ...data.school!, tree_ranks: undefined }
+    resetSkillTree()
+    await xiyouSaveBridge.restore({ ...data, school: legacy })
+    expect(hpNode.ranks).toBe(1)
   })
 
   it('旧档（无 earned/equipped 字段）恢复兜底：earned >= spent，装备槽清空', async () => {

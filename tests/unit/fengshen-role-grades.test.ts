@@ -28,14 +28,14 @@ describe('role-grades 单一来源', () => {
     })
   })
 
-  it('官方倍率：小妖 1.0 / 妖兵 1.15 / 妖徒 1.2 / 妖魁 2.0 / 妖王 3.0 / 妖尊 5.0', () => {
+  it('官方倍率：小妖 1.0 / 妖兵 1.1 / 妖徒 1.2 / 妖魁 1.3 / 妖王 1.4 / 妖尊 1.5（线性档）', () => {
     expect(ENEMY_ROLE_MULTIPLIERS).toEqual({
       xiaoyao: 1.0,
-      yaobing: 1.15,
+      yaobing: 1.1,
       yaotu: 1.2,
-      yaokui: 2.0,
-      yaowang: 3.0,
-      yaozun: 5.0,
+      yaokui: 1.3,
+      yaowang: 1.4,
+      yaozun: 1.5,
     })
   })
 })

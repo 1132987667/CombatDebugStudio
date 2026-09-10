@@ -335,11 +335,11 @@ describe('debug 调试方法（DebugCavePanel 存档调试）', () => {
     expect((raw?.equipment as unknown as Record<string, unknown>).necklace).toBeTruthy()
     const r = await f.manager.load()
     expect(r.ok).toBe(true)
-    // 迁移后版本升级 + necklace 映射 helmet、belt 映射 boots
+    // 迁移后版本升级 + necklace 映射 helmet、belt 映射 boots（夹具 id 为 equipment.json 现存装备，restore 不再丢弃）
     const migrated = f.storage.raw(SAVE_STORE.SAVES, SAVE_MAIN_KEY) as SaveData
     expect(migrated.meta.version).toBe('2.0.0')
-    expect(migrated.equipment.helmet).toBe('ac_001')
-    expect(migrated.equipment.boots).toBe('ac_002')
+    expect(migrated.equipment.helmet).toBe('hd_t1_war_01')
+    expect(migrated.equipment.boots).toBe('bt_t1_light_01')
   })
 
   it('debugWriteCorrupt 写入损坏 JSON，load 触发降级（主档损坏→备份→重置）', async () => {

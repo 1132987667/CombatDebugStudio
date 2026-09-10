@@ -42,18 +42,18 @@ describe('playerProfile 玩家属性创建', () => {
     expect(b.speed).toBe(11)
   })
 
-  it('加点换算按 statBonuses 计算', () => {
-    const bonus = computeStatBonuses({ available: 0, strength: 3, vitality: 2, agility: 1, spirit: 4 })
-    expect(bonus.attack).toBe(3)
-    expect(bonus.maxHealth).toBe(20)
-    expect(bonus.speed).toBe(1)
-    expect(bonus.maxEnergy).toBe(20)
+  it('加点换算按 statBonuses 计算（SAP 六维：1 点 = 12 气血 = 2 攻 = 2 速度）', () => {
+    const bonus = computeStatBonuses({ available: 0, hp: 2, atk: 3, def: 0, hit: 0, dodge: 0, speed: 1 })
+    expect(bonus.attack).toBe(6)
+    expect(bonus.maxHealth).toBe(24)
+    expect(bonus.speed).toBe(2)
   })
 
   it('createPlayerProfile 满血创建且含加点加成', () => {
-    const p = createPlayerProfile({ level: 1, stats: { available: 0, strength: 2, vitality: 0, agility: 0, spirit: 0 } })
-    expect(p.attackMin).toBe(10)
-    expect(p.attackMax).toBe(18)
+    const p = createPlayerProfile({ level: 1, stats: { available: 0, hp: 0, atk: 2, def: 0, hit: 0, dodge: 0, speed: 0 } })
+    // 2 点 × 2 攻/点 = +4
+    expect(p.attackMin).toBe(12)
+    expect(p.attackMax).toBe(20)
   })
 
   it('经验表缺档封顶', () => {
@@ -66,9 +66,10 @@ describe('playerProfile 玩家属性创建', () => {
     setActivePinia(createPinia())
     const store = usePlayerStore()
     expect(store.playerAttributes.attack).toBe(store.player.attackMax)
-    store.statPoints.strength += 2
-    expect(store.playerAttributes.attack).toBe(store.player.attackMax + 2)
-    store.statPoints.strength -= 2
+    store.statPoints.atk += 2
+    // 2 点 × 2 攻/点 = +4
+    expect(store.playerAttributes.attack).toBe(store.player.attackMax + 4)
+    store.statPoints.atk -= 2
     expect(store.playerAttributes.attack).toBe(store.player.attackMax)
   })
 })
@@ -90,20 +91,22 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     setActivePinia(createPinia())
     const store = usePlayerStore()
     expect(store.battleSnapshot.attack).toBe(store.player.attackMax)
-    store.statPoints.strength += 2
-    expect(store.battleSnapshot.attack).toBe(store.player.attackMax + 2)
-    store.statPoints.strength -= 2
+    store.statPoints.atk += 2
+    expect(store.battleSnapshot.attack).toBe(store.player.attackMax + 4)
+    store.statPoints.atk -= 2
   })
 
-  it('buildBattleTeams 主角属性取玩家实时值，初始队伍仅主角一人', () => {
+  it('buildBattleTeams 主角属性取玩家实时值，默认 4v4 阵容（主角 + 3 上阵伙伴）', () => {
     setActivePinia(createPinia())
     const store = usePlayerStore()
     const { ally } = buildBattleTeams(scene, undefined, store.battleSnapshot)
-    // 主角：玩家真实属性（attackMax 20、maxHp 420、critRate 7.5）
-    expect(ally).toHaveLength(1)
+    // 主角：玩家真实属性（attackMax 20、maxHp 420、critRate 7.5）；上阵伙伴（mate.json 前 3 名 active）凑满 4v4
+    expect(ally).toHaveLength(4)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.attack)).toBe(store.player.attackMax)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(store.player.maxHp)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.critRate)).toBe(store.player.critRate)
+    // 伙伴按 mate.json stats × 等级成长系数派生（孙小圣 lv5：230 × 1.6 = 368）
+    expect(ally[1].getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(368)
   })
 
   it('buildBattleTeams 缺省 protagonist 回退 playerParty[0] 演示值', () => {

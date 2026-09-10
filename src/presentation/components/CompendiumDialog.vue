@@ -144,8 +144,8 @@ const getTabCount = (tab: string): number => {
   }
 }
 
-const getItemName = (item: any): string => {
-  return item.name || '未知'
+const getItemName = (item: { name?: string } | null | undefined): string => {
+  return item?.name || '未知'
 }
 
 const getRarityText = (rarity: number): string => {

@@ -49,7 +49,7 @@
         </datalist>
         <TacticalInput size="md" type="number" :model-value="entry.value" placeholder="数值"
           :aria-label="`${field.label}数值`"
-          @update:model-value="(v) => setMapValue(idx, String(v ?? ''))" />
+          @update:model-value="(v: string | number | null) => setMapValue(idx, String(v ?? ''))" />
         <Button size="small" variant="danger" @click="removeMapRow(idx)">×</Button>
       </div>
       <Button size="small" @click="addMapRow">＋ 添加属性</Button>

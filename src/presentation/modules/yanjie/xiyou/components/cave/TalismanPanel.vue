@@ -64,6 +64,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 import { talismanRecipes } from '../../xiyouData'
 import { itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
+import type { XiyouQuality } from '../../types'
 import { qualityClassOf } from '../../quality'
 
 const pack = usePackStore()
@@ -74,7 +75,7 @@ const selected = ref<XiyouRecipe | null>(null)
 const brewing = ref(false)
 const rippling = ref(false)
 
-function qualityOfOut(r: XiyouRecipe): string {
+function qualityOfOut(r: XiyouRecipe): XiyouQuality {
   const outId = itemIdByName(r.name)
   return outId ? qualityOf(outId) : '凡品'
 }

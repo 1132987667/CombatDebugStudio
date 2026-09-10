@@ -563,5 +563,287 @@
     "passiveCategory": [
       "attribute"
     ]
+  },
+  {
+    "id": "school_pojun_pozhan_apply",
+    "name": "破绽烙印·叠破绽",
+    "description": "暴击时，为目标附加 1 层【破绽】（上限 3 层）：每层使目标免伤 -3%、受到的暴击伤害 +8%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_pozhan",
+        "stacks": 1
+      }
+    ],
+    "triggerTimes": [
+      "on_crit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_pojun_baonu_apply",
+    "name": "暴怒循环·叠暴怒",
+    "description": "每次暴击后，自身获得 1 层【暴怒】（上限 3 层）：每层使暴击伤害 +5%，持续 2 回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_baonu",
+        "stacks": 1
+      }
+    ],
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "on_crit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_pojun_zhanmie_execute",
+    "name": "斩灭之锋·低血处决",
+    "description": "对气血低于 50% 的目标暴击时，追加 30% 攻击力的真实伤害（基础版口径：低血暴击率/暴伤修正待条件静态修正支持）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.3
+            }
+          ]
+        }
+      }
+    ],
+    "condition": "target_low_hp",
+    "conditionParams": {
+      "pct": 50
+    },
+    "triggerTimes": [
+      "on_crit"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_budong_panshi_shield",
+    "name": "磐石壁垒·无盾生盾",
+    "description": "每回合开始时，若自身没有护盾，则获得最大气血 8% 的护盾",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "shield",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.08
+            }
+          ]
+        },
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "condition": "source_shield_empty",
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_budong_jingji_reflect",
+    "name": "荆棘反噬",
+    "description": "受到攻击时，对攻击者反弹 15% 攻击力的真实伤害，并自身获得 1 层【荆棘】（每层反伤 +5% 待动态反伤接线，暂为标记）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.15
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_jingji_stack",
+        "stacks": 1,
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "maxTriggersPerRound": 3,
+    "triggerTimes": [
+      "damage_taken"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_budong_mingwang_regen",
+    "name": "不动明王·低血回复",
+    "description": "当自身气血低于 50% 时，每回合回复 5% 最大气血",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.05
+            }
+          ]
+        },
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ],
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "condition": "source_low_hp",
+    "conditionParams": {
+      "pct": 50
+    },
+    "triggerTimes": [
+      "turn_start"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_huanying_fanji",
+    "name": "幻影反击",
+    "description": "成功闪避后，立即对攻击者发动一次反击，造成 80% 攻击力的伤害（可暴击）；30% 概率使目标致盲 1 回合（命中 -30%）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.8
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_blind",
+        "stacks": 1,
+        "probability": 0.3
+      }
+    ],
+    "maxTriggersPerRound": 3,
+    "triggerTimes": [
+      "dodge"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_huanying_canying_apply",
+    "name": "残影叠层",
+    "description": "每次成功闪避，获得 1 层【残影】（上限 5 层）：每层使自身闪避率 +3%、速度 +2%，持续到战斗结束（受击消耗 1 层待脚本接线）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_canying",
+        "stacks": 1
+      }
+    ],
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": [
+      "dodge"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
+  },
+  {
+    "id": "school_huanying_jifeng_speed",
+    "name": "疾风之影",
+    "description": "闪避速度低于自身的攻击者后，自身获得 1 层【疾风残步】（速度 +5，可叠 2 层，持续 1 回合）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_huanying_speed",
+        "stacks": 1
+      }
+    ],
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "condition": "target_speed_lower",
+    "triggerTimes": [
+      "dodge"
+    ],
+    "passiveCategory": [
+      "trigger"
+    ]
   }
 ]

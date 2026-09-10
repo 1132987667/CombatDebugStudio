@@ -43,6 +43,8 @@ export class HealCalculator {
     target: BattleEntity,
     context?: StepExecutionContext,
     buffSystem?: BuffSystem,
+    /** NOTE: shield 步骤复用本计算——护盾不受"缺失气血"封顶（满血亦可获得全额护盾）且不吃减治疗 */
+    options?: { ignoreHealCap?: boolean }
   ): { heal: number; overflow: number } {
     this.calculationLogs = []
     let heal = 0
@@ -61,7 +63,7 @@ export class HealCalculator {
             }
             // level 为实体级字段（非属性系统属性），与 resolveAttributeValue 同口径
             if (attr === 'level') return source.level ?? 0
-            return source.getAttribute(attr as ATTRIBUTE_CODE) || 0
+            return source.getAttribute(attr) || 0
           },
         )
         heal += total
@@ -77,12 +79,12 @@ export class HealCalculator {
       heal = result
     }
 
-    // 治疗上限: 不超过目标最大气血值
+    // 治疗上限: 不超过目标最大气血值（护盾跳过——盾独立于气血条，见 options.ignoreHealCap）
     const maxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
     const currentHp = target.getAttribute(ATTRIBUTE_CODE.currentHealth)
     const healCap = Math.max(0, maxHp - currentHp)
     let overflow = 0
-    if (heal > healCap) {
+    if (heal > healCap && !options?.ignoreHealCap) {
       // ponytail: 溢出量在 debuff 之前计算——"损失"由两个独立机制构成：
       // ① 上限溢出（HP满了装不下）= overflow，用于盾生成
       // ② 减益缩减（debuff降低效果）= 在下方计算，反映在最终 heal 值
@@ -96,8 +98,8 @@ export class HealCalculator {
       heal = healCap
     }
 
-    // 负面状态影响（降低治疗效果）
-    const debuffEffect = this.calculateDebuffEffect(target, buffSystem)
+    // 负面状态影响（降低治疗效果）——护盾不吃减治疗
+    const debuffEffect = options?.ignoreHealCap ? 0 : this.calculateDebuffEffect(target, buffSystem)
     if (debuffEffect > 0) {
       heal = floor(heal * (1 - debuffEffect))
       this.calculationLogs.push({

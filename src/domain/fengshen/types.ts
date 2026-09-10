@@ -39,18 +39,19 @@ export interface ActorData {
 /** 装备（equipment 表）—— 对齐规格说明书 3.6。
  * 统一装备定义表：configs/equipment/equipment.json（旧 eq_* 与西游 wp_/ar_/ac_ 已合并为唯一数据源）。
  * 可打造装备含 tier/materials/cost；无法匹配新体系的旧版 eq_* 保留原 ID（craftable 缺省 false）。
- * NOTE（PRD §21）：静态定义不再携带写死 stats——核心/主要/附加属性全部由运行时按
- * 「单位基数 × itemLevel × 权重 × 品阶权重 × 转化系数 × 浮动」公式与 affix-rule 池生成（gear-generate.ts）。 */
+ * NOTE（PRD §21）：静态定义不携带随机词条（主要/附加属性由运行时按 affix-rule 池 roll）；
+ * 核心属性可选携带静态标称 coreStat（「全量重生成」按装备公式单值预算，见字段注释），缺省时运行时 roll。 */
 export interface EquipmentStatEntry {
-  attribute: ATTRIBUTE_CODE
+  /** 属性码 = 配置域开放 string（affix-rule 池/曲线可含注册表外属性码，消费侧查表兜底） */
+  attribute: string
   modifierType: 'flat' | 'percent'
   value: number
 }
 /** 装备词条（实例化：制造/掉落时从 affix-rule 池抽取并锁定数值；洗练/重铸时重 roll） */
 export interface GearAffix {
-  /** 属性码（同件装备内唯一；来源 affix-rule 的 attribute_groups 属性） */
+  /** 属性码（同件装备内唯一；来源 affix-rule 的 attribute_groups 属性，开放 string） */
   id: string
-  attribute: ATTRIBUTE_CODE
+  attribute: string
   modifierType: 'flat' | 'percent'
   value: number
   /** 主要属性第 1 条（子类型固定，PRD §21）——洗练不可替换 */
@@ -76,6 +77,11 @@ export interface EquipmentData {
   itemLevel?: number
   /** 穿戴等级门槛 */
   requiredLevel?: number
+  /** 部位固定属性（§21 核心属性静态标称值，批量生成器「全量重生成」写入）：
+   *  装备公式单值口径——单位基数 × itemLevel × 核心权重 × 子类型系数 × 转化系数 × 品阶权重上限，
+   *  不含浮动（50%~110%）与品质系数（实例维度）。实例化时直取并按品质系数缩放，
+   *  不再公式 roll 核心（packStore.rollInstanceParts）；缺省时维持运行时 roll 旧径 */
+  coreStat?: EquipmentStatEntry
   /** 阵营限制（引用 elements 表） */
   factionRestriction?: string
   /** 打造材料（可打造装备才有） */
@@ -518,20 +524,20 @@ export interface EconomyRatiosConfig {
 export interface AffixRuleConfig {
   id: 'affix_rule'
   description?: string
-  /** 部位固定属性（slot → 该部位必然提供的主属性 code） */
-  fixed_attributes: Partial<Record<EquipmentSlot, ATTRIBUTE_CODE>>
+  /** 部位固定属性（slot → 该部位必然提供的主属性 code；键开放——策划侧可增删槽位配置） */
+  fixed_attributes: Record<string, string>
   /** 子类型核心属性词条系数（sub_type id → 核心属性 code + 词条系数；剑=攻击90% → { attribute, ratio }） */
-  core_affix_ratio: Record<string, { attribute: ATTRIBUTE_CODE; ratio: number }>
+  core_affix_ratio: Record<string, { attribute: string; ratio: number }>
   /** 子类型主要属性池（sub_type id → 第 1 条固定属性 + 第 2 条随机池）。
    *  random_pool 元素可为属性组码（如 `ALL-MEC`，整组展开取一）或单个属性码（如 `comboRate`）；
    *  解析时先查 attribute_groups 命中即按组展开，否则视为单属性。主要属性不含基础六维（PRD §21）。 */
-  main_affix_pool?: Record<string, { fixed: ATTRIBUTE_CODE; random_pool: string[] }>
+  main_affix_pool?: Record<string, { fixed: string; random_pool: string[] }>
   /** 品阶码（affix-rule params 域的拼音五档；与装备/存档侧 t1~t5 是两套码系，packStore 负责换算） */
-  tier_weight: Record<AffixQualityCode, { min: number; max: number }>
+  tier_weight: Record<string, { min: number; max: number }>
   /** 词条数值曲线（来源系统 → 属性组数值区间；属性组 = 一组属性 code + 下限/上限 {base, perLevel, full}）。
    *  base=1 级基础值，perLevel=每级成长，full=满级值（策划给表，满级约 50 级）。 */
   affix_value_curve: Record<string, Array<{
-    attributes: ATTRIBUTE_CODE[]
+    attributes: string[]
     min: { base: number; perLevel: number; full: number }
     max: { base: number; perLevel: number; full: number }
   }>>
@@ -539,26 +545,26 @@ export interface AffixRuleConfig {
     label: string
     side: 'ATK' | 'DEF'
     tier: string
-    attributes: ATTRIBUTE_CODE[]
+    attributes: string[]
     names: string[]
   }>
-  sub_type_groups: Partial<Record<EquipmentSlot, {
+  sub_type_groups: Record<string, {
     label: string
     sub_types: Array<{ id: string; name: string }>
-  }>>
-  slot_side: Partial<Record<EquipmentSlot, 'ATK' | 'DEF'>>
+  }>
+  slot_side: Record<string, 'ATK' | 'DEF'>
   affix_rows: Array<{
     row: number
     name: string
     pool: Record<string, string[]>
   }>
   forbidden: Array<{
-    slot: EquipmentSlot
+    slot: string
     slotLabel: string
     /** 限定子类型（缺省 = 整个部位生效）；存 sub_type_groups 里的中文名 */
     subType?: string
     subTypeLabel?: string
-    attributes: ATTRIBUTE_CODE[]
+    attributes: string[]
     attributeLabels: string[]
   }>
   /** 宠物与坐骑投放规则（8.16 口径：个体驱动 + 品质门槛 1~5），缺省视为未配置 */

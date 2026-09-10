@@ -235,6 +235,8 @@ export function buildSampleDamageTrace(override?: Partial<DamageTraceInputs>): D
     vulnerability: input.vulnerability,
   }, { maxHealth: 1000, currentHealth: input.targetCurrentHealth })
 
+  // NOTE: 最小化演示结构（仅填公式消费的字段），ExtendedSkillStep 其余字段与
+  //       158 行演示实体同理由 cast 规避，不构造全量内部状态
   const skillStep = {
     type: 'deal_damage',
     damageCategory: DamageCategory.PHYSICAL,

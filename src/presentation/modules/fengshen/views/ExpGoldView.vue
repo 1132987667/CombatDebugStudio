@@ -200,8 +200,9 @@ import {
   interpolateEnemyReward,
   matchLevelDiffCondition,
   matchLevelDiffRule,
+  DEFAULT_ENEMY_REWARD_ENTRIES,
 } from '@/domain/fengshen/exp-reward'
-import { ENEMY_ROLE_MULTIPLIERS } from '@/domain/fengshen/role-grades'
+import { ENEMY_ROLE_MULTIPLIERS, type EnemyRole } from '@/domain/fengshen/role-grades'
 import LineChart, { type ChartSeries } from '@/presentation/modules/fengshen/components/LineChart.vue'
 
 const TABS = [
@@ -234,7 +235,7 @@ const enemyReward = reactive<EnemyRewardTableConfig>({
 })
 const roleKeys = ref<string[]>([])
 const simEnemyLevel = ref(10)
-const simRole = ref('xiaoyao')
+const simRole = ref<EnemyRole>('xiaoyao')
 const simResult = ref<ReturnType<typeof calcEnemyReward> | null>(null)
 
 /** 等级差规则草稿 */
@@ -432,19 +433,7 @@ function defaultEnemyReward(): EnemyRewardTableConfig {
     baseExpFormula: 'enemyLevel × 10',
     baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
     roleMultiplier: { ...ENEMY_ROLE_MULTIPLIERS },
-    entries: [
-      { enemyLevel: 1, baseExp: 10, goldMin: 3, goldMax: 5, note: '小花山初级敌人' },
-      { enemyLevel: 5, baseExp: 50, goldMin: 15, goldMax: 25, note: '小花山后期' },
-      { enemyLevel: 10, baseExp: 100, goldMin: 30, goldMax: 50, note: '浅水涧' },
-      { enemyLevel: 15, baseExp: 150, goldMin: 45, goldMax: 75, note: '碎石坡' },
-      { enemyLevel: 20, baseExp: 200, goldMin: 60, goldMax: 100, note: '熔岩洞' },
-      { enemyLevel: 25, baseExp: 250, goldMin: 75, goldMax: 125, note: '蛛丝谷' },
-      { enemyLevel: 30, baseExp: 300, goldMin: 90, goldMax: 150, note: '灵霄台终局' },
-      { enemyLevel: 40, baseExp: 400, goldMin: 120, goldMax: 200, note: '中期深度（插值锚点）' },
-      { enemyLevel: 50, baseExp: 500, goldMin: 150, goldMax: 250, note: '后期深度（插值锚点）' },
-      { enemyLevel: 60, baseExp: 600, goldMin: 180, goldMax: 300, note: '妖尊 档（插值锚点）' },
-      { enemyLevel: 70, baseExp: 700, goldMin: 210, goldMax: 350, note: '终局档（插值锚点）' },
-    ],
+    entries: DEFAULT_ENEMY_REWARD_ENTRIES.map((e) => ({ ...e })),
     interpolation: 'linear',
   }
 }

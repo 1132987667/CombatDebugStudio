@@ -22,6 +22,7 @@ import type {
 } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { checkAttributeLimits } from '@/domain/fengshen/validators/attribute-limits'
+import { checkBudgetDeviation } from '@/domain/fengshen/validators/budget-deviation'
 
 export type ValidationSeverity = 'error' | 'warn' | 'info'
 
@@ -77,6 +78,7 @@ export interface ValidationRule {
  */
 export const NUMERIC_VALIDATION_RULES: ValidationRule[] = [
   { id: 'attribute_limits', severity: 'error', run: checkAttributeLimits },
+  { id: 'budget_deviation', severity: 'warn', run: checkBudgetDeviation },
 ]
 
 export interface ValidationReport {

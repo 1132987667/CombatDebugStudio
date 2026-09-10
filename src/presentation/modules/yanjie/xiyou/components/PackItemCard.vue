@@ -133,7 +133,7 @@ function closeMenu(): void {
 
 function act(action: 'use' | 'sell' | 'storage' | 'discard' | 'open'): void {
   closeMenu()
-  emit(action, props.item.id)
+  emit(action as 'open', props.item.id)
 }
 
 onBeforeUnmount(() => {

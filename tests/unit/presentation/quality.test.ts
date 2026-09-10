@@ -22,6 +22,7 @@ import packJson from '@configs/xiyou/pack.json'
 import itemsJson from '@configs/xiyou/items.json'
 import mateJson from '@configs/xiyou/mate.json'
 import equipJson from '@configs/xiyou/equip.json'
+import equipmentJson from '@configs/equipment/equipment.json'
 
 describe('品级映射 RARITY_NAMES', () => {
   it('rarity 1-5 → 凡品/玄品/地品/天品/仙品', () => {
@@ -132,10 +133,9 @@ describe('旧版数据迁移 migrateRarityField', () => {
 
 describe('数据层统一：configs 全数字 rarity', () => {
   it('pack.json 各组条目均能解析到 items.json，且 rarity 为 1-4 数字（不再有中文 4 档）', () => {
-    // pack.json 现为 { name, count } 引用结构，rarity 权威在 items.json
+    // pack.json：材料/丹药/消耗品为 { name, count } 引用，rarity 权威在 items.json
     const groups = [
       packJson.materials,
-      packJson.equipment,
       packJson.pills,
       packJson.consumables,
     ]
@@ -150,6 +150,20 @@ describe('数据层统一：configs 全数字 rarity', () => {
       expect(rarity, `「${it.name}」应存在于 items.json`).toBeDefined()
       expect(rarity as number).toBeGreaterThanOrEqual(1)
       expect(rarity as number).toBeLessThanOrEqual(4)
+    }
+
+    // equipment 组已 itemId 化：rarity 权威在 equipment.json（装备 1-5）
+    const gearRarityById = new Map<string, number>()
+    for (const g of equipmentJson as Array<{ id: string; rarity: number }>) {
+      gearRarityById.set(g.id, g.rarity)
+    }
+    const equipEntries = packJson.equipment as Array<{ itemId: string }>
+    expect(equipEntries.length).toBeGreaterThan(0)
+    for (const it of equipEntries) {
+      const rarity = gearRarityById.get(it.itemId)
+      expect(rarity, `「${it.itemId}」应存在于 equipment.json`).toBeDefined()
+      expect(rarity as number).toBeGreaterThanOrEqual(1)
+      expect(rarity as number).toBeLessThanOrEqual(5)
     }
   })
 

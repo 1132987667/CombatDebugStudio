@@ -12,6 +12,7 @@ import {
   type SaveData,
 } from './save-schema'
 
+/** 旧档持有量归一：对象浅拷贝 / 字符串数组计数为 Record；其余视为空（宽容点：历史档键开放） */
 function toRecord(v: unknown): Record<string, number> {
   if (v && typeof v === 'object' && !Array.isArray(v)) {
     return { ...(v as Record<string, number>) }

@@ -173,6 +173,39 @@ describe('Tabs 面板', () => {
     expect(root.querySelector('.panel-b')).toBeNull()
     expect(root.querySelector('.panel-a')).not.toBeNull()
   })
+
+  it('页签无对应具名内容时回退渲染 empty 插槽', async () => {
+    const active = ref('a')
+    host = document.createElement('div')
+    document.body.appendChild(host)
+    app = createApp({
+      render: () =>
+        h(
+          Tabs,
+          {
+            tabs: [
+              { id: 'a', label: '页签A' },
+              { id: 'todo', label: '待实现' },
+            ],
+            modelValue: active.value,
+            destroyInactive: true,
+            'onUpdate:modelValue': (v: string) => (active.value = v),
+          },
+          {
+            a: () => h('div', { class: 'panel-a' }, '内容A'),
+            empty: () => h('p', { class: 'panel-empty-fallback' }, '暂无内容'),
+          },
+        ),
+    })
+    app.mount(host)
+    // 有对应内容的页签不触发 empty 兜底
+    expect(host.querySelector('.panel-empty-fallback')).toBeNull()
+    expect(host.querySelector('.panel-a')).not.toBeNull()
+    // 未提供内容的页签回退渲染 empty 插槽
+    getTabs(host)[1].click()
+    await nextTick()
+    expect(host.querySelector('.panel-empty-fallback')?.textContent).toBe('暂无内容')
+  })
 })
 
 describe('Tabs 指示条', () => {

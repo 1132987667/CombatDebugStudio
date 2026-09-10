@@ -13,12 +13,13 @@
 import { makeInstance, GEAR_SLOT_LABELS, type GearInstance, type GearSlotKey } from '@/presentation/stores/packStore'
 import { applyAffixToParticipant, clearAffixesFromParticipant } from '@/shared/utils/affix'
 import { PLAYER_ID } from '@/shared/constants/player'
-import type { AffixData } from '@/domain/fengshen/types'
+import type { AffixData, EquipmentAffixData } from '@/domain/fengshen/types'
 import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
-import { createPlayerProfile } from './playerProfile'
+import { createPlayerProfile, playerConfig } from './playerProfile'
 import { dropsForEnemyById, xianyuanForEnemyIds, rewardForEnemyById } from './battle'
-import { equippedSkills, grantPillPoint, pureSchoolBonus } from './xiyouData'
+import { equippedSkills, grantLevelPoint, grantPillPoint, pureSchoolBonus, schoolsLayers } from './xiyouData'
+import { enhanceMaxByRarity } from './caveLogic'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
 import { RARITY_NAMES } from './quality'
@@ -29,17 +30,10 @@ const RARITY_OPTIONS = Object.entries(RARITY_NAMES).map(([value, label]) => ({ v
 /** 材料类型集合（与 PackPanel 的 material/essence/enhance 分组对齐，供"给予全部N阶材料"按 items.json 全量筛选） */
 const MATERIAL_TYPES = ALL_ITEM_TYPES_SET
 
-/** 装备词条库（equipment-affixes.json，与 packStore 同源） */
-const EQUIP_AFFIXES = equipmentAffixesDataRaw as unknown as Array<{
-  id: string
-  name: string
-  attribute: string
-  modifierType: 'flat' | 'percent'
-  valueRange: { min: number; max: number }
-  applicableSlots: string[]
-}>
+/** 装备词条库（equipment-affixes.json；类型即 fengshen 词缀表镜像）。NOTE: packStore 制造/洗练词缀池已切 affix-rule.json，与本库为两池——本库仅供词缀注入调试 */
+const EQUIP_AFFIXES = equipmentAffixesDataRaw as unknown as EquipmentAffixData[]
 
-/** 敌人词缀库（affixes.json，与封神榜 affixes 表同源） */
+/** 敌人词缀库（affixes.json，与封神榜 affixes 表同源；断言为取 affixes 数组的最小视图） */
 const AFFIX_LIBRARY = affixesDataRaw as unknown as {
   affixes: AffixData[]
 }
@@ -143,6 +137,12 @@ function getCraftQualityLock(): number | null {
 function playerSetLevel(env: PlayerStoreDebugEnv, level: number): Record<string, unknown> {
   const { player } = env
   const next = Math.max(1, Math.floor(level))
+  // 与 gainExp 自然升级同口径补发：每级自由属性点 + 技能点（仅升级方向；降级不回收，与游戏语义一致）
+  if (next > player.player.level) {
+    const delta = next - player.player.level
+    player.statPoints.available += delta * (playerConfig.freePointsPerLevel ?? 4)
+    for (let i = 0; i < delta; i++) grantLevelPoint()
+  }
   const profile = createPlayerProfile({
     level: next,
     exp: player.player.exp,
@@ -553,13 +553,16 @@ function buildPlayerCategory(env: PlayerStoreDebugEnv): DebugCategory {
             label: '重置为初始状态',
             danger: true,
             execute: () => {
-              Object.assign(p, createPlayerProfile({ level: 1, exp: 0, stats: { available: 3, strength: 0, vitality: 0, agility: 0, spirit: 0 } }))
-              player.statPoints.available = 3
-              player.statPoints.strength = 0
-              player.statPoints.vitality = 0
-              player.statPoints.agility = 0
-              player.statPoints.spirit = 0
+              Object.assign(p, createPlayerProfile({ level: 1, exp: 0, stats: { available: 4, hp: 0, atk: 0, def: 0, hit: 0, dodge: 0, speed: 0 } }))
+              player.statPoints.available = 4
+              player.statPoints.hp = 0
+              player.statPoints.atk = 0
+              player.statPoints.def = 0
+              player.statPoints.hit = 0
+              player.statPoints.dodge = 0
+              player.statPoints.speed = 0
               player.currency.money = 0
+              player.currency.xianyuan = 100 // 对齐 playerStore 初始灵韵
               return ok('玩家已重置为初始状态')
             },
           },
@@ -768,7 +771,7 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             },
             execute: (rarity) => {
               const r = Number(rarity ?? 1)
-              // NOTE: 全槽位 = 共享 6 槽定义（GEAR_SLOT_LABELS），避免写死槽位清单漏槽/引用失效槽位
+              // NOTE: 全槽位 = GEAR_SLOT_LABELS（8 槽枚举；equipment.json 现有 6 槽数据，artifact/relic 无装备自动跳过）
               const given: string[] = []
               for (const slot of Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[]) {
                 const pick = env.equipmentCatalog.find((e) => e.slot === slot && e.rarity === r)
@@ -798,9 +801,12 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: (instId) => {
               const inst = pack.gearInstances.find((g) => g.instanceId === instId)
               if (!inst) return fail('未找到该装备实例')
-              inst.enhance += 1
+              // 与正规强化路径同口径：按品阶封顶（enhanceMaxByRarity），不产生超限非法实例
+              const max = enhanceMaxByRarity(pack.gearById(inst.itemId)?.rarity ?? 1)
+              if (inst.enhance >= max) return fail(`已达强化上限 +${max}`)
+              inst.enhance = Math.min(inst.enhance + 1, max)
               void pack.flush()
-              return ok(`「${pack.gearById(inst.itemId)?.name ?? inst.itemId}」强化 +${inst.enhance}`)
+              return ok(`「${pack.gearById(inst.itemId)?.name ?? inst.itemId}」强化 +${inst.enhance}（上限 +${max}）`)
             },
           },
           {
@@ -815,9 +821,11 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: (instId) => {
               const inst = pack.gearInstances.find((g) => g.instanceId === instId)
               if (!inst) return fail('未找到该装备实例')
-              inst.enhance += 5
+              const max = enhanceMaxByRarity(pack.gearById(inst.itemId)?.rarity ?? 1)
+              if (inst.enhance >= max) return fail(`已达强化上限 +${max}`)
+              inst.enhance = Math.min(inst.enhance + 5, max)
               void pack.flush()
-              return ok(`「${pack.gearById(inst.itemId)?.name ?? inst.itemId}」强化 +${inst.enhance}`)
+              return ok(`「${pack.gearById(inst.itemId)?.name ?? inst.itemId}」强化 +${inst.enhance}（上限 +${max}）`)
             },
           },
           {
@@ -980,7 +988,7 @@ function buildPackCategory(env: PlayerStoreDebugEnv): DebugCategory {
       .map((it) => ({ value: it.name, label: it.name }))
   const pillOptions = () =>
     env.items
-      .filter((it) => it.type === '丹药')
+      .filter((it) => it.type === '丹药' || it.type === '永久丹药')
       .map((it) => ({ value: it.name, label: it.name }))
   /** name → itemId（caveLogic 同源） */
   const idByName = (name: string): string | null => {
@@ -1215,12 +1223,6 @@ function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
     label: '修行',
     groups: [
       {
-        id: 'realm',
-        label: '境界',
-        actions: [
-        ],
-      },
-      {
         id: 'school',
         label: '流派',
         actions: [
@@ -1270,6 +1272,10 @@ function buildCultivateCategory(env: PlayerStoreDebugEnv): DebugCategory {
               pureSchoolBonus.value = null
               for (const s of schools) {
                 for (const n of s.nodes ?? []) n.learned = false
+              }
+              // 流派树（schools.json）同步清空
+              for (const l of schoolsLayers) {
+                for (const n of l.nodes) n.ranks = 0
               }
               return ok('技能树已重置（全部节点未点亮，装备槽已清空）')
             },
@@ -1402,18 +1408,18 @@ function buildEconomyCategory(env: PlayerStoreDebugEnv): DebugCategory {
           },
           {
             id: 'econ_mat_x2',
-            label: '材料倍增 x2',
+            label: '背包倍增 x2',
             execute: () => {
               for (const [id, count] of Object.entries(pack.inventory)) {
                 pack.inventory[id] = count * 2
               }
               void pack.flush()
-              return ok(`全部材料数量翻倍（共 ${Object.keys(pack.inventory).length} 种）`)
+              return ok(`全部背包物品数量翻倍（共 ${Object.keys(pack.inventory).length} 种）`)
             },
           },
           {
             id: 'econ_mat_x10',
-            label: '材料倍增 x10',
+            label: '背包倍增 x10',
             execute: () => {
               for (const [id, count] of Object.entries(pack.inventory)) {
                 pack.inventory[id] = count * 10

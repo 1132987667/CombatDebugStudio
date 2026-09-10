@@ -146,7 +146,10 @@ defineExpose({ updateIndicator })
         <!-- v-if 处理销毁模式，v-show 处理保活模式；二者同节点时 v-if 先求值 -->
         <div v-if="!destroyInactive || tab.id === activeId" v-show="tab.id === activeId" :id="panelId(tab.id)"
           class="flex-col-fill" role="tabpanel" :aria-labelledby="tabButtonId(tab.id)">
-          <slot :name="tab.id" :tab="tab" />
+          <slot :name="tab.id" :tab="tab">
+            <!-- fallback：该页签无对应具名内容时回退到 empty 插槽（页面可用其展示"暂无内容"占位） -->
+            <slot name="empty" />
+          </slot>
         </div>
       </template>
     </div>

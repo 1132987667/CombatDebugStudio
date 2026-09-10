@@ -167,8 +167,10 @@ function nodeById(id: string): XiyouSkillNode | undefined {
   return undefined
 }
 
+const SLOT_LABELS: Record<string, string> = { passive: '被动', skill: '小技能', ultimate: '大招' }
+
 function slotLabelOf(n: XiyouSkillNode): string {
-  return { passive: '被动', skill: '小技能', ultimate: '大招' }[n.type] ?? n.type
+  return SLOT_LABELS[n.type] ?? n.type
 }
 
 function equip(n: XiyouSkillNode): void {

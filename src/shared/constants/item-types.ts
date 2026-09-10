@@ -4,6 +4,7 @@
  * 统一物品类型分类，避免各模块重复声明。
  * 数据来源：configs/xiyou/items.json
  */
+import itemsDataRaw from '@configs/xiyou/items.json'
 
 /** 基础材料类型（自然资源） */
 export const BASE_MATERIAL_TYPES = [
@@ -35,12 +36,11 @@ export const MATERIAL_DOMAIN_TYPES = [
   ...CONSUMABLE_TYPES,
 ] as const
 
-/** 调试用完整物品类型集合（debugActions 使用，包含所有功能性类型） */
-export const ALL_ITEM_TYPES_SET = new Set<string>([
-  ...BASE_MATERIAL_TYPES,
-  ...SPECIAL_MATERIAL_TYPES,
-  ...FUNCTIONAL_ITEM_TYPES,
-])
+/** 调试用完整物品类型集合（debugActions 使用）——从 items.json 实配 type 派生，
+ *  手写清单必与数据漂移（曾漏'洗练'/'经验丹'等 20 种实配类型），故以数据为单一来源 */
+export const ALL_ITEM_TYPES_SET = new Set<string>(
+  ((itemsDataRaw as { items: Array<{ type: string }> }).items ?? []).map((it) => it.type),
+)
 
 /** 类型导出 */
 export type BaseMaterialType = typeof BASE_MATERIAL_TYPES[number]

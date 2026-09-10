@@ -4,6 +4,9 @@
  *       玩家运行时状态（属性/加点/货币）持有在 playerStore，本文件仅保留类型定义与配置数据。
  *       reactive 初始化自 configs（同步兜底，组件渲染不依赖异步）；
  *       loadXiyouData() 从封神榜 IDB 读取西游数据并原地更新（需求说明 §5.1 方案 B）。
+ * HACK: 本文件多处 `json as unknown as XiyouXxx[]` 双断言——JSON import 无 d.ts 且
+ *       结构校验在封神榜健康检查阶段，XiyouXxx 是 configs 结构的视图子集；
+ *       若某 JSON 结构与视图类型漂移，由 DataIntegrityService / 运行时 ?? 兜底暴露。
  */
 
 import caveJson from '@configs/xiyou/cave.json'
@@ -213,7 +216,10 @@ export const schoolsLayers: SchoolsLayer[] = reactive<SchoolsLayer[]>(
       skillKind: raw.skillKind,
       layer: layer.layer,
       index: idx,
-      learned: false,
+      ranks: 0,
+      get learned(): boolean {
+        return this.ranks > 0
+      },
       x: 0,
       y: 0,
     })),
@@ -279,6 +285,23 @@ export function availableSkillPoints(): number {
 export function grantLevelPoint(): void {
   if (skillPoints.earned - skillPoints.totalPillsUsed >= LEVEL_POINT_LIMIT) return
   skillPoints.earned = Math.min(skillPoints.earned + 1, skillPoints.max)
+}
+
+/** 节点满级数（value 档位数：[基础值, 满级值] → 2 级，[固定值] → 1 级） */
+export function nodeMaxRank(node: SchoolsNode): number {
+  return Math.max(1, node.value?.length ?? 1)
+}
+
+/** 升到第 rank 级（1-based）的消耗点数（learn 节点缺省 2 点/属性节点 1 点，见《完整项目说明.md》加点规则） */
+export function nodeRankCost(node: SchoolsNode, rank: number): number {
+  return node.cost?.[rank - 1] ?? node.cost?.[0] ?? (node.type === 'learn' ? 2 : 1)
+}
+
+/** 第 rank 级的效果值（1 级 = value[0]，满级 = value 末位；value 为空返回 0） */
+export function nodeValueAtRank(node: SchoolsNode, rank: number): number {
+  if (!node.value?.length) return 0
+  const idx = Math.min(Math.max(rank, 1), node.value.length) - 1
+  return node.value[idx]
 }
 
 /** 服用悟道丹获得技能点：+1 且 totalPillsUsed+1，全存档最多 PILL_POINT_LIMIT 颗 */
@@ -387,6 +410,20 @@ function syncArray(target: unknown[], src: unknown): void {
 }
 
 /**
+ * IDB mates 数据合并覆盖：按 name 匹配，IDB 快照（运行时状态 active 等为权威）缺新结构字段
+ * （stats 等后加配置）时从 configs 原值回落——整表替换会让新配置字段被旧档清空。
+ */
+function syncMates(src: unknown[]): void {
+  if (!Array.isArray(src)) return
+  const prev = new Map(mates.map((m) => [m.name, m]))
+  const merged = (src as XiyouMate[]).map((m) => {
+    const before = prev.get(m.name)
+    return { ...before, ...m, stats: m.stats ?? before?.stats }
+  })
+  mates.splice(0, mates.length, ...merged)
+}
+
+/**
  * IDB schools 数据覆盖：schools.json 不含 nodes，覆盖后重新挂 skill_tree 节点，
  * 并保留旧的 learned/selected 状态（防存档恢复前闪烁）。
  */
@@ -461,7 +498,9 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   migrateRarity(treasures)
   aIn(mounts, 'equip', 'mounts')
   migrateRarity(mounts)
-  aIn(mates, 'mate', 'mates')
+  // NOTE: mates 不整表覆盖（syncMates 按 name 合并）——旧档快照缺 stats 会清空参战属性
+  const mateSrc = arr('mate') as { mates?: XiyouMate[] } | null
+  if (mateSrc?.mates) syncMates(mateSrc.mates)
   migrateRarity(mates)
   aIn(pets, 'mate', 'pets')
   migrateRarity(pets)

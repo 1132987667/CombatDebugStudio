@@ -58,7 +58,7 @@
     </section>
 
     <section class="xy-section">
-      <h4 class="xy-sec-title">角色加点<span class="xy-sec-count">剩余 {{ statPoints.available }} 点</span></h4>
+      <h4 class="xy-sec-title">角色加点<span class="xy-sec-count">每级 +{{ freePointsPerLevel }} · 剩余 {{ statPoints.available }} 点</span></h4>
       <div class="xy-stat-list">
         <div class="xy-stat-row" v-for="stat in statList" :key="stat.key">
           <span class="xy-stat-label">{{ stat.label }}</span>
@@ -103,10 +103,11 @@ import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAtt
 import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
+import { playerConfig } from '../../playerProfile'
 import { equipBonuses } from '../../battle'
 import { qualityClass, qualityOf } from '../../quality'
 
-defineEmits<{ goEquip: [] }>()
+const emit = defineEmits<{ goEquip: [] }>()
 
 const notification = useNotificationStore()
 
@@ -126,7 +127,7 @@ function toEntry(code: ATTRIBUTE_CODE, meta: { displayName: string; isPercentage
   return { code, displayName: meta.displayName, isPercentage: !!meta.isPercentage }
 }
 
-const EXCLUDED_CORE = new Set([
+const EXCLUDED_CORE = new Set<ATTRIBUTE_CODE>([
   ATTRIBUTE_CODE.currentHealth,
   ATTRIBUTE_CODE.currentEnergy,
   ATTRIBUTE_CODE.maxHealth,
@@ -216,14 +217,26 @@ function hideAttrTooltip() {
   attrTooltip.value.visible = false
 }
 
-const statList = [
-  { key: 'strength', label: '力量', desc: '攻击 +1/点' },
-  { key: 'vitality', label: '体质', desc: '气血 +10/点' },
-  { key: 'agility', label: '敏捷', desc: '速度 +1/点' },
-  { key: 'spirit', label: '精神', desc: '能量 +5/点' },
+// SAP 六维自由点（《玩家数值体系构建计划.md》D1）：转化率读 player.json statBonuses，展示不硬编码
+const STAT_DEFS = [
+  { key: 'hp', label: '气血', attr: 'maxHealth' },
+  { key: 'atk', label: '攻击', attr: 'attack' },
+  { key: 'def', label: '防御', attr: 'defense' },
+  { key: 'hit', label: '命中', attr: 'hitValue' },
+  { key: 'dodge', label: '闪避', attr: 'dodgeValue' },
+  { key: 'speed', label: '速度', attr: 'speed' },
 ] as const
 
-type StatKey = (typeof statList)[number]['key']
+type StatKey = (typeof STAT_DEFS)[number]['key']
+
+/** 每级自由点（player.json freePointsPerLevel） */
+const freePointsPerLevel = playerConfig.freePointsPerLevel ?? 4
+
+const statList = STAT_DEFS.map(({ key, label, attr }) => ({
+  key,
+  label,
+  desc: `+${playerConfig.statBonuses[key]?.[attr] ?? 0}/点`,
+}))
 
 const usedPoints = computed(() => statList.reduce((sum, s) => sum + statPoints.value[s.key], 0))
 

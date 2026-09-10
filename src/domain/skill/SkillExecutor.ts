@@ -1160,13 +1160,17 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-  ): void {    const buffTarget =
+  ): void {
+    const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
-    // 从 calculation 计算护盾值
+    // 从 calculation 计算护盾值（满血亦可全额上盾：护盾不受缺失气血封顶）
     const { heal: shieldValue } = this.healCalculator.calculateHeal(
       skillStep,
       source,
       buffTarget,
+      undefined,
+      undefined,
+      { ignoreHealCap: true },
     )
 
     const config: BuffConfig = {

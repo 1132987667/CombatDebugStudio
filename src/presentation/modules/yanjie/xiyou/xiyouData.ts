@@ -410,15 +410,17 @@ function syncArray(target: unknown[], src: unknown): void {
 }
 
 /**
- * IDB mates 数据合并覆盖：按 name 匹配，IDB 快照（运行时状态 active 等为权威）缺新结构字段
- * （stats 等后加配置）时从 configs 原值回落——整表替换会让新配置字段被旧档清空。
+ * IDB mates 数据合并覆盖：按 name 匹配，IDB 快照缺新结构字段（stats 等后加配置）时从 configs
+ * 原值回落——整表替换会让新配置字段被旧档清空。
+ * NOTE: active 是运行时状态（上阵与否，权威 = 存档 mates_active），不从封神榜数据文档覆盖——
+ *       否则 IDB 里的旧 mates 快照会在每次启动时把上阵状态带回来。
  */
 function syncMates(src: unknown[]): void {
   if (!Array.isArray(src)) return
   const prev = new Map(mates.map((m) => [m.name, m]))
   const merged = (src as XiyouMate[]).map((m) => {
     const before = prev.get(m.name)
-    return { ...before, ...m, stats: m.stats ?? before?.stats }
+    return { ...before, ...m, active: before?.active ?? m.active, stats: m.stats ?? before?.stats }
   })
   mates.splice(0, mates.length, ...merged)
 }

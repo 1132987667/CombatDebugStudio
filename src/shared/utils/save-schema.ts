@@ -45,6 +45,8 @@ export interface SaveProgressState {
   max_scene: number
   current_scene: string
   unlocked_scenes: string[]
+  /** 场景星级：场景 id → 历史最高星（1~3；旧档缺省视为 0，首杀判定不受影响） */
+  scene_stars?: Record<string, number>
 }
 
 export interface SaveInventoryState {

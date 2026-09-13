@@ -14,6 +14,7 @@ import {
 } from '@/presentation/modules/yanjie/xiyou/playerProfile'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { buildBattleTeams, equipBonuses, xianyuanForEnemyIds } from '@/presentation/modules/yanjie/xiyou/battle'
+import { mates } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import type { XiyouScene } from '@/presentation/modules/yanjie/xiyou/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
@@ -96,17 +97,24 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     store.statPoints.atk -= 2
   })
 
-  it('buildBattleTeams 主角属性取玩家实时值，默认 4v4 阵容（主角 + 3 上阵伙伴）', () => {
+  it('buildBattleTeams 主角属性取玩家实时值，默认阵容 = 主角 + mate.json 默认上阵伙伴', () => {
     setActivePinia(createPinia())
     const store = usePlayerStore()
     const { ally } = buildBattleTeams(scene, undefined, store.battleSnapshot)
-    // 主角：玩家真实属性（attackMax 20、maxHp 420、critRate 7.5）；上阵伙伴（mate.json 前 3 名 active）凑满 4v4
+    // mate.json 前 3 名伙伴默认上阵（新档即 4v4，兜住 1v4 开局），主角在首位
     expect(ally).toHaveLength(4)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.attack)).toBe(store.player.attackMax)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(store.player.maxHp)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.critRate)).toBe(store.player.critRate)
     // 伙伴按 mate.json stats × 等级成长系数派生（孙小圣 lv5：230 × 1.6 = 368）
+    const mate = mates.find((m) => m.name === '孙小圣')!
+    expect(mate.active).toBe(true)
     expect(ally[1].getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(368)
+    // 下阵后收缩（伙伴面板上阵交互；此处直改运行时验证编队链路）
+    mate.active = false
+    const { ally: withoutMate } = buildBattleTeams(scene, undefined, store.battleSnapshot)
+    expect(withoutMate).toHaveLength(3)
+    mate.active = true
   })
 
   it('buildBattleTeams 缺省 protagonist 回退 playerParty[0] 演示值', () => {

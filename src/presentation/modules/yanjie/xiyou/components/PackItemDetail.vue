@@ -18,6 +18,7 @@
         <Button v-else-if="inBattleOnly" size="small" disabled title="仅战斗中可用（战斗行囊·快捷栏）">使用</Button>
 
         <Button v-if="canEquip" size="small" variant="secondary" @click="emit('equip', item.id)">装备</Button>
+        <Button v-if="canDecompose" size="small" variant="warning" @click="askDecompose = true">分解</Button>
         <Button v-if="canStore" size="small" variant="secondary" @click="emit('storage', item.id)">存入仓库</Button>
         <Button v-if="storageFull" size="small" variant="warning" @click="pack.expandStorage()">仓库已满 · 扩容</Button>
         <Button v-if="canDiscard" size="small" variant="danger" @click="askDiscard = true">丢弃</Button>
@@ -29,6 +30,10 @@
     <ConfirmDialog v-model="askDiscard" title="丢弃物品"
       :message="`确定丢弃「${item?.name ?? ''}」×${count} 吗？此操作不可恢复。`"
       confirm-text="丢弃" danger @confirm="onDiscard" />
+
+    <ConfirmDialog v-model="askDecompose" title="分解装备"
+      :message="decomposeMsg"
+      confirm-text="分解" danger @confirm="onDecompose" />
   </Dialog>
 </template>
 
@@ -54,6 +59,7 @@ const emit = defineEmits<{
 const pack = usePackStore()
 
 const askDiscard = ref(false)
+const askDecompose = ref(false)
 
 const item = computed(() => (props.itemId ? pack.catalogById(props.itemId) : undefined))
 const eff = computed(() => item.value?.effects?.[0])
@@ -75,6 +81,20 @@ const storageFull = computed(() => props.count > 0 && !pack.storage.some((s) => 
 
 const canDiscard = computed(() => props.count > 0 && item.value?.type !== '任务')
 
+/** 分解：仅背包中的装备实例可分解（§21 全品质可分解；穿戴中的装备不在背包列表） */
+const canDecompose = computed(() => canEquip.value && props.count > 0)
+
+/** 分解对象为背包中第一件实例（品质随实例不同，产出按品质档计算） */
+const firstInstance = computed(() =>
+  props.itemId ? pack.gearInstances.find((g) => g.itemId === props.itemId) : undefined,
+)
+
+const decomposeMsg = computed(() => {
+  const inst = firstInstance.value
+  const qualityText = inst ? qualityOf(inst.quality) : '未知品质'
+  return `消耗分解锤×1，分解背包中第一件「${item.value?.name ?? ''}」（${qualityText}），按品质返还金钱/制造材料/兵解残魄晶。此操作不可恢复。`
+})
+
 /** 品阶色类（px-q* 为全局令牌映射，见下方样式） */
 function rarityClass(rarity: number): string {
   return `px-q${rarity}`
@@ -90,6 +110,12 @@ function onUse(): void {
 
 function onDiscard(): void {
   if (item.value) emit('discard', item.value.id)
+}
+
+function onDecompose(): void {
+  if (!props.itemId) return
+  const err = pack.decompose(props.itemId)
+  if (!err) emit('close')
 }
 </script>
 

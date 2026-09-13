@@ -10,6 +10,11 @@
 
           <p class="xy-battle-desc">{{ scene.desc }}</p>
           <p v-if="scene.narrativeHook" class="xy-battle-hook">{{ scene.narrativeHook }}</p>
+          <!-- 开战入口（内联于场景头部，替代原"战斗就绪"横幅）：手动开战模式下显示 -->
+          <div v-if="run.phase === 'battle' && !store.autoPlayMode" class="xy-battle-start">
+            <span class="xy-battle-start-badge">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 就绪</span>
+            <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
+          </div>
         </div>
         <div class="xy-battle-head-right" role="list" aria-label="敌人与掉落">
           <div v-for="e in scene.enemies" :key="e.name" class="xy-drop-row" role="listitem">
@@ -110,12 +115,6 @@
       <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
     </div>
 
-    <!-- 战斗就绪待命条：关闭"进入即自动开战"后，由玩家手动点「开战」启动循环 -->
-    <div v-else-if="run.phase === 'battle' && !store.autoPlayMode" class="xy-run xy-run--ready" aria-label="战斗就绪">
-      <span class="xy-run-title">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 战斗就绪</span>
-      <button type="button" class="xy-run-btn" @click="beginBattle">开战</button>
-    </div>
-
     <!-- 中上部：4v4 角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard） -->
     <div class="xy-vitals">
       <div class="xy-vitals-row xy-vitals-row--enemy" role="list" aria-label="敌方阵容">
@@ -171,6 +170,7 @@ import {
   dropsForEnemyIds,
   enemyBriefById,
   equipBonuses,
+  firstKillRewardDrops,
   schoolTreeCombatBonuses,
   xianyuanForEnemyIds,
   rewardForEnemyIds,
@@ -481,6 +481,15 @@ function skipWait(): void {
 function finishRun(bossTurns: number, aliveCount: number): void {
   run.stars = clearStars(aliveCount, Math.max(1, store.allyTeam.length), bossTurns)
   run.firstClear = markSceneCleared(props.scene.id, run.stars)
+  if (run.firstClear) {
+    // BOSS 首杀一次性奖励（首杀神兵/耀星石，battle.ts FIRST_KILL_REWARDS 口径）：入包并并入结算展示
+    const pack = usePackStore()
+    const bossIds = runNodes[run.nodeIndex]?.enemyIds ?? []
+    const firstKillDrops = firstKillRewardDrops(bossIds)
+    for (const d of firstKillDrops) pack.addItem(d.itemId, d.quantity)
+    run.totals.drops.push(...firstKillDrops)
+    lastSettle.drops.push(...firstKillDrops)
+  }
   run.phase = 'finished'
   finishLeftSec.value = RUN_TIMING.FINISH_SHOW_MS / 1000
   finishTicker = setInterval(() => {
@@ -620,6 +629,39 @@ onUnmounted(() => {
   padding-left: var(--space-2);
   border-left: 2px solid var(--xy-gold);
   color: var(--xy-ink-3);
+}
+
+/* 开战入口（内联于场景头部）：场次徽章 + 开战按钮，轻量不占行 */
+.xy-battle-start {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  white-space: nowrap;
+}
+
+.xy-battle-start-badge {
+  padding: 2px var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--xy-gold) 55%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--xy-gold);
+  font-size: var(--font-size-md);
+  letter-spacing: 1px;
+}
+
+.xy-battle-start-btn {
+  padding: 2px var(--space-4);
+  border: 1px solid var(--xy-seal);
+  border-radius: var(--radius-sm);
+  background: var(--xy-seal);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  letter-spacing: 4px;
+  text-indent: 4px;
+  cursor: pointer;
+
+  &:hover { filter: brightness(1.15); }
 }
 
 .xy-battle-head-right {

@@ -18,14 +18,17 @@ const cfg = (...segments) => path.resolve(__dirname, '..', 'configs', ...segment
 
 const itemsDoc = JSON.parse(fs.readFileSync(cfg('xiyou', 'items.json'), 'utf8'))
 const itemIds = new Set(itemsDoc.items.map((i) => i.id))
+const equipmentDoc = JSON.parse(fs.readFileSync(cfg('equipment', 'equipment.json'), 'utf8'))
+const equipIds = new Set(equipmentDoc.map((e) => e.id))
 
 const issues = []
 let totalRefs = 0
 
-/** 收集引用并校验：refId 不在 items.json 时记入 issues */
-function checkRef(origin, refId) {
+/** 收集引用并校验：refId 不在 items.json 时记入 issues；
+ *  allowEquip 供掉落表使用——装备本体可掉落（id 权威在 equipment.json） */
+function checkRef(origin, refId, allowEquip = false) {
   totalRefs++
-  if (!itemIds.has(refId)) {
+  if (!itemIds.has(refId) && !(allowEquip && equipIds.has(refId))) {
     issues.push({ origin, refId })
   }
 }
@@ -36,29 +39,28 @@ for (const id of new Set(dup)) {
   issues.push({ origin: 'items.json 内部重复 ID', refId: id })
 }
 
-// enemies 掉落
+// enemies 掉落（装备本体可掉落，id 合法集含 equipment.json）
 for (const file of fs.readdirSync(cfg('enemies')).filter((f) => f.endsWith('.json'))) {
   const enemies = JSON.parse(fs.readFileSync(cfg('enemies', file), 'utf8'))
   for (const e of enemies) {
     for (const d of e.drops || []) {
-      checkRef(`${file}:${e.id}.drops`, d.itemId)
+      checkRef(`${file}:${e.id}.drops`, d.itemId, true)
     }
   }
 }
 
-// drops 掉落组
+// drops 掉落组（掉落组可含装备本体，id 合法集含 equipment.json）
 const drops = JSON.parse(fs.readFileSync(cfg('drops', 'drops.json'), 'utf8'))
 for (const g of drops) {
   for (const entry of g.entries || []) {
-    checkRef(`drops.json:${g.id}.entries`, entry.itemId)
+    checkRef(`drops.json:${g.id}.entries`, entry.itemId, true)
   }
 }
 
-// equipment 制造材料（装备详情统一数据源 configs/equipment/equipment.json）
-const equipment = JSON.parse(fs.readFileSync(cfg('equipment', 'equipment.json'), 'utf8'))
+// equipment 制造材料（装备详情统一数据源 configs/equipment/equipment.json；equipmentDoc/equipIds 已在文件头加载）
+const equipment = equipmentDoc
 const forgeRecipes = JSON.parse(fs.readFileSync(cfg('xiyou', 'cave.json'), 'utf8')).forgeRecipes || []
 const forgeIds = new Set(forgeRecipes.map((r) => r.id))
-const equipIds = new Set(equipment.map((e) => e.id))
 for (const f of forgeRecipes) {
   if (f.equipmentId && !equipIds.has(f.equipmentId)) {
     issues.push({ origin: `cave.json:${f.id}.equipmentId`, refId: f.equipmentId })

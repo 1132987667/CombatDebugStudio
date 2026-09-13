@@ -4,7 +4,7 @@
       <template #mates>
         <p class="xy-panel-hint">上阵伙伴上限 {{ MAX_ACTIVE_MATES }} · 主角 {{ playerStore.player.name }} Lv.{{ playerStore.player.level }}</p>
         <div class="xy-card-grid">
-          <div v-for="(m, i) in matesWithUnlock" :key="m.name" class="xy-mate-card" :class="{ active: m.active, locked: !m.unlocked }">
+          <div v-for="(m, i) in mates" :key="m.name" class="xy-mate-card" :class="{ active: m.active, locked: !isUnlocked(i) }">
             <div class="xy-mate-head">
               <span class="xy-mate-name" :class="qualityClass(m.rarity)">{{ m.name }}</span>
               <span v-if="m.active" class="xy-chip xy-chip--gold">上阵</span>
@@ -15,14 +15,21 @@
               <IconStar v-for="i in 5" :key="i" class="xy-star" :class="{ on: i <= m.stars }" />
             </div>
             <p class="xy-row-desc">{{ m.desc }}</p>
+            <!-- NOTE: 上阵/下场拆成两个互斥按钮，目标状态在渲染期固定（!m.active 内联取反在连点/双击时
+                 参数翻转，导致状态切回去——"点了没反应"） -->
             <button
-              v-if="m.unlocked && m.stats && m.level > 0"
+              v-if="isUnlocked(i) && m.stats && m.level > 0 && m.active"
+              type="button"
+              class="xy-mate-toggle off"
+              @click="setMateActive(m.name, false)"
+            >下场</button>
+            <button
+              v-else-if="isUnlocked(i) && m.stats && m.level > 0"
               type="button"
               class="xy-mate-toggle"
-              :class="{ off: m.active }"
-              :disabled="!m.active && activeMateCount >= MAX_ACTIVE_MATES"
-              @click="toggleMate(m.name)"
-            >{{ m.active ? '下场' : '上阵' }}</button>
+              :disabled="activeMateCount >= MAX_ACTIVE_MATES"
+              @click="setMateActive(m.name, true)"
+            >上阵</button>
           </div>
         </div>
       </template>
@@ -59,7 +66,6 @@ import type { TabItem } from '@/presentation/components'
 import { mates, pets } from '../xiyouData'
 import { MAX_ACTIVE_MATES } from '../battle'
 import { saveManager } from '../save-bridge'
-import type { XiyouMate } from '../types'
 import { qualityClass, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
@@ -74,26 +80,26 @@ const SUBS: TabItem[] = [
   { id: 'pets', label: '灵宠' },
 ]
 
-/** 伙伴解锁状态：前 4 位已解锁，余下待剧情推进（展示用） */
-const matesWithUnlock: Array<XiyouMate & { unlocked: boolean }> = mates.map((m, i) => ({ ...m, unlocked: i < 4 }))
+/** 伙伴解锁状态：前 4 位已解锁，余下待剧情推进（展示用；直接读 reactive mates 保证上阵切换即时响应） */
+const UNLOCKED_MATES = 4
+const isUnlocked = (i: number): boolean => i < UNLOCKED_MATES
 
 const activeMateCount = computed(() => mates.filter((m) => m.active).length)
 
-/** 上阵/下场（上限 MAX_ACTIVE_MATES；即时存档，出战阵容随下次战斗生效） */
-function toggleMate(name: string): void {
+/**
+ * 设置伙伴上阵状态（幂等：按钮显示什么就做什么——快速双击/连点不会翻转回原位）
+ * NOTE: 此前为 toggle 取反语义，双击 = 翻转两次 = 视觉上"点了没反应"
+ */
+function setMateActive(name: string, active: boolean): void {
   const m = mates.find((x) => x.name === name)
-  if (!m) return
-  if (m.active) {
-    m.active = false
-  } else {
-    if (activeMateCount.value >= MAX_ACTIVE_MATES) {
-      notification.toast(`上阵伙伴最多 ${MAX_ACTIVE_MATES} 名`, 'warning')
-      return
-    }
-    m.active = true
+  if (!m || m.active === active) return
+  if (active && activeMateCount.value >= MAX_ACTIVE_MATES) {
+    notification.toast(`上阵伙伴最多 ${MAX_ACTIVE_MATES} 名`, 'warning')
+    return
   }
+  m.active = active
   saveManager.autoSave()
-  notification.toast(m.active ? `${m.name} 已上阵` : `${m.name} 已下场`, 'success')
+  notification.toast(active ? `${m.name} 已上阵` : `${m.name} 已下场`, 'success')
 }
 </script>
 

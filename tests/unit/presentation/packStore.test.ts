@@ -1010,14 +1010,14 @@ describe("药园（仙缘催熟制：投入 1 株草药 + 仙缘，按产量表�
 })
 
 describe("坊市刷新", () => {
-  it("初始全量上架；刷新后抽取 6 种，列表变化", async () => {
+  it("初始全量上架；刷新后抽取 8 种，列表变化", async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.shopGoods.length).toBe(9) // 商品池 9 种（洗髓丹移除后）
+    expect(pack.shopGoods.length).toBe(16) // 商品池 16 种（养成材料补货 +7 后）
 
     const before = new Set(pack.shopGoods.map((g) => g.name))
     pack.refreshShop(new Date(), () => 0)
-    expect(pack.shopGoods.length).toBe(6)
+    expect(pack.shopGoods.length).toBe(8)
     // 抽取的是商品池子集
     for (const g of pack.shopGoods) expect(before.has(g.name)).toBe(true)
 
@@ -1046,5 +1046,77 @@ describe("坊市刷新", () => {
     expect(pack.isNewDay(day1.toISOString(), day1)).toBe(false)
     expect(pack.isNewDay(day1.toISOString(), day2)).toBe(true)
     expect(pack.isNewDay("", day1)).toBe(true)
+  })
+})
+
+describe("装备分解（§21 装备分解）", () => {
+  /** 造一件指定品质的背包实例（绕开 rollQuality，品质直接受控；先清掉同 id 预置实例） */
+  function pushInst(pack: ReturnType<typeof usePackStore>, itemId: string, quality: number, instanceId: string): void {
+    for (let i = pack.gearInstances.length - 1; i >= 0; i--) {
+      if (pack.gearInstances[i].itemId === itemId) pack.gearInstances.splice(i, 1)
+    }
+    pack.gearInstances.push({
+      instanceId, itemId, enhance: 0, quality, qualityFactor: 1, star: 0, stats: [], affixes: [],
+    })
+  }
+
+  it("绝品分解：必得残魂×1，制造材料按 40% 返还（至少 1），扣分解锤、移除实例、金钱入账", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pushInst(pack, "wp_t1_light_01", 4, "test-decomp-1") // 竹剑：桃木×3+铜精×1，value 150
+    pack.addItem("decomp_hammer", 1)
+    const before = {
+      money: pack.currency.money,
+      soul: pack.countOf("decomp_soul"),
+      taomu: pack.countOf("mat_taomu"),
+      tongjing: pack.countOf("mat_tongjing"),
+    }
+    expect(pack.decompose("wp_t1_light_01", () => 0)).toBeNull()
+    expect(pack.countOf("decomp_hammer")).toBe(0)
+    expect(pack.gearInstances.some((g) => g.instanceId === "test-decomp-1")).toBe(false)
+    expect(pack.countOf("decomp_soul")).toBe(before.soul + 1)
+    expect(pack.countOf("mat_taomu")).toBe(before.taomu + 1) // max(1, floor(3×0.4)) = 1
+    expect(pack.countOf("mat_tongjing")).toBe(before.tongjing + 1)
+    expect(pack.currency.money).toBe(before.money + 84) // ⌊150×0.56⌋
+  })
+
+  it("神品分解：残魂×3 + 太古汲灵符必得", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pushInst(pack, "wp_t1_light_01", 5, "test-decomp-2")
+    pack.addItem("decomp_hammer", 1)
+    const soul0 = pack.countOf("decomp_soul")
+    expect(pack.decompose("wp_t1_light_01", () => 0)).toBeNull()
+    expect(pack.countOf("decomp_soul")).toBe(soul0 + 3)
+    expect(pack.countOf("wash_extract")).toBe(1)
+  })
+
+  it("超品分解概率分支：rng 0.5 → 残魂(40%)未中、强化石(60%)命中", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pushInst(pack, "wp_t1_light_01", 3, "test-decomp-3")
+    pack.addItem("decomp_hammer", 1)
+    const before = { soul: pack.countOf("decomp_soul"), enh: pack.countOf("enh_stone") }
+    expect(pack.decompose("wp_t1_light_01", () => 0.5)).toBeNull()
+    expect(pack.countOf("decomp_soul")).toBe(before.soul)
+    expect(pack.countOf("enh_stone")).toBe(before.enh + 1)
+  })
+
+  it("无分解锤拒绝分解，实例保留", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pushInst(pack, "wp_t1_light_01", 4, "test-decomp-4")
+    expect(pack.decompose("wp_t1_light_01")).toBe("缺少分解锤（坊市有售）")
+    expect(pack.gearInstances.some((g) => g.instanceId === "test-decomp-4")).toBe(true)
+    expect(pack.countOf("decomp_soul")).toBe(0)
+  })
+
+  it("穿戴中的装备不可分解（不在背包实例中，分解锤不消耗）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.addItem("decomp_hammer", 1)
+    pack.equip("wp_t1_light_01")
+    expect(pack.decompose("wp_t1_light_01")).toBe("背包中没有该装备")
+    expect(pack.countOf("decomp_hammer")).toBe(1)
   })
 })

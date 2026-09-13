@@ -8,9 +8,13 @@ import { createPinia, setActivePinia } from 'pinia'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import equipmentAffixesJson from '@configs/equipment/equipment-affixes.json'
+import equipmentJson from '@configs/equipment/equipment.json'
+import itemsJson from '@configs/xiyou/items.json'
 import {
+  FIRST_KILL_REWARDS,
   buildEnemyTeam,
   dropsForEnemyIds,
+  firstKillRewardDrops,
   rewardForEnemyIds,
 } from '@/presentation/modules/yanjie/xiyou/battle'
 import { markSceneCleared, scenes } from '@/presentation/modules/yanjie/xiyou/xiyouData'
@@ -163,6 +167,34 @@ describe('通关解锁链（markSceneCleared，V08）', () => {
     } finally {
       s1b.unlocked = b1
       s21.unlocked = b2
+    }
+  })
+})
+
+describe('BOSS 首杀奖励（FIRST_KILL_REWARDS）', () => {
+  it('五大妖王命中奖励表：首杀神兵/耀星石以必掉形态返回', () => {
+    const drops = firstKillRewardDrops(['boss_major_huayaowang'])
+    expect(drops).toEqual([
+      { itemId: 'wp_sb01', quantity: 1, chance: 1 },
+      { itemId: 'star_up_low', quantity: 1, chance: 1 },
+    ])
+    expect(firstKillRewardDrops(['boss_major_rulai'])).toEqual([
+      { itemId: 'star_up_low', quantity: 1, chance: 1 },
+    ])
+    expect(firstKillRewardDrops(['enemy_s1_1_a', 'ghost_enemy'])).toEqual([])
+  })
+
+  it('奖励表物品全部已注册（items.json 或 equipment.json），零断裂', () => {
+    const items = new Set(
+      (itemsJson as { items: Array<{ id: string }> }).items.map((i) => i.id),
+    )
+    const equips = new Set(
+      (equipmentJson as Array<{ id: string }>).map((e) => e.id),
+    )
+    for (const ids of Object.values(FIRST_KILL_REWARDS)) {
+      for (const id of ids) {
+        expect(items.has(id) || equips.has(id)).toBe(true)
+      }
     }
   })
 })

@@ -49,6 +49,8 @@ import {
   WASH_MATERIAL_NAMES,
   WASH_MATERIALS,
   washAllowed,
+  catalogById as caveCatalogById,
+  itemIdByName as caveItemIdByName,
   type WashMode,
 } from '@/presentation/modules/yanjie/xiyou/caveLogic'
 import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/quality'
@@ -203,17 +205,30 @@ const EXPAND_COSTS = [50, 100, 200, 400]
 /** 药园地块数量（对齐 cave.json crops 六格） */
 const GARDEN_PLOT_COUNT = 6
 /** 坊市每轮上架商品数量（从商品池随机抽取） */
-const SHOP_PICK_COUNT = 6
+const SHOP_PICK_COUNT = 8
 /** 强化保护符物品 id（强化失败时消耗一张保住材料） */
 const ENH_PROTECT_ID = 'enh_protect'
+/** 分解锤物品 id（分解装备的门槛消耗，坊市常售） */
+const DECOMP_HAMMER_ID = 'decomp_hammer'
 
-/** 目录索引（items.json 静态，模块级构建一次） */
-const catalogMap = new Map<string, XiyouCatalogItem>()
-const nameToId = new Map<string, string>()
-for (const it of packItems) {
-  catalogMap.set(it.id, it)
-  if (!nameToId.has(it.name)) nameToId.set(it.name, it.id)
+/**
+ * 分解产出表（§21「装备分解」，键 = 装备实例品质 1-5）：
+ * soulChance/soulCount 兵解残魄晶（概率×数量）、enhChance 强化石（精低/超中概率）、
+ * extract 神品必得太古汲灵符（附录B「分解神品装备必得 ×1」）。
+ * 「基础材料 ×N」落地为制造材料按品质档比例返还（matRatio，神品 50% 对齐分解锤「返还 50% 制造材料」口径）。
+ * 已强化的装备不按强化等级返还强化石——强化是沉没成本（§21 裁定），强化石为品质档固定产出。
+ */
+const DECOMPOSE_TABLE: Record<number, { soulChance: number; soulCount: number; enhChance: number; matRatio: number; extract?: boolean }> = {
+  1: { soulChance: 0.3, soulCount: 1, enhChance: 0, matRatio: 0.1 },
+  2: { soulChance: 0.6, soulCount: 1, enhChance: 0.3, matRatio: 0.2 },
+  3: { soulChance: 0.4, soulCount: 1, enhChance: 0.6, matRatio: 0.3 },
+  4: { soulChance: 1, soulCount: 1, enhChance: 0, matRatio: 0.4 },
+  5: { soulChance: 1, soulCount: 3, enhChance: 0, matRatio: 0.5, extract: true },
 }
+
+/** 目录索引：委托 caveLogic 合并目录（items.json + equipment.json 装备派生条目，
+ *  「行囊展示 / 名字索引共用」单一权威）——装备掉落/首杀奖励的 itemId 均可解析 */
+const nameToId = (name: string): string | null => caveItemIdByName(name)
 
 /** 玩家数值属性键（name/title 等字符串属性不可参与加减） */
 type NumericPlayerKey = {
@@ -266,9 +281,9 @@ export const usePackStore = defineStore('pack', () => {
   /** 坊市上次刷新时间（ISO） */
   const shopRefreshedAt = ref('')
 
-  /** 目录查询 */
+  /** 目录查询（合并目录含装备派生条目，装备掉落/分解/首杀奖励均可解析名字与价值） */
   function catalogById(itemId: string | null | undefined): XiyouCatalogItem | undefined {
-    return itemId ? catalogMap.get(itemId) : undefined
+    return itemId ? caveCatalogById(itemId) : undefined
   }
 
   function countOf(itemId: string): number {
@@ -453,7 +468,7 @@ export const usePackStore = defineStore('pack', () => {
     const inv: Record<string, number> = {}
     for (const group of [materials, pills, consumables]) {
       for (const item of group) {
-        const id = nameToId.get(item.name)
+        const id = nameToId(item.name)
         if (id) inv[id] = item.count
       }
     }
@@ -470,7 +485,7 @@ export const usePackStore = defineStore('pack', () => {
 
     storage.value = storageCells.map((cell) => {
       if (cell.locked || !cell.name || cell.name === '空位') return { itemId: null, count: 0 }
-      const id = nameToId.get(cell.name)
+      const id = nameToId(cell.name)
       return id ? { itemId: id, count: cell.count } : { itemId: null, count: 0 }
     })
 
@@ -806,6 +821,52 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
+   * 分解背包装备实例（§21 装备分解，全品质可分解）：
+   * 消耗分解锤 ×1，产出金钱 + 制造材料（按品质档比例）+ 兵解残魄晶（升星替代点数），
+   * 精品/超品概率产强化石、神品必得太古汲灵符；强化等级不参与产出（沉没成本）。
+   * 只处理背包中该装备的第一件实例（穿戴中的装备不在背包，天然不可分解）。
+   * 返回失败原因文案（成功返回 null）。
+   */
+  function decompose(itemId: string, rng: Rng = Math.random): string | null {
+    const inst = gearInstances.value.find((g) => g.itemId === itemId)
+    if (!inst) return '背包中没有该装备'
+    const g = gearById(itemId)
+    if (!g) return '未知装备'
+    if ((inventory.value[DECOMP_HAMMER_ID] ?? 0) <= 0) return '缺少分解锤（坊市有售）'
+    inventory.value[DECOMP_HAMMER_ID] = (inventory.value[DECOMP_HAMMER_ID] ?? 0) - 1
+    if (inventory.value[DECOMP_HAMMER_ID]! <= 0) delete inventory.value[DECOMP_HAMMER_ID]
+    gearInstances.value.splice(gearInstances.value.indexOf(inst), 1)
+
+    const t = DECOMPOSE_TABLE[inst.quality] ?? DECOMPOSE_TABLE[1]
+    const parts: string[] = []
+    const money = Math.floor((g.value ?? 0) * sellRatio())
+    if (money > 0) {
+      currency.money += money
+      parts.push(`金钱×${money}`)
+    }
+    for (const m of g.materials ?? []) {
+      const n = Math.max(1, Math.floor(m.count * t.matRatio))
+      addItem(m.itemId, n)
+      parts.push(`材料×${n}`)
+    }
+    if (rng() < t.soulChance) {
+      addItem('decomp_soul', t.soulCount)
+      parts.push(`兵解残魄晶×${t.soulCount}`)
+    }
+    if (t.enhChance > 0 && rng() < t.enhChance) {
+      addItem('enh_stone', 1)
+      parts.push('强化石×1')
+    }
+    if (t.extract) {
+      addItem('wash_extract', 1)
+      parts.push('太古汲灵符×1')
+    }
+    scheduleSave()
+    notification.toast(`分解「${g.name}」获得：${parts.join('、') || '无'}`, 'success')
+    return null
+  }
+
+  /**
    * 图纸解锁判定：装备无 blueprintId（旧版/非图纸体系）→ 直接可造；
    * 一阶（t1）图纸默认解锁（新手期无门槛，设计稿 §3.1「默认解锁」）；
    * 其余阶位需背包持有对应图纸（解锁判定不消耗图纸，对齐设计稿「解锁制造权限」语义）。
@@ -1064,7 +1125,7 @@ export const usePackStore = defineStore('pack', () => {
    *  单价 = shopPrice（有 itemId 的商品按 实际价值 × 购买系数 派生） */
   function purchase(good: XiyouShopGood, count: number): string | null {
     if (count <= 0) return '数量无效'
-    const itemId = nameToId.get(good.name)
+    const itemId = nameToId(good.name)
     if (!itemId) return '商品未收录'
     if (good.stock >= 0 && good.stock < count) return '库存不足'
     const wallet = currency.money
@@ -1378,6 +1439,7 @@ export const usePackStore = defineStore('pack', () => {
     starGear,
     starPointsAvailable,
     washGear,
+    decompose,
     blueprintUnlocked,
     craftEquipment,
     rollAffixes,

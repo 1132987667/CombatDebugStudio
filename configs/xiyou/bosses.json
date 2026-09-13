@@ -464,7 +464,8 @@
       ],
       "rare": [
         "bp_t1_wp",
-        "bp_t1_ar"
+        "bp_t1_ar",
+        "wp_sb01"
       ],
       "money": [
         200,
@@ -548,7 +549,9 @@
         "mat_zhenzhu",
         "mat_shenshuiyu"
       ],
-      "rare": [],
+      "rare": [
+        "ar_sb02"
+      ],
       "money": [
         350,
         600
@@ -633,7 +636,8 @@
       ],
       "rare": [
         "bp_t3_wp",
-        "bp_t3_ar"
+        "bp_t3_ar",
+        "hd_sb03"
       ],
       "money": [
         500,
@@ -718,7 +722,8 @@
         "mat_hantan"
       ],
       "rare": [
-        "bp_t3_wp"
+        "bp_t3_wp",
+        "jz_sb04"
       ],
       "money": [
         650,

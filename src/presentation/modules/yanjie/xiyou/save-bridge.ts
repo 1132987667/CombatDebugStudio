@@ -115,6 +115,11 @@ export const xiyouSaveBridge: SaveStatePort = {
     data.progress.max_scene = unlocked.length
     const current = currentSceneId ? scenes.find((s) => s.id === currentSceneId) : undefined
     data.progress.current_scene = current?.id ?? unlocked[0]?.id ?? ''
+    // 场景星级（历史最高；全 0 时省略字段保持存档紧凑）
+    const starred = scenes.filter((s) => s.stars > 0)
+    if (starred.length > 0) {
+      data.progress.scene_stars = Object.fromEntries(starred.map((s) => [s.id, s.stars]))
+    }
 
     // inventory
     data.inventory = classifyInventory()
@@ -280,6 +285,10 @@ export const xiyouSaveBridge: SaveStatePort = {
     // scenes 解锁状态
     const unlockedSet = new Set(data.progress.unlocked_scenes ?? [])
     for (const s of scenes) s.unlocked = unlockedSet.has(s.id) || !s.unlockCondition?.sceneId
+
+    // scenes 星级（旧档无此字段保持 0；越界值钳制到 0~3 防脏档污染首杀/星级展示）
+    const starsSaved = data.progress.scene_stars
+    for (const s of scenes) s.stars = Math.max(0, Math.min(3, starsSaved?.[s.id] ?? 0))
 
     // school（v3.0 流派：恢复已点亮节点 + 技能点 + 出战装备槽）
     const schoolState = data.school

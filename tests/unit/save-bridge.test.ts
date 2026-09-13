@@ -243,6 +243,45 @@ describe('collect → restore 往返', () => {
     expect(data2.player.money).toBe(777)
     expect(data2.equipment.weapon).toBe(pack2.equipped.weapon?.instanceId)
   })
+
+  it('场景星级往返：collect 写入 scene_stars，restore 回填历史最高星', async () => {
+    const scene11 = scenes.find((s) => s.id === 'scene_1_1')!
+    const scene12 = scenes.find((s) => s.id === 'scene_1_2')!
+    scene11.stars = 2
+    scene12.stars = 3
+    try {
+      const data = await xiyouSaveBridge.collect({ currentSceneId: 'scene_1_1' })
+      expect(data.progress.scene_stars).toEqual({ scene_1_1: 2, scene_1_2: 3 })
+
+      // 模拟重启后内存星级归零，restore 应回填
+      for (const s of scenes) s.stars = 0
+      await xiyouSaveBridge.restore(data)
+      expect(scene11.stars).toBe(2)
+      expect(scene12.stars).toBe(3)
+      expect(scenes.find((s) => s.id === 'scene_1_3')?.stars).toBe(0)
+    } finally {
+      scene11.stars = 0
+      scene12.stars = 0
+    }
+  })
+
+  it('星级恢复边界：旧档无 scene_stars 视为 0，脏档越界值钳制到 0~3', async () => {
+    const scene11 = scenes.find((s) => s.id === 'scene_1_1')!
+    try {
+      const legacy: SaveData = { ...createInitialGameState(), progress: { ...createInitialGameState().progress } }
+      await xiyouSaveBridge.restore(legacy)
+      expect(scene11.stars).toBe(0)
+
+      const dirty = createInitialGameState()
+      dirty.progress.scene_stars = { scene_1_1: 9, scene_1_2: -2 }
+      await xiyouSaveBridge.restore(dirty)
+      expect(scene11.stars).toBe(3)
+      expect(scenes.find((s) => s.id === 'scene_1_2')?.stars).toBe(0)
+    } finally {
+      scene11.stars = 0
+      for (const s of scenes) if (s.id !== 'scene_1_1') s.stars = 0
+    }
+  })
 })
 
 /** 轻量形状断言：关键字段存在 */

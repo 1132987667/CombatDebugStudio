@@ -315,6 +315,31 @@ export function dropsForEnemy(name: string): EnemyDrop[] {
 }
 
 /**
+ * BOSS 首杀一次性奖励（enemyId → 物品清单）：装备本体以 equipment.json source「首杀掉落」为口径，
+ * 破境耀星石·下按 §21「场景 BOSS 首杀奖励」。
+ * NOTE: 不进敌人常规 drops（首杀后重复刷取会通胀神兵/图纸），发放挂在场景首杀（markSceneCleared），
+ *       关底节点中 id 命中本表的敌人逐项必掉。
+ */
+export const FIRST_KILL_REWARDS: Record<string, string[]> = {
+  boss_major_huayaowang: ['wp_sb01', 'star_up_low'],
+  boss_major_hebo: ['ar_sb02', 'star_up_low'],
+  boss_major_shanshen: ['hd_sb03', 'star_up_low'],
+  boss_major_miwu: ['jz_sb04', 'star_up_low'],
+  boss_major_rulai: ['star_up_low'],
+}
+
+/** 首杀奖励转为必掉掉落形态（quantity=1 / chance=1；供入包与结算展示共用） */
+export function firstKillRewardDrops(enemyIds: string[]): EnemyDrop[] {
+  const out: EnemyDrop[] = []
+  for (const id of enemyIds) {
+    for (const itemId of FIRST_KILL_REWARDS[id] ?? []) {
+      out.push({ itemId, quantity: 1, chance: 1 })
+    }
+  }
+  return out
+}
+
+/**
  * 装备加成 → 主角最终属性增量
  * NOTE: flat 直接相加；percent 按 buildBattleTeams 实际使用的主角基础属性（protagonist 或 playerParty[0]）
  *       计算绝对增量，保证 flat 与 percent 的基准与战斗主角同源。

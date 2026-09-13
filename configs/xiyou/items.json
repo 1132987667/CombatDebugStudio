@@ -774,7 +774,31 @@
     },
     {
       "id": "bp_sp_01",
-      "name": "特殊装备图纸",
+      "name": "特殊图纸·烈焰",
+      "type": "图纸",
+      "rarity": 3,
+      "source": "妖尊",
+      "value": 500
+    },
+    {
+      "id": "bp_sp_02",
+      "name": "特殊图纸·风灵",
+      "type": "图纸",
+      "rarity": 3,
+      "source": "妖尊",
+      "value": 500
+    },
+    {
+      "id": "bp_sp_03",
+      "name": "特殊图纸·地灵",
+      "type": "图纸",
+      "rarity": 3,
+      "source": "妖尊",
+      "value": 500
+    },
+    {
+      "id": "bp_sp_04",
+      "name": "特殊图纸·噬魂",
       "type": "图纸",
       "rarity": 3,
       "source": "妖尊",

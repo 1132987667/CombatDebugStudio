@@ -73,6 +73,7 @@ import IconKettle from '~icons/app/kettle'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
+import { progressQuests } from '../../questProgress'
 import { alchemyRecipes } from '../../xiyouData'
 import { itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
 import type { XiyouQuality } from '../../types'
@@ -131,6 +132,7 @@ function brew(): void {
     for (const m of r.materials ?? []) pack.removeItem(m.itemId, m.count)
     const outCount = Math.max(1, r.count ?? 1)
     pack.addItem(outId, outCount)
+    progressQuests('brew')
     rippling.value = true
     window.setTimeout(() => {
       rippling.value = false

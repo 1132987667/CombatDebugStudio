@@ -12,6 +12,10 @@
       <span class="fs-detail-id">{{ entity.id }} <span class="fs-detail-table">{{ schema.label }}</span></span>
       <h3 class="fs-detail-title">{{ detailName }} <Button v-if="schema.table === 'lineups'" size="small"
           title="切换到唤灵台并加载该预设阵容" @click="emit('openInHuanling')">在唤灵台打开</Button>
+        <Button v-if="canQuickVerify" size="small" title="用当前已保存配置无头模拟一场战斗，查看胜负与战报"
+          @click="quickVerifyOpen = true">快速验证</Button>
+        <Button v-if="schema.table === 'enemies'" size="small" title="解析计算掉落期望与「打 n 次至少出一件」概率，附蒙特卡洛对照"
+          @click="dropsSimOpen = true">掉落试算</Button>
         <Button size="small" title="在编辑器中打开该实体" @click="emit('edit')">编辑</Button>
       </h3>
     </header>
@@ -117,6 +121,10 @@
   <EntityTooltip :visible="skillTipVisible" :data="skillTipData" :trigger-rect="skillTipRect" @hide="hideSkillTip" />
   <!-- 装备合成材料悬浮详情 -->
   <EntityTooltip :visible="gearTipVisible" :data="gearTipData" :trigger-rect="gearTipRect" @hide="hideGearTip" />
+  <!-- 快速验证（无头模拟战，仅 actors/enemies 表） -->
+  <QuickVerifyDialog :open="quickVerifyOpen" :table="schema.table" :entity="entity" @close="quickVerifyOpen = false" />
+  <!-- 掉落试算（仅 enemies 表） -->
+  <DropsSimDialog :open="dropsSimOpen" :entity="entity" :ref-index="refIndex" @close="dropsSimOpen = false" />
 </template>
 
 <script setup lang="ts">
@@ -143,6 +151,8 @@ import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import type { GearData } from '@/domain/fengshen/types'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
+import QuickVerifyDialog from '@/presentation/modules/fengshen/components/QuickVerifyDialog.vue'
+import DropsSimDialog from '@/presentation/modules/fengshen/components/DropsSimDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -165,6 +175,11 @@ const emit = defineEmits<{
 }>()
 
 const detailName = computed(() => String(props.entity.name ?? props.entity.id ?? '未命名'))
+
+/** 快速验证开关与可见性：仅参战数据表（actors/enemies）提供无头模拟战入口 */
+const quickVerifyOpen = ref(false)
+const dropsSimOpen = ref(false)
+const canQuickVerify = computed(() => props.schema.table === 'enemies' || props.schema.table === 'actors')
 
 /**
  * 引用叶子键集合：REFERENCE_RULES 中 sourceTable = 当前表的规则的 path 末段（去 []）。

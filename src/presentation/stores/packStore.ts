@@ -53,6 +53,7 @@ import {
   itemIdByName as caveItemIdByName,
   type WashMode,
 } from '@/presentation/modules/yanjie/xiyou/caveLogic'
+import { progressQuests } from '@/presentation/modules/yanjie/xiyou/questProgress'
 import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/quality'
 import { useNotificationStore } from './notificationStore'
 import { useBattleStore } from './battleStore'
@@ -1134,6 +1135,7 @@ export const usePackStore = defineStore('pack', () => {
     currency.money = wallet - total
     if (good.stock >= 0) good.stock -= count
     addItem(itemId, count)
+    progressQuests('purchase')
     scheduleSave()
     notification.toast(`购买了「${good.name}」×${count}`)
     return null

@@ -1,12 +1,89 @@
 {
   "quests": [
-    { "type": "主线", "name": "初探花果山", "desc": "击败花妖王，救出被擒的巡山小猴", "progress": 1, "target": 1, "reward": "经验 300 · 桃木×5" },
-    { "type": "主线", "name": "水帘洞之谜", "desc": "深入水帘洞，取回九节灵藤", "progress": 0, "target": 1, "reward": "经验 500 · 淡水玉×2" },
-    { "type": "日常", "name": "斩妖除魔", "desc": "完成任意战斗 3 次", "progress": 2, "target": 3, "reward": "金钱×300" },
-    { "type": "日常", "name": "勤修苦练", "desc": "在洞府闭关累计 60 分钟", "progress": 30, "target": 60, "reward": "经验 200" },
-    { "type": "日常", "name": "坊市采买", "desc": "在坊市购买 1 件商品", "progress": 1, "target": 1, "reward": "金钱×100" },
-    { "type": "周常", "name": "百妖斩·周", "desc": "本周击败 50 只妖怪", "progress": 21, "target": 50, "reward": "金钱×5000 · 玄铁×1" },
-    { "type": "周常", "name": "丹炉不辍", "desc": "本周炼制丹药 5 次", "progress": 2, "target": 5, "reward": "金钱×200" }
+    {
+      "id": "q_main_01",
+      "type": "主线",
+      "name": "初探花果山",
+      "desc": "击败花妖王，救出被擒的巡山小猴",
+      "progress": 0,
+      "target": 1,
+      "reward": "经验 300 · 桃木×5",
+      "goal": { "kind": "clear_scene", "sceneId": "scene_1_boss", "target": 1 },
+      "rewards": [
+        { "kind": "exp", "amount": 300 },
+        { "kind": "item", "itemId": "mat_taomu", "amount": 5 }
+      ]
+    },
+    {
+      "id": "q_main_02",
+      "type": "主线",
+      "name": "水帘洞之谜",
+      "desc": "深入水帘洞，取回九节灵藤",
+      "progress": 0,
+      "target": 1,
+      "reward": "经验 500 · 淡水玉×2",
+      "goal": { "kind": "clear_scene", "sceneId": "scene_2_boss", "target": 1 },
+      "rewards": [
+        { "kind": "exp", "amount": 500 },
+        { "kind": "item", "itemId": "mat_danshuiyu", "amount": 2 }
+      ]
+    },
+    {
+      "id": "q_daily_01",
+      "type": "日常",
+      "name": "斩妖除魔",
+      "desc": "完成任意战斗 3 次",
+      "progress": 0,
+      "target": 3,
+      "reward": "金钱×300",
+      "goal": { "kind": "battle_win", "target": 3 },
+      "rewards": [{ "kind": "money", "amount": 300 }]
+    },
+    {
+      "id": "q_daily_02",
+      "type": "日常",
+      "name": "勤修苦练",
+      "desc": "在洞府闭关累计 60 分钟",
+      "progress": 0,
+      "target": 60,
+      "reward": "经验 200"
+    },
+    {
+      "id": "q_daily_03",
+      "type": "日常",
+      "name": "坊市采买",
+      "desc": "在坊市购买 1 件商品",
+      "progress": 0,
+      "target": 1,
+      "reward": "金钱×100",
+      "goal": { "kind": "purchase", "target": 1 },
+      "rewards": [{ "kind": "money", "amount": 100 }]
+    },
+    {
+      "id": "q_week_01",
+      "type": "周常",
+      "name": "百妖斩·周",
+      "desc": "本周击败 50 只妖怪",
+      "progress": 0,
+      "target": 50,
+      "reward": "金钱×5000 · 玄铁×1",
+      "goal": { "kind": "kill_count", "target": 50 },
+      "rewards": [
+        { "kind": "money", "amount": 5000 },
+        { "kind": "item", "itemId": "mat_xuantie", "amount": 1 }
+      ]
+    },
+    {
+      "id": "q_week_02",
+      "type": "周常",
+      "name": "丹炉不辍",
+      "desc": "本周炼制丹药 5 次",
+      "progress": 0,
+      "target": 5,
+      "reward": "金钱×200",
+      "goal": { "kind": "brew", "target": 5 },
+      "rewards": [{ "kind": "money", "amount": 200 }]
+    }
   ],
   "events": [
     { "name": "蟠桃盛会", "time": "今日 12:00 - 24:00", "desc": "食蟠桃得仙力，击败邀战的天兵天将", "reward": "金钱×5000 · 经验×800", "status": "进行中" },

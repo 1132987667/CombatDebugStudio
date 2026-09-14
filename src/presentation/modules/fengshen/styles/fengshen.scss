@@ -798,6 +798,85 @@ input[type='checkbox'] {
   margin-top: var(--space-2);
 }
 
+/* 批量编辑预览：选中行旧值 → 新值对照（无变化行置灰） */
+.fs-batch-preview {
+  margin-top: var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+}
+
+/* 试算弹窗数据表（快速验证 / 掉落试算共用；首列恢复继承字体） */
+.fs-qv-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: var(--space-1) var(--space-2);
+    border-bottom: 1px solid var(--color-border-default);
+    text-align: left;
+  }
+
+  th {
+    color: var(--color-text-tertiary);
+    font-weight: var(--font-weight-medium);
+  }
+
+  td {
+    font-family: var(--font-family-mono);
+  }
+
+  td:first-child {
+    font-family: inherit;
+  }
+}
+
+.fs-batch-preview-head {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-default);
+  color: var(--color-text-secondary);
+}
+
+.fs-batch-preview-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.fs-batch-preview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+
+  & + & {
+    border-top: 1px dashed var(--color-border-default);
+  }
+
+  &--muted {
+    opacity: 0.55;
+  }
+}
+
+.fs-batch-preview-name {
+  color: var(--color-text-primary);
+  word-break: break-all;
+}
+
+.fs-batch-preview-diff {
+  font-family: var(--font-family-mono);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.fs-batch-preview-arrow {
+  color: var(--color-info);
+
+  &.same {
+    color: var(--color-text-tertiary);
+  }
+}
+
 .fs-form-errors {
   margin-top: var(--space-3);
   padding: var(--space-2) var(--space-3);

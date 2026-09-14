@@ -118,6 +118,8 @@ export interface SaveData {
   mates_active?: string[]
   /** 永久丹药属性累计增量：attr → 总和（恢复时叠回 player；maxHp/attackMin 已含于 hp_max/base_atk，恢复时跳过防双算） */
   pill_bonuses?: Record<string, number>
+  /** 任务进度（接线任务）：questId → 进度与领取态（旧档缺省保留 configs 初始值） */
+  quest_progress?: Record<string, { progress: number; claimed?: boolean }>
 }
 
 /** 初始状态工厂（新游戏 / 无档兜底，PRD §6.4） */

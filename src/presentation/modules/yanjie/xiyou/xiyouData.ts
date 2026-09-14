@@ -162,7 +162,7 @@ const SKILL_TREE_RAW = (skillTreeJson as { nodes?: XiyouSkillTreeRawNode[] }).no
 // ════════════════════════════════════════════════════════════
 // 旧格式兼容：从 skill_tree.json 提取流派列表（保留 .schools 向后兼容）
 // NOTE: 新 schools.json 的 schools 字段已改为 { id: name } 映射，
-//       旧代码仍需要 XiyouSchool[] 数组（battle.ts / save-bridge.ts / SkillTreeView），
+//       旧代码仍需要 XiyouSchool[] 数组（battle.ts / save-bridge.ts），
 //       此处从 skill_tree.json 的 schoolId 去重推导流派列表，保持兼容。
 // ════════════════════════════════════════════════════════════
 const SCHOOL_NAME_MAP = (schoolsJson as { schools: Record<string, string> }).schools ?? {}

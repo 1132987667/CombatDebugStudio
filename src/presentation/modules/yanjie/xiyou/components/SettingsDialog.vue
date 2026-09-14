@@ -46,6 +46,31 @@
               <span class="xy-settings-dlg__hint">从 JSON 文件恢复进度</span>
             </button>
             <input ref="fileInput" type="file" accept=".json,application/json" class="xy-settings-dlg__file" @change="onImportFile" />
+
+            <div class="xy-settings-dlg__row xy-settings-dlg__row--static">
+              <span class="xy-settings-dlg__label">对局书签</span>
+              <span class="xy-settings-dlg__hint">存档快照 + 场景 + 种子 + 倍速，一键回到验证起点</span>
+            </div>
+            <div v-for="b in bookmarks" :key="b.id" class="xy-settings-dlg__row xy-settings-dlg__bookmark xy-ink-hover">
+              <span class="xy-settings-dlg__label">
+                {{ b.name }}
+                <span class="xy-settings-dlg__hint">{{ bookmarkMeta(b) }}</span>
+              </span>
+              <span class="xy-settings-dlg__bookmark-actions">
+                <button type="button" class="xy-settings-dlg__seg-btn" @click="onApplyBookmark(b.id)">应用</button>
+                <button type="button" class="xy-settings-dlg__seg-btn" @click="onDeleteBookmark(b.id)">删除</button>
+              </span>
+            </div>
+            <div class="xy-settings-dlg__row xy-settings-dlg__bookmark-new">
+              <input v-model="newBookmarkName" class="xy-settings-dlg__bookmark-input" placeholder="书签名，如：猴三·满配·种子42"
+                maxlength="30" @keydown.enter="onSaveBookmark" />
+              <button type="button" class="xy-settings-dlg__seg-btn" :disabled="savingBookmark" @click="onSaveBookmark">
+                {{ savingBookmark ? '保存中…' : '存为书签' }}
+              </button>
+            </div>
+            <div v-if="!bookmarks.length" class="xy-settings-dlg__hint xy-settings-dlg__bookmark-empty">
+              暂无书签。走到想反复验证的场景，存一个书签，之后一键回到这里。
+            </div>
           </section>
 
           <section class="xy-settings-dlg__group xy-settings-dlg__group--danger">
@@ -142,6 +167,13 @@ import IconXClose from '~icons/app/x-close'
 import { saveManager } from '../save-bridge'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import {
+  applyRunBookmark,
+  createRunBookmark,
+  deleteRunBookmark,
+  listRunBookmarks,
+  type RunBookmark,
+} from '../bookmarks'
 
 const props = defineProps<{
   modelValue: boolean
@@ -152,6 +184,8 @@ const emit = defineEmits<{
   'update:sidebar': [value: 'left' | 'right']
   back: []
   'progress-changed': []
+  /** 书签已应用：携带书签场景 id，父级负责切换当前场景 */
+  'bookmark-applied': [sceneId: string]
 }>()
 
 const notification = useNotificationStore()
@@ -220,12 +254,72 @@ async function doResetCore(): Promise<void> {
   emit('progress-changed')
 }
 
+// ════ 对局书签 ════
+const bookmarks = ref<RunBookmark[]>([])
+const newBookmarkName = ref('')
+const savingBookmark = ref(false)
+
+function refreshBookmarks(): void {
+  bookmarks.value = listRunBookmarks()
+}
+
+watch(
+  () => props.modelValue,
+  open => {
+    if (open) refreshBookmarks()
+  },
+)
+
+/** 书签摘要：场景 + 种子 + 倍速（列表行副标题） */
+function bookmarkMeta(b: RunBookmark): string {
+  const seed = b.seed ? `种子 ${b.seed}` : '随机种子'
+  return `${b.sceneId || '—'} · ${seed} · ${b.speed}x`
+}
+
+async function onSaveBookmark(): Promise<void> {
+  if (savingBookmark.value) return
+  savingBookmark.value = true
+  try {
+    await createRunBookmark(newBookmarkName.value)
+    newBookmarkName.value = ''
+    refreshBookmarks()
+    notification.toast('书签已保存', 'success')
+  } catch (e) {
+    notification.toast(`书签保存失败: ${String(e)}`, 'error')
+  } finally {
+    savingBookmark.value = false
+  }
+}
+
+async function onApplyBookmark(id: string): Promise<void> {
+  // 战斗进行中禁止应用书签：restore 会改写 playerStore/packStore/scenes，摧毁进行中的对局
+  if (useBattleStore().isBattleActive) {
+    notification.toast('有战斗正在进行，请先结束当前战斗再应用书签', 'error')
+    return
+  }
+  try {
+    const sceneId = await applyRunBookmark(id)
+    notification.toast('书签已应用', 'success')
+    close()
+    emit('bookmark-applied', sceneId)
+  } catch (e) {
+    notification.toast(`书签应用失败: ${String(e)}`, 'error')
+  }
+}
+
+function onDeleteBookmark(id: string): void {
+  deleteRunBookmark(id)
+  refreshBookmarks()
+}
+
 const overlayRef = ref<HTMLElement | null>(null)
 
 watch(
   () => props.modelValue,
   open => {
-    if (open) nextTick(() => overlayRef.value?.focus())
+    if (!open) return
+    refreshBookmarks()
+    nextTick(() => overlayRef.value?.focus())
   },
 )
 
@@ -355,6 +449,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   color: var(--xy-ink-1);
   box-sizing: border-box;
 
+  &--static {
+    cursor: default;
+    margin-bottom: var(--space-1);
+  }
+
   &--muted {
     cursor: default;
     opacity: 0.75;
@@ -413,6 +512,61 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     background: var(--xy-seal);
     color: #fff;
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+/* 对局书签：行内动作按钮组 + 新建输入行 + 空态提示 */
+.xy-settings-dlg__bookmark {
+  flex-wrap: wrap;
+
+  .xy-settings-dlg__label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.xy-settings-dlg__bookmark-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.xy-settings-dlg__bookmark-new {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  border: 1px dashed var(--xy-ink-line);
+  background: var(--xy-paper);
+  border-radius: 2px;
+}
+
+.xy-settings-dlg__bookmark-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 1px;
+  background: transparent;
+  color: var(--xy-ink-1);
+  font-family: var(--xy-font-body);
+  font-size: var(--font-size-md);
+
+  &:focus {
+    outline: none;
+    border-color: var(--xy-seal);
+  }
+}
+
+.xy-settings-dlg__bookmark-empty {
+  display: block;
+  padding: 0 var(--space-1);
+  margin-bottom: var(--space-2);
 }
 
 .xy-settings-fade-enter-active {

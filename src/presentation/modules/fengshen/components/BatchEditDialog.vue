@@ -18,7 +18,25 @@
           :options="valueOptions" placeholder="— 未选择 —" @update:model-value="setValue($event ?? '')" />
       </div>
 
-      <div class="fs-form-hint">将应用到当前选中的 {{ count }} 条{{ schema.label }}记录，保存时仍走完整性校验。</div>
+      <div v-if="selectedField && previewRows.length" class="fs-batch-preview">
+        <div class="fs-batch-preview-head">
+          将改动 <strong>{{ changedCount }}</strong> 条
+          <span v-if="unchangedCount > 0"> · {{ unchangedCount }} 条值无变化（仍走校验）</span>
+        </div>
+        <div class="fs-batch-preview-list">
+          <div v-for="r in previewRows" :key="String(r.id)" class="fs-batch-preview-row"
+            :class="{ 'fs-batch-preview-row--muted': !isChanged(r) }">
+            <span class="fs-batch-preview-name" :title="`id: ${String(r.id)}`">{{ String(r.name ?? r.id) }}</span>
+            <span class="fs-batch-preview-diff">
+              {{ String(r[fieldKey] ?? '—') }}
+              <span class="fs-batch-preview-arrow" :class="{ same: !isChanged(r) }">→</span>
+              {{ displayValue }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fs-form-hint">将应用到当前选中的 {{ count }} 条{{ schema.label }}记录，保存时仍走完整性校验；应用后可一键撤销整批改动。</div>
     </div>
 
     <template #footer>
@@ -39,6 +57,8 @@ const props = defineProps<{
   open: boolean
   schema: TableSchema
   count: number
+  /** 选中行实体（应用前预览旧值 → 新值 diff 用） */
+  selectedRows: Array<Record<string, unknown>>
   loadOptions: (table: FengshenTableName) => Promise<OptionItem[]>
 }>()
 
@@ -98,6 +118,27 @@ function onFieldChange(v: string | number | null): void {
 function setValue(v: unknown): void {
   rawValue.value = String(v ?? '')
 }
+
+// ════ 应用前预览：选中行的旧值 → 新值对照 ════
+/** 应用值（number 字段空串 → undefined，与 apply 同口径） */
+const applyValue = computed(() => {
+  const field = selectedField.value
+  if (!field) return undefined
+  return field.type === 'number'
+    ? (rawValue.value === '' ? undefined : Number(rawValue.value))
+    : rawValue.value
+})
+
+/** 新值展示文本（undefined 显示为「清空」） */
+const displayValue = computed(() => (applyValue.value === undefined ? '清空' : String(applyValue.value)))
+
+function isChanged(r: Record<string, unknown>): boolean {
+  return String(r[fieldKey.value] ?? '') !== String(applyValue.value ?? '')
+}
+
+const previewRows = computed(() => (selectedField.value ? props.selectedRows : []))
+const changedCount = computed(() => previewRows.value.filter((r) => isChanged(r)).length)
+const unchangedCount = computed(() => previewRows.value.length - changedCount.value)
 
 function onModelValue(v: boolean): void {
   if (!v) emit('close')

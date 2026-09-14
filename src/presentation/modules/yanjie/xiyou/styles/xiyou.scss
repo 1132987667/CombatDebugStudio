@@ -15,8 +15,8 @@
   --xy-paper: var(--color-bg-primary); /* 主背景 */
   --xy-paper-warm: var(--color-bg-secondary); /* 次背景 */
   --xy-paper-light: var(--color-bg-tertiary); /* 强调背景 */
-  --xy-seal: var(--color-brand-red); /* 朱印 = 品牌红 */
-  --xy-seal-soft: rgba(var(--rgb-brand-red), var(--alpha-wash));
+  --xy-seal: #c14b3a; /* 朱印 = 品牌红（域内覆盖全局 #e94560：玫红倾向在深蓝底上发紫，收敛为水墨朱砂） */
+  --xy-seal-soft: rgba(193, 75, 58, var(--alpha-wash));
   --xy-jade: var(--color-success); /* 青绿 = 成功绿 */
   --xy-jade-soft: rgba(var(--rgb-success), var(--alpha-wash));
   --xy-gold: var(--color-warning); /* 鎏金 = 警示金 */
@@ -194,6 +194,20 @@
           grid-column: 1 / -1;
         }
 
+        /* 修行角色面板：双列布局（左属性主列 + 右角色侧列）。
+           本规则域的 auto-fill 轨道会把面板劈成多个 300px 窄条，右侧留白——
+           & 复合到同一元素（面板根即 div:not(...) 本身），特异性高于 auto-fill 声明 */
+        &.xy-character-panel {
+          grid-template-columns: minmax(0, 1fr) 400px;
+          gap: var(--space-4);
+        }
+
+        @media (max-width: 1280px) {
+          &.xy-character-panel {
+            grid-template-columns: minmax(0, 1fr);
+          }
+        }
+
         .xy-row-card {
           margin-bottom: 0;
         }
@@ -275,6 +289,8 @@
   overflow-y: auto;
   min-height: 0;
   padding-right: var(--space-2);
+  /* 底部留呼吸空间：末尾分组头不再贴边裁切 */
+  padding-bottom: var(--space-6);
 }
 
 .xy-seal-title {
@@ -364,10 +380,12 @@
    ══════════════════════════════════════════════════════════════════ */
 
 /* 系统 Tabs 融入水墨主题（宝阁内二级导航）：
-   朱印为激活色 + 页签头居中，各 Panel 复用同一类，避免重复样式 */
-.xy-tabs--seal {
+   朱印为激活色 + 页签头居中，各 Panel 复用同一类，避免重复样式。
+   NOTE: 提升特异性压过 Tabs 组件默认 --tabs-accent（--color-info 蓝）——
+         同为单类选择器时组件样式后注入会赢，故挂 .xy-game 祖先链 */
+.xy-game .xy-tabs--seal {
   --tabs-accent: var(--xy-seal);
-  --tabs-accent-glow: rgba(var(--rgb-brand-red), var(--alpha-glow));
+  --tabs-accent-glow: rgba(193, 75, 58, var(--alpha-glow));
 
   :deep(.tabs-header) {
     justify-content: center;
@@ -581,8 +599,15 @@
   color: var(--xy-ink-1);
 }
 
+/* 百分比不再单独鎏金：满屏橙黄让重点失焦，数值色只留给零值弱化的对比 */
 .xy-attr-value--pct {
-  color: var(--xy-gold);
+  color: var(--xy-ink-1);
+}
+
+/* 零值弱化：扫视时即刻分辨「有」与「无」（进阶属性新手期大面积为 0） */
+.xy-attr-value--zero {
+  font-weight: var(--font-weight-regular);
+  color: var(--xy-ink-4);
 }
 
 /* 货币徽章 */

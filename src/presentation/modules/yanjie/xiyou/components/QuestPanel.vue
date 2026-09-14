@@ -10,10 +10,11 @@
           <div v-for="q in cat.items" :key="q.name" class="xy-row-card" :class="{ done: q.progress >= q.target }">
             <div class="xy-row-top">
               <span class="xy-row-name">{{ q.name }}</span>
-              <span class="xy-chip" :class="q.progress >= q.target ? 'xy-chip--gold' : 'xy-chip--jade'">
-                {{ q.progress >= q.target ? '可领取' : '进行中' }}
+              <span class="xy-chip" :class="questChip(q)">
+                {{ questState(q) }}
               </span>
-              <span class="xy-row-side">{{ q.progress }}/{{ q.target }}</span>
+              <button v-if="canClaim(q)" type="button" class="xy-claim-btn" @click="claim(q)">领取奖励</button>
+              <span v-else class="xy-row-side">{{ q.progress }}/{{ q.target }}</span>
             </div>
             <p class="xy-row-desc">{{ q.desc }}</p>
             <div class="xy-progress">
@@ -43,15 +44,52 @@
 import { computed, ref } from 'vue'
 
 import type { TabItem } from '@/presentation/components'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { usePackStore } from '@/presentation/stores/packStore'
+import { usePlayerStore } from '@/presentation/stores/playerStore'
+import { saveManager } from '../save-bridge'
 import { events, quests } from '../xiyouData'
 import type { XiyouQuest } from '../types'
 
 const sub = ref<'quest' | 'event'>('quest')
 
+const notification = useNotificationStore()
+
 const SUBS: TabItem[] = [
   { id: 'quest', label: '任务' },
   { id: 'event', label: '活动' },
 ]
+
+/** 任务态文案与配色：已领取 > 可领取 > 进行中 */
+function questState(q: XiyouQuest): string {
+  if (q.claimed) return '已领取'
+  return q.progress >= q.target ? '可领取' : '进行中'
+}
+
+function questChip(q: XiyouQuest): string {
+  if (q.claimed) return 'xy-chip--muted'
+  return q.progress >= q.target ? 'xy-chip--gold' : 'xy-chip--jade'
+}
+
+/** 结构化任务达成未领取才出领取按钮（纯展示任务如「勤修苦练」无 rewards，不出） */
+function canClaim(q: XiyouQuest): boolean {
+  return !!q.rewards?.length && !q.claimed && q.progress >= q.target
+}
+
+/** 领取奖励：exp/money/item 分别入账并标记录态（进度经存档持久化） */
+function claim(q: XiyouQuest): void {
+  if (!canClaim(q) || !q.rewards) return
+  const player = usePlayerStore()
+  const pack = usePackStore()
+  for (const r of q.rewards) {
+    if (r.kind === 'exp') player.gainExp(r.amount)
+    else if (r.kind === 'money') player.gainCurrency('money', r.amount)
+    else if (r.kind === 'item' && r.itemId) pack.addItem(r.itemId, r.amount)
+  }
+  q.claimed = true
+  void saveManager.save('auto')
+  notification.toast(`领取「${q.name}」奖励`, 'success')
+}
 
 const questCats = computed(() => {
   const order: Array<XiyouQuest['type']> = ['主线', '日常', '周常']
@@ -80,6 +118,23 @@ function eventChip(status: string): string {
 .xy-row-card.done {
   border-color: rgba(var(--rgb-warning), var(--alpha-border));
   background: var(--xy-gold-soft);
+}
+
+.xy-claim-btn {
+  padding: 2px var(--space-3);
+  border: 1px solid var(--xy-gold);
+  border-radius: var(--radius-sm);
+  background: var(--xy-gold-soft);
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  color: var(--xy-gold);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--xy-gold);
+    color: var(--xy-ink-1);
+  }
 }
 
 </style>

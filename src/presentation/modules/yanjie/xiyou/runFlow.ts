@@ -88,7 +88,9 @@ export function buildRunNodes(scene: XiyouScene, allScenes: XiyouScene[]): RunNo
         amp: ampAt(k),
       })
     }
-    pushBoss(total - 1, pool, 1)
+    // 妖魁率队（§24 关底 4v4）：妖魁 + 同区域敌组随从凑满一队（妖魁权威数值不增幅，随从同场 amp=1）
+    const escorts = elitePool.slice(0, Math.max(0, 4 - pool.length))
+    pushBoss(total - 1, [...pool, ...escorts], 1)
     return nodes
   }
 

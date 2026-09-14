@@ -39,7 +39,7 @@
 
     <!-- 设置：居中弹窗 -->
     <SettingsDialog v-model="settingsOpen" v-model:sidebar="sidebarSide" @back="emit('back')"
-      @progress-changed="onProgressChanged" />
+      @progress-changed="onProgressChanged" @bookmark-applied="onBookmarkApplied" />
   </div>
 </template>
 
@@ -88,6 +88,13 @@ const gameLoaded = ref(false)
 /** 侧边路引时间线点选关卡：切场景并回战斗 tab */
 function onSceneSelect(scene: XiyouScene): void {
   currentScene.value = scene
+  activeCabinet.value = 'battle'
+}
+
+/** 对局书签已应用：切到书签保存时的场景并回战斗 tab（存档/种子/倍速已在书签模块恢复） */
+function onBookmarkApplied(sceneId: string): void {
+  const scene = scenes.find(s => s.id === sceneId)
+  currentScene.value = scene ?? scenes.find(s => s.unlocked) ?? scenes[0]
   activeCabinet.value = 'battle'
 }
 

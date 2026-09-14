@@ -370,14 +370,36 @@ export interface XiyouAchievement {
 }
 
 
-/** 任务（任务子系统） */
+/** 任务目标类型（quest.json goal.kind；缺省 = 纯展示任务，暂无推进源） */
+export type QuestGoalKind = 'clear_scene' | 'battle_win' | 'kill_count' | 'purchase' | 'brew'
+
+/** 结构化目标：kind + 达成次数；clear_scene 需 sceneId 指定关卡 */
+export interface QuestGoal {
+  kind: QuestGoalKind
+  target: number
+  sceneId?: string
+}
+
+/** 结构化奖励（发放口径；reward 字符串保留作展示文案） */
+export interface QuestReward {
+  kind: 'exp' | 'money' | 'item'
+  amount: number
+  itemId?: string
+}
+
+/** 任务（任务子系统；id/goal/rewards 为接线字段，缺省回退纯展示） */
 export interface XiyouQuest {
+  id?: string
   type: '主线' | '日常' | '周常'
   name: string
   desc: string
   progress: number
   target: number
   reward: string
+  goal?: QuestGoal
+  rewards?: QuestReward[]
+  /** 奖励是否已领取（运行时态；存档持久化） */
+  claimed?: boolean
 }
 
 /** 志怪录条目（图鉴子系统；captured 暂无击杀记录源，恒为 false） */

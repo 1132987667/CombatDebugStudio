@@ -362,12 +362,17 @@ export class SaveManager {
     if (!isObj(raw) || !isObj(raw.meta) || typeof raw.meta.version !== 'string') {
       return { ok: false, message: '存档缺少 meta.version 字段' }
     }
+    const fromVersion = raw.meta.version
     const data = migrateSave(raw)
     const check = validateSaveData(data)
     if (!check.ok) return { ok: false, message: `存档缺少必填字段：${check.error}` }
     await this.port.restore(data)
     await this.persist(data, true)
     this.setSessionFromMeta(data)
-    return { ok: true, source: 'import', message: '存档导入成功' }
+    // 版本迁移不静默：QA 共享存档时需感知档位差异（迁移会改写版本号落盘）
+    const message = data.meta.version !== fromVersion
+      ? `存档导入成功（版本 ${fromVersion} 已迁移至 ${data.meta.version}）`
+      : '存档导入成功'
+    return { ok: true, source: 'import', message }
   }
 }

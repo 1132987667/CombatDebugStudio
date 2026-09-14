@@ -29,6 +29,34 @@
       </div>
     </div>
     <div v-else class="fs-empty">玩家配置（params 域 player_config）缺失，无法绘制玩家曲线</div>
+
+    <div v-if="playerConfig" class="fs-block">
+      <div class="fs-toolbar">
+        <span class="fs-chart-field-label">数值表步进</span>
+        <TacticalSelect v-model="tableStep" size="md" :options="stepOptions" />
+        <span class="fs-form-hint">差值为「玩家 − 敌人均值」：负值=同等级打不过均值敌人（断档），过大=超模</span>
+      </div>
+      <table class="fs-table">
+        <thead>
+          <tr>
+            <th>等级</th>
+            <th>玩家 · {{ attrLabel }}</th>
+            <th>玩家+自由点上限</th>
+            <th>同等级敌人均值</th>
+            <th>差值（玩家−敌人）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in tableRows" :key="row.level">
+            <td class="fs-cell-num">{{ row.level }}</td>
+            <td class="fs-cell-num">{{ fmt(row.player) }}</td>
+            <td class="fs-cell-num">{{ fmt(row.free) }}</td>
+            <td class="fs-cell-num">{{ fmt(row.enemy) }}</td>
+            <td class="fs-cell-num" :class="row.diffClass">{{ fmt(row.diff) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -131,6 +159,37 @@ function fmt(v: number | null | undefined): string {
   return v == null ? '—' : String(Math.round(v))
 }
 
+// ════ 逐级数值表：差值列直接暴露断档/超模 ════
+const stepOptions: TSelectOption[] = [
+  { value: 1, label: '每 1 级' },
+  { value: 5, label: '每 5 级' },
+  { value: 10, label: '每 10 级' },
+]
+const tableStep = ref(5)
+
+interface CurveTableRow {
+  level: number
+  player: number | null
+  free: number | null
+  enemy: number | null
+  diff: number | null
+  diffClass: string
+}
+
+const tableRows = computed<CurveTableRow[]>(() => {
+  const rows: CurveTableRow[] = []
+  for (let i = 0; i < labels.value.length; i += tableStep.value) {
+    const player = playerSeries.value[i]
+    const free = freeSeries.value[i]
+    const enemy = enemySeries.value[i]
+    const diff = player != null && enemy != null ? player - enemy : null
+    // 差值分级：负值（打不过均值敌人）危险；低于玩家值 20% 提示偏弱
+    const diffClass = diff == null ? '' : diff < 0 ? 'fs-diff-bad' : diff < player * 0.2 ? 'fs-diff-warn' : 'fs-diff-ok'
+    rows.push({ level: i + 1, player, free, enemy, diff, diffClass })
+  }
+  return rows
+})
+
 onMounted(async () => {
   const [cfg, rows] = await Promise.all([
     api.getPlayerConfig(),
@@ -154,5 +213,19 @@ onMounted(async () => {
   color: var(--color-text-secondary);
   font-size: var(--font-size-md);
   cursor: pointer;
+}
+
+/* 数值表差值分级：负值危险 / 偏弱警示 / 正常 */
+.fs-diff-bad {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+.fs-diff-warn {
+  color: var(--color-warning);
+}
+
+.fs-diff-ok {
+  color: var(--color-success);
 }
 </style>

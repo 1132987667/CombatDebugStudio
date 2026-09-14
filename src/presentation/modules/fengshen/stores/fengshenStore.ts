@@ -264,9 +264,18 @@ export const useFengshenStore = defineStore('fengshen', () => {
     await refreshVersion()
   }
 
-  /** 批量改字段：对选中行应用同一值（逐条走保存校验），返回成功数与失败 ID 列表 */
+  /** 上次批量编辑批次（字段旧值快照，供一键撤销；仅内存态，页面刷新即失） */
+  const lastBatch = ref<{ table: string; field: string; updates: Array<{ id: string; oldValue: unknown }>; at: number } | null>(null)
+
+  /** 批量改字段：对选中行应用同一值（逐条走保存校验），返回成功数与失败 ID 列表。
+   *  应用前记录字段旧值快照到 lastBatch，供一键撤销整批改动。 */
   async function batchUpdate(field: string, value: unknown): Promise<{ ok: number; failed: string[] }> {
     const ids = [...selectedIds.value]
+    const updates: Array<{ id: string; oldValue: unknown }> = []
+    for (const id of ids) {
+      const row = rows.value.find((r) => String(r.id) === id)
+      if (row) updates.push({ id, oldValue: (row as Record<string, unknown>)[field] })
+    }
     let ok = 0
     const failed: string[] = []
     for (const id of ids) {
@@ -277,11 +286,35 @@ export const useFengshenStore = defineStore('fengshen', () => {
       else failed.push(id)
     }
     if (ok > 0) {
+      lastBatch.value = { table: currentTable.value, field, updates, at: Date.now() }
       invalidateOptions()
       invalidateRefIndex()
       await refreshList()
       await refreshVersion()
     }
+    return { ok, failed }
+  }
+
+  /** 撤销上次批量编辑：把每条记录写回旧值（走同一条保存校验管线）。
+   *  仅全部成功才清空批次——部分/全部失败时保留，可修正后重试剩余行。 */
+  async function undoLastBatch(): Promise<{ ok: number; failed: string[] }> {
+    const batch = lastBatch.value
+    if (!batch || batch.table !== currentTable.value) return { ok: 0, failed: [] }
+    let ok = 0
+    const failed: string[] = []
+    for (const u of batch.updates) {
+      const row = rows.value.find((r) => String(r.id) === u.id)
+      if (!row) continue
+      const result = await write.save(batch.table, { ...row, [batch.field]: u.oldValue } as EntityDraft)
+      if (result.ok) ok++
+      else failed.push(u.id)
+    }
+    if (ok === 0 && batch.updates.length > 0) return { ok, failed }
+    lastBatch.value = null
+    invalidateOptions()
+    invalidateRefIndex()
+    await refreshList()
+    await refreshVersion()
     return { ok, failed }
   }
 
@@ -407,6 +440,8 @@ export const useFengshenStore = defineStore('fengshen', () => {
     toggleSelect,
     removeSelected,
     batchUpdate,
+    undoLastBatch,
+    lastBatch,
     runHealth,
     runNumericValidation,
     applyQuickFix,

@@ -39,8 +39,10 @@
         @click="openRegionCreate">＋ 新增区域</Button>
       <Button size="small" title="复制选中数据为模板" :disabled="!store.selectedIds.length"
         @click="duplicateFirst">复制为模板</Button>
-      <Button size="small" title="批量修改选中记录的同一字段" :disabled="!store.selectedIds.length"
+      <Button size="small" title="批量修改选中记录的同一字段（应用前可预览改动）" :disabled="!store.selectedIds.length"
         @click="batchDialogOpen = true">批量编辑</Button>
+      <Button v-if="canUndoBatch" size="small" variant="danger" :title="`撤销上次批量改动（${undoBatchSummary}）`"
+        @click="confirmUndoBatch = true">撤销上次批量</Button>
       <Button v-if="store.currentTable === 'enemies'" size="small" title="并排对比所选敌人的属性（2~4 条）"
         :disabled="compareRows.length < 2 || compareRows.length > 4" @click="compareOpen = true">对比所选（{{
         compareRows.length }}）</Button>
@@ -92,7 +94,8 @@
       @validate="validateRegion" />
 
     <BatchEditDialog :open="batchDialogOpen" :schema="schema" :count="store.selectedIds.length"
-      :load-options="store.loadOptions" @close="batchDialogOpen = false" @apply="onBatchApply" />
+      :selected-rows="selectedRows" :load-options="store.loadOptions" @close="batchDialogOpen = false"
+      @apply="onBatchApply" />
 
     <!-- 敌人横向对比（仅 enemies 表；勾选 2~4 行并排） -->
     <EnemyCompareDialog :open="compareOpen" :rows="compareRows" @close="compareOpen = false" />
@@ -100,6 +103,11 @@
     <!-- 危险操作二次确认 + 统一提示 -->
     <ConfirmDialog v-model="confirmRemove" :title="`删除${schema.label}`" :message="removeMessage"
       confirm-text="删除" danger @confirm="doRemove" />
+
+    <!-- 撤销上次批量编辑：二次确认（覆盖写走同一条校验管线） -->
+    <ConfirmDialog v-model="confirmUndoBatch" title="撤销上次批量编辑"
+      :message="`将把上次批量改动的 ${store.lastBatch?.updates.length ?? 0} 条「${schema.label}」写回改动前的值（${undoBatchSummary}）。写库后可通过「导出 ${schema.table}.json」回写项目配置。`"
+      confirm-text="撤销" @confirm="onUndoBatch" />
 
     <!-- 一键重算敌人属性：覆盖性写二次确认 + 完成后 diff 摘要 -->
     <ConfirmDialog v-model="confirmRebuild" title="重算全部敌人属性"
@@ -510,11 +518,36 @@ const batchDialogOpen = ref(false)
 
 /** 敌人横向对比：选中行按当前列表顺序取行实体（跨页勾选保留，超 4 条由按钮禁用兜底） */
 const compareOpen = ref(false)
-const compareRows = computed(() =>
+/** 选中行实体（批量编辑预览 / 敌人对比共用） */
+const selectedRows = computed(() =>
   store.selectedIds
     .map((id) => store.rows.find((r) => String(r.id) === id))
     .filter((r): r is Record<string, unknown> => !!r),
 )
+const compareRows = selectedRows
+
+/** 撤销上次批量编辑：仅当前表匹配且批次存在时可用 */
+const confirmUndoBatch = ref(false)
+const canUndoBatch = computed(() =>
+  !!store.lastBatch && store.lastBatch.table === store.currentTable,
+)
+const undoBatchSummary = computed(() => {
+  const b = store.lastBatch
+  if (!b) return ''
+  const label = schema.value.fields.find((f) => f.key === b.field)?.label ?? b.field
+  return `共 ${b.updates.length} 条「${label}」`
+})
+
+/** 撤销上次批量：逐条写回旧值，结果走通知反馈 */
+async function onUndoBatch(): Promise<void> {
+  const result = await store.undoLastBatch()
+  if (result.ok > 0) {
+    notification.notify('已撤销批量改动', `已写回 ${result.ok} 条记录 · 数据版本 v${store.dataVersion}`, 'success')
+  }
+  if (result.failed.length) {
+    notification.notify('撤销部分失败', `${result.failed.length} 条未通过校验：${result.failed.join(', ')}`, 'error')
+  }
+}
 
 /** 批量应用字段值：成功通知 + 失败列出 ID */
 async function onBatchApply(field: string, value: unknown): Promise<void> {

@@ -50,7 +50,7 @@ const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
     battle: { label: '战斗', sub: '演武台 · 当前场景对战' },
     map: { label: '降妖路引', sub: '五域二十五关 · 择路而进' },
     pack: { label: '行囊', sub: '乾坤袋 · 背包 / 仓库 / 坊市' },
-    cultivate: { label: '修行', sub: '问道长生 · 角色 / 境界 / 流派' },
+    cultivate: { label: '修行', sub: '问道长生 · 角色 / 流派树 / 境界 / 经脉' },
     equip: { label: '装备', sub: '兵器法宝 · 装备 / 法宝 / 坐骑' },
     mate: { label: '伙伴', sub: '结伴同行 · 伙伴 / 灵宠 / 缘分' },
     collect: { label: '收集', sub: '志怪录 · 图鉴 / 成就 / 称号' },

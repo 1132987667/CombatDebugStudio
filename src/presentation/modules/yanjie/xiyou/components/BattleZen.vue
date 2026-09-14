@@ -73,6 +73,7 @@
       <div class="xy-run-progress">
         <span class="xy-run-progress-fill" :style="{ animationDuration: `${RUN_TIMING.ADVANCE_MS}ms` }"></span>
       </div>
+      <button v-if="run.total >= 2" type="button" class="xy-run-btn" @click="retreat">撤离</button>
     </div>
 
     <div v-else-if="run.phase === 'settling'" class="xy-run xy-run--settle" aria-label="收拾战利品">
@@ -80,6 +81,7 @@
         <span class="xy-run-title">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场胜利 · 收拾战利品</span>
         <span class="xy-run-meta">气血回复中 · {{ regenLeftSec }}s</span>
         <button type="button" class="xy-run-btn" @click="skipWait">加速</button>
+        <button v-if="run.total >= 2" type="button" class="xy-run-btn" @click="retreat">撤离</button>
       </div>
       <div class="xy-run-loot">
         <span class="xy-run-gain">经验 +{{ lastSettle.exp }}</span>
@@ -102,11 +104,20 @@
       </div>
       <div class="xy-run-loot">
         <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
+        <span v-if="run.totals.levelUps > 0" class="xy-run-gain xy-run-gain--level">升级 ×{{ run.totals.levelUps }}</span>
         <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
         <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">灵韵 +{{ run.totals.xianyuan }}</span>
         <span v-for="(d, i) in run.totals.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
         }}</span>
       </div>
+    </div>
+
+    <div v-else-if="run.phase === 'retreated'" class="xy-run xy-run--fail" aria-label="撤离结算">
+      <span class="xy-run-title">已撤离 · 已获战利品保留</span>
+      <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
+      <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
+      <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
+      <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
     </div>
 
     <div v-else-if="run.phase === 'failed'" class="xy-run xy-run--fail" aria-label="战败结算">
@@ -157,6 +168,7 @@ import ParticipantCard from '@/presentation/components/ParticipantCard.vue'
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation'
 import BattleLog from '@/presentation/modules/huanling/views/BattleLog.vue'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
@@ -177,6 +189,7 @@ import {
   type EnemyBrief,
 } from '../battle'
 import { itemName } from '../caveLogic'
+import { progressQuests } from '../questProgress'
 import { saveManager } from '../save-bridge'
 import { buildRunNodes, clearStars, RUN_TIMING, settleSeconds, type RunNode } from '../runFlow'
 import type { XiyouScene } from '../types'
@@ -343,7 +356,7 @@ async function initBattle(node: RunNode): Promise<void> {
 }
 
 // ════════════ 关卡推进状态机（玩法主循环设计.md §二/§三.2/§六/§七） ════════════
-type RunPhase = 'advancing' | 'battle' | 'settling' | 'finished' | 'failed'
+type RunPhase = 'advancing' | 'battle' | 'settling' | 'finished' | 'failed' | 'retreated'
 
 /** 手动开战：战斗就绪待命时由 HUD「开战」按钮触发，启动自动战斗循环 */
 async function beginBattle(): Promise<void> {
@@ -354,10 +367,18 @@ const run = reactive({
   phase: 'advancing' as RunPhase,
   nodeIndex: 0,
   total: 1,
-  totals: { exp: 0, money: 0, xianyuan: 0, drops: [] as EnemyDrop[] },
+  totals: { exp: 0, money: 0, xianyuan: 0, levelUps: 0, drops: [] as EnemyDrop[] },
   firstClear: false,
   stars: 0,
 })
+
+/** 中途撤离（§6.3）：场数 ≥2 的关卡开放，已入包资源保留、不计通关星级 */
+function retreat(): void {
+  clearRunTimers()
+  battleService.reset()
+  battleService.clearParticipants()
+  run.phase = 'retreated'
+}
 
 /** 上一场（当前节点）小结算数据（HUD 内嵌展示） */
 const lastSettle = reactive({ exp: 0, money: 0, xianyuan: 0, drops: [] as EnemyDrop[] })
@@ -405,7 +426,7 @@ function startRun(): void {
   runNodes = buildRunNodes(props.scene, scenes)
   run.nodeIndex = 0
   run.total = runNodes.length
-  run.totals = { exp: 0, money: 0, xianyuan: 0, drops: [] }
+  run.totals = { exp: 0, money: 0, xianyuan: 0, levelUps: 0, drops: [] }
   run.firstClear = false
   run.stars = 0
   const player = usePlayerStore()
@@ -481,6 +502,8 @@ function skipWait(): void {
 function finishRun(bossTurns: number, aliveCount: number): void {
   run.stars = clearStars(aliveCount, Math.max(1, store.allyTeam.length), bossTurns)
   run.firstClear = markSceneCleared(props.scene.id, run.stars)
+  // 任务推进：通关指定关卡（主线任务接线）
+  progressQuests('clear_scene', 1, { sceneId: props.scene.id })
   if (run.firstClear) {
     // BOSS 首杀一次性奖励（首杀神兵/耀星石，battle.ts FIRST_KILL_REWARDS 口径）：入包并并入结算展示
     const pack = usePackStore()
@@ -525,9 +548,17 @@ function onBattleEnded(data: BattleEndedEventData): void {
     const money = roll(reward.money)
     // 灵韵：按本节点敌方分级聚合（§10.1，战斗胜利获得，药园催熟资源）
     const xianyuan = xianyuanForEnemyIds(node?.enemyIds ?? [])
-    if (exp > 0) player.gainExp(exp)
+    const notification = useNotificationStore()
+    const levelUps = exp > 0 ? player.gainExp(exp) : 0
+    if (levelUps > 0) {
+      run.totals.levelUps += levelUps
+      notification.toast(`角色升级！当前 Lv.${player.player.level}`, 'success')
+    }
     if (money > 0) player.gainCurrency('money', money)
     if (xianyuan > 0) player.gainCurrency('xianyuan', xianyuan)
+    // 任务推进：任意战斗胜利 +1、击杀计数按本节点敌方数（任务子系统接线）
+    progressQuests('battle_win')
+    progressQuests('kill_count', node?.enemyIds.length ?? 0)
     // 掉落：入包（applyDrops 内部逐条 roll + toast），返回命中列表供小结算展示
     const hits = pack.applyDrops(
       dropsForEnemyIds(node?.enemyIds ?? [], node?.isBoss ? props.scene.drops?.materials : undefined),
@@ -896,6 +927,11 @@ onUnmounted(() => {
   font-size: var(--font-size-md);
   color: var(--xy-jade);
   font-variant-numeric: tabular-nums;
+}
+
+.xy-run-gain--level {
+  color: var(--xy-gold);
+  font-weight: var(--font-weight-bold);
 }
 
 .xy-run-stars {

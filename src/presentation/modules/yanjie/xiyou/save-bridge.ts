@@ -23,7 +23,7 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
-import { materials as packMaterials, packItems, pills as packPills, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
+import { materials as packMaterials, packItems, pills as packPills, quests, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
 
@@ -120,6 +120,14 @@ export const xiyouSaveBridge: SaveStatePort = {
     if (starred.length > 0) {
       data.progress.scene_stars = Object.fromEntries(starred.map((s) => [s.id, s.stars]))
     }
+
+    // 任务进度（结构化任务：id + goal 齐全才记录；全初始态时省略字段）
+    const questSaved: NonNullable<SaveData['quest_progress']> = {}
+    for (const q of quests) {
+      if (!q.id || !q.goal) continue
+      questSaved[q.id] = { progress: q.progress, ...(q.claimed ? { claimed: true } : {}) }
+    }
+    if (Object.keys(questSaved).length > 0) data.quest_progress = questSaved
 
     // inventory
     data.inventory = classifyInventory()
@@ -289,6 +297,17 @@ export const xiyouSaveBridge: SaveStatePort = {
     // scenes 星级（旧档无此字段保持 0；越界值钳制到 0~3 防脏档污染首杀/星级展示）
     const starsSaved = data.progress.scene_stars
     for (const s of scenes) s.stars = Math.max(0, Math.min(3, starsSaved?.[s.id] ?? 0))
+
+    // 任务进度恢复（旧档无此字段保留 configs 初始值）
+    const questSavedMap = data.quest_progress
+    if (questSavedMap) {
+      for (const q of quests) {
+        const saved = q.id ? questSavedMap[q.id] : undefined
+        if (!saved) continue
+        q.progress = Math.max(0, saved.progress)
+        q.claimed = !!saved.claimed
+      }
+    }
 
     // school（v3.0 流派：恢复已点亮节点 + 技能点 + 出战装备槽）
     const schoolState = data.school

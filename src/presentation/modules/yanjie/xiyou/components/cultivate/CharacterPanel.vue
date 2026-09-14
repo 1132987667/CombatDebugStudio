@@ -1,92 +1,127 @@
 <template>
   <div class="xy-character-panel">
-    <section class="xy-char-header">
-      <div class="xy-char-info">
+    <!-- 左列：属性面板（吃剩余宽度，属性网格双列铺开） -->
+    <div class="xy-col xy-col--main">
+      <section class="xy-section">
+        <h4 class="xy-sec-title">
+          属性面板<span class="xy-sec-count">已激活 {{ attrActiveCount }} / {{ attrTotal }} 项</span>
+        </h4>
+
+        <div class="xy-attr-group">
+          <p class="xy-attr-sub">基础属性</p>
+          <div class="xy-attr-grid" @mouseleave="hideAttrTooltip">
+            <div class="xy-attr-item" @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxHealth, attrVal(ATTRIBUTE_CODE.maxHealth))" @mousemove="updateTooltipPosition">
+              <span class="xy-attr-label">气血</span>
+              <span class="xy-attr-value">{{ hpText }}</span>
+            </div>
+            <div class="xy-attr-item" @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxEnergy, attrVal(ATTRIBUTE_CODE.maxEnergy))" @mousemove="updateTooltipPosition">
+              <span class="xy-attr-label">能量</span>
+              <span class="xy-attr-value">{{ energyText }}</span>
+            </div>
+            <div class="xy-attr-item" v-for="item in coreAttrs" :key="item.code"
+              @mouseenter="showAttrTooltip($event, item.code, attrVal(item.code))" @mousemove="updateTooltipPosition">
+              <span class="xy-attr-label">{{ item.displayName }}</span>
+              <span class="xy-attr-value" :class="valueClass(item)">{{ attrText(item) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="xy-attr-group">
+          <button type="button" class="xy-attr-sub xy-attr-sub--toggle" :aria-expanded="advancedExpanded"
+            @click="advancedExpanded = !advancedExpanded">
+            <span class="xy-attr-caret" :class="{ 'xy-attr-caret--open': advancedExpanded }" aria-hidden="true"></span>
+            <span>进阶属性</span>
+            <span class="xy-sec-count">共 {{ advancedCount }} 项</span>
+          </button>
+          <template v-if="advancedExpanded">
+            <div v-for="group in advancedGroupList" :key="group.key" class="xy-attr-sub-group">
+              <button type="button" class="xy-attr-sub xy-attr-sub--minor xy-attr-sub--toggle" :aria-expanded="expandedGroups.has(group.key)"
+                @click="toggleGroup(group.key)">
+                <span class="xy-attr-caret xy-attr-caret--minor" :class="{ 'xy-attr-caret--open': expandedGroups.has(group.key) }" aria-hidden="true"></span>
+                <span>{{ group.label }}</span>
+                <span class="xy-sec-count">{{ group.attrs.length }} 项</span>
+              </button>
+              <div v-if="expandedGroups.has(group.key)" class="xy-attr-grid" @mouseleave="hideAttrTooltip">
+                <div class="xy-attr-item" v-for="item in group.attrs" :key="item.code"
+                  @mouseenter="showAttrTooltip($event, item.code, attrVal(item.code))" @mousemove="updateTooltipPosition">
+                  <span class="xy-attr-label">{{ item.displayName }}</span>
+                  <span class="xy-attr-value" :class="valueClass(item)">{{ attrText(item) }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+    </div>
+
+    <!-- 右列：角色卡 + 加点 + 装备总览 -->
+    <div class="xy-col xy-col--side">
+      <section class="xy-section xy-char-header">
         <div class="xy-char-name-row">
           <span class="xy-char-name">{{ player.name }}</span>
           <span class="xy-char-level">Lv.{{ player.level }}</span>
         </div>
         <p class="xy-char-title">{{ player.title }}</p>
-        <div class="xy-exp-bar">
-          <div class="xy-exp-fill" :style="{ width: expPct + '%' }"></div>
-          <span class="xy-exp-text">{{ player.exp }} / {{ player.expNeed }} 经验</span>
+        <div class="xy-vital-bar" role="img" :aria-label="`气血 ${player.hp}/${player.maxHp}`">
+          <div class="xy-vital-fill xy-vital-fill--hp" :style="{ width: hpPct + '%' }"></div>
+          <span class="xy-vital-text">{{ player.hp }} / {{ player.maxHp }}</span>
         </div>
-      </div>
-    </section>
-
-    <section class="xy-section">
-      <h4 class="xy-sec-title">属性面板<span class="xy-sec-count">共 {{ attrTotal }} 项</span></h4>
-
-      <div class="xy-attr-group">
-        <p class="xy-attr-sub">基础属性</p>
-        <div class="xy-attr-grid" @mouseleave="hideAttrTooltip">
-          <div class="xy-attr-item" @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxHealth, attrVal(ATTRIBUTE_CODE.maxHealth))" @mousemove="updateTooltipPosition">
-            <span class="xy-attr-label">气血</span>
-            <span class="xy-attr-value">{{ hpText }}</span>
-          </div>
-          <div class="xy-attr-item" @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxEnergy, attrVal(ATTRIBUTE_CODE.maxEnergy))" @mousemove="updateTooltipPosition">
-            <span class="xy-attr-label">能量</span>
-            <span class="xy-attr-value">{{ energyText }}</span>
-          </div>
-          <div class="xy-attr-item" v-for="item in coreAttrs" :key="item.code"
-            @mouseenter="showAttrTooltip($event, item.code, attrVal(item.code))" @mousemove="updateTooltipPosition">
-            <span class="xy-attr-label">{{ item.displayName }}</span>
-            <span class="xy-attr-value" :class="{ 'xy-attr-value--pct': item.isPercentage }">{{ attrText(item) }}</span>
-          </div>
+        <div class="xy-vital-bar" role="img" :aria-label="`能量 ${player.energy}/${player.maxEnergy}`">
+          <div class="xy-vital-fill xy-vital-fill--energy" :style="{ width: energyPct + '%' }"></div>
+          <span class="xy-vital-text">{{ player.energy }} / {{ player.maxEnergy }}</span>
         </div>
-      </div>
+        <div class="xy-vital-bar xy-vital-bar--exp" role="img" :aria-label="`经验 ${player.exp}/${player.expNeed}`">
+          <div class="xy-vital-fill xy-vital-fill--exp" :style="{ width: expPct + '%' }"></div>
+          <span class="xy-vital-text">经验 {{ player.exp }} / {{ player.expNeed }}</span>
+        </div>
+        <div class="xy-char-meta">
+          <span class="xy-coin">金钱 {{ currency.money }}</span>
+          <span class="xy-coin">灵韵 {{ currency.xianyuan }}</span>
+          <span class="xy-coin">流派 {{ currentSchoolName }}</span>
+        </div>
+      </section>
 
-      <div class="xy-attr-group">
-        <button type="button" class="xy-attr-sub xy-attr-sub--toggle" :aria-expanded="advancedExpanded"
-          @click="advancedExpanded = !advancedExpanded">
-          <span>进阶属性</span>
-          <span class="xy-attr-caret">{{ advancedExpanded ? '收起' : '展开' }}</span>
-        </button>
-        <template v-if="advancedExpanded">
-          <div v-for="(attrs, group) in advancedGroups" :key="group" class="xy-attr-sub-group">
-            <p class="xy-attr-sub xy-attr-sub--minor">{{ groupLabels[group] ?? group }}</p>
-            <div class="xy-attr-grid" @mouseleave="hideAttrTooltip">
-              <div class="xy-attr-item" v-for="item in attrs" :key="item.code"
-                @mouseenter="showAttrTooltip($event, item.code, attrVal(item.code))" @mousemove="updateTooltipPosition">
-                <span class="xy-attr-label">{{ item.displayName }}</span>
-                <span class="xy-attr-value" :class="{ 'xy-attr-value--pct': item.isPercentage }">{{ attrText(item) }}</span>
-              </div>
+      <section class="xy-section">
+        <h4 class="xy-sec-title">
+          角色加点<span class="xy-sec-count" title="每次升级获得的自由属性点">可用属性点 <b class="xy-sec-count--num">{{ statPoints.available }}</b></span>
+        </h4>
+        <div class="xy-stat-list">
+          <div class="xy-stat-row" v-for="stat in statList" :key="stat.key">
+            <span class="xy-stat-label">{{ stat.label }}</span>
+            <span class="xy-stat-desc">{{ stat.desc }}</span>
+            <div class="xy-stat-ctrl">
+              <button type="button" class="xy-stat-btn" :aria-label="`减少${stat.label}`" :disabled="statPoints[stat.key] <= 0" @click="decStat(stat.key)">−</button>
+              <span class="xy-stat-val">{{ statPoints[stat.key] }}</span>
+              <button type="button" class="xy-stat-btn xy-stat-btn--inc" :aria-label="`增加${stat.label}`" :disabled="statPoints.available <= 0" @click="incStat(stat.key)">＋</button>
             </div>
           </div>
-        </template>
-      </div>
-    </section>
+        </div>
+        <div class="xy-stat-actions">
+          <button type="button" class="xy-btn xy-btn--primary" :disabled="usedPoints === 0" @click="applyStats">分配加点</button>
+          <button type="button" class="xy-btn xy-btn--ghost" :disabled="usedPoints === 0" @click="resetStats">重置加点</button>
+        </div>
+      </section>
 
-    <section class="xy-section">
-      <h4 class="xy-sec-title">角色加点<span class="xy-sec-count">每级 +{{ freePointsPerLevel }} · 剩余 {{ statPoints.available }} 点</span></h4>
-      <div class="xy-stat-list">
-        <div class="xy-stat-row" v-for="stat in statList" :key="stat.key">
-          <span class="xy-stat-label">{{ stat.label }}</span>
-          <span class="xy-stat-desc">{{ stat.desc }}</span>
-          <div class="xy-stat-ctrl">
-            <button type="button" class="xy-stat-btn" :disabled="statPoints[stat.key] <= 0" @click="decStat(stat.key)">-</button>
-            <span class="xy-stat-val">{{ statPoints[stat.key] }}</span>
-            <button type="button" class="xy-stat-btn" :disabled="statPoints.available <= 0" @click="incStat(stat.key)">+</button>
+      <section class="xy-section">
+        <h4 class="xy-sec-title">
+          装备总览<span class="xy-sec-count">已穿 {{ equippedCount }}/6</span>
+        </h4>
+        <p v-if="equippedCount === 0" class="xy-equip-hint">
+          尚未穿戴装备：通关关卡获取掉落，或前往洞府打造后在此穿戴。
+        </p>
+        <div class="xy-equip-list">
+          <div class="xy-equip-row" :class="{ 'xy-equip-row--empty': !row.gear }" v-for="row in gearSlotRows" :key="row.slot">
+            <span class="xy-equip-slot">{{ row.slot }}</span>
+            <template v-if="row.gear">
+              <span class="xy-equip-name">{{ row.gear.name }}<em v-if="row.enhance > 0">+{{ row.enhance }}</em></span>
+              <span class="xy-chip" :class="qualityClass(row.gear.rarity)">{{ qualityOf(row.gear.rarity) }}</span>
+            </template>
+            <span v-else class="xy-equip-name xy-equip-name--empty">未穿戴</span>
           </div>
         </div>
-      </div>
-      <div class="xy-stat-actions">
-        <button type="button" class="xy-btn xy-btn--primary" :disabled="usedPoints === 0" @click="applyStats">分配加点</button>
-        <button type="button" class="xy-btn xy-btn--ghost" :disabled="usedPoints === 0" @click="resetStats">重置加点</button>
-      </div>
-    </section>
-
-    <section class="xy-section">
-      <h4 class="xy-sec-title">装备总览<span class="xy-sec-count">{{ equippedGear.length }}/6</span></h4>
-      <div class="xy-equip-list">
-        <div class="xy-equip-row" v-for="g in equippedGear" :key="g.slot">
-          <span class="xy-equip-slot">{{ g.slot }}</span>
-          <span class="xy-equip-name">{{ g.item }}<em v-if="g.enhance > 0">+{{ g.enhance }}</em></span>
-          <span class="xy-chip" :class="qualityClass(g.rarity)">{{ qualityOf(g.rarity) }}</span>
-        </div>
-      </div>
-      <button type="button" class="xy-link-btn" @click="emit('goEquip')">前往装备面板</button>
-    </section>
+        <button type="button" class="xy-link-btn" @click="emit('goEquip')">前往装备面板</button>
+      </section>
+    </div>
 
     <AttributeTooltip :visible="attrTooltip.visible" :title="attrTooltip.title"
       :final-value="attrTooltip.finalValue" :value-type="attrTooltip.valueType"
@@ -106,16 +141,22 @@ import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation
 import { playerConfig } from '../../playerProfile'
 import { equipBonuses } from '../../battle'
 import { qualityClass, qualityOf } from '../../quality'
+import { schools } from '../../xiyouData'
 
 const emit = defineEmits<{ goEquip: [] }>()
 
 const notification = useNotificationStore()
 
-const { player, statPoints, playerAttributes, battleSnapshot } = storeToRefs(usePlayerStore())
+const { player, currency, statPoints, playerAttributes, battleSnapshot } = storeToRefs(usePlayerStore())
 
-const expPct = computed(() => (player.value.exp / player.value.expNeed) * 100)
+const expPct = computed(() => (player.value.expNeed > 0 ? (player.value.exp / player.value.expNeed) * 100 : 0))
+const hpPct = computed(() => (player.value.maxHp > 0 ? (player.value.hp / player.value.maxHp) * 100 : 0))
+const energyPct = computed(() => (player.value.maxEnergy > 0 ? (player.value.energy / player.value.maxEnergy) * 100 : 0))
 
-/* ── 属性面板（对齐唤灵台「角色监控」：基础/加成/进阶三层分组，元数据驱动 + 悬浮说明） ── */
+// 当前流派（schools 单例的 selected；新档未选流派时显式给出状态而非留白）
+const currentSchoolName = computed(() => schools.find((s) => s.selected)?.name ?? '未选定')
+
+/* ── 属性面板（对齐唤灵台「角色监控」：基础/进阶两层分组，元数据驱动 + 悬浮说明） ── */
 
 interface AttrEntry {
   code: ATTRIBUTE_CODE
@@ -161,16 +202,39 @@ const advancedGroups = computed<Record<string, AttrEntry[]>>(() => {
   return groups
 })
 
-// 分组中文名（单一来源 attributeDisplay）
-const groupLabels: Record<string, string> = DISPLAY_GROUP_LABELS
+// 分组中文名（单一来源 attributeDisplay）；「生命/攻击」与属性名「气血/攻击力」同屏混淆，域内改语义名
+const GROUP_LABEL_OVERRIDES: Record<string, string> = {
+  vitality: '生存',
+  offense: '输出',
+}
+const advancedGroupList = computed(() =>
+  Object.entries(advancedGroups.value).map(([key, attrs]) => ({
+    key,
+    label: GROUP_LABEL_OVERRIDES[key] ?? DISPLAY_GROUP_LABELS[key as keyof typeof DISPLAY_GROUP_LABELS] ?? key,
+    attrs,
+  })),
+)
 
 const advancedExpanded = ref(false)
+
+// 子组二级折叠：默认只展开有非零值的组（新手期 0 值组不铺开），展开状态随后续手动操作
+const expandedGroups = ref(new Set<string>())
 
 const advancedCount = computed(() =>
   Object.values(advancedGroups.value).reduce((sum, list) => sum + list.length, 0),
 )
-// 属性加成（*Bonus）已通过展示配置归入进阶区属性族分组，此处 advancedCount 已含
+// 属性加成（*Bonus）已通过展示配置归入进阶区属性族分组，此处 attrTotal 已含
 const attrTotal = computed(() => 2 + coreAttrs.value.length + advancedCount.value)
+
+// 「已激活」= 值 > 0 的展示项（对玩家有意义的元信息，替代无感的总项数）
+const attrActiveCount = computed(() => {
+  let count = 0
+  if (attrVal(ATTRIBUTE_CODE.currentHealth) > 0) count++
+  if (attrVal(ATTRIBUTE_CODE.maxEnergy) > 0) count++
+  for (const item of coreAttrs.value) if (attrVal(item.code) > 0) count++
+  for (const group of advancedGroupList.value) for (const item of group.attrs) if (attrVal(item.code) > 0) count++
+  return count
+})
 
 const hpText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentHealth)}/${attrVal(ATTRIBUTE_CODE.maxHealth)}`)
 const energyText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentEnergy)}/${attrVal(ATTRIBUTE_CODE.maxEnergy)}`)
@@ -184,8 +248,28 @@ function attrVal(code: ATTRIBUTE_CODE): number {
   return (playerAttributes.value[code] ?? getAttrDv(code)) + (gearBonus.value[code] ?? 0)
 }
 
+// 子组默认展开态依赖 attrVal（含装备加成），须在 gearBonus 就绪后初始化
+for (const [group, list] of Object.entries(advancedGroups.value)) {
+  if (list.some((item) => attrVal(item.code) > 0)) expandedGroups.value.add(group)
+}
+
+function toggleGroup(group: string) {
+  const next = new Set(expandedGroups.value)
+  if (next.has(group)) next.delete(group)
+  else next.add(group)
+  expandedGroups.value = next
+}
+
 function attrText(item: AttrEntry): string {
   return attrVal(item.code) + (item.isPercentage ? '%' : '')
+}
+
+/** 零值弱化 + 百分比标记（0 值灰化后百分比金标只剩噪音，统一交由 zero 类表达「无」） */
+function valueClass(item: AttrEntry): Record<string, boolean> {
+  return {
+    'xy-attr-value--pct': item.isPercentage && attrVal(item.code) > 0,
+    'xy-attr-value--zero': attrVal(item.code) <= 0,
+  }
 }
 
 const attrTooltip = ref({
@@ -264,50 +348,55 @@ function resetStats() {
   })
 }
 
-// NOTE: 装备总览 = 真实穿戴（pack.equipped），与装备/强化/升星面板同源，不再读静态 gearSlots
+// NOTE: 装备总览 = 真实穿戴（pack.equipped），与装备/强化/升星面板同源，不再读静态 gearSlots。
+//       只列六件套基础槽——GEAR_SLOT_LABELS 的 artifact/relic（法宝/神器）系统未实装，
+//       计入会重现「8/6」计数穿帮，待系统落地后放开。
+const BASE_GEAR_SLOTS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
+
 interface EquipOverviewRow {
   slot: string
-  item: string
-  rarity: number
+  gear: { name: string; rarity: number } | null
   enhance: number
 }
-const equippedGear = computed<EquipOverviewRow[]>(() =>
-  (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
-    .filter((slot) => pack.equippedGear(slot))
-    .map((slot) => {
-      const g = pack.equippedGear(slot)!
-      return {
-        slot: GEAR_SLOT_LABELS[slot],
-        item: g.name,
-        rarity: g.rarity,
-        enhance: pack.equippedInstance(slot)?.enhance ?? 0,
-      }
-    }),
+const gearSlotRows = computed<EquipOverviewRow[]>(() =>
+  BASE_GEAR_SLOTS.map((slot) => {
+    const g = pack.equippedGear(slot)
+    return {
+      slot: GEAR_SLOT_LABELS[slot],
+      gear: g ? { name: g.name, rarity: g.rarity } : null,
+      enhance: pack.equippedInstance(slot)?.enhance ?? 0,
+    }
+  }),
 )
+const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).length)
 </script>
 
 <style scoped lang="scss">
 .xy-character-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: var(--space-4);
+  align-items: start;
+  max-width: 1440px;
+}
+
+@media (max-width: 1280px) {
+  .xy-character-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.xy-col {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  min-width: 0;
 }
 
 .xy-char-header {
   display: flex;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 1px solid var(--xy-ink-line);
-  background: var(--xy-paper);
-  border-radius: 2px;
-}
-
-.xy-char-info {
-  flex: 1;
-  display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
+  gap: var(--space-2);
 }
 
 .xy-char-name-row {
@@ -317,7 +406,6 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
 }
 
 .xy-char-name {
-  
   font-size: var(--font-size-xl);
   letter-spacing: 2px;
   color: var(--xy-ink-1);
@@ -334,23 +422,38 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   color: var(--xy-ink-3);
 }
 
-.xy-exp-bar {
+/* 气血/能量/经验通用条：填充色区分语义（朱砂=气血、青绿=能量、鎏金细条=经验） */
+.xy-vital-bar {
   position: relative;
-  height: 14px;
-  margin-top: var(--space-1);
+  height: 18px;
   border: 1px solid var(--xy-ink-line);
   border-radius: 2px;
   background: var(--color-bg-secondary);
   overflow: hidden;
 }
 
-.xy-exp-fill {
+.xy-vital-bar--exp {
+  height: 12px;
+}
+
+.xy-vital-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--xy-jade), var(--xy-gold));
   transition: width var(--transition-base);
 }
 
-.xy-exp-text {
+.xy-vital-fill--hp {
+  background: linear-gradient(90deg, var(--xy-seal), var(--xy-seal-soft));
+}
+
+.xy-vital-fill--energy {
+  background: linear-gradient(90deg, var(--xy-jade), var(--xy-jade-soft));
+}
+
+.xy-vital-fill--exp {
+  background: linear-gradient(90deg, var(--xy-gold), var(--xy-gold-soft));
+}
+
+.xy-vital-text {
   position: absolute;
   inset: 0;
   display: flex;
@@ -359,6 +462,13 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   font-size: var(--font-size-md);
   color: var(--xy-ink-1);
   text-shadow: 0 0 2px var(--xy-paper);
+}
+
+.xy-char-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .xy-section {
@@ -386,6 +496,11 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   color: var(--xy-ink-4);
 }
 
+.xy-sec-count--num {
+  font-weight: var(--font-weight-bold);
+  color: var(--xy-gold);
+}
+
 .xy-attr-group {
   margin-bottom: var(--space-3);
 
@@ -397,7 +512,7 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
 .xy-attr-sub {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-1);
   margin: 0 0 var(--space-2);
   padding-left: var(--space-2);
   border-left: 3px solid var(--xy-seal);
@@ -407,27 +522,54 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
 }
 
 .xy-attr-sub--minor {
-  margin-top: var(--space-2);
   border-left-color: var(--xy-ink-line);
   font-weight: var(--font-weight-regular);
   color: var(--xy-ink-3);
 }
 
+/* 折叠开关：整行可点 + CSS 三角指示（矢量字符 ▶ 属控制符号被禁，用 border 绘制） */
 .xy-attr-sub--toggle {
   width: 100%;
-  padding: 0 0 var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-2);
   border: none;
   border-left: 3px solid var(--xy-seal);
   background: none;
   font-family: inherit;
   cursor: pointer;
   text-align: left;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--xy-paper-light);
+  }
+
+  &.xy-attr-sub--minor {
+    border-left-color: var(--xy-ink-line);
+
+    &:hover {
+      background: var(--xy-paper-light);
+    }
+  }
 }
 
 .xy-attr-caret {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-regular);
-  color: var(--xy-ink-4);
+  width: 0;
+  height: 0;
+  flex-shrink: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--xy-ink-4);
+  transition: transform var(--transition-fast);
+}
+
+.xy-attr-caret--minor {
+  border-left-width: 5px;
+  border-top-width: 3px;
+  border-bottom-width: 3px;
+}
+
+.xy-attr-caret--open {
+  transform: rotate(90deg);
 }
 
 .xy-attr-item {
@@ -466,21 +608,22 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
 .xy-stat-ctrl {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .xy-stat-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: 1px solid var(--xy-ink-line);
   border-radius: 2px;
-  background: var(--color-bg-secondary);
-  color: var(--xy-ink-2);
+  background: var(--xy-paper-light);
+  color: var(--xy-ink-1);
   cursor: pointer;
   font-size: var(--font-size-md);
+  line-height: 1;
 
   &:hover:not(:disabled) {
     border-color: var(--xy-seal);
@@ -493,8 +636,12 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   }
 }
 
+.xy-stat-btn--inc:hover:not(:disabled) {
+  background: var(--xy-seal-soft);
+}
+
 .xy-stat-val {
-  width: 24px;
+  width: 26px;
   text-align: center;
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
@@ -533,6 +680,12 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   color: var(--xy-ink-2);
 }
 
+.xy-equip-hint {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
 .xy-equip-list {
   display: flex;
   flex-direction: column;
@@ -547,6 +700,10 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
   padding: var(--space-2);
   border: 1px dashed var(--xy-ink-line);
   border-radius: 2px;
+}
+
+.xy-equip-row--empty {
+  opacity: 0.55;
 }
 
 .xy-equip-slot {
@@ -565,6 +722,10 @@ const equippedGear = computed<EquipOverviewRow[]>(() =>
     font-style: normal;
     color: var(--xy-seal);
   }
+}
+
+.xy-equip-name--empty {
+  color: var(--xy-ink-4);
 }
 
 .xy-link-btn {

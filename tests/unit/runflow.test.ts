@@ -53,7 +53,7 @@ describe('buildRunNodes（节点序列构造）', () => {
     expect(nodes[3].enemyIds).toEqual(['e1', 'e2', 'e3', 'yaotu_a'])
   })
 
-  it('妖魁关：普通场借同区域 scene_R_5 敌组垫场，关底妖魁不加增幅', () => {
+  it('妖魁关：普通场借同区域 scene_R_5 敌组垫场，关底妖魁率队 4v4 不加增幅', () => {
     const elite = makeScene('scene_2_5', ['w1', 'w2', 'w3'], 'yaotu_b')
     const bossScene = makeScene('scene_2_boss', ['boss_major_x'])
     const nodes = buildRunNodes(bossScene, [elite, bossScene])
@@ -61,7 +61,7 @@ describe('buildRunNodes（节点序列构造）', () => {
     expect(nodes[0].enemyIds).toEqual(['w1', 'w2', 'w3'])
     expect(nodes[2].amp).toBeCloseTo(1.3)
     expect(nodes[3].isBoss).toBe(true)
-    expect(nodes[3].enemyIds).toEqual(['boss_major_x'])
+    expect(nodes[3].enemyIds).toEqual(['boss_major_x', 'w1', 'w2', 'w3'])
     expect(nodes[3].amp).toBe(1)
   })
 })

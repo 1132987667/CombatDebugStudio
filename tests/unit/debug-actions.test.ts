@@ -5,9 +5,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { container, initializeContainer } from '@/infrastructure/di/Container'
 import { createDebugCategories, fail, ok, type DebugCategory } from '@/presentation/modules/yanjie/xiyou/debugActions'
 import type { PlayerStoreDebugEnv } from '@/presentation/modules/yanjie/xiyou/debugEnv'
-import { packItems, quests, scenes, schools, shopGoods, skillPoints } from '@/presentation/modules/yanjie/xiyou/xiyouData'
+import { packItems, quests, scenes, schools, shopGoods, skillPoints, mates, mounts, pets } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { saveManager } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { makeInstance, usePackStore } from '@/presentation/stores/packStore'
@@ -228,6 +229,125 @@ describe('刷关模拟（battle_grind）真实行为', () => {
     expect(lockedVariety).toBeGreaterThanOrEqual(unlockedSummary.dropVariety)
     vi.restoreAllMocks()
   })
+})
+
+describe('一键实测（battle_sweep）真实行为', () => {
+  /** mates/mounts/pets 是 xiyouData 模块级单例：记录 active 快照，测后恢复防串染 */
+  let mateActive: boolean[] = []
+  let mountActive: boolean[] = []
+  let petActive: boolean[] = []
+  let sceneUnlocked: boolean[] = []
+  beforeEach(() => {
+    mateActive = mates.map((m) => m.active)
+    mountActive = mounts.map((m) => m.active)
+    petActive = pets.map((p) => p.active)
+    sceneUnlocked = scenes.map((s) => s.unlocked)
+  })
+  afterEach(() => {
+    mates.forEach((m, i) => (m.active = mateActive[i]!))
+    mounts.forEach((m, i) => (m.active = mountActive[i]!))
+    pets.forEach((p, i) => (p.active = petActive[i]!))
+    scenes.forEach((s, i) => (s.unlocked = sceneUnlocked[i]!))
+  })
+
+  const findSweep = (env: ReturnType<typeof makeEnv>) => {
+    const battleCat = createDebugCategories(env).find((c) => c.id === 'battle') as DebugCategory
+    return battleCat.groups.flatMap((g) => g.actions).find((a) => a.id === 'battle_sweep')!
+  }
+
+  it('定义存在且为多输入（口径 + 次数 + 加点 + 穿装 + 阵容 + 范围）', () => {
+    const sweep = findSweep(makeEnv())
+    expect(sweep).toBeTruthy()
+    expect(Array.isArray(sweep.input)).toBe(true)
+    expect((sweep.input as unknown[]).length).toBe(6)
+  })
+
+  it('全流程：加点入账 + 穿装 + 上阵 3 伙伴 + 逐场景汇总', async () => {
+    const env = makeEnv()
+    const pack = usePackStore()
+    await pack.init()
+    // 养成素材：7 自由点 + 一件武器实例（无已穿戴装备）
+    env.player.statPoints.available = 7
+    pack.gearInstances.push(makeInstance('wp_t1_light_01', [], 0, 5))
+    const atkBefore = env.player.statPoints.atk
+    const saveAutoSaveSpy = vi.spyOn(env.save, 'autoSave').mockResolvedValue(true)
+    const r = await findSweep(env).execute({ count: '2', stats: 'atk', gear: 'best', mates: 'best', scope: 'all' })
+    expect(r.success).toBe(true)
+    const payload = r.payload as {
+      prep: { stats?: { allocated: Record<string, number> }; gear?: { slot: string }[]; mates?: string[] }
+      scenes: { id: string; battles: number; exp: number; dropVariety: number }[]
+      total: { battles: number; exp: number; leveled: number }
+    }
+    // 加点：本次分配恰为 7 点全攻击（扫荡中升级新发的 available 不属于本次）
+    expect(Object.values(payload.prep.stats!.allocated).reduce((a, b) => a + b, 0)).toBe(7)
+    expect(env.player.statPoints.atk).toBe(atkBefore + 7)
+    // 穿装：weapon 槽被占
+    expect(pack.equipped.weapon).toBeTruthy()
+    // 上阵：恰好 MAX_ACTIVE_MATES 名伙伴 active
+    expect(mates.filter((m) => m.active).length).toBe(3)
+    expect(payload.prep.mates!.length).toBe(3)
+    // 汇总：场景行数 > 0，total 与逐场景行一致
+    expect(payload.scenes.length).toBeGreaterThan(0)
+    expect(payload.total.battles).toBe(payload.scenes.reduce((s, row) => s + row.battles, 0))
+    expect(payload.total.exp).toBeGreaterThanOrEqual(0)
+    // 扫荡后状态落盘
+    expect(saveAutoSaveSpy).toHaveBeenCalled()
+  })
+
+  it('scope=unlocked 且全部未解锁时失败', async () => {
+    const env = makeEnv()
+    await usePackStore().init()
+    scenes.forEach((s) => (s.unlocked = false))
+    const r = await findSweep(env).execute({ count: '1', stats: 'none', gear: 'no', mates: 'no', scope: 'unlocked' })
+    expect(r.success).toBe(false)
+  })
+
+  it('全 no 策略：不动加点/装备/阵容，仅扫荡', async () => {
+    const env = makeEnv()
+    const pack = usePackStore()
+    await pack.init()
+    env.player.statPoints.available = 5
+    const weaponBefore = pack.equipped.weapon ?? null
+    const r = await findSweep(env).execute({ count: '1', stats: 'none', gear: 'no', mates: 'no', scope: 'all' })
+    expect(r.success).toBe(true)
+    const payload = r.payload as { prep: Record<string, unknown> }
+    expect(payload.prep).toEqual({})
+    expect(env.player.statPoints.available).toBeGreaterThanOrEqual(5)
+    expect(pack.equipped.weapon ?? null).toBe(weaponBefore)
+  })
+
+  it('真实模拟口径：无头对局出胜率报告，不入账收益', async () => {
+    // runQuickBattle 经 DI 容器取战斗引擎（quick-battle-sim.test.ts 同款装配）
+    container.clear()
+    initializeContainer()
+    const env = makeEnv()
+    const pack = usePackStore()
+    await pack.init()
+    scenes[0]!.unlocked = true
+    env.player.statPoints.available = 3
+    const expBefore = env.player.player.exp
+    const moneyBefore = env.player.currency.money
+    const saveAutoSaveSpy = vi.spyOn(env.save, 'autoSave').mockResolvedValue(true)
+    const r = await findSweep(env).execute({ mode: 'sim', count: '1', stats: 'atk', gear: 'no', mates: 'no', scope: 'unlocked' })
+    expect(r.success).toBe(true)
+    const payload = r.payload as {
+      mode: string
+      scenes: { battles: number; winRate: number | null; avgRounds: number | null }[]
+      total: { battles: number; winRate: number | null; failures: { reason: string; count: number }[] }
+    }
+    expect(payload.mode).toBe('sim')
+    expect(payload.scenes.length).toBe(1)
+    expect(payload.scenes[0]!.battles).toBe(1)
+    expect(payload.scenes[0]!.winRate).toBeGreaterThanOrEqual(0)
+    expect(payload.total.battles).toBe(1)
+    expect(payload.total.failures).toEqual([])
+    // 纯读侧：经验/金钱不入账；加点 prep 在模拟前生效（allyBonuses 同链路反映到主角快照）
+    expect(env.player.player.exp).toBe(expBefore)
+    expect(env.player.currency.money).toBe(moneyBefore)
+    expect(env.player.statPoints.atk).toBeGreaterThanOrEqual(3)
+    // prep 副作用与 fast 口径同频落盘
+    expect(saveAutoSaveSpy).toHaveBeenCalled()
+  }, 30000)
 })
 
 describe('玩家状态动作真实行为', () => {

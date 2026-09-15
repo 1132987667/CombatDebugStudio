@@ -3,6 +3,7 @@
 > 针对典型架构挑战，逐项评估当前系统的未完成项——能处理的、部分能处理的、不能处理及原因。
 > 评估基准：代码库当前 HEAD，基于领域层 `src/domain/buff/` 的实际实现。
 > 已完成的条目（光环/级联失效、即时/持续效果组件化、Buff-技能双向交互）已从本文档移除，不再追踪。
+> **时效标注（2026-09-15）**：各条目结论已对照代码复核仍有效；原行号引用已漂移，现统一改为符号引用，检索时以符号为准。
 
 ---
 
@@ -29,8 +30,8 @@
 **已有的基础设施：**
 
 - `BuffInstance.conditionState`（`'active' | 'inactive'`）已定义
-- `BuffSystem.setBuffConditionState()` 已实现，会 emit `CONDITION_CHANGED` 事件并触发属性变更通知（`BuffSystem.ts:1153`）
-- `BattleTriggerPhase.HP_LOWER_THAN` 阶段已定义，且被被动技能系统消费（`PassiveSkillManager.ts:228` 按 `hpThreshold` 判定）
+- `BuffSystem.setBuffConditionState()` 已实现，会 emit `CONDITION_CHANGED` 事件并触发属性变更通知
+- `BattleTriggerPhase.HP_LOWER_THAN` 阶段已定义，且被被动技能系统消费（`PassiveSkillManager` 按 `hpThreshold` 判定）
 
 **未闭合的链路：**
 
@@ -72,7 +73,7 @@
 - `BuffConfig` 没有 `persistOnDeath: boolean` 字段
 - `BuffSystem` 没有监听 `ON_DEATH` 并遍历清理非持久 Buff 的逻辑（战斗结束/重置时才 `clearAllBuffs`）
 - 没有"复活时恢复哪些 Buff"的机制
-- `ON_DEATH` / `ON_KILL` / `ON_REVIVE` 事件阶段已定义（`types.ts`），其中 `ON_REVIVE` 已被复活流程触发被动技能（`BattleExecutor.ts:686`），但均不承担 Buff 气血周期管理
+- `ON_DEATH` / `ON_KILL` / `ON_REVIVE` 事件阶段已定义（`types.ts`），其中 `ON_REVIVE` 已被复活流程触发被动技能（`BattleExecutor`），但均不承担 Buff 气血周期管理
 
 **要支持需要的改动：**
 
@@ -90,7 +91,7 @@
 
 - `BuffConfig.tags?: string[]` —— 多维标签已就位
 - `BuffConfig.dispellable?: boolean` —— 是否可驱散标记
-- **`BuffSystem.removeDispellableBuffs()` 已是公开 API**（`BuffSystem.ts:863`），按 `dispellable === true` 过滤，技能系统在调用（`SkillExecutor.ts:942`）
+- **`BuffSystem.removeDispellableBuffs()` 已是公开 API**，按 `dispellable === true` 过滤，技能系统在调用（`SkillExecutor`）
 - `cleanse_random_debuff` trigger 脚本——按 `isDebuff && dispellable` 过滤
 - 免疫检查 `characterImmunities` 在 `addBuff` 时阻断施加
 
@@ -108,7 +109,7 @@
 **已有的：**
 
 - `maxStacks` + `stackRule`（`LIMITED` / `REFRESH` / `INDEPENDENT`）
-- `LIMITED` 满层时：刷新持续时间、不增加层数、同步 `_stacks` 变量并通知 effectPlan 各原语 `onStackChange`（`BuffSystem.ts:539-563`）
+- `LIMITED` 满层时：刷新持续时间、不增加层数、同步 `_stacks` 变量并通知 effectPlan 各原语 `onStackChange`
 - `IAtomicEffect.onStackChange?` 回调——层数变化时重新计算修饰符值（`ModifierEffect` 使用）
 
 **不足：**
@@ -144,7 +145,7 @@
 **已有的：**
 
 - `BuffContextPool`（对象池，最大 200 实例，`borrow` / `reset` / `return` 完整实现，`BuffContextPool.ts`）
-- `BuffErrorBoundary`——脚本执行错误边界，出错回滚施加（`BuffSystem.ts:673-682`）
+- `BuffErrorBoundary`——脚本执行错误边界，出错回滚施加（`BuffSystem`）
 - `ModifierEffect.onStackChange` 只重算受影响的修饰符，而非整体重建
 
 **不足：**

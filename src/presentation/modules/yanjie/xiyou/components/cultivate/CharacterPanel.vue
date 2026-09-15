@@ -104,6 +104,23 @@
 
       <section class="xy-section">
         <h4 class="xy-sec-title">
+          等级突破<span class="xy-sec-count">{{ breakNode ? `已完成 ${player.breakStage}/5 阶` : '五阶圆满' }}</span>
+        </h4>
+        <template v-if="breakNode">
+          <p class="xy-break-desc">
+            升至 <b>Lv.{{ breakNode.level }}</b> 需：突破丹·{{ breakNodeCn }} ×1（持有
+            <span :class="{ 'xy-break-lack': breakPillCount < 1 }">{{ breakPillCount }}</span>）+ 金钱 {{ breakNode.money }}
+          </p>
+          <p v-if="!breakLevelReady" class="xy-break-desc">角色达到 Lv.{{ breakNode.level - 1 }} 且经验满溢后可突破。</p>
+          <button type="button" class="xy-btn xy-btn--primary" :disabled="!canBreak" @click="doBreak">
+            {{ breakLevelReady ? `突破·${breakNodeCn}` : '未达突破等级' }}
+          </button>
+        </template>
+        <p v-else class="xy-break-desc">五阶突破已圆满，境界再无桎梏。</p>
+      </section>
+
+      <section class="xy-section">
+        <h4 class="xy-sec-title">
           装备总览<span class="xy-sec-count">已穿 {{ equippedCount }}/6</span>
         </h4>
         <p v-if="equippedCount === 0" class="xy-equip-hint">
@@ -138,7 +155,7 @@ import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAtt
 import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
-import { playerConfig } from '../../playerProfile'
+import { playerConfig, BREAK_NODES, breakNodeLabel, nextBreakNode } from '../../playerProfile'
 import { equipBonuses } from '../../battle'
 import { qualityClass, qualityOf } from '../../quality'
 import { schools } from '../../xiyouData'
@@ -348,7 +365,24 @@ function resetStats() {
   })
 }
 
-// NOTE: 装备总览 = 真实穿戴（pack.equipped），与装备/强化/升星面板同源，不再读静态 gearSlots。
+// NOTE: 装备总览 = 真实穿戴（pack.equipped），与装备/强化/升星面板同源，不再读静态 gearSlots
+// ═══ 等级突破（§20）：节点丹+金钱扣减在组件层完成，playerStore 不反向依赖 packStore ═══
+const breakNode = computed(() => nextBreakNode(player.value.breakStage ?? 0))
+const breakNodeCn = computed(() => (breakNode.value ? breakNodeLabel(breakNode.value.stage) : ''))
+const breakPillCount = computed(() => (breakNode.value ? pack.countOf(breakNode.value.pillId) : 0))
+const breakLevelReady = computed(() => !!breakNode.value && player.value.level >= breakNode.value.level - 1)
+const canBreak = computed(
+  () => !!breakNode.value && breakLevelReady.value && breakPillCount.value >= 1 && currency.value.money >= (breakNode.value?.money ?? 0),
+)
+
+function doBreak(): void {
+  const node = breakNode.value
+  if (!node || !canBreak.value) return
+  pack.removeItem(node.pillId, 1)
+  currency.value.money -= node.money
+  usePlayerStore().setBreakStage(node.stage)
+  notification.toast(`突破·${breakNodeCn.value}成功！解锁 Lv.${node.level}`, 'success')
+}
 //       只列六件套基础槽——GEAR_SLOT_LABELS 的 artifact/relic（法宝/神器）系统未实装，
 //       计入会重现「8/6」计数穿帮，待系统落地后放开。
 const BASE_GEAR_SLOTS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
@@ -469,6 +503,21 @@ const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).le
   flex-wrap: wrap;
   gap: var(--space-2);
   margin-top: var(--space-1);
+}
+
+.xy-break-desc {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+
+  b {
+    color: var(--xy-gold);
+  }
+}
+
+.xy-break-lack {
+  color: var(--xy-seal);
+  font-weight: var(--font-weight-bold);
 }
 
 .xy-section {

@@ -71,8 +71,40 @@ export function computeStatBonuses(stats: XiyouStatPoints): Partial<Record<AttrC
   return out
 }
 
+/** 等级突破节点（完整项目说明 §20：突破·壹~伍，丹 + 阶位金钱；60 级二周目预留不设丹） */
+export interface BreakNode {
+  stage: number
+  /** 解锁等级（突破后方可升到该级） */
+  level: number
+  pillId: string
+  money: number
+}
+
+export const BREAK_NODES: BreakNode[] = [
+  { stage: 1, level: 10, pillId: 'break_pill_1', money: 500 },
+  { stage: 2, level: 20, pillId: 'break_pill_2', money: 1000 },
+  { stage: 3, level: 30, pillId: 'break_pill_3', money: 2000 },
+  { stage: 4, level: 40, pillId: 'break_pill_4', money: 4000 },
+  { stage: 5, level: 50, pillId: 'break_pill_5', money: 8000 },
+]
+
+/** 升到 nextLevel 是否被突破节点卡住（节点 = 10 的倍数级，需对应阶次已完成突破） */
+export function isBreakBlocked(nextLevel: number, breakStage: number): boolean {
+  return nextLevel % 10 === 0 && breakStage < nextLevel / 10
+}
+
+/** 下一待突破节点（五阶全满返回 null） */
+export function nextBreakNode(breakStage: number): BreakNode | null {
+  return BREAK_NODES.find((n) => n.stage === breakStage + 1) ?? null
+}
+
+/** 节点中文名（突破·壹/贰/叁/肆/伍） */
+export function breakNodeLabel(stage: number): string {
+  return ['壹', '贰', '叁', '肆', '伍'][stage - 1] ?? String(stage)
+}
+
 /** 创建玩家快照：满血满能量，属性 = 基础 + 成长 + 加点 */
-export function createPlayerProfile(opts?: { level?: number; exp?: number; stats?: XiyouStatPoints }): XiyouPlayer {
+export function createPlayerProfile(opts?: { level?: number; exp?: number; stats?: XiyouStatPoints; breakStage?: number }): XiyouPlayer {
   const level = opts?.level ?? playerConfig.initialLevel
   const stats: XiyouStatPoints = opts?.stats ?? { available: 0, hp: 0, atk: 0, def: 0, hit: 0, dodge: 0, speed: 0 }
   const base = computePlayerBase(level)
@@ -98,5 +130,6 @@ export function createPlayerProfile(opts?: { level?: number; exp?: number; stats
     dodgeRate: base.dodgeRate,
     exp: opts?.exp ?? 0,
     expNeed: expNeedForLevel(level),
+    breakStage: opts?.breakStage ?? 0,
   }
 }

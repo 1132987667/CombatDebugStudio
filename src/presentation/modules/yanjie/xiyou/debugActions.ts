@@ -17,9 +17,21 @@ import type { AffixData, EquipmentAffixData } from '@/domain/fengshen/types'
 import equipmentAffixesDataRaw from '@configs/equipment/equipment-affixes.json'
 import affixesDataRaw from '@configs/affixes/affixes.json'
 import { createPlayerProfile, playerConfig } from './playerProfile'
-import { dropsForEnemyById, xianyuanForEnemyIds, rewardForEnemyById } from './battle'
-import { equippedSkills, grantLevelPoint, grantPillPoint, pureSchoolBonus, schoolsLayers } from './xiyouData'
-import { enhanceMaxByRarity } from './caveLogic'
+import {
+  dropsForEnemyById,
+  xianyuanForEnemyIds,
+  rewardForEnemyById,
+  MAX_ACTIVE_MATES,
+  buildSimAlly,
+  buildEnemyRoster,
+  equipBonuses,
+  schoolTreeCombatBonuses,
+} from './battle'
+import { runQuickBattle } from '@/application/service/QuickBattleSim'
+import { ParticipantSide } from '@/domain/battle/type/types'
+import { equippedSkills, grantLevelPoint, grantPillPoint, pureSchoolBonus, schoolsLayers, mates, mounts, pets } from './xiyouData'
+import { enhanceCost, enhanceMaxByRarity, enhanceSuccessRate } from './caveLogic'
+import { createRng, rngFn } from '@/shared/utils/seeded-rng'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
 import { RARITY_NAMES } from './quality'
@@ -355,11 +367,6 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
               const enemyId = p.enemy as string
               const n = Number(p.count ?? 10)
               if (!enemyId) return fail('未知敌人')
-              const roll = (range: [number, number] | undefined): number =>
-                range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
-              const reward = rewardForEnemyById(enemyId)
-              const enemyDrops = dropsForEnemyById(enemyId)
-              const xianyuanPerBattle = xianyuanForEnemyIds([enemyId])
               const enemyName =
                 env.scenes.flatMap((s) => [...s.enemies, ...(s.yaotu ? [s.yaotu] : [])]).find((e) => e.id === enemyId)?.name ??
                 enemyId
@@ -370,18 +377,12 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
               const drops = new Map<string, { name: string; quantity: number; times: number }>()
               const levelBefore = player.player.level
               for (let i = 0; i < n; i++) {
-                const exp = roll(reward.exp)
-                const money = roll(reward.money)
-                totalExp += exp
-                totalMoney += money
-                if (exp > 0) player.gainExp(exp)
-                if (money > 0) player.gainCurrency('money', money)
-                if (xianyuanPerBattle > 0) {
-                  player.gainCurrency('xianyuan', xianyuanPerBattle)
-                  totalXianyuan += xianyuanPerBattle
-                }
+                const r = simBattleRewards(env, enemyId)
+                totalExp += r.exp
+                totalMoney += r.money
+                totalXianyuan += r.xianyuan
                 // 掉落：仅 roll 所选敌人的掉落（含「掉落率锁定」联动，silent 抑制逐条 toast 刷屏）
-                for (const d of pack.applyDrops(enemyDrops, true)) {
+                for (const d of r.drops) {
                   const key = d.itemId
                   const cur = drops.get(key) ?? { name: pack.catalogById(d.itemId)?.name ?? d.itemId, quantity: 0, times: 0 }
                   cur.quantity += d.quantity
@@ -406,10 +407,399 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
               )
             },
           },
+          {
+            id: 'battle_sweep',
+            label: '一键实测 · 全场景扫荡',
+            input: [
+              {
+                id: 'mode',
+                type: 'select',
+                options: [
+                  { value: 'fast', label: '快速结算 · 收益实测（经验/金钱/掉落入账）' },
+                  { value: 'sim', label: '真实模拟 · 强度实测（无头对局胜率/回合，不入账）' },
+                ],
+                placeholder: '模拟口径',
+              },
+              {
+                id: 'count',
+                type: 'select',
+                options: [
+                  { value: '1', label: '每场景 1 次' },
+                  { value: '5', label: '每场景 5 次' },
+                  { value: '10', label: '每场景 10 次' },
+                  { value: '20', label: '每场景 20 次' },
+                  { value: '50', label: '每场景 50 次' },
+                ],
+                placeholder: '每场景打怪次数（真实模拟时单场较慢，建议 ≤10）',
+                required: true,
+              },
+              {
+                id: 'stats',
+                type: 'select',
+                options: [
+                  { value: 'atk', label: '自动加点 · 全攻击' },
+                  { value: 'bracket', label: '自动加点 · 攻击+气血' },
+                  { value: 'balanced', label: '自动加点 · 六维均衡' },
+                  { value: 'none', label: '不自动加点' },
+                ],
+                placeholder: '加点方案（扫荡前一次性分完可用点数）',
+              },
+              {
+                id: 'gear',
+                type: 'select',
+                options: [
+                  { value: 'best', label: '自动穿装 · 逐槽位挑背包最优' },
+                  { value: 'no', label: '不动装备' },
+                ],
+                placeholder: '装备策略',
+              },
+              {
+                id: 'mates',
+                type: 'select',
+                options: [
+                  { value: 'best', label: '自动阵容 · 最优伙伴 + 骑乘 + 灵宠伴战' },
+                  { value: 'no', label: '不动阵容' },
+                ],
+                placeholder: '伙伴/坐骑/灵宠策略',
+              },
+              {
+                id: 'scope',
+                type: 'select',
+                options: [
+                  { value: 'all', label: '全部场景' },
+                  { value: 'unlocked', label: '仅已解锁场景' },
+                ],
+                placeholder: '场景范围',
+              },
+            ],
+            execute: async (params) => {
+              const p = (params ?? {}) as Record<string, string | number | File | null>
+              const n = Math.max(1, Number(p.count ?? 10))
+              const targets = p.scope === 'unlocked' ? env.scenes.filter((s) => s.unlocked) : env.scenes
+              if (targets.length === 0) return fail('没有可扫荡的场景（请解锁场景或改选「全部场景」）')
+
+              // ── 一键养成准备：加点 → 穿装 → 阵容（与手动路径同改 reactive 状态，两口径共用） ──
+              const prep = applyPrep(env, p)
+              if (p.mode === 'sim') return runSimSweep(env, targets, n, prep)
+
+              // ── 快速结算口径：每场景 N 战，敌人按场景敌组池（普通+妖徒）轮转覆盖 ──
+              const levelBefore = player.player.level
+              const rows: {
+                id: string
+                name: string
+                battles: number
+                exp: number
+                money: number
+                xianyuan: number
+                leveled: number
+                dropVariety: number
+                topDrops: string[]
+              }[] = []
+              let totBattles = 0
+              let totExp = 0
+              let totMoney = 0
+              let totXianyuan = 0
+              // 掉落种数全局去重（同物品多场景掉落时 headline 不重复计数）
+              const allDropIds = new Set<string>()
+              for (const scene of targets) {
+                const pool = [...scene.enemies.map((e) => e.id), scene.yaotu?.id].filter((id): id is string => !!id)
+                if (pool.length === 0) continue
+                const lvBefore = player.player.level
+                let exp = 0
+                let money = 0
+                let xianyuan = 0
+                const drops = new Map<string, number>()
+                for (let i = 0; i < n; i++) {
+                  const r = simBattleRewards(env, pool[i % pool.length]!)
+                  exp += r.exp
+                  money += r.money
+                  xianyuan += r.xianyuan
+                  for (const d of r.drops) drops.set(d.itemId, (drops.get(d.itemId) ?? 0) + d.quantity)
+                }
+                totBattles += n
+                totExp += exp
+                totMoney += money
+                totXianyuan += xianyuan
+                for (const id of drops.keys()) allDropIds.add(id)
+                rows.push({
+                  id: scene.id,
+                  name: scene.name,
+                  battles: n,
+                  exp,
+                  money,
+                  xianyuan,
+                  leveled: player.player.level - lvBefore,
+                  dropVariety: drops.size,
+                  topDrops: [...drops.entries()]
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([id, q]) => `${pack.catalogById(id)?.name ?? id}×${q}`),
+                })
+              }
+              const totalLeveled = player.player.level - levelBefore
+              // 养成与扫荡状态一次落盘（与 MatePanel 手动上阵后 autoSave 同口径）
+              void env.save.autoSave()
+              const prepText = prepSummary(prep)
+              return ok(
+                `实测完成：${rows.length} 场景 ${totBattles} 战 · 经验+${totExp} · 金钱+${totMoney} · 灵韵+${totXianyuan} · 升${totalLeveled} 级 · 掉落 ${allDropIds.size} 种${prepText ? `（${prepText}）` : ''}`,
+                { prep, scenes: rows, total: { scenes: rows.length, battles: totBattles, exp: totExp, money: totMoney, xianyuan: totXianyuan, leveled: totalLeveled, dropVariety: allDropIds.size } },
+              )
+            },
+          },
         ],
       },
     ],
   }
+}
+
+/** 单场模拟战结算：roll 经验/金钱/灵韵入账 + 掉落入包（silent 抑制逐条 toast 刷屏），返回本场明细 */
+function simBattleRewards(
+  env: PlayerStoreDebugEnv,
+  enemyId: string,
+): { exp: number; money: number; xianyuan: number; drops: { itemId: string; quantity: number }[] } {
+  const { player, pack } = env
+  const roll = (range: [number, number] | undefined): number =>
+    range ? Math.round(range[0] + Math.random() * (range[1] - range[0])) : 0
+  const reward = rewardForEnemyById(enemyId)
+  const exp = roll(reward.exp)
+  const money = roll(reward.money)
+  if (exp > 0) player.gainExp(exp)
+  if (money > 0) player.gainCurrency('money', money)
+  let gainedXianyuan = 0
+  const xianyuan = xianyuanForEnemyIds([enemyId])
+  if (xianyuan > 0) {
+    player.gainCurrency('xianyuan', xianyuan)
+    gainedXianyuan = xianyuan
+  }
+  return { exp, money, xianyuan: gainedXianyuan, drops: pack.applyDrops(dropsForEnemyById(enemyId), true) }
+}
+
+/** 加点六维 key（与 CharacterPanel STAT_DEFS 同序） */
+const STAT_ALLOC_KEYS = ['hp', 'atk', 'def', 'hit', 'dodge', 'speed'] as const
+type StatAllocKey = (typeof STAT_ALLOC_KEYS)[number]
+
+/** 按方案分配 N 个自由属性点，返回各维分配数（总和 = N） */
+function planStatAllocation(n: number, plan: string): Partial<Record<StatAllocKey, number>> {
+  const dist: Partial<Record<StatAllocKey, number>> = {}
+  const give = (key: StatAllocKey, cnt: number): void => {
+    if (cnt > 0) dist[key] = (dist[key] ?? 0) + cnt
+  }
+  if (plan === 'atk') {
+    give('atk', n)
+  } else if (plan === 'bracket') {
+    const atk = Math.ceil(n / 2)
+    give('atk', atk)
+    give('hp', n - atk)
+  } else {
+    // balanced：六维均分，余数按序补
+    let rem = n % STAT_ALLOC_KEYS.length
+    for (const key of STAT_ALLOC_KEYS) {
+      give(key, Math.floor(n / STAT_ALLOC_KEYS.length) + (rem-- > 0 ? 1 : 0))
+    }
+  }
+  return dist
+}
+
+/** 装备实例评分：instanceStats 数值总和（基础×强化×星级 + 词条；调试场景够用） */
+function gearScoreOf(env: PlayerStoreDebugEnv, inst: GearInstance): number {
+  return env.pack.instanceStats(inst).reduce((sum, s) => sum + Math.abs(s.value), 0)
+}
+
+/** 自动穿装：逐槽位从背包未穿戴实例中挑最高分穿上（equipInstance 同槽旧件自动回包），返回穿戴清单 */
+function autoEquipBest(env: PlayerStoreDebugEnv): { slot: string; name: string }[] {
+  const worn: { slot: string; name: string }[] = []
+  for (const slot of Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[]) {
+    const best = env.pack.gearInstances
+      .filter((g) => env.pack.gearById(g.itemId)?.slot === slot)
+      .reduce<GearInstance | null>((acc, g) => (acc === null || gearScoreOf(env, g) > gearScoreOf(env, acc) ? g : acc), null)
+    if (best && env.pack.equipInstance(best.instanceId)) {
+      worn.push({ slot, name: env.pack.gearById(best.itemId)?.name ?? best.itemId })
+    }
+  }
+  return worn
+}
+
+/** 伙伴战力分：参战 stats 总和（缺 stats 不可参战 = 0 分垫底） */
+function mateScore(m: (typeof mates)[number]): number {
+  return m.stats ? m.stats.maxHp + m.stats.attack + m.stats.defense + m.stats.speed : 0
+}
+
+/** 自动上阵：按战力分取前 MAX_ACTIVE_MATES 名 active，其余下场；返回上阵名单 */
+function autoDeployMates(): string[] {
+  const ranked = [...mates].sort((a, b) => mateScore(b) - mateScore(a))
+  const active = ranked.slice(0, MAX_ACTIVE_MATES)
+  for (const m of mates) m.active = active.includes(m)
+  return active.map((m) => m.name)
+}
+
+/**
+ * 自动骑乘：资质最高坐骑设为当前（其余取消），返回坐骑名（无坐骑返回 null）。
+ * HACK: mounts.active 不持久化（save-schema 无 mounts_active 键，EquipPanel 亦无切换 UI），
+ *       重载后回退 configs 初始值；需要持久化时先扩存档 schema 再来改这里。
+ */
+function autoRideMount(): string | null {
+  if (mounts.length === 0) return null
+  const best = [...mounts].sort((a, b) => b.aptitude - a.aptitude)[0]!
+  for (const m of mounts) m.active = m === best
+  return best.name
+}
+
+/** 灵宠伴战：全部设为伴战（当前无上限与参战数值，仅状态位）。同 autoRideMount：active 不持久化 */
+function autoAccompanyPets(): void {
+  for (const p of pets) p.active = true
+}
+
+/** 一键养成准备（加点 → 穿装 → 阵容），快速结算与真实模拟两口径共用；返回 prep 报告（未启用的项不含键） */
+function applyPrep(env: PlayerStoreDebugEnv, p: Record<string, string | number | File | null>): Record<string, unknown> {
+  const { player } = env
+  const prep: Record<string, unknown> = {}
+  const statPlan = String(p.stats ?? 'none')
+  if (statPlan !== 'none' && player.statPoints.available > 0) {
+    const dist = planStatAllocation(player.statPoints.available, statPlan)
+    for (const [key, cnt] of Object.entries(dist)) {
+      player.statPoints[key as StatAllocKey] += cnt ?? 0
+      player.statPoints.available -= cnt ?? 0
+    }
+    prep.stats = { plan: statPlan, allocated: dist }
+  }
+  if (p.gear === 'best') prep.gear = autoEquipBest(env)
+  if (p.mates === 'best') {
+    prep.mates = autoDeployMates()
+    prep.mount = autoRideMount()
+    autoAccompanyPets()
+    prep.pets = pets.filter((x) => x.active).map((x) => x.name)
+  }
+  return prep
+}
+
+/** prep 报告 → 消息摘要（如「加点7点 · 穿装4件 · 上阵3伙伴 · 骑乘照夜」） */
+function prepSummary(prep: Record<string, unknown>): string {
+  return [
+    prep.stats ? `加点${Object.values((prep.stats as { allocated: Record<string, number> }).allocated).reduce((a, b) => a + b, 0)}点` : null,
+    Array.isArray(prep.gear) ? `穿装${(prep.gear as { name: string }[]).length}件` : null,
+    prep.mates ? `上阵${(prep.mates as string[]).length}伙伴` : null,
+    prep.mount ? `骑乘${prep.mount as string}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
+/** 模拟场景行（winRate/avgRounds 仅统计成功执行场次；全被拒时 winRate = null，与「全败 0%」区分） */
+interface SimSceneRow {
+  id: string
+  name: string
+  battles: number
+  wins: number
+  winRate: number | null
+  avgRounds: number | null
+  avgSurvivors: number | null
+}
+
+/**
+ * 一键实测 · 真实模拟口径：逐场景 N 场无头真实对局（我方 = 主角+上阵伙伴，敌方 = 场景敌人合编）。
+ * NOTE: 每场满血独立模拟（无跨场血量继承/结算缓回），纯读侧强度实测——不入账经验/金钱/掉落；
+ *       引擎对局进行中时 runQuickBattle 拒绝，该场不计入胜率分母，失败计入报告 failures 而非中断。
+ */
+async function runSimSweep(
+  env: PlayerStoreDebugEnv,
+  targets: PlayerStoreDebugEnv['scenes'],
+  n: number,
+  prep: Record<string, unknown>,
+): Promise<DebugActionResult> {
+  const { player, pack } = env
+  const protagonist = player.battleSnapshot
+  // 与 BattleZen.initBattle 同口径：装备 + 流派树加成只作用于主角
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses() }
+  // 我方编成与场景无关，构造一次全场景复用（prep 已定妆：加点/穿装/阵容不再变化）
+  const allyActors = buildSimAlly(allyBonuses, protagonist)
+  const rows: SimSceneRow[] = []
+  let launched = 0
+  let executed = 0
+  let totWins = 0
+  let totRounds = 0
+  let totDecided = 0
+  let totSurv = 0
+  let totSurvSamples = 0
+  const failures = new Map<string, number>()
+    for (const scene of targets) {
+      const enemyEnemies = buildEnemyRoster(scene)
+      if (enemyEnemies.length === 0) continue
+      let wins = 0
+    let executedScene = 0
+    let rounds = 0
+    let decided = 0
+    let surv = 0
+    let survSamples = 0
+    for (let i = 0; i < n; i++) {
+      const r = await runQuickBattle({ allyActors, enemyEnemies })
+      launched++
+      if (!r.ok) {
+        const reason = r.reason ?? 'unknown'
+        failures.set(reason, (failures.get(reason) ?? 0) + 1)
+        continue
+      }
+      executed++
+      executedScene++
+      if (r.winner === ParticipantSide.ALLY) {
+        wins++
+        totWins++
+      }
+      if (r.winner !== null) {
+        rounds += r.rounds
+        decided++
+        totRounds += r.rounds
+        totDecided++
+      }
+      const allyTeam = r.summary?.teams.find((t) => t.side === ParticipantSide.ALLY)
+      if (allyTeam) {
+        surv += allyTeam.survivors
+        survSamples++
+        totSurv += allyTeam.survivors
+        totSurvSamples++
+      }
+    }
+    rows.push({
+      id: scene.id,
+      name: scene.name,
+      battles: n,
+      wins,
+      winRate: executedScene > 0 ? Math.round((wins / executedScene) * 100) : null,
+      avgRounds: decided > 0 ? Math.round((rounds / decided) * 10) / 10 : null,
+      avgSurvivors: survSamples > 0 ? Math.round((surv / survSamples) * 10) / 10 : null,
+    })
+  }
+  const failedCount = launched - executed
+  // prep 副作用（加点/穿装/阵容）在模拟前已生效：无论成败都落盘，fail 时也带 prep 报告防状态丢失感知
+  void env.save.autoSave()
+  if (rows.length === 0) return fail('没有可模拟的敌方编成（场景敌表为空或敌人 id 失效）', { prep })
+  if (launched > 0 && executed === 0) {
+    const first = [...failures.entries()].map(([reason, count]) => `${reason}×${count}`).join('、')
+    return fail(`模拟未能启动：${first}`, { prep, failures: [...failures.entries()].map(([reason, count]) => ({ reason, count })) })
+  }
+  const totalWinRate = executed > 0 ? Math.round((totWins / executed) * 100) : null
+  const totalAvgRounds = totDecided > 0 ? Math.round((totRounds / totDecided) * 10) / 10 : null
+  const totalAvgSurvivors = totSurvSamples > 0 ? Math.round((totSurv / totSurvSamples) * 10) / 10 : null
+  const notCleared = rows.filter((r) => r.winRate !== null && r.winRate < 100)
+  const failureText = failedCount > 0 ? ` · 未启动 ${failedCount} 场` : ''
+  const prepText = prepSummary(prep)
+  return ok(
+    `模拟完成：${rows.length} 场景 ${launched} 战 · 我方胜率 ${totalWinRate === null ? '-' : `${totalWinRate}%`} · 平均 ${totalAvgRounds ?? '-'} 回合 · 未全胜场景 ${notCleared.length}${notCleared.length > 0 ? `（${notCleared.slice(0, 3).map((r) => r.name).join('、')}）` : ''}${failureText}${prepText ? `（${prepText}）` : ''}`,
+    {
+      mode: 'sim',
+      prep,
+      scenes: rows,
+      total: {
+        scenes: rows.length,
+        battles: launched,
+        executed,
+        wins: totWins,
+        winRate: totalWinRate,
+        avgRounds: totalAvgRounds,
+        avgSurvivors: totalAvgSurvivors,
+        failures: [...failures.entries()].map(([reason, count]) => ({ reason, count })),
+      },
+    },
+  )
 }
 
 /** 玩家状态调试（D02） */
@@ -1082,6 +1472,110 @@ function buildPackCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: () => {
               pack.addItem('enh_stone', 50)
               return ok('「强化石」×50 已入背包', [{ id: 'enh_stone', name: '强化石' }])
+            },
+          },
+          {
+            id: 'enhance_sim',
+            label: '强化批量模拟（纯采样，不改状态）',
+            input: [
+              { id: 'current', type: 'number', placeholder: '当前强化等级 0~14（默认 0）' },
+              {
+                id: 'rarity',
+                type: 'select',
+                options: [
+                  { value: '1', label: '凡品（+3）' },
+                  { value: '2', label: '玄品（+6）' },
+                  { value: '3', label: '地品（+9）' },
+                  { value: '4', label: '天品（+12）' },
+                  { value: '5', label: '仙品（+15）' },
+                ],
+                placeholder: '品阶',
+              },
+              { id: 'target', type: 'number', placeholder: '目标等级（默认该品阶上限）' },
+              {
+                id: 'count',
+                type: 'select',
+                options: [
+                  { value: '100', label: '100 轮' },
+                  { value: '1000', label: '1000 轮' },
+                  { value: '10000', label: '10000 轮' },
+                ],
+                placeholder: '模拟轮数',
+              },
+              { id: 'seed', type: 'text', placeholder: '随机种子（留空随机）' },
+            ],
+            execute: (params) => {
+              const p = params as Record<string, string | number | File | null>
+              const current = Math.max(0, Math.min(14, Math.floor(Number(p.current ?? 0) || 0)))
+              const rarity = Math.max(1, Math.min(5, Number(p.rarity ?? 1) || 1))
+              const maxL = Math.min(
+                Math.max(current + 1, Math.floor(Number(p.target ?? 99) || 99)),
+                enhanceMaxByRarity(rarity),
+              )
+              if (current >= maxL) return fail(`当前等级已到该品阶上限 +${enhanceMaxByRarity(rarity)}`)
+              const rounds = Math.max(1, Math.min(100000, Number(p.count ?? 1000) || 1000))
+              const rng = rngFn(createRng(p.seed ? String(p.seed).trim() : Date.now() ^ Math.floor(Math.random() * 0x7fffffff)))
+
+              let triesAll = 0
+              let costAll = 0
+              let pityAll = 0
+              let successAll = 0
+              let done = 0
+              const byLevel = new Map<number, { tries: number; cost: number; okCnt: number; failCnt: number }>()
+              for (let r = 0; r < rounds; r++) {
+                let enhance = current
+                let failStreak = 0
+                // 保底语义（enhanceSuccessRate 内含 +10×连败）：失败 6 次后成功率钳到 100%，每级至多 7 次必成，循环必终止
+                while (enhance < maxL) {
+                  const at = enhance
+                  const rate = enhanceSuccessRate(at, failStreak) / 100
+                  const cost = enhanceCost(at, rarity)
+                  triesAll++
+                  costAll += cost
+                  const stat = byLevel.get(at) ?? { tries: 0, cost: 0, okCnt: 0, failCnt: 0 }
+                  stat.tries++
+                  stat.cost += cost
+                  if (rng() < rate) {
+                    stat.okCnt++
+                    enhance++
+                    successAll++
+                    if (failStreak >= 6) pityAll++
+                    failStreak = 0
+                  } else {
+                    stat.failCnt++
+                    failStreak++
+                  }
+                  byLevel.set(at, stat)
+                }
+                if (enhance >= maxL) done++
+              }
+              const rarityLabel = ['凡', '玄', '地', '天', '仙'][rarity - 1] ?? String(rarity)
+              const avgTries = Math.round((triesAll / rounds) * 10) / 10
+              const avgCost = Math.round(costAll / rounds)
+              const successRate = triesAll ? Math.round((successAll / triesAll) * 1000) / 10 : 0
+              const reachRate = Math.round((done / rounds) * 1000) / 10
+              return ok(
+                `+${current}→+${maxL}（${rarityLabel}品）×${rounds} 轮：平均 ${avgTries} 次尝试 · 每轮花费 ${avgCost} 金 · 实测成功率 ${successRate}% · 保底触发 ${pityAll} 次 · 达成率 ${reachRate}%`,
+                {
+                  from: current,
+                  to: maxL,
+                  rounds,
+                  avgTries,
+                  avgCost,
+                  successRate,
+                  pity: pityAll,
+                  reachRate,
+                  byLevel: [...byLevel.entries()]
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([level, s]) => ({
+                      // level = 目标强化等级 L（当前 enhance + 1，与公式口径一致）
+                      level: level + 1,
+                      avgTries: Math.round((s.tries / rounds) * 100) / 100,
+                      avgCost: Math.round(s.cost / rounds),
+                      successRate: s.tries ? Math.round((s.okCnt / s.tries) * 1000) / 10 : 0,
+                    })),
+                },
+              )
             },
           },
         ],

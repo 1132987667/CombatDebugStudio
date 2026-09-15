@@ -39,6 +39,8 @@ export interface SavePlayerState {
   // HACK: 键为加点域（v7 起 SAP 六维 hp/atk/def/hit/dodge/speed；旧档 strength/vitality/agility/spirit
   //       恢复时退还为 available）而非属性码；历史档可能携带已废弃加点键，故保持开放 Record 不收窄
   statBonuses?: Record<string, number>
+  /** 已完成等级突破阶次（0~5，§20；旧档缺省按当前等级宽大补齐 floor(level/10)） */
+  break_stage?: number
 }
 
 export interface SaveProgressState {

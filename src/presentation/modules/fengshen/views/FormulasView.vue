@@ -80,6 +80,40 @@
         命中 {{ trace.result.isMiss ? '闪避' : '命中' }}。
         引擎每步 floor 取整（如 780 × 1.15 = 896.99… → 896），故手算与逐击链可能有 1 点差。
       </div>
+
+      <!-- ===== 批量试算：两个维度取档，扫 finalDamage 矩阵（其余维度沿用上方表单当前值） ===== -->
+      <div class="fs-trace-inputs">
+        <div class="fs-trace-input-group">
+          <div class="fs-trace-input-title">维度 A（行）</div>
+          <TacticalSelect v-model="matrixKeyA" size="md" :options="matrixKeyOptions" />
+          <TacticalInput type="text" size="md" :model-value="matrixValsA" placeholder="档位，逗号分隔，如 100,300,600,1000"
+            @update:model-value="matrixValsA = String($event ?? '')" />
+        </div>
+        <div class="fs-trace-input-group">
+          <div class="fs-trace-input-title">维度 B（列）</div>
+          <TacticalSelect v-model="matrixKeyB" size="md" :options="matrixKeyOptions" />
+          <TacticalInput type="text" size="md" :model-value="matrixValsB" placeholder="档位，逗号分隔，如 60,120,240,480"
+            @update:model-value="matrixValsB = String($event ?? '')" />
+        </div>
+      </div>
+      <div v-if="matrix.error" class="fs-form-hint">{{ matrix.error }}</div>
+      <div v-else class="fs-table-wrap">
+        <table class="fs-table">
+          <thead>
+            <tr>
+              <th class="fs-col-label">{{ labelOf(matrixKeyA) }} ＼ {{ labelOf(matrixKeyB) }}</th>
+              <th v-for="c in matrix.cols" :key="c" class="fs-col-num">{{ c }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in matrix.rows" :key="row.row">
+              <td class="fs-col-label fs-cell-num">{{ row.row }}</td>
+              <td v-for="(cell, j) in row.cells" :key="j" class="fs-cell-num">{{ cell }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-if="!matrix.error" class="fs-form-hint">单元格 = 最终伤害（每步 floor 取整）；每个单元格都是一次引擎实算，非 JS 复刻。</div>
     </div>
 
     <!-- ===== 三、属性字典（次要，只读折叠） ===== -->
@@ -123,6 +157,8 @@ import {
 } from '@/domain/fengshen/damage-formula-reference'
 import { getCoreAttributes, CORE_CATEGORY_ORDER, type AttributeDictEntry } from '@/domain/fengshen/attribute-dictionary'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import { ref } from 'vue'
 
 const TIER_CLASSES: Record<AttributeValueTier, string> = {
   L1: 'fs-tag-aura',
@@ -165,6 +201,48 @@ function resetInputs(): void {
 }
 
 const trace = computed(() => buildSampleDamageTrace(calcInputs))
+
+// ════ 批量试算：两个输入维度取档，扫 finalDamage 矩阵（其余维度沿用 what-if 表单当前值） ════
+const matrixKeyA = ref<string>('attack')
+const matrixKeyB = ref<string>('defense')
+const matrixValsA = ref('100,300,600,1000')
+const matrixValsB = ref('60,120,240,480')
+
+const matrixKeyOptions = computed<TSelectOption[]>(() =>
+  trace.value.inputs.map((r) => ({ value: String(r.key), label: r.label })),
+)
+
+function labelOf(key: string): string {
+  return trace.value.inputs.find((r) => String(r.key) === key)?.label ?? key
+}
+
+/** 档位解析：逗号/空格分隔，最多 6 档（防矩阵爆炸），非法输入返回 null */
+function parseVals(s: string): number[] | null {
+  const parts = s.split(/[,，\s]+/).filter(Boolean).map(Number).filter((n) => Number.isFinite(n))
+  return parts.length ? parts.slice(0, 6) : null
+}
+
+const matrix = computed<{
+  error: string
+  cols: number[]
+  rows: Array<{ row: number; cells: number[] }>
+}>(() => {
+  const a = parseVals(matrixValsA.value)
+  const b = parseVals(matrixValsB.value)
+  if (!a || !b) return { error: '档位格式：数字用逗号分隔（每维最多 6 档）', cols: [], rows: [] }
+  if (matrixKeyA.value === matrixKeyB.value) return { error: '两个维度不能相同', cols: [], rows: [] }
+  const rows = a.map((av) => ({
+    row: av,
+    cells: b.map((bv) =>
+      buildSampleDamageTrace({
+        ...calcInputs,
+        [matrixKeyA.value]: av,
+        [matrixKeyB.value]: bv,
+      } as DamageTraceInputs).result.finalDamage,
+    ),
+  }))
+  return { error: '', cols: b, rows }
+})
 
 /** 表单分组渲染顺序（沿 trace.inputs 的分组语义） */
 const editableInputs = computed(() => {

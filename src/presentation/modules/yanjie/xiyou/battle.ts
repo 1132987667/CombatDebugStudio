@@ -7,7 +7,7 @@
 import { ATTRIBUTE_CODE, getAttrMeta } from '@/domain/attribute/types'
 import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
 import { SkillType } from '@/domain/skill/types'
-import type { EquipmentStatEntry } from '@/domain/fengshen/types'
+import type { ActorData, EquipmentStatEntry } from '@/domain/fengshen/types'
 import type { EnemyRole } from '@/domain/fengshen/role-grades'
 import { PLAYER_ID } from '@/shared/constants/player'
 import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
@@ -59,24 +59,21 @@ export function buildPlayerParty(): XiyouCombatant[] {
 }
 
 /**
- * 由场景敌人构造敌方阵容（至多 4 个，R22：属性/掉落/技能来自 configs/enemies/enemies.json 按 id 关联）
- * 妖徒（yaotu）参战：scenes.json yaotu.id 关联 enemies.json 完整定义，追加在普通敌人之后。
- * 技能按 enemy-skills.json 的 skillType 分桶（与 ConfigDataSource.normalizeEnemy 同口径），
- * passiveSkillIds 归被动、skillType=ultimate 归大招、其余归小技能。
- * @param node 关卡推进节点（runFlow.ts）：传入时按节点编成与妖气增幅构造；缺省 = 整场景合编一场（历史行为）
+ * 场景敌人的 Enemy 形状编成（未转领域参与者）。
+ * 无头模拟（QuickBattleSim 直收 Enemy 形状）与 buildEnemyTeam 共用，保证两口径编成一致。
  */
-export function buildEnemyTeam(scene: XiyouScene, node?: RunNode): BattleEntity[] {
+export function buildEnemyRoster(scene: XiyouScene, node?: RunNode): Enemy[] {
   const ids = node ? node.enemyIds : [...scene.enemies.map((e) => e.id), scene.yaotu?.id]
   const rows = ids
     .map((id) => (id ? (enemyById.get(id) ?? null) : null))
     .filter((r): r is EnemyRow => !!r)
   const amp = node?.amp ?? 1
-  return rows.slice(0, 4).map((row, i) => {
+  return rows.slice(0, 4).map((row) => {
     const st = row.stats ?? {}
     const s = (v?: number): number => Math.round(v ?? 0)
     // NOTE: 妖气增幅只缩放战斗数值（气血/攻击/防御/速度），命中率/闪避/暴击等百分比类不缩放
     const scaled = (v?: number): number => Math.round((v ?? 0) * amp)
-    const enemy: Enemy = {
+    return {
       id: row.id,
       name: row.name,
       level: row.level,
@@ -99,8 +96,18 @@ export function buildEnemyTeam(scene: XiyouScene, node?: RunNode): BattleEntity[
       //       数据源 affixes 表解析池并注入），此处透传 affixPool 即完成「敌人词缀配置 → 战斗生效」闭环。
       affixPool: row.affixPool,
     }
-    return GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, i)
   })
+}
+
+/**
+ * 由场景敌人构造敌方阵容（至多 4 个，R22：属性/掉落/技能来自 configs/enemies/enemies.json 按 id 关联）
+ * 妖徒（yaotu）参战：scenes.json yaotu.id 关联 enemies.json 完整定义，追加在普通敌人之后。
+ * 技能按 enemy-skills.json 的 skillType 分桶（与 ConfigDataSource.normalizeEnemy 同口径），
+ * passiveSkillIds 归被动、skillType=ultimate 归大招、其余归小技能。
+ * @param node 关卡推进节点（runFlow.ts）：传入时按节点编成与妖气增幅构造；缺省 = 整场景合编一场（历史行为）
+ */
+export function buildEnemyTeam(scene: XiyouScene, node?: RunNode): BattleEntity[] {
+  return buildEnemyRoster(scene, node).map((enemy, i) => GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, i))
 }
 
 /** 敌人技能按 skillType 分桶（enemy-skills.json 权威；未知技能忽略，引擎普攻兜底） */
@@ -506,21 +513,12 @@ export function schoolTreeCombatBonuses(): Partial<Record<string, number>> {
   return out
 }
 
-/**
- * 将斗战西游阵容转换为战斗引擎参与者（真实参战）
- * NOTE: 经 GameDataProcessor.enemyToParticipant 构造 BattleEntity，消费引擎而非直接 new 领域实现，
- *       与唤灵台演武台同数据源；技能留空（引擎普攻兜底），后续技能接入随 configs/skills 扩展。
- * @param allyBonuses 主角属性加成（已穿戴装备 stats，flat/percent 归一到最终数值），缺省无加成
- * @param protagonist 主角实时战斗快照（playerStore 派生），缺省回退 playerParty[0] 演示值
- * @param node 关卡推进节点（runFlow.ts）：传入时敌方按节点编成 + 妖气增幅；缺省 = 整场景合编一场
- */
-export function buildBattleTeams(
-  scene: XiyouScene,
-  allyBonuses?: Partial<Record<string, number>>,
-  protagonist?: ProtagonistSnapshot,
-  node?: RunNode,
-): { ally: BattleEntity[]; enemy: BattleEntity[] } {
-  const toEnemy = (c: XiyouCombatant & { critRate?: number; critDamage?: number; hitRate?: number; dodge?: number; damageReduction?: number }, player: boolean): Enemy => ({
+/** 西游战斗单位（含主角快照扩展字段）→ Enemy 形状（ATTRIBUTE_CODE stats）。无头模拟与 buildBattleTeams 共用同一映射，保证口径一致 */
+function xiyouToEnemy(
+  c: XiyouCombatant & { critRate?: number; critDamage?: number; hitRate?: number; dodge?: number; damageReduction?: number },
+  player: boolean,
+): Enemy {
+  return {
     id: c.id,
     name: c.name,
     level: c.level,
@@ -541,20 +539,64 @@ export function buildBattleTeams(
     drops: dropsForEnemy(c.name),
     // NOTE: 主角注入装备槽选出的技能（equipped 节点映射后的技能）；伙伴为固定空技能（引擎普攻兜底）
     skills: player ? equippedPlayerSkills() : { small: [], passive: [], ultimate: [] },
+  }
+}
+
+/** Enemy 形状 → ActorData 外壳（QuickBattleSim 我方入参）：stats 同口径复用，技能三桶平铺为 skillIds */
+function enemyToActor(e: Enemy): ActorData {
+  return {
+    id: e.id,
+    name: e.name,
+    level: e.level,
+    stats: e.stats,
+    skillIds: [...(e.skills.small ?? []), ...(e.skills.passive ?? []), ...(e.skills.ultimate ?? [])],
+  }
+}
+
+/** 主角属性加成累加（装备 equipBonuses + 流派 schoolTreeCombatBonuses 的合并结果，只作用于主角）。全键合并（含 dodge/damageReduction 等百分比属性），不做白名单 */
+function applyAllyBonuses(enemy: Enemy, allyBonuses: Partial<Record<string, number>>): Enemy {
+  const boostedStats: Enemy['stats'] = { ...enemy.stats }
+  for (const [attr, bonus] of Object.entries(allyBonuses)) {
+    if (!bonus) continue
+    boostedStats[attr as ATTRIBUTE_CODE] = (boostedStats[attr as ATTRIBUTE_CODE] ?? 0) + bonus
+  }
+  return { ...enemy, stats: boostedStats }
+}
+
+/**
+ * 构造无头模拟（QuickBattleSim）的我方编成：主角 + 上阵伙伴（与 buildBattleTeams 同口径，
+ * 装备/流派加成只作用于主角）。我方编成与场景无关——批量扫荡多场景时构造一次复用；
+ * 敌方随场景用 buildEnemyRoster(scene) 取。
+ * TODO(P2): 当前为整场景合编单场口径；整关节点制（buildRunNodes 连打 + 结算缓回 + 星级评定）需要跨场
+ *           血量继承，超过无头模拟「独立满血单场」的能力时再来扩展。
+ */
+export function buildSimAlly(allyBonuses?: Partial<Record<string, number>>, protagonist?: ProtagonistSnapshot): ActorData[] {
+  return buildPlayerParty().map((c, i) => {
+    const src = i === 0 && protagonist ? { ...c, ...protagonist } : c
+    const enemy = i === 0 && allyBonuses ? applyAllyBonuses(xiyouToEnemy(src, true), allyBonuses) : xiyouToEnemy(src, i === 0)
+    return enemyToActor(enemy)
   })
+}
+
+/**
+ * 将斗战西游阵容转换为战斗引擎参与者（真实参战）
+ * NOTE: 经 GameDataProcessor.enemyToParticipant 构造 BattleEntity，消费引擎而非直接 new 领域实现，
+ *       与唤灵台演武台同数据源；技能留空（引擎普攻兜底），后续技能接入随 configs/skills 扩展。
+ * @param allyBonuses 主角属性加成（已穿戴装备 stats，flat/percent 归一到最终数值），缺省无加成
+ * @param protagonist 主角实时战斗快照（playerStore 派生），缺省回退 playerParty[0] 演示值
+ * @param node 关卡推进节点（runFlow.ts）：传入时敌方按节点编成 + 妖气增幅；缺省 = 整场景合编一场
+ */
+export function buildBattleTeams(
+  scene: XiyouScene,
+  allyBonuses?: Partial<Record<string, number>>,
+  protagonist?: ProtagonistSnapshot,
+  node?: RunNode,
+): { ally: BattleEntity[]; enemy: BattleEntity[] } {
   // NOTE: 主角属性以 protagonist（playerStore 派生）为权威，伙伴为 mate.json 出战属性；装备加成仅作用于主角
   const ally = buildPlayerParty().map((c, i) => {
     const src = i === 0 && protagonist ? { ...c, ...protagonist } : c
-    if (i !== 0 || !allyBonuses) return GameDataProcessor.enemyToParticipant(toEnemy(src, i === 0), ParticipantSide.ALLY, i)
-    const enemy = toEnemy(src, i === 0)
-    // NOTE: 合并装备/流派全部加成属性到主角 stats（原为白名单 5 项，遗漏 dodge/damageReduction 等）
-    const boostedStats: Enemy['stats'] = { ...enemy.stats }
-    for (const [attr, bonus] of Object.entries(allyBonuses ?? {})) {
-      if (!bonus) continue
-      boostedStats[attr as ATTRIBUTE_CODE] = (boostedStats[attr as ATTRIBUTE_CODE] ?? 0) + bonus
-    }
-    const boosted: Enemy = { ...enemy, stats: boostedStats }
-    return GameDataProcessor.enemyToParticipant(boosted, ParticipantSide.ALLY, i)
+    const enemy = i === 0 && allyBonuses ? applyAllyBonuses(xiyouToEnemy(src, true), allyBonuses) : xiyouToEnemy(src, i === 0)
+    return GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ALLY, i)
   })
   const enemy = buildEnemyTeam(scene, node)
   return { ally, enemy }

@@ -58,6 +58,8 @@
               </span>
               <span class="xy-settings-dlg__bookmark-actions">
                 <button type="button" class="xy-settings-dlg__seg-btn" @click="onApplyBookmark(b.id)">应用</button>
+                <button type="button" class="xy-settings-dlg__seg-btn" title="下载书签 JSON，可分享给同事复现同一验证场景"
+                  @click="onExportBookmark(b.id)">导出</button>
                 <button type="button" class="xy-settings-dlg__seg-btn" @click="onDeleteBookmark(b.id)">删除</button>
               </span>
             </div>
@@ -68,6 +70,12 @@
                 {{ savingBookmark ? '保存中…' : '存为书签' }}
               </button>
             </div>
+            <button type="button" class="xy-settings-dlg__row xy-settings-dlg__row--btn xy-ink-hover" @click="onImportBookmarkClick">
+              <span class="xy-settings-dlg__label">导入书签</span>
+              <span class="xy-settings-dlg__hint">从导出的书签 JSON 恢复（新增，不覆盖现有书签）</span>
+            </button>
+            <input ref="bookmarkFileInput" type="file" accept=".json,application/json" class="xy-settings-dlg__file"
+              @change="onImportBookmarkFile" />
             <div v-if="!bookmarks.length" class="xy-settings-dlg__hint xy-settings-dlg__bookmark-empty">
               暂无书签。走到想反复验证的场景，存一个书签，之后一键回到这里。
             </div>
@@ -171,7 +179,9 @@ import {
   applyRunBookmark,
   createRunBookmark,
   deleteRunBookmark,
+  importRunBookmark,
   listRunBookmarks,
+  serializeRunBookmark,
   type RunBookmark,
 } from '../bookmarks'
 
@@ -310,6 +320,45 @@ async function onApplyBookmark(id: string): Promise<void> {
 function onDeleteBookmark(id: string): void {
   deleteRunBookmark(id)
   refreshBookmarks()
+}
+
+/** 导出书签为 JSON 文件下载（文件名清洗 Windows 非法字符；revoke 延迟到下一轮，避免下载尚未开始就被释放） */
+function onExportBookmark(id: string): void {
+  try {
+    const bookmark = bookmarks.value.find((b) => b.id === id)
+    const json = serializeRunBookmark(id)
+    const safeName = (bookmark?.name ?? id).replace(/[\\/:*?"<>|]/g, '-').slice(0, 40)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `bookmark-${safeName}.json`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 0)
+  } catch (e) {
+    notification.toast(`书签导出失败: ${String(e)}`, 'error')
+  }
+}
+
+const bookmarkFileInput = ref<HTMLInputElement | null>(null)
+
+function onImportBookmarkClick(): void {
+  bookmarkFileInput.value?.click()
+}
+
+/** 导入书签：解析由 importRunBookmark 校验，成功后刷新列表 */
+async function onImportBookmarkFile(e: Event): Promise<void> {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  try {
+    const bookmark = importRunBookmark(await file.text())
+    refreshBookmarks()
+    notification.toast(`书签「${bookmark.name}」已导入`, 'success')
+  } catch (err) {
+    notification.toast(`书签导入失败: ${err instanceof SyntaxError ? '不是合法 JSON 文件' : String(err)}`, 'error')
+  }
 }
 
 const overlayRef = ref<HTMLElement | null>(null)

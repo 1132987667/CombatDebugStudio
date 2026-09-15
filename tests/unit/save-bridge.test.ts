@@ -168,6 +168,20 @@ describe('restore 状态恢复', () => {
     expect(player.currency.money).toBe(10800)
     expect(player.currency.xianyuan).toBe(40)
   })
+
+  it('突破阶次（§20）：restore 回填 break_stage，旧档缺省按等级宽大补齐', async () => {
+    const data = createInitialGameState()
+    data.player.level = 25
+    data.player.break_stage = 2
+    await xiyouSaveBridge.restore(data)
+    expect(usePlayerStore().player.breakStage).toBe(2)
+
+    // 旧档无 break_stage：已到达的 10 的倍数节点视为已突破（Lv32 → 三阶）
+    const legacy = createInitialGameState()
+    legacy.player.level = 32
+    await xiyouSaveBridge.restore(legacy)
+    expect(usePlayerStore().player.breakStage).toBe(3)
+  })
 })
 
 describe('手动存档全链路（真实 bridge → 落盘）', () => {

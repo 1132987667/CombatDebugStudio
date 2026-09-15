@@ -7,10 +7,14 @@
 import { describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import {
+  BREAK_NODES,
+  breakNodeLabel,
   computePlayerBase,
   computeStatBonuses,
   createPlayerProfile,
   expNeedForLevel,
+  isBreakBlocked,
+  nextBreakNode,
 } from '@/presentation/modules/yanjie/xiyou/playerProfile'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { buildBattleTeams, equipBonuses, xianyuanForEnemyIds } from '@/presentation/modules/yanjie/xiyou/battle'
@@ -41,6 +45,41 @@ describe('playerProfile 玩家属性创建', () => {
     expect(b.attackMax).toBe(16)
     expect(b.defense).toBe(4)
     expect(b.speed).toBe(11)
+  })
+
+  it('突破节点表（§20）：五阶 10/20/30/40/50 级，丹与阶位金钱对应', () => {
+    expect(BREAK_NODES.map((n) => n.level)).toEqual([10, 20, 30, 40, 50])
+    expect(BREAK_NODES.map((n) => n.money)).toEqual([500, 1000, 2000, 4000, 8000])
+    expect(BREAK_NODES.map((n) => n.pillId)).toEqual([
+      'break_pill_1',
+      'break_pill_2',
+      'break_pill_3',
+      'break_pill_4',
+      'break_pill_5',
+    ])
+    expect(nextBreakNode(0)?.stage).toBe(1)
+    expect(nextBreakNode(4)?.stage).toBe(5)
+    expect(nextBreakNode(5)).toBeNull()
+    expect(breakNodeLabel(1)).toBe('壹')
+    expect(breakNodeLabel(5)).toBe('伍')
+  })
+
+  it('突破卡级判定：10 的倍数级需对应阶次，其余等级畅通', () => {
+    expect(isBreakBlocked(10, 0)).toBe(true)
+    expect(isBreakBlocked(10, 1)).toBe(false)
+    expect(isBreakBlocked(11, 1)).toBe(false)
+    expect(isBreakBlocked(19, 1)).toBe(false)
+    expect(isBreakBlocked(20, 1)).toBe(true)
+    expect(isBreakBlocked(20, 2)).toBe(false)
+    expect(isBreakBlocked(50, 4)).toBe(true)
+    expect(isBreakBlocked(50, 5)).toBe(false)
+    expect(isBreakBlocked(51, 5)).toBe(false)
+    expect(isBreakBlocked(30, 0)).toBe(true)
+  })
+
+  it('profile 快照带突破阶次（缺省 0，升级链透传不被重置）', () => {
+    expect(createPlayerProfile({ level: 5 }).breakStage).toBe(0)
+    expect(createPlayerProfile({ level: 25, breakStage: 2 }).breakStage).toBe(2)
   })
 
   it('加点换算按 statBonuses 计算（SAP 六维：1 点 = 12 气血 = 2 攻 = 2 速度）', () => {

@@ -99,6 +99,7 @@ export const xiyouSaveBridge: SaveStatePort = {
     data.player.base_atk = [player.player.attackMin, player.player.attackMax]
     data.player.money = player.currency.money
     data.player.xianyuan = player.currency.xianyuan
+    data.player.break_stage = player.player.breakStage ?? 0
     data.player.statBonuses = {
       available: player.statPoints.available,
       hp: player.statPoints.hp,
@@ -198,6 +199,8 @@ export const xiyouSaveBridge: SaveStatePort = {
       level: data.player.level,
       exp: data.player.exp,
       stats: restoredStats,
+      // 突破阶次：旧档缺省按当前等级宽大补齐（已到达的 10 的倍数节点视为已突破，不受新机制惩罚）
+      breakStage: data.player.break_stage ?? Math.floor(data.player.level / 10),
     })
     Object.assign(player.player, profile)
     player.player.maxHp = data.player.hp_max

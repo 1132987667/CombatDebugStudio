@@ -17,8 +17,19 @@
         <span>敌方：{{ lineupEnemyText || '（加载中…）' }}</span>
       </div>
       <div v-if="lineupError" class="fs-qv-error">{{ lineupError }}</div>
+      <div v-if="skippedRows.length" class="fs-qv-warn">
+        已跳过 {{ skippedRows.length }} 条不参与模拟（表坏行缺 id/name/stats、或编成引用未命中）：{{ skippedRows.slice(0, 5).join('、') }}<template v-if="skippedRows.length > 5"> 等</template>
+      </div>
 
       <div class="fs-qv-controls">
+        <label class="fs-qv-field">
+          <span class="fs-qv-field-label">我方编成</span>
+          <TacticalSelect v-model="allyLineupId" size="md" :options="lineupOptions" />
+        </label>
+        <label class="fs-qv-field">
+          <span class="fs-qv-field-label">敌方编成</span>
+          <TacticalSelect v-model="enemyLineupId" size="md" :options="lineupOptions" />
+        </label>
         <label class="fs-qv-field">
           <span class="fs-qv-field-label">种子</span>
           <input v-model="seed" class="fs-qv-input" type="text" placeholder="留空随机；填写后固定单场可复现" />
@@ -31,8 +42,8 @@
               @click="battleCount = n">{{ n }}</Button>
           </div>
         </div>
-        <Button variant="primary" :disabled="running || !canRun" @click="run">
-          {{ running ? progress || '模拟中…' : '开始验证' }}
+        <Button variant="primary" :disabled="running || lineupLoading || !canRun" @click="run">
+          {{ running ? progress || '模拟中…' : lineupLoading ? '编成载入中…' : '开始验证' }}
         </Button>
       </div>
       <div class="fs-qv-hint">按当前已保存配置模拟（行内已即时保存；编辑器中未保存的草稿不参与）。同种子同编成结果可复现。</div>
@@ -112,6 +123,7 @@ import { GameDataApi } from '@/application/service/GameDataApi'
 import type { ActorData } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import {
   aggregateQuickBattles,
   runQuickBattle,
@@ -136,6 +148,8 @@ type Row = Record<string, unknown>
 const lineupAllyText = ref('')
 const lineupEnemyText = ref('')
 const lineupError = ref('')
+/** 坏行剔除不静默：列出被跳过的行（表:id），防止模拟建立在缩水编成上而无人察觉 */
+const skippedRows = ref<string[]>([])
 const allyRows = ref<ActorData[]>([])
 const enemyRows = ref<Enemy[]>([])
 const seed = ref('')
@@ -145,7 +159,23 @@ const progress = ref('')
 const single = ref<QuickBattleResult | null>(null)
 const agg = ref<QuickBattleAggregate | null>(null)
 
+// ════ 自选编成（lineups 表）：'' = 默认固定规则，选中行覆盖同侧编成 ════
+type LineupRow = { id: string; name?: string; roles?: Array<{ roleId?: string }> }
+const allyLineupId = ref<string | null>('')
+const enemyLineupId = ref<string | null>('')
+const lineupRows = ref<LineupRow[]>([])
+const lineupOptions = computed<TSelectOption[]>(() => [
+  { value: '', label: '默认规则' },
+  ...lineupRows.value.map((l) => ({ value: l.id, label: l.name || l.id })),
+])
+
+function isLineupRow(l: Row): l is LineupRow {
+  return !!l && typeof l.id === 'string' && Array.isArray(l.roles)
+}
+
 const canRun = computed(() => allyRows.value.length > 0 && enemyRows.value.length > 0)
+/** 编成重建中：禁用开始按钮，防止用旧编成跑模拟 */
+const lineupLoading = ref(false)
 
 const verdictText = computed(() => {
   if (!single.value) return ''
@@ -172,18 +202,63 @@ function asEnemy(r: Row): Enemy | null {
   return asActor(r)
 }
 
+/** 划分有效行 / 坏行，坏行记录「表:id」供显式提示 */
+function partitionValid<T>(table: string, rows: Row[], map: (r: Row) => T | null): { valid: T[]; skipped: string[] } {
+  const valid: T[] = []
+  const skipped: string[] = []
+  rows.forEach((r, i) => {
+    const v = map(r)
+    if (v) valid.push(v)
+    else skipped.push(`${table}:${String(r?.id ?? `#索引${i}`)}`)
+  })
+  return { valid, skipped }
+}
+
+/** lineups 单侧编成解析：我方仅收 actors 命中、敌方仅收 enemies 命中；未命中 roleId 计入缺失（不静默缩编） */
+function collectLineupSide(
+  lineupId: string,
+  side: 'ally' | 'enemy',
+  actors: ActorData[],
+  enemies: Enemy[],
+): { allyUnits: ActorData[]; enemyUnits: Enemy[]; missing: string[]; lineupName: string } {
+  const out = { allyUnits: [] as ActorData[], enemyUnits: [] as Enemy[], missing: [] as string[], lineupName: lineupId }
+  const lineup = lineupRows.value.find((l) => l.id === lineupId)
+  if (!lineup) return out
+  out.lineupName = lineup.name || lineup.id
+  const pool = side === 'ally' ? actors : enemies
+  const poolById = new Map(pool.map((r) => [r.id, r]))
+  for (const role of lineup.roles ?? []) {
+    const roleId = String(role?.roleId ?? '')
+    const hit = roleId ? poolById.get(roleId) : undefined
+    if (!hit) {
+      out.missing.push(roleId || '(空 roleId)')
+      continue
+    }
+    if (side === 'ally') out.allyUnits.push(hit as ActorData)
+    else out.enemyUnits.push(hit as Enemy)
+  }
+  return out
+}
+
 async function loadRows(table: string): Promise<Row[]> {
   const api = container.resolve<GameDataApi>('GameDataApi')
   return api.listByTable<Row>(table, { limit: 1000 })
 }
 
-/** 按验证对象构造编成：验证敌人 = actors 前 4 vs 该敌人；验证角色 = 该角色 + 其余前 3 vs enemies 前 4 */
+/** 构造编成：默认规则 = 验证敌人 → actors 前 4 vs 该敌人；验证角色 → 该角色 + 其余前 3 vs enemies 前 4。选择 lineups 编成时覆盖同侧 */
 async function buildLineup(): Promise<void> {
+  lineupLoading.value = true
   lineupError.value = ''
   try {
-    const [actorRows, enemyRowsAll] = await Promise.all([loadRows('actors'), loadRows('enemies')])
-    const actors = actorRows.map(asActor).filter((a): a is ActorData => !!a)
-    const enemies = enemyRowsAll.map(asEnemy).filter((e): e is Enemy => !!e)
+    const [actorRows, enemyRowsAll, lineupAll] = await Promise.all([
+      loadRows('actors'), loadRows('enemies'), loadRows('lineups'),
+    ])
+    const allyPart = partitionValid('actors', actorRows, asActor)
+    const enemyPart = partitionValid('enemies', enemyRowsAll, asEnemy)
+    skippedRows.value = [...allyPart.skipped, ...enemyPart.skipped]
+    const actors = allyPart.valid
+    const enemies = enemyPart.valid
+    lineupRows.value = lineupAll.filter(isLineupRow)
     if (props.table === 'enemies') {
       const cur = asEnemy(props.entity)
       allyRows.value = actors.slice(0, 4)
@@ -194,18 +269,49 @@ async function buildLineup(): Promise<void> {
       allyRows.value = cur ? [cur, ...others] : others
       enemyRows.value = enemies.slice(0, 4)
     }
+    // 选中编成即以编成为准：命中 0 也覆盖为空并明示错误，绝不静默回退默认编成
+    let lineupIssue = ''
+    if (allyLineupId.value) {
+      const r = collectLineupSide(allyLineupId.value, 'ally', actors, enemies)
+      allyRows.value = r.allyUnits.slice(0, 4)
+      skippedRows.value.push(...r.missing.map((id) => `编成「${r.lineupName}」:${id}`))
+      if (!r.allyUnits.length) {
+        lineupIssue = `我方编成「${r.lineupName}」的 roles 全部未命中 actors 表，请检查编成引用`
+      }
+    }
+    if (enemyLineupId.value) {
+      const r = collectLineupSide(enemyLineupId.value, 'enemy', actors, enemies)
+      enemyRows.value = r.enemyUnits.slice(0, 4)
+      skippedRows.value.push(...r.missing.map((id) => `编成「${r.lineupName}」:${id}`))
+      if (!r.enemyUnits.length) {
+        lineupIssue = lineupIssue || `敌方编成「${r.lineupName}」的 roles 全部未命中 enemies 表，请检查编成引用`
+      }
+    }
     lineupAllyText.value = allyRows.value.map((a) => a.name).join('、') || '（无可用角色）'
     lineupEnemyText.value = enemyRows.value.map((e) => e.name).join('、') || '（无可用敌人）'
-    if (!allyRows.value.length || !enemyRows.value.length) {
+    if (lineupIssue) {
+      lineupError.value = lineupIssue
+    } else if (!allyRows.value.length || !enemyRows.value.length) {
       lineupError.value = '编成不完整：actors / enemies 表需至少一条含 id/name/stats 的有效数据'
     }
   } catch (e) {
     lineupError.value = `编成加载失败: ${String(e)}`
+  } finally {
+    lineupLoading.value = false
   }
 }
 
 watch(() => props.open, (v) => {
   if (!v) return
+  single.value = null
+  agg.value = null
+  skippedRows.value = []
+  void buildLineup()
+})
+
+// 切换编成选择即时重建；旧模拟结果随旧编成作废，一并清除
+watch([allyLineupId, enemyLineupId], () => {
+  if (!props.open) return
   single.value = null
   agg.value = null
   void buildLineup()
@@ -275,6 +381,10 @@ const unitRows = computed(() => {
 
 .fs-qv-error {
   color: var(--color-danger);
+}
+
+.fs-qv-warn {
+  color: var(--color-warning);
 }
 
 .fs-qv-controls {

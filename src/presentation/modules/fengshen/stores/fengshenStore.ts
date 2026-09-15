@@ -264,8 +264,29 @@ export const useFengshenStore = defineStore('fengshen', () => {
     await refreshVersion()
   }
 
-  /** 上次批量编辑批次（字段旧值快照，供一键撤销；仅内存态，页面刷新即失） */
-  const lastBatch = ref<{ table: string; field: string; updates: Array<{ id: string; oldValue: unknown }>; at: number } | null>(null)
+  /** 上次批量编辑批次（字段旧值快照，供一键撤销；localStorage 持久化，页面刷新后仍可撤销最近一批） */
+  const LAST_BATCH_KEY = 'fs_last_batch'
+  type LastBatch = { table: string; field: string; updates: Array<{ id: string; oldValue: unknown }>; at: number }
+
+  function loadPersistedBatch(): LastBatch | null {
+    try {
+      const raw = localStorage.getItem(LAST_BATCH_KEY)
+      if (!raw) return null
+      const b = JSON.parse(raw) as LastBatch
+      return b && typeof b.table === 'string' && typeof b.field === 'string' && Array.isArray(b.updates) ? b : null
+    } catch {
+      return null
+    }
+  }
+
+  function persistBatch(): void {
+    try {
+      if (lastBatch.value) localStorage.setItem(LAST_BATCH_KEY, JSON.stringify(lastBatch.value))
+      else localStorage.removeItem(LAST_BATCH_KEY)
+    } catch { /* 存储不可用时撤销能力退化为仅本页内存态，不阻断主流程 */ }
+  }
+
+  const lastBatch = ref<LastBatch | null>(loadPersistedBatch())
 
   /** 批量改字段：对选中行应用同一值（逐条走保存校验），返回成功数与失败 ID 列表。
    *  应用前记录字段旧值快照到 lastBatch，供一键撤销整批改动。 */
@@ -287,6 +308,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     }
     if (ok > 0) {
       lastBatch.value = { table: currentTable.value, field, updates, at: Date.now() }
+      persistBatch()
       invalidateOptions()
       invalidateRefIndex()
       await refreshList()
@@ -311,6 +333,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     }
     if (ok === 0 && batch.updates.length > 0) return { ok, failed }
     lastBatch.value = null
+    persistBatch()
     invalidateOptions()
     invalidateRefIndex()
     await refreshList()

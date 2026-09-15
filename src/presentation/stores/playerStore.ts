@@ -10,7 +10,7 @@
 import { computed, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import type { XiyouCurrency, XiyouPlayer, XiyouStatPoints, ProtagonistSnapshot } from '@/presentation/modules/yanjie/xiyou/types'
-import { computeStatBonuses, createPlayerProfile, expNeedForLevel, playerConfig } from '@/presentation/modules/yanjie/xiyou/playerProfile'
+import { BREAK_NODES, computeStatBonuses, createPlayerProfile, expNeedForLevel, isBreakBlocked, playerConfig } from '@/presentation/modules/yanjie/xiyou/playerProfile'
 import { schoolAttributeBonuses, schoolTreeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
 import { grantLevelPoint } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { PLAYER_ID } from '@/shared/constants/player'
@@ -123,15 +123,19 @@ export const usePlayerStore = defineStore('player', () => {
     player.exp += amount
     let leveled = 0
     while (player.exp >= player.expNeed && Number.isFinite(player.expNeed)) {
+      const nextLevel = player.level + 1
+      // 等级突破节点（§20）：10 的倍数级需对应阶突破丹+金钱解锁，未突破则经验封存卡级
+      if (isBreakBlocked(nextLevel, player.breakStage)) break
       player.exp -= player.expNeed
       leveled += 1
       // 每升 1 级 +1 技能点（需求 §2.1.1，等级点上限 50）、+4 自由属性点（文档 D1）
       grantLevelPoint()
       statPoints.available += FREE_POINTS_PER_LEVEL
       const profile = createPlayerProfile({
-        level: player.level + 1,
+        level: nextLevel,
         exp: player.exp,
         stats: { ...statPoints },
+        breakStage: player.breakStage,
       })
       Object.assign(player, profile)
     }
@@ -139,5 +143,14 @@ export const usePlayerStore = defineStore('player', () => {
     return leveled
   }
 
-  return { player, statPoints, currency, playerAttributes, battleSnapshot, gainExp, gainCurrency }
+  /**
+   * 突破当前节点（§20）：阶次 +1，解锁下一个 10 的倍数级。
+   * 丹药扣减与金钱校验由调用方（角色面板）完成——playerStore 不反向依赖 packStore。
+   */
+  function setBreakStage(stage: number): void {
+    if (stage <= player.breakStage || stage > BREAK_NODES.length) return
+    player.breakStage = stage
+  }
+
+  return { player, statPoints, currency, playerAttributes, battleSnapshot, gainExp, gainCurrency, setBreakStage }
 })

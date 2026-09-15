@@ -16,7 +16,7 @@
     "check:items": "node scripts/check-items.cjs",
     "check:craft": "node scripts/check-craft-loop.cjs",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
-    "typecheck": "tsc -p tsconfig.strict.json --noEmit"
+    "typecheck": "vue-tsc --noEmit -p tsconfig.strict.json"
   },
   "dependencies": {
     "gsap": "^3.14.2",

@@ -77,6 +77,8 @@
 
 ## 五、本项目现状对照（审查结论速览）
 
+> **复核标注（2026-09-15）**：本节基于 2026-08 的审查快照。原配套《UI设计审查报告.md》已于 2026-08-10 删除（追溯走 git）。下方「缺口」清单经代码复核**大半已修复**：`GlobalNotifications.vue` 已有 `aria-live`、fengshen 模块已用 `tabular-nums`、`--ease-*` token 已有引用（haotian.scss 等）、`prefers-reduced-motion` 已多文件覆盖、`Dialog.vue` 已处理 ESC。未复核完的遗留项以现场代码为准，本清单仅保留「已达标」部分作基线。
+
 **已达标（保持）：**
 - ✅ 语义色 token 体系完整（`tokens.scss`，95+ 变量，明暗双主题）
 - ✅ z-index 分层 token（--z-base/1000/1100/1300/1400/1500）
@@ -84,14 +86,3 @@
 - ✅ 间距 4px 栅格（--space-*）+ 圆角/阴影 token
 - ✅ EmptyState 组件广泛使用；btn-base 三态（hover/active/disabled）是范本
 - ✅ GSAP 动画全部走 transform/opacity
-
-**缺口（详见 `UI设计审查报告.md`）：**
-- ❌ 全库无 aria-live（日志/toast/错误条）、无 tabular-nums、Dialog 无 ESC/焦点管理、ToggleSwitch 键盘不可达、危险操作无确认
-- ❌ `--ease-*`/`--transition-slow` token 定义了零引用（全部裸时长/裸缓动）
-- ❌ prefers-reduced-motion 覆盖不全（GSAP 链路完全无检测）
-- ❌ emoji 当图标多处；硬编码颜色集中在特效/图表层
-- ❌ 浅色主题 tertiary 文字对比度不足（#888 在浅底 ≈2.9:1）
-
----
-
-*对应审查报告：`documents/UI设计审查报告.md`*

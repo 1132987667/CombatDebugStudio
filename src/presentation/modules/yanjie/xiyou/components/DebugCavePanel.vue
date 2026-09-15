@@ -61,8 +61,9 @@
                   </div>
                   <button v-if="!hasFileInput(act)" type="button"
                     class="xy-debug__btn" :class="{ 'xy-debug__btn--danger': act.danger }"
+                    :disabled="runningActionId !== null"
                     @click="runAction(act, collectParams(act))">
-                    {{ act.label }}
+                    {{ runningActionId === act.id ? '执行中…' : act.label }}
                   </button>
                 </template>
 
@@ -72,9 +73,10 @@
                     'xy-debug__btn--danger': act.danger,
                     'xy-debug__btn--on': act.toggle && toggleStates[act.id],
                   }"
+                  :disabled="runningActionId !== null"
                   @click="onActionClick(act)">
                   <span v-if="act.toggle" class="xy-debug__toggle" aria-hidden="true"></span>
-                  {{ act.label }}
+                  {{ runningActionId === act.id ? '执行中…' : act.label }}
                 </button>
               </div>
             </div>
@@ -232,22 +234,31 @@ function resolveOptions(act: DebugActionDef, input: DebugActionInput): Array<{ v
 
 // ════════════ 执行分发 ════════════
 const confirmOpen = ref(false)
+/** 执行中动作 id（按钮禁用 + 文案反馈；防秒级动作如真实模拟期间重复点击并发） */
+const runningActionId = ref<string | null>(null)
 const confirmAction = ref<DebugActionDef | null>(null)
 const confirmTitle = ref('')
 const confirmMessage = ref('')
 
 /** 带输入的动作：点击按钮直接执行（参数在 inputValues 中）；file 动作由 onFileChange 传 File */
 async function runAction(act: DebugActionDef, param: string | number | File | Record<string, string | number | File | null> | null): Promise<void> {
-  const value = param
-  // 确保 packStore 初始化完成（调试动作改背包/掉落 → flush 落盘的前提；init 幂等）
-  await pack.init()
-  if (act.input && !hasFileInput(act) && !isParamsFilled(act, value)) {
-    notification.toast('请先输入参数', 'warning')
-    return
+  // NOTE: 置位必须在首个 await 之前——否则 init 让出窗口内第二次点击仍读到 null，动作并发
+  if (runningActionId.value !== null) return
+  runningActionId.value = act.id
+  try {
+    const value = param
+    // 确保 packStore 初始化完成（调试动作改背包/掉落 → flush 落盘的前提；init 幂等）
+    await pack.init()
+    if (act.input && !hasFileInput(act) && !isParamsFilled(act, value)) {
+      notification.toast('请先输入参数', 'warning')
+      return
+    }
+    const result = await dispatch(act, value, toggleStates[act.id])
+    pushLog(act, result)
+    if (act.toggle && result.nextState !== undefined) toggleStates[act.id] = result.nextState
+  } finally {
+    runningActionId.value = null
   }
-  const result = await dispatch(act, value, toggleStates[act.id])
-  pushLog(act, result)
-  if (act.toggle && result.nextState !== undefined) toggleStates[act.id] = result.nextState
 }
 
 /** 校验必填输入是否齐全（单输入直接非空；多输入逐项校验） */
@@ -267,6 +278,10 @@ function isParamsFilled(act: DebugActionDef, value: string | number | File | Rec
 
 /** 开关/普通动作：danger 先确认 */
 function onActionClick(act: DebugActionDef): void {
+  if (runningActionId.value !== null) {
+    notification.toast('有动作执行中，请稍候', 'warning')
+    return
+  }
   if (act.danger) {
     confirmAction.value = act
     confirmTitle.value = `确认${act.label}？`
@@ -280,6 +295,10 @@ function onActionClick(act: DebugActionDef): void {
 function onConfirm(): void {
   const act = confirmAction.value
   if (!act) return
+  if (runningActionId.value !== null) {
+    notification.toast('有动作执行中，请稍候', 'warning')
+    return
+  }
   void runAction(act, null)
   confirmAction.value = null
 }
@@ -320,6 +339,11 @@ function onFileChange(act: DebugActionDef, inputDef: DebugActionInput, e: Event)
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
+  if (runningActionId.value !== null) {
+    notification.toast('有动作执行中，请稍候', 'warning')
+    input.value = ''
+    return
+  }
   fileNames[valueKey(act, inputDef)] = file.name
   void runAction(act, file)
   input.value = ''

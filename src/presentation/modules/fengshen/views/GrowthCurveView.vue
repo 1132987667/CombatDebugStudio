@@ -19,8 +19,16 @@
     </div>
 
     <div v-if="playerConfig" class="fs-block">
-      <LineChart :labels="labels" :series="series" :x-step="10" :height="300"
+      <LineChart :labels="labels" :series="allSeries" :x-step="10" :height="300"
         :value-formatter="(v) => String(Math.round(v))" :aria-label="`${attrLabel} 成长曲线`" />
+      <div class="fs-toolbar">
+        <Button size="small" title="把当前三条序列存为快照（localStorage 持久，上限 5 份），调参前后叠加对比"
+          @click="saveSnapshot">存为快照</Button>
+        <span v-for="s in snapshots" :key="s.id" class="fs-snap-chip" :title="`属性：${ATTR_LABELS[s.attrCode] ?? s.attrCode}`">
+          {{ s.name }}
+          <button type="button" class="fs-snap-del" aria-label="删除快照" @click="removeSnapshot(s.id)">×</button>
+        </span>
+      </div>
       <div class="fs-form-hint">
         {{ attrLabel }}：玩家 1 级 <b class="fs-cell-num">{{ fmt(playerSeries[0]) }}</b> →
         {{ maxLevel }} 级 <b class="fs-cell-num">{{ fmt(playerSeries[playerSeries.length - 1]) }}</b> ·
@@ -35,6 +43,9 @@
         <span class="fs-chart-field-label">数值表步进</span>
         <TacticalSelect v-model="tableStep" size="md" :options="stepOptions" />
         <span class="fs-form-hint">差值为「玩家 − 敌人均值」：负值=同等级打不过均值敌人（断档），过大=超模</span>
+        <span class="fs-spacer"></span>
+        <Button size="small" :disabled="!tableRows.length" title="导出数值表为 CSV"
+          @click="exportCsv">导出 CSV</Button>
       </div>
       <table class="fs-table">
         <thead>
@@ -70,7 +81,9 @@ import type { PlayerBaseAttrCode } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { PlayerGrowthConfig } from '@/domain/fengshen/types'
 import { ENEMY_ROLE_LABELS } from '@/domain/fengshen/role-grades'
+import { downloadCsv } from '@/shared/utils/csv'
 import type { TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import Button from '@/presentation/components/Button.vue'
 import LineChart, { type ChartSeries } from '@/presentation/modules/fengshen/components/LineChart.vue'
 
 const api = container.resolve<GameDataApi>('GameDataApi')
@@ -155,6 +168,65 @@ const series = computed<ChartSeries[]>(() => {
   return out
 })
 
+// ════ 曲线快照：存档当前序列供调参前后叠加对比（localStorage 持久，上限 5 份） ════
+interface CurveSnapshot {
+  id: string
+  name: string
+  /** 快照对应属性：与当前属性不同不叠加（数值轴不同，叠加没有对比意义） */
+  attrCode: PlayerBaseAttrCode
+  series: Array<{ name: string; points: Array<number | null>; dashed: boolean }>
+}
+const SNAP_KEY = 'fs_curve_snapshots'
+
+function loadSnapshots(): CurveSnapshot[] {
+  try {
+    const raw = localStorage.getItem(SNAP_KEY)
+    const list = raw ? (JSON.parse(raw) as CurveSnapshot[]) : []
+    return Array.isArray(list) ? list.slice(0, 5) : []
+  } catch {
+    return []
+  }
+}
+
+const snapshots = ref<CurveSnapshot[]>(loadSnapshots())
+
+function persistSnapshots(): void {
+  try {
+    localStorage.setItem(SNAP_KEY, JSON.stringify(snapshots.value.slice(0, 5)))
+  } catch { /* 存储不可用时快照退化为仅本页内存态 */ }
+}
+
+function saveSnapshot(): void {
+  const snap: CurveSnapshot = {
+    id: `cs_${Date.now()}`,
+    name: `${attrLabel.value} · ${roleFilter.value ? (ROLE_LABELS[roleFilter.value] ?? roleFilter.value) : '全部品阶'} · ${new Date().toLocaleTimeString()}`,
+    attrCode: attrCode.value,
+    series: series.value.map((s) => ({ name: s.name, points: [...s.points], dashed: !!s.dashed })),
+  }
+  snapshots.value = [snap, ...snapshots.value].slice(0, 5)
+  persistSnapshots()
+}
+
+function removeSnapshot(id: string): void {
+  snapshots.value = snapshots.value.filter((s) => s.id !== id)
+  persistSnapshots()
+}
+
+/** 叠加快照序列（虚线灰）；仅叠加与当前查看属性相同的快照 */
+const allSeries = computed<ChartSeries[]>(() => [
+  ...series.value,
+  ...snapshots.value
+    .filter((s) => s.attrCode === attrCode.value)
+    .flatMap((s) =>
+      s.series.map((ser) => ({
+        name: `${s.name} · ${ser.name}`,
+        color: 'var(--color-text-tertiary)',
+        points: ser.points,
+        dashed: true,
+      })),
+    ),
+])
+
 function fmt(v: number | null | undefined): string {
   return v == null ? '—' : String(Math.round(v))
 }
@@ -189,6 +261,15 @@ const tableRows = computed<CurveTableRow[]>(() => {
   }
   return rows
 })
+
+/** 数值表导出 CSV（与屏幕表格同口径，供评审/存档对比） */
+function exportCsv(): void {
+  downloadCsv(
+    `growth-curve-${attrCode.value}.csv`,
+    ['等级', `玩家·${attrLabel.value}`, '玩家+自由点上限', '同等级敌人均值', '差值（玩家−敌人）'],
+    tableRows.value.map((r) => [r.level, fmt(r.player), fmt(r.free), fmt(r.enemy), fmt(r.diff)]),
+  )
+}
 
 onMounted(async () => {
   const [cfg, rows] = await Promise.all([
@@ -227,5 +308,28 @@ onMounted(async () => {
 
 .fs-diff-ok {
   color: var(--color-success);
+}
+
+/* 曲线快照 chips */
+.fs-snap-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
+
+.fs-snap-del {
+  border: none;
+  background: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 0 var(--space-1);
+
+  &:hover {
+    color: var(--color-danger);
+  }
 }
 </style>

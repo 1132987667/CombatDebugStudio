@@ -116,3 +116,37 @@ export async function applyRunBookmark(id: string): Promise<string> {
 export function deleteRunBookmark(id: string): void {
   persistBookmarks(listRunBookmarks().filter((b) => b.id !== id))
 }
+
+/**
+ * 序列化书签为 JSON 字符串（供文件下载分享；saveData 内嵌含 checksum 的完整存档快照）。
+ * DOM 下载副作用由调用方（SettingsDialog）承担，本模块保持无 DOM 依赖。
+ */
+export function serializeRunBookmark(id: string): string {
+  const bookmark = listRunBookmarks().find((b) => b.id === id)
+  if (!bookmark) throw new Error('书签不存在或已被清除')
+  return JSON.stringify(bookmark, null, 2)
+}
+
+/**
+ * 从导出的 JSON 恢复书签（新增一条，不覆盖现有书签）。
+ * saveData 的逐字段校验/clamp 由恢复管线（xiyouSaveBridge.restore）兜底，这里只挡明显非书签文件。
+ */
+export function importRunBookmark(json: string): RunBookmark {
+  const parsed = JSON.parse(json) as Partial<RunBookmark> | null
+  if (!parsed || typeof parsed !== 'object' || !parsed.saveData || !parsed.sceneId) {
+    throw new Error('不是有效的书签文件（缺少存档快照或场景）')
+  }
+  const bookmark: RunBookmark = {
+    id: `bm_${Date.now()}_${Math.floor(Math.random() * 1e4)}`,
+    name: `${String(parsed.name ?? '').trim() || '书签'}（导入）`,
+    createdAt: Date.now(),
+    sceneId: String(parsed.sceneId),
+    seed: typeof parsed.seed === 'string' ? parsed.seed : null,
+    speed: typeof parsed.speed === 'number' ? parsed.speed : 1,
+    saveData: parsed.saveData,
+  }
+  if (!persistBookmarks([bookmark, ...listRunBookmarks()])) {
+    throw new Error('浏览器存储不可用或配额已满，书签未导入')
+  }
+  return bookmark
+}

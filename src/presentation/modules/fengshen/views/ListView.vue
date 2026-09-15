@@ -106,7 +106,7 @@
 
     <!-- 撤销上次批量编辑：二次确认（覆盖写走同一条校验管线） -->
     <ConfirmDialog v-model="confirmUndoBatch" title="撤销上次批量编辑"
-      :message="`将把上次批量改动的 ${store.lastBatch?.updates.length ?? 0} 条「${schema.label}」写回改动前的值（${undoBatchSummary}）。写库后可通过「导出 ${schema.table}.json」回写项目配置。`"
+      :message="`将把上次批量改动的 ${store.lastBatch?.updates.length ?? 0} 条「${schema.label}」写回改动前的值（${undoBatchSummary}）。${undoExportHint}`"
       confirm-text="撤销" @confirm="onUndoBatch" />
 
     <!-- 一键重算敌人属性：覆盖性写二次确认 + 完成后 diff 摘要 -->
@@ -537,6 +537,12 @@ const undoBatchSummary = computed(() => {
   const label = schema.value.fields.find((f) => f.key === b.field)?.label ?? b.field
   return `共 ${b.updates.length} 条「${label}」`
 })
+/** 导出回写通道目前仅 enemies 表提供，其余表不冒充有逃生口 */
+const undoExportHint = computed(() =>
+  store.currentTable === 'enemies'
+    ? '写库后可通过「导出 enemies.json」回写项目配置。'
+    : '当前表暂无导出回写通道，改动保留在沙盒库中。',
+)
 
 /** 撤销上次批量：逐条写回旧值，结果走通知反馈 */
 async function onUndoBatch(): Promise<void> {
@@ -549,7 +555,7 @@ async function onUndoBatch(): Promise<void> {
   }
 }
 
-/** 批量应用字段值：成功通知 + 失败列出 ID */
+/** 批量应用字段值：成功通知 + 失败列出 ID + 批量后健康扫描（非阻断） */
 async function onBatchApply(field: string, value: unknown): Promise<void> {
   const fieldLabel = schema.value.fields.find((f) => f.key === field)?.label ?? field
   const result = await store.batchUpdate(field, value)
@@ -560,6 +566,26 @@ async function onBatchApply(field: string, value: unknown): Promise<void> {
   if (result.failed.length) {
     notification.notify('批量部分失败', `${result.failed.length} 条未通过校验：${result.failed.join(', ')}`, 'error')
   }
+  await postBatchHealthScan(store.currentTable)
+}
+
+/** 批量后局部健康扫描：只在本表出现健康问题时非阻断警告（清单见健康检查页），扫描失败不掩盖批量结果 */
+async function postBatchHealthScan(table: string): Promise<void> {
+  try {
+    await store.runHealth()
+    const own = (store.healthReport?.issues ?? []).filter((i) => i.sourceTable === table)
+    if (own.length) {
+      notification.notify(
+        '批量完成，健康检查有提示',
+        `「${schemaLabel(table)}」表现有 ${own.length} 个健康问题（首条涉及 ${own[0]?.sourceId ?? '—'}），可在「健康检查」页查看`,
+        'warning',
+      )
+    }
+  } catch { /* 扫描是增量保障，失败静默 */ }
+}
+
+function schemaLabel(table: string): string {
+  return TABLE_SCHEMAS[table as keyof typeof TABLE_SCHEMAS]?.label ?? table
 }
 
 /** 详情面板「被引用」跳转到引用方表 */

@@ -281,7 +281,7 @@
       "count": 1
     },
     {
-      "name": "突破丹·壹",
+      "name": "宠物突破丹·壹",
       "level": 3,
       "materials": [
         {
@@ -297,7 +297,7 @@
       "count": 1
     },
     {
-      "name": "突破丹·贰",
+      "name": "宠物突破丹·贰",
       "level": 4,
       "materials": [
         {
@@ -313,7 +313,7 @@
       "count": 1
     },
     {
-      "name": "突破丹·叁",
+      "name": "宠物突破丹·叁",
       "level": 5,
       "materials": [
         {
@@ -326,6 +326,86 @@
         }
       ],
       "effect": "宠物坐骑50级三阶突破",
+      "count": 1
+    },
+    {
+      "name": "突破丹·壹",
+      "level": 2,
+      "materials": [
+        {
+          "itemId": "mat_zhixuecao",
+          "count": 3
+        },
+        {
+          "itemId": "mat_chenlutaozhi",
+          "count": 1
+        }
+      ],
+      "effect": "玩家10级一阶突破材料",
+      "count": 1
+    },
+    {
+      "name": "突破丹·贰",
+      "level": 3,
+      "materials": [
+        {
+          "itemId": "mat_qingxinye",
+          "count": 3
+        },
+        {
+          "itemId": "mat_hantanyusui",
+          "count": 1
+        }
+      ],
+      "effect": "玩家20级二阶突破材料",
+      "count": 1
+    },
+    {
+      "name": "突破丹·叁",
+      "level": 4,
+      "materials": [
+        {
+          "itemId": "mat_tiepishihu",
+          "count": 3
+        },
+        {
+          "itemId": "mat_dimaishiru",
+          "count": 1
+        }
+      ],
+      "effect": "玩家30级三阶突破材料",
+      "count": 1
+    },
+    {
+      "name": "突破丹·肆",
+      "level": 5,
+      "materials": [
+        {
+          "itemId": "mat_youlancao",
+          "count": 3
+        },
+        {
+          "itemId": "mat_youmingxuelian",
+          "count": 1
+        }
+      ],
+      "effect": "玩家40级四阶突破材料",
+      "count": 1
+    },
+    {
+      "name": "突破丹·伍",
+      "level": 6,
+      "materials": [
+        {
+          "itemId": "mat_jiuyelingzhi",
+          "count": 2
+        },
+        {
+          "itemId": "mat_putiganiu",
+          "count": 1
+        }
+      ],
+      "effect": "玩家50级五阶突破材料",
       "count": 1
     },
     {

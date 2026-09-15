@@ -29,6 +29,8 @@ export interface XiyouPlayer {
   dodgeRate: number
   exp: number
   expNeed: number
+  /** 已完成等级突破阶次（0~5，§20；10 的倍数级需对应阶突破丹+金钱解锁） */
+  breakStage: number
 }
 
 /**

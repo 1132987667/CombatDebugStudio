@@ -13,6 +13,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   auditEnemyStore,
+  CONFIG_ENEMY_IDS,
+  FROZEN_IDS,
   enemyTierOf,
   expectEnemyStats,
   rebuildEnemyStats,
@@ -97,9 +99,9 @@ describe('enemyTierOf：档位识别', () => {
     expect(enemyTierOf({ id: 'boss_final_liuer', role: 'yaozun' })).toBe('final')
   })
 
-  it('普通档取 role 字段；无系数的 role（yaobing/未知/缺失）回退基准档 xiaoyao', () => {
+  it('普通档取 role 字段；yaobing 已入系数表，未知/缺失 role 回退基准档 xiaoyao', () => {
     expect(enemyTierOf({ id: 'enemy_s1_1_a', role: 'yaokui' })).toBe('yaokui')
-    expect(enemyTierOf({ id: 'enemy_x', role: 'yaobing' })).toBe('xiaoyao')
+    expect(enemyTierOf({ id: 'enemy_x', role: 'yaobing' })).toBe('yaobing')
     expect(enemyTierOf({ id: 'enemy_x', role: 'whatever' })).toBe('xiaoyao')
     expect(enemyTierOf({ id: 'enemy_x' })).toBe('xiaoyao')
   })
@@ -114,12 +116,14 @@ describe('rebuildEnemyStats / rebuildAllEnemies：真实配置条目重算', () 
     }
   })
 
-  it('全量 124 条：全部可重算、输出十键、无跳过无 warning（现状 role 全部合法）', () => {
+  it('全量 172 条：可重算条目输出十键；沙盒/测试/场景 BOSS 冻结跳过并登记 warning', () => {
     const report = rebuildAllEnemies(realEnemies as never)
-    expect(report.total).toBe(124)
-    expect(report.entries.length).toBe(124)
-    expect(report.skippedCount).toBe(0)
-    expect(report.warnings).toEqual([])
+    const frozen = realEnemies.filter((e) => FROZEN_IDS(String(e.id)) || !e.role).length
+    expect(report.total).toBe(realEnemies.length - frozen)
+    expect(report.entries.length).toBe(report.total)
+    expect(report.skippedCount).toBe(frozen)
+    expect(report.warnings.length).toBe(frozen)
+    expect(report.warnings.every((w) => w.includes('数值冻结'))).toBe(true)
     const TEN_KEYS = ['maxHealth', 'attack', 'defense', 'speed', 'hit', 'dodge', 'critRate', 'critDamage', 'maxEnergy', 'energyInit']
     for (const entry of report.entries) {
       expect(Object.keys(entry.after).sort()).toEqual([...TEN_KEYS].sort())
@@ -128,11 +132,11 @@ describe('rebuildEnemyStats / rebuildAllEnemies：真实配置条目重算', () 
     expect(report.entries.find((e) => e.id === 'boss_final_liuer')?.after.energyInit).toBe(50)
   })
 
-  it('role 缺失/非法且非特殊档的记录被跳过（非生成模型管辖，不产出写入条目）', () => {
+  it('role 缺失/非法且非特殊档的记录被跳过；yaotu_* 沙盒基准即使有 role 也冻结跳过', () => {
     const report = rebuildAllEnemies([
-      { id: 'boss_001', name: '旧残留', stats: { maxHealth: 160 } }, // 无 role
+      { id: 'boss_001', name: '无 role 记录', stats: { maxHealth: 160 } }, // 无 role → 跳过重算
       { id: 'enemy_x', role: 'boss', stats: {} }, // role 非法
-      { id: 'yaotu_fire', stats: { maxHealth: 350 } }, // 我方护法旧残留，无 role
+      { id: 'yaotu_fire', name: '火护法', role: 'yaotu', stats: { maxHealth: 350 } }, // 沙盒基准冻结
     ])
     expect(report.total).toBe(0)
     expect(report.skippedCount).toBe(3)
@@ -191,16 +195,16 @@ describe('auditEnemyStore：运行时表 vs configs 权威集合（导出防御�
   it('识别库中的权威外记录与缺失记录', () => {
     const audit = auditEnemyStore([
       { id: 'enemy_s1_1_a' }, // 权威存在
-      { id: 'boss_001' }, // 权威外（历史残留）
+      { id: 'legacy_boss_x' }, // 权威外（历史残留）
       { id: 'enemy_custom_1' }, // 权威外（沙盒新增）
     ])
-    expect(audit.extraIds.sort()).toEqual(['boss_001', 'enemy_custom_1'].sort())
-    // configs 权威 124 条，库中只放了 1 条 → 其余 123 条全为缺失
-    expect(audit.missingIds.length).toBe(123)
+    expect(audit.extraIds.sort()).toEqual(['legacy_boss_x', 'enemy_custom_1'].sort())
+    // configs 权威 = enemies.json 全部（含并入的旧体系沙盒基准），库中只放了 1 条 → 其余全为缺失
+    expect(audit.missingIds.length).toBe(CONFIG_ENEMY_IDS.size - 1)
     expect(audit.missingIds).not.toContain('enemy_s1_1_a')
   })
 
-  it('与 configs 权威完全一致时差异为空（正常导出路径）', () => {
+  it('与 configs 权威完全一致时差异为空（正常导出路径；权威 = enemies.json 单一来源）', () => {
     const audit = auditEnemyStore(realEnemies as never)
     expect(audit.extraIds).toEqual([])
     expect(audit.missingIds).toEqual([])

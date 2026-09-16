@@ -160,8 +160,8 @@ describe('EntityDetailPanel 引用字段优先中文', () => {
     const root = mount(
       { id: 'mat_x', name: '桃木' },
       schema,
-      { boss_hidden_003: '镇山神兽·岩', enemy_006: '成年山魈' },
-      [{ sourceTable: 'enemies', ids: ['boss_hidden_003', 'enemy_006', 'enemy_022', 'enemy_076', 'enemy_079'] }],
+      { boss_minor_zhenshan: '镇山神兽·岩', enemy_006: '成年山魈' },
+      [{ sourceTable: 'enemies', ids: ['boss_minor_zhenshan', 'enemy_006', 'enemy_022', 'enemy_076', 'enemy_079'] }],
     )
     expect(root.textContent).toContain('被引用（5 处）')
     expect(root.textContent).toContain('镇山神兽·岩')
@@ -173,7 +173,7 @@ describe('EntityDetailPanel 引用字段优先中文', () => {
     expect(root.textContent).not.toContain('enemy_006')
     // 原始 id 保留在 title 悬浮
     const idsSpan = Array.from(root.querySelectorAll('span')).find((s) => s.textContent === '镇山神兽·岩、成年山魈、enemy_022、enemy_076、enemy_079')
-    expect(idsSpan?.getAttribute('title')).toContain('boss_hidden_003')
+    expect(idsSpan?.getAttribute('title')).toContain('boss_minor_zhenshan')
   })
 
   it('被引用区装备详情（gears）来源：装备名渲染为可悬浮 tag，显示名称而非编号', () => {

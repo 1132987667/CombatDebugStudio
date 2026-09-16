@@ -208,17 +208,17 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
 })
 
 describe('xianyuanForEnemyIds 战胜仙缘聚合（完整项目说明 §10.1）', () => {
-  it('按敌人分级聚合：小妖 2 / 妖徒 10 / 妖魁·妖王 50 / 妖尊 150', () => {
+  it('按敌人分级聚合：小妖 2 / 妖徒 20 / 妖魁 30 / 妖王 50 / 妖尊 150', () => {
     expect(xianyuanForEnemyIds(['enemy_s1_1_a'])).toBe(2) // xiaoyao 花妖幼芽
-    expect(xianyuanForEnemyIds(['enemy_s1_1_g'])).toBe(10) // yaotu 桃林守卫
-    expect(xianyuanForEnemyIds(['boss_minor_taoyao'])).toBe(50) // yaokui
+    expect(xianyuanForEnemyIds(['enemy_s1_1_g'])).toBe(20) // yaotu 桃林守卫
+    expect(xianyuanForEnemyIds(['boss_minor_taoyao'])).toBe(30) // yaokui
     expect(xianyuanForEnemyIds(['boss_major_huayaowang'])).toBe(50) // yaowang
     expect(xianyuanForEnemyIds(['boss_achieve_huayaowang'])).toBe(150) // yaozun
   })
 
   it('多敌节点求和；未知 id 与未知分级兜底 0', () => {
-    // 普通节点（3 小妖 + 1 妖徒）≈ §10.1 校验口径 16
-    expect(xianyuanForEnemyIds(['enemy_s1_1_a', 'enemy_s1_1_a', 'enemy_s1_1_a', 'enemy_s1_1_g'])).toBe(16)
+    // 普通节点（3 小妖 + 1 妖徒）≈ §10.1 口径 3×2 + 20 = 26
+    expect(xianyuanForEnemyIds(['enemy_s1_1_a', 'enemy_s1_1_a', 'enemy_s1_1_a', 'enemy_s1_1_g'])).toBe(26)
     expect(xianyuanForEnemyIds(['enemy_ghost'])).toBe(0)
     expect(xianyuanForEnemyIds([])).toBe(0)
   })

@@ -1,61 +1,5 @@
 [
   {
-    "id": "enemy_001",
-    "name": "花妖",
-    "level": 1,
-    "stats": {
-      "currentHealth": 80,
-      "defense": 1,
-      "speed": 10,
-      "attack": 10
-    },
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 2,
-        "chance": 0.8
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.2
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_001_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_002",
-    "name": "草精",
-    "level": 2,
-    "stats": {
-      "currentHealth": 91,
-      "defense": 2,
-      "speed": 11,
-      "attack": 12
-    },
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "mat_cushi",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_002_small"
-      ]
-    }
-  },
-  {
     "id": "enemy_003",
     "name": "幼年山魈",
     "level": 2,
@@ -80,133 +24,6 @@
     "skills": {
       "small": [
         "skill_enemy_003_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_004",
-    "name": "食人花妖",
-    "level": 4,
-    "stats": {
-      "currentHealth": 104,
-      "defense": 4,
-      "speed": 13,
-      "attack": 16
-    },
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 3,
-        "chance": 0.75
-      },
-      {
-        "itemId": "mat_tongjing",
-        "quantity": 1,
-        "chance": 0.25
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_004_small"
-      ],
-      "passive": [
-        "skill_enemy_004_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_005",
-    "name": "巨石精",
-    "level": 5,
-    "stats": {
-      "currentHealth": 124,
-      "defense": 5,
-      "speed": 15,
-      "attack": 18
-    },
-    "drops": [
-      {
-        "itemId": "mat_cushi",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_005_small"
-      ],
-      "passive": [
-        "skill_enemy_005_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_006",
-    "name": "成年山魈",
-    "level": 5,
-    "stats": {
-      "currentHealth": 124,
-      "defense": 5,
-      "speed": 15,
-      "attack": 18
-    },
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 4,
-        "chance": 0.65
-      },
-      {
-        "itemId": "enh_stone",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_006_small"
-      ],
-      "passive": [
-        "skill_enemy_006_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_007",
-    "name": "花妖王",
-    "level": 8,
-    "stats": {
-      "currentHealth": 160,
-      "defense": 8,
-      "speed": 17,
-      "attack": 25
-    },
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 5,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_007_small"
-      ],
-      "passive": [
-        "skill_enemy_007_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_007_ultimate"
       ]
     }
   },
@@ -245,40 +62,6 @@
     }
   },
   {
-    "id": "boss_001",
-    "name": "小花山守护者",
-    "level": 9,
-    "stats": {
-      "currentHealth": 168,
-      "defense": 8,
-      "speed": 20,
-      "attack": 26
-    },
-    "drops": [
-      {
-        "itemId": "mat_danshuiyu",
-        "quantity": 3,
-        "chance": 0.6
-      },
-      {
-        "itemId": "enh_stone",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_001_small"
-      ],
-      "passive": [
-        "skill_boss_001_passive"
-      ],
-      "ultimate": [
-        "skill_boss_001_ultimate"
-      ]
-    }
-  },
-  {
     "id": "enemy_009",
     "name": "小虾兵",
     "level": 3,
@@ -303,34 +86,6 @@
     "skills": {
       "small": [
         "skill_enemy_009_small"
-      ]
-    }
-  },
-  {
-    "id": "enemy_010",
-    "name": "幼年蟹将",
-    "level": 4,
-    "stats": {
-      "currentHealth": 118,
-      "defense": 4,
-      "speed": 14,
-      "attack": 16
-    },
-    "drops": [
-      {
-        "itemId": "mat_beike",
-        "quantity": 1,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_001",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_010_small"
       ]
     }
   },
@@ -394,37 +149,6 @@
     }
   },
   {
-    "id": "enemy_013",
-    "name": "铁甲蟹将",
-    "level": 7,
-    "stats": {
-      "currentHealth": 146,
-      "defense": 6,
-      "speed": 17,
-      "attack": 22
-    },
-    "drops": [
-      {
-        "itemId": "mat_danshuiyu",
-        "quantity": 3,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_013_small"
-      ],
-      "passive": [
-        "skill_enemy_013_passive"
-      ]
-    }
-  },
-  {
     "id": "enemy_014",
     "name": "鱼精头目",
     "level": 7,
@@ -452,108 +176,6 @@
       ],
       "passive": [
         "skill_enemy_014_passive"
-      ]
-    }
-  },
-  {
-    "id": "enemy_015",
-    "name": "虾兵统领",
-    "level": 10,
-    "stats": {
-      "currentHealth": 183,
-      "defense": 9,
-      "speed": 21,
-      "attack": 29
-    },
-    "drops": [
-      {
-        "itemId": "mat_beike",
-        "quantity": 5,
-        "chance": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "quantity": 1,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_015_small"
-      ],
-      "passive": [
-        "skill_enemy_015_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_015_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "enemy_016",
-    "name": "金甲蟹将",
-    "level": 11,
-    "stats": {
-      "currentHealth": 190,
-      "defense": 10,
-      "speed": 22,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_danshuiyu",
-        "quantity": 4,
-        "chance": 0.65
-      },
-      {
-        "itemId": "mat_tongjing",
-        "quantity": 2,
-        "chance": 0.35
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_016_small"
-      ],
-      "passive": [
-        "skill_enemy_016_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_016_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_002",
-    "name": "浅水涧守护者",
-    "level": 11,
-    "stats": {
-      "currentHealth": 190,
-      "defense": 10,
-      "speed": 22,
-      "attack": 30
-    },
-    "drops": [
-      {
-        "itemId": "mat_zhenzhu",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "enh_stone",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_002_small"
-      ],
-      "passive": [
-        "skill_boss_002_passive"
-      ],
-      "ultimate": [
-        "skill_boss_002_ultimate"
       ]
     }
   },
@@ -774,35 +396,6 @@
       ],
       "ultimate": [
         "skill_enemy_024_ultimate"
-      ]
-    }
-  },
-  {
-    "id": "boss_003",
-    "name": "碎石坡守护者",
-    "level": 13,
-    "stats": {
-      "currentHealth": 212,
-      "defense": 12,
-      "speed": 24,
-      "attack": 34
-    },
-    "drops": [
-      {
-        "itemId": "enh_stone",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_003_small"
-      ],
-      "passive": [
-        "skill_boss_003_passive"
-      ],
-      "ultimate": [
-        "skill_boss_003_ultimate"
       ]
     }
   },
@@ -1824,40 +1417,6 @@
     }
   },
   {
-    "id": "boss_007",
-    "name": "蛛丝谷守护者",
-    "level": 21,
-    "stats": {
-      "currentHealth": 300,
-      "defense": 19,
-      "speed": 34,
-      "attack": 50
-    },
-    "drops": [
-      {
-        "itemId": "mat_xianyun",
-        "quantity": 1,
-        "chance": 0.6
-      },
-      {
-        "itemId": "enh_stone",
-        "quantity": 1,
-        "chance": 0.05
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_boss_007_small"
-      ],
-      "passive": [
-        "skill_boss_007_passive"
-      ],
-      "ultimate": [
-        "skill_boss_007_ultimate"
-      ]
-    }
-  },
-  {
     "id": "enemy_057",
     "name": "小狮兵",
     "level": 15,
@@ -2593,40 +2152,6 @@
     }
   },
   {
-    "id": "enemy_079",
-    "name": "佛门叛徒首领",
-    "level": 26,
-    "stats": {
-      "currentHealth": 355,
-      "defense": 24,
-      "speed": 40,
-      "attack": 60
-    },
-    "drops": [
-      {
-        "itemId": "mat_tiangang",
-        "quantity": 2,
-        "chance": 0.7
-      },
-      {
-        "itemId": "enh_stone",
-        "quantity": 2,
-        "chance": 0.3
-      }
-    ],
-    "skills": {
-      "small": [
-        "skill_enemy_079_small"
-      ],
-      "passive": [
-        "skill_enemy_079_passive"
-      ],
-      "ultimate": [
-        "skill_enemy_079_ultimate"
-      ]
-    }
-  },
-  {
     "id": "enemy_080",
     "name": "金刚护法统帅",
     "level": 27,
@@ -2692,98 +2217,6 @@
       "ultimate": [
         "skill_boss_010_ultimate"
       ]
-    }
-  },
-  {
-    "id": "yaotu_gold",
-    "name": "金护法",
-    "level": 10,
-    "stats": {
-      "currentHealth": 430,
-      "defense": 18,
-      "speed": 24,
-      "attack": 58
-    },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [
-        "skill_enemy_079_passive"
-      ],
-      "ultimate": []
-    }
-  },
-  {
-    "id": "yaotu_wood",
-    "name": "木护法",
-    "level": 10,
-    "stats": {
-      "currentHealth": 410,
-      "defense": 16,
-      "speed": 26,
-      "attack": 52
-    },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [],
-      "ultimate": []
-    }
-  },
-  {
-    "id": "yaotu_water",
-    "name": "水护法",
-    "level": 10,
-    "stats": {
-      "currentHealth": 390,
-      "defense": 14,
-      "speed": 30,
-      "attack": 48
-    },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [],
-      "ultimate": []
-    }
-  },
-  {
-    "id": "yaotu_fire",
-    "name": "火护法",
-    "level": 10,
-    "stats": {
-      "currentHealth": 350,
-      "defense": 12,
-      "speed": 35,
-      "attack": 70
-    },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [
-        "yaotu_revenge_rage",
-        "yaotu_combo_heart",
-        "yaotu_energy_overload",
-        "yaotu_swift_wind"
-      ],
-      "ultimate": []
-    }
-  },
-  {
-    "id": "yaotu_earth",
-    "name": "土护法",
-    "level": 10,
-    "stats": {
-      "currentHealth": 520,
-      "defense": 25,
-      "speed": 16,
-      "attack": 40
-    },
-    "drops": [],
-    "skills": {
-      "small": [],
-      "passive": [],
-      "ultimate": []
     }
   }
 ]

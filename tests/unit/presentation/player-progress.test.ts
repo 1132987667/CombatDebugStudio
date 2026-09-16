@@ -86,7 +86,7 @@ describe('掉落与奖励数据源（configs/enemies/enemies.json）', () => {
 })
 
 describe('敌方参战者（R22 敌人数据加载）与难度倍率（R19）', () => {
-  it('buildEnemyTeam 从 enemies.json 按 id 读取属性（scene_1_1 花妖幼芽 82 血，easy 倍率 1）', () => {
+  it('buildEnemyTeam 从 enemies.json 按 id 读取属性（scene_1_1 花妖幼芽 86 血，easy 倍率 1）', () => {
     const s1 = scenes.find((s) => s.id === 'scene_1_1')
     expect(s1).toBeDefined()
     const enemy = buildEnemyTeam(s1!)
@@ -94,8 +94,8 @@ describe('敌方参战者（R22 敌人数据加载）与难度倍率（R19）', 
     expect(enemy.length).toBe(4)
     const hua = enemy.find((e) => e.name === '花妖幼芽')
     expect(hua).toBeDefined()
-    expect(hua!.getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(82)
-    expect(hua!.getAttribute(ATTRIBUTE_CODE.attack)).toBe(11)
+    expect(hua!.getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(86) // 小妖 L1 模型值（enemies.json 现行数据）
+    expect(hua!.getAttribute(ATTRIBUTE_CODE.attack)).toBe(14)
     // 头目参战：scene_1_1.guardian「桃林守卫」来自 enemies.json 完整定义
     const guard = enemy.find((e) => e.name === '桃林守卫')
     expect(guard).toBeDefined()
@@ -106,8 +106,8 @@ describe('敌方参战者（R22 敌人数据加载）与难度倍率（R19）', 
     const node = { index: 1, total: 4, isBoss: false, enemyIds: s1.enemies.map((e) => e.id), amp: 1.5 }
     const team = buildEnemyTeam(s1, node)
     const n = team.find((e) => e.name === '花妖幼芽')!
-    expect(n.getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(Math.round(82 * 1.5))
-    expect(n.getAttribute(ATTRIBUTE_CODE.attack)).toBe(Math.round(11 * 1.5))
+    expect(n.getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(Math.round(86 * 1.5))
+    expect(n.getAttribute(ATTRIBUTE_CODE.attack)).toBe(Math.round(14 * 1.5))
   })
 
   it('critDamage 百分制 → 引擎比例（120 → 1.2）', () => {

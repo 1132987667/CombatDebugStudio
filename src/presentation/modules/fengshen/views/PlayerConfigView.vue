@@ -94,21 +94,41 @@
     <!-- Tab2 经验公式 -->
     <section v-else-if="activeTab === 'exp'" class="fs-exp-panel" role="tabpanel">
       <div class="fs-exp-block">
-        <div class="fs-block-title">经验公式</div>
+        <div class="fs-block-title">升级所需经验 · 运行时生效表（exp_table，{{ effectiveRows.length ? effectiveRows[0].level + '~' + effectiveRows[effectiveRows.length - 1].level + ' 级' : '—' }}）</div>
+        <div v-if="!effectiveRows.length" class="fs-form-hint">未加载到 exp_table（未 seed），运行时以 configs/xiyou/player.json 的 expTable 为准。</div>
+        <div class="fs-table-wrap">
+          <table v-if="effectiveRows.length" class="fs-table fs-exp-grid">
+            <thead>
+              <tr>
+                <th v-for="n in 10" :key="'he' + n">Lv.{{ n }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in effectiveGridRows" :key="row[0].level">
+                <td v-for="cell in row" :key="cell.level" class="fs-cell-num">{{ cell.expRequired }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="fs-exp-block">
+        <div class="fs-block-title">经验公式（设计预览，非运行时值）</div>
         <div class="fs-exp-sim-row">
           <span class="fs-exp-field-label">公式</span>
           <input v-model="cfg.expFormula" type="text" class="fs-input fs-exp-formula" placeholder="round(50 × L^1.35 + 60 × L)" />
         </div>
         <div v-if="!expRows.length" class="fs-form-hint">公式格式不匹配（支持 round(A × L^B + C × L)），无法展开经验表。</div>
+        <div v-else-if="formulaMismatch" class="fs-form-hint">注意：公式展开值与上方生效表（exp_table）不一致——运行时升级以 exp_table 为准，本表仅作公式推演对照。</div>
       </div>
 
-      <div class="fs-exp-block">
-        <div class="fs-block-title">升级所需经验（{{ expRows.length ? expRows[0].level + '~' + expRows[expRows.length - 1].level + ' 级' : '—' }}）</div>
+      <div v-if="expRows.length" class="fs-exp-block">
+        <div class="fs-block-title">公式展开对照（{{ expRows[0].level + '~' + expRows[expRows.length - 1].level + ' 级' }}）</div>
         <div class="fs-table-wrap">
-          <table v-if="expRows.length" class="fs-table fs-exp-grid">
+          <table class="fs-table fs-exp-grid">
             <thead>
               <tr>
-                <th v-for="n in 10" :key="'h' + n">Lv.{{ n }}</th>
+                <th v-for="n in 10" :key="'hf' + n">Lv.{{ n }}</th>
               </tr>
             </thead>
             <tbody>
@@ -252,7 +272,7 @@ import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import type { PlayerGrowthConfig, PlayerBaseAttrCode, SystemBudgetConfig, EquipFormulaConfig } from '@/domain/fengshen/types'
+import type { PlayerGrowthConfig, PlayerBaseAttrCode, SystemBudgetConfig, EquipFormulaConfig, ExpTableConfig } from '@/domain/fengshen/types'
 import {
   calcEquipBaseValue,
   calcTotalSap,
@@ -353,16 +373,31 @@ const expectedTotalSap = computed({
     if (levelEntry) levelEntry.totalSap = v
   },
 })
-/** 经验表：由公式实时推导，随 expFormula/maxLevel 变化自动刷新 */
+/** 经验表：由公式实时推导，随 expFormula/maxLevel 变化自动刷新（设计预览，非运行时值） */
 const expRows = computed(() => fillExpFromFormula(cfg.expFormula, cfg.maxLevel))
 
+/** 运行时生效经验表（params 域 exp_table；升级逻辑真实消费的数据，未 seed 为 null） */
+const expTableCfg = ref<ExpTableConfig | null>(null)
+const effectiveRows = computed(() => expTableCfg.value?.entries ?? [])
+
 /** 经验表网格：10 列/行，每列 1 个等级（行1=1-10级 ... 行5=41-50级） */
-const expGridRows = computed(() => {
-  const rows: Array<Array<{ level: number; expRequired: number }>> = []
-  for (let i = 0; i < expRows.value.length; i += 10) {
-    rows.push(expRows.value.slice(i, i + 10))
-  }
-  return rows
+function gridRows(rows: Array<{ level: number; expRequired: number }>): Array<Array<{ level: number; expRequired: number }>> {
+  const out: Array<Array<{ level: number; expRequired: number }>> = []
+  for (let i = 0; i < rows.length; i += 10) out.push(rows.slice(i, i + 10))
+  return out
+}
+
+const expGridRows = computed(() => gridRows(expRows.value))
+const effectiveGridRows = computed(() => gridRows(effectiveRows.value))
+
+/** 公式展开值与运行时生效表逐级不一致（两套口径并存时防止误读） */
+const formulaMismatch = computed(() => {
+  const eff = effectiveRows.value
+  if (!eff.length || !expRows.value.length) return false
+  return eff.some((e) => {
+    const byFormula = expRows.value.find((r) => r.level === e.level)
+    return byFormula && byFormula.expRequired !== e.expRequired
+  })
 })
 
 // Tab3 装备验算
@@ -405,10 +440,16 @@ function toPlain<T>(v: T): T {
 
 async function load(): Promise<void> {
   try {
-    const [pc, sb, ef] = await Promise.all([api.getPlayerConfig(), api.getSystemBudget(), api.getEquipFormula()])
+    const [pc, sb, ef, et] = await Promise.all([
+      api.getPlayerConfig(),
+      api.getSystemBudget(),
+      api.getEquipFormula(),
+      api.getExpTable(),
+    ])
     if (pc) resetInto(cfg, pc)
     if (sb) resetInto(budget, sb)
     if (ef) resetInto(equipFormula, ef)
+    expTableCfg.value = et
   } catch {
     resetInto(cfg, defaultGrowth())
     resetInto(budget, defaultBudget())

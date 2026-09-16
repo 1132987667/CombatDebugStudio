@@ -59,6 +59,14 @@
             {{ m.name }} {{ m.have }}/{{ m.count }}
             <span v-if="!m.enough" class="xy-cave-mat__tag">不足</span>
           </span>
+          <span
+            v-if="costOf(selected)"
+            class="xy-cave-mat"
+            :class="{ 'is-low': !moneyEnough(selected) }"
+          >
+            金钱 {{ costOf(selected) }}
+            <span v-if="!moneyEnough(selected)" class="xy-cave-mat__tag">不足</span>
+          </span>
         </span>
       </div>
       <div class="xy-cave-forge-detail__action">
@@ -165,11 +173,20 @@ function materialsOf(r: XiyouForgeRecipe): MatView[] {
   })
 }
 
+/** 打造金钱费用（equipment.json cost；无 cost 字段的旧装备视为免费） */
+function costOf(r: XiyouForgeRecipe): number {
+  return gearOf(r)?.cost ?? 0
+}
+
+function moneyEnough(r: XiyouForgeRecipe): boolean {
+  return pack.currency.money >= costOf(r)
+}
+
 function canCraft(r: XiyouForgeRecipe): boolean {
   const g = gearOf(r)
   if (!g || !pack.blueprintUnlocked(g.id)) return false
   const mats = materialsOf(r)
-  return mats.length > 0 && mats.every((m) => m.enough)
+  return mats.length > 0 && mats.every((m) => m.enough) && moneyEnough(r)
 }
 
 /** 图纸解锁状态（t1 默认解锁；高阶需持有图纸） */

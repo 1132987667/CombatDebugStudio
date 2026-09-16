@@ -4984,7 +4984,7 @@
     "description": "受到攻击时20%概率提升自身防御2回合。"
   },
   {
-    "id": "skill_boss_hidden_heifeng_s1",
+    "id": "skill_boss_oldsoul_heifeng_s1",
     "name": "黑风斩",
     "skillType": "small",
     "energyCost": 50,
@@ -5018,7 +5018,7 @@
     "description": "以黑风斩击，造成160%攻击伤害，40%概率流血2回合。"
   },
   {
-    "id": "skill_boss_hidden_heifeng_s2",
+    "id": "skill_boss_oldsoul_heifeng_s2",
     "name": "黑风护体",
     "skillType": "small",
     "energyCost": 50,
@@ -5039,7 +5039,7 @@
     "description": "获得黑风护体，吸收伤害，持续3回合。"
   },
   {
-    "id": "skill_boss_hidden_heifeng_ult",
+    "id": "skill_boss_oldsoul_heifeng_ult",
     "name": "黑风葬",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -5073,7 +5073,7 @@
     "description": "黑风葬，对全体造成350%攻击伤害，70%概率流血3回合。"
   },
   {
-    "id": "passive_boss_hidden_heifeng_p1",
+    "id": "passive_boss_oldsoul_heifeng_p1",
     "name": "残影之躯",
     "skillType": "passive",
     "trigger": "ON_DODGE_SUCCESS",
@@ -5089,7 +5089,7 @@
     "description": "闪避成功时提升自身速度2回合。"
   },
   {
-    "id": "passive_boss_hidden_heifeng_p2",
+    "id": "passive_boss_oldsoul_heifeng_p2",
     "name": "黑风不灭",
     "skillType": "passive",
     "trigger": "ON_TURN_START",
@@ -5105,7 +5105,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_hidden_dixing_s1",
+    "id": "skill_boss_oldsoul_dixing_s1",
     "name": "地裂击",
     "skillType": "small",
     "energyCost": 50,
@@ -5139,7 +5139,7 @@
     "description": "以地裂击，造成160%攻击伤害，30%概率眩晕1回合。"
   },
   {
-    "id": "skill_boss_hidden_dixing_s2",
+    "id": "skill_boss_oldsoul_dixing_s2",
     "name": "遁地护盾",
     "skillType": "small",
     "energyCost": 50,
@@ -5166,7 +5166,7 @@
     "description": "遁入地下获得护盾和防御提升，持续3回合。"
   },
   {
-    "id": "skill_boss_hidden_dixing_ult",
+    "id": "skill_boss_oldsoul_dixing_ult",
     "name": "地裂葬",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -5200,7 +5200,7 @@
     "description": "地裂葬，对全体造成350%攻击伤害，60%概率眩晕1回合。"
   },
   {
-    "id": "passive_boss_hidden_dixing_p1",
+    "id": "passive_boss_oldsoul_dixing_p1",
     "name": "遁地之躯",
     "skillType": "passive",
     "trigger": "ON_DAMAGE_TAKEN",
@@ -5216,7 +5216,7 @@
     "description": "受到攻击时25%概率提升自身防御2回合。"
   },
   {
-    "id": "passive_boss_hidden_dixing_p2",
+    "id": "passive_boss_oldsoul_dixing_p2",
     "name": "地行不灭",
     "skillType": "passive",
     "trigger": "ON_TURN_START",
@@ -5232,7 +5232,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_hidden_jiuchi_s1",
+    "id": "skill_boss_oldsoul_jiuchi_s1",
     "name": "九齿钉耙击",
     "skillType": "small",
     "energyCost": 50,
@@ -5266,7 +5266,7 @@
     "description": "以九齿钉耙攻击，造成160%攻击伤害，40%概率流血2回合。"
   },
   {
-    "id": "skill_boss_hidden_jiuchi_s2",
+    "id": "skill_boss_oldsoul_jiuchi_s2",
     "name": "天蓬护体",
     "skillType": "small",
     "energyCost": 50,
@@ -5287,7 +5287,7 @@
     "description": "获得天蓬护体，吸收伤害，持续3回合。"
   },
   {
-    "id": "skill_boss_hidden_jiuchi_ult",
+    "id": "skill_boss_oldsoul_jiuchi_ult",
     "name": "九齿葬",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -5321,7 +5321,7 @@
     "description": "九齿葬，对全体造成350%攻击伤害，70%概率流血3回合。"
   },
   {
-    "id": "passive_boss_hidden_jiuchi_p1",
+    "id": "passive_boss_oldsoul_jiuchi_p1",
     "name": "九齿之躯",
     "skillType": "passive",
     "trigger": "ON_ATTACK_LANDED",
@@ -5337,7 +5337,7 @@
     "description": "攻击命中后25%概率提升自身攻击2回合。"
   },
   {
-    "id": "passive_boss_hidden_jiuchi_p2",
+    "id": "passive_boss_oldsoul_jiuchi_p2",
     "name": "天蓬不灭",
     "skillType": "passive",
     "trigger": "ON_TURN_START",
@@ -5353,7 +5353,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_hidden_baiyan_s1",
+    "id": "skill_boss_oldsoul_baiyan_s1",
     "name": "千目射线",
     "skillType": "small",
     "energyCost": 50,
@@ -5387,7 +5387,7 @@
     "description": "释放千目射线，对全体造成140%攻击伤害，30%概率降攻2回合。"
   },
   {
-    "id": "skill_boss_hidden_baiyan_s2",
+    "id": "skill_boss_oldsoul_baiyan_s2",
     "name": "百目护盾",
     "skillType": "small",
     "energyCost": 50,
@@ -5408,7 +5408,7 @@
     "description": "获得百目护盾，吸收伤害，持续3回合。"
   },
   {
-    "id": "skill_boss_hidden_baiyan_ult",
+    "id": "skill_boss_oldsoul_baiyan_ult",
     "name": "万目葬",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -5442,7 +5442,7 @@
     "description": "万目葬，对全体造成350%攻击伤害，60%概率降攻3回合。"
   },
   {
-    "id": "passive_boss_hidden_baiyan_p1",
+    "id": "passive_boss_oldsoul_baiyan_p1",
     "name": "百目之躯",
     "skillType": "passive",
     "trigger": "ON_DODGE_SUCCESS",
@@ -5458,7 +5458,7 @@
     "description": "闪避成功时提升自身速度2回合。"
   },
   {
-    "id": "passive_boss_hidden_baiyan_p2",
+    "id": "passive_boss_oldsoul_baiyan_p2",
     "name": "百目不灭",
     "skillType": "passive",
     "trigger": "ON_TURN_START",
@@ -5474,7 +5474,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_hidden_jinchan_s1",
+    "id": "skill_boss_oldsoul_jinchan_s1",
     "name": "金蝉佛掌",
     "skillType": "small",
     "energyCost": 50,
@@ -5502,7 +5502,7 @@
     "description": "以金蝉佛掌攻击，造成160%攻击伤害。"
   },
   {
-    "id": "skill_boss_hidden_jinchan_s2",
+    "id": "skill_boss_oldsoul_jinchan_s2",
     "name": "净坛结界",
     "skillType": "small",
     "energyCost": 50,
@@ -5529,7 +5529,7 @@
     "description": "获得净坛结界护盾和反伤效果，持续3回合。"
   },
   {
-    "id": "skill_boss_hidden_jinchan_ult",
+    "id": "skill_boss_oldsoul_jinchan_ult",
     "name": "净坛葬",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -5563,7 +5563,7 @@
     "description": "净坛葬，对全体造成350%攻击伤害，50%概率沉默2回合。"
   },
   {
-    "id": "passive_boss_hidden_jinchan_p1",
+    "id": "passive_boss_oldsoul_jinchan_p1",
     "name": "金蝉之躯",
     "skillType": "passive",
     "trigger": "ON_DAMAGE_TAKEN",
@@ -5579,7 +5579,7 @@
     "description": "受到攻击时20%概率获得护盾。"
   },
   {
-    "id": "passive_boss_hidden_jinchan_p2",
+    "id": "passive_boss_oldsoul_jinchan_p2",
     "name": "净坛不灭",
     "skillType": "passive",
     "trigger": "ON_TURN_START",

@@ -24,6 +24,8 @@ export interface SaveMeta {
   save_time: number
   play_time: number
   checksum?: string
+  /** 导出时的封神榜配置指纹（xiyou 域配置内容 hash，前缀标口径）：导入时不一致则提示数据漂移 */
+  configs_fp?: string
 }
 
 export interface SavePlayerState {

@@ -3,6 +3,7 @@
     "id": "test_warrior",
     "name": "测试·战士",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -24,6 +25,7 @@
     "id": "test_tank",
     "name": "测试·坦克",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -45,6 +47,7 @@
     "id": "test_assassin",
     "name": "测试·刺客",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -66,6 +69,7 @@
     "id": "test_anti_crit",
     "name": "测试·抗暴者",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -88,6 +92,7 @@
     "id": "test_dodge_master",
     "name": "测试·闪避大师",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -114,6 +119,7 @@
     "id": "test_vampire",
     "name": "测试·吸血鬼",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 150,
       "maxHealth": 150,
@@ -138,6 +144,7 @@
     "id": "test_shield_guard",
     "name": "测试·护盾卫士",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 150,
       "maxHealth": 150,
@@ -162,6 +169,7 @@
     "id": "test_controller",
     "name": "测试·控制法师",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -187,6 +195,7 @@
     "id": "test_poisoner",
     "name": "测试·毒师",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -211,6 +220,7 @@
     "id": "test_bard",
     "name": "测试·鼓舞者",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -236,6 +246,7 @@
     "id": "test_thorns",
     "name": "测试·荆棘骑士",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -260,6 +271,7 @@
     "id": "test_combo",
     "name": "测试·连击剑士",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -284,6 +296,7 @@
     "id": "test_dummy_low",
     "name": "木人·低级",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 100,
       "maxHealth": 100,
@@ -302,6 +315,7 @@
     "id": "test_dummy_mid",
     "name": "木人·中级",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 500,
       "maxHealth": 500,
@@ -320,6 +334,7 @@
     "id": "test_dummy_high",
     "name": "木人·高级",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 1000,
       "maxHealth": 1000,
@@ -338,6 +353,7 @@
     "id": "test_control_rotator",
     "name": "测试·控制轮转",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 500,
       "maxHealth": 500,
@@ -362,6 +378,7 @@
     "id": "test_dot_rotator",
     "name": "测试·持续轮转",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 500,
       "maxHealth": 500,
@@ -386,6 +403,7 @@
     "id": "test_dummy_ultimate",
     "name": "木人·究极",
     "level": 1,
+    "role": "xiaoyao",
     "stats": {
       "currentHealth": 2000,
       "maxHealth": 2000,

@@ -1,0 +1,611 @@
+[
+  {
+    "id": "boss_major_huayaowang",
+    "name": "花妖王·千瓣",
+    "level": 10,
+    "faction": "wood",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 418,
+      "attack": 84,
+      "defense": 48,
+      "speed": 33,
+      "critRate": 10,
+      "critDamage": 135,
+      "hit": 30,
+      "dodge": 18,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_huayaowang_s1",
+      "skill_boss_major_huayaowang_s2",
+      "skill_boss_major_huayaowang_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_major_huayaowang_p1"
+    ],
+    "affixPool": {
+      "buffTier": 5,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_taomu",
+        "probability": 1
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "probability": 0.6
+      },
+      {
+        "itemId": "mat_tongjing",
+        "probability": 0.4
+      },
+      {
+        "itemId": "bp_t1_wp",
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_t1_ar",
+        "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
+      },
+      {
+        "itemId": "enh_stone",
+        "probability": 0.35
+      },
+      {
+        "itemId": "wash_stone",
+        "probability": 0.1
+      },
+      {
+        "itemId": "misc_yaodan",
+        "probability": 0.25
+      },
+      {
+        "itemId": "exp_pill_small",
+        "probability": 0.2
+      },
+      {
+        "itemId": "bp_t1_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t1_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t1_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t1_rg",
+        "probability": 0.15
+      }
+    ],
+    "money": [
+      100,
+      150
+    ],
+    "exp": [
+      150,
+      200
+    ],
+    "description": "花妖一族的王者，千瓣花开，万毒归宗。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "花妖王·千瓣绽放第一层花瓣",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "花妖王·千瓣进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "千瓣花开，瓣瓣含毒。你踏入花妖巢，便是我的花肥。",
+      "outro": "花落归根，根犹在土。来年花开，又是一季繁华。",
+      "deathQuote": "千瓣……凋零……"
+    },
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+  },
+  {
+    "id": "boss_major_hebo",
+    "name": "河伯·沧浪",
+    "level": 20,
+    "faction": "water",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 682,
+      "attack": 150,
+      "defense": 92,
+      "speed": 51,
+      "critRate": 12,
+      "critDamage": 140,
+      "hit": 50,
+      "dodge": 30,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_hebo_s1",
+      "skill_boss_major_hebo_s2",
+      "skill_boss_major_hebo_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_major_hebo_p1"
+    ],
+    "affixPool": {
+      "buffTier": 5,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_tongjing",
+        "probability": 1
+      },
+      {
+        "itemId": "mat_danshuiyu",
+        "probability": 0.6
+      },
+      {
+        "itemId": "bp_t2_wp",
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_t2_ar",
+        "probability": 0.5
+      },
+      {
+        "itemId": "mat_sp_06",
+        "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
+      },
+      {
+        "itemId": "enh_stone",
+        "probability": 0.35
+      },
+      {
+        "itemId": "wash_stone",
+        "probability": 0.1
+      },
+      {
+        "itemId": "misc_yaodan",
+        "probability": 0.25
+      },
+      {
+        "itemId": "exp_pill_mid",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t2_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t2_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t2_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t2_rg",
+        "probability": 0.15
+      }
+    ],
+    "money": [
+      150,
+      220
+    ],
+    "exp": [
+      220,
+      280
+    ],
+    "description": "断柳渡的河伯，沧浪之水，可覆万物。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "河伯·沧浪掀起巨浪",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "河伯·沧浪进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "沧浪之水清兮，可以濯吾缨。沧浪之水浊兮，可以濯吾足。你选哪个？",
+      "outro": "水可载舟，亦可覆舟。今日之败，不过潮起潮落。",
+      "deathQuote": "沧浪……归海……"
+    },
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+  },
+  {
+    "id": "boss_major_shanshen",
+    "name": "山神·岩坚",
+    "level": 30,
+    "faction": "earth",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 946,
+      "attack": 216,
+      "defense": 136,
+      "speed": 68,
+      "critRate": 14,
+      "critDamage": 145,
+      "hit": 70,
+      "dodge": 42,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_shanshen_s1",
+      "skill_boss_major_shanshen_s2",
+      "skill_boss_major_shanshen_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_major_shanshen_p1"
+    ],
+    "affixPool": {
+      "buffTier": 5,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_cushi",
+        "probability": 1
+      },
+      {
+        "itemId": "mat_tongjing",
+        "probability": 0.4
+      },
+      {
+        "itemId": "bp_t3_wp",
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_t3_ar",
+        "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
+      },
+      {
+        "itemId": "pet_break_pill_1",
+        "probability": 0.3
+      },
+      {
+        "itemId": "enh_stone",
+        "probability": 0.35
+      },
+      {
+        "itemId": "wash_stone",
+        "probability": 0.1
+      },
+      {
+        "itemId": "misc_yaodan",
+        "probability": 0.25
+      },
+      {
+        "itemId": "exp_pill_mid",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t3_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t3_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t3_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t3_rg",
+        "probability": 0.15
+      }
+    ],
+    "money": [
+      200,
+      300
+    ],
+    "exp": [
+      300,
+      360
+    ],
+    "description": "碎石岭的山神，岩坚不摧，守护五行山。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "山神·岩坚召唤岩石护盾",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "山神·岩坚进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "吾乃五行山神，岩坚不摧。你若想过山，先问吾答不答应。",
+      "outro": "山可崩，石可碎，然山神之心，永不磨灭。",
+      "deathQuote": "岩坚……终有……崩时……"
+    },
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+  },
+  {
+    "id": "boss_major_miwu",
+    "name": "迷雾妖主·幻影",
+    "level": 40,
+    "type": "old_soul",
+    "faction": "neutral",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 1210,
+      "attack": 282,
+      "defense": 180,
+      "speed": 86,
+      "critRate": 16,
+      "critDamage": 150,
+      "hit": 90,
+      "dodge": 54,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_miwu_s1",
+      "skill_boss_major_miwu_s2",
+      "skill_boss_major_miwu_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_major_miwu_p1"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_taomu",
+        "probability": 1
+      },
+      {
+        "itemId": "mat_cushi",
+        "probability": 0.4
+      },
+      {
+        "itemId": "bp_t4_wp",
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_t4_ar",
+        "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
+      },
+      {
+        "itemId": "enh_stone",
+        "probability": 0.35
+      },
+      {
+        "itemId": "wash_stone",
+        "probability": 0.1
+      },
+      {
+        "itemId": "misc_yaodan",
+        "probability": 0.25
+      },
+      {
+        "itemId": "exp_pill_mid",
+        "probability": 0.15
+      },
+      {
+        "itemId": "wash_directed",
+        "probability": 0.2
+      },
+      {
+        "itemId": "bp_t4_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t4_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t4_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t4_rg",
+        "probability": 0.15
+      }
+    ],
+    "money": [
+      250,
+      380
+    ],
+    "exp": [
+      380,
+      440
+    ],
+    "description": "迷雾谷的妖主，幻影重重，真假难辨。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "迷雾妖主·幻影释放迷雾",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "迷雾妖主·幻影进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "你看到的我，是真是幻？你脚下的路，是实是虚？在迷雾中，一切皆不可信。",
+      "outro": "迷雾散去，真相又如何？你不过是走出了我的梦，却走不出你自己的。",
+      "deathQuote": "幻影……终归……虚无……"
+    },
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+  },
+  {
+    "id": "boss_major_rulai",
+    "name": "如来法相·须弥",
+    "level": 50,
+    "faction": "earth",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 1474,
+      "attack": 348,
+      "defense": 224,
+      "speed": 103,
+      "critRate": 18,
+      "critDamage": 155,
+      "hit": 110,
+      "dodge": 66,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_major_rulai_s1",
+      "skill_boss_major_rulai_s2",
+      "skill_boss_major_rulai_ult"
+    ],
+    "passiveSkillIds": [
+      "passive_boss_major_rulai_p1"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_cushi",
+        "probability": 1
+      },
+      {
+        "itemId": "mat_tongjing",
+        "probability": 0.4
+      },
+      {
+        "itemId": "bp_t5_wp",
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_t5_ar",
+        "probability": 0.5
+      },
+      {
+        "itemId": "mat_sp_05",
+        "probability": 0.5
+      },
+      {
+        "itemId": "pet_aptitude_pill",
+        "probability": 0.15
+      },
+      {
+        "itemId": "spirit_dust",
+        "probability": 0.2
+      },
+      {
+        "itemId": "enh_stone",
+        "probability": 0.35
+      },
+      {
+        "itemId": "wash_stone",
+        "probability": 0.1
+      },
+      {
+        "itemId": "misc_yaodan",
+        "probability": 0.25
+      },
+      {
+        "itemId": "exp_pill_large",
+        "probability": 0.1
+      },
+      {
+        "itemId": "wash_directed",
+        "probability": 0.2
+      },
+      {
+        "itemId": "hd_sb10",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t5_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t5_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t5_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t5_rg",
+        "probability": 0.15
+      }
+    ],
+    "money": [
+      300,
+      450
+    ],
+    "exp": [
+      450,
+      520
+    ],
+    "description": "灵霄台的如来法相，须弥山巅，佛光普照。",
+    "phases": [
+      {
+        "threshold": 70,
+        "trigger": "如来法相·须弥释放佛光",
+        "buffId": "buff_boss_major_phase2_atk"
+      },
+      {
+        "threshold": 40,
+        "trigger": "如来法相·须弥进入狂暴状态",
+        "buffId": "buff_boss_major_phase3_berserk"
+      }
+    ],
+    "narrative": {
+      "intro": "须弥顶上，佛光万丈。你既已至此，便以斗战证道。",
+      "outro": "法相虽灭，佛法犹存。你今日之胜，不过是因果循环。",
+      "deathQuote": "须弥……不倒……"
+    },
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+  }
+]

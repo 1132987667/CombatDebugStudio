@@ -353,6 +353,23 @@
     "description": "小头目阶段转换：攻击+30%，速度+10%。"
   },
   {
+    "id": "buff_boss_minor_phase2_atk",
+    "name": "妖气迸发",
+    "polarity": "positive",
+    "category": "modifier",
+    "duration": -1,
+    "maxStacks": 1,
+    "stackRule": "REFRESH",
+    "dispellable": false,
+    "cleanseable": false,
+    "tags": ["boss", "phase", "modifier"],
+    "attributes": {
+      "attack": { "value": 35, "type": "PERCENTAGE" },
+      "speed": { "value": 15, "type": "PERCENTAGE" }
+    },
+    "description": "妖魁阶段转换：攻击+35%，速度+15%。"
+  },
+  {
     "id": "buff_boss_major_phase2_atk",
     "name": "怒意升腾",
     "polarity": "positive",
@@ -441,7 +458,7 @@
     "description": "大成就领主终极形态：攻击+80%，速度+30%，暴击率+15%。"
   },
   {
-    "id": "buff_boss_hidden_phase2_atk",
+    "id": "buff_boss_oldsoul_phase2_atk",
     "name": "残影苏醒",
     "polarity": "positive",
     "category": "modifier",
@@ -455,10 +472,10 @@
       "attack": { "value": 40, "type": "PERCENTAGE" },
       "speed": { "value": 20, "type": "PERCENTAGE" }
     },
-    "description": "隐藏BOSS阶段转换：攻击+40%，速度+20%。"
+    "description": "残魂BOSS阶段转换：攻击+40%，速度+20%。"
   },
   {
-    "id": "buff_boss_hidden_phase3_berserk",
+    "id": "buff_boss_oldsoul_phase3_berserk",
     "name": "怨念爆发",
     "polarity": "positive",
     "category": "modifier",
@@ -473,10 +490,10 @@
       "defense": { "value": -20, "type": "PERCENTAGE" },
       "speed": { "value": 30, "type": "PERCENTAGE" }
     },
-    "description": "隐藏BOSS狂暴状态：攻击+65%，防御-20%，速度+30%。"
+    "description": "残魂BOSS狂暴状态：攻击+65%，防御-20%，速度+30%。"
   },
   {
-    "id": "buff_boss_hidden_phase4_ult",
+    "id": "buff_boss_oldsoul_phase4_ult",
     "name": "残魂觉醒",
     "polarity": "positive",
     "category": "modifier",
@@ -492,7 +509,7 @@
       "critRate": { "value": 20, "type": "ADDITIVE" },
       "critDamage": { "value": 30, "type": "ADDITIVE" }
     },
-    "description": "隐藏BOSS终极形态：攻击+90%，速度+35%，暴击率+20%，暴击伤害+30%。"
+    "description": "残魂BOSS终极形态：攻击+90%，速度+35%，暴击率+20%，暴击伤害+30%。"
   },
   {
     "id": "buff_boss_king_phase2_atk",

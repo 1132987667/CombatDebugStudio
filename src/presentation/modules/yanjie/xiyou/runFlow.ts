@@ -62,8 +62,17 @@ export function sceneNodeCount(scene: XiyouScene): number {
  * 构造关卡节点序列。
  * - 普通关：普通场编成 = 本场景敌组池（amp 按 1+0.15×(k-1) 递增）；关底 = 敌组池 + 妖徒（满档增幅）。
  *   单场关（关卡一/二）= 敌组池 + 妖徒合编一场（与历史行为一致）。
- * - 妖魁关：普通场借同区域 scene_R_5 敌组垫场（amp 递增）；关底 = bosses.json 妖魁（权威数值，不再增幅）。
+ * - 妖魁关：普通场借同区域 scene_R_5 敌组垫场（amp 递增）；第 3 场区域妖魁前哨战；关底 = 场景 BOSS（权威数值，不再增幅）。
  */
+/** 区域 → 妖魁关前哨小 BOSS（boss_minor，§3.8 章节末分层：妖魁前哨 → 妖王关底） */
+const MINOR_BOSS_BY_REGION: Record<string, string> = {
+  region_1: 'boss_minor_taoyao',
+  region_2: 'boss_minor_liuyao',
+  region_3: 'boss_minor_yanjing',
+  region_4: 'boss_minor_zhuyao',
+  region_5: 'boss_minor_panseng',
+}
+
 export function buildRunNodes(scene: XiyouScene, allScenes: XiyouScene[]): RunNode[] {
   const total = sceneNodeCount(scene)
   const pool = scene.enemies.map((e) => e.id).filter((id): id is string => !!id)
@@ -76,10 +85,11 @@ export function buildRunNodes(scene: XiyouScene, allScenes: XiyouScene[]): RunNo
   }
 
   if (bossSeq) {
-    // 妖魁关：同区域 scene_R_5 敌组垫普通场；关底妖魁不加增幅
-    const elite = allScenes.find((s) => s.id === `${scene.regionId}_5`)
+    // 妖魁关：同区域 scene_R_5 敌组垫普通场；第 3 场区域妖魁前哨战；关底场景 BOSS（权威数值，不增幅）
+    // NOTE: regionId（region_R）→ 场景 id（scene_R_5）需换前缀；直接拼接 `region_R_5` 永不命中
+    const elite = allScenes.find((s) => s.id === `scene_${scene.regionId.slice('region_'.length)}_5`)
     const elitePool = (elite?.enemies ?? []).map((e) => e.id).filter((id): id is string => !!id)
-    for (let k = 0; k < total - 1; k++) {
+    for (let k = 0; k < total - 2; k++) {
       nodes.push({
         index: k,
         total,
@@ -88,7 +98,16 @@ export function buildRunNodes(scene: XiyouScene, allScenes: XiyouScene[]): RunNo
         amp: ampAt(k),
       })
     }
-    // 妖魁率队（§24 关底 4v4）：妖魁 + 同区域敌组随从凑满一队（妖魁权威数值不增幅，随从同场 amp=1）
+    // 妖魁前哨战：区域小 BOSS（boss_minor）率队，权威数值不增幅（amp=1）
+    const minorId = MINOR_BOSS_BY_REGION[scene.regionId]
+    nodes.push({
+      index: total - 2,
+      total,
+      isBoss: false,
+      enemyIds: minorId ? [minorId, ...elitePool.slice(0, 3)] : elitePool.slice(0, 3),
+      amp: 1,
+    })
+    // 场景 BOSS 压阵（§24 关底 4v4）：场景 BOSS + 同区域敌组随从凑满一队（amp=1）
     const escorts = elitePool.slice(0, Math.max(0, 4 - pool.length))
     pushBoss(total - 1, [...pool, ...escorts], 1)
     return nodes

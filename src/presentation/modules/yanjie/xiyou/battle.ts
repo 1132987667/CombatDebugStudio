@@ -13,7 +13,6 @@ import { PLAYER_ID } from '@/shared/constants/player'
 import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import enemiesJson from '@configs/enemies/enemies.json'
-import bossesJson from '@configs/xiyou/bosses.json'
 import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
 import type { ProtagonistSnapshot, XiyouCombatant, XiyouMate, XiyouScene } from './types'
 import { equippedSkills, mates, nodeValueAtRank, pureSchoolBonus, schools, schoolsLayers, skillNodeMap } from './xiyouData'
@@ -152,73 +151,9 @@ interface EnemyRow {
 }
 
 /** 敌人配置索引（id → 行；id 与 scenes.json 敌人 id 一一对应，封神榜健康检查保证零断裂）
- * NOTE: 5 大场景 BOSS（boss_major_*）定义收敛到 bosses.json（权威），运行时经 bossToRow 转换合并进索引。 */
+ * NOTE: 5 大场景 BOSS（boss_major_*）已并入 enemies.json（引擎结构静态条目，数值冻结）。 */
 const enemyRows = enemiesJson as unknown as EnemyRow[]
 const enemyById = new Map<string, EnemyRow>(enemyRows.map((r) => [r.id, r]))
-
-/** bosses.json 重型 BOSS 条目（设计稿结构：内联文本技能 / 对象掉落 / 缺角色字段） */
-interface BossRow {
-  id?: string
-  name?: string
-  level?: number
-  type?: string
-  enemyType?: string
-  faction?: string
-  stats?: Partial<Record<ATTRIBUTE_CODE, number>>
-  skills?: Array<{ id?: string }>
-  passive?: { id?: string }
-  ultimate?: { id?: string }
-  affixPool?: EnemyAffixPool
-  drops?: { guaranteed?: string[]; rare?: string[]; money?: [number, number]; exp?: [number, number] }
-  phases?: Array<{ threshold: number; trigger: string }>
-  unlockCondition?: { sceneId?: string }
-  description?: string
-  narrative?: unknown
-}
-
-/** 把 bosses.json 的 major BOSS 条目转为引擎 EnemyRow（数值以 bosses.json 为准；技能引用 enemy-skills.json 现有可执行定义） */
-function bossToRow(b: BossRow): EnemyRow | null {
-  if (!b.id || b.type !== 'major') return null
-  const name = b.id.replace('boss_major_', '')
-  const guaranteed = b.drops?.guaranteed ?? []
-  const rare = b.drops?.rare ?? []
-  return {
-    id: b.id,
-    name: b.name ?? b.id,
-    level: b.level ?? 1,
-    type: b.enemyType ?? 'old_blood',
-    faction: b.faction,
-    role: 'yaokui',
-    stats: {
-      ...(b.stats ?? {}),
-      hit: b.stats?.hit ?? 30,
-      dodge: b.stats?.dodge ?? 15,
-      maxEnergy: b.stats?.maxEnergy ?? 150,
-      energyInit: b.stats?.energyInit ?? 25,
-    },
-    skillIds: [`skill_boss_major_${name}_s1`, `skill_boss_major_${name}_s2`, `skill_boss_major_${name}_ult`],
-    passiveSkillIds: [`passive_boss_major_${name}_p1`],
-    affixPool: { buffTier: b.affixPool?.buffTier ?? 1, count: 1 },
-    drops: [
-      ...guaranteed.map((id) => ({ itemId: id, probability: 1 })),
-      ...rare.map((id) => ({ itemId: id, probability: 0.3 })),
-    ],
-    money: b.drops?.money,
-    exp: b.drops?.exp,
-    sceneId: b.unlockCondition?.sceneId,
-    description: b.description,
-    phases: (b.phases ?? []).map((p, i) => ({
-      ...p,
-      buffId: i === 0 ? 'buff_boss_major_phase2_atk' : 'buff_boss_major_phase3_berserk',
-    })),
-  }
-}
-
-// NOTE: 收敛 —— 5 大场景 BOSS 定义来自 bosses.json（权威），覆盖 enemies.json 同名索引（该处已删除）
-for (const b of bossesJson as unknown as BossRow[]) {
-  const row = bossToRow(b)
-  if (row) enemyById.set(row.id, row)
-}
 
 /** 敌人技能 → 类型索引（enemy-skills.json skillType；与 ConfigDataSource.normalizeEnemy 同口径） */
 const enemySkillTypeById = new Map<string, string>(
@@ -289,12 +224,13 @@ export function rewardForEnemyIds(enemyIds: string[]): { money: [number, number]
   return { money: [g0, g1], exp: [e0, e1] }
 }
 
-/** 敌人分级 → 战胜灵韵（六档：小妖 2 / 妖兵 5 / 妖徒 10 / 妖魁·妖王（BOSS）50 / 妖尊 150；键域挂 EnemyRole，新增档位漏配即编译错） */
+/** 敌人分级 → 战胜灵韵（六档：小妖 2 / 妖兵 10 / 妖徒 20 / 妖魁 30 / 妖王 50 / 妖尊 150；
+ *  权威口径《完整项目说明.md》附录A §10.1；键域挂 EnemyRole，新增档位漏配即编译错） */
 const ROLE_XIANYUAN: Record<EnemyRole, number> = {
   xiaoyao: 2,
-  yaobing: 5,
-  yaotu: 10,
-  yaokui: 50,
+  yaobing: 10,
+  yaotu: 20,
+  yaokui: 30,
   yaowang: 50,
   yaozun: 150,
 }

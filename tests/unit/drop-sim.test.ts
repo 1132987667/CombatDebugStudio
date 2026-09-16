@@ -11,8 +11,10 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
+  aggregateDropSet,
   analyzeDrops,
   probAtLeastOne,
+  simulateDropSet,
   simulateDrops,
 } from '@/domain/fengshen/drop-sim'
 import type { EnemyDrop } from '@/shared/types/enemy'
@@ -58,5 +60,46 @@ describe('drop-sim 掉落试算', () => {
     const b = simulateDrops(drops, 500, 'seed-x')
     expect(a.observedRates).toEqual(b.observedRates)
     expect(a.moneyObserved).toBe(b.moneyObserved)
+  })
+})
+
+describe('drop-sim 掉落组聚合（连战多敌）', () => {
+  // 敌 A 与敌 B 都掉 mat_001（0.5/0.5 → 复合至少一件 0.75，期望 1.0 + 0.2 = 1.2？见断言）
+  const setA = { drops: [{ itemId: 'mat_001', quantity: 2, chance: 0.5 } as EnemyDrop], money: [10, 30] as [number, number] }
+  const setB = { drops: [{ itemId: 'mat_001', quantity: 1, chance: 0.2 } as EnemyDrop, { itemId: 'mat_002', quantity: 1, chance: 1 } as EnemyDrop], exp: [5, 15] as [number, number] }
+
+  it('同 itemId 跨敌合并：至少一件用复合概率（0.5、0.2 → 0.6），期望相加', () => {
+    const report = aggregateDropSet([setA, setB])
+    const m1 = report.items.find((i) => i.itemId === 'mat_001')!
+    expect(m1.sources).toBe(2)
+    expect(m1.atLeastOne).toBeCloseTo(1 - 0.5 * 0.8) // 0.6，不是 0.7
+    expect(m1.expectedTotal).toBeCloseTo(0.5 * 2 + 0.2 * 1) // 1.2
+    const m2 = report.items.find((i) => i.itemId === 'mat_002')!
+    expect(m2.sources).toBe(1)
+    expect(m2.atLeastOne).toBe(1)
+  })
+
+  it('奖励区间逐敌求和；单敌缺失的奖励类型不出现在报告中', () => {
+    const report = aggregateDropSet([setA, setB])
+    expect(report.money).toEqual({ min: 10, max: 30, expected: 20 })
+    expect(report.exp).toEqual({ min: 5, max: 15, expected: 10 })
+  })
+
+  it('空输入返回空报告', () => {
+    const report = aggregateDropSet([])
+    expect(report.items).toEqual([])
+    expect(report.money).toBeUndefined()
+    expect(report.exp).toBeUndefined()
+  })
+
+  it('模拟对照：实测至少一件率收敛到复合概率（±3%），同种子确定', () => {
+    const obs = simulateDropSet([setA, setB], 100000, 'agg-seed')
+    expect(obs.observedAtLeastOne['mat_001']).toBeGreaterThan(0.57)
+    expect(obs.observedAtLeastOne['mat_001']).toBeLessThan(0.63)
+    expect(obs.observedAtLeastOne['mat_002']).toBe(1)
+    expect(obs.moneyObserved).toBeCloseTo(20, 0)
+    expect(obs.expObserved).toBeCloseTo(10, 0)
+    const again = simulateDropSet([setA, setB], 100000, 'agg-seed')
+    expect(again.observedAtLeastOne).toEqual(obs.observedAtLeastOne)
   })
 })

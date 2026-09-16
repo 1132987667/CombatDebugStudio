@@ -7,6 +7,7 @@
 
 import type { IDataSource } from '@/domain/port/IDataSource'
 import type { Enemy, EnemyStats } from '@/shared/types/enemy'
+import type { EnemyRole } from '@/domain/fengshen/role-grades'
 import type { SceneData } from '@/shared/types/scene'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { LineupData, AffixData, AffixLibraryData, EconomyRatiosConfig } from '@/domain/fengshen/types'
@@ -20,10 +21,6 @@ import type { ItemData } from '@/domain/fengshen/types'
 import { deriveMaterials } from '@/domain/fengshen/derive-materials'
 import itemsDataRaw from '@configs/xiyou/items.json'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
-import bossesJson from '@configs/xiyou/bosses.json'
-import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
-import enemiesXiyouHiddenDataRaw from '@configs/enemies/enemies_xiyou_hidden.json'
-import enemiesOldDataRaw from '@configs/enemies/enemies-old.json'
 import enemySkillsData from '@configs/xiyou/enemy-skills.json'
 import enemyBuffsData from '@configs/xiyou/enemy-buffs.json'
 import xiyouScenesData from '@configs/xiyou/scenes.json'
@@ -35,26 +32,26 @@ import passiveSchoolSkillsData from '@configs/skills/skill_passive_schools.json'
 import schoolActiveSkillsData from '@configs/skills/skills_school_lianzhan.json'
 import skillsData from '@configs/skills/skills.json'
 import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
-import hiddenBossSkillsData from '@configs/skills/skill_yaozun.json'
+import xiyouMinorBossSkillsData from '@configs/skills/skill_boss_minor_xiyou.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 import affixLibraryDataRaw from '@configs/affixes/affixes.json'
 
 /** 新结构敌人条目（enemies.json：skillIds/passiveSkillIds/drops.probability） */
-interface RawEnemyEntry {
+export interface RawEnemyEntry {
   id: string
   name: string
   level: number
   stats: EnemyStats
   skillIds?: string[]
   passiveSkillIds?: string[]
-  drops?: Array<{ itemId: string; probability?: number }>
+  drops?: Array<{ itemId: string; quantity?: number; probability?: number }>
   // HACK: enemies.json 尚有 role/faction/type 等未入 Enemy 接口的原始字段，
   //       normalizeEnemy 经展开带入运行时（索引签名兜底）；接口收敛前保持开放键
   [key: string]: unknown
 }
 
-/** 归一化新结构敌人到 Enemy 标准结构：技能按 enemy-skills.json 的 skillType 分桶，掉落 probability→chance */
-function normalizeEnemy(raw: RawEnemyEntry, skillTypeById: ReadonlyMap<string, string>): Enemy {
+/** 归一化新结构敌人到 Enemy 标准结构：技能按 enemy-skills.json 的 skillType 分桶，掉落 probability→chance（测试夹具 loadTestData 共用） */
+export function normalizeEnemy(raw: RawEnemyEntry, skillTypeById: ReadonlyMap<string, string>): Enemy {
   const passive = [...(raw.passiveSkillIds ?? [])]
   const small: string[] = []
   const ultimate: string[] = []
@@ -68,65 +65,32 @@ function normalizeEnemy(raw: RawEnemyEntry, skillTypeById: ReadonlyMap<string, s
   //       覆写 drops/skills 后结构即 Enemy，双断言只为剥掉索引签名
   return {
     ...raw,
-    drops: (raw.drops ?? []).map((d) => ({ itemId: d.itemId, quantity: 1, chance: d.probability ?? 1 })),
+    drops: (raw.drops ?? []).map((d) => ({ itemId: d.itemId, quantity: d.quantity ?? 1, chance: d.probability ?? 1 })),
     skills: { small, passive, ultimate },
   } as unknown as Enemy
 }
 
-const skillTypeById = new Map(
-  (enemySkillsData as Array<{ id: string; skillType?: string }>).map((s) => [s.id, s.skillType ?? 'small']),
+// NOTE: 技能类型分桶查表需覆盖全部技能文件（专用被动/学派/玩家/妖魁/enemy-skills），
+//       漏源会把 passive/ultimate 错分进 small 桶
+export const skillTypeById = new Map(
+  [
+    ...skillsData,
+    ...passiveSkillsData,
+    ...yaotuPassiveSkillsData,
+    ...passiveTestSkillsData,
+    ...passiveSchoolSkillsData,
+    ...schoolActiveSkillsData,
+    ...playerXiyouSkillsData,
+    ...xiyouMinorBossSkillsData,
+    ...enemySkillsData,
+  ].map((s) => [s.id, (s as { skillType?: string }).skillType ?? 'small']),
 )
 
-/** bosses.json 重型 BOSS 条目（设计稿结构：内联文本技能 / 对象掉落 / 缺角色字段） */
-interface BossRow {
-  id?: string
-  name?: string
-  level?: number
-  type?: string
-  stats?: Record<string, number>
-  affixPool?: { buffTier?: number }
-  drops?: { guaranteed?: string[]; rare?: string[] }
-}
-
-/** 把 bosses.json 的 major BOSS 条目转成引擎 Enemy（技能引用 enemy-skills.json 现有可执行定义；数值以 bosses.json 为准） */
-function bossToEnemy(b: BossRow): Enemy | null {
-  if (!b.id || b.type !== 'major') return null
-  const name = b.id.replace('boss_major_', '')
-  const guaranteed = b.drops?.guaranteed ?? []
-  const rare = b.drops?.rare ?? []
-  return {
-    id: b.id,
-    name: b.name ?? b.id,
-    level: b.level ?? 1,
-    stats: {
-      ...(b.stats ?? {}),
-      hit: b.stats?.hit ?? 30,
-      dodge: b.stats?.dodge ?? 15,
-      maxEnergy: b.stats?.maxEnergy ?? 150,
-      energyInit: b.stats?.energyInit ?? 25,
-    },
-    skills: {
-      small: [`skill_boss_major_${name}_s1`, `skill_boss_major_${name}_s2`],
-      passive: [`passive_boss_major_${name}_p1`],
-      ultimate: [`skill_boss_major_${name}_ult`],
-    },
-    drops: [
-      ...guaranteed.map((itemId) => ({ itemId, quantity: 1, chance: 1 })),
-      ...rare.map((itemId) => ({ itemId, quantity: 1, chance: 0.3 })),
-    ],
-    affixPool: { buffTier: b.affixPool?.buffTier ?? 1, count: 1 },
-  }
-}
-
-// NOTE: 旧敌人体系（enemy_001 系 / yaotu_* 五行护法）归档于 enemies-old.json，
-//       seed 的 deriveActors 依赖 yaotu_* 派生 actors、lineups 引用旧敌人 id，故兜底数据源一并加载。
-// NOTE: 5 大场景 BOSS 定义收敛到 bosses.json（权威），此处并入供封神榜敌人表/健康检查一致性。
+// NOTE: 旧体系敌人（enemy_0NN 系 / yaotu_* 五行护法 / boss_0NN 章节守护者）已并入 enemies.json：
+//       yaotu_* 是 ACTORS 派生与 TTK 断言的我方基准、唤灵台默认阵容与战斗预设引用其余 15 只，
+//       数值冻结不加 role（重算跳过）；零引用的 75 只归档 configs/expired/enemies-old-expired.json。
 const enemies = [
   ...(enemiesDataRaw as unknown as RawEnemyEntry[]).map((e) => normalizeEnemy(e, skillTypeById)),
-  ...(bossesJson as unknown as BossRow[]).map(bossToEnemy).filter((e): e is Enemy => !!e),
-  ...(enemiesTestDataRaw as Enemy[]),
-  ...(enemiesXiyouHiddenDataRaw as Enemy[]),
-  ...(enemiesOldDataRaw as Enemy[]),
 ]
 
 const skills = [
@@ -137,7 +101,7 @@ const skills = [
   ...passiveSchoolSkillsData,
   ...schoolActiveSkillsData,
   ...(playerXiyouSkillsData as SkillConfig[]),
-  ...(hiddenBossSkillsData as SkillConfig[]),
+  ...(xiyouMinorBossSkillsData as SkillConfig[]),
   ...(enemySkillsData as SkillConfig[]),
 ] as SkillConfig[]
 

@@ -264,9 +264,9 @@ export const useFengshenStore = defineStore('fengshen', () => {
     await refreshVersion()
   }
 
-  /** 上次批量编辑批次（字段旧值快照，供一键撤销；localStorage 持久化，页面刷新后仍可撤销最近一批） */
+  /** 上次批量编辑批次（字段新旧值快照，供一键撤销与变更表导出；localStorage 持久化，页面刷新后仍可撤销最近一批） */
   const LAST_BATCH_KEY = 'fs_last_batch'
-  type LastBatch = { table: string; field: string; updates: Array<{ id: string; oldValue: unknown }>; at: number }
+  type LastBatch = { table: string; field: string; updates: Array<{ id: string; oldValue: unknown; newValue?: unknown }>; at: number }
 
   function loadPersistedBatch(): LastBatch | null {
     try {
@@ -292,10 +292,10 @@ export const useFengshenStore = defineStore('fengshen', () => {
    *  应用前记录字段旧值快照到 lastBatch，供一键撤销整批改动。 */
   async function batchUpdate(field: string, value: unknown): Promise<{ ok: number; failed: string[] }> {
     const ids = [...selectedIds.value]
-    const updates: Array<{ id: string; oldValue: unknown }> = []
+    const updates: Array<{ id: string; oldValue: unknown; newValue: unknown }> = []
     for (const id of ids) {
       const row = rows.value.find((r) => String(r.id) === id)
-      if (row) updates.push({ id, oldValue: (row as Record<string, unknown>)[field] })
+      if (row) updates.push({ id, oldValue: (row as Record<string, unknown>)[field], newValue: value })
     }
     let ok = 0
     const failed: string[] = []

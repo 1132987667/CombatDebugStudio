@@ -49,15 +49,14 @@ export function getPassiveSkills(): SkillConfig[] {
 // ───── 敌人配置 ─────
 
 import type { Enemy } from '@/shared/types/enemy'
+import { normalizeEnemy, skillTypeById } from '@/shared/utils/ConfigDataSource'
+import type { RawEnemyEntry } from '@/shared/utils/ConfigDataSource'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
-import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
-import enemiesOldDataRaw from '@configs/enemies/enemies-old.json'
 
-// 与 ConfigDataSource 保持同一合并口径：正式敌人 + 测试敌人 + 旧敌人归档（yaotu_* 妖徒五护法（enemies-old 归档））
+
+// 与 ConfigDataSource 保持同一合并口径与归一化管道（enemies.json 单一权威，含沙盒/测试/场景 BOSS 条目）
 const enemiesData = [
-  ...(enemiesDataRaw as Enemy[]),
-  ...(enemiesTestDataRaw as Enemy[]),
-  ...(enemiesOldDataRaw as Enemy[]),
+  ...(enemiesDataRaw as unknown as RawEnemyEntry[]).map((e) => normalizeEnemy(e, skillTypeById)),
 ] as Enemy[]
 
 /** 按 ID 查找敌人配置 */

@@ -22,14 +22,15 @@ import curvesJson from '@configs/params/curves.json'
 import enemiesConfigJson from '@configs/enemies/enemies.json'
 
 /**
- * 品阶档位：普通五档（role 字段；role-grades 的 yaobing 存量数据无此档，
- * 系数表不收录、命中即回退基准档）+ 特殊两档（按 id 识别，绕开 role 错标）
+ * 品阶档位：PRD 六档（role-grades 单一来源；yaobing 妖兵系数取小妖/妖徒几何中点插值推导，
+ * PRD §3.6 仅给奖励倍率 1.1 未给属性系数）+ 特殊两档（按 id 识别，绕开 role 错标）
  */
-export type EnemyTier = 'xiaoyao' | 'yaotu' | 'yaokui' | 'yaowang' | 'yaozun' | 'king' | 'final'
+export type EnemyTier = 'xiaoyao' | 'yaobing' | 'yaotu' | 'yaokui' | 'yaowang' | 'yaozun' | 'king' | 'final'
 
 /** 档位系数矩阵（实数/模板 中位数，round2；来源 scripts/generate-enemy-design.cjs 拟合输出 = 设计文档 §4 表） */
 export const ENEMY_TIER_COEF: Record<EnemyTier, EnemyCoefRow> = {
   xiaoyao: { maxHealth: 1.08, attack: 1.43, defense: 2.3, speed: 0.69, hit: 1.0, dodge: 1.0 },
+  yaobing: { maxHealth: 1.23, attack: 1.63, defense: 2.65, speed: 0.77, hit: 1.0, dodge: 1.08 },
   yaotu: { maxHealth: 1.4, attack: 1.87, defense: 2.99, speed: 0.89, hit: 1.0, dodge: 1.19 },
   yaokui: { maxHealth: 1.94, attack: 2.58, defense: 4.13, speed: 1.21, hit: 1.03, dodge: 1.43 },
   yaowang: { maxHealth: 2.38, attack: 3.21, defense: 5.18, speed: 1.57, hit: 1.02, dodge: 1.59 },
@@ -170,7 +171,7 @@ export interface EnemyStatsRebuildReport {
   warnings: string[]
 }
 
-/** IDB 行的宽松形态（enemies 表原样 JSON 口径：skillIds/drops[].probability，本模块只碰 stats） */
+/** IDB 行的宽松形态（enemies 表原样 JSON 口径：skillIds/drops[].chance×quantity，本模块只碰 stats） */
 export type EnemyStatsRow = {
   id: string
   name?: string
@@ -179,9 +180,17 @@ export type EnemyStatsRow = {
   stats?: Record<string, number | undefined>
 }
 
+/** 沙盒/测试/场景 BOSS 实体冻结：yaotu_* 五行护法是 TTK 断言（A5）的我方基准与 ACTORS 派生源，
+ *  test_* 是战斗机制测试靶子（数值与测试断言绑定），
+ *  boss_major_*（五大场景 BOSS）与 boss_0NN（章节守护者，唤灵台/预设实体）数值均为手调设计值——
+ *  重算产物只回写 enemies.json，覆盖它们会造成 IDB 与 configs 权威漂移。一律跳过 */
+export const FROZEN_IDS = (id: string) =>
+  id.startsWith('yaotu_') || id.startsWith('test_') || id.startsWith('boss_major_') || /^boss_0\d+$/.test(id)
+
 /** 全量重算：逐只产出 before/after，纯函数不写库（写回由调用方走 FengshenDataService）。
  *  role 缺失/非法且非特殊档的记录**跳过**（生成模型先决条件 §3.8 assert role ∈ 五档；
- *  这些记录多为旧 id 体系残留，按基准档强算属越权覆盖） */
+ *  这些记录多为旧 id 体系残留，按基准档强算属越权覆盖）；
+ *  yaotu_* / test_* 沙盒与测试实体冻结跳过（数值不归生成模型管辖） */
 export function rebuildAllEnemies(rows: EnemyStatsRow[]): EnemyStatsRebuildReport {
   const entries: EnemyStatsRebuildEntry[] = []
   const warnings: string[] = []
@@ -190,6 +199,11 @@ export function rebuildAllEnemies(rows: EnemyStatsRow[]): EnemyStatsRebuildRepor
   for (const row of rows) {
     if (!row || typeof row.id !== 'string' || !row.id) {
       warnings.push(`跳过缺少 id 的记录：${JSON.stringify(row).slice(0, 60)}`)
+      skippedCount++
+      continue
+    }
+    if (FROZEN_IDS(row.id)) {
+      warnings.push(`${row.id}（${row.name ?? '无名'}）为沙盒/测试/场景 BOSS 实体，数值冻结，已跳过重算`)
       skippedCount++
       continue
     }
@@ -237,7 +251,8 @@ export function toExportableEnemies(rows: EnemyStatsRow[]): Array<Record<string,
 // 体系审计：运行时表 vs configs 权威集合（导出防御的基线）
 // ---------------------------------------------------------------------------
 
-/** configs 权威敌人 id 集合（导出基线：区分权威记录与历史残留/沙盒新增） */
+/** configs 权威敌人 id 集合（导出基线：区分权威记录与历史残留/沙盒新增）。
+ *  全部敌人（含五大场景 BOSS / 沙盒 / 测试条目）已收敛至 enemies.json 单一权威。 */
 export const CONFIG_ENEMY_IDS: ReadonlySet<string> = new Set(
   (enemiesConfigJson as Array<{ id: string }>).map((e) => e.id),
 )

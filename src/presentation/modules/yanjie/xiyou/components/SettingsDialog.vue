@@ -242,6 +242,7 @@ async function onImportFile(e: Event): Promise<void> {
   if (!file) return
   const result = await saveManager.importSave(file)
   notification.toast(result.message ?? (result.ok ? '存档导入成功' : '存档导入失败'), result.ok ? 'success' : 'error')
+  if (result.warning) notification.toast(result.warning, 'warning', 6000)
   if (result.ok) emit('progress-changed')
 }
 

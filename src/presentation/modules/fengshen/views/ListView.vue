@@ -43,8 +43,13 @@
         @click="batchDialogOpen = true">批量编辑</Button>
       <Button v-if="canUndoBatch" size="small" variant="danger" :title="`撤销上次批量改动（${undoBatchSummary}）`"
         @click="confirmUndoBatch = true">撤销上次批量</Button>
+      <Button v-if="canUndoBatch" size="small" title="导出上次批量改动的旧值→新值对照表（CSV，供评审/归档）"
+        @click="exportBatchChanges">导出变更表</Button>
       <Button v-if="store.currentTable === 'enemies'" size="small" title="并排对比所选敌人的属性（2~4 条）"
         :disabled="compareRows.length < 2 || compareRows.length > 4" @click="compareOpen = true">对比所选（{{
+        compareRows.length }}）</Button>
+      <Button v-if="store.currentTable === 'enemies'" size="small" title="连战所选敌人的总产出试算（同物品跨敌合并，2 条起）"
+        :disabled="compareRows.length < 2" @click="aggOpen = true">聚合试算（{{
         compareRows.length }}）</Button>
       <Button v-if="store.currentTable === 'enemies'" size="small" :disabled="rebuilding"
         title="按生成模型（等级模板曲线 × 品阶系数，见敌人生成设计.md）重算全部敌人的 stats；技能/掉落/奖励/剧情不动"
@@ -100,6 +105,10 @@
     <!-- 敌人横向对比（仅 enemies 表；勾选 2~4 行并排） -->
     <EnemyCompareDialog :open="compareOpen" :rows="compareRows" @close="compareOpen = false" />
 
+    <!-- 掉落聚合试算（仅 enemies 表；勾选 2+ 行连战总产出） -->
+    <DropsAggregateDialog :open="aggOpen" :entities="compareRows" :ref-index="store.refIndex"
+      @close="aggOpen = false" />
+
     <!-- 危险操作二次确认 + 统一提示 -->
     <ConfirmDialog v-model="confirmRemove" :title="`删除${schema.label}`" :message="removeMessage"
       confirm-text="删除" danger @confirm="doRemove" />
@@ -130,7 +139,7 @@
         </div>
         <p v-for="w in rebuildReport.warnings.slice(0, 5)" :key="w" class="fs-rebuild-warn">{{ w }}</p>
         <p v-if="rebuildReport.warnings.length > 5" class="fs-rebuild-warn">
-          ……等共 {{ rebuildReport.warnings.length }} 条档位回退/等级修正提示
+          ……等共 {{ rebuildReport.warnings.length }} 条提示
         </p>
         <div class="fs-rebuild-table-wrap">
           <table class="fs-rebuild-table">
@@ -176,6 +185,7 @@ import DataTable from '@/presentation/modules/fengshen/components/DataTable.vue'
 import EntityDrawer from '@/presentation/modules/fengshen/components/EntityDrawer.vue'
 import BatchEditDialog from '@/presentation/modules/fengshen/components/BatchEditDialog.vue'
 import EnemyCompareDialog from '@/presentation/modules/fengshen/components/EnemyCompareDialog.vue'
+import DropsAggregateDialog from '@/presentation/modules/fengshen/components/DropsAggregateDialog.vue'
 import EntityDetailPanel from '@/presentation/modules/fengshen/components/EntityDetailPanel.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
@@ -188,6 +198,7 @@ import { DataIntegrityService } from '@/application/service/DataIntegrityService
 import { buildEnemySceneIndex, buildSceneRegionIndex } from '@/domain/fengshen/sceneIndex'
 import { resolveRefName } from '@/domain/fengshen/refNames'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
+import { downloadCsv } from '@/shared/utils/csv'
 import { nextEntityId } from '@/domain/fengshen/types'
 import type { RegionData } from '@/domain/fengshen/types'
 import {
@@ -518,6 +529,7 @@ const batchDialogOpen = ref(false)
 
 /** 敌人横向对比：选中行按当前列表顺序取行实体（跨页勾选保留，超 4 条由按钮禁用兜底） */
 const compareOpen = ref(false)
+const aggOpen = ref(false)
 /** 选中行实体（批量编辑预览 / 敌人对比共用） */
 const selectedRows = computed(() =>
   store.selectedIds
@@ -543,6 +555,22 @@ const undoExportHint = computed(() =>
     ? '写库后可通过「导出 enemies.json」回写项目配置。'
     : '当前表暂无导出回写通道，改动保留在沙盒库中。',
 )
+
+/** 导出上次批量改动的旧值→新值对照表（CSV）：评审/归档用，不依赖撤销时序（新值随批次记录） */
+function exportBatchChanges(): void {
+  const b = store.lastBatch
+  if (!b) return
+  const cell = (v: unknown): string => {
+    if (v === undefined || v === null) return '—'
+    return typeof v === 'object' ? JSON.stringify(v) : String(v)
+  }
+  downloadCsv(
+    `batch-changes-${b.table}-${b.field}.csv`,
+    ['数据表', '字段', '条目ID', '旧值', '新值', '改动时间'],
+    b.updates.map((u) => [b.table, b.field, u.id, cell(u.oldValue), cell(u.newValue), new Date(b.at).toLocaleString()]),
+  )
+  notification.notify('变更表已导出', `共 ${b.updates.length} 条「${b.field}」改动对照`, 'success')
+}
 
 /** 撤销上次批量：逐条写回旧值，结果走通知反馈 */
 async function onUndoBatch(): Promise<void> {

@@ -36,6 +36,8 @@ export interface SaveStatePort {
 export interface SaveResult {
   ok: boolean
   message?: string
+  /** 非阻断警告（如导入存档的配置指纹与当前环境不一致），调用方以警示样式展示 */
+  warning?: string
   source?: 'main' | 'auto' | 'local' | 'reset' | 'new' | 'import'
   migrated?: boolean
 }
@@ -56,6 +58,8 @@ export class SaveManager {
   constructor(
     private readonly port: SaveStatePort,
     private readonly storage: IPersistentStorage = persistentStorage,
+    /** 当前配置指纹提供方（导出时写入 meta.configs_fp，导入时比对提示漂移）；未注入则跳过指纹逻辑 */
+    private readonly getConfigsFingerprint?: () => Promise<string | undefined>,
   ) {}
 
   setCurrentSceneId(id: string): void {
@@ -254,10 +258,20 @@ export class SaveManager {
     return { ok: true, source: 'reset' }
   }
 
-  /** 导出当前存档为 JSON 并触发下载（返回 JSON 文本供测试/校验） */
+  /** 导出当前存档为 JSON 并触发下载（返回 JSON 文本供测试/校验）。
+   *  附带配置指纹（meta.configs_fp）：QA 共享存档时，导入方可据此发现数据版本漂移。 */
   async exportSave(): Promise<string> {
     const raw = await this.port.collect({ currentSceneId: this.currentSceneId })
-    const data = attachChecksum({ ...raw, meta: { ...raw.meta, save_time: Date.now() } })
+    let configsFp: string | undefined
+    try {
+      configsFp = this.getConfigsFingerprint ? await this.getConfigsFingerprint() : undefined
+    } catch {
+      configsFp = undefined // 指纹获取失败不阻断导出（降级为无指纹旧格式）
+    }
+    const data = attachChecksum({
+      ...raw,
+      meta: { ...raw.meta, save_time: Date.now(), configs_fp: configsFp },
+    })
     const json = JSON.stringify(data, null, 2)
     if (typeof document !== 'undefined') {
       const blob = new Blob([json], { type: 'application/json' })
@@ -363,6 +377,19 @@ export class SaveManager {
       return { ok: false, message: '存档缺少 meta.version 字段' }
     }
     const fromVersion = raw.meta.version
+    // 配置指纹比对（非阻断）：档内指纹与当前环境不一致说明数据已漂移，掉落/公式行为可能与录档时不符
+    let warning: string | undefined
+    const saveFp = typeof raw.meta.configs_fp === 'string' ? raw.meta.configs_fp : undefined
+    if (saveFp && this.getConfigsFingerprint) {
+      try {
+        const currentFp = await this.getConfigsFingerprint()
+        if (currentFp && currentFp !== saveFp) {
+          warning = '存档基于不同版本的配置数据导出，掉落/成长等行为可能与录档时不一致'
+        }
+      } catch {
+        /* 当前环境指纹获取失败：跳过比对，不阻断导入 */
+      }
+    }
     const data = migrateSave(raw)
     const check = validateSaveData(data)
     if (!check.ok) return { ok: false, message: `存档缺少必填字段：${check.error}` }
@@ -373,6 +400,6 @@ export class SaveManager {
     const message = data.meta.version !== fromVersion
       ? `存档导入成功（版本 ${fromVersion} 已迁移至 ${data.meta.version}）`
       : '存档导入成功'
-    return { ok: true, source: 'import', message }
+    return { ok: true, source: 'import', message, warning }
   }
 }

@@ -1541,5 +1541,170 @@
       "sceneId": "scene_5_5"
     },
     "narrativeHook": "法相睁开眼：世间已无如来，只有被六耳夺舍的躯壳。"
+  },
+  {
+    "id": "scene_maze_1",
+    "regionId": "region_maze",
+    "name": "雾隐外谷",
+    "levelRange": [
+      5,
+      9
+    ],
+    "desc": "秘境外谷终年浓雾，雾中妖魁占谷为王，闯雾者先过它们这一关。",
+    "enemies": [
+      {
+        "id": "enemy_maze_1_a",
+        "name": "迷踪·雾灵",
+        "level": 5
+      },
+      {
+        "id": "boss_minor_shangui",
+        "name": "山鬼·幽",
+        "level": 5
+      },
+      {
+        "id": "boss_minor_guichengxiang",
+        "name": "龟丞相·沉",
+        "level": 7
+      },
+      {
+        "id": "boss_minor_zhenshan",
+        "name": "镇山神兽·岩",
+        "level": 9
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        40,
+        70
+      ],
+      "exp": [
+        55,
+        85
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 80,
+      "y": 300
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_boss"
+    },
+    "narrativeHook": "雾里传来龟甲落地的闷响：又来一个，先称称斤两。"
+  },
+  {
+    "id": "scene_maze_2",
+    "regionId": "region_maze",
+    "name": "藤影深径",
+    "levelRange": [
+      11,
+      15
+    ],
+    "desc": "藤蔓织成穹顶，日光漏不进来。野猪王与河神在此分治深径的两端。",
+    "enemies": [
+      {
+        "id": "enemy_maze_2_a",
+        "name": "迷踪·影鼠",
+        "level": 11
+      },
+      {
+        "id": "boss_minor_yezhuwang",
+        "name": "野猪王·獠",
+        "level": 11
+      },
+      {
+        "id": "boss_minor_heshen",
+        "name": "河神·滔",
+        "level": 13
+      },
+      {
+        "id": "boss_minor_huoling",
+        "name": "火灵老祖·炎",
+        "level": 15
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        60,
+        100
+      ],
+      "exp": [
+        85,
+        125
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 280,
+      "y": 300
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_maze_1"
+    },
+    "narrativeHook": "藤影里獠牙一闪：撞碎你，像撞碎一截烂木。"
+  },
+  {
+    "id": "scene_maze_3",
+    "regionId": "region_maze",
+    "name": "秘境腹地",
+    "levelRange": [
+      17,
+      23
+    ],
+    "desc": "秘境最深处的妖窟。蛛网、佛印与妖王气机交织，大妖王·灭坐镇于此。",
+    "enemies": [
+      {
+        "id": "boss_minor_baizhu",
+        "name": "白蛛娘娘·丝",
+        "level": 17
+      },
+      {
+        "id": "boss_minor_shituowang",
+        "name": "狮驼王·啸",
+        "level": 19
+      },
+      {
+        "id": "boss_minor_jinshenluohan",
+        "name": "金身罗汉·印",
+        "level": 21
+      },
+      {
+        "id": "boss_minor_dayaowang",
+        "name": "大妖王·灭",
+        "level": 23
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        90,
+        150
+      ],
+      "exp": [
+        130,
+        180
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 480,
+      "y": 300
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_maze_2"
+    },
+    "narrativeHook": "万妖之首睁开眼：你的气运，到此为止。"
   }
 ]

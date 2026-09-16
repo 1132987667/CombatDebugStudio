@@ -41,10 +41,10 @@ describe('role-grades 单一来源', () => {
 })
 
 describe('消费方一致性', () => {
-  it('enemies.json 的 role 全部落在六档内（历史别名 normal/elite 已灭绝）', () => {
+  it('enemies.json 有 role 的条目全部落在六档内（历史别名 normal/elite 已灭绝；旧体系沙盒基准无 role 冻结数值，不在此约束内）', () => {
     const enemies = enemiesJson as Array<{ role?: string }>
     expect(enemies.length).toBeGreaterThan(0)
-    const bad = enemies.filter((e) => !(ENEMY_ROLES as readonly string[]).includes(e.role ?? ''))
+    const bad = enemies.filter((e) => e.role !== undefined && !(ENEMY_ROLES as readonly string[]).includes(e.role))
     expect(bad.map((e) => `${(e as { name?: string }).name}: ${e.role}`)).toEqual([])
   })
 

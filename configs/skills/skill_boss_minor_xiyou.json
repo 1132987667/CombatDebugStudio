@@ -1,6 +1,6 @@
 [
   {
-    "id": "skill_yaozun_001_small",
+    "id": "skill_boss_minor_shangui_s1",
     "name": "幽爪",
     "description": "造成 110% 攻击力伤害，30% 概率施加虚弱",
     "energyCost": 50,
@@ -23,7 +23,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_001_ultimate",
+    "id": "skill_boss_minor_shangui_ult",
     "name": "幽影噬魂",
     "description": "造成 180% 攻击力伤害，并施加 3 回合中毒",
     "energyCost": 150,
@@ -45,7 +45,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_002_small",
+    "id": "skill_boss_minor_guichengxiang_s1",
     "name": "水牢",
     "description": "造成 100% 攻击力伤害，30% 概率冰冻",
     "energyCost": 50,
@@ -68,7 +68,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_002_ultimate",
+    "id": "skill_boss_minor_guichengxiang_ult",
     "name": "沉渊激流",
     "description": "造成 200% 攻击力伤害，无视 30% 防御",
     "energyCost": 150,
@@ -85,7 +85,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_003_small",
+    "id": "skill_boss_minor_zhenshan_s1",
     "name": "磐石震",
     "description": "造成 120% 攻击力伤害，施加破甲",
     "energyCost": 50,
@@ -107,7 +107,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_003_ultimate",
+    "id": "skill_boss_minor_zhenshan_ult",
     "name": "镇山压顶",
     "description": "造成 220% 攻击力伤害，50% 概率眩晕",
     "energyCost": 150,
@@ -130,7 +130,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_004_small",
+    "id": "skill_boss_minor_yezhuwang_s1",
     "name": "獠牙冲撞",
     "description": "造成 130% 攻击力伤害，施加迟缓",
     "energyCost": 50,
@@ -152,7 +152,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_004_ultimate",
+    "id": "skill_boss_minor_yezhuwang_ult",
     "name": "狂暴突袭",
     "description": "造成 200% 攻击力伤害，自身获得激怒",
     "energyCost": 150,
@@ -174,7 +174,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_005_small",
+    "id": "skill_boss_minor_heshen_s1",
     "name": "浊浪裹身",
     "description": "造成 110% 攻击力伤害，30% 概率冰冻",
     "energyCost": 50,
@@ -197,7 +197,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_005_ultimate",
+    "id": "skill_boss_minor_heshen_ult",
     "name": "洪流决堤",
     "description": "造成 210% 攻击力伤害，施加 2 回合中毒",
     "energyCost": 150,
@@ -219,7 +219,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_006_small",
+    "id": "skill_boss_minor_huoling_s1",
     "name": "炎爆",
     "description": "造成 120% 攻击力伤害，施加灼烧",
     "energyCost": 50,
@@ -241,7 +241,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_006_ultimate",
+    "id": "skill_boss_minor_huoling_ult",
     "name": "焚天火海",
     "description": "造成 200% 攻击力伤害，施加火焰易伤",
     "energyCost": 150,
@@ -263,7 +263,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_007_small",
+    "id": "skill_boss_minor_baizhu_s1",
     "name": "蛛丝缠绕",
     "description": "造成 100% 攻击力伤害，30% 概率束缚",
     "energyCost": 50,
@@ -286,7 +286,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_007_ultimate",
+    "id": "skill_boss_minor_baizhu_ult",
     "name": "万蛛噬心",
     "description": "造成 190% 攻击力伤害，施加 3 回合中毒",
     "energyCost": 150,
@@ -308,7 +308,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_008_small",
+    "id": "skill_boss_minor_shituowang_s1",
     "name": "狮吼",
     "description": "造成 130% 攻击力伤害，30% 概率眩晕",
     "energyCost": 50,
@@ -331,7 +331,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_008_ultimate",
+    "id": "skill_boss_minor_shituowang_ult",
     "name": "万兽奔腾",
     "description": "造成 220% 攻击力伤害，施加破甲",
     "energyCost": 150,
@@ -353,7 +353,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_009_small",
+    "id": "skill_boss_minor_jinshenluohan_s1",
     "name": "降魔印",
     "description": "造成 120% 攻击力伤害，施加沉默",
     "energyCost": 50,
@@ -376,7 +376,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_009_ultimate",
+    "id": "skill_boss_minor_jinshenluohan_ult",
     "name": "万佛朝宗",
     "description": "造成 230% 攻击力伤害，自身获得铁壁",
     "energyCost": 150,
@@ -398,7 +398,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_010_small",
+    "id": "skill_boss_minor_dayaowang_s1",
     "name": "灭世妖气",
     "description": "造成 140% 攻击力伤害，施加虚弱",
     "energyCost": 50,
@@ -420,7 +420,7 @@
     ]
   },
   {
-    "id": "skill_yaozun_010_ultimate",
+    "id": "skill_boss_minor_dayaowang_ult",
     "name": "混元灭世",
     "description": "造成 260% 攻击力伤害，施加 3 回合中毒与破甲",
     "energyCost": 150,

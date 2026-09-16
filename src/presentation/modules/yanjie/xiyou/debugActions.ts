@@ -1037,7 +1037,9 @@ function buildSaveCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: async (file) => {
               if (!(file instanceof File)) return fail('未选择文件')
               const r = await save.importSave(file)
-              return r.ok ? ok(r.message ?? '导入成功') : fail(r.message ?? '导入失败')
+              if (!r.ok) return fail(r.message ?? '导入失败')
+              // 配置指纹漂移警告拼入结果：调试动作导档时同样需要感知数据版本不一致
+              return ok(r.warning ? `${r.message ?? '导入成功'}；${r.warning}` : r.message ?? '导入成功')
             },
           },
         ],

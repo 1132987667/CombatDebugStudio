@@ -267,6 +267,52 @@ describe('export / import', () => {
   })
 })
 
+describe('配置指纹（meta.configs_fp，QA 共享存档的数据漂移提示）', () => {
+  const base = (): SaveData => attachChecksum(createInitialGameState())
+
+  it('exportSave 写入指纹 provider 返回的 configs_fp', async () => {
+    const f = makeFixture()
+    const manager = new SaveManager(f.port, f.storage, async () => 'xiyou-v1:abcd1234')
+    const parsed = JSON.parse(await manager.exportSave()) as SaveData
+    expect(parsed.meta.configs_fp).toBe('xiyou-v1:abcd1234')
+  })
+
+  it('导入档指纹与当前环境不一致 → ok + warning；一致 → 无 warning', async () => {
+    const f = makeFixture()
+    const manager = new SaveManager(f.port, f.storage, async () => 'xiyou-v1:current')
+    const drifted = await manager.importSave(new File(
+      [JSON.stringify({ ...base(), meta: { ...base().meta, configs_fp: 'xiyou-v1:other' } })],
+      'save.json',
+    ))
+    expect(drifted.ok).toBe(true)
+    expect(drifted.warning).toContain('不同版本')
+
+    const same = await manager.importSave(new File(
+      [JSON.stringify({ ...base(), meta: { ...base().meta, configs_fp: 'xiyou-v1:current' } })],
+      'save.json',
+    ))
+    expect(same.ok).toBe(true)
+    expect(same.warning).toBeUndefined()
+  })
+
+  it('无指纹旧档 / 未注入 provider / provider 失败：导入均不受阻断', async () => {
+    const f = makeFixture()
+    const plain = await f.manager.importSave(new File([JSON.stringify(base())], 'save.json'))
+    expect(plain.ok).toBe(true)
+    expect(plain.warning).toBeUndefined()
+
+    const broken = new SaveManager(f.port, f.storage, async () => {
+      throw new Error('container not ready')
+    })
+    const r = await broken.importSave(new File(
+      [JSON.stringify({ ...base(), meta: { ...base().meta, configs_fp: 'xiyou-v1:other' } })],
+      'save.json',
+    ))
+    expect(r.ok).toBe(true)
+    expect(r.warning).toBeUndefined()
+  })
+})
+
 describe('reset（新游戏）', () => {
   it('清除旧进度并落盘初始档（进度清零，回到 Lv.1）', async () => {
     const f = makeFixture()

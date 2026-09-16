@@ -880,7 +880,7 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 制造装备：图纸解锁校验 → 检查材料 → 扣材料 → 生成装备实例（按稀有度随机词缀）→ 入背包
+   * 制造装备：图纸解锁校验 → 检查材料 → 扣金钱+材料 → 生成装备实例（按稀有度随机词缀）→ 入背包
    * NOTE: 图纸仅作解锁判定（持图可造、制造不消耗），一阶默认解锁；词缀数值在制造时锁定（rollAffixStat）
    */
   function craftEquipment(itemId: string, rng: Rng = Math.random): GearInstance | null {
@@ -903,6 +903,11 @@ export const usePackStore = defineStore('pack', () => {
         notification.toast('材料不足，无法铸造', 'error')
         return null
       }
+    }
+    // 打造金钱消耗（equipment.json cost 字段，§23 经济 sinks；无 cost 的旧装备视为免费）
+    if (!spend('money', g.cost ?? 0)) {
+      notification.toast(`金钱不足（需 ${g.cost}），无法铸造`, 'warning')
+      return null
     }
     for (const m of g.materials) {
       inventory.value[m.itemId] = (inventory.value[m.itemId] ?? 0) - m.count
@@ -1184,7 +1189,7 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     if (inputCount > 0) removeItem(crop.id, inputCount)
-    currency.xianyuan -= crop.xianyuan
+    spend('xianyuan', crop.xianyuan)
     plot.cropId = cropId
     plot.cooldownUntil = null
     scheduleSave()

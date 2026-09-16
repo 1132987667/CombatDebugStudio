@@ -1033,7 +1033,7 @@
       "name": "悟道丹",
       "type": "丹药",
       "rarity": 5,
-      "source": "成就/隐藏BOSS 掉落",
+      "source": "成就/残魂BOSS 掉落",
       "description": "参悟大道的丹药，蕴含一丝道韵",
       "value": 3000,
       "usage": "悟道突破与顶级装备强化的核心材料"
@@ -1053,7 +1053,7 @@
       "name": "百眼金",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "隐藏BOSS·百眼旧将 掉落",
+      "source": "残魂BOSS·百眼旧将 掉落",
       "description": "百眼魔君炼化的金色妖核，无数只眼睛折射着金光",
       "value": 800,
       "usage": "打造顶级装备的稀有材料"
@@ -1063,7 +1063,7 @@
       "name": "地行土",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "隐藏BOSS·地行仙 掉落",
+      "source": "残魂BOSS·地行仙 掉落",
       "description": "遁地千里所染的灵土，厚重而温润",
       "value": 800,
       "usage": "打造顶级装备的稀有材料"
@@ -1073,7 +1073,7 @@
       "name": "黑风灵",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "隐藏BOSS·黑风老妖 掉落",
+      "source": "残魂BOSS·黑风老妖 掉落",
       "description": "黑风洞中凝聚的风之精华，蕴含着千年的呼啸",
       "value": 800,
       "usage": "打造顶级装备的稀有材料"
@@ -1083,7 +1083,7 @@
       "name": "金蝉残灰",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "隐藏BOSS·金蝉残影 掉落",
+      "source": "残魂BOSS·金蝉残影 掉落",
       "description": "金蝉脱壳时留下的残灰，带着淡淡的佛光",
       "value": 800,
       "usage": "打造顶级装备的稀有材料"
@@ -1093,7 +1093,7 @@
       "name": "九齿残魄",
       "type": "BOSS材料",
       "rarity": 4,
-      "source": "隐藏BOSS·九齿残魂 掉落",
+      "source": "残魂BOSS·九齿残魂 掉落",
       "description": "九齿钉耙中残存的器灵魄，历经千年而不散",
       "value": 800,
       "usage": "打造顶级装备的稀有材料"
@@ -1103,7 +1103,7 @@
       "name": "神秘宝箱",
       "type": "宝箱",
       "rarity": 4,
-      "source": "隐藏BOSS 掉落",
+      "source": "残魂BOSS 掉落",
       "description": "蕴含着未知惊喜的神秘宝箱，打开后可获得随机稀有物品。"
     },
     {
@@ -1621,7 +1621,7 @@
       "name": "九宫锁灵印",
       "type": "洗练",
       "rarity": 3,
-      "source": "隐藏BOSS掉落(15%)",
+      "source": "残魂BOSS掉落(15%)",
       "description": "洗练时锁定1-2条词条不变",
       "value": 200,
       "usage": "装备锁词条洗练"
@@ -1681,7 +1681,7 @@
       "name": "冰封符",
       "type": "符箓",
       "rarity": 4,
-      "source": "隐藏BOSS寒冰领主掉落(25%)/关卡5-5困难(5%)",
+      "source": "残魂BOSS寒冰领主掉落(25%)/关卡5-5困难(5%)",
       "description": "冻结目标1回合（无法行动）",
       "value": 250,
       "usage": "战斗中使用"
@@ -1741,7 +1741,7 @@
       "name": "太古汲灵符",
       "type": "功能道具",
       "rarity": 5,
-      "source": "隐藏BOSS极低概率(5%)/分解神品装备",
+      "source": "残魂BOSS极低概率(5%)/分解神品装备",
       "description": "将极品词条吸出，可移植到另一件同阶装备",
       "value": 500,
       "usage": "终局定制"
@@ -1801,7 +1801,7 @@
       "name": "照妖镜",
       "type": "法宝",
       "rarity": 4,
-      "source": "隐藏BOSS百眼魔君掉落",
+      "source": "残魂BOSS百眼魔君掉落",
       "description": "战斗开始显示敌方弱点（暴击率+5%）",
       "value": 800,
       "usage": "法宝装备"
@@ -1901,7 +1901,7 @@
       "name": "古钱",
       "type": "杂物",
       "rarity": 2,
-      "source": "隐藏BOSS朱刚鬣掉落(50%)",
+      "source": "残魂BOSS朱刚鬣掉落(50%)",
       "description": "前朝古钱，高价杂物，可出售换取金钱",
       "value": 50,
       "usage": "出售"
@@ -1951,7 +1951,7 @@
       "name": "灵尘",
       "type": "功能道具",
       "rarity": 3,
-      "source": "无尽塔15层起每5层×2/妖王及隐藏BOSS掉落(20%)/坊市500金钱",
+      "source": "无尽塔15层起每5层×2/妖王及残魂BOSS掉落(20%)/坊市500金钱",
       "description": "法宝神器强化所用的灵性粉尘",
       "value": 150,
       "usage": "法宝/神器强化材料（必成，每级基础属性+4%）"
@@ -1961,7 +1961,7 @@
       "name": "冥灵珠",
       "type": "特殊材料",
       "rarity": 3,
-      "source": "隐藏BOSS 地行 首杀",
+      "source": "残魂BOSS 地行 首杀",
       "value": 1200
     },
     {

@@ -22,7 +22,6 @@ const path = require('path')
 
 const ROOT = path.resolve(__dirname, '..')
 const ENEMIES_FILE = path.join(ROOT, 'configs', 'enemies', 'enemies.json')
-const OLD_ENEMIES_FILE = path.join(ROOT, 'configs', 'enemies', 'enemies-old.json')
 const CURVES_FILE = path.join(ROOT, 'configs', 'params', 'curves.json')
 const AFFIXES_FILE = path.join(ROOT, 'configs', 'affixes', 'affixes.json')
 const SEED_FILE = path.join(ROOT, 'src', 'infrastructure', 'adapters', 'storage', 'seed.ts')
@@ -36,9 +35,24 @@ const WRITE = process.argv.includes('--write')
 // 数据装载
 // ---------------------------------------------------------------------------
 
-const enemies = JSON.parse(fs.readFileSync(ENEMIES_FILE, 'utf8'))
+// boss_major_* 五条已归档（定义权威收敛至 bosses.json，运行时经 bossToRow 覆盖同名索引），
+// 但其数值仍是 yaowang 档系数拟合与 A4 存在域的唯一现状样本，再生时并入拟合池保持口径不变
+const ARCHIVED_ENEMIES_FILE = path.join(ROOT, 'configs', 'expired', 'enemies-expired.json')
+// 归档条目打来源标记：同名 id（如 boss_major_*）归档版为模型贴合样本（参与拟合），
+// 主表版为场景设计值/沙盒冻结值（剥离出断言样本集）
+const archivedEnemies = (fs.existsSync(ARCHIVED_ENEMIES_FILE) ? JSON.parse(fs.readFileSync(ARCHIVED_ENEMIES_FILE, 'utf8')) : [])
+  .map((e) => ({ ...e, __archived: true }))
+const frozenPrefixes = ['yaotu_', 'boss_major_', 'test_', 'boss_0']
+const allEnemies = [
+  ...JSON.parse(fs.readFileSync(ENEMIES_FILE, 'utf8')),
+  ...archivedEnemies,
+]
+const enemies = allEnemies.filter((e) => !(frozenPrefixes.some((p) => String(e.id).startsWith(p)) && !e.__archived))
+// 主表冻结条目（沙盒护法 / 测试靶子 / 场景 BOSS 设计值）不归生成模型管辖：
+// 剥离出断言样本集（与合并前口径一致）；yaotu_* 仍作为 A5 TTK 的我方基准单独取用。
+// 归档条目（expired）与主表同名 id 时语义不同：如 boss_major_* 归档版为模型贴合样本，保留参与拟合。
 const curves = JSON.parse(fs.readFileSync(CURVES_FILE, 'utf8'))
-const oldEnemies = JSON.parse(fs.readFileSync(OLD_ENEMIES_FILE, 'utf8'))
+const oldEnemies = allEnemies.filter((e) => String(e.id).startsWith('yaotu_'))
 const affixes = JSON.parse(fs.readFileSync(AFFIXES_FILE, 'utf8'))
 const seedSrc = fs.readFileSync(SEED_FILE, 'utf8')
 // 奖励种子已抽到 domain 层单一来源（seed.ts 仅引用）：entries ← exp-reward.ts，倍率 ← role-grades.ts
@@ -46,8 +60,8 @@ const expRewardSrc = fs.readFileSync(EXP_REWARD_FILE, 'utf8')
 const roleGradesSrc = fs.readFileSync(ROLE_GRADES_FILE, 'utf8')
 
 /** 普通品阶（按强度升序，单调性断言依赖此顺序） */
-const ROLES = ['xiaoyao', 'yaotu', 'yaokui', 'yaowang', 'yaozun']
-const ROLE_LABEL = { xiaoyao: '小妖', yaotu: '妖徒', yaokui: '妖魁', yaowang: '妖王', yaozun: '妖尊' }
+const ROLES = ['xiaoyao', 'yaobing', 'yaotu', 'yaokui', 'yaowang', 'yaozun']
+const ROLE_LABEL = { xiaoyao: '小妖', yaobing: '妖兵', yaotu: '妖徒', yaokui: '妖魁', yaowang: '妖王', yaozun: '妖尊' }
 /** 特殊档：id 前缀/全名匹配，绕开 role 字段的错标（boss_king_* 数值超 yaowang 档） */
 const SPECIAL_TIERS = [
   { key: 'king', label: '王级(boss_king_*)', match: (id) => id.startsWith('boss_king_') },
@@ -55,7 +69,7 @@ const SPECIAL_TIERS = [
 ]
 const tierOf = (e) => SPECIAL_TIERS.find((t) => t.match(e.id))?.key ?? e.role
 
-/** 等级模板曲线求值器（与 rebalance-enemies.cjs 同款，未知类型抛错防静默算错） */
+/** 等级模板曲线求值器（与 src/domain/fengshen/enemy-generate.ts 的 evalCurve 同款，未知类型抛错防静默算错） */
 function evalCurve(spec, L) {
   if (spec.type !== 'linear') throw new Error(`不支持的曲线类型: ${spec.type}`)
   return spec.base + spec.perLevel * (L - 1)
@@ -196,7 +210,9 @@ for (const t of SPECIAL_TIERS) {
 
 /** 各档位在现状中的存在等级域（模型外推超出此域仅供推演，不参与对标断言） */
 const LEVEL_RANGE = {}
+// 无 role 记录非生成模型管辖，跳过
 for (const e of enemies) {
+  if (!e.role) continue
   const t = tierOf(e)
   const r = (LEVEL_RANGE[t] ??= { min: e.level, max: e.level })
   r.min = Math.min(r.min, e.level)
@@ -251,7 +267,7 @@ function simCombat(foes, allies, seed = 1) {
   return { turns: turn, alliesWin: allies.some((a) => a.alive) && !foes.some((f) => f.alive) }
 }
 
-// 主角团基准：enemies-old.json 的 yaotu_*（沙盒玩家实体，L10 固定值）
+// 主角团基准：enemies.json 的 yaotu_*（沙盒玩家实体，L10 固定值，数值冻结）（沙盒玩家实体，L10 固定值）
 const heroes = {}
 for (const e of oldEnemies.filter((e) => String(e.id).startsWith('yaotu_'))) {
   heroes[e.id] = { hp: e.stats.maxHealth, atk: e.stats.attack, def: e.stats.defense, spd: e.stats.speed }
@@ -289,6 +305,7 @@ const TOL = { maxHealth: 0.12, attack: 0.12, defense: 0.35, speed: 0.12, hit: 0.
 const OUTLIER_ALLOWANCE = 10 // 每维允许的离群数上限；剩余离群多为新手域(L≤5)手调弱化，逐只点名进报告
 const outliers = {}
 for (const e of enemies) {
+  if (!e.role) continue
   const m = expectStats(tierOf(e), e.level)
   for (const k of Object.keys(TOL)) {
     const exp = Math.max(1, m[k])
@@ -317,7 +334,7 @@ for (const tier of ['yaokui', 'yaowang', 'yaozun']) {
       `A4 L${L} ${tier} 血量低于玩家 95%: ${ratioToPlayer(tier, L, 'maxHealth', 'maxHealth').toFixed(0)}%`)
   }
 }
-for (const [tier, cap] of [['xiaoyao', 100], ['yaotu', 110]]) {
+for (const [tier, cap] of [['xiaoyao', 100], ['yaobing', 105], ['yaotu', 110]]) {
   const { min, max } = LEVEL_RANGE[tier]
   for (let L = min; L <= max; L++) {
     assert(ratioToPlayer(tier, L, 'attack', 'attack') <= cap, `A4 L${L} ${tier} 攻击高于玩家攻击 ${cap}%`)
@@ -382,13 +399,14 @@ const affixPlan = (e) => {
   const L = e.level
   const t = e.role
   if (t === 'xiaoyao') return { buffTier: 0, count: 0 }
-  if (t === 'yaotu' || t === 'yaokui') return { buffTier: Math.min(3, Math.max(1, Math.ceil(L / 20))), count: 1 }
+  if (t === 'yaobing' || t === 'yaotu' || t === 'yaokui') return { buffTier: Math.min(3, Math.max(1, Math.ceil(L / 20))), count: 1 }
   if (t === 'yaowang') return { buffTier: e.id.startsWith('boss_king_') ? 5 : 3, count: 1 }
   if (t === 'yaozun') return { buffTier: e.id === 'boss_final_liuer' ? 5 : 4, count: e.id === 'boss_final_liuer' ? 1 : 2 }
   return { buffTier: 0, count: 0 }
 }
 const affixMismatch = []
 for (const e of enemies) {
+  if (String(e.id).startsWith('boss_major_')) continue // 场景 BOSS 词缀为设计值（归档版 t3/t5 本就豁免，跳过等价）
   const p = affixPlan(e)
   const a = e.affixPool ?? {}
   if ((a.buffTier ?? 0) !== p.buffTier || (a.count ?? 0) !== p.count) {
@@ -404,7 +422,7 @@ assert(affixMismatch.length === 0, `A8 affixPool 与模型规则不符: ${affixM
 // ---------------------------------------------------------------------------
 const rewardGap = {}
 for (const role of ROLES) {
-  const pool = enemies.filter((e) => e.role === role)
+  const pool = enemies.filter((e) => e.role === role && !String(e.id).startsWith('yaotu_'))
   const expR = pool.map((e) => (e.exp?.[0] ?? 0) / Math.max(1, Math.round(rewardAt(e.level).baseExp * (roleMultSeg[e.role] ?? 1))))
   const goldR = pool.map((e) => (e.money?.[0] ?? 0) / Math.max(1, Math.round(rewardAt(e.level).goldMin * (roleMultSeg[e.role] ?? 1))))
   rewardGap[role] = { exp: median(expR), gold: median(goldR), n: pool.length }

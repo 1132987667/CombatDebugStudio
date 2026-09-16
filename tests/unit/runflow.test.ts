@@ -11,7 +11,7 @@ import type { XiyouScene } from '@/presentation/modules/yanjie/xiyou/types'
 function makeScene(id: string, enemyIds: string[], yaotuId?: string): XiyouScene {
   return {
     id,
-    regionId: id.split('_').slice(0, 2).join('_'),
+    regionId: 'region_' + id.split('_')[1], // 真实形态：scene_R_* → region_R
     name: id,
     desc: '',
     enemies: enemyIds.map((eid) => ({ id: eid, name: eid, level: 1 })),
@@ -59,11 +59,14 @@ describe('buildRunNodes（节点序列构造）', () => {
     const nodes = buildRunNodes(bossScene, [elite, bossScene])
     expect(nodes).toHaveLength(4)
     expect(nodes[0].enemyIds).toEqual(['w1', 'w2', 'w3'])
-    expect(nodes[2].amp).toBeCloseTo(1.3)
+    // 妖魁前哨战：region_2 映射 boss_minor_liuyao 率队，权威数值不增幅
+    expect(nodes[2].enemyIds).toEqual(['boss_minor_liuyao', 'w1', 'w2', 'w3'])
+    expect(nodes[2].amp).toBe(1)
     expect(nodes[3].isBoss).toBe(true)
     expect(nodes[3].enemyIds).toEqual(['boss_major_x', 'w1', 'w2', 'w3'])
     expect(nodes[3].amp).toBe(1)
   })
+
 })
 
 describe('妖气增幅曲线', () => {

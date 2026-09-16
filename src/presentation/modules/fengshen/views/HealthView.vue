@@ -30,10 +30,16 @@
           <IconSearch />
         </template>
       </TacticalInput>
+      <label class="fs-form-hint" style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+        <input v-model="showIgnored" type="checkbox" />
+        显示已忽略（{{ ignoredCount }}）
+      </label>
       <span class="fs-spacer"></span>
       <span class="fs-version">问题 {{ filtered.length }} 条</span>
       <Button size="small" :disabled="!filtered.length" title="导出当前筛选结果为 CSV"
         @click="exportCsv">导出 CSV</Button>
+      <Button size="small" title="把本次扫描的各类别计数存档（localStorage，上限 10 份），形成健康度台账"
+        @click="saveSnapshot">留存快照</Button>
       <Button variant="primary" @click="rescan">重新扫描</Button>
     </div>
 
@@ -62,6 +68,12 @@
                 @click="store.applyQuickFix(issue.raw)">一键修复</Button>
               <Button size="small" :title="`跳转到「${tableLabel(issue.navTable)}」表并定位该实体`"
                 @click="store.navigateTo(issue.navTable, issue.sourceId)">定位引用方</Button>
+              <Button v-if="isIgnored(issue)" size="small" variant="danger"
+                title="从忽略白名单移除，恢复计入问题数"
+                @click="unignoreIssue(issue)">取消忽略</Button>
+              <Button v-else size="small"
+                title="加入忽略白名单（如「设计如此」的误报），不再计入默认视图；白名单 localStorage 持久"
+                @click="ignoreIssue(issue)">忽略</Button>
             </td>
           </tr>
           <tr v-if="!filtered.length">
@@ -75,6 +87,30 @@
       <span class="fs-page-info">筛选出 {{ filtered.length }} 条 · 第 {{ page }}/{{ pages }} 页</span>
       <button class="fs-page-btn" :disabled="page <= 1" aria-label="上一页" @click="go(page - 1)">«</button>
       <button class="fs-page-btn" :disabled="page >= pages" aria-label="下一页" @click="go(page + 1)">»</button>
+    </div>
+
+    <!-- 健康度台账：扫描计数沉淀，跨会话看趋势 -->
+    <div v-if="snapshots.length" class="fs-block" style="margin-top: var(--space-3);">
+      <div class="fs-block-title">健康度台账
+        <span class="fs-page-hint">「留存快照」记录的各类别计数（localStorage，上限 10 份，新在前）</span>
+      </div>
+      <div class="fs-table-wrap">
+        <table class="fs-table">
+          <thead>
+            <tr><th>时间</th><th>问题总数</th><th>断裂引用</th><th>命名重复</th><th>字段重复</th><th>数值校验</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in snapshots" :key="s.at">
+              <td>{{ new Date(s.at).toLocaleString() }}</td>
+              <td>{{ s.total }}</td>
+              <td>{{ s.byKind.integrity ?? 0 }}</td>
+              <td>{{ s.byKind.duplicate_name ?? 0 }}</td>
+              <td>{{ s.byKind.duplicate_ref ?? 0 }}</td>
+              <td>{{ s.byKind.numeric ?? 0 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -183,16 +219,86 @@ const allIssues = computed<IssueRow[]>(() => {
 
 const numericTotal = computed(() => store.numericReport?.issues.length ?? 0)
 
-/** 类别筛选 + 关键词搜索（匹配引用方/问题对象/字段/目标表） */
+/** 类别筛选 + 关键词搜索（匹配引用方/问题对象/字段/目标表）+ 忽略白名单过滤 */
 const filtered = computed<IssueRow[]>(() => {
   const kw = search.value.trim().toLowerCase()
   return allIssues.value.filter((i) => {
+    if (!showIgnored.value && ignoredKeys.value.has(issueKey(i))) return false
     if (kindFilter.value && i.kind !== kindFilter.value) return false
     if (!kw) return true
     return [i.sourceId, i.missingId, i.field, i.targetTable, i.detail, i.quickFix?.label]
       .some((v) => v != null && String(v).toLowerCase().includes(kw))
   })
 })
+
+// ── 忽略白名单（localStorage 持久）：「设计如此」的误报不再每次重新人工过滤 ──
+const IGNORED_KEY = 'fs_health_ignored'
+
+function issueKey(i: IssueRow): string {
+  return [i.kind, i.navTable, i.sourceId, i.field, i.missingId].join('|')
+}
+
+function loadIgnored(): string[] {
+  try {
+    const arr: unknown = JSON.parse(localStorage.getItem(IGNORED_KEY) ?? '[]')
+    return Array.isArray(arr) ? arr.filter((v): v is string => typeof v === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+const ignoredKeys = ref(new Set<string>(loadIgnored()))
+const showIgnored = ref(false)
+
+function persistIgnored(): void {
+  try {
+    localStorage.setItem(IGNORED_KEY, JSON.stringify([...ignoredKeys.value]))
+  } catch { /* 存储不可用时忽略能力退化为会话内生效 */ }
+}
+
+function isIgnored(i: IssueRow): boolean {
+  return ignoredKeys.value.has(issueKey(i))
+}
+
+function ignoreIssue(i: IssueRow): void {
+  ignoredKeys.value.add(issueKey(i))
+  persistIgnored()
+}
+
+function unignoreIssue(i: IssueRow): void {
+  ignoredKeys.value.delete(issueKey(i))
+  persistIgnored()
+}
+
+const ignoredCount = computed(() => allIssues.value.filter(isIgnored).length)
+
+// ── 健康度台账（localStorage 持久，上限 10 份）：扫描计数沉淀，跨会话看趋势 ──
+const SNAPSHOT_KEY = 'fs_health_snapshots'
+interface HealthSnapshot { at: number; total: number; byKind: Partial<Record<IssueKind, number>> }
+
+function loadSnapshots(): HealthSnapshot[] {
+  try {
+    const arr: unknown = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) ?? '[]')
+    if (!Array.isArray(arr)) return []
+    return arr.filter((v): v is HealthSnapshot =>
+      !!v && typeof v === 'object' && typeof (v as HealthSnapshot).at === 'number'
+      && typeof (v as HealthSnapshot).total === 'number' && !!(v as HealthSnapshot).byKind)
+  } catch {
+    return []
+  }
+}
+
+const snapshots = ref<HealthSnapshot[]>(loadSnapshots())
+
+function saveSnapshot(): void {
+  const byKind: Partial<Record<IssueKind, number>> = {}
+  for (const i of allIssues.value) byKind[i.kind] = (byKind[i.kind] ?? 0) + 1
+  const list = [{ at: Date.now(), total: allIssues.value.length, byKind }, ...snapshots.value].slice(0, 10)
+  snapshots.value = list
+  try {
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(list))
+  } catch { /* 存储不可用时台账退化为会话内生效 */ }
+}
 
 const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)))
 const paged = computed(() => filtered.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))

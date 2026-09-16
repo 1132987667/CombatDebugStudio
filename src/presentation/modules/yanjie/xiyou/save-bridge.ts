@@ -11,8 +11,12 @@
  */
 
 import { createInitialGameState, type SaveData, type SaveEquipmentInstance, type SavePlayerState } from '@/shared/utils/save-schema'
+import { calculateChecksum } from '@/shared/utils/Checksum'
 import type { SaveStatePort } from '@/shared/utils/save-manager'
 import { SaveManager } from '@/shared/utils/save-manager'
+import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { container } from '@/infrastructure/di/Container'
+import { GameDataApi } from '@/application/service/GameDataApi'
 import type { XiyouStatPoints } from './types'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import {
@@ -380,4 +384,23 @@ export const xiyouSaveBridge: SaveStatePort = {
 }
 
 /** 存档管理器单例（组件统一引用） */
-export const saveManager = new SaveManager(xiyouSaveBridge)
+export const saveManager = new SaveManager(xiyouSaveBridge, persistentStorage, loadConfigsFingerprint)
+
+/**
+ * 当前配置指纹（存档 meta.configs_fp）：对封神榜 IDB 中西游域配置全集做内容 hash。
+ * HACK: 口径只覆盖 xiyou 域，不含封神榜战斗表（enemies/skills/buffs）——演劫台主要玩法数据
+ *       已够用；哪天需要覆盖战斗表，升级口径并把前缀 `xiyou-v1:` 升版本号，旧档指纹自然失配降级为无提示。
+ */
+async function loadConfigsFingerprint(): Promise<string | undefined> {
+  try {
+    const api = container.resolve<GameDataApi>('GameDataApi')
+    const records = await api.listXiyouData()
+    if (!records.length) return undefined
+    const canonical = records
+      .map((r) => ({ id: r.id, data: r.data }))
+      .sort((a, b) => a.id.localeCompare(b.id))
+    return `xiyou-v1:${calculateChecksum(canonical)}`
+  } catch {
+    return undefined // 容器未初始化（如单测环境）：无指纹，导入侧跳过比对
+  }
+}

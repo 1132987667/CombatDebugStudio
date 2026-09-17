@@ -248,6 +248,11 @@
         "id": "enemy_s1_5_c",
         "name": "花妖精英",
         "level": 10
+      },
+      {
+        "id": "boss_001",
+        "name": "小花山守护者",
+        "level": 9
       }
     ],
     "yaotu": {
@@ -332,6 +337,11 @@
         "id": "enemy_s2_1_c",
         "name": "青鱼精",
         "level": 12
+      },
+      {
+        "id": "boss_002",
+        "name": "浅水涧守护者",
+        "level": 11
       }
     ],
     "yaotu": {
@@ -391,6 +401,11 @@
         "name": "柳妖侍从",
         "level": 14,
         "type": "old_soul"
+      },
+      {
+        "id": "boss_003",
+        "name": "碎石坡守护者",
+        "level": 13
       }
     ],
     "yaotu": {
@@ -446,6 +461,11 @@
         "id": "enemy_s2_3_c",
         "name": "河伯侍从",
         "level": 16
+      },
+      {
+        "id": "boss_004",
+        "name": "迷雾林守护者",
+        "level": 15
       }
     ],
     "yaotu": {
@@ -503,6 +523,11 @@
         "name": "沉船精",
         "level": 18,
         "type": "old_soul"
+      },
+      {
+        "id": "boss_005",
+        "name": "浊浪滩守护者",
+        "level": 17
       }
     ],
     "yaotu": {
@@ -558,6 +583,11 @@
         "id": "enemy_s2_5_c",
         "name": "河伯亲卫",
         "level": 20
+      },
+      {
+        "id": "boss_006",
+        "name": "熔岩洞守护者",
+        "level": 19
       }
     ],
     "yaotu": {
@@ -642,6 +672,11 @@
         "id": "enemy_s3_1_c",
         "name": "矿虫",
         "level": 22
+      },
+      {
+        "id": "boss_007",
+        "name": "蛛丝谷守护者",
+        "level": 21
       }
     ],
     "yaotu": {
@@ -699,6 +734,11 @@
         "name": "废铺守卫",
         "level": 24,
         "type": "old_soul"
+      },
+      {
+        "id": "boss_008",
+        "name": "狂风岭守护者",
+        "level": 23
       }
     ],
     "yaotu": {
@@ -754,6 +794,11 @@
         "id": "enemy_s3_3_c",
         "name": "山魈王",
         "level": 26
+      },
+      {
+        "id": "boss_009",
+        "name": "禅音崖守护者",
+        "level": 25
       }
     ],
     "yaotu": {
@@ -810,6 +855,11 @@
         "id": "enemy_s3_4_c",
         "name": "地底蛇",
         "level": 28
+      },
+      {
+        "id": "boss_010",
+        "name": "灵霄台守护者",
+        "level": 27
       }
     ],
     "yaotu": {

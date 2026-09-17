@@ -5,12 +5,12 @@
     "level": 9,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 326,
-      "attack": 67,
-      "defense": 34,
-      "speed": 24,
+      "maxHealth": 400,
+      "attack": 83,
+      "defense": 42,
+      "speed": 31,
       "hit": 27,
-      "dodge": 12,
+      "dodge": 14,
       "critRate": 6,
       "critDamage": 124,
       "maxEnergy": 150,
@@ -24,7 +24,7 @@
       "skill_boss_001_passive"
     ],
     "affixPool": {
-      "buffTier": 1,
+      "buffTier": 3,
       "count": 1
     },
     "drops": [
@@ -57,7 +57,9 @@
       "ultimate": [
         "skill_boss_001_ultimate"
       ]
-    }
+    },
+    "faction": "wood",
+    "description": "小花山旧时代的石质守护者，历经妖气侵蚀而苏醒。"
   },
   {
     "id": "boss_002",
@@ -65,12 +67,12 @@
     "level": 11,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 369,
-      "attack": 77,
-      "defense": 41,
-      "speed": 27,
+      "maxHealth": 452,
+      "attack": 96,
+      "defense": 52,
+      "speed": 35,
       "hit": 31,
-      "dodge": 15,
+      "dodge": 16,
       "critRate": 7,
       "critDamage": 125,
       "maxEnergy": 150,
@@ -84,7 +86,7 @@
       "skill_boss_002_passive"
     ],
     "affixPool": {
-      "buffTier": 1,
+      "buffTier": 3,
       "count": 1
     },
     "drops": [
@@ -117,7 +119,9 @@
       "ultimate": [
         "skill_boss_002_ultimate"
       ]
-    }
+    },
+    "faction": "water",
+    "description": "浅水涧的守护者，镇守渡口航道多年。"
   },
   {
     "id": "boss_003",
@@ -125,12 +129,12 @@
     "level": 13,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 411,
-      "attack": 88,
-      "defense": 49,
-      "speed": 30,
+      "maxHealth": 505,
+      "attack": 109,
+      "defense": 61,
+      "speed": 38,
       "hit": 35,
-      "dodge": 17,
+      "dodge": 19,
       "critRate": 7,
       "critDamage": 126,
       "maxEnergy": 150,
@@ -144,7 +148,7 @@
       "skill_boss_003_passive"
     ],
     "affixPool": {
-      "buffTier": 1,
+      "buffTier": 3,
       "count": 1
     },
     "drops": [
@@ -172,7 +176,9 @@
       "ultimate": [
         "skill_boss_003_ultimate"
       ]
-    }
+    },
+    "faction": "earth",
+    "description": "碎石坡的守护者，与山石同化了千年的老妖。"
   },
   {
     "id": "boss_007",
@@ -180,12 +186,12 @@
     "level": 21,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 582,
-      "attack": 129,
-      "defense": 78,
-      "speed": 41,
-      "hit": 52,
-      "dodge": 26,
+      "maxHealth": 714,
+      "attack": 161,
+      "defense": 98,
+      "speed": 53,
+      "hit": 51,
+      "dodge": 29,
       "critRate": 9,
       "critDamage": 130,
       "maxEnergy": 150,
@@ -199,7 +205,7 @@
       "skill_boss_007_passive"
     ],
     "affixPool": {
-      "buffTier": 2,
+      "buffTier": 3,
       "count": 1
     },
     "drops": [
@@ -232,7 +238,9 @@
       "ultimate": [
         "skill_boss_007_ultimate"
       ]
-    }
+    },
+    "faction": "neutral",
+    "description": "蛛丝谷的守护者，谷中丝网皆出其手。"
   },
   {
     "id": "boss_achieve_hebo",
@@ -13778,5 +13786,306 @@
       "passive": [],
       "ultimate": []
     }
+  },
+  {
+    "id": "boss_004",
+    "name": "迷雾林守护者",
+    "level": 15,
+    "faction": "wood",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 557,
+      "attack": 122,
+      "defense": 70,
+      "speed": 42,
+      "hit": 39,
+      "dodge": 22,
+      "critRate": 8,
+      "critDamage": 127,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_004_small",
+      "skill_boss_004_ultimate"
+    ],
+    "passiveSkillIds": [
+      "skill_boss_004_passive"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "enh_stone",
+        "quantity": 1,
+        "probability": 0.05
+      }
+    ],
+    "description": "迷雾林的守护者，林中雾气随它的呼吸涨落。",
+    "money": [
+      63,
+      105
+    ],
+    "exp": [
+      210,
+      315
+    ]
+  },
+  {
+    "id": "boss_005",
+    "name": "浊浪滩守护者",
+    "level": 17,
+    "faction": "water",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 609,
+      "attack": 135,
+      "defense": 80,
+      "speed": 46,
+      "hit": 43,
+      "dodge": 24,
+      "critRate": 8,
+      "critDamage": 128,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_005_small",
+      "skill_boss_005_ultimate"
+    ],
+    "passiveSkillIds": [
+      "skill_boss_005_passive"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_shengshui",
+        "quantity": 1,
+        "probability": 0.6
+      },
+      {
+        "itemId": "enh_stone",
+        "quantity": 1,
+        "probability": 0.05
+      }
+    ],
+    "description": "浊浪滩的守护者，滩头的每一朵浪都听它号令。",
+    "money": [
+      71,
+      119
+    ],
+    "exp": [
+      238,
+      357
+    ]
+  },
+  {
+    "id": "boss_006",
+    "name": "熔岩洞守护者",
+    "level": 19,
+    "faction": "fire",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 662,
+      "attack": 148,
+      "defense": 89,
+      "speed": 50,
+      "hit": 47,
+      "dodge": 27,
+      "critRate": 8,
+      "critDamage": 129,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_006_small",
+      "skill_boss_006_ultimate"
+    ],
+    "passiveSkillIds": [
+      "skill_boss_006_passive"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_jinjing",
+        "quantity": 1,
+        "probability": 0.6
+      },
+      {
+        "itemId": "enh_stone",
+        "quantity": 1,
+        "probability": 0.05
+      }
+    ],
+    "description": "熔岩洞的守护者，洞中地火因它而不灭。",
+    "money": [
+      80,
+      133
+    ],
+    "exp": [
+      266,
+      399
+    ]
+  },
+  {
+    "id": "boss_008",
+    "name": "狂风岭守护者",
+    "level": 23,
+    "faction": "metal",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 766,
+      "attack": 173,
+      "defense": 108,
+      "speed": 57,
+      "hit": 55,
+      "dodge": 32,
+      "critRate": 9,
+      "critDamage": 131,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_008_small",
+      "skill_boss_008_ultimate"
+    ],
+    "passiveSkillIds": [
+      "skill_boss_008_passive"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_gutongjing",
+        "quantity": 2,
+        "probability": 0.6
+      },
+      {
+        "itemId": "enh_stone",
+        "quantity": 1,
+        "probability": 0.05
+      }
+    ],
+    "description": "狂风岭的守护者，一声长啸可引岭上罡风。",
+    "money": [
+      97,
+      161
+    ],
+    "exp": [
+      322,
+      483
+    ]
+  },
+  {
+    "id": "boss_009",
+    "name": "禅音崖守护者",
+    "level": 25,
+    "faction": "neutral",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 819,
+      "attack": 186,
+      "defense": 117,
+      "speed": 61,
+      "hit": 59,
+      "dodge": 34,
+      "critRate": 10,
+      "critDamage": 132,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_009_small",
+      "skill_boss_009_ultimate"
+    ],
+    "passiveSkillIds": [
+      "skill_boss_009_passive"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_tiangang",
+        "quantity": 1,
+        "probability": 0.6
+      },
+      {
+        "itemId": "enh_stone",
+        "quantity": 1,
+        "probability": 0.05
+      }
+    ],
+    "description": "禅音崖的守护者，崖间钟声与它的诵念共鸣。",
+    "money": [
+      105,
+      175
+    ],
+    "exp": [
+      350,
+      525
+    ]
+  },
+  {
+    "id": "boss_010",
+    "name": "灵霄台守护者",
+    "level": 27,
+    "faction": "metal",
+    "role": "yaowang",
+    "stats": {
+      "maxHealth": 871,
+      "attack": 199,
+      "defense": 126,
+      "speed": 65,
+      "hit": 63,
+      "dodge": 37,
+      "critRate": 10,
+      "critDamage": 133,
+      "maxEnergy": 150,
+      "energyInit": 25
+    },
+    "skillIds": [
+      "skill_boss_010_small",
+      "skill_boss_010_ultimate"
+    ],
+    "passiveSkillIds": [
+      "skill_boss_010_passive"
+    ],
+    "affixPool": {
+      "buffTier": 3,
+      "count": 1
+    },
+    "drops": [
+      {
+        "itemId": "mat_jiuzhuan_jindan",
+        "quantity": 2,
+        "probability": 0.6
+      },
+      {
+        "itemId": "enh_stone",
+        "quantity": 1,
+        "probability": 0.05
+      }
+    ],
+    "description": "灵霄台的守护者，台顶云阶由它把守。",
+    "money": [
+      113,
+      189
+    ],
+    "exp": [
+      378,
+      567
+    ]
   }
 ]

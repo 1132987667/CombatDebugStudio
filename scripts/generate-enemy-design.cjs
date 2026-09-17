@@ -42,7 +42,7 @@ const ARCHIVED_ENEMIES_FILE = path.join(ROOT, 'configs', 'expired', 'enemies-exp
 // 主表版为场景设计值/沙盒冻结值（剥离出断言样本集）
 const archivedEnemies = (fs.existsSync(ARCHIVED_ENEMIES_FILE) ? JSON.parse(fs.readFileSync(ARCHIVED_ENEMIES_FILE, 'utf8')) : [])
   .map((e) => ({ ...e, __archived: true }))
-const frozenPrefixes = ['yaotu_', 'boss_major_', 'test_', 'boss_0']
+const frozenPrefixes = ['yaotu_', 'boss_major_', 'test_']
 const allEnemies = [
   ...JSON.parse(fs.readFileSync(ENEMIES_FILE, 'utf8')),
   ...archivedEnemies,

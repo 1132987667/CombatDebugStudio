@@ -182,10 +182,10 @@ export type EnemyStatsRow = {
 
 /** 沙盒/测试/场景 BOSS 实体冻结：yaotu_* 五行护法是 TTK 断言（A5）的我方基准与 ACTORS 派生源，
  *  test_* 是战斗机制测试靶子（数值与测试断言绑定），
- *  boss_major_*（五大场景 BOSS）与 boss_0NN（章节守护者，唤灵台/预设实体）数值均为手调设计值——
+ *  boss_major_*（五大场景 BOSS）数值为场景设计值——
  *  重算产物只回写 enemies.json，覆盖它们会造成 IDB 与 configs 权威漂移。一律跳过 */
 export const FROZEN_IDS = (id: string) =>
-  id.startsWith('yaotu_') || id.startsWith('test_') || id.startsWith('boss_major_') || /^boss_0\d+$/.test(id)
+  id.startsWith('yaotu_') || id.startsWith('test_') || id.startsWith('boss_major_')
 
 /** 全量重算：逐只产出 before/after，纯函数不写库（写回由调用方走 FengshenDataService）。
  *  role 缺失/非法且非特殊档的记录**跳过**（生成模型先决条件 §3.8 assert role ∈ 五档；

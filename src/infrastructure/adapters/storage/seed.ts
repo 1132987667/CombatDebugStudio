@@ -65,7 +65,7 @@ import itemsDataRaw from '@configs/xiyou/items.json'
 import enemyBuffsJson from '@configs/xiyou/enemy-buffs.json'
 import attributesDataRaw from '@configs/attributes/attributes.json'
 
-export const SEED_FLAG_ID = 'cds:fengshen-seed-v39'
+export const SEED_FLAG_ID = 'cds:fengshen-seed-v40'
 
 /** buffs 域统一管理 buff 定义 + effect 定义（规格说明书 3.3）——技能 steps.effectId 可引用两者 */
 const buffsWithEffects = [

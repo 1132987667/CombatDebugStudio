@@ -203,7 +203,14 @@ export function rebuildAllEnemies(rows: EnemyStatsRow[]): EnemyStatsRebuildRepor
       continue
     }
     if (FROZEN_IDS(row.id)) {
-      warnings.push(`${row.id}（${row.name ?? '无名'}）为沙盒/测试/场景 BOSS 实体，数值冻结，已跳过重算`)
+      const kind = row.id.startsWith('yaotu_')
+        ? '五行护法沙盒基准（TTK 我方/ACTORS 派生源）'
+        : row.id.startsWith('test_')
+          ? '战斗测试靶子'
+          : row.id.startsWith('boss_major_')
+            ? '场景 BOSS（设计值）'
+            : '旧体系章节守护者（沙盒实体）'
+      warnings.push(`${row.id}（${row.name ?? '无名'}）为${kind}，数值冻结，已跳过重算`)
       skippedCount++
       continue
     }

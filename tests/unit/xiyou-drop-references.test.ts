@@ -50,7 +50,7 @@ describe('BOSS 掉落引用', () => {
 
   it('场景 BOSS 关底掉首杀专属装备（花妖王/河伯/山神/迷雾妖主）', () => {
     const rareOf = (id: string): string[] =>
-      (bossMajorDrops.find((b) => b.id === id)?.drops ?? []).filter((d) => d.chance < 1).map((d) => d.itemId)
+      (bossMajorDrops.find((b) => b.id === id)?.drops ?? []).filter((d) => d.probability < 1).map((d) => d.itemId)
     expect(rareOf('boss_major_huayaowang')).toContain('wp_sb01')
     expect(rareOf('boss_major_hebo')).toContain('ar_sb02')
     expect(rareOf('boss_major_shanshen')).toContain('hd_sb03')

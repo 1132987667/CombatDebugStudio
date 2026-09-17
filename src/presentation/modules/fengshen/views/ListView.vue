@@ -127,7 +127,7 @@
     <Dialog v-model="rebuildOpen" title="敌人属性重算结果" width="720px">
       <div v-if="rebuildReport" class="fs-rebuild">
         <p class="fs-rebuild-summary">
-          模型管辖 {{ rebuildReport.total }} 只 · 变更 {{ rebuildReport.changedCount }} 只 · 与模型一致的 {{ rebuildReport.total - rebuildReport.changedCount }} 只<template v-if="rebuildReport.skippedCount"> · 跳过 {{ rebuildReport.skippedCount }} 只（非模型管辖，见下方提示）</template>
+          模型管辖 {{ rebuildReport.total }} 只 · 变更 {{ rebuildReport.changedCount }} 只 · 与模型一致的 {{ rebuildReport.total - rebuildReport.changedCount }} 只<template v-if="rebuildReport.skippedCount"> · 跳过 {{ rebuildReport.skippedCount }} 只（非模型管辖，见提示页签）</template>
         </p>
         <div v-if="rebuildFailures.length" class="fs-rebuild-fail">
           <p class="fs-rebuild-fail-title">
@@ -137,32 +137,37 @@
             <p v-for="f in rebuildFailures" :key="f.id" class="fs-rebuild-warn">{{ f.name }}（{{ f.id }}）：{{ f.reason }}</p>
           </div>
         </div>
-        <p v-for="w in rebuildReport.warnings.slice(0, 5)" :key="w" class="fs-rebuild-warn">{{ w }}</p>
-        <p v-if="rebuildReport.warnings.length > 5" class="fs-rebuild-warn">
-          ……等共 {{ rebuildReport.warnings.length }} 条提示
-        </p>
-        <div class="fs-rebuild-table-wrap">
-          <table class="fs-rebuild-table">
-            <thead>
-              <tr>
-                <th>敌人</th><th>等级</th><th>档位</th>
-                <th>血量</th><th>攻击</th><th>防御</th><th>速度</th><th>闪避</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="e in rebuildReport.entries" :key="e.id"
-                :class="{ changed: e.changed && !failedIds.has(e.id), failed: failedIds.has(e.id) }">
-                <td class="fs-rebuild-name">{{ e.name }}<span class="fs-rebuild-id">{{ e.id }}</span></td>
-                <td>L{{ e.level }}</td>
-                <td>{{ tierLabel(e.tier) }}</td>
-                <td v-for="k in ['maxHealth', 'attack', 'defense', 'speed', 'dodge'] as const" :key="k">
-                  <span v-if="e.before[k] !== e.after[k]" class="fs-rebuild-delta">{{ e.before[k] }} → {{ e.after[k] }}</span>
-                  <span v-else>{{ e.after[k] }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <Tabs v-model="rebuildTab" :tabs="rebuildTabs" size="sm">
+          <template #entries>
+            <div class="fs-rebuild-table-wrap">
+              <table class="fs-rebuild-table">
+                <thead>
+                  <tr>
+                    <th>敌人</th><th>等级</th><th>档位</th>
+                    <th>血量</th><th>攻击</th><th>防御</th><th>速度</th><th>闪避</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="e in rebuildReport.entries" :key="e.id"
+                    :class="{ changed: e.changed && !failedIds.has(e.id), failed: failedIds.has(e.id) }">
+                    <td class="fs-rebuild-name">{{ e.name }}<span class="fs-rebuild-id">{{ e.id }}</span></td>
+                    <td>L{{ e.level }}</td>
+                    <td>{{ tierLabel(e.tier) }}</td>
+                    <td v-for="k in ['maxHealth', 'attack', 'defense', 'speed', 'dodge'] as const" :key="k">
+                      <span v-if="e.before[k] !== e.after[k]" class="fs-rebuild-delta">{{ e.before[k] }} → {{ e.after[k] }}</span>
+                      <span v-else>{{ e.after[k] }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+          <template #warnings>
+            <div class="fs-rebuild-warn-list">
+              <p v-for="(w, i) in rebuildReport.warnings" :key="w" class="fs-rebuild-warn">{{ i + 1 }}. {{ w }}</p>
+            </div>
+          </template>
+        </Tabs>
       </div>
       <template #footer>
         <Button variant="ghost" @click="rebuildOpen = false">关闭</Button>
@@ -188,6 +193,7 @@ import EnemyCompareDialog from '@/presentation/modules/fengshen/components/Enemy
 import DropsAggregateDialog from '@/presentation/modules/fengshen/components/DropsAggregateDialog.vue'
 import EntityDetailPanel from '@/presentation/modules/fengshen/components/EntityDetailPanel.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
+import Tabs, { type TabItem } from '@/presentation/components/Tabs.vue'
 
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { uiNavBus, OPEN_LINEUP_EVENT } from '@/presentation/uiEvents'
@@ -715,6 +721,12 @@ const rebuildReport = ref<EnemyStatsRebuildReport | null>(null)
 /** 写入被校验拦截的条目（如存量重名数据触发唯一性校验）；失败不中断其余写入 */
 const rebuildFailures = ref<Array<{ id: string; name: string; reason: string }>>([])
 const rebuildOpen = ref(false)
+/** 结果对话框页签：敌人数据 / 提示（提示全量展示，不再截断前 5 条） */
+const rebuildTab = ref('entries')
+const rebuildTabs = computed<TabItem[]>(() => [
+  { id: 'entries', label: '敌人数据' },
+  { id: 'warnings', label: '提示', count: rebuildReport.value?.warnings.length ?? 0 },
+])
 const failedIds = computed(() => new Set(rebuildFailures.value.map((f) => f.id)))
 
 /** 档位中文（含特殊档；普通档与 ENEMY_ROLE_LABELS 同名） */
@@ -755,6 +767,7 @@ async function doRebuildStats(): Promise<void> {
     await store.refreshVersion()
     rebuildReport.value = report
     rebuildFailures.value = failures
+    rebuildTab.value = 'entries' // 每次打开回默认页签
     rebuildOpen.value = true
     notification.notify(
       failures.length ? '重算部分完成' : '重算完成',
@@ -837,6 +850,14 @@ async function requestExportEnemiesJson(): Promise<void> {
   color: var(--color-text-tertiary, #5f7a99);
   text-decoration: line-through;
 }
+.fs-rebuild-warn-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .fs-rebuild-table-wrap {
   max-height: 52vh;
   overflow: auto;

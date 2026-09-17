@@ -58,8 +58,8 @@ describe('GameDataApi 搜索维度（searchable 字段）', () => {
     const storage = new MemoryStorage()
     await seedFengshenData(storage)
     const api = new GameDataApi(storage)
-    const rows = await api.listByTable<{ id: string; name: string }>('actors', { search: '火护法' })
-    expect(rows.some((r) => r.name === '火护法')).toBe(true)
+    const rows = await api.listByTable<{ id: string; name: string }>('actors', { search: '旧火护法' })
+    expect(rows.some((r) => r.name === '旧火护法')).toBe(true)
   })
 
   it('按 searchable select 字段搜索（materials.type）命中', async () => {

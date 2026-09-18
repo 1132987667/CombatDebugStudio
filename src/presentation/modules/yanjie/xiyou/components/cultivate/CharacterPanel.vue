@@ -151,12 +151,11 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
-import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
-import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
 import { playerConfig, BREAK_NODES, breakNodeLabel, nextBreakNode } from '../../playerProfile'
-import { equipBonuses } from '../../battle'
+import { useCharacterAttrs } from '../../characterAttrs'
 import { qualityClass, qualityOf } from '../../quality'
 import { schools } from '../../xiyouData'
 
@@ -164,7 +163,8 @@ const emit = defineEmits<{ goEquip: [] }>()
 
 const notification = useNotificationStore()
 
-const { player, currency, statPoints, playerAttributes, battleSnapshot } = storeToRefs(usePlayerStore())
+const { player, currency, statPoints } = storeToRefs(usePlayerStore())
+const pack = usePackStore()
 
 const expPct = computed(() => (player.value.expNeed > 0 ? (player.value.exp / player.value.expNeed) * 100 : 0))
 const hpPct = computed(() => (player.value.maxHp > 0 ? (player.value.hp / player.value.maxHp) * 100 : 0))
@@ -173,150 +173,27 @@ const energyPct = computed(() => (player.value.maxEnergy > 0 ? (player.value.ene
 // 当前流派（schools 单例的 selected；新档未选流派时显式给出状态而非留白）
 const currentSchoolName = computed(() => schools.find((s) => s.selected)?.name ?? '未选定')
 
-/* ── 属性面板（对齐唤灵台「角色监控」：基础/进阶两层分组，元数据驱动 + 悬浮说明） ── */
-
-interface AttrEntry {
-  code: ATTRIBUTE_CODE
-  displayName: string
-  isPercentage: boolean
-}
-
-function toEntry(code: ATTRIBUTE_CODE, meta: { displayName: string; isPercentage?: boolean }): AttrEntry {
-  return { code, displayName: meta.displayName, isPercentage: !!meta.isPercentage }
-}
-
-const EXCLUDED_CORE = new Set<ATTRIBUTE_CODE>([
-  ATTRIBUTE_CODE.currentHealth,
-  ATTRIBUTE_CODE.currentEnergy,
-  ATTRIBUTE_CODE.maxHealth,
-  ATTRIBUTE_CODE.maxEnergy,
-  ATTRIBUTE_CODE.shield,
-])
-
-const coreAttrs = computed<AttrEntry[]>(() =>
-  Object.entries(AttributeMetaMap)
-    .filter(
-      ([code]) =>
-        getAttributeDisplayConfig(code).displayTier === 'core' &&
-        !EXCLUDED_CORE.has(code as ATTRIBUTE_CODE),
-    )
-    .map(([code, meta]) => toEntry(code as ATTRIBUTE_CODE, meta)),
-)
-
-const advancedGroups = computed<Record<string, AttrEntry[]>>(() => {
-  const groups: Record<string, AttrEntry[]> = {}
-  for (const [code, meta] of Object.entries(AttributeMetaMap)) {
-    const display = getAttributeDisplayConfig(code)
-    // NOTE: 未配置项（displayTier 默认 advanced）对齐唤灵台一并展示——流派增量/装备词缀可携带
-    //       进阶属性（如 armorBreak/lifestealRate），不再当 0 值噪音隐藏；situational（情境增伤、
-    //       毒抗等）并入折叠区按组展示；hidden（运行时资源与五行属性）不进面板。
-    //       分组轴为属性族（*Bonus/系数/最终值与基础属性同族），非计算层
-    if (display.displayTier !== 'advanced' && display.displayTier !== 'situational') continue
-    const entry = toEntry(code as ATTRIBUTE_CODE, meta)
-    const list = groups[display.group] ?? (groups[display.group] = [])
-    list.push(entry)
-  }
-  return groups
-})
-
-// 分组中文名（单一来源 attributeDisplay）；「生命/攻击」与属性名「气血/攻击力」同屏混淆，域内改语义名
-const GROUP_LABEL_OVERRIDES: Record<string, string> = {
-  vitality: '生存',
-  offense: '输出',
-}
-const advancedGroupList = computed(() =>
-  Object.entries(advancedGroups.value).map(([key, attrs]) => ({
-    key,
-    label: GROUP_LABEL_OVERRIDES[key] ?? DISPLAY_GROUP_LABELS[key as keyof typeof DISPLAY_GROUP_LABELS] ?? key,
-    attrs,
-  })),
-)
-
-const advancedExpanded = ref(false)
-
-// 子组二级折叠：默认只展开有非零值的组（新手期 0 值组不铺开），展开状态随后续手动操作
-const expandedGroups = ref(new Set<string>())
-
-const advancedCount = computed(() =>
-  Object.values(advancedGroups.value).reduce((sum, list) => sum + list.length, 0),
-)
-// 属性加成（*Bonus）已通过展示配置归入进阶区属性族分组，此处 attrTotal 已含
-const attrTotal = computed(() => 2 + coreAttrs.value.length + advancedCount.value)
-
-// 「已激活」= 值 > 0 的展示项（对玩家有意义的元信息，替代无感的总项数）
-const attrActiveCount = computed(() => {
-  let count = 0
-  if (attrVal(ATTRIBUTE_CODE.currentHealth) > 0) count++
-  if (attrVal(ATTRIBUTE_CODE.maxEnergy) > 0) count++
-  for (const item of coreAttrs.value) if (attrVal(item.code) > 0) count++
-  for (const group of advancedGroupList.value) for (const item of group.attrs) if (attrVal(item.code) > 0) count++
-  return count
-})
-
-const hpText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentHealth)}/${attrVal(ATTRIBUTE_CODE.maxHealth)}`)
-const energyText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentEnergy)}/${attrVal(ATTRIBUTE_CODE.maxEnergy)}`)
-
-// NOTE: 装备加成与战斗主角同口径（BattleZen.initBattle / BattleRoster 均 equipBonuses(equippedStats, battleSnapshot)），
-//       面板数值 = 实时快照（基础+加点+流派）+ 已穿戴装备词缀增量，否则面板与战斗数值不同源
-const pack = usePackStore()
-const gearBonus = computed(() => equipBonuses(pack.equippedStats(), battleSnapshot.value))
-
-function attrVal(code: ATTRIBUTE_CODE): number {
-  return (playerAttributes.value[code] ?? getAttrDv(code)) + (gearBonus.value[code] ?? 0)
-}
-
-// 子组默认展开态依赖 attrVal（含装备加成），须在 gearBonus 就绪后初始化
-for (const [group, list] of Object.entries(advancedGroups.value)) {
-  if (list.some((item) => attrVal(item.code) > 0)) expandedGroups.value.add(group)
-}
-
-function toggleGroup(group: string) {
-  const next = new Set(expandedGroups.value)
-  if (next.has(group)) next.delete(group)
-  else next.add(group)
-  expandedGroups.value = next
-}
-
-function attrText(item: AttrEntry): string {
-  return attrVal(item.code) + (item.isPercentage ? '%' : '')
-}
-
-/** 零值弱化 + 百分比标记（0 值灰化后百分比金标只剩噪音，统一交由 zero 类表达「无」） */
-function valueClass(item: AttrEntry): Record<string, boolean> {
-  return {
-    'xy-attr-value--pct': item.isPercentage && attrVal(item.code) > 0,
-    'xy-attr-value--zero': attrVal(item.code) <= 0,
-  }
-}
-
-const attrTooltip = ref({
-  visible: false,
-  title: '',
-  finalValue: 0,
-  valueType: AttributeValueType.VALUE as AttributeValueType,
-  attributeCode: '' as string,
-  triggerRect: null as DOMRect | null,
-})
-
-function showAttrTooltip(event: MouseEvent, code: ATTRIBUTE_CODE, value: number) {
-  const meta = getAttrMeta(code)
-  attrTooltip.value = {
-    visible: true,
-    title: meta?.displayName ?? code,
-    finalValue: value,
-    valueType: meta?.isPercentage ? AttributeValueType.PERCENT : AttributeValueType.VALUE,
-    attributeCode: code,
-    triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect(),
-  }
-}
-
-function updateTooltipPosition(event: MouseEvent) {
-  attrTooltip.value.triggerRect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-}
-
-function hideAttrTooltip() {
-  attrTooltip.value.visible = false
-}
+/* ── 属性面板（对齐唤灵台「角色监控」：基础/进阶两层分组，元数据驱动 + 悬浮说明） ──
+   派生逻辑抽至 characterAttrs.ts（与战斗侧栏 BattleRoster 共用同一口径） */
+const {
+  coreAttrs,
+  advancedGroupList,
+  advancedExpanded,
+  expandedGroups,
+  toggleGroup,
+  advancedCount,
+  attrTotal,
+  attrActiveCount,
+  hpText,
+  energyText,
+  attrVal,
+  attrText,
+  valueClass,
+  attrTooltip,
+  showAttrTooltip,
+  updateTooltipPosition,
+  hideAttrTooltip,
+} = useCharacterAttrs()
 
 // SAP 六维自由点（《玩家数值体系构建计划.md》D1）：转化率读 player.json statBonuses，展示不硬编码
 const STAT_DEFS = [
@@ -550,80 +427,7 @@ const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).le
   color: var(--xy-gold);
 }
 
-.xy-attr-group {
-  margin-bottom: var(--space-3);
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.xy-attr-sub {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin: 0 0 var(--space-2);
-  padding-left: var(--space-2);
-  border-left: 3px solid var(--xy-seal);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--xy-ink-2);
-}
-
-.xy-attr-sub--minor {
-  border-left-color: var(--xy-ink-line);
-  font-weight: var(--font-weight-regular);
-  color: var(--xy-ink-3);
-}
-
-/* 折叠开关：整行可点 + CSS 三角指示（矢量字符 ▶ 属控制符号被禁，用 border 绘制） */
-.xy-attr-sub--toggle {
-  width: 100%;
-  padding: var(--space-1) var(--space-2);
-  border: none;
-  border-left: 3px solid var(--xy-seal);
-  background: none;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition: background var(--transition-fast);
-
-  &:hover {
-    background: var(--xy-paper-light);
-  }
-
-  &.xy-attr-sub--minor {
-    border-left-color: var(--xy-ink-line);
-
-    &:hover {
-      background: var(--xy-paper-light);
-    }
-  }
-}
-
-.xy-attr-caret {
-  width: 0;
-  height: 0;
-  flex-shrink: 0;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  border-left: 6px solid var(--xy-ink-4);
-  transition: transform var(--transition-fast);
-}
-
-.xy-attr-caret--minor {
-  border-left-width: 5px;
-  border-top-width: 3px;
-  border-bottom-width: 3px;
-}
-
-.xy-attr-caret--open {
-  transform: rotate(90deg);
-}
-
-.xy-attr-item {
-  cursor: help;
-}
+/* 属性网格/分组折叠样式已上移 xiyou.scss（战斗侧栏共用），此处不再重复定义 */
 
 .xy-stat-list {
   display: flex;

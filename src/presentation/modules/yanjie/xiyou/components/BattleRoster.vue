@@ -17,15 +17,61 @@
       </div>
     </div>
 
-    <!-- 角色属性 · 50% -->
+    <!-- 角色属性 · 50%（与修行「角色」页同源同口径：characterAttrs 派生 + 基础/进阶分组 + 悬浮说明） -->
     <section class="xy-roster-half">
-      <h4 class="xy-sec-title">角色属性</h4>
+      <h4 class="xy-sec-title">
+        角色属性<span class="xy-sec-count">已激活 {{ attrActiveCount }} / {{ attrTotal }} 项</span>
+      </h4>
       <div class="xy-roster-scroll">
-        <div class="xy-attr-grid">
-          <div v-for="a in attrRows" :key="a.label" class="xy-attr-item">
-            <span class="xy-attr-label">{{ a.label }}</span>
-            <span class="xy-attr-value" :class="{ 'xy-attr-value--pct': a.pct }">{{ a.text }}</span>
+        <div class="xy-attr-group">
+          <p class="xy-attr-sub">基础属性</p>
+          <div class="xy-attr-grid" @mouseleave="hideAttrTooltip">
+            <div class="xy-attr-item"
+              @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxHealth, attrVal(ATTRIBUTE_CODE.maxHealth))"
+              @mousemove="updateTooltipPosition">
+              <span class="xy-attr-label">气血</span>
+              <span class="xy-attr-value">{{ hpText }}</span>
+            </div>
+            <div class="xy-attr-item"
+              @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxEnergy, attrVal(ATTRIBUTE_CODE.maxEnergy))"
+              @mousemove="updateTooltipPosition">
+              <span class="xy-attr-label">能量</span>
+              <span class="xy-attr-value">{{ energyText }}</span>
+            </div>
+            <div class="xy-attr-item" v-for="item in coreAttrs" :key="item.code"
+              @mouseenter="showAttrTooltip($event, item.code, attrVal(item.code))" @mousemove="updateTooltipPosition">
+              <span class="xy-attr-label">{{ item.displayName }}</span>
+              <span class="xy-attr-value" :class="valueClass(item)">{{ attrText(item) }}</span>
+            </div>
           </div>
+        </div>
+
+        <div class="xy-attr-group">
+          <button type="button" class="xy-attr-sub xy-attr-sub--toggle" :aria-expanded="advancedExpanded"
+            @click="advancedExpanded = !advancedExpanded">
+            <span class="xy-attr-caret" :class="{ 'xy-attr-caret--open': advancedExpanded }" aria-hidden="true"></span>
+            <span>进阶属性</span>
+            <span class="xy-sec-count">共 {{ advancedCount }} 项</span>
+          </button>
+          <template v-if="advancedExpanded">
+            <div v-for="group in advancedGroupList" :key="group.key" class="xy-attr-sub-group">
+              <button type="button" class="xy-attr-sub xy-attr-sub--minor xy-attr-sub--toggle"
+                :aria-expanded="expandedGroups.has(group.key)" @click="toggleGroup(group.key)">
+                <span class="xy-attr-caret xy-attr-caret--minor"
+                  :class="{ 'xy-attr-caret--open': expandedGroups.has(group.key) }" aria-hidden="true"></span>
+                <span>{{ group.label }}</span>
+                <span class="xy-sec-count">{{ group.attrs.length }} 项</span>
+              </button>
+              <div v-if="expandedGroups.has(group.key)" class="xy-attr-grid" @mouseleave="hideAttrTooltip">
+                <div class="xy-attr-item" v-for="item in group.attrs" :key="item.code"
+                  @mouseenter="showAttrTooltip($event, item.code, attrVal(item.code))"
+                  @mousemove="updateTooltipPosition">
+                  <span class="xy-attr-label">{{ item.displayName }}</span>
+                  <span class="xy-attr-value" :class="valueClass(item)">{{ attrText(item) }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </section>
@@ -44,6 +90,10 @@
         </div>
       </div>
     </section>
+
+    <AttributeTooltip :visible="attrTooltip.visible" :title="attrTooltip.title"
+      :final-value="attrTooltip.finalValue" :value-type="attrTooltip.valueType"
+      :trigger-rect="attrTooltip.triggerRect" :attribute-code="attrTooltip.attributeCode" />
   </aside>
 </template>
 
@@ -52,62 +102,43 @@ import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import AttributeTooltip from '@/presentation/components/AttributeTooltip.vue'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import { equipBonuses } from '../battle'
-import { schools } from '../xiyouData'
+import { useCharacterAttrs } from '../characterAttrs'
 import PackItemCard from './PackItemCard.vue'
 
 const emit = defineEmits<{ 'open-pack': [] }>()
 
-const { player, statPoints, playerAttributes, battleSnapshot, currency } = storeToRefs(usePlayerStore())
+const { player, statPoints, currency } = storeToRefs(usePlayerStore())
 const pack = usePackStore()
 
 onMounted(() => {
   void pack.init()
 })
 
-/** 已穿戴装备加成（与 buildBattleTeams 注入战斗主角同口径，面板数值 = 基础 + 加点 + 装备） */
-const gearBonus = computed(() => equipBonuses(pack.equippedStats(), battleSnapshot.value))
-
-/** 当前境界 / 流派（首个解锁境界 / 已选流派，configs 配置驱动） */
-const school = computed(() => schools.find((s) => s.selected))
-
-const expPct = computed(() => {
-  const need = player.value.expNeed
-  if (!need || !Number.isFinite(need)) return 100
-  return Math.min(100, Math.round((player.value.exp / need) * 100))
-})
-
 const expNeedText = computed(() => (Number.isFinite(player.value.expNeed) ? player.value.expNeed : 'MAX'))
 
-interface AttrRow {
-  label: string
-  text: string
-  pct: boolean
-}
-
-/** 角色属性（playerStore 实时快照 + 已穿戴装备加成） */
-const attrRows = computed<AttrRow[]>(() => {
-  const val = (code: ATTRIBUTE_CODE): number =>
-    (playerAttributes.value[code] ?? 0) + (gearBonus.value[code] ?? 0)
-  const curHp = val(ATTRIBUTE_CODE.currentHealth)
-  const maxHp = val(ATTRIBUTE_CODE.maxHealth)
-  const curEn = val(ATTRIBUTE_CODE.currentEnergy)
-  const maxEn = val(ATTRIBUTE_CODE.maxEnergy)
-  const pct = (v: number): string => `${v}%`
-  return [
-    { label: '气血', text: `${curHp}/${maxHp}`, pct: false },
-    { label: '能量', text: `${curEn}/${maxEn}`, pct: false },
-    { label: '攻击', text: `${val(ATTRIBUTE_CODE.attack)}`, pct: false },
-    { label: '防御', text: `${val(ATTRIBUTE_CODE.defense)}`, pct: false },
-    { label: '速度', text: `${val(ATTRIBUTE_CODE.speed)}`, pct: false },
-    { label: '暴击率', text: pct(val(ATTRIBUTE_CODE.critRate)), pct: true },
-    { label: '暴击伤害', text: pct(val(ATTRIBUTE_CODE.critDamage)), pct: true },
-    { label: '命中率', text: pct(val(ATTRIBUTE_CODE.hit)), pct: true },
-    { label: '闪避率', text: pct(val(ATTRIBUTE_CODE.dodge)), pct: true },
-  ]
-})
+// 角色属性（与修行「角色」页共用 characterAttrs 派生：基础/进阶分组 + 装备加成同口径）
+const {
+  coreAttrs,
+  advancedGroupList,
+  advancedExpanded,
+  expandedGroups,
+  toggleGroup,
+  advancedCount,
+  attrTotal,
+  attrActiveCount,
+  hpText,
+  energyText,
+  attrVal,
+  attrText,
+  valueClass,
+  attrTooltip,
+  showAttrTooltip,
+  updateTooltipPosition,
+  hideAttrTooltip,
+} = useCharacterAttrs()
 </script>
 
 <style scoped lang="scss">

@@ -3,26 +3,28 @@
     <header class="xy-battle-head">
       <div class="xy-battle-head-grid">
         <div class="xy-battle-head-left">
-          <h2 class="xy-battle-scene">
-            {{ scene.name }}
-            <span class="xy-battle-meta">Lv.{{ scene.levelRange?.[0] }}-{{ scene.levelRange?.[1] }}</span>
-          </h2>
+          <div class="xy-battle-title-row">
+            <h2 class="xy-battle-scene">
+              {{ scene.name }}
+              <span class="xy-battle-meta">Lv.{{ scene.levelRange?.[0] }}-{{ scene.levelRange?.[1] }}</span>
+            </h2>
+            <!-- 开战入口与标题同行（内联于场景头部，替代原"战斗就绪"横幅）：手动开战模式下显示 -->
+            <div v-if="run.phase === 'battle' && !store.autoPlayMode" class="xy-battle-start">
+              <span class="xy-battle-start-badge">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 就绪</span>
+              <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
+            </div>
+          </div>
 
           <p class="xy-battle-desc">{{ scene.desc }}</p>
           <p v-if="scene.narrativeHook" class="xy-battle-hook">{{ scene.narrativeHook }}</p>
-          <!-- 开战入口（内联于场景头部，替代原"战斗就绪"横幅）：手动开战模式下显示 -->
-          <div v-if="run.phase === 'battle' && !store.autoPlayMode" class="xy-battle-start">
-            <span class="xy-battle-start-badge">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 就绪</span>
-            <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
-          </div>
         </div>
         <div class="xy-battle-head-right" role="list" aria-label="敌人与掉落">
-          <div v-for="e in scene.enemies" :key="e.name" class="xy-drop-row" role="listitem">
+          <div v-for="e in scene.enemies" :key="e.name" class="xy-drop-row" role="listitem" tabindex="0">
             <span class="xy-drop-ename">
               <span class="xy-drop-name">{{ e.name }}</span>
               <span class="xy-drop-lv">Lv.{{ e.level }}</span>
             </span>
-            <span class="xy-drop-items">
+            <span class="xy-drop-pop" role="tooltip">
               <span v-for="d in dropsForEnemy(e.name)" :key="d.itemId" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
                 }}</template></span>
@@ -30,13 +32,13 @@
               </span>
             </span>
           </div>
-          <div v-if="scene.yaotu" class="xy-drop-row xy-drop-row--yaotu" role="listitem">
+          <div v-if="scene.yaotu" class="xy-drop-row xy-drop-row--yaotu" role="listitem" tabindex="0">
             <span class="xy-drop-ename">
               <span class="xy-dot xy-dot--yaotu"></span>
               <span class="xy-drop-name">{{ scene.yaotu.name }}</span>
               <span class="xy-guard-tag">守护</span>
             </span>
-            <span class="xy-drop-items">
+            <span class="xy-drop-pop" role="tooltip">
               <span v-for="d in dropsForEnemy(scene.yaotu.name)" :key="d.itemId" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
                 }}</template></span>
@@ -44,12 +46,12 @@
               </span>
             </span>
           </div>
-          <div v-if="scene.drops?.materials?.length" class="xy-drop-row xy-drop-row--materials" role="listitem">
+          <div v-if="scene.drops?.materials?.length" class="xy-drop-row xy-drop-row--materials" role="listitem" tabindex="0">
             <span class="xy-drop-ename">
               <span class="xy-dot xy-dot--materials"></span>
               <span class="xy-drop-name">关卡必掉</span>
             </span>
-            <span class="xy-drop-items">
+            <span class="xy-drop-pop" role="tooltip">
               <span v-for="m in scene.drops.materials" :key="m" class="xy-drop-chip">
                 <span class="xy-drop-chip-name">{{ itemName(m) }}</span>
                 <span class="xy-pct xy-pct--main">必掉</span>
@@ -611,9 +613,12 @@ onUnmounted(() => {
   padding: var(--space-4);
 }
 
-/* ═══ 方案B · 左叙事 右掉落表（战前全展开零交互，阵容由战场区展示不重复） ═══ */
+/* ═══ 头部纵向流：标题+开战同行 → 描述 → 敌情徽章横排（掉落收进悬浮浮层，hover/键盘 focus 均可唤出） ═══ */
+/* NOTE: 高度按最坏场景（渡口残桥：描述 2 行 + 钩子 + 敌情 2 行）实测取值，换场景时战场区不跳；
+   用 rem 与内容字号等比缩放防裁切（.xy-panel overflow hidden 无滚动兜底，宁松勿紧） */
 .xy-battle-head {
   flex-shrink: 0;
+  height: 12.5rem;
   border-bottom: 1px solid var(--xy-ink-line);
   padding-bottom: var(--space-3);
   margin-bottom: var(--space-4);
@@ -621,19 +626,20 @@ onUnmounted(() => {
 
 .xy-battle-head-grid {
   display: flex;
-  gap: var(--space-3);
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .xy-battle-head-left,
 .xy-battle-head-right {
-  flex: 1 1 50%;
   min-width: 0;
 }
 
-.xy-battle-head-left {
-  border-right: 1px solid var(--xy-ink-line);
-  padding-right: var(--space-3);
+.xy-battle-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .xy-battle-scene {
@@ -662,12 +668,12 @@ onUnmounted(() => {
   color: var(--xy-ink-3);
 }
 
-/* 开战入口（内联于场景头部）：场次徽章 + 开战按钮，轻量不占行 */
+/* 开战入口：与场景标题同行，轻量不占行 */
 .xy-battle-start {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-2);
+  flex-shrink: 0;
   white-space: nowrap;
 }
 
@@ -696,25 +702,37 @@ onUnmounted(() => {
 }
 
 .xy-battle-head-right {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
   min-width: 0;
 }
 
 .xy-drop-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--xy-paper-warm);
+  }
+
+  &:hover .xy-drop-name,
+  &:focus-visible .xy-drop-name {
+    color: var(--xy-gold);
+  }
 }
 
 .xy-drop-ename {
-  width: 160px;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  flex-shrink: 0;
   min-width: 0;
 }
 
@@ -728,6 +746,37 @@ onUnmounted(() => {
 .xy-drop-lv {
   color: var(--xy-seal);
   white-space: nowrap;
+}
+
+/* 掉落浮层：默认隐藏，行 hover / focus-within 时弹出。
+   锚定敌情列表正下方（相对列表容器），横向不超出面板；不同徽章的浮层同位互斥切换 */
+.xy-drop-pop {
+  position: absolute;
+  left: 0;
+  top: calc(100% + var(--space-1));
+  z-index: 30;
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  width: max-content;
+  max-width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-sm);
+  background: var(--xy-paper-light);
+  box-shadow: 0 4px 12px rgba(var(--rgb-black), 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  pointer-events: none;
+}
+
+.xy-drop-row:hover .xy-drop-pop,
+.xy-drop-row:focus-within .xy-drop-pop {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .xy-dot {
@@ -755,13 +804,6 @@ onUnmounted(() => {
   &--materials {
     background: var(--xy-jade);
   }
-}
-
-.xy-drop-items {
-  display: flex;
-  gap: var(--space-1);
-  flex-wrap: wrap;
-  min-width: 0;
 }
 
 .xy-drop-chip {
@@ -796,10 +838,6 @@ onUnmounted(() => {
 
 .xy-drop-row--yaotu .xy-drop-name {
   color: var(--xy-gold);
-}
-
-.xy-drop-items--hint {
-  color: var(--xy-ink-4);
 }
 
 .xy-guard-tag {

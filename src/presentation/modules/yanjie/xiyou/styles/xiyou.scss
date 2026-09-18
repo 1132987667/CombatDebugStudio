@@ -583,6 +583,7 @@
   background: var(--color-bg-secondary);
   border-radius: 2px;
   transition: background-color var(--transition-fast);
+  cursor: help;
 
   &:hover {
     background: var(--color-bg-hover);
@@ -609,6 +610,78 @@
 .xy-attr-value--zero {
   font-weight: var(--font-weight-regular);
   color: var(--xy-ink-4);
+}
+
+/* 属性分组折叠（基础/进阶两层 · 角色面板/战斗侧栏共用） */
+.xy-attr-group {
+  margin-bottom: var(--space-3);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.xy-attr-sub {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--xy-seal);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--xy-ink-2);
+}
+
+.xy-attr-sub--minor {
+  border-left-color: var(--xy-ink-line);
+  font-weight: var(--font-weight-regular);
+  color: var(--xy-ink-3);
+}
+
+/* 折叠开关：整行可点 + CSS 三角指示（矢量字符 ▶ 属控制符号被禁，用 border 绘制） */
+.xy-attr-sub--toggle {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-left: 3px solid var(--xy-seal);
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--xy-paper-light);
+  }
+
+  &.xy-attr-sub--minor {
+    border-left-color: var(--xy-ink-line);
+
+    &:hover {
+      background: var(--xy-paper-light);
+    }
+  }
+}
+
+.xy-attr-caret {
+  width: 0;
+  height: 0;
+  flex-shrink: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--xy-ink-4);
+  transition: transform var(--transition-fast);
+}
+
+.xy-attr-caret--minor {
+  border-left-width: 5px;
+  border-top-width: 3px;
+  border-bottom-width: 3px;
+}
+
+.xy-attr-caret--open {
+  transform: rotate(90deg);
 }
 
 /* 货币徽章 */

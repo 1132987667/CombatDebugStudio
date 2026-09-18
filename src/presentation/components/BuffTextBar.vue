@@ -1,6 +1,8 @@
 <template>
   <div class="buff-text-bar" :class="{ 'is-expanded': expanded, 'is-empty': isEmpty }" ref="barRef"
-    @click="handleClick">
+    role="button" :tabindex="isEmpty ? undefined : 0" :aria-expanded="isEmpty ? undefined : expanded"
+    aria-label="状态栏，点击展开全部状态"
+    @click="handleClick" @keydown.enter.prevent="handleClick" @keydown.space.prevent="handleClick">
     <!-- 空状态 -->
     <span v-if="isEmpty" class="bar-placeholder">无效果</span>
 
@@ -20,7 +22,7 @@
 
       <!-- 折叠指示器 -->
       <Transition name="badge-pop">
-        <span v-if="collapsedCount > 0" class="bar-collapse-badge" title="点击展开全部状态">+{{ collapsedCount }}</span>
+        <span v-if="collapsedCount > 0" class="bar-collapse-badge" aria-hidden="true">+{{ collapsedCount }}</span>
       </Transition>
     </template>
   </div>
@@ -57,9 +59,9 @@ const emit = defineEmits<{
   /** 点击展开/收起 */
   toggle: []
   /** 悬停某个 Buff 标签 */
-  hoverBuff: [item: BuffTextItem, event: MouseEvent]
+  hoverBuff: [item: BuffTextItem, event: MouseEvent | FocusEvent]
   /** 悬停属性标签 */
-  hoverAttr: [attr: MergedAttributeLine, event: MouseEvent]
+  hoverAttr: [attr: MergedAttributeLine, event: MouseEvent | FocusEvent]
   /** 离开标签 */
   leave: []
 }>()
@@ -81,6 +83,8 @@ watch(
   [() => props.controlLabels, () => props.visibleAttrLabels],
   async () => {
     if (props.controlLabels.length === 0 && props.visibleAttrLabels.length === 0) return
+    // GSAP 动画不受 CSS 全局 prefers-reduced-motion 兜底覆盖，需自行跳过
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     // 清理上一轮动画，防止 clearProps 叠加冲突
     if (currentTween) currentTween.kill()
     await nextTick()
@@ -114,11 +118,11 @@ function handleClick() {
   }
 }
 
-function onTagHover(event: MouseEvent, item: BuffTextItem) {
+function onTagHover(event: MouseEvent | FocusEvent, item: BuffTextItem) {
   emit('hoverBuff', item, event)
 }
 
-function onAttrHover(event: MouseEvent, attr: MergedAttributeLine) {
+function onAttrHover(event: MouseEvent | FocusEvent, attr: MergedAttributeLine) {
   emit('hoverAttr', attr, event)
 }
 
@@ -159,7 +163,7 @@ function onTagLeave() {
 }
 
 .bar-placeholder {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   font-style: italic;
 }
 

@@ -112,6 +112,10 @@ $transition-fast: var(--transition-fast);
   /* ═══ 机制三：语义补全 —— 收编当前裸奔的色值 ═══ */
   --color-energy: #22d3ee; /* 原 #1099ae，改判给事实标准青 */
   --color-energy-deep: #0a7f91; /* 深青：渐变端点、选中态、元素标签 */
+  /* on-color：亮色填充底上的文字色（不随主题翻转的底色配对字色） */
+  --color-on-warning: #1a1a2e; /* #ff9800 橙底上的深字，白字仅 2.15:1 不可读 */
+  --color-on-energy: #1a1a2e; /* #22d3ee 亮青底上的深字，白字仅 1.8:1 不可读 */
+  --color-on-info: #1a1a2e; /* #4fc3f7 亮蓝底上的深字，白字仅 2.0:1 不可读 */
   --color-selected: var(--color-energy-deep);
   --color-crit-glow: rgba(var(--rgb-warning), var(--alpha-glow));
   --color-shield: #66b8ff;
@@ -127,6 +131,9 @@ $transition-fast: var(--transition-fast);
   --color-crit-bg: #2a2a1e;
   --color-round-announce: #ffd478; /* 回合公告金（BattleField 圆公告） */
   --rgb-round-announce: 255, 212, 120;
+  --color-ultimate: #ffd700; /* 终结技金（_battle-log 收编，区别于 skill-ultimate #fbbf24） */
+  --color-heal-bright: #7bdf7e; /* 血条治疗亮绿（haotian 变化帧） */
+  --color-energy-bright: #7ee3f5; /* 能量亮青（haotian 变化帧） */
   --color-overlay-panel: rgba(var(--rgb-overlay), 0.96);
   --color-border-hairline: rgba(var(--rgb-white), 0.08);
 
@@ -158,6 +165,17 @@ $transition-fast: var(--transition-fast);
   --cat-summon: #fb923c;
   --cat-attribute: #60a5fa;
   --cat-other: #90a4ae;
+
+  /* ═══ 被动技能分类色板（唤灵台 BattleDashboard 专属，区别于 --cat-* 圆点色板） ═══ */
+  --ps-cat-aura: #34d399;
+  --ps-cat-trigger: #a78bfa;
+  --ps-cat-heal: #f472b6;
+  --ps-cat-immunity: #fbbf24;
+  --ps-cat-summon: #fb923c;
+  --ps-cat-dot: #f87171;
+  --ps-cat-shield: #0a7f91;
+  --ps-cat-attribute: #60a5fa;
+  --ps-cat-uncategorized: #94a3b8;
 
   /* ═══ 品阶色板（稀有度 1-5：凡/玄/地/天/仙，语义化统一令牌） ═══
      唯一真源：quality.ts / affix.ts / xy-q--* / px-q* / px-qs-q* / rarity-* 全部引用此组，
@@ -242,11 +260,15 @@ $transition-fast: var(--transition-fast);
 
   /* ==========================================================================
      6. 层级 (z-index)
-     ========================================================================== */
+     ==========================================================================
+     NOTE: 组件内局部 stacking context 的 0/1/2 微层叠可用 --z-base/--z-raised；
+     跨组件的浮层一律引用下列语义档，禁止裸数字。 */
   --z-base: 1;
+  --z-raised: 2; /* 同 context 内抬升层（血条文字、表头吸顶等） */
   --z-float: 100; /* 浮动文本/战斗徽标层（场景内，低于 dropdown） */
   --z-dropdown: 1000;
   --z-sticky: 1100;
+  --z-scene-fx: 1200; /* 战场场景特效层（火花/浮动文字/震屏，低于 overlay） */
   --z-overlay: 1300;
   --z-modal: 1400;
   --z-toast: 1500;
@@ -258,6 +280,9 @@ $transition-fast: var(--transition-fast);
   --transition-fast: 150ms ease-in-out;
   --transition-base: 250ms ease-in-out;
   --transition-slow: 350ms ease-in-out;
+  /* keyframe/animation 时长（无 easing，easing 由 --transition-* 或声明处自带） */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
 }
 
 /* ==================== 2. 浅色主题 (Light Theme) ==================== */
@@ -274,6 +299,13 @@ $transition-fast: var(--transition-fast);
   --color-text-tertiary: #666666;
   --color-text-disabled: #cccccc;
   --color-text-inverse: #ffffff;
+
+  /* NOTE: #22d3ee 亮青在浅底仅 ≈1.6:1 不可读，浅色主题统一加深为深青；
+     rgba(var(--rgb-energy),…) 引用处不受影响（rgb 分量未变） */
+  --color-energy: #0e7490;
+  --color-energy-deep: #0a5f6e;
+  /* 深青填充底上的文字翻转为白 */
+  --color-on-energy: #ffffff;
 
   --color-border-default: #d0d5dd;
   --color-border-tertiary: #b0b8c4;

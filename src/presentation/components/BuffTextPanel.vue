@@ -1,11 +1,12 @@
 <template>
   <Teleport to="body">
     <transition name="panel-fade">
-      <div v-if="visible" class="buff-text-panel" ref="panelRef">
+      <div v-if="visible" class="buff-text-panel" ref="panelRef" role="dialog" aria-modal="false"
+        :aria-label="`${participantName} · 全部状态`" tabindex="-1">
         <!-- 头部 -->
         <div class="panel-header">
           <span class="panel-title">{{ participantName }} · 全部状态</span>
-          <button class="panel-close" @click="$emit('close')">×</button>
+          <button class="panel-close" aria-label="关闭" @click="$emit('close')">×</button>
         </div>
 
         <div class="panel-body">
@@ -89,8 +90,10 @@ const panelRef = ref<HTMLElement | null>(null)
 const showSecondary = ref(false)
 
 let clickCleanup: (() => void) | null = null
+let escHandler: ((e: KeyboardEvent) => void) | null = null
 watch(() => props.visible, (val) => {
   if (clickCleanup) { clickCleanup(); clickCleanup = null }
+  if (escHandler) { document.removeEventListener('keydown', escHandler); escHandler = null }
   if (val) {
     const handler = (e: MouseEvent) => {
       if (panelRef.value && !panelRef.value.contains(e.target as Node)) {
@@ -105,9 +108,18 @@ watch(() => props.visible, (val) => {
         clearTimeout(timer)
       }
     }, 0)
+    escHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') emit('close')
+    }
+    document.addEventListener('keydown', escHandler)
+    // 打开时聚焦面板，键盘用户可 Tab 进入内容、ESC 退出
+    requestAnimationFrame(() => panelRef.value?.focus())
   }
 })
-onUnmounted(() => { if (clickCleanup) clickCleanup() })
+onUnmounted(() => {
+  if (clickCleanup) clickCleanup()
+  if (escHandler) document.removeEventListener('keydown', escHandler)
+})
 
 // 如果在面板中需要不同排序，考虑将排序函数提升为共享模块
 const sortedGroups = computed(() => props.groups)
@@ -247,11 +259,11 @@ const summaryLines = computed<SummaryLine[]>(() => {
 }
 
 .summary-base {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 .summary-arrow {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 .summary-total {

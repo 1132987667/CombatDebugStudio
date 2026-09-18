@@ -254,7 +254,8 @@ defineExpose({ updateIndicator })
   .is-active & {
     background: var(--tabs-accent);
     border-color: transparent;
-    color: var(--color-bg-secondary);
+    /* NOTE: accent 亮蓝底白字 ≈2:1，用 on-info 深字双主题可读 */
+    color: var(--color-on-info);
     box-shadow: 0 0 6px var(--tabs-accent-glow);
   }
 }

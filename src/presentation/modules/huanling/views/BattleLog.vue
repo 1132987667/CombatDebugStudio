@@ -9,8 +9,9 @@
 
         <TacticalInput size="md" :model-value="keyword" placeholder="搜索…" aria-label="搜索日志"
           @update:model-value="keyword = String($event ?? '')" />
-        <div class="export-wrapper" ref="exportWrapperRef">
-          <Button @click="showExportMenu = !showExportMenu" title="导出当前页签日志">
+        <div class="export-wrapper" ref="exportWrapperRef" @keydown.escape="showExportMenu = false">
+          <Button @click="showExportMenu = !showExportMenu" :aria-expanded="showExportMenu"
+            aria-haspopup="menu" title="导出当前页签日志">
             导出 ▾
           </Button>
           <div v-if="showExportMenu" class="export-menu">
@@ -38,7 +39,7 @@
       <!-- ═══ 容器 B-1：系统页签 ═══ -->
       <template #system>
         <div class="log-content log-content--flat" :class="{ 'is-active': activeTab === 'system' }"
-          ref="systemContainer" @scroll="onScroll">
+          ref="systemContainer" @scroll="onScroll" aria-live="polite">
           <EmptyState v-if="systemLogs.length === 0">
             <template v-if="keyword && systemTotal > 0">无匹配结果<button type="button" class="empty-clear" @click="keyword = ''">清除搜索</button></template>
             <template v-else>暂无系统日志</template>
@@ -59,7 +60,7 @@
       <!-- ═══ 容器 B-2：调试页签 ═══ -->
       <template #debug>
         <div class="log-content log-content--flat" :class="{ 'is-active': activeTab === 'debug' }"
-          ref="debugContainer" @scroll="onScroll">
+          ref="debugContainer" @scroll="onScroll" aria-live="polite">
           <div v-if="debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
             仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
           </div>
@@ -224,7 +225,7 @@ const tooltipVisible = ref(false)
 const tooltipData = ref<TooltipData | null>(null)
 const tooltipRect = ref<DOMRect | null>(null)
 
-function onSegmentEnter(event: MouseEvent, hover: LogSegmentHover) {
+function onSegmentEnter(event: MouseEvent | FocusEvent, hover: LogSegmentHover) {
   if (!tooltipResolver) return
   const data = tooltipResolver.resolve(hover)
   if (data) {

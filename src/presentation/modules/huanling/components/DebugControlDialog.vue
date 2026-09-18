@@ -226,7 +226,7 @@ const handleButtonClick = (action: string) => {
 }
 
 .module-name {
-  color: rgba(var(--rgb-white), 0.9);
+  color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
 }
 
@@ -252,7 +252,7 @@ const handleButtonClick = (action: string) => {
 }
 
 .selector-label {
-  color: rgba(var(--rgb-white), 0.6);
+  color: var(--color-text-tertiary);
   flex-shrink: 0;
 }
 
@@ -266,7 +266,7 @@ const handleButtonClick = (action: string) => {
 }
 
 .log-gen-label {
-  color: rgba(var(--rgb-white), 0.6);
+  color: var(--color-text-tertiary);
   font-size: var(--font-size-md);
   min-width: 40px;
   flex-shrink: 0;

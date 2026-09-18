@@ -107,7 +107,7 @@ const tooltipText = computed(() => {
 
 /* 未激活 */
 .tag--inactive {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 /* 永久 */

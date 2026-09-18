@@ -82,11 +82,11 @@ import LogSeg from './LogSeg.vue'
 defineProps<{ blocks: NarrativeBlock[] }>()
 
 const emit = defineEmits<{
-  (e: 'hover', event: MouseEvent, hover: LogSegmentHover): void
+  (e: 'hover', event: MouseEvent | FocusEvent, hover: LogSegmentHover): void
   (e: 'leave'): void
 }>()
 
-function onHover(event: MouseEvent, hover: LogSegmentHover): void {
+function onHover(event: MouseEvent | FocusEvent, hover: LogSegmentHover): void {
   emit('hover', event, hover)
 }
 

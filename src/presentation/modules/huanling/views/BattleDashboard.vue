@@ -300,18 +300,18 @@ const buffListItems = computed((): BuffRawItem[] => currentCharacterSnap.value?.
 const buffDisplay = useBuffDisplay(buffListItems, computed(() => currentCharacter.value?.id ?? ''), 99)
 
 /** 被动技能分类色板
- *  NOTE: 分类色为被动技能专属色板，集中在此配置（不散落），与 tokens 的 --cat-*（数据分类圆点）色板语义不同，故不合并；
- *  分类键序/中文标签/优先级/分组算法的单一来源见 @/presentation/config/passive-skill-categories */
+ *  NOTE: 色值收编于 tokens.scss 的 --ps-cat-* 组（被动技能专属，区别于 --cat-* 圆点色板），
+ *  经内联 style 注入 var() 引用；分类键序/中文标签/优先级/分组算法的单一来源见 @/presentation/config/passive-skill-categories */
 const CATEGORY_COLORS: Record<string, string> = {
-  aura: '#34d399',
-  trigger: '#a78bfa',
-  heal: '#f472b6',
-  immunity: '#fbbf24',
-  summon: '#fb923c',
-  dot: '#f87171',
-  shield: '#0a7f91',
-  attribute: '#60a5fa',
-  [PASSIVE_UNCATEGORIZED.category]: '#94a3b8',
+  aura: 'var(--ps-cat-aura)',
+  trigger: 'var(--ps-cat-trigger)',
+  heal: 'var(--ps-cat-heal)',
+  immunity: 'var(--ps-cat-immunity)',
+  summon: 'var(--ps-cat-summon)',
+  dot: 'var(--ps-cat-dot)',
+  shield: 'var(--ps-cat-shield)',
+  attribute: 'var(--ps-cat-attribute)',
+  [PASSIVE_UNCATEGORIZED.category]: 'var(--ps-cat-uncategorized)',
 }
 
 interface PassiveSkillGroup {
@@ -525,7 +525,7 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: var(--space-2);
   margin-bottom: 0.35rem;
-  color: rgba(var(--rgb-white), 0.85);
+  color: var(--color-text-secondary);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
@@ -598,7 +598,7 @@ onUnmounted(() => {
 
 .category-count {
   color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-regular);
   text-transform: none;
 }
 
@@ -627,7 +627,7 @@ onUnmounted(() => {
   backdrop-filter: blur(12px);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   line-height: var(--line-height-md);
-  color: rgba(var(--rgb-white), 0.85);
+  color: var(--color-text-secondary);
   pointer-events: none;
 }
 
@@ -670,7 +670,7 @@ onUnmounted(() => {
 }
 
 .tooltip-description {
-  color: rgba(var(--rgb-white), 0.75);
+  color: var(--color-text-secondary);
   margin-bottom: var(--space-3);
   line-height: var(--line-height-lg);
 }
@@ -692,7 +692,7 @@ onUnmounted(() => {
 }
 
 .tooltip-stats .stat-label {
-  color: rgba(var(--rgb-white), var(--alpha-glow));
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -707,7 +707,7 @@ onUnmounted(() => {
 }
 
 .effects-title {
-  color: rgba(var(--rgb-white), var(--alpha-glow));
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
@@ -725,15 +725,15 @@ onUnmounted(() => {
 
 .effect-type {
   padding: var(--space-1) var(--space-1);
-  background: --border-debug-color-dark;
+  background: var(--border-debug-color-dark);
   border-radius: var(--radius-sm);
   color: var(--color-energy);
   font-weight: var(--font-weight-medium);
 }
 
 .effect-formula {
-  color: rgba(var(--rgb-white), 0.7);
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
 }
 
 .effect-scope {
@@ -757,8 +757,8 @@ onUnmounted(() => {
 }
 
 .condition-value {
-  color: rgba(var(--rgb-white), 0.7);
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
 }
 
 /* 技能可用性状态 */
@@ -771,7 +771,7 @@ onUnmounted(() => {
 }
 
 .tooltip-availability.available {
-  background: --border-debug-color-dark;
+  background: var(--border-debug-color-dark);
   color: var(--color-energy);
   border: 1px solid var(--border-debug-color);
 }

@@ -11,7 +11,7 @@
         <div v-for="s in budget.systems" :key="s.system" class="fs-audit-budget-item">
           <span class="fs-audit-budget-label">{{ s.label }}</span>
           <div class="fs-audit-budget-bar">
-            <div class="fs-audit-budget-fill" :style="{ width: budgetPercent(s) }"></div>
+            <div class="fs-audit-budget-fill" :style="{ transform: `scaleX(${budgetScale(s)})` }"></div>
           </div>
           <span class="fs-audit-budget-weight">{{ s.weight }}（{{ budgetPercent(s) }}）</span>
         </div>
@@ -200,6 +200,11 @@ function budgetPercent(s: { weight: number }): string {
   return ((s.weight / total) * 100).toFixed(1) + '%'
 }
 
+function budgetScale(s: { weight: number }): string {
+  const total = totalWeight.value || 1
+  return ((s.weight / total) || 0).toFixed(3)
+}
+
 function isPrimary(attr: AttributeDef, system: string): boolean {
   return attr.systems.length > 0 && attr.systems[0] === system
 }
@@ -246,7 +251,7 @@ onMounted(async () => {
 .fs-audit-budget-label {
   width: 48px;
   text-align: right;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-md);
 }
 
@@ -262,13 +267,14 @@ onMounted(async () => {
   height: 100%;
   background: var(--color-info);
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transform-origin: left;
+  transition: transform var(--duration-base) ease;
 }
 
 .fs-audit-budget-weight {
   width: 80px;
-  font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
 }
 
 .fs-audit-matrix {

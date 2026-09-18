@@ -161,6 +161,16 @@
       </div>
     </template>
   </div>
+
+  <!-- 覆盖写入 equipment 表：二次确认（同 id 覆盖不可逆） -->
+  <ConfirmDialog v-model="confirmWriteBack" title="写入 equipment 表"
+    :message="`将把重生成后的 ${regenReport?.items.length ?? 0} 件装备按 id 覆盖写入 equipment 表，原有词条与数值会被替换。确定继续吗？`"
+    confirm-text="覆盖写入" danger @confirm="runWriteBack" />
+
+  <!-- 一键导入 equipment 表：二次确认（批量新增） -->
+  <ConfirmDialog v-model="confirmImportAll" title="一键导入装备"
+    :message="`将把本次生成的 ${report?.items.length ?? 0} 件装备导入 equipment 表（id 自动重排）。确定继续吗？`"
+    confirm-text="导入" @confirm="runImportAll" />
 </template>
 
 <script setup lang="ts">
@@ -180,6 +190,8 @@ import type { EquipmentSlot } from '@/shared/types/Item'
 const api = container.resolve<GameDataApi>('GameDataApi')
 const write = container.resolve<FengshenDataService>('FengshenDataService')
 const store = useFengshenStore()
+const confirmWriteBack = ref(false)
+const confirmImportAll = ref(false)
 const notif = useNotificationStore()
 
 const form = reactive({
@@ -314,8 +326,13 @@ function generate(): void {
   notif.toast(`已生成 ${result.items.length} 件（种子 ${result.seed}）`, 'success', 3000)
 }
 
-/** 一键导入：gen_ 临时 id 按现有表重排（gen_001 起），逐件走统一保存通道 */
+/** 一键导入：gen_ 临时 id 按现有表重排（gen_001 起），批量写库前先二次确认 */
 async function importAll(): Promise<void> {
+  if (!report.value) return
+  confirmImportAll.value = true
+}
+
+async function runImportAll(): Promise<void> {
   if (!report.value) return
   const existing = await api.listByTable<Record<string, unknown>>('equipment', { limit: 2000 })
   let next = existing.map((r) => String(r.id))
@@ -376,8 +393,14 @@ async function regenAll(): Promise<void> {
   notif.toast(`已按 §21 公式重算 ${regenReport.value.items.length} 件装备的固定属性`, 'success', 3000)
 }
 
-/** 同 id 覆盖写入运行时 equipment 表（沙盒内立即生效，斗战西游实例化亦按 coreStat 取值） */
+/** 同 id 覆盖写入运行时 equipment 表（沙盒内立即生效，斗战西游实例化亦按 coreStat 取值）；
+ *  覆盖写不可逆，先经 ConfirmDialog 二次确认 */
 async function writeBackRegen(): Promise<void> {
+  if (!regenReport.value) return
+  confirmWriteBack.value = true
+}
+
+async function runWriteBack(): Promise<void> {
   if (!regenReport.value) return
   let ok = 0
   for (const item of regenReport.value.items) {
@@ -424,13 +447,13 @@ const regenPreview = computed(() =>
 .fs-warn-list {
   margin: 4px 0 0;
   padding-left: 18px;
-  color: var(--color-warning, #d9a441);
+  color: var(--color-warning);
   font-size: var(--font-size-md);
   line-height: 1.8;
 }
 .fs-kind-core {
-  color: var(--color-primary, #7fb0e8);
-  border-color: rgba(127, 176, 232, 0.45);
-  background: rgba(127, 176, 232, 0.1);
+  color: var(--color-info);
+  border-color: rgba(var(--rgb-info), var(--alpha-glow));
+  background: rgba(var(--rgb-info), var(--alpha-wash));
 }
 </style>

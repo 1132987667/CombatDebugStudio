@@ -304,7 +304,7 @@ watch(activeTab, () => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   gap: var(--space-2);
 }
 

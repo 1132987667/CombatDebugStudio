@@ -225,6 +225,7 @@ function craft(): void {
     const inst = pack.craftEquipment(g.id)
     if (inst) {
       rippling.value = true
+      notification.toast(`铸造成功！获得「${g.name}」`, 'success')
       window.setTimeout(() => {
         rippling.value = false
       }, 700)

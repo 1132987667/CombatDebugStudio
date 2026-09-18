@@ -225,7 +225,7 @@ function select(s: XiyouScene): void {
   border-radius: 50%;
   border: 2px solid var(--xy-ink-4);
   background: var(--xy-paper);
-  z-index: 1;
+  z-index: var(--z-base);
   flex-shrink: 0;
 }
 

@@ -110,7 +110,7 @@
 
 /* 大技能名 — 亮金（ultimate，与小技能区分） */
 .log-ultimate {
-  color: #ffd700;
+  color: var(--color-ultimate);
   font-weight: var(--font-weight-bold);
 }
 
@@ -126,10 +126,11 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* 系统信息（装饰线、标题等） */
+/* 系统信息（装饰线、标题等）
+   NOTE: 曾用 opacity 0.7 弱化，暗/浅主题有效对比掉到 ≈3:1 不达 AA；
+   tertiary 本身就是弱化语义，直接用即可 */
 .log-system {
   color: var(--color-text-tertiary);
-  opacity: 0.7;
 }
 
 /* 高亮信息（条件激活等） */
@@ -163,7 +164,7 @@
 }
 
 .chip--ultimate {
-  color: #ffd700;
+  color: var(--color-ultimate);
 }
 
 .chip--buff {

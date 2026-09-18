@@ -11,7 +11,7 @@
   --ht-cyan: var(--color-energy);
   --ht-amber: var(--color-warning);
   --ht-orange: var(--color-live);
-  --ht-slate: #8b95a5;
+  --ht-slate: var(--color-text-tertiary);
   --ht-mono: var(--font-family-mono);
   --ht-bd: var(--color-border-default);
 
@@ -116,10 +116,10 @@
   position: absolute;
   top: calc(100% + 6px);
   right: 16px;
-  z-index: 50;
+  z-index: var(--z-dropdown);
   min-width: 260px;
   padding: var(--space-3) 14px;
-  animation: ht-popIn var(--transition-base) var(--ease-in-out);
+  animation: ht-popIn var(--transition-base);
   background: var(--color-bg-secondary);
   border: 1px solid var(--ht-bd);
   border-radius: var(--radius-md);
@@ -674,7 +674,7 @@
   padding: 0 6px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--ht-bd);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   color: var(--color-text-secondary);
   white-space: nowrap;
 }
@@ -801,10 +801,10 @@
 /* 当前值/原有：纯色。本次变化（扣除/增加）：语义色 + 斜纹条纹 */
 .ht-bar-hp .keep { background-color: var(--color-success); }
 .ht-bar-hp .change.damage { background-color: var(--color-danger); }
-.ht-bar-hp .change.heal { background-color: #7bdf7e; }
+.ht-bar-hp .change.heal { background-color: var(--color-heal-bright); }
 .ht-bar-en .keep { background-color: var(--color-energy); }
 .ht-bar-en .change.cost { background-color: var(--color-danger); }
-.ht-bar-en .change.gain { background-color: #7ee3f5; }
+.ht-bar-en .change.gain { background-color: var(--color-energy-bright); }
 .ht-bar .change {
   background-image: repeating-linear-gradient(
     -45deg,
@@ -1147,7 +1147,7 @@
 
 .ht-sec-toggle .ht-sec-caret {
   display: inline-block;
-  transition: transform var(--transition-fast) var(--ease-in-out);
+  transition: transform var(--transition-fast);
   color: var(--color-text-tertiary);
 }
 
@@ -1729,7 +1729,7 @@
 
 .ht-diag.open {
   display: flex;
-  animation: ht-popIn var(--transition-base) var(--ease-in-out);
+  animation: ht-popIn var(--transition-base);
 }
 
 .ht-diag-hd {
@@ -2445,10 +2445,10 @@
   position: absolute;
   top: calc(100% + 6px);
   right: 16px;
-  z-index: 50;
+  z-index: var(--z-dropdown);
   min-width: 180px;
   padding: 6px;
-  animation: ht-popIn var(--transition-base) var(--ease-in-out);
+  animation: ht-popIn var(--transition-base);
   background: var(--color-bg-secondary);
   border: 1px solid var(--ht-bd);
   border-radius: var(--radius-md);
@@ -2511,7 +2511,7 @@
   background: var(--color-bg-secondary);
   color: var(--color-text-tertiary);
   font-family: var(--ht-mono);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   text-align: center;
 }
 

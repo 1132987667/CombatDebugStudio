@@ -104,6 +104,8 @@ const updateCustomSpeed = () => {
 
 <style scoped>
 .rule-list {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
   margin-bottom: var(--space-5);
 }

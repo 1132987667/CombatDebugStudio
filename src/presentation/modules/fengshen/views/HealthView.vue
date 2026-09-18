@@ -341,27 +341,27 @@ function exportCsv(): void {
   line-height: 1.6;
 }
 .fs-sev-error {
-  color: var(--color-danger, #e2545a);
-  background: rgba(226, 84, 90, 0.12);
-  border: 1px solid rgba(226, 84, 90, 0.35);
+  color: var(--color-danger);
+  background: rgba(var(--rgb-danger), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-danger), var(--alpha-border));
 }
 .fs-sev-warn {
-  color: var(--color-warning, #d9a441);
-  background: rgba(217, 164, 65, 0.12);
-  border: 1px solid rgba(217, 164, 65, 0.35);
+  color: var(--color-warning);
+  background: rgba(var(--rgb-warning), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-warning), var(--alpha-border));
 }
 .fs-sev-info {
-  color: var(--color-text-secondary, #8a93a6);
-  background: rgba(138, 147, 166, 0.12);
-  border: 1px solid rgba(138, 147, 166, 0.3);
+  color: var(--color-text-secondary);
+  background: rgba(var(--rgb-neutral), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-neutral), var(--alpha-border));
 }
 .fs-sev-none {
-  color: var(--color-text-secondary, #6b7385);
+  color: var(--color-text-secondary);
 }
 .fs-kind-numeric {
   /* 数值校验类别标签：紫系区分引用级三色 */
-  color: #a78bda;
-  border-color: rgba(167, 139, 218, 0.45);
-  background: rgba(167, 139, 218, 0.1);
+  color: var(--color-casting);
+  border-color: rgba(var(--rgb-casting), var(--alpha-glow));
+  background: rgba(var(--rgb-casting), var(--alpha-wash));
 }
 </style>

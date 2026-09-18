@@ -74,7 +74,7 @@ const TABS: Array<{ id: GroupTab; label: string; badge?: string }> = [
   { id: 'equip', label: '装备' },
   { id: 'mate', label: '伙伴' },
   { id: 'collect', label: '收集' },
-  { id: 'quest', label: '历练', badge: '4' },
+  { id: 'quest', label: '历练' },
   { id: 'cave', label: '洞府' },
   { id: 'settings', label: '设置' },
 ]
@@ -128,7 +128,7 @@ const TAB_ICONS: Record<GroupTab, Component> = {
   &.active {
     background: var(--xy-seal);
     border-color: var(--xy-seal);
-    color: #fff;
+    color: var(--xy-on-seal);
   }
 }
 

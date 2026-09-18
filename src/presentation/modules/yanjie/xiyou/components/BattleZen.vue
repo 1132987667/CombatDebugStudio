@@ -685,7 +685,7 @@ onUnmounted(() => {
   border: 1px solid var(--xy-seal);
   border-radius: var(--radius-sm);
   background: var(--xy-seal);
-  color: #fff;
+  color: var(--xy-on-seal);
   font-family: inherit;
   font-size: var(--font-size-md);
   letter-spacing: 4px;
@@ -804,7 +804,7 @@ onUnmounted(() => {
 
 .xy-guard-tag {
   color: var(--xy-gold);
-  border: 1px solid rgba(var(--rgb-warning), 0.45);
+  border: 1px solid rgba(var(--rgb-warning), var(--alpha-border));
   background: var(--xy-gold-soft);
   padding: 0 5px;
   border-radius: 3px;

@@ -148,6 +148,8 @@ function nudge(key: keyof typeof DEFAULT_WIDTHS, d: number): void {
 
 useHaotianHotkeys({
   isActive: () => props.active,
+  hasOpenDialog: () =>
+    store.bpOpen || store.sumOpen || store.diffOpen || store.bookmarkOpen,
   mode: () => store.mode,
   setMode: (m) => store.setMode(m),
   togglePlay: () => store.togglePlay(),

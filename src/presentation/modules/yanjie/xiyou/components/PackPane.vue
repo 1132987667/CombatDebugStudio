@@ -47,7 +47,9 @@ export type PackSub = 'pack' | 'storage' | 'shop'
           </div>
           <div class="xy-storage-grid">
             <button v-for="(slot, i) in pack.storage" :key="i" type="button" class="xy-storage-cell"
-              :class="{ 'is-empty': !slot.itemId }" @click="emit('open-storage-cell', i)">
+              :class="{ 'is-empty': !slot.itemId }"
+              :aria-label="slot.itemId ? `${nameOf(slot.itemId)} ×${slot.count}，第 ${i + 1} 格` : `空位，第 ${i + 1} 格`"
+              @click="emit('open-storage-cell', i)">
               <span class="xy-storage-count" :class="{ 'is-empty': !slot.itemId }">{{ slot.itemId ? `×${slot.count}` : '空' }}</span>
               <span class="xy-storage-name" :style="slot.itemId ? { color: qualityColor(pack.catalogById(slot.itemId)?.rarity ?? 1) } : undefined">{{ slot.itemId ? nameOf(slot.itemId) : '空位' }}</span>
             </button>
@@ -463,7 +465,7 @@ function doBuy(g: XiyouShopGood): void {
 
   &:hover {
     background: var(--xy-seal);
-    color: #fff;
+    color: var(--xy-on-seal);
   }
 }
 

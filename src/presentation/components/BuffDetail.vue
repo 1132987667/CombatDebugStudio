@@ -210,7 +210,7 @@ const effectTypeClass = computed(() => {
 .empty-attributes {
   text-align: center;
   padding: var(--space-2);
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 .buff-description-panel {

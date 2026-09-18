@@ -13,10 +13,10 @@
       <TacticalInput size="md" :model-value="store.streamText" placeholder="过滤关键词 / 数值…" aria-label="过滤关键词"
         @update:model-value="store.streamText = String($event ?? '')" />
       <div class="ht-stream-filter-grid">
-        <TacticalSelect v-model="store.filterPhase" size="sm" clearable placeholder="阶段…" :options="phaseOptions" />
-        <TacticalSelect v-model="store.filterLevel" size="sm" clearable placeholder="级别…" :options="levelOptions" />
-        <TacticalSelect v-model="store.filterActor" size="sm" clearable searchable placeholder="单位…" :options="actorOptions" />
-        <TacticalSelect v-model="store.filterKind" size="sm" :options="kindOptions" />
+        <TacticalSelect v-model="store.filterPhase" size="md" clearable placeholder="阶段…" :options="phaseOptions" />
+        <TacticalSelect v-model="store.filterLevel" size="md" clearable placeholder="级别…" :options="levelOptions" />
+        <TacticalSelect v-model="store.filterActor" size="md" clearable searchable placeholder="单位…" :options="actorOptions" />
+        <TacticalSelect v-model="store.filterKind" size="md" :options="kindOptions" />
       </div>
     </div>
     <div class="ht-pane-bd ht-vscroll" ref="scrollRef" @scroll.passive="onScroll">

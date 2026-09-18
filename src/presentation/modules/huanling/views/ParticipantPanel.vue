@@ -7,7 +7,7 @@
         @change="applyPreset" />
       <div class="preset-actions">
         <Button size="tiny" @click="showSavePreset = true" title="将当前参战阵容保存为自定义预设">存为预设</Button>
-        <Button v-if="selectedCustomPreset" size="tiny" variant="danger" @click="removePreset">删除预设</Button>
+        <Button v-if="selectedCustomPreset" size="tiny" variant="danger" @click="confirmRemovePreset = true">删除预设</Button>
       </div>
       <span v-if="currentPresetDesc" class="preset-desc">{{ currentPresetDesc }}</span>
     </div>
@@ -32,11 +32,12 @@
             <div class="party-members">
               <div v-for="char in allyTeam" :key="char.id" class="character-item bg-dots"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
-                role="button" tabindex="0" @click="selectCharacter(char.id)"
+                role="button" tabindex="0" :aria-pressed="selectedCharacterId === char.id"
+                @click="selectCharacter(char.id)"
                 @keydown.enter="onCharKeydown($event, char.id)"
                 @keydown.space="onCharKeydown($event, char.id)">
                 <div class="char-check">
-                  <input type="checkbox" :checked="char.enabled"
+                  <input type="checkbox" :checked="char.enabled" :aria-label="`启用 ${char.name}`"
                     @change="toggleCharacterEnabled(char.id, ($event.target as HTMLInputElement).checked)" @click.stop>
                 </div>
                 <div class="char-info">
@@ -60,11 +61,12 @@
             <div class="party-members">
               <div v-for="char in enemyTeam" :key="char.id" class="character-item bg-dots"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
-                role="button" tabindex="0" @click="selectCharacter(char.id)"
+                role="button" tabindex="0" :aria-pressed="selectedCharacterId === char.id"
+                @click="selectCharacter(char.id)"
                 @keydown.enter="onCharKeydown($event, char.id)"
                 @keydown.space="onCharKeydown($event, char.id)">
                 <div class="char-check">
-                  <input type="checkbox" :checked="char.enabled"
+                  <input type="checkbox" :checked="char.enabled" :aria-label="`启用 ${char.name}`"
                     @change="toggleCharacterEnabled(char.id, ($event.target as HTMLInputElement).checked)" @click.stop>
                 </div>
                 <div class="char-info">
@@ -164,6 +166,8 @@
       confirm-text="清空" danger @confirm="clearParticipants" />
     <ConfirmDialog v-model="confirmRemove" title="移除角色" message="确定要移除当前选中的角色吗？"
       confirm-text="移除" danger @confirm="removeSelectedCharacter" />
+    <ConfirmDialog v-model="confirmRemovePreset" title="删除预设" message="确定要删除当前选中的自定义预设吗？删除后不可恢复。"
+      confirm-text="删除" danger @confirm="removePreset" />
 
     <!-- 将当前阵容存为自定义预设 -->
     <Dialog v-model="showSavePreset" title="存为预设" width="400px">
@@ -377,7 +381,7 @@ const saveCurrentAsPreset = () => {
   showSavePreset.value = false
 }
 
-/** 删除选中的自定义预设 */
+/** 删除选中的自定义预设（经 ConfirmDialog 二次确认后调用） */
 const removePreset = () => {
   const id = selectedPreset.value
   if (!id) return
@@ -385,6 +389,7 @@ const removePreset = () => {
   selectedPreset.value = ''
   notification.notify('成功', '预设已删除', 'success')
 }
+const confirmRemovePreset = ref(false)
 
 /** 封神榜阵容 → 参战者（roles 按 seatIndex 排序；角色归我方、敌人归敌方；失配角色打日志跳过，避免"少人"静默开战） */
 /** 阵型异步加载竞态守卫：连续切换阵容时，仅最后一次选中的阵容写回阵型（迟到的旧 promise 丢弃） */
@@ -739,13 +744,13 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 
 .scene-item-level {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
 }
 
 .scene-item-count {
   color: var(--color-text-tertiary);
   margin-left: auto;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   white-space: nowrap;
 }
 
@@ -785,18 +790,6 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   display: flex;
   gap: var(--space-2);
   margin-top: var(--space-2);
-}
-
-.btn-remove {
-  margin-left: auto;
-  color: var(--color-danger) !important;
-  border-color: var(--color-brand-red-active) !important;
-}
-
-.btn-remove:hover:not(:disabled) {
-  background: var(--color-brand-red-active) !important;
-  color: var(--color-text-primary) !important;
-  border-color: var(--color-danger) !important;
 }
 
 .preset-selector {

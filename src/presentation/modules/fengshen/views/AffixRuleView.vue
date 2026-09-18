@@ -1629,7 +1629,7 @@ void load()
 
 .fs-edit-attrs {
   padding-top: var(--space-2);
-  border-top: 1px solid var(--color-border, #e8e8e8);
+  border-top: 1px solid var(--color-border-default);
 }
 
 .fs-edit-footer {
@@ -1650,7 +1650,7 @@ void load()
   gap: 4px;
   padding: 2px 6px;
   border-radius: 3px;
-  background: var(--color-bg-secondary, #f0f0f0);
+  background: var(--color-bg-secondary);
   font-size: var(--font-size-md);
 }
 
@@ -1659,14 +1659,14 @@ void load()
 }
 
 .fs-attr-code {
-  color: var(--color-text-secondary, #999);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-md);
 }
 
 .fs-chip-remove {
   background: none;
   border: none;
-  color: #ff4d4f;
+  color: var(--color-danger);
   cursor: pointer;
   padding: 0 2px;
   font-size: var(--font-size-md);
@@ -1692,12 +1692,12 @@ void load()
 
 .fs-tag-add {
   background: none;
-  border: 1px dashed var(--color-border, #d9d9d9);
+  border: 1px dashed var(--color-border-default);
   border-radius: 3px;
   padding: 1px 6px;
   cursor: pointer;
   font-size: var(--font-size-md);
-  color: var(--color-primary, #1890ff);
+  color: var(--color-info);
 }
 
 .fs-inline-input {
@@ -1710,8 +1710,8 @@ void load()
 
 .fs-btn-danger-sm {
   background: none;
-  border: 1px solid #ff4d4f;
-  color: #ff4d4f;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
   border-radius: 3px;
   padding: 1px 6px;
   cursor: pointer;
@@ -1728,9 +1728,9 @@ void load()
 .fs-forbidden-label-tag {
   display: inline-flex;
   padding: 1px 4px;
-  border: 1px solid var(--color-border, #d9d9d9);
+  border: 1px solid var(--color-border-default);
   border-radius: 3px;
-  background: #fff;
+  background: var(--color-bg-secondary);
 }
 
 .fs-table-scroll {
@@ -1741,17 +1741,17 @@ void load()
   display: inline-block;
   padding: 0 4px;
   border-radius: 2px;
-  background: var(--color-bg-secondary, #f0f0f0);
+  background: var(--color-bg-secondary);
   font-size: var(--font-size-md);
   white-space: nowrap;
 }
 
 .side-atk {
-  background: rgba(255, 77, 79, 0.04);
+  background: rgba(var(--rgb-danger), var(--alpha-tint));
 }
 
 .side-def {
-  background: rgba(24, 144, 255, 0.04);
+  background: rgba(var(--rgb-info), var(--alpha-tint));
 }
 
 .fs-mono {
@@ -1761,7 +1761,7 @@ void load()
 .fs-export-preview {
   max-height: 400px;
   overflow: auto;
-  border: 1px solid var(--color-border, #e8e8e8);
+  border: 1px solid var(--color-border-default);
   border-radius: 4px;
   margin-top: 8px;
 }

@@ -10,8 +10,9 @@
       <div class="member-name">
         <template v-if="displayLevel > 0">Lv.{{ displayLevel }} </template>
         <span v-if="affixTags.length > 0" class="member-affixes">【<span v-for="(a, i) in affixTags" :key="a.id"
-            class="affix-tag" :class="'affix-q' + a.rarity" @mouseenter="showAffixTooltip(a.affix, $event)"
-            @mouseleave="clearAffixTooltip">{{ i > 0 ? '、' : '' }}{{ a.name }}</span>】</span>
+            class="affix-tag" :class="'affix-q' + a.rarity" tabindex="0" @mouseenter="showAffixTooltip(a.affix, $event)"
+            @mouseleave="clearAffixTooltip" @focus="showAffixTooltip(a.affix, $event)"
+            @blur="clearAffixTooltip">{{ i > 0 ? '、' : '' }}{{ a.name }}</span>】</span>
         <span class="ml-2" :class="isEnemy ? 'name--enemy' : 'name--ally'">{{ displayName }}</span> {{ hpText }}
         <div class="member-action ml-2" v-if="isActive">
           <span :class="['acting-badge', { 'enemy-acting': isEnemy }]">←操作中</span>
@@ -228,7 +229,7 @@ function affixQuality(rarity: number): string {
 const hoveredAffix = ref<AffixData | null>(null)
 const affixHoverPos = ref<DOMRect | null>(null)
 
-function showAffixTooltip(a: AffixData, event: MouseEvent): void {
+function showAffixTooltip(a: AffixData, event: MouseEvent | FocusEvent): void {
   hoveredAffix.value = a
   affixHoverPos.value = (event.currentTarget as HTMLElement).getBoundingClientRect()
 }
@@ -508,15 +509,16 @@ defineExpose({
 .situational-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 2px 8px;
-  margin: 2px 0;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  margin: var(--space-1) 0;
 }
 
 .situational-tag {
-  font-size: 0.75em;
-  padding: 1px 6px;
-  border-radius: 4px;
+  /* NOTE: 曾 0.75em(≈10.5px)，低于字号红线 */
+  font-size: var(--font-size-sm);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
@@ -528,7 +530,8 @@ defineExpose({
 
 .situational-tag.tag-elemental {
   background: rgba(var(--rgb-energy), var(--alpha-tint));
-  color: var(--color-energy-deep);
+  /* NOTE: energy-deep 深青压暗色卡底 ≈3.6:1，用亮青保证可读 */
+  color: var(--color-energy);
   border: 1px solid rgba(var(--rgb-energy), var(--alpha-border));
 }
 
@@ -560,7 +563,7 @@ defineExpose({
 
 .debug-row .value {
   color: var(--color-text-secondary);
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-family-mono);
 }
 
 .debug-row .breakdown {
@@ -577,7 +580,7 @@ defineExpose({
   margin-top: var(--space-2);
   padding: var(--space-2);
   background: rgba(var(--rgb-black), var(--alpha-wash-strong));
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   border-left: 2px solid var(--color-energy);
 }
 
@@ -585,7 +588,7 @@ defineExpose({
   display: flex;
   justify-content: space-between;
   padding: var(--space-1) 0;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-family-mono);
 }
 
 .breakdown-item .key {
@@ -624,7 +627,7 @@ defineExpose({
 }
 
 .breakdown-meta {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 .breakdown-effects {
@@ -666,7 +669,7 @@ defineExpose({
 }
 
 .source-meta {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 </style>

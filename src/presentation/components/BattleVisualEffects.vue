@@ -95,6 +95,13 @@ const shaking = ref(false)
 const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
 const pendingFrames = new Set<number>()
 
+// NOTE: WAAPI element.animate() 驱动的粒子不受 base.scss 的 CSS 全局
+// prefers-reduced-motion 兜底覆盖（那只作用于 animation/transition），
+// 粒子/闪光必须在 JS 侧短路。快照式检测：运行中切换系统设置需刷新页面。
+const prefersReducedMotion =
+  typeof matchMedia !== 'undefined' &&
+  matchMedia('(prefers-reduced-motion: reduce)').matches
+
 function later(fn: () => void, delay: number): void {
   const t = setTimeout(() => { pendingTimers.delete(t); fn() }, delay)
   pendingTimers.add(t)
@@ -247,6 +254,7 @@ function showImpact(targetId: string, colorType: ImpactClass, budget?: number) {
 
 /** 爆炸粒子（原 showImpact 的火花逻辑） */
 function spawnExplosionParticles(pos: CardPos, c: { bg: string; glow: string }) {
+  if (prefersReducedMotion) return
   const sparkCount = 12
   for (let i = 0; i < sparkCount; i++) {
     const spark = createSpark(pos, c, 4)
@@ -264,6 +272,7 @@ function spawnExplosionParticles(pos: CardPos, c: { bg: string; glow: string }) 
 
 /** 冰裂粒子 — 菱形碎晶散射 */
 function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string }) {
+  if (prefersReducedMotion) return
   for (let i = 0; i < 6; i++) {
     const spark = createSpark(pos, c, 4)
     spark.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
@@ -285,7 +294,7 @@ function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string })
   flash.style.cssText = `
     position: fixed; left: ${pos.x}px; top: ${pos.y}px;
     width: 20px; height: 20px; border-radius: 50%;
-    pointer-events: none; z-index: 158;
+    pointer-events: none; z-index: var(--z-scene-fx);
     background: radial-gradient(circle, #fff, ${c.bg}, transparent);
     box-shadow: 0 0 30px ${c.glow};
   `
@@ -300,6 +309,7 @@ function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string })
 
 /** 暗影粒子 — 上升烟雾 */
 function spawnShadowParticles(pos: CardPos, c: { bg: string; glow: string }) {
+  if (prefersReducedMotion) return
   for (let i = 0; i < 10; i++) {
     const spark = createSpark(pos, c, 5)
     spark.style.background = 'radial-gradient(circle, #a855f7, transparent)'
@@ -323,7 +333,7 @@ function createSpark(pos: CardPos, c: { bg: string; glow: string }, size: number
   spark.style.cssText = `
     position: fixed; left: ${pos.x}px; top: ${pos.y}px;
     width: ${size}px; height: ${size}px; border-radius: 50%;
-    pointer-events: none; z-index: 156;
+    pointer-events: none; z-index: var(--z-scene-fx);
     background: ${c.bg};
     box-shadow: 0 0 8px ${c.glow};
   `
@@ -472,7 +482,7 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999;
+  z-index: var(--z-scene-fx);
 }
 </style>
 
@@ -540,7 +550,7 @@ onUnmounted(() => {
   letter-spacing: 4px;
   white-space: nowrap;
   pointer-events: none;
-  z-index: 1100;
+  z-index: var(--z-scene-fx);
   color: var(--vfx-skill-color);
   text-shadow: 0 0 12px currentColor, 0 0 24px currentColor, 0 2px 6px rgba(0, 0, 0, 0.95);
   will-change: transform, opacity;
@@ -576,7 +586,7 @@ onUnmounted(() => {
   height: 14px;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 1050;
+  z-index: var(--z-scene-fx);
   will-change: transform, opacity;
 }
 
@@ -607,7 +617,7 @@ onUnmounted(() => {
   height: 6px;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 1049;
+  z-index: var(--z-scene-fx);
   animation: trail-fade 0.6s ease forwards;
 }
 
@@ -630,7 +640,7 @@ onUnmounted(() => {
   height: 80px;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 1100;
+  z-index: var(--z-scene-fx);
   transform: translate(-50%, -50%);
   animation-duration: 0.5s;
   animation-fill-mode: forwards;
@@ -985,7 +995,7 @@ onUnmounted(() => {
   height: 80px;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 1100;
+  z-index: var(--z-scene-fx);
   transform: translate(-50%, -50%);
   border: 2px solid var(--vfx-heal-glow);
   box-shadow: 0 0 24px var(--vfx-heal-glow), inset 0 0 24px var(--vfx-heal-glow);
@@ -1008,7 +1018,7 @@ onUnmounted(() => {
 .shield-hex {
   position: fixed;
   pointer-events: none;
-  z-index: 1100;
+  z-index: var(--z-scene-fx);
   transform: translate(-50%, -50%);
   animation: hex-flash 0.9s ease-out forwards;
 }
@@ -1044,11 +1054,11 @@ onUnmounted(() => {
 /* 浮动数字 */
 .floating-num {
   position: fixed;
-  font-family: 'Cinzel', 'Noto Serif SC', serif;
+  font-family: var(--font-family-serif);
   font-weight: 900;
   pointer-events: none;
   white-space: nowrap;
-  z-index: 1100;
+  z-index: var(--z-scene-fx);
   will-change: transform, opacity;
 }
 

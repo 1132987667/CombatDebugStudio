@@ -805,7 +805,7 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
 
 .t-select__option-check {
   flex-shrink: 0;
-  font-size: 9px;
+  font-size: var(--font-size-xs);
   color: var(--accent);
   opacity: 0;
   transform: scale(0.5);
@@ -836,19 +836,6 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   animation: t-pulse 1s ease-in-out infinite;
 }
 
-@keyframes t-pulse {
-
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
 
 /* 页脚状态条 */
 .t-select__footer {
@@ -868,7 +855,7 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
 }
 
 .t-select__footer-keys {
-  font-family: 'Cinzel', var(--font-family-base);
+  font-family: var(--font-family-base);
 }
 
 /* ── 面板进出场 ── */

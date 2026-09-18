@@ -127,28 +127,39 @@ function onClick(e: MouseEvent) {
 
 /* ---------- 3D 按压族（参考 buttons.theme.css .btn.primary） ---------- */
 /* 底部硬阴影 + 按下下沉；margin-bottom 补偿阴影占位，避免布局跳动 */
-.ui-button--primary,
 .ui-button--energy {
+  background: var(--color-energy);
+  /* NOTE: 亮青底白字仅 ≈1.8:1，改用 on-energy 深字（浅色主题底转深青时自动翻白） */
+  color: var(--color-on-energy);
+  border: 1px solid rgba(var(--rgb-white), 0.4);
+  box-shadow: 0 4px 0 0 var(--color-energy-deep);
+  margin-bottom: var(--space-1);
+
+  &:hover:not(:disabled):not(.is-loading) {
+    /* NOTE: 保持亮体（energy），阴影 4→3 + 下沉 1px 做按压预览，
+       与 primary 对齐；若把 body 也刷成 energy-deep 会和硬阴影同色、立体感消失 */
+    color: var(--color-on-energy);
+    box-shadow: 0 3px 0 0 var(--color-energy-deep);
+    transform: translateY(1px);
+  }
+
+  &:active:not(:disabled):not(.is-loading) {
+    box-shadow: 0 0px 0 0 var(--color-energy-deep);
+    transform: translateY(4px);
+  }
+}
+
+.ui-button--primary {
   color: var(--color-text-primary);
   border: 1px solid rgba(var(--rgb-white), 0.4);
   margin-bottom: var(--space-1);
+  background: var(--color-brand-red);
+  box-shadow: 0 4px 0 0 var(--color-brand-red-active);
 
   &:hover:not(:disabled):not(.is-loading) {
     border-color: rgba(var(--rgb-white), 0.6);
     /* NOTE: 实色底 hover 保持白字，避免继承基类能量青 */
     color: var(--color-text-primary);
-  }
-
-  &:active:not(:disabled):not(.is-loading) {
-    transform: translateY(3px);
-  }
-}
-
-.ui-button--primary {
-  background: var(--color-brand-red);
-  box-shadow: 0 4px 0 0 var(--color-brand-red-active);
-
-  &:hover:not(:disabled):not(.is-loading) {
     background: var(--color-brand-red-hover);
     box-shadow: 0 3px 0 0 var(--color-brand-red-active);
     transform: translateY(1px);
@@ -156,23 +167,6 @@ function onClick(e: MouseEvent) {
 
   &:active:not(:disabled):not(.is-loading) {
     box-shadow: 0 0px 0 0 var(--color-brand-red-active);
-    transform: translateY(4px);
-  }
-}
-
-.ui-button--energy {
-  background: var(--color-energy);
-  box-shadow: 0 4px 0 0 var(--color-energy-deep);
-
-  &:hover:not(:disabled):not(.is-loading) {
-    /* NOTE: 保持亮体（energy），阴影 4→3 + 下沉 1px 做按压预览，
-       与 primary 对齐；若把 body 也刷成 energy-deep 会和硬阴影同色、立体感消失 */
-    box-shadow: 0 3px 0 0 var(--color-energy-deep);
-    transform: translateY(1px);
-  }
-
-  &:active:not(:disabled):not(.is-loading) {
-    box-shadow: 0 0px 0 0 var(--color-energy-deep);
     transform: translateY(4px);
   }
 }
@@ -191,12 +185,13 @@ function onClick(e: MouseEvent) {
 
 .ui-button--warning {
   background: var(--color-warning);
-  color: var(--color-text-inverse);
+  /* NOTE: 橙底白字（浅色主题 inverse=#fff）仅 ≈2.15:1，改用固定深字 */
+  color: var(--color-on-warning);
   border-color: var(--color-warning);
 
   &:hover:not(:disabled):not(.is-loading) {
     background: var(--color-live);
-    color: var(--color-text-inverse);
+    color: var(--color-on-warning);
   }
 }
 

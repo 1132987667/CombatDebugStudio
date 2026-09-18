@@ -1,6 +1,7 @@
 <template>
   <figure ref="rootEl" class="fs-chart">
-    <svg ref="svgEl" :viewBox="`0 0 ${W} ${H}`" role="img" :aria-label="ariaLabel" class="fs-chart-svg"
+    <div v-if="!hasData" class="fs-empty fs-chart-empty">暂无数据</div>
+    <svg v-show="hasData" ref="svgEl" :viewBox="`0 0 ${W} ${H}`" role="img" :aria-label="ariaLabel" class="fs-chart-svg"
       @mousemove="onMove" @mouseleave="hoverIdx = null">
       <!-- 网格 + 左右轴刻度（右轴仅在有右侧序列时显示） -->
       <g v-for="(t, i) in ticks" :key="`g${i}`">
@@ -96,6 +97,11 @@ function toggleSeries(name: string): void {
 }
 
 const visibleSeries = computed(() => props.series.filter((s) => !hidden.value.has(s.name)))
+
+/** 空态：无序列，或所有序列点均为空（绘制无意义，避免只剩裸网格） */
+const hasData = computed(() =>
+  visibleSeries.value.some((s) => s.points.length > 0),
+)
 
 /** 向上取整到 1/2/2.5/5 × 10^n 的「好看」刻度上限 */
 function niceMax(v: number): number {

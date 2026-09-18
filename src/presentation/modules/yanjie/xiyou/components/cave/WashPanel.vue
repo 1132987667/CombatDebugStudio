@@ -50,7 +50,7 @@
         <span class="xy-cave-mat">金钱 {{ WASH_COST_GOLD }}（每次）</span>
       </div>
 
-      <div class="xy-cave-wash-actions">
+      <div class="xy-cave-wash-actions" :class="{ 'xy-cave-ripple': rippling, 'xy-cave-shake': shaking }">
         <button type="button" class="xy-cave-action" :disabled="!canWash('normal')" @click="doWash('normal')">
           普通洗练
         </button>
@@ -150,8 +150,18 @@ function canWash(mode: WashMode): boolean {
 function doWash(mode: WashMode): void {
   const g = gear.value
   if (!g || !canWash(mode)) return
-  pack.washGear(g.slot, mode, targetIdx.value)
+  const ok = pack.washGear(g.slot, mode, targetIdx.value)
+  if (ok) {
+    rippling.value = true
+    window.setTimeout(() => { rippling.value = false }, 700)
+  } else {
+    shaking.value = true
+    window.setTimeout(() => { shaking.value = false }, 400)
+  }
 }
+
+const rippling = ref(false)
+const shaking = ref(false)
 
 /** 词条文案（属性名 + 数值，percent 补 %；属性名走领域字典，覆盖全部曲线属性码） */
 function affixText(a: GearAffix): string {
@@ -169,7 +179,7 @@ function affixText(a: GearAffix): string {
 }
 
 .xy-cave-wash-affix {
-  border: 1px solid var(--xy-line, #c9b48a);
+  border: 1px solid var(--xy-ink-line);
   background: transparent;
   color: inherit;
   border-radius: 6px;
@@ -184,8 +194,8 @@ function affixText(a: GearAffix): string {
 }
 
 .xy-cave-wash-affix.is-selected {
-  border-color: var(--xy-accent, #a4763a);
-  background: color-mix(in srgb, var(--xy-accent, #a4763a) 12%, transparent);
+  border-color: var(--xy-seal);
+  background: color-mix(in srgb, var(--xy-seal) 12%, transparent);
 }
 
 .xy-cave-wash-actions {

@@ -16,6 +16,7 @@
   --xy-paper-warm: var(--color-bg-secondary); /* 次背景 */
   --xy-paper-light: var(--color-bg-tertiary); /* 强调背景 */
   --xy-seal: #c14b3a; /* 朱印 = 品牌红（域内覆盖全局 #e94560：玫红倾向在深蓝底上发紫，收敛为水墨朱砂） */
+  --xy-on-seal: #ffffff; /* 朱砂底配对字色（底色不随主题翻转，白字 ≈5.4:1 恒达标；勿用 --color-text-inverse，其在暗色主题为深字） */
   --xy-seal-soft: rgba(193, 75, 58, var(--alpha-wash));
   --xy-jade: var(--color-success); /* 青绿 = 成功绿 */
   --xy-jade-soft: rgba(var(--rgb-success), var(--alpha-wash));

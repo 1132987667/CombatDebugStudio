@@ -124,11 +124,12 @@ const handleKeydown = (event: KeyboardEvent) => {
 
   &.radio-button--selected {
     background: var(--color-warning);
-    color: var(--color-text-primary);
+    /* NOTE: 橙底白字仅 ≈2.15:1，改用固定深字 */
+    color: var(--color-on-warning);
     border-color: var(--color-brand-red-active);
 
     .radio-button__icon {
-      color: var(--color-text-primary);
+      color: var(--color-on-warning);
     }
   }
 

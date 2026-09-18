@@ -557,11 +557,11 @@ defineExpose({ env, categories })
   &--danger {
     border-color: var(--xy-seal);
     background: var(--xy-seal);
-    color: #fff;
+    color: var(--xy-on-seal);
 
     &:hover {
       background: var(--xy-seal);
-      color: #fff;
+      color: var(--xy-on-seal);
     }
   }
 

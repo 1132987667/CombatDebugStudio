@@ -292,7 +292,7 @@ const getSelectorText = (selector: unknown): string => {
 
 .group-count {
   color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-regular);
 }
 
 .skill-card {
@@ -375,7 +375,7 @@ const getSelectorText = (selector: unknown): string => {
 .empty-drops {
   text-align: center;
   padding: var(--space-2);
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 .enemy-drops-panel {

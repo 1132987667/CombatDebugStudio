@@ -481,7 +481,7 @@ function mountQualityChip(rarity: number): string {
     --r-color: var(--rarity-1);
 
     &::after {
-      @include bg-rings($light: #666666);
+      @include bg-rings($light: #8bc34a); /* = --rarity-1（mixin 编译期色，改 rarity 需同步） */
     }
   }
 
@@ -489,7 +489,7 @@ function mountQualityChip(rarity: number): string {
     --r-color: var(--rarity-2);
 
     &::after {
-      @include bg-rings($light: #4caf50);
+      @include bg-rings($light: #64b5f6); /* = --rarity-2 */
     }
   }
 
@@ -497,7 +497,7 @@ function mountQualityChip(rarity: number): string {
     --r-color: var(--rarity-3);
 
     &::after {
-      @include bg-rings($light: #60a5fa);
+      @include bg-rings($light: #ce93d8); /* = --rarity-3 */
     }
   }
 
@@ -505,7 +505,7 @@ function mountQualityChip(rarity: number): string {
     --r-color: var(--rarity-4);
 
     &::after {
-      @include bg-rings($light: #a855f7);
+      @include bg-rings($light: #ffd54f); /* = --rarity-4 */
     }
   }
 
@@ -513,7 +513,7 @@ function mountQualityChip(rarity: number): string {
     --r-color: var(--rarity-5);
 
     &::after {
-      @include bg-rings($light: #ff9800);
+      @include bg-rings($light: #ef5350); /* = --rarity-5 */
     }
   }
 

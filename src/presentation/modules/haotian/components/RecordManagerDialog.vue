@@ -10,9 +10,9 @@
   <Dialog :model-value="modelValue" title="战斗记录管理" width="620px" @update:model-value="onModelValue">
     <div class="rm-toolbar">
       <Button @click="refresh">刷新</Button>
-      <TacticalInput size="sm" :model-value="query" placeholder="搜索词牌名 / battleId…" aria-label="搜索战斗记录"
+      <TacticalInput size="md" :model-value="query" placeholder="搜索词牌名 / battleId…" aria-label="搜索战斗记录"
         @update:model-value="query = String($event ?? '')" />
-      <TacticalSelect v-model="sortKey" size="sm" :options="sortOptions" title="排序方式" />
+      <TacticalSelect v-model="sortKey" size="md" :options="sortOptions" title="排序方式" />
       <span class="rm-total">共 {{ store.recordings.length }} 条记录 · 显示 {{ visible.length }}</span>
     </div>
 
@@ -206,7 +206,7 @@ async function doDelete(): Promise<void> {
 .rm-meta {
   margin-top: 2px;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
 }
 .rm-empty {
   padding: var(--space-5);

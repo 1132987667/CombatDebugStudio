@@ -288,7 +288,7 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1200;
+  z-index: var(--z-scene-fx);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -297,7 +297,7 @@ onUnmounted(() => {
 .round-announce {
   position: absolute;
   top: 45%;
-  font-family: 'Cinzel', 'Noto Serif SC', serif;
+  font-family: var(--font-family-serif);
   font-size: 48px;
   font-weight: 900;
   color: var(--color-round-announce);

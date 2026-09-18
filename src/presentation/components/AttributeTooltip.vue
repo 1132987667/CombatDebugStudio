@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { Modifier, ModifierType, AttributeValueType, ModifierSourceType, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttrMeta } from '@/domain/attribute/types'
@@ -358,18 +358,6 @@ const tooltipStyle = computed(() => {
     top: `${top}px`
   }
 })
-
-const handleClickOutside = () => {
-  // 可以添加点击外部关闭的逻辑
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>
 
 <style scoped lang="scss">
@@ -377,7 +365,7 @@ onUnmounted(() => {
 
 .attribute-tooltip {
   position: fixed;
-  z-index: 9999;
+  z-index: var(--z-tooltip);
   width: 320px;
   max-width: 40vw;
   background: var(--color-overlay-panel);
@@ -405,7 +393,7 @@ onUnmounted(() => {
       font-size: var(--font-size-xl);
       font-weight: var(--font-weight-bold);
       color: var(--color-energy);
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-family-mono);
     }
   }
 
@@ -473,7 +461,7 @@ onUnmounted(() => {
         .layer-total {
           font-weight: var(--font-weight-bold);
           color: var(--color-energy);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--font-family-mono);
         }
       }
 
@@ -501,7 +489,7 @@ onUnmounted(() => {
           }
 
           .source-name {
-            color: var(--color-text-disabled);
+            color: var(--color-text-tertiary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -514,7 +502,7 @@ onUnmounted(() => {
           .source-amount {
             font-size: var(--font-size-md);
             font-weight: var(--font-weight-semibold);
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-family-mono);
             color: var(--color-text-primary);
 
             &.positive {
@@ -548,7 +536,7 @@ onUnmounted(() => {
           gap: var(--space-2);
           padding: var(--space-1) 0;
           border-bottom: 1px dashed var(--border-common-color-dark);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--font-family-mono);
 
           &:last-child {
             border-bottom: none;
@@ -583,7 +571,7 @@ onUnmounted(() => {
             font-size: var(--font-size-lg);
             font-weight: var(--font-weight-bold);
             color: var(--color-energy);
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--font-family-mono);
           }
         }
       }

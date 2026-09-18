@@ -720,7 +720,7 @@ const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).le
 .xy-btn--primary {
   border: 1px solid var(--xy-seal);
   background: var(--xy-seal);
-  color: #fff;
+  color: var(--xy-on-seal);
 }
 
 .xy-btn--ghost {

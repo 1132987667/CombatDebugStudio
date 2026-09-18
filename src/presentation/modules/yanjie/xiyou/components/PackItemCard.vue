@@ -142,7 +142,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
-@use 'sass:color';
 @use '@/presentation/styles/mixins' as *;
 
 .xy-item-card {
@@ -179,7 +178,7 @@ onBeforeUnmount(() => {
       0 0 0 2px var(--xy-paper),
       0 0 0 4px var(--ring),
       0 0 34px var(--glow),
-      0 22px 46px rgba(0, 0, 0, 0.4);
+      0 22px 46px rgba(var(--rgb-black), 0.4);
 
     &::after {
       animation: dots-flow 6s linear infinite;
@@ -195,7 +194,7 @@ onBeforeUnmount(() => {
     --r-color: var(--rarity-1);
 
     &::after {
-      @include mixin-bg-dual-dots($color: color.adjust(#7a7a86));
+      @include mixin-bg-dual-dots();
     }
   }
 
@@ -203,7 +202,7 @@ onBeforeUnmount(() => {
     --r-color: var(--rarity-2);
 
     &::after {
-      @include mixin-bg-dual-dots($color: color.adjust(#4caf50));
+      @include mixin-bg-dual-dots();
     }
   }
 
@@ -211,7 +210,7 @@ onBeforeUnmount(() => {
     --r-color: var(--rarity-3);
 
     &::after {
-      @include mixin-bg-dual-dots($color: color.adjust(#60a5fa));
+      @include mixin-bg-dual-dots();
     }
   }
 
@@ -219,7 +218,7 @@ onBeforeUnmount(() => {
     --r-color: var(--rarity-4);
 
     &::after {
-      @include mixin-bg-dual-dots($color: color.adjust(#a855f7));
+      @include mixin-bg-dual-dots();
     }
   }
 
@@ -227,7 +226,7 @@ onBeforeUnmount(() => {
     --r-color: var(--rarity-5);
 
     &::after {
-      @include mixin-bg-dual-dots($color: color.adjust(#ff9800));
+      @include mixin-bg-dual-dots();
     }
   }
 }

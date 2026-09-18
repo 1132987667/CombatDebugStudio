@@ -78,6 +78,11 @@
         </table>
       </div>
     </div>
+
+    <!-- 覆盖导入二次确认：该策略会丢弃库内现有条目，不可逆 -->
+    <ConfirmDialog v-model="confirmOverwrite" title="全量导入（覆盖）"
+      message="「全量导入（覆盖）」将丢弃库内与包内同表的全部现有条目，以包内数据为准。此操作不可撤销（可通过先「导出全量」备份）。确定继续吗？"
+      confirm-text="覆盖导入" danger @confirm="runImport" />
   </div>
 </template>
 
@@ -171,9 +176,20 @@ function onDrop(e: DragEvent): void {
 
 async function doImport(): Promise<void> {
   if (!pendingPkg.value) return
+  // 覆盖导入会清掉现有数据以包内为准，属不可逆操作：二次确认后再执行
+  if (strategy.value === 'overwrite') {
+    confirmOverwrite.value = true
+    return
+  }
+  await runImport()
+}
+
+async function runImport(): Promise<void> {
+  if (!pendingPkg.value) return
   // NOTE: 版本刷新 / 列表刷新 / 引擎数据源重载由 DataPackageService.onDataChanged 统一订阅处理
   importResult.value = await pkgService.importPackage(pendingPkg.value, strategy.value)
   pendingPkg.value = null
 }
+const confirmOverwrite = ref(false)
 </script>
 

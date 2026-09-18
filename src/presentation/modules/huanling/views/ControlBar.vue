@@ -8,15 +8,20 @@
     </div>
 
     <div class="control-group">
-      <Button @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</Button>
+      <Button @click="$emit('start-battle')" :disabled="isBattleActive"
+        :title="isBattleActive ? '战斗进行中，不可重复开始' : undefined">开始战斗</Button>
       <!-- 暂停/继续按钮（仅自动战斗模式可用；手动模式战斗本就暂停，点它会进入"激活但静止"中间态） -->
-      <Button @click="$emit('toggle-pause')" :disabled="!isBattleActive || !isAutoPlaying">
+      <Button @click="$emit('toggle-pause')" :disabled="!isBattleActive || !isAutoPlaying"
+        :title="!isBattleActive ? '战斗未开始' : !isAutoPlaying ? '手动模式下不可暂停' : undefined">
         {{ isPaused ? '继 续' : '暂 停' }}
       </Button>
-      <Button @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</Button>
-      <Button @click="$emit('manual-turn')" :disabled="!isBattleActive || isAutoPlaying">手动单回合</Button>
+      <Button @click="$emit('end-battle')" :disabled="!isBattleActive"
+        :title="!isBattleActive ? '战斗未开始' : undefined">结束战斗</Button>
+      <Button @click="$emit('manual-turn')" :disabled="!isBattleActive || isAutoPlaying"
+        :title="!isBattleActive ? '战斗未开始' : isAutoPlaying ? '自动战斗中，切回手动后可用' : undefined">手动单回合</Button>
       <Button @click="$emit('reset-battle')"
-        :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</Button>
+        :disabled="!isBattleActive && autoPlayMode !== 'off'"
+        :title="!isBattleActive && autoPlayMode !== 'off' ? '自动战斗待机中，关闭自动模式后可重置' : undefined">重置战斗</Button>
 
       <span class="separator"></span>
 

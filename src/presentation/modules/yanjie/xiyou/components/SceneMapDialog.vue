@@ -649,7 +649,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   &--primary {
     border: 1px solid var(--xy-seal);
     background: var(--xy-seal);
-    color: #fff;
+    color: var(--xy-on-seal);
 
     &.locked {
       border-color: var(--xy-ink-line);

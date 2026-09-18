@@ -8,7 +8,11 @@
   <span v-else-if="seg.kind === 'hp-after'" class="hp-after">{{ seg.text }}</span>
   <span v-else-if="seg.kind && ['buff', 'skill', 'passive'].includes(seg.kind)" class="chip"
     :class="[seg.kind === 'skill' && seg.classStr === 'log-ultimate' ? 'chip--ultimate' : 'chip--' + seg.kind, { hoverable: !!seg.hover }]"
-    @mouseenter="seg.hover ? $emit('hover', $event, seg.hover) : undefined" @mouseleave="$emit('leave')">{{ seg.text
+    :tabindex="seg.hover ? 0 : undefined"
+    @mouseenter="seg.hover ? $emit('hover', $event, seg.hover) : undefined"
+    @focus="seg.hover ? $emit('hover', $event, seg.hover) : undefined"
+    @blur="seg.hover ? $emit('leave') : undefined"
+    @mouseleave="$emit('leave')">{{ seg.text
     }}</span>
   <span v-else :class="seg.classStr">{{ seg.text }}</span>
 </template>
@@ -26,7 +30,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  hover: [event: MouseEvent, hover: LogSegmentHover]
+  hover: [event: MouseEvent | FocusEvent, hover: LogSegmentHover]
   leave: []
 }>()
 </script>

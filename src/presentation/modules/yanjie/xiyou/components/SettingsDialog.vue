@@ -560,7 +560,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
   &.active {
     background: var(--xy-seal);
-    color: #fff;
+    color: var(--xy-on-seal);
   }
 
   &:disabled {
@@ -657,7 +657,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .xy-settings-dlg__confirm {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: var(--z-raised);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -719,11 +719,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   &--primary {
     border-color: var(--xy-seal);
     background: var(--xy-seal);
-    color: #fff;
+    color: var(--xy-on-seal);
 
     &:hover {
       background: var(--xy-seal);
-      color: #fff;
+      color: var(--xy-on-seal);
     }
   }
 

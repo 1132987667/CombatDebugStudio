@@ -194,17 +194,7 @@
   }
 }
 
-/* ----- 脉冲缩放（施法蓄力 / 选择指示点 / 霓虹点） ----- */
-@keyframes cast-pulse {
-  0%,
-  100% {
-    transform: translateY(-3px) scale(1);
-  }
-  50% {
-    transform: translateY(-3px) scale(1.018);
-  }
-}
-
+/* ----- 选择指示点 / 霓虹点脉冲 ----- */
 @keyframes t-pulse {
   0%,
   100% {

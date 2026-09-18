@@ -452,7 +452,7 @@
   border: 1px solid var(--xy-seal);
   border-radius: 2px;
   background: var(--xy-seal);
-  color: #fff;
+  color: var(--xy-on-seal);
   cursor: pointer;
   
   font-size: var(--font-size-md);
@@ -667,7 +667,7 @@
 
 .xy-cave-alc-ingrids {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-base);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -677,7 +677,7 @@
 
 .xy-cave-alc-state {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-base);
   margin: 0;
   font-size: var(--font-size-md);
   color: var(--xy-ink-3);
@@ -690,7 +690,7 @@
 
 .xy-cave-alc-action {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-base);
 }
 
 /* ══════════════════════════════════════════════════════════════════

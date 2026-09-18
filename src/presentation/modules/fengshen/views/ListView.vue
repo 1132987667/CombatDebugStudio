@@ -825,12 +825,12 @@ async function requestExportEnemiesJson(): Promise<void> {
 <style scoped>
 .fs-rebuild-summary {
   margin: 0 0 8px;
-  color: var(--color-text-secondary, #9db4cc);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-md);
 }
 .fs-rebuild-warn {
   margin: 0 0 6px;
-  color: var(--color-warning, #d9a441);
+  color: var(--color-warning);
   font-size: var(--font-size-md);
 }
 .fs-rebuild-fail {
@@ -838,7 +838,7 @@ async function requestExportEnemiesJson(): Promise<void> {
 }
 .fs-rebuild-fail-title {
   margin: 0 0 4px;
-  color: var(--color-danger, #e06c5a);
+  color: var(--color-danger);
   font-size: var(--font-size-md);
   font-weight: 600;
 }
@@ -847,7 +847,7 @@ async function requestExportEnemiesJson(): Promise<void> {
   overflow: auto;
 }
 .fs-rebuild-table tr.failed td {
-  color: var(--color-text-tertiary, #5f7a99);
+  color: var(--color-text-tertiary);
   text-decoration: line-through;
 }
 .fs-rebuild-warn-list {
@@ -861,7 +861,7 @@ async function requestExportEnemiesJson(): Promise<void> {
 .fs-rebuild-table-wrap {
   max-height: 52vh;
   overflow: auto;
-  border: 1px solid rgba(127, 176, 232, 0.2);
+  border: 1px solid rgba(var(--rgb-info), var(--alpha-border));
 }
 .fs-rebuild-table {
   width: 100%;
@@ -872,24 +872,24 @@ async function requestExportEnemiesJson(): Promise<void> {
 .fs-rebuild-table td {
   padding: 4px 10px;
   text-align: left;
-  border-bottom: 1px solid rgba(127, 176, 232, 0.12);
+  border-bottom: 1px solid rgba(var(--rgb-info), var(--alpha-wash-strong));
   white-space: nowrap;
 }
 .fs-rebuild-table th {
   position: sticky;
   top: 0;
-  background: rgba(20, 32, 48, 0.96);
-  color: var(--color-text-secondary, #9db4cc);
+  background: var(--color-overlay-panel);
+  color: var(--color-text-secondary);
 }
 .fs-rebuild-table tr.changed td {
-  color: var(--color-primary, #7fb0e8);
+  color: var(--color-info);
 }
 .fs-rebuild-name {
   font-weight: 600;
 }
 .fs-rebuild-id {
   margin-left: 8px;
-  color: var(--color-text-tertiary, #5f7a99);
+  color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
 }
 .fs-rebuild-delta {

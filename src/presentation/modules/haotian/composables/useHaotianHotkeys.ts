@@ -2,7 +2,7 @@
  * 文件: useHaotianHotkeys.ts
  * 功能: 昊天镜键盘导航（V4 键位表）
  * 描述: 1/2 切换双工作台 · 空格播放/暂停 · ←/→ 逐事件 · ↑/↓ 调试卡片导航 · F 跟随 · Esc 关闭诊断。
- *       INPUT/TEXTAREA 聚焦时不拦截。
+ *       INPUT/TEXTAREA 聚焦或任意弹层打开时不拦截（弹窗自管 ESC）。
  */
 
 import { onMounted, onUnmounted } from 'vue'
@@ -11,6 +11,9 @@ import type { HaotianMode } from '../stores/haotianStore'
 export interface HaotianHotkeyContext {
   /** 昊天镜模块当前是否可见（v-show 保活，仅激活时响应快捷键） */
   isActive: () => boolean
+  /** 任一弹层（断点/摘要/对比/记录管理/书签面板）打开时为真：热键全部让路，
+   *  否则 Space 的 preventDefault 会吞掉弹窗内按钮的空格激活 */
+  hasOpenDialog: () => boolean
   mode: () => HaotianMode
   setMode: (m: HaotianMode) => void
   togglePlay: () => void
@@ -36,8 +39,14 @@ export interface HaotianHotkeyContext {
 export function useHaotianHotkeys(ctx: HaotianHotkeyContext): void {
   function onKeydown(e: KeyboardEvent): void {
     if (!ctx.isActive()) return
+    if (ctx.hasOpenDialog()) return
     const target = e.target as HTMLElement | null
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+    // 原生交互控件聚焦时让路：Space 在 BUTTON 上是激活语义，preventDefault 会吞掉点击
+    if (
+      target &&
+      ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName)
+    )
+      return
 
     if (e.key === '1') {
       e.preventDefault()

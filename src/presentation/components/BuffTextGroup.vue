@@ -26,7 +26,7 @@
 
     <!-- 调试信息（可折叠） -->
     <div v-if="debugMode" class="group-debug">
-      <div class="debug-toggle" role="button" tabindex="0" @click.stop="battleStore.setShowDebug(!showDebug)"
+      <div class="debug-toggle" role="button" tabindex="0" :aria-expanded="showDebug" @click.stop="battleStore.setShowDebug(!showDebug)"
         @keydown.enter.stop.prevent="battleStore.setShowDebug(!showDebug)"
         @keydown.space.stop.prevent="battleStore.setShowDebug(!showDebug)">
         {{ showDebug ? '▾' : '▸' }} 调试信息
@@ -147,7 +147,7 @@ const effectLines = computed(() => {
   background: rgba(var(--rgb-debuff), var(--alpha-tint));
 }
 .group--inactive {
-  border-left-color: var(--color-text-disabled);
+  border-left-color: var(--color-text-tertiary);
   background: transparent;
 }
 .group--permanent {
@@ -175,14 +175,14 @@ const effectLines = computed(() => {
   color: var(--color-energy);
   font-weight: var(--font-weight-semibold);
   padding: 0 4px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   background: rgba(var(--rgb-energy), var(--alpha-wash));
 }
 
 .meta-inactive {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   padding: 0 4px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   background: rgba(var(--rgb-neutral), var(--alpha-tint));
 }
 

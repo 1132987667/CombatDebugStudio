@@ -1,7 +1,7 @@
 <template>
   <div class="huanling-module">
     <!-- 加载指示器 -->
-    <div v-if="battleStore.loading.isLoading" class="loading-overlay">
+    <div v-if="battleStore.loading.isLoading" class="loading-overlay" role="status" aria-live="polite">
       <div class="loading-spinner"></div>
       <div class="loading-text">{{ battleStore.loading.operation || '加载中...' }}</div>
       <div v-if="battleStore.loading.progress !== null" class="loading-progress">
@@ -795,7 +795,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 999;
+  z-index: var(--z-toast);
   transition: var(--transition-base);
   backdrop-filter: blur(2px);
 

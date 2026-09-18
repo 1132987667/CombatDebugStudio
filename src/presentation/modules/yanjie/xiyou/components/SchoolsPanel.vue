@@ -516,11 +516,12 @@ function doReset(): void {
   bottom: 0;
   left: 50%;
   width: 2px;
-  height: var(--lit, 0%);
-  transform: translateX(-50%);
+  height: 100%;
+  transform: translateX(-50%) scaleY(calc(var(--lit, 0%) / 100%));
+  transform-origin: bottom;
   background: linear-gradient(to top, var(--sc), color-mix(in srgb, var(--sc) 40%, transparent));
   box-shadow: 0 0 6px color-mix(in srgb, var(--sc) 60%, transparent);
-  transition: height 0.25s ease;
+  transition: transform var(--duration-base) ease;
 }
 
 /* 层门槛（经脉节点）：竖线 + 菱形 + 需求点数 */
@@ -654,14 +655,14 @@ function doReset(): void {
 
 .xy-tree-tip {
   position: absolute;
-  z-index: 10;
+  z-index: var(--z-tooltip);
   width: 230px;
   transform: translate(-50%, calc(-100% - 12px));
   padding: var(--space-2) var(--space-3);
   border: 1px solid color-mix(in srgb, var(--xy-gold) 40%, var(--xy-ink-line));
   border-radius: 2px;
   background: var(--xy-paper-warm, var(--xy-paper));
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(var(--rgb-black), 0.35);
   pointer-events: none;
 
   &.below { transform: translate(-50%, 16px); }

@@ -1,5 +1,5 @@
 <template>
-  <div class="ht-cmd">
+  <div ref="cmdRootRef" class="ht-cmd" @keydown.escape="closePops">
     <div class="ht-mode-switch" role="tablist" aria-label="双工作台切换">
       <button type="button" role="tab" title="回放系统：按时间戳播放，StateDelta 快照跳转（快捷键 1）"
         :aria-selected="store.mode === 'replay'" :class="{ on: store.mode === 'replay' }" @click="store.setMode('replay')">
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
@@ -109,6 +109,7 @@ const opsOpen = ref(false)
 const sessionInput = ref<HTMLInputElement | null>(null)
 const archiveInput = ref<HTMLInputElement | null>(null)
 const recMgrOpen = ref(false)
+const cmdRootRef = ref<HTMLElement | null>(null)
 
 /** 快捷键 / 图例弹层互斥，避免同侧两个 popover 叠放 */
 function toggleHint(): void {
@@ -119,6 +120,19 @@ function toggleLegend(): void {
   legendOpen.value = !legendOpen.value
   if (legendOpen.value) hintOpen.value = false
 }
+
+// NOTE: popover 逃生口对齐 BattleLog 导出菜单口径：Esc（根元素 keydown）+ 点击外部关闭
+function closePops(): void {
+  hintOpen.value = false
+  legendOpen.value = false
+  opsOpen.value = false
+}
+
+function onDocMouseDown(e: MouseEvent): void {
+  if (!cmdRootRef.value?.contains(e.target as Node)) closePops()
+}
+onMounted(() => document.addEventListener('mousedown', onDocMouseDown))
+onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMouseDown))
 
 const LEGEND_ORDER: TracePhase[] = [
   'battle_lifecycle',

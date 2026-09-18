@@ -648,7 +648,7 @@ void load()
 }
 
 .warn {
-  border-left-color: #ff4d4f;
+  border-left-color: var(--color-danger);
 }
 
 .fs-stat-cards {

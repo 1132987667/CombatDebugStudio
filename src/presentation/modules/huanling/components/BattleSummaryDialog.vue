@@ -319,8 +319,8 @@ const exportJson = () => {
   font-size: 1.2em;
   font-weight: bold;
 }
-.winner-badge.win { color: var(--color-heal, #4caf50); }
-.winner-badge.lose { color: var(--color-damage, #f44336); }
+.winner-badge.win { color: var(--color-heal); }
+.winner-badge.lose { color: var(--color-damage); }
 .summary-meta {
   color: var(--color-text-secondary);
 }
@@ -334,7 +334,7 @@ const exportJson = () => {
   color: var(--color-text-secondary);
 }
 .mvp-tag {
-  color: var(--color-heal, #4caf50);
+  color: var(--color-heal);
   font-weight: bold;
   margin-left: var(--space-2);
 }
@@ -363,12 +363,12 @@ const exportJson = () => {
 .sum-table td.nm {
   font-weight: bold;
 }
-.row-win td { background: rgba(76, 175, 80, 0.06); }
-.row-mvp td { background: rgba(76, 175, 80, 0.1); }
-.num.dmg { color: var(--color-damage, #f44336); }
-.num.heal { color: var(--color-heal, #4caf50); }
-.num.ok { color: var(--color-heal, #4caf50); }
-.num.dead { color: var(--color-damage, #f44336); }
+.row-win td { background: rgba(var(--rgb-success), var(--alpha-tint)); }
+.row-mvp td { background: rgba(var(--rgb-success), var(--alpha-wash)); }
+.num.dmg { color: var(--color-damage); }
+.num.heal { color: var(--color-heal); }
+.num.ok { color: var(--color-heal); }
+.num.dead { color: var(--color-damage); }
 
 .judge-row {
   display: flex;
@@ -393,8 +393,8 @@ const exportJson = () => {
   flex: 0 0 40px;
   color: var(--color-text-tertiary);
 }
-.ke-kill, .ke-first_blood { color: var(--color-damage, #f44336); }
-.ke-highest_hit { color: var(--color-heal, #4caf50); }
+.ke-kill, .ke-first_blood { color: var(--color-damage); }
+.ke-highest_hit { color: var(--color-heal); }
 
 .summary-empty {
   padding: var(--space-4);

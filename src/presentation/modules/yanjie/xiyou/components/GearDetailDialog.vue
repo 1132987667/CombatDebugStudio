@@ -227,11 +227,11 @@ function onEquip(): void {
 }
 
 .gd-compare-vs {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-disabled);
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
 
   &--empty {
-    color: var(--color-text-disabled);
+    color: var(--color-text-tertiary);
   }
 }
 
@@ -270,7 +270,7 @@ function onEquip(): void {
 }
 
 .gd-row-delta {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
 
   &--up {
     color: var(--color-buff);
@@ -283,7 +283,7 @@ function onEquip(): void {
 
 .gd-row-tag {
   padding: 0 var(--space-1);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   border-radius: 2px;
   background: var(--color-buff-soft);
   color: var(--color-buff);
@@ -302,8 +302,8 @@ function onEquip(): void {
 
 .gd-source {
   margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-disabled);
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
 }
 
 .gd-actions {

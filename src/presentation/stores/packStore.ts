@@ -16,6 +16,7 @@ import {
   equipmentCatalog,
   materials,
   equipment,
+  starterEnabled,
   packItems,
   pills,
   consumables,
@@ -33,6 +34,7 @@ import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { buildEquipFormula, buildPlayerConfig } from '@/infrastructure/adapters/storage/seed'
 import { rollGearStats, rollAppendAffixes, TIER_TO_QUALITY } from '@/domain/fengshen/gear-generate'
 import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
+import { subTypeName } from '@/domain/fengshen/equipment-overview'
 import type { AffixRuleConfig, AffixQualityCode, EquipFormulaConfig, GearTier } from '@/domain/fengshen/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import {
@@ -130,6 +132,21 @@ function rollInstanceParts(
     return { stats: [{ ...g.coreStat, value: Math.round(g.coreStat.value * factor) }], affixes: r.affixes }
   }
   return { stats: r.core ? [r.core] : [], affixes: r.affixes }
+}
+
+/** 旧档 stats 规范化：写死 stats 时代的实例把核心+词条混锁在 stats（同属性重复 2~3 条，
+ *  如贝壳护手「速度+12/+6/免伤+7%」），与 §21（stats=核心单条、词条在 affixes）冲突。
+ *  恢复存档时以配置 coreStat × 品质系数为权威收敛；旧词条口径已废不并入（可洗练重 roll）。 */
+function normalizeLegacyStats(g: { itemId: string; qualityFactor: number; stats: EquipmentStatEntry[] }): EquipmentStatEntry[] {
+  const def = equipmentCatalog.find((e) => e.id === g.itemId)
+  if (!def?.coreStat) return g.stats
+  const factor = Math.max(0, g.qualityFactor || 1)
+  const canonical = { ...def.coreStat, value: Math.round(def.coreStat.value * factor) }
+  const isCurrent =
+    g.stats.length === 1 &&
+    g.stats[0].attribute === canonical.attribute &&
+    g.stats[0].modifierType === canonical.modifierType
+  return isCurrent ? g.stats : [canonical]
 }
 
 /** 创建装备实例（enhance 0、品质 1 凡品、系数取品质区间中值；属性按公式 roll 锁存）。
@@ -423,8 +440,8 @@ export const usePackStore = defineStore('pack', () => {
               quality,
               qualityFactor: Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality),
               star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
-              // 旧档无锁存属性（写死 stats 时代的实例）→ 按公式补 roll 一次
-              stats: Array.isArray(g.stats) ? g.stats.map((s) => ({ ...s })) : rollInstanceParts(g.itemId as string, quality, Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality)).stats,
+              // 旧档无锁存属性（写死 stats 时代的实例）→ 按公式补 roll 一次；有锁存但为旧混装格式 → 收敛
+              stats: Array.isArray(g.stats) ? normalizeLegacyStats({ itemId: g.itemId as string, qualityFactor: Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality), stats: g.stats.map((s) => ({ ...s })) }) : rollInstanceParts(g.itemId as string, quality, Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality)).stats,
               affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
             }
           }
@@ -443,8 +460,8 @@ export const usePackStore = defineStore('pack', () => {
               quality,
               qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1),
               star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
-              // 旧档无锁存属性（写死 stats 时代）→ 按公式补 roll 一次
-              stats: Array.isArray(g.stats) ? g.stats.map((s) => ({ ...s })) : rollInstanceParts(g.itemId, quality, Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1)).stats,
+              // 旧档无锁存属性（写死 stats 时代）→ 按公式补 roll 一次；有锁存但为旧混装格式 → 收敛
+              stats: Array.isArray(g.stats) ? normalizeLegacyStats({ itemId: g.itemId, qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1), stats: g.stats.map((s) => ({ ...s })) }) : rollInstanceParts(g.itemId, quality, Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1)).stats,
               affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
             }
           })
@@ -475,11 +492,14 @@ export const usePackStore = defineStore('pack', () => {
     }
     inventory.value = inv
 
-    // 装备组：每件生成一个实例（无词缀、enhance 0；pack.json 按 itemId 引用装备定义）
+    // 装备组（新手套）：每件生成一个实例（无词缀、enhance 0；pack.json 按 itemId 引用装备定义）
+    // NOTE: starterEnabled=false（调试面板可禁用）时新档不自动生成，可用「发放新手装备套」补发
     const gear: GearInstance[] = []
-    for (const item of equipment) {
-      if (gearById(item.itemId)) {
-        for (let i = 0; i < item.count; i++) gear.push(makeInstance(item.itemId, [], 0))
+    if (starterEnabled.value) {
+      for (const item of equipment) {
+        if (gearById(item.itemId)) {
+          for (let i = 0; i < item.count; i++) gear.push(makeInstance(item.itemId, [], 0))
+        }
       }
     }
     gearInstances.value = gear
@@ -507,8 +527,10 @@ export const usePackStore = defineStore('pack', () => {
   let snapshotVersion = 0
   function migrateV5StarterHerbs(): void {
     if (snapshotVersion >= 5) return
-    inventory.value['mat_zhixuecao'] = (inventory.value['mat_zhixuecao'] ?? 0) + 3
-    inventory.value['mat_qingxinye'] = (inventory.value['mat_qingxinye'] ?? 0) + 3
+    // NOTE: 「补齐到」而非「累加」——新档 createInitial/buildFromConfigs 已按 pack.json 带 3/3，
+    //       累加会双发；v4 旧档无草药时行为与原补发一致
+    inventory.value['mat_zhixuecao'] = Math.max(inventory.value['mat_zhixuecao'] ?? 0, 3)
+    inventory.value['mat_qingxinye'] = Math.max(inventory.value['mat_qingxinye'] ?? 0, 3)
     for (const id of Object.keys(inventory.value)) {
       if (id.startsWith('seed_')) delete inventory.value[id]
     }
@@ -611,17 +633,30 @@ export const usePackStore = defineStore('pack', () => {
     return true
   }
 
-  /** 实例最终属性（锁存核心 stats × 强化倍率 × 星级倍率 + 词条；未穿戴/未定义返回空） */
-  function instanceStats(inst: GearInstance): EquipmentStatEntry[] {
+  /** 详情分组（PRD §21 三属性）：core=基础属性（含强化/升星倍率），main=固定/主要词条，extra=附加词条 */
+  function instanceStatGroups(inst: GearInstance): { core: EquipmentStatEntry[]; main: EquipmentStatEntry[]; extra: EquipmentStatEntry[] } {
     // 强化 ×(1+4%×L)、升星 ×(5%/10%/10% 累计 25%) 只增强基础属性（§21）；词条不吃养成倍率
     const factor = enhanceFactor(inst.enhance) * starFactor(inst.star ?? 0)
-    const base = (inst.stats ?? []).map((s) => ({ ...s, value: Math.round(s.value * factor) }))
-    const affixStats = (inst.affixes ?? []).map((a) => ({
-      attribute: a.attribute,
-      modifierType: a.modifierType,
-      value: a.value,
-    }))
-    return [...base, ...affixStats]
+    const core = (inst.stats ?? []).map((s) => ({ ...s, value: Math.round(s.value * factor) }))
+    const main: EquipmentStatEntry[] = []
+    const extra: EquipmentStatEntry[] = []
+    for (const a of inst.affixes ?? []) {
+      const row: EquipmentStatEntry = { attribute: a.attribute, modifierType: a.modifierType, value: a.value }
+      if (a.fixed || a.main) main.push(row)
+      else extra.push(row)
+    }
+    return { core, main, extra }
+  }
+
+  /** 实例最终属性（锁存核心 stats × 强化倍率 × 星级倍率 + 词条；未穿戴/未定义返回空） */
+  function instanceStats(inst: GearInstance): EquipmentStatEntry[] {
+    const g = instanceStatGroups(inst)
+    return [...g.core, ...g.main, ...g.extra]
+  }
+
+  /** 装备子类型中文标签（affix-rule sub_type_groups 权威，如 sword→剑）；无子类型部位返回空串 */
+  function subTypeLabel(slot: string, subType?: string): string {
+    return subType ? subTypeName(AFFIX_RULE, slot, subType) : ''
   }
 
   /** 已穿戴装备的 stats 汇总（供 buildBattleTeams 注入主角与属性面板重算，未穿戴返回空） */
@@ -1009,6 +1044,17 @@ export const usePackStore = defineStore('pack', () => {
     return true
   }
 
+  /** 丢弃单件装备实例（逐件操作粒度；穿戴中的不在 gearInstances，天然不可丢） */
+  function discardGearInstance(instanceId: string): boolean {
+    const idx = gearInstances.value.findIndex((g) => g.instanceId === instanceId)
+    if (idx < 0) return false
+    const inst = gearInstances.value[idx]
+    gearInstances.value.splice(idx, 1)
+    scheduleSave()
+    notification.toast(`丢弃了「${gearById(inst.itemId)?.name ?? inst.itemId}」`)
+    return true
+  }
+
   // ════════════ 仓库存取 ════════════
 
   /** 存入仓库（全部数量），找第一个空位 */
@@ -1389,7 +1435,7 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 战斗胜利掉落结算：逐条 roll（命中 chance 才入包）+ toast
+   * 战斗胜利掉落结算：逐条 roll（命中 chance 才入包），toast 按物品聚合
    * @param silent 静默模式（批量结算用，如刷关模拟；抑制逐条 toast 刷屏）
    * @returns 实际命中的掉落条目（供结算展示；确定性由战斗引擎自身保证，掉落非其验证点）
    * NOTE: debugForceDrops 为调试开关（DebugCavePanel「掉落率锁定」），开启时全部命中，验证掉落表完整性
@@ -1407,13 +1453,20 @@ export const usePackStore = defineStore('pack', () => {
 
   function applyDrops(drops: EnemyDrop[], silent = false): EnemyDrop[] {
     const hit: EnemyDrop[] = []
+    const byItem = new Map<string, { name: string; quantity: number }>()
     for (const d of drops) {
       const item = catalogById(d.itemId)
       if (!item || d.quantity <= 0 || d.chance <= 0) continue
       if (!debugForceDrops && Math.random() >= d.chance) continue
       addItem(d.itemId, d.quantity)
       hit.push(d)
-      if (!silent) notification.toast(`获得「${item.name}」×${d.quantity}`, 'success')
+      const agg = byItem.get(d.itemId)
+      if (agg) agg.quantity += d.quantity
+      else byItem.set(d.itemId, { name: item.name, quantity: d.quantity })
+    }
+    // NOTE: 同物品多次命中（多敌同表 / 一表多条）合并为一条 toast，重复条目只是独立 roll，不是重复入包
+    if (!silent) {
+      for (const a of byItem.values()) notification.toast(`获得「${a.name}」×${a.quantity}`, 'success')
     }
     return hit
   }
@@ -1437,6 +1490,8 @@ export const usePackStore = defineStore('pack', () => {
     equippedGear,
     equippedInstance,
     instanceStats,
+    instanceStatGroups,
+    subTypeLabel,
     equippedStats,
     packGearInstances,
     equipInstance,
@@ -1454,6 +1509,7 @@ export const usePackStore = defineStore('pack', () => {
     addItem,
     removeItem,
     discardItem,
+    discardGearInstance,
     moveToStorage,
     moveToInventory,
     expandCost,

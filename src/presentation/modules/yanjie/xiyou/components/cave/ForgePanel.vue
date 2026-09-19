@@ -225,7 +225,7 @@ function craft(): void {
     const inst = pack.craftEquipment(g.id)
     if (inst) {
       rippling.value = true
-      notification.toast(`铸造成功！获得「${g.name}」`, 'success')
+      // NOTE: 成功提示由 packStore.craftEquipment 统一弹出，此处不再重复 toast
       window.setTimeout(() => {
         rippling.value = false
       }, 700)

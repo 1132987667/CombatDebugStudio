@@ -79,6 +79,17 @@
           </div>
         </div>
       </template>
+
+      <!-- ═══ 容器 C：战斗战报页签（战斗结束后自动记录，保留最近 3 场，不弹窗） ═══ -->
+      <template #report>
+        <div class="log-content" :class="{ 'is-active': activeTab === 'report' }">
+          <EmptyState v-if="recentSummaries.length === 0">暂无战斗战报（战斗结束后自动记录，保留最近 3 场）</EmptyState>
+          <div v-for="(s, i) in recentSummaries" :key="s.battleId" class="report-item">
+            <div class="report-tag">{{ REPORT_TAGS[i] ?? `更早一场` }}</div>
+            <BattleSummaryCard :summary="s" />
+          </div>
+        </div>
+      </template>
     </Tabs>
 
     <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
@@ -101,6 +112,9 @@ import type { TabItem } from '@/presentation/components'
 
 import LogSeg from '@/presentation/components/LogSeg.vue'
 import NarrativeBlocks from '@/presentation/components/NarrativeBlocks.vue'
+import BattleSummaryCard from '@/presentation/components/BattleSummaryCard.vue'
+import { summaryToText } from '@/shared/utils/battle-summary-text'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import { LogTooltipResolver } from '@/application/projection/LogTooltipResolver'
 import { container } from '@/infrastructure/di/Container'
@@ -123,12 +137,16 @@ try {
 // ───────────────────────── 页签状态 ─────────────────────────
 const TAB_DEFS = [
   { id: 'battle', label: '战斗' },
+  { id: 'report', label: '战斗战报' },
   { id: 'system', label: '系统' },
   { id: 'debug', label: '调试' },
 ] as const
 type TabId = (typeof TAB_DEFS)[number]['id']
 
 const activeTab = ref<TabId>('battle')
+
+/** 战报场次标签（recentSummaries 按最新在前排列，下标 0 = 最新一场） */
+const REPORT_TAGS = ['最新一场', '上一场', '再上一场'] as const
 
 /** 为 Tabs 组件构建带计数徽章的页签列表 */
 const tabsWithCount = computed<TabItem[]>(() =>
@@ -147,6 +165,9 @@ const allLogs = ref<LogEntry[]>([])
 const logUpdateListener = () => {
   allLogs.value = battleLogManager.getFilteredLogs()
 }
+
+/** 战斗战报历史（battleStore 在战斗结束时入列，最新在前，仅保留 3 场） */
+const { recentSummaries } = useBattleStore()
 
 // ───────────────────────── 派生数据 ─────────────────────────
 function applyKeyword(list: LogEntry[], kw: string): LogEntry[] {
@@ -197,6 +218,7 @@ const blocks = computed(() => renderer.renderEntries(battleLogs.value))
 // ───────────────────────── 页签计数 ═══ Tabs 组件接管指示条 ──────────────────
 function tabCount(id: TabId): number {
   if (id === 'battle') return allLogs.value.filter((l) => l.type === LogType.BATTLE).length
+  if (id === 'report') return recentSummaries.length
   if (id === 'system') return allLogs.value.filter((l) => SYSTEM_TYPES.includes(l.type)).length
   return debugTotal.value
 }
@@ -324,6 +346,11 @@ function exportLogs(format: 'txt' | 'html' = 'txt'): void {
       mime = 'text/plain;charset=utf-8'
       ext = 'txt'
     }
+  } else if (activeTab.value === 'report') {
+    // 战报页签：纯文本摘要（与卡片「复制摘要」同口径，仅 TXT）
+    content = recentSummaries.map((s, i) => `【${REPORT_TAGS[i] ?? '更早一场'}】\n${summaryToText(s)}`).join('\n\n')
+    mime = 'text/plain;charset=utf-8'
+    ext = 'txt'
   } else {
     // 系统/调试页签：扁平日志，仅 TXT
     const logs = activeTab.value === 'debug' ? debugLogs.value : systemLogs.value
@@ -552,6 +579,25 @@ onUnmounted(() => {
 .flat-err {
   flex-basis: 100%;
   color: var(--color-danger);
+}
+
+/* ─────────── 战斗战报页签 ─────────── */
+.report-item {
+  margin-bottom: var(--space-3);
+}
+
+.report-item:last-child {
+  margin-bottom: 0;
+}
+
+.report-tag {
+  display: inline-block;
+  margin-bottom: var(--space-1);
+  padding: 1px var(--space-2);
+  border-left: 2px solid var(--color-heal);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
 }
 
 /* 搜索无结果空态内的「清除搜索」按钮 */

@@ -18,13 +18,16 @@ export type PackSub = 'pack' | 'storage' | 'shop'
               <div class="xy-pack-list xy-panel-tabs">
                 <template v-if="displayGroups(c.types).length">
                   <div v-for="group in displayGroups(c.types)" :key="group.type" class="xy-cabinet-cat">
-                    <h4 class="xy-sec-title">{{ group.type }}<span class="xy-sec-count">×{{ group.items.length }}</span></h4>
+                    <h4 class="xy-sec-title">{{ group.type }}<span class="xy-sec-count">×{{ group.cards.length }}</span></h4>
                     <div class="xy-card-grid">
                       <PackItemCard
-                        v-for="it in group.items" :key="it.id"
-                        :item="it" :count="countOf(it.id)" :selected="selectedId === it.id"
-                        @open="emit('open-detail', $event)" @use="emit('use', $event)"
+                        v-for="card in group.cards" :key="card.key"
+                        :item="card.item" :count="card.gear ? 1 : countOf(card.item.id)" :gear="card.gear"
+                        :selected="selectedId === card.item.id && !card.gear"
+                        @open="(id, inst) => emit('open-detail', id, inst)" @use="emit('use', $event)"
                         @storage="emit('move-storage', $event)" @discard="emit('ask-card-discard', $event)"
+                        @discard-instance="emit('discard-gear-instance', $event)"
+                        @equip="emit('equip-gear-instance', $event)"
                         @sell="onSellCard($event)" />
                     </div>
                   </div>
@@ -45,14 +48,16 @@ export type PackSub = 'pack' | 'storage' | 'shop'
               扩容 · {{ pack.expandCost() }} 金钱
             </Button>
           </div>
-          <div class="xy-storage-grid">
-            <button v-for="(slot, i) in pack.storage" :key="i" type="button" class="xy-storage-cell"
-              :class="{ 'is-empty': !slot.itemId }"
-              :aria-label="slot.itemId ? `${nameOf(slot.itemId)} ×${slot.count}，第 ${i + 1} 格` : `空位，第 ${i + 1} 格`"
-              @click="emit('open-storage-cell', i)">
-              <span class="xy-storage-count" :class="{ 'is-empty': !slot.itemId }">{{ slot.itemId ? `×${slot.count}` : '空' }}</span>
-              <span class="xy-storage-name" :style="slot.itemId ? { color: qualityColor(pack.catalogById(slot.itemId)?.rarity ?? 1) } : undefined">{{ slot.itemId ? nameOf(slot.itemId) : '空位' }}</span>
-            </button>
+          <div class="xy-card-grid">
+            <template v-for="s in storageSlots" :key="s.index">
+              <PackItemCard v-if="s.item" :item="s.item" :count="s.count" in-storage
+                @open="emit('open-storage-cell', s.index)" />
+              <button v-else type="button" class="xy-storage-cell"
+                :aria-label="`空位，第 ${s.index + 1} 格`" @click="emit('open-storage-cell', s.index)">
+                <span class="xy-storage-count">空</span>
+                <span class="xy-storage-name">空位</span>
+              </button>
+            </template>
           </div>
         </div>
       </template>
@@ -101,10 +106,9 @@ export type PackSub = 'pack' | 'storage' | 'shop'
 import { computed, ref, watch } from 'vue'
 import type { TabItem } from '@/presentation/components'
 
-import { usePackStore } from '@/presentation/stores/packStore'
+import { usePackStore, type GearInstance } from '@/presentation/stores/packStore'
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import type { XiyouCatalogItem, XiyouShopGood } from '../types'
-import { qualityColor } from '../quality'
 import PackItemCard from './PackItemCard.vue'
 
 const props = defineProps<{
@@ -118,10 +122,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:sub': [PackSub]
-  'open-detail': [itemId: string]
+  'open-detail': [itemId: string, instanceId?: string]
   'use': [itemId: string]
   'move-storage': [itemId: string]
   'ask-card-discard': [itemId: string]
+  'discard-gear-instance': [instanceId: string]
+  'equip-gear-instance': [instanceId: string]
   'open-storage-cell': [index: number]
 }>()
 
@@ -210,25 +216,41 @@ const filtered = computed<XiyouCatalogItem[]>(() => {
   return list
 })
 
-/** 按二级分类过滤 + 按 type 分组（保持 items.json 顺序） */
-function displayGroups(types: readonly string[]): Array<{ type: string; items: XiyouCatalogItem[] }> {
+/** 背包卡片视图：普通物品一张聚合卡；装备逐实例展开（key=instanceId，不叠加） */
+interface PackCard {
+  key: string
+  item: XiyouCatalogItem
+  gear?: GearInstance
+}
+
+/** 按二级分类过滤 + 按 type 分组（保持 items.json 顺序），装备组内逐实例展开 */
+function displayGroups(types: readonly string[]): Array<{ type: string; cards: PackCard[] }> {
   const list = types.length === 0 ? filtered.value : filtered.value.filter((it) => types.includes(it.type))
-  const map = new Map<string, XiyouCatalogItem[]>()
+  const map = new Map<string, PackCard[]>()
   for (const it of list) {
+    const gears = pack.gearById(it.id) ? pack.packGearInstances().filter((g) => g.itemId === it.id) : []
+    const cards = gears.length
+      ? gears.map((g) => ({ key: g.instanceId, item: it, gear: g }))
+      : [{ key: it.id, item: it }]
     const group = map.get(it.type)
-    if (group) group.push(it)
-    else map.set(it.type, [it])
+    if (group) group.push(...cards)
+    else map.set(it.type, cards)
   }
-  return [...map.entries()].map(([type, items]) => ({ type, items }))
+  return [...map.entries()].map(([type, cards]) => ({ type, cards }))
 }
 
 function countOf(itemId: string): number {
   return pack.countOf(itemId)
 }
 
-function nameOf(itemId: string): string {
-  return pack.catalogById(itemId)?.name ?? itemId
-}
+/** 仓库格数据：目录缺失的 itemId 视同空位渲染 */
+const storageSlots = computed<Array<{ index: number; item: XiyouCatalogItem | null; count: number }>>(() =>
+  pack.storage.map((slot, index) => ({
+    index,
+    item: slot.itemId ? pack.catalogById(slot.itemId) ?? null : null,
+    count: slot.count,
+  })),
+)
 
 /* ── 坊市购买 ── */
 interface BuyState {
@@ -375,7 +397,12 @@ function doBuy(g: XiyouShopGood): void {
   margin-bottom: var(--space-4);
 }
 
-/* ── 仓库 ── */
+/* 分组标题的数量紧跟类型（覆盖 xiyou.scss 全局 margin-left:auto 右推） */
+.xy-sec-title .xy-sec-count {
+  margin-left: 0;
+}
+
+/* ── 仓库（有物品的格子复用 PackItemCard，仅空位保留虚线格） ── */
 .xy-storage-head {
   display: flex;
   align-items: baseline;
@@ -388,27 +415,18 @@ function doBuy(g: XiyouShopGood): void {
   }
 }
 
-.xy-storage-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-2);
-}
-
 .xy-storage-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  align-self: start;
   padding: var(--space-2) 0;
-  border: 1px solid var(--xy-ink-line);
+  border: 1px dashed var(--xy-ink-line);
   background: var(--xy-paper);
   border-radius: 2px;
   cursor: pointer;
   font-family: inherit;
-
-  &.is-empty {
-    border-style: dashed;
-  }
 
   &:hover {
     border-color: var(--xy-seal);
@@ -417,20 +435,12 @@ function doBuy(g: XiyouShopGood): void {
 
 .xy-storage-count {
   font-size: var(--font-size-md);
-  color: var(--xy-seal);
-
-  &.is-empty {
-    color: var(--xy-ink-4);
-  }
+  color: var(--xy-ink-4);
 }
 
 .xy-storage-name {
   font-size: var(--font-size-md);
   color: var(--xy-ink-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  white-space: nowrap;
 }
 
 /* ── 坊市 ── */

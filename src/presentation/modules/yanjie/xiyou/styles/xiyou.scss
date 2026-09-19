@@ -186,7 +186,6 @@
         .xy-gear-grid,
         .xy-codex-grid,
         .xy-farm-grid,
-        .xy-storage-grid,
         .xy-skill-grid,
         .xy-character-panel,
         .xy-realm-panel,
@@ -218,7 +217,6 @@
         .xy-gear-grid,
         .xy-codex-grid,
         .xy-farm-grid,
-        .xy-storage-grid,
         .xy-skill-grid {
           grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         }
@@ -292,6 +290,18 @@
   padding-right: var(--space-2);
   /* 底部留呼吸空间：末尾分组头不再贴边裁切 */
   padding-bottom: var(--space-6);
+  /* 卡片 hover 上移 4px + 4px 外圈 ring，超出滚动容器 overflow 裁剪边界——顶部留白让 hover 态完整显示
+     （同 BattleRoster .xy-roster-pack-list 范式） */
+  padding-top: 14px;
+}
+
+/* 装备页签例外：左右两栏撑满面板高度，右池自滚动、左栏总属性贴底（同文件上方 block 滚动规则之后声明以覆盖） */
+.xy-panel-scroll:not(.xy-pack-host)
+  > .tabs-root
+  .flex-col-fill
+  > [role='tabpanel'][id$='-panel-gear'] {
+  display: flex;
+  overflow: hidden;
 }
 
 .xy-seal-title {
@@ -621,20 +631,21 @@
   }
 }
 
+/* 层级区分：一级节标题（sec-title 红条）> 二级子标题（纯文字+字距，无条）> 三级组（缩进+灰条） */
 .xy-attr-sub {
   display: flex;
   align-items: center;
   gap: var(--space-1);
   margin: 0 0 var(--space-2);
-  padding-left: var(--space-2);
-  border-left: 3px solid var(--xy-seal);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
+  letter-spacing: 2px;
   color: var(--xy-ink-2);
 }
 
 .xy-attr-sub--minor {
-  border-left-color: var(--xy-ink-line);
+  margin-left: var(--space-2);
+  border-left: 3px solid var(--xy-ink-line);
   font-weight: var(--font-weight-regular);
   color: var(--xy-ink-3);
 }
@@ -644,7 +655,6 @@
   width: 100%;
   padding: var(--space-1) var(--space-2);
   border: none;
-  border-left: 3px solid var(--xy-seal);
   background: none;
   font-family: inherit;
   cursor: pointer;
@@ -656,7 +666,7 @@
   }
 
   &.xy-attr-sub--minor {
-    border-left-color: var(--xy-ink-line);
+    border-left: 3px solid var(--xy-ink-line);
 
     &:hover {
       background: var(--xy-paper-light);

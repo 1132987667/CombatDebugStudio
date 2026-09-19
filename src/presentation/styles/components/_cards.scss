@@ -188,11 +188,17 @@
 
 .member-name {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--space-2);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin-bottom: var(--space-1);
+}
+
+/* 三段式名称行：等级贴左 · 词缀区弹性居中（无词缀占位空段）· 名称贴右 */
+.member-lv,
+.member-title {
+  flex: none;
 }
 
 /* 名字阵营色 */
@@ -204,11 +210,23 @@
   color: var(--color-enemy-text);
 }
 
-/* 词缀前缀（名字前【词缀1、词缀2】，文本色随品阶）
+/* 名称可悬浮出属性卡片：help 光标 + 提亮提示（键盘 focus 同样唤出） */
+.member-title {
+  cursor: help;
+}
+
+.member-title:hover,
+.member-title:focus-visible {
+  filter: brightness(1.3);
+}
+
+/* 词缀（【词缀1、词缀2】，文本色随品阶）居中显示在等级与名称之间
    NOTE: 色值统一引用 tokens.scss 的 --rarity-* 令牌 */
 .member-affixes {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
   font-weight: var(--font-weight-bold);
-  margin-right: var(--space-1);
 }
 
 .affix-tag.affix-q1 {
@@ -234,6 +252,12 @@
 .member-action {
   display: inline-flex;
   align-items: center;
+}
+
+/* NOTE: 非行动态用 visibility 保留占位而非移出文档流——徽标出现/消失不再压缩词缀区宽度，
+   自动战斗中每次切换行动者时词缀位置零跳动（visibility 仍参与布局，宽度恒等于徽标宽） */
+.member-action--idle {
+  visibility: hidden;
 }
 
 /* ----- 5. 行动标签 ----- */
@@ -461,9 +485,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* NOTE: 行高须小于条高（16.8px 含 border），行高=条高时行盒撑满、
+     monospace 数字字形在行盒内偏上，视觉贴条顶；收为 1 交给 flex 居中 */
+  line-height: 1;
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-sm);
   color: var(--color-text-primary);
   text-shadow: 0 1px 2px rgba(var(--rgb-black), 0.9);
   pointer-events: none;

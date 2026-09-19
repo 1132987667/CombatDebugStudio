@@ -6,17 +6,20 @@
   <div class="member-card" ref="cardRef" :class="[cardClasses, cardVisualStateClass]" role="button" tabindex="0"
     @click="handleClick" @keydown.enter="handleClick" @keydown.space.prevent="handleClick">
     <div class="member-info">
-      <!-- 名称和行动标识 -->
+      <!-- 名称行：等级固定最左 · 词缀居中自由显示 · 名称固定最右（头部不再重复气血文本，条上已有） -->
       <div class="member-name">
-        <template v-if="displayLevel > 0">Lv.{{ displayLevel }} </template>
+        <span v-if="displayLevel > 0" class="member-lv">Lv.{{ displayLevel }}</span>
         <span v-if="affixTags.length > 0" class="member-affixes">【<span v-for="(a, i) in affixTags" :key="a.id"
             class="affix-tag" :class="'affix-q' + a.rarity" tabindex="0" @mouseenter="showAffixTooltip(a.affix, $event)"
             @mouseleave="clearAffixTooltip" @focus="showAffixTooltip(a.affix, $event)"
             @blur="clearAffixTooltip">{{ i > 0 ? '、' : '' }}{{ a.name }}</span>】</span>
-        <span class="ml-2" :class="isEnemy ? 'name--enemy' : 'name--ally'">{{ displayName }}</span> {{ hpText }}
-        <div class="member-action ml-2" v-if="isActive">
+        <span v-else class="member-affixes"></span>
+        <div class="member-action" :class="{ 'member-action--idle': !isActive }">
           <span :class="['acting-badge', { 'enemy-acting': isEnemy }]">←操作中</span>
         </div>
+        <span class="member-title" :class="isEnemy ? 'name--enemy' : 'name--ally'" tabindex="0"
+          @mouseenter="showNameTooltip" @mouseleave="clearNameTooltip" @focus="showNameTooltip"
+          @blur="clearNameTooltip">{{ displayName }}</span>
       </div>
 
       <!-- 气血值条 -->
@@ -112,6 +115,9 @@
            宿主只经 @hide 清理状态，传 DOM 事件会被 Vue 告警且不生效） -->
       <EntityTooltip :visible="!!hoveredAffix" :data="affixTooltipData" :trigger-rect="affixHoverPos"
         @hide="hoveredAffix = null" />
+      <!-- 名称悬浮卡片：实体实时最终属性（纯数据注入模式无属性明细，showNameTooltip 内不启用） -->
+      <EntityTooltip :visible="!!hoveredName" :data="nameTooltipData" :trigger-rect="nameHoverPos"
+        @hide="hoveredName = false" />
     </div>
   </div>
 </template>
@@ -145,14 +151,15 @@ import type { BattleEntity } from '@/domain/battle/type/types'
 
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
-import type { TooltipData } from '@/application/projection/LogTooltipResolver'
+import type { TooltipData, TooltipDetailRow } from '@/application/projection/LogTooltipResolver'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
 
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'
-import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { getAttrName, getAttrMeta, ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_DISPLAY_CONFIG } from '@/presentation/config/attributeDisplay'
 import type { AffixData, AffixLibraryData } from '@/domain/fengshen/types'
 import { QUALITY_NAMES, QUALITY_COLORS } from '@/presentation/modules/yanjie/xiyou/quality'
 import affixLibraryRaw from '@configs/affixes/affixes.json'
@@ -258,6 +265,49 @@ const affixTooltipData = computed<TooltipData | null>(() => {
       value: `${m.percent > 0 ? '+' : ''}${m.percent}%`,
     })),
     source: a.drop_hint ? `掉落倾向：${a.drop_hint}` : undefined,
+  }
+})
+
+// ============ 名称悬浮：实体实时属性卡片 ============
+/** 名称悬浮属性清单：取展示配置 core 基础速览层为单一来源（与调试面板/属性面板同源，不另立数组） */
+const NAME_TOOLTIP_ATTRS: ATTRIBUTE_CODE[] = (Object.keys(ATTRIBUTE_DISPLAY_CONFIG) as ATTRIBUTE_CODE[])
+  .filter((code) => ATTRIBUTE_DISPLAY_CONFIG[code].displayTier === 'core')
+
+const hoveredName = ref(false)
+const nameHoverPos = ref<DOMRect | null>(null)
+
+function showNameTooltip(event: MouseEvent | FocusEvent): void {
+  // 纯数据注入（回放舞台）无属性明细数据，名称悬浮仅实体模式启用
+  if (!props.participant) return
+  hoveredName.value = true
+  nameHoverPos.value = (event.currentTarget as HTMLElement).getBoundingClientRect()
+}
+
+function clearNameTooltip(): void {
+  hoveredName.value = false
+  nameHoverPos.value = null
+}
+
+/** 名称悬浮卡片数据（明细 = core 属性实时最终值；读 version 戳保证战斗中随 buff 增减刷新） */
+const nameTooltipData = computed<TooltipData | null>(() => {
+  const entity = props.participant
+  if (!hoveredName.value || !entity) return null
+  void snap.value?.version
+  const details: TooltipDetailRow[] = NAME_TOOLTIP_ATTRS.map((code) => {
+    const value = entity.getAttribute(code)
+    return {
+      label: getAttrName(code),
+      value: getAttrMeta(code)?.isPercentage ? `${value}%` : String(value),
+    }
+  })
+  const factionColor = props.isEnemy ? 'var(--color-enemy-text)' : 'var(--color-ally-text)'
+  return {
+    name: displayName.value,
+    badge: props.isEnemy ? '敌方' : '我方',
+    nameColor: factionColor,
+    badgeColor: factionColor,
+    durationLabel: displayLevel.value > 0 ? `Lv.${displayLevel.value}` : undefined,
+    details,
   }
 })
 

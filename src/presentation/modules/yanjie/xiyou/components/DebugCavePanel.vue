@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import IconXClose from '~icons/app/x-close'
 
 import { useBattleStore } from '@/presentation/stores/battleStore'
@@ -122,7 +122,7 @@ import type { DataIntegrityService } from '@/application/service/DataIntegritySe
 import { container } from '@/infrastructure/di/Container'
 import { createDebugCategories, type DebugActionDef, type DebugActionInput, type DebugActionResult, type DebugCategory } from '../debugActions'
 import type { PlayerStoreDebugEnv } from '../debugEnv'
-import { alchemyRecipes, equipmentCatalog, forgeRecipes, loadXiyouData, packItems, quests, scenes, schools, shopGoods, skillPoints } from '../xiyouData'
+import { alchemyRecipes, equipment, equipmentCatalog, forgeRecipes, loadXiyouData, packItems, persistStarterEnabled, quests, scenes, schools, shopGoods, skillPoints, starterEnabled } from '../xiyouData'
 import { saveManager } from '../save-bridge'
 
 interface Props {
@@ -171,6 +171,11 @@ const env: PlayerStoreDebugEnv = {
   equipmentCatalog,
   forgeRecipes,
   alchemyRecipes,
+  starter: {
+    items: () => equipment,
+    enabled: () => starterEnabled.value,
+    setEnabled: persistStarterEnabled,
+  },
   toast: (message, type) => notification.toast(message, type),
 }
 
@@ -187,6 +192,18 @@ const inputValues = reactive<Record<string, string | number | null>>({})
 
 /** 开关型动作状态 */
 const toggleStates = reactive<Record<string, boolean>>({})
+
+// 带 initial 的开关动作（如新档新手套开关）：挂载时按持久化态播种一次，之后由 nextState 驱动
+watch(
+  categories,
+  (cats) => {
+    for (const c of cats)
+      for (const g of c.groups)
+        for (const act of g.actions)
+          if (act.toggle && act.initial && !(act.id in toggleStates)) toggleStates[act.id] = act.initial()
+  },
+  { immediate: true },
+)
 
 /** 文件型动作：隐藏 input 触发 + 文件名显示 */
 const fileInputRefs = reactive<Record<string, HTMLInputElement | null>>({})

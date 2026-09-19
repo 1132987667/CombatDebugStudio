@@ -18,6 +18,7 @@ import type { AffixRuleConfig, AffixQualityCode, EquipFormulaConfig, PetMountInd
 import type { EquipmentSlot } from '@/shared/types/Item'
 import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { equipBaseUnit, PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
+import { getAttributeDict } from '@/domain/fengshen/attribute-dictionary'
 import type { PlayerBaseAttrCode } from '@/domain/fengshen/types'
 
 /** 基础六维：有属性点转化系数、走装备公式；其余属性一律走词条曲线 */
@@ -618,5 +619,5 @@ const SHORT_ATTR_NAMES: Record<string, string> = {
 }
 
 export function attrShortName(code: string): string {
-  return SHORT_ATTR_NAMES[code] ?? code
+  return SHORT_ATTR_NAMES[code] ?? getAttributeDict(code)?.name ?? code
 }

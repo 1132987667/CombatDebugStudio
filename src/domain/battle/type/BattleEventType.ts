@@ -5,7 +5,6 @@ import type {
 } from '@/domain/skill/types';
 import type { AnimationType } from '@/domain/battle/type/BattleAnimationType';
 import type { BattleLogEntry } from '@/shared/types/battle-log';
-import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary';
 
 
 
@@ -108,7 +107,6 @@ export interface BattleEvents {
   [BattleEventCodes.DEBUG_PAUSE_RESUME]: void;
   [BattleEventCodes.DEBUG_TOGGLE]: { enabled: boolean };
   [BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED]: { characterId: string };
-  [BattleEventCodes.BATTLE_SUMMARY]: BattleSummary;
   [BattleEventCodes.ANIMATION_COMPLETE]: AnimationCompleteEventData;
   // mitt 约束：Emitter<Events> 要求 Events extends Record<string, unknown>，必须保留
   [key: string]: unknown;
@@ -156,8 +154,6 @@ export const BattleEventCodes = {
   DEBUG_TOGGLE: 'debug-toggle',
   /** 参与者属性变更事件（Buff 触发 recalculateAll 后发射） */
   PARTICIPANT_ATTRIBUTE_CHANGED: 'participant-attribute-changed',
-  /** 战斗摘要事件 */
-  BATTLE_SUMMARY: 'battle-summary',
   /** 动画完成事件（领域层动画队列 resolve 时发射，用于 UI 层竞态安全的清除动画状态） */
   ANIMATION_COMPLETE: 'animation-complete',
 } as const

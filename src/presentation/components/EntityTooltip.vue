@@ -31,10 +31,13 @@
 
         <!-- 明细行 -->
         <div v-if="data.details.length > 0" class="tooltip-details">
-          <div v-for="(row, idx) in data.details" :key="idx" class="detail-row">
-            <span class="detail-label">{{ row.label }}</span>
-            <span class="detail-value">{{ row.value }}</span>
-          </div>
+          <template v-for="(row, idx) in data.details" :key="idx">
+            <div v-if="row.section" class="detail-section">{{ row.label }}</div>
+            <div v-else class="detail-row">
+              <span class="detail-label">{{ row.label }}</span>
+              <span class="detail-value">{{ row.value }}</span>
+            </div>
+          </template>
         </div>
 
         <!-- 来源脚注 -->
@@ -50,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 
 interface Props {
@@ -88,10 +91,47 @@ const onTooltipLeave = () => {
   }, 200) // 200ms 延迟
 }
 
+// NOTE: 关闭不能只靠宿主 mouseleave——触发元素被 v-for 销毁时（如点击穿戴移除背包卡）
+// 浏览器不会派发 mouseleave，tooltip 会永久残留。点击外部即收起，对所有宿主兜底。
+const onDocMouseDown = (e: MouseEvent): void => {
+  if (tooltipRef.value?.contains(e.target as Node)) return
+  emit('hide')
+}
+
+watch(
+  () => props.visible,
+  (visible) => {
+    if (visible) window.addEventListener('mousedown', onDocMouseDown, true)
+    else window.removeEventListener('mousedown', onDocMouseDown, true)
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  window.removeEventListener('mousedown', onDocMouseDown, true)
+  if (hideTimer) clearTimeout(hideTimer)
+})
+
 // ===================== 定位 =====================
 
 const TOOLTIP_WIDTH = 300
+/** 估算高度仅作首帧兜底；显示后测量真实高度再校正位置（内容多寡差异大，固定估值会超屏） */
 const TOOLTIP_HEIGHT = 240
+const measuredH = ref(TOOLTIP_HEIGHT)
+
+// NOTE: 定位依赖真实高度——装备悬浮卡带分组明细可达 400px+，按估算值翻转仍会超出视口。
+// 显示/数据变化后测量 offsetHeight，触发 tooltipStyle 重算并夹紧到视口内（超高的走内部滚动）。
+watch(
+  () => [props.visible, props.data, props.triggerRect] as const,
+  ([visible]) => {
+    if (!visible) return
+    void nextTick(() => {
+      const h = tooltipRef.value?.offsetHeight ?? 0
+      if (h > 0) measuredH.value = h
+    })
+  },
+  { immediate: true },
+)
 
 const arrowClass = computed(() => {
   const rect = props.triggerRect
@@ -99,11 +139,12 @@ const arrowClass = computed(() => {
 
   const vw = window.innerWidth
   const vh = window.innerHeight
+  const h = measuredH.value
 
-  if (vh - rect.bottom > TOOLTIP_HEIGHT + 12) return 'arrow-top'     // 下方空间大，箭头朝上
-  if (rect.top > TOOLTIP_HEIGHT + 12) return 'arrow-bottom'          // 上方空间大，箭头朝下
-  if (vw - rect.right > TOOLTIP_WIDTH + 12) return 'arrow-left'      // 右侧空间大，箭头朝左
-  return 'arrow-right'                                                // 左侧空间大，箭头朝右
+  if (vh - rect.bottom > h + 12) return 'arrow-top'                  // 下方放得下，箭头朝上
+  if (rect.top > h + 12) return 'arrow-bottom'                       // 上方放得下，箭头朝下
+  if (vh - rect.bottom >= rect.top) return 'arrow-top'               // 上下都紧：取空间大的一侧
+  return 'arrow-bottom'
 })
 
 const tooltipStyle = computed(() => {
@@ -113,22 +154,28 @@ const tooltipStyle = computed(() => {
   }
 
   const offset = 10
-  let left = rect.left
-  let top = rect.top
+  const vh = window.innerHeight
+  const vw = window.innerWidth
+  const h = measuredH.value
+  // 垂直兜底夹紧：条内超高时（max-height 50vh + 内部滚动）也保证不出视口
+  const maxTop = Math.max(10, vh - h - 10)
+  const clampTop = (top: number): number => Math.min(Math.max(top, 10), maxTop)
 
-  // 默认：放在下方（箭头朝上）
+  let left: number
+  let top: number
+
   if (arrowClass.value === 'arrow-top') {
-    left = Math.max(10, Math.min(rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2, window.innerWidth - TOOLTIP_WIDTH - 10))
-    top = rect.bottom + offset
+    left = Math.max(10, Math.min(rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2, vw - TOOLTIP_WIDTH - 10))
+    top = clampTop(rect.bottom + offset)
   } else if (arrowClass.value === 'arrow-bottom') {
-    left = Math.max(10, Math.min(rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2, window.innerWidth - TOOLTIP_WIDTH - 10))
-    top = rect.top - TOOLTIP_HEIGHT - offset
+    left = Math.max(10, Math.min(rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2, vw - TOOLTIP_WIDTH - 10))
+    top = clampTop(rect.top - h - offset)
   } else if (arrowClass.value === 'arrow-left') {
     left = rect.right + offset
-    top = Math.max(10, Math.min(rect.top + rect.height / 2 - TOOLTIP_HEIGHT / 2, window.innerHeight - TOOLTIP_HEIGHT - 10))
+    top = clampTop(rect.top + rect.height / 2 - h / 2)
   } else {
     left = rect.left - TOOLTIP_WIDTH - offset
-    top = Math.max(10, Math.min(rect.top + rect.height / 2 - TOOLTIP_HEIGHT / 2, window.innerHeight - TOOLTIP_HEIGHT - 10))
+    top = clampTop(rect.top + rect.height / 2 - h / 2)
   }
 
   return { left: `${left}px`, top: `${top}px` }
@@ -208,6 +255,16 @@ const tooltipStyle = computed(() => {
 /* 明细行 */
 .tooltip-details {
   margin-bottom: var(--space-2);
+}
+
+/* 分组标题行（如装备三属性小节） */
+.detail-section {
+  margin-top: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-common-color-dark);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 1px;
 }
 
 .detail-row {

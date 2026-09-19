@@ -201,7 +201,7 @@ export class DataIntegrityService {
   /**
    * 命名重复扫描：收集 items + equipment 两表的 (id, name)，按 name 分组、组内按 id 去重，
    * 去重后仍多出 1 个不同 id 即报「同名不同 id」。
-   * NOTE: 派生关系（materials⊂items / gears⊂equipment）与装备注册（装备同 id 同时在 items 与 equipment）
+   * NOTE: 派生关系（materials⊂items）与装备注册（装备同 id 同时在 items 与 equipment）
    *       天然同 id 同名，经 id 去重后不计为重复；只有真正「不同 id 共用一名」才报。
    */
   private async scanNameDuplicates(issues: HealthCheckIssue[]): Promise<number> {

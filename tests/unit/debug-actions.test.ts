@@ -8,7 +8,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { container, initializeContainer } from '@/infrastructure/di/Container'
 import { createDebugCategories, fail, ok, type DebugCategory } from '@/presentation/modules/yanjie/xiyou/debugActions'
 import type { PlayerStoreDebugEnv } from '@/presentation/modules/yanjie/xiyou/debugEnv'
-import { packItems, quests, scenes, schools, shopGoods, skillPoints, mates, mounts, pets } from '@/presentation/modules/yanjie/xiyou/xiyouData'
+import { equipment, packItems, quests, scenes, schools, shopGoods, skillPoints, starterEnabled, mates, mounts, pets } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { saveManager } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { makeInstance, usePackStore } from '@/presentation/stores/packStore'
@@ -83,6 +83,14 @@ function makeEnv(): PlayerStoreDebugEnv {
     equipmentCatalog: [],
     forgeRecipes: [],
     alchemyRecipes: [],
+    starter: {
+      items: () => equipment,
+      enabled: () => starterEnabled.value,
+      setEnabled: async (v: boolean) => {
+        starterEnabled.value = v
+        return true
+      },
+    },
     toast: vi.fn(),
   }
 }

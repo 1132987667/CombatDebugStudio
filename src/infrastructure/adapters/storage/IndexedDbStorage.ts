@@ -21,7 +21,8 @@ const DB_NAME = 'combat-debug-studio'
 //       v5 = 新增 equipment_affixes（装备词条库，独立于敌人词缀）；
 //       v6 = 新增 saves（演劫台存档）表
 //       v7 = 新增 regions（区域，scenes.regionId 引用目标）表
-const DB_VERSION = 7
+//       v8 = 删除 gears 派生表（equipment.filter(craftable) 即等价清单，消除双份事实来源）
+const DB_VERSION = 8
 
 /** 存储迁移历史（PackagesView「版本迁移记录」读取；新增迁移在此追加即可，UI 自动更新） */
 export const STORAGE_MIGRATIONS: Array<{ version: number; note: string }> = [
@@ -32,6 +33,7 @@ export const STORAGE_MIGRATIONS: Array<{ version: number; note: string }> = [
   { version: 5, note: '新增 equipment_affixes（装备词条库）数据表' },
   { version: 6, note: '新增 saves（演劫台存档）数据表' },
   { version: 7, note: '新增 regions（区域）数据表' },
+  { version: 8, note: '删除 gears（装备详情）派生表，统一由 equipment 表 craftable 字段承载' },
 ]
 
 export class IndexedDbStorage implements IPersistentStorage {
@@ -75,6 +77,10 @@ export class IndexedDbStorage implements IPersistentStorage {
             if (name === FENGSHEN_STORE.META) {
               store.createIndex('updatedAt', 'updatedAt', { unique: false })
             }
+          }
+          // v8：删除 gears 派生表（数据可由 equipment.craftable 重建，删除无丢失）
+          if (db.objectStoreNames.contains('gears')) {
+            db.deleteObjectStore('gears')
           }
           // 存档表（v6）：演劫台存档（key: save:main / save:auto）
           for (const name of Object.values(SAVE_STORE)) {

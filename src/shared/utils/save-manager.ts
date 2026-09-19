@@ -31,6 +31,8 @@ import { migrateSave } from './save-migrate'
 export interface SaveStatePort {
   collect(context: { currentSceneId: string | null }): Promise<SaveData> | SaveData
   restore(data: SaveData): Promise<void>
+  /** 新游戏初始态提供方（缺省用 createInitialGameState）；bridge 实现据此把 configs 权威的新手内容并入 */
+  createInitial?(): SaveData
 }
 
 export interface SaveResult {
@@ -249,7 +251,9 @@ export class SaveManager {
     } catch {
       /* ignore */
     }
-    const initial = createInitialGameState()
+    // NOTE: 初始态经端口 createInitial 组装——shared 层的 createInitialGameState 只有裸字段形状，
+    //       configs 权威的新手内容（如 pack.json 新手装备套）由 bridge 并入，避免两处各写一份初始数据
+    const initial = this.port.createInitial?.() ?? createInitialGameState()
     await this.port.restore(initial)
     await this.persist(initial, true)
     this.playTimeSec = 0

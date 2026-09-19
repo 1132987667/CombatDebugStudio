@@ -16,6 +16,11 @@
         </div>
 
         <div class="xy-timeline-path" :aria-label="`${region.name} 关卡路径`">
+          <div v-if="region.city" class="xy-timeline-city" :title="region.city.desc">
+            <span class="xy-timeline-city__marker" aria-hidden="true"></span>
+            <span class="xy-timeline-city__name">{{ region.city.name }}</span>
+            <span class="xy-timeline-city__tag">城镇</span>
+          </div>
           <button
             v-for="(s, si) in regionScenes(region.id)"
             :key="s.id"
@@ -215,6 +220,42 @@ function select(s: XiyouScene): void {
   &.locked {
     opacity: 0.45;
   }
+}
+
+/* 一域一城（PRD §24）：路径首站的城镇节点，纯展示不可讨伐 */
+.xy-timeline-city {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  font-size: var(--font-size-md);
+}
+
+.xy-timeline-city__marker {
+  position: absolute;
+  left: -19px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--xy-gold);
+  border-radius: 2px;
+  background: var(--xy-paper);
+  box-shadow: inset 0 0 0 2px var(--xy-gold-soft);
+  z-index: var(--z-base);
+}
+
+.xy-timeline-city__name {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: var(--xy-paper);
+  color: var(--xy-ink-1);
+  letter-spacing: 1px;
+}
+
+.xy-timeline-city__tag {
+  color: var(--xy-gold);
+  letter-spacing: 2px;
 }
 
 .xy-timeline-node__marker {

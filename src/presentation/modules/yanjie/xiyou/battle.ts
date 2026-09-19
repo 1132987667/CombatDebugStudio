@@ -85,7 +85,7 @@ export function buildEnemyRoster(scene: XiyouScene, node?: RunNode): Enemy[] {
         [ATTRIBUTE_CODE.defense]: scaled(st.defense),
         [ATTRIBUTE_CODE.speed]: scaled(st.speed),
         [ATTRIBUTE_CODE.critRate]: st.critRate ?? 5,
-        [ATTRIBUTE_CODE.critDamage]: (st.critDamage ?? 120) / 100,
+        [ATTRIBUTE_CODE.critDamage]: st.critDamage ?? 120,
         [ATTRIBUTE_CODE.hit]: st.hit ?? 10,
         [ATTRIBUTE_CODE.dodge]: st.dodge ?? 2,
       },
@@ -290,7 +290,8 @@ export function firstKillRewardDrops(enemyIds: string[]): EnemyDrop[] {
  */
 export function equipBonuses(
   stats: EquipmentStatEntry[],
-  protagonist: ProtagonistSnapshot = { ...playerParty[0], critRate: 0, critDamage: 1.5, dodge: 0, damageReduction: 0 },
+  // NOTE: 引擎按百分数消费 critDamage（DamageCalculator /100 折算倍率），默认值同用百分数语义
+  protagonist: ProtagonistSnapshot = { ...playerParty[0], critRate: 0, critDamage: 150, dodge: 0, damageReduction: 0 },
 ): Partial<Record<string, number>> {
   const base = protagonist
   const flat: Record<string, number> = {}
@@ -467,7 +468,7 @@ function xiyouToEnemy(
       [ATTRIBUTE_CODE.defense]: c.defense,
       [ATTRIBUTE_CODE.speed]: c.speed,
       [ATTRIBUTE_CODE.critRate]: c.critRate ?? 10,
-      [ATTRIBUTE_CODE.critDamage]: c.critDamage ?? 1.5,
+      [ATTRIBUTE_CODE.critDamage]: c.critDamage ?? 150,
       [ATTRIBUTE_CODE.hit]: c.hitRate ?? 90,
       [ATTRIBUTE_CODE.dodge]: c.dodge ?? 0,
       [ATTRIBUTE_CODE.damageReduction]: c.damageReduction ?? 0,

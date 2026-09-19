@@ -34,7 +34,12 @@ const GROUP_LABEL_OVERRIDES: Record<string, string> = {
   offense: '输出',
 }
 
-export function useCharacterAttrs() {
+export interface CharacterAttrsOptions {
+  /** 进阶属性默认全展开（修行页宽栏用；战斗侧栏窄，保持折叠） */
+  expandAll?: boolean
+}
+
+export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
   const { playerAttributes, battleSnapshot } = storeToRefs(usePlayerStore())
   const pack = usePackStore()
 
@@ -80,12 +85,12 @@ export function useCharacterAttrs() {
     })),
   )
 
-  const advancedExpanded = ref(false)
+  const advancedExpanded = ref(!!options.expandAll)
 
-  // 子组二级折叠：默认只展开有非零值的组（新手期 0 值组不铺开），展开状态随后续手动操作
+  // 子组二级折叠：expandAll 时全展开；否则默认只展开有非零值的组（新手期 0 值组不铺开）
   const expandedGroups = ref(new Set<string>())
   for (const [group, list] of Object.entries(advancedGroups.value)) {
-    if (list.some((item) => attrVal(item.code) > 0)) expandedGroups.value.add(group)
+    if (options.expandAll || list.some((item) => attrVal(item.code) > 0)) expandedGroups.value.add(group)
   }
 
   function toggleGroup(group: string) {

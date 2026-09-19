@@ -4,25 +4,30 @@
          左切到右当前页签时右自动让位到下一个可用页签 -->
     <div class="xy-pack-dual">
       <PackPane v-model:sub="leftSub" :selected-id="selectedId" @open-detail="openDetail" @use="onUse"
-        @move-storage="onMoveToStorage" @ask-card-discard="askCardDiscard" @open-storage-cell="openStorageCell" />
+        @move-storage="onMoveToStorage" @ask-card-discard="askCardDiscard" @open-storage-cell="openStorageCell"
+        @discard-gear-instance="onDiscardGearInstance" @equip-gear-instance="onEquipGearInstance" />
       <PackPane v-model:sub="rightSub" :excluded="leftSub" :selected-id="selectedId" @open-detail="openDetail" @use="onUse"
-        @move-storage="onMoveToStorage" @ask-card-discard="askCardDiscard" @open-storage-cell="openStorageCell" />
+        @move-storage="onMoveToStorage" @ask-card-discard="askCardDiscard" @open-storage-cell="openStorageCell"
+        @discard-gear-instance="onDiscardGearInstance" @equip-gear-instance="onEquipGearInstance" />
     </div>
 
     <!-- 物品详情弹窗 -->
     <PackItemDetail :item-id="selectedId" :count="selectedId ? countOf(selectedId) : 0"
       @close="selectedId = null" @use="onUse" @storage="onMoveToStorage" @discard="onDiscard" @equip="onEquip" />
 
-    <!-- 仓库：存入选择 -->
+    <!-- 装备实例详情（逐件卡点击：新旧对比 + 穿戴） -->
+    <GearDetailDialog :instance="detailInstance" @close="detailInstance = null" @equip="onGearDialogEquip" />
+
+    <!-- 仓库：存入选择（仓库格只存 itemId+count，装备实例不可入仓） -->
     <Dialog :model-value="storePickOpen" title="存入仓库" width="440px" @update:model-value="storePickOpen = false">
-      <p class="xy-store-hint">选择背包物品（整组存入）</p>
+      <p class="xy-store-hint">选择背包物品（整组存入；装备逐件持有，暂不支持入仓）</p>
       <div class="xy-store-pick-list">
-        <button v-for="it in pack.ownedItems" :key="it.id" type="button" class="xy-store-pick-item"
+        <button v-for="it in storableItems" :key="it.id" type="button" class="xy-store-pick-item"
           @click="pickIntoStorage(it.id)">
           <span class="xy-store-pick-name" :style="{ color: qualityColor(it.rarity) }">{{ it.name }}</span>
           <span class="xy-store-pick-count">×{{ countOf(it.id) }}</span>
         </button>
-        <EmptyState v-if="!pack.ownedItems.length">背包没有可存入的物品</EmptyState>
+        <EmptyState v-if="!storableItems.length">背包没有可存入的物品</EmptyState>
       </div>
     </Dialog>
 
@@ -43,6 +48,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { qualityColor } from '../quality'
 import PackItemDetail from './PackItemDetail.vue'
+import GearDetailDialog from './GearDetailDialog.vue'
 import PackPane, { type PackSub } from './PackPane.vue'
 
 const pack = usePackStore()
@@ -67,9 +73,38 @@ watch(leftSub, (v) => {
 
 /* ── 物品详情 ── */
 const selectedId = ref<string | null>(null)
+/** 装备实例详情（逐件卡点击打开；与 itemId 级 PackItemDetail 互斥） */
+const detailInstance = ref<ReturnType<typeof findGearInstance>>(null)
 
-function openDetail(itemId: string): void {
+function findGearInstance(instanceId: string) {
+  return pack.gearInstances.find((g) => g.instanceId === instanceId) ?? null
+}
+
+function openDetail(itemId: string, instanceId?: string): void {
+  if (instanceId) {
+    const inst = findGearInstance(instanceId)
+    if (inst) {
+      detailInstance.value = inst
+      selectedId.value = null
+      return
+    }
+  }
+  detailInstance.value = null
   selectedId.value = itemId
+}
+
+function onGearDialogEquip(instanceId: string): void {
+  if (pack.equipInstance(instanceId)) detailInstance.value = null
+}
+
+/** 卡片菜单「穿戴这一件」 */
+function onEquipGearInstance(instanceId: string): void {
+  pack.equipInstance(instanceId)
+}
+
+/** 卡片菜单「丢弃这一件」（与装备面板一致：单件直丢，不整堆） */
+function onDiscardGearInstance(instanceId: string): void {
+  pack.discardGearInstance(instanceId)
 }
 
 function onUse(itemId: string): void {
@@ -118,6 +153,9 @@ function nameOf(itemId: string): string {
 
 /* ── 仓库存取 ── */
 const storePickOpen = ref(false)
+
+/** 可入仓物品：装备逐件持有（gearInstances），不支持整堆入仓 */
+const storableItems = computed(() => pack.ownedItems.filter((it) => !pack.gearById(it.id)))
 const storageTakeIdx = ref<number | null>(null)
 const storageTakeOpen = ref(false)
 

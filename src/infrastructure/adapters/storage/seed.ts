@@ -25,7 +25,6 @@ import type {
   EquipFormulaConfig,
   EquipmentAffixData,
   EquipmentData,
-  GearData,
   GrowthCurveData,
   ItemData,
   LineupData,
@@ -513,6 +512,29 @@ async function backfillMissingParams(storage: IPersistentStorage, rows: BattlePa
   return backfilled
 }
 
+/** 新手装备套一次性刷新标记（pack 文档 equipment/starterEnabled 字段级合并，见 refreshPackStarter） */
+const PACK_STARTER_FLAG_ID = 'cds:xiyou-pack-starter-v1'
+
+/**
+ * 一次性把 configs pack.json 的新手套字段（equipment + starterEnabled）合并进存量 IDB pack 文档。
+ * NOTE: 只动这两个字段——pack 文档其余分组（materials/pills/shopGoods…）可能被用户在封神榜 CRUD 改过，
+ *       不随 SEED_FLAG 全量重播；本迁移跑完即落标记，之后开关以 IDB 文档为权威（调试面板写回）。
+ */
+async function refreshPackStarter(storage: IPersistentStorage): Promise<boolean> {
+  if (await storage.get(FENGSHEN_STORE.META, PACK_STARTER_FLAG_ID)) return false
+  const doc = await storage.get<XiyouData>(FENGSHEN_STORE.XIYOU, 'pack')
+  if (doc?.data && typeof doc.data === 'object') {
+    const src = xiyouPackJson as { equipment?: unknown; starterEnabled?: unknown }
+    await storage.set(FENGSHEN_STORE.XIYOU, 'pack', {
+      ...doc,
+      data: { ...(doc.data as Record<string, unknown>), equipment: src.equipment, starterEnabled: src.starterEnabled ?? true },
+      updatedAt: nowIso(),
+    })
+  }
+  await storage.set(FENGSHEN_STORE.META, PACK_STARTER_FLAG_ID, { id: PACK_STARTER_FLAG_ID, appliedAt: nowIso() })
+  return true
+}
+
 /**
  * 执行种子导入（幂等）。
  * 底层 storage 不可用时（如无 IndexedDB 环境）由调用方容错，此处不预检。
@@ -527,7 +549,8 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
         [FENGSHEN_STORE.REGIONS, () => xiyouRegionsJson as RegionData[]],
       ])
       const backfilledParams = await backfillMissingParams(storage, [buildAttributeLimit(), buildSystemDistribution()])
-      return backfilledStores || backfilledParams
+      const refreshedStarter = await refreshPackStarter(storage)
+      return backfilledStores || backfilledParams || refreshedStarter
         ? { imported: true, reason: 'backfilled-new-stores' }
         : { imported: false, reason: 'already-seeded' }
     }
@@ -554,7 +577,6 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule(), buildAttributeLimit(), buildSystemDistribution()]],
       [FENGSHEN_STORE.XIYOU, buildXiyou()],
       [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
-      [FENGSHEN_STORE.GEARS, (equipmentDataRaw as EquipmentData[]).filter((e) => e.craftable) as GearData[]],
     ]
 
     for (const [store, rows] of tables) {
@@ -568,9 +590,10 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
     // elements 单文档
     await storage.set(FENGSHEN_STORE.ELEMENTS, 'elements', { ...buildElements(), updatedAt: nowIso() })
 
-    // meta：dataVersion 初值 1 + 种子标记
+    // meta：dataVersion 初值 1 + 种子标记（全量重播已含 pack 文档，新手套刷新标记同步落位保持幂等）
     await storage.set(FENGSHEN_STORE.META, 'dataVersion', { id: 'dataVersion', version: 1, updatedAt: nowIso() })
     await storage.set(FENGSHEN_STORE.META, SEED_FLAG_ID, { id: SEED_FLAG_ID, appliedAt: nowIso() })
+    await storage.set(FENGSHEN_STORE.META, PACK_STARTER_FLAG_ID, { id: PACK_STARTER_FLAG_ID, appliedAt: nowIso() })
 
     return { imported: true, reason: 'seeded' }
   } catch {

@@ -2,18 +2,23 @@
   <div class="xy-item-card-wrap">
     <button type="button"
       :class="['xy-item-card', `xy-item-card--r${item.rarity}`, { 'is-selected': selected }, 'xy-ink-hover']"
-      :aria-label="`${item.name} ×${count}`" @mouseenter="onEnter" @mouseleave="onLeave" @click="$emit('open', item.id)"
-      @contextmenu.prevent="openMenu($event)">
+      :aria-label="gear ? `${item.name}（${qualityName(gear.quality)}品·强化+${gear.enhance}）` : `${item.name} ×${count}`"
+      @mouseenter="onEnter" @mouseleave="onLeave" @click="onCardClick"
+      @contextmenu.prevent="onContextmenu">
       <span class="xy-item-title">
         <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ item.name }}</span>
         <span class="xy-item-type">{{ item.type }}</span>
+        <span v-if="gear" class="xy-item-quality" :class="equipQualityClass(gear.quality)">
+          {{ qualityName(gear.quality) }} · ×{{ factorText(gear.qualityFactor) }}
+        </span>
+        <span v-else class="xy-item-count">×{{ count }}</span>
+        <span v-if="gear && gear.enhance > 0" class="xy-item-enhance">强化 +{{ gear.enhance }}</span>
       </span>
-      <span class="xy-item-meta">
-        <span v-if="sellable" class="xy-item-price" :title="`实际价值 ${item.value}`">
+      <span v-if="sellable && !gear" class="xy-item-meta">
+        <span class="xy-item-price" :title="`实际价值 ${item.value}`">
           <span class="xy-item-price-icon" aria-hidden="true"><IconMoney /></span>
           <span class="xy-item-price-value">{{ item.value }}</span>
         </span>
-        <span class="xy-item-count">×{{ count }}</span>
       </span>
     </button>
 
@@ -24,13 +29,20 @@
     <!-- 右键操作菜单 -->
     <Teleport to="body">
       <div v-if="menuOpen" ref="menuRef" class="xy-ctx" role="menu" :style="menuStyle" aria-label="物品操作">
-        <button v-if="showUse" type="button" class="xy-ctx-item" :disabled="!canUseNow"
-          :title="inBattleOnly ? '仅战斗中可用（行囊·快捷栏）' : undefined" @click="act('use')">使用</button>
-        <button v-if="showSell" type="button" class="xy-ctx-item" @click="act('sell')">出售</button>
-        <button v-if="canStore" type="button" class="xy-ctx-item" @click="act('storage')">存入仓库</button>
-        <button v-if="canDiscard" type="button" class="xy-ctx-item xy-ctx-item--danger"
-          @click="act('discard')">丢弃</button>
-        <button type="button" class="xy-ctx-item" @click="act('open')">查看详情</button>
+        <template v-if="gear">
+          <button type="button" class="xy-ctx-item" @click="act('equip')">穿戴</button>
+          <button type="button" class="xy-ctx-item xy-ctx-item--danger" @click="act('discardInstance')">丢弃这一件</button>
+          <button type="button" class="xy-ctx-item" @click="act('open')">查看详情</button>
+        </template>
+        <template v-else>
+          <button v-if="showUse" type="button" class="xy-ctx-item" :disabled="!canUseNow"
+            :title="inBattleOnly ? '仅战斗中可用（行囊·快捷栏）' : undefined" @click="act('use')">使用</button>
+          <button v-if="showSell" type="button" class="xy-ctx-item" @click="act('sell')">出售</button>
+          <button v-if="canStore" type="button" class="xy-ctx-item" @click="act('storage')">存入仓库</button>
+          <button v-if="canDiscard" type="button" class="xy-ctx-item xy-ctx-item--danger"
+            @click="act('discard')">丢弃</button>
+          <button type="button" class="xy-ctx-item" @click="act('open')">查看详情</button>
+        </template>
       </div>
     </Teleport>
   </div>
@@ -41,22 +53,29 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import IconMoney from '~icons/app/money'
-import { usePackStore } from '@/presentation/stores/packStore'
-import { qualityClass, qualityColor, qualityOf } from '../quality'
+import { usePackStore, GEAR_SLOT_LABELS, type GearInstance } from '@/presentation/stores/packStore'
+import { equipQualityClass, qualityClass, qualityColor, qualityName, qualityOf } from '../quality'
+import { factorText, gearTooltipData } from '../gearTooltip'
 import type { XiyouCatalogItem } from '../types'
 
 const props = defineProps<{
   item: XiyouCatalogItem
   count: number
   selected?: boolean
+  /** 仓库格模式：点击/右键均由父级处理（open 回传格索引），禁用背包操作菜单 */
+  inStorage?: boolean
+  /** 装备实例模式：逐件独立卡（品质/强化按实例展示，不显示数量，操作回传 instanceId） */
+  gear?: GearInstance
 }>()
 
 const emit = defineEmits<{
-  (e: 'open', itemId: string): void
+  (e: 'open', itemId: string, instanceId?: string): void
   (e: 'use', itemId: string): void
   (e: 'sell', itemId: string): void
   (e: 'storage', itemId: string): void
   (e: 'discard', itemId: string): void
+  (e: 'discardInstance', instanceId: string): void
+  (e: 'equip', instanceId: string): void
 }>()
 
 const pack = usePackStore()
@@ -65,19 +84,28 @@ const pack = usePackStore()
 const tooltipVisible = ref(false)
 const triggerRect = ref<DOMRect | null>(null)
 
-const tooltipData = computed<TooltipData>(() => ({
-  name: props.item.name,
-  description: props.item.description ?? '暂无描述',
-  badge: qualityOf(props.item.rarity),
-  // 悬浮面板在 body 层（无 --xy-* 变量），用全局 --color-* 令牌映射品阶色
-  nameColor: qualityColor(props.item.rarity),
-  badgeColor: qualityColor(props.item.rarity),
-  details: [
-    { label: '类型', value: props.item.type },
-    { label: '持有', value: `×${props.count}` },
-  ],
-  source: props.item.source,
-}))
+const tooltipData = computed<TooltipData>(() => {
+  if (props.gear) {
+    return gearTooltipData(pack, GEAR_SLOT_LABELS, { ...props.gear, name: props.item.name, rarity: props.item.rarity })
+  }
+  return {
+    name: props.item.name,
+    description: props.item.description ?? '暂无描述',
+    badge: qualityOf(props.item.rarity),
+    // 悬浮面板在 body 层（无 --xy-* 变量），用全局 --color-* 令牌映射品阶色
+    nameColor: qualityColor(props.item.rarity),
+    badgeColor: qualityColor(props.item.rarity),
+    details: [
+      { label: '类型', value: props.item.type },
+      { label: props.inStorage ? '数量' : '持有', value: `×${props.count}` },
+    ],
+    source: props.item.source,
+  }
+})
+
+function onCardClick(): void {
+  emit('open', props.item.id, props.gear?.instanceId)
+}
 
 function onEnter(e: MouseEvent): void {
   triggerRect.value = (e.currentTarget as HTMLElement)?.getBoundingClientRect() ?? null
@@ -107,6 +135,11 @@ const sellable = computed(() => (props.item.value ?? 0) > 0)
 /** 右键菜单「出售」：有价值且持有数量 > 0 */
 const showSell = computed(() => sellable.value && props.count > 0)
 
+function onContextmenu(e: MouseEvent): void {
+  if (props.inStorage) return
+  openMenu(e)
+}
+
 function openMenu(e: MouseEvent): void {
   tooltipVisible.value = false
   menuStyle.value = {
@@ -131,9 +164,11 @@ function closeMenu(): void {
   removeDocListener = null
 }
 
-function act(action: 'use' | 'sell' | 'storage' | 'discard' | 'open'): void {
+function act(action: 'use' | 'sell' | 'storage' | 'discard' | 'open' | 'equip' | 'discardInstance'): void {
   closeMenu()
-  emit(action as 'open', props.item.id)
+  if (action === 'equip' && props.gear) emit('equip', props.gear.instanceId)
+  else if (action === 'discardInstance' && props.gear) emit('discardInstance', props.gear.instanceId)
+  else emit(action as 'open', props.item.id)
 }
 
 onBeforeUnmount(() => {
@@ -249,11 +284,10 @@ onBeforeUnmount(() => {
 
 .xy-item-rarity {}
 
-/* 价值 + 数量同行：价值最左、数量最右 */
+/* 价值行（数量已并入名称行） */
 .xy-item-meta {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: var(--space-2);
   width: 100%;
 }
@@ -279,9 +313,20 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 数量（meta 行右端）；可出售时用绿色标识 */
+/* 数量（紧跟类型，名称行内） */
 .xy-item-count {
   color: var(--color-success);
+}
+
+/* 装备实例品质文本（色值由全局 xy-eq-q--* 类提供） */
+.xy-item-quality {
+  font-size: var(--font-size-md);
+}
+
+/* 强化等级（实例模式名称行内，金色与价值色一致） */
+.xy-item-enhance {
+  color: var(--xy-gold);
+  font-size: var(--font-size-md);
 }
 
 /* 右键菜单（Teleport 到 body，用全局令牌） */

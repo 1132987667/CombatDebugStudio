@@ -28,6 +28,8 @@ import type { BattleTriggerPhase } from '@/domain/battle/type/types'
 export interface TooltipDetailRow {
   label: string
   value: string
+  /** 分组标题行（如装备的「核心属性」）：value 忽略，整行渲染为小节头 */
+  section?: boolean
 }
 
 /** Tooltip 卡片数据 */

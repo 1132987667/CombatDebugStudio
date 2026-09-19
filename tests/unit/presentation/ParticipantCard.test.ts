@@ -3,7 +3,7 @@
  * ParticipantCard displayData 纯数据注入模式特征测试
  *
  * 定位：锁住"回放/静态场景无领域实体时卡片仍完整渲染"契约——
- *       名称/等级/HP 文本/HP 条/护盾条/纯名字 Buff 标签均从注入数据读取，
+ *       名称/等级/HP 条/护盾条/纯名字 Buff 标签均从注入数据读取，
  *       与唤灵台演武台共用同一卡片组件（昊天镜回放舞台数据源）。
  */
 import { describe, it, expect } from 'vitest'
@@ -41,7 +41,8 @@ describe('ParticipantCard displayData 纯数据注入', () => {
     const name = el.querySelector('.member-name')!.textContent!
     expect(name).toContain('Lv.5')
     expect(name).toContain('剑修')
-    expect(name).toContain('80/100')
+    // 名称行不再重复气血文本（HP 条上已有），改为断言不出现
+    expect(name).not.toContain('80/100')
     expect(el.querySelector('.hp-fill')!.getAttribute('style')).toContain('width: 80%')
 
     // 护盾条：值 20，宽度 20%

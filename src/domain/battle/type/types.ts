@@ -135,11 +135,12 @@ export const BATTLE_CONSTANTS = {
 
 /** 自动战斗速度到延迟(ms)的映射 */
 export const AUTO_BATTLE_CONFIG = {
-  /** 速度等级对应的延迟时间(ms) */
+  /** 速度等级对应的延迟时间(ms)，按 1000/speed 取整；缺档会 fallback 到 DEFAULT_DELAY 造成"调速不生效" */
   DELAYS: {
     1: 1000,
     2: 500,
     3: 330,
+    4: 250,
     5: 200,
   } as Record<number, number>,
   /** 默认延迟时间(ms) */

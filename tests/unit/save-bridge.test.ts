@@ -8,7 +8,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { xiyouSaveBridge } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { scenes } from '@/presentation/modules/yanjie/xiyou/xiyouData'
+import { equipment as starterEquipment, scenes, starterEnabled } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { SaveManager } from '@/shared/utils/save-manager'
 import { createInitialGameState, verifySaveChecksum, type SaveData } from '@/shared/utils/save-schema'
 
@@ -294,6 +294,54 @@ describe('collect → restore 往返', () => {
     } finally {
       scene11.stars = 0
       for (const s of scenes) if (s.id !== 'scene_1_1') s.stars = 0
+    }
+  })
+})
+
+describe('新游戏初始态（reset → createInitial → restore 全链）', () => {
+  it('reset() 后背包含 pack.json equipment 组各一件（六槽新手套）', async () => {
+    setActivePinia(createPinia())
+    __mem.clear()
+    const manager = new SaveManager(xiyouSaveBridge, __storage)
+    await manager.reset()
+
+    const pack = usePackStore()
+    const counts = pack.gearInstances.reduce<Record<string, number>>((m, g) => {
+      m[g.itemId] = (m[g.itemId] ?? 0) + 1
+      return m
+    }, {})
+    for (const item of starterEquipment) expect(counts[item.itemId]).toBe(item.count)
+    // 新手套未穿戴（槽位空、实例全在背包）
+    expect(Object.keys(pack.equipped)).toHaveLength(0)
+  })
+
+  it('reset() 后材料/丹药/消耗对齐 pack.json 初始量（草药不双发）', async () => {
+    setActivePinia(createPinia())
+    __mem.clear()
+    const manager = new SaveManager(xiyouSaveBridge, __storage)
+    await manager.reset()
+
+    const pack = usePackStore()
+    expect(pack.countOf('mat_taomu')).toBe(24) // 桃木
+    expect(pack.countOf('enh_stone')).toBe(18) // 强化石
+    expect(pack.countOf('elix_001')).toBe(5) // 疗伤丹
+    // v5 草药补发已改「补齐到」：restore 整表覆盖后不再叠加成 6
+    expect(pack.countOf('mat_zhixuecao')).toBe(3)
+    expect(pack.countOf('mat_qingxinye')).toBe(3)
+  })
+
+  it('starterEnabled=false 时 reset() 不生成新手套（材料初始量不受影响）', async () => {
+    setActivePinia(createPinia())
+    __mem.clear()
+    starterEnabled.value = false
+    try {
+      const manager = new SaveManager(xiyouSaveBridge, __storage)
+      await manager.reset()
+      const pack = usePackStore()
+      expect(pack.gearInstances).toHaveLength(0)
+      expect(pack.countOf('mat_taomu')).toBe(24)
+    } finally {
+      starterEnabled.value = true
     }
   })
 })

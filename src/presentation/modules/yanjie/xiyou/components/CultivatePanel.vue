@@ -2,7 +2,7 @@
   <div class="xy-panel-scroll">
     <Tabs v-model="sub" :tabs="SUBS" size="sm" destroy-inactive class="xy-tabs--seal">
       <template #character>
-        <CharacterPanel @go-equip="emit('open-equip')" />
+        <CharacterPanel />
       </template>
       <template #school>
         <SchoolsPanel />
@@ -20,8 +20,6 @@ import { ref } from 'vue'
 import type { TabItem } from '@/presentation/components'
 import CharacterPanel from './cultivate/CharacterPanel.vue'
 import SchoolsPanel from './SchoolsPanel.vue'
-
-const emit = defineEmits<{ 'open-equip': [] }>()
 
 const sub = ref<'character' | 'realm' | 'school' | 'meridian' | 'dharma'>('character')
 

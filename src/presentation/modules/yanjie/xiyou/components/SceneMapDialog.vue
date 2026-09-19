@@ -29,6 +29,11 @@
 
         <div class="xy-map-dlg__body">
           <div class="xy-map-dlg__list" :aria-label="`${activeRegion.name} · ${activeRegion.sub} 关卡列表`">
+            <div v-if="activeRegion.city" class="xy-map-dlg__city">
+              <span class="xy-map-dlg__city-tag">城镇</span>
+              <span class="xy-map-dlg__city-name">{{ activeRegion.city.name }}</span>
+              <span class="xy-map-dlg__city-desc">{{ activeRegion.city.desc }}</span>
+            </div>
             <button
               v-for="s in regionScenes"
               :key="s.id"
@@ -379,6 +384,41 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-3);
   align-content: start;
+}
+
+/* ── 一域一城（PRD §24）：区域城镇条，列表首行通栏 ── */
+.xy-map-dlg__city {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--xy-gold);
+  border-left-width: 3px;
+  border-radius: 3px;
+  background: var(--xy-gold-soft);
+}
+
+.xy-map-dlg__city-tag {
+  flex-shrink: 0;
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+  color: var(--xy-gold);
+}
+
+.xy-map-dlg__city-name {
+  flex-shrink: 0;
+  font-size: var(--font-size-lg);
+  letter-spacing: 2px;
+  color: var(--xy-ink-1);
+}
+
+.xy-map-dlg__city-desc {
+  min-width: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  color: var(--xy-ink-3);
 }
 
 .xy-map-dlg__stage {

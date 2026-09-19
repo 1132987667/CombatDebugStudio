@@ -225,6 +225,8 @@ export interface XiyouRegion {
   sub: string
   /** 等级范围（configs/xiyou/regions.json） */
   levelRange?: [number, number]
+  /** 一域一城（PRD §24）：该区域的城镇枢纽；迷踪秘境/最终决战地不设城市 */
+  city?: { id: string; name: string; desc: string } | null
 }
 
 /** 场景（关卡）卡片

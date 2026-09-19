@@ -608,7 +608,7 @@ export const useHaotianStore = defineStore('haotian', () => {
     await loadLatest(battleSystem)
   }
 
-  /** 跨模块跳转入口（唤灵台战报「去昊天镜分析」）：按 battleId 加载对应战斗记录，未找到时回退最近记录 */
+  /** 跨模块跳转入口（日志「战斗战报」页签的「去昊天镜分析」）：按 battleId 加载对应战斗记录，未找到时回退最近记录 */
   async function openBattleById(battleId: string): Promise<void> {
     const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
     await refreshRecordings(battleSystem)

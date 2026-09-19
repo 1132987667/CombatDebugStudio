@@ -27,7 +27,7 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
-import { materials as packMaterials, packItems, pills as packPills, quests, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
+import { materials as packMaterials, equipment as packStarterEquipment, starterEnabled, packItems, pills as packPills, consumables as packConsumables, quests, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
 
@@ -88,6 +88,34 @@ function restoreEquipped(eq: { passive?: string[]; small?: string[]; ultimate?: 
 }
 
 export const xiyouSaveBridge: SaveStatePort = {
+  /**
+   * 新游戏初始态：pack.json 初始持有整组并入（与 buildFromConfigs 同源口径）——
+   * - materials/pills/consumables → inventory 三类（restore 合并回背包）
+   * - equipment 组（新手装备套，starterEnabled 门禁）→ equipments 计数，
+   *   restore 从计数派生裸实例（无 equipment_instances 分支）
+   * NOTE: buildFromConfigs 只在行囊首次 init 时跑一次，reset→restore 会整表覆盖，
+   *       新档初始量必须走这里，不能指望 configs 兜底。
+   */
+  createInitial(): SaveData {
+    const data = createInitialGameState()
+    for (const [target, group] of [
+      [data.inventory.materials, packMaterials],
+      [data.inventory.elixirs, packPills],
+      [data.inventory.misc, packConsumables],
+    ] as const) {
+      for (const item of group) {
+        const id = PACK_NAME_TO_ID.get(item.name)
+        if (id) target[id] = (target[id] ?? 0) + item.count
+      }
+    }
+    if (starterEnabled.value) {
+      for (const item of packStarterEquipment) {
+        data.inventory.equipments[item.itemId] = (data.inventory.equipments[item.itemId] ?? 0) + item.count
+      }
+    }
+    return data
+  },
+
   async collect({ currentSceneId }): Promise<SaveData> {
     const data = createInitialGameState()
     const player = usePlayerStore()

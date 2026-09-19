@@ -9,7 +9,7 @@ import type { useBattleStore } from '@/presentation/stores/battleStore'
 import type { usePlayerStore } from '@/presentation/stores/playerStore'
 import type { usePackStore } from '@/presentation/stores/packStore'
 import type { SaveManager } from '@/shared/utils/save-manager'
-import type { XiyouCatalogItem, XiyouForgeRecipe, XiyouQuest, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
+import type { XiyouCatalogItem, XiyouForgeRecipe, XiyouPackedEquipment, XiyouQuest, XiyouRecipe, XiyouScene, XiyouSchool, XiyouShopGood, XiyouSkillPoints } from './types'
 import type { EquipmentData } from '@/domain/fengshen/types'
 
 /** 系统诊断端口（DebugCavePanel 装配：经 DI 容器 resolve application 层服务） */
@@ -48,6 +48,13 @@ export interface PlayerStoreDebugEnv {
   forgeRecipes: XiyouForgeRecipe[]
   /** 炼丹配方表 */
   alchemyRecipes: XiyouRecipe[]
+  /** 新手装备套（pack.json equipment 组 + starterEnabled 开关；供调试发放与新档开关） */
+  starter: {
+    items: () => XiyouPackedEquipment[]
+    enabled: () => boolean
+    /** 写回 IDB pack 文档（对之后的新游戏生效）；失败返回 false */
+    setEnabled: (value: boolean) => Promise<boolean>
+  }
   /** Toast 提示 */
   toast: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void
 }

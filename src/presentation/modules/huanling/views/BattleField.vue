@@ -46,40 +46,22 @@
         {{ ra.text }}
       </div>
     </div>
-
-    <!-- 战报弹窗 -->
-    <BattleSummaryDialog v-model="showSummaryDialog" :summary="lastSummary" />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ComponentPublicInstance } from 'vue'
-import { BattleEventCodes } from '@/domain/battle/type/BattleEventType';
+import type { ComponentPublicInstance } from 'vue';
 import { ActionResultType, ActionTypes, type BattleEntity } from '@/domain/battle/type/types';
-import { container } from '@/infrastructure/di/Container';
-import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus';
-const emitter = container.resolve<UIEventBus>('UIEventBus').getEmitter()
 import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
 import ParticipantCard from '@/presentation/components/ParticipantCard.vue'
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
 import { useBattleStore } from '@/presentation/stores/battleStore';
 import BattleLog from "./BattleLog.vue";
-import BattleSummaryDialog from "../components/BattleSummaryDialog.vue";
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing';
-import type { BattleSummary } from '@/domain/battle/replay/unified/unified-summary';
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper';
 import { computed, onUnmounted, ref, watch } from "vue";
 
 const store = useBattleStore()
-
-// 战报弹窗状态
-const showSummaryDialog = ref(false)
-const lastSummary = ref<BattleSummary | null>(null)
-
-emitter.on(BattleEventCodes.BATTLE_SUMMARY, (summary: BattleSummary) => {
-  lastSummary.value = summary
-  showSummaryDialog.value = true
-})
 
 const props = defineProps<{
   currentActorId: string | null;

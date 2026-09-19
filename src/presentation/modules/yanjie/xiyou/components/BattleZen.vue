@@ -89,7 +89,7 @@
         <span class="xy-run-gain">经验 +{{ lastSettle.exp }}</span>
         <span class="xy-run-gain">金钱 +{{ lastSettle.money }}</span>
         <span v-if="lastSettle.xianyuan > 0" class="xy-run-gain">灵韵 +{{ lastSettle.xianyuan }}</span>
-        <span v-for="(d, i) in lastSettle.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
+        <span v-for="d in mergedDrops(lastSettle.drops)" :key="d.itemId" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
         }}</span>
         <span v-if="!lastSettle.drops.length" class="xy-run-meta">本场无掉落</span>
       </div>
@@ -109,7 +109,7 @@
         <span v-if="run.totals.levelUps > 0" class="xy-run-gain xy-run-gain--level">升级 ×{{ run.totals.levelUps }}</span>
         <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
         <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">灵韵 +{{ run.totals.xianyuan }}</span>
-        <span v-for="(d, i) in run.totals.drops" :key="i" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
+        <span v-for="d in mergedDrops(run.totals.drops)" :key="d.itemId" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
         }}</span>
       </div>
     </div>
@@ -343,8 +343,8 @@ async function initBattle(node: RunNode): Promise<void> {
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()
   // NOTE: 切场景/切节点收尾旧战斗用 reset（静默清场）而非 endBattle——endBattle 会广播 BATTLE_ENDED，
-  //       被全局 battleStore 当成一场战斗结算并弹出战报（唤灵台 BattleField 常驻监听）。未打完的
-  //       旧战斗不应触发战报，reset + clearParticipants 已覆盖停自动战斗/清 buff/清录制。
+  //       被全局 battleStore 当成一场战斗结算（未打完的旧战斗不应触发结算），reset + clearParticipants
+  //       已覆盖停自动战斗/清 buff/清录制。
   battleService.reset()
   battleService.clearParticipants()
   battleService.initializeTeams(ally, enemy)
@@ -352,9 +352,9 @@ async function initBattle(node: RunNode): Promise<void> {
   store.selectCharacter(ally[0]?.id ?? '')
   await store.startBattle()
   acceptingDrops = true
-  // NOTE: 2026-09-08 调整：关闭"进入即自动开战"（原 2026-09-06 全自动循环裁定）。
-  //       战斗就绪后停在待命态，由玩家点 HUD「开战」按钮（beginBattle）启动自动循环。
-  //       store.startBattle 内部已置 isBattleActive 并按引擎实际值同步 autoPlayMode（false）。
+  // NOTE: 2026-09-19 恢复"进入即自动开战"：玩法核心是自动循环（变强 → 验证 → 碾压），
+  //       每场就绪后直接启动，玩家无需逐场点「开战」；HUD 按钮仅在手动停止自动战斗后作为重启入口
+  await beginBattle()
 }
 
 // ════════════ 关卡推进状态机（玩法主循环设计.md §二/§三.2/§六/§七） ════════════
@@ -384,6 +384,13 @@ function retreat(): void {
 
 /** 上一场（当前节点）小结算数据（HUD 内嵌展示） */
 const lastSettle = reactive({ exp: 0, money: 0, xianyuan: 0, drops: [] as EnemyDrop[] })
+
+/** 结算掉落展示合并：同物品多次命中（多敌独立 roll）→ 一个 chip，数量求和 */
+function mergedDrops(drops: EnemyDrop[]): Array<{ itemId: string; quantity: number }> {
+  const m = new Map<string, number>()
+  for (const d of drops) m.set(d.itemId, (m.get(d.itemId) ?? 0) + d.quantity)
+  return [...m.entries()].map(([itemId, quantity]) => ({ itemId, quantity }))
+}
 
 /** 缓回剩余秒数 / 自动再战倒计时（HUD 展示） */
 const regenLeftSec = ref(0)
@@ -734,6 +741,7 @@ onUnmounted(() => {
   gap: var(--space-1);
   flex-shrink: 0;
   min-width: 0;
+  cursor: pointer;
 }
 
 .xy-drop-name {

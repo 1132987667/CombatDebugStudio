@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { starterEnabled } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import type { XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/types'
 
 /** 内存版持久化（代替 IndexedDB，供 flush/load 往返断言） */
@@ -55,6 +57,27 @@ describe('初始化', () => {
     expect(pack.storage).toHaveLength(12)
     expect(pack.storage[0]).toMatchObject({ itemId: 'mat_lupi', count: 12 }) // 鹿皮 ×12
     expect(pack.storageCapacity).toBe(12)
+  })
+
+  it('新游戏自动生成新手装备套：六槽各一件 t1', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    expect(pack.gearInstances.map((g) => g.itemId).sort()).toEqual(
+      ['ar_t1_light_01', 'bt_t1_light_01', 'hd_t1_war_01', 'hf_t1_life_01', 'jz_t1_power_01', 'wp_t1_light_01'].sort(),
+    )
+    // 六件覆盖六个不同槽位
+    expect(new Set(pack.gearInstances.map((g) => pack.slotKeyOf(g.itemId))).size).toBe(6)
+  })
+
+  it('starterEnabled=false 时新档不生成新手套', async () => {
+    starterEnabled.value = false
+    try {
+      const pack = usePackStore()
+      await pack.init()
+      expect(pack.gearInstances).toHaveLength(0)
+    } finally {
+      starterEnabled.value = true
+    }
   })
 })
 
@@ -361,6 +384,22 @@ describe('战斗掉落', () => {
     expect(pack.countOf('mat_taomu')).toBe(24)
   })
 
+  it('同物品多次命中合并为一条 toast（数量求和），不同物品各一条', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const notification = useNotificationStore()
+    const spy = vi.spyOn(notification, 'toast')
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    pack.applyDrops([
+      { itemId: 'mat_taomu', quantity: 1, chance: 1 },
+      { itemId: 'mat_taomu', quantity: 2, chance: 1 },
+      { itemId: 'mat_cushi', quantity: 1, chance: 1 },
+    ])
+    expect(spy).toHaveBeenCalledTimes(2)
+    expect(spy).toHaveBeenCalledWith('获得「桃木」×3', 'success')
+    expect(spy).toHaveBeenCalledWith('获得「粗石」×1', 'success')
+  })
+
   it('掉落率锁定（setDebugForceDrops(true)）时全部命中，忽略 chance', async () => {
     const pack = usePackStore()
     await pack.init()
@@ -449,6 +488,50 @@ describe('持久化', () => {
     await pack2.init()
     expect(pack2.countOf('mat_zhixuecao')).toBe(3)
   })
+
+  it('旧档混装 stats 收敛：写死 stats 时代的多核心条目按 coreStat×品质系数回归单条', async () => {
+    // 预置旧格式实例：贝壳护手（coreStat speed 14）锁存了核心+词条混装的 3 条 stats；
+    // 旁挂一件正常实例（stats 单条且属性与 coreStat 一致）验证不受影响
+    __mem.set('xiyou', new Map([['pack_runtime', {
+      id: 'pack_runtime',
+      name: '行囊运行时',
+      data: {
+        version: 6,
+        inventory: {},
+        storage: [],
+        quickSlots: [null, null, null, null],
+        currency: { money: 0, xianyuan: 0 },
+        gearInstances: [
+          {
+            instanceId: 'inst_legacy', itemId: 'jz_t1_power_01', enhance: 0, quality: 1, qualityFactor: 0.85, star: 0,
+            stats: [
+              { attribute: 'speed', modifierType: 'flat', value: 12 },
+              { attribute: 'speed', modifierType: 'flat', value: 6 },
+              { attribute: 'damageTakenReduce', modifierType: 'percent', value: 7 },
+            ],
+            affixes: [{ id: 'eqaff_spd_flat', attribute: 'speed', modifierType: 'flat', value: 6, rarity: 1 }],
+          },
+          {
+            instanceId: 'inst_modern', itemId: 'jz_t1_power_01', enhance: 0, quality: 1, qualityFactor: 0.9, star: 0,
+            stats: [{ attribute: 'speed', modifierType: 'flat', value: 13 }],
+            affixes: [],
+          },
+        ],
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }]]))
+
+    const pack = usePackStore()
+    await pack.init()
+    const legacy = pack.gearInstances.find((g) => g.instanceId === 'inst_legacy')
+    const modern = pack.gearInstances.find((g) => g.instanceId === 'inst_modern')
+    // 旧实例：核心收敛为 coreStat 14 × 0.85 = 11.9 → 12 单条；词条归属 affixes 不动
+    expect(legacy?.stats).toEqual([{ attribute: 'speed', modifierType: 'flat', value: 12 }])
+    expect(legacy?.affixes).toHaveLength(1)
+    // 新格式实例原样保留
+    expect(modern?.stats).toEqual([{ attribute: 'speed', modifierType: 'flat', value: 13 }])
+  })
 })
 
 describe("装备穿戴（背包实例化闭环）", () => {
@@ -482,14 +565,14 @@ describe("装备穿戴（背包实例化闭环）", () => {
   it("同槽换装：旧装备自动回背包", async () => {
     const pack = usePackStore()
     await pack.init()
-    // 初始：竹剑 ×1、松木棍 ×1
-    pack.addItem("wp_t1_mid_01", 1) // 松木棍 ×2
+    // 初始：竹剑 ×1（新手套），松木棍补 1 件
+    pack.addItem("wp_t1_mid_01", 1) // 松木棍 ×1
     expect(pack.equip("wp_t1_light_01")).toBe(true) // 竹剑 ×0
-    expect(pack.equip("wp_t1_mid_01")).toBe(true) // 松木棍 ×1，竹剑回背包 ×1
+    expect(pack.equip("wp_t1_mid_01")).toBe(true) // 松木棍 ×0，竹剑回背包 ×1
 
     expect(pack.equipped.weapon?.itemId).toBe("wp_t1_mid_01")
     expect(pack.countOf("wp_t1_light_01")).toBe(1)
-    expect(pack.countOf("wp_t1_mid_01")).toBe(1)
+    expect(pack.countOf("wp_t1_mid_01")).toBe(0)
   })
 
   it("卸下装备回背包并清空槽位", async () => {
@@ -543,6 +626,38 @@ describe("装备穿戴（背包实例化闭环）", () => {
     const pack2 = usePackStore()
     await pack2.init()
     expect(pack2.equipped.weapon?.itemId).toBe("wp_t1_light_01")
+  })
+})
+
+describe("discardGearInstance 单件丢弃（逐件操作粒度）", () => {
+  it("丢弃一件只删该实例，其余保留；空后再丢返回 false", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.addItem("wp_t1_light_01", 2) // 初始 1 + 2 = 3 件实例
+    const insts = pack.gearInstances.filter((g) => g.itemId === "wp_t1_light_01")
+    expect(insts).toHaveLength(3)
+
+    expect(pack.discardGearInstance(insts[0].instanceId)).toBe(true)
+    expect(pack.countOf("wp_t1_light_01")).toBe(2)
+
+    for (const g of insts.slice(1)) pack.discardGearInstance(g.instanceId)
+    expect(pack.countOf("wp_t1_light_01")).toBe(0)
+    expect(pack.discardGearInstance(insts[0].instanceId)).toBe(false)
+  })
+
+  it("穿戴中的实例不在 gearInstances，按 instanceId 丢弃返回 false", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    const wornId = pack.equipped.weapon!.instanceId
+    expect(pack.discardGearInstance(wornId)).toBe(false)
+    expect(pack.equipped.weapon).toBeDefined()
+  })
+
+  it("未知 instanceId 返回 false", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    expect(pack.discardGearInstance("no-such-instance")).toBe(false)
   })
 })
 
@@ -733,6 +848,7 @@ describe("装备制造与强化（实例化）", () => {
   it("升星同名装备兜底支付：无残魂/破境耀星石时消耗同名 3 件（1 点/件）", async () => {
     const pack = usePackStore()
     await pack.init()
+    pack.addItem("wp_t1_mid_01", 1) // 新手套已不含松木棍，先补一件穿上
     pack.equip("wp_t1_mid_01")
     pack.addItem("wp_t1_mid_01", 3) // 3 件同名 = 3 点
     expect(pack.starGear("weapon")).toBe(true)
@@ -743,6 +859,7 @@ describe("装备制造与强化（实例化）", () => {
   it("破境耀星石支付：破境耀星石·上 1 颗 = 3 点，不消耗同名与残魂", async () => {
     const pack = usePackStore()
     await pack.init()
+    pack.addItem("wp_t1_mid_01", 1) // 新手套已不含松木棍，先补一件穿上
     pack.equip("wp_t1_mid_01")
     pack.addItem("wp_t1_mid_01", 1)
     pack.addItem("decomp_soul", 1)

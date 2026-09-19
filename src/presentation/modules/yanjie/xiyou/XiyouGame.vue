@@ -26,7 +26,7 @@
 
       <!-- 功能宝阁（行路态 290px / 功能态全屏） -->
       <TreasureCabinet :tab="activeCabinet" :current="currentScene" :regions="regions" :scenes="scenes"
-        @select="onSceneSelect" @open-equip="activeCabinet = 'equip'" />
+        @select="onSceneSelect" />
 
       <!-- 战斗禅台（仅行路态显示；gameLoaded 前不挂载，避免首屏用存档前初始属性初始化战斗） -->
       <BattleZen v-if="gameLoaded" v-show="!isFeature" :scene="currentScene" @open-map="mapOpen = true" />

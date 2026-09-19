@@ -57,6 +57,7 @@
       "count": 18
     }
   ],
+  "starterEnabled": true,
   "equipment": [
     {
       "count": 1,
@@ -68,11 +69,19 @@
     },
     {
       "count": 1,
+      "itemId": "hd_t1_war_01"
+    },
+    {
+      "count": 1,
+      "itemId": "bt_t1_light_01"
+    },
+    {
+      "count": 1,
       "itemId": "hf_t1_life_01"
     },
     {
       "count": 1,
-      "itemId": "wp_t1_mid_01"
+      "itemId": "jz_t1_power_01"
     }
   ],
   "pills": [

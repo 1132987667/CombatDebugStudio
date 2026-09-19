@@ -2,48 +2,48 @@
   <div class="xy-panel-scroll">
     <Tabs v-model="sub" :tabs="SUBS" destroy-inactive class="xy-tabs--seal">
       <template #gear>
-        <div class="xy-gear-layout">
-          <!-- 左侧：当前穿戴槽位（固定）+ 已穿戴总属性 -->
+        <!-- xy-panel-tabs：豁免 xiyou.scss 功能态对 tabpanel 直接子 div 的 grid 化（同 PackPane），否则三栏各被压成 300px 轨道 -->
+        <div class="xy-gear-layout xy-panel-tabs">
+          <!-- 左侧：当前穿戴槽位（固定等高，属性走悬浮详情） -->
           <aside class="xy-gear-side">
             <div class="xy-gear-grid">
               <div v-for="slot in GEAR_SLOT_KEYS" :key="slot" class="xy-gear-slot"
                 :class="[{ empty: !equippedInstance(slot) }, slotQualityClass(slot)]"
                 @mouseenter="onEnter($event, equippedInstance(slot))" @mouseleave="onLeave"
                 @contextmenu.prevent="openMenu($event, { slot, equipped: true, g: equippedInstance(slot) })">
-                <span class="xy-gear-slot-name">{{ GEAR_SLOT_LABELS[slot] }}</span>
-                <span class="xy-gear-slot-item" :class="qualityClass(equippedInstance(slot)?.rarity ?? 1)">
-                  {{ equippedInstance(slot)?.name ?? '空位' }}
+                <span class="xy-gear-slot-title">
+                  <span class="xy-gear-slot-item" :class="qualityClass(equippedInstance(slot)?.rarity ?? 1)">
+                    {{ equippedInstance(slot)?.name ?? '空位' }}
+                  </span>
+                  <span class="xy-gear-slot-name">{{ GEAR_SLOT_LABELS[slot] }}</span>
+                  <span v-if="equippedInstance(slot)" class="xy-gear-slot-enhance">
+                    强化 +{{ equippedInstance(slot)!.enhance }}
+                  </span>
                 </span>
-                <span class="xy-gear-slot-enhance" :class="{ 'xy-gear-slot-enhance--empty': !equippedInstance(slot) }">
-                  {{ equippedInstance(slot) ? `强化 +${equippedInstance(slot)!.enhance} · 已穿戴` : '空位' }}
-                </span>
-                <span v-if="equippedInstance(slot)" class="xy-gear-slot-quality"
-                  :class="equipQualityClass(equippedInstance(slot)!.quality)">
-                  {{ qualityName(equippedInstance(slot)!.quality) }} · ×{{ factorText(equippedInstance(slot)!.qualityFactor) }}
-                </span>
-                <p class="xy-gear-slot-effect">{{ equippedInstance(slot) ? statsText(equippedInstance(slot)!) : '未装备' }}</p>
-                <button v-if="equippedInstance(slot)" type="button" class="xy-gear-unequip" @click="pack.unequip(slot)">
-                  卸下
-                </button>
+                <template v-if="equippedInstance(slot)">
+                  <span class="xy-gear-slot-quality" :class="equipQualityClass(equippedInstance(slot)!.quality)">
+                    {{ qualityName(equippedInstance(slot)!.quality) }} · ×{{ factorText(equippedInstance(slot)!.qualityFactor) }}
+                  </span>
+                  <button type="button" class="xy-gear-unequip" @click="pack.unequip(slot)">卸下</button>
+                </template>
+                <span v-else class="xy-gear-slot-none">未装备</span>
               </div>
             </div>
-
-            <section class="xy-gear-total">
-              <h5 class="xy-panel-hint">已穿戴装备提供总属性</h5>
-              <div v-if="equippedTotal.length" class="xy-gear-total-rows">
-                <span v-for="t in equippedTotal" :key="t.key" class="xy-gear-total-chip">
-                  {{ t.label }} +{{ t.value }}{{ t.percent ? '%' : '' }}
-                </span>
-              </div>
-              <p v-else class="xy-gear-pool__empty">尚未穿戴装备</p>
-            </section>
           </aside>
 
           <!-- 右侧：背包装备池（独立滚动，可排序筛选） -->
           <div class="xy-gear-pool">
           <div class="xy-gear-toolbar">
             <TacticalSelect v-model="sortBy" :options="SORT_OPTIONS" placeholder="排序" class="xy-gear-sort" />
+            <div class="xy-gear-filters" role="group" aria-label="部位筛选">
+              <span class="xy-gear-filter-cap">部位</span>
+              <button v-for="f in SLOT_FILTERS" :key="f.value" type="button"
+                class="xy-gear-filter" :class="{ on: slotFilter === f.value }" @click="slotFilter = f.value">
+                {{ f.label }}
+              </button>
+            </div>
             <div class="xy-gear-filters" role="group" aria-label="品质筛选">
+              <span class="xy-gear-filter-cap">品质</span>
               <button v-for="f in QUALITY_FILTERS" :key="f.value" type="button"
                 class="xy-gear-filter" :class="{ on: qualityFilter === f.value }" @click="qualityFilter = f.value">
                 {{ f.label }}
@@ -51,14 +51,11 @@
             </div>
           </div>
           <h5 class="xy-panel-hint xy-gear-pool-hint">背包装备 · 点击穿戴</h5>
-          <div v-for="slot in GEAR_SLOT_KEYS" :key="slot" class="xy-gear-pool__group">
+          <div v-for="slot in visibleGearGroups" :key="slot" class="xy-gear-pool__group">
             <span class="xy-gear-pool__label">{{ GEAR_SLOT_LABELS[slot] }}</span>
             <div class="xy-gear-pool__items">
-              <div
-                v-for="g in gearInPack(slot)"
-                :key="g.instanceId"
-                class="xy-gear-pack-item"
-              >
+              <div v-for="g in gearInPack(slot)" :key="g.instanceId" class="xy-gear-pack-item"
+                :class="`xy-gear-pack-item--r${g.rarity}`">
                 <button
                   type="button"
                   class="xy-gear-pack-item__main"
@@ -66,13 +63,16 @@
                   @contextmenu.prevent="openMenu($event, { slot, equipped: false, g })"
                   @click="pack.equipInstance(g.instanceId)"
                 >
-                  <span class="xy-gear-pack-item__name">{{ g.name }}</span>
-                  <span class="xy-gear-pack-item__stat">{{ statsText(g) }}</span>
-                  <span class="xy-gear-pack-item__quality" :class="equipQualityClass(g.quality)">
-                    {{ qualityName(g.quality) }} · ×{{ factorText(g.qualityFactor) }}
+                  <span class="xy-gear-pack-item__title">
+                    <span class="xy-gear-pack-item__name" :class="qualityClass(g.rarity)">{{ g.name }}</span>
+                    <span class="xy-gear-pack-item__quality" :class="equipQualityClass(g.quality)">
+                      {{ qualityName(g.quality) }} · ×{{ factorText(g.qualityFactor) }}
+                    </span>
+                    <span v-if="g.affixes.length" class="xy-gear-pack-item__affix">词缀 ×{{ g.affixes.length }}</span>
+                    <span v-if="g.enhance" class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
                   </span>
-                  <span v-if="g.affixes.length" class="xy-gear-pack-item__affix">
-                    词缀 ×{{ g.affixes.length }}
+                  <span class="xy-gear-stat-row">
+                    <span v-for="(s, si) in g.stats" :key="si" class="xy-gear-stat-chip">{{ statText(s) }}</span>
                   </span>
                 </button>
                 <button type="button" class="xy-gear-pack-item__detail" @click="openDetail(g)">详情</button>
@@ -81,6 +81,17 @@
             </div>
           </div>
         </div>
+
+          <!-- 最右：已穿戴装备总属性 -->
+          <section class="xy-gear-total">
+            <h5 class="xy-panel-hint">已穿戴装备提供总属性</h5>
+            <div v-if="equippedTotal.length" class="xy-gear-total-rows">
+              <span v-for="t in equippedTotal" :key="t.key" class="xy-gear-total-chip">
+                {{ t.label }} +{{ t.value }}{{ t.percent ? '%' : '' }}
+              </span>
+            </div>
+            <p v-else class="xy-gear-pool__empty">尚未穿戴装备</p>
+          </section>
         </div>
 
         <!-- 装备详情（新旧对比） -->
@@ -154,8 +165,9 @@ import {
 } from '@/presentation/stores/packStore'
 import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import { mounts, treasures } from '../xiyouData'
-import { equipQualityClass, qualityClass, qualityColor, qualityName, qualityOf } from '../quality'
+import { equipQualityClass, qualityClass, qualityName, qualityOf } from '../quality'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
+import { factorText, gearTooltipData, statText } from '../gearTooltip'
 import GearDetailDialog from './GearDetailDialog.vue'
 
 const pack = usePackStore()
@@ -204,6 +216,18 @@ const QUALITY_FILTERS = [
   { value: 5, label: '神' },
 ]
 const qualityFilter = ref(0)
+
+/** 部位筛选：all = 六槽位全展示（默认） */
+const slotFilter = ref<'all' | GearSlotKey>('all')
+const SLOT_FILTERS: Array<{ value: 'all' | GearSlotKey; label: string }> = [
+  { value: 'all', label: '全部' },
+  ...GEAR_SLOT_KEYS.map((s) => ({ value: s, label: GEAR_SLOT_LABELS[s] })),
+]
+
+/** 池内分组：按部位筛选裁剪 */
+const visibleGearGroups = computed(() =>
+  GEAR_SLOT_KEYS.filter((s) => slotFilter.value === 'all' || s === slotFilter.value),
+)
 
 /** 背包中该槽位可穿戴的装备实例（应用品质筛选 + 排序） */
 function gearInPack(slot: GearSlotKey): GearPackView[] {
@@ -279,37 +303,11 @@ const tooltipVisible = ref(false)
 const triggerRect = ref<DOMRect | null>(null)
 const tooltipData = ref<TooltipData | null>(null)
 
-/** 装备实例 → 悬浮卡片数据（含基础属性×品质×强化、词缀、部位、来源） */
-function gearTooltipData(g: GearPackView): TooltipData {
-  const def = pack.gearById(g.itemId)
-  const attrRows: { label: string; value: string }[] = g.stats.map((s) => {
-    const n = attrShortName(s.attribute)
-    const suffix = s.modifierType === 'percent' ? '%' : ''
-    return { label: n, value: `${s.value >= 0 ? '+' : ''}${s.value}${suffix}` }
-  })
-  return {
-    name: g.name,
-    description: def?.description ?? '暂无描述',
-    badge: qualityOf(g.rarity),
-    nameColor: qualityColor(g.rarity),
-    badgeColor: qualityColor(g.rarity),
-    durationLabel: def?.subType,
-    details: [
-      { label: '部位', value: def ? (GEAR_SLOT_LABELS[def.slot as GearSlotKey] ?? def.slot) : '未知' },
-      { label: '品质', value: `${qualityName(g.quality)} · ×${factorText(g.qualityFactor)}` },
-      { label: '强化', value: g.enhance > 0 ? `+${g.enhance}` : '未强化' },
-      { label: '词缀', value: g.affixes.length > 0 ? `×${g.affixes.length}` : '无' },
-      ...attrRows,
-    ],
-    source: def?.source,
-  }
-}
-
 /** 悬浮进入：记录触发元素 rect + 组装数据（空槽不显示） */
 function onEnter(e: MouseEvent, g: GearPackView | null): void {
   if (!g) return
   triggerRect.value = (e.currentTarget as HTMLElement)?.getBoundingClientRect() ?? null
-  tooltipData.value = gearTooltipData(g)
+  tooltipData.value = gearTooltipData(pack, GEAR_SLOT_LABELS, g)
   tooltipVisible.value = true
 }
 
@@ -364,26 +362,12 @@ function act(action: 'equip' | 'unequip' | 'discard'): void {
   if (!target?.g) return
   if (action === 'equip') pack.equipInstance(target.g.instanceId)
   else if (action === 'unequip') pack.unequip(target.slot)
-  else pack.discardItem(target.g.itemId)
+  else pack.discardGearInstance(target.g.instanceId)
 }
 
 onBeforeUnmount(() => {
   removeDocListener?.()
 })
-
-/** 装备 stats 文案："攻击 +12"（含强化与词缀） */
-function statsText(g: GearPackView): string {
-  return g.stats.map((s) => {
-    const n = attrShortName(s.attribute)
-    const suffix = s.modifierType === 'percent' ? '%' : ''
-    return `${n} ${s.value >= 0 ? '+' : ''}${s.value}${suffix}`
-  }).join(' · ')
-}
-
-/** 品质系数文案：×0.85（百分数展示，>=1 省略小数补零显示两位） */
-function factorText(factor: number): string {
-  return (Math.round(factor * 100) / 100).toFixed(2)
-}
 
 /** 坐骑品级 → chip 类（EquipPanel 专属，不入统一映射表） */
 const MOUNT_CHIP_BY_RARITY: Record<number, string> = {
@@ -408,30 +392,37 @@ function mountQualityChip(rarity: number): string {
   color: var(--xy-ink-4);
 }
 
-/* ── 装备页左右布局：左侧固定穿戴槽位，右侧背包装备池 ── */
+/* ── 装备页三栏布局：左=固定等高穿戴槽位，中=背包装备池（独立滚动），右=已穿戴总属性 ── */
 .xy-gear-layout {
+  flex: 1;
+  min-height: 0;
   display: flex;
   gap: var(--space-3);
-  align-items: flex-start;
+  align-items: stretch;
 }
 
-/* 左侧边栏：固定（面板内滚动时保持可见） */
+/* 左侧边栏：占满面板高度，内容超高才内部滚动。
+   四周留白：卡片 hover 上移 4px + 4px 外圈 ring 超出滚动容器裁剪边界（同 BattleRoster 范式） */
 .xy-gear-side {
-  position: sticky;
-  top: 0;
   flex: 0 0 220px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  overflow-y: auto;
+  padding: 14px var(--space-3);
 }
 
-/* 右侧背包装备池：撑满剩余宽度 */
+/* 右侧背包装备池：撑满剩余宽度，独立滚动（留白理由同 .xy-gear-side） */
 .xy-gear-pool {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px var(--space-3) var(--space-4);
 }
 
-/* ── 当前穿戴：品质光晕卡片（还原旧设计：同心环背景 + 品级色边框 + hover 浮起发光） ── */
+/* ── 当前穿戴：与行囊 PackItemCard 同款视觉（品级色描边 + 双点底纹 + hover 浮起） ── */
 .xy-gear-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -450,12 +441,14 @@ function mountQualityChip(rarity: number): string {
   align-items: flex-start;
   gap: 2px;
   padding: var(--space-2) var(--space-3);
+  /* 六槽等高：内容固定为 标题行+品质行+卸下按钮（属性明细走悬浮详情），空槽同高 */
+  height: 112px;
   border: 2px solid var(--r-color);
   border-radius: 2px;
   color: var(--xy-ink-1);
 
   &::after {
-    @include bg-rings();
+    @include mixin-bg-dual-dots();
     content: '';
     position: absolute;
     inset: 0;
@@ -466,90 +459,51 @@ function mountQualityChip(rarity: number): string {
   &:hover {
     transform: translateY(-4px);
     box-shadow:
-      0 0 0 3px var(--xy-paper),
-      0 0 0 6px var(--ring),
+      0 0 0 2px var(--xy-paper),
+      0 0 0 4px var(--ring),
       0 0 34px var(--glow),
-      0 22px 46px rgba(0, 0, 0, 0.4);
+      0 22px 46px rgba(var(--rgb-black), 0.4);
 
     &::after {
-      animation: hover-breath 1.2s ease-in-out infinite;
+      animation: dots-flow 6s linear infinite;
     }
   }
 
   /* 品级着色：r1 凡品灰 ~ r5 仙品橙（对齐 tokens --rarity-* 令牌） */
-  &--r1 {
-    --r-color: var(--rarity-1);
-
-    &::after {
-      @include bg-rings($light: #8bc34a); /* = --rarity-1（mixin 编译期色，改 rarity 需同步） */
-    }
-  }
-
-  &--r2 {
-    --r-color: var(--rarity-2);
-
-    &::after {
-      @include bg-rings($light: #64b5f6); /* = --rarity-2 */
-    }
-  }
-
-  &--r3 {
-    --r-color: var(--rarity-3);
-
-    &::after {
-      @include bg-rings($light: #ce93d8); /* = --rarity-3 */
-    }
-  }
-
-  &--r4 {
-    --r-color: var(--rarity-4);
-
-    &::after {
-      @include bg-rings($light: #ffd54f); /* = --rarity-4 */
-    }
-  }
-
-  &--r5 {
-    --r-color: var(--rarity-5);
-
-    &::after {
-      @include bg-rings($light: #ef5350); /* = --rarity-5 */
-    }
-  }
+  &--r1 { --r-color: var(--rarity-1); }
+  &--r2 { --r-color: var(--rarity-2); }
+  &--r3 { --r-color: var(--rarity-3); }
+  &--r4 { --r-color: var(--rarity-4); }
+  &--r5 { --r-color: var(--rarity-5); }
 
   &.empty {
     opacity: 0.6;
   }
 }
 
-.xy-gear-slot-name {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-4);
+/* 名称行：装备名（品阶色）+ 部位 + 强化（同背包卡片标题行结构） */
+.xy-gear-slot-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  width: 100%;
+  flex-wrap: wrap;
 }
 
-.xy-gear-slot-item {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-1);
+.xy-gear-slot-name {
+  color: var(--xy-ink-3);
 }
 
 .xy-gear-slot-enhance {
-  font-size: var(--font-size-md);
-  color: var(--xy-seal);
-
-  &--empty {
-    color: var(--xy-ink-4);
-  }
+  color: var(--color-success);
 }
 
 .xy-gear-slot-quality {
-  font-size: var(--font-size-md);
   font-weight: 600;
 }
 
-.xy-gear-slot-effect {
-  margin: 0;
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
+.xy-gear-slot-none {
+  color: var(--xy-ink-4);
 }
 
 .xy-gear-unequip {
@@ -569,8 +523,10 @@ function mountQualityChip(rarity: number): string {
   }
 }
 
-/* ── 已穿戴装备总属性 ── */
+/* ── 已穿戴装备总属性：最右独立列（顶部对齐） ── */
 .xy-gear-total {
+  flex: 0 0 220px;
+  align-self: flex-start;
   padding: var(--space-3);
   border: 1px dashed var(--xy-ink-line);
   border-radius: 2px;
@@ -583,8 +539,9 @@ function mountQualityChip(rarity: number): string {
 
 .xy-gear-total-rows {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
 }
 
 .xy-gear-total-chip {
@@ -595,11 +552,12 @@ function mountQualityChip(rarity: number): string {
   color: var(--xy-ink-2);
 }
 
-/* ── 背包装备池工具栏（排序 + 品质筛选） ── */
+/* ── 背包装备池工具栏（排序 + 部位筛选 + 品质筛选） ── */
 .xy-gear-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
   margin-bottom: var(--space-2);
 
   .t-select {
@@ -614,7 +572,15 @@ function mountQualityChip(rarity: number): string {
 .xy-gear-filters {
   display: flex;
   flex-wrap: wrap;
+  flex: none; /* 工具栏变窄时优先挤压排序框，品质筛选不折行 */
   gap: var(--space-1);
+}
+
+/* 筛选组前缀标签（部位/品质），区分两组同名「全部」 */
+.xy-gear-filter-cap {
+  align-self: center;
+  color: var(--xy-ink-4);
+  margin-right: var(--space-1);
 }
 
 .xy-gear-filter {
@@ -650,7 +616,7 @@ function mountQualityChip(rarity: number): string {
 
 .xy-gear-pool__label {
   display: inline-block;
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-3);
   padding-left: var(--space-2);
   border-left: 3px solid var(--xy-seal);
   font-size: var(--font-size-md);
@@ -658,26 +624,66 @@ function mountQualityChip(rarity: number): string {
 }
 
 .xy-gear-pool__items {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-2);
 }
 
-.xy-gear-pack-item {
+/* 属性小标签：每条属性一格，避免长串拼接在窄卡片里乱换行 */
+.xy-gear-stat-row {
   display: flex;
-  align-items: stretch;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.xy-gear-stat-chip {
+  padding: 1px var(--space-2);
   border: 1px solid var(--xy-ink-line);
   border-radius: 2px;
-  background: var(--xy-paper);
+  color: var(--xy-ink-3);
+}
+
+/* 背包池卡片：与行囊 PackItemCard 同款视觉 */
+.xy-gear-pack-item {
+  --r-color: var(--xy-ink-line);
+  --ring: var(--r-color);
+  --glow: color-mix(in srgb, var(--r-color) 40%, transparent);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--r-color);
+  border-radius: 2px;
+
+  &::after {
+    @include mixin-bg-dual-dots();
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+  }
 
   &:hover {
-    border-color: var(--xy-seal);
+    transform: translateY(-4px);
+    box-shadow:
+      0 0 0 2px var(--xy-paper),
+      0 0 0 4px var(--ring),
+      0 0 34px var(--glow),
+      0 22px 46px rgba(var(--rgb-black), 0.4);
+
+    &::after {
+      animation: dots-flow 6s linear infinite;
+    }
   }
 
-  &.is-worn {
-    border-color: var(--xy-seal);
-    background: var(--xy-seal-soft);
-  }
+  &--r1 { --r-color: var(--rarity-1); }
+  &--r2 { --r-color: var(--rarity-2); }
+  &--r3 { --r-color: var(--rarity-3); }
+  &--r4 { --r-color: var(--rarity-4); }
+  &--r5 { --r-color: var(--rarity-5); }
 }
 
 .xy-gear-pack-item__main {
@@ -686,7 +692,7 @@ function mountQualityChip(rarity: number): string {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--space-1);
   padding: var(--space-2) var(--space-3);
   border: none;
   background: transparent;
@@ -696,10 +702,31 @@ function mountQualityChip(rarity: number): string {
   text-align: left;
 }
 
+/* 标题行：名称（品阶色）+ 品质系数 + 词缀 + 强化 */
+.xy-gear-pack-item__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.xy-gear-pack-item__quality {
+  font-weight: 600;
+}
+
+.xy-gear-pack-item__affix {
+  color: var(--xy-ink-3);
+}
+
+.xy-gear-pack-item__enhance {
+  color: var(--color-success);
+}
+
 .xy-gear-pack-item__detail {
-  align-self: center;
+  align-self: flex-start;
   flex-shrink: 0;
-  margin-right: var(--space-2);
+  margin: var(--space-2) var(--space-2) 0 0;
   padding: 2px var(--space-2);
   border: 1px solid var(--xy-ink-line);
   border-radius: 2px;
@@ -713,25 +740,6 @@ function mountQualityChip(rarity: number): string {
     border-color: var(--xy-seal);
     color: var(--xy-seal);
   }
-}
-
-.xy-gear-pack-item__name {
-  font-size: var(--font-size-md);
-}
-
-.xy-gear-pack-item__stat {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
-}
-
-.xy-gear-pack-item__quality {
-  font-size: var(--font-size-md);
-  font-weight: 600;
-}
-
-.xy-gear-pack-item__worn {
-  font-size: var(--font-size-md);
-  color: var(--xy-seal);
 }
 
 .xy-gear-pool__empty {

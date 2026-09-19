@@ -11,7 +11,7 @@
       </div>
 
       <PackPanel v-else-if="tab === 'pack'" />
-      <CultivatePanel v-else-if="tab === 'cultivate'" @open-equip="emit('open-equip')" />
+      <CultivatePanel v-else-if="tab === 'cultivate'" />
       <EquipPanel v-else-if="tab === 'equip'" />
       <MatePanel v-else-if="tab === 'mate'" />
       <QuestPanel v-else-if="tab === 'quest'" />
@@ -40,7 +40,7 @@ const props = defineProps<{
   regions: XiyouRegion[]
   scenes: XiyouScene[]
 }>()
-const emit = defineEmits<{ select: [scene: XiyouScene]; 'open-equip': [] }>()
+const emit = defineEmits<{ select: [scene: XiyouScene] }>()
 
 /** 战斗/路引 tab：路引时间线自带头部（含进度），隐藏通用头部避免标题重复 */
 const isRouteTab = computed(() => props.tab === 'battle' || props.tab === 'map')

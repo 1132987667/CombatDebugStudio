@@ -81,6 +81,8 @@ export interface DebugActionDef {
   input?: DebugActionInput | DebugActionInput[]
   /** 开关型动作（execute 返回 nextState，面板持久化状态并高亮） */
   toggle?: boolean
+  /** 开关型动作初始态（面板挂载时播种 toggleStates；缺省视为关闭） */
+  initial?: () => boolean
   /**
    * 执行函数（注入 env 后生成）。
    * - 无输入：params = null
@@ -1173,6 +1175,37 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 }
               }
               return ok(`全槽位已给予${given.length}件：${given.join('、')}`, given)
+            },
+          },
+          {
+            id: 'gear_give_starter',
+            label: '发放新手装备套',
+            execute: () => {
+              const given: string[] = []
+              for (const it of env.starter.items()) {
+                const def = pack.gearById(it.itemId)
+                if (!def) continue
+                pack.addItem(it.itemId, it.count)
+                given.push(def.name)
+              }
+              return given.length ? ok(`新手套装已发放 ${given.length} 件：${given.join('、')}`, given) : fail('新手套装清单为空')
+            },
+          },
+          {
+            id: 'gear_starter_toggle',
+            label: '新档自动生成新手套',
+            toggle: true,
+            initial: () => env.starter.enabled(),
+            execute: async (_p, on) => {
+              const next = !on
+              if (!(await env.starter.setEnabled(next))) return fail('写入 pack 配置失败（IDB 不可用或 pack 文档缺失）')
+              return {
+                success: true,
+                message: next
+                  ? '已启用：新游戏自动生成新手装备套'
+                  : '已禁用：新游戏不再自动生成（可用「发放新手装备套」补发）',
+                nextState: next,
+              }
             },
           },
         ],

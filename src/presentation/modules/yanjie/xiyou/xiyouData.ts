@@ -22,6 +22,8 @@ import schoolsJson from '@configs/xiyou/schools.json'
 import skillTreeJson from '@configs/xiyou/skill_tree.json'
 import { computed, reactive, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
+import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
 import { migrateRarityField } from './quality'
@@ -354,6 +356,25 @@ export function markSceneCleared(sceneId: string, stars = 1): boolean {
 
 export const materials: XiyouItem[] = reactive<XiyouItem[]>(packJson.materials as unknown as XiyouItem[])
 export const equipment: XiyouPackedEquipment[] = reactive<XiyouPackedEquipment[]>(packJson.equipment as unknown as XiyouPackedEquipment[])
+/** 新游戏新手装备套开关（pack.json starterEnabled；运行期以 IDB pack 文档为权威，调试面板切换经 persistStarterEnabled 写回） */
+export const starterEnabled = ref<boolean>((packJson as { starterEnabled?: boolean }).starterEnabled !== false)
+
+/** 把新手套开关写回 IDB pack 文档（对之后的新游戏生效）；文档缺失/写失败返回 false */
+export async function persistStarterEnabled(value: boolean): Promise<boolean> {
+  try {
+    const doc = await persistentStorage.get<XiyouData>(FENGSHEN_STORE.XIYOU, 'pack')
+    if (!doc || !doc.data || typeof doc.data !== 'object') return false
+    await persistentStorage.set(FENGSHEN_STORE.XIYOU, 'pack', {
+      ...doc,
+      data: { ...(doc.data as Record<string, unknown>), starterEnabled: value },
+      updatedAt: new Date().toISOString(),
+    })
+    starterEnabled.value = value
+    return true
+  } catch {
+    return false
+  }
+}
 export const pills: XiyouItem[] = reactive<XiyouItem[]>(packJson.pills as unknown as XiyouItem[])
 export const consumables: XiyouItem[] = reactive<XiyouItem[]>(packJson.consumables as unknown as XiyouItem[])
 export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.shopGoods as unknown as XiyouShopGood[])
@@ -492,6 +513,9 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   if (schoolSrc) syncSchools(schoolSrc)
   aIn(materials, 'pack', 'materials')
   aIn(equipment, 'pack', 'equipment')
+  // 新手套开关随 pack 文档恢复（旧文档无该字段保持 configs 兜底值）
+  const packDoc = obj('pack')
+  if (packDoc && typeof packDoc.starterEnabled === 'boolean') starterEnabled.value = packDoc.starterEnabled
   aIn(pills, 'pack', 'pills')
   aIn(consumables, 'pack', 'consumables')
   aIn(shopGoods, 'pack', 'shopGoods')

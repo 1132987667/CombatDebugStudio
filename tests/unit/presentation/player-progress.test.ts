@@ -110,11 +110,11 @@ describe('敌方参战者（R22 敌人数据加载）与难度倍率（R19）', 
     expect(n.getAttribute(ATTRIBUTE_CODE.attack)).toBe(Math.round(14 * 1.5))
   })
 
-  it('critDamage 百分制 → 引擎比例（120 → 1.2）', () => {
+  it('critDamage 保持百分制（enemies.json 120 原样注入；引擎 DamageCalculator 消费时自行 /100 折算倍率）', () => {
     const s1 = scenes.find((s) => s.id === 'scene_1_1')!
     const enemy = buildEnemyTeam(s1)
     const hua = enemy.find((e) => e.name === '花妖幼芽')!
-    expect(hua.getAttribute(ATTRIBUTE_CODE.critDamage)).toBe(1.2)
+    expect(hua.getAttribute(ATTRIBUTE_CODE.critDamage)).toBe(120)
   })
 
   it('buildEnemyTeam 注入敌人技能（enemy-skills.json 分桶，P0-1）', () => {

@@ -36,10 +36,8 @@ import { SPEED_OPTIONS } from '@/shared/constants/speed'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
-import type { UnifiedArchive } from '@/domain/battle/replay/unified/unified-archive'
 import { summarizeBattle, type BattleSummary } from '@/domain/battle/replay/unified/unified-summary'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
-import type { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { getActionBudget } from '@/shared/constants/animation-timing'
@@ -267,8 +265,8 @@ export const useBattleStore = defineStore('battle', () => {
 
   //  4. 事件处理器（仅负责同步业务数据到响应式状态）
 
-  /** 最近一场战斗的统一存档（战报弹窗「导出 JSON」导出完整存档，供昊天镜导入回放） */
-  const lastArchive = ref<UnifiedArchive | null>(null)
+  /** 战斗战报历史（日志「战斗战报」页签展示；只保留最近 3 场，最新在前） */
+  const recentSummaries = ref<BattleSummary[]>([])
 
   /** 从当前战斗录制生成统一战报（与昊天镜摘要共用 fromRecordedBattle + summarizeBattle 统计源） */
   const buildBattleSummary = (): BattleSummary | null => {
@@ -277,7 +275,6 @@ export const useBattleStore = defineStore('battle', () => {
     const rec = bs.getBattleRecording(currentBattleId.value)
     if (!rec) return null
     const archive = fromRecordedBattle(rec)
-    lastArchive.value = archive
     const summary = archive ? summarizeBattle(archive) : null
     if (summary) BattleSummaryGenerator.instance.setSummary(summary)
     return summary
@@ -306,12 +303,10 @@ export const useBattleStore = defineStore('battle', () => {
       })
       // NOTE: 战报统一从录制事件流派生（fromRecordedBattle + summarizeBattle），
       //       与昊天镜摘要共用同一统计源，不维护第二套累加口径。
+      //       战报不再弹窗展示，入列 recentSummaries 供日志「战斗战报」页签查看。
       const summary = buildBattleSummary()
       if (summary) {
-        container
-          .resolve<UIEventBus>('UIEventBus')
-          .getEmitter()
-          .emit(BattleEventCodes.BATTLE_SUMMARY, summary)
+        recentSummaries.value = [summary, ...recentSummaries.value].slice(0, 3)
       }
     }
   }
@@ -639,6 +634,9 @@ export const useBattleStore = defineStore('battle', () => {
         .buildSnapshot(battleId)
       battleService.value!.syncBattleState()
       setBattleActive(true)
+      // NOTE: 引擎侧每场 initialize 会把 battleSpeed 重置为规则默认 1x（BattleSystem.initialize），
+      //       UI store.battleSpeed 才是玩家权威速度——每场开始后重新下发，否则第二场起速度失效
+      battleService.value!.setBattleSpeed(battleSpeed.value)
       autoPlayMode.value = battleService.value!.getAutoBattle()
       battleLogManager.addSystemLog({ message: '战斗已开始' })
       return true
@@ -1217,7 +1215,7 @@ export const useBattleStore = defineStore('battle', () => {
     setShowDebug, // 设置显示调试信息状态
 
     // ========== 战斗流程控制 ==========
-    lastArchive, // 最近一场战斗的统一存档（战报弹窗导出用）
+    recentSummaries, // 战斗战报历史（日志「战斗战报」页签，最近 3 场）
     startBattle, // 开始战斗
     endBattle, // 结束战斗
     resetBattle, // 重置战斗

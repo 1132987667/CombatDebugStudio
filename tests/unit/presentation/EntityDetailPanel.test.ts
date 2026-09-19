@@ -176,12 +176,12 @@ describe('EntityDetailPanel 引用字段优先中文', () => {
     expect(idsSpan?.getAttribute('title')).toContain('boss_minor_zhenshan')
   })
 
-  it('被引用区装备详情（gears）来源：装备名渲染为可悬浮 tag，显示名称而非编号', () => {
+  it('被引用区可打造装备（equipment.craftable）来源：装备名渲染为可悬浮 tag，显示名称而非编号', () => {
     const root = mount(
       { id: 'mat_x', name: '幽影木' },
       schema,
       { hf_t4_war_01: '毒牙战符', jz_t4_power_01: '毒牙戒', wp_t4_light_01: '幽影刃' },
-      [{ sourceTable: 'gears', ids: ['hf_t4_war_01', 'jz_t4_power_01', 'wp_t4_light_01'] }],
+      [{ sourceTable: 'equipment', ids: ['hf_t4_war_01', 'jz_t4_power_01', 'wp_t4_light_01'] }],
     )
     expect(root.textContent).toContain('毒牙战符')
     expect(root.textContent).toContain('毒牙戒')

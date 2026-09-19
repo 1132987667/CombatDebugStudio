@@ -114,10 +114,14 @@ describe('种子导入 seedFengshenData', () => {
     expect(itemKeys).not.toContain('wp_t1_light_01')
     expect(itemKeys).not.toContain('eq_w001')
 
-    // 装备详情（gears 表）：全量可打造装备（equipment.json 中 craftable 的装备）
-    const gearKeys = await storage.keys(FENGSHEN_STORE.GEARS)
-    expect(gearKeys).toHaveLength(87)
-    expect(gearKeys).toContain('hf_t1_life_01')
+    // 可打造清单（原「装备详情」gears 派生表已删除）：由 equipment.craftable 单一来源承载
+    const craftableKeys: string[] = []
+    for (const k of equipKeys) {
+      const row = await storage.get<{ craftable?: boolean }>(FENGSHEN_STORE.EQUIPMENT, k)
+      if (row?.craftable) craftableKeys.push(k)
+    }
+    expect(craftableKeys).toHaveLength(87)
+    expect(craftableKeys).toContain('hf_t1_life_01')
 
     // 词缀表：61 种种子词缀齐全（需求调整历史 #16：移除 8 条五行词条后 69-8=61）
     const affixKeys = await storage.keys(FENGSHEN_STORE.AFFIXES)

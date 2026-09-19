@@ -31,7 +31,6 @@ export const FENGSHEN_STORE = {
   PARAMS: 'params',
   XIYOU: 'xiyou',
   ITEMS: 'items',
-  GEARS: 'gears',
   META: 'meta',
 } as const
 export type FengshenStoreName = (typeof FENGSHEN_STORE)[keyof typeof FENGSHEN_STORE]

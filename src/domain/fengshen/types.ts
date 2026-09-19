@@ -123,30 +123,6 @@ export interface ItemData {
   effects?: ItemEffect[]
 }
 
-/** 装备制造条目（gears 表）—— 可打造装备子集（craftable），源为 configs/equipment/equipment.json（合并后唯一装备定义） */
-export interface GearMaterialEntry {
-  /** 材料物品 ID（引用 items 表） */
-  itemId: string
-  count: number
-}
-export interface GearData {
-  id: string
-  name: string
-  slot: EquipmentSlot
-  /** 子类型（轻型/中型/重型/皮甲/木甲/铠甲/护符/护手/头盔/冠冕/靴子） */
-  subType?: string
-  /** 阶位（t1 凡品 ~ t5 仙品） */
-  tier: GearTier
-  rarity: number
-  requiredLevel?: number
-  stats: EquipmentStatEntry[]
-  materials: GearMaterialEntry[]
-  /** 制造金钱消耗 */
-  cost: number
-  source?: string
-  description?: string
-}
-
 /** 阵营元素（elements 表）—— 单文档整体存储，固定 id：'elements' */
 export interface ElementDef {
   id: string
@@ -681,7 +657,6 @@ export interface FengshenTables {
   params: BattleParamData
   xiyou: XiyouData
   items: ItemData
-  gears: GearData
 }
 export type FengshenTableName = keyof FengshenTables
 

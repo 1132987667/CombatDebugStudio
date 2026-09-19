@@ -54,7 +54,7 @@
       </section>
     </div>
 
-    <!-- 右列：角色卡 + 加点 + 装备总览 -->
+    <!-- 右列：角色卡 + 加点 + 等级突破 -->
     <div class="xy-col xy-col--side">
       <section class="xy-section xy-char-header">
         <div class="xy-char-name-row">
@@ -118,26 +118,6 @@
         </template>
         <p v-else class="xy-break-desc">五阶突破已圆满，境界再无桎梏。</p>
       </section>
-
-      <section class="xy-section">
-        <h4 class="xy-sec-title">
-          装备总览<span class="xy-sec-count">已穿 {{ equippedCount }}/6</span>
-        </h4>
-        <p v-if="equippedCount === 0" class="xy-equip-hint">
-          尚未穿戴装备：通关关卡获取掉落，或前往洞府打造后在此穿戴。
-        </p>
-        <div class="xy-equip-list">
-          <div class="xy-equip-row" :class="{ 'xy-equip-row--empty': !row.gear }" v-for="row in gearSlotRows" :key="row.slot">
-            <span class="xy-equip-slot">{{ row.slot }}</span>
-            <template v-if="row.gear">
-              <span class="xy-equip-name">{{ row.gear.name }}<em v-if="row.enhance > 0">+{{ row.enhance }}</em></span>
-              <span class="xy-chip" :class="qualityClass(row.gear.rarity)">{{ qualityOf(row.gear.rarity) }}</span>
-            </template>
-            <span v-else class="xy-equip-name xy-equip-name--empty">未穿戴</span>
-          </div>
-        </div>
-        <button type="button" class="xy-link-btn" @click="emit('goEquip')">前往装备面板</button>
-      </section>
     </div>
 
     <AttributeTooltip :visible="attrTooltip.visible" :title="attrTooltip.title"
@@ -153,13 +133,10 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
+import { usePackStore } from '@/presentation/stores/packStore'
 import { playerConfig, BREAK_NODES, breakNodeLabel, nextBreakNode } from '../../playerProfile'
 import { useCharacterAttrs } from '../../characterAttrs'
-import { qualityClass, qualityOf } from '../../quality'
 import { schools } from '../../xiyouData'
-
-const emit = defineEmits<{ goEquip: [] }>()
 
 const notification = useNotificationStore()
 
@@ -193,7 +170,7 @@ const {
   showAttrTooltip,
   updateTooltipPosition,
   hideAttrTooltip,
-} = useCharacterAttrs()
+} = useCharacterAttrs({ expandAll: true })
 
 // SAP 六维自由点（《玩家数值体系构建计划.md》D1）：转化率读 player.json statBonuses，展示不硬编码
 const STAT_DEFS = [
@@ -242,7 +219,6 @@ function resetStats() {
   })
 }
 
-// NOTE: 装备总览 = 真实穿戴（pack.equipped），与装备/强化/升星面板同源，不再读静态 gearSlots
 // ═══ 等级突破（§20）：节点丹+金钱扣减在组件层完成，playerStore 不反向依赖 packStore ═══
 const breakNode = computed(() => nextBreakNode(player.value.breakStage ?? 0))
 const breakNodeCn = computed(() => (breakNode.value ? breakNodeLabel(breakNode.value.stage) : ''))
@@ -260,26 +236,6 @@ function doBreak(): void {
   usePlayerStore().setBreakStage(node.stage)
   notification.toast(`突破·${breakNodeCn.value}成功！解锁 Lv.${node.level}`, 'success')
 }
-//       只列六件套基础槽——GEAR_SLOT_LABELS 的 artifact/relic（法宝/神器）系统未实装，
-//       计入会重现「8/6」计数穿帮，待系统落地后放开。
-const BASE_GEAR_SLOTS: GearSlotKey[] = ['weapon', 'armor', 'helmet', 'boots', 'charm', 'glove']
-
-interface EquipOverviewRow {
-  slot: string
-  gear: { name: string; rarity: number } | null
-  enhance: number
-}
-const gearSlotRows = computed<EquipOverviewRow[]>(() =>
-  BASE_GEAR_SLOTS.map((slot) => {
-    const g = pack.equippedGear(slot)
-    return {
-      slot: GEAR_SLOT_LABELS[slot],
-      gear: g ? { name: g.name, rarity: g.rarity } : null,
-      enhance: pack.equippedInstance(slot)?.enhance ?? 0,
-    }
-  }),
-)
-const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).length)
 </script>
 
 <style scoped lang="scss">
@@ -341,10 +297,6 @@ const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).le
   border-radius: 2px;
   background: var(--color-bg-secondary);
   overflow: hidden;
-}
-
-.xy-vital-bar--exp {
-  height: 12px;
 }
 
 .xy-vital-fill {
@@ -428,6 +380,19 @@ const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).le
 }
 
 /* 属性网格/分组折叠样式已上移 xiyou.scss（战斗侧栏共用），此处不再重复定义 */
+
+/* 修行页宽栏专属：仅改列数——78 项收进一屏靠 auto-fill 5 列密排（188px 下限 = 最宽词条
+   「对低血量目标伤害加成」实测宽，按栏宽自适应列数）；间距/行高全部继承 xiyou.scss 共用标准值，
+   与全项目节奏一致。nowrap 防窄列下文字换行撑破行高；侧栏窄栏不受影响（保持 2 列） */
+.xy-col--main {
+  .xy-attr-grid {
+    grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+  }
+
+  .xy-attr-item {
+    white-space: nowrap;
+  }
+}
 
 .xy-stat-list {
   display: flex;
@@ -531,67 +496,5 @@ const equippedCount = computed(() => gearSlotRows.value.filter((r) => r.gear).le
   border: 1px solid var(--xy-ink-line);
   background: transparent;
   color: var(--xy-ink-2);
-}
-
-.xy-equip-hint {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
-}
-
-.xy-equip-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-
-.xy-equip-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2);
-  border: 1px dashed var(--xy-ink-line);
-  border-radius: 2px;
-}
-
-.xy-equip-row--empty {
-  opacity: 0.55;
-}
-
-.xy-equip-slot {
-  width: 48px;
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-4);
-}
-
-.xy-equip-name {
-  flex: 1;
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-1);
-
-  em {
-    margin-left: var(--space-1);
-    font-style: normal;
-    color: var(--xy-seal);
-  }
-}
-
-.xy-equip-name--empty {
-  color: var(--xy-ink-4);
-}
-
-.xy-link-btn {
-  padding: 0;
-  border: none;
-  background: none;
-  font-size: var(--font-size-md);
-  font-family: inherit;
-  color: var(--xy-seal);
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 </style>

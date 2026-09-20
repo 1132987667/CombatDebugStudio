@@ -190,6 +190,7 @@ import {
   rewardForEnemyIds,
   type EnemyBrief,
 } from '../battle'
+import { fabaoAttributeBonuses } from '../fabao'
 import { itemName } from '../caveLogic'
 import { progressQuests } from '../questProgress'
 import { saveManager } from '../save-bridge'
@@ -338,7 +339,7 @@ async function initBattle(node: RunNode): Promise<void> {
   await pack.init()
   const protagonist = usePlayerStore().battleSnapshot
   // NOTE: 装备加成 + 流派树增量（schoolTreeCombatBonuses 已排除快照承载键，避免双算）一并注入主角
-  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses() }
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses() }
   const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses, protagonist, node)
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()

@@ -1,0 +1,681 @@
+{
+  "fabao": [
+    {
+      "id": "fb_zhaoxianjian",
+      "name": "斩仙剑",
+      "kind": "fabao",
+      "positioning": "爆发/斩杀",
+      "releaseSkillId": "skill_fb_release_zhaoxian",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "hit",
+        "label": "命中",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "coefficient": {
+        "attr": "damageCoefficient",
+        "label": "伤害系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "对目标造成180%攻击伤害，目标气血>50%时伤害提升至220%",
+      "mechanic": "攻击气血>50%目标时，伤害独立+8%"
+    },
+    {
+      "id": "fb_pojunfu",
+      "name": "破军斧",
+      "kind": "fabao",
+      "positioning": "削甲开路",
+      "releaseSkillId": "skill_fb_release_pojunfu",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "hit",
+        "label": "命中",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "coefficient": {
+        "attr": "attackCoefficient",
+        "label": "攻击系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "对目标造成120%攻击伤害，施加破甲+20%持续2回合",
+      "mechanic": "攻击防御高于自身的目标时，伤害独立+10%"
+    },
+    {
+      "id": "fb_zhuihunzhui",
+      "name": "追魂锥",
+      "kind": "fabao",
+      "positioning": "收割循环",
+      "releaseSkillId": "skill_fb_release_zhuihunzhui",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "speed",
+        "label": "速度",
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "coefficient": {
+        "attr": "damageCoefficient",
+        "label": "伤害系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "对气血最低目标造成150%攻击伤害，若击杀灵能+1",
+      "mechanic": "攻击气血<50%目标时，伤害独立+8%"
+    },
+    {
+      "id": "fb_jiangyaochu",
+      "name": "降妖杵",
+      "kind": "fabao",
+      "positioning": "多段攻击",
+      "releaseSkillId": "skill_fb_release_jiangyaochu",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "speed",
+        "label": "速度",
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "coefficient": {
+        "attr": "comboDamageCoefficient",
+        "label": "连击伤害系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "攻击3次，每次60%攻击伤害，可暴击，不可触发连击",
+      "mechanic": "每次法宝技能命中，本次战斗伤害独立+2%，最多叠3层"
+    },
+    {
+      "id": "fb_zhenmota",
+      "name": "镇魔塔",
+      "kind": "fabao",
+      "positioning": "群攻压制",
+      "releaseSkillId": "skill_fb_release_zhenmota",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "hit",
+        "label": "命中",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "coefficient": {
+        "attr": "damageCoefficient",
+        "label": "伤害系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "对全体敌人造成100%攻击伤害，对受控目标额外+30%",
+      "mechanic": "对受控目标伤害独立+10%"
+    },
+    {
+      "id": "fb_fuyaosuo",
+      "name": "缚妖索",
+      "kind": "fabao",
+      "positioning": "控制干扰",
+      "releaseSkillId": "skill_fb_release_fuyaosuo",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "speed",
+        "label": "速度",
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "coefficient": {
+        "attr": "attackCoefficient",
+        "label": "攻击系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "对目标造成100%攻击伤害，50%概率附加1回合控制",
+      "mechanic": "攻击未受控目标时，控制成功率+8%（基础50%，合计58%）"
+    },
+    {
+      "id": "fb_lihuoshan",
+      "name": "离火扇",
+      "kind": "fabao",
+      "positioning": "持续伤害",
+      "releaseSkillId": "skill_fb_release_lihuoshan",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "hit",
+        "label": "命中",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "coefficient": {
+        "attr": "damageCoefficient",
+        "label": "伤害系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "对目标造成110%攻击伤害，附加灼烧（每回合20%施加者攻击伤害，持续2回合，刷新不叠加）",
+      "mechanic": "攻击灼烧目标时，伤害独立+8%"
+    },
+    {
+      "id": "fb_julingzhu",
+      "name": "聚灵珠",
+      "kind": "fabao",
+      "positioning": "循环加速",
+      "releaseSkillId": "skill_fb_release_julingzhu",
+      "primary": {
+        "attr": "attack",
+        "label": "攻击",
+        "values": [
+          16,
+          20,
+          23,
+          26,
+          29
+        ]
+      },
+      "secondary": {
+        "attr": "speed",
+        "label": "速度",
+        "values": [
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "coefficient": {
+        "attr": "attackCoefficient",
+        "label": "攻击系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "skill": "对目标造成130%攻击伤害，自身灵能+1",
+      "mechanic": "灵能满时，伤害独立+6%"
+    }
+  ],
+  "relic": [
+    {
+      "id": "sq_jingangzhao",
+      "name": "金刚罩",
+      "kind": "relic",
+      "positioning": "硬防护",
+      "releaseSkillId": "skill_sq_release_jingangzhao",
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "maxHealth",
+        "label": "气血",
+        "values": [
+          120,
+          150,
+          170,
+          195,
+          220
+        ]
+      },
+      "coefficient": {
+        "attr": "damageReductionCoefficient",
+        "label": "免伤系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "获得最大气血25%护盾，持续2回合",
+      "mechanic": "护盾存在时，免伤独立+6%"
+    },
+    {
+      "id": "sq_taijitu",
+      "name": "太极图",
+      "kind": "relic",
+      "positioning": "减伤",
+      "releaseSkillId": "skill_sq_release_taijitu",
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "maxHealth",
+        "label": "气血",
+        "values": [
+          120,
+          150,
+          170,
+          195,
+          220
+        ]
+      },
+      "coefficient": {
+        "attr": "damageReductionCoefficient",
+        "label": "免伤系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "获得免伤+20%，持续1回合",
+      "mechanic": "受到技能伤害后，本回合免伤独立+8%"
+    },
+    {
+      "id": "sq_yujingping",
+      "name": "玉净瓶",
+      "kind": "relic",
+      "positioning": "续航净化",
+      "releaseSkillId": "skill_sq_release_yujingping",
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "maxHealth",
+        "label": "气血",
+        "values": [
+          120,
+          150,
+          170,
+          195,
+          220
+        ]
+      },
+      "coefficient": {
+        "attr": "healthCoefficient",
+        "label": "气血系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "回复最大气血20%，清除自身1个异常状态（不解除控制）",
+      "mechanic": "气血<50%时，受到治疗独立+15%"
+    },
+    {
+      "id": "sq_zhenyaoling",
+      "name": "镇妖铃",
+      "kind": "relic",
+      "positioning": "反制",
+      "releaseSkillId": "skill_sq_release_zhenyaoling",
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "maxHealth",
+        "label": "气血",
+        "values": [
+          120,
+          150,
+          170,
+          195,
+          220
+        ]
+      },
+      "coefficient": {
+        "attr": "damageReductionCoefficient",
+        "label": "免伤系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "获得伤害反弹+60%效果，持续1回合",
+      "mechanic": "受到近战攻击后，本次战斗反伤独立+10%，最多叠2层"
+    },
+    {
+      "id": "sq_fenghuolun",
+      "name": "风火轮",
+      "kind": "relic",
+      "positioning": "闪避机动",
+      "releaseSkillId": "skill_sq_release_fenghuolun",
+      "extraSkillIds": [
+        "skill_sq_fenghuolun_dodge"
+      ],
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "dodgeValue",
+        "label": "闪避",
+        "values": [
+          10,
+          12,
+          14,
+          16,
+          18
+        ]
+      },
+      "coefficient": {
+        "attr": "damageReductionCoefficient",
+        "label": "免伤系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "获得闪避率+20%，持续1回合；触发后若成功闪避1次，速度+5持续1回合",
+      "mechanic": "闪避成功后，免伤独立+5%，持续1回合"
+    },
+    {
+      "id": "sq_baguajing",
+      "name": "八卦镜",
+      "kind": "relic",
+      "positioning": "防暴击",
+      "releaseSkillId": "skill_sq_release_baguajing",
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "maxHealth",
+        "label": "气血",
+        "values": [
+          120,
+          150,
+          170,
+          195,
+          220
+        ]
+      },
+      "coefficient": {
+        "attr": "damageReductionCoefficient",
+        "label": "免伤系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "获得暴击抵抗+40%，暴伤减免+30%，持续1回合",
+      "mechanic": "受到暴击后，本回合暴击抵抗独立+20%"
+    },
+    {
+      "id": "sq_zijinhulu",
+      "name": "紫金葫芦",
+      "kind": "relic",
+      "positioning": "自身净化",
+      "releaseSkillId": "skill_sq_release_zijinhulu",
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "maxHealth",
+        "label": "气血",
+        "values": [
+          120,
+          150,
+          170,
+          195,
+          220
+        ]
+      },
+      "coefficient": {
+        "attr": "healthCoefficient",
+        "label": "气血系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "清除自身所有异常状态（不解除控制），获得控制豁免+50%持续1回合",
+      "mechanic": "被控制后，控制豁免独立+15%"
+    },
+    {
+      "id": "sq_liulizhan",
+      "name": "琉璃盏",
+      "kind": "relic",
+      "positioning": "持续回复",
+      "releaseSkillId": "skill_sq_release_liulizhan",
+      "primary": {
+        "attr": "defense",
+        "label": "防御",
+        "values": [
+          12,
+          15,
+          17,
+          20,
+          22
+        ]
+      },
+      "secondary": {
+        "attr": "maxHealth",
+        "label": "气血",
+        "values": [
+          120,
+          150,
+          170,
+          195,
+          220
+        ]
+      },
+      "coefficient": {
+        "attr": "healthCoefficient",
+        "label": "气血系数",
+        "values": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "trigger": "回复最大气血10%，之后每回合回复5%，持续2回合",
+      "mechanic": "回合结束时若气血>50%，受治疗独立+8%"
+    }
+  ]
+}

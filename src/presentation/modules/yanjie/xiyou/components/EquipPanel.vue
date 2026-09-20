@@ -112,19 +112,43 @@
       </template>
 
       <template #treasure>
-        <p class="xy-panel-hint">喂养法宝提升等级 · 觉醒解锁本源神通</p>
-        <div v-for="t in treasures" :key="t.name" class="xy-row-card">
-          <div class="xy-row-top">
-            <span class="xy-row-name" :class="qualityClass(t.rarity)">{{ t.name }}</span>
-            <span class="xy-chip xy-chip--jade">{{ qualityOf(t.rarity) }}</span>
-            <span v-if="t.active" class="xy-chip xy-chip--gold">已装备</span>
-            <span class="xy-row-side">Lv.{{ t.level }}/{{ t.maxLevel }}</span>
+        <p class="xy-panel-hint">法宝主攻伐 · 神器主防守；战斗中灵能/护体充能满 3 层自动释放，不占行动回合</p>
+        <section v-for="group in fabaoGroups" :key="group.kind" class="xy-fabao-group">
+          <h5 class="xy-cave-sec">{{ group.label }}</h5>
+          <div v-for="row in group.rows" :key="row.def.id" class="xy-row-card">
+            <div class="xy-row-top">
+              <span class="xy-row-name">{{ row.def.name }}</span>
+              <span class="xy-chip xy-chip--muted">{{ row.def.positioning }}</span>
+              <span v-if="row.inst" class="xy-chip xy-chip--jade">{{ fabaoTier(row.inst.quality).name }}</span>
+              <span v-if="row.equipped" class="xy-chip xy-chip--gold">出战中</span>
+              <span v-if="row.count > 1" class="xy-row-side">拥有 ×{{ row.count }}</span>
+            </div>
+            <p v-if="row.inst" class="xy-row-desc">
+              {{ row.stats.map((s) => `${s.label} +${s.value}${row.def.coefficient.attr === s.attr ? '%' : ''}`).join(' · ') }}
+            </p>
+            <p v-if="row.inst" class="xy-row-desc xy-row-desc--key">
+              强化 +{{ row.inst.enhance }}/{{ fabaoTier(row.inst.quality).enhanceCap }}
+              <template v-if="row.def.kind === 'fabao'"> · 技能 {{ row.inst.skillRank }}/{{ FABAO_MAX_SKILL_RANK }} 阶</template>
+            </p>
+            <p class="xy-row-desc">{{ row.def.skill ?? row.def.trigger }}</p>
+            <p class="xy-row-desc xy-row-desc--key">{{ row.def.mechanic }}</p>
+            <div v-if="row.inst" class="xy-fabao-ops">
+              <button type="button" class="xy-shop-buy" @click="toggleEquip(row)">
+                {{ row.equipped ? '卸下' : '出战' }}
+              </button>
+              <button v-if="row.inst.enhance < fabaoTier(row.inst.quality).enhanceCap" type="button" class="xy-shop-buy"
+                @click="doEnhance(row)">
+                强化（灵尘×1 + {{ fabaoEnhanceCost(row.inst.quality, row.inst.enhance + 1) }} 金）
+              </button>
+              <button v-if="row.def.kind === 'fabao' && row.inst.skillRank < FABAO_MAX_SKILL_RANK" type="button"
+                class="xy-shop-buy" @click="doUpgrade(row)">升阶（器灵×1）</button>
+              <button type="button" class="xy-shop-buy xy-fabao-decompose" @click="doDecompose(row)">
+                分解（返灵尘×{{ fabaoDustReturn(row.inst) }}）
+              </button>
+            </div>
+            <p v-else class="xy-row-desc xy-row-desc--key">未获得（调试面板可发放）</p>
           </div>
-          <p class="xy-row-desc">{{ t.skill }}</p>
-          <div class="xy-progress" :class="{ 'xy-progress--gold': t.active }">
-            <div class="xy-progress-fill" :style="{ width: t.progress * 100 + '%' }"></div>
-          </div>
-        </div>
+        </section>
       </template>
 
       <template #mount>
@@ -164,11 +188,74 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
-import { mounts, treasures } from '../xiyouData'
+import { mounts } from '../xiyouData'
 import { equipQualityClass, qualityClass, qualityName, qualityOf } from '../quality'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { factorText, gearTooltipData, statText } from '../gearTooltip'
 import GearDetailDialog from './GearDetailDialog.vue'
+import {
+  FABAO_MAX_SKILL_RANK,
+  fabaoDefs,
+  fabaoDustReturn,
+  fabaoEnhanceCost,
+  fabaoInstanceStats,
+  fabaoState,
+  fabaoTier,
+  decomposeFabao,
+  enhanceFabao,
+  equipFabao,
+  upgradeFabaoSkill,
+  type FabaoDef,
+  type FabaoInstance,
+} from '../fabao'
+
+/** 法宝页签行：定义 + 拥有实例（多实例取首个，计数展示） */
+interface FabaoRow {
+  def: FabaoDef
+  inst?: FabaoInstance
+  count: number
+  equipped: boolean
+  stats: ReturnType<typeof fabaoInstanceStats>
+}
+
+const fabaoGroups = computed(() => {
+  const build = (kind: 'fabao' | 'relic', label: string) => ({
+    kind,
+    label,
+    rows: fabaoDefs
+      .filter((d) => d.kind === kind)
+      .map((def): FabaoRow => {
+        const owned = fabaoState.instances.filter((i) => i.defId === def.id)
+        const inst = owned[0]
+        return {
+          def,
+          inst,
+          count: owned.length,
+          equipped: inst
+            ? fabaoState[kind === 'fabao' ? 'equippedFabao' : 'equippedRelic'] === inst.uid
+            : false,
+          stats: inst ? fabaoInstanceStats(def, inst) : [],
+        }
+      }),
+  })
+  return [build('fabao', '法宝'), build('relic', '神器')]
+})
+
+function toggleEquip(row: FabaoRow): void {
+  if (row.inst) equipFabao(row.inst.uid)
+}
+
+function doEnhance(row: FabaoRow): void {
+  if (row.inst) enhanceFabao(row.inst.uid)
+}
+
+function doUpgrade(row: FabaoRow): void {
+  if (row.inst) upgradeFabaoSkill(row.inst.uid)
+}
+
+function doDecompose(row: FabaoRow): void {
+  if (row.inst) decomposeFabao(row.inst.uid)
+}
 
 const pack = usePackStore()
 

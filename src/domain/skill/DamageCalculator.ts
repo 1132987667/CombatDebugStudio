@@ -144,12 +144,14 @@ export class DamageCalculator {
       }
     }
 
-    // 暴击判定
+    // 暴击判定（PRD §13：实际暴击率 = clamp(暴击率 - 暴击抵抗%, 0%, 100%)）
     let cr = source.getAttribute(ATTRIBUTE_CODE.critRate)
     if (Number.isNaN(cr)) {
       cr = getAttrDv(ATTRIBUTE_CODE.critRate)
     }
-    if (hasGuaranteedCrit || (this.config.enableCrit && nextRandom(this.rng) * 100 < cr)) {
+    const critResist = Math.max(0, target.getAttribute(ATTRIBUTE_CODE.critResist) || 0)
+    const effectiveCritRate = Math.max(0, cr - critResist)
+    if (hasGuaranteedCrit || (this.config.enableCrit && nextRandom(this.rng) * 100 < effectiveCritRate)) {
       damageResult.isCritical = true
     }
 
@@ -223,10 +225,11 @@ export class DamageCalculator {
       })
     }
 
-    // 暴击倍率
+    // 暴击倍率（PRD §11：攻击方暴击伤害% - 防御方暴伤减免%，最低100%）
     if (damageResult.isCritical) {
       const cd = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.critDamage)
-      const critMultiplier = (cd ?? this.config.critDamage) / 100
+      const critTaken = Math.max(0, target.getAttribute(ATTRIBUTE_CODE.critDamageTaken) || 0)
+      const critMultiplier = Math.max(1, ((cd ?? this.config.critDamage) - critTaken) / 100)
       breakdown.critDamage = cd
       breakdown.critMultiplier = critMultiplier
       damage = floor(damage * critMultiplier)
@@ -265,6 +268,25 @@ export class DamageCalculator {
         after: damage,
         sourceType: 'skill',
         description: `伤害提升(${dmgBoost}%): ${before} → ${damage}`,
+      })
+    }
+
+    // L3 独立乘区（PRD §9：伤害系数/攻击系数对伤害独立放大；默认 0 不影响既有战斗。
+    // HACK: 攻击系数按出伤乘区近似（§9 语义是属性层乘区，需进入属性 recalc 才是精确实现；
+    //       升级路径：ModifierType.MULTIPLICATIVE 接入属性管线后移出此处）
+    const dmgCoeff = Math.max(0, source.getAttribute(ATTRIBUTE_CODE.damageCoefficient) || 0)
+    const atkCoeff = Math.max(0, source.getAttribute(ATTRIBUTE_CODE.attackCoefficient) || 0)
+    const coeffTotal = dmgCoeff + atkCoeff
+    if (coeffTotal > 0) {
+      const before = damage
+      damage = floor(damage * (1 + coeffTotal / 100))
+      breakdown.steps.push({
+        stepName: 'independentCoefficient',
+        value: damage,
+        before,
+        after: damage,
+        sourceType: 'skill',
+        description: `独立乘区(${coeffTotal}%): ${before} → ${damage}`,
       })
     }
 
@@ -486,7 +508,9 @@ export class DamageCalculator {
 
     // 伤害减免 — 同时作用于 ELEMENTAL 和 PHYSICAL，TRUE 跳过
     if (damageCategory !== DamageCategory.TRUE) {
-      const dmgReduction = target.getAttribute(ATTRIBUTE_CODE.damageReduction)
+      // 免伤系数（L3）独立放大免伤效果（PRD §9；默认 0 不影响）
+      const drCoeff = Math.max(0, target.getAttribute(ATTRIBUTE_CODE.damageReductionCoefficient) || 0)
+      const dmgReduction = target.getAttribute(ATTRIBUTE_CODE.damageReduction) * (1 + drCoeff / 100)
       breakdown.damageReduction = dmgReduction
       if (dmgReduction > 0) {
         const before = damage

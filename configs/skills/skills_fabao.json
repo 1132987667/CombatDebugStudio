@@ -1,0 +1,856 @@
+[
+  {
+    "id": "skill_fb_charge_gen",
+    "name": "灵能充能",
+    "description": "法宝灵能：回合开始+1；暴击/击杀+1；每回合总获取上限+2；上限3层",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 2,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_charge_gen",
+    "name": "护体充能",
+    "description": "神器护体：回合开始+1；受伤/闪避/护盾破碎+1；每回合总获取上限+2；上限3层",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 2,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_zhaoxian",
+    "name": "斩仙剑·斩仙",
+    "description": "灵能满释放：对目标造成180%攻击伤害，目标气血>50%时提升至220%；攻击气血>50%目标伤害独立+8%",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 1.8,
+          "altRatio": 2.2,
+          "altCond": {
+            "cond": "target_hp_above",
+            "value": 50
+          },
+          "independent": {
+            "cond": "target_hp_above",
+            "value": 50,
+            "bonus": 8
+          }
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_pojunfu",
+    "name": "破军斧·破军",
+    "description": "灵能满释放：对目标造成120%攻击伤害并施加破甲20%持续2回合；攻击防御高于自身的目标伤害独立+10%",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 1.2,
+          "independent": {
+            "cond": "target_def_above_source",
+            "value": 0,
+            "bonus": 10
+          }
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_pojun_armorbreak"
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_zhuihunzhui",
+    "name": "追魂锥·追魂",
+    "description": "灵能满释放：对气血最低目标造成150%攻击伤害，若击杀灵能+1；攻击气血<50%目标伤害独立+8%",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "lowest_hp"
+    },
+    "steps": [
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 1.5,
+          "killCharge": 1,
+          "independent": {
+            "cond": "target_hp_below",
+            "value": 50,
+            "bonus": 8
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_jiangyaochu",
+    "name": "降妖杵·碎岳",
+    "description": "灵能满释放：攻击3次每次60%攻击伤害（可暴击不可连击）；每次命中伤害独立+2%最多叠3层",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 0.6,
+          "hits": 3,
+          "stackBuffId": "buff_jiangmo_stack",
+          "independent": {
+            "cond": "per_hit_stack",
+            "value": 0,
+            "bonus": 2
+          }
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_zhenmota",
+    "name": "镇魔塔·镇魔",
+    "description": "灵能满释放：对全体敌人造成100%攻击伤害，受控目标提升至130%且伤害独立+10%",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "all"
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 1.0,
+          "altRatio": 1.3,
+          "altCond": {
+            "cond": "target_controlled",
+            "value": 0
+          },
+          "independent": {
+            "cond": "target_controlled",
+            "value": 0,
+            "bonus": 10
+          }
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_fuyaosuo",
+    "name": "缚妖索·缚妖",
+    "description": "灵能满释放：对目标造成100%攻击伤害，58%（50%+未受控加成8%）概率附加1回合眩晕",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 1.0
+        }
+      },
+      {
+        "type": "stun",
+        "duration": 1,
+        "buffId": "buff_stun",
+        "parameters": {
+          "chance": 58
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_lihuoshan",
+    "name": "离火扇·燎原",
+    "description": "灵能满释放：附加离火灼烧（每回合20%施加者攻击伤害2回合，刷新不叠加）并造成110%攻击伤害；攻击灼烧目标伤害独立+8%",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_lh_shan_burn"
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 1.1,
+          "burnBuffId": "buff_lh_shan_burn",
+          "independent": {
+            "cond": "target_burning",
+            "value": 0,
+            "bonus": 8
+          }
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_fb_release_julingzhu",
+    "name": "聚灵珠·聚灵",
+    "description": "灵能满释放：对目标造成130%攻击伤害（灵能满时伤害独立+6%），释放后自身灵能+1",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "on_crit",
+      "on_kill"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_fb_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "customType": "fabao_strike",
+          "ratio": 1.3,
+          "independent": {
+            "cond": "source_charge_full",
+            "value": 0,
+            "bonus": 6
+          }
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_fb_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_jingangzhao",
+    "name": "金刚罩·金光",
+    "description": "护体满触发：获得最大气血25%护盾，持续2回合",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "shield",
+        "duration": 2,
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.25
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_taijitu",
+    "name": "太极图·阴阳",
+    "description": "护体满触发：获得免伤+20%，持续1回合",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_twist_guard",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_yujingping",
+    "name": "玉净瓶·甘露",
+    "description": "护体满触发：回复最大气血20%，清除自身1个异常状态（不解除控制）",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.2
+            }
+          ]
+        }
+      },
+      {
+        "type": "remove_debuff",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "count": 1,
+        "parameters": {
+          "exceptControl": true
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_zhenyaoling",
+    "name": "镇妖铃·铃音",
+    "description": "护体满触发：获得伤害反弹+60%效果，持续1回合",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_zhenyao_reflect",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_fenghuolun",
+    "name": "风火轮·疾风",
+    "description": "护体满触发：获得闪避率+20%，持续1回合；期间成功闪避后速度+5持续1回合（联动被动）",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_wfslt_dodgeup",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_fenghuolun_dodge",
+    "name": "踏轮生风",
+    "description": "风火轮联动：风火疾行期间成功闪避后速度+5，持续1回合",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "dodge"
+    ],
+    "condition": "source_has_buff_id",
+    "conditionParams": {
+      "buffId": "buff_wfslt_dodgeup"
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_wfslt_speed",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_baguajing",
+    "name": "八卦镜·镜界",
+    "description": "护体满触发：获得暴击抵抗+40%、暴伤减免+30%，持续1回合",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_bagua_guard",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_zijinhulu",
+    "name": "紫金葫芦·净世",
+    "description": "护体满触发：清除自身所有异常状态（不解除控制），获得控制豁免+50%持续1回合",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "remove_debuff",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "parameters": {
+          "exceptControl": true
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_zijin_immunity",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "skill_sq_release_liulizhan",
+    "name": "琉璃盏·辉光",
+    "description": "护体满触发：回复最大气血10%，之后每回合回复5%持续2回合",
+    "cooldown": 0,
+    "energyCost": 0,
+    "skillType": "passive",
+    "triggerTimes": [
+      "turn_start",
+      "damage_taken",
+      "dodge",
+      "shield_break"
+    ],
+    "maxTriggersPerRound": 1,
+    "condition": "source_buff_stack_min",
+    "conditionParams": {
+      "buffId": "buff_sq_charge",
+      "min": 3
+    },
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.1
+            }
+          ]
+        }
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_liuli_hot",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      },
+      {
+        "type": "remove_buff",
+        "buffId": "buff_sq_charge",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  }
+]

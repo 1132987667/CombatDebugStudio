@@ -30,6 +30,7 @@ import {
 import { runQuickBattle } from '@/application/service/QuickBattleSim'
 import { ParticipantSide } from '@/domain/battle/type/types'
 import { equippedSkills, grantLevelPoint, grantPillPoint, pureSchoolBonus, schoolsLayers, mates, mounts, pets } from './xiyouData'
+import { fabaoAttributeBonuses, fabaoDefs, fabaoTier, grantFabao } from './fabao'
 import { enhanceCost, enhanceMaxByRarity, enhanceSuccessRate } from './caveLogic'
 import { createRng, rngFn } from '@/shared/utils/seeded-rng'
 import type { PlayerStoreDebugEnv } from './debugEnv'
@@ -711,7 +712,7 @@ async function runSimSweep(
   const { player, pack } = env
   const protagonist = player.battleSnapshot
   // 与 BattleZen.initBattle 同口径：装备 + 流派树加成只作用于主角
-  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses() }
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses() }
   // 我方编成与场景无关，构造一次全场景复用（prep 已定妆：加点/穿装/阵容不再变化）
   const allyActors = buildSimAlly(allyBonuses, protagonist)
   const rows: SimSceneRow[] = []

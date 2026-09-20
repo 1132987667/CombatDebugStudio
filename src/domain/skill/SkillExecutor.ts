@@ -11,6 +11,7 @@ import type {
   StepExecutionContext,
 } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import { ControlType, StackRule, type BuffConfig, KNOWN_BUFF_IDS } from '@/domain/buff/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
@@ -40,6 +41,26 @@ interface ComboState {
   streak: number
   /** 普攻总次数（用于第三连击） */
   totalAttacks: number
+}
+
+/** fabao_strike 步骤参数（PRD §22 法宝·灵能释放打击） */
+export interface FabaoStrikeParams extends CustomStepParams {
+  customType: 'fabao_strike'
+  /** 每段攻击倍率 */
+  ratio: number
+  /** 段数（缺省 1；降妖杵 3 段） */
+  hits?: number
+  /** 条件倍率：altCond 满足时以 altRatio 替代 ratio（斩仙剑 180%→220%、镇魔塔受控+30%） */
+  altRatio?: number
+  altCond?: { cond: string; value: number }
+  /** 条件独立乘区：条件满足时伤害独立 ×(1 + bonus/100)（PRD §22 独立机制） */
+  independent?: { cond: string; value: number; bonus: number }
+  /** 击杀目标后自身灵能 +N 层（追魂锥） */
+  killCharge?: number
+  /** target_burning 条件的灼烧 buff 判定 id（离火扇） */
+  burnBuffId?: string
+  /** per_hit_stack 条件的叠层标记 buff id，每段命中后 +1 层（降妖杵） */
+  stackBuffId?: string
 }
 
 export class SkillExecutor {
@@ -149,7 +170,7 @@ export class SkillExecutor {
         this.executeRevive(skillStep, action, source, target, context)
         break
       case StepEffectType.REMOVE_BUFF:
-        this.executeRemoveBuff(skillStep, action, target)
+        this.executeRemoveBuff(skillStep, action, source, target)
         break
       default: {
         throw new Error(
@@ -325,6 +346,22 @@ export class SkillExecutor {
       action.turn ?? 0,
       context,
     )
+    // attack_percent DoT（法宝灼烧）按施加者攻击结算：施加时快照攻击到实例变量（DotEffect 消费）
+    if (instanceId) {
+      const resolvedForDot = this.buffSystem
+        .getScriptRegistry()
+        .getResolvedBuffConfig(buffId)
+      const hasAtkDot = resolvedForDot?.effectPlan?.some(
+        (plan) =>
+          plan.type === AtomicEffectType.DOT &&
+          (plan.params as { damageType?: string }).damageType === 'attack_percent',
+      )
+      if (hasAtkDot) {
+        this.buffSystem
+          .getBuffInstanceById(instanceId)
+          ?.context.setVariable('_source_attack', source.getAttribute(ATTRIBUTE_CODE.attack))
+      }
+    }
     // 解析 Buff 展示名称
     const buffCfgForName = this.buffSystem
       .getScriptRegistry()
@@ -460,16 +497,23 @@ export class SkillExecutor {
       skillStep.targetConfig?.faction === 'self' ? source : target
     const instances = this.buffSystem.getBuffInstances(modTarget.id)
     const isRemoveDebuff = skillStep.type === StepEffectType.REMOVE_DEBUFF
+    // PRD §22 玉净瓶/紫金葫芦：净化只清异常状态，不解除控制
+    const exceptControl =
+      (skillStep.parameters as { exceptControl?: boolean } | undefined)?.exceptControl === true
     const count = skillStep.count || (isRemoveDebuff ? 1 : 999)
 
     let removed = 0
     for (const instance of instances) {
       if (removed >= count) break
       // 减益判定读取显式声明的 polarity（由 BuffConfigResolver 解析时写入）
-      const polarity = this.buffSystem
+      const resolved = this.buffSystem
         .getScriptRegistry()
-        .getResolvedBuffConfig(instance.buffId)?.polarity
+        .getResolvedBuffConfig(instance.buffId)
+      const polarity = resolved?.polarity
       if (isRemoveDebuff && polarity !== 'negative') continue
+      if (exceptControl && resolved?.controlType && resolved.controlType !== ControlType.NONE) {
+        continue
+      }
       this.buffSystem.removeBuff(instance.id)
       removed++
     }
@@ -615,11 +659,146 @@ export class SkillExecutor {
     } else if (customType === 'liejia_detonate') {
       // 裂甲爆发 / 裂甲天崩 — 引爆目标全部【裂甲】：每层伤害加成 + 每层一段真实伤害 + 碎甲
       this.handleLiejiaDetonate(action, source, target, customParams, context?.token)
+    } else if (customType === 'fabao_strike') {
+      // 法宝·灵能释放打击（PRD §22）— 走完整伤害管线（可暴击、不进连击），支持条件独立乘区
+      this.handleFabaoStrike(skillStep, action, source, target, customParams as FabaoStrikeParams, context?.token)
     } else {
       throw new Error(
         `[SkillExecutor] 未实现的自定义步骤类型: ${desc}（${customType}）。` +
         `请实现对应的处理逻辑或从技能配置中移除。`
       )
+    }
+  }
+
+  /**
+   * 法宝·灵能释放打击（PRD §22.2/§22.6）
+   *
+   * 走 DamageCalculator 完整管线（命中/暴击/防御/抗性），不进连击系统（§22 充能通用规则）。
+   * - 多段（hits）：每段独立 calculateDamage（独立命中/暴击 roll），累计进同一 DeferredDamageToken
+   * - 技能升阶（§22 养成）：source.fabaoRankMult 为阶数（xiyou 层注入），每阶倍率 +10%
+   * - 条件独立乘区：independent 条件满足时伤害独立 ×(1+bonus/100)，只乘最终值不走乘区链
+   * - 击杀充能/命中叠层：直接操作充能/标记 buff（limited 叠层，addBuff 单次 +1）
+   */
+  private handleFabaoStrike(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    params: FabaoStrikeParams,
+    token?: DeferredDamageToken,
+  ): void {
+    const hits = Math.max(1, params.hits ?? 1)
+    const rankMult = 1 + 0.1 * Math.max(0, source.fabaoRankMult ?? 0)
+
+    for (let i = 0; i < hits; i++) {
+      if (!target.isAlive()) break
+
+      const altMet =
+        params.altCond &&
+        this.meetsFabaoCond(params.altCond.cond, params.altCond.value, source, target, params)
+      const ratio = (altMet ? params.altRatio ?? params.ratio : params.ratio) * rankMult
+
+      const strikeStep: ExtendedSkillStep = {
+        ...skillStep,
+        calculation: {
+          baseValue: 0,
+          extraValues: [{ attribute: 'attack', ratio }],
+        },
+      }
+      const dmg = this.damageCalculator.calculateDamage(strikeStep, source, target)
+
+      // 条件独立乘区（PRD §22 独立机制——乘在管线结果上，属独立乘区语义）
+      let damage = dmg.damage
+      if (!dmg.isMiss && params.independent) {
+        const met = this.meetsFabaoCond(
+          params.independent.cond,
+          params.independent.value,
+          source,
+          target,
+          params,
+        )
+        if (met) damage = Math.floor(damage * (1 + params.independent.bonus / 100))
+      }
+
+      if (dmg.isMiss || damage <= 0) continue
+
+      if (token) {
+        token.record(target, damage, 0, dmg.rawDamage)
+        action.damage = (action.damage ?? 0) + damage
+      } else {
+        this.damageCalculator.applyDamage(target, damage)
+        action.damage = (action.damage ?? 0) + damage
+      }
+
+      // 命中后叠层（降妖杵 per_hit_stack：标记 buff limited 叠层，addBuff 单次 +1）
+      if (params.stackBuffId) {
+        this.buffSystem.addBuff(source.id, params.stackBuffId, {
+          id: params.stackBuffId,
+          description: '',
+          cooldown: 0,
+        }, action.turn ?? 0)
+      }
+      // 击杀充能（追魂锥：击杀灵能+1）
+      if (params.killCharge && !target.isAlive()) {
+        this.buffSystem.addBuff(source.id, 'buff_fb_charge', {
+          id: 'buff_fb_charge',
+          description: '',
+          cooldown: 0,
+        }, action.turn ?? 0)
+      }
+    }
+
+    action.effects.push({
+      type: ActionResultType.DAMAGE,
+      sourceId: source.id,
+      targetId: target.id,
+      damage: action.damage ?? 0,
+      description: `${source.name} 法宝灵能释放命中 ${target.name}`,
+    })
+  }
+
+  /** fabao_strike 条件判定（§22 独立机制/条件倍率共用） */
+  private meetsFabaoCond(
+    cond: string,
+    value: number,
+    source: BattleEntity,
+    target: BattleEntity,
+    params: FabaoStrikeParams,
+  ): boolean {
+    switch (cond) {
+      case 'target_hp_above':
+      case 'target_hp_below': {
+        const ratio =
+          target.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+          Math.max(1, target.getAttribute(ATTRIBUTE_CODE.maxHealth))
+        return cond === 'target_hp_above' ? ratio * 100 > value : ratio * 100 < value
+      }
+      case 'target_def_above_source':
+        return (
+          target.getAttribute(ATTRIBUTE_CODE.defense) >
+          source.getAttribute(ATTRIBUTE_CODE.defense)
+        )
+      case 'target_controlled':
+        // 目标身上存在控制类 buff（controlType 非 NONE）
+        return this.buffSystem
+          .getBuffInstances(target.id)
+          .some((inst) => {
+            const cfg = this.buffSystem
+              .getScriptRegistry()
+              .getResolvedBuffConfig(inst.buffId)
+            return !!cfg?.controlType && cfg.controlType !== ControlType.NONE
+          })
+      case 'target_burning':
+        return target.hasBuff(params.burnBuffId ?? 'buff_burn')
+      case 'source_charge_full':
+        return this.buffSystem.getBuffStackCount(source.id, 'buff_fb_charge') >= 3
+      case 'per_hit_stack':
+        // 降妖杵：按已叠层数加成（每层 +bonus%，value 不用）
+        return (params.stackBuffId
+          ? this.buffSystem.getBuffStackCount(source.id, params.stackBuffId)
+          : 0) > 0
+      default:
+        return false
     }
   }
 
@@ -1126,6 +1305,7 @@ export class SkillExecutor {
   private executeRemoveBuff(
     skillStep: ExtendedSkillStep,
     action: BattleAction,
+    source: BattleEntity,
     target: BattleEntity,
   ): void {
     const buffId = skillStep.buffId || skillStep.effectId || ''
@@ -1136,8 +1316,11 @@ export class SkillExecutor {
       )
       return
     }
+    // targetConfig self：移除施法者自身的 buff（法宝释放后清自身充能层）
+    const modTarget =
+      skillStep.targetConfig?.faction === 'self' ? source : target
     const instances = this.buffSystem
-      .getBuffInstances(target.id)
+      .getBuffInstances(modTarget.id)
       .filter((i) => i.buffId === buffId)
     if (instances.length === 0) return
 
@@ -1150,8 +1333,8 @@ export class SkillExecutor {
     }
     action.effects.push({
       type: ActionResultType.STATUS,
-      targetId: target.id,
-      description: `${target.name} 的【${buffId}】移除 ${removed} 层`,
+      targetId: modTarget.id,
+      description: `${modTarget.name} 的【${buffId}】移除 ${removed} 层`,
     })
   }
 
@@ -1219,6 +1402,20 @@ export class SkillExecutor {
         : normalizedType === StepEffectType.SILENCE
           ? ControlType.SILENCE
           : ControlType.STUN
+    // 控制成功率掷骰（PRD §17：控制成功率 = 基础成功率% - 目标控制豁免率%）。
+    // NOTE: 控制步骤勿在 SkillManager 配 step.probability——概率统一在此处与豁免相减后单点掷骰
+    const baseChance =
+      (skillStep.parameters as { chance?: number } | undefined)?.chance ?? 100
+    const immunity = Math.max(0, target.getAttribute(ATTRIBUTE_CODE.controlImmunity) || 0)
+    const finalChance = Math.max(0, baseChance - immunity)
+    if (nextRandom(this.rng) * 100 >= finalChance) {
+      action.effects.push({
+        type: ActionResultType.STATUS,
+        targetId: target.id,
+        description: `${target.name} 抵抗了控制效果`,
+      })
+      return
+    }
     const buffId = skillStep.buffId || `control_${controlType}`
     const config: Partial<BuffConfig> = {
       id: buffId,

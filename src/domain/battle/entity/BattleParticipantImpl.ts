@@ -66,6 +66,8 @@ export class BattleParticipantImpl implements BattleEntity {
   enabled: boolean
   seatIndex: number
   statusEffects?: StatusEffect[]
+  /** 法宝技能升阶阶数（PRD §22 每阶技能效果 +10%；xiyou 层注入，缺省 0 阶） */
+  fabaoRankMult?: number
   skills: SkillSet
   /** 阵营元素 ID（克制矩阵用） */
   faction?: string

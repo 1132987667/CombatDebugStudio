@@ -16,6 +16,7 @@ import enemiesJson from '@configs/enemies/enemies.json'
 import enemySkillsJson from '@configs/xiyou/enemy-skills.json'
 import type { ProtagonistSnapshot, XiyouCombatant, XiyouMate, XiyouScene } from './types'
 import { equippedSkills, mates, nodeValueAtRank, pureSchoolBonus, schools, schoolsLayers, skillNodeMap } from './xiyouData'
+import { fabaoEquippedRank, fabaoReleaseSkillIds } from './fabao'
 import type { RunNode } from './runFlow'
 
 /** 主角占位（编队 i=0 会被 protagonist 快照覆盖；缺省时回退此演示值） */
@@ -474,9 +475,16 @@ function xiyouToEnemy(
       [ATTRIBUTE_CODE.damageReduction]: c.damageReduction ?? 0,
     },
     drops: dropsForEnemy(c.name),
-    // NOTE: 主角注入装备槽选出的技能（equipped 节点映射后的技能）；伙伴为固定空技能（引擎普攻兜底）
-    skills: player ? equippedPlayerSkills() : { small: [], passive: [], ultimate: [] },
+    // NOTE: 主角注入装备槽选出的技能（equipped 节点映射后的技能）+ 法宝/神器被动（充能/释放）；伙伴为固定空技能（引擎普攻兜底）
+    skills: player ? withFabaoSkills(equippedPlayerSkills()) : { small: [], passive: [], ultimate: [] },
   }
+}
+
+/** 主角技能三桶并入法宝/神器被动（充能/释放/联动；未出战法宝时原样返回） */
+function withFabaoSkills(skills: EnemySkills): EnemySkills {
+  const ids = fabaoReleaseSkillIds()
+  if (ids.length === 0) return skills
+  return { ...skills, passive: [...(skills.passive ?? []), ...ids] }
 }
 
 /** Enemy 形状 → ActorData 外壳（QuickBattleSim 我方入参）：stats 同口径复用，技能三桶平铺为 skillIds */
@@ -533,7 +541,9 @@ export function buildBattleTeams(
   const ally = buildPlayerParty().map((c, i) => {
     const src = i === 0 && protagonist ? { ...c, ...protagonist } : c
     const enemy = i === 0 && allyBonuses ? applyAllyBonuses(xiyouToEnemy(src, true), allyBonuses) : xiyouToEnemy(src, i === 0)
-    return GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ALLY, i)
+    const participant = GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ALLY, i)
+    if (i === 0) participant.fabaoRankMult = fabaoEquippedRank()
+    return participant
   })
   const enemy = buildEnemyTeam(scene, node)
   return { ally, enemy }

@@ -727,3 +727,19 @@
   background: currentColor;
   opacity: 0.85;
 }
+
+/* 法宝/神器页签（PRD §22）：操作按钮行 + 危险操作区分 */
+.xy-fabao-group {
+  margin-top: var(--space-2);
+}
+
+.xy-fabao-ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.xy-fabao-decompose:not(:hover) {
+  opacity: 0.85;
+}

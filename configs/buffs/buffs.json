@@ -3001,5 +3001,241 @@
     ],
     "polarity": "negative",
     "description": "使目标睡眠，无法行动；受到伤害时解除，且该次伤害额外增加20%"
+  },
+  {
+    "id": "buff_fb_charge",
+    "name": "灵能",
+    "category": "buff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": -1,
+    "executionMode": "marker",
+    "polarity": "positive",
+    "description": "法宝灵能充能标记（回合开始+1；暴击/击杀+1；每回合总获取上限+2；满3层释放法宝技能）"
+  },
+  {
+    "id": "buff_sq_charge",
+    "name": "护体",
+    "category": "buff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": -1,
+    "executionMode": "marker",
+    "polarity": "positive",
+    "description": "神器护体充能标记（回合开始+1；受伤/闪避/护盾破碎+1；每回合总获取上限+2；满3层触发神器效果）"
+  },
+  {
+    "id": "buff_jiangmo_stack",
+    "name": "连击势",
+    "category": "buff",
+    "maxStacks": 3,
+    "stackRule": "limited",
+    "duration": -1,
+    "executionMode": "marker",
+    "polarity": "positive",
+    "description": "降妖杵命中标记：每次法宝技能命中伤害独立+2%，最多叠3层"
+  },
+  {
+    "id": "buff_lh_shan_burn",
+    "name": "离火灼烧",
+    "category": "dot",
+    "maxStacks": 1,
+    "stackRule": "refresh",
+    "duration": 2,
+    "tags": [
+      "burn"
+    ],
+    "effects": [
+      {
+        "type": "dot",
+        "params": {
+          "damageType": "attack_percent",
+          "value": 20
+        }
+      }
+    ],
+    "polarity": "negative",
+    "dispellable": true,
+    "description": "每回合受到施加者20%攻击的伤害（可被净化）"
+  },
+  {
+    "id": "buff_pojun_armorbreak",
+    "name": "破甲",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 2,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "defense": {
+              "value": -20,
+              "type": "PERCENTAGE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "negative",
+    "description": "降低 20% 防御力，持续 2 回合"
+  },
+  {
+    "id": "buff_twist_guard",
+    "name": "太极守御",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "damageReduction": {
+              "value": 20,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "免伤 +20%，持续 1 回合"
+  },
+  {
+    "id": "buff_bagua_guard",
+    "name": "八卦镜界",
+    "category": "buff",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "critResist": {
+              "value": 40,
+              "type": "ADDITIVE"
+            },
+            "critDamageTaken": {
+              "value": 30,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "暴击抵抗 +40%，暴伤减免 +30%，持续 1 回合"
+  },
+  {
+    "id": "buff_zhenyao_reflect",
+    "name": "镇妖铃音",
+    "category": "trigger",
+    "maxStacks": 1,
+    "duration": 1,
+    "triggers": [
+      {
+        "phase": "ON_DAMAGE_TAKEN",
+        "scriptId": "reflect_damage",
+        "params": {
+          "percent": 0.6,
+          "basis": "final"
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "受到攻击时反弹 60% 伤害，持续 1 回合"
+  },
+  {
+    "id": "buff_wfslt_dodgeup",
+    "name": "风火疾行",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "dodge": {
+              "value": 20,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "闪避率 +20%，持续 1 回合"
+  },
+  {
+    "id": "buff_wfslt_speed",
+    "name": "踏轮生风",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speed": {
+              "value": 5,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "速度 +5，持续 1 回合"
+  },
+  {
+    "id": "buff_zijin_immunity",
+    "name": "葫芦净界",
+    "category": "attribute",
+    "maxStacks": 1,
+    "duration": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "controlImmunity": {
+              "value": 50,
+              "type": "ADDITIVE"
+            }
+          },
+          "perStack": false
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "控制豁免 +50%，持续 1 回合"
+  },
+  {
+    "id": "buff_liuli_hot",
+    "name": "琉璃辉光",
+    "category": "trigger",
+    "maxStacks": 1,
+    "duration": 2,
+    "triggers": [
+      {
+        "phase": "ON_TURN_START",
+        "scriptId": "heal_percent_max_hp",
+        "params": {
+          "percent": 0.05,
+          "target": "self"
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "每回合回复 5% 最大气血，持续 2 回合"
   }
 ]

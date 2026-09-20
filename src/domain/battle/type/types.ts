@@ -215,6 +215,8 @@ export interface BattleEntity {
   faction?: string
   /** 状态效果列表 */
   statusEffects?: StatusEffect[]
+  /** 法宝技能升阶阶数（PRD §22 每阶技能效果 +10%；xiyou 层注入，缺省 0 阶） */
+  fabaoRankMult?: number
   /** 技能配置 */
   skills: SkillSet
   /** 属性版本戳（每次属性重算后递增，用于 Vue 响应式追踪） */

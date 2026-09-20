@@ -27,6 +27,7 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
 import { migrateRarityField } from './quality'
+import { loadFabaoState } from './fabao'
 import { catalogItems } from './caveLogic'
 import type {
   XiyouAchievement,
@@ -472,6 +473,8 @@ function syncSchools(src: unknown[]): void {
 
 /** 从封神榜 IDB 载入西游配置（需求说明 §5.1 方案 B）：成功原地更新 reactive 导出；失败/无数据保持 configs 兜底 */
 export async function loadXiyouData(): Promise<boolean> {
+  // 法宝/神器持有状态独立文档（PRD §22），不依赖 xiyou rows 是否 seed
+  await loadFabaoState()
   try {
     const api = container.resolve<GameDataApi>('GameDataApi')
     const rows = await api.listXiyouData()

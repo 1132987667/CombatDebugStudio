@@ -33,6 +33,7 @@ import schoolActiveSkillsData from '@configs/skills/skills_school_lianzhan.json'
 import skillsData from '@configs/skills/skills.json'
 import playerXiyouSkillsData from '@configs/skills/skill_player_xiyou.json'
 import xiyouMinorBossSkillsData from '@configs/skills/skill_boss_minor_xiyou.json'
+import fabaoSkillsData from '@configs/skills/skills_fabao.json'
 import effectsDataRaw from '@configs/effects/effects.json'
 import affixLibraryDataRaw from '@configs/affixes/affixes.json'
 
@@ -103,6 +104,7 @@ const skills = [
   ...(playerXiyouSkillsData as SkillConfig[]),
   ...(xiyouMinorBossSkillsData as SkillConfig[]),
   ...(enemySkillsData as SkillConfig[]),
+  ...(fabaoSkillsData as SkillConfig[]),
 ] as SkillConfig[]
 
 /** 兜底 Buff 定义：buffs.json + effects.json + enemy-buffs.json 归一化（与 seed 写入 IDB 的混合格式同源） */

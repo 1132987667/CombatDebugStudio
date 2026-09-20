@@ -172,8 +172,9 @@ export class SkillManager {
       this.buffSystem,
     )
     if (!availability.can) {
+      const blockText = availability.detail ?? availability.reason
       LoggerProvider.logger.addDebugLog(
-        `技能 ${skillId} 不可用: ${availability.reason}`,
+        `技能 ${skillId} 不可用: ${blockText}`,
         { level: LogLevel.WARN },
       )
       return BattleActionHelper.createSkill({
@@ -187,7 +188,7 @@ export class SkillManager {
           {
             type: 'status',
             targetId: target.id,
-            description: `技能 ${skillId} 不可用: ${availability.reason}`,
+            description: `技能 ${skillId} 不可用: ${blockText}`,
           },
         ],
       })

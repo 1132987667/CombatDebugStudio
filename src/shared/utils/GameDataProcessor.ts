@@ -23,6 +23,7 @@ import type {
 } from '@/domain/skill/PassiveSkillManager'
 import type { SkillConfig } from '@/domain/skill/types'
 import { SkillType } from '@/domain/skill/types'
+import { renderSkillDescription } from '@/domain/skill/calculation-utils'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
 import type {
@@ -116,7 +117,16 @@ export class GameDataProcessor {
   }
 
   static getSkillsData(): SkillConfig[] {
-    return dataSource.getSkills()
+    // NOTE: {{damage}}/{{heal}} 描述模板在读出口统一渲染——ConfigDataSource（静态 JSON）与
+    // IdbDataSource（IDB 存量）两条路径都汇聚于此；渲染幂等，结果随 DataProcessor 缓存，
+    // 数据源切换时经 clearCache 自动失效。seed.ts 写库仍走原始模板，读时渲染，无需数据迁移。
+    const cached = DataProcessor.getCachedData<SkillConfig[]>('skills_rendered')
+    if (cached) return cached
+    const rendered = dataSource.getSkills().map((s) =>
+      s.description ? { ...s, description: renderSkillDescription(s) } : s,
+    )
+    DataProcessor.setCachedData('skills_rendered', rendered)
+    return rendered
   }
 
   /** 获取所有 Buff 定义（统一 BuffJsonEntry 格式，与 BuffScriptRegistry 配置层同源） */

@@ -46,7 +46,6 @@ import {
   ParticipantSide,
   ParticipantSideName,
   RoundStatus,
-  SkillBlockReason,
 } from '@/domain/battle/type/types'
 import { BuffSystem, type SummonRequest, type DamageOrigin } from '@/domain/buff/BuffSystem'
 import type { TriggerEventContext } from '@/domain/buff/types'
@@ -97,14 +96,6 @@ import type { FormationConfig } from '@/shared/types/formation'
 
 /** 动作日志保留上限 */
 const MAX_ACTION_HISTORY = 100
-
-/** 手动行动技能不可用原因的中文标签 */
-const MANUAL_ACTION_BLOCK_LABELS: Record<string, string> = {
-  [SkillBlockReason.ENERGY_SHORT]: '能量不足',
-  [SkillBlockReason.COOLDOWN]: '冷却中',
-  [SkillBlockReason.CONTROLLED]: '被控制',
-  [SkillBlockReason.SILENCED]: '被沉默',
-}
 
 export class BattleSystem {
   /**
@@ -1745,7 +1736,7 @@ export class BattleSystem {
           this.buffSystem,
         )
         if (!availability.can) {
-          return `技能不可用：${MANUAL_ACTION_BLOCK_LABELS[availability.reason] ?? availability.reason}`
+          return `技能不可用：${availability.detail ?? availability.reason}`
         }
         await this.executor.selectAndExecuteSkill(battle, source, skill, targetId)
       } else {

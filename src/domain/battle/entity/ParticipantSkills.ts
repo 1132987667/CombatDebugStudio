@@ -92,6 +92,7 @@ export class ParticipantSkills {
    * 统一技能可执行性检查
    * 合并能量、冷却、控制状态检查，通过 BuffQuery 解耦 BuffSystem
    * ponytail: 不检查目标有效性——目标由执行阶段的 resolveSkillTargets 处理
+   * detail 格式约定：冷却用中文+数值，能量用 current/max，控制/沉默用状态名
    */
   canExecuteSkill(
     characterId: string,
@@ -101,23 +102,31 @@ export class ParticipantSkills {
   ): SkillAvailability {
     // 1. 控制状态检查（通过 BuffQuery 接口解耦）
     if (buffQuery.isCharacterControlled(characterId)) {
-      return { can: false, reason: SkillBlockReason.CONTROLLED }
+      return { can: false, reason: SkillBlockReason.CONTROLLED, detail: '被控制' }
     }
     if (!buffQuery.canUseSkill(characterId)) {
-      return { can: false, reason: SkillBlockReason.SILENCED }
+      return { can: false, reason: SkillBlockReason.SILENCED, detail: '被沉默' }
     }
 
     // 2. 冷却检查
     const cooldown = this.skillCooldowns.get(skillId) || 0
     if (cooldown > 0) {
-      return { can: false, reason: SkillBlockReason.COOLDOWN }
+      return {
+        can: false,
+        reason: SkillBlockReason.COOLDOWN,
+        detail: `还需 ${cooldown} 回合冷却`,
+      }
     }
 
     // 3. 能量检查
     const skills = this.getSkillList()
     const skillConfig = skills.find(s => s.id === skillId)
     if (skillConfig && skillConfig.energyCost > 0 && currentEnergy < skillConfig.energyCost) {
-      return { can: false, reason: SkillBlockReason.ENERGY_SHORT }
+      return {
+        can: false,
+        reason: SkillBlockReason.ENERGY_SHORT,
+        detail: `能量 ${currentEnergy}/${skillConfig.energyCost}`,
+      }
     }
 
     return { can: true, reason: SkillBlockReason.NONE }

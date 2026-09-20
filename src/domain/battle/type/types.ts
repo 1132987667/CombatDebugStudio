@@ -193,6 +193,8 @@ export interface SkillAvailability {
   can: boolean
   /** 不可用原因 */
   reason: SkillBlockReason
+  /** 不可用的人读描述（如 "还需 2 回合冷却"）；可用时缺省 */
+  detail?: string
 }
 
 export type ControlMode = 'AI' | 'AUTO' | 'MANUAL'

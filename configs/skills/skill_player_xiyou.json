@@ -2,7 +2,7 @@
   {
     "id": "skill_xiyou_basic_attack",
     "name": "普攻",
-    "description": "造成 100% 攻击力伤害",
+    "description": "造成 {{damage}} 伤害",
     "energyCost": 0,
     "cooldown": 0,
     "skillType": "small",
@@ -22,7 +22,7 @@
   {
     "id": "skill_xiyou_armor_break",
     "name": "破甲斩",
-    "description": "造成 120% 攻击力伤害，无视 40% 防御",
+    "description": "造成 {{damage}} 伤害，无视 40% 防御",
     "energyCost": 50,
     "cooldown": 2,
     "skillType": "small",
@@ -48,7 +48,7 @@
   {
     "id": "skill_xiyou_heal",
     "name": "治疗术",
-    "description": "恢复 (50 + 等级×5) 气血",
+    "description": "恢复 {{heal}} 气血",
     "energyCost": 50,
     "cooldown": 3,
     "skillType": "small",
@@ -90,7 +90,7 @@
   {
     "id": "skill_xiyou_golden_fury",
     "name": "金刚怒",
-    "description": "造成 200% 攻击力伤害，30% 几率眩晕 1 回合",
+    "description": "造成 {{damage}} 伤害，30% 几率眩晕 1 回合",
     "energyCost": 150,
     "cooldown": 5,
     "skillType": "ultimate",
@@ -116,7 +116,7 @@
   {
     "id": "skill_xiyou_buddha_light",
     "name": "佛光普照",
-    "description": "恢复 (150 + 等级×10) 气血，驱散所有负面状态",
+    "description": "恢复 {{heal}} 气血，驱散所有负面状态",
     "energyCost": 150,
     "cooldown": 6,
     "skillType": "ultimate",
@@ -201,7 +201,7 @@
   {
     "id": "skill_xiyou_whirlwind",
     "name": "乱舞",
-    "description": "3 次快速攻击，每次 60% 伤害",
+    "description": "3 次快速攻击，每次造成 {{damage}} 伤害",
     "energyCost": 50,
     "cooldown": 2,
     "skillType": "small",
@@ -221,7 +221,7 @@
   {
     "id": "skill_xiyou_thousand_shadow",
     "name": "千影绝杀",
-    "description": "5 次攻击，每次 70% 伤害，最后一击必暴",
+    "description": "5 次攻击，每次造成 {{damage}} 伤害，最后一击必暴",
     "energyCost": 150,
     "cooldown": 5,
     "skillType": "ultimate",
@@ -283,7 +283,7 @@
   {
     "id": "skill_xiyou_weak_point",
     "name": "弱点打击",
-    "description": "造成 130% 伤害，本次暴击率 +30%",
+    "description": "造成 {{damage}} 伤害，本次暴击率 +30%",
     "energyCost": 50,
     "cooldown": 2,
     "skillType": "small",
@@ -303,7 +303,7 @@
   {
     "id": "skill_xiyou_armor_pierce",
     "name": "破甲斩",
-    "description": "造成 120% 伤害，无视 40% 防御",
+    "description": "造成 {{damage}} 伤害，无视 40% 防御",
     "energyCost": 50,
     "cooldown": 2,
     "skillType": "small",
@@ -323,7 +323,7 @@
   {
     "id": "skill_xiyou_gathering_strike",
     "name": "蓄势一击",
-    "description": "本回合不行动，下回合攻击造成 200% 伤害",
+    "description": "本回合不行动，下回合攻击造成 {{damage}} 伤害",
     "energyCost": 50,
     "cooldown": 3,
     "skillType": "small",
@@ -342,7 +342,7 @@
   {
     "id": "skill_xiyou_heaven_destroy",
     "name": "天诛地灭",
-    "description": "造成 250% 伤害，若暴击则追加 100% 伤害",
+    "description": "造成 {{damage}} 伤害，若暴击则追加 100% 伤害",
     "energyCost": 150,
     "cooldown": 5,
     "skillType": "ultimate",
@@ -396,7 +396,7 @@
   {
     "id": "skill_xiyou_earthquake",
     "name": "撼地击",
-    "description": "造成 140% 伤害，30% 概率眩晕 1 回合",
+    "description": "造成 {{damage}} 伤害，30% 概率眩晕 1 回合",
     "energyCost": 50,
     "cooldown": 2,
     "skillType": "small",
@@ -439,7 +439,7 @@
   {
     "id": "skill_xiyou_blood_swap",
     "name": "以伤换伤",
-    "description": "损失 10% 当前气血，造成损失气血×2 的固定伤害",
+    "description": "损失 10% 当前气血，造成 {{damage}} 伤害",
     "energyCost": 50,
     "cooldown": 3,
     "skillType": "small",
@@ -458,7 +458,7 @@
   {
     "id": "skill_xiyou_mountain_crush",
     "name": "泰山压顶",
-    "description": "造成 220% 伤害，100% 眩晕 1 回合",
+    "description": "造成 {{damage}} 伤害，100% 眩晕 1 回合",
     "energyCost": 150,
     "cooldown": 5,
     "skillType": "ultimate",

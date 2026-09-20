@@ -77,16 +77,20 @@
                 <div v-if="currentCharacter!.skills.small?.length" class="skill-category flex flex-col gap-1">
                   <div class="skill-category-title">小技能</div>
                   <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
+                    :class="{ 'skill-unavailable': isSkillUnavailable(skill) }"
                     @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
                     @mouseleave="hideSkillTooltip">
+                    <IconSkillLock v-if="isSkillUnavailable(skill)" class="skill-lock-icon" />
                     {{ skill.name || '未知技能' }}
                   </div>
                 </div>
                 <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category flex flex-col gap-1">
                   <div class="skill-category-title">终极技能</div>
                   <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
-                    class="skill-item ultimate" @mouseenter="showSkillTooltip($event, skill)"
+                    class="skill-item ultimate" :class="{ 'skill-unavailable': isSkillUnavailable(skill) }"
+                    @mouseenter="showSkillTooltip($event, skill)"
                     @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
+                    <IconSkillLock v-if="isSkillUnavailable(skill)" class="skill-lock-icon" />
                     {{ skill.name || '未知技能' }}
                   </div>
                 </div>
@@ -155,8 +159,8 @@
 
       <!-- 技能可用性 -->
       <div class="tooltip-availability"
-        :class="{ 'available': isSkillAvailable(tooltipContent), 'unavailable': !isSkillAvailable(tooltipContent) }">
-        {{ isSkillAvailable(tooltipContent) ? '当前可用' : '当前不可用' }}
+        :class="{ 'available': tooltipAvailability?.can !== false, 'unavailable': tooltipAvailability?.can === false }">
+        {{ tooltipAvailability?.can === false ? (tooltipAvailability.detail || '当前不可用') : '当前可用' }}
       </div>
     </div>
 
@@ -173,10 +177,13 @@ import type { BattleService } from '@/application/facade/BattleFacade';
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier } from "@/domain/attribute/types";
 import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay';
 import { PASSIVE_UNCATEGORIZED, groupPassiveSkills } from '@/presentation/config/passive-skill-categories';
-import { BattleEntity } from '@/domain/battle/type/types';
+import { BattleEntity, type SkillAvailability } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
+import { processExtraValues } from '@/domain/skill/calculation-utils';
+import type { BuffSystem } from '@/domain/buff/BuffSystem';
+import IconSkillLock from '~icons/app/skill-lock';
 import { container } from '@/infrastructure/di/Container';
 import type { TabItem } from '@/presentation/components'
 import { useBattleStore } from '@/presentation/stores';
@@ -396,6 +403,23 @@ const getStepTypeName = (stepType?: string): string => {
   return getStepTypeDisplayName(stepType);
 };
 
+/** 基于当前角色属性预估 calculation 的数值（无角色上下文时返回 null 不展示） */
+const previewCalculation = (calc: NonNullable<ExtendedSkillStep['calculation']>): number | null => {
+  const char = currentCharacter.value
+  if (!char) return null
+  const extras = calc.extraValues ?? []
+  // 与 DamageCalculator.resolveAttributeValue 对齐：maxHealth/currentHealth 按目标结算，
+  // tooltip 无目标上下文，此类动态伤害（如按目标最大气血的比例伤害）不显示预览
+  const hasTargetScaledAttr = extras.some(
+    (e) => e.attribute === 'maxHealth' || e.attribute === 'currentHealth',
+  )
+  if (hasTargetScaledAttr) return null
+  const { total } = processExtraValues(extras, (attr) =>
+    attr === 'level' ? char.level : char.getAttribute(attr) || 0,
+  )
+  return Math.round(calc.baseValue + total)
+};
+
 const formatCalculation = (step: ExtendedSkillStep): string => {
   if (!step.calculation) return ''
   const parts: string[] = []
@@ -406,19 +430,38 @@ const formatCalculation = (step: ExtendedSkillStep): string => {
       parts.push(`${attrName}×${ev.ratio}`)
     }
   }
-  return parts.join(' + ') || ''
+  const formula = parts.join(' + ') || ''
+  const preview = previewCalculation(step.calculation)
+  return preview != null && formula ? `${formula}（预计 ${preview}）` : formula
 };
 
-/**
- * 检查技能是否可用
- * @param skill - 技能配置
- * @returns 是否可用
- */
-const isSkillAvailable = (skill: SkillConfig): boolean => {
-  // 简单检查：能量消耗是否为0或角色有足够能量
-  const currentEnergy = currentCharacter.value?.getAttrVal(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0;
-  return (skill.energyCost || 0) === 0 || currentEnergy >= (skill.energyCost || 0);
-};
+// ------------------------------------------------------------
+// 技能可用性（直读领域实体的完整检查：控制→沉默→冷却→能量）
+const buffSystem = container.resolve<BuffSystem>('BuffSystem');
+
+const skillAvailabilities = computed<Record<string, SkillAvailability>>(() => {
+  void snapVersion.value  // 建立响应式依赖
+  const char = currentCharacter.value
+  if (!char) return {}
+  const map: Record<string, SkillAvailability> = {}
+  const energy = char.getAttribute(ATTRIBUTE_CODE.currentEnergy)
+  for (const skill of char.getSkillList()) {
+    map[skill.id] = char.canExecuteSkill(char.id, skill.id, energy, buffSystem)
+  }
+  return map
+})
+
+// HACK: 快照 version = statsVersion，冷却变更（setSkillCooldown）与纯 tag 类 buff（控制/沉默
+// 无属性修改时）都不 bump 它，对应状态变化要等下一次属性事件（行动回能/回合开始 recalcAll）才
+// 刷到这里；技能释放入口落地时统一解决冷却/buff 的投影触发
+const isSkillUnavailable = (skill: SkillConfig): boolean =>
+  skillAvailabilities.value[skill.id]?.can === false;
+
+const tooltipAvailability = computed<SkillAvailability | null>(() => {
+  const skill = tooltipContent.value
+  if (!skill) return null
+  return skillAvailabilities.value[skill.id] ?? null
+});
 
 // 属性悬浮提示状态
 const attrTooltipVisible = ref(false)
@@ -556,6 +599,23 @@ onUnmounted(() => {
 .skill-item:hover {
   background: rgba(var(--rgb-energy), var(--alpha-wash));
   box-shadow: 0 0 8px var(--border-debug-color);
+}
+
+/* 不可用技能：置灰 + 锁图标；hover 恢复可读性（原因见 tooltip） */
+.skill-item.skill-unavailable {
+  opacity: 0.6;
+}
+
+.skill-item.skill-unavailable:hover {
+  opacity: 1;
+}
+
+.skill-lock-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-warning);
 }
 
 .skill-item.passive:hover {

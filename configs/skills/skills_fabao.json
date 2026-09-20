@@ -530,7 +530,7 @@
   {
     "id": "skill_sq_release_yujingping",
     "name": "玉净瓶·甘露",
-    "description": "护体满触发：回复最大气血20%，清除自身1个异常状态（不解除控制）",
+    "description": "护体满触发：回复 {{heal}}，清除自身1个异常状态（不解除控制）",
     "cooldown": 0,
     "energyCost": 0,
     "skillType": "passive",
@@ -798,7 +798,7 @@
   {
     "id": "skill_sq_release_liulizhan",
     "name": "琉璃盏·辉光",
-    "description": "护体满触发：回复最大气血10%，之后每回合回复5%持续2回合",
+    "description": "护体满触发：回复 {{heal}}，之后每回合回复5%持续2回合",
     "cooldown": 0,
     "energyCost": 0,
     "skillType": "passive",

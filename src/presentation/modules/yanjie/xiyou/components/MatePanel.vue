@@ -35,20 +35,36 @@
       </template>
 
       <template #pets>
-        <div v-for="p in pets" :key="p.name" class="xy-row-card">
+        <p class="xy-panel-hint">灵宠伴战提供输出属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
+        <p v-if="petRows.length === 0" class="xy-panel-hint">尚未获得灵宠——击败敌人有几率掉落个体（调试面板可发放）</p>
+        <div v-for="row in petRows" :key="row.inst.uid" class="xy-row-card">
           <div class="xy-row-top">
-            <span class="xy-row-name" :class="qualityClass(p.rarity)">{{ p.name }}</span>
-            <span class="xy-chip xy-chip--jade">{{ qualityOf(p.rarity) }}</span>
-            <span v-if="p.active" class="xy-chip xy-chip--gold">伴战</span>
-            <span class="xy-row-side">Lv.{{ p.level }}</span>
+            <span class="xy-row-name">{{ row.name }}</span>
+            <span class="xy-chip xy-chip--jade">{{ qualityOf(row.inst.quality) }}</span>
+            <span v-if="row.inst.active" class="xy-chip xy-chip--gold">伴战</span>
+            <span class="xy-row-side">Lv.{{ row.inst.level }}/{{ PET_MAX_LEVEL }}</span>
           </div>
-          <p class="xy-row-desc">{{ p.skill }}</p>
-          <div class="xy-progress-text">
-            <span>成长资质</span>
-            <span>{{ p.growth }} / 100</span>
-          </div>
+          <p class="xy-row-desc">{{ row.statsText }}</p>
+          <p class="xy-row-desc xy-row-desc--key">
+            资质 {{ row.inst.aptitude }}/{{ APTITUDE_CAP }} · 突破 {{ row.inst.breakthroughs }}/3
+            <template v-if="row.inst.trait"> · {{ row.inst.trait }}</template>
+          </p>
           <div class="xy-progress xy-progress--gold">
-            <div class="xy-progress-fill" :style="{ width: p.growth + '%' }"></div>
+            <div class="xy-progress-fill" :style="{ width: expPercent(row.inst) + '%' }"></div>
+          </div>
+          <div class="xy-fabao-ops">
+            <button type="button" class="xy-shop-buy" @click="toggleActive(row.inst)">
+              {{ row.inst.active ? '歇战' : '伴战' }}
+            </button>
+            <button v-if="row.inst.level < PET_MAX_LEVEL" type="button" class="xy-shop-buy" @click="feed(row.inst)">
+              经验丹(+500)
+            </button>
+            <button v-if="row.inst.aptitude < APTITUDE_CAP" type="button" class="xy-shop-buy" @click="raiseApt(row.inst)">
+              资质丹(+2)
+            </button>
+            <button v-if="row.inst.breakthroughs < BREAKTHROUGH_STAGES.length" type="button" class="xy-shop-buy" @click="brk(row.inst)">
+              突破
+            </button>
           </div>
         </div>
       </template>
@@ -63,12 +79,26 @@ import { computed, ref } from 'vue'
 import IconStar from '~icons/app/star'
 
 import type { TabItem } from '@/presentation/components'
-import { mates, pets } from '../xiyouData'
+import { mates } from '../xiyouData'
 import { MAX_ACTIVE_MATES } from '../battle'
 import { saveManager } from '../save-bridge'
-import { qualityClass, qualityOf } from '../quality'
+import { qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import {
+  APTITUDE_CAP,
+  BREAKTHROUGH_STAGES,
+  PET_MAX_LEVEL,
+  breakthrough as petBreakthrough,
+  feedExpPill,
+  individualById,
+  petExpNeed,
+  petMountState,
+  petMountStats,
+  raiseAptitude,
+  setPetMountActive,
+  type PetMountInstance,
+} from '../petMount'
 
 const playerStore = usePlayerStore()
 const notification = useNotificationStore()
@@ -100,6 +130,56 @@ function setMateActive(name: string, active: boolean): void {
   m.active = active
   saveManager.autoSave()
   notification.toast(active ? `${m.name} 已上阵` : `${m.name} 已下场`, 'success')
+}
+
+/** 灵宠个体行（petMountState 权威；持有列表 + 养成操作） */
+interface PetRow {
+  inst: PetMountInstance
+  name: string
+  statsText: string
+}
+
+const petRows = computed<PetRow[]>(() =>
+  petMountState.pets.map((inst) => ({
+    inst,
+    name: individualById(inst.individualId)?.name ?? inst.individualId,
+    statsText: petMountStats(inst)
+      .map((s) => `${ATTR_LABELS[s.attr] ?? s.attr} +${s.value}`)
+      .join(' · '),
+  })),
+)
+
+const ATTR_LABELS: Record<string, string> = {
+  attack: '攻击',
+  defense: '防御',
+  hit: '命中',
+  dodge: '闪避',
+  speed: '速度',
+  maxHealth: '气血',
+}
+
+function expPercent(inst: PetMountInstance): number {
+  if (inst.level >= PET_MAX_LEVEL) return 100
+  return Math.min(100, (inst.exp / petExpNeed(inst.level)) * 100)
+}
+
+function toggleActive(inst: PetMountInstance): void {
+  setPetMountActive('pet', inst.uid)
+}
+
+function feed(inst: PetMountInstance): void {
+  const err = feedExpPill('pet', inst.uid)
+  if (err) notification.toast(err, 'warning')
+}
+
+function raiseApt(inst: PetMountInstance): void {
+  const err = raiseAptitude('pet', inst.uid)
+  if (err) notification.toast(err, 'warning')
+}
+
+function brk(inst: PetMountInstance): void {
+  const err = petBreakthrough('pet', inst.uid)
+  if (err) notification.toast(err, 'warning')
 }
 </script>
 

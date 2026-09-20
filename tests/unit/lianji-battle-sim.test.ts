@@ -102,7 +102,8 @@ describe('连击流完整战斗模拟', () => {
       f.setAttribute(ATTRIBUTE_CODE.currentHealth, 5000)
     }
 
-    battleSystem.initialize([player], foes)
+    // 固定种子：命中/暴击序列确定（flaky 修复——此前 generateSeed() 随机，弹射链路偶发无样本）
+    battleSystem.initialize([player], foes, undefined, 'alpha')
     // initialize 后 battleData.rng 才存在——注入被动共用的确定性随机源
     const rng = (battleSystem as unknown as { battleData?: { rng?: unknown } }).battleData?.rng
     if (rng) manager.setRng(rng as never)

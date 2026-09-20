@@ -152,22 +152,34 @@
       </template>
 
       <template #mount>
-        <div v-for="m in mounts" :key="m.name" class="xy-row-card">
+        <p class="xy-panel-hint">坐骑伴战提供防御属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
+        <p v-if="mountRows.length === 0" class="xy-panel-hint">尚未获得坐骑——击败敌人有几率掉落个体（调试面板可发放）</p>
+        <div v-for="row in mountRows" :key="row.inst.uid" class="xy-row-card">
           <div class="xy-row-top">
-            <span class="xy-row-name" :class="qualityClass(m.rarity)">{{ m.name }}</span>
-            <span class="xy-chip" :class="mountQualityChip(m.rarity)">{{ qualityOf(m.rarity) }}</span>
-            <span v-if="m.active" class="xy-chip xy-chip--gold">当前</span>
-            <span class="xy-row-side">Lv.{{ m.level }}</span>
+            <span class="xy-row-name">{{ row.name }}</span>
+            <span class="xy-chip xy-chip--jade">{{ qualityOf(row.inst.quality) }}</span>
+            <span v-if="row.inst.active" class="xy-chip xy-chip--gold">出战</span>
+            <span class="xy-row-side">Lv.{{ row.inst.level }}/{{ PET_MAX_LEVEL }}</span>
           </div>
-          <p class="xy-row-desc">{{ m.skill }}</p>
-          <div class="xy-progress-text">
-            <span>资质</span>
-            <span>{{ m.aptitude }}</span>
+          <p class="xy-row-desc">{{ row.statsText }}</p>
+          <p class="xy-row-desc xy-row-desc--key">
+            资质 {{ row.inst.aptitude }}/{{ APTITUDE_CAP }} · 突破 {{ row.inst.breakthroughs }}/3
+            <template v-if="row.inst.trait"> · {{ row.inst.trait }}</template>
+          </p>
+          <div class="xy-fabao-ops">
+            <button type="button" class="xy-shop-buy" @click="toggleMountActive(row.inst)">
+              {{ row.inst.active ? '歇战' : '出战' }}
+            </button>
+            <button v-if="row.inst.level < PET_MAX_LEVEL" type="button" class="xy-shop-buy" @click="feedMount(row.inst)">
+              经验丹(+500)
+            </button>
+            <button v-if="row.inst.aptitude < APTITUDE_CAP" type="button" class="xy-shop-buy" @click="raiseMountApt(row.inst)">
+              资质丹(+2)
+            </button>
+            <button v-if="row.inst.breakthroughs < BREAKTHROUGH_STAGES.length" type="button" class="xy-shop-buy" @click="brkMount(row.inst)">
+              突破
+            </button>
           </div>
-          <div class="xy-progress xy-progress--line">
-            <div class="xy-progress-fill" :style="{ width: m.aptitude + '%' }"></div>
-          </div>
-          <p class="xy-row-desc xy-row-desc--key">速度加成 +{{ m.speed }}</p>
         </div>
       </template>
     </Tabs>
@@ -188,7 +200,8 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
-import { mounts } from '../xiyouData'
+import { mountIndividuals, individualById, petMountState, petMountStats, PET_MAX_LEVEL, APTITUDE_CAP, BREAKTHROUGH_STAGES,
+  breakthrough as mountBreakthrough, feedExpPill as mountFeedPill, raiseAptitude as mountRaiseApt, setPetMountActive, type PetMountInstance } from '../petMount'
 import { equipQualityClass, qualityClass, qualityName, qualityOf } from '../quality'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { factorText, gearTooltipData, statText } from '../gearTooltip'
@@ -255,6 +268,48 @@ function doUpgrade(row: FabaoRow): void {
 
 function doDecompose(row: FabaoRow): void {
   if (row.inst) decomposeFabao(row.inst.uid)
+}
+
+/** 坐骑个体行（petMountState 权威；持有列表 + 养成操作） */
+interface MountRow {
+  inst: PetMountInstance
+  name: string
+  statsText: string
+}
+
+const MOUNT_ATTR_LABELS: Record<string, string> = {
+  attack: '攻击',
+  defense: '防御',
+  hit: '命中',
+  dodge: '闪避',
+  speed: '速度',
+  maxHealth: '气血',
+}
+
+const mountRows = computed<MountRow[]>(() =>
+  petMountState.mounts.map((inst) => ({
+    inst,
+    name: individualById(inst.individualId)?.name ?? inst.individualId,
+    statsText: petMountStats(inst)
+      .map((s) => `${MOUNT_ATTR_LABELS[s.attr] ?? s.attr} +${s.value}`)
+      .join(' · '),
+  })),
+)
+
+function toggleMountActive(inst: PetMountInstance): void {
+  setPetMountActive('mount', inst.uid)
+}
+
+function feedMount(inst: PetMountInstance): void {
+  mountFeedPill('mount', inst.uid)
+}
+
+function raiseMountApt(inst: PetMountInstance): void {
+  mountRaiseApt('mount', inst.uid)
+}
+
+function brkMount(inst: PetMountInstance): void {
+  mountBreakthrough('mount', inst.uid)
 }
 
 const pack = usePackStore()
@@ -457,17 +512,6 @@ onBeforeUnmount(() => {
 })
 
 /** 坐骑品级 → chip 类（EquipPanel 专属，不入统一映射表） */
-const MOUNT_CHIP_BY_RARITY: Record<number, string> = {
-  1: 'xy-chip--muted',
-  2: 'xy-chip--jade',
-  3: 'xy-chip--jade',
-  4: 'xy-chip--seal',
-  5: 'xy-chip--gold',
-}
-
-function mountQualityChip(rarity: number): string {
-  return MOUNT_CHIP_BY_RARITY[rarity] ?? 'xy-chip--muted'
-}
 </script>
 
 <style scoped lang="scss">

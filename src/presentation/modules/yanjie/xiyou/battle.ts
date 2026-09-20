@@ -236,6 +236,16 @@ const ROLE_XIANYUAN: Record<EnemyRole, number> = {
   yaozun: 150,
 }
 
+/** 按敌方 id 列表取分级序列（宠物/坐骑掉落判定用；缺 role 的敌人跳过） */
+export function rolesForEnemyIds(enemyIds: string[]): string[] {
+  const out: string[] = []
+  for (const id of enemyIds) {
+    const role = enemyById.get(id)?.role
+    if (role) out.push(role)
+  }
+  return out
+}
+
 /** 按敌方 id 列表聚合战斗胜利灵韵（药园催熟资源；多场推进的逐场结算口径） */
 export function xianyuanForEnemyIds(enemyIds: string[]): number {
   let sum = 0

@@ -459,6 +459,22 @@
       ],
       "effect": "制造辅助：绝品概率+8%，凡品、精品各-4%（仅三阶）",
       "count": 1
+    },
+    {
+      "name": "宠物经验丹",
+      "level": 1,
+      "materials": [
+        {
+          "itemId": "mat_zhixuecao",
+          "count": 2
+        },
+        {
+          "itemId": "mat_qingxinye",
+          "count": 2
+        }
+      ],
+      "effect": "喂食宠物/坐骑 +500 经验",
+      "count": 1
     }
   ],
   "forgeRecipes": [

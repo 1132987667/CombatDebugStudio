@@ -191,6 +191,7 @@ import {
   type EnemyBrief,
 } from '../battle'
 import { fabaoAttributeBonuses } from '../fabao'
+import { individualById, petMountAttributeBonuses, rollPetMountDrops, settlePetMountBattleExp } from '../petMount'
 import { itemName } from '../caveLogic'
 import { progressQuests } from '../questProgress'
 import { saveManager } from '../save-bridge'
@@ -339,7 +340,7 @@ async function initBattle(node: RunNode): Promise<void> {
   await pack.init()
   const protagonist = usePlayerStore().battleSnapshot
   // NOTE: 装备加成 + 流派树增量（schoolTreeCombatBonuses 已排除快照承载键，避免双算）一并注入主角
-  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses() }
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses(), ...petMountAttributeBonuses() }
   const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses, protagonist, node)
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()
@@ -573,6 +574,14 @@ function onBattleEnded(data: BattleEndedEventData): void {
     const hits = pack.applyDrops(
       dropsForEnemyIds(node?.enemyIds ?? [], node?.isBoss ? props.scene.drops?.materials : undefined),
     )
+    // 宠物/坐骑：出战个体同池结算经验（§18 双通道 1:1）+ 击败掉落个体（§18 六档掉率×幸运，命中即停）
+    for (const msg of settlePetMountBattleExp(exp)) notification.toast(msg)
+    const gainedIndividuals = rollPetMountDrops(props.scene.id, rolesForEnemyIds(node?.enemyIds ?? []))
+    for (const g of gainedIndividuals) {
+      const name = individualById(g.individualId)?.name ?? g.individualId
+      notification.toast(`获得${g.kind === 'pet' ? '灵宠' : '坐骑'}「${name}」（资质 ${g.aptitude}）`, 'success')
+      run.totals.drops.push({ itemId: g.individualId, count: 1 })
+    }
     run.totals.exp += exp
     run.totals.money += money
     run.totals.xianyuan += xianyuan

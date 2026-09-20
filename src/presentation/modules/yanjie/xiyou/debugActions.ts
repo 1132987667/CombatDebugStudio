@@ -29,8 +29,9 @@ import {
 } from './battle'
 import { runQuickBattle } from '@/application/service/QuickBattleSim'
 import { ParticipantSide } from '@/domain/battle/type/types'
-import { equippedSkills, grantLevelPoint, grantPillPoint, pureSchoolBonus, schoolsLayers, mates, mounts, pets } from './xiyouData'
+import { equippedSkills, grantLevelPoint, grantPillPoint, pureSchoolBonus, schoolsLayers, mates } from './xiyouData'
 import { fabaoAttributeBonuses, fabaoDefs, fabaoTier, grantFabao } from './fabao'
+import { grantPetMount, petMountAttributeBonuses, petIndividuals, mountIndividuals, individualById, petMountState, persistPetMountState } from './petMount'
 import { enhanceCost, enhanceMaxByRarity, enhanceSuccessRate } from './caveLogic'
 import { createRng, rngFn } from '@/shared/utils/seeded-rng'
 import type { PlayerStoreDebugEnv } from './debugEnv'
@@ -635,21 +636,22 @@ function autoDeployMates(): string[] {
   return active.map((m) => m.name)
 }
 
-/**
- * 自动骑乘：资质最高坐骑设为当前（其余取消），返回坐骑名（无坐骑返回 null）。
- * HACK: mounts.active 不持久化（save-schema 无 mounts_active 键，EquipPanel 亦无切换 UI），
- *       重载后回退 configs 初始值；需要持久化时先扩存档 schema 再来改这里。
- */
+/** 自动骑乘：资质最高的坐骑个体出战（§18 个体体系，伴战光环 + 出战经验；IDB 持久化） */
 function autoRideMount(): string | null {
-  if (mounts.length === 0) return null
-  const best = [...mounts].sort((a, b) => b.aptitude - a.aptitude)[0]!
-  for (const m of mounts) m.active = m === best
-  return best.name
+  const best = [...petMountState.mounts].sort((a, b) => b.aptitude - a.aptitude)[0]
+  if (!best) return null
+  for (const m of petMountState.mounts) m.active = m === best
+  void persistPetMountState()
+  return individualById(best.individualId)?.name ?? best.individualId
 }
 
-/** 灵宠伴战：全部设为伴战（当前无上限与参战数值，仅状态位）。同 autoRideMount：active 不持久化 */
-function autoAccompanyPets(): void {
-  for (const p of pets) p.active = true
+/** 灵宠伴战：资质最高的宠物个体出战（同 autoRideMount 口径） */
+function autoAccompanyPets(): string | null {
+  const best = [...petMountState.pets].sort((a, b) => b.aptitude - a.aptitude)[0]
+  if (!best) return null
+  for (const p of petMountState.pets) p.active = p === best
+  void persistPetMountState()
+  return individualById(best.individualId)?.name ?? best.individualId
 }
 
 /** 一键养成准备（加点 → 穿装 → 阵容），快速结算与真实模拟两口径共用；返回 prep 报告（未启用的项不含键） */
@@ -669,8 +671,8 @@ function applyPrep(env: PlayerStoreDebugEnv, p: Record<string, string | number |
   if (p.mates === 'best') {
     prep.mates = autoDeployMates()
     prep.mount = autoRideMount()
-    autoAccompanyPets()
-    prep.pets = pets.filter((x) => x.active).map((x) => x.name)
+    const petName = autoAccompanyPets()
+    if (petName) prep.pets = [petName]
   }
   return prep
 }
@@ -712,7 +714,7 @@ async function runSimSweep(
   const { player, pack } = env
   const protagonist = player.battleSnapshot
   // 与 BattleZen.initBattle 同口径：装备 + 流派树加成只作用于主角
-  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses() }
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses(), ...petMountAttributeBonuses() }
   // 我方编成与场景无关，构造一次全场景复用（prep 已定妆：加点/穿装/阵容不再变化）
   const allyActors = buildSimAlly(allyBonuses, protagonist)
   const rows: SimSceneRow[] = []
@@ -1137,6 +1139,73 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
     id: 'gear',
     label: '装备',
     groups: [
+      {
+        id: 'fabao',
+        label: '法宝给予',
+        actions: [
+          {
+            id: 'fabao_give',
+            label: '给予指定法宝/神器',
+            input: {
+              type: 'select',
+              options: () => fabaoDefs.map((d) => ({ value: d.id, label: `${d.kind === 'fabao' ? '法宝' : '神器'}·${d.name}` })),
+              required: true,
+            },
+            execute: (defId) => {
+              const def = fabaoDefs.find((d) => d.id === String(defId))
+              if (!def) return fail('未知法宝 ID')
+              const inst = grantFabao(def.id, 1)
+              return inst ? ok(`已给予 ${def.kind === 'fabao' ? '法宝' : '神器'}「${def.name}」（凡品）`) : fail('发放失败')
+            },
+          },
+          {
+            id: 'fabao_material',
+            label: '给予灵尘/器灵×20',
+            execute: () => {
+              pack.addItem('spirit_dust', 20)
+              pack.addItem('spirit_core', 20)
+              return ok('已给予 灵尘×20、器灵×20')
+            },
+          },
+        ],
+      },
+      {
+        id: 'petmount',
+        label: '宠物/坐骑给予',
+        actions: [
+          {
+            id: 'pet_give',
+            label: '给予指定个体',
+            input: {
+              type: 'select',
+              options: () =>
+                [...petIndividuals, ...mountIndividuals].map((i) => ({
+                  value: i.id,
+                  label: `${i.id.startsWith('pet_') ? '灵宠' : '坐骑'}·${i.name}`,
+                })),
+              required: true,
+            },
+            execute: (id) => {
+              const inst = grantPetMount(String(id))
+              return inst
+                ? ok(`已获得个体「${individualById(inst.individualId)?.name ?? inst.individualId}」（资质 ${inst.aptitude}）`)
+                : fail('发放失败（未知个体或已拥有——个体唯一持有）')
+            },
+          },
+          {
+            id: 'pet_material',
+            label: '给予宠物养成材料×10',
+            execute: () => {
+              pack.addItem('pet_exp_pill', 10)
+              pack.addItem('pet_aptitude_pill', 10)
+              pack.addItem('pet_break_pill_1', 10)
+              pack.addItem('pet_break_pill_2', 10)
+              pack.addItem('pet_break_pill_3', 10)
+              return ok('已给予 宠物经验丹/资质丹/突破丹壹贰叁 各×10')
+            },
+          },
+        ],
+      },
       {
         id: 'give',
         label: '装备给予',

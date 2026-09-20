@@ -29,6 +29,7 @@ import type { EquipmentData, XiyouData } from '@/domain/fengshen/types'
 import { migrateRarityField } from './quality'
 import { loadFabaoState } from './fabao'
 import { loadPetMountState } from './petMount'
+import { loadTowerState } from './tower'
 import { catalogItems } from './caveLogic'
 import type {
   XiyouAchievement,
@@ -477,6 +478,7 @@ export async function loadXiyouData(): Promise<boolean> {
   // 法宝/神器 + 宠物/坐骑持有状态独立文档（PRD §22/§18），不依赖 xiyou rows 是否 seed
   await loadFabaoState()
   await loadPetMountState()
+  await loadTowerState()
   try {
     const api = container.resolve<GameDataApi>('GameDataApi')
     const rows = await api.listXiyouData()

@@ -35,6 +35,7 @@ import IconAspectSettings from '~icons/app/aspect-settings'
 export type GroupTab =
   | 'battle'
   | 'map'
+  | 'tower'
   | 'pack'
   | 'cultivate'
   | 'equip'
@@ -75,6 +76,7 @@ const TABS: Array<{ id: GroupTab; label: string; badge?: string }> = [
   { id: 'mate', label: '伙伴' },
   { id: 'collect', label: '收集' },
   { id: 'quest', label: '历练' },
+  { id: 'tower', label: '无尽塔' },
   { id: 'cave', label: '洞府' },
   { id: 'settings', label: '设置' },
 ]

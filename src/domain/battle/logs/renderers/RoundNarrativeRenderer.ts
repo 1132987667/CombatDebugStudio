@@ -15,7 +15,7 @@
  *   - 系统初始化日志 → 过滤
  */
 
-import { LogSegment, BattleLogEntry, BattleLogMetaRole, NarrativeBlockType } from '@/shared/types/battle-log'
+import { LogSegment, BattleLogEntry, BattleLogMetaRole, NarrativeBlockType, LogType } from '@/shared/types/battle-log'
 import type {
   NarrativeBlock as BattleLogNarrativeBlock,
   BattleLogMeta,
@@ -45,6 +45,9 @@ export class RoundNarrativeRenderer {
    */
   renderEntries(entries: BattleLogEntry[]): BattleLogNarrativeBlock[] {
     if (!entries || entries.length === 0) return []
+    // NOTE: getAllLogs 现包含 debug 条目（供调试页签显示），但 debug 无 turn/meta，
+    //       混入会触发回合切换 flushAll、打断 action→sub 归组；叙事渲染只消费战斗日志。
+    entries = entries.filter((e) => e.type !== LogType.DEBUG)
     const blocks: BattleLogNarrativeBlock[] = []
     let currentTurn = -1
     let currentAction: Extract<

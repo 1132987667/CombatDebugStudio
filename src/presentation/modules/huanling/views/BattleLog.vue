@@ -9,15 +9,25 @@
 
         <TacticalInput size="md" :model-value="keyword" placeholder="搜索…" aria-label="搜索日志"
           @update:model-value="keyword = String($event ?? '')" />
-        <div class="export-wrapper" ref="exportWrapperRef" @keydown.escape="showExportMenu = false">
-          <Button @click="showExportMenu = !showExportMenu" :aria-expanded="showExportMenu"
+        <div class="dropdown-wrapper" ref="exportWrapperRef">
+          <Button @click="toggleMenu('export')" :aria-expanded="openMenu === 'export'"
             aria-haspopup="menu" title="导出当前页签日志">
             导出 ▾
           </Button>
-          <div v-if="showExportMenu" class="export-menu">
+          <div v-if="openMenu === 'export'" class="dropdown-menu">
             <button @click="exportLogs('txt')">导出为 TXT</button>
             <!-- 修复⑤：HTML 仅对战斗页签提供 -->
             <button v-if="activeTab === 'battle'" @click="exportLogs('html')">导出为 HTML</button>
+          </div>
+        </div>
+        <div class="dropdown-wrapper" ref="clearWrapperRef">
+          <Button @click="toggleMenu('clear')" :aria-expanded="openMenu === 'clear'"
+            aria-haspopup="menu" title="清除日志">
+            清除 ▾
+          </Button>
+          <div v-if="openMenu === 'clear'" class="dropdown-menu">
+            <button @click="clearCurrentTab()">清除当前页签</button>
+            <button @click="clearAllLogs()">清除全部</button>
           </div>
         </div>
       </div>
@@ -53,6 +63,7 @@
             <template v-else>
               <span class="flat-msg">{{ entry.message }}</span>
             </template>
+            <button type="button" class="copy-btn" title="复制此条" @click="copyEntry(entry)">复制</button>
           </div>
         </div>
       </template>
@@ -61,11 +72,23 @@
       <template #debug>
         <div class="log-content log-content--flat" :class="{ 'is-active': activeTab === 'debug' }"
           ref="debugContainer" @scroll="onScroll" aria-live="polite">
+          <!-- 级别过滤：选中若干级别只看所选，全不选 = 显示全部 -->
+          <div class="level-filter" role="group" aria-label="按级别过滤">
+            <span class="level-filter-label">级别</span>
+            <button v-for="lv in FILTERABLE_LEVELS" :key="lv" type="button" class="level-chip"
+              :class="[`chip-lv-${lv}`, { 'is-on': levelFilter.has(lv) }]"
+              :aria-pressed="levelFilter.has(lv)" @click="toggleLevelFilter(lv)">
+              {{ levelName(lv) }}
+            </button>
+            <button v-if="levelFilter.size > 0" type="button" class="level-chip chip-reset"
+              title="重置为显示全部" @click="levelFilter.clear()">全部</button>
+          </div>
           <div v-if="debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
             仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
           </div>
           <EmptyState v-if="debugLogs.length === 0">
             <template v-if="keyword && debugTotal > 0">无匹配结果<button type="button" class="empty-clear" @click="keyword = ''">清除搜索</button></template>
+            <template v-else-if="levelFilter.size > 0">所选级别暂无日志</template>
             <template v-else>暂无调试日志</template>
           </EmptyState>
 
@@ -76,6 +99,7 @@
             <span class="flat-msg">{{ entry.message }}</span>
             <pre v-if="entry.context" class="flat-ctx">{{ JSON.stringify(entry.context, null, 2) }}</pre>
             <div v-if="entry.error" class="flat-err">{{ entry.error.message }}</div>
+            <button type="button" class="copy-btn" title="复制此条" @click="copyEntry(entry)">复制</button>
           </div>
         </div>
       </template>
@@ -91,6 +115,12 @@
         </div>
       </template>
     </Tabs>
+
+    <!-- 回到底部：用户上滚后出现，显式恢复跟随（替代原 3 秒自动回底） -->
+    <button v-if="!autoScrollEnabled && activeTab !== 'report'" type="button" class="scroll-bottom-btn"
+      title="回到底部并恢复自动滚动" @click="resumeFollow">
+      回到底部 ▼
+    </button>
 
     <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
       @hide="tooltipVisible = false" />
@@ -150,7 +180,13 @@ const REPORT_TAGS = ['最新一场', '上一场', '再上一场'] as const
 
 /** 为 Tabs 组件构建带计数徽章的页签列表 */
 const tabsWithCount = computed<TabItem[]>(() =>
-  TAB_DEFS.map((t) => ({ id: t.id, label: t.label, count: tabCount(t.id) })),
+  TAB_DEFS.map((t) => ({
+    id: t.id,
+    label: t.label,
+    count: tabCount(t.id),
+    // 调试页签存在 ERROR 时徽章标红，一眼发现运行异常
+    danger: t.id === 'debug' && hasDebugError.value,
+  })),
 )
 
 const keyword = ref('')
@@ -167,7 +203,7 @@ const logUpdateListener = () => {
 }
 
 /** 战斗战报历史（battleStore 在战斗结束时入列，最新在前，仅保留 3 场） */
-const { recentSummaries } = useBattleStore()
+const { recentSummaries, clearRecentSummaries } = useBattleStore()
 
 // ───────────────────────── 派生数据 ─────────────────────────
 function applyKeyword(list: LogEntry[], kw: string): LogEntry[] {
@@ -201,12 +237,29 @@ const systemLogs = computed(() => {
 const debugAllRaw = computed(() => allLogs.value.filter((l) => l.type === LogType.DEBUG))
 const debugAll = computed(() => {
   let r = debugAllRaw.value
+  if (levelFilter.value.size > 0) r = r.filter((e) => levelFilter.value.has(e.level ?? LogLevel.INFO))
   if (keyword.value) r = applyKeyword(r, keyword.value)
   return r
 })
 /** 调试日志原始总数（截断提示用；与 keyword 无关） */
 const debugTotal = computed(() => debugAllRaw.value.length)
 const debugLogs = computed(() => debugAll.value.slice(-DEBUG_DISPLAY_LIMIT))
+
+// ───────────────────────── 级别过滤（调试页签） ─────────────────────────
+/** 可过滤的级别（按严重度排序显示） */
+const FILTERABLE_LEVELS = [LogLevel.ERROR, LogLevel.WARN, LogLevel.INFO, LogLevel.DEBUG, LogLevel.TRACE] as const
+/** 选中的级别集合；空 = 显示全部 */
+const levelFilter = ref<Set<LogLevel>>(new Set())
+
+function toggleLevelFilter(lv: LogLevel): void {
+  const next = new Set(levelFilter.value)
+  if (next.has(lv)) next.delete(lv)
+  else next.add(lv)
+  levelFilter.value = next
+}
+
+/** 调试页签存在 ERROR 级日志（页签徽章标红用） */
+const hasDebugError = computed(() => debugAllRaw.value.some((e) => e.level === LogLevel.ERROR))
 
 /** 战斗 / 系统日志原始总数（搜索无结果空态区分用：过滤后有内容但无匹配 → 提示清除搜索） */
 const battleTotal = computed(() => allLogs.value.filter((l) => l.type === LogType.BATTLE).length)
@@ -267,7 +320,6 @@ const battleContainer = ref<HTMLElement | null>(null)
 const systemContainer = ref<HTMLElement | null>(null)
 const debugContainer = ref<HTMLElement | null>(null)
 const autoScrollEnabled = ref(true)
-let autoScrollTimer: ReturnType<typeof setTimeout> | null = null
 let scrollThrottled = false
 
 function activeContainer(): HTMLElement | null {
@@ -283,21 +335,15 @@ const onScroll = (ev: Event) => {
   requestAnimationFrame(() => {
     scrollThrottled = false
   })
+  // 上滚离开底部 = 用户要回看，停止跟随；回到底部由用户点「回到底部」或手动滚回恢复
   const { scrollTop, scrollHeight, clientHeight } = el
-  if (scrollTop < scrollHeight - clientHeight - 5) {
-    autoScrollEnabled.value = false
-    if (autoScrollTimer) clearTimeout(autoScrollTimer)
-    autoScrollTimer = setTimeout(() => {
-      autoScrollEnabled.value = true
-      autoScrollTimer = null
-    }, 3000)
-  } else {
-    autoScrollEnabled.value = true
-    if (autoScrollTimer) {
-      clearTimeout(autoScrollTimer)
-      autoScrollTimer = null
-    }
-  }
+  autoScrollEnabled.value = scrollTop >= scrollHeight - clientHeight - 5
+}
+
+/** 「回到底部」按钮：滚到底并恢复自动跟随 */
+function resumeFollow(): void {
+  autoScrollEnabled.value = true
+  scrollActiveToBottom()
 }
 
 function scrollActiveToBottom() {
@@ -311,14 +357,21 @@ watch([battleLogs, systemLogs, debugLogs, activeTab], () => {
   })
 })
 
-// ───────────────────────── 导出（当前页签） ─────────────────────────
+// ───────────────────────── 工具条下拉（导出 / 清除共用） ─────────────────────────
 
-const showExportMenu = ref(false)
+const openMenu = ref<'export' | 'clear' | null>(null)
 const exportWrapperRef = ref<HTMLElement | null>(null)
+const clearWrapperRef = ref<HTMLElement | null>(null)
 
-function handleExportClickOutside(e: MouseEvent) {
-  if (exportWrapperRef.value && !exportWrapperRef.value.contains(e.target as Node)) {
-    showExportMenu.value = false
+function toggleMenu(menu: 'export' | 'clear'): void {
+  openMenu.value = openMenu.value === menu ? null : menu
+}
+
+function handleMenuClickOutside(e: MouseEvent): void {
+  if (openMenu.value === 'export' && exportWrapperRef.value && !exportWrapperRef.value.contains(e.target as Node)) {
+    openMenu.value = null
+  } else if (openMenu.value === 'clear' && clearWrapperRef.value && !clearWrapperRef.value.contains(e.target as Node)) {
+    openMenu.value = null
   }
 }
 
@@ -328,7 +381,7 @@ function flatToText(e: LogEntry): string {
 }
 
 function exportLogs(format: 'txt' | 'html' = 'txt'): void {
-  showExportMenu.value = false
+  openMenu.value = null
   let content: string
   let mime: string
   let ext: string
@@ -376,6 +429,44 @@ function exportLogs(format: 'txt' | 'html' = 'txt'): void {
   URL.revokeObjectURL(url)
 }
 
+// ───────────────────────── 清除（当前页签 / 全部） ─────────────────────────
+
+function clearCurrentTab(): void {
+  openMenu.value = null
+  if (activeTab.value === 'battle') {
+    battleLogManager.clearLogs()
+  } else if (activeTab.value === 'system') {
+    battleLogManager.clearLogsByTypes([...SYSTEM_TYPES])
+  } else if (activeTab.value === 'debug') {
+    battleLogManager.clearLogsByTypes([LogType.DEBUG])
+  } else {
+    clearRecentSummaries()
+  }
+}
+
+function clearAllLogs(): void {
+  openMenu.value = null
+  battleLogManager.clearLogsByTypes([
+    LogType.BATTLE,
+    LogType.SYSTEM,
+    LogType.ACTION,
+    LogType.ITEM,
+    LogType.DEBUG,
+  ])
+  clearRecentSummaries()
+}
+
+// ───────────────────────── 单条复制 ─────────────────────────
+
+async function copyEntry(entry: LogEntry): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(flatToText(entry))
+    useNotificationStore().toast('已复制该条日志', 'success')
+  } catch {
+    useNotificationStore().toast('复制失败', 'warning')
+  }
+}
+
 // ───────────────────────── 生命周期 ─────────────────────────
 onMounted(() => {
   // 打开全部过滤器，确保 listener 收到全量日志（页签过滤在本地完成）
@@ -388,13 +479,12 @@ onMounted(() => {
   })
   battleLogManager.addListener(logUpdateListener)
 
-  document.addEventListener('click', handleExportClickOutside)
+  document.addEventListener('click', handleMenuClickOutside)
 })
 
 onUnmounted(() => {
   battleLogManager.removeListener(logUpdateListener)
-  document.removeEventListener('click', handleExportClickOutside)
-  if (autoScrollTimer) clearTimeout(autoScrollTimer)
+  document.removeEventListener('click', handleMenuClickOutside)
 })
 </script>
 
@@ -413,7 +503,7 @@ onUnmounted(() => {
   letter-spacing: 1px;
 }
 
-/* ─────────── 搜索 & 导出 ─────────── */
+/* ─────────── 搜索 & 下拉（导出/清除共用） ─────────── */
 .log-tools {
   display: flex;
   align-items: center;
@@ -427,12 +517,12 @@ onUnmounted(() => {
   min-width: 0;
 }
 
-.export-wrapper {
+.dropdown-wrapper {
   position: relative;
   display: inline-flex;
 }
 
-.export-menu {
+.dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
@@ -449,7 +539,7 @@ onUnmounted(() => {
   min-width: 120px;
 }
 
-.export-menu button {
+.dropdown-menu button {
   padding: var(--space-1) var(--space-3);
   border: none;
   border-radius: var(--radius-sm);
@@ -460,15 +550,131 @@ onUnmounted(() => {
   text-align: left;
 }
 
-.export-menu button:hover {
+.dropdown-menu button:hover {
   background: var(--color-bg-hover);
   color: var(--color-info);
 }
 
 /* ─────────── 内容容器（双容器，v-show 保留滚动位置） ─────────── */
+/* 悬浮按钮的定位锚点 */
+.battle-log-section {
+  position: relative;
+}
+
 /* 页签切入时的淡入上浮 */
 .log-content.is-active {
   animation: content-in 0.18s ease-out;
+}
+
+/* ─────────── 级别过滤（调试页签） ─────────── */
+.level-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.level-filter-label {
+  color: var(--color-text-tertiary);
+}
+
+.level-chip {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.level-chip:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-secondary);
+}
+
+/* 选中 = 对应级别色高亮（与条目左边线同色系） */
+.level-chip.chip-lv-0.is-on {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: rgba(var(--rgb-danger), 0.12);
+}
+
+.level-chip.chip-lv-1.is-on {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+  background: rgba(var(--rgb-warning), 0.12);
+}
+
+.level-chip.chip-lv-2.is-on {
+  border-color: var(--color-info);
+  color: var(--color-info);
+  background: rgba(var(--rgb-info), 0.12);
+}
+
+.level-chip.chip-lv-3.is-on,
+.level-chip.chip-lv-4.is-on {
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.level-chip.chip-reset {
+  border-style: dashed;
+}
+
+.level-chip.chip-reset:hover {
+  color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+/* ─────────── 单条复制按钮（hover 浮现） ─────────── */
+.copy-btn {
+  margin-left: auto;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.flat-item:hover .copy-btn,
+.copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+/* ─────────── 回到底部悬浮按钮 ─────────── */
+.scroll-bottom-btn {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: var(--z-dropdown);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-primary);
+  color: var(--color-info);
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+
+.scroll-bottom-btn:hover {
+  border-color: var(--color-info);
+  box-shadow: 0 0 8px rgba(var(--rgb-info), var(--alpha-glow));
 }
 
 /* ─────────── 扁平容器（系统/调试共用） ─────────── */

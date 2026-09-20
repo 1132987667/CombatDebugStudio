@@ -375,6 +375,7 @@ export class BattleLogManager implements IBattleLogManager {
       ...this.actionLogs,
       ...this.systemLogs,
       ...this.itemLogs,
+      ...this.debugLogs,
     ]
     return array.sort((a, b) => a.index - b.index)
   }
@@ -391,6 +392,20 @@ export class BattleLogManager implements IBattleLogManager {
    */
   clearLogs(): void {
     this.battleLogs = []
+    this.emitLogUpdate()
+  }
+
+  /**
+   * 按日志类型清除（日志面板页签清除用；新战斗前清空继续用 clearLogs）
+   */
+  clearLogsByTypes(types: LogType[]): void {
+    for (const type of types) {
+      if (type === LogType.BATTLE) this.battleLogs = []
+      else if (type === LogType.SYSTEM) this.systemLogs = []
+      else if (type === LogType.ACTION) this.actionLogs = []
+      else if (type === LogType.ITEM) this.itemLogs = []
+      else if (type === LogType.DEBUG) this.debugLogs = []
+    }
     this.emitLogUpdate()
   }
 

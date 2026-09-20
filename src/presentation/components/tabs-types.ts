@@ -8,4 +8,6 @@ export interface TabItem {
   count?: number
   /** 禁用该页签（点击与键盘导航均跳过） */
   disabled?: boolean
+  /** 计数徽章标红（如调试页签存在 ERROR 日志时） */
+  danger?: boolean
 }

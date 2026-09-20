@@ -136,7 +136,8 @@ defineExpose({ updateIndicator })
         :disabled="tab.disabled" @click="select(tab)" @keydown="onKeydown">
         <span class="tabs-tab-label">{{ tab.label }}</span>
         <!-- :key 绑定 count：数值变化时强制重建节点，重触发弹跳动画 -->
-        <span v-if="tab.count != null" :key="tab.count" class="tabs-badge">{{ tab.count }}</span>
+        <span v-if="tab.count != null" :key="tab.count" class="tabs-badge"
+          :class="{ 'is-danger': tab.danger }">{{ tab.count }}</span>
       </button>
       <span class="tabs-indicator" :style="indicatorStyle" aria-hidden="true"></span>
     </div>
@@ -257,6 +258,19 @@ defineExpose({ updateIndicator })
     /* NOTE: accent 亮蓝底白字 ≈2:1，用 on-info 深字双主题可读 */
     color: var(--color-on-info);
     box-shadow: 0 0 6px var(--tabs-accent-glow);
+  }
+
+  /* 危险态（如调试页签含 ERROR）：红色描边常亮，激活时红底 */
+  &.is-danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+
+  .is-active &.is-danger {
+    background: var(--color-danger);
+    border-color: transparent;
+    color: var(--color-text-primary);
+    box-shadow: 0 0 6px rgba(var(--rgb-danger), var(--alpha-glow));
   }
 }
 

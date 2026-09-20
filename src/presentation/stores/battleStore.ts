@@ -268,6 +268,11 @@ export const useBattleStore = defineStore('battle', () => {
   /** 战斗战报历史（日志「战斗战报」页签展示；只保留最近 3 场，最新在前） */
   const recentSummaries = ref<BattleSummary[]>([])
 
+  /** 清空战报历史（日志「战斗战报」页签的清除按钮） */
+  const clearRecentSummaries = () => {
+    recentSummaries.value = []
+  }
+
   /** 从当前战斗录制生成统一战报（与昊天镜摘要共用 fromRecordedBattle + summarizeBattle 统计源） */
   const buildBattleSummary = (): BattleSummary | null => {
     if (!battleService.value || !currentBattleId.value) return null
@@ -1216,6 +1221,7 @@ export const useBattleStore = defineStore('battle', () => {
 
     // ========== 战斗流程控制 ==========
     recentSummaries, // 战斗战报历史（日志「战斗战报」页签，最近 3 场）
+    clearRecentSummaries, // 清空战报历史（日志「战斗战报」页签清除按钮）
     startBattle, // 开始战斗
     endBattle, // 结束战斗
     resetBattle, // 重置战斗

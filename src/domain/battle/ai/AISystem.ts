@@ -65,6 +65,12 @@ export class AISystem {
     this.buffLookup = buffLookup
   }
 
+  /** 应用单位级 AI 策略偏好（PRD §5 AI 自定义；entity.aiStrategy 缺省保持工厂默认 balanced） */
+  private applyEntityStrategy(ai: BattleAI, participant: BattleEntity): void {
+    const preferred = participant.aiStrategy
+    if (preferred) ai.setPriorityStrategy(preferred)
+  }
+
   /**
    * 创建AI实例集合
    * 为每个参与者创建对应类型的AI实例，并缓存到管理器中
@@ -83,6 +89,7 @@ export class AISystem {
       )
       ai.setTracePort(this.tracePort ?? null)
       if (this.rng) ai.setRng(this.rng)
+      this.applyEntityStrategy(ai, participant)
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
     })
@@ -108,6 +115,7 @@ export class AISystem {
       // 惰性创建的实例同样注入追踪端口（AI_DECISION 事件不丢失）
       ai.setTracePort(this.tracePort ?? null)
       if (this.rng) ai.setRng(this.rng)
+      this.applyEntityStrategy(ai, participant)
       this.aiInstances.set(participant.id, ai)
     }
 

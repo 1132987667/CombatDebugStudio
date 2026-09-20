@@ -47,6 +47,9 @@ export interface BattleAI {
   /** 设置调试追踪端口（BattleSystem 创建 AI 实例后注入，AI_DECISION 事件用） */
   setTracePort(port: IDebugTracePort | null): void
 
+  /** 设置技能决策策略（PRD §5 AI 自定义；值域 AI_STRATEGY，创建后可切换） */
+  setPriorityStrategy(strategyName: string): void
+
   /** 做出战斗决策 */
   makeDecision(
     battleState: BattleState,

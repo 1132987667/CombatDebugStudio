@@ -88,6 +88,16 @@
         <Button @click="moveCharacter(-1)"><span class="icon mr-2">[↑]</span>上调</Button>
         <Button @click="moveCharacter(1)"><span class="icon mr-2">[↓]</span>下调</Button>
         <Button variant="danger" @click="confirmRemove = true"><span class="icon mr-2">[−]</span>移除</Button>
+        <!-- AI 自定义（PRD §5 策略入口）：选中角色后设置技能决策策略，开战时随 AI 实例生效 -->
+        <label v-if="selectedChar" class="ai-strategy-pick">
+          <span>AI 策略</span>
+          <select :value="selectedChar.aiStrategy ?? 'balanced'" aria-label="AI 策略"
+            @change="setAiStrategy(selectedChar!, ($event.target as HTMLSelectElement).value)">
+            <option value="balanced">均衡</option>
+            <option value="aggressive">激进</option>
+            <option value="defensive">防守</option>
+          </select>
+        </label>
       </div>
     </div>
 
@@ -480,6 +490,19 @@ const applyPreset = () => {
 // 响应式获取队伍数据
 const allyTeam = computed(() => battleStore.fullAllyTeam);
 const enemyTeam = computed(() => battleStore.fullEnemyTeam);
+
+/** 当前选中角色（AI 策略设置目标；含敌方——AI 策略对双方单位同样生效） */
+const selectedChar = computed(() =>
+  [...allyTeam.value, ...enemyTeam.value].find((c) => c.id === selectedCharacterId.value),
+);
+
+/** 设置 AI 策略偏好（编成期写入实体，开战创建 AI 实例时应用；即刻生效无需重开战） */
+function setAiStrategy(char: { aiStrategy?: string; name: string }, strategy: string): void {
+  char.aiStrategy = strategy;
+  notification.notify('成功', `${char.name} AI 策略已设为「${STRATEGY_LABELS[strategy] ?? strategy}」`, 'success');
+}
+
+const STRATEGY_LABELS: Record<string, string> = { balanced: '均衡', aggressive: '激进', defensive: '防守' };
 // 我方参战人数
 const allyTeamCount = computed(() => allyTeam.value.filter(c => c.enabled).length);
 // 敌方参战人数
@@ -857,6 +880,23 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 
   &:hover {
     border-color: var(--color-info);
+  }
+}
+
+.ai-strategy-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary, #666);
+
+  select {
+    padding: 2px 6px;
+    border: 1px solid var(--color-border-default, #ccc);
+    border-radius: 4px;
+    background: var(--color-bg-container, #fff);
+    font-size: var(--font-size-md);
+    cursor: pointer;
   }
 }
 </style>

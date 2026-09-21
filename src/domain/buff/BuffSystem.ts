@@ -205,7 +205,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         // 使伤害补发 dot 事件进入战报；BerserkBuff 自残等非 dot 脚本不带此标记
         const origin = ctx.params?.dot ? ('dot' as const) : undefined
         if (damagePercent > 0) {
-          this.dealDirectDamage(ctx.targetId ?? '', 0, damagePercent, undefined, origin)
+          this.dealDirectDamage(ctx.targetId ?? '', 0, undefined, damagePercent, origin)
         } else if (damage > 0) {
           this.dealDirectDamage(ctx.targetId ?? '', damage, undefined, undefined, origin)
         }

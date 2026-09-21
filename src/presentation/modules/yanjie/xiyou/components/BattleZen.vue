@@ -128,7 +128,7 @@
       <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
     </div>
 
-    <!-- 中上部：4v4 角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard） -->
+    <!-- 中上部：角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard；敌方按席位阶梯 2~4 员） -->
     <div class="xy-vitals">
       <div class="xy-vitals-row xy-vitals-row--enemy" role="list" aria-label="敌方阵容">
         <ParticipantCard v-for="c in store.enemyTeam" :key="c.id" :ref="(el) => handleCardRef(c.id, el)"
@@ -867,7 +867,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 4v4 双行阵容：敌方一行在上、我方一行在下（ParticipantCard 演武台同款） */
+/* 双行阵容：敌方一行在上（2~4 员，席位阶梯）、我方一行在下（主角 + 3 伙伴），ParticipantCard 演武台同款 */
 .xy-vitals {
   flex-shrink: 0;
   display: flex;
@@ -1021,10 +1021,18 @@ onUnmounted(() => {
 }
 
 .xy-vitals-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  justify-content: center;
   gap: var(--space-2);
   align-items: stretch;
+
+  // 席位阶梯（runFlow.enemySlotCount）下敌方可能只有 2~3 员：单卡宽度仍以满席 4 档为上限，
+  // 少员时整行居中，不左对齐留白
+  > * {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc((100% - 3 * var(--space-2)) / 4);
+  }
 }
 
 .xy-vs {

@@ -2,9 +2,10 @@
  * 斗战西游 · 关卡推进编排（玩法主循环设计.md §三.2/§九）
  * NOTE: 纯逻辑模块（无 Vue/引擎依赖）——节点序列构造、节奏常量、缓回时长计算，
  *       供 BattleZen 状态机消费；配套断言见 tests/unit/runflow.test.ts。
- * HACK: 场数表硬编码自《完整项目说明.md》§24（关卡一/二 1 场、三 2 场、四 3 场、五 4 场、
- *       妖魁关 4 场），以 scene id 序号解析。天花板：关卡结构扩展（如精英支线）时此映射
- *       需配置化（scenes.json 增加 waves 字段），当前 30 关静态数据下先硬编码。
+ * HACK: 场数表与席位表（sceneNodeCount / enemySlotCount）均按 scene id 序号硬编码解析，
+ *       数据源分别是《完整项目说明.md》§24 与《玩法主循环设计.md》§三.4。天花板：关卡结构
+ *       扩展（如精英支线、按区域定制节奏）时两张表需一并配置化（scenes.json 增加 waves 字段），
+ *       当前 33 关静态数据下先硬编码。
  */
 
 import type { XiyouScene } from './types'
@@ -16,7 +17,7 @@ export interface RunNode {
   total: number
   /** 关底场（妖徒/妖魁率队，胜利触发通关结算与星级评定） */
   isBoss: boolean
-  /** 本场敌方单位 id（enemies.json / bosses.json 权威） */
+  /** 本场敌方单位 id（enemies.json / bosses.json 权威）；同 id 可重复 = 同种怪多个个体，结算按此逐席计酬 */
   enemyIds: string[]
   /** 妖气增幅：敌方战斗属性倍率（气血/攻击/防御/速度），关底满档 */
   amp: number
@@ -58,10 +59,40 @@ export function sceneNodeCount(scene: XiyouScene): number {
   }
 }
 
+/** 敌方席位上限（对齐我方 主角 + 3 伙伴 = 4v4 顶格档） */
+export const MAX_ENEMY_SLOTS = 4
+
 /**
- * 构造关卡节点序列。
- * - 普通关：普通场编成 = 本场景敌组池（amp 按 1+0.15×(k-1) 递增）；关底 = 敌组池 + 妖徒（满档增幅）。
- *   单场关（关卡一/二）= 敌组池 + 妖徒合编一场（与历史行为一致）。
+ * 每场敌方席位数（大场景内小场景序号阶梯）：关卡一 2 / 关卡二 3 / 关卡三~五与妖魁关 4。
+ * 制造"入关时零星小妖 → 关内妖群渐聚"的爬坡手感；场数与妖气增幅另两条递增轴不变。
+ * NOTE: 阶梯只作用于编号区域（region_R）——迷踪秘境/最终决战地的场景池子本身即定编阵容
+ *       （enemies 内含小 BOSS、无妖徒），套阶梯会把它们压成 2 个敌人。
+ */
+export function enemySlotCount(scene: XiyouScene): number {
+  if (!/^region_\d+$/.test(scene.regionId)) return MAX_ENEMY_SLOTS
+  switch (scene.id.split('_')[2]) {
+    case '1':
+      return 2
+    case '2':
+      return 3
+    default:
+      return MAX_ENEMY_SLOTS
+  }
+}
+
+/**
+ * 从敌组池取 n 个小怪席位；池子不足 n 时同种怪重复出场（如「花妖幼芽 ×2」）。
+ * 席位制由此恒成立：enemyIds.length ≤ MAX_ENEMY_SLOTS，编成与结算同源、不脱钩。
+ */
+function fillSlots(pool: string[], n: number): string[] {
+  if (pool.length === 0 || n <= 0) return []
+  return Array.from({ length: n }, (_, i) => pool[i % pool.length]!)
+}
+
+/**
+ * 构造关卡节点序列（每场编成按 enemySlotCount 席位阶梯）。
+ * - 普通关：普通场 = 本场景敌组池凑满席位（amp 按 1+0.15×k 递增）；关底 = 席位-1 个小怪 + 妖徒压轴（满档增幅）。
+ *   单场关（关卡一/二）= 同一套席位规则的合编一场。
  * - 妖魁关：普通场借同区域 scene_R_5 敌组垫场（amp 递增）；第 3 场区域妖魁前哨战；关底 = 场景 BOSS（权威数值，不再增幅）。
  */
 /** 区域 → 妖魁关前哨小 BOSS（boss_minor，§3.8 章节末分层：妖魁前哨 → 妖王关底） */
@@ -75,6 +106,7 @@ const MINOR_BOSS_BY_REGION: Record<string, string> = {
 
 export function buildRunNodes(scene: XiyouScene, allScenes: XiyouScene[]): RunNode[] {
   const total = sceneNodeCount(scene)
+  const slots = enemySlotCount(scene)
   const pool = scene.enemies.map((e) => e.id).filter((id): id is string => !!id)
   const yaotuId = scene.yaotu?.id
   const bossSeq = scene.id.endsWith('_boss')
@@ -94,35 +126,34 @@ export function buildRunNodes(scene: XiyouScene, allScenes: XiyouScene[]): RunNo
         index: k,
         total,
         isBoss: false,
-        enemyIds: elitePool.slice(0, 3),
+        enemyIds: fillSlots(elitePool, slots),
         amp: ampAt(k),
       })
     }
-    // 妖魁前哨战：区域小 BOSS（boss_minor）率队，权威数值不增幅（amp=1）
+    // 妖魁前哨战：区域小 BOSS（boss_minor）率队占 1 席，其余席位由敌组凑满；权威数值不增幅（amp=1）
     const minorId = MINOR_BOSS_BY_REGION[scene.regionId]
     nodes.push({
       index: total - 2,
       total,
       isBoss: false,
-      enemyIds: minorId ? [minorId, ...elitePool.slice(0, 3)] : elitePool.slice(0, 3),
+      enemyIds: minorId ? [minorId, ...fillSlots(elitePool, slots - 1)] : fillSlots(elitePool, slots),
       amp: 1,
     })
-    // 场景 BOSS 压阵（§24 关底 4v4）：场景 BOSS + 同区域敌组随从凑满一队（amp=1）
-    const escorts = elitePool.slice(0, Math.max(0, 4 - pool.length))
-    pushBoss(total - 1, [...pool, ...escorts], 1)
+    // 场景 BOSS 压阵：BOSS 自身的敌人条目先占席，剩余席位由同区域敌组随从凑满（amp=1）
+    pushBoss(total - 1, [...pool, ...fillSlots(elitePool, Math.max(0, slots - pool.length))], 1)
     return nodes
   }
 
   if (total <= 1 || !yaotuId) {
-    // 单场关：整关合编一场（敌组 + 妖徒），历史行为
-    pushBoss(0, yaotuId ? [...pool, yaotuId] : pool, 1)
+    // 单场关：整关合编一场（妖徒压轴占末席），历史行为
+    pushBoss(0, yaotuId ? [...fillSlots(pool, slots - 1), yaotuId] : fillSlots(pool, slots), 1)
     return nodes
   }
 
   for (let k = 0; k < total - 1; k++) {
-    nodes.push({ index: k, total, isBoss: false, enemyIds: pool.slice(0, 3), amp: ampAt(k) })
+    nodes.push({ index: k, total, isBoss: false, enemyIds: fillSlots(pool, slots), amp: ampAt(k) })
   }
-  pushBoss(total - 1, [...pool, yaotuId], ampAt(total - 1))
+  pushBoss(total - 1, [...fillSlots(pool, slots - 1), yaotuId], ampAt(total - 1))
   return nodes
 }
 

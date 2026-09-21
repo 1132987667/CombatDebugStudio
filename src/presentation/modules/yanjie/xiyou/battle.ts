@@ -68,6 +68,8 @@ export function buildEnemyRoster(scene: XiyouScene, node?: RunNode): Enemy[] {
     .map((id) => (id ? (enemyById.get(id) ?? null) : null))
     .filter((r): r is EnemyRow => !!r)
   const amp = node?.amp ?? 1
+  // NOTE: 席位制（runFlow.enemySlotCount）已保证 node.enemyIds ≤ 4，此处 slice 仅作无头模拟
+  //       （不传 node 的整场景合编路径）的越界兜底——真实战斗不应在此截断，截断即编成与结算脱钩
   return rows.slice(0, 4).map((row) => {
     const st = row.stats ?? {}
     const s = (v?: number): number => Math.round(v ?? 0)

@@ -71,6 +71,11 @@ export class SeededRandom {
     return this.seed
   }
 
+  /** 将内部状态回退到先前导出的种子值（战斗单步回退用；复用同一实例，持有引用的消费方无需重新注入） */
+  public restoreSeed(seed: number): void {
+    this.seed = seed
+  }
+
   public static generateSeed(): string {
     return Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
   }

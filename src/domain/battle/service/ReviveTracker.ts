@@ -35,6 +35,21 @@ export class ReviveTracker {
     return this.records.get(entityId)?.count ?? 0
   }
 
+  /** 导出复活记录纯数据（战斗单步回退快照用） */
+  exportUndoState(): Array<[string, ReviveRecord]> {
+    return Array.from(this.records.entries()).map(
+      ([id, rec]): [string, ReviveRecord] => [id, { ...rec }],
+    )
+  }
+
+  /** 从回退快照整体还原复活记录 */
+  restoreUndoState(state: Array<[string, ReviveRecord]>): void {
+    this.records.clear()
+    for (const [id, rec] of state) {
+      this.records.set(id, { ...rec })
+    }
+  }
+
   reset(): void {
     this.records.clear()
   }

@@ -77,23 +77,38 @@
                 <div v-if="currentCharacter!.skills.small?.length" class="skill-category flex flex-col gap-1">
                   <div class="skill-category-title">小技能</div>
                   <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
-                    :class="{ 'skill-unavailable': isSkillUnavailable(skill) }"
+                    :class="{ 'skill-unavailable': isSkillUnavailable(skill), 'skill-pending': pendingSkillId === skill.id }"
                     @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
                     @mouseleave="hideSkillTooltip">
                     <IconSkillLock v-if="isSkillUnavailable(skill)" class="skill-lock-icon" />
                     {{ skill.name || '未知技能' }}
+                    <Button v-if="manualCasting" class="cast-btn" :disabled="isSkillUnavailable(skill)"
+                      @click.stop="requestCastSkill(skill)">
+                      {{ pendingSkillId === skill.id ? '选目标中' : '施放' }}
+                    </Button>
                   </div>
                 </div>
                 <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category flex flex-col gap-1">
                   <div class="skill-category-title">终极技能</div>
                   <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
-                    class="skill-item ultimate" :class="{ 'skill-unavailable': isSkillUnavailable(skill) }"
+                    class="skill-item ultimate" :class="{ 'skill-unavailable': isSkillUnavailable(skill), 'skill-pending': pendingSkillId === skill.id }"
                     @mouseenter="showSkillTooltip($event, skill)"
                     @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
                     <IconSkillLock v-if="isSkillUnavailable(skill)" class="skill-lock-icon" />
                     {{ skill.name || '未知技能' }}
+                    <Button v-if="manualCasting" class="cast-btn" :disabled="isSkillUnavailable(skill)"
+                      @click.stop="requestCastSkill(skill)">
+                      {{ pendingSkillId === skill.id ? '选目标中' : '施放' }}
+                    </Button>
                   </div>
                 </div>
+              </div>
+              <!-- 手动施放入口：普攻与选中角色走同一"选目标"链路 -->
+              <div v-if="manualCasting" class="manual-cast-bar">
+                <Button class="cast-btn basic" :class="{ 'skill-pending': pendingIsBasic }"
+                  @click.stop="requestCastBasic">
+                  {{ pendingIsBasic ? '选目标中' : '普通攻击' }}
+                </Button>
               </div>
             </div>
           </template>
@@ -457,6 +472,44 @@ const skillAvailabilities = computed<Record<string, SkillAvailability>>(() => {
 const isSkillUnavailable = (skill: SkillConfig): boolean =>
   skillAvailabilities.value[skill.id]?.can === false;
 
+// ------------------------------------------------------------
+// 手动施放（调试沙盒）：手动模式 + 战斗进行中，选中参战者点「施放」→ 大图选目标
+const manualCasting = computed(() => {
+  void snapVersion.value
+  const char = currentCharacter.value
+  return battleStore.isBattleActive
+    && !battleStore.autoPlayMode
+    && !!char
+    && battleStore.participants.has(char.id)
+    && char.isAlive()
+})
+
+const pendingSkillId = computed(() => battleStore.pendingManualAction?.skillId)
+const pendingIsBasic = computed(() => {
+  const pending = battleStore.pendingManualAction
+  return pending !== null && pending.skillId === null
+})
+
+const requestCastSkill = (skill: SkillConfig): void => {
+  const char = currentCharacter.value
+  if (!char) return
+  battleStore.setPendingManualAction({
+    participantId: char.id,
+    skillId: skill.id,
+    skillName: skill.name || '未知技能',
+  })
+}
+
+const requestCastBasic = (): void => {
+  const char = currentCharacter.value
+  if (!char) return
+  battleStore.setPendingManualAction({
+    participantId: char.id,
+    skillId: null,
+    skillName: '普通攻击',
+  })
+}
+
 const tooltipAvailability = computed<SkillAvailability | null>(() => {
   const skill = tooltipContent.value
   if (!skill) return null
@@ -608,6 +661,24 @@ onUnmounted(() => {
 
 .skill-item.skill-unavailable:hover {
   opacity: 1;
+}
+
+/* 手动施放入口（调试沙盒 · 手动模式） */
+.cast-btn {
+  margin-left: auto;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.skill-item.skill-pending,
+.cast-btn.skill-pending {
+  box-shadow: inset 0 0 0 1px var(--color-energy);
+}
+
+.manual-cast-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
 }
 
 .skill-lock-icon {

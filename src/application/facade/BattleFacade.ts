@@ -56,6 +56,21 @@ export class BattleService {
     return this.battleManager.executeManualAction(participantId, skillId, targetId)
   }
 
+  /** 回退上一个行动（战斗单步回退）；返回失败原因，成功为 null */
+  undoLastAction(): string | null {
+    return this.battleManager.undoLastAction()
+  }
+
+  /** 当前可回退步数 */
+  getUndoDepth(): number {
+    return this.battleManager.getUndoDepth()
+  }
+
+  /** 清空回退栈（调试注入后调用，防止回退到不一致状态） */
+  clearUndoHistory(): void {
+    this.battleManager.clearUndoHistory()
+  }
+
   /** 启动自动战斗 */
   async startAutoBattle(): Promise<boolean> {
     return this.battleManager.startAutoBattle()

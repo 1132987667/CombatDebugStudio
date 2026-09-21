@@ -588,6 +588,26 @@ export class BattleManager {
   }
 
   /**
+   * 回退上一个行动（战斗单步回退，调试分支对比用）
+   * @returns 失败原因字符串；成功返回 null
+   */
+  undoLastAction(): string | null {
+    const error = this.battleSystem.undoLastAction()
+    if (error === null) this.emitTeamChanged()
+    return error
+  }
+
+  /** 当前可回退步数 */
+  getUndoDepth(): number {
+    return this.battleSystem.getUndoDepth()
+  }
+
+  /** 清空回退栈（调试注入等绕过快照的状态变更后调用） */
+  clearUndoHistory(): void {
+    this.battleSystem.clearUndoHistory()
+  }
+
+  /**
    * 设置战斗速度
    * @param speed 速度倍率
    */

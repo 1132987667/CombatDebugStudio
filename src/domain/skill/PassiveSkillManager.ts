@@ -152,6 +152,54 @@ export class PassiveSkillManager {
   }
 
   /**
+   * 导出被动运行时计数器（战斗单步回退快照用）
+   * 与 passives 注册表按下标对齐；注册表在战斗内不增删（新增角色仅编成阶段）。
+   */
+  exportUndoState(): Array<
+    Array<{
+      triggerCount?: number
+      lastTriggeredTurn?: number
+      roundTriggerCount?: number
+      lastRoundNumber?: number
+    }>
+  > {
+    return Array.from(this.passives.values()).map((list) =>
+      list.map((c) => ({
+        triggerCount: c.triggerCount,
+        lastTriggeredTurn: c.lastTriggeredTurn,
+        roundTriggerCount: c.roundTriggerCount,
+        lastRoundNumber: c.lastRoundNumber,
+      })),
+    )
+  }
+
+  /** 从回退快照把计数器写回同一批 config 对象 */
+  restoreUndoState(
+    state: Array<
+      Array<{
+        triggerCount?: number
+        lastTriggeredTurn?: number
+        roundTriggerCount?: number
+        lastRoundNumber?: number
+      }>
+    >,
+  ): void {
+    let i = 0
+    for (const list of this.passives.values()) {
+      const snapList = state[i++]
+      if (!snapList) continue
+      for (let j = 0; j < list.length; j++) {
+        const snap = snapList[j]
+        if (!snap) continue
+        list[j].triggerCount = snap.triggerCount
+        list[j].lastTriggeredTurn = snap.lastTriggeredTurn
+        list[j].roundTriggerCount = snap.roundTriggerCount
+        list[j].lastRoundNumber = snap.lastRoundNumber
+      }
+    }
+  }
+
+  /**
    * 检查被动技能是否触发
    *
    * @param config — 被动技能配置

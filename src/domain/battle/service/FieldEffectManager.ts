@@ -114,6 +114,16 @@ export class FieldEffectManager {
     this.reset()
   }
 
+  /** 导出回退快照：效果配置引用（静态）+ 剩余回合数 */
+  exportUndoState(): Array<{ config: FieldEffectConfig; remainingTurns: number }> {
+    return this.effects.map((e) => ({ config: e.config, remainingTurns: e.remainingTurns }))
+  }
+
+  /** 从回退快照还原（场地修饰符本身由 BuffSystem 的 ModifierStack 快照统一恢复） */
+  restoreUndoState(state: Array<{ config: FieldEffectConfig; remainingTurns: number }>): void {
+    this.effects = state.map((e) => ({ config: e.config, remainingTurns: e.remainingTurns }))
+  }
+
   reset(): void {
     this.effects = []
   }

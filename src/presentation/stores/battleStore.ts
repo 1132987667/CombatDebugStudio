@@ -643,6 +643,8 @@ export const useBattleStore = defineStore('battle', () => {
       //       UI store.battleSpeed 才是玩家权威速度——每场开始后重新下发，否则第二场起速度失效
       battleService.value!.setBattleSpeed(battleSpeed.value)
       autoPlayMode.value = battleService.value!.getAutoBattle()
+      undoDepth.value = 0 // 引擎 initialize 已清空回退栈
+      pendingManualAction.value = null
       battleLogManager.addSystemLog({ message: '战斗已开始' })
       return true
     }, {
@@ -684,6 +686,8 @@ export const useBattleStore = defineStore('battle', () => {
       clearBattleLogs()
       currentBattleId.value = null
       turnOrder.value = []
+      undoDepth.value = 0
+      pendingManualAction.value = null
       battleLogManager.addSystemLog({ message: '战斗已重置' })
       return true
     }, {
@@ -701,6 +705,7 @@ export const useBattleStore = defineStore('battle', () => {
     withBattleAction(async () => {
       await battleService.value!.processSingleTurn()
       battleService.value!.syncBattleState()
+      refreshUndoDepth()
       return true
     }, {
       loading: '执行回合',
@@ -721,6 +726,7 @@ export const useBattleStore = defineStore('battle', () => {
       p.setAttribute(ATTRIBUTE_CODE.currentHealth, p.getAttribute(ATTRIBUTE_CODE.maxHealth))
       p.setAttribute(ATTRIBUTE_CODE.currentEnergy, p.getAttribute(ATTRIBUTE_CODE.maxEnergy))
     }
+    battleService.value.clearUndoHistory() // 绕过快照的状态变更，回退栈失效
     battleService.value.syncBattleState()
     return true
   }
@@ -730,6 +736,7 @@ export const useBattleStore = defineStore('battle', () => {
     const target = enemyTeam.value.find((p) => p.id === selectedCharacterId.value)
     if (!target) return false
     target.setAttribute(ATTRIBUTE_CODE.currentHealth, 0)
+    battleService.value?.clearUndoHistory() // 绕过快照的状态变更，回退栈失效
     battleService.value?.syncBattleState()
     return true
   }
@@ -742,6 +749,7 @@ export const useBattleStore = defineStore('battle', () => {
       p.setAttribute(ATTRIBUTE_CODE.critRate, on ? 100 : (forceCritOrig.get(p.id) ?? 0))
       if (!on) forceCritOrig.delete(p.id)
     }
+    battleService.value?.clearUndoHistory() // 绕过快照的状态变更，回退栈失效
     battleService.value?.syncBattleState()
   }
 
@@ -753,6 +761,7 @@ export const useBattleStore = defineStore('battle', () => {
       p.setAttribute(ATTRIBUTE_CODE.dodge, on ? 100 : (forceDodgeOrig.get(p.id) ?? 0))
       if (!on) forceDodgeOrig.delete(p.id)
     }
+    battleService.value?.clearUndoHistory() // 绕过快照的状态变更，回退栈失效
     battleService.value?.syncBattleState()
   }
 
@@ -792,6 +801,7 @@ export const useBattleStore = defineStore('battle', () => {
         targetId,
       )
       if (error === null) battleService.value!.syncBattleState()
+      refreshUndoDepth()
       return error
     }, {
       loading: '手动施放',
@@ -799,6 +809,56 @@ export const useBattleStore = defineStore('battle', () => {
       debugLabel: '手动施放失败',
       failValue: (errorMsg) => errorMsg,
     })
+
+  // ════════════ 战斗单步回退（Undo） ════════════
+
+  /** 可回退步数（引擎回退栈深度镜像，行动/回退/开始战斗后刷新） */
+  const undoDepth = ref(0)
+
+  const refreshUndoDepth = (): void => {
+    undoDepth.value = battleService.value?.getUndoDepth() ?? 0
+  }
+
+  /**
+   * 回退上一个行动：恢复引擎快照状态并同步投影。
+   * @returns 失败原因字符串；成功返回 null
+   */
+  const undoLastAction = async (): Promise<string | null> =>
+    withBattleAction(async () => {
+      const error = battleService.value!.undoLastAction()
+      if (error === null) battleService.value!.syncBattleState()
+      refreshUndoDepth()
+      return error
+    }, {
+      loading: '回退一步',
+      guard: true,
+      debugLabel: '回退失败',
+      failValue: (errorMsg) => errorMsg,
+    })
+
+  // ════════════ 手动操控：待选目标的暂存行动 ════════════
+
+  /** 暂存的待释放行动（技能面板点击后等待玩家在大图选目标；null = 无待处理） */
+  const pendingManualAction = ref<{
+    participantId: string
+    skillId: string | null
+    skillName: string
+  } | null>(null)
+
+  const setPendingManualAction = (
+    pending: { participantId: string; skillId: string | null; skillName: string } | null,
+  ): void => {
+    pendingManualAction.value = pending
+  }
+
+  /** 在大图点选目标后确认释放：执行暂存行动，成功后清除暂存 */
+  const confirmManualAction = async (targetId: string): Promise<string | null> => {
+    const pending = pendingManualAction.value
+    if (!pending) return '没有待释放的行动'
+    const error = await executeManualAction(pending.participantId, pending.skillId, targetId)
+    if (error === null) pendingManualAction.value = null
+    return error
+  }
 
   /**
    * 切换自动播放模式
@@ -812,11 +872,14 @@ export const useBattleStore = defineStore('battle', () => {
         battleService.value!.stopAutoBattle()
         autoPlayMode.value = false
         isBattleActive.value = false
+        // 自动战斗期间引擎持续打点，切回手动后刷新可回退步数
+        refreshUndoDepth()
         battleLogManager.addSystemLog({ message: '停止自动战斗' })
       } else {
         await battleService.value!.startAutoBattle()
         autoPlayMode.value = true
         isBattleActive.value = true
+        pendingManualAction.value = null // 自动接管，撤销暂存的手动施放
         battleService.value!.syncBattleState()
         battleLogManager.addSystemLog({ message: '开始自动战斗' })
       }
@@ -1227,6 +1290,11 @@ export const useBattleStore = defineStore('battle', () => {
     resetBattle, // 重置战斗
     processSingleTurn, // 执行单回合
     executeManualAction, // 手动施放指定行动（技能/普攻）
+    undoLastAction, // 回退上一个行动（战斗单步回退）
+    undoDepth, // 可回退步数
+    pendingManualAction, // 待选目标的暂存行动（手动操控）
+    setPendingManualAction, // 设置/清除暂存行动
+    confirmManualAction, // 选定目标后释放暂存行动
     toggleAutoPlay, // 切换自动播放
     togglePause, // 切换暂停
 

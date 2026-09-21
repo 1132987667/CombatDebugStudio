@@ -46,7 +46,7 @@
     <ControlBar :is-battle-active="battleStore.isBattleActive" :is-auto-playing="battleStore.autoPlayMode"
       :is-paused="battleStore.isPaused" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
       @end-battle="endBattle" @reset-battle="requestResetBattle" @toggle-pause="togglePause"
-      @toggle-auto-play="toggleAutoPlay" @manual-turn="manualTurn"
+      @toggle-auto-play="toggleAutoPlay" @manual-turn="manualTurn" @undo-action="undoAction"
       @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 重置战斗二次确认 -->
@@ -659,6 +659,12 @@ const togglePause = () => {
 // 手动单回合：在手动模式（战斗已暂停）下推进一个回合
 const manualTurn = async () => {
   await battleStore.processSingleTurn();
+};
+
+// 回退一步：撤销上一个行动（引擎快照恢复，失败原因进日志）
+const undoAction = async () => {
+  const error = await battleStore.undoLastAction();
+  if (error) battleLogManager.addSystemLog({ message: `回退失败：${error}` });
 };
 
 // 全部参战实体（含未启用占位，供调试动作遍历）

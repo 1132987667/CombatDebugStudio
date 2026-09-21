@@ -123,6 +123,34 @@ export class SkillExecutor {
     this.rotatingBuffIndex.clear()
   }
 
+  /** 导出技能执行器运行时状态（战斗单步回退快照用） */
+  public exportUndoState(): {
+    comboStates: Array<[string, ComboState]>
+    rotatingBuffIndex: Array<[string, number]>
+    pendingExtraActions: string[]
+  } {
+    return {
+      comboStates: Array.from(this.comboStates.entries()).map(
+        ([id, s]): [string, ComboState] => [id, { ...s }],
+      ),
+      rotatingBuffIndex: Array.from(this.rotatingBuffIndex.entries()),
+      pendingExtraActions: [...this.pendingExtraActions],
+    }
+  }
+
+  /** 从回退快照整体还原 */
+  public restoreUndoState(state: {
+    comboStates: Array<[string, ComboState]>
+    rotatingBuffIndex: Array<[string, number]>
+    pendingExtraActions: string[]
+  }): void {
+    this.comboStates.clear()
+    for (const [id, s] of state.comboStates) this.comboStates.set(id, { ...s })
+    this.rotatingBuffIndex.clear()
+    for (const [id, i] of state.rotatingBuffIndex) this.rotatingBuffIndex.set(id, i)
+    this.pendingExtraActions = [...state.pendingExtraActions]
+  }
+
   executeStep(
     skillStep: ExtendedSkillStep,
     action: BattleAction,

@@ -32,6 +32,16 @@ import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { SkillType } from '@/domain/skill/types'
 
+/**
+ * 修饰符同步白名单前缀：attrData.modifiers 中直挂写入方（不经 ModifierStack）的来源标识。
+ * - `passive:` — SkillExecutor 被动属性微调（passive:runtime:*，attributeSync 联动同键）
+ * - `custom:`  — SkillExecutor 连击类（custom:third_strike / custom:combo_master）
+ * - `affix:`   — 装备词缀（shared/utils/affix.ts）
+ * - `bonus:`   — 敌人数值加成（GameDataProcessor attackBonus/healthBonus）
+ * 其余条目全部视为 ModifierStack 复制品，每次同步整体替换。
+ */
+const KEPT_SYNC_EXEMPT_PREFIXES = ['passive:', 'custom:', 'affix:', 'bonus:']
+
 export type BattleParticipantData = {
   id: string
   name: string
@@ -194,11 +204,16 @@ export class BattleParticipantImpl implements BattleEntity {
   /**
    * 从 ModifierStack 同步修饰符到本地 attrData.modifiers
    * 在每次重新计算属性前调用
+   *
+   * NOTE: attrData.modifiers 是「直挂来源 + 栈来源」的合并视图——
+   *       KEPT_SOURCE 白名单内的条目（base/passive:/custom:/affix:/bonus:）由各写入方
+   *       直接维护（ParticipantStats.initAttribute、SkillExecutor、affix.ts、GameDataProcessor），
+   *       其余条目全部是栈修饰符（buffInstanceId / aura / fieldEffect）的复制品，
+   *       每次同步整体替换——栈里消失的必须裁剪，否则 Buff 到期/战斗回退后属性残留幻象加成。
    */
   private syncModifiersFromProvider(): void {
     if (!this.modifierProvider) return
     const stack = this.modifierProvider.getModifierStack(this.id)
-    if (!stack) return
 
     let hasChanges = false
 
@@ -206,16 +221,15 @@ export class BattleParticipantImpl implements BattleEntity {
       const attrData = this.stats.getAttribute(code)
       if (!attrData) continue
 
-      const stackMods = stack.getModifiers(code)
-      if (stackMods.length === 0) continue
-
-      // 保留 base 修饰符和被动技能修饰符
-      const baseModifier = attrData.modifiers.find(
-        (m) => m.sourceKey === 'base',
+      const stackMods = stack?.getModifiers(code) ?? []
+      const keptModifiers = attrData.modifiers.filter(
+        (m) =>
+          m.sourceKey === 'base' ||
+          KEPT_SYNC_EXEMPT_PREFIXES.some((p) => m.sourceKey.startsWith(p)),
       )
-      const passiveModifiers = attrData.modifiers.filter((m) =>
-        m.sourceKey.startsWith('passive:'),
-      )
+      // 栈无条目且本地无待裁剪的栈残留 → 该属性无需重建
+      if (stackMods.length === 0 && keptModifiers.length === attrData.modifiers.length)
+        continue
 
       // ponytail: ModifierStack 现在直接存储 Modifier[]（sourceKey = buffInstanceId），
       // 此处仅做富化（sourceType 委托给 provider，添加描述文本），无需类型桥接。
@@ -225,11 +239,7 @@ export class BattleParticipantImpl implements BattleEntity {
         description: `来自: ${this.modifierProvider!.getSourceName(m.sourceKey) || m.sourceKey}`,
       }))
 
-      attrData.modifiers = [
-        ...(baseModifier ? [baseModifier] : []),
-        ...passiveModifiers,
-        ...externalModifiers,
-      ]
+      attrData.modifiers = [...keptModifiers, ...externalModifiers]
       // 标记该属性缓存过期（版本号不匹配）
       attrData.cachedVersion = this.stats.getCurrentVersion() - 1
       hasChanges = true
@@ -690,4 +700,57 @@ export class BattleParticipantImpl implements BattleEntity {
   reduceSkillCooldowns(): void {
     this.skillManager.reduceSkillCooldowns()
   }
+
+  // ════════════ 战斗单步回退（Undo）快照取数 / 回填 ════════════
+
+  /** 导出回退快照：全属性 base+value+修饰符数组、技能冷却、本回合受击能量计数（Buff 由 BuffSystem 全局快照负责） */
+  exportUndoState(): ParticipantUndoState {
+    const attributes: ParticipantUndoState['attributes'] = []
+    for (const code of Object.values(ATTRIBUTE_CODE)) {
+      const attr = this.stats.getAttribute(code)
+      if (!attr) continue
+      attributes.push([
+        code,
+        attr.base,
+        attr.value,
+        attr.modifiers.map((m) => ({ ...m })),
+      ])
+    }
+    return {
+      attributes,
+      cooldowns: this.skillManager.exportCooldownSnapshot(),
+      energyHitCount: this._energyHitCountThisRound,
+    }
+  }
+
+  /**
+   * 回填回退快照（直接写 stats 存储，绕开 setAttribute 的 max 钳制链）
+   * NOTE: 只写 base/value/modifiers、不做重算——BattleSystem 在 BuffSystem/ModifierStack 恢复完成后
+   *       统一调 recalcAll，届时"base+修饰符"派生值与快照时刻一致；
+   *       modifiers 必须整体回填：撤销的行动可能直挂了 custom: 连击修饰符或经栈施加 Buff，
+   *       仅靠 base/value 回填无法让 sync 裁剪这些残留；
+   *       运行时状态属性（气血/能量）recalc 会跳过，直接保留回填值。
+   */
+  restoreUndoState(state: ParticipantUndoState): void {
+    for (const [code, base, value, modifiers] of state.attributes) {
+      const attr = this.stats.getAttribute(code)
+      if (!attr) continue
+      attr.base = base
+      attr.value = value
+      attr.modifiers = modifiers.map((m) => ({ ...m }))
+      attr.cachedVersion = -1
+    }
+    this.skillManager.importCooldownSnapshot(state.cooldowns)
+    this._energyHitCountThisRound = state.energyHitCount
+  }
+}
+
+/** 参与者回退快照（内存态，不做持久化） */
+export interface ParticipantUndoState {
+  /** [属性代码, base, value, 修饰符数组副本] 列表 */
+  attributes: Array<[ATTRIBUTE_CODE, number, number, Modifier[]]>
+  /** 技能冷却表（skillId → 剩余回合） */
+  cooldowns: Record<string, number>
+  /** 本回合受击能量获取次数 */
+  energyHitCount: number
 }

@@ -69,6 +69,22 @@ export class ThreatManager {
     }
   }
 
+  /** 导出仇恨表纯数据（战斗单步回退快照用） */
+  exportUndoState(): Array<[string, Array<[string, number]>]> {
+    return Array.from(this.threatTables.entries()).map(([targetId, table]) => [
+      targetId,
+      Array.from(table.entries()),
+    ])
+  }
+
+  /** 从回退快照整体还原仇恨表 */
+  restoreUndoState(state: Array<[string, Array<[string, number]>]>): void {
+    this.threatTables.clear()
+    for (const [targetId, entries] of state) {
+      this.threatTables.set(targetId, new Map(entries))
+    }
+  }
+
   reset(): void {
     this.threatTables.clear()
   }

@@ -2,6 +2,7 @@ import {
   ModifierSourceType,
   ModifierType,
   type IModifierProvider,
+  type Modifier,
 } from '@/domain/attribute/types'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
@@ -50,6 +51,39 @@ export interface TriggerExecutionContext extends TriggerEventContext {
 
 /** 角色解析器：characterId → BattleEntity */
 export type CharacterResolver = (characterId: string) => BattleEntity | undefined
+
+/**
+ * BuffSystem 回退快照（内存态，不做持久化——script/config 为静态对象引用）
+ * 战斗单步回退用：restore 时整体替换全部容器，不触发 onApply/onRemove 副作用。
+ */
+export interface BuffUndoState {
+  instances: Array<{
+    id: string
+    characterId: string
+    buffId: string
+    script: IBuffScript | null
+    config: BuffConfig
+    variables: Array<[string, string | number | boolean]>
+    contextCurrentTurn: number
+    startTurn: number
+    duration: number
+    remainingTurns: number
+    currentStacks: number
+    isActive: boolean
+    conditionState?: ConditionState
+    effectLines?: BuffInstance['effectLines']
+    parentInstanceId?: string
+    /** 注册触发器时使用的归一化 triggers 集（与 triggerRuntime 下标对齐） */
+    triggers?: TriggerAction[]
+    triggerRuntime?: Array<{ count: number; lastTurn: number }>
+  }>
+  /** characterId → 修饰符列表（含跨角色光环分发与 'field:' 场地源） */
+  modifierStacks: Array<[string, Modifier[]]>
+  shieldValues: Array<[string, number]>
+  immunities: Array<[string, string[]]>
+  parentToChildren: Array<[string, string[]]>
+  counterValue: number
+}
 
 /**
  * 伤害/治疗请求来源标记：区分 dot 持续伤害、hot 持续治疗与触发器脚本伤害。
@@ -101,6 +135,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     (context: TriggerExecutionContext) => void
   >()
   private instanceIdCounter = new Counter(1)
+  /** 触发器运行时计数器（instanceId → 按 trigger 下标对齐），供回退快照读写 */
+  private triggerRuntimeStates = new Map<
+    string,
+    Array<{ count: number; lastTurn: number }>
+  >()
 
   /** 确定性随机源 — 由 BattleSystem.initialize 注入 battleData.rng；未注入时回退 Math.random */
   private rng?: SeededRandom
@@ -363,21 +402,28 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   /**
    * 为 Buff 实例注册触发器监听器
    * 在 addBuff 中被调用，读取 resolvedConfig.triggers，向 TriggerEventBus 注册监听器。
+   * @param initialRuntime 恢复快照时的触发器计数器初值（战斗单步回退用；缺省全 0）
    */
   private registerTriggersForInstance(
     instanceId: string,
     triggers: import('@/domain/buff/types').TriggerAction[],
     characterId: string,
+    initialRuntime?: Array<{ count: number; lastTurn: number }>,
   ): void {
     const buffInstance = this.buffInstances.get(instanceId)
     if (!buffInstance) return
 
-    for (const trigger of triggers) {
+    // NOTE: 触发器计数器原为逐 trigger 闭包变量，回退快照无法读写闭包，
+    //       改存 triggerRuntimeStates（instanceId → 按 trigger 下标对齐的计数器数组）。
+    const runtime =
+      initialRuntime ?? triggers.map(() => ({ count: 0, lastTurn: -999 }))
+    this.triggerRuntimeStates.set(instanceId, runtime)
+
+    triggers.forEach((trigger, t) => {
       // NOTE: phase 在此入口统一归一化——JSON 配置已在 BuffConfigResolver 归一化（幂等），
       //       运行时动态创建（调用方 config.triggers）的 Buff 未经解析器，此处兜底归一化。
       const phase = normalizeTriggerPhase(trigger.phase, buffInstance.buffId)
-      let triggerCount = 0
-      let lastTriggerTurn = -999
+      const state = runtime[t]
 
       const callback = (ctx: TriggerEventContext) => {
         // 概率检查
@@ -391,12 +437,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         if (
           trigger.maxTriggers !== undefined &&
           trigger.maxTriggers >= 0 &&
-          triggerCount >= trigger.maxTriggers
+          state.count >= trigger.maxTriggers
         )
           return
         // 冷却检查
         const turn = ctx.currentTurn ?? 0
-        if (lastTriggerTurn >= 0 && trigger.cooldown && turn - lastTriggerTurn < trigger.cooldown)
+        if (state.lastTurn >= 0 && trigger.cooldown && turn - state.lastTurn < trigger.cooldown)
           return
 
         const handler = this.triggerScripts.get(trigger.scriptId)
@@ -413,13 +459,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
               | Record<string, number | string>
               | undefined,
           })
-          triggerCount++
-          lastTriggerTurn = turn
+          state.count++
+          state.lastTurn = turn
         }
       }
 
       this.eventBus.on(phase, callback as (...args: unknown[]) => void, instanceId)
-    }
+    })
   }
 
   /**
@@ -428,6 +474,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
    */
   private unregisterTriggersForInstance(instanceId: string): void {
     this.eventBus.offByListenerId(instanceId)
+    this.triggerRuntimeStates.delete(instanceId)
   }
 
   public addBuff(
@@ -1190,6 +1237,142 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.clearAllBuffs(characterId)
     this.shieldValues.delete(characterId)
     this.characterImmunities.delete(characterId)
+  }
+
+  // ════════════ 战斗单步回退（Undo）快照导出 / 静默恢复 ════════════
+
+  /** 导出 Buff 全量运行时状态（实例/修饰符堆栈/护盾/免疫/级联索引/ID 计数器/触发器计数器） */
+  public exportUndoState(): BuffUndoState {
+    const instances: BuffUndoState['instances'] = []
+    for (const inst of this.buffInstances.values()) {
+      const normalizedTriggers =
+        inst.context.config.triggers ??
+        this.scriptRegistry.getResolvedBuffConfig(inst.buffId)?.triggers
+      instances.push({
+        id: inst.id,
+        characterId: inst.characterId,
+        buffId: inst.buffId,
+        script: inst.script ?? null,
+        config: inst.context.config,
+        variables: Array.from(inst.context.variables.entries()),
+        contextCurrentTurn: inst.context.currentTurn,
+        startTurn: inst.startTurn,
+        duration: inst.duration,
+        remainingTurns: inst.remainingTurns,
+        currentStacks: inst.currentStacks,
+        isActive: inst.isActive,
+        conditionState: inst.conditionState,
+        effectLines: inst.effectLines ? [...inst.effectLines] : undefined,
+        parentInstanceId: inst.parentInstanceId,
+        triggers: normalizedTriggers?.length
+          ? [...normalizedTriggers]
+          : undefined,
+        triggerRuntime: this.triggerRuntimeStates.get(inst.id)?.map((r) => ({
+          ...r,
+        })),
+      })
+    }
+    return {
+      instances,
+      modifierStacks: Array.from(this.modifierStacks.entries()).map(
+        ([characterId, stack]): [string, Modifier[]] => [
+          characterId,
+          stack.getModifiers().map((m) => ({ ...m })),
+        ],
+      ),
+      shieldValues: Array.from(this.shieldValues.entries()),
+      immunities: Array.from(this.characterImmunities.entries()).map(
+        ([id, set]) => [id, [...set]],
+      ),
+      parentToChildren: Array.from(this.parentToChildren.entries()).map(
+        ([pid, set]) => [pid, [...set]],
+      ),
+      counterValue: this.instanceIdCounter.current,
+    }
+  }
+
+  /**
+   * 从回退快照整体恢复 Buff 状态
+   * NOTE: 静默恢复——不执行 onApply/onRemove/原语回调（快照本身就是副作用执行完的结果），
+   *       但完整重建触发器监听（含计数器初值）、修饰符堆栈、护盾与免疫集合；
+   *       实例 ID 原样恢复，FormationManager.appliedBuffIds 等按 ID 引用保持有效。
+   */
+  public restoreUndoState(state: BuffUndoState): void {
+    // 1) 静默清空当前态：反注册监听器 + 归还池化上下文，容器整体替换
+    for (const inst of this.buffInstances.values()) {
+      this.eventBus.offByListenerId(inst.id)
+      BuffContextPool.return(inst.context)
+    }
+    this.buffInstances.clear()
+    this.triggerRuntimeStates.clear()
+    this.modifierStacks.clear()
+    this.shieldValues.clear()
+    this.characterImmunities.clear()
+    this.parentToChildren.clear()
+
+    // 2) 修饰符堆栈 / 独立存储态 / ID 计数器
+    for (const [characterId, mods] of state.modifierStacks) {
+      const stack = new ModifierStack()
+      for (const m of mods) {
+        stack.addModifier(m.sourceKey, m.attribute, m.value, m.type)
+      }
+      this.modifierStacks.set(characterId, stack)
+    }
+    for (const [id, value] of state.shieldValues) {
+      this.shieldValues.set(id, value)
+    }
+    for (const [id, tags] of state.immunities) {
+      this.characterImmunities.set(id, new Set(tags))
+    }
+    for (const [pid, children] of state.parentToChildren) {
+      this.parentToChildren.set(pid, new Set(children))
+    }
+    this.instanceIdCounter.reset(state.counterValue)
+
+    // 3) 实例重建（同 ID、同 config/script 引用、恢复变量与触发器注册）
+    for (const e of state.instances) {
+      const context = BuffContextPool.borrow(
+        e.characterId,
+        e.id,
+        e.config,
+        this,
+      )
+      for (const [k, v] of e.variables) context.variables.set(k, v)
+      context.currentTurn = e.contextCurrentTurn
+
+      const instance: BuffInstance = {
+        id: e.id,
+        characterId: e.characterId,
+        buffId: e.buffId,
+        script: (e.script ?? null) as IBuffScript,
+        context,
+        startTurn: e.startTurn,
+        duration: e.duration,
+        remainingTurns: e.remainingTurns,
+        currentStacks: e.currentStacks,
+        isActive: e.isActive,
+        conditionState: e.conditionState,
+        effectLines: e.effectLines ? [...e.effectLines] : undefined,
+        parentInstanceId: e.parentInstanceId,
+      }
+      this.buffInstances.set(instance.id, instance)
+
+      if (instance.parentInstanceId) {
+        if (!this.parentToChildren.has(instance.parentInstanceId)) {
+          this.parentToChildren.set(instance.parentInstanceId, new Set())
+        }
+        this.parentToChildren.get(instance.parentInstanceId)!.add(instance.id)
+      }
+
+      if (e.triggers?.length) {
+        this.registerTriggersForInstance(
+          instance.id,
+          e.triggers,
+          instance.characterId,
+          e.triggerRuntime,
+        )
+      }
+    }
   }
 
   /**

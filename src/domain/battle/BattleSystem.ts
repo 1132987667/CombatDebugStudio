@@ -20,7 +20,10 @@ import {
   BATTLE_RULE_MANAGER_TOKEN,
   TURN_MANAGER_TOKEN,
 } from '@/domain/battle/entity/BattleInterfaces'
-import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import {
+  BattleParticipantImpl,
+  type ParticipantUndoState,
+} from '@/domain/battle/entity/BattleParticipantImpl'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
   entitySegment,
@@ -47,11 +50,12 @@ import {
   ParticipantSideName,
   RoundStatus,
 } from '@/domain/battle/type/types'
-import { BuffSystem, type SummonRequest, type DamageOrigin } from '@/domain/buff/BuffSystem'
+import { BuffSystem, type SummonRequest, type DamageOrigin, type BuffUndoState } from '@/domain/buff/BuffSystem'
 import type { TriggerEventContext } from '@/domain/buff/types'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
+import type { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import type { Container } from '@/infrastructure/di/Container'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
@@ -353,6 +357,8 @@ export class BattleSystem {
     sceneId?: string,
     seed?: string,
   ): BattleState {
+    // 新一场战斗：清空上一场残留的回退栈（回退不允许跨越战斗边界）
+    this.undoStack.length = 0
     //  桥接战斗规则 → 伤害计算器（暴击/闪避开关+场地元素修正），每场战斗开始时生效
     // NOTE: §1.1 修复后 this.damageCalculator 与 this.skillManager.getDamageCalculator()
     //       为同一实例，一次 setConfig 即覆盖普攻和技能两条路径
@@ -1087,6 +1093,7 @@ export class BattleSystem {
         }
 
         try {
+          this.captureUndoSnapshot()
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
           LoggerProvider.logger.addDebugLog('角色行动执行出错:', {
@@ -1428,6 +1435,8 @@ export class BattleSystem {
   }
 
   public resetBattle(): void {
+    // 回退栈与战斗同生命周期：清空防止跨战斗回填过期状态
+    this.undoStack.length = 0
     // ponytail: 清除上一场战斗的被动注册、连击状态和待处理额外行动，防止跨战斗污染
     this.executor.reset() // 新增：重置 pendingDeaths / currentActionOrder，防止跨战斗残留
     this.passiveSkillManager.clearAll()
@@ -1640,6 +1649,11 @@ export class BattleSystem {
   /** 手动行动并发锁（防快速连点） */
   private manualActionLock = false
 
+  // ===================== 战斗单步回退（Undo） =====================
+
+  /** 回退快照栈：每个行动执行前压入一条，undoLastAction 弹出恢复 */
+  private undoStack: BattleUndoSnapshot[] = []
+
   /**
    * 手动干预：让指定存活参战者立即对指定目标执行一次指定行动（技能或普攻）。
    * 走完整执行管线（被动/伤害/日志/动画），不经过 AI 决策。
@@ -1673,6 +1687,7 @@ export class BattleSystem {
     const effectTarget = targetId ? battle.participants.get(targetId) ?? user : user
     if (!effectTarget.isAlive()) return '目标已阵亡'
 
+    this.captureUndoSnapshot()
     const applied: string[] = []
     for (const effect of item.effects) {
       if (effect.type === 'heal') {
@@ -1700,7 +1715,11 @@ export class BattleSystem {
       }
     }
 
-    if (applied.length === 0) return '物品无可用效果'
+    if (applied.length === 0) {
+      // 所有效果均跳过（value<=0 等）——状态未动，撤掉行动前打点，避免幽灵回退步
+      this.undoStack.pop()
+      return '物品无可用效果'
+    }
     const message = `${user.name} 使用了「${item.name}」（${applied.join('、')}）`
     LoggerProvider.logger.addItemLog({
       message,
@@ -1738,8 +1757,10 @@ export class BattleSystem {
         if (!availability.can) {
           return `技能不可用：${availability.detail ?? availability.reason}`
         }
+        this.captureUndoSnapshot()
         await this.executor.selectAndExecuteSkill(battle, source, skill, targetId)
       } else {
+        this.captureUndoSnapshot()
         await this.executor.selectAndExecuteAttack(battle, source, targetId)
       }
       source.afterAction()
@@ -1748,4 +1769,117 @@ export class BattleSystem {
       this.manualActionLock = false
     }
   }
+
+  /**
+   * 行动执行前捕获回退快照并压栈。
+   * headless（批量模拟）与无战斗数据时跳过 — 无 UI 回退需求，省去全量导出开销。
+   */
+  private captureUndoSnapshot(): void {
+    const battle = this.battleData
+    if (!battle || battle.headless) return
+    const participants: Array<{ id: string; state: ParticipantUndoState }> = []
+    for (const p of battle.participants.values()) {
+      if (p instanceof BattleParticipantImpl) {
+        participants.push({ id: p.id, state: p.exportUndoState() })
+      }
+    }
+    const snapshot: BattleUndoSnapshot = {
+      currentTurn: battle.currentTurn,
+      turnOrder: [...battle.turnOrder],
+      actionsLength: battle.actions.length,
+      battleState: battle.battleState,
+      roundState: battle.roundState,
+      winner: battle.winner,
+      endTime: battle.endTime,
+      rngSeed: battle.rng.getSeed(),
+      participants,
+      buffs: this.buffSystem.exportUndoState(),
+      threat: this.threatManager.exportUndoState(),
+      revive: this.reviveTracker.exportUndoState(),
+      fieldEffects: this.fieldEffectManager.exportUndoState(),
+      formation: this.formationManager.exportUndoState(),
+      passives: this.passiveSkillManager.exportUndoState(),
+      skillExecutor: this.skillManager.getExecutor().exportUndoState(),
+      executor: this.executor.exportUndoState(),
+    }
+    if (this.undoStack.length >= MAX_UNDO_SNAPSHOTS) this.undoStack.shift()
+    this.undoStack.push(snapshot)
+  }
+
+  /**
+   * 回退上一个行动：弹出快照并将战斗数据/随机源/各子系统/参与者逐层回填。
+   * 战报日志与回放记录不回滚（调试用途：回退后走新分支重新观察）。
+   * @returns 失败原因字符串；成功返回 null
+   */
+  public undoLastAction(): string | null {
+    const battle = this.battleData
+    if (!battle) return '没有进行中的战斗'
+    if (this.getAutoBattle()) return '自动战斗中不可回退'
+    if (this.manualActionLock) return '行动执行中，无法回退'
+    const snapshot = this.undoStack.pop()
+    if (!snapshot) return '没有可回退的行动'
+
+    battle.currentTurn = snapshot.currentTurn
+    battle.turnOrder = [...snapshot.turnOrder]
+    battle.actions.splice(snapshot.actionsLength)
+    battle.battleState = snapshot.battleState
+    battle.roundState = snapshot.roundState
+    battle.winner = snapshot.winner
+    battle.endTime = snapshot.endTime
+    battle.rng.restoreSeed(snapshot.rngSeed)
+
+    // Buff/修饰符栈先恢复，参与者 recalcAll 才能拿到正确的修饰符集合
+    this.buffSystem.restoreUndoState(snapshot.buffs)
+    this.threatManager.restoreUndoState(snapshot.threat)
+    this.reviveTracker.restoreUndoState(snapshot.revive)
+    this.fieldEffectManager.restoreUndoState(snapshot.fieldEffects)
+    this.formationManager.restoreUndoState(snapshot.formation)
+    this.passiveSkillManager.restoreUndoState(snapshot.passives)
+    this.skillManager.getExecutor().restoreUndoState(snapshot.skillExecutor)
+    this.executor.restoreUndoState(snapshot.executor)
+
+    for (const { id, state } of snapshot.participants) {
+      const participant = battle.participants.get(id)
+      if (participant instanceof BattleParticipantImpl) {
+        participant.restoreUndoState(state)
+        // recalcAll 内部 syncModifiersFromProvider + notifyDirty：statsVersion 变化驱动投影刷新
+        participant.recalcAll('undo')
+      }
+    }
+    return null
+  }
+
+  /** 当前可回退步数（UI 按钮禁用判断用） */
+  public getUndoDepth(): number {
+    return this.undoStack.length
+  }
+
+  /** 清空回退栈（调试注入等绕过快照的状态变更调用，防止回退到不一致状态） */
+  public clearUndoHistory(): void {
+    this.undoStack.length = 0
+  }
+}
+
+/** 回退栈容量上限：50 步足够调试分支对比，快照含全量 Buff 导出，不宜过大 */
+const MAX_UNDO_SNAPSHOTS = 50
+
+/** 行动执行前的战斗状态快照（内存态，不做持久化） */
+interface BattleUndoSnapshot {
+  currentTurn: number
+  turnOrder: string[]
+  actionsLength: number
+  battleState: BattleStatus
+  roundState?: RoundStatus
+  winner?: ParticipantSide
+  endTime?: number
+  rngSeed: number
+  participants: Array<{ id: string; state: ParticipantUndoState }>
+  buffs: BuffUndoState
+  threat: ReturnType<ThreatManager['exportUndoState']>
+  revive: ReturnType<ReviveTracker['exportUndoState']>
+  fieldEffects: ReturnType<FieldEffectManager['exportUndoState']>
+  formation: ReturnType<FormationManager['exportUndoState']>
+  passives: ReturnType<PassiveSkillManager['exportUndoState']>
+  skillExecutor: ReturnType<SkillExecutor['exportUndoState']>
+  executor: ReturnType<BattleExecutor['exportUndoState']>
 }

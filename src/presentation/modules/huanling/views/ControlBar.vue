@@ -19,6 +19,8 @@
         :title="!isBattleActive ? '战斗未开始' : undefined">结束战斗</Button>
       <Button @click="$emit('manual-turn')" :disabled="!isBattleActive || isAutoPlaying"
         :title="!isBattleActive ? '战斗未开始' : isAutoPlaying ? '自动战斗中，切回手动后可用' : undefined">手动单回合</Button>
+      <Button @click="$emit('undo-action')" :disabled="!isBattleActive || isAutoPlaying || store.undoDepth === 0"
+        :title="!isBattleActive ? '战斗未开始' : isAutoPlaying ? '自动战斗中不可回退' : store.undoDepth === 0 ? '没有可回退的行动' : '撤销上一个行动，回到分支前重新决策'">回退一步</Button>
       <Button @click="$emit('reset-battle')"
         :disabled="!isBattleActive && autoPlayMode !== 'off'"
         :title="!isBattleActive && autoPlayMode !== 'off' ? '自动战斗待机中，关闭自动模式后可重置' : undefined">重置战斗</Button>
@@ -91,6 +93,7 @@ const emit = defineEmits<{
   "toggle-pause": [];
   "toggle-auto-play": [];
   "manual-turn": [];
+  "undo-action": [];
   "battle-speed-change": [speed: number];
 }>();
 

@@ -64,6 +64,30 @@ export class FormationManager {
     this.enemyFormation = null
   }
 
+  /** 导出回退快照：阵型配置引用（静态）+ 已施加 Buff 实例 ID 列表 */
+  exportUndoState(): {
+    allyFormation: FormationConfig | null
+    enemyFormation: FormationConfig | null
+    appliedBuffIds: string[]
+  } {
+    return {
+      allyFormation: this.allyFormation,
+      enemyFormation: this.enemyFormation,
+      appliedBuffIds: [...this.appliedBuffIds],
+    }
+  }
+
+  /** 从回退快照还原（Buff 实例本身由 BuffSystem 快照以相同实例 ID 重建，ID 引用保持有效） */
+  restoreUndoState(state: {
+    allyFormation: FormationConfig | null
+    enemyFormation: FormationConfig | null
+    appliedBuffIds: string[]
+  }): void {
+    this.allyFormation = state.allyFormation
+    this.enemyFormation = state.enemyFormation
+    this.appliedBuffIds = [...state.appliedBuffIds]
+  }
+
   reset(): void {
     this.allyFormation = null
     this.enemyFormation = null

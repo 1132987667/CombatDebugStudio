@@ -167,6 +167,26 @@ export class BattleExecutor {
     this.currentActionOrder = 0
   }
 
+  /** 导出战斗执行器可变状态（战斗单步回退快照用；battle 引用为同一实例，直接保留） */
+  exportUndoState(): {
+    pendingDeaths: Array<{ deadId: string; killerId: string; battle: BattleData }>
+    currentActionOrder: number
+  } {
+    return {
+      pendingDeaths: this.pendingDeaths.map((d) => ({ ...d })),
+      currentActionOrder: this.currentActionOrder,
+    }
+  }
+
+  /** 从回退快照还原 */
+  restoreUndoState(state: {
+    pendingDeaths: Array<{ deadId: string; killerId: string; battle: BattleData }>
+    currentActionOrder: number
+  }): void {
+    this.pendingDeaths = state.pendingDeaths.map((d) => ({ ...d }))
+    this.currentActionOrder = state.currentActionOrder
+  }
+
   constructor(
     private readonly skillManager: SkillManager,
     private readonly damageCalculator: DamageCalculator,

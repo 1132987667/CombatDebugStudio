@@ -181,4 +181,14 @@ export class ParticipantSkills {
     })
     return snapshot
   }
+
+  /**
+   * 从快照恢复冷却（战斗单步回退用）：整体替换当前冷却表
+   */
+  importCooldownSnapshot(snapshot: Record<string, number>): void {
+    this.skillCooldowns.clear()
+    for (const [skillId, cooldown] of Object.entries(snapshot)) {
+      this.skillCooldowns.set(skillId, cooldown)
+    }
+  }
 }

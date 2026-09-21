@@ -10,6 +10,12 @@
         </div>
       </div>
 
+      <!-- 手动施放待选目标提示条 -->
+      <div v-if="pendingAction" class="pending-target-bar">
+        <span>「{{ pendingActorName }}」准备释放「{{ pendingAction.skillName }}」— 点击角色卡选择目标</span>
+        <Button class="pending-cancel-btn" @click="cancelPendingAction">取消 (Esc)</Button>
+      </div>
+
       <div class="battle-field">
         <div class="field-party our-party">
           <div class="party-header">我方 ({{ allyTeam.length }}人)</div>
@@ -59,7 +65,7 @@ import { useBattleStore } from '@/presentation/stores/battleStore';
 import BattleLog from "./BattleLog.vue";
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing';
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper';
-import { computed, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 const store = useBattleStore()
 
@@ -217,9 +223,28 @@ const currentActor = computed(() => {
 });
 
 const selectCharacter = (charId: string) => {
+  // 手动施放待选目标：点卡即确认释放，覆盖默认选中行为
+  if (store.pendingManualAction) {
+    void store.confirmManualAction(charId)
+    return
+  }
   store.selectCharacter(charId);
   emit('select-character', charId);
 };
+
+/** 待释放行动（技能面板点击后暂存，等待在大图选目标） */
+const pendingAction = computed(() => store.pendingManualAction)
+const pendingActorName = computed(() => {
+  const pending = store.pendingManualAction
+  if (!pending) return ''
+  return [...allyTeam.value, ...enemyTeam.value].find((p) => p.id === pending.participantId)?.name ?? '未知'
+})
+const cancelPendingAction = () => store.setPendingManualAction(null)
+
+const handleManualActionKey = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && store.pendingManualAction) cancelPendingAction()
+}
+onMounted(() => window.addEventListener('keydown', handleManualActionKey))
 
 // 状态工具提示相关逻辑
 
@@ -260,12 +285,32 @@ defineExpose({
 })
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', handleManualActionKey)
   cleanupAnimations()
   participantCardRefs.value = {}
 })
 </script>
 
 <style scoped lang="scss">
+.pending-target-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-debug-color-light);
+  border-radius: var(--radius-md);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
+  color: var(--color-energy);
+  font-size: var(--font-size-md);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.pending-cancel-btn {
+  flex-shrink: 0;
+}
+
 .round-announce-layer {
   position: fixed;
   inset: 0;

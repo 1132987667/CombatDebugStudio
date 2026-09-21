@@ -525,8 +525,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         jsonConfig?.maxStacks ??
         1,
       cooldown: config.cooldown ?? scriptDefaultConfig?.cooldown ?? 0,
+      // stackRule 取 resolver 归一后的值而非 raw jsonConfig：叠层 switch 读本行合并结果，
+      // 只有 resolver 产物做过值域归一（坏值 → LIMITED），raw 坏值会漏命中 switch 退化成无限实例
       stackRule:
-        config.stackRule ?? scriptDefaultConfig?.stackRule ?? StackRule.LIMITED,
+        config.stackRule ??
+        scriptDefaultConfig?.stackRule ??
+        this.scriptRegistry.getResolvedBuffConfig(buffId)?.stackRule ??
+        StackRule.LIMITED,
       controlType:
         config.controlType ??
         scriptDefaultConfig?.controlType ??

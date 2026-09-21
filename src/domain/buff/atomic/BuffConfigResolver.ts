@@ -1,7 +1,7 @@
 import { type IAtomicEffect, AtomicEffectType } from './types'
 import { AtomicEffectRegistry } from './AtomicEffectRegistry'
-import { ControlType } from '@/domain/buff/types'
-import type { BuffConfig, StackRule, TriggerAction } from '@/domain/buff/types'
+import { ControlType, StackRule } from '@/domain/buff/types'
+import type { BuffConfig, TriggerAction } from '@/domain/buff/types'
 import type { BuffPolarity } from '@/shared/types/buff-classification'
 import type { AttributeValueConfig, BuffJsonEntry } from '@/shared/types/buffs-json'
 import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -156,13 +156,8 @@ export class BuffConfigResolver {
       duration: raw.duration ?? 1,
       maxStacks: raw.maxStacks ?? 1,
       cooldown: raw.cooldown ?? 0,
-      // HACK: 缺省值为大写字符串 'LIMITED'，与 enum 值 StackRule.LIMITED（'limited'）不一致，
-      // BuffSystem 叠层 switch 不会命中该分支（buffs.json 121/142 条无 stackRule 走此缺省）。
-      // 修正会改变现网叠层行为，须先确认策划语义再统一，见类型收敛报告遗留项
-      stackRule: (raw.stackRule ?? 'LIMITED') as StackRule,
-      // NOTE: 缺省必须是 ControlType.NONE（'none'）——SkillExecutor 的 exceptControl 净化
-      // 与 target_controlled 判定直接消费本字段并与其比较，大写缺省会把所有非控制 buff 误判为控制类
-      controlType: (raw.controlType ?? ControlType.NONE) as ControlType,
+      stackRule: this.normalizeStackRule(raw),
+      controlType: this.normalizeControlType(raw),
       dispellable: raw.dispellable ?? true,
       blockedByTag: raw.blockedByTag ?? undefined,
       tags: raw.tags ?? [],
@@ -177,5 +172,32 @@ export class BuffConfigResolver {
           }))
         : undefined,
     }
+  }
+
+  /**
+   * stackRule 边界值域归一：JSON 是无类型外部输入，`as StackRule` 不提供任何检查。
+   * 缺省 → LIMITED（引擎默认）；显式坏值（如早期封神榜下拉写出的 'replace'/'stack'、
+   * 历史大写 'LIMITED'）→ 抛错，与 derivePolarity 的 fail-fast 契约一致——
+   * 静默放行会让 BuffSystem 叠层 switch 漏命中，退化成无上限新建实例。
+   */
+  private normalizeStackRule(raw: BuffJsonEntry): StackRule {
+    const v = raw.stackRule
+    if (v === undefined || v === null) return StackRule.LIMITED
+    if ((Object.values(StackRule) as string[]).includes(v)) return v as StackRule
+    throw new Error(
+      `[BuffConfigResolver] ${raw.id ?? 'unknown'}: stackRule "${v}" 非法，须为 ${Object.values(StackRule).join('/')}`
+    )
+  }
+
+  /** controlType 边界值域归一：缺省 → ControlType.NONE（'none'）。 */
+  private normalizeControlType(raw: BuffJsonEntry): ControlType {
+    const v = raw.controlType
+    if (v === undefined || v === null) return ControlType.NONE
+    // NOTE: SkillExecutor 的 exceptControl 净化与 target_controlled 判定直接消费本字段
+    // 并与 ControlType.NONE 比较，坏值会被误判为控制类
+    if ((Object.values(ControlType) as string[]).includes(v)) return v as ControlType
+    throw new Error(
+      `[BuffConfigResolver] ${raw.id ?? 'unknown'}: controlType "${v}" 非法，须为引擎控制状态码（${ControlType.NONE} 表示无控制）`
+    )
   }
 }

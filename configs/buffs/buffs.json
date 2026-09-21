@@ -1684,7 +1684,7 @@
     "description": "速度↑5%/层",
     "maxStacks": 999,
     "duration": -1,
-    "stackRule": "independent",
+    "stackRule": "limited",
     "effects": [
       {
         "type": "modifier",

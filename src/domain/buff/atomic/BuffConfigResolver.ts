@@ -1,6 +1,7 @@
 import { type IAtomicEffect, AtomicEffectType } from './types'
 import { AtomicEffectRegistry } from './AtomicEffectRegistry'
-import type { BuffConfig, StackRule, ControlType, TriggerAction } from '@/domain/buff/types'
+import { ControlType } from '@/domain/buff/types'
+import type { BuffConfig, StackRule, TriggerAction } from '@/domain/buff/types'
 import type { BuffPolarity } from '@/shared/types/buff-classification'
 import type { AttributeValueConfig, BuffJsonEntry } from '@/shared/types/buffs-json'
 import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -159,7 +160,9 @@ export class BuffConfigResolver {
       // BuffSystem 叠层 switch 不会命中该分支（buffs.json 121/142 条无 stackRule 走此缺省）。
       // 修正会改变现网叠层行为，须先确认策划语义再统一，见类型收敛报告遗留项
       stackRule: (raw.stackRule ?? 'LIMITED') as StackRule,
-      controlType: (raw.controlType ?? 'NONE') as ControlType,
+      // NOTE: 缺省必须是 ControlType.NONE（'none'）——SkillExecutor 的 exceptControl 净化
+      // 与 target_controlled 判定直接消费本字段并与其比较，大写缺省会把所有非控制 buff 误判为控制类
+      controlType: (raw.controlType ?? ControlType.NONE) as ControlType,
       dispellable: raw.dispellable ?? true,
       blockedByTag: raw.blockedByTag ?? undefined,
       tags: raw.tags ?? [],

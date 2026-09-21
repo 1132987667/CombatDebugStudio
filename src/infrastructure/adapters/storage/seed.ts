@@ -34,6 +34,7 @@ import type {
   XiyouData,
 } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
+import { StackRule } from '@/domain/buff/types'
 import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { SkillConfig } from '@/domain/skill/types'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
@@ -535,6 +536,30 @@ async function refreshPackStarter(storage: IPersistentStorage): Promise<boolean>
   return true
 }
 
+/** buffs 表 stackRule 大写残值一次性修补标记（见 repairBuffsStackRuleCase） */
+const BUFFS_STACKRULE_CASE_FLAG_ID = 'cds:buffs-stackrule-case-v1'
+
+/**
+ * 一次性把存量 IDB buffs 表的大写 stackRule（'LIMITED'/'REFRESH' 等）归一为引擎小写枚举值。
+ * NOTE: enemy-buffs.json 数据已在源头改小写，但已播种库的 buffs 表不随 SEED_FLAG 重播，
+ *       存量旧值会在 resolver 收口点施加即抛错；只改写 stackRule 一个字段
+ *       （且仅当 toLowerCase 后为合法枚举），条目其余字段（含用户编辑）绝不触碰。
+ */
+async function repairBuffsStackRuleCase(storage: IPersistentStorage): Promise<boolean> {
+  if (await storage.get(FENGSHEN_STORE.META, BUFFS_STACKRULE_CASE_FLAG_ID)) return false
+  const valid = Object.values(StackRule) as string[]
+  let repaired = false
+  for (const id of await storage.keys(FENGSHEN_STORE.BUFFS)) {
+    const row = await storage.get<Record<string, unknown>>(FENGSHEN_STORE.BUFFS, id)
+    const v = row?.stackRule
+    if (typeof v !== 'string' || v === v.toLowerCase() || !valid.includes(v.toLowerCase())) continue
+    await storage.set(FENGSHEN_STORE.BUFFS, id, { ...row, stackRule: v.toLowerCase(), updatedAt: nowIso() })
+    repaired = true
+  }
+  await storage.set(FENGSHEN_STORE.META, BUFFS_STACKRULE_CASE_FLAG_ID, { id: BUFFS_STACKRULE_CASE_FLAG_ID, appliedAt: nowIso() })
+  return repaired
+}
+
 /**
  * 执行种子导入（幂等）。
  * 底层 storage 不可用时（如无 IndexedDB 环境）由调用方容错，此处不预检。
@@ -550,7 +575,8 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
       ])
       const backfilledParams = await backfillMissingParams(storage, [buildAttributeLimit(), buildSystemDistribution()])
       const refreshedStarter = await refreshPackStarter(storage)
-      return backfilledStores || backfilledParams || refreshedStarter
+      const repairedCase = await repairBuffsStackRuleCase(storage)
+      return backfilledStores || backfilledParams || refreshedStarter || repairedCase
         ? { imported: true, reason: 'backfilled-new-stores' }
         : { imported: false, reason: 'already-seeded' }
     }

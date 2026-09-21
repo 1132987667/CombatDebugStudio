@@ -205,6 +205,35 @@ describe('种子导入 seedFengshenData', () => {
     // NOTE: 材料域补全（42 种）+ buff_silence + effects 并入 buffs 表后，种子数据应完全自洽
     expect(report.issues).toEqual([])
   })
+
+  it('存量 buffs 表大写 stackRule 一次性修补为小写，其余字段不触碰，二次调用幂等', async () => {
+    const storage = new MemoryStorage()
+    await seedFengshenData(storage)
+
+    // 模拟存量库：旧数据大写 stackRule + 用户在封神榜编辑过的其他字段
+    await storage.set(FENGSHEN_STORE.BUFFS, 'buff_dot_poison', {
+      id: 'buff_dot_poison', name: '中毒', stackRule: 'LIMITED', maxStacks: 9, updatedAt: '2020-01-01T00:00:00.000Z',
+    })
+    // 无法归一的坏值（toLowerCase 后仍非枚举）须保持原样，交给 resolver fail-fast
+    await storage.set(FENGSHEN_STORE.BUFFS, 'buff_bad_value', {
+      id: 'buff_bad_value', name: '坏值', stackRule: 'REPLACE', updatedAt: '2020-01-01T00:00:00.000Z',
+    })
+
+    const res = await seedFengshenData(storage)
+    expect(res.imported).toBe(true)
+
+    const poisoned = await storage.get<{ stackRule?: string; name?: string; maxStacks?: number }>(FENGSHEN_STORE.BUFFS, 'buff_dot_poison')
+    expect(poisoned?.stackRule).toBe('limited')
+    expect(poisoned?.name).toBe('中毒')
+    expect(poisoned?.maxStacks).toBe(9)
+
+    const bad = await storage.get<{ stackRule?: string }>(FENGSHEN_STORE.BUFFS, 'buff_bad_value')
+    expect(bad?.stackRule).toBe('REPLACE')
+
+    // 标记已落：再跑一次不重复修补
+    const second = await seedFengshenData(storage)
+    expect(second.imported).toBe(false)
+  })
 })
 
 describe('DataIntegrityService 校验', () => {

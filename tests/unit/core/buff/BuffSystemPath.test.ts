@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
-import { ControlType } from '@/domain/buff/types'
+import { ControlType, StackRule } from '@/domain/buff/types'
 import type { BuffConfig } from '@/domain/buff/types'
 import type { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { getBuffConfig } from '@tests/fixtures/loadTestData'
@@ -24,7 +24,7 @@ function createBuffConfig(overrides?: Partial<BuffConfig>): BuffConfig {
     duration: 3,
     maxStacks: 1,
     cooldown: 0,
-    stackRule: 'LIMITED' as any,
+    stackRule: StackRule.LIMITED,
     controlType: ControlType.NONE,
     ...overrides,
   }

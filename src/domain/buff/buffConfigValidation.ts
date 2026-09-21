@@ -8,10 +8,15 @@
 
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import { BattleTriggerPhase, OLD_PHASE_NAME_MAP } from '@/domain/battle/type/types'
+import { ControlType, StackRule } from '@/domain/buff/types'
 
 const ATOMIC_TYPES = new Set<string>(Object.values(AtomicEffectType))
 const VALID_POLARITIES = ['positive', 'negative', 'neutral', 'mixed']
 const PHASES = new Set<string>(Object.values(BattleTriggerPhase))
+// JSON 是无类型外部输入，as StackRule/as ControlType 断言不提供任何检查；
+// 此处是坏值进入引擎前的保存期闸门，值域以引擎枚举为单一事实来源
+const STACK_RULES = new Set<string>(Object.values(StackRule))
+const CONTROL_TYPES = new Set<string>(Object.values(ControlType))
 
 /**
  * 校验单个 Buff 配置结构（接受 BuffJsonEntry 或归一化后的配置）。
@@ -35,6 +40,18 @@ export function validateBuffConfigShape(input: object): string[] {
         (raw.tags as unknown[]).some((t) => t === 'dot' || t === 'poison' || t === 'debuff'))
     if (!derivable) {
       errors.push(`「${buffId}」缺少 polarity 字段，且无法从 controlType/tags 推导`)
+    }
+  }
+
+  // stackRule / controlType：枚举值域校验（引擎按枚举值 switch/比较，大小写错值会静默漏命中）
+  if (raw.stackRule !== undefined && raw.stackRule !== null) {
+    if (!STACK_RULES.has(String(raw.stackRule))) {
+      errors.push(`「${buffId}」stackRule "${String(raw.stackRule)}" 非法，须为 ${[...STACK_RULES].join('/')}`)
+    }
+  }
+  if (raw.controlType !== undefined && raw.controlType !== null) {
+    if (!CONTROL_TYPES.has(String(raw.controlType))) {
+      errors.push(`「${buffId}」controlType "${String(raw.controlType)}" 非法，须为引擎控制状态码（${ControlType.NONE} 表示无控制）`)
     }
   }
 

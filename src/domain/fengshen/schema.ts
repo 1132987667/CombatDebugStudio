@@ -8,6 +8,7 @@
 import type { FengshenTableName, GearTier, AffixQualityCode } from '@/domain/fengshen/types'
 import { ENEMY_ROLE_LABELS, ENEMY_ROLES } from '@/domain/fengshen/role-grades'
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
+import { StackRule } from '@/domain/buff/types'
 
 /**
  * 枚举值 → 中文标签（单一来源）
@@ -18,7 +19,7 @@ import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 export const SKILL_TYPE_VALUE_LABEL: Record<string, string> = { small: '小技能', ultimate: '大招', passive: '被动' }
 export const POLARITY_VALUE_LABEL: Record<string, string> = { positive: '增益', negative: '减益' }
 export const BUFF_CATEGORY_VALUE_LABEL: Record<string, string> = { attribute: '属性', aura: '光环', dot: '持续伤害', hot: '持续治疗', shield: '护盾', control: '控制', immunity: '免疫', trigger: '触发' }
-export const STACK_RULE_VALUE_LABEL: Record<string, string> = { replace: '替换', stack: '叠加', independent: '独立' }
+export const STACK_RULE_VALUE_LABEL: Record<string, string> = { limited: '叠加封顶', refresh: '刷新覆盖', independent: '独立叠加' }
 export const AFFIX_TIER_VALUE_LABEL: Record<string, string> = { yao_1: '一档·妖气', yao_2: '二档·妖性', yao_3: '三档·妖道', yao_4: '四档·妖圣', mandate: '天命', jie: '劫数' }
 export const AFFIX_TARGET_VALUE_LABEL: Record<string, string> = { player: '玩家', enemy: '敌人' }
 export const CONFLICT_GROUP_VALUE_LABEL: Record<string, string> = { wuxing_single: '五行单体', wuxing_all: '五行全抗' }
@@ -194,7 +195,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
         valueLabel: BUFF_CATEGORY_VALUE_LABEL },
       { key: 'duration', label: '持续回合', type: 'number', min: -1, max: 99, description: '-1 为永久', column: { format: 'number' } },
       { key: 'maxStacks', label: '最大叠加', type: 'number', min: 1, max: 99 },
-      { key: 'stackRule', label: '叠加规则', type: 'select', enum: ['replace', 'stack', 'independent'],
+      { key: 'stackRule', label: '叠加规则', type: 'select', enum: Object.values(StackRule),
         valueLabel: STACK_RULE_VALUE_LABEL },
       { key: 'effects', label: '效果列表', type: 'array', searchable: true,
         description: '原子效果类型 + params（modifier/aura/...）',

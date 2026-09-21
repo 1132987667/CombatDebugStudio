@@ -6,6 +6,21 @@ import {
   ConditionState,
 } from '@/shared/types/buff-display'
 import { STATUS_CODE } from '@/shared/types/status-meta'
+import type { DamageOrigin } from './BuffSystem'
+
+/**
+ * 伤害请求回调签名（BuffSystem → BattleSystem）
+ * percentBase 控制百分比基数：'current' = 当前气血（默认，保持 dealDotDamage/狂暴自残语义），
+ * 'max' = 最大气血（供 DotEffect 等按设计文案执行）。
+ */
+export type DamageRequestFn = (
+  targetId: string,
+  damage: number,
+  rawDamage?: number,
+  damagePercent?: number,
+  origin?: DamageOrigin,
+  percentBase?: 'current' | 'max',
+) => void
 
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'

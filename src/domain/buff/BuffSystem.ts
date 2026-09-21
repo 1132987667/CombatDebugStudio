@@ -5,6 +5,7 @@ import {
   type Modifier,
 } from '@/domain/attribute/types'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import type { DamageRequestFn } from './types'
 import {
   BattleTriggerPhase,
   StepExecutionContext,
@@ -118,13 +119,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   private readonly logger: IBattleLogManager
   private _debugMode: boolean = true
   private onAttributeChange?: (characterId: string) => void
-  private onDamageRequest?: (
-    targetId: string,
-    damage: number,
-    rawDamage?: number,
-    damagePercent?: number,
-    origin?: DamageOrigin,
-  ) => void
+  private onDamageRequest?: DamageRequestFn
   private onHealRequest?: (targetId: string, amount: number, origin?: DamageOrigin) => void
   private onEnergyRequest?: (targetId: string, amount: number) => void
   private onSummonRequest?: (request: SummonRequest) => void
@@ -259,8 +254,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     rawDamage?: number,
     damagePercent?: number,
     origin?: DamageOrigin,
+    percentBase?: 'current' | 'max',
   ): void {
-    this.dealDirectDamage(targetId, damage, rawDamage, damagePercent, origin)
+    this.dealDirectDamage(targetId, damage, rawDamage, damagePercent, origin, percentBase)
   }
 
   /**
@@ -294,9 +290,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     rawDamage?: number,
     damagePercent?: number,
     origin?: DamageOrigin,
+    percentBase?: 'current' | 'max',
   ): void {
     if (this.onDamageRequest) {
-      this.onDamageRequest(targetId, damage, rawDamage, damagePercent, origin)
+      this.onDamageRequest(targetId, damage, rawDamage, damagePercent, origin, percentBase)
     }
   }
 
@@ -320,13 +317,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   }
 
   public setDamageCallback(
-    callback: (
-      targetId: string,
-      damage: number,
-      rawDamage?: number,
-      damagePercent?: number,
-      origin?: DamageOrigin,
-    ) => void,
+    callback: DamageRequestFn,
   ): void {
     this.onDamageRequest = callback
   }

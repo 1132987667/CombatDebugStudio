@@ -498,7 +498,7 @@ export class BattleSystem {
 
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback(
-      (targetId: string, damage: number, rawDamage?: number, damagePercent?: number, origin?: DamageOrigin) => {
+      (targetId: string, damage: number, rawDamage?: number, damagePercent?: number, origin?: DamageOrigin, percentBase?: 'current' | 'max') => {
         // ponytail: 递归守卫 — 深度计数器替代布尔标志，允许有限嵌套
         if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
           throw new Error(
@@ -537,10 +537,11 @@ export class BattleSystem {
           let settledViaExecutor = false
 
           if (damagePercent && damagePercent > 0) {
-            // 正百分比 = 扣当前气血百分比
+            // 正百分比：基数由 percentBase 控制，缺省 currentHealth（保持 dealDotDamage/狂暴自残语义）
+            const baseHp = percentBase === 'max' ? target.maxHealth : target.currentHealth
             actualDamage = Math.max(
               1,
-              Math.floor(target.currentHealth * damagePercent),
+              Math.floor(baseHp * damagePercent),
             )
             target.takeDamage(actualDamage)
             if (origin === 'dot') emitDotTrace(actualDamage)

@@ -362,9 +362,10 @@ async function initBattle(node: RunNode): Promise<void> {
 // ════════════ 关卡推进状态机（玩法主循环设计.md §二/§三.2/§六/§七） ════════════
 type RunPhase = 'advancing' | 'battle' | 'settling' | 'finished' | 'failed' | 'retreated'
 
-/** 手动开战：战斗就绪待命时由 HUD「开战」按钮触发，启动自动战斗循环 */
+/** 开战：确保进入自动战斗（显式 set 语义，不用 toggle——引擎标志残留 true 时 toggle 会翻成手动，
+ *  表现为每场就绪后都要手点「开战」；autoPlayMode 每场 startBattle 时与引擎标志同步，此处判断可靠） */
 async function beginBattle(): Promise<void> {
-  await store.toggleAutoPlay()
+  if (!store.autoPlayMode) await store.toggleAutoPlay()
 }
 
 const run = reactive({

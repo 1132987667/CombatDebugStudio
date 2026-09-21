@@ -1,11 +1,7 @@
 <template>
   <div class="xy-cave">
-    <!-- 顶部货币条：制造时快速查看余额 -->
+    <!-- 顶部货币条：制造时快速查看余额（洞府/修炼洞标题由外层页签头提供，此处不再重复） -->
     <div class="xy-cave-top">
-      <h3 class="xy-cave-top-name">
-        洞府 · 修炼洞
-        <span class="xy-cave-top-sub">工坊 / 丹炉 / 修炼之所</span>
-      </h3>
       <div class="xy-cave-top-coins">
         <span class="xy-cave-coin">金钱 {{ pack.currency.money.toLocaleString() }}</span>
         <span class="xy-cave-coin xy-cave-coin--gold">灵韵 {{ pack.currency.xianyuan }}</span>

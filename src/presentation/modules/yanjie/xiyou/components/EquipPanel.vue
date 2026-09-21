@@ -22,7 +22,7 @@
                 </span>
                 <template v-if="equippedInstance(slot)">
                   <span class="xy-gear-slot-quality" :class="equipQualityClass(equippedInstance(slot)!.quality)">
-                    {{ qualityName(equippedInstance(slot)!.quality) }} · ×{{ factorText(equippedInstance(slot)!.qualityFactor) }}
+                    {{ qualityLabel(equippedInstance(slot)!.quality, equippedInstance(slot)!.qualityFactor) }}
                   </span>
                   <button type="button" class="xy-gear-unequip" @click="pack.unequip(slot)">卸下</button>
                 </template>
@@ -66,13 +66,9 @@
                   <span class="xy-gear-pack-item__title">
                     <span class="xy-gear-pack-item__name" :class="qualityClass(g.rarity)">{{ g.name }}</span>
                     <span class="xy-gear-pack-item__quality" :class="equipQualityClass(g.quality)">
-                      {{ qualityName(g.quality) }} · ×{{ factorText(g.qualityFactor) }}
+                      {{ qualityLabel(g.quality, g.qualityFactor) }}
                     </span>
-                    <span v-if="g.affixes.length" class="xy-gear-pack-item__affix">词缀 ×{{ g.affixes.length }}</span>
                     <span v-if="g.enhance" class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
-                  </span>
-                  <span class="xy-gear-stat-row">
-                    <span v-for="(s, si) in g.stats" :key="si" class="xy-gear-stat-chip">{{ statText(s) }}</span>
                   </span>
                 </button>
                 <button type="button" class="xy-gear-pack-item__detail" @click="openDetail(g)">详情</button>
@@ -191,8 +187,6 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { TabItem } from '@/presentation/components'
 
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
-import type { EquipmentData } from '@/domain/fengshen/types'
-import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import {
   usePackStore,
   GEAR_SLOT_LABELS,
@@ -202,10 +196,10 @@ import {
 import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import { mountIndividuals, individualById, petMountState, petMountStats, PET_MAX_LEVEL, APTITUDE_CAP, BREAKTHROUGH_STAGES,
   breakthrough as mountBreakthrough, feedExpPill as mountFeedPill, raiseAptitude as mountRaiseApt, setPetMountActive, type PetMountInstance } from '../petMount'
-import { equipQualityClass, qualityClass, qualityName, qualityOf } from '../quality'
+import { equipQualityClass, qualityClass, qualityLabel, qualityOf } from '../quality'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
-import { factorText, gearTooltipData, statText } from '../gearTooltip'
+import { gearTooltipData, type GearTooltipView } from '../gearTooltip'
 import GearDetailDialog from './GearDetailDialog.vue'
 import {
   FABAO_MAX_SKILL_RANK,
@@ -322,12 +316,8 @@ const SUBS: TabItem[] = [
 /** 六类装备槽键（顺序 = 展示顺序；单一来源 EQUIPMENT_SLOTS） */
 const GEAR_SLOT_KEYS: GearSlotKey[] = [...EQUIPMENT_SLOTS]
 
-/** 背包装备实例视图（含装备定义名，供模板展示） */
-interface GearPackView extends GearInstance {
-  name: string
-  rarity: number
-  stats: EquipmentStatEntry[]
-}
+/** 背包装备实例视图 = 悬浮卡输入视图（属性行已从卡面移除，明细走悬浮/详情弹窗） */
+type GearPackView = GearTooltipView
 
 /** 背包装备排序键 */
 type GearSortKey = 'default' | 'rarity-desc' | 'rarity-asc' | 'name'
@@ -373,7 +363,6 @@ function gearInPack(slot: GearSlotKey): GearPackView[] {
       ...g,
       name: pack.gearById(g.itemId)?.name ?? g.itemId,
       rarity: pack.gearById(g.itemId)?.rarity ?? 1,
-      stats: pack.instanceStats(g),
     }))
   const by = sortBy.value
   if (by === 'rarity-desc') list.sort((a, b) => b.rarity - a.rarity)
@@ -422,7 +411,6 @@ function equippedInstance(slot: GearSlotKey): GearPackView | null {
     ...inst,
     name: pack.gearById(inst.itemId)?.name ?? inst.itemId,
     rarity: pack.gearById(inst.itemId)?.rarity ?? 1,
-    stats: pack.instanceStats(inst),
   }
 }
 
@@ -752,21 +740,6 @@ onBeforeUnmount(() => {
   gap: var(--space-2);
 }
 
-/* 属性小标签：每条属性一格，避免长串拼接在窄卡片里乱换行 */
-.xy-gear-stat-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  width: 100%;
-}
-
-.xy-gear-stat-chip {
-  padding: 1px var(--space-2);
-  border: 1px solid var(--xy-ink-line);
-  border-radius: 2px;
-  color: var(--xy-ink-3);
-}
-
 /* 背包池卡片：与行囊 PackItemCard 同款视觉 */
 .xy-gear-pack-item {
   --r-color: var(--xy-ink-line);
@@ -838,18 +811,14 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.xy-gear-pack-item__affix {
-  color: var(--xy-ink-3);
-}
-
 .xy-gear-pack-item__enhance {
   color: var(--color-success);
 }
 
 .xy-gear-pack-item__detail {
-  align-self: flex-start;
+  align-self: center;
   flex-shrink: 0;
-  margin: var(--space-2) var(--space-2) 0 0;
+  margin: 0 var(--space-2) 0 0;
   padding: 2px var(--space-2);
   border: 1px solid var(--xy-ink-line);
   border-radius: 2px;

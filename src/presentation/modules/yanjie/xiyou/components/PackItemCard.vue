@@ -9,7 +9,7 @@
         <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ item.name }}</span>
         <span class="xy-item-type">{{ item.type }}</span>
         <span v-if="gear" class="xy-item-quality" :class="equipQualityClass(gear.quality)">
-          {{ qualityName(gear.quality) }} · ×{{ factorText(gear.qualityFactor) }}
+          {{ qualityLabel(gear.quality, gear.qualityFactor) }}
         </span>
         <span v-else class="xy-item-count">×{{ count }}</span>
         <span v-if="gear && gear.enhance > 0" class="xy-item-enhance">强化 +{{ gear.enhance }}</span>
@@ -54,8 +54,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import IconMoney from '~icons/app/money'
 import { usePackStore, GEAR_SLOT_LABELS, type GearInstance } from '@/presentation/stores/packStore'
-import { equipQualityClass, qualityClass, qualityColor, qualityName, qualityOf } from '../quality'
-import { factorText, gearTooltipData } from '../gearTooltip'
+import { equipQualityClass, qualityClass, qualityColor, qualityLabel, qualityName, qualityOf } from '../quality'
+import { gearTooltipData } from '../gearTooltip'
 import type { XiyouCatalogItem } from '../types'
 
 const props = defineProps<{

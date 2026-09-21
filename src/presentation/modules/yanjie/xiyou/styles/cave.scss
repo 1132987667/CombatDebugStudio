@@ -16,34 +16,16 @@
   overflow: hidden;
 }
 
-/* ── 顶部货币条 ── */
+/* ── 顶部货币条（标题由外层页签头提供，此处仅余额，靠右） ── */
 .xy-cave-top {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--xy-ink-line);
   background: var(--xy-paper-warm);
-}
-
-.xy-cave-top-name {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  margin: 0;
-  
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 3px;
-  color: var(--xy-ink-1);
-}
-
-.xy-cave-top-sub {
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
-  letter-spacing: 1px;
 }
 
 .xy-cave-top-coins {
@@ -557,21 +539,25 @@
   gap: var(--space-3);
 }
 
+/* 选中配方详情：产物信息 | 出品品质概率 | 技艺 + 铸造，三栏横排填满下方空白 */
 .xy-cave-forge-detail {
   margin-top: var(--space-4);
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--xy-ink-line);
   border-radius: 3px;
   background: var(--xy-paper);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: var(--space-4);
   flex-wrap: wrap;
 }
 
-.xy-cave-forge-detail__info {
-  flex: 1;
-  min-width: 200px;
+.xy-cave-forge-detail__main {
+  flex: 1 1 300px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .xy-cave-forge-detail__effect {
@@ -584,10 +570,88 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-2);
+  margin-top: auto;
 }
 
-.xy-cave-forge-detail__action {
-  flex-shrink: 0;
+.xy-cave-forge-detail__odds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.xy-cave-forge-detail__label {
+  margin: 0;
+  font-size: var(--font-size-md);
+  letter-spacing: 2px;
+  color: var(--xy-ink-4);
+}
+
+.xy-cave-odds {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* 品质小卡：容器已有边框，卡本体不再描框——浅底 + 左侧品质色竖线区分（凡/精/超） */
+.xy-cave-odds-card {
+  min-width: 118px;
+  padding: var(--space-1) var(--space-2);
+  border-left: 2px solid var(--xy-ink-line);
+  background: var(--xy-paper-warm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.xy-cave-odds-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.xy-cave-odds-name {
+  font-size: var(--font-size-md);
+}
+
+.xy-cave-odds-pct {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-1);
+}
+
+.xy-cave-odds-meta {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+}
+
+.xy-cave-forge-detail__side {
+  flex: 0 0 auto;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.xy-cave-forge-detail__craft {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.xy-cave-forge-detail__craft-line {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-1);
+
+  strong {
+    color: var(--xy-gold);
+  }
+}
+
+.xy-cave-forge-detail__craft-effect {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
 }
 
 /* ══════════════════════════════════════════════════════════════════

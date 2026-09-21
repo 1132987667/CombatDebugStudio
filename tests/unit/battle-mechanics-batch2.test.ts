@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
+import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
@@ -334,6 +335,171 @@ describe('BattleExecutor 守护转移', () => {
 
     expect(actual).toBe(100)
     expect(guardian.currentHealth).toBe(500) // 守护者未承受伤害
+  })
+})
+
+// ==================== 守护分摊按承接者面板重算减免 ====================
+
+/**
+ * 口径来源《流派文档》不动明王：「护盾存在时，队友受到的伤害降低 10%，自身承受该伤害的
+ * 50%（此伤害可被免伤和护盾吸收）」。守护份额是它自己挨的一击，须吃守护者自身面板。
+ *
+ * 关键约束：防御是【减法】项，份额基数改为减免前后必须折算防御
+ * （defenseScale = 份额/减免前），否则每份都被扣满整段防御 —— 中位数值档位
+ * （攻 88 / 防 52）下会把整击归零，守护者变成团队免疫。
+ */
+describe('BattleExecutor 守护分摊按承接者面板重算', () => {
+  let calc: DamageCalculator
+  let executor: BattleExecutor
+  let buffSystem: BuffSystemType
+
+  const PHYSICAL_STEP = {
+    type: 'deal_damage',
+    calculation: { baseValue: 100, extraValues: [] },
+    damageCategory: 'physical',
+    attackType: 'normal',
+  } as any
+
+  beforeEach(() => {
+    const registry = new BuffScriptRegistry()
+    buffSystem = new BuffSystem(registry, mockEventBus, createMockLogManager())
+    buffSystem.getEventBus = vi.fn(() => mockEventBus)
+    calc = new DamageCalculator({ enableDodge: false, enableCrit: false })
+
+    const skillManager = {
+      getExecutor: () => ({ cleanupComboState: vi.fn(), cleanupRotatingState: vi.fn() }),
+    } as unknown as SkillManager
+
+    executor = new BattleExecutor(
+      skillManager,
+      calc,
+      { triggerPassives: vi.fn(), drainLastTriggeredPassives: () => [] } as any,
+      {} as any,
+      {} as any,
+      buffSystem,
+      undefined,
+      undefined,
+    )
+    LoggerProvider.logger = createMockLogManager()
+  })
+
+  /** 与生产同构：BattleExecutor.createRedirectRecalc 就是包一层 recalcTargetMitigation */
+  const recalcFor = (source: BattleEntity, step: any) =>
+    (share: number, guardian: BattleEntity, defenseScale: number, isCritical: boolean) =>
+      calc.recalcTargetMitigation(share, step, source, guardian, isCritical, defenseScale)
+
+  function setupGuardian(targetDef: number, guardianDef: number) {
+    const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 1000)
+    const target = makeEntity('t1', '术士', ParticipantSide.ENEMY, 5000, {
+      attrs: { [ATTRIBUTE_CODE.defense]: targetDef },
+      takeDamage: vi.fn((n: number) => n),
+    })
+    const guardian = makeEntity('g1', '护卫', ParticipantSide.ENEMY, 5000, {
+      attrs: { [ATTRIBUTE_CODE.defense]: guardianDef },
+      takeDamage: vi.fn((n: number) => n),
+    })
+    buffSystem.addBuff('g1', 'buff_guardian', {}, 1) // percent 0.5 / reduction 0.1
+    buffSystem.setShieldValue('g1', 1000)
+    const battle = makeBattle()
+    battle.participants.set('t1', target)
+    battle.participants.set('g1', guardian)
+    return { source, target, guardian, battle }
+  }
+
+  const calledWith = (fn: unknown) => (fn as ReturnType<typeof vi.fn>).mock.calls[0][0] as number
+
+  it('守护者防御越高自己受得越少（份额吃自身面板，不再照抄主目标减免）', () => {
+    const tanky = setupGuardian(0, 60)
+    executor.settleDamage(
+      tanky.source, tanky.target, 100, 100, false, tanky.battle, false,
+      recalcFor(tanky.source, PHYSICAL_STEP),
+    )
+    // 份额 100×0.9×0.5=45，折算防御 round(60×0.45)=27 → 45−27=18
+    expect(calledWith(tanky.guardian.takeDamage)).toBe(18)
+
+    const soft = setupGuardian(0, 20)
+    executor.settleDamage(
+      soft.source, soft.target, 100, 100, false, soft.battle, false,
+      recalcFor(soft.source, PHYSICAL_STEP),
+    )
+    // 低防守护者折算防御 round(20×0.45)=9 → 45−9=36
+    expect(calledWith(soft.guardian.takeDamage)).toBe(36)
+  })
+
+  it('队友份额不受守护者面板影响（否则越肉的守护者越坑队友）', () => {
+    for (const guardianDef of [0, 60, 200]) {
+      const s = setupGuardian(0, guardianDef)
+      executor.settleDamage(
+        s.source, s.target, 100, 100, false, s.battle, false,
+        recalcFor(s.source, PHYSICAL_STEP),
+      )
+      expect(calledWith(s.target.takeDamage)).toBe(45)
+    }
+  })
+
+  it('中位数值档位（攻 88 / 防 52）走完整链路：分摊不归零，团队总承伤优于无守护', () => {
+    const strike = { ...PHYSICAL_STEP, calculation: { baseValue: 88, extraValues: [] } }
+    const s = setupGuardian(52, 52)
+    // 队友侧真实结算结果作为 settleDamage 入参（防御 52 → 88−52=36）
+    const real = calc.calculateDamage(strike, s.source, s.target)
+    expect(real.rawDamage).toBe(88)
+    expect(real.damage).toBe(36)
+
+    executor.settleDamage(
+      s.source, s.target, real.damage, real.rawDamage, false, s.battle, false,
+      recalcFor(s.source, strike),
+    )
+
+    const toTarget = calledWith(s.target.takeDamage)
+    const toGuardian = calledWith(s.guardian.takeDamage)
+    // 守护份额 88×0.9×0.5=39.6，折算防御 round(52×0.45)=23 → floor(16.6)=16
+    expect(toGuardian).toBe(16)
+    expect(toTarget).toBe(16)
+    // 悬崖守卫：减法防御若逐份扣满，这里会是 0（整击被无效化）
+    expect(toGuardian + toTarget).toBeGreaterThan(0)
+    expect(toGuardian + toTarget).toBeLessThan(real.damage) // 32 < 36
+  })
+
+  it('targetModifiers 之外的乘区同样吃守护者面板（免伤生效）', () => {
+    const s = setupGuardian(0, 0)
+    s.guardian.getAttribute = (code: string) =>
+      code === ATTRIBUTE_CODE.damageReduction ? 50 : 0
+    executor.settleDamage(
+      s.source, s.target, 100, 100, false, s.battle, false,
+      recalcFor(s.source, PHYSICAL_STEP),
+    )
+    // 份额 45，无防御，免伤 50% → 22
+    expect(calledWith(s.guardian.takeDamage)).toBe(22)
+    expect(calledWith(s.target.takeDamage)).toBe(45)
+  })
+})
+
+// ==================== 守护分摊的重算上下文传递 ====================
+
+/**
+ * 技能路径在 BattleExecutor 里按目标聚合多步伤害后才调 settleDamage，届时需还能拿到
+ * 某一步 skillStep 才能按承接者面板重算减免。step 是随 DeferredDamageToken 条目带过来的，
+ * 这个契约一断，守护分摊会静默退回旧口径（不报错、只是数值不对），故单独钉住。
+ */
+describe('DeferredDamageToken 携带重算上下文', () => {
+  it('record 保留 skillStep，供聚合后选取重算减免的那一步', () => {
+    const token = new DeferredDamageToken()
+    const target = makeEntity('t1', '术士', ParticipantSide.ENEMY, 500)
+    const step = { type: 'deal_damage', damageCategory: 'physical' } as any
+
+    token.record(target, 30, 0, 80, step)
+    token.record(target, 10, 0, 200, step)
+
+    const entries = token.getEntries()
+    expect(entries).toHaveLength(2)
+    expect(entries[0].skillStep).toBe(step)
+  })
+
+  it('未传 step（真伤/附加伤害，本就不进减免链）时 skillStep 为空', () => {
+    const token = new DeferredDamageToken()
+    const target = makeEntity('t1', '术士', ParticipantSide.ENEMY, 500)
+    token.record(target, 30)
+    expect(token.getEntries()[0].skillStep).toBeUndefined()
   })
 })
 

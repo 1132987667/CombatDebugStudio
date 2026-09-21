@@ -96,6 +96,21 @@ interface TargetResult {
 }
 
 /**
+ * 守护者减免重算器 —— 由握有 skillStep 的伤害产出方构造并传给 settleDamage。
+ *
+ * @param preMitigationShare 守护份额（减免前口径）
+ * @param guardian 承接者
+ * @param defenseScale 防御折算系数（份额/减免前伤害），防减法项在多份间重复扣满
+ * @param isCritical 原始一击是否暴击（决定暴击承伤减免是否生效）
+ */
+export type RedirectMitigationRecalc = (
+  preMitigationShare: number,
+  guardian: BattleEntity,
+  defenseScale: number,
+  isCritical: boolean,
+) => number
+
+/**
  * 行动表现清单 —— 用于解耦"伤害结算"与"日志拼装"的局部数据契约。
  * 仅在 selectAndExecuteSkill / selectAndExecuteAttack 内部流转，不跨越方法边界。
  */
@@ -671,8 +686,20 @@ export class BattleExecutor {
           // 命中瞬间（50%T）：统一应用所有延迟伤害，统一走 settleDamage
           // NOTE: 先按 target.id 聚合 entries，确保多步骤技能对同一目标只触发一次 ON_HIT/DAMAGE_TAKEN
           const resultMap = new Map<string, TargetResult>()
+          // 守护分摊重算减免需要 skillStep，但 TargetResult 是纯日志视图（见其定义处禁令），
+          // 故另开一张旁路表；多步命中同一目标时保留贡献减免前数值最大的那一步。
+          const stepByTarget = new Map<string, { step: ExtendedSkillStep; raw: number }>()
           for (const entry of damageToken.getEntries()) {
             if (!entry.target.isAlive()) continue
+            if (entry.skillStep) {
+              const held = stepByTarget.get(entry.target.id)
+              if (!held || entry.rawDamage > held.raw) {
+                stepByTarget.set(entry.target.id, {
+                  step: entry.skillStep,
+                  raw: entry.rawDamage,
+                })
+              }
+            }
             const existing = resultMap.get(entry.target.id)
             if (existing) {
               existing.damage += entry.damage
@@ -694,7 +721,19 @@ export class BattleExecutor {
           manifest.results.length = 0
           for (const r of resultMap.values()) {
             if (r.damage > 0) {
-              const actualDamage = this.settleDamage(source, r.target, r.damage, r.rawDamage, isCrit, battleData)
+              const heldStep = stepByTarget.get(r.target.id)
+              const actualDamage = this.settleDamage(
+                source,
+                r.target,
+                r.damage,
+                r.rawDamage,
+                isCrit,
+                battleData,
+                false,
+                heldStep
+                  ? this.createRedirectRecalc(heldStep.step, source)
+                  : undefined,
+              )
               overkillMap.set(r.target.id, Math.max(0, actualDamage - r.hpBefore))
             }
             if (r.heal > 0) {
@@ -1000,6 +1039,7 @@ export class BattleExecutor {
     isCritical: boolean,
     battle: BattleData,
     deferHitPassives = false,
+    redirectRecalc?: RedirectMitigationRecalc,
   ): number {
     // G2（统一战斗系统 §6.4）：睡眠目标受击该次伤害 ×1.2（先探测，扣血成立后唤醒）
     const wasSleeping = this.buffSystem.isSleeping(target.id)
@@ -1010,9 +1050,25 @@ export class BattleExecutor {
     let damageForTarget = Math.round(finalDamage * (wasSleeping ? 1.2 : 1))
     if (redirect) {
       const totalAfterReduction = finalDamage * (1 - redirect.reduction)
-      const toGuardian = Math.round(totalAfterReduction * redirect.percent)
-      damageForTarget = Math.max(0, Math.round(totalAfterReduction - toGuardian))
-      this.settleGuardianDamage(source, redirect.guardian, toGuardian, battle)
+      // NOTE: 队友份额恒为自己那一份，不由「减免后总额 − 守护者份额」反推——
+      //       守护者按自身面板重算后可能减免掉大半，差值会回灌到队友身上（越肉的守护者越坑队友）。
+      damageForTarget = Math.max(
+        0,
+        Math.round(totalAfterReduction * (1 - redirect.percent)),
+      )
+      this.settleGuardianDamage(
+        source,
+        redirect.guardian,
+        this.resolveGuardianShare(
+          source,
+          redirect,
+          rawDamage,
+          totalAfterReduction,
+          isCritical,
+          redirectRecalc,
+        ),
+        battle,
+      )
     }
 
     // 1. 扣血（内部处理护盾吸收、背水护甲能量抵扣）
@@ -1208,10 +1264,55 @@ export class BattleExecutor {
   }
 
   /**
-   * 守护者侧伤害结算 — 承接转移伤害（护盾吸收由 takeDamage 内部处理）。
+   * 守护者份额解析 — 决定转移给守护者的最终伤害值。
    *
-   * HACK: 天花板 — 该份伤害基于目标侧免伤后的数值，守护者自身免伤率不重算；
-   * 若将来需要"按守护者面板重算免伤"，需把此调用前移到 DamageCalculator 管线内。
+   * 口径（《流派文档》不动明王：「此伤害可被免伤和护盾吸收」）：守护者的那一份是它自己
+   * 挨的一击，应按**守护者自身面板**（防御/抗性/免伤）结算，而非沿用主目标减免后的数值。
+   * 因此以【减免前】rawDamage 为基数取份额，再走 DamageCalculator 的目标侧减免链重算。
+   *
+   * 无 redirectRecalc 时（DOT / 溅射 / 固定伤害路径）保持旧口径：这些路径本就不进减免链
+   * （takeDamage 只吸盾），没有「守护者面板」可重算，强行套用反而会引入减免。
+   */
+  private resolveGuardianShare(
+    source: BattleEntity | null,
+    redirect: { guardian: BattleEntity; percent: number; reduction: number },
+    rawDamage: number,
+    totalAfterReduction: number,
+    isCritical: boolean,
+    redirectRecalc?: RedirectMitigationRecalc,
+  ): number {
+    if (!redirectRecalc || !source) {
+      return Math.round(totalAfterReduction * redirect.percent)
+    }
+    const share = rawDamage * (1 - redirect.reduction) * redirect.percent
+    // 防御折算系数 = 份额 / 减免前伤害。防御是减法项，不折算会在各份额间被逐份扣满，
+    // 导致「减免前为基」的分摊把整击归零（中位数值档位 raw88/def52 → 队友0+守护0）。
+    return redirectRecalc(share, redirect.guardian, share / Math.max(1, rawDamage), isCritical)
+  }
+
+  /**
+   * 构造守护者减免重算器 — 只有握有 skillStep 的伤害产出方才该传它。
+   *
+   * 目标侧减免链的分支（伤害大类跳过、普攻/技能减免、元素抗性、targetModifiers、
+   * 阵营克制）全由 skillStep 决定，故重算能力必须与 step 成对出现，不能凭空合成。
+   */
+  private createRedirectRecalc(
+    skillStep: ExtendedSkillStep,
+    source: BattleEntity,
+  ): RedirectMitigationRecalc {
+    return (share, guardian, defenseScale, isCritical) =>
+      this.damageCalculator.recalcTargetMitigation(
+        share,
+        skillStep,
+        source,
+        guardian,
+        isCritical,
+        defenseScale,
+      )
+  }
+
+  /**
+   * 守护者侧伤害结算 — 承接已按自身面板重算过的转移伤害（护盾吸收由 takeDamage 内部处理）。
    */
   private settleGuardianDamage(
     source: BattleEntity | null,
@@ -1336,6 +1437,7 @@ export class BattleExecutor {
   /**
    * 处理攻击命中的情况
    * @param options.comboSegment 连击段序号（≥2 表示连击段，日志与被动上下文携带）
+   * @param options.attackStep 产出该次伤害的技能步骤（守护分摊按承接者面板重算减免用）
    */
   async handleHitAttack(
     action: BattleAction,
@@ -1344,7 +1446,7 @@ export class BattleExecutor {
     damageResult: { damage: number; isCritical: boolean; rawDamage: number },
     battle: BattleData,
     record?: CombatRecord,
-    options?: { comboSegment?: number },
+    options?: { comboSegment?: number; attackStep?: ExtendedSkillStep },
   ): Promise<void> {
     const { damage, isCritical, rawDamage } = damageResult
     const comboSegment = options?.comboSegment
@@ -1372,7 +1474,18 @@ export class BattleExecutor {
     // 命中瞬间（50%T）：扣血，气血 条与 UI 特效同帧开始
     // NOTE: deferHitPassives — 被动触发推迟到 emitAttackLog 之后，
     //       保证日志顺序为「攻击 → 受到伤害 → 被动效果」。
-    const actualDamage = this.settleDamage(source, target, damage, rawDamage, isCritical, battle, true)
+    const actualDamage = this.settleDamage(
+      source,
+      target,
+      damage,
+      rawDamage,
+      isCritical,
+      battle,
+      true,
+      options?.attackStep
+        ? this.createRedirectRecalc(options.attackStep, source)
+        : undefined,
+    )
     //  overkill = takeDamage 返回值超出目标扣血前 HP 的部分
     const overkill = Math.max(0, actualDamage - hpBefore)
     if (record && overkill > 0) record.overkill = overkill
@@ -1519,7 +1632,7 @@ export class BattleExecutor {
         },
         battle,
         record,
-        { comboSegment: segment },
+        { comboSegment: segment, attackStep },
       )
     }
   }
@@ -1616,7 +1729,9 @@ export class BattleExecutor {
     if (damageResult.isMiss) {
       await this.handleMissAttack(action, source, target, battle)
     } else {
-      await this.handleHitAttack(action, source, target, damageResult, battle, record)
+      await this.handleHitAttack(action, source, target, damageResult, battle, record, {
+        attackStep,
+      })
       // 溅射：按 splash 属性对主目标的相邻敌人追加比例伤害（基于第一段实际伤害）
       this.executeSplash(source, target, action.damage ?? 0, battle, action)
       // 连击引擎：普攻命中后按 comboRate 追加连击段（伤害按 comboDamageCoefficient 缩放）

@@ -156,26 +156,7 @@ export class DamageCalculator {
     }
 
     // ---- 构建伤害拆分对象 ----
-    const breakdown: DamageBreakdown = {
-      baseDamage: 0,
-      extraContributions: [],
-      isCritical: damageResult.isCritical,
-      critRate: cr,
-      critDamage: 0,
-      critMultiplier: 1,
-      preCritDamage: 0,
-      postCritDamage: 0,
-      defenseValue: 0,
-      effectiveDefense: 0,
-      defenseMultiplier: 1,
-      vulnerability: 0,
-      targetModifierEffects: [],
-      minDamageThreshold: this.config.minDamageThreshold ?? 1,
-      maxDamageThreshold: this.config.maxDamageThreshold ?? 9999,
-      finalDamage: 0,
-      rawDamage: 0,
-      steps: [],
-    }
+    const breakdown = this.createDamageBreakdown(damageResult.isCritical, cr)
 
     // 基础伤害计算
     let damage = this.calculateBaseDamage(skillStep, source, target, context)
@@ -359,8 +340,60 @@ export class DamageCalculator {
     breakdown.rawDamage = floor(damage)
     damage = breakdown.rawDamage
 
+    damage = this.applyTargetMitigation(
+      breakdown.rawDamage,
+      skillStep,
+      source,
+      target,
+      damageResult.isCritical,
+      breakdown,
+    )
+
+    breakdown.finalDamage = damage
+
+    // 写入 CombatRecord
+    if (context?.record) {
+      context.record.damageBreakdown = breakdown
+    }
+
+    // 日志记录
+    this.logCalculation('final', damage, `最终伤害: ${damage}`)
+
+    return {
+      damage,
+      rawDamage: breakdown.rawDamage,
+      isCritical: damageResult.isCritical,
+      isMiss,
+    }
+  }
+
+  /**
+   * 目标侧减免链 — 从「减免前伤害」推到「最终伤害」的唯一实现。
+   *
+   * 顺序不可重排（与抽取前逐位一致）：
+   *   暴击承伤减免 → 防御(减法，含 armorBreak) → 攻击类型减免 → 元素抗性/场地
+   *   → 免伤 → 易伤 → targetModifiers → 阵营克制 → 阈值钳制
+   *
+   * 公开供守护者伤害分摊复用：转移份额需按承接者自身面板重算减免，而非沿用主目标的。
+   *
+   * @param defenseScale 防御折算系数，默认 1（整段防御照扣）。分摊场景传 `份额/减免前伤害`：
+   *                     防御是减法项，不折算会在多份之间被逐份重复扣满，导致份额归零。
+   */
+  applyTargetMitigation(
+    preMitigationDamage: number,
+    skillStep: ExtendedSkillStep,
+    source: BattleEntity,
+    target: BattleEntity,
+    isCritical: boolean,
+    breakdown: DamageBreakdown,
+    defenseScale = 1,
+  ): number {
+    let damage = preMitigationDamage
+    const damageCategory = skillStep.damageCategory || DamageCategory.PHYSICAL
+    const skillAtkType = skillStep.attackType || AttackType.SKILL
+
     // 暴击承伤减免（目标方）
-    if (damageResult.isCritical) {
+    if (isCritical) {
       const critReduction = target.getAttribute(
         ATTRIBUTE_CODE.critDmgTakenReduction,
       )
@@ -389,7 +422,7 @@ export class DamageCalculator {
           ? 0
           : Math.min(armorBreak, 100) / 100
       breakdown.effectiveDefense = Math.round(
-        breakdown.defenseValue * (1 - armorBreakRatio),
+        breakdown.defenseValue * (1 - armorBreakRatio) * defenseScale,
       )
       breakdown.defenseMultiplier = Math.max(
         0,
@@ -601,24 +634,58 @@ export class DamageCalculator {
     }
 
     // 确保非负整数
-    damage = Math.max(0, floor(damage))
-
-    breakdown.finalDamage = damage
     // final 值在 payload 顶层（final 字段）可查，steps 只记录变换环节，终点不重复打点
+    return Math.max(0, floor(damage))
+  }
 
-    // 写入 CombatRecord
-    if (context?.record) {
-      context.record.damageBreakdown = breakdown
-    }
+  /**
+   * 按承接者面板重算目标侧减免（不产出 breakdown，仅供分摊/预览类调用）。
+   *
+   * 用于守护者转移：转移份额需吃承接者自己的防御/抗性/免伤，而非沿用主目标结算结果。
+   */
+  recalcTargetMitigation(
+    preMitigationShare: number,
+    skillStep: ExtendedSkillStep,
+    source: BattleEntity,
+    target: BattleEntity,
+    isCritical: boolean,
+    defenseScale: number,
+  ): number {
+    const scratch = this.createDamageBreakdown(isCritical, 0)
+    return this.applyTargetMitigation(
+      preMitigationShare,
+      skillStep,
+      source,
+      target,
+      isCritical,
+      scratch,
+      defenseScale,
+    )
+  }
 
-    // 日志记录
-    this.logCalculation('final', damage, `最终伤害: ${damage}`)
-
+  private createDamageBreakdown(
+    isCritical: boolean,
+    critRate: number,
+  ): DamageBreakdown {
     return {
-      damage,
-      rawDamage: breakdown.rawDamage,
-      isCritical: damageResult.isCritical,
-      isMiss,
+      baseDamage: 0,
+      extraContributions: [],
+      isCritical,
+      critRate,
+      critDamage: 0,
+      critMultiplier: 1,
+      preCritDamage: 0,
+      postCritDamage: 0,
+      defenseValue: 0,
+      effectiveDefense: 0,
+      defenseMultiplier: 1,
+      vulnerability: 0,
+      targetModifierEffects: [],
+      minDamageThreshold: this.config.minDamageThreshold ?? 1,
+      maxDamageThreshold: this.config.maxDamageThreshold ?? 9999,
+      finalDamage: 0,
+      rawDamage: 0,
+      steps: [],
     }
   }
 

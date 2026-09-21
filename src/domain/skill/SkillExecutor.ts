@@ -234,7 +234,7 @@ export class SkillExecutor {
     } else {
       if (context?.token) {
         // 延迟模式 — 只记录伤害数值
-        context.token.record(target, result.damage, 0, result.rawDamage)
+        context.token.record(target, result.damage, 0, result.rawDamage, skillStep)
         action.damage = (action.damage ?? 0) + result.damage
         action.effects.push({
           type: ActionResultType.DAMAGE,
@@ -566,7 +566,7 @@ export class SkillExecutor {
     const dmg = this.damageCalculator.calculateDamage(skillStep, source, target)
     if (!dmg.isMiss && dmg.damage > 0) {
       if (context?.token) {
-        context?.token.record(target, dmg.damage, 0, dmg.rawDamage)
+        context?.token.record(target, dmg.damage, 0, dmg.rawDamage, skillStep)
         action.damage = (action.damage ?? 0) + dmg.damage
       } else {
         this.damageCalculator.applyDamage(target, dmg.damage)
@@ -599,7 +599,7 @@ export class SkillExecutor {
     if (!dmg.isMiss && dmg.damage > 0) {
       let actualHeal = 0
       if (context?.token) {
-        context?.token.record(target, dmg.damage, 0, dmg.rawDamage)
+        context?.token.record(target, dmg.damage, 0, dmg.rawDamage, skillStep)
         action.damage = (action.damage ?? 0) + dmg.damage
         action.heal = (action.heal ?? 0) + dmg.damage
         actualHeal = dmg.damage
@@ -751,7 +751,7 @@ export class SkillExecutor {
       if (dmg.isMiss || damage <= 0) continue
 
       if (token) {
-        token.record(target, damage, 0, dmg.rawDamage)
+        token.record(target, damage, 0, dmg.rawDamage, strikeStep)
         action.damage = (action.damage ?? 0) + damage
       } else {
         this.damageCalculator.applyDamage(target, damage)

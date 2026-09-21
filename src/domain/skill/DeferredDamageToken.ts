@@ -1,4 +1,5 @@
 import type { BattleEntity } from '@/domain/battle/type/types'
+import type { ExtendedSkillStep } from '@/domain/skill/types'
 
 interface DamageEntry {
   target: BattleEntity
@@ -6,6 +7,12 @@ interface DamageEntry {
   heal: number
   /** 减免前原始伤害（供 DAMAGE_TAKEN 事件发射使用） */
   rawDamage: number
+  /**
+   * 产出该份伤害的技能步骤。守护分摊需按承接者面板重算减免，而减免链的
+   * 大类/攻击类型/元素抗性/易伤等分支全由 skillStep 决定，多步技能聚合同一
+   * 目标时取贡献最大的那一步作代表。
+   */
+  skillStep?: ExtendedSkillStep
 }
 
 /**
@@ -21,8 +28,14 @@ export class DeferredDamageToken {
   private totalDamageSnapshot = 0
   private totalHealSnapshot = 0
 
-  record(target: BattleEntity, damage: number, heal: number = 0, rawDamage?: number): void {
-    this.entries.push({ target, damage, heal, rawDamage: rawDamage ?? damage })
+  record(
+    target: BattleEntity,
+    damage: number,
+    heal: number = 0,
+    rawDamage?: number,
+    skillStep?: ExtendedSkillStep,
+  ): void {
+    this.entries.push({ target, damage, heal, rawDamage: rawDamage ?? damage, skillStep })
   }
 
   /** 获取所有记录条目（供 BattleExecutor 遍历扣血并发射事件） */

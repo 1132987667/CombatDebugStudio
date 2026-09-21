@@ -99,6 +99,7 @@ import {
   setPetMountActive,
   type PetMountInstance,
 } from '../petMount'
+import { PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
 
 const playerStore = usePlayerStore()
 const notification = useNotificationStore()
@@ -144,19 +145,10 @@ const petRows = computed<PetRow[]>(() =>
     inst,
     name: individualById(inst.individualId)?.name ?? inst.individualId,
     statsText: petMountStats(inst)
-      .map((s) => `${ATTR_LABELS[s.attr] ?? s.attr} +${s.value}`)
+      .map((s) => `${PLAYER_BASE_ATTR_LABELS[s.attr as keyof typeof PLAYER_BASE_ATTR_LABELS] ?? s.attr} +${s.value}`)
       .join(' · '),
   })),
 )
-
-const ATTR_LABELS: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  hit: '命中',
-  dodge: '闪避',
-  speed: '速度',
-  maxHealth: '气血',
-}
 
 function expPercent(inst: PetMountInstance): number {
   if (inst.level >= PET_MAX_LEVEL) return 100

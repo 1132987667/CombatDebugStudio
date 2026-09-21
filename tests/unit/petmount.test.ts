@@ -34,6 +34,7 @@ import {
   setLuckValue,
   type PetMountInstance,
 } from '@/presentation/modules/yanjie/xiyou/petMount'
+import { PLAYER_BASE_ATTRS } from '@/domain/fengshen/player-config'
 
 function makeInst(partial: Partial<PetMountInstance>): PetMountInstance {
   return {
@@ -96,10 +97,23 @@ describe('属性公式（§18 算例锚定）', () => {
     expect(petMountStatValue(makeInst({ quality: 5 }), 3, 'attack')).toBe(60)
   })
 
-  it('实例主要 3 条：个体 weights 键序（pet_01 combo = speed/attack/hit）', () => {
+  it('实例主要 3 条：个体 weights 键序归一为基础六维属性码（pet_01 combo = speed/attack/hit）', () => {
     const inst = makeInst({ individualId: 'pet_01' })
     const stats = petMountStats(inst)
-    expect(stats.map((s) => s.attr)).toEqual(['speed', 'attack', 'hit'])
+    expect(stats.map((s) => s.attr)).toEqual(['speed', 'attack', 'hitValue'])
+    // 光环键值必须落在基础六维口径内：曾漂移成 hit（命中率）导致加错属性且总览与实战不一致
+    expect([...PLAYER_BASE_ATTRS]).toEqual(expect.arrayContaining(stats.map((s) => s.attr)))
+  })
+
+  it('全部 50 个个体的权重键均归一到基础六维、换算值非零（配置信任边界）', () => {
+    for (const individual of [...petIndividuals, ...mountIndividuals]) {
+      const stats = petMountStats(makeInst({ individualId: individual.id }))
+      expect(stats, individual.id).toHaveLength(3)
+      for (const s of stats) {
+        expect(PLAYER_BASE_ATTRS, `${individual.id} 权重键 ${s.attr} 不在基础六维内`).toContain(s.attr)
+        expect(s.value, `${individual.id}.${s.attr} 换算为 0（转化系数缺该属性码）`).toBeGreaterThan(0)
+      }
+    }
   })
 })
 

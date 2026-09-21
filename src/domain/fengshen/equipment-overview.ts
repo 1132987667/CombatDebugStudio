@@ -392,8 +392,12 @@ export function buildEquipmentOverview(
 // - 行→属性组池映射：2026-09-06 策划拍板，行名与属性组码逐字同源（原 §八遗留 1 已关闭）
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 个体 weights 键 → 属性 code（configs 用短名 hit / dodge，属性系统用 hitValue / dodgeValue） */
-const INDIVIDUAL_WEIGHT_CODES: Record<string, ATTRIBUTE_CODE> = {
+/**
+ * 个体 weights 键 → 属性 code（configs 用短名 hit / dodge，属性系统用 hitValue / dodgeValue）
+ * NOTE: 单一事实来源——设计侧总览与运行期出战光环（petMount）共用本表，
+ *       两侧各自维护时曾漂移成 hit→hit（命中率，百分比进阶属性），使光环加错属性。
+ */
+export const INDIVIDUAL_WEIGHT_CODES: Record<string, ATTRIBUTE_CODE> = {
   attack: 'attack', hit: 'hitValue', speed: 'speed',
   defense: 'defense', dodge: 'dodgeValue', maxHealth: 'maxHealth',
 }

@@ -204,6 +204,7 @@ import { mountIndividuals, individualById, petMountState, petMountStats, PET_MAX
   breakthrough as mountBreakthrough, feedExpPill as mountFeedPill, raiseAptitude as mountRaiseApt, setPetMountActive, type PetMountInstance } from '../petMount'
 import { equipQualityClass, qualityClass, qualityName, qualityOf } from '../quality'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
+import { PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
 import { factorText, gearTooltipData, statText } from '../gearTooltip'
 import GearDetailDialog from './GearDetailDialog.vue'
 import {
@@ -277,21 +278,12 @@ interface MountRow {
   statsText: string
 }
 
-const MOUNT_ATTR_LABELS: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  hit: '命中',
-  dodge: '闪避',
-  speed: '速度',
-  maxHealth: '气血',
-}
-
 const mountRows = computed<MountRow[]>(() =>
   petMountState.mounts.map((inst) => ({
     inst,
     name: individualById(inst.individualId)?.name ?? inst.individualId,
     statsText: petMountStats(inst)
-      .map((s) => `${MOUNT_ATTR_LABELS[s.attr] ?? s.attr} +${s.value}`)
+      .map((s) => `${PLAYER_BASE_ATTR_LABELS[s.attr as keyof typeof PLAYER_BASE_ATTR_LABELS] ?? s.attr} +${s.value}`)
       .join(' · '),
   })),
 )

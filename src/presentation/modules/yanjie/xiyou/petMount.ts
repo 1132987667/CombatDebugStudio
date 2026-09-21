@@ -14,6 +14,7 @@ import petsJson from '@configs/pets/pets.json'
 import mountsJson from '@configs/mounts/mounts.json'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
+import { INDIVIDUAL_WEIGHT_CODES } from '@/domain/fengshen/equipment-overview'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
@@ -102,24 +103,14 @@ export function qualityTierWeight(quality: number): number {
   return [0, 0.6, 0.7, 0.8, 0.9, 1.0][Math.min(5, Math.max(1, quality))] ?? 0.6
 }
 
-/** 属性点转化系数（§19：1 点 = 12 气血 = 2 攻/防/命/闪/速） */
+/** 属性点转化系数（§19：1 点 = 12 气血 = 2 攻/防/命/闪/速）——按属性码取键 */
 const CONVERSION: Record<string, number> = {
   attack: 2,
   defense: 2,
-  hit: 2,
-  dodge: 2,
+  hitValue: 2,
+  dodgeValue: 2,
   speed: 2,
   maxHealth: 12,
-}
-
-/** 个体权重键 → 属性码（与设计侧 INDIVIDUAL_WEIGHT_CODES 同口径） */
-const WEIGHT_CODES: Record<string, string> = {
-  attack: 'attack',
-  hit: 'hit',
-  speed: 'speed',
-  defense: 'defense',
-  dodge: 'dodge',
-  maxHealth: 'maxHealth',
 }
 
 /**
@@ -131,18 +122,18 @@ export function petMountStatValue(
   weight: number,
   attrKey: string,
 ): number {
-  const conversion = CONVERSION[WEIGHT_CODES[attrKey] ?? attrKey] ?? 0
+  const conversion = CONVERSION[INDIVIDUAL_WEIGHT_CODES[attrKey] ?? attrKey] ?? 0
   if (conversion === 0) return 0
   const base = inst.level * weight * qualityTierWeight(inst.quality) * (inst.aptitude / 400) * breakthroughMult(inst.breakthroughs) * conversion
   return Math.max(1, Math.round(base * inst.floatFactor))
 }
 
-/** 实例的主要 3 条属性（个体 weights 顺序） */
+/** 实例的主要 3 条属性（个体 weights 顺序，属性码经设计侧同一映射归一） */
 export function petMountStats(inst: PetMountInstance): { attr: string; value: number }[] {
   const individual = individualById(inst.individualId)
   if (!individual) return []
   return Object.entries(individual.weights).map(([key, weight]) => ({
-    attr: WEIGHT_CODES[key] ?? key,
+    attr: INDIVIDUAL_WEIGHT_CODES[key] ?? key,
     value: petMountStatValue(inst, weight, key),
   }))
 }

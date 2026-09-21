@@ -13,9 +13,10 @@
     "effects": [
       {
         "type": "dot",
-        "damagePercent": 0.03,
-        "damageBase": "maxHealth",
-        "perStack": true
+        "params": {
+          "damageType": "percent",
+          "value": 3
+        }
       }
     ],
     "description": "每回合损失3%最大气血，最多3层。"
@@ -34,9 +35,10 @@
     "effects": [
       {
         "type": "dot",
-        "damagePercent": 0.03,
-        "damageBase": "maxHealth",
-        "perStack": true
+        "params": {
+          "damageType": "percent",
+          "value": 3
+        }
       }
     ],
     "description": "每回合损失3%最大气血，最多3层。"
@@ -55,9 +57,10 @@
     "effects": [
       {
         "type": "dot",
-        "damagePercent": 0.03,
-        "damageBase": "maxHealth",
-        "perStack": true
+        "params": {
+          "damageType": "percent",
+          "value": 3
+        }
       }
     ],
     "description": "每回合损失3%最大气血，最多3层。"
@@ -250,8 +253,10 @@
     "effects": [
       {
         "type": "shield",
-        "shieldPercent": 0.15,
-        "shieldBase": "maxHealth"
+        "params": {
+          "value": 15,
+          "valueType": "percent_max_hp"
+        }
       }
     ],
     "description": "获得最大气血15%的护盾，吸收伤害。"

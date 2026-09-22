@@ -64,8 +64,7 @@ export class BattleProjection {
 
     // 注入脏回调 — 领域实体属性变更后调用 markDirty
     if (isDirtyObservable(entity)) {
-      const that = this
-      entity.setDirtyCallback(() => that.markDirty(id))
+      entity.setDirtyCallback(() => this.markDirty(id))
     }
   }
 

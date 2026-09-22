@@ -2,6 +2,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { AttributeValueConfig } from '@/shared/types/buffs-json'
+import type { BuffPolarity } from '@/shared/types/buff-classification'
 import {
   ConditionState,
 } from '@/shared/types/buff-display'
@@ -224,6 +225,12 @@ export interface BuffConfig {
    * true表示此Buff可被驱散技能移除
    */
   dispellable?: boolean
+
+  /**
+   * 极性：positive/negative/neutral/mixed，决定 UI 颜色与减益判定（classifyBuff.isNegative）。
+   * addBuff 合并链从 BuffConfigResolver 解析结果透传（JSON 显式声明或 controlType/tags 推导）。
+   */
+  polarity?: BuffPolarity
   /** 施加阻挡标记：目标身上存在携带该 tag 的 buff 时无法施加本 buff */
   blockedByTag?: string
 

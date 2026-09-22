@@ -535,6 +535,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         ControlType.NONE,
       isPermanent:
         config.isPermanent ?? scriptDefaultConfig?.isPermanent ?? false,
+      // polarity 取 resolver 解析值（JSON 显式声明或 controlType/tags 推导，缺失且不可推导时
+      // 加载期即抛）——isNegative/UI 着色由 classifyBuff 读本字段，不进合并链则恒 NEUTRAL
+      polarity:
+        config.polarity ??
+        this.scriptRegistry.getResolvedBuffConfig(buffId)?.polarity,
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable:
         config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,

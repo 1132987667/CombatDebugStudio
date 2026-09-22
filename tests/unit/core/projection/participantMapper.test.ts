@@ -115,12 +115,9 @@ describe('participantToSnapshot', () => {
       expect(item?.remainingTurns).toBe(inst?.remainingTurns)
     })
 
-    // NOTE: 已知缺陷（2026-09-22 反查发现，待拍板修复）——participantMapper.ts:133 把
-    // 运行时合并 BuffConfig 传给 classifyBuff，但 addBuff 合并链不写入 polarity，
-    // 导致快照 isNegative 恒 false、UI 减益全按增益着色。引擎事件侧（BuffSystem.ts:829）
-    // 从 resolved 配置取 polarity 是对的，仅投影路径断链。
-    // 修好（改传 getResolvedBuffConfig/rawConfig）后本用例会转红，届时去掉 .fails。
-    it.fails('减益 buff 的 isNegative 应为 true（当前恒 false，见上方 NOTE）', () => {
+    // 回归锁定（2026-09-22 修复）：addBuff 合并链此前不写入 polarity，
+    // 快照 isNegative 恒 false、UI 减益全按增益着色；现由 resolver 解析结果透传。
+    it('减益 buff 的 isNegative 应为 true', () => {
       BattleParticipantImpl.eventBus = mockEventBus as never
       const p = createParticipantFromEnemy('yaotu_gold', ParticipantSide.ENEMY)
       if (!p) throw new Error('配置缺失')

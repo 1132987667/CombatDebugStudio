@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { StackRule, ControlType } from '@/domain/buff/types'
+import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import type { BuffConfig } from '@/domain/buff/types'
 import { getBuffConfig } from '@tests/fixtures/loadTestData'
 import { createMockLogManager } from '@tests/mocks/MockLogger'
@@ -228,6 +229,35 @@ describe('BuffSystem', () => {
     it('should return empty array for character with no buffs', () => {
       const instances = buffSystem.getBuffInstances('no_buff_char')
       expect(instances.length).toBe(0)
+    })
+  })
+
+  describe('触发器分发错误边界', () => {
+    it('脚本抛错不冒泡到事件发射方，Buff 实例保留', () => {
+      let fired = 0
+      buffSystem.registerTriggerScript('boom', () => {
+        fired++
+        throw new Error('触发器内部错误')
+      })
+      const instanceId = buffSystem.addBuff(
+        'char_1',
+        'test_buff',
+        {
+          ...createTestBuffConfig(),
+          triggers: [{ phase: BattleTriggerPhase.DAMAGE_TAKEN, scriptId: 'boom' }],
+        },
+        1,
+      )
+      const registration = mockEventBus.on.mock.calls
+        .filter((call: unknown[]) => call[0] === BattleTriggerPhase.DAMAGE_TAKEN)
+        .at(-1)
+      expect(registration).toBeTruthy()
+      const callback = registration![1] as (ctx: Record<string, unknown>) => void
+
+      // 修复前：抛错一路逃到行动层 catch，整个行动降级为默认行动，已结算的扣血不回滚
+      expect(() => callback({ currentTurn: 1 })).not.toThrow()
+      expect(fired).toBe(1)
+      expect(buffSystem.getBuffInstances('char_1').map((b) => b.id)).toContain(instanceId)
     })
   })
 })

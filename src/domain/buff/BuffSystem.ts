@@ -438,18 +438,23 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
         const handler = this.triggerScripts.get(trigger.scriptId)
         if (handler) {
-          handler({
-            ...ctx,
-            instanceId,
-            targetId: characterId,
-            // NOTE: 修复 JSON 触发器脚本 ctx.buffSystem 缺失——emitTriggerEvent 构造的
-            //       TriggerEventContext 不含 buffSystem，此前 dealDotDamage/reflectDamage/
-            //       shareDamage 等全部通过 `ctx.buffSystem?.requestDamage` 的脚本实际无效
-            buffSystem: this,
-            params: trigger.params as
-              | Record<string, number | string>
-              | undefined,
-          })
+          // NOTE: 分发点必须有边界——onApply/onTick/onRemove 都有，唯独这里漏了。触发器脚本抛错
+          //       （典型是 BattleSystem 伤害回调递归深度守卫 throw）会一路逃到行动层 catch，
+          //       把整个行动降级成默认行动，而此前已结算的扣血不回滚。失败只丢本次触发。
+          BuffErrorBoundary.wrap(() => {
+            handler({
+              ...ctx,
+              instanceId,
+              targetId: characterId,
+              // NOTE: 修复 JSON 触发器脚本 ctx.buffSystem 缺失——emitTriggerEvent 构造的
+              //       TriggerEventContext 不含 buffSystem，此前 dealDotDamage/reflectDamage/
+              //       shareDamage 等全部通过 `ctx.buffSystem?.requestDamage` 的脚本实际无效
+              buffSystem: this,
+              params: trigger.params as
+                | Record<string, number | string>
+                | undefined,
+            })
+          }, { buffId: buffInstance.buffId, scriptPath: trigger.scriptId })
           state.count++
           state.lastTurn = turn
         }

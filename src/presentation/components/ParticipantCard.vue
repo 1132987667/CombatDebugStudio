@@ -464,9 +464,12 @@ const baseAttributes = computed(() => {
 
 const buffDisplay = useBuffDisplay(buffListItems, entityId.value, 5, baseAttributes)
 
-/** 无属性修饰且非控制的普通 Buff：纯名字标签（回放存档仅 name/stacks/turns，仍须在卡片上可见） */
+/** 无属性修饰且非控制的普通 Buff：纯名字标签（回放存档仅 name/stacks/turns，仍须在卡片上可见）
+ * NOTE: controlType 运行时约定为 'none' 字符串（truthy），须显式排除，与 useBuffDisplay 内 4 处判定一致 */
 const plainBuffLabels = computed<BuffTextItem[]>(() =>
-  buffDisplay.value.items.filter((i) => !i.controlType && i.modifiers.length === 0),
+  buffDisplay.value.items.filter(
+    (i) => (!i.controlType || i.controlType === 'none') && i.modifiers.length === 0,
+  ),
 )
 
 // 情境属性 — 根据当前选中的目标动态计算激活的情境属性

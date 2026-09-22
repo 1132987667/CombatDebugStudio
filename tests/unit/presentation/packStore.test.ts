@@ -489,9 +489,9 @@ describe('持久化', () => {
     expect(pack2.countOf('mat_zhixuecao')).toBe(3)
   })
 
-  it('旧档混装 stats 收敛：写死 stats 时代的多核心条目按 coreStat×品质系数回归单条', async () => {
-    // 预置旧格式实例：贝壳护手（coreStat speed 14）锁存了核心+词条混装的 3 条 stats；
-    // 旁挂一件正常实例（stats 单条且属性与 coreStat 一致）验证不受影响
+  it('旧档混装 stats 原样保留：coreStat 收敛锚点已废（配置表不再存固化数值），不再重写旧档', async () => {
+    // 预置旧格式实例：贝壳护手锁存了核心+词条混装的 3 条 stats；
+    // 旁挂一件正常实例（stats 单条）验证不受影响
     __mem.set('xiyou', new Map([['pack_runtime', {
       id: 'pack_runtime',
       name: '行囊运行时',
@@ -526,8 +526,12 @@ describe('持久化', () => {
     await pack.init()
     const legacy = pack.gearInstances.find((g) => g.instanceId === 'inst_legacy')
     const modern = pack.gearInstances.find((g) => g.instanceId === 'inst_modern')
-    // 旧实例：核心收敛为 coreStat 14 × 0.85 = 11.9 → 12 单条；词条归属 affixes 不动
-    expect(legacy?.stats).toEqual([{ attribute: 'speed', modifierType: 'flat', value: 12 }])
+    // 旧实例：混锁 stats 原样保留（收敛锚点已废）；词条归属 affixes 不动
+    expect(legacy?.stats).toEqual([
+      { attribute: 'speed', modifierType: 'flat', value: 12 },
+      { attribute: 'speed', modifierType: 'flat', value: 6 },
+      { attribute: 'damageTakenReduce', modifierType: 'percent', value: 7 },
+    ])
     expect(legacy?.affixes).toHaveLength(1)
     // 新格式实例原样保留
     expect(modern?.stats).toEqual([{ attribute: 'speed', modifierType: 'flat', value: 13 }])

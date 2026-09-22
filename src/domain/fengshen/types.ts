@@ -77,10 +77,9 @@ export interface EquipmentData {
   itemLevel?: number
   /** 穿戴等级门槛 */
   requiredLevel?: number
-  /** 部位固定属性（§21 核心属性静态标称值，批量生成器「全量重生成」写入）：
-   *  装备公式单值口径——单位基数 × itemLevel × 核心权重 × 子类型系数 × 转化系数 × 品阶权重上限，
-   *  不含浮动（50%~110%）与品质系数（实例维度）。实例化时直取并按品质系数缩放，
-   *  不再公式 roll 核心（packStore.rollInstanceParts）；缺省时维持运行时 roll 旧径 */
+  /** HACK: 过时字段——装备属性已统一为运行时公式 roll（packStore.rollInstanceParts），配置表不再存固化数值。
+   *  仅封神榜批量生成器（equip-generator「全量重生成→导出」工作流）仍产出此字段；西游侧无消费方。
+   *  哪天封神榜生成工作流改造为直出公式引用，删此字段。 */
   coreStat?: EquipmentStatEntry
   /** 阵营限制（引用 elements 表） */
   factionRestriction?: string

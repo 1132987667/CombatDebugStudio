@@ -31,6 +31,8 @@ import type { EnemyDrop } from '@/shared/types/enemy'
 import { EquipmentSlot, EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { container } from '@/infrastructure/di/Container'
+import { GameDataApi } from '@/application/service/GameDataApi'
 import { buildEquipFormula, buildPlayerConfig } from '@/infrastructure/adapters/storage/seed'
 import { rollGearStats, rollAppendAffixes, TIER_TO_QUALITY } from '@/domain/fengshen/gear-generate'
 import { affixRuleDefaults } from '@/domain/fengshen/affix-rule-defaults'
@@ -97,10 +99,23 @@ export function newInstanceId(): string {
 /** 阶位换算单一来源已上移 domain（gear-generate.TIER_TO_QUALITY）；此处保留本文件惯用短名 */
 const TIER_KEY = TIER_TO_QUALITY
 
-/** 词条投放规则 + 装备公式 + 转化系数（configs 权威源，与封神榜验证器同口径；模块级只构建一次） */
-const AFFIX_RULE: AffixRuleConfig = affixRuleDefaults()
-const EQUIP_FORMULA: EquipFormulaConfig = buildEquipFormula().data as unknown as EquipFormulaConfig
-const PLAYER_CONVERSION: Record<string, number> = (buildPlayerConfig().data as unknown as { conversion: Record<string, number> }).conversion
+/** 词条投放规则 + 装备公式 + 转化系数（种子默认兜底；init 时经封神榜 IDB 覆盖——策划改公式对西游新装备即时生效） */
+let AFFIX_RULE: AffixRuleConfig = affixRuleDefaults()
+let EQUIP_FORMULA: EquipFormulaConfig = buildEquipFormula().data as unknown as EquipFormulaConfig
+let PLAYER_CONVERSION: Record<string, number> = (buildPlayerConfig().data as unknown as { conversion: Record<string, number> }).conversion
+
+/** 从封神榜 IDB（params 域）拉取公式参数覆盖种子默认；任一缺失/异常保持当前值（静默，不做 toast） */
+async function refreshFormulaParams(): Promise<void> {
+  try {
+    const api = container.resolve<GameDataApi>('GameDataApi')
+    const [rule, formula, player] = await Promise.all([api.getAffixRule(), api.getEquipFormula(), api.getPlayerConfig()])
+    if (rule) AFFIX_RULE = rule
+    if (formula) EQUIP_FORMULA = formula
+    if (player?.conversion) PLAYER_CONVERSION = player.conversion
+  } catch {
+    // IDB 不可用（测试环境/存储异常）：种子默认已兜底
+  }
+}
 
 /** 按实例品质 roll 一件装备的全部属性（核心 1 条 + 主要/附加词条；§21 三属性固定/随机边界） */
 function rollInstanceParts(
@@ -125,28 +140,8 @@ function rollInstanceParts(
     PLAYER_CONVERSION,
     rng,
   )
-  // 静态定义带 coreStat（§21 部位固定属性标称，批量生成器全量重生成写入）时核心属性直取，
-  // 仅按品质系数缩放（实例维度），不再公式 roll；主要/附加词条照旧 roll。
-  if (g.coreStat) {
-    const factor = Math.max(0, qualityFactor || 1)
-    return { stats: [{ ...g.coreStat, value: Math.round(g.coreStat.value * factor) }], affixes: r.affixes }
-  }
+  // NOTE: 装备属性单一来源 = 装备公式（核心/词条均在公式区间内 roll；配置表已不存固化 coreStat）
   return { stats: r.core ? [r.core] : [], affixes: r.affixes }
-}
-
-/** 旧档 stats 规范化：写死 stats 时代的实例把核心+词条混锁在 stats（同属性重复 2~3 条，
- *  如贝壳护手「速度+12/+6/免伤+7%」），与 §21（stats=核心单条、词条在 affixes）冲突。
- *  恢复存档时以配置 coreStat × 品质系数为权威收敛；旧词条口径已废不并入（可洗练重 roll）。 */
-function normalizeLegacyStats(g: { itemId: string; qualityFactor: number; stats: EquipmentStatEntry[] }): EquipmentStatEntry[] {
-  const def = equipmentCatalog.find((e) => e.id === g.itemId)
-  if (!def?.coreStat) return g.stats
-  const factor = Math.max(0, g.qualityFactor || 1)
-  const canonical = { ...def.coreStat, value: Math.round(def.coreStat.value * factor) }
-  const isCurrent =
-    g.stats.length === 1 &&
-    g.stats[0].attribute === canonical.attribute &&
-    g.stats[0].modifierType === canonical.modifierType
-  return isCurrent ? g.stats : [canonical]
 }
 
 /** 创建装备实例（enhance 0、品质 1 凡品、系数取品质区间中值；属性按公式 roll 锁存）。
@@ -440,8 +435,8 @@ export const usePackStore = defineStore('pack', () => {
               quality,
               qualityFactor: Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality),
               star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
-              // 旧档无锁存属性（写死 stats 时代的实例）→ 按公式补 roll 一次；有锁存但为旧混装格式 → 收敛
-              stats: Array.isArray(g.stats) ? normalizeLegacyStats({ itemId: g.itemId as string, qualityFactor: Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality), stats: g.stats.map((s) => ({ ...s })) }) : rollInstanceParts(g.itemId as string, quality, Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality)).stats,
+              // 旧档无锁存属性（写死 stats 时代的实例）→ 按公式补 roll 一次；有锁存则原样保留（coreStat 收敛锚点已废）
+              stats: Array.isArray(g.stats) ? (g.stats.map((s) => ({ ...s })) as EquipmentStatEntry[]) : rollInstanceParts(g.itemId as string, quality, Number.isFinite(g.qualityFactor) ? (g.qualityFactor as number) : qualityFactorOf(quality)).stats,
               affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
             }
           }
@@ -460,8 +455,8 @@ export const usePackStore = defineStore('pack', () => {
               quality,
               qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1),
               star: Number.isInteger(g.star) && (g.star as number) >= 0 ? (g.star as number) : 0,
-              // 旧档无锁存属性（写死 stats 时代）→ 按公式补 roll 一次；有锁存但为旧混装格式 → 收敛
-              stats: Array.isArray(g.stats) ? normalizeLegacyStats({ itemId: g.itemId, qualityFactor: Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1), stats: g.stats.map((s) => ({ ...s })) }) : rollInstanceParts(g.itemId, quality, Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1)).stats,
+              // 旧档无锁存属性（写死 stats 时代）→ 按公式补 roll 一次；有锁存则原样保留（coreStat 收敛锚点已废）
+              stats: Array.isArray(g.stats) ? (g.stats.map((s) => ({ ...s })) as EquipmentStatEntry[]) : rollInstanceParts(g.itemId, quality, Number.isFinite(g.qualityFactor) ? g.qualityFactor : qualityFactorOf(g.quality ?? 1)).stats,
               affixes: Array.isArray(g.affixes) ? g.affixes.map((a) => ({ ...a })) : [],
             }
           })
@@ -541,6 +536,8 @@ export const usePackStore = defineStore('pack', () => {
   async function init(): Promise<void> {
     if (initialized) return
     initialized = true
+    // 公式参数先于任何实例化（buildFromConfigs 的初始装备/load 的旧档补 roll）拉取；失败静默用种子
+    await refreshFormulaParams()
     buildFromConfigs()
     await load()
     // 每日自动刷新：跨天则重抽坊市商品（静默，避免 init 时打扰）

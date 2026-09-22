@@ -121,19 +121,24 @@ describe('禁止规则（forbidden）', () => {
 })
 
 describe('显式缺口（不补默认值）', () => {
-  it('未配置 main_affix_pool 的子类型（皮甲）产生缺口 warning，主要条为空', () => {
+  it('未配置 main_affix_pool 的子类型产生缺口 warning，主要条为空', () => {
+    // 真实配置已补全（皮甲等均有池）；用 cfg 克隆移除该键，保持「缺口显式化」行为覆盖
+    const noPool = { ...CFG, main_affix_pool: { ...CFG.main_affix_pool } }
+    delete (noPool.main_affix_pool as Record<string, unknown>).leather_armor
     const r = rollGearStats(
       { slot: 'armor', subType: 'leather_armor', tier: 'di', itemLevel: 25, quality: 3, qualityFactor: 1 },
-      CFG, FORMULA, CONVERSION, lcg(11),
+      noPool, FORMULA, CONVERSION, lcg(11),
     )
     expect(r.affixes.filter((a) => a.fixed || a.main)).toHaveLength(0)
     expect(r.warnings.some((w) => w.includes('main_affix_pool'))).toBe(true)
   })
 
   it('护手主要固定条未配置（fixed 为空）产生 warning，随机池正常投放', () => {
+    // 真实配置已补全（glove.fixed=effectHit）；用 cfg 克隆置空 fixed，保持「缺口显式化」行为覆盖
+    const noFixed = { ...CFG, main_affix_pool: { ...CFG.main_affix_pool, glove: { ...CFG.main_affix_pool.glove, fixed: '' } } }
     const r = rollGearStats(
       { slot: 'glove', subType: 'glove', tier: 'xuan', itemLevel: 15, quality: 2, qualityFactor: 1 },
-      CFG, FORMULA, CONVERSION, lcg(13),
+      noFixed, FORMULA, CONVERSION, lcg(13),
     )
     expect(r.affixes.filter((a) => a.fixed)).toHaveLength(0)
     expect(r.warnings.some((w) => w.includes('第 1 条'))).toBe(true)

@@ -23,12 +23,7 @@
     "blueprintId": "bp_legend_01",
     "source": "牛魔王首杀（天品合成）",
     "description": "以牛魔之角为核，金精淬锋，撼天动地。",
-    "value": 4000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 144
-    }
+    "value": 4000
   },
   {
     "id": "ac_t4_01",
@@ -54,12 +49,7 @@
     "blueprintId": "bp_legend_02",
     "source": "蝎子精首杀（天品合成）",
     "description": "蝎毒淬魄，蚀骨蚀心，触之即腐。",
-    "value": 4000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 144
-    }
+    "value": 4000
   },
   {
     "id": "ac_t4_02",
@@ -85,12 +75,7 @@
     "blueprintId": "bp_legend_03",
     "source": "金翅大鹏首杀（天品合成）",
     "description": "大鹏展翅，扶摇九万里，逐日追光。",
-    "value": 4000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 864
-    }
+    "value": 4000
   },
   {
     "id": "wp_t5_01",
@@ -116,12 +101,7 @@
     "blueprintId": "bp_immortal_01",
     "source": "六耳猕猴首杀（仙品合成）",
     "description": "混沌之气所凝，环扣天地，无坚不摧。",
-    "value": 8000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 200
-    }
+    "value": 8000
   },
   {
     "id": "ar_t5_01",
@@ -147,12 +127,7 @@
     "blueprintId": "bp_immortal_02",
     "source": "六耳猕猴首杀（仙品合成）",
     "description": "混沌天丝织就，万法不侵，不染尘埃。",
-    "value": 8000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 160
-    }
+    "value": 8000
   },
   {
     "id": "ac_t5_01",
@@ -178,12 +153,7 @@
     "blueprintId": "bp_immortal_03",
     "source": "六耳猕猴首杀（仙品合成）",
     "description": "太初道韵，冠上流转，近之忘俗。",
-    "value": 8000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 1200
-    }
+    "value": 8000
   },
   {
     "id": "ac_t5_02",
@@ -209,12 +179,7 @@
     "blueprintId": "bp_immortal_04",
     "source": "六耳猕猴首杀（仙品合成）",
     "description": "混元灵珠，气运加身，百邪辟易。",
-    "value": 8000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 200
-    }
+    "value": 8000
   },
   {
     "id": "wp_sp_01",
@@ -244,12 +209,7 @@
     "blueprintId": "bp_sp_01",
     "source": "妖尊（特殊装备制造）",
     "description": "火灵淬刃，出鞘烈焰焚身。",
-    "value": 2000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 72
-    }
+    "value": 2000
   },
   {
     "id": "ar_sp_01",
@@ -279,12 +239,7 @@
     "blueprintId": "bp_sp_02",
     "source": "妖尊（特殊装备制造）",
     "description": "风灵织就，身轻如燕，御风而行。",
-    "value": 2000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 72
-    }
+    "value": 2000
   },
   {
     "id": "ac_sp_01",
@@ -314,12 +269,7 @@
     "blueprintId": "bp_sp_03",
     "source": "妖尊（特殊装备制造）",
     "description": "地灵护体，厚德载物，百害不侵。",
-    "value": 2000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 2000
   },
   {
     "id": "wp_t1_light_01",
@@ -349,12 +299,7 @@
     ],
     "source": "制造（主线，免图纸）",
     "description": "削竹为剑，轻而无锋。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 13
-    }
+    "value": 150
   },
   {
     "id": "wp_t1_mid_01",
@@ -382,12 +327,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "粗铜为棍，一寸硬气。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "wp_t1_heavy_01",
@@ -415,12 +355,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜铸重锤，笨而有劲。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "ar_t1_light_01",
@@ -448,12 +383,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "鹿皮为衣，柔暖贴身。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 13
-    }
+    "value": 150
   },
   {
     "id": "ar_t1_mid_01",
@@ -481,12 +411,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铜木相合，朴而不拙。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "ar_t1_heavy_01",
@@ -514,12 +439,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "薄铜打成，轻身护体。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "hd_t1_war_01",
@@ -547,12 +467,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "藤蔓编箍，束发上阵。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 99
-    }
+    "value": 150
   },
   {
     "id": "hd_t1_spirit_01",
@@ -580,12 +495,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "灵桃木冠，一点仙气。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 86
-    }
+    "value": 150
   },
   {
     "id": "bt_t1_light_01",
@@ -613,12 +523,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "草茎编履，行路生风。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 17
-    }
+    "value": 150
   },
   {
     "id": "bt_t1_heavy_01",
@@ -646,12 +551,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "粗石裹足，踏地有声。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 12
-    }
+    "value": 150
   },
   {
     "id": "hf_t1_life_01",
@@ -679,12 +579,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "淡水琢玉，温润养人。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "hf_t1_war_01",
@@ -712,12 +607,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "桃木刻符，壮胆提气。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "jz_t1_power_01",
@@ -745,12 +635,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "贝壳缀掌，护腕初成。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "jz_t1_spirit_01",
@@ -778,12 +663,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "桃核为核，聚点灵气。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "wp_t2_light_01",
@@ -811,12 +691,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "剑携迅风，出手如电。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 38
-    }
+    "value": 400
   },
   {
     "id": "wp_t2_mid_01",
@@ -844,12 +719,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "精铁为棒，横扫有威。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "wp_t2_heavy_01",
@@ -877,12 +747,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铁骨铮铮，落锤千钧。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "ar_t2_light_01",
@@ -910,12 +775,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "熊皮蒙身，悍气逼人。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 38
-    }
+    "value": 400
   },
   {
     "id": "ar_t2_mid_01",
@@ -943,12 +803,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铁嵌木理，刚柔并济。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "ar_t2_heavy_01",
@@ -976,12 +831,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "重铁压身，岿然不动。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "hd_t2_war_01",
@@ -1009,12 +859,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铁盔罩顶，战意昂然。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 290
-    }
+    "value": 400
   },
   {
     "id": "hd_t2_spirit_01",
@@ -1042,12 +887,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "河伯赐冠，水韵养神。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 252
-    }
+    "value": 400
   },
   {
     "id": "bt_t2_light_01",
@@ -1075,12 +915,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "踏浪而行，如履平地。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 48
-    }
+    "value": 400
   },
   {
     "id": "bt_t2_heavy_01",
@@ -1108,12 +943,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铁蹄踏地，步步生威。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 36
-    }
+    "value": 400
   },
   {
     "id": "hf_t2_life_01",
@@ -1141,12 +971,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "深水育玉，静水流深。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "hf_t2_war_01",
@@ -1174,12 +999,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "河底寒铁，铸符镇心。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "jz_t2_power_01",
@@ -1207,12 +1027,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "铁精淬掌，拳风渐硬。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "jz_t2_spirit_01",
@@ -1240,12 +1055,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "水灵入腕，柔中蓄劲。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "wp_t3_light_01",
@@ -1273,12 +1083,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "剑走流云，飘逸莫测。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 72
-    }
+    "value": 1000
   },
   {
     "id": "wp_t3_mid_01",
@@ -1306,12 +1111,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "杖名伏魔，邪祟辟易。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wp_t3_heavy_01",
@@ -1343,12 +1143,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "锤落撼地，群山应声。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "ar_t3_light_01",
@@ -1376,12 +1171,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "虎威附体，气势摄人。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 72
-    }
+    "value": 1000
   },
   {
     "id": "ar_t3_mid_01",
@@ -1409,12 +1199,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "金气入木，甲生纹光。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "ar_t3_heavy_01",
@@ -1442,12 +1227,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "神金铸甲，宝光内蕴。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "hd_t3_war_01",
@@ -1475,12 +1255,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "百炼精钢，锐气逼人。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 552
-    }
+    "value": 1000
   },
   {
     "id": "hd_t3_spirit_01",
@@ -1508,12 +1283,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "岩灵栖冠，稳如山岳。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 480
-    }
+    "value": 1000
   },
   {
     "id": "bt_t3_light_01",
@@ -1541,12 +1311,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "疾风灌足，奔雷逐电。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 92
-    }
+    "value": 1000
   },
   {
     "id": "bt_t3_heavy_01",
@@ -1574,12 +1339,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "磐石固足，立于不败。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 68
-    }
+    "value": 1000
   },
   {
     "id": "hf_t3_life_01",
@@ -1607,12 +1367,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "翠玉养神，生生不息。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "hf_t3_war_01",
@@ -1640,12 +1395,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "金精铸符，战气不堕。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "jz_t3_power_01",
@@ -1673,12 +1423,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "金精缠腕，拳可裂石。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "jz_t3_spirit_01",
@@ -1706,12 +1451,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "翠玉通灵，掌心生凉。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wp_t4_light_01",
@@ -1739,12 +1479,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "刃化幽影，出鞘无形。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 113
-    }
+    "value": 2500
   },
   {
     "id": "wp_t4_mid_01",
@@ -1772,12 +1507,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "杖破诸幻，直指本心。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wp_t4_heavy_01",
@@ -1805,12 +1535,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "一锤碎岳，声震百里。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "ar_t4_light_01",
@@ -1838,12 +1563,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "影豹之皮，动若脱影。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 113
-    }
+    "value": 2500
   },
   {
     "id": "ar_t4_mid_01",
@@ -1871,12 +1591,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "瘴木为甲，毒瘴不近。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "ar_t4_heavy_01",
@@ -1904,12 +1619,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "幻岩成铠，虚实莫辨。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "hd_t4_war_01",
@@ -1937,12 +1647,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "幻岩铸盔，眼神如电。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 869
-    }
+    "value": 2500
   },
   {
     "id": "hd_t4_spirit_01",
@@ -1970,12 +1675,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "幽兰覆冠，灵秀内生。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 756
-    }
+    "value": 2500
   },
   {
     "id": "bt_t4_light_01",
@@ -2003,12 +1703,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "影随步走，步化身形。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 145
-    }
+    "value": 2500
   },
   {
     "id": "bt_t4_heavy_01",
@@ -2036,12 +1731,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "幻岩镇足，踏碎虚妄。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 107
-    }
+    "value": 2500
   },
   {
     "id": "hf_t4_life_01",
@@ -2069,12 +1759,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "翡翠凝露，护佑周全。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "hf_t4_war_01",
@@ -2102,12 +1787,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "毒牙悬符，锋锐蚀骨。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "jz_t4_power_01",
@@ -2135,12 +1815,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "毒牙淬掌，拳拳见血。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "jz_t4_spirit_01",
@@ -2168,12 +1843,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "雾灵缠腕，虚实自生。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wp_t5_light_01",
@@ -2201,12 +1871,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "菩提证道，一剑降龙。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 162
-    }
+    "value": 6000
   },
   {
     "id": "wp_t5_mid_01",
@@ -2234,12 +1899,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "天罡归位，群魔束手。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wp_t5_heavy_01",
@@ -2267,12 +1927,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "须弥藏锤，落则碎天。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "ar_t5_light_01",
@@ -2300,12 +1955,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "天蚕吐丝，仙衣无瑕。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 162
-    }
+    "value": 6000
   },
   {
     "id": "ar_t5_mid_01",
@@ -2333,12 +1983,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "菩提染衣，尘心尽洗。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "ar_t5_heavy_01",
@@ -2366,12 +2011,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "金刚不坏，万法不侵。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "hd_t5_war_01",
@@ -2399,12 +2039,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "金刚怒目，浩气冲冠。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 1242
-    }
+    "value": 6000
   },
   {
     "id": "hd_t5_spirit_01",
@@ -2432,12 +2067,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "菩提映冠，慧光内蕴。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 1080
-    }
+    "value": 6000
   },
   {
     "id": "bt_t5_light_01",
@@ -2465,12 +2095,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "足踏仙云，身轻于鸿。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 207
-    }
+    "value": 6000
   },
   {
     "id": "bt_t5_heavy_01",
@@ -2498,12 +2123,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "金刚镇足，如渊如岳。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 153
-    }
+    "value": 6000
   },
   {
     "id": "hf_t5_life_01",
@@ -2531,12 +2151,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "琉璃澄澈，涤尽浊气。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "hf_t5_war_01",
@@ -2564,12 +2179,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "天罡护体，兵锋不近。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "jz_t5_power_01",
@@ -2597,12 +2207,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "金刚掌力，可撼须弥。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "jz_t5_spirit_01",
@@ -2630,12 +2235,7 @@
     "legacyIds": [],
     "source": "制造（主线，免图纸）",
     "description": "菩提灵韵，掌心向道。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wp_sb01",
@@ -2652,12 +2252,7 @@
     "legacyIds": [],
     "source": "花妖王首杀掉落",
     "description": "灵根为骨，缠藤为身，缚敌缠身。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 13
-    }
+    "value": 150
   },
   {
     "id": "ar_sb02",
@@ -2674,12 +2269,7 @@
     "legacyIds": [],
     "source": "河伯首杀掉落",
     "description": "沧浪涌潮，浪打不透，水火难侵。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "hd_sb03",
@@ -2696,12 +2286,7 @@
     "legacyIds": [],
     "source": "山神首杀掉落",
     "description": "心若磐石，八风不动。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 552
-    }
+    "value": 1000
   },
   {
     "id": "jz_sb04",
@@ -2718,12 +2303,7 @@
     "legacyIds": [],
     "source": "迷雾妖主首杀掉落",
     "description": "幻瞳迷心，惑敌神智于无形。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "ar_sb05",
@@ -2740,12 +2320,7 @@
     "legacyIds": [],
     "source": "浊浪龙王掉落",
     "description": "龙鳞逆生，锋芒向敌。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wp_sb06",
@@ -2762,12 +2337,7 @@
     "legacyIds": [],
     "source": "火焰领主掉落",
     "description": "炽焰缠刃，焚天之怒。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "hf_sb07",
@@ -2784,12 +2354,7 @@
     "legacyIds": [],
     "source": "盘丝大仙掉落",
     "description": "千丝万缕，缚灵缚形。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "bt_sb08",
@@ -2806,12 +2371,7 @@
     "legacyIds": [],
     "source": "风暴领主掉落",
     "description": "裂风疾羽，一瞬千里。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 145
-    }
+    "value": 2500
   },
   {
     "id": "hf_sb09",
@@ -2828,12 +2388,7 @@
     "legacyIds": [],
     "source": "罗汉尊者掉落",
     "description": "金身加护，诸邪不破。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "hd_sb10",
@@ -2850,12 +2405,7 @@
     "legacyIds": [],
     "source": "如来法相掉落",
     "description": "法相庄严，金莲承冠。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 1080
-    }
+    "value": 6000
   },
   {
     "id": "bt_hb01",
@@ -2872,12 +2422,7 @@
     "legacyIds": [],
     "source": "黑风老妖掉落",
     "description": "黑风裹足，疾行如夜。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 207
-    }
+    "value": 6000
   },
   {
     "id": "bt_hb02",
@@ -2894,12 +2439,7 @@
     "legacyIds": [],
     "source": "土行孙掉落",
     "description": "遁地入土，来去无踪。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 107
-    }
+    "value": 2500
   },
   {
     "id": "jz_hb03",
@@ -2916,12 +2456,7 @@
     "legacyIds": [],
     "source": "朱刚鬣掉落",
     "description": "九齿如钉，破甲摧城。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "hd_hb04",
@@ -2938,12 +2473,7 @@
     "legacyIds": [],
     "source": "百眼魔君掉落",
     "description": "百眼开阖，明察秋毫。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 756
-    }
+    "value": 2500
   },
   {
     "id": "hf_hb05",
@@ -2960,12 +2490,7 @@
     "legacyIds": [],
     "source": "金蝉长老掉落",
     "description": "净坛法印，浊不沾身。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "hd_t4_war_02",
@@ -2993,12 +2518,7 @@
     "legacyIds": [],
     "source": "制造（需图纸 bp_legend_01）",
     "description": "牛魔遗盔，狂性犹存。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 994
-    }
+    "value": 2500
   },
   {
     "id": "bt_t4_02",
@@ -3026,12 +2546,7 @@
     "legacyIds": [],
     "source": "制造（需图纸 bp_legend_02）",
     "description": "蝎尾藏锋，步步杀机。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 166
-    }
+    "value": 2500
   },
   {
     "id": "bt_t4_03",
@@ -3059,12 +2574,7 @@
     "legacyIds": [],
     "source": "制造（需图纸 bp_legend_03）",
     "description": "鹏翼乘风，轻若浮云。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 166
-    }
+    "value": 2500
   },
   {
     "id": "jz_sp_02",
@@ -3081,12 +2591,7 @@
     "legacyIds": [],
     "source": "百眼魔君掉落",
     "description": "寒潭之玉，触手生凉，心境澄明。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wp_sp_02",
@@ -3104,12 +2609,7 @@
     "legacyIds": [],
     "source": "黑风老妖掉落",
     "description": "刃饮魂魄，出鞘有声，闻者胆寒。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 113
-    }
+    "value": 2500
   },
   {
     "id": "ar_sp_03",
@@ -3126,12 +2626,7 @@
     "legacyIds": [],
     "source": "成就「百战不殆」奖励",
     "description": "百战其甲，愈战愈坚，不灭不折。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "hd_sp_04",
@@ -3148,12 +2643,7 @@
     "legacyIds": [],
     "source": "成就「九死一生」奖励",
     "description": "冠载轮回，窥生死之门。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 756
-    }
+    "value": 2500
   },
   {
     "id": "bt_sp_05",
@@ -3170,12 +2660,7 @@
     "legacyIds": [],
     "source": "风暴领主困难模式掉落",
     "description": "追风逐电，踏影无踪。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 207
-    }
+    "value": 6000
   },
   {
     "id": "jz_sp_06",
@@ -3192,12 +2677,7 @@
     "legacyIds": [],
     "source": "成就「降妖除魔」奖励",
     "description": "万妖俯首，臣服于此拳之下。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wt_01",
@@ -3213,12 +2693,7 @@
     "craftable": false,
     "source": "降妖塔第1层首通掉落",
     "description": "塔中木剑，试炼之始。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 13
-    }
+    "value": 150
   },
   {
     "id": "wt_02",
@@ -3234,12 +2709,7 @@
     "craftable": false,
     "source": "降妖塔第2层首通掉落",
     "description": "粗布裁甲，初试锋芒。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 13
-    }
+    "value": 150
   },
   {
     "id": "wt_03",
@@ -3255,12 +2725,7 @@
     "craftable": false,
     "source": "降妖塔第3层首通掉落",
     "description": "草帽遮阳，亦避刀风。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 99
-    }
+    "value": 150
   },
   {
     "id": "wt_04",
@@ -3276,12 +2741,7 @@
     "craftable": false,
     "source": "降妖塔第4层首通掉落",
     "description": "布鞋轻便，始于足下。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 17
-    }
+    "value": 150
   },
   {
     "id": "wt_05",
@@ -3297,12 +2757,7 @@
     "craftable": false,
     "source": "降妖塔第5层首通掉落",
     "description": "小玉一枚，聊作护身。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "wt_06",
@@ -3318,12 +2773,7 @@
     "craftable": false,
     "source": "降妖塔第6层首通掉落",
     "description": "铜片护掌，初学乍练。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "wt_07",
@@ -3339,12 +2789,7 @@
     "craftable": false,
     "source": "降妖塔第7层首通掉落",
     "description": "刃出破风，初露锋芒。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 13
-    }
+    "value": 150
   },
   {
     "id": "wt_08",
@@ -3360,12 +2805,7 @@
     "craftable": false,
     "source": "降妖塔第8层首通掉落",
     "description": "铁片缀甲，堪当一壁。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 14
-    }
+    "value": 150
   },
   {
     "id": "wt_09",
@@ -3381,12 +2821,7 @@
     "craftable": false,
     "source": "降妖塔第9层首通掉落",
     "description": "鹰眼锐利，明察敌先。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 86
-    }
+    "value": 150
   },
   {
     "id": "wt_10",
@@ -3402,12 +2837,7 @@
     "craftable": false,
     "source": "降妖塔第10层首通掉落",
     "description": "步履如风，疾行塔间。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 17
-    }
+    "value": 150
   },
   {
     "id": "wt_11",
@@ -3423,12 +2853,7 @@
     "craftable": false,
     "source": "降妖塔第11层首通掉落",
     "description": "寒铁淬锋，剑气微凉。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "wt_12",
@@ -3444,12 +2869,7 @@
     "craftable": false,
     "source": "降妖塔第12层首通掉落",
     "description": "玄铁入甲，沉而不朽。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "wt_13",
@@ -3465,12 +2885,7 @@
     "craftable": false,
     "source": "降妖塔第13层首通掉落",
     "description": "灵犀一点，先知先觉。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 252
-    }
+    "value": 400
   },
   {
     "id": "wt_14",
@@ -3486,12 +2901,7 @@
     "craftable": false,
     "source": "降妖塔第14层首通掉落",
     "description": "风行草偃，身快一筹。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 48
-    }
+    "value": 400
   },
   {
     "id": "wt_15",
@@ -3507,12 +2917,7 @@
     "craftable": false,
     "source": "降妖塔第15层首通掉落",
     "description": "守心如一，杂念不侵。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "wt_16",
@@ -3528,12 +2933,7 @@
     "craftable": false,
     "source": "降妖塔第16层首通掉落",
     "description": "破军之势，聚于拳锋。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "wt_17",
@@ -3549,12 +2949,7 @@
     "craftable": false,
     "source": "降妖塔第17层首通掉落",
     "description": "刃光裂空，声势更炽。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 38
-    }
+    "value": 400
   },
   {
     "id": "wt_18",
@@ -3570,12 +2965,7 @@
     "craftable": false,
     "source": "降妖塔第18层首通掉落",
     "description": "铠若磐石，稳守中军。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 42
-    }
+    "value": 400
   },
   {
     "id": "wt_19",
@@ -3591,12 +2981,7 @@
     "craftable": false,
     "source": "降妖塔第19层首通掉落",
     "description": "慧眼识破，万变不惊。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 252
-    }
+    "value": 400
   },
   {
     "id": "wt_20",
@@ -3612,12 +2997,7 @@
     "craftable": false,
     "source": "降妖塔第20层首通掉落",
     "description": "足下生云，身轻一步。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 48
-    }
+    "value": 400
   },
   {
     "id": "wt_21",
@@ -3633,12 +3013,7 @@
     "craftable": false,
     "source": "降妖塔第21层首通掉落",
     "description": "杵镇邪祟，佛门气象。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wt_22",
@@ -3654,12 +3029,7 @@
     "craftable": false,
     "source": "降妖塔第22层首通掉落",
     "description": "龙鳞覆甲，威势渐成。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wt_23",
@@ -3675,12 +3045,7 @@
     "craftable": false,
     "source": "降妖塔第23层首通掉落",
     "description": "天灵之盖，气冲斗牛。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 480
-    }
+    "value": 1000
   },
   {
     "id": "wt_24",
@@ -3696,12 +3061,7 @@
     "craftable": false,
     "source": "降妖塔第24层首通掉落",
     "description": "逐风而行，其疾如电。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 92
-    }
+    "value": 1000
   },
   {
     "id": "wt_25",
@@ -3717,12 +3077,7 @@
     "craftable": false,
     "source": "降妖塔第25层首通掉落",
     "description": "符心不灭，其志弥坚。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wt_26",
@@ -3738,12 +3093,7 @@
     "craftable": false,
     "source": "降妖塔第26层首通掉落",
     "description": "拳碎星辰，势大力沉。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wt_27",
@@ -3759,12 +3109,7 @@
     "craftable": false,
     "source": "降妖塔第27层首通掉落",
     "description": "刀气噬魂，锋芒带煞。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wt_28",
@@ -3780,12 +3125,7 @@
     "craftable": false,
     "source": "降妖塔第28层首通掉落",
     "description": "玄武镇甲，守御成势。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 80
-    }
+    "value": 1000
   },
   {
     "id": "wt_29",
@@ -3801,12 +3141,7 @@
     "craftable": false,
     "source": "降妖塔第29层首通掉落",
     "description": "通灵之冠，感应四方。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 480
-    }
+    "value": 1000
   },
   {
     "id": "wt_30",
@@ -3822,12 +3157,7 @@
     "craftable": false,
     "source": "降妖塔第30层首通掉落",
     "description": "瞬息化影，敌难觅踪。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 92
-    }
+    "value": 1000
   },
   {
     "id": "wt_31",
@@ -3843,12 +3173,7 @@
     "craftable": false,
     "source": "降妖塔第31层首通掉落",
     "description": "天罡正气，剑锋凛然。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 113
-    }
+    "value": 2500
   },
   {
     "id": "wt_32",
@@ -3864,12 +3189,7 @@
     "craftable": false,
     "source": "降妖塔第32层首通掉落",
     "description": "混元之气，充盈甲胄。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wt_33",
@@ -3885,12 +3205,7 @@
     "craftable": false,
     "source": "降妖塔第33层首通掉落",
     "description": "法相初成，宝相庄严。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 756
-    }
+    "value": 2500
   },
   {
     "id": "wt_34",
@@ -3906,12 +3221,7 @@
     "craftable": false,
     "source": "降妖塔第34层首通掉落",
     "description": "凌波微步，踏水无痕。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 145
-    }
+    "value": 2500
   },
   {
     "id": "wt_35",
@@ -3927,12 +3237,7 @@
     "craftable": false,
     "source": "降妖塔第35层首通掉落",
     "description": "金刚法符，坚不可摧。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wt_36",
@@ -3948,12 +3253,7 @@
     "craftable": false,
     "source": "降妖塔第36层首通掉落",
     "description": "拳有灭世，气吞山河。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wt_37",
@@ -3969,12 +3269,7 @@
     "craftable": false,
     "source": "降妖塔第37层首通掉落",
     "description": "剑气纵横，诛仙灭神。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wt_38",
@@ -3990,12 +3285,7 @@
     "craftable": false,
     "source": "降妖塔第38层首通掉落",
     "description": "须弥纳甲，藏山纳海。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 126
-    }
+    "value": 2500
   },
   {
     "id": "wt_39",
@@ -4011,12 +3301,7 @@
     "craftable": false,
     "source": "降妖塔第39层首通掉落",
     "description": "天眼洞开，虚实立辨。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 756
-    }
+    "value": 2500
   },
   {
     "id": "wt_40",
@@ -4032,12 +3317,7 @@
     "craftable": false,
     "source": "降妖塔第40层首通掉落",
     "description": "风火相济，其行若奔雷。",
-    "value": 2500,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 145
-    }
+    "value": 2500
   },
   {
     "id": "wt_41",
@@ -4053,12 +3333,7 @@
     "craftable": false,
     "source": "降妖塔第41层首通掉落",
     "description": "一杵降魔，正道所向。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wt_42",
@@ -4074,12 +3349,7 @@
     "craftable": false,
     "source": "降妖塔第42层首通掉落",
     "description": "天蚕仙袍，羽化欲仙。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 162
-    }
+    "value": 6000
   },
   {
     "id": "wt_43",
@@ -4095,12 +3365,7 @@
     "craftable": false,
     "source": "降妖塔第43层首通掉落",
     "description": "菩提证慧，冠上生花。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 1080
-    }
+    "value": 6000
   },
   {
     "id": "wt_44",
@@ -4116,12 +3381,7 @@
     "craftable": false,
     "source": "降妖塔第44层首通掉落",
     "description": "足踏金乌，追日而行。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "dodgeValue",
-      "modifierType": "flat",
-      "value": 207
-    }
+    "value": 6000
   },
   {
     "id": "wt_45",
@@ -4137,12 +3397,7 @@
     "craftable": false,
     "source": "降妖塔第45层首通掉落",
     "description": "琉璃护心，澄明不染。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wt_46",
@@ -4158,12 +3413,7 @@
     "craftable": false,
     "source": "降妖塔第46层首通掉落",
     "description": "天罡聚拳，战意通天。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "speed",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wt_47",
@@ -4179,12 +3429,7 @@
     "craftable": false,
     "source": "降妖塔第47层首通掉落",
     "description": "太虚燃魂，一刃破妄。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wt_48",
@@ -4200,12 +3445,7 @@
     "craftable": false,
     "source": "降妖塔第48层首通掉落",
     "description": "燃血历劫，甲愈战坚。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "defense",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wt_49",
@@ -4221,12 +3461,7 @@
     "craftable": false,
     "source": "降妖塔第49层首通掉落",
     "description": "魂燃太虚，冠映星河。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "maxHealth",
-      "modifierType": "flat",
-      "value": 1080
-    }
+    "value": 6000
   },
   {
     "id": "wt_50",
@@ -4242,12 +3477,7 @@
     "craftable": false,
     "source": "降妖塔第50层首通掉落",
     "description": "魄火不熄，劫后重生。",
-    "value": 6000,
-    "coreStat": {
-      "attribute": "hitValue",
-      "modifierType": "flat",
-      "value": 180
-    }
+    "value": 6000
   },
   {
     "id": "wp_t1_dagger_01",
@@ -4274,12 +3504,7 @@
     "blueprintId": "bp_t1_wp",
     "source": "制造（主线，免图纸）",
     "description": "竹削细刺，暗藏袖中。",
-    "value": 150,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 13
-    }
+    "value": 150
   },
   {
     "id": "wp_t2_dagger_01",
@@ -4306,12 +3531,7 @@
     "blueprintId": "bp_t2_wp",
     "source": "制造（关卡4-6）",
     "description": "双刺成对，短兵藏巧。",
-    "value": 400,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 38
-    }
+    "value": 400
   },
   {
     "id": "wp_t3_dagger_01",
@@ -4338,12 +3558,7 @@
     "blueprintId": "bp_t3_wp",
     "source": "制造（关卡7-9）",
     "description": "峨眉细刺，锋藏秀色。",
-    "value": 1000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 72
-    }
+    "value": 1000
   },
   {
     "id": "wp_t4_dagger_01",
@@ -4369,11 +3584,6 @@
     "blueprintId": "bp_legend_01",
     "source": "制造（天品合成）",
     "description": "影中藏刃，一击即走。",
-    "value": 4000,
-    "coreStat": {
-      "attribute": "attack",
-      "modifierType": "flat",
-      "value": 130
-    }
+    "value": 4000
   }
 ]

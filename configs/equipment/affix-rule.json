@@ -9,68 +9,734 @@
     "glove": "speed"
   },
   "tier_weight": {
-    "fan": { "min": 0.5, "max": 0.6 },
-    "xuan": { "min": 0.6, "max": 0.7 },
-    "di": { "min": 0.7, "max": 0.8 },
-    "tian": { "min": 0.8, "max": 0.9 },
-    "xian": { "min": 0.9, "max": 1.0 }
+    "fan": {
+      "min": 0.5,
+      "max": 0.6
+    },
+    "xuan": {
+      "min": 0.6,
+      "max": 0.7
+    },
+    "di": {
+      "min": 0.7,
+      "max": 0.8
+    },
+    "tian": {
+      "min": 0.8,
+      "max": 0.9
+    },
+    "xian": {
+      "min": 0.9,
+      "max": 1.0
+    }
   },
   "core_affix_ratio": {
-    "sword": { "attribute": "attack", "ratio": 0.9 },
-    "dagger": { "attribute": "attack", "ratio": 0.9 },
-    "staff": { "attribute": "attack", "ratio": 1.0 },
-    "blade": { "attribute": "attack", "ratio": 1.0 },
-    "cloth_armor": { "attribute": "defense", "ratio": 0.8 },
-    "leather_armor": { "attribute": "defense", "ratio": 0.9 },
-    "plate_armor": { "attribute": "defense", "ratio": 1.0 },
-    "face_guard": { "attribute": "maxHealth", "ratio": 0.85 },
-    "crown": { "attribute": "maxHealth", "ratio": 1.0 },
-    "helmet": { "attribute": "maxHealth", "ratio": 1.15 },
-    "cloth_boots": { "attribute": "dodgeValue", "ratio": 1.15 },
-    "leather_boots": { "attribute": "dodgeValue", "ratio": 1.0 },
-    "battle_boots": { "attribute": "dodgeValue", "ratio": 0.85 },
-    "charm": { "attribute": "hitValue", "ratio": 1.0 },
-    "glove": { "attribute": "speed", "ratio": 1.0 }
+    "sword": {
+      "attribute": "attack",
+      "ratio": 0.9
+    },
+    "dagger": {
+      "attribute": "attack",
+      "ratio": 0.9
+    },
+    "staff": {
+      "attribute": "attack",
+      "ratio": 1.0
+    },
+    "blade": {
+      "attribute": "attack",
+      "ratio": 1.0
+    },
+    "cloth_armor": {
+      "attribute": "defense",
+      "ratio": 0.8
+    },
+    "leather_armor": {
+      "attribute": "defense",
+      "ratio": 0.9
+    },
+    "plate_armor": {
+      "attribute": "defense",
+      "ratio": 1.0
+    },
+    "face_guard": {
+      "attribute": "maxHealth",
+      "ratio": 0.85
+    },
+    "crown": {
+      "attribute": "maxHealth",
+      "ratio": 1.0
+    },
+    "helmet": {
+      "attribute": "maxHealth",
+      "ratio": 1.15
+    },
+    "cloth_boots": {
+      "attribute": "dodgeValue",
+      "ratio": 1.15
+    },
+    "leather_boots": {
+      "attribute": "dodgeValue",
+      "ratio": 1.0
+    },
+    "battle_boots": {
+      "attribute": "dodgeValue",
+      "ratio": 0.85
+    },
+    "charm": {
+      "attribute": "hitValue",
+      "ratio": 1.0
+    },
+    "glove": {
+      "attribute": "speed",
+      "ratio": 1.0
+    }
   },
   "main_affix_pool": {
-    "sword": { "fixed": "comboRate", "random_pool": ["speedBonus", "hitBonus", "comboRate", "normalAtkBonus"] },
-    "staff": { "fixed": "counterRate", "random_pool": [] },
-    "blade": { "fixed": "critRate", "random_pool": [] },
-    "charm": { "fixed": "hitBonus", "random_pool": ["effectHit", "lifestealRate", "healBonus", "healReduction", "trueDamageResist"] },
-    "glove": { "fixed": "", "random_pool": ["ALL-MEC", "SHD-L2"] }
+    "sword": {
+      "fixed": "comboRate",
+      "random_pool": [
+        "speedBonus",
+        "hitBonus",
+        "comboRate",
+        "normalAtkBonus"
+      ]
+    },
+    "staff": {
+      "fixed": "counterRate",
+      "random_pool": []
+    },
+    "blade": {
+      "fixed": "critRate",
+      "random_pool": []
+    },
+    "charm": {
+      "fixed": "hitBonus",
+      "random_pool": [
+        "effectHit",
+        "lifestealRate",
+        "healBonus",
+        "healReduction",
+        "trueDamageResist"
+      ]
+    },
+    "glove": {
+      "fixed": "effectHit",
+      "random_pool": [
+        "ALL-MEC",
+        "SHD-L2"
+      ]
+    },
+    "cloth_armor": {
+      "fixed": "dodgeBonus",
+      "random_pool": [
+        "dodge",
+        "hpRegenPercent",
+        "damageReduction",
+        "dodgeCoefficient"
+      ]
+    },
+    "leather_armor": {
+      "fixed": "defenseBonus",
+      "random_pool": [
+        "dodgeBonus",
+        "damageReduction",
+        "hpRegenPercent",
+        "critResist"
+      ]
+    },
+    "plate_armor": {
+      "fixed": "damageReduction",
+      "random_pool": [
+        "reflectDamagePercent",
+        "critResist",
+        "defenseCoefficient",
+        "shieldBonus"
+      ]
+    },
+    "crown": {
+      "fixed": "healBonus",
+      "random_pool": [
+        "shieldBonus",
+        "hpRegenPercent",
+        "energyGainEfficiency",
+        "critResist"
+      ]
+    },
+    "face_guard": {
+      "fixed": "normalAtkDmgReduction",
+      "random_pool": [
+        "skillDmgReduction",
+        "trueDamageResist",
+        "damageReduction"
+      ]
+    },
+    "helmet": {
+      "fixed": "normalAtkDmgReduction",
+      "random_pool": [
+        "skillDmgReduction",
+        "trueDamageResist",
+        "shieldBonus",
+        "critDmgTakenReduction"
+      ]
+    },
+    "cloth_boots": {
+      "fixed": "energyGainEfficiency",
+      "random_pool": [
+        "dodge",
+        "hpRegenPercent",
+        "energyInit",
+        "dodgeBonus"
+      ]
+    },
+    "leather_boots": {
+      "fixed": "dodge",
+      "random_pool": [
+        "energyGainEfficiency",
+        "dodgeBonus",
+        "controlImmunity"
+      ]
+    },
+    "battle_boots": {
+      "fixed": "controlImmunity",
+      "random_pool": [
+        "trueDamageResist",
+        "normalAtkDmgReduction",
+        "dodge",
+        "skillDmgReduction"
+      ]
+    }
   },
   "affix_value_curve": {
     "equipment": [
-      { "attributes": ["attackBonus", "hitBonus", "speedBonus", "healthBonus", "defenseBonus", "dodgeBonus"], "min": { "base": 1, "perLevel": 0.1, "full": 6 }, "max": { "base": 10, "perLevel": 0.2, "full": 20 } },
-      { "attributes": ["attackCoefficient", "hitCoefficient", "speedCoefficient", "healthCoefficient", "defenseCoefficient", "dodgeCoefficient"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
-      { "attributes": ["hit", "dodge", "lifestealRate", "effectHit", "controlSuccessRate"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
-      { "attributes": ["counterRate", "trueDamageRate", "critRate", "reflectDamagePercent", "critResist"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
-      { "attributes": ["critDamage", "critDmgTakenReduction", "damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient", "finalAttack", "finalDefense"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
-      { "attributes": ["comboRate"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } },
-      { "attributes": ["damageBoost", "normalAtkBonus", "skillBonus", "shieldBonus", "healBonus", "reflectBonus", "finalDamageBoost", "lifestealBonus"], "min": { "base": 1, "perLevel": 0.1, "full": 6 }, "max": { "base": 10, "perLevel": 0.2, "full": 20 } },
-      { "attributes": ["trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate", "armorBreak"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
-      { "attributes": ["energyGainEfficiency"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
-      { "attributes": ["shieldReduction", "healReduction", "lifestealReduction", "reflectReduction"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
-      { "attributes": ["damageReduction", "damageReductionCoefficient", "finalDamageReduction"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
-      { "attributes": ["hpRegenPercent"], "min": { "base": 1, "perLevel": 0.02, "full": 2 }, "max": { "base": 3, "perLevel": 0.04, "full": 5 } },
-      { "attributes": ["energyInit"], "min": { "base": 5, "perLevel": 0.1, "full": 10 }, "max": { "base": 15, "perLevel": 0.2, "full": 25 } },
-      { "attributes": ["splash"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } }
+      {
+        "attributes": [
+          "attackBonus",
+          "hitBonus",
+          "speedBonus",
+          "healthBonus",
+          "defenseBonus",
+          "dodgeBonus"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.1,
+          "full": 6
+        },
+        "max": {
+          "base": 10,
+          "perLevel": 0.2,
+          "full": 20
+        }
+      },
+      {
+        "attributes": [
+          "attackCoefficient",
+          "hitCoefficient",
+          "speedCoefficient",
+          "healthCoefficient",
+          "defenseCoefficient",
+          "dodgeCoefficient"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 4,
+          "perLevel": 0.12,
+          "full": 10
+        }
+      },
+      {
+        "attributes": [
+          "hit",
+          "dodge",
+          "lifestealRate",
+          "effectHit",
+          "controlSuccessRate"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.04,
+          "full": 3
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        }
+      },
+      {
+        "attributes": [
+          "counterRate",
+          "trueDamageRate",
+          "critRate",
+          "reflectDamagePercent",
+          "critResist"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.1,
+          "full": 8
+        }
+      },
+      {
+        "attributes": [
+          "critDamage",
+          "critDmgTakenReduction",
+          "damageCoefficient",
+          "comboDamageCoefficient",
+          "counterDamageCoefficient",
+          "trueDamageCoefficient",
+          "finalAttack",
+          "finalDefense"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 4,
+          "perLevel": 0.12,
+          "full": 10
+        }
+      },
+      {
+        "attributes": [
+          "comboRate"
+        ],
+        "min": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        },
+        "max": {
+          "base": 8,
+          "perLevel": 0.12,
+          "full": 14
+        }
+      },
+      {
+        "attributes": [
+          "damageBoost",
+          "normalAtkBonus",
+          "skillBonus",
+          "shieldBonus",
+          "healBonus",
+          "reflectBonus",
+          "finalDamageBoost",
+          "lifestealBonus"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.1,
+          "full": 6
+        },
+        "max": {
+          "base": 10,
+          "perLevel": 0.2,
+          "full": 20
+        }
+      },
+      {
+        "attributes": [
+          "trueDamageResist",
+          "normalAtkDmgReduction",
+          "skillDmgReduction",
+          "controlImmunity",
+          "debuffImmunityRate",
+          "armorBreak",
+          "vulnerability"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.04,
+          "full": 3
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        }
+      },
+      {
+        "attributes": [
+          "energyGainEfficiency"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 4,
+          "perLevel": 0.12,
+          "full": 10
+        }
+      },
+      {
+        "attributes": [
+          "shieldReduction",
+          "healReduction",
+          "lifestealReduction",
+          "reflectReduction"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.1,
+          "full": 8
+        }
+      },
+      {
+        "attributes": [
+          "damageReduction",
+          "damageReductionCoefficient",
+          "finalDamageReduction"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.04,
+          "full": 3
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        }
+      },
+      {
+        "attributes": [
+          "hpRegenPercent"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.02,
+          "full": 2
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.04,
+          "full": 5
+        }
+      },
+      {
+        "attributes": [
+          "energyInit"
+        ],
+        "min": {
+          "base": 5,
+          "perLevel": 0.1,
+          "full": 10
+        },
+        "max": {
+          "base": 15,
+          "perLevel": 0.2,
+          "full": 25
+        }
+      },
+      {
+        "attributes": [
+          "splash"
+        ],
+        "min": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        },
+        "max": {
+          "base": 8,
+          "perLevel": 0.12,
+          "full": 14
+        }
+      },
+      {
+        "attributes": [
+          "shield"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.1,
+          "full": 6
+        },
+        "max": {
+          "base": 10,
+          "perLevel": 0.2,
+          "full": 20
+        }
+      }
     ],
     "pet_mount": [
-      { "attributes": ["attack", "hitValue", "speed", "maxHealth", "defense", "dodgeValue", "attackBonus", "hitBonus", "speedBonus", "healthBonus", "defenseBonus", "dodgeBonus"], "min": { "base": 6, "perLevel": 0.16, "full": 14 }, "max": { "base": 15, "perLevel": 0.3, "full": 30 } },
-      { "attributes": ["attackCoefficient", "hitCoefficient", "speedCoefficient", "healthCoefficient", "defenseCoefficient", "dodgeCoefficient"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
-      { "attributes": ["hit", "dodge", "lifestealRate", "effectHit", "controlSuccessRate"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
-      { "attributes": ["counterRate", "trueDamageRate", "critRate", "reflectDamagePercent", "critResist"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
-      { "attributes": ["critDamage", "critDmgTakenReduction", "damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient", "finalAttack", "finalDefense"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
-      { "attributes": ["comboRate"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } },
-      { "attributes": ["damageBoost", "normalAtkBonus", "skillBonus", "shieldBonus", "healBonus", "reflectBonus", "finalDamageBoost", "lifestealBonus"], "min": { "base": 1, "perLevel": 0.1, "full": 6 }, "max": { "base": 10, "perLevel": 0.2, "full": 20 } },
-      { "attributes": ["trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate", "armorBreak"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
-      { "attributes": ["energyGainEfficiency"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 4, "perLevel": 0.12, "full": 10 } },
-      { "attributes": ["shieldReduction", "healReduction", "lifestealReduction", "reflectReduction"], "min": { "base": 1, "perLevel": 0.06, "full": 4 }, "max": { "base": 3, "perLevel": 0.1, "full": 8 } },
-      { "attributes": ["damageReduction", "damageReductionCoefficient", "finalDamageReduction"], "min": { "base": 1, "perLevel": 0.04, "full": 3 }, "max": { "base": 3, "perLevel": 0.06, "full": 6 } },
-      { "attributes": ["hpRegenPercent"], "min": { "base": 1, "perLevel": 0.02, "full": 2 }, "max": { "base": 3, "perLevel": 0.04, "full": 5 } },
-      { "attributes": ["energyInit"], "min": { "base": 5, "perLevel": 0.1, "full": 10 }, "max": { "base": 15, "perLevel": 0.2, "full": 25 } },
-      { "attributes": ["splash"], "min": { "base": 3, "perLevel": 0.06, "full": 6 }, "max": { "base": 8, "perLevel": 0.12, "full": 14 } }
+      {
+        "attributes": [
+          "attack",
+          "hitValue",
+          "speed",
+          "maxHealth",
+          "defense",
+          "dodgeValue",
+          "attackBonus",
+          "hitBonus",
+          "speedBonus",
+          "healthBonus",
+          "defenseBonus",
+          "dodgeBonus"
+        ],
+        "min": {
+          "base": 6,
+          "perLevel": 0.16,
+          "full": 14
+        },
+        "max": {
+          "base": 15,
+          "perLevel": 0.3,
+          "full": 30
+        }
+      },
+      {
+        "attributes": [
+          "attackCoefficient",
+          "hitCoefficient",
+          "speedCoefficient",
+          "healthCoefficient",
+          "defenseCoefficient",
+          "dodgeCoefficient"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 4,
+          "perLevel": 0.12,
+          "full": 10
+        }
+      },
+      {
+        "attributes": [
+          "hit",
+          "dodge",
+          "lifestealRate",
+          "effectHit",
+          "controlSuccessRate"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.04,
+          "full": 3
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        }
+      },
+      {
+        "attributes": [
+          "counterRate",
+          "trueDamageRate",
+          "critRate",
+          "reflectDamagePercent",
+          "critResist"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.1,
+          "full": 8
+        }
+      },
+      {
+        "attributes": [
+          "critDamage",
+          "critDmgTakenReduction",
+          "damageCoefficient",
+          "comboDamageCoefficient",
+          "counterDamageCoefficient",
+          "trueDamageCoefficient",
+          "finalAttack",
+          "finalDefense"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 4,
+          "perLevel": 0.12,
+          "full": 10
+        }
+      },
+      {
+        "attributes": [
+          "comboRate"
+        ],
+        "min": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        },
+        "max": {
+          "base": 8,
+          "perLevel": 0.12,
+          "full": 14
+        }
+      },
+      {
+        "attributes": [
+          "damageBoost",
+          "normalAtkBonus",
+          "skillBonus",
+          "shieldBonus",
+          "healBonus",
+          "reflectBonus",
+          "finalDamageBoost",
+          "lifestealBonus"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.1,
+          "full": 6
+        },
+        "max": {
+          "base": 10,
+          "perLevel": 0.2,
+          "full": 20
+        }
+      },
+      {
+        "attributes": [
+          "trueDamageResist",
+          "normalAtkDmgReduction",
+          "skillDmgReduction",
+          "controlImmunity",
+          "debuffImmunityRate",
+          "armorBreak"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.04,
+          "full": 3
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        }
+      },
+      {
+        "attributes": [
+          "energyGainEfficiency"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 4,
+          "perLevel": 0.12,
+          "full": 10
+        }
+      },
+      {
+        "attributes": [
+          "shieldReduction",
+          "healReduction",
+          "lifestealReduction",
+          "reflectReduction"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.06,
+          "full": 4
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.1,
+          "full": 8
+        }
+      },
+      {
+        "attributes": [
+          "damageReduction",
+          "damageReductionCoefficient",
+          "finalDamageReduction"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.04,
+          "full": 3
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        }
+      },
+      {
+        "attributes": [
+          "hpRegenPercent"
+        ],
+        "min": {
+          "base": 1,
+          "perLevel": 0.02,
+          "full": 2
+        },
+        "max": {
+          "base": 3,
+          "perLevel": 0.04,
+          "full": 5
+        }
+      },
+      {
+        "attributes": [
+          "energyInit"
+        ],
+        "min": {
+          "base": 5,
+          "perLevel": 0.1,
+          "full": 10
+        },
+        "max": {
+          "base": 15,
+          "perLevel": 0.2,
+          "full": 25
+        }
+      },
+      {
+        "attributes": [
+          "splash"
+        ],
+        "min": {
+          "base": 3,
+          "perLevel": 0.06,
+          "full": 6
+        },
+        "max": {
+          "base": 8,
+          "perLevel": 0.12,
+          "full": 14
+        }
+      }
     ]
   },
   "attribute_groups": {
@@ -78,166 +744,487 @@
       "label": "攻击系·基础数值",
       "side": "ATK",
       "tier": "L1",
-      "attributes": ["attack", "hitValue", "speed"],
-      "names": ["攻击", "命中", "速度"]
+      "attributes": [
+        "attack",
+        "hitValue",
+        "speed"
+      ],
+      "names": [
+        "攻击",
+        "命中",
+        "速度"
+      ]
     },
     "ATK-L2": {
       "label": "攻击系·百分比加成",
       "side": "ATK",
       "tier": "L2",
-      "attributes": ["attackBonus", "hitBonus", "speedBonus"],
-      "names": ["攻击加成", "命中加成", "速度加成"]
+      "attributes": [
+        "attackBonus",
+        "hitBonus",
+        "speedBonus"
+      ],
+      "names": [
+        "攻击加成",
+        "命中加成",
+        "速度加成"
+      ]
     },
     "ATK-L3": {
       "label": "攻击系·独立系数",
       "side": "ATK",
       "tier": "L3",
-      "attributes": ["attackCoefficient", "hitCoefficient", "speedCoefficient"],
-      "names": ["攻击系数", "命中系数", "速度系数"]
+      "attributes": [
+        "attackCoefficient",
+        "hitCoefficient",
+        "speedCoefficient"
+      ],
+      "names": [
+        "攻击系数",
+        "命中系数",
+        "速度系数"
+      ]
     },
     "ATK-MEC": {
       "label": "攻击系·机制对抗",
       "side": "ATK",
       "tier": "L1",
-      "attributes": ["critRate", "critDamage", "hit", "comboRate", "trueDamageRate", "damageBoost", "normalAtkBonus", "skillBonus", "counterRate", "lifestealRate", "effectHit", "controlSuccessRate", "lifestealBonus"],
-      "names": ["暴击率", "暴击伤害", "命中率", "连击率", "真伤率", "伤害加成", "普攻加成", "技能加成", "反击率", "吸血率", "效果命中", "控制命中", "吸血效果加成"]
+      "attributes": [
+        "critRate",
+        "critDamage",
+        "hit",
+        "comboRate",
+        "trueDamageRate",
+        "damageBoost",
+        "normalAtkBonus",
+        "skillBonus",
+        "counterRate",
+        "lifestealRate",
+        "effectHit",
+        "controlSuccessRate",
+        "lifestealBonus"
+      ],
+      "names": [
+        "暴击率",
+        "暴击伤害",
+        "命中率",
+        "连击率",
+        "真伤率",
+        "伤害加成",
+        "普攻加成",
+        "技能加成",
+        "反击率",
+        "吸血率",
+        "效果命中",
+        "控制命中",
+        "吸血效果加成"
+      ]
     },
     "SHD-L1": {
       "label": "破甲·易伤",
       "side": "ATK",
       "tier": "L1",
-      "attributes": ["armorBreak", "vulnerability"],
-      "names": ["破甲", "易伤"]
+      "attributes": [
+        "armorBreak",
+        "vulnerability"
+      ],
+      "names": [
+        "破甲",
+        "易伤"
+      ]
     },
     "SHD-L2": {
       "label": "削减类",
       "side": "ATK",
       "tier": "L2",
-      "attributes": ["shieldReduction", "healReduction", "lifestealReduction", "reflectReduction"],
-      "names": ["护盾削减", "治疗强度削减", "吸血效果削减", "伤害反弹削减"]
+      "attributes": [
+        "shieldReduction",
+        "healReduction",
+        "lifestealReduction",
+        "reflectReduction"
+      ],
+      "names": [
+        "护盾削减",
+        "治疗强度削减",
+        "吸血效果削减",
+        "伤害反弹削减"
+      ]
     },
     "DEF-L1": {
       "label": "防御系·基础数值",
       "side": "DEF",
       "tier": "L1",
-      "attributes": ["maxHealth", "defense", "dodgeValue"],
-      "names": ["气血", "防御", "闪避"]
+      "attributes": [
+        "maxHealth",
+        "defense",
+        "dodgeValue"
+      ],
+      "names": [
+        "气血",
+        "防御",
+        "闪避"
+      ]
     },
     "DEF-L2": {
       "label": "防御系·百分比加成",
       "side": "DEF",
       "tier": "L2",
-      "attributes": ["healthBonus", "defenseBonus", "dodgeBonus"],
-      "names": ["气血加成", "防御加成", "闪避加成"]
+      "attributes": [
+        "healthBonus",
+        "defenseBonus",
+        "dodgeBonus"
+      ],
+      "names": [
+        "气血加成",
+        "防御加成",
+        "闪避加成"
+      ]
     },
     "DEF-L3": {
       "label": "防御系·独立系数",
       "side": "DEF",
       "tier": "L3",
-      "attributes": ["healthCoefficient", "defenseCoefficient", "dodgeCoefficient"],
-      "names": ["气血系数", "防御系数", "闪避系数"]
+      "attributes": [
+        "healthCoefficient",
+        "defenseCoefficient",
+        "dodgeCoefficient"
+      ],
+      "names": [
+        "气血系数",
+        "防御系数",
+        "闪避系数"
+      ]
     },
     "DEF-MEC": {
       "label": "防御系·机制对抗",
       "side": "DEF",
       "tier": "L1",
-      "attributes": ["damageReduction", "shield", "reflectDamagePercent", "hpRegenPercent", "shieldBonus", "healBonus", "reflectBonus", "dodge", "critResist", "critDmgTakenReduction", "trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate"],
-      "names": ["免伤率", "护盾", "伤害反弹", "气血回复(%)", "护盾加成", "治疗强度加成", "伤害反弹加成", "闪避率", "暴击抵抗", "暴伤减免", "真伤抗性", "普攻抵抗", "技能抵抗", "控制豁免", "效果抵抗"]
+      "attributes": [
+        "damageReduction",
+        "shield",
+        "reflectDamagePercent",
+        "hpRegenPercent",
+        "shieldBonus",
+        "healBonus",
+        "reflectBonus",
+        "dodge",
+        "critResist",
+        "critDmgTakenReduction",
+        "trueDamageResist",
+        "normalAtkDmgReduction",
+        "skillDmgReduction",
+        "controlImmunity",
+        "debuffImmunityRate"
+      ],
+      "names": [
+        "免伤率",
+        "护盾",
+        "伤害反弹",
+        "气血回复(%)",
+        "护盾加成",
+        "治疗强度加成",
+        "伤害反弹加成",
+        "闪避率",
+        "暴击抵抗",
+        "暴伤减免",
+        "真伤抗性",
+        "普攻抵抗",
+        "技能抵抗",
+        "控制豁免",
+        "效果抵抗"
+      ]
     },
     "ALL-MEC": {
       "label": "通用·机制节奏",
       "side": "DEF",
       "tier": "L1",
-      "attributes": ["energyInit", "energyGainEfficiency", "splash"],
-      "names": ["初始法力", "法力获取效率", "溅射"]
+      "attributes": [
+        "energyInit",
+        "energyGainEfficiency",
+        "splash"
+      ],
+      "names": [
+        "初始法力",
+        "法力获取效率",
+        "溅射"
+      ]
     },
     "L3-通用": {
       "label": "通用·独立乘区",
       "side": "ATK",
       "tier": "L3",
-      "attributes": ["damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient"],
-      "names": ["伤害系数", "连击伤害系数", "反击伤害系数", "真伤系数"]
+      "attributes": [
+        "damageCoefficient",
+        "comboDamageCoefficient",
+        "counterDamageCoefficient",
+        "trueDamageCoefficient"
+      ],
+      "names": [
+        "伤害系数",
+        "连击伤害系数",
+        "反击伤害系数",
+        "真伤系数"
+      ]
     },
     "L4-通用": {
       "label": "通用·最终乘区",
       "side": "DEF",
       "tier": "L4",
-      "attributes": ["damageReductionCoefficient", "finalAttack", "finalDefense", "finalDamageBoost", "finalDamageReduction"],
-      "names": ["免伤系数", "最终攻击", "最终防御", "最终伤害提升", "最终伤害减免"]
+      "attributes": [
+        "damageReductionCoefficient",
+        "finalAttack",
+        "finalDefense",
+        "finalDamageBoost",
+        "finalDamageReduction"
+      ],
+      "names": [
+        "免伤系数",
+        "最终攻击",
+        "最终防御",
+        "最终伤害提升",
+        "最终伤害减免"
+      ]
     },
     "ATK-ADD": {
       "label": "攻击系·百分比加成（完整）",
       "side": "ATK",
       "tier": "L2",
-      "attributes": ["attackBonus", "hitBonus", "speedBonus", "damageBoost", "normalAtkBonus", "skillBonus"],
-      "names": ["攻击加成", "命中加成", "速度加成", "伤害加成", "普攻加成", "技能加成"]
+      "attributes": [
+        "attackBonus",
+        "hitBonus",
+        "speedBonus",
+        "damageBoost",
+        "normalAtkBonus",
+        "skillBonus"
+      ],
+      "names": [
+        "攻击加成",
+        "命中加成",
+        "速度加成",
+        "伤害加成",
+        "普攻加成",
+        "技能加成"
+      ]
     },
     "DEF-ADD": {
       "label": "防御系·百分比加成（完整）",
       "side": "DEF",
       "tier": "L2",
-      "attributes": ["healthBonus", "defenseBonus", "dodgeBonus", "shieldBonus", "healBonus", "reflectBonus"],
-      "names": ["气血加成", "防御加成", "闪避加成", "护盾加成", "治疗强度加成", "伤害反弹加成"]
+      "attributes": [
+        "healthBonus",
+        "defenseBonus",
+        "dodgeBonus",
+        "shieldBonus",
+        "healBonus",
+        "reflectBonus"
+      ],
+      "names": [
+        "气血加成",
+        "防御加成",
+        "闪避加成",
+        "护盾加成",
+        "治疗强度加成",
+        "伤害反弹加成"
+      ]
     },
     "ATK-ALL": {
       "label": "攻击系·全部属性",
       "side": "ATK",
       "tier": "L1",
-      "attributes": ["critRate", "critDamage", "hit", "comboRate", "trueDamageRate", "damageBoost", "normalAtkBonus", "skillBonus", "counterRate", "lifestealRate", "effectHit", "controlSuccessRate", "lifestealBonus", "armorBreak", "vulnerability", "damageCoefficient", "comboDamageCoefficient", "counterDamageCoefficient", "trueDamageCoefficient", "shieldReduction", "healReduction", "lifestealReduction", "reflectReduction", "finalAttack", "finalDamageBoost"],
-      "names": ["暴击率", "暴击伤害", "命中率", "连击率", "真伤率", "伤害加成", "普攻加成", "技能加成", "反击率", "吸血率", "效果命中", "控制命中", "吸血效果加成", "破甲", "易伤", "伤害系数", "连击伤害系数", "反击伤害系数", "真伤系数", "护盾削减", "治疗强度削减", "吸血效果削减", "伤害反弹削减", "最终攻击", "最终伤害提升"]
+      "attributes": [
+        "critRate",
+        "critDamage",
+        "hit",
+        "comboRate",
+        "trueDamageRate",
+        "damageBoost",
+        "normalAtkBonus",
+        "skillBonus",
+        "counterRate",
+        "lifestealRate",
+        "effectHit",
+        "controlSuccessRate",
+        "lifestealBonus",
+        "armorBreak",
+        "vulnerability",
+        "damageCoefficient",
+        "comboDamageCoefficient",
+        "counterDamageCoefficient",
+        "trueDamageCoefficient",
+        "shieldReduction",
+        "healReduction",
+        "lifestealReduction",
+        "reflectReduction",
+        "finalAttack",
+        "finalDamageBoost"
+      ],
+      "names": [
+        "暴击率",
+        "暴击伤害",
+        "命中率",
+        "连击率",
+        "真伤率",
+        "伤害加成",
+        "普攻加成",
+        "技能加成",
+        "反击率",
+        "吸血率",
+        "效果命中",
+        "控制命中",
+        "吸血效果加成",
+        "破甲",
+        "易伤",
+        "伤害系数",
+        "连击伤害系数",
+        "反击伤害系数",
+        "真伤系数",
+        "护盾削减",
+        "治疗强度削减",
+        "吸血效果削减",
+        "伤害反弹削减",
+        "最终攻击",
+        "最终伤害提升"
+      ]
     },
     "DEF-ALL": {
       "label": "防御系·全部属性",
       "side": "DEF",
       "tier": "L1",
-      "attributes": ["damageReduction", "shield", "reflectDamagePercent", "hpRegenPercent", "shieldBonus", "healBonus", "reflectBonus", "dodge", "critResist", "critDmgTakenReduction", "trueDamageResist", "normalAtkDmgReduction", "skillDmgReduction", "controlImmunity", "debuffImmunityRate", "energyInit", "energyGainEfficiency", "damageReductionCoefficient", "finalDefense", "finalDamageReduction"],
-      "names": ["免伤率", "护盾", "伤害反弹", "气血回复(%)", "护盾加成", "治疗强度加成", "伤害反弹加成", "闪避率", "暴击抵抗", "暴伤减免", "真伤抗性", "普攻抵抗", "技能抵抗", "控制豁免", "效果抵抗", "初始法力", "法力获取效率", "免伤系数", "最终防御", "最终伤害减免"]
+      "attributes": [
+        "damageReduction",
+        "shield",
+        "reflectDamagePercent",
+        "hpRegenPercent",
+        "shieldBonus",
+        "healBonus",
+        "reflectBonus",
+        "dodge",
+        "critResist",
+        "critDmgTakenReduction",
+        "trueDamageResist",
+        "normalAtkDmgReduction",
+        "skillDmgReduction",
+        "controlImmunity",
+        "debuffImmunityRate",
+        "energyInit",
+        "energyGainEfficiency",
+        "damageReductionCoefficient",
+        "finalDefense",
+        "finalDamageReduction"
+      ],
+      "names": [
+        "免伤率",
+        "护盾",
+        "伤害反弹",
+        "气血回复(%)",
+        "护盾加成",
+        "治疗强度加成",
+        "伤害反弹加成",
+        "闪避率",
+        "暴击抵抗",
+        "暴伤减免",
+        "真伤抗性",
+        "普攻抵抗",
+        "技能抵抗",
+        "控制豁免",
+        "效果抵抗",
+        "初始法力",
+        "法力获取效率",
+        "免伤系数",
+        "最终防御",
+        "最终伤害减免"
+      ]
     }
   },
   "sub_type_groups": {
     "weapon": {
       "label": "武器",
       "sub_types": [
-        { "id": "sword", "name": "剑" },
-        { "id": "dagger", "name": "刺" },
-        { "id": "staff", "name": "棍" },
-        { "id": "blade", "name": "刀" }
+        {
+          "id": "sword",
+          "name": "剑"
+        },
+        {
+          "id": "dagger",
+          "name": "刺"
+        },
+        {
+          "id": "staff",
+          "name": "棍"
+        },
+        {
+          "id": "blade",
+          "name": "刀"
+        }
       ]
     },
     "armor": {
       "label": "衣甲",
       "sub_types": [
-        { "id": "cloth_armor", "name": "布甲" },
-        { "id": "leather_armor", "name": "皮甲" },
-        { "id": "plate_armor", "name": "盔甲" }
+        {
+          "id": "cloth_armor",
+          "name": "布甲"
+        },
+        {
+          "id": "leather_armor",
+          "name": "皮甲"
+        },
+        {
+          "id": "plate_armor",
+          "name": "盔甲"
+        }
       ]
     },
     "helmet": {
       "label": "头部",
       "sub_types": [
-        { "id": "face_guard", "name": "面" },
-        { "id": "crown", "name": "冠" },
-        { "id": "helmet", "name": "头盔" }
+        {
+          "id": "face_guard",
+          "name": "面"
+        },
+        {
+          "id": "crown",
+          "name": "冠"
+        },
+        {
+          "id": "helmet",
+          "name": "头盔"
+        }
       ]
     },
     "boots": {
       "label": "脚部",
       "sub_types": [
-        { "id": "cloth_boots", "name": "布靴" },
-        { "id": "leather_boots", "name": "皮靴" },
-        { "id": "battle_boots", "name": "战靴" }
+        {
+          "id": "cloth_boots",
+          "name": "布靴"
+        },
+        {
+          "id": "leather_boots",
+          "name": "皮靴"
+        },
+        {
+          "id": "battle_boots",
+          "name": "战靴"
+        }
       ]
     },
     "charm": {
       "label": "护符",
       "sub_types": [
-        { "id": "charm", "name": "护符" }
+        {
+          "id": "charm",
+          "name": "护符"
+        }
       ]
     },
     "glove": {
       "label": "护腕",
       "sub_types": [
-        { "id": "glove", "name": "护腕" }
+        {
+          "id": "glove",
+          "name": "护腕"
+        }
       ]
     }
   },
@@ -254,40 +1241,64 @@
       "row": 1,
       "name": "基础属性",
       "pool": {
-        "ATK": ["ATK-L1"],
-        "DEF": ["DEF-L1"]
+        "ATK": [
+          "ATK-L1"
+        ],
+        "DEF": [
+          "DEF-L1"
+        ]
       }
     },
     {
       "row": 2,
       "name": "百分比加成",
       "pool": {
-        "ATK": ["ATK-ADD"],
-        "DEF": ["DEF-ADD"]
+        "ATK": [
+          "ATK-ADD"
+        ],
+        "DEF": [
+          "DEF-ADD"
+        ]
       }
     },
     {
       "row": 3,
       "name": "生存对抗",
       "pool": {
-        "ATK": ["ATK-MEC", "SHD-L2"],
-        "DEF": ["DEF-MEC", "ALL-MEC"]
+        "ATK": [
+          "ATK-MEC",
+          "SHD-L2"
+        ],
+        "DEF": [
+          "DEF-MEC",
+          "ALL-MEC"
+        ]
       }
     },
     {
       "row": 4,
       "name": "机制功能",
       "pool": {
-        "ATK": ["ATK-ALL"],
-        "DEF": ["DEF-ALL"]
+        "ATK": [
+          "ATK-ALL"
+        ],
+        "DEF": [
+          "DEF-ALL"
+        ]
       }
     },
     {
       "row": 5,
       "name": "独立系数",
       "pool": {
-        "ATK": ["L3-通用", "ATK-L3"],
-        "DEF": ["L4-通用", "DEF-L3"]
+        "ATK": [
+          "L3-通用",
+          "ATK-L3"
+        ],
+        "DEF": [
+          "L4-通用",
+          "DEF-L3"
+        ]
       }
     }
   ],
@@ -295,80 +1306,267 @@
     {
       "slot": "weapon",
       "slotLabel": "武器",
-      "attributes": ["damageReduction"],
-      "attributeLabels": ["免伤率"]
+      "attributes": [
+        "damageReduction"
+      ],
+      "attributeLabels": [
+        "免伤率"
+      ]
     },
     {
       "slot": "weapon",
       "slotLabel": "武器",
       "subType": "刺",
       "subTypeLabel": "刺",
-      "attributes": ["comboRate", "comboDamageCoefficient", "armorBreak", "vulnerability"],
-      "attributeLabels": ["连击率", "连击伤害系数", "破甲", "易伤"]
+      "attributes": [
+        "comboRate",
+        "comboDamageCoefficient",
+        "armorBreak",
+        "vulnerability"
+      ],
+      "attributeLabels": [
+        "连击率",
+        "连击伤害系数",
+        "破甲",
+        "易伤"
+      ]
     },
     {
       "slot": "armor",
       "slotLabel": "护甲",
-      "attributes": ["critRate"],
-      "attributeLabels": ["暴击率"]
+      "attributes": [
+        "critRate"
+      ],
+      "attributeLabels": [
+        "暴击率"
+      ]
     },
     {
       "slot": "boots",
       "slotLabel": "脚部",
-      "attributes": ["critDamage"],
-      "attributeLabels": ["暴击伤害"]
+      "attributes": [
+        "critDamage"
+      ],
+      "attributeLabels": [
+        "暴击伤害"
+      ]
     },
     {
       "slot": "charm",
       "slotLabel": "护符",
-      "attributes": ["defense", "defenseBonus", "defenseCoefficient"],
-      "attributeLabels": ["防御", "防御加成", "防御系数"]
+      "attributes": [
+        "defense",
+        "defenseBonus",
+        "defenseCoefficient"
+      ],
+      "attributeLabels": [
+        "防御",
+        "防御加成",
+        "防御系数"
+      ]
     }
   ],
   "pet_mount_rules": {
     "max_level": 50,
-    "float_range": { "min": 0.5, "max": 1.1 },
-    "formula": { "base_sap": 900, "system_count": 2, "total_weight": 9, "main_weight_sum": 7 },
-    "aptitude": { "min": 280, "max": 440, "cap": 500, "base": 400 },
+    "float_range": {
+      "min": 0.5,
+      "max": 1.1
+    },
+    "formula": {
+      "base_sap": 900,
+      "system_count": 2,
+      "total_weight": 9,
+      "main_weight_sum": 7
+    },
+    "aptitude": {
+      "min": 280,
+      "max": 440,
+      "cap": 500,
+      "base": 400
+    },
     "breakthroughs": [
-      { "level": 10, "bonus": 0.1 },
-      { "level": 30, "bonus": 0.2 },
-      { "level": 50, "bonus": 0.3 }
+      {
+        "level": 10,
+        "bonus": 0.1
+      },
+      {
+        "level": 30,
+        "bonus": 0.2
+      },
+      {
+        "level": 50,
+        "bonus": 0.3
+      }
     ],
     "rows": [
-      { "id": "main", "nameAtk": "主要属性", "nameDef": "主要属性", "minQuality": 1 },
-      { "id": "trait", "nameAtk": "特性", "nameDef": "特性", "minQuality": 3 },
-      { "id": "side_all", "nameAtk": "ATK-ALL", "nameDef": "DEF-ALL", "minQuality": 4, "pool": { "ATK": ["ATK-ALL"], "DEF": ["DEF-ALL"] } },
-      { "id": "l1", "nameAtk": "ATK-L1", "nameDef": "DEF-L1", "minQuality": 1, "pool": { "ATK": ["ATK-L1"], "DEF": ["DEF-L1"] } },
-      { "id": "l3c", "nameAtk": "L3-通用", "nameDef": "L4-通用", "minQuality": 2, "pool": { "ATK": ["L3-通用"], "DEF": ["L4-通用"] } },
-      { "id": "l3", "nameAtk": "ATK-L3", "nameDef": "DEF-L3", "minQuality": 3, "pool": { "ATK": ["ATK-L3"], "DEF": ["DEF-L3"] } },
-      { "id": "all", "nameAtk": "ATK-ALL", "nameDef": "DEF-ALL", "minQuality": 4, "pool": { "ATK": ["ATK-ALL"], "DEF": ["DEF-ALL"] } }
+      {
+        "id": "main",
+        "nameAtk": "主要属性",
+        "nameDef": "主要属性",
+        "minQuality": 1
+      },
+      {
+        "id": "trait",
+        "nameAtk": "特性",
+        "nameDef": "特性",
+        "minQuality": 3
+      },
+      {
+        "id": "side_all",
+        "nameAtk": "ATK-ALL",
+        "nameDef": "DEF-ALL",
+        "minQuality": 4,
+        "pool": {
+          "ATK": [
+            "ATK-ALL"
+          ],
+          "DEF": [
+            "DEF-ALL"
+          ]
+        }
+      },
+      {
+        "id": "l1",
+        "nameAtk": "ATK-L1",
+        "nameDef": "DEF-L1",
+        "minQuality": 1,
+        "pool": {
+          "ATK": [
+            "ATK-L1"
+          ],
+          "DEF": [
+            "DEF-L1"
+          ]
+        }
+      },
+      {
+        "id": "l3c",
+        "nameAtk": "L3-通用",
+        "nameDef": "L4-通用",
+        "minQuality": 2,
+        "pool": {
+          "ATK": [
+            "L3-通用"
+          ],
+          "DEF": [
+            "L4-通用"
+          ]
+        }
+      },
+      {
+        "id": "l3",
+        "nameAtk": "ATK-L3",
+        "nameDef": "DEF-L3",
+        "minQuality": 3,
+        "pool": {
+          "ATK": [
+            "ATK-L3"
+          ],
+          "DEF": [
+            "DEF-L3"
+          ]
+        }
+      },
+      {
+        "id": "all",
+        "nameAtk": "ATK-ALL",
+        "nameDef": "DEF-ALL",
+        "minQuality": 4,
+        "pool": {
+          "ATK": [
+            "ATK-ALL"
+          ],
+          "DEF": [
+            "DEF-ALL"
+          ]
+        }
+      }
     ],
     "trait_pools": {
       "combo": {
         "attack": [
-          { "name": "斩魂", "desc": "造成的伤害会额外扣除目标1%最大气血（对Boss减半）" },
-          { "name": "风之怒", "desc": "每次连击未暴击时，自身获得 1 层【风怒】（上限 5 层），每层使暴击率 +3%。风怒满 5 层时，下一次连击必定暴击，且暴击伤害 +30%，触发后风怒清零。暴击后的下一段连击伤害 +10%。" },
-          { "name": "裂风之刃", "desc": "每段连击命中时，有 15% 概率追加一段 40% 攻击的风刃伤害（每回合上限 3 段）。风刃命中速度低于自身的目标时，伤害翻倍。风刃暴击时，目标速度 -5%（1 回合，可叠 2 层）。" },
-          { "name": "必中之意", "desc": "连续命中同一目标3次后，第4次必定暴击且暴伤+30%" },
-          { "name": "连势追击", "desc": "连击段数≥3时，最后一段伤害翻倍" },
-          { "name": "战意高涨", "desc": "对速度低于自身目标伤害+20%，且命中后目标无法闪避（1回合）" },
-          { "name": "影杀标记", "desc": "每回合攻击后伤害系数+3%，最多叠10层" },
-          { "name": "蚀甲深化", "desc": "攻击命中后，目标防御-2%（叠5层，持续2回合）" },
-          { "name": "风怒连斩", "desc": "连击达4段时，追加1次无视防御的50%真伤攻击" },
-          { "name": "凝锋", "desc": "每次普攻命中，为自己增加标记:锋煞，每层标记伤害加成+1%" }
+          {
+            "name": "斩魂",
+            "desc": "造成的伤害会额外扣除目标1%最大气血（对Boss减半）"
+          },
+          {
+            "name": "风之怒",
+            "desc": "每次连击未暴击时，自身获得 1 层【风怒】（上限 5 层），每层使暴击率 +3%。风怒满 5 层时，下一次连击必定暴击，且暴击伤害 +30%，触发后风怒清零。暴击后的下一段连击伤害 +10%。"
+          },
+          {
+            "name": "裂风之刃",
+            "desc": "每段连击命中时，有 15% 概率追加一段 40% 攻击的风刃伤害（每回合上限 3 段）。风刃命中速度低于自身的目标时，伤害翻倍。风刃暴击时，目标速度 -5%（1 回合，可叠 2 层）。"
+          },
+          {
+            "name": "必中之意",
+            "desc": "连续命中同一目标3次后，第4次必定暴击且暴伤+30%"
+          },
+          {
+            "name": "连势追击",
+            "desc": "连击段数≥3时，最后一段伤害翻倍"
+          },
+          {
+            "name": "战意高涨",
+            "desc": "对速度低于自身目标伤害+20%，且命中后目标无法闪避（1回合）"
+          },
+          {
+            "name": "影杀标记",
+            "desc": "每回合攻击后伤害系数+3%，最多叠10层"
+          },
+          {
+            "name": "蚀甲深化",
+            "desc": "攻击命中后，目标防御-2%（叠5层，持续2回合）"
+          },
+          {
+            "name": "风怒连斩",
+            "desc": "连击达4段时，追加1次无视防御的50%真伤攻击"
+          },
+          {
+            "name": "凝锋",
+            "desc": "每次普攻命中，为自己增加标记:锋煞，每层标记伤害加成+1%"
+          }
         ],
         "defense": [
-          { "name": "灵息", "desc": "受击后法力+2，闪避后法力+3（每回合上限+5）" },
-          { "name": "连击余韵", "desc": "战斗开始时，消耗一层风势来获得10%最大气血护盾" },
-          { "name": "风之能", "desc": "每触发 1 段连击，有 30% 概率获得 1 层【风能】（上限 4 层），每层使法力获取效率 +5%。风能满 4 层时，消耗全部风能：立即回复 10 点法力，并使下一个技能伤害 +15%。" },
-          { "name": "疾影步", "desc": "速度高于攻击者时，闪避率+10%" },
-          { "name": "先手之盾", "desc": "本回合最先行动时，获得5%最大气血护盾" },
-          { "name": "疾风之蹄", "desc": "速度高于攻击者时，闪避率+8%" },
-          { "name": "风之识破", "desc": "速度高于攻击者时，闪避率+10%" },
-          { "name": "风之破绽", "desc": "命中同一目标3次后，第4次必定暴击且暴伤+25%" },
-          { "name": "风之守护", "desc": "每触发 1 段连击，获得 1 层【风护】（上限 5 层），每层使自身受到的下一次伤害 -4%。风护满 5 层时，消耗全部风护获得最大气血 8% 的护盾。" },
-          { "name": "连击回能", "desc": "每次连击判定成功法力+3；连击段数≥4时额外+5" }
+          {
+            "name": "灵息",
+            "desc": "受击后法力+2，闪避后法力+3（每回合上限+5）"
+          },
+          {
+            "name": "连击余韵",
+            "desc": "战斗开始时，消耗一层风势来获得10%最大气血护盾"
+          },
+          {
+            "name": "风之能",
+            "desc": "每触发 1 段连击，有 30% 概率获得 1 层【风能】（上限 4 层），每层使法力获取效率 +5%。风能满 4 层时，消耗全部风能：立即回复 10 点法力，并使下一个技能伤害 +15%。"
+          },
+          {
+            "name": "疾影步",
+            "desc": "速度高于攻击者时，闪避率+10%"
+          },
+          {
+            "name": "先手之盾",
+            "desc": "本回合最先行动时，获得5%最大气血护盾"
+          },
+          {
+            "name": "疾风之蹄",
+            "desc": "速度高于攻击者时，闪避率+8%"
+          },
+          {
+            "name": "风之识破",
+            "desc": "速度高于攻击者时，闪避率+10%"
+          },
+          {
+            "name": "风之破绽",
+            "desc": "命中同一目标3次后，第4次必定暴击且暴伤+25%"
+          },
+          {
+            "name": "风之守护",
+            "desc": "每触发 1 段连击，获得 1 层【风护】（上限 5 层），每层使自身受到的下一次伤害 -4%。风护满 5 层时，消耗全部风护获得最大气血 8% 的护盾。"
+          },
+          {
+            "name": "连击回能",
+            "desc": "每次连击判定成功法力+3；连击段数≥4时额外+5"
+          }
         ]
       }
     }

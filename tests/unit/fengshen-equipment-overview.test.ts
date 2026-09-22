@@ -130,7 +130,8 @@ describe('词条曲线通路', () => {
   })
 
   it('无曲线属性显式标记 none，不静默返回 0 区间', () => {
-    const r = resolveAttrRange(cfg, formula, conv, 'vulnerability', 10, 'xian', 1)
+    // 历史：vulnerability 曾真实缺曲线（已补，与 armorBreak 同档）；现用合成码保持缺口路径覆盖
+    const r = resolveAttrRange(cfg, formula, conv, 'noCurveAttr', 10, 'xian', 1)
     expect(r.source).toBe('none')
   })
 
@@ -174,7 +175,7 @@ describe('分步推导', () => {
   })
 
   it('缺曲线属性给出缺口步骤与补配方向，不给空推导', () => {
-    const r = resolveAttrRange(cfg, formula, conv, 'vulnerability', 10, 'xian', 1)
+    const r = resolveAttrRange(cfg, formula, conv, 'noCurveAttr', 10, 'xian', 1)
     expect(r.source).toBe('none')
     expect(r.calc.length).toBe(2)
     const gap = r.calc.find((s) => s.label === '缺口')
@@ -262,10 +263,12 @@ describe('主要属性', () => {
     expect(o.mainRandom.map((r) => r.attribute)).toEqual(['speedBonus', 'hitBonus', 'comboRate', 'normalAtkBonus'])
   })
 
-  it('随机池混写组码与属性码时一并展开（护腕 ALL-MEC + SHD-L2 = 7 项）', () => {
+  it('随机池混写组码与属性码时一并展开（护腕 ALL-MEC + SHD-L2 = 7 项，fixed 已补为 effectHit）', () => {
     const o = buildEquipmentOverview(cfg, formula, conv, { level: 10, slot: 'glove', subType: 'glove', tier: 'xian', quality: 1 })
     expect(o.mainRandom).toHaveLength(7)
-    expect(o.warnings.some((w) => /第 1 条（固定）未配置/.test(w))).toBe(true)
+    expect(o.mainFixed).not.toBeNull()
+    expect(o.mainFixed?.attribute).toBe('effectHit')
+    expect(o.warnings.some((w) => /第 1 条（固定）未配置/.test(w))).toBe(false)
   })
 
   it('未配置主要池的子类型给出告警而非崩溃', () => {

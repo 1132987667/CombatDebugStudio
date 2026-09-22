@@ -201,9 +201,10 @@ describe('formatRemainingTurns', () => {
   it('正数返回 N回合', () => {
     expect(formatRemainingTurns(3)).toBe('3回合')
   })
-  it('0 或负数返回永久', () => {
-    expect(formatRemainingTurns(0)).toBe('永久')
+  // 回归（2026-09-22）：0 曾与负数同判"永久"，与领域 duration 语义（-1 永久、0 仅施加当轮）错位
+  it('负数返回永久，0 返回 0回合', () => {
     expect(formatRemainingTurns(-1)).toBe('永久')
+    expect(formatRemainingTurns(0)).toBe('0回合')
   })
 })
 

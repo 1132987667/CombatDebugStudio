@@ -4,7 +4,7 @@
     <div class="group-header">
       <span class="group-name">【{{ buff.name }}】</span>
       <span class="group-meta">
-        {{ buff.condition === 'permanent' ? '永久' : `剩余 ${buff.remainingTurns} 回合` }}
+        {{ buff.condition === 'permanent' || buff.remainingTurns < 0 ? '永久' : `剩余 ${buff.remainingTurns} 回合` }}
         <span v-if="buff.stacks > 1"> · ×{{ buff.stacks }}层</span>
         <span v-if="buff.isAura"> · 全队</span>
         <span v-if="buff.condition === 'active'" class="meta-active"> · 已激活</span>
@@ -82,7 +82,7 @@ const effectLines = computed(() => {
     const absVal = Math.abs(mod.value)
     const turnText = props.buff.remainingTurns > 0
       ? `（${props.buff.remainingTurns}回合）`
-      : props.buff.condition === 'permanent' ? '（永久）' : ''
+      : (props.buff.condition === 'permanent' || props.buff.remainingTurns < 0) ? '（永久）' : ''
 
     // 条件标签 — 使用 conditionLabel（投影层预计算），不再从 description 正则提取
     let conditionSuffix = ''

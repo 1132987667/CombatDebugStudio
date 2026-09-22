@@ -85,7 +85,7 @@
                 :class="src.percent > 0 ? 'source-buff' : 'source-debuff'">
                 <span class="source-name">{{ src.buffName }}</span>
                 <span class="source-value">{{ src.percent > 0 ? '+' : '' }}{{ src.percent }}%</span>
-                <span class="source-meta">{{ src.remainingTurns > 0 ? `${src.remainingTurns}回合` : '永久' }}</span>
+                <span class="source-meta">{{ src.isPermanent ? '永久' : formatRemainingTurns(src.remainingTurns) }}</span>
               </div>
             </div>
           </div>
@@ -97,7 +97,8 @@
               <div v-if="hoveredBuff.description" class="breakdown-desc">{{ hoveredBuff.description }}</div>
               <div class="breakdown-meta">
                 <span v-if="hoveredBuff.remainingTurns > 0">{{ hoveredBuff.remainingTurns }}回合</span>
-                <span v-else>永久</span>
+                <span v-else-if="hoveredBuff.condition === 'permanent' || hoveredBuff.remainingTurns < 0">永久</span>
+                <span v-else>0回合</span>
                 <span v-if="hoveredBuff.stacks > 1"> · ×{{ hoveredBuff.stacks }}层</span>
                 <span v-if="hoveredBuff.condition === 'active'" class="meta-active"> · 已激活</span>
                 <span v-if="hoveredBuff.condition === 'inactive'" class="meta-inactive"> · 未激活</span>
@@ -152,7 +153,7 @@ import type { BattleEntity } from '@/domain/battle/type/types'
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import type { TooltipData, TooltipDetailRow } from '@/application/projection/LogTooltipResolver'
-import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
+import { useBuffDisplay, formatRemainingTurns } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
 

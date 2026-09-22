@@ -699,7 +699,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       script: script as IBuffScript,
       context: buffContext,
       startTurn: currentTurn,
-      duration: resolvedConfig.duration || -1,
+      // duration 语义：-1 永久、正数回合数、0 = 仅施加当轮存在（下一轮 updatePerTurn 移除）；
+      // 配置缺省（undefined）按引擎惯例回退永久。不可用 || 吞 0（调试注入 0 回合会被误判永久）
+      duration: resolvedConfig.duration ?? -1,
       remainingTurns: resolvedConfig.duration,
       currentStacks: 1,
       isActive: true,
@@ -1140,7 +1142,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (instance.duration === -1) return
 
       instance.remainingTurns--
-      if (instance.duration > 0 && instance.remainingTurns <= 0) {
+      // duration >= 0：含 0（施加轮到期）与正数；-1 永久已在上方 return 跳过
+      if (instance.duration >= 0 && instance.remainingTurns <= 0) {
         toRemove.push(instance.id)
       } else {
         // ponytail: 非过期递减需要通知 UI（removeBuff 已处理过期的通知）

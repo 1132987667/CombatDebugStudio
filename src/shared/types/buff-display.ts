@@ -60,7 +60,11 @@ export interface BuffTextItem {
   /** 效果描述 */
   description: string
 
-  /** 剩余回合数，0 表示永久 */
+  /**
+   * 剩余回合数（原始数值编码，与领域 BuffInstance.remainingTurns 一致）：
+   * 负数 = 永久（领域 duration:-1）；0 = 0 回合（仅施加当轮存在）；正数 = 剩余回合。
+   * 条件 PERMANENT 的效果经 toBuffTextItem 归零，永久判定须结合 condition 字段。
+   */
   remainingTurns: number
   /** 当前层数 */
   stacks: number

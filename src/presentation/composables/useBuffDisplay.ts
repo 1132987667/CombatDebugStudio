@@ -167,7 +167,8 @@ export function mergeAttributes(
         buffName: item.name,
         percent: mod.value,
         remainingTurns: item.remainingTurns,
-        isPermanent: item.remainingTurns === 0,
+        // 永久两种编码：条件 PERMANENT（remainingTurns 已归零）、领域 duration=-1（数值为负）
+        isPermanent: item.condition === ConditionState.PERMANENT || item.remainingTurns < 0,
         stacks: item.stacks,
       })
       if (mod.isFlat) {
@@ -333,10 +334,10 @@ export function useBuffDisplay(
 }
 
 /**
- * 格式化回合数
+ * 格式化回合数（原始数值编码：负 = 领域永久 duration:-1；0 = 0 回合，非永久）
  */
 export function formatRemainingTurns(turns: number): string {
-  if (turns <= 0) return '永久'
+  if (turns < 0) return '永久'
   return `${turns}回合`
 }
 

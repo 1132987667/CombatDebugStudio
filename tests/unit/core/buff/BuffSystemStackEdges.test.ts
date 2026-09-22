@@ -144,11 +144,9 @@ describe('BuffSystem 叠加/免疫/驱散边界', () => {
   })
 
   describe('removeDispellableBuffs 只清显式 dispellable === true', () => {
-    // NOTE: 已知断链（2026-09-22 发现，待拍板修复）——判定读 instance.context.config.dispellable，
-    // 而 addBuff 合并链里 jsonConfig.dispellable 不参与合并（BuffSystem.ts:539-540 只取
-    // config/scriptDefault），导致 buffs.json 声明的 dispellable（如 buff_yishang:true）
-    // 在主路径不生效，须调用方显式传 config 才可驱散。本用例显式传值锁功能正确性，
-    // 数据断链另见评估报告。
+    // 回归锁定（2026-09-22 修复）：addBuff 合并链此前不读 jsonConfig.dispellable，
+    // buffs.json 声明（如 buff_yishang:true）在主路径不生效；现三源合并
+    // 调用方 > 脚本默认 > JSON，本组用例锁两侧语义。
     it('true 被清、false 与未声明保留', () => {
       buffSystem.addBuff('c1', 'buff_yishang', { dispellable: true }, 1)
       buffSystem.addBuff('c1', 'buff_fenghen', { dispellable: false }, 1)
@@ -164,9 +162,12 @@ describe('BuffSystem 叠加/免疫/驱散边界', () => {
       expect(ids).toContain('t4_limited')
     })
 
-    it('行为锁定：仅靠 JSON 声明（调用方不显式传）目前不会被驱散', () => {
+    it('JSON 声明 dispellable:true 即被驱散；调用方显式 false 可覆盖', () => {
       buffSystem.addBuff('c1', 'buff_yishang', {}, 1) // json 声明 dispellable:true
-      expect(buffSystem.removeDispellableBuffs('c1')).toBe(0)
+      expect(buffSystem.removeDispellableBuffs('c1')).toBe(1)
+
+      buffSystem.addBuff('c2', 'buff_yishang', { dispellable: false }, 1)
+      expect(buffSystem.removeDispellableBuffs('c2')).toBe(0)
     })
   })
 })

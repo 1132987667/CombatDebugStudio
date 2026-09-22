@@ -542,7 +542,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         this.scriptRegistry.getResolvedBuffConfig(buffId)?.polarity,
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable:
-        config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
+        config.dispellable ??
+        scriptDefaultConfig?.dispellable ??
+        jsonConfig?.dispellable ??
+        undefined,
       blockedByTag:
         config.blockedByTag ?? jsonConfig?.blockedByTag ?? undefined,
       immunities:

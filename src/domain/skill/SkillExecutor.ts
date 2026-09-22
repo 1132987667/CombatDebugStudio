@@ -367,6 +367,12 @@ export class SkillExecutor {
       // 硬编码 NONE 会短路覆盖（曾导致全部控制类 buff 的控制状态不生效）
     }
 
+    // 解析 Buff 展示名称
+    const buffCfgForName = this.buffSystem
+      .getScriptRegistry()
+      .getBuffConfig(buffId)
+    const buffName = buffCfgForName?.name ?? buffId
+
     const instanceId = this.buffSystem.addBuff(
       buffTarget.id,
       buffId,
@@ -374,8 +380,16 @@ export class SkillExecutor {
       action.turn ?? 0,
       context,
     )
+    // 施加失败（免疫/blockedByTag/容量满）不得播报"获得"——日志与卡片快照必须一致
+    if (!instanceId) {
+      LoggerProvider.logger.addDebugLog(
+        `executeApplyBuff: Buff 施加被免疫/跳过: ${buffName} → ${buffTarget.id}`,
+        { level: LogLevel.WARN },
+      )
+      return
+    }
     // attack_percent DoT（法宝灼烧）按施加者攻击结算：施加时快照攻击到实例变量（DotEffect 消费）
-    if (instanceId) {
+    {
       const resolvedForDot = this.buffSystem
         .getScriptRegistry()
         .getResolvedBuffConfig(buffId)
@@ -390,15 +404,8 @@ export class SkillExecutor {
           ?.context.setVariable('_source_attack', source.getAttribute(ATTRIBUTE_CODE.attack))
       }
     }
-    // 解析 Buff 展示名称
-    const buffCfgForName = this.buffSystem
-      .getScriptRegistry()
-      .getBuffConfig(buffId)
-    const buffName = buffCfgForName?.name ?? buffId
     // 读取实际叠加层数（addBuff 内部已按 stackRule 合并，effect.stacks 反映真实层数）
-    const buffInstance = instanceId
-      ? this.buffSystem.getBuffInstanceById(instanceId)
-      : undefined
+    const buffInstance = this.buffSystem.getBuffInstanceById(instanceId)
     const actualStacks = buffInstance?.currentStacks ?? skillStep.stacks ?? 1
     action.effects.push({
       type: ActionResultType.BUFF,

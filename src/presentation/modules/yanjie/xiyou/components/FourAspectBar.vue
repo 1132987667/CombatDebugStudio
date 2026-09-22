@@ -29,6 +29,7 @@ import IconAspectEquip from '~icons/app/aspect-equip'
 import IconAspectMate from '~icons/app/aspect-mate'
 import IconAspectCollect from '~icons/app/aspect-collect'
 import IconAspectQuest from '~icons/app/aspect-quest'
+import IconAspectTower from '~icons/app/aspect-tower'
 import IconAspectCave from '~icons/app/aspect-cave'
 import IconAspectSettings from '~icons/app/aspect-settings'
 
@@ -91,6 +92,7 @@ const TAB_ICONS: Record<GroupTab, Component> = {
   mate: IconAspectMate,
   collect: IconAspectCollect,
   quest: IconAspectQuest,
+  tower: IconAspectTower,
   cave: IconAspectCave,
   settings: IconAspectSettings,
 }

@@ -47,6 +47,10 @@ import { equipBonuses, buildSimAlly, schoolTreeCombatBonuses } from '../battle'
 import { fabaoAttributeBonuses } from '../fabao'
 import { petMountAttributeBonuses } from '../petMount'
 import {
+  TOWER_FLOOR_EXP,
+  TOWER_FLOOR_GOLD,
+  TOWER_HIDDEN_FLOOR,
+  TOWER_MAX_FLOOR,
   isTowerFloorUnlocked,
   nextTowerFloor,
   recordTowerClear,

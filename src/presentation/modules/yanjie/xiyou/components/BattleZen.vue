@@ -185,6 +185,7 @@ import {
   enemyBriefById,
   equipBonuses,
   firstKillRewardDrops,
+  rolesForEnemyIds,
   schoolTreeCombatBonuses,
   xianyuanForEnemyIds,
   rewardForEnemyIds,
@@ -577,11 +578,15 @@ function onBattleEnded(data: BattleEndedEventData): void {
     )
     // 宠物/坐骑：出战个体同池结算经验（§18 双通道 1:1）+ 击败掉落个体（§18 六档掉率×幸运，命中即停）
     for (const msg of settlePetMountBattleExp(exp)) notification.toast(msg)
-    const gainedIndividuals = rollPetMountDrops(props.scene.id, rolesForEnemyIds(node?.enemyIds ?? []))
+    // NOTE: 个体池按域序号 1-5 建池（configs/pets|mounts 的 scene 字段），迷踪秘境无域序号不掉落
+    const regionNo = Number(props.scene.regionId.slice('region_'.length))
+    const gainedIndividuals = Number.isFinite(regionNo)
+      ? rollPetMountDrops(regionNo, rolesForEnemyIds(node?.enemyIds ?? []))
+      : []
     for (const g of gainedIndividuals) {
       const name = individualById(g.individualId)?.name ?? g.individualId
       notification.toast(`获得${g.kind === 'pet' ? '灵宠' : '坐骑'}「${name}」（资质 ${g.aptitude}）`, 'success')
-      run.totals.drops.push({ itemId: g.individualId, count: 1 })
+      run.totals.drops.push({ itemId: g.individualId, quantity: 1, chance: 1 })
     }
     run.totals.exp += exp
     run.totals.money += money

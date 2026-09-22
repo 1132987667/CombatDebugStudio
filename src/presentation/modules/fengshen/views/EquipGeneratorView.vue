@@ -182,7 +182,7 @@ import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshe
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import Button from '@/presentation/components/Button.vue'
 import { QUALITY_NAMES, qualityFactorOf } from '@/presentation/modules/yanjie/xiyou/quality'
-import { generateEquipments, regenEquipmentCoreStats, toExportableEquipment, type EquipmentRegenReport } from '@/domain/fengshen/equip-generator'
+import { generateEquipments, regenEquipmentCoreStats, toExportableEquipment, type EquipmentRegenReport, type EquipGenerateReport } from '@/domain/fengshen/equip-generator'
 import type { AffixRuleConfig, EquipmentData, EquipFormulaConfig, GearTier, PlayerGrowthConfig } from '@/domain/fengshen/types'
 import { nextEntityId } from '@/domain/fengshen/types'
 import type { EquipmentSlot } from '@/shared/types/Item'

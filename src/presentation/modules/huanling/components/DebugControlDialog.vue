@@ -47,14 +47,14 @@
         <div class="log-gen-buttons">
           <Button variant="energy"
             :disabled="battleStore.generationProgress.isGenerating"
-            @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', genFormat, genCount)">
+            @click="battleStore.generateBattleData(genMode as BattleGenerationMode, genFormat, genCount)">
             {{ battleStore.generationProgress.isGenerating
               ? `生成中 ${battleStore.generationProgress.percent}%`
               : `生成数据（${genCount}场）` }}
           </Button>
           <Button variant="secondary"
             :disabled="battleStore.generationProgress.isGenerating"
-            @click="battleStore.generateBattleData(genMode as '1v1' | '2v2' | 'random', 'record', genCount, false, true)"
+            @click="battleStore.generateBattleData(genMode as BattleGenerationMode, 'record', genCount, false, true)"
             title="生成录制数据并存入昊天镜「战斗记录」，不下载文件">
             {{ battleStore.generationProgress.isGenerating
               ? `生成中 ${battleStore.generationProgress.percent}%`
@@ -70,6 +70,7 @@
 import { ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import type { BattleGenerationMode, BattleExportFormat } from '@/application/service/BattleDataGenerator'
 
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
@@ -79,7 +80,7 @@ const battleStore = useBattleStore()
 // ==================== 战斗数据生成 ====================
 // NOTE: 战术下拉 v-model 值为 string | number | null，故放宽为 string；调用处按已知选项断言
 const genMode = ref<string>('random')
-const genFormat = ref<'txt' | 'html' | 'record' | 'json'>('txt')
+const genFormat = ref<BattleExportFormat>('txt')
 const genCount = ref(50)
 const modeOptions = [
   { value: '1v1' as const, label: '1v1' },

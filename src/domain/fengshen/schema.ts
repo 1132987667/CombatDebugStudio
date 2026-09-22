@@ -9,14 +9,20 @@ import type { FengshenTableName, GearTier, AffixQualityCode } from '@/domain/fen
 import { ENEMY_ROLE_LABELS, ENEMY_ROLES } from '@/domain/fengshen/role-grades'
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import { StackRule } from '@/domain/buff/types'
+import { SkillTypeName } from '@/domain/skill/types'
 
 /**
- * 枚举值 → 中文标签（单一来源）
+ * 枚举值 → 中文标签
  *
  * schema 内联 valueLabel 与 DataTable/EntityDetailPanel 的展示翻译共用此表；
+ * 技能类型措辞以 domain/skill 的 SkillTypeName 为单一来源（此处仅按键名转发）。
  * 文案与既有界面保持逐字一致（部分组件对个别键有刻意不同的文案域，见各自注释）。
  */
-export const SKILL_TYPE_VALUE_LABEL: Record<string, string> = { small: '小技能', ultimate: '大招', passive: '被动' }
+export const SKILL_TYPE_VALUE_LABEL: Record<string, string> = {
+  small: SkillTypeName.small,
+  ultimate: SkillTypeName.ultimate,
+  passive: SkillTypeName.passive,
+}
 export const POLARITY_VALUE_LABEL: Record<string, string> = { positive: '增益', negative: '减益' }
 export const BUFF_CATEGORY_VALUE_LABEL: Record<string, string> = { attribute: '属性', aura: '光环', dot: '持续伤害', hot: '持续治疗', shield: '护盾', control: '控制', immunity: '免疫', trigger: '触发' }
 export const STACK_RULE_VALUE_LABEL: Record<string, string> = { limited: '叠加封顶', refresh: '刷新覆盖', independent: '独立叠加' }

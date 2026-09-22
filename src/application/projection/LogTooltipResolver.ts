@@ -12,15 +12,67 @@
 
 import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
 import { classifyBuff, getStatusCategoryBadge } from '@/shared/types/buff-classification'
-import { StatusCategory } from '@/shared/types/status-meta'
+import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 import type { BuffJsonEntry, BuffJsonAuraModifier, AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { ResolvedBuffConfig } from '@/domain/buff/atomic/BuffConfigResolver'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import { ModifierType } from '@/domain/attribute/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
+import { SkillType, SkillTypeName } from '@/domain/skill/types'
 import type { SkillConfig } from '@/domain/skill/types'
 import { BattleTriggerPhaseName } from '@/domain/battle/type/types'
 import type { BattleTriggerPhase } from '@/domain/battle/type/types'
+
+// ==================== 显示文案常量（本文件 Tooltip 专用） ====================
+
+/** 明细行标签 */
+const ROW = {
+  scope: '生效范围',
+  attribute: '属性',
+  triggerPhase: '触发时机',
+  triggerChance: '触发概率',
+  effect: '效果',
+  type: '类型',
+  immunityList: '免疫列表',
+  energyCost: '法力消耗',
+  cooldown: '冷却',
+  targetCount: '目标数',
+} as const
+
+/** 类别效果描述值（区别于 StatusCategoryNames 的类别名，此处描述具体作用） */
+const ROW_VALUE = {
+  uncontrollable: '无法行动',
+  shieldAbsorb: '护盾吸收',
+} as const
+
+/** 光环 targetSelector 配置值 */
+const AuraTargetSelector = {
+  SELF: 'self',
+  ALLIES: 'allies',
+  ENEMIES: 'enemies',
+} as const
+
+/** targetSelector → 作用范围文案 */
+const AURA_SCOPE_LABEL: Record<string, string> = {
+  [AuraTargetSelector.SELF]: '自身',
+  [AuraTargetSelector.ALLIES]: '全体友方',
+  [AuraTargetSelector.ENEMIES]: '全体敌方',
+}
+
+/** 兜底 / 通用文案 */
+const TEXT = {
+  notFound: '未找到配置',
+  unknown: '未知',
+  skill: '技能',
+  permanent: '永久',
+} as const
+
+const UNIT_ROUND = '回合'
+const COOLDOWN_SUFFIX = '冷却'
+const SOURCE_PREFIX = '来源：'
+/** buff 持续时长哨兵：-1 = 永久 */
+const DURATION_PERMANENT = -1
 
 // ==================== 输出类型 ====================
 
@@ -89,8 +141,8 @@ export class LogTooltipResolver {
     if (!config) {
       return {
         name: buffId,
-        description: '未找到配置',
-        badge: '未知',
+        description: TEXT.notFound,
+        badge: TEXT.unknown,
         details: [],
       }
     }
@@ -151,13 +203,13 @@ export class LogTooltipResolver {
           []) as BuffJsonAuraModifier[]
         const targetSelector = (auraEffect?.params.targetSelector as
           | string
-          | undefined) ?? 'self'
-        const scope = targetSelector === 'allies' ? '全体友方' : targetSelector === 'enemies' ? '全体敌方' : '自身'
-        details.push({ label: '生效范围', value: scope })
+          | undefined) ?? AuraTargetSelector.SELF
+        const scope = AURA_SCOPE_LABEL[targetSelector] ?? AURA_SCOPE_LABEL[AuraTargetSelector.SELF]
+        details.push({ label: ROW.scope, value: scope })
         if (modifiers.length) {
           for (const m of modifiers) {
             details.push({
-              label: m.targetAttribute ?? '属性',
+              label: m.targetAttribute ?? ROW.attribute,
               value: this.formatModifierValue(m),
             })
           }
@@ -176,7 +228,7 @@ export class LogTooltipResolver {
         for (const [key, cfg] of attrs) {
           const sign = cfg.value > 0 ? '+' : ''
           const text =
-            cfg.type === 'PERCENTAGE'
+            cfg.type === ModifierType.PERCENTAGE
               ? `${sign}${cfg.value}%`
               : `${sign}${cfg.value}`
           details.push({ label: key, value: text })
@@ -188,32 +240,32 @@ export class LogTooltipResolver {
         if (triggers?.length) {
           for (const t of triggers!) {
             details.push({
-              label: '触发时机',
-              value: this.formatTriggerPhase(t.phase ?? '') || t.scriptId || '未知',
+              label: ROW.triggerPhase,
+              value: this.formatTriggerPhase(t.phase ?? '') || t.scriptId || TEXT.unknown,
             })
             if (t.params?.probability != null) {
-              details.push({ label: '触发概率', value: `${Math.round((t.params.probability as number) * 100)}%` })
+              details.push({ label: ROW.triggerChance, value: `${Math.round((t.params.probability as number) * 100)}%` })
             }
           }
         }
         break
       }
       case StatusCategory.CONTROL: {
-        details.push({ label: '效果', value: '无法行动' })
+        details.push({ label: ROW.effect, value: ROW_VALUE.uncontrollable })
         break
       }
       case StatusCategory.DOT: {
-        details.push({ label: '类型', value: '持续伤害' })
+        details.push({ label: ROW.type, value: StatusCategoryNames[StatusCategory.DOT] })
         break
       }
       case StatusCategory.SHIELD: {
-        details.push({ label: '类型', value: '护盾吸收' })
+        details.push({ label: ROW.type, value: ROW_VALUE.shieldAbsorb })
         break
       }
       case StatusCategory.IMMUNITY: {
         const immunities = config.immunities
         if (immunities?.length) {
-          details.push({ label: '免疫列表', value: immunities!.join('、') })
+          details.push({ label: ROW.immunityList, value: immunities!.join('、') })
         }
         break
       }
@@ -225,7 +277,7 @@ export class LogTooltipResolver {
     if (sourceSkills.length > 0) {
       const names = sourceSkills.map((s) => s.name).filter(Boolean)
       if (names.length > 0) {
-        return `来源：${names.join('、')}`
+        return `${SOURCE_PREFIX}${names.join('、')}`
       }
     }
     return undefined
@@ -236,24 +288,24 @@ export class LogTooltipResolver {
   private resolveSkill(skillId: string): TooltipData | null {
     const config = this.skillManager.getSkillConfig(skillId)
     if (!config) {
-      return { name: skillId, description: '未找到配置', badge: '技能', details: [] }
+      return { name: skillId, description: TEXT.notFound, badge: TEXT.skill, details: [] }
     }
 
     const details: TooltipDetailRow[] = []
-    details.push({ label: '法力消耗', value: `${config.energyCost}` })
+    details.push({ label: ROW.energyCost, value: `${config.energyCost}` })
     if (config.cooldown > 0) {
-      details.push({ label: '冷却', value: `${config.cooldown} 回合` })
+      details.push({ label: ROW.cooldown, value: `${config.cooldown} ${UNIT_ROUND}` })
     }
     const targetCount = config.selector?.count
     if (targetCount != null && targetCount !== 'all') {
-      details.push({ label: '目标数', value: `${targetCount}` })
+      details.push({ label: ROW.targetCount, value: `${targetCount}` })
     }
 
     return {
       name: config.name,
       description: config.description ?? '',
-      badge: config.skillType === 'ultimate' ? '终极技' : '技能',
-      durationLabel: config.cooldown > 0 ? `${config.cooldown}回合冷却` : undefined,
+      badge: config.skillType ? SkillTypeName[config.skillType] : TEXT.skill,
+      durationLabel: config.cooldown > 0 ? `${config.cooldown}${UNIT_ROUND}${COOLDOWN_SUFFIX}` : undefined,
       details,
     }
   }
@@ -263,31 +315,31 @@ export class LogTooltipResolver {
   private resolvePassive(skillId: string): TooltipData | null {
     const config = this.skillManager.getSkillConfig(skillId)
     if (!config) {
-      return { name: skillId, description: '未找到配置', badge: '被动', details: [] }
+      return { name: skillId, description: TEXT.notFound, badge: SkillTypeName[SkillType.PASSIVE], details: [] }
     }
 
     const details: TooltipDetailRow[] = []
 
     // 触发时机
     if (config.triggerTimes && config.triggerTimes.length > 0) {
-      details.push({ label: '触发时机', value: config.triggerTimes.map((t) => this.formatTriggerPhase(t)).join('、') })
+      details.push({ label: ROW.triggerPhase, value: config.triggerTimes.map((t) => this.formatTriggerPhase(t)).join('、') })
     }
 
     // 触发概率（从 parameters 或 steps 中推测）
     const rawProbability = config.parameters?.triggerProbability ?? config.parameters?.probability
     const probability = typeof rawProbability === 'number' ? rawProbability : undefined
     if (probability != null) {
-      details.push({ label: '触发概率', value: `${Math.round(probability * 100)}%` })
+      details.push({ label: ROW.triggerChance, value: `${Math.round(probability * 100)}%` })
     }
 
     if (config.cooldown > 0) {
-      details.push({ label: '冷却', value: `${config.cooldown} 回合` })
+      details.push({ label: ROW.cooldown, value: `${config.cooldown} ${UNIT_ROUND}` })
     }
 
     return {
       name: config.name,
       description: config.description ?? '',
-      badge: '被动',
+      badge: SkillTypeName[SkillType.PASSIVE],
       details,
     }
   }
@@ -303,16 +355,16 @@ export class LogTooltipResolver {
   private formatModifierValue(modifier: BuffJsonAuraModifier): string {
     if (modifier.value == null) return ''
     const pct = Math.round(modifier.value)
-    const type = modifier.type === 'PERCENTAGE' ? '%' : ''
+    const type = modifier.type === ModifierType.PERCENTAGE ? '%' : ''
     return `${pct}${type}`
   }
 
   /** 格式化持续时间 */
   private formatDuration(duration: number | undefined): string | undefined {
     if (duration == null) return undefined
-    if (duration === -1) return '永久'
+    if (duration === DURATION_PERMANENT) return TEXT.permanent
     if (duration <= 0) return undefined
-    return `${duration}回合`
+    return `${duration}${UNIT_ROUND}`
   }
 
   /**

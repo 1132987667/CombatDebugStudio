@@ -65,6 +65,11 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
     // dot 无来源，不计入任何单位输出，也不计入命中/暴击分母
     expect(sum.judgment.hits).toBe(0)
     expect(sum.judgment.crits).toBe(0)
+    // CombatRecord 侧：DOT 才落 damageSource='dot'
+    const dotRecords = rec.combatRecords.filter((r) => r.damage === 15)
+    expect(dotRecords).toHaveLength(1)
+    expect(dotRecords[0].damageSource).toBe('dot')
+    expect(dotRecords[0].message).toContain('持续伤害')
   })
 
   it('触发器脚本伤害（无 origin）不误标为 dot', async () => {
@@ -126,6 +131,13 @@ describe('dot 持续伤害进入真实录制战报（BattleSystem 补发 DAMAGE_
     expect(sum.units[enemy.id].hpEnd).toBe(initialHp - 12)
     expect(sum.judgment.hits).toBe(0)
     expect(sum.skills.some((s) => s.damage > 0)).toBe(false)
+    // 回归：触发器伤害曾被无条件写成 damageSource='dot' + "受到 N 点持续伤害"，
+    //       反伤/平摊在战报叙事里被当成毒
+    const triggerRecords = rec.combatRecords.filter((r) => r.damage === 12)
+    expect(triggerRecords).toHaveLength(1)
+    expect(triggerRecords[0].damageSource).toBeUndefined()
+    expect(triggerRecords[0].message).toContain('受到 12 点伤害')
+    expect(triggerRecords[0].message).not.toContain('持续')
   })
 
   it('脚本型毒（buff_poison）伤害补发 dot 事件进入战报', async () => {

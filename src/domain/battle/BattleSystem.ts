@@ -562,9 +562,10 @@ export class BattleSystem {
               null, target, damage, rawDamage ?? damage, false, battleData,
             )
             settledViaExecutor = true
-            // DOT 特有逻辑（DOT CombatRecord、叙事日志）
+            // 触发器伤害记录与叙事日志（DOT 与反伤/平摊等共用此路径，措辞按 origin 区分）
             if (actualDamage > 0) {
-              if (origin === 'dot') emitDotTrace(actualDamage)
+              const isDot = origin === 'dot'
+              if (isDot) emitDotTrace(actualDamage)
               else if (origin === 'trigger') emitTriggerTrace(targetId, actualDamage)
               const hpAfter = target.currentHealth
               const dotRecord = createEmptyRecord(
@@ -577,8 +578,12 @@ export class BattleSystem {
                 battleData.currentTurn ?? 1,
               )
               dotRecord.damage = actualDamage
-              dotRecord.damageSource = 'dot'
-              dotRecord.message = `${target.name} 受到 ${actualDamage} 点持续伤害`
+              // NOTE: damageSource 只给 DOT 落 'dot'。反伤/平摊无对应来源枚举（DamageSource 仅
+              //       attack/skill/dot/thorns/reaction），误标会让战报把触发器伤害叙述成持续伤害；
+              //       留空即可——消费方按 sourceId 缺失判定（口径见 unified-summary.ts）
+              if (isDot) dotRecord.damageSource = 'dot'
+              const damageLabel = isDot ? '持续伤害' : '伤害'
+              dotRecord.message = `${target.name} 受到 ${actualDamage} 点${damageLabel}`
               this.battleRecorder.recordCombatRecord(
                 battleData.battleId,
                 dotRecord,
@@ -592,7 +597,7 @@ export class BattleSystem {
                   classStr: 'log-damage',
                   kind: 'damage',
                 },
-                { text: ' 点持续伤害' },
+                { text: ` 点${damageLabel}` },
               ]
               LoggerProvider.logger.addBattleLog({
                 turn: battleData.currentTurn ?? 1,

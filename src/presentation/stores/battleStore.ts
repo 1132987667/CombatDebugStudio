@@ -1,4 +1,5 @@
 import type { BattleService } from '@/application/facade/BattleFacade'
+import type { BattleGenerationMode, BattleExportFormat } from '@/application/service/BattleDataGenerator'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -388,13 +389,21 @@ export const useBattleStore = defineStore('battle', () => {
     handleAttributeChanged,
   )
   events.set(BattleEventCodes.TEAM_DATA_CHANGED, syncTeams)
-  /** 需要清理的事件码列表（用于组件卸载时移除监听器） */
-  const cleanupEvents = [...events.keys()]
+  /** 订阅对列表（事件码 → 处理函数）：卸载时精确移除，重挂时精确重订 */
+  const cleanupEvents = [...events.entries()]
 
-  // 注册所有事件处理器到战斗管理器（桥上 eventBus）
-  for (const [eventCode, handler] of events) {
-    battleService.value!.on(eventCode as BattleEventName, handler)
+  // NOTE: 订阅必须幂等且可重挂——Huanling.vue 卸载（dev HMR 改脚本即触发）会调 destroy()
+  //       清掉桥上全部订阅，而本 store 是 app 级单例不会重建；重挂只能靠
+  //       initializeBattleService 再调 subscribeBattleEvents，否则投影链永久冻结。
+  /** 注册所有事件处理器到战斗管理器（桥上 eventBus）；幂等，可重复调用 */
+  const subscribeBattleEvents = () => {
+    if (!battleService.value) return
+    for (const [eventCode, handler] of cleanupEvents) {
+      battleService.value.off(eventCode as BattleEventName, handler)
+      battleService.value.on(eventCode as BattleEventName, handler)
+    }
   }
+  subscribeBattleEvents()
 
   //  5. 核心 Actions（纯函数，仅更新本地状态或调用 Manager）
 
@@ -405,6 +414,8 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const initializeBattleService = (manager: BattleService) => {
     battleService.value = manager
+    // destroy() 后重建（dev HMR 重挂组件）必须重新订阅，否则领域事件无人接
+    subscribeBattleEvents()
     battleLogManager.addSystemLog({ message: '战斗管理器已初始化' })
   }
 
@@ -1055,8 +1066,8 @@ export const useBattleStore = defineStore('battle', () => {
 
   /**  执行战斗数据生成 */
   const generateBattleData = async (
-    mode: '1v1' | '2v2' | 'random' = 'random',
-    format: 'txt' | 'html' | 'record' | 'json' = 'txt',
+    mode: BattleGenerationMode = 'random',
+    format: BattleExportFormat = 'txt',
     count: number = 50,
     record: boolean = false,
     store: boolean = false,
@@ -1120,8 +1131,10 @@ export const useBattleStore = defineStore('battle', () => {
       }
 
       if (!battleService.value) return
-      cleanupEvents.forEach((key) => battleService.value!.off(key))
-      cleanupEvents.length = 0
+      // 精确移除自己注册的 handler（不带 handler 的 off 会清掉该事件上其他订阅者）
+      for (const [key, handler] of cleanupEvents) {
+        battleService.value!.off(key as BattleEventName, handler)
+      }
       projection?.clear()
       projection = null
       participants.clear()

@@ -66,8 +66,8 @@
   },
   {
     "id": "yaotu_energy_overload",
-    "name": "能量过载",
-    "description": "每次攻击命中额外获得+8能量",
+    "name": "法力过载",
+    "description": "每次攻击命中额外获得+8法力",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,

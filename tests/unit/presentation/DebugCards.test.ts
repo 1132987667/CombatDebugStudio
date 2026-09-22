@@ -127,7 +127,7 @@ function createSkillArchive(): UnifiedArchive {
   }
 }
 
-/** 条渲染存档：同一行动链内目标受伤(u2)、目标受治疗+回能量(u3)，验证气血/能量条四态 */
+/** 条渲染存档：同一行动链内目标受伤(u2)、目标受治疗+回法力(u3)，验证气血/法力条四态 */
 function createBarsArchive(): UnifiedArchive {
   const ev = (e: Omit<UnifiedEvent, '_delta'>): UnifiedEvent => e
   return {
@@ -238,7 +238,7 @@ describe('DebugCards 行动卡片标题', () => {
     expect(host!.querySelectorAll('.ht-sh-row').length).toBe(0)
   })
 
-  it('头部技能行动：显示"消耗: X能量"；普攻/无消耗数据不显示', async () => {
+  it('头部技能行动：显示"消耗: X法力"；普攻/无消耗数据不显示', async () => {
     await mountCards()
     const store = useHaotianStore()
     // 技能行动：显示消耗
@@ -248,9 +248,9 @@ describe('DebugCards 行动卡片标题', () => {
     expect(text).toContain('行动类型')
     expect(text).toContain('技能')
     expect(text).toContain('消耗')
-    expect(text).toContain('30能量')
-    // 消耗行同侧显示行动者剩余能量（action_execution 快照 EN 末态 100→70）
-    expect(text).toContain('剩余 70能量')
+    expect(text).toContain('30法力')
+    // 消耗行同侧显示行动者剩余法力（action_execution 快照 EN 末态 100→70）
+    expect(text).toContain('剩余 70法力')
     // 普攻行动（demo 首个节点）：无消耗行
     await store.loadDemo()
     await new Promise((r) => setTimeout(r, 30))
@@ -260,7 +260,7 @@ describe('DebugCards 行动卡片标题', () => {
     expect(host!.textContent ?? '').not.toContain('消耗')
   })
 
-  it('目标行气血/能量条：伤害红段、治疗亮绿段、回能亮蓝段，按 HP/EN 前后值渲染', async () => {
+  it('目标行气血/法力条：伤害红段、治疗亮绿段、回能亮蓝段，按 HP/EN 前后值渲染', async () => {
     await mountCards()
     const store = useHaotianStore()
     await store.loadArchiveFile(new File([JSON.stringify(createBarsArchive())], 'bars.json'))
@@ -270,14 +270,14 @@ describe('DebugCards 行动卡片标题', () => {
     await new Promise((r) => setTimeout(r, 30))
     const tgts = [...host!.querySelectorAll<HTMLElement>('.ht-sh-tgt')]
     const tgtOf = (name: string): HTMLElement => tgts.find((t) => t.querySelector('b')?.textContent === name)!
-    // 受伤目标 u2：气血条 剩余86%（430/500）+ 扣减红段14%（70/500），无能量条
+    // 受伤目标 u2：气血条 剩余86%（430/500）+ 扣减红段14%（70/500），无法力条
     const u2 = tgtOf('金护法')
     expect(u2.querySelector('.ht-bar-hp .keep')?.getAttribute('style')).toContain('86%')
     const u2Change = u2.querySelector('.ht-bar-hp .change')
     expect(u2Change?.classList.contains('damage')).toBe(true)
     expect(u2Change?.getAttribute('style')).toContain('14%')
     expect(u2.querySelector('.ht-bar-en')).toBeNull()
-    // 受治疗+回能目标 u3：气血条 原有75% + 治疗亮绿5%；能量条 原有40% + 回复亮蓝20%
+    // 受治疗+回能目标 u3：气血条 原有75% + 治疗亮绿5%；法力条 原有40% + 回复亮蓝20%
     const u3 = tgtOf('水护法')
     expect(u3.querySelector('.ht-bar-hp .keep')?.getAttribute('style')).toContain('75%')
     const healSeg = u3.querySelector('.ht-bar-hp .change')

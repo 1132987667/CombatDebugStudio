@@ -5,10 +5,10 @@ import { round } from '@/shared/utils/math'
 /**
  * HotEffect — 持续治疗/回能原语
  *
- * 每回合治疗目标或恢复能量。
+ * 每回合治疗目标或恢复法力。
  * - healType='flat': 固定值
  * - healType='percent': 百分比最大生命
- * - resource='health' 治疗生命，'energy' 恢复能量
+ * - resource='health' 治疗生命，'energy' 恢复法力
  */
 export class HotEffect implements IAtomicEffect {
   readonly type: AtomicEffectType = AtomicEffectType.HEAL
@@ -40,7 +40,7 @@ export class HotEffect implements IAtomicEffect {
     } else if (resource === 'energy') {
       const stacks = ctx.getVariable<number>('_stacks') ?? 1
       if (healType === 'percent') {
-        // 百分比能量：基于最大能量值（依赖问题一修复后的 getAttrVal）
+        // 百分比法力：基于最大法力值（依赖问题一修复后的 getAttrVal）
         const maxEnergy = ctx.getAttrVal('maxEnergy')
         const amount = round(maxEnergy * value / 100) * stacks
         buffSystem.requestEnergy(ctx.characterId, amount)
@@ -55,7 +55,7 @@ export class HotEffect implements IAtomicEffect {
     const type = params.healType as string
     const resource = (params.resource as string) ?? 'health'
     const suffix = type === 'percent' ? '% 最大' : ' 点'
-    const resourceLabel = resource === 'energy' ? '能量' : '生命'
+    const resourceLabel = resource === 'energy' ? '法力' : '生命'
     return [{
       text: `每回合恢复 ${value}${suffix} ${resourceLabel}`,
       kind: AtomicEffectType.HEAL,

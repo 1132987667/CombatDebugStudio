@@ -694,7 +694,7 @@ describe("装备制造与强化（实例化）", () => {
     }
   })
 
-  it("制造 roll 品质：地品阶位 rng 贴 0.99 → 超品（3 条词缀，词条数按品质）", async () => {
+  it("制造 roll 品质：地品阶位 rng 贴 0.99 → 超品质（3 条词缀，词条数按品质）", async () => {
     const pack = usePackStore()
     await pack.init()
     // 流云剑（wp_t3_light_01，rarity 3）：铁木×4 + 金精×2 + 仙云皮×1；三阶需持有 bp_t3_wp 解锁
@@ -702,7 +702,7 @@ describe("装备制造与强化（实例化）", () => {
     pack.addItem("mat_tiemu", 4)
     pack.addItem("mat_jinjing", 2)
     pack.addItem("mat_xianyun", 1)
-    // rng 序列：品质 roll=0.99 → 超品；品质系数 roll=seq2；词条抽取用递增值保证抽到不同词条
+    // rng 序列：品质 roll=0.99 → 超品质；品质系数 roll=seq2；词条抽取用递增值保证抽到不同词条
     let seq = 0
     const rng = () => {
       seq++
@@ -710,9 +710,9 @@ describe("装备制造与强化（实例化）", () => {
     }
     const inst = pack.craftEquipment("wp_t3_light_01", rng)
     expect(inst).not.toBeNull()
-    expect(inst!.quality).toBe(3) // 地品权重表 [10,50,40]，rng 0.99 → 超品
-    expect(inst!.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(3) // 超品 3 条附加（§21 品质→行数）
-    // 品质系数锁存：超品区间 [1.06,1.2]，rng 0.274 → 1.06+0.274×0.14=1.09836
+    expect(inst!.quality).toBe(3) // 地品权重表 [10,50,40]，rng 0.99 → 超品质
+    expect(inst!.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(3) // 超品质 3 条附加（§21 品质→行数）
+    // 品质系数锁存：超品质区间 [1.06,1.2]，rng 0.274 → 1.06+0.274×0.14=1.09836
     expect(inst!.qualityFactor).toBeCloseTo(1.098, 2)
     const stats = pack.instanceStats(inst!)
     // §21 公式：流云剑核心攻击基准 1×25×2×0.9×2=90 × 品阶[0.7,0.8] × 浮动[0.5,1.1] × 系数1.098 → [35,87]
@@ -724,7 +724,7 @@ describe("装备制造与强化（实例化）", () => {
     expect(pack.instanceStats(inst!).find((s) => s.attribute === "attack" && s.modifierType === "flat")?.value).toBe(atk!.value)
   })
 
-  it("制造天品装备固定绝品（4 条词缀，词条池充足）", async () => {
+  it("制造天品装备固定绝品质（4 条词缀，词条池充足）", async () => {
     const pack = usePackStore()
     await pack.init()
     // 牛魔撼天锤（wp_t4_01，rarity 4）：mat_boss_01×1 + 金精×10；天品需持有 bp_legend_01 解锁
@@ -739,8 +739,8 @@ describe("装备制造与强化（实例化）", () => {
     }
     const inst = pack.craftEquipment("wp_t4_01", rng)
     expect(inst).not.toBeNull()
-    expect(inst!.quality).toBe(4) // 天品固定绝品
-    expect(inst!.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(4) // 绝品 4 条附加（§21 品质→行数）
+    expect(inst!.quality).toBe(4) // 天品固定绝品质
+    expect(inst!.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(4) // 绝品质 4 条附加（§21 品质→行数）
   })
 
   it("图纸解锁：一阶默认解锁；高阶未持有图纸时拒绝制造且不扣材料", async () => {

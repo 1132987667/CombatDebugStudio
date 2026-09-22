@@ -29,7 +29,7 @@ export const RUN_TIMING = {
   ADVANCE_MS: 3000,
   /** 结算期缓回：每秒回复 10% 最大气血 */
   REGEN_HP_RATIO_PER_SEC: 0.1,
-  /** 结算期缓回：能量每秒 +5 */
+  /** 结算期缓回：法力每秒 +5 */
   REGEN_ENERGY_PER_SEC: 5,
   /** 缓回上限 10 秒（空血起算） */
   MAX_SETTLE_SEC: 10,

@@ -1009,5 +1009,51 @@
     ],
     "polarity": "positive",
     "description": "每次攻击额外获得 10 能量"
+  },
+  {
+    "id": "buff_formation_front_def",
+    "name": "鹤翼阵·前排",
+    "category": "attribute",
+    "duration": -1,
+    "maxStacks": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "defense": {
+              "value": 15,
+              "type": "PERCENTAGE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "阵型效果：防御+15%"
+  },
+  {
+    "id": "buff_formation_back_spd",
+    "name": "鹤翼阵·后排",
+    "category": "attribute",
+    "duration": -1,
+    "maxStacks": 1,
+    "effects": [
+      {
+        "type": "modifier",
+        "params": {
+          "attributes": {
+            "speed": {
+              "value": 10,
+              "type": "PERCENTAGE"
+            }
+          },
+          "perStack": true
+        }
+      }
+    ],
+    "polarity": "positive",
+    "description": "阵型效果：速度+10%"
   }
 ]

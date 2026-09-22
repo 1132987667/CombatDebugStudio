@@ -133,7 +133,7 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 是否完全不会攻击（木人/训练靶子） */
   noAttack?: boolean
 
-  /** 本回合受击能量获取次数（每回合最多3次） */
+  /** 本回合受击法力获取次数（每回合最多3次） */
   private _energyHitCountThisRound = 0
 
   // === 投影层（Projection）脏标记机制 ===
@@ -340,14 +340,14 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获取当前能量值
+   * 获取当前法力值
    */
   get currentEnergy(): number {
     return this.getAttribute(ATTRIBUTE_CODE.currentEnergy)
   }
 
   /**
-   * 设置当前能量值
+   * 设置当前法力值
    */
   set currentEnergy(value: number) {
     const maxEnergy = this.getAttribute(ATTRIBUTE_CODE.maxEnergy)
@@ -360,14 +360,14 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获取最大能量值
+   * 获取最大法力值
    */
   get maxEnergy(): number {
     return this.getAttribute(ATTRIBUTE_CODE.maxEnergy)
   }
 
   /**
-   * 设置最大能量值
+   * 设置最大法力值
    */
   set maxEnergy(value: number) {
     this.setAttributeBase(ATTRIBUTE_CODE.maxEnergy, value)
@@ -548,7 +548,7 @@ export class BattleParticipantImpl implements BattleEntity {
       damage = Math.max(0, damage)
     }
 
-    // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
+    // ponytail: 背水护甲 — 法力抵扣伤害（每1法力抵扣1点伤害）
     if (
       this.buffQuery?.hasBuffWithTag(this.id, BUFF_TAGS.ENERGY_ABSORPTION) &&
       this.currentEnergy > 0
@@ -561,7 +561,7 @@ export class BattleParticipantImpl implements BattleEntity {
 
     this.currentHealth = Math.max(0, this.currentHealth - damage)
 
-    // ponytail: 受击能量从 BATTLE_CONSTANTS 读取，与 BattleRuleManager 配置一致
+    // ponytail: 受击法力从 BATTLE_CONSTANTS 读取，与 BattleRuleManager 配置一致
     // 升级路径：由 BattleSystem 传入 combatRules.energyGainOnHit 替代常量
     if (this._energyHitCountThisRound < 3) {
       this.gainEnergy(BATTLE_CONSTANTS.ENERGY_GAIN_ON_HIT)
@@ -587,16 +587,16 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获得能量
-   * 集成触发器事件系统，触发能量获取事件
-   * @param amount - 能量值
+   * 获得法力
+   * 集成触发器事件系统，触发法力获取事件
+   * @param amount - 法力值
    */
   gainEnergy(amount: number): void {
     const previousEnergy = this.currentEnergy
     this.currentEnergy = Math.min(this.currentEnergy + amount, this.maxEnergy)
     const actualGain = this.currentEnergy - previousEnergy
 
-    // 触发能量获取事件
+    // 触发法力获取事件
     if (actualGain > 0) {
       BattleParticipantImpl.eventBus.emit(BattleTriggerPhase.ENERGY_GAINED, {
         phase: BattleTriggerPhase.ENERGY_GAINED,
@@ -608,8 +608,8 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 消耗能量
-   * @param amount - 能量值
+   * 消耗法力
+   * @param amount - 法力值
    * @returns 是否成功消耗
    */
   spendEnergy(amount: number): boolean {
@@ -624,11 +624,11 @@ export class BattleParticipantImpl implements BattleEntity {
    * 行动后处理
    */
   afterAction(): void {
-    // ponytail: 行动结束不加能量（能量机制改为回合开始+15、受击+12/次/最多3次）
+    // ponytail: 行动结束不加法力（法力机制改为回合开始+15、受击+12/次/最多3次）
   }
 
   /**
-   * 重置本回合受击能量计数器（每回合开始时调用）
+   * 重置本回合受击法力计数器（每回合开始时调用）
    */
   resetEnergyHitCount(): void {
     this._energyHitCountThisRound = 0
@@ -703,7 +703,7 @@ export class BattleParticipantImpl implements BattleEntity {
 
   // ════════════ 战斗单步回退（Undo）快照取数 / 回填 ════════════
 
-  /** 导出回退快照：全属性 base+value+修饰符数组、技能冷却、本回合受击能量计数（Buff 由 BuffSystem 全局快照负责） */
+  /** 导出回退快照：全属性 base+value+修饰符数组、技能冷却、本回合受击法力计数（Buff 由 BuffSystem 全局快照负责） */
   exportUndoState(): ParticipantUndoState {
     const attributes: ParticipantUndoState['attributes'] = []
     for (const code of Object.values(ATTRIBUTE_CODE)) {
@@ -729,7 +729,7 @@ export class BattleParticipantImpl implements BattleEntity {
    *       统一调 recalcAll，届时"base+修饰符"派生值与快照时刻一致；
    *       modifiers 必须整体回填：撤销的行动可能直挂了 custom: 连击修饰符或经栈施加 Buff，
    *       仅靠 base/value 回填无法让 sync 裁剪这些残留；
-   *       运行时状态属性（气血/能量）recalc 会跳过，直接保留回填值。
+   *       运行时状态属性（气血/法力）recalc 会跳过，直接保留回填值。
    */
   restoreUndoState(state: ParticipantUndoState): void {
     for (const [code, base, value, modifiers] of state.attributes) {
@@ -751,6 +751,6 @@ export interface ParticipantUndoState {
   attributes: Array<[ATTRIBUTE_CODE, number, number, Modifier[]]>
   /** 技能冷却表（skillId → 剩余回合） */
   cooldowns: Record<string, number>
-  /** 本回合受击能量获取次数 */
+  /** 本回合受击法力获取次数 */
   energyHitCount: number
 }

@@ -97,7 +97,7 @@ const impactStyles = [
   { label: '斩击', value: 'slash', desc: '干净利落的一刀弧光' },
   { label: '冰裂', value: 'iceshatter', desc: '菱形冰晶碎裂散射' },
   { label: '冲击波', value: 'shockwave', desc: '环形冲击波扩散' },
-  { label: '暗影', value: 'shadow', desc: '紫黑能量爆发' },
+  { label: '暗影', value: 'shadow', desc: '紫黑法力爆发' },
 ]
 /** desc 作为下拉选项的 hint（面板与触发器均显示，替代原按钮组 hover title） */
 const impactStyleOptions: TSelectOption[] = impactStyles.map((s) => ({
@@ -149,7 +149,7 @@ const debugModules: DebugModule[] = [
     name: '角色状态',
     buttons: [
       { label: '满血', action: 'full_health', description: '恢复所有角色气血', variant: 'success' },
-      { label: '满能量', action: 'full_energy', description: '恢复所有角色能量', variant: 'secondary' },
+      { label: '满法力', action: 'full_energy', description: '恢复所有角色法力', variant: 'secondary' },
       { label: '杀死选中', action: 'kill_selected', description: '将选中角色血量设为0', variant: 'danger' }
     ]
   },

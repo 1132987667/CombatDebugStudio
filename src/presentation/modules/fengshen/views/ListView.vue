@@ -52,7 +52,7 @@
         :disabled="compareRows.length < 2" @click="aggOpen = true">聚合试算（{{
         compareRows.length }}）</Button>
       <Button v-if="store.currentTable === 'enemies'" size="small" :disabled="rebuilding"
-        title="按生成模型（等级模板曲线 × 品阶系数，见敌人生成设计.md）重算全部敌人的 stats；技能/掉落/奖励/剧情不动"
+        title="按生成模型（等级模板曲线 × 阶位系数，见敌人生成设计.md）重算全部敌人的 stats；技能/掉落/奖励/剧情不动"
         @click="confirmRebuild = true">重算全部敌人属性</Button>
       <Button v-if="store.currentTable === 'enemies'" size="small" title="导出当前 enemies 表为规范 JSON，可替换 configs/enemies/enemies.json"
         @click="requestExportEnemiesJson">导出 enemies.json</Button>
@@ -120,7 +120,7 @@
 
     <!-- 一键重算敌人属性：覆盖性写二次确认 + 完成后 diff 摘要 -->
     <ConfirmDialog v-model="confirmRebuild" title="重算全部敌人属性"
-      :message="`将按生成模型（等级模板曲线 × 品阶系数）覆盖 enemies 表全部 ${store.rows.length} 条记录的 stats（血/攻/防/速/命中/闪避/暴击/能量）。
+      :message="`将按生成模型（等级模板曲线 × 阶位系数）覆盖 enemies 表全部 ${store.rows.length} 条记录的 stats（血/攻/防/速/命中/闪避/暴击/法力）。
 技能、掉落、经验金钱、剧情与阶段配置保持不变；写库后可通过「导出 enemies.json」回写项目配置。`"
       confirm-text="重算" @confirm="doRebuildStats" />
 
@@ -336,7 +336,7 @@ function onClearFilters(): void {
 const tableHint = computed(() => {
   const hints: Record<string, string> = {
     actors: '基础属性 / 成长曲线 / 技能绑定 / 阵营元素',
-    skills: '主动 / 被动 · 能量消耗 · 步骤编排 · 效果组合',
+    skills: '主动 / 被动 · 法力消耗 · 步骤编排 · 效果组合',
     buffs: '增益 / 减益 / 控制 · 叠加规则 · 效果链',
     enemies: '品阶 / 属性 / 技能组 / 掉落物',
     scenes: '多难度敌人编组 · 所需等级 · 通关奖励',

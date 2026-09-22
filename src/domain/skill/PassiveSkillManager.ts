@@ -500,7 +500,7 @@ export class PassiveSkillManager {
    * 执行被动技能步骤（绕过 SkillManager.executeSkill 的主动技能管道）
    *
    * 与主动技能 executeSkill 的关键区别：
-   * - 跳过能量检查/消耗（被动 energyCost ≡ 0）
+   * - 跳过法力检查/消耗（被动 energyCost ≡ 0）
    * - 跳过目标眩晕检查（被动效果不受眩晕阻挡）
    * - 跳过冷却设置（被动冷却由 PassiveSkillManager 自身管理）
    * - 跳过 SKILL_USE 事件（被动不触发 skill_use 事件）

@@ -90,9 +90,9 @@ export class ParticipantSkills {
 
   /**
    * 统一技能可执行性检查
-   * 合并能量、冷却、控制状态检查，通过 BuffQuery 解耦 BuffSystem
+   * 合并法力、冷却、控制状态检查，通过 BuffQuery 解耦 BuffSystem
    * ponytail: 不检查目标有效性——目标由执行阶段的 resolveSkillTargets 处理
-   * detail 格式约定：冷却用中文+数值，能量用 current/max，控制/沉默用状态名
+   * detail 格式约定：冷却用中文+数值，法力用 current/max，控制/沉默用状态名
    */
   canExecuteSkill(
     characterId: string,
@@ -118,14 +118,14 @@ export class ParticipantSkills {
       }
     }
 
-    // 3. 能量检查
+    // 3. 法力检查
     const skills = this.getSkillList()
     const skillConfig = skills.find(s => s.id === skillId)
     if (skillConfig && skillConfig.energyCost > 0 && currentEnergy < skillConfig.energyCost) {
       return {
         can: false,
         reason: SkillBlockReason.ENERGY_SHORT,
-        detail: `能量 ${currentEnergy}/${skillConfig.energyCost}`,
+        detail: `法力 ${currentEnergy}/${skillConfig.energyCost}`,
       }
     }
 

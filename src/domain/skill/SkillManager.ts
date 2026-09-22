@@ -163,7 +163,7 @@ export class SkillManager {
       })
     }
 
-    // 通过 getAttribute 获取能量，确保与属性系统（含修饰符）一致
+    // 通过 getAttribute 获取法力，确保与属性系统（含修饰符）一致
     const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const availability = source.canExecuteSkill(
       source.id,
@@ -246,8 +246,8 @@ export class SkillManager {
       return action
     }
 
-    // 在执行前消耗能量——如果失败则无法恢复，但
-    // 上面的预检查确保了有足够的能量可用
+    // 在执行前消耗法力——如果失败则无法恢复，但
+    // 上面的预检查确保了有足够的法力可用
     if (source.spendEnergy && config.energyCost) {
       source.spendEnergy(config.energyCost)
     }

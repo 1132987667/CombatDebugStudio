@@ -947,7 +947,7 @@ onUnmounted(() => {
   }
 }
 
-/* 5. 暗影 — 紫黑能量爆发 */
+/* 5. 暗影 — 紫黑法力爆发 */
 .impact.shadow {
   animation-name: shadow-burst;
   mix-blend-mode: screen;
@@ -957,7 +957,7 @@ onUnmounted(() => {
 .impact.shadow.frost,
 .impact.shadow.shield,
 .impact.shadow.heal {
-  /* 暗影统一用紫黑能量覆盖原色 */
+  /* 暗影统一用紫黑法力覆盖原色 */
   background: radial-gradient(circle, #c084fc 10%, #a855f7 30%, #7c3aed 50%, transparent 70%);
   box-shadow: 0 0 30px #a855f7, 0 0 60px #7c3aed;
 }
@@ -1130,7 +1130,7 @@ onUnmounted(() => {
   }
 }
 
-/* 暴击伤害：更强烈的能量爆发 */
+/* 暴击伤害：更强烈的法力爆发 */
 @keyframes dmg-crit-glow {
 
   0%,

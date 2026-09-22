@@ -35,7 +35,7 @@ export const effectTypeLabels: Record<string, string> = {
   [ActionResultType.HEAL]: '气血恢复',
   [ActionResultType.BUFF]: '增益效果',
   [ActionResultType.DAMAGE]: '伤害',
-  mpRestore: '能量恢复',
+  mpRestore: '法力恢复',
   shield: '护盾',
 }
 

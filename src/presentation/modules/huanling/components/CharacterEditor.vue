@@ -105,7 +105,7 @@
             <Button block @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
               Buff</Button>
             <Button block @click="emitReset('hp_energy')"
-              :disabled="!innerSelectedCharId">恢复满血满能量</Button>
+              :disabled="!innerSelectedCharId">恢复满血满法力</Button>
             <Button block variant="danger" @click="confirmResetAll = true"
               :disabled="!innerSelectedCharId">完全重置</Button>
           </div>
@@ -236,7 +236,7 @@ const SIDEBAR_DEFS: { key: string; label: string; categoryMatch?: StatusCategory
 
 const attrFields: AttrOverrideItem[] = [
   { key: 'currentHealth', label: '气血', min: 0, max: 99999, steps: [100, 10, 1] },
-  { key: 'currentEnergy', label: '能量', min: 0, max: 999, steps: [100, 10, 1] },
+  { key: 'currentEnergy', label: '法力', min: 0, max: 999, steps: [100, 10, 1] },
   { key: 'attack', label: '攻击', min: 0, max: 99999, steps: [100, 10, 1] },
   { key: 'defense', label: '防御', min: 0, max: 99999, steps: [100, 10, 1] },
   { key: 'speed', label: '速度', min: 0, max: 9999, steps: [100, 10, 1] },

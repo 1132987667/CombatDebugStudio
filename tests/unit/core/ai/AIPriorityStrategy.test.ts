@@ -79,15 +79,15 @@ describe('AIPriorityStrategy breakdown（§4.3 数值化权重贡献）', () => 
     expect(weights[0].reason).toContain('低血量队友+40')
   })
 
-  it('能量不足时贡献 -50 且 reason 反映负值', () => {
+  it('法力不足时贡献 -50 且 reason 反映负值', () => {
     const me = createMockEntity({ currentEnergy: 0, maxEnergy: 100 })
     const battleState = createBattleState(new Map([[me.id, me]]))
     const skill = createSkill({ id: 'costly', energyCost: 80 })
 
     const weights = strategy.calculateSkillWeights(battleState, me, [skill])
 
-    expect(weights[0].breakdown).toContainEqual({ label: '能量不足', value: -50 })
-    expect(weights[0].reason).toContain('能量不足-50')
+    expect(weights[0].breakdown).toContainEqual({ label: '法力不足', value: -50 })
+    expect(weights[0].reason).toContain('法力不足-50')
   })
 
   it('防御策略覆写：低气血时治疗技能获得（0.5-hp）*100 且并入 breakdown', () => {

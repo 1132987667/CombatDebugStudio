@@ -76,7 +76,7 @@ const TABS: Array<{ id: GroupTab; label: string; badge?: string }> = [
   { id: 'mate', label: '伙伴' },
   { id: 'collect', label: '收集' },
   { id: 'quest', label: '历练' },
-  { id: 'tower', label: '无尽塔' },
+  { id: 'tower', label: '降妖塔' },
   { id: 'cave', label: '洞府' },
   { id: 'settings', label: '设置' },
 ]

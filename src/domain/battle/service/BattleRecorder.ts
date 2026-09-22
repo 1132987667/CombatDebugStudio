@@ -94,9 +94,9 @@ export interface RecordedBattle {
       maxHealth: number
       /** 当前气血值 */
       currentHealth: number
-      /** 最大能量值 */
+      /** 最大法力值 */
       maxEnergy: number
-      /** 当前能量值 */
+      /** 当前法力值 */
       currentEnergy: number
       /** 初始属性快照（键为 ATTRIBUTE_CODE，省略 0 值；老档无此字段） */
       attributes?: Record<string, number>

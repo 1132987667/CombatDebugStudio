@@ -1303,7 +1303,7 @@ export class SkillExecutor {
     })
   }
 
-  /** 获取能量（gain_energy 步骤 — R6: 资源变动 ≠ 属性修正）
+  /** 获取法力（gain_energy 步骤 — R6: 资源变动 ≠ 属性修正）
    *  复用 BattleEntity.gainEnergy()，自带上限封顶 + ENERGY_GAINED 事件触发
    */
   private executeGainEnergy(
@@ -1321,7 +1321,7 @@ export class SkillExecutor {
     action.effects.push({
       type: ActionResultType.STATUS,
       targetId: modTarget.id,
-      description: `${modTarget.name} 获得 ${value} 能量`,
+      description: `${modTarget.name} 获得 ${value} 法力`,
     })
   }
 

@@ -35,9 +35,9 @@
       </template>
     </SpeedSelector>
     <label class="rule-item">
-      <span>每回合能量回复</span>
+      <span>每回合法力回复</span>
       <TacticalInput type="number" size="md" class="custom-speed-slot" :model-value="localRules.energyGainPerTurn"
-        aria-label="每回合能量回复"
+        aria-label="每回合法力回复"
         @update:model-value="localRules.energyGainPerTurn = Number($event) || 0" />
     </label>
   </Dialog>

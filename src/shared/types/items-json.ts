@@ -6,7 +6,7 @@
  */
 import itemsDataRaw from '@configs/xiyou/items.json'
 
-/** 物品效果（战斗可解析子集：heal=百分比最大气血 / energy=固定能量 / buff=标准 Buff 管线） */
+/** 物品效果（战斗可解析子集：heal=百分比最大气血 / energy=固定法力 / buff=标准 Buff 管线） */
 export interface BattleItemEffect {
   type: string
   value?: number

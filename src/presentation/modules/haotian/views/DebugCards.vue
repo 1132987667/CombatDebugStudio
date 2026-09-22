@@ -17,10 +17,10 @@
         <div v-if="skillDescription" class="ht-sh-skill-desc">{{ skillDescription }}</div>
         <div v-if="energyCost" class="ht-sh-row">
           <em>消耗</em>
-          <b>{{ energyCost }}能量</b>
+          <b>{{ energyCost }}法力</b>
           <template v-if="actorEnergy != null">
             <span class="ht-sh-arrow">·</span>
-            <span>剩余 {{ actorEnergy }}能量</span>
+            <span>剩余 {{ actorEnergy }}法力</span>
           </template>
         </div>
         <div v-for="t in targetRows" :key="t.targetId || 'unknown'" class="ht-sh-tgt">
@@ -35,7 +35,7 @@
             <i class="seg change" :class="t.hp.kind" :style="{ width: hpChangeWidth(t) }"></i>
             <span class="ht-bar-text">{{ hpText(t) }}</span>
           </div>
-          <div v-if="t.en" class="ht-bar ht-bar-en" :title="`能量 ${t.en.before} → ${t.en.after}`" aria-hidden="true">
+          <div v-if="t.en" class="ht-bar ht-bar-en" :title="`法力 ${t.en.before} → ${t.en.after}`" aria-hidden="true">
             <i class="seg keep" :style="{ width: enKeepWidth(t) }"></i>
             <i class="seg change" :class="t.en.kind" :style="{ width: enChangeWidth(t) }"></i>
             <span class="ht-bar-text">{{ enText(t) }}</span>
@@ -174,9 +174,9 @@ const actionTagText = computed<string>(() =>
   actionType.value ? ACTION_TAG_TEXT[actionType.value] : '',
 )
 
-/** 技能行动标签：仅技能（含小/大技能）显示能量消耗，普攻/被控制/跳过无消耗 */
+/** 技能行动标签：仅技能（含小/大技能）显示法力消耗，普攻/被控制/跳过无消耗 */
 const SKILL_TAGS: readonly ActionTypeTag[] = ['skill', 'skill_small', 'skill_ultimate']
-/** 能量消耗：技能行动由 action_execution payload.energyCost 携带；无数据时不显示 */
+/** 法力消耗：技能行动由 action_execution payload.energyCost 携带；无数据时不显示 */
 const energyCost = computed<number | undefined>(() => {
   const n = currentNode.value
   if (!n?.action || !actionType.value) return undefined
@@ -184,7 +184,7 @@ const energyCost = computed<number | undefined>(() => {
   return n.energyCost
 })
 
-/** 行动者剩余能量：行动链内该角色 EN 末态（action_execution 扣费后快照；真实录制无 EN 快照时不显示） */
+/** 行动者剩余法力：行动链内该角色 EN 末态（action_execution 扣费后快照；真实录制无 EN 快照时不显示） */
 const actorEnergy = computed<number | undefined>(() => {
   const n = currentNode.value
   if (!n?.action || !n.actor) return undefined
@@ -230,7 +230,7 @@ interface TargetRow {
   result: string
   /** 气血条：本次行动该目标 HP 前后值（max 为上限，条上绿=剩余、红=扣减/亮绿=治疗） */
   hp?: HpBar
-  /** 能量条：本次行动该目标 EN 前后值（仅目标行；施法者自身扣能量不走此条） */
+  /** 法力条：本次行动该目标 EN 前后值（仅目标行；施法者自身扣法力不走此条） */
   en?: EnBar
 }
 
@@ -249,17 +249,17 @@ function hpChangeWidth(t: TargetRow): string {
   const h = t.hp!
   return barPct(h.kind === 'damage' ? h.before - h.after : h.after - h.before, h.max)
 }
-/** 能量条"剩余/原有"段宽度 */
+/** 法力条"剩余/原有"段宽度 */
 function enKeepWidth(t: TargetRow): string {
   const e = t.en!
   return barPct(e.kind === 'cost' ? e.after : e.before, e.max)
 }
-/** 能量条"本次变化"段宽度：扣除量或回复量 */
+/** 法力条"本次变化"段宽度：扣除量或回复量 */
 function enChangeWidth(t: TargetRow): string {
   const e = t.en!
   return barPct(e.kind === 'cost' ? e.before - e.after : e.after - e.before, e.max)
 }
-/** 条内文字：当前/最大 - 扣减量（伤害/扣能量）或 + 变化量（治疗/回能量） */
+/** 条内文字：当前/最大 - 扣减量（伤害/扣法力）或 + 变化量（治疗/回法力） */
 function hpText(t: TargetRow): string {
   const h = t.hp!
   const d = h.kind === 'damage' ? h.before - h.after : h.after - h.before

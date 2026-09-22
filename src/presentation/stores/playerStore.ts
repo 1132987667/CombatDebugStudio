@@ -20,7 +20,7 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 const FREE_POINTS_PER_LEVEL = playerConfig.freePointsPerLevel ?? 4
 
 export const usePlayerStore = defineStore('player', () => {
-  /** 玩家属性（基础 + 等级成长 + 加点；血量/能量为运行时状态） */
+  /** 玩家属性（基础 + 等级成长 + 加点；血量/法力为运行时状态） */
   const player = reactive<XiyouPlayer>(createPlayerProfile({ level: 5, exp: 360 }))
 
   /** 角色加点（SAP 六维自由点：初始点数 = 初始等级 × 每级 4 点） */
@@ -115,7 +115,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   /**
-   * 经验入账并处理升级：溢出经验顺延，每升一级重算属性（基础+成长+加点）、回满血能量。
+   * 经验入账并处理升级：溢出经验顺延，每升一级重算属性（基础+成长+加点）、回满血法力。
    * @returns 本次升级的等级数（0 表示未升级）
    */
   function gainExp(amount: number): number {

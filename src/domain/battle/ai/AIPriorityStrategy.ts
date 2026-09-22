@@ -322,14 +322,14 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
       participant.getAttribute(ATTRIBUTE_CODE.currentEnergy) /
       participant.getAttribute(ATTRIBUTE_CODE.maxEnergy)
 
-    // 能量不足时降低技能权重
+    // 法力不足时降低技能权重
     if (
       skill.energyCost &&
       energyPercent <
         skill.energyCost / participant.getAttribute(ATTRIBUTE_CODE.maxEnergy)
     ) {
       adjustment -= 50
-      items.push({ label: '能量不足', value: -50 })
+      items.push({ label: '法力不足', value: -50 })
     }
 
     // 气血值过低时优先使用治疗技能

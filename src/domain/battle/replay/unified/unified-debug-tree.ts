@@ -46,7 +46,7 @@ export interface DebugNode {
   hits?: number
   /** 行动类型标签：新引擎由 action_execution payload.actionType 标记；旧存档从同链子事件推断 */
   actionType?: ActionTypeTag
-  /** 技能能量消耗：action_execution payload.energyCost（技能行动发射端携带） */
+  /** 技能法力消耗：action_execution payload.energyCost（技能行动发射端携带） */
   energyCost?: number
   events: UnifiedEvent[]
 }
@@ -199,7 +199,7 @@ export function nodeOfEvent(entries: DebugTreeEntry[], eventId: string): DebugNo
   return allNodesFlat(entries).find((n) => n.events.some((e) => e.id === eventId)) ?? null
 }
 
-/** 行动能量消耗：action_execution payload.energyCost（技能行动发射端携带，普攻/0 视为无消耗） */
+/** 行动法力消耗：action_execution payload.energyCost（技能行动发射端携带，普攻/0 视为无消耗） */
 function energyCostOfPayload(pl: Record<string, unknown>): number | undefined {
   const c = pl.energyCost
   return typeof c === 'number' && c > 0 ? c : undefined

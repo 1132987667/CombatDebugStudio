@@ -2,7 +2,7 @@
  * 守护者被动日志顺序 + 连击之心目标 E2E
  *
  * 背景（bug 根因）：
- * - ON_HIT/DAMAGE_TAKEN 被动（能量过载/疾风叠步/复仇怒火）在 BattleExecutor.settleDamage
+ * - ON_HIT/DAMAGE_TAKEN 被动（法力过载/疾风叠步/复仇怒火）在 BattleExecutor.settleDamage
  *   中触发，而 settleDamage 先于 emitAttackLog（攻击主日志）执行；
  * - BattleLogManager.addBattleLog 原本不检查 _buffering，攻击结算期间的 sub 日志直接入列，
  *   导致被动日志排在所属攻击日志之前，渲染时变成独立行/挂错攻击块。
@@ -36,7 +36,7 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
     )
   })
 
-  it('能量过载/疾风叠步作为火护法攻击的 sub 显示，复仇怒火作为金护法攻击的 sub 显示', async () => {
+  it('法力过载/疾风叠步作为火护法攻击的 sub 显示，复仇怒火作为金护法攻击的 sub 显示', async () => {
     const { allies, enemies } = createTestParticipantsFromConfig(
       ['yaotu_fire'],
       ['yaotu_gold'],
@@ -63,17 +63,17 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
     const subTexts = (b: Extract<NarrativeBlock, { type: 'action' }>): string =>
       b.subs.map(blockText).join('\n')
 
-    // 火护法攻击块：命中触发的能量过载/疾风叠步应挂在攻击之后
+    // 火护法攻击块：命中触发的法力过载/疾风叠步应挂在攻击之后
     const fireAction = actions.find((b) =>
       blockText(b.header).startsWith('[友方]旧火护法'),
     )
     expect(fireAction).toBeDefined()
-    expect(subTexts(fireAction!)).toContain('能量过载')
+    expect(subTexts(fireAction!)).toContain('法力过载')
     expect(subTexts(fireAction!)).toContain('疾风叠步')
 
     // A2：块内顺序应为「受到伤害 → 被动效果」——第一个 sub 是结算行而非被动
     expect(subTexts(fireAction!).indexOf('受到')).toBeLessThan(
-      subTexts(fireAction!).indexOf('能量过载'),
+      subTexts(fireAction!).indexOf('法力过载'),
     )
 
     // 金护法攻击块：火护法受击触发的复仇怒火应挂在对应攻击之后
@@ -86,20 +86,20 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
       subTexts(goldAction!).indexOf('复仇怒火'),
     )
 
-    // 修复前：被动日志在攻击主日志之前入列，渲染成独立 plain 块。修复后不应存在独立 plain 的能量过载
+    // 修复前：被动日志在攻击主日志之前入列，渲染成独立 plain 块。修复后不应存在独立 plain 的法力过载
     const standalone = blocks.filter(
       (b) =>
         b.type === NarrativeBlockType.PLAIN &&
-        blockText(b.segments).includes('能量过载'),
+        blockText(b.segments).includes('法力过载'),
     )
     expect(standalone).toHaveLength(0)
 
-    // A3：回合开始能量应有可见日志（且实体段带敌我前缀 — 统一口径回归断言）
+    // A3：回合开始法力应有可见日志（且实体段带敌我前缀 — 统一口径回归断言）
     const energyLogs = logs.filter((l) =>
-      (l.message ?? '').includes('获得回合开始能量'),
+      (l.message ?? '').includes('获得回合开始法力'),
     )
     expect(energyLogs.length).toBeGreaterThanOrEqual(2)
-    expect(energyLogs[0].message).toMatch(/回合开始能量 \+/)
+    expect(energyLogs[0].message).toMatch(/回合开始法力 \+/)
     expect(energyLogs.every((l) => /[友方]|[敌方]/.test(l.message ?? ''))).toBe(
       true,
     )
@@ -114,8 +114,8 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
       expect(entry).toBeDefined()
       return entry!.meta as { triggerPhase?: string; sourceId?: string }
     }
-    // 能量过载 = 普攻命中触发（on_hit）
-    const overloadMeta = findMeta('能量过载')
+    // 法力过载 = 普攻命中触发（on_hit）
+    const overloadMeta = findMeta('法力过载')
     expect(overloadMeta.triggerPhase).toBe('on_hit')
     expect(overloadMeta.sourceId).toBeTruthy()
     // 复仇怒火 = 受击触发（damage_taken）
@@ -132,9 +132,9 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
     expect(turnEndLogs.length).toBeGreaterThanOrEqual(2)
     expect(turnEndLogs[0].message).toMatch(/第 \d+ 回合结束/)
 
-    // B2：回合开始能量日志携带 before/after 快照（合并后每组一条，含角色明细）
+    // B2：回合开始法力日志携带 before/after 快照（合并后每组一条，含角色明细）
     const energyEntry = logs.find((l) =>
-      (l.message ?? '').includes('获得回合开始能量'),
+      (l.message ?? '').includes('获得回合开始法力'),
     )!
     const energyMeta = energyEntry.meta as {
       energyChanges?: Array<{

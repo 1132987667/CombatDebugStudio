@@ -147,7 +147,7 @@
         }
       ],
       "rarity": 1,
-      "description": "增益：最大能量 +20%",
+      "description": "增益：最大法力 +20%",
       "drop_hint": "essence_material"
     },
     {
@@ -163,7 +163,7 @@
         }
       ],
       "rarity": 1,
-      "description": "增益：初始能量 +20%",
+      "description": "增益：初始法力 +20%",
       "drop_hint": "essence_material"
     },
     {

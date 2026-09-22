@@ -101,24 +101,24 @@ export const BATTLE_CONSTANTS = {
   /** 敌人默认攻击伤害范围 */
   ENEMY_ATTACK_DAMAGE_MIN: 8,
   ENEMY_ATTACK_DAMAGE_MAX: 15,
-  /** 默认能量上限 */
+  /** 默认法力上限 */
   DEFAULT_MAX_ENERGY: 200,
-  /** 技能能量消耗阈值 */
+  /** 技能法力消耗阈值 */
   SKILL_ENERGY_THRESHOLD: 50,
   ULTIMATE_ENERGY_THRESHOLD: 150,
   /** 技能使用概率 */
   SKILL_USE_CHANCE: 0.4,
   ULTIMATE_USE_CHANCE: 0.3,
   LOW_ENERGY_USE_CHANCE: 0.7,
-  /** AI决策能量阈值 */
+  /** AI决策法力阈值 */
   AI_SKILL_ENERGY_THRESHOLD: 0.7,
   ENEMY_SKILL_ENERGY_THRESHOLD: 50,
   /** 治疗血量阈值 */
   HEAL_THRESHOLD: 0.3,
   CRITICAL_HEALTH_THRESHOLD: 0.5,
-  /** 受击获得的能量值 */
+  /** 受击获得的法力值 */
   ENERGY_GAIN_ON_HIT: 12,
-  /** 默认初始能量 */
+  /** 默认初始法力 */
   DEFAULT_INITIAL_ENERGY: 30,
   /** 默认最大回合数 */
   DEFAULT_MAX_TURNS: 99,
@@ -175,7 +175,7 @@ export { ActionResultType }
 export enum SkillBlockReason {
   /** 可用 */
   NONE = 'none',
-  /** 能量不足 */
+  /** 法力不足 */
   ENERGY_SHORT = 'energy',
   /** 冷却中 */
   COOLDOWN = 'cooldown',
@@ -202,7 +202,7 @@ export type ControlMode = 'AI' | 'AUTO' | 'MANUAL'
 /**
  * 战斗实体接口
  * 定义战斗中最基础的实体结构
- * 包含实体的基本属性（ID、名称、等级、阵营等）和核心方法（气血值、能量、Buff 等）
+ * 包含实体的基本属性（ID、名称、等级、阵营等）和核心方法（气血值、法力、Buff 等）
  * 所有参与战斗的角色和敌人都应实现此接口
  */
 export interface BattleEntity {
@@ -230,9 +230,9 @@ export interface BattleEntity {
   currentHealth: number
   /** 最大气血 */
   maxHealth: number
-  /** 当前能量 */
+  /** 当前法力 */
   currentEnergy: number
-  /** 最大能量 */
+  /** 最大法力 */
   maxEnergy: number
 
   /** 获取 Buff 实例 ID 列表（派生自 BuffSystem） */
@@ -264,7 +264,7 @@ export interface BattleEntity {
   gainEnergy(amount: number): void
   spendEnergy(amount: number): boolean
   afterAction(): void
-  /** 重置本回合受击能量计数器 */
+  /** 重置本回合受击法力计数器 */
   resetEnergyHitCount(): void
   isFullHealth(): boolean
   needsHealing(): boolean
@@ -827,7 +827,7 @@ export const BattleTriggerPhaseName: Record<BattleTriggerPhase, string> = {
   [BattleTriggerPhase.ON_KILL]: '击杀时',
   [BattleTriggerPhase.ON_DEATH]: '死亡时',
   [BattleTriggerPhase.HEAL_RECEIVED]: '受治疗时',
-  [BattleTriggerPhase.ENERGY_GAINED]: '获得能量时',
+  [BattleTriggerPhase.ENERGY_GAINED]: '获得法力时',
   [BattleTriggerPhase.SKILL_USE]: '使用技能时',
   [BattleTriggerPhase.HP_LOWER_THAN]: '血量低于阈值',
   [BattleTriggerPhase.ALLY_FATAL_DAMAGE]: '队友受致命伤害',

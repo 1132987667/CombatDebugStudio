@@ -254,7 +254,7 @@ describe('unified-sim（回放投影状态推演）', () => {
     expect(fired).toBe(20)
     expect(sim.u2.hp).toBe(0)
     expect(sim.u1.hp).toBe(287)
-    // 第 2 回合开始锚点将 u2 能量重置为 60（覆盖 ev10 的 50）
+    // 第 2 回合开始锚点将 u2 法力重置为 60（覆盖 ev10 的 50）
     expect(sim.u2.en).toBe(60)
   })
 

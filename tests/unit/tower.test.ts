@@ -1,5 +1,5 @@
 /**
- * tower.test.ts — 无尽塔（挑战层，PRD §31 Beta）单元自检
+ * tower.test.ts — 降妖塔（挑战层，PRD §31 Beta）单元自检
  *
  * 覆盖：
  * - 层编成确定性（同层同编成）、层≈等级带直映、BOSS 层 role 模式

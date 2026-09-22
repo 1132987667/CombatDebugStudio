@@ -1,6 +1,6 @@
 /**
  * ParticipantSkills.canExecuteSkill 的 detail 字段测试（P2/UI-1）
- * detail 格式约定：冷却用中文+数值，能量用 current/max，控制/沉默用状态名
+ * detail 格式约定：冷却用中文+数值，法力用 current/max，控制/沉默用状态名
  */
 import { describe, it, expect } from 'vitest'
 import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
@@ -67,14 +67,14 @@ describe('canExecuteSkill detail', () => {
     expect(r.detail).toBe('还需 2 回合冷却')
   })
 
-  it('能量不足 → detail 为 current/max', () => {
+  it('法力不足 → detail 为 current/max', () => {
     const ps = new ParticipantSkills(makeSkillSet([makeSkill('a', 50)]))
     const r = ps.canExecuteSkill('c1', 'a', 30, makeBuffQuery())
     expect(r.reason).toBe(SkillBlockReason.ENERGY_SHORT)
-    expect(r.detail).toBe('能量 30/50')
+    expect(r.detail).toBe('法力 30/50')
   })
 
-  it('边界：能量恰好够 → 可用；冷却为 0 视为无冷却', () => {
+  it('边界：法力恰好够 → 可用；冷却为 0 视为无冷却', () => {
     const ps = new ParticipantSkills(
       makeSkillSet([makeSkill('a', 50), makeSkill('b')]),
       new Map([['b', 0]]),
@@ -83,12 +83,12 @@ describe('canExecuteSkill detail', () => {
     expect(ps.canExecuteSkill('c1', 'b', 0, makeBuffQuery()).can).toBe(true)
   })
 
-  it('边界：零消耗技能不检查能量', () => {
+  it('边界：零消耗技能不检查法力', () => {
     const ps = new ParticipantSkills(makeSkillSet([makeSkill('free', 0)]))
     expect(ps.canExecuteSkill('c1', 'free', 0, makeBuffQuery()).can).toBe(true)
   })
 
-  it('控制优先于冷却与能量', () => {
+  it('控制优先于冷却与法力', () => {
     const ps = new ParticipantSkills(makeSkillSet([makeSkill('a', 50)]), new Map([['a', 3]]))
     const r = ps.canExecuteSkill('c1', 'a', 0, makeBuffQuery({ isCharacterControlled: () => true }))
     expect(r.reason).toBe(SkillBlockReason.CONTROLLED)

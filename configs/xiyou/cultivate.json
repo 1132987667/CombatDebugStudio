@@ -22,7 +22,7 @@
     {
       "name": "金丹",
       "level": 0,
-      "bonus": "气血 +400 · 能量 +50",
+      "bonus": "气血 +400 · 法力 +50",
       "progress": 0,
       "unlocked": true,
       "desc": "凝丹于腹，道行一跃千里",

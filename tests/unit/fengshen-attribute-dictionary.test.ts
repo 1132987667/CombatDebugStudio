@@ -62,5 +62,7 @@ describe('属性权威字典', () => {
     // 易伤唯一权威归 vulnerability（引擎逐击乘区读取），重复 code damageTakenIncrease 已物理删除
     expect(getAttributeDict('vulnerability')?.numeric).toBe(true)
     expect(getAttributeDict('damageTakenIncrease')).toBeUndefined()
+    // critDamageTaken 已彻底废弃（与暴伤减免重叠、引擎读取语义相反），定义在 configs/expired/attributes-expired.json
+    expect(getAttributeDict('critDamageTaken')).toBeUndefined()
   })
 })

@@ -15,7 +15,7 @@
               <span class="xy-attr-value">{{ hpText }}</span>
             </div>
             <div class="xy-attr-item" @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxEnergy, attrVal(ATTRIBUTE_CODE.maxEnergy))" @mousemove="updateTooltipPosition">
-              <span class="xy-attr-label">能量</span>
+              <span class="xy-attr-label">法力</span>
               <span class="xy-attr-value">{{ energyText }}</span>
             </div>
             <div class="xy-attr-item" v-for="item in coreAttrs" :key="item.code"
@@ -66,7 +66,7 @@
           <div class="xy-vital-fill xy-vital-fill--hp" :style="{ width: hpPct + '%' }"></div>
           <span class="xy-vital-text">{{ player.hp }} / {{ player.maxHp }}</span>
         </div>
-        <div class="xy-vital-bar" role="img" :aria-label="`能量 ${player.energy}/${player.maxEnergy}`">
+        <div class="xy-vital-bar" role="img" :aria-label="`法力 ${player.energy}/${player.maxEnergy}`">
           <div class="xy-vital-fill xy-vital-fill--energy" :style="{ width: energyPct + '%' }"></div>
           <span class="xy-vital-text">{{ player.energy }} / {{ player.maxEnergy }}</span>
         </div>
@@ -289,7 +289,7 @@ function doBreak(): void {
   color: var(--xy-ink-3);
 }
 
-/* 气血/能量/经验通用条：填充色区分语义（朱砂=气血、青绿=能量、鎏金细条=经验） */
+/* 气血/法力/经验通用条：填充色区分语义（朱砂=气血、青绿=法力、鎏金细条=经验） */
 .xy-vital-bar {
   position: relative;
   height: 18px;

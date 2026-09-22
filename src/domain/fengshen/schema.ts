@@ -26,8 +26,8 @@ export const CONFLICT_GROUP_VALUE_LABEL: Record<string, string> = { wuxing_singl
 export const MODIFIER_TYPE_VALUE_LABEL: Record<string, string> = { flat: '固定值', percent: '百分比' }
 /** 装备 8 槽标签（与 @/shared/types/Item 的 EQUIPMENT_SLOT_LABELS 同源） */
 export const SLOT_VALUE_LABEL: Record<string, string> = EQUIPMENT_SLOT_LABELS
-/** 装备阶位 t1~t5（xiyou 侧 GearDetailDialog 的 天品/仙品 是另一套文案域，勿混用） */
-export const GEAR_TIER_VALUE_LABEL: Record<GearTier, string> = { t1: '一阶', t2: '二阶', t3: '三阶', t4: '四阶', t5: '五阶' }
+/** 装备阶位 t1~t5 → 阶位名（与 xiyou 侧 quality.ts TIER_NAMES 同名系：凡品/玄品/地品/天品/仙品） */
+export const GEAR_TIER_VALUE_LABEL: Record<GearTier, string> = { t1: '凡品', t2: '玄品', t3: '地品', t4: '天品', t5: '仙品' }
 /** 词条品阶拼音五档 → 品质名（affix-rule params 域；与 t1~t5 是两套码系，packStore 的 TIER_KEY 负责换算） */
 export const AFFIX_QUALITY_VALUE_LABEL: Record<AffixQualityCode, string> = { fan: '凡品', xuan: '玄品', di: '地品', tian: '天品', xian: '仙品' }
 
@@ -35,7 +35,7 @@ export const AFFIX_QUALITY_VALUE_LABEL: Record<AffixQualityCode, string> = { fan
 const SLOT_ENUM = Object.keys(EQUIPMENT_SLOT_LABELS)
 const GEAR_TIER_ENUM = Object.keys(GEAR_TIER_VALUE_LABEL)
 const MATERIAL_TYPE_ENUM = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '灵气', '碎片', '货币', '草药', '药引', '种子']
-const ITEM_TYPE_ENUM = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '特殊材料', 'BOSS材料', '灵气', '碎片', '货币', '丹药', '永久丹药', '图纸', '强化', '升星', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱']
+const ITEM_TYPE_ENUM = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '特殊材料', '首领材料', '灵气', '碎片', '货币', '丹药', '永久丹药', '图纸', '强化', '升星', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱']
 
 export type FieldType = 'text' | 'number' | 'select' | 'multi' | 'map' | 'array' | 'object' | 'boolean'
 
@@ -150,7 +150,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'level', label: '等级', type: 'number', required: true, min: 1, max: 99, column: { format: 'number' } },
       { key: 'growth', label: '成长曲线', type: 'select', refTable: 'growth' },
       { key: 'skillIds', label: '可用技能', type: 'multi', refTable: 'skills', searchable: true },
-      { key: 'energyInit', label: '初始能量', type: 'number', min: 0, max: 200 },
+      { key: 'energyInit', label: '初始法力', type: 'number', min: 0, max: 200 },
       { key: 'stats', label: '基础属性', type: 'map', searchable: true },
       { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
@@ -167,7 +167,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'skillType', label: '类型', type: 'select', enum: ['small', 'ultimate', 'passive'], column: { tagKind: 'type' }, searchable: true,
         valueLabel: SKILL_TYPE_VALUE_LABEL },
-      { key: 'energyCost', label: '能量消耗', type: 'number', min: 0, max: 200, column: { format: 'number' } },
+      { key: 'energyCost', label: '法力消耗', type: 'number', min: 0, max: 200, column: { format: 'number' } },
       { key: 'cooldown', label: '冷却回合', type: 'number', min: 0, max: 20, column: { format: 'number' } },
       { key: 'description', label: '描述', type: 'text', searchable: true },
       { key: 'selector', label: '目标规则', type: 'object',
@@ -184,7 +184,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     uniqueFields: ['name'],
     filters: [
       { key: 'skillType', label: '类型', type: 'select', options: ['small', 'ultimate', 'passive'] },
-      { key: 'energyCost', label: '能量消耗', type: 'range', min: 0, max: 200 },
+      { key: 'energyCost', label: '法力消耗', type: 'range', min: 0, max: 200 },
     ],
   },
   buffs: {
@@ -354,7 +354,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'type', label: '类型', type: 'select', enum: MATERIAL_TYPE_ENUM, column: { tagKind: 'type' }, searchable: true },
-      { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
+      { key: 'rarity', label: '品级', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'effects', label: '使用效果', type: 'array',
         description: '效果类型 + 数值（heal/buff/...）',
         arrayTemplate: [{ type: 'heal', value: 50 }] },
@@ -364,7 +364,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     uniqueFields: ['name'],
     filters: [
       { key: 'type', label: '类型', type: 'select', options: MATERIAL_TYPE_ENUM },
-      { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
+      { key: 'rarity', label: '品级', type: 'range', min: 1, max: 5 },
     ],
   },
   equipment: {
@@ -378,7 +378,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'subType', label: '子类型', type: 'text', searchable: true },
       { key: 'tier', label: '阶位', type: 'select', enum: GEAR_TIER_ENUM, column: { tagKind: 'neutral' }, searchable: true,
         valueLabel: GEAR_TIER_VALUE_LABEL },
-      { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
+      { key: 'rarity', label: '品级', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'itemLevel', label: '装备等级', type: 'number', min: 1, max: 50, column: { format: 'number' },
         description: '数值锚点 1~50，装备公式按它线性成长；requiredLevel 缺省 = itemLevel − 5' },
       { key: 'requiredLevel', label: '穿戴等级门槛', type: 'number', min: 1, max: 99, column: { format: 'number' } },
@@ -396,7 +396,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     filters: [
       { key: 'slot', label: '部位', type: 'select', options: SLOT_ENUM },
       { key: 'tier', label: '阶位', type: 'select', options: GEAR_TIER_ENUM },
-      { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
+      { key: 'rarity', label: '品级', type: 'range', min: 1, max: 5 },
       { key: 'craftable', label: '可打造', type: 'select', options: ['true', 'false'],
         labelMap: { true: '仅可打造', false: '仅不可打造' } },
     ],
@@ -438,7 +438,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
         valueLabel: AFFIX_TIER_VALUE_LABEL },
       { key: 'target', label: '作用目标', type: 'select', enum: ['player', 'enemy'], column: { tagKind: 'neutral' }, searchable: true,
         valueLabel: AFFIX_TARGET_VALUE_LABEL },
-      { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
+      { key: 'rarity', label: '品级', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'statModifiers', label: '属性修正', type: 'array',
         description: '属性 + 修正百分比（20=+20%，-20=-20%）',
         arrayTemplate: [{ attribute: 'attack', percent: -20 }] },
@@ -473,13 +473,13 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
         description: 'schools.json 流派名（如 连战/破军/不动/幻影）；缺省为通用词条' },
       { key: 'weight', label: '抽池权重', type: 'number', required: true, min: 0, max: 99999, column: { format: 'number' },
         description: '0 = 不参与随机（如限定时装词条）' },
-      { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
+      { key: 'rarity', label: '品级', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     uniqueFields: ['name'],
     filters: [
       { key: 'modifierType', label: '修正类型', type: 'select', options: ['flat', 'percent'] },
-      { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
+      { key: 'rarity', label: '品级', type: 'range', min: 1, max: 5 },
     ],
   },
   attributes: {
@@ -513,7 +513,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     fields: [
       { key: 'name', label: '名称', type: 'text', required: true },
       { key: 'value', label: '当前值', type: 'number', column: { format: 'number' },
-        description: '简单数字参数（如每回合能量）；结构化参数（exp_table 等）不填，见 data' },
+        description: '简单数字参数（如每回合法力）；结构化参数（exp_table 等）不填，见 data' },
       { key: 'range', label: '合法范围', type: 'object',
         description: '{ min, max }——越界保存被拦截（仅数字参数）',
         objectTemplate: { min: 0, max: 9999 } },
@@ -544,7 +544,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'type', label: '类型', type: 'select',
         enum: ITEM_TYPE_ENUM,
         column: { tagKind: 'type' }, searchable: true },
-      { key: 'rarity', label: '稀有度', type: 'number', min: 1, max: 5, column: { format: 'number' } },
+      { key: 'rarity', label: '品级', type: 'number', min: 1, max: 5, column: { format: 'number' } },
       { key: 'value', label: '实际价值', type: 'number', min: 0, max: 999999, column: { format: 'number' },
         description: '物品实际价值（金钱口径）；出售价 / 坊市购买价 = 价值 × 全局系数（params 域 economy_ratios）' },
       { key: 'source', label: '来源', type: 'text', searchable: true },
@@ -553,7 +553,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
     ],
     filters: [
       { key: 'type', label: '类型', type: 'select', options: ITEM_TYPE_ENUM },
-      { key: 'rarity', label: '稀有度', type: 'range', min: 1, max: 5 },
+      { key: 'rarity', label: '品级', type: 'range', min: 1, max: 5 },
     ],
   },
 }

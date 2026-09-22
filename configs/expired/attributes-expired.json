@@ -1,0 +1,12 @@
+[
+  {
+    "uid": "D1_12",
+    "code": "critDamageTaken",
+    "name": "受到暴击伤害",
+    "displayName": "受到暴击伤害",
+    "description": "受到暴击时额外承受的伤害比例",
+    "range": "0-100%",
+    "impact": "提高暴击所受伤害",
+    "isPercentage": true
+  }
+]

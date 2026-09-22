@@ -58,7 +58,7 @@
             <span class="skill-name">{{ skill.name }}</span>
             <div class="skill-meta">
               <span v-if="skill.category === 'ultimate'" class="skill-tag ultimate">大招</span>
-              <span v-if="skill.energyCost > 0" class="skill-cost">消耗: {{ skill.energyCost }}能量</span>
+              <span v-if="skill.energyCost > 0" class="skill-cost">消耗: {{ skill.energyCost }}法力</span>
             </div>
           </div>
           <div class="skill-body">

@@ -137,7 +137,7 @@ export interface Skill {
   id: string // 技能唯一标识符
   name: string // 技能名称
   type: SkillType // 技能类型（被动/小技能/大招）
-  energyCost: number // 能量消耗
+  energyCost: number // 法力消耗
   cooldown: number // 冷却回合数
   lastUsed: number // 上次使用回合
   description: string // 技能描述
@@ -265,7 +265,7 @@ export function formatTargetConfig(config: SkillTargetConfig): string {
  * 资源消耗类型
  */
 export enum CostType {
-  ENERGY = '能量',
+  ENERGY = '法力',
   气血 = '气血值',
   NONE = '无消耗',
 }
@@ -435,7 +435,7 @@ export interface SkillConfig {
   id: string // 技能唯一标识符
   name: string // 技能名称
   description?: string // 技能描述
-  energyCost: number // 能量消耗
+  energyCost: number // 法力消耗
   cooldown: number // 冷却时间(回合数)
   maxUses?: number // 最大使用次数
   selector: SkillTargetConfig // 目标选择配置
@@ -586,7 +586,7 @@ export function convertSkillConfigToSkill(
 
 /** gain_energy 步骤参数 */
 export interface GainEnergyStepParams {
-  /** 能量获得量 */
+  /** 法力获得量 */
   value: number
 }
 

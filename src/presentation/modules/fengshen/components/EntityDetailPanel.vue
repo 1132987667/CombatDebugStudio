@@ -450,7 +450,7 @@ function showSkillTip(e: MouseEvent, skillId: string): void {
     badge: config.skillType === 'ultimate' ? '终极技' : '技能',
     durationLabel: config.cooldown > 0 ? `${config.cooldown}回合冷却` : undefined,
     details: [
-      { label: '能量消耗', value: `${config.energyCost ?? 0}` },
+      { label: '法力消耗', value: `${config.energyCost ?? 0}` },
       ...(config.cooldown > 0 ? [{ label: '冷却', value: `${config.cooldown} 回合` }] : []),
     ],
   }

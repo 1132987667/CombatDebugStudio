@@ -32,7 +32,7 @@
               locked: !s.unlocked,
             }"
             :aria-pressed="isCurrent(s)"
-            :aria-label="`${s.name}${isBoss(si) ? '（BOSS）' : ''}${s.unlocked ? '' : '（未解锁）'}`"
+            :aria-label="`${s.name}${isBoss(si) ? '（首领）' : ''}${s.unlocked ? '' : '（未解锁）'}`"
             @click="select(s)"
           >
             <span class="xy-timeline-node__marker" aria-hidden="true"></span>

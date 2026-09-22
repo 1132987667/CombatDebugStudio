@@ -1675,7 +1675,7 @@
     "tags": [
       "energy_absorption"
     ],
-    "description": "气血低于40%时，受到伤害先由能量抵扣"
+    "description": "气血低于40%时，受到伤害先由法力抵扣"
   },
   {
     "id": "yaotu_buff_swift_wind",
@@ -1836,52 +1836,6 @@
       "taunt"
     ],
     "description": "强制敌方攻击自己，持续2回合"
-  },
-  {
-    "id": "buff_formation_front_def",
-    "name": "鹤翼阵·前排",
-    "category": "attribute",
-    "duration": -1,
-    "maxStacks": 1,
-    "effects": [
-      {
-        "type": "modifier",
-        "params": {
-          "attributes": {
-            "defense": {
-              "value": 15,
-              "type": "PERCENTAGE"
-            }
-          },
-          "perStack": true
-        }
-      }
-    ],
-    "polarity": "positive",
-    "description": "阵型效果：防御+15%"
-  },
-  {
-    "id": "buff_formation_back_spd",
-    "name": "鹤翼阵·后排",
-    "category": "attribute",
-    "duration": -1,
-    "maxStacks": 1,
-    "effects": [
-      {
-        "type": "modifier",
-        "params": {
-          "attributes": {
-            "speed": {
-              "value": 10,
-              "type": "PERCENTAGE"
-            }
-          },
-          "perStack": true
-        }
-      }
-    ],
-    "polarity": "positive",
-    "description": "阵型效果：速度+10%"
   },
   {
     "id": "buff_formation_all_def",
@@ -3119,7 +3073,7 @@
               "value": 40,
               "type": "ADDITIVE"
             },
-            "critDamageTaken": {
+            "critDmgTakenReduction": {
               "value": 30,
               "type": "ADDITIVE"
             }

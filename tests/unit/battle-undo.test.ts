@@ -2,7 +2,7 @@
  * battle-undo.test.ts — 战斗单步回退（Undo）回归测试
  *
  * 验证 BattleSystem 行动前快照 → undoLastAction 恢复的等价性：
- * - 属性（气血/能量）/ 技能冷却 / Buff 实例与修饰符栈 / 护盾 / rng 种子 / 行动日志长度
+ * - 属性（气血/法力）/ 技能冷却 / Buff 实例与修饰符栈 / 护盾 / rng 种子 / 行动日志长度
  * - 手动普攻、技能、物品（executeItem）三类行动入口都能回退
  * - 空栈拒绝、跨战斗清空、自动战斗禁用
  * - 修饰符残留回归（对抗评审 CRITICAL）：Buff 施加/移除后 sync 必须裁剪栈来源条目，
@@ -50,7 +50,7 @@ describe('战斗单步回退（undoLastAction）', () => {
     expect(battleSystem.getUndoDepth()).toBe(1)
   })
 
-  it('普攻回退：气血/能量/行动日志长度/rng 种子全部恢复', async () => {
+  it('普攻回退：气血/法力/行动日志长度/rng 种子全部恢复', async () => {
     const { allies, enemies } = startBattle()
     const battle = battleOf()
     const target = enemies[0]!

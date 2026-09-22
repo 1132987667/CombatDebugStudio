@@ -568,7 +568,7 @@
         <!-- 装备阶位权重 -->
         <div class="fs-exp-block">
           <div class="fs-block-title">装备阶位权重</div>
-          <div class="fs-form-hint">装备基础属性投放的品阶权重区间（凡品 0.5~0.6 … 仙品 0.9~1.0）。每件装备在区间内随机取一次，故「装备总览」按区间上下界给出可获得范围；「玩家配置 →
+          <div class="fs-form-hint">装备基础属性投放的阶位权重区间（凡品 0.5~0.6 … 仙品 0.9~1.0）。每件装备在区间内随机取一次，故「装备总览」按区间上下界给出可获得范围；「玩家配置 →
             装备公式」验算取区间上限作单值示例。</div>
           <div class="fs-rule-wrap">
             <table class="fs-table fs-rule">
@@ -1042,8 +1042,8 @@ const ALL_ATTRS: AttrInfo[] = [
   { code: 'skillDmgReduction', name: '技能抵抗', isPercentage: true },
   { code: 'controlImmunity', name: '控制豁免', isPercentage: true },
   { code: 'debuffImmunityRate', name: '效果抵抗', isPercentage: true },
-  { code: 'energyInit', name: '初始能量', isPercentage: false },
-  { code: 'energyGainEfficiency', name: '能量获取效率', isPercentage: true },
+  { code: 'energyInit', name: '初始法力', isPercentage: false },
+  { code: 'energyGainEfficiency', name: '法力获取效率', isPercentage: true },
   { code: 'splash', name: '溅射', isPercentage: true },
   { code: 'damageCoefficient', name: '伤害系数', isPercentage: true },
   { code: 'comboDamageCoefficient', name: '连击伤害系数', isPercentage: true },

@@ -2,7 +2,7 @@
  * 确定性战斗复现测试
  *
  * 验证问题6修复的核心契约：同一 seed 初始化两场战斗，执行相同回合数后
- * 状态（回合顺序 / 血量 / 能量 / 行动序列）完全一致——证明战斗内所有随机判定
+ * 状态（回合顺序 / 血量 / 法力 / 行动序列）完全一致——证明战斗内所有随机判定
  * （命中/暴击/目标/AI/触发器）都走 battleData.rng，而非 Math.random。
  *
  * 运行: npx vitest run tests/unit/seeded-battle-determinism.test.ts

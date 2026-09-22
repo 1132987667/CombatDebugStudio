@@ -13,7 +13,7 @@
  * core        — 始终展示（攻击、防御等）
  * advanced    — 折叠/进阶（暴击承伤减免等）
  * situational — 情境高亮（特殊伤害加成、毒抗等）
- * hidden      — 独立 UI 处理（血量、能量、护盾）
+ * hidden      — 独立 UI 处理（血量、法力、护盾）
  */
 export type DisplayTier = 'core' | 'advanced' | 'situational' | 'hidden'
 
@@ -29,7 +29,7 @@ export type DisplayTier = 'core' | 'advanced' | 'situational' | 'hidden'
  * control   控制（成功率/豁免/免疫）
  * elemental 元素（五行攻抗；五行暂不启用期间整体 hidden）
  * support   辅助（吸血、治疗）
- * energy    能量/资源（初始能量、冷却、获取效率）
+ * energy    法力/资源（初始法力、冷却、获取效率）
  * utility   兜底（未归类属性）
  */
 export type DisplayGroup =
@@ -58,7 +58,7 @@ export const DISPLAY_GROUP_LABELS: Record<DisplayGroup, string> = {
   control: '控制',
   elemental: '元素',
   support: '辅助',
-  energy: '能量',
+  energy: '法力',
   utility: '其他',
 }
 
@@ -122,7 +122,6 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   normalAtkDmgReduction:       { displayTier: 'advanced',    group: 'defense' },
   skillDmgReduction:           { displayTier: 'advanced',    group: 'defense' },
   critDmgTakenReduction:       { displayTier: 'advanced',    group: 'defense' },
-  critDamageTaken:             { displayTier: 'advanced',    group: 'defense' },
   damageReductionCoefficient:  { displayTier: 'advanced',    group: 'defense' },
   finalDamageReduction:        { displayTier: 'advanced',    group: 'defense' },
   reflectDamagePercent:        { displayTier: 'advanced',    group: 'defense' },
@@ -190,7 +189,7 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   healReduction:               { displayTier: 'advanced',    group: 'support' },
   healReceived:                { displayTier: 'advanced',    group: 'support' },
 
-  // ── 能量/资源族 ──
+  // ── 法力/资源族 ──
   energyInit:                  { displayTier: 'advanced',    group: 'energy' },
   energyGainEfficiency:        { displayTier: 'advanced',    group: 'energy' },
   skillCooldown:               { displayTier: 'advanced',    group: 'energy' },

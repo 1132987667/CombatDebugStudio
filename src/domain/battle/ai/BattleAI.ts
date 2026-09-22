@@ -274,7 +274,7 @@ export class BaseBattleAI implements BattleAI {
     const teamMaxHealth = allies.reduce((sum, p) => sum + p.maxHealth, 0)
     const teamHealthPercent = teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
 
-    // 判断是否应该使用技能：有可用技能且（能量充足或有治疗需求）
+    // 判断是否应该使用技能：有可用技能且（法力充足或有治疗需求）
     const shouldUseSkill = this.shouldUseSkill(participant)
 
     // 计算最高威胁敌人（以攻击力衡量）

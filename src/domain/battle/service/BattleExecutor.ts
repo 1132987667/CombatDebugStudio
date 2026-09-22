@@ -315,7 +315,7 @@ export class BattleExecutor {
       ? {
           actionType: this.isNormalAttackSkill(aiSkill) ? 'attack' : 'skill',
           ...(aiSkill.skillType ? { skillType: aiSkill.skillType } : {}),
-          // 能量消耗：AI 决策时技能已选定，energyCost 随 action_execution 携带（行动卡片头部展示）
+          // 法力消耗：AI 决策时技能已选定，energyCost 随 action_execution 携带（行动卡片头部展示）
           ...(aiSkill.energyCost ? { energyCost: aiSkill.energyCost } : {}),
         }
       : decision
@@ -1029,7 +1029,7 @@ export class BattleExecutor {
    *   守护转移检查 → 扣血 → 护盾破碎检测 → TriggerEventBus(DAMAGE_TAKEN/CRIT) → 仇恨 → 被动(ON_HIT/CRIT/DAMAGE_TAKEN) → pendingDeaths
    * 调用方负责：动画编排、日志、CombatRecord
    *
-   * @returns 实际扣除的 HP（经过护盾/能量吸收后），0 表示完全吸收
+   * @returns 实际扣除的 HP（经过护盾/法力吸收后），0 表示完全吸收
    */
   settleDamage(
     source: BattleEntity | null,
@@ -1071,7 +1071,7 @@ export class BattleExecutor {
       )
     }
 
-    // 1. 扣血（内部处理护盾吸收、背水护甲能量抵扣）
+    // 1. 扣血（内部处理护盾吸收、背水护甲法力抵扣）
     const shieldBefore = this.buffSystem.getShieldValue(target.id)
     const actualDamage = target.takeDamage(damageForTarget)
 
@@ -1811,7 +1811,7 @@ export class BattleExecutor {
   // ============ 工具方法 ============
 
   /**
-   * 获取技能能量消耗
+   * 获取技能法力消耗
    */
   getSkillEnergyCost(skillId: string): number {
     return this.skillManager.getSkillConfig(skillId)?.energyCost ?? 0

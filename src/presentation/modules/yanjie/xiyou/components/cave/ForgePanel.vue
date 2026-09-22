@@ -158,7 +158,7 @@ function recipesOf(id: string): XiyouForgeRecipe[] {
 }
 
 function tierOf(r: XiyouForgeRecipe): string {
-  // 配方无 level 字段，阶位以装备定义 tier 为权威（t1-5 → 一阶…仙品）
+  // 配方无 level 字段，阶位以装备定义 tier 为权威（t1-5 → 凡品…仙品）
   const t = tierName(gearOf(r)?.tier)
   return t ? `${t}器方` : '器方'
 }

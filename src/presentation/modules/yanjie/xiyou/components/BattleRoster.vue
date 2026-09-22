@@ -35,7 +35,7 @@
             <div class="xy-attr-item"
               @mouseenter="showAttrTooltip($event, ATTRIBUTE_CODE.maxEnergy, attrVal(ATTRIBUTE_CODE.maxEnergy))"
               @mousemove="updateTooltipPosition">
-              <span class="xy-attr-label">能量</span>
+              <span class="xy-attr-label">法力</span>
               <span class="xy-attr-value">{{ energyText }}</span>
             </div>
             <div class="xy-attr-item" v-for="item in coreAttrs" :key="item.code"

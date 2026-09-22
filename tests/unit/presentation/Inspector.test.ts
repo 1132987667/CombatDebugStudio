@@ -108,7 +108,7 @@ describe('Inspector 检视器头部', () => {
     const text = root.textContent ?? ''
     expect(text).toContain('行动类型')
     expect(text).toContain('技能')
-    expect(text).toContain('能量消耗')
+    expect(text).toContain('法力消耗')
     expect(text).toContain('50')
     // 原始英文键名 / 枚举值不再直接裸露
     expect(text).not.toContain('actionType')

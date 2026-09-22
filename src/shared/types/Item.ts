@@ -33,7 +33,7 @@ export const EQUIPMENT_SLOT_LABELS: Record<EquipmentSlot, string> = {
  * 用于消耗品或特殊物品
  */
 export interface ItemEffect {
-  /** 效果类型：如 heal（恢复气血）、mpRestore（恢复能量）、buff（施加增益）等 */
+  /** 效果类型：如 heal（恢复气血）、mpRestore（恢复法力）、buff（施加增益）等 */
   type: string
   /** 效果数值 */
   value: number

@@ -212,7 +212,7 @@ export interface AttributeMeta {
   iconPath?: string
   isPercentage: boolean
   defaultValue?: number
-  /** 运行时状态属性（血量、能量），不由公式重算，由 setAttributeValue 单独维护 */
+  /** 运行时状态属性（血量、法力），不由公式重算，由 setAttributeValue 单独维护 */
   isRuntimeState?: boolean
 }
 

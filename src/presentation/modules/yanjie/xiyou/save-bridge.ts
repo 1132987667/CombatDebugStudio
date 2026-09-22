@@ -213,7 +213,7 @@ export const xiyouSaveBridge: SaveStatePort = {
     // 确保行囊已 init（configs 兜底 + IDB pack_runtime），再整体覆盖
     await pack.init()
 
-    // player 重建（level/exp/加点 → 属性，覆盖血量能量上限）
+    // player 重建（level/exp/加点 → 属性，覆盖血量法力上限）
     const bonuses = data.player.statBonuses
     // v7 六维加点：旧四维档（strength/vitality/agility/spirit）已投点数退还为 available 重分
     const legacySpent =
@@ -237,7 +237,7 @@ export const xiyouSaveBridge: SaveStatePort = {
     Object.assign(player.player, profile)
     player.player.maxHp = data.player.hp_max
     player.player.maxEnergy = data.player.energy_max
-    // 恢复后满血满能量（存档不持久化当前 hp，只有上限）
+    // 恢复后满血满法力（存档不持久化当前 hp，只有上限）
     player.player.hp = data.player.hp_max
     player.player.energy = data.player.energy_max
     player.player.attackMin = data.player.base_atk[0]

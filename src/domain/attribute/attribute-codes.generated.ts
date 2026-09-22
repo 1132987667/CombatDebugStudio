@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-09-21T15:55:17.176Z
+// 生成时间: 2026-09-22T03:29:52.544Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -45,7 +45,6 @@ export const ATTRIBUTE_CODE = {
   debuffImmunityRate: 'debuffImmunityRate',
   demonDamage: 'demonDamage',
   skillCooldown: 'skillCooldown',
-  critDamageTaken: 'critDamageTaken',
   burnDuration: 'burnDuration',
   fireDamage: 'fireDamage',
   fireDamageTaken: 'fireDamageTaken',
@@ -179,9 +178,9 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   currentEnergy: {
     code: 'currentEnergy',
-    name: '当前能量',
-    displayName: '当前能量',
-    description: '角色当前能量值',
+    name: '当前法力',
+    displayName: '当前法力',
+    description: '角色当前法力值',
     isPercentage: false,
     defaultValue: 30,
     range: '0-200',
@@ -190,13 +189,13 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   maxEnergy: {
     code: 'maxEnergy',
-    name: '最大能量',
-    displayName: '最大能量',
-    description: '最大能量上限',
+    name: '最大法力',
+    displayName: '最大法力',
+    description: '最大法力上限',
     isPercentage: false,
     defaultValue: 200,
     range: '200',
-    impact: '决定能量上限，通常固定为200',
+    impact: '决定法力上限，通常固定为200',
   },
   damageReduction: {
     code: 'damageReduction',
@@ -446,15 +445,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '-99-99',
     impact: '影响技能冷却回合',
   },
-  critDamageTaken: {
-    code: 'critDamageTaken',
-    name: '受到暴击伤害',
-    displayName: '受到暴击伤害',
-    description: '受到暴击时额外承受的伤害比例',
-    isPercentage: true,
-    range: '0-100%',
-    impact: '提高暴击所受伤害',
-  },
   burnDuration: {
     code: 'burnDuration',
     name: '灼烧持续时间',
@@ -565,9 +555,9 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   energyInit: {
     code: 'energyInit',
-    name: '初始能量',
-    displayName: '初始能量',
-    description: '战斗开始时角色拥有的能量',
+    name: '初始法力',
+    displayName: '初始法力',
+    description: '战斗开始时角色拥有的法力',
     isPercentage: false,
     defaultValue: 30,
     range: '0-200',
@@ -791,12 +781,12 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
   energyGainEfficiency: {
     code: 'energyGainEfficiency',
-    name: '能量获取效率',
-    displayName: '能量获取效率',
-    description: '按百分比放大所有来源获得的能量',
+    name: '法力获取效率',
+    displayName: '法力获取效率',
+    description: '按百分比放大所有来源获得的法力',
     isPercentage: true,
     range: '0-100%',
-    impact: '放大能量获取',
+    impact: '放大法力获取',
   },
   splash: {
     code: 'splash',

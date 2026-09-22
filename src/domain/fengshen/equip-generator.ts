@@ -160,7 +160,7 @@ export function generateEquipments(req: EquipGenerateRequest, deps: EquipGenerat
   return { items, seed, stats: aggregate(byAttr), coreStats: aggregate(coreByAttr), sapPerItem, itemRolls, warnings: [...new Set(warnings)] }
 }
 
-/** 全量重生成逐条明细：重算结果 + 消费的品阶键（缺口时 core 为 null，原 coreStat 保留不动） */
+/** 全量重生成逐条明细：重算结果 + 消费的阶位键（缺口时 core 为 null，原 coreStat 保留不动） */
 export interface EquipmentRegenEntry {
   item: EquipmentData
   core: EquipmentStatEntry | null
@@ -178,7 +178,7 @@ export interface EquipmentRegenReport {
 
 /**
  * 全量重生成部位固定属性（§21 核心属性）：对每件静态定义按装备公式单值口径预算 coreStat。
- * 单值口径沿用验证器既定裁定「品阶权重取区间上限」（每件随机取一次的确定性替身）；
+ * 单值口径沿用验证器既定裁定「阶位权重取区间上限」（每件随机取一次的确定性替身）；
  * 浮动（50%~110%）与品质系数属实例维度，不进静态定义，实例化时按品质系数缩放。
  * 基础六维之外的曲线属性核心无静态公式通路，记缺口跳过（当前配置不会出现）。
  * 不 mutate 入参；返回 items 保持入参顺序与字段，仅追加/覆盖 coreStat。
@@ -204,7 +204,7 @@ export function regenEquipmentCoreStats(items: EquipmentData[], deps: EquipGener
     if (!ratioCfg) {
       warnings.push(`${e.id}（${e.name}）子类型 ${subType} 未配置核心属性系数（core_affix_ratio），跳过`)
     } else if (!tw) {
-      warnings.push(`${e.id}（${e.name}）品阶 ${tierKey} 不在 tier_weight，跳过`)
+      warnings.push(`${e.id}（${e.name}）阶位 ${tierKey} 不在 tier_weight，跳过`)
     } else {
       const attr = ratioCfg.attribute
       const conv = deps.conversion[attr]

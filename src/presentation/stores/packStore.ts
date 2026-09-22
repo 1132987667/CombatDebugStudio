@@ -232,8 +232,8 @@ const DECOMP_HAMMER_ID = 'decomp_hammer'
 /**
  * 分解产出表（§21「装备分解」，键 = 装备实例品质 1-5）：
  * soulChance/soulCount 兵解残魄晶（概率×数量）、enhChance 强化石（精低/超中概率）、
- * extract 神品必得太古汲灵符（附录B「分解神品装备必得 ×1」）。
- * 「基础材料 ×N」落地为制造材料按品质档比例返还（matRatio，神品 50% 对齐分解锤「返还 50% 制造材料」口径）。
+ * extract 神品质必得太古汲灵符（附录B「分解神品质装备必得 ×1」）。
+ * 「基础材料 ×N」落地为制造材料按品质档比例返还（matRatio，神品质 50% 对齐分解锤「返还 50% 制造材料」口径）。
  * 已强化的装备不按强化等级返还强化石——强化是沉没成本（§21 裁定），强化石为品质档固定产出。
  */
 const DECOMPOSE_TABLE: Record<number, { soulChance: number; soulCount: number; enhChance: number; matRatio: number; extract?: boolean }> = {
@@ -859,7 +859,7 @@ export const usePackStore = defineStore('pack', () => {
   /**
    * 分解背包装备实例（§21 装备分解，全品质可分解）：
    * 消耗分解锤 ×1，产出金钱 + 制造材料（按品质档比例）+ 兵解残魄晶（升星替代点数），
-   * 精品/超品概率产强化石、神品必得太古汲灵符；强化等级不参与产出（沉没成本）。
+   * 精品质/超品质概率产强化石、神品质必得太古汲灵符；强化等级不参与产出（沉没成本）。
    * 只处理背包中该装备的第一件实例（穿戴中的装备不在背包，天然不可分解）。
    * 返回失败原因文案（成功返回 null）。
    */
@@ -1335,7 +1335,7 @@ export const usePackStore = defineStore('pack', () => {
         break
       case 'energy':
         buffSystem.requestEnergy(targetId, effect.value)
-        notification.toast(`使用「${item.name}」，恢复 ${effect.value} 能量`, 'success')
+        notification.toast(`使用「${item.name}」，恢复 ${effect.value} 法力`, 'success')
         break
       case 'buff':
         if (!effect.buffId) {

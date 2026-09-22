@@ -163,7 +163,7 @@ export interface EnemyStatsRebuildEntry {
 export interface EnemyStatsRebuildReport {
   entries: EnemyStatsRebuildEntry[]
   total: number
-  /** stats 实际发生变化（或能量特例修正）的敌人数 */
+  /** stats 实际发生变化（或法力特例修正）的敌人数 */
   changedCount: number
   /** role 缺失/非法且非特殊档的记录数：不属生成模型管辖（§3.8 assert），已跳过不写 */
   skippedCount: number

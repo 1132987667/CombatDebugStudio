@@ -93,10 +93,10 @@ export interface BattleLogMeta {
   skillName?: string
   /** 回合标签（可选）：提供后作为回合标签默认值；未提供时渲染器按本回合击杀/sub 统计计算 */
   roundTag?: string
-  /** 能量变化快照（能量类日志） */
+  /** 法力变化快照（法力类日志） */
   energyBefore?: number
   energyAfter?: number
-  /** 回合开始能量（合并日志）：角色级到账明细 */
+  /** 回合开始法力（合并日志）：角色级到账明细 */
   energyChanges?: Array<{
     entityId: string
     name?: string

@@ -15,7 +15,7 @@
           </div>
           <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.currentEnergy)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">能量:</span>
+            <span class="monitor-label">法力:</span>
             <span class="monitor-value">{{ displayEnergy }}</span>
           </div>
           <div class="monitor-item" v-for="a in coreAttrs" :key="a.code"
@@ -143,7 +143,7 @@
       <!-- 技能基础信息 -->
       <div class="tooltip-stats">
         <div class="stat-item">
-          <div class="stat-label">能量消耗</div>
+          <div class="stat-label">法力消耗</div>
           <div class="stat-value">{{ tooltipContent.energyCost || 0 }}</div>
         </div>
         <div class="stat-item">
@@ -264,7 +264,7 @@ const attrVal = (code: ATTRIBUTE_CODE): number => {
 // 进阶属性分组中文名（单一来源 attributeDisplay）
 const groupLabels: Record<string, string> = DISPLAY_GROUP_LABELS
 const advancedExpanded = ref(false)
-// 基础属性区（core tier，排除气血/能量/护盾等 hidden 语义项）— 元数据驱动
+// 基础属性区（core tier，排除气血/法力/护盾等 hidden 语义项）— 元数据驱动
 // NOTE: *Bonus 已改 advanced tier 归属性族分组，不会进 core 过滤，无需在此排除
 const coreAttrs = computed(() => {
   const excluded = new Set<ATTRIBUTE_CODE>([
@@ -451,7 +451,7 @@ const formatCalculation = (step: ExtendedSkillStep): string => {
 };
 
 // ------------------------------------------------------------
-// 技能可用性（直读领域实体的完整检查：控制→沉默→冷却→能量）
+// 技能可用性（直读领域实体的完整检查：控制→沉默→冷却→法力）
 const buffSystem = container.resolve<BuffSystem>('BuffSystem');
 
 const skillAvailabilities = computed<Record<string, SkillAvailability>>(() => {

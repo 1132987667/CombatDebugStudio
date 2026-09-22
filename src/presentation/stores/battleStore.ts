@@ -56,7 +56,7 @@ export interface BattleRules {
   critEnabled: boolean
   /** 是否启用闪避机制 */
   dodgeEnabled: boolean
-  /** 每回合自动回复的能量值（同步领域层 BattleRuleManager.combat.energyGainPerTurn） */
+  /** 每回合自动回复的法力值（同步领域层 BattleRuleManager.combat.energyGainPerTurn） */
   energyGainPerTurn: number
 }
 
@@ -719,7 +719,7 @@ export const useBattleStore = defineStore('battle', () => {
   const debugEndBattle = (winner: 'ally' | 'enemy'): Promise<boolean> =>
     endBattle(winner === 'ally' ? ParticipantSide.ALLY : ParticipantSide.ENEMY)
 
-  /** 我方全员满血满能量 */
+  /** 我方全员满血满法力 */
   const restoreAllAlly = (): boolean => {
     if (!battleService.value) return false
     for (const p of allyTeam.value) {
@@ -1300,7 +1300,7 @@ export const useBattleStore = defineStore('battle', () => {
 
     // ========== 调试注入（DebugCavePanel 战斗调试） ==========
     debugEndBattle, // 强制结束战斗（'ally' | 'enemy'）
-    restoreAllAlly, // 我方全员满血满能量
+    restoreAllAlly, // 我方全员满血满法力
     killSelectedEnemy, // 击杀选中敌人
     setForceCrit, // 强制暴击开关
     setForceDodge, // 强制闪避开关

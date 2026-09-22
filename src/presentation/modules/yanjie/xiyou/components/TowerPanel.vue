@@ -1,7 +1,7 @@
 <template>
   <div class="xy-panel-scroll">
     <p class="xy-panel-hint">
-      无尽塔 · 层层向上（挑战层）。材料产出：灵尘 / 器灵 / 突破丹叁（§22 法宝 / §18 宠物养成来源）。
+      降妖塔 · 层层向上（挑战层）。材料产出：灵尘 / 器灵 / 突破丹叁（§22 法宝 / §18 宠物养成来源）。
       第 {{ TOWER_HIDDEN_FLOOR }} 层为隐藏层——通关第 {{ TOWER_MAX_FLOOR }} 层解锁。
     </p>
 

@@ -121,7 +121,7 @@ const handleDebugAction = async (action: string) => {
     case 'full_energy':
       for (const p of getAllParticipants()) p.currentEnergy = p.maxEnergy
       battleStore.syncTeams()
-      battleLogManager.addSystemLog({ message: '调试: 满能量' })
+      battleLogManager.addSystemLog({ message: '调试: 满法力' })
       break
     case 'kill_selected': {
       const selectedId = battleStore.selectedCharacterId
@@ -444,7 +444,7 @@ const handleApplyAttributes = (payload: { charId: string; attributes: Record<str
     return
   }
 
-  // 运行时状态属性（气血/能量）走直接 setter，不经过 ModifierStack
+  // 运行时状态属性（气血/法力）走直接 setter，不经过 ModifierStack
   if (payload.attributes.currentHealth !== undefined) {
     entity.currentHealth = payload.attributes.currentHealth
   }
@@ -518,7 +518,7 @@ const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_ene
   // 强制 UI 刷新
   battleStore.syncTeams()
 
-  const modeName = { buffs: '清除所有 Buff', hp_energy: '满血满能量', all: '完全重置' }[mode]
+  const modeName = { buffs: '清除所有 Buff', hp_energy: '满血满法力', all: '完全重置' }[mode]
   battleLogManager.addActionLog({
     source: '系统', action: '重置角色', target: payload.charId,
     message: modeName,

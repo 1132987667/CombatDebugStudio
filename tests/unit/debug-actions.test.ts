@@ -370,7 +370,7 @@ describe('玩家状态动作真实行为', () => {
     const r = await act.execute('10')
     expect(r.success).toBe(true)
     expect(env.player.player.level).toBe(10)
-    // 等级提升后属性应增长（成长曲线 + 满血满能量）
+    // 等级提升后属性应增长（成长曲线 + 满血满法力）
     expect(env.player.player.maxHp).toBeGreaterThan(beforeHp)
     expect(env.player.player.attackMax).toBeGreaterThan(beforeAtk)
     expect(env.player.player.hp).toBe(env.player.player.maxHp)
@@ -412,7 +412,7 @@ describe('行囊/装备动作真实行为', () => {
     const env = makeEnv()
     const pack = usePackStore()
     await pack.init()
-    // 直接构造一件神品（quality=5）装备实例，验证重roll用实例品质而非装备品阶（rarity=1 凡品）
+    // 直接构造一件神品质（quality=5）装备实例，验证重roll用实例品质而非装备品级（rarity=1 凡品）
     const gearCat = createDebugCategories(env).find((c) => c.id === 'gear') as DebugCategory
     const act = gearCat.groups.flatMap((g) => g.actions).find((a) => a.id === 'gear_reroll')!
     const inst = makeInstance('wp_t1_light_01', [], 0, 5)
@@ -422,7 +422,7 @@ describe('行囊/装备动作真实行为', () => {
     expect(r.success).toBe(true)
     const after = pack.gearInstances.find((g) => g.instanceId === inst.instanceId)
     expect(after?.quality).toBe(5)
-    // 神品词缀数量（affixCountByQuality(5)=5；词库不足时取可用上限）应 ≥ 凡品语义（1）
+    // 神品质词缀数量（affixCountByQuality(5)=5；词库不足时取可用上限）应 ≥ 凡品质语义（1）
     expect(after?.affixes.length).toBeGreaterThanOrEqual(2)
     vi.restoreAllMocks()
   })

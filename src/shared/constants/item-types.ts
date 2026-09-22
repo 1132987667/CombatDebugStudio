@@ -14,7 +14,7 @@ export const BASE_MATERIAL_TYPES = [
 
 /** 特殊材料类型 */
 export const SPECIAL_MATERIAL_TYPES = [
-  '特殊材料', 'BOSS材料', '灵气',
+  '特殊材料', '首领材料', '灵气',
 ] as const
 
 /** 功能性物品类型（强化/升级/合成相关） */

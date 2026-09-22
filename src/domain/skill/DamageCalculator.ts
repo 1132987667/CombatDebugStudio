@@ -206,11 +206,10 @@ export class DamageCalculator {
       })
     }
 
-    // 暴击倍率（PRD §11：攻击方暴击伤害% - 防御方暴伤减免%，最低100%）
+    // 暴击倍率（PRD §11：攻击方暴击伤害%，最低 100%；受方暴伤减免走 critDmgTakenReduction 独立步骤，不走此处减法）
     if (damageResult.isCritical) {
       const cd = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.critDamage)
-      const critTaken = Math.max(0, target.getAttribute(ATTRIBUTE_CODE.critDamageTaken) || 0)
-      const critMultiplier = Math.max(1, ((cd ?? this.config.critDamage) - critTaken) / 100)
+      const critMultiplier = Math.max(1, (cd ?? this.config.critDamage) / 100)
       breakdown.critDamage = cd
       breakdown.critMultiplier = critMultiplier
       damage = floor(damage * critMultiplier)

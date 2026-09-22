@@ -101,7 +101,7 @@ describe('BattleExecutor.settleDamage 结算序列', () => {
     const actual = executor.settleDamage(source, target, 30, 35, false, battle)
 
     expect(actual).toBe(30)
-    // 扣血：takeDamage 收到最终伤害 30（护盾/能量吸收已由 takeDamage 内部处理）
+    // 扣血：takeDamage 收到最终伤害 30（护盾/法力吸收已由 takeDamage 内部处理）
     expect(takeDamage).toHaveBeenCalledWith(30)
     // DAMAGE_TAKEN 事件（驱动反伤/荆棘）
     const emitCall = mockEventBus.emit.mock.calls.find(

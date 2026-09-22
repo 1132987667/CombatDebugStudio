@@ -268,7 +268,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   }
 
   /**
-   * 请求能量恢复（供 HotEffect / 触发器脚本调用）
+   * 请求法力恢复（供 HotEffect / 触发器脚本调用）
    * 委托给 BattleSystem 注册的 onEnergyRequest 回调
    */
   public requestEnergy(targetId: string, amount: number): void {

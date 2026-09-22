@@ -101,7 +101,7 @@ const SKILL_TREE_TYPE_MAP: Record<string, XiyouNodeType> = {
   enhance: 'enhance',
 }
 
-/** 技能树能量消耗（skill_tree 节点未带，取映射后技能配置的 energyCost；非技能节点为 0） */
+/** 技能树法力消耗（skill_tree 节点未带，取映射后技能配置的 energyCost；非技能节点为 0） */
 const SKILL_ENERGY_COST: Record<string, number> = {
   skill_xiyou_swift_step: 50,
   skill_xiyou_whirlwind: 50,

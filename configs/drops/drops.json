@@ -439,7 +439,7 @@
   },
   {
     "id": "drop_equipment_t1",
-    "name": "一阶装备掉落",
+    "name": "凡品装备掉落",
     "entries": [
       {
         "itemId": "wp_t1_light_01",
@@ -465,7 +465,7 @@
   },
   {
     "id": "drop_equipment_t2",
-    "name": "二阶装备掉落",
+    "name": "玄品装备掉落",
     "entries": [
       {
         "itemId": "wp_t2_light_01",
@@ -491,7 +491,7 @@
   },
   {
     "id": "drop_equipment_t3",
-    "name": "三阶装备掉落",
+    "name": "地品装备掉落",
     "entries": [
       {
         "itemId": "wp_t3_light_01",

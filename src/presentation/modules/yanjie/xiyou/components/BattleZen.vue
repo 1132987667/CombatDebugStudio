@@ -464,7 +464,7 @@ async function runBattle(index: number): Promise<void> {
   await initBattle(node)
 }
 
-/** 结算期缓回（§六.2.1）：每秒 +10% 最大气血 / 能量 +5，窗口上限 10 秒，结束自动推进 */
+/** 结算期缓回（§六.2.1）：每秒 +10% 最大气血 / 法力 +5，窗口上限 10 秒，结束自动推进 */
 function settleThenAdvance(): void {
   run.phase = 'settling'
   const player = usePlayerStore()
@@ -536,7 +536,7 @@ function finishRun(bossTurns: number, aliveCount: number): void {
   }, 1000)
 }
 
-/** 战斗结束：回写主角当前血/能量 → 逐场结算入账（W16 经济闭环）→ 状态机推进 */
+/** 战斗结束：回写主角当前血/法力 → 逐场结算入账（W16 经济闭环）→ 状态机推进 */
 function onBattleEnded(data: BattleEndedEventData): void {
   const victory = data.winner === ParticipantSide.ALLY
   const player = usePlayerStore()

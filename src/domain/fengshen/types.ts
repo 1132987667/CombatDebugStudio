@@ -23,7 +23,7 @@ export interface ActorData {
   id: string
   name: string
   level: number
-  /** 基础属性：气血、能量、最小/最大攻击、防御、速度、暴击率等（键为 ATTRIBUTE_CODE） */
+  /** 基础属性：气血、法力、最小/最大攻击、防御、速度、暴击率等（键为 ATTRIBUTE_CODE） */
   stats: Record<string, number>
   /** 成长曲线 ID（引用 growth 表） */
   growth?: string
@@ -31,7 +31,7 @@ export interface ActorData {
   skillIds: string[]
   /** 所属阵营 / 元素（引用 elements 表） */
   faction?: string
-  /** 初始能量（默认 30） */
+  /** 初始法力（默认 30） */
   energyInit?: number
   description?: string
 }
@@ -109,7 +109,7 @@ export interface ItemData {
   name: string
   /** 功能大类（木材/矿石/丹药/图纸/武器/饰品...，枚举见 schema items 表） */
   type: string
-  /** 稀有度（1 普通 ~ 5 仙品） */
+  /** 品级（1 凡品 ~ 5 仙品） */
   rarity: number
   /** 实际价值（金钱口径；出售价 / 坊市购买价 = 价值 × 全局系数） */
   value?: number
@@ -117,7 +117,7 @@ export interface ItemData {
   source?: string
   /** 物品描述（材料/丹药等来自原 materials.json 的条目含描述） */
   description?: string
-  /** 用途（从 description 中拆分的独立字段，如「强化一阶武器，每级提升攻击力5%」） */
+  /** 用途（从 description 中拆分的独立字段，如「强化凡品武器，每级提升攻击力5%」） */
   usage?: string
   /** 使用效果（仅消耗品/丹药类） */
   effects?: ItemEffect[]
@@ -182,7 +182,7 @@ export interface AffixData {
   statModifiers: AffixStatModifier[]
   /** 冲突组（同组词缀不共存；五行单体 wuxing_single / 全抗 wuxing_all） */
   conflict_group?: string
-  /** 稀有度（1 普通 ~ 5 传说，用于 UI 高亮） */
+  /** 稀有度（1 ~ 5） */
   rarity?: number
   description?: string
   /** 掉落倾向提示（用于 UI 展示） */
@@ -226,7 +226,7 @@ export interface EquipmentAffixData {
   school?: string
   /** 抽池权重（0 = 不参与随机） */
   weight: number
-  /** 稀有度（1 普通 ~ 5 仙品，用于 UI 高亮） */
+  /** 品级（1 凡品 ~ 5 仙品，用于 UI 高亮） */
   rarity?: number
   description?: string
 }

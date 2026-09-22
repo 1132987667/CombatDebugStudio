@@ -1,7 +1,7 @@
 /**
  * equipment-overview.ts — 装备总览数值推算纯函数（封神榜「词条投放规则 → 装备总览」）
  *
- * 定位：策划验证器。输入「等级 / 部位 / 子类型 / 品阶 / 品质」五个参数，
+ * 定位：策划验证器。输入「等级 / 部位 / 子类型 / 阶位 / 品质」五个参数，
  * 按 affix_rule + equip_formula 反推一件装备**可能产出的全部属性及数值区间**，
  * 不读取 equipment.json 的任何已配置装备。
  *
@@ -616,10 +616,10 @@ const SHORT_ATTR_NAMES: Record<string, string> = {
   lifestealBonus: '吸血效果加成',
   trueDamageResist: '真伤抗性', normalAtkDmgReduction: '普攻抵抗', skillDmgReduction: '技能抵抗',
   controlImmunity: '控制豁免', debuffImmunityRate: '效果抵抗', armorBreak: '破甲',
-  energyGainEfficiency: '能量获取效率',
+  energyGainEfficiency: '法力获取效率',
   shieldReduction: '护盾削减', healReduction: '治疗削减', lifestealReduction: '吸血削减', reflectReduction: '反弹削减',
   damageReduction: '免伤率', finalDamageReduction: '最终伤害减免', hpRegenPercent: '气血回复',
-  energyInit: '初始能量', splash: '溅射',
+  energyInit: '初始法力', splash: '溅射',
 }
 
 export function attrShortName(code: string): string {

@@ -40,9 +40,9 @@ export interface TooltipData {
   description: string
   /** 类型徽章（如 "光环"、"控制"、"被动"） */
   badge: string
-  /** 名称颜色（CSS color 值；缺省用默认主题色。如物品品阶色） */
+  /** 名称颜色（CSS color 值；缺省用默认主题色。如物品品级色） */
   nameColor?: string
-  /** 类型徽章颜色（CSS color 值；缺省用默认 info 色。如物品品阶色） */
+  /** 类型徽章颜色（CSS color 值；缺省用默认 info 色。如物品品级色） */
   badgeColor?: string
   /** 时长徽章（如 "永久"、"3回合"） */
   durationLabel?: string
@@ -240,7 +240,7 @@ export class LogTooltipResolver {
     }
 
     const details: TooltipDetailRow[] = []
-    details.push({ label: '能量消耗', value: `${config.energyCost}` })
+    details.push({ label: '法力消耗', value: `${config.energyCost}` })
     if (config.cooldown > 0) {
       details.push({ label: '冷却', value: `${config.cooldown} 回合` })
     }

@@ -111,7 +111,7 @@ export interface XiyouSkillNode {
   type: XiyouNodeType
   /** 点亮消耗技能点（1-5） */
   points: number
-  /** 战斗中能量消耗（属性/被动/强化为 0） */
+  /** 战斗中法力消耗（属性/被动/强化为 0） */
   energyCost: number
   desc: string
   /** 运行时：已点亮（configs 未含 · 展示态） */

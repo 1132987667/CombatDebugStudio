@@ -70,6 +70,6 @@ describe('FormulasView', () => {
     expect(dictText).toContain('attackCoefficient')
     // 运行时/归档项不应出现在核心字典（护盾值归运行时、不在此 64 组内）
     expect(dictText).not.toContain('护盾值')
-    expect(dictText).not.toContain('最大能量')
+    expect(dictText).not.toContain('最大法力')
   })
 })

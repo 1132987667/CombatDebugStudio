@@ -223,11 +223,11 @@ const SLOT_OPTIONS: Array<{ value: EquipmentSlot; label: string }> = [
 ]
 
 const TIER_OPTIONS: Array<{ value: GearTier; label: string }> = [
-  { value: 't1', label: 't1 凡品' },
-  { value: 't2', label: 't2 玄品' },
-  { value: 't3', label: 't3 地品' },
-  { value: 't4', label: 't4 天品' },
-  { value: 't5', label: 't5 仙品' },
+  { value: 't1', label: '凡品' },
+  { value: 't2', label: '玄品' },
+  { value: 't3', label: '地品' },
+  { value: 't4', label: '天品' },
+  { value: 't5', label: '仙品' },
 ]
 
 /** 子类型随部位联动（affix_rule.sub_type_groups；无子类型部位回退部位同名 id） */

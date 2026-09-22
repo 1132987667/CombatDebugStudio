@@ -48,7 +48,7 @@ const REQ: EquipGenerateRequest = {
   tier: 't5',
   level: 50,
   quality: 5,
-  qualityFactor: 1.455, // 神品系数（quality.ts QUALITY_FACTOR[5]）
+  qualityFactor: 1.455, // 神品质系数（quality.ts QUALITY_FACTOR[5]）
   count: 100,
   seed: 20260909,
 }

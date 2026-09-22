@@ -137,7 +137,7 @@ export class ParticipantStats {
     const attrData: AttributeValue | undefined = this.attributes.get(attrCode)
     if (!attrData) return
 
-    // ponytail: 跳过运行时状态属性（血量、能量），它们由 setAttributeValue 单独维护，不从公式重算
+    // ponytail: 跳过运行时状态属性（血量、法力），它们由 setAttributeValue 单独维护，不从公式重算
     const meta = getAttrMeta(attrCode)
     if (meta?.isRuntimeState) return
 

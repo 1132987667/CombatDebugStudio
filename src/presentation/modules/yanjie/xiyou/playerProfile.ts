@@ -1,7 +1,7 @@
 /**
  * 玩家属性创建与计算（configs/xiyou/player.json 配置驱动）
  * NOTE: 玩家基础属性 = base + (level-1)×growth，叠加加点加成（statBonuses）；
- *       运行时血量/能量由调用方维护。替代原先 mock.ts 中硬编码的 player 数值。
+ *       运行时血量/法力由调用方维护。替代原先 mock.ts 中硬编码的 player 数值。
  *       结构复用封神榜既有模型：base 对齐 ActorData.stats、growth/expTable 对齐 GrowthCurveData，
  *       不平行定义成长概念；后续如需进封神榜管理可直接下沉（同步兜底，不依赖异步 IDB）。
  */
@@ -103,7 +103,7 @@ export function breakNodeLabel(stage: number): string {
   return ['壹', '贰', '叁', '肆', '伍'][stage - 1] ?? String(stage)
 }
 
-/** 创建玩家快照：满血满能量，属性 = 基础 + 成长 + 加点 */
+/** 创建玩家快照：满血满法力，属性 = 基础 + 成长 + 加点 */
 export function createPlayerProfile(opts?: { level?: number; exp?: number; stats?: XiyouStatPoints; breakStage?: number }): XiyouPlayer {
   const level = opts?.level ?? playerConfig.initialLevel
   const stats: XiyouStatPoints = opts?.stats ?? { available: 0, hp: 0, atk: 0, def: 0, hit: 0, dodge: 0, speed: 0 }

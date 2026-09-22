@@ -147,7 +147,7 @@ function getCraftQualityLock(): number | null {
 
 /**
  * 设置玩家等级并重算属性（基础 + 成长 + 加点），返回属性快照。
- * NOTE: 等级变化不重置运行时血/能量——保留当前值，maxHp/maxEnergy 重算后回满血能量，
+ * NOTE: 等级变化不重置运行时血/法力——保留当前值，maxHp/maxEnergy 重算后回满血法力，
  *       与 gainExp 升级路径语义一致（升级回满）。
  */
 function playerSetLevel(env: PlayerStoreDebugEnv, level: number): Record<string, unknown> {
@@ -214,7 +214,7 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
         actions: [
           {
             id: 'battle_restore',
-            label: '满血满能量',
+            label: '满血满法力',
             execute: () => ok(battle.restoreAllAlly() ? '我方全员已恢复' : '战斗未就绪'),
           },
           {
@@ -905,18 +905,18 @@ function buildPlayerCategory(env: PlayerStoreDebugEnv): DebugCategory {
           },
           {
             id: 'player_energy_150',
-            label: '能量上限设为 150',
+            label: '法力上限设为 150',
             execute: () => {
               p.maxEnergy = 150
-              return ok(`能量上限已设为 150`)
+              return ok(`法力上限已设为 150`)
             },
           },
           {
             id: 'player_energy_200',
-            label: '能量上限设为 200',
+            label: '法力上限设为 200',
             execute: () => {
               p.maxEnergy = 200
-              return ok(`能量上限已设为 200`)
+              return ok(`法力上限已设为 200`)
             },
           },
           {
@@ -1517,7 +1517,7 @@ function buildPackCategory(env: PlayerStoreDebugEnv): DebugCategory {
           },
           {
             id: 'pack_mat_all_t1',
-            label: '给予全部一阶材料',
+            label: '给予全部凡品材料',
             execute: () => {
               let n = 0
               for (const it of env.items) {
@@ -1526,12 +1526,12 @@ function buildPackCategory(env: PlayerStoreDebugEnv): DebugCategory {
                   n++
                 }
               }
-              return ok(`已给予 ${n} 种一阶材料各 99`)
+              return ok(`已给予 ${n} 种凡品材料各 99`)
             },
           },
           {
             id: 'pack_mat_all_t2',
-            label: '给予全部二阶材料',
+            label: '给予全部玄品材料',
             execute: () => {
               let n = 0
               for (const it of env.items) {
@@ -1540,7 +1540,7 @@ function buildPackCategory(env: PlayerStoreDebugEnv): DebugCategory {
                   n++
                 }
               }
-              return ok(`已给予 ${n} 种二阶材料各 99`)
+              return ok(`已给予 ${n} 种玄品材料各 99`)
             },
           },
         ],

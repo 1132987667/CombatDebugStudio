@@ -51,9 +51,9 @@ export interface BattleRulesConfig {
       minDamage: number
       /** 单次攻击的最大伤害值 */
       maxDamage: number
-      /** 每回合自动回复的能量值 */
+      /** 每回合自动回复的法力值 */
       energyGainPerTurn: number
-      /** 命中敌人时获得的额外能量值 */
+      /** 命中敌人时获得的额外法力值 */
       energyGainOnHit: number
       /** 仇恨系统配置（可选） */
       threat?: {
@@ -130,7 +130,7 @@ export class BattleRuleManager {
    * 获取默认战斗规则配置
    * 该方法返回系统预设的完整战斗规则配置，包含以下模块：
    * - 回合系统规则：速度优先/固定回合/最大回合数/回合超时
-   * - 战斗机制规则：暴击/闪避/伤害范围/能量获取
+   * - 战斗机制规则：暴击/闪避/伤害范围/法力获取
    * - 伤害计算规则：暴击/防御/伤害阈值
    * - 自动战斗规则：启用状态/速度设置/间隔时间
    * @returns BattleRulesConfig 返回完整的战斗规则配置对象
@@ -161,9 +161,9 @@ export class BattleRuleManager {
           minDamage: 1,
           // maxDamage: 最大伤害上限，任何伤害计算结果不超过此值
           maxDamage: 9999,
-          // energyGainPerTurn: 每回合开始时自动恢复的能量值（初始30，上限200）
+          // energyGainPerTurn: 每回合开始时自动恢复的法力值（初始30，上限200）
           energyGainPerTurn: 15,
-          // energyGainOnHit: 受到攻击时获得的能量值（每回合最多3次）
+          // energyGainOnHit: 受到攻击时获得的法力值（每回合最多3次）
           energyGainOnHit: 12,
         },
         // 伤害计算规则：控制伤害的各类计算参数

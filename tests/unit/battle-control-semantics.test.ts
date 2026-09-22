@@ -174,7 +174,7 @@ describe('G5：战斗中物品使用（executeItem）', () => {
     expect(user.getAttribute(ATTRIBUTE_CODE.currentHealth)).toBe(expected)
   })
 
-  it('聚气丹恢复 30 点能量（不超过上限）', () => {
+  it('聚气丹恢复 30 点法力（不超过上限）', () => {
     const { allies } = startBattle()
     const user = allies[0]!
     user.setAttribute(ATTRIBUTE_CODE.currentEnergy, 10)

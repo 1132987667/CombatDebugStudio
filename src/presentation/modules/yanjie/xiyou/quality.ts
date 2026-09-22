@@ -9,7 +9,7 @@
  * 装备品质（QUALITY_NAMES，设计稿《设计稿补充-装备V2》§5）：
  *       品质决定基础属性系数（凡 80%-90% … 神 141%-150%，本表取区间中值）与随机词条数量
  *       （凡 1 / 精 2 / 超 3 / 绝 4 / 神 5，见 affixCountByQuality）。制造/掉落时按装备阶位
- *       roll 品质（rollQuality），天品阶位固定绝品、仙品阶位固定神品。
+ *       roll 品质（rollQuality），天品阶位固定绝品质、仙品阶位固定神品质。
  */
 import type { XiyouQuality } from './types'
 
@@ -167,11 +167,11 @@ export function qualityOf(rarity: number): XiyouQuality {
   return RARITY_NAMES[rarity] ?? '凡品'
 }
 
-/** 阶位名（装备 tier t1-5 → 一阶/二阶/三阶/天品/仙品，与 GearDetailDialog 既有叫法一致） */
+/** 阶位名（tier t1-5 → 凡品/玄品/地品/天品/仙品，序号与品级 rarity 同名系） */
 export const TIER_NAMES: Record<string, string> = {
-  t1: '一阶',
-  t2: '二阶',
-  t3: '三阶',
+  t1: '凡品',
+  t2: '玄品',
+  t3: '地品',
   t4: '天品',
   t5: '仙品',
 }

@@ -695,7 +695,7 @@ export class BattleSystem {
       }
     })
 
-    //  能量恢复回调
+    //  法力恢复回调
     this.buffSystem.setEnergyCallback((targetId: string, amount: number) => {
       const target = battleData.participants.get(targetId)
       if (target?.isAlive()) {
@@ -971,12 +971,12 @@ export class BattleSystem {
         }
       })
 
-      // 重置所有存活角色的受击能量计数器（每回合开始）
+      // 重置所有存活角色的受击法力计数器（每回合开始）
       aliveParticipants.forEach((participant) => {
         participant.resetEnergyHitCount()
       })
 
-      // 为所有存活角色增加回合开始能量（按 阵营:实际到账 分组，同组角色合并为一行，敌我分开）
+      // 为所有存活角色增加回合开始法力（按 阵营:实际到账 分组，同组角色合并为一行，敌我分开）
       const combatRules = this.ruleManager.getCombatRules()
       const energyGains: Array<{
         participant: BattleEntity
@@ -1017,7 +1017,7 @@ export class BattleSystem {
             segs.push(entitySegment(item.participant))
           })
           segs.push(
-            { text: ` 获得回合开始能量 `, classStr: 'log-info' },
+            { text: ` 获得回合开始法力 `, classStr: 'log-info' },
             { text: `+${items[0].actualGain}`, classStr: 'log-heal' },
           )
           LoggerProvider.logger.addBattleLog({
@@ -1673,7 +1673,7 @@ export class BattleSystem {
    * 战斗中使用物品（统一战斗系统文档 §11 G5）：
    * - 占用一次行动轮（§11 决策 1），调用方负责行动节奏；
    * - 完全控制（blocksAction=true）不可使用，沉默（仅禁技能）可用（§6.5）；
-   * - 效果走标准管线：heal=百分比最大气血 / energy=固定能量 / buff=标准 Buff 管线（sourceType 标记丹药来源）。
+   * - 效果走标准管线：heal=百分比最大气血 / energy=固定法力 / buff=标准 Buff 管线（sourceType 标记丹药来源）。
    * 返回 null 表示成功，否则为失败原因。
    */
   public executeItem(userId: string, itemId: string, targetId?: string): string | null {
@@ -1709,7 +1709,7 @@ export class BattleSystem {
         if (amount <= 0) continue
         const current = effectTarget.getAttribute(ATTRIBUTE_CODE.currentEnergy)
         effectTarget.setAttribute(ATTRIBUTE_CODE.currentEnergy, Math.min(current + amount, maxEnergy))
-        applied.push(`恢复能量 ${amount}`)
+        applied.push(`恢复法力 ${amount}`)
       } else if (effect.type === 'buff' && effect.buffId) {
         const ok = this.buffSystem.addBuff(
           effectTarget.id,

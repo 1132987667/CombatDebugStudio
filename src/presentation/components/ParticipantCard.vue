@@ -33,7 +33,7 @@
         </div>
       </div>
 
-      <!-- 能量条 -->
+      <!-- 法力条 -->
       <div class="member-energy">
         <div class="energy-bar">
           <div class="energy-ticks">

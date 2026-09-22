@@ -154,7 +154,7 @@ export class BattleLifecycleManager {
       try {
         await this.processTurnInternal()
 
-        // 每回合结束后通知 UI 同步队伍数据（气血/能量等）
+        // 每回合结束后通知 UI 同步队伍数据（气血/法力等）
         const turnData = this.getBattleData()
         if (turnData) {
           const allyTeam: BattleEntity[] = []

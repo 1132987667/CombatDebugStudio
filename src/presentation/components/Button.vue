@@ -74,7 +74,7 @@ function onClick(e: MouseEvent) {
     transform var(--transition-fast);
 
   &:hover:not(:disabled):not(.is-loading) {
-    /* NOTE: 提亮 + 边框变亮 + 文本变能量青 + 内高光增强；不做位移动效（无上浮） */
+    /* NOTE: 提亮 + 边框变亮 + 文本变法力青 + 内高光增强；不做位移动效（无上浮） */
     background: var(--color-bg-tertiary-hover);
     border-color: var(--color-border-tertiary-hover);
     color: var(--color-energy);
@@ -158,7 +158,7 @@ function onClick(e: MouseEvent) {
 
   &:hover:not(:disabled):not(.is-loading) {
     border-color: rgba(var(--rgb-white), 0.6);
-    /* NOTE: 实色底 hover 保持白字，避免继承基类能量青 */
+    /* NOTE: 实色底 hover 保持白字，避免继承基类法力青 */
     color: var(--color-text-primary);
     background: var(--color-brand-red-hover);
     box-shadow: 0 3px 0 0 var(--color-brand-red-active);

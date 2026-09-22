@@ -1513,6 +1513,35 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return instance?.currentStacks ?? 0
   }
 
+  /**
+   * 消耗指定 buff 实例的 1 层：层数 >1 时递减并重算修饰符，降到 0 移除整个实例。
+   * 与 addBuff 的 LIMITED 叠层递增路径对称：改 currentStacks 必须同步 _stacks
+   * 并通知 effectPlan.onStackChange，否则叠层缩放的修饰符不会回落。
+   */
+  public consumeBuffStack(instanceId: string): void {
+    const instance = this.buffInstances.get(instanceId)
+    if (!instance || !instance.isActive) return
+    if (instance.currentStacks <= 1) {
+      this.removeBuff(instanceId)
+      return
+    }
+    instance.currentStacks -= 1
+    instance.context.variables.set('_stacks', instance.currentStacks)
+    // 兼容无脚本 buff（effectPlan 驱动）——与叠层递增分支一致
+    instance.script?.onRefresh?.(instance.context)
+    const resolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
+    if (resolved?.effectPlan) {
+      for (const effect of resolved.effectPlan) {
+        effect.handler.onStackChange?.(
+          instance.context,
+          effect.params,
+          instance.currentStacks,
+        )
+      }
+    }
+    this.triggerAttributeChange(instance.characterId)
+  }
+
   /** 获取角色身上带指定 tag 的所有 buff 配置参数列表（减治疗参数化等按实例结算的机制使用） */
   getBuffParamsListByTag(characterId: string, tag: string): Array<Record<string, unknown>> {
     const result: Array<Record<string, unknown>> = []

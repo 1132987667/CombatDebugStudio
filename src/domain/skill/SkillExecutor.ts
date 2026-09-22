@@ -968,7 +968,7 @@ export class SkillExecutor {
     const tianwangActive = this.buffSystem.hasBuff(source.id, 'buff_tianwang')
     if (tianwangActive) probability += 0.2
 
-    // 风逐联动：该次弹射概率翻倍，消耗 1 层
+    // 风逐联动：该次弹射概率翻倍，消耗 1 层（多层时实例保留，降至 0 层才消失）
     const fengzhuStacks = this.buffSystem.getBuffStackCount(source.id, 'buff_fengzhu')
     const fengzhuConsumed = fengzhuStacks > 0
     if (fengzhuConsumed) {
@@ -976,7 +976,7 @@ export class SkillExecutor {
       const inst = this.buffSystem
         .getBuffInstances(source.id)
         .find((i) => i.buffId === 'buff_fengzhu')
-      if (inst) this.buffSystem.removeBuff(inst.id)
+      if (inst) this.buffSystem.consumeBuffStack(inst.id)
     }
 
     probability = Math.min(probability, maxProbability + (tianwangActive ? 0.2 : 0))

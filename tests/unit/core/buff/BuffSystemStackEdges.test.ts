@@ -143,6 +143,28 @@ describe('BuffSystem 叠加/免疫/驱散边界', () => {
     expect(buffSystem.addBuff('c2', 'buff_fengsuo', {}, 1)).toBeTruthy()
   })
 
+  describe('consumeBuffStack 逐层消耗（2026-09-22 缺陷3修复引入）', () => {
+    it('层数 >1 时递减并重算 perStack 修饰符，_stacks 同步', () => {
+      buffSystem.addBuff('c1', 't4_limited', {}, 1)
+      buffSystem.addBuff('c1', 't4_limited', {}, 1) // 2 层 → attack +10
+      const inst = buffSystem.getBuffInstances('c1')[0]
+      expect(buffSystem.getModifierStack('c1').getModifiers('attack')[0]?.value).toBe(10)
+
+      buffSystem.consumeBuffStack(inst.id)
+
+      expect(inst.currentStacks).toBe(1)
+      expect(inst.context.variables.get('_stacks')).toBe(1)
+      expect(buffSystem.getModifierStack('c1').getModifiers('attack')[0]?.value).toBe(5)
+      expect(inst.isActive).toBe(true)
+    })
+
+    it('最后 1 层消耗即整实例移除', () => {
+      const id = buffSystem.addBuff('c1', 't4_limited', {}, 1)
+      buffSystem.consumeBuffStack(id)
+      expect(buffSystem.getBuffInstances('c1')).toHaveLength(0)
+    })
+  })
+
   describe('removeDispellableBuffs 只清显式 dispellable === true', () => {
     // 回归锁定（2026-09-22 修复）：addBuff 合并链此前不读 jsonConfig.dispellable，
     // buffs.json 声明（如 buff_yishang:true）在主路径不生效；现三源合并

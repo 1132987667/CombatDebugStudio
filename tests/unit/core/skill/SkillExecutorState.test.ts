@@ -114,7 +114,7 @@ describe('SkillExecutor 概率与状态', () => {
       expect(dmg?.value).toBe(Math.round(100 * 0.6 * 1.3))
     })
 
-    it('风逐联动：概率翻倍并整实例消耗（NOTE：注释写"消耗 1 层"，实际 removeBuff 移除全部层）', () => {
+    it('风逐联动：概率翻倍且每次仅消耗 1 层，降至 0 层实例才消失', () => {
       setupSpeed(0, 0)
       buffSystem.addBuff(source.id, 'buff_fengzhu', {}, 1)
       buffSystem.addBuff(source.id, 'buff_fengzhu', {}, 1) // LIMITED 叠 2 层
@@ -124,12 +124,20 @@ describe('SkillExecutor 概率与状态', () => {
       executor.executeStep(bounceStep(), action, source, target)
       expect(action.effects.some((e) => e.type === 'damage')).toBe(true)
 
-      const fengzhu = buffSystem
-        .getBuffInstances(source.id)
-        .filter((i) => i.buffId === 'buff_fengzhu')
-      // 行为锁定：2 层风逐一次弹射后实例整体消失。
-      // 若按设计应为逐层消耗——此断言红即为修复信号。
-      expect(fengzhu).toHaveLength(0)
+      const stacks = () =>
+        buffSystem.getBuffStackCount(source.id, 'buff_fengzhu')
+      // 回归锁定（2026-09-22 修复）：原实现 removeBuff 整体删除多层实例，
+      // 与"消耗 1 层"语义不符；现 consumeBuffStack 逐层递减。
+      expect(stacks()).toBe(1)
+      expect(
+        buffSystem
+          .getBuffInstances(source.id)
+          .filter((i) => i.buffId === 'buff_fengzhu'),
+      ).toHaveLength(1)
+
+      executor.setRng(stubRng(0.39))
+      executor.executeStep(bounceStep(), makeAction(), source, target)
+      expect(stacks()).toBe(0)
     })
 
     it('基础概率被 maxProbability 封顶（速度差再大也不超 0.4）', () => {

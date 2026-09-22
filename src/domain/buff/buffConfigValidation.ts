@@ -1,14 +1,17 @@
 /**
  * buffConfigValidation.ts — Buff 配置结构校验（保存时拦截引擎运行期会抛错的坏数据）
  *
- * 与 BuffConfigResolver 的抛错点对齐（未知原子效果类型 / polarity 非法或不可推导 /
- * 无法识别的触发阶段），供封神榜保存 buffs 表时校验，避免坏数据注入引擎后在战斗中断裂。
+ * 与 BuffConfigResolver / BuffSystem 的静默失效点对齐（未知原子效果类型 / polarity 非法或不可
+ * 推导 / 无法识别的触发阶段 / 未注册的触发器 scriptId），供封神榜保存 buffs 表时校验，避免坏数据
+ * 注入引擎后在战斗中断裂或配置写了不生效。
  * 构造期校验（BuffScriptRegistry.validateBuffConfigs）更严格、且抛错；此处为编辑保存期的宽松提示。
  */
 
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import { BattleTriggerPhase, OLD_PHASE_NAME_MAP } from '@/domain/battle/type/types'
 import { ControlType, StackRule } from '@/domain/buff/types'
+import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
+import { StepEffectType } from '@/domain/skill/types'
 
 const ATOMIC_TYPES = new Set<string>(Object.values(AtomicEffectType))
 const VALID_POLARITIES = ['positive', 'negative', 'neutral', 'mixed']
@@ -17,6 +20,13 @@ const PHASES = new Set<string>(Object.values(BattleTriggerPhase))
 // 此处是坏值进入引擎前的保存期闸门，值域以引擎枚举为单一事实来源
 const STACK_RULES = new Set<string>(Object.values(StackRule))
 const CONTROL_TYPES = new Set<string>(Object.values(ControlType))
+// NOTE: 与 BuffSystem.registerDefaultTriggerScripts 注册集一致——内建三项 + TRIGGER_SCRIPTS 全量。
+const TRIGGER_SCRIPT_IDS = new Set<string>([
+  ...Object.keys(TRIGGER_SCRIPTS),
+  StepEffectType.DEAL_DAMAGE,
+  StepEffectType.APPLY_BUFF,
+  StepEffectType.HEAL,
+])
 
 /**
  * 校验单个 Buff 配置结构（接受 BuffJsonEntry 或归一化后的配置）。
@@ -75,6 +85,12 @@ export function validateBuffConfigShape(input: object): string[] {
       const phase = tr?.phase
       if (typeof phase === 'string' && !PHASES.has(phase) && !OLD_PHASE_NAME_MAP[phase]) {
         errors.push(`「${buffId}」triggers[${i}].phase "${phase}" 无法识别`)
+      }
+      // scriptId：未知 ID 在引擎侧静默跳过（BuffSystem.triggerScripts.get 落空），
+      // 配置写了却不生效最难排查，故在保存期拦住
+      const scriptId = tr?.scriptId
+      if (typeof scriptId === 'string' && !TRIGGER_SCRIPT_IDS.has(scriptId)) {
+        errors.push(`「${buffId}」triggers[${i}].scriptId "${scriptId}" 未注册触发器脚本`)
       }
     }
   }

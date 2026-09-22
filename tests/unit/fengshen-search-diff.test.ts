@@ -164,4 +164,28 @@ describe('validateBuffConfigShape（Buff 结构校验，拦截引擎运行期会
       effects: [{ type: 'modifier', params: { attributes: {} } }],
     })).toEqual([])
   })
+
+  it('未注册的 triggers[].scriptId 被拦截（引擎侧静默跳过，配置写了不生效）', () => {
+    const errors = validateBuffConfigShape({
+      id: 'b1',
+      polarity: 'negative',
+      triggers: [{ phase: 'ON_DAMAGE_TAKEN', scriptId: 'no_such_script' }],
+    })
+    expect(errors.some((e) => e.includes('scriptId') && e.includes('no_such_script'))).toBe(true)
+  })
+
+  it('已注册 scriptId（TRIGGER_SCRIPTS 与内建 deal_damage/apply_buff/heal）通过', () => {
+    expect(validateBuffConfigShape({
+      id: 'b1',
+      polarity: 'negative',
+      triggers: [{ phase: 'ON_DAMAGE_TAKEN', scriptId: 'reflect_damage', params: { percent: 0.1 } }],
+    })).toEqual([])
+    for (const builtin of ['deal_damage', 'apply_buff', 'heal']) {
+      expect(validateBuffConfigShape({
+        id: 'b1',
+        polarity: 'negative',
+        triggers: [{ phase: 'ON_TURN_START', scriptId: builtin }],
+      })).toEqual([])
+    }
+  })
 })

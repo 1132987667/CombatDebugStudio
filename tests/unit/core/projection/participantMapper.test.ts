@@ -163,5 +163,44 @@ describe('participantToSnapshot', () => {
         (item?.attributes?.attack as unknown as { perStack?: boolean }).perStack,
       ).toBe(false)
     })
+
+    // 回归锁定（2026-09-22 修复）：光环修饰符嵌套在 AURA.params.modifiers，
+    // 此前只扫 effectPlan 顶层 MODIFIER，光环 buff 悬停属性明细恒为空。
+    it('光环 buff 从 AURA.params.modifiers 提取属性明细（perStack:false 与叠层不放大语义对齐）', () => {
+      const cfg = {
+        id: 'test_aura_attrs',
+        name: '测试光环',
+        description: '',
+        duration: -1,
+        maxStacks: 1,
+        stackRule: 'limited',
+        polarity: 'positive',
+        effects: [
+          {
+            type: 'aura',
+            params: {
+              targetSelector: 'self',
+              modifiers: [
+                { id: 'aura_atk', targetAttribute: 'attack', type: 'PERCENTAGE', value: 10 },
+                { id: 'aura_def', targetAttribute: 'defense', type: 'ADDITIVE', value: 5 },
+              ],
+            },
+          },
+        ],
+      } as unknown as BuffJsonEntry
+      registry.loadBuffConfigsFromArray([cfg])
+
+      BattleParticipantImpl.eventBus = mockEventBus as never
+      const p = createParticipantFromEnemy('yaotu_gold', ParticipantSide.ENEMY)
+      if (!p) throw new Error('配置缺失')
+      p.setBuffQuery(buffSystem as never)
+      buffSystem.addBuff(p.id, 'test_aura_attrs', {}, 1)
+
+      const snap = participantToSnapshot(p as unknown as BattleEntity, buffSystem)
+      const item = snap.buffs.find((b) => b.buffId === 'test_aura_attrs')
+      expect(item?.isAura).toBe(true)
+      expect(item?.attributes?.attack).toEqual({ value: 10, type: 'PERCENTAGE', perStack: false })
+      expect(item?.attributes?.defense).toEqual({ value: 5, type: 'ADDITIVE', perStack: false })
+    })
   })
 })

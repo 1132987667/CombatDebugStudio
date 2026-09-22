@@ -104,22 +104,32 @@ function buildBuffRawItems(
       // 条件标签从 JSON 配置显式读取（BuffConfig 为运行时合并配置，不含展示字段）
       const rawConfig = buffSystem.getScriptRegistry().getBuffConfig(config.id)
 
-      // 从 effectPlan 的 modifier 效果中提取修饰符数据（供展示层生成属性标签）
+      // 从 effectPlan 提取修饰符数据（供展示层生成属性标签/悬停明细）：
+      // - MODIFIER：顶层 params.attributes
+      // - AURA：嵌套在 params.modifiers（ModifierTemplate，value/type 语义与 AttributeValueConfig 一致）
       // NOTE: 合并时透传 perStack 标志——perStack=false 的修饰符叠层不放大，
       //       展示层据此跳过 ×stacks（否则与实际生效值不符）。
       let attributes: Record<string, AttributeValueConfig> | undefined
       const resolved = buffSystem.getResolvedBuffConfig?.(config.id)
-      const modifierEffects = resolved?.effectPlan?.filter(
-        (e: { type: string }) => e.type === AtomicEffectType.MODIFIER,
-      ) ?? []
-      if (modifierEffects.length > 0) {
-        attributes = {}
-        for (const effect of modifierEffects) {
+      for (const effect of resolved?.effectPlan ?? []) {
+        if (effect.type === AtomicEffectType.MODIFIER) {
           const attrs = effect.params.attributes as Record<string, AttributeValueConfig> | undefined
           if (!attrs) continue
+          attributes ??= {}
           const perStack = effect.params.perStack !== false
           for (const [code, cfg] of Object.entries(attrs)) {
             attributes[code] = perStack ? cfg : { ...cfg, perStack: false }
+          }
+        } else if (effect.type === AtomicEffectType.AURA) {
+          // NOTE: AuraEffect 未实现 onStackChange，光环叠层不重算修饰符（实际生效值不随层数放大），
+          //       故固定 perStack:false 与生效语义对齐
+          const mods = effect.params.modifiers as
+            | Array<{ targetAttribute: string; value: number; type: 'PERCENTAGE' | 'ADDITIVE' }>
+            | undefined
+          if (!mods) continue
+          attributes ??= {}
+          for (const mod of mods) {
+            attributes[mod.targetAttribute] = { value: mod.value, type: mod.type, perStack: false }
           }
         }
       }

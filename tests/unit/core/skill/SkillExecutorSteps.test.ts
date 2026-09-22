@@ -438,9 +438,8 @@ describe('SkillExecutor 步骤语义', () => {
       ).toBe(false)
     })
 
-    it('NOTE 行为锁定：灼烧基数按实例剩余回合数计，叠层数不放大伤害', () => {
-      // handleBurnDetonate 不读 currentStacks——2 层灼烧与 1 层伤害相同。
-      // 此用例锁定现状；若未来改为按层放大，此测试应红并联动更新。
+    it('灼烧引爆按层数线性放大：2 层 = 1 层伤害 ×2（2026-09-22 缺陷4修复）', () => {
+      // 原实现不读 currentStacks，2 层与 1 层伤害相同；现按 层数 × 剩余回合 折算。
       buffSystem.addBuff(target.id, 'buff_burn', {}, 1) // 叠到 2 层
       const inst = buffSystem
         .getBuffInstances(target.id)
@@ -448,7 +447,7 @@ describe('SkillExecutor 步骤语义', () => {
       expect(inst?.currentStacks).toBe(2)
 
       const { hpDelta } = detonateBurn(false)
-      expect(hpDelta).toBe(Math.round(target.maxHealth * 0.05 * 2))
+      expect(hpDelta).toBe(Math.round(target.maxHealth * 0.05 * 2) * 2)
     })
 
     it('目标无灼烧时静默返回，不产伤害 effect', () => {

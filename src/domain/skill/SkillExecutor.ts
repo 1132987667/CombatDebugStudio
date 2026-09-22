@@ -1271,11 +1271,11 @@ export class SkillExecutor {
 
     let totalBurnDmg = 0
     for (const inst of burnInstances) {
-      // 假设每层灼烧每回合造成 5% 最大气血值伤害
+      // 每层灼烧每回合造成 percent 最大气血伤害——引爆按 层数 × 剩余回合 全额折算
       const remainingDuration = inst.remainingTurns ?? inst.duration ?? 1
       const dmgPerTick =
         target.getAttribute(ATTRIBUTE_CODE.maxHealth) * burnDamagePercent
-      totalBurnDmg += dmgPerTick * remainingDuration
+      totalBurnDmg += dmgPerTick * remainingDuration * (inst.currentStacks || 1)
 
       // 完全引爆时移除该灼烧 buff
       if (isFullDetonate) {

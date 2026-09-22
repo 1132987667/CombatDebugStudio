@@ -322,25 +322,6 @@
     "description": "恢复10%最大气血（持续1回合结算）。"
   },
   {
-    "id": "buff_energy_drain",
-    "name": "能量吸取",
-    "polarity": "negative",
-    "category": "modifier",
-    "duration": 1,
-    "maxStacks": 1,
-    "stackRule": "refresh",
-    "dispellable": false,
-    "cleanseable": true,
-    "tags": ["energy", "drain"],
-    "effects": [
-      {
-        "type": "energy_drain",
-        "drainAmount": 25
-      }
-    ],
-    "description": "被吸取25点能量。"
-  },
-  {
     "id": "buff_boss_yaotu_phase2_atk",
     "name": "狂暴觉醒",
     "polarity": "positive",

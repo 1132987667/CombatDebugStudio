@@ -375,7 +375,7 @@
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "apply_debuff_to_attacker",
         "params": {
-          "buffId": "buff_slow",
+          "buffId": "buff_speed_down",
           "duration": 2
         },
         "probability": 0.2
@@ -874,7 +874,7 @@
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "apply_debuff_to_attacker",
         "params": {
-          "buffId": "buff_slow",
+          "buffId": "buff_speed_down",
           "duration": 2
         },
         "probability": 0.15

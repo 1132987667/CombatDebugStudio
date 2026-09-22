@@ -492,7 +492,7 @@
         {
           "type": "buff",
           "value": 0,
-          "buffId": "buff_defense_up"
+          "buffId": "buff_def_up"
         }
       ],
       "value": 40,
@@ -519,7 +519,7 @@
         {
           "type": "buff",
           "value": 0,
-          "buffId": "buff_attack_up"
+          "buffId": "buff_atk_up"
         }
       ],
       "value": 80,

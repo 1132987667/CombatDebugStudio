@@ -23,56 +23,17 @@ import { SkillType, SkillTypeName } from '@/domain/skill/types'
 import type { SkillConfig } from '@/domain/skill/types'
 import { BattleTriggerPhaseName } from '@/domain/battle/type/types'
 import type { BattleTriggerPhase } from '@/domain/battle/type/types'
-
-// ==================== 显示文案常量（本文件 Tooltip 专用） ====================
-
-/** 明细行标签 */
-const ROW = {
-  scope: '生效范围',
-  attribute: '属性',
-  triggerPhase: '触发时机',
-  triggerChance: '触发概率',
-  effect: '效果',
-  type: '类型',
-  immunityList: '免疫列表',
-  energyCost: '法力消耗',
-  cooldown: '冷却',
-  targetCount: '目标数',
-} as const
-
-/** 类别效果描述值（区别于 StatusCategoryNames 的类别名，此处描述具体作用） */
-const ROW_VALUE = {
-  uncontrollable: '无法行动',
-  shieldAbsorb: '护盾吸收',
-} as const
-
-/** 光环 targetSelector 配置值 */
-const AuraTargetSelector = {
-  SELF: 'self',
-  ALLIES: 'allies',
-  ENEMIES: 'enemies',
-} as const
-
-/** targetSelector → 作用范围文案 */
-const AURA_SCOPE_LABEL: Record<string, string> = {
-  [AuraTargetSelector.SELF]: '自身',
-  [AuraTargetSelector.ALLIES]: '全体友方',
-  [AuraTargetSelector.ENEMIES]: '全体敌方',
-}
-
-/** 兜底 / 通用文案 */
-const TEXT = {
-  notFound: '未找到配置',
-  unknown: '未知',
-  skill: '技能',
-  permanent: '永久',
-} as const
-
-const UNIT_ROUND = '回合'
-const COOLDOWN_SUFFIX = '冷却'
-const SOURCE_PREFIX = '来源：'
-/** buff 持续时长哨兵：-1 = 永久 */
-const DURATION_PERMANENT = -1
+import {
+  ROW,
+  ROW_VALUE,
+  AuraTargetSelector,
+  AURA_SCOPE_LABEL,
+  TEXT,
+  UNIT_ROUND,
+  COOLDOWN_SUFFIX,
+  SOURCE_PREFIX,
+  DURATION_PERMANENT,
+} from '@/shared/types/ui-labels'
 
 // ==================== 输出类型 ====================
 

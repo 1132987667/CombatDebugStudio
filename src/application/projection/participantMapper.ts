@@ -16,6 +16,7 @@ import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { classifyBuff } from '@/shared/types/buff-classification'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 
 /**
@@ -49,11 +50,11 @@ export function participantToSnapshot(
     maxHealth: maxHp,
     currentEnergy: curEnergy,
     maxEnergy,
-    attack: entity.getAttribute('attack'),
-    defense: entity.getAttribute('defense'),
-    speed: entity.getAttribute('speed'),
-    critRate: entity.getAttribute('critRate'),
-    critDamage: entity.getAttribute('critDamage'),
+    attack: entity.getAttribute(ATTRIBUTE_CODE.attack),
+    defense: entity.getAttribute(ATTRIBUTE_CODE.defense),
+    speed: entity.getAttribute(ATTRIBUTE_CODE.speed),
+    critRate: entity.getAttribute(ATTRIBUTE_CODE.critRate),
+    critDamage: entity.getAttribute(ATTRIBUTE_CODE.critDamage),
 
     // 派生状态
     isAlive: entity.isAlive(),

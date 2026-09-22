@@ -35,15 +35,35 @@ import { fromRecordedBattle } from '@/application/service/UnifiedArchiveService'
 import { summarizeBattle } from '@/domain/battle/replay/unified/unified-summary'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 
+/** 战斗模式（生成器 API 判别值，单源） */
+export const BattleGenerationMode = {
+  ONE_V_ONE: '1v1',
+  TWO_V_TWO: '2v2',
+  RANDOM: 'random',
+} as const
+export type BattleGenerationMode = (typeof BattleGenerationMode)[keyof typeof BattleGenerationMode]
+
+/** 导出格式（生成器 API 判别值，单源） */
+export const BattleExportFormat = {
+  TXT: 'txt',
+  HTML: 'html',
+  RECORD: 'record',
+  JSON: 'json',
+} as const
+export type BattleExportFormat = (typeof BattleExportFormat)[keyof typeof BattleExportFormat]
+
+/** 无胜方时的占位文案（与 ParticipantSideName 的胜方标签同层显示，仅逻辑判等用此符号而非字面量） */
+const WINNER_DRAW = '未分胜负'
+
 export interface BattleGenerationOptions {
   /** 总场次数（默认 50） */
   totalBattles?: number
   /** 战斗模式：'1v1' | '2v2' | 'random'（随机选择） */
-  mode?: '1v1' | '2v2' | 'random'
+  mode?: BattleGenerationMode
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
   /** 导出格式，默认 'txt'；'record' = 下载录制 JSON（未压缩）；'json' = 下载统一存档（昊天镜可导入） */
-  format?: 'txt' | 'html' | 'record' | 'json'
+  format?: BattleExportFormat
   /** 是否保存每场战斗的回放/调试记录到本地（IndexedDB，昊天镜「战斗记录」源可加载） */
   record?: boolean
   /** 是否下载导出文件（仅 format='record' 生效，默认 true；存入昊天镜时置 false 跳过下载） */
@@ -90,7 +110,7 @@ export class BattleDataGenerator {
 
   async generate(options: BattleGenerationOptions = {}): Promise<string> {
     const total = options.totalBattles ?? 50
-    const mode = options.mode ?? 'random'
+    const mode = options.mode ?? BattleGenerationMode.RANDOM
     const allEnemies = GameDataProcessor.getEnemiesData()
     if (allEnemies.length < 1) {
       throw new Error('角色库数据不足，至少需要 1 个角色')
@@ -130,8 +150,10 @@ export class BattleDataGenerator {
         const rng = new SeededRandom(Date.now() + i * 9973 + Math.floor(Math.random() * 10000))
 
         // 决定本场模式
-        const battleMode = mode === 'random' ? (rng.next() < 0.5 ? '1v1' : '2v2') : mode
-        const teamSize = battleMode === '1v1' ? 1 : 2
+        const battleMode = mode === BattleGenerationMode.RANDOM
+          ? (rng.next() < 0.5 ? BattleGenerationMode.ONE_V_ONE : BattleGenerationMode.TWO_V_TWO)
+          : mode
+        const teamSize = battleMode === BattleGenerationMode.ONE_V_ONE ? 1 : 2
 
         // 随机选择双方成员；角色不足时允许克隆补足，保证至少 1v1
         const shuffled = rng.shuffle(allEnemies)
@@ -193,7 +215,7 @@ export class BattleDataGenerator {
           battleId,
           allyNames: allyTeam.map(e => e.name),
           enemyNames: enemyTeam.map(e => e.name),
-          winner: winner ? ParticipantSideName[winner] : '未分胜负',
+          winner: winner ? ParticipantSideName[winner] : WINNER_DRAW,
           totalRounds: rounds,
           narrativeBlocks,
         })
@@ -210,7 +232,9 @@ export class BattleDataGenerator {
               { level: LogLevel.WARN },
             )
           } else {
-            const label = battleMode === '1v1' ? '1v1' : '2v2'
+            const label = battleMode === BattleGenerationMode.ONE_V_ONE
+              ? BattleGenerationMode.ONE_V_ONE
+              : BattleGenerationMode.TWO_V_TWO
             try {
               await this.battleSystem.saveBattleRecording(battleId, `数据生成 第${i + 1}场（${label}）`)
               const rec = this.battleSystem.getBattleRecording(battleId)
@@ -250,8 +274,8 @@ export class BattleDataGenerator {
     options.onProgress?.(1, total, total)
 
     if (!this._cancelled && battleLogs.length > 0) {
-      const format = options.format ?? 'txt'
-      if (format === 'json') {
+      const format = options.format ?? BattleExportFormat.TXT
+      if (format === BattleExportFormat.JSON) {
         //  统一存档 JSON：单场为单个 UnifiedArchive（昊天镜可直接导入），多场为数组（导入第一场）
         if (archives.length === 1) {
           const a = archives[0]
@@ -259,7 +283,7 @@ export class BattleDataGenerator {
         } else if (archives.length > 1) {
           this.downloadFile(JSON.stringify(archives), `battle-archives-${archives.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
         }
-      } else if (format === 'record') {
+      } else if (format === BattleExportFormat.RECORD) {
         // 存入昊天镜（download=false）时只入库不下载：record 分支独立处理，
         // 否则会落入下方 else 误下载 txt 文件
         if (options.download !== false) {
@@ -268,7 +292,7 @@ export class BattleDataGenerator {
             await this.downloadFile(json, `battle-recordings-${recordings.length}场-${this.getTimestamp()}.json`, 'application/json;charset=utf-8')
           }
         }
-      } else if (format === 'html') {
+      } else if (format === BattleExportFormat.HTML) {
         const mergedHtml = this.mergeLogsHtml(battleLogs)
         this.downloadFile(mergedHtml, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.html`, 'text/html;charset=utf-8')
       } else {
@@ -359,8 +383,8 @@ export class BattleDataGenerator {
     header.push('═'.repeat(60))
     header.push('')
 
-    const allyWins = battleLogs.filter(b => b.winner === '友方').length
-    const draws = battleLogs.filter(b => b.winner === '未分胜负').length
+    const allyWins = battleLogs.filter(b => b.winner === ParticipantSideName[ParticipantSide.ALLY]).length
+    const draws = battleLogs.filter(b => b.winner === WINNER_DRAW).length
     const enemyWins = battleLogs.length - allyWins - draws
     const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
     const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
@@ -388,8 +412,8 @@ export class BattleDataGenerator {
 
   /** 合并所有战斗日志为 HTML（头部统计 + <details> 折叠 + 语义渲染） */
   private mergeLogsHtml(battleLogs: SingleBattleLog[]): string {
-    const allyWins = battleLogs.filter(b => b.winner === '友方').length
-    const draws = battleLogs.filter(b => b.winner === '未分胜负').length
+    const allyWins = battleLogs.filter(b => b.winner === ParticipantSideName[ParticipantSide.ALLY]).length
+    const draws = battleLogs.filter(b => b.winner === WINNER_DRAW).length
     const enemyWins = battleLogs.length - allyWins - draws
     const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
     const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0

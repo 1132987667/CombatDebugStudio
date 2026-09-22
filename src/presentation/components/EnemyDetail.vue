@@ -276,7 +276,7 @@ const getSelectorText = (selector: unknown): string => {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-secondary);
   padding: var(--space-1) var(--space-1);

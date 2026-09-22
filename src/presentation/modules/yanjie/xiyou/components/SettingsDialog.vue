@@ -375,6 +375,26 @@ watch(
 
 function onKeydown(e: KeyboardEvent): void {
   if (e.key === 'Escape' && props.modelValue) close()
+  if (e.key === 'Tab' && props.modelValue) {
+    // 焦点陷阱:Tab 循环在弹窗内,不逃逸到背景(对齐共享 components/Dialog.vue 同名逻辑)
+    const overlay = overlayRef.value
+    if (!overlay) return
+    const focusables = Array.from(
+      overlay.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter(node => !node.hasAttribute('disabled'))
+    if (focusables.length === 0) return
+    const first = focusables[0]!
+    const last = focusables[focusables.length - 1]!
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 }
 
 window.addEventListener('keydown', onKeydown)

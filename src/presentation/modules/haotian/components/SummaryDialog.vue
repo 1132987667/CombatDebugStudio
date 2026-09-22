@@ -148,7 +148,7 @@
         </div>
       </div>
 
-      <div v-else-if="!teams.length" class="ht-empty">存档未加载</div>
+      <EmptyState v-else-if="!teams.length">存档未加载</EmptyState>
       <div v-if="dotHint" class="ht-sum-note">{{ dotHint }}</div>
     </div>
     <template #footer>

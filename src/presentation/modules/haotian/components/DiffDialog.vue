@@ -42,10 +42,10 @@
           </template>
         </div>
       </div>
-      <div v-else class="ht-empty">
+      <EmptyState v-else>
         尚未载入分支。点击「生成示例分支」改写随机判定阈值，或将另一份存档 JSON 载入对比。<br />
         示例：修改前 / 修改后两栏逐链路对齐 diff，差异集中在一处判定步骤。
-      </div>
+      </EmptyState>
     </div>
     <template #footer>
       <Button variant="energy" @click="close">关闭</Button>

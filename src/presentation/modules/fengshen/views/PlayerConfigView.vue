@@ -26,10 +26,8 @@
 
     <!-- 工具栏 -->
     <div class="fs-toolbar">
-      <div class="fs-exp-tabs" role="tablist" aria-label="玩家配置">
-        <button v-for="t in TABS" :key="t.id" type="button" class="fs-exp-tab" :class="{ active: activeTab === t.id }"
-          :role="'tab'" :aria-selected="activeTab === t.id" @click="activeTab = t.id">{{ t.label }}</button>
-      </div>
+      <!-- 页签头收编共享 Tabs(轻量模式:面板 v-if 保留在本组件) -->
+      <Tabs v-model="activeTab" :tabs="TABS" size="sm" />
       <span class="fs-spacer"></span>
       <Button variant="ghost" size="small" @click="exportConfig">导出配置</Button>
       <Button variant="ghost" size="small" @click="importConfig">导入配置</Button>
@@ -202,9 +200,7 @@
         <div class="fs-exp-sim-row" style="margin-top: var(--space-2);">
           <span class="fs-exp-field-label">验算</span>
           <input v-model.number="simLevel" type="number" class="fs-input fs-exp-num-sm" min="1" :max="equipFormula.maxLevel" />
-          <select v-model="simTier" class="fs-input">
-            <option v-for="(w, tier) in equipFormula.tierWeight" :key="tier" :value="tier">{{ tier }}（{{ w.min }}~{{ w.max }}）</option>
-          </select>
+          <TacticalSelect v-model="simTier" :options="tierOptions" size="sm" />
           <span class="fs-exp-field-label">转化系数</span>
           <input v-model.number="simConvert" type="number" class="fs-input fs-exp-num-sm" min="0" step="0.1" />
           <Button size="small" variant="energy" @click="runEquipSim">计算</Button>
@@ -286,19 +282,29 @@ import {
   validatePlayerConfig,
 } from '@/domain/fengshen/player-config'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Tabs from '@/presentation/components/Tabs.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const TABS = [
   { id: 'growth', label: '成长配置' },
   { id: 'exp', label: '经验公式' },
   { id: 'preview', label: '属性预览' },
   { id: 'budget', label: '系统预算/装备公式' },
-] as const
+]
 
 const api = container.resolve<GameDataApi>('GameDataApi')
 const write = container.resolve<FengshenDataService>('FengshenDataService')
 const notification = useNotificationStore()
 
-const activeTab = ref<(typeof TABS)[number]['id']>('growth')
+const activeTab = ref<string>('growth')
+
+/** 档位下拉选项（TacticalSelect 收敛，原手写 <select>） */
+const tierOptions = computed<TSelectOption[]>(() =>
+  Object.entries(equipFormula.tierWeight ?? {}).map(([tier, w]) => ({
+    value: tier,
+    label: `${tier}（${w.min}~${w.max}）`,
+  })),
+)
 
 /** 默认成长配置（对齐 PRD §19 / D1 决策） */
 function defaultGrowth(): PlayerGrowthConfig {

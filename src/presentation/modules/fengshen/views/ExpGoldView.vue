@@ -5,14 +5,10 @@
       <span class="fs-page-hint">升级经验表 · 敌人奖励基准 · 等级差加成（IndexedDB params 域，保存后引擎数据源重载）</span>
     </div>
 
-    <!-- 三 Tab 切换 -->
-    <div class="fs-exp-tabs" role="tablist" aria-label="经验与金钱管理">
-      <button v-for="t in TABS" :key="t.id" type="button" class="fs-exp-tab" :class="{ active: activeTab === t.id }"
-        :role="'tab'" :aria-selected="activeTab === t.id" @click="activeTab = t.id">{{ t.label }}</button>
-    </div>
-
-    <!-- Tab1 升级经验表 -->
-    <section v-if="activeTab === 'exp_table'" class="fs-exp-panel" role="tabpanel">
+    <!-- 三 Tab 切换（共享 Tabs：键盘导航 + ARIA + 指示条，同 ListView 用法） -->
+    <Tabs v-model="activeTab" :tabs="TABS" destroy-inactive>
+      <template #exp_table>
+    <section class="fs-exp-panel">
       <div class="fs-toolbar">
         <span class="fs-exp-field-label">最大等级</span>
         <input v-model.number="expTable.maxLevel" type="number" class="fs-input fs-exp-num-sm" min="1" max="100" />
@@ -55,9 +51,10 @@
         <div v-for="e in expErrors" :key="e" class="fs-form-error">{{ e }}</div>
       </div>
     </section>
+      </template>
 
-    <!-- Tab2 敌人经验金钱 -->
-    <section v-else-if="activeTab === 'enemy_reward'" class="fs-exp-panel" role="tabpanel">
+      <template #enemy_reward>
+    <section class="fs-exp-panel">
       <div class="fs-exp-block">
         <div class="fs-block-title">角色倍率（键对齐 enemies.json role）</div>
         <div class="fs-exp-mult-row">
@@ -71,10 +68,7 @@
 
       <div class="fs-toolbar">
         <span class="fs-exp-field-label">插值方式</span>
-        <select v-model="enemyReward.interpolation" class="fs-input">
-          <option value="linear">线性插值</option>
-          <option value="nearest">最近档位</option>
-        </select>
+        <TacticalSelect v-model="enemyReward.interpolation" :options="INTERPOLATION_OPTIONS" size="sm" />
         <Button variant="primary" size="small" @click="applyEnemyFormula">按公式填充（1-70 级）</Button>
         <span class="fs-spacer"></span>
         <Button variant="danger" size="small" @click="resetEnemyReward">重置</Button>
@@ -109,9 +103,7 @@
           <span class="fs-exp-field-label">敌人等级</span>
           <input v-model.number="simEnemyLevel" type="number" class="fs-input fs-exp-num-sm" min="1" max="99" />
           <span class="fs-exp-field-label">角色</span>
-          <select v-model="simRole" class="fs-input">
-            <option v-for="k in roleKeys" :key="k" :value="k">{{ k }}</option>
-          </select>
+          <TacticalSelect v-model="simRole" :options="roleOptions" size="sm" />
           <Button size="small" variant="energy" @click="runEnemySim">计算</Button>
         </div>
         <div v-if="simResult" class="fs-exp-sim-result">
@@ -120,9 +112,10 @@
         </div>
       </div>
     </section>
+      </template>
 
-    <!-- Tab3 等级差加成规则 -->
-    <section v-else class="fs-exp-panel" role="tabpanel">
+      <template #level_diff>
+    <section class="fs-exp-panel">
       <div class="fs-toolbar">
         <Button variant="primary" size="small" @click="addRule">+ 新增规则</Button>
         <span class="fs-spacer"></span>
@@ -183,6 +176,8 @@
         <div v-for="e in diffErrors" :key="e" class="fs-form-error">{{ e }}</div>
       </div>
     </section>
+      </template>
+    </Tabs>
   </div>
 </template>
 
@@ -204,18 +199,26 @@ import {
 } from '@/domain/fengshen/exp-reward'
 import { ENEMY_ROLE_MULTIPLIERS, type EnemyRole } from '@/domain/fengshen/role-grades'
 import LineChart, { type ChartSeries } from '@/presentation/modules/fengshen/components/LineChart.vue'
+import Tabs from '@/presentation/components/Tabs.vue'
+import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 
 const TABS = [
   { id: 'exp_table', label: '升级经验表' },
   { id: 'enemy_reward', label: '敌人经验金钱' },
   { id: 'level_diff', label: '等级差加成规则' },
-] as const
+]
 
 const api = container.resolve<GameDataApi>('GameDataApi')
 const write = container.resolve<FengshenDataService>('FengshenDataService')
 const notification = useNotificationStore()
 
-const activeTab = ref<(typeof TABS)[number]['id']>('exp_table')
+const activeTab = ref<string>('exp_table')
+
+/** 插值方式下拉选项（TacticalSelect 收敛，原手写 <select>） */
+const INTERPOLATION_OPTIONS: TSelectOption[] = [
+  { value: 'linear', label: '线性插值' },
+  { value: 'nearest', label: '最近档位' },
+]
 
 /** 升级经验表草稿 */
 const expTable = reactive<ExpTableConfig>({
@@ -235,7 +238,9 @@ const enemyReward = reactive<EnemyRewardTableConfig>({
 })
 const roleKeys = ref<string[]>([])
 const simEnemyLevel = ref(10)
-const simRole = ref<EnemyRole>('xiaoyao')
+// NOTE: TacticalSelect 的 modelValue 语义是 string，选中值传给 calcEnemyReward 时收窄回 EnemyRole
+const simRole = ref<string>('xiaoyao')
+const roleOptions = computed<TSelectOption[]>(() => roleKeys.value.map(k => ({ value: k, label: k })))
 const simResult = ref<ReturnType<typeof calcEnemyReward> | null>(null)
 
 /** 等级差规则草稿 */
@@ -419,7 +424,7 @@ function validateEnemyReward(): string[] {
 
 function runEnemySim(): void {
   const cfg: EnemyRewardTableConfig = { ...enemyReward, entries: enemyReward.entries.map((e) => ({ ...e })) }
-  simResult.value = calcEnemyReward(cfg, simEnemyLevel.value, simRole.value)
+  simResult.value = calcEnemyReward(cfg, simEnemyLevel.value, simRole.value as EnemyRole)
 }
 
 function resetEnemyReward(): void {

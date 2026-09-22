@@ -11,11 +11,8 @@
       <Button size="small" @click="reset">载入定稿</Button>
     </div>
 
-    <!-- Tab 切换 -->
-    <div class="fs-exp-tabs" role="tablist" aria-label="词条投放规则">
-      <button v-for="t in TABS" :key="t.id" type="button" class="fs-exp-tab" :class="{ active: activeTab === t.id }"
-        :role="'tab'" :aria-selected="activeTab === t.id" @click="activeTab = t.id">{{ t.label }}</button>
-    </div>
+    <!-- Tab 切换（页签头收编共享 Tabs,轻量模式:面板 v-if 保留在本组件） -->
+    <Tabs v-model="activeTab" :tabs="TABS" size="sm" />
 
     <!-- ═══ Tab0: 装备总览 ═══ -->
     <section v-if="activeTab === 'overview'" class="fs-exp-panel" role="tabpanel">
@@ -949,6 +946,7 @@ import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import Tabs from '@/presentation/components/Tabs.vue'
 import type { AffixRuleConfig, AffixQualityCode, EquipFormulaConfig, PetMountIndividual, PetMountTraitEntry } from '@/domain/fengshen/types'
 import { AFFIX_QUALITY_VALUE_LABEL } from '@/domain/fengshen/schema'
 import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
@@ -981,7 +979,7 @@ const TABS = [
   { id: 'groups', label: '属性组配置' },
   { id: 'forbidden', label: '禁止规则' },
   { id: 'export', label: '导出配置' },
-] as const
+]
 
 const SIDE_OPTIONS: TSelectOption[] = [
   { value: 'ATK', label: 'ATK（攻击系）' },
@@ -1069,7 +1067,7 @@ const cfg = reactive<AffixRuleConfig>(affixRuleDefaults())
 const errors = ref<string[]>([])
 /** 存档规则与 configs/equipment/affix-rule.json 定稿不一致（种子一次性写入，改配置不会自动下发） */
 const driftFromConfigs = ref(false)
-const activeTab = ref<(typeof TABS)[number]['id']>('overview')
+const activeTab = ref<string>('overview')
 const newGroupCode = ref('')
 const addAttrSelection = ref<Record<string, string>>({})
 const addAttrNameSelection = ref<Record<string, string>>({})

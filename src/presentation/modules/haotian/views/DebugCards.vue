@@ -76,7 +76,7 @@
           </div>
         </div>
       </div>
-      <div v-else class="ht-empty">{{ store.archive ? '选中时间线节点以查看事件卡片' : '存档未加载，请从顶部选择数据源' }}</div>
+      <EmptyState v-else>{{ store.archive ? '选中时间线节点以查看事件卡片' : '存档未加载，请从顶部选择数据源' }}</EmptyState>
     </div>
   </div>
 </template>

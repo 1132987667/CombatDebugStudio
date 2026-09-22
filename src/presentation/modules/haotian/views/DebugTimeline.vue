@@ -38,7 +38,7 @@
           </div>
         </div>
       </div>
-      <div v-else class="ht-empty">{{ store.archive ? '存档无时间线节点' : '存档未加载' }}</div>
+      <EmptyState v-else>{{ store.archive ? '存档无时间线节点' : '存档未加载' }}</EmptyState>
     </div>
   </div>
 </template>

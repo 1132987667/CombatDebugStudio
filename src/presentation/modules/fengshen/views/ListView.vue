@@ -890,7 +890,7 @@ async function requestExportEnemiesJson(): Promise<void> {
 .fs-rebuild-id {
   margin-left: 8px;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
 }
 .fs-rebuild-delta {
   font-variant-numeric: tabular-nums;

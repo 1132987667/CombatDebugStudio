@@ -566,8 +566,8 @@ defineExpose({
 
 .situational-tag {
   /* NOTE: 曾 0.75em(≈10.5px)，低于字号红线 */
-  font-size: var(--font-size-sm);
-  padding: 1px var(--space-2);
+  font-size: var(--font-size-md);
+  padding: 2px var(--space-2);
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }

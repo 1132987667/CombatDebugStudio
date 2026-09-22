@@ -28,13 +28,22 @@
           :key="`${a.attribute}:${a.modifierType}:${i}`"
           type="button"
           class="xy-cave-wash-affix"
-          :class="{ 'is-selected': targetIdx === i }"
+          :class="[diffClass(a), { 'is-selected': targetIdx === i }]"
           :disabled="!washModes.directed"
           @click="targetIdx = i"
         >
-          {{ affixText(a) }}
+          {{ affixText(a) }}{{ diffMark(a) }}
         </button>
+        <span
+          v-for="r in removedAffixes"
+          :key="`rm-${r.attribute}:${r.modifierType}`"
+          class="xy-cave-wash-affix is-removed"
+          :title="`本次洗练被替换：${affixText(r)}`"
+        >
+          {{ affixText(r) }}
+        </span>
       </div>
+      <p v-if="removedAffixes.length" class="xy-cave-wash-diff-note">删除线为本次洗练被替换掉的旧词条</p>
 
       <div class="xy-cave-star-cost">
         <span class="xy-cave-mat" :class="{ 'is-low': !hasMat('normal') }">
@@ -123,6 +132,7 @@ const gear = computed<WashGearView | null>(() => (idx.value >= 0 ? gears.value[i
 function selectGear(i: number): void {
   idx.value = i
   targetIdx.value = -1
+  lastWashDiff.value = null
 }
 
 const qualityName = (q: number): string => ({ 1: '凡', 2: '精', 3: '超', 4: '绝', 5: '神' })[q] ?? `品质${q}`
@@ -150,8 +160,12 @@ function canWash(mode: WashMode): boolean {
 function doWash(mode: WashMode): void {
   const g = gear.value
   if (!g || !canWash(mode)) return
+  // 洗练前快照:词条键(attribute|modifierType) → 旧值,供洗练后 diff 高亮
+  const before = new Map<string, number>()
+  for (const a of washable(g)) before.set(affixKey(a), a.value)
   const ok = pack.washGear(g.slot, mode, targetIdx.value)
   if (ok) {
+    computeWashDiff(before)
     rippling.value = true
     window.setTimeout(() => { rippling.value = false }, 700)
   } else {
@@ -162,6 +176,63 @@ function doWash(mode: WashMode): void {
 
 const rippling = ref(false)
 const shaking = ref(false)
+
+/* ── 洗练 diff 高亮:对比最近一次洗练前后的附加词条 ── */
+
+const affixKey = (a: Pick<GearAffix, 'attribute' | 'modifierType'>): string => `${a.attribute}|${a.modifierType}`
+
+interface WashDiff {
+  up: Set<string>
+  down: Set<string>
+  added: Set<string>
+  removed: Array<Pick<GearAffix, 'attribute' | 'modifierType' | 'value'>>
+}
+
+const lastWashDiff = ref<WashDiff | null>(null)
+
+function computeWashDiff(before: Map<string, number>): void {
+  const g = gear.value
+  if (!g) { lastWashDiff.value = null; return }
+  const up = new Set<string>()
+  const down = new Set<string>()
+  const added = new Set<string>()
+  const afterKeys = new Set<string>()
+  for (const a of washable(g)) {
+    const k = affixKey(a)
+    afterKeys.add(k)
+    const prev = before.get(k)
+    if (prev === undefined) { if (before.size > 0) added.add(k); continue }
+    if (a.value > prev) up.add(k)
+    else if (a.value < prev) down.add(k)
+  }
+  const removed: WashDiff['removed'] = []
+  for (const [k, value] of before) {
+    if (afterKeys.has(k)) continue
+    const [attribute, modifierType] = k.split('|')
+    removed.push({ attribute, modifierType, value })
+  }
+  lastWashDiff.value = { up, down, added, removed }
+}
+
+const removedAffixes = computed(() => lastWashDiff.value?.removed ?? [])
+
+function diffClass(a: GearAffix): string {
+  const d = lastWashDiff.value
+  if (!d) return ''
+  const k = affixKey(a)
+  if (d.up.has(k)) return 'is-up'
+  if (d.down.has(k)) return 'is-down'
+  if (d.added.has(k)) return 'is-added'
+  return ''
+}
+
+function diffMark(a: GearAffix): string {
+  const cls = diffClass(a)
+  if (cls === 'is-up') return ' ↑'
+  if (cls === 'is-down') return ' ↓'
+  if (cls === 'is-added') return ' ＋'
+  return ''
+}
 
 /** 词条文案（属性名 + 数值，percent 补 %；属性名走领域字典，覆盖全部曲线属性码） */
 function affixText(a: GearAffix): string {
@@ -196,6 +267,34 @@ function affixText(a: GearAffix): string {
 .xy-cave-wash-affix.is-selected {
   border-color: var(--xy-seal);
   background: color-mix(in srgb, var(--xy-seal) 12%, transparent);
+}
+
+/* 洗练 diff 高亮:↑ 提升 / ↓ 降低 / ＋ 新增 / 删除线 = 被替换旧词条 */
+.xy-cave-wash-affix.is-up {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.xy-cave-wash-affix.is-down {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.xy-cave-wash-affix.is-added {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.xy-cave-wash-affix.is-removed {
+  text-decoration: line-through;
+  opacity: 0.55;
+  cursor: default;
+}
+
+.xy-cave-wash-diff-note {
+  margin: -6px 0 12px;
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
 }
 
 .xy-cave-wash-actions {

@@ -44,10 +44,10 @@
           </div>
         </div>
       </div>
-      <div v-else-if="store.archive" class="ht-empty">
+      <EmptyState v-else-if="store.archive">
         无匹配事件<button type="button" class="ht-empty-clear" @click="clearFilters">清除过滤</button>
-      </div>
-      <div v-else class="ht-empty">{{ store.loadingArchive ? '正在载入…' : '存档未加载' }}</div>
+      </EmptyState>
+      <EmptyState v-else>{{ store.loadingArchive ? '正在载入…' : '存档未加载' }}</EmptyState>
     </div>
   </div>
 </template>

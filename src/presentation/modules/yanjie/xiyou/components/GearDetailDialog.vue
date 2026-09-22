@@ -10,7 +10,7 @@
       <div class="gd-top">
         <span class="gd-rank" :class="qualityClass(gear.rarity)">{{ qualityOf(gear.rarity) }}</span>
         <span class="gd-quality" :class="equipQualityClass(instance.quality)">
-          {{ qualityName(instance.quality) }} · ×{{ factorText(instance.qualityFactor) }}
+          {{ qualityLabel(instance.quality, instance.qualityFactor) }}
         </span>
         <span class="gd-meta">{{ slotLabel }} · {{ tierLabel }}</span>
         <span v-if="instance.enhance > 0" class="gd-enhance">强化 +{{ instance.enhance }}</span>
@@ -64,7 +64,7 @@ import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import type { EquipmentData } from '@/domain/fengshen/types'
 import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
-import { equipQualityClass, equipQualityColor, qualityClass, qualityName, qualityOf, tierName } from '../quality'
+import { equipQualityClass, equipQualityColor, qualityClass, qualityLabel, qualityOf, tierName } from '../quality'
 
 const props = defineProps<{
   instance: GearInstance | null
@@ -154,11 +154,6 @@ const statRows = computed<StatRow[]>(() => {
 /** 属性名：领域字典权威显示名（覆盖全部曲线属性码），未登记回退原 code */
 function labelOf(attribute: string): string {
   return attrShortName(attribute)
-}
-
-/** 品质系数文案：×0.85（两位小数） */
-function factorText(factor: number): string {
-  return (Math.round(factor * 100) / 100).toFixed(2)
 }
 
 function onClose(): void {

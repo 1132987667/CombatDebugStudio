@@ -36,7 +36,7 @@ import { enhanceCost, enhanceMaxByRarity, enhanceSuccessRate } from './caveLogic
 import { createRng, rngFn } from '@/shared/utils/seeded-rng'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
-import { RARITY_NAMES } from './quality'
+import { RARITY_NAMES, rollQualityFactor } from './quality'
 
 /** 品级 1-5 → select options（单一来源 quality.RARITY_NAMES） */
 const RARITY_OPTIONS = Object.entries(RARITY_NAMES).map(([value, label]) => ({ value, label }))
@@ -1129,10 +1129,10 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
 
   /** 装备品质（equipment.json rarity，供词缀 roll 的 quality 参数） */
   const rarityOf = (itemId: string): number => pack.gearById(itemId)?.rarity ?? 1
-  /** 生成装备实例（按稀有度 roll 词缀；制造品质锁定时使用锁定品质，否则按装备 rarity） */
+  /** 生成装备实例（品质按稀有度 roll / 制造锁定；品质系数同打造/掉落口径在区间内 roll，不取中值） */
   const newInstance = (itemId: string): GearInstance => {
     const quality = getCraftQualityLock() ?? rarityOf(itemId)
-    return makeInstance(itemId, pack.rollAffixes(itemId, quality), 0, quality)
+    return makeInstance(itemId, pack.rollAffixes(itemId, quality), 0, quality, rollQualityFactor(quality))
   }
 
   return {

@@ -36,17 +36,17 @@
       </template>
     </Tabs>
 
-    <!-- 底部：预览与铸造 -->
+    <!-- 底部：选中配方详情（产物信息 / 出品品质概率 / 相关技艺 / 铸造） -->
     <div
       v-if="selected"
       class="xy-cave-forge-detail"
       :class="{ 'xy-cave-ripple': rippling, 'xy-cave-shake': shaking }"
     >
-      <div class="xy-cave-forge-detail__info">
+      <div class="xy-cave-forge-detail__main">
         <span class="xy-cave-card__top">
           <span class="xy-cave-card__name">{{ recipeName(selected) }}</span>
-          <span class="xy-cave-chip xy-cave-chip--gold">{{ qualityOfOut(selected) }}</span>
-          <span class="xy-cave-card__side">{{ typeOfOut(selected) }} · {{ tierOf(selected) }}</span>
+          <span class="xy-cave-chip xy-cave-chip--jade">{{ tierOf(selected) }}</span>
+          <span class="xy-cave-card__side">{{ typeOfOut(selected) }}</span>
         </span>
         <p class="xy-cave-forge-detail__effect">{{ recipeDesc(selected) }}</p>
         <span class="xy-cave-forge-detail__mats">
@@ -69,7 +69,29 @@
           </span>
         </span>
       </div>
-      <div class="xy-cave-forge-detail__action">
+
+      <div class="xy-cave-forge-detail__odds">
+        <p class="xy-cave-forge-detail__label">出品品质</p>
+        <div class="xy-cave-odds">
+          <div v-for="o in qualityOddsOf(selected)" :key="o.quality" class="xy-cave-odds-card"
+            :style="{ borderLeftColor: equipQualityColor(o.quality) }">
+            <span class="xy-cave-odds-top">
+              <span class="xy-cave-odds-name" :style="{ color: equipQualityColor(o.quality) }">{{ o.name }}</span>
+              <span class="xy-cave-odds-pct">{{ o.percent }}%</span>
+            </span>
+            <span class="xy-cave-odds-meta">基础 {{ factorPct(o.factor.min) }}~{{ factorPct(o.factor.max) }}% · {{ o.affixes }}词条</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="xy-cave-forge-detail__side">
+        <p v-if="craftOf(selected)" class="xy-cave-forge-detail__craft">
+          <span class="xy-cave-forge-detail__label">相关技艺</span>
+          <span class="xy-cave-forge-detail__craft-line">
+            {{ craftOf(selected)!.name }} <strong>Lv.{{ craftOf(selected)!.level }}</strong>
+          </span>
+          <span class="xy-cave-forge-detail__craft-effect">{{ craftOf(selected)!.effect }}</span>
+        </p>
         <button
           type="button"
           class="xy-cave-action"
@@ -93,9 +115,9 @@ import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouForgeRecipe } from '../../types'
-import { forgeRecipes, equipmentCatalog } from '../../xiyouData'
-import { itemName, qualityOf, type MatView } from '../../caveLogic'
-import { tierName } from '../../quality'
+import { crafts, forgeRecipes, equipmentCatalog } from '../../xiyouData'
+import { itemName, type MatView } from '../../caveLogic'
+import { equipQualityColor, qualityOdds, tierName } from '../../quality'
 
 const pack = usePackStore()
 const notification = useNotificationStore()
@@ -141,9 +163,26 @@ function tierOf(r: XiyouForgeRecipe): string {
   return t ? `${t}器方` : '器方'
 }
 
-function qualityOfOut(r: XiyouForgeRecipe): string {
+function qualityOddsOf(r: XiyouForgeRecipe) {
+  return qualityOdds(gearOf(r)?.rarity ?? 1)
+}
+
+/** 系数区间 → 整数百分比（展示用） */
+function factorPct(v: number): number {
+  return Math.round(v * 100)
+}
+
+/** 部位 → 相关技艺（cave.json crafts；护符归饰品制作，头盔/靴子/护手暂无对应技艺） */
+const CRAFT_BY_SLOT: Record<string, string> = {
+  weapon: '武器制作',
+  armor: '衣甲制作',
+  charm: '饰品制作',
+}
+
+function craftOf(r: XiyouForgeRecipe) {
   const g = gearOf(r)
-  return g ? qualityOf(g.id) : '凡品'
+  const name = g ? CRAFT_BY_SLOT[g.slot] : undefined
+  return crafts.find((c) => c.name === name)
 }
 
 function typeOfOut(r: XiyouForgeRecipe): string {

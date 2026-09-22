@@ -128,7 +128,7 @@
       <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
     </div>
 
-    <!-- 中上部：4v4 角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard） -->
+    <!-- 中上部：角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard；敌方按席位阶梯 2~4 员） -->
     <div class="xy-vitals">
       <div class="xy-vitals-row xy-vitals-row--enemy" role="list" aria-label="敌方阵容">
         <ParticipantCard v-for="c in store.enemyTeam" :key="c.id" :ref="(el) => handleCardRef(c.id, el)"
@@ -362,9 +362,10 @@ async function initBattle(node: RunNode): Promise<void> {
 // ════════════ 关卡推进状态机（玩法主循环设计.md §二/§三.2/§六/§七） ════════════
 type RunPhase = 'advancing' | 'battle' | 'settling' | 'finished' | 'failed' | 'retreated'
 
-/** 手动开战：战斗就绪待命时由 HUD「开战」按钮触发，启动自动战斗循环 */
+/** 开战：确保进入自动战斗（显式 set 语义，不用 toggle——引擎标志残留 true 时 toggle 会翻成手动，
+ *  表现为每场就绪后都要手点「开战」；autoPlayMode 每场 startBattle 时与引擎标志同步，此处判断可靠） */
 async function beginBattle(): Promise<void> {
-  await store.toggleAutoPlay()
+  if (!store.autoPlayMode) await store.toggleAutoPlay()
 }
 
 const run = reactive({
@@ -867,7 +868,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 4v4 双行阵容：敌方一行在上、我方一行在下（ParticipantCard 演武台同款） */
+/* 双行阵容：敌方一行在上（2~4 员，席位阶梯）、我方一行在下（主角 + 3 伙伴），ParticipantCard 演武台同款 */
 .xy-vitals {
   flex-shrink: 0;
   display: flex;
@@ -1021,10 +1022,18 @@ onUnmounted(() => {
 }
 
 .xy-vitals-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  justify-content: center;
   gap: var(--space-2);
   align-items: stretch;
+
+  // 席位阶梯（runFlow.enemySlotCount）下敌方可能只有 2~3 员：单卡宽度仍以满席 4 档为上限，
+  // 少员时整行居中，不左对齐留白
+  > * {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc((100% - 3 * var(--space-2)) / 4);
+  }
 }
 
 .xy-vs {

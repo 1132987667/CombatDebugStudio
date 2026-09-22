@@ -82,7 +82,7 @@ import type { TabItem } from '@/presentation/components'
 import { mates } from '../xiyouData'
 import { MAX_ACTIVE_MATES } from '../battle'
 import { saveManager } from '../save-bridge'
-import { qualityOf } from '../quality'
+import { qualityClass, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import {

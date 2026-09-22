@@ -55,6 +55,12 @@ export function qualityName(quality: number): string {
   return QUALITY_NAMES[quality] ?? '凡'
 }
 
+/** 品质行文案（玩家语言）：「凡 · 基础 85%」——品质系数本质是核心属性乘数，
+ *  整百分比已够玩家决策；roll 锁存的第三位小数精度只留数据不进 UI */
+export function qualityLabel(quality: number, qualityFactor: number): string {
+  return `${qualityName(quality)} · 基础 ${Math.round(qualityFactor * 100)}%`
+}
+
 /** 装备品质色（1-5 → --eq-q-*，独立于品阶的 QUALITY_COLORS/--rarity-*） */
 export const EQUIP_QUALITY_COLORS: Record<number, string> = {
   1: 'var(--eq-q-1)',
@@ -114,6 +120,37 @@ export function rollQuality(rarity: number, rng: () => number = Math.random): nu
     if (roll < 0) return i + 1
   }
   return 1
+}
+
+/** 单档出品概率视图（打造详情区展示用） */
+export interface QualityOdds {
+  quality: number
+  name: string
+  percent: number
+  /** 基础属性系数区间（设计稿 §5） */
+  factor: { min: number; max: number }
+  /** 随机词条条数 */
+  affixes: number
+}
+
+function qualityOdd(quality: number, percent: number): QualityOdds {
+  return {
+    quality,
+    name: QUALITY_NAMES[quality] ?? '凡',
+    percent: Math.round(percent),
+    factor: QUALITY_FACTOR_RANGE[quality] ?? QUALITY_FACTOR_RANGE[1],
+    affixes: affixCountByQuality(quality),
+  }
+}
+
+/** 出品品质概率查询（与 rollQuality 共用权重表——展示与实际 roll 永远一致）：
+ *  天/仙品阶位固定单档，凡/玄/地按阶位权重折算百分比 */
+export function qualityOdds(rarity: number): QualityOdds[] {
+  if (rarity >= 5) return [qualityOdd(5, 100)]
+  if (rarity >= 4) return [qualityOdd(4, 100)]
+  const weights = QUALITY_WEIGHTS_BY_RARITY[rarity] ?? QUALITY_WEIGHTS_BY_RARITY[1]
+  const total = weights.reduce((s, w) => s + w, 0)
+  return weights.map((w, i) => qualityOdd(i + 1, (w / total) * 100))
 }
 
 /** 品级色（对齐 tokens.scss 的 --rarity-* 令牌，用全局令牌） */

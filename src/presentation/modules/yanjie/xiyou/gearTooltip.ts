@@ -8,7 +8,7 @@ import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import type { GearInstance } from '@/presentation/stores/packStore'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
-import { qualityColor, qualityName, qualityOf } from './quality'
+import { qualityColor, qualityLabel, qualityOf } from './quality'
 
 /** 悬浮卡组装所需的最小 store 接口（避免整 store 类型循环依赖） */
 export interface GearTooltipSource {
@@ -19,17 +19,6 @@ export interface GearTooltipSource {
 
 /** 悬浮卡输入的装备实例视图（含装备定义名与品级） */
 export type GearTooltipView = GearInstance & { name: string; rarity: number }
-
-/** 单条属性文案："攻击 +16" / "连击率 +5%" */
-export function statText(s: EquipmentStatEntry): string {
-  const suffix = s.modifierType === 'percent' ? '%' : ''
-  return `${attrShortName(s.attribute)} ${s.value >= 0 ? '+' : ''}${s.value}${suffix}`
-}
-
-/** 品质系数文案：×0.85（百分数展示，保留两位小数） */
-export function factorText(factor: number): string {
-  return (Math.round(factor * 100) / 100).toFixed(2)
-}
 
 export function gearTooltipData(
   pack: GearTooltipSource,
@@ -55,7 +44,7 @@ export function gearTooltipData(
     durationLabel: def ? pack.subTypeLabel(def.slot, def.subType) : undefined,
     details: [
       { label: '部位', value: def ? (slotLabels[def.slot] ?? def.slot) : '未知' },
-      { label: '品质', value: `${qualityName(g.quality)} · ×${factorText(g.qualityFactor)}` },
+      { label: '品质', value: qualityLabel(g.quality, g.qualityFactor) },
       { label: '强化', value: g.enhance > 0 ? `+${g.enhance}` : '未强化' },
       ...grouped('核心属性', groups.core),
       ...grouped('主要属性', groups.main),

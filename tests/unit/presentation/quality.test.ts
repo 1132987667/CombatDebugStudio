@@ -15,6 +15,7 @@ import {
   qualityFactorOf,
   qualityName,
   qualityOf,
+  qualityOdds,
   rollQuality,
   rollQualityFactor,
 } from '@/presentation/modules/yanjie/xiyou/quality'
@@ -103,6 +104,32 @@ describe('品质体系落地（设计稿 §5：品质决定系数 80%-150% 与�
     expect(rollQuality(3, () => 0.3)).toBe(2) // 地品权重 [10,50,40]，rng=0.3 落在「精」
     expect(rollQuality(3, () => 0.99)).toBe(3) // 地品权重表累进到「超」
     expect(rollQuality(0, () => 0)).toBe(1) // 越界兜底凡品
+  })
+
+  it('qualityOdds 与 rollQuality 同源：权重折算百分比、天/仙固定单档、越界兜底', () => {
+    // 凡品权重 [70,25,5] → 70%/25%/5%，附系数区间与词条数
+    const fan = qualityOdds(1)
+    expect(fan.map((o) => o.quality)).toEqual([1, 2, 3])
+    expect(fan.map((o) => o.percent)).toEqual([70, 25, 5])
+    expect(fan[0].name).toBe('凡')
+    expect(fan[0].factor).toEqual({ min: 0.8, max: 0.9 })
+    expect(fan[2].affixes).toBe(3)
+    // 玄品 [30,50,20] / 地品 [10,50,40]
+    expect(qualityOdds(2).map((o) => o.percent)).toEqual([30, 50, 20])
+    expect(qualityOdds(3).map((o) => o.percent)).toEqual([10, 50, 40])
+    // 天/仙固定单档 100%（绝/神）
+    const tian = qualityOdds(4)
+    expect(tian).toHaveLength(1)
+    expect(tian[0]).toMatchObject({ quality: 4, name: '绝', percent: 100, affixes: 4 })
+    expect(qualityOdds(5)).toEqual([
+      { quality: 5, name: '神', percent: 100, factor: { min: 1.41, max: 1.5 }, affixes: 5 },
+    ])
+    // 越界兜底与 rollQuality 一致（凡品权重表）
+    expect(qualityOdds(0).map((o) => o.percent)).toEqual([70, 25, 5])
+    // 每组概率合计 100
+    for (const odds of [qualityOdds(1), qualityOdds(2), qualityOdds(3), qualityOdds(4)]) {
+      expect(odds.reduce((s, o) => s + o.percent, 0)).toBe(100)
+    }
   })
 })
 

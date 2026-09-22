@@ -118,6 +118,10 @@ export const REFERENCE_RULES: ReferenceRule[] = [
   { sourceTable: 'actors', path: 'faction', targetTables: ['elements'], optional: true },
   { sourceTable: 'skills', path: 'steps[].effectId', targetTables: ['buffs'], optional: true },
   { sourceTable: 'skills', path: 'steps[].buffId', targetTables: ['buffs'], optional: true },
+  // NOTE: Buff 触发器与物品自身也会引用 buffId，引擎侧对未知 id 静默落空（BuffSystem.addBuff /
+  //       apply_debuff_to_attacker），不接进引用完整性就会长期悬空。
+  { sourceTable: 'buffs', path: 'triggers[].params.buffId', targetTables: ['buffs'], optional: true },
+  { sourceTable: 'items', path: 'effects[].buffId', targetTables: ['buffs'], optional: true },
   { sourceTable: 'scenes', path: 'enemies[].id', targetTables: ['enemies'], optional: true },
   { sourceTable: 'scenes', path: 'yaotu.id', targetTables: ['enemies'], optional: true },
   { sourceTable: 'scenes', path: 'regionId', targetTables: ['regions'] },

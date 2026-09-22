@@ -655,6 +655,9 @@ describe('纯函数', () => {
     expect(keys).toContain('enemies.affixes')
     expect(keys).toContain('equipment.factionRestriction')
     expect(keys).toContain('actors.growth')
+    // Buff 触发器与丹药自身的 buffId 引用（引擎侧未知 id 静默落空，必须在保存期拦住）
+    expect(keys).toContain('buffs.triggers[].params.buffId')
+    expect(keys).toContain('items.effects[].buffId')
   })
 
   it('词缀数据与 AffixId 常量一一对应（防漂移）', async () => {

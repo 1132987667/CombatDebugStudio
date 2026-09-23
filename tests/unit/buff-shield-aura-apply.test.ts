@@ -15,6 +15,9 @@
  * 目标 stats 的合并视图残留已删条目，光环到期/驱散后效果（如 -15 暴击）永久残留。
  * 分发路径有对称操作（BattleSystem.distributeAuras 分发后 target.recalcAll()），移除路径缺失。
  *
+ * 规格 §16（护盾唯一权威定义）：护盾可叠加、无上限。buff_shield_basic 曾配
+ * refresh+maxStacks:1 违背规格（B2），现改 independent+maxStacks:0，尾部用例锁定叠加行为。
+ *
  * 运行: npx vitest run tests/unit/buff-shield-aura-apply.test.ts
  */
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -22,6 +25,7 @@ import { initializeContainer, container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -84,5 +88,38 @@ describe('shield/aura 配置→面板施加链路', () => {
 
     const afterAlly = ally.getAttribute(ATTRIBUTE_CODE.critRate)
     expect(enemy.getAttribute(ATTRIBUTE_CODE.critRate) - beforeEnemy - (afterAlly - beforeAlly)).toBe(0)
+  })
+
+  it('buff_shield_basic：按规格 §16 可叠加无上限，逐实例对称回收', () => {
+    // enemy-buffs.json 不在 registry 默认预载源（仅 buffs.json），
+    // 显式载入真实配置后再走引擎链路，锁定该文件的 stackRule/maxStacks 语义。
+    const raw = GameDataProcessor.getBuffsData().find((b) => b.id === 'buff_shield_basic')
+    if (!raw) throw new Error('buff_shield_basic 配置缺失')
+    container
+      .resolve<BuffScriptRegistry>('BuffScriptRegistry')
+      .loadBuffConfigsFromArray([raw])
+
+    const { enemies } = createTestParticipantsFromConfig(['yaotu_fire'], ['yaotu_gold'])
+    const enemy = enemies[0]!
+    const id = enemy.id
+    // percent_max_hp 分支经 ctx.getAttrVal→resolveCharacter 读 maxHealth；
+    // 引擎在 BattleSystem.initialize 注入 resolver，单测未走该链路，此处手动补齐。
+    buffSystem.setCharacterResolver((cid) => (cid === id ? (enemy as never) : undefined))
+    expect(buffSystem.getShieldValue(id)).toBe(0)
+
+    const i1 = buffSystem.addBuff(id, 'buff_shield_basic')
+    const s1 = buffSystem.getShieldValue(id)
+    expect(s1).toBeGreaterThan(0)
+
+    // INDEPENDENT + maxStacks:0（无界）：第二次上盾是独立实例，盾值累加
+    const i2 = buffSystem.addBuff(id, 'buff_shield_basic')
+    expect(i2).not.toBe(i1)
+    expect(buffSystem.getShieldValue(id)).toBe(s1 * 2)
+
+    // 回收按各实例施加时的 _shieldAmount 精确扣除，而非清零
+    expect(buffSystem.removeBuff(i1)).toBe(true)
+    expect(buffSystem.getShieldValue(id)).toBe(s1)
+    expect(buffSystem.removeBuff(i2)).toBe(true)
+    expect(buffSystem.getShieldValue(id)).toBe(0)
   })
 })

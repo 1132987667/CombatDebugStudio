@@ -17,7 +17,7 @@ export interface RunNode {
   total: number
   /** 关底场（妖徒/妖魁率队，胜利触发通关结算与星级评定） */
   isBoss: boolean
-  /** 本场敌方单位 id（enemies.json / bosses.json 权威）；同 id 可重复 = 同种怪多个个体，结算按此逐席计酬 */
+  /** 本场敌方单位 id（enemies.json 权威）；同 id 可重复 = 同种怪多个个体，结算按此逐席计酬 */
   enemyIds: string[]
   /** 妖气增幅：敌方战斗属性倍率（气血/攻击/防御/速度），关底满档 */
   amp: number

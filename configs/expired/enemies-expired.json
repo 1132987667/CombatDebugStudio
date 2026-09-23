@@ -117,7 +117,7 @@
       "outro": "花落归根，根犹在土。来年花开，又是一季繁华。",
       "deathQuote": "千瓣……凋零……"
     },
-    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义当时外置 configs/xiyou/bosses.json（type=major）；后 bosses.json 亦归档，定义权威回归 configs/enemies/enemies.json 同名条目，此行为历史拟合样本"
   },
   {
     "id": "boss_major_hebo",
@@ -237,7 +237,7 @@
       "outro": "水可载舟，亦可覆舟。今日之败，不过潮起潮落。",
       "deathQuote": "沧浪……归海……"
     },
-    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义当时外置 configs/xiyou/bosses.json（type=major）；后 bosses.json 亦归档，定义权威回归 configs/enemies/enemies.json 同名条目，此行为历史拟合样本"
   },
   {
     "id": "boss_major_shanshen",
@@ -357,7 +357,7 @@
       "outro": "山可崩，石可碎，然山神之心，永不磨灭。",
       "deathQuote": "岩坚……终有……崩时……"
     },
-    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义当时外置 configs/xiyou/bosses.json（type=major）；后 bosses.json 亦归档，定义权威回归 configs/enemies/enemies.json 同名条目，此行为历史拟合样本"
   },
   {
     "id": "boss_major_miwu",
@@ -478,7 +478,7 @@
       "outro": "迷雾散去，真相又如何？你不过是走出了我的梦，却走不出你自己的。",
       "deathQuote": "幻影……终归……虚无……"
     },
-    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义当时外置 configs/xiyou/bosses.json（type=major）；后 bosses.json 亦归档，定义权威回归 configs/enemies/enemies.json 同名条目，此行为历史拟合样本"
   },
   {
     "id": "boss_major_rulai",
@@ -606,6 +606,6 @@
       "outro": "法相虽灭，佛法犹存。你今日之胜，不过是因果循环。",
       "deathQuote": "须弥……不倒……"
     },
-    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义权威已收敛至 configs/xiyou/bosses.json（type=major），运行时经 bossToRow 覆盖同名索引，此行自 battle.ts 收敛改造起从未被消费"
+    "source": "2026-09-16 自 configs/enemies/enemies.json 归档：5 大场景 BOSS 定义当时外置 configs/xiyou/bosses.json（type=major）；后 bosses.json 亦归档，定义权威回归 configs/enemies/enemies.json 同名条目，此行为历史拟合样本"
   }
 ]

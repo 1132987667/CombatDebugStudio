@@ -35,8 +35,8 @@ const WRITE = process.argv.includes('--write')
 // 数据装载
 // ---------------------------------------------------------------------------
 
-// boss_major_* 五条已归档（定义权威收敛至 bosses.json，运行时经 bossToRow 覆盖同名索引），
-// 但其数值仍是 yaowang 档系数拟合与 A4 存在域的唯一现状样本，再生时并入拟合池保持口径不变
+// boss_major_* 定义权威 = configs/enemies/enemies.json 同名条目（曾外置 bosses.json，该文件已归档至 configs/expired/bosses-expired.json），
+// 但其归档样本仍是 yaowang 档系数拟合与 A4 存在域的现状样本，再生时并入拟合池保持口径不变
 const ARCHIVED_ENEMIES_FILE = path.join(ROOT, 'configs', 'expired', 'enemies-expired.json')
 // 归档条目打来源标记：同名 id（如 boss_major_*）归档版为模型贴合样本（参与拟合），
 // 主表版为场景设计值/沙盒冻结值（剥离出断言样本集）

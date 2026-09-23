@@ -23,28 +23,28 @@ import type { XiyouScene } from '@/presentation/modules/yanjie/xiyou/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 describe('playerProfile 玩家属性创建', () => {
-  it('level 5 档位对齐演示数值', () => {
+  it('level 5 档位对齐 SAP 模型（player.json：base 60/16/10/10 + 4×growth 24/8/4/2）', () => {
     const p = createPlayerProfile({ level: 5, exp: 360 })
-    expect(p.maxHp).toBe(420)
-    expect(p.attackMin).toBe(12)
-    expect(p.attackMax).toBe(20)
-    expect(p.defense).toBe(8)
-    expect(p.speed).toBe(15)
+    expect(p.maxHp).toBe(156)
+    expect(p.attackMin).toBe(48)
+    expect(p.attackMax).toBe(48)
+    expect(p.defense).toBe(26)
+    expect(p.speed).toBe(18)
     expect(p.maxEnergy).toBe(150)
     expect(p.critRate).toBe(7.5)
     expect(p.hitRate).toBe(90)
     expect(p.dodgeRate).toBe(10)
-    expect(p.expNeed).toBe(1500)
+    expect(p.expNeed).toBe(739)
     expect(p.hp).toBe(p.maxHp)
   })
 
   it('level 1 为纯基础属性', () => {
     const b = computePlayerBase(1)
-    expect(b.maxHp).toBe(300)
-    expect(b.attackMin).toBe(8)
+    expect(b.maxHp).toBe(60)
+    expect(b.attackMin).toBe(16)
     expect(b.attackMax).toBe(16)
-    expect(b.defense).toBe(4)
-    expect(b.speed).toBe(11)
+    expect(b.defense).toBe(10)
+    expect(b.speed).toBe(10)
   })
 
   it('突破节点表（§20）：五阶 10/20/30/40/50 级，丹与阶位金钱对应', () => {
@@ -92,13 +92,13 @@ describe('playerProfile 玩家属性创建', () => {
   it('createPlayerProfile 满血创建且含加点加成', () => {
     const p = createPlayerProfile({ level: 1, stats: { available: 0, hp: 0, atk: 2, def: 0, hit: 0, dodge: 0, speed: 0 } })
     // 2 点 × 2 攻/点 = +4
-    expect(p.attackMin).toBe(12)
+    expect(p.attackMin).toBe(20)
     expect(p.attackMax).toBe(20)
   })
 
-  it('经验表缺档封顶', () => {
-    expect(expNeedForLevel(1)).toBe(300)
-    expect(expNeedForLevel(5)).toBe(1500)
+  it('经验表缺档封顶（§19 公式 EXP(L)=round(50×L^1.35+60L)）', () => {
+    expect(expNeedForLevel(1)).toBe(110)
+    expect(expNeedForLevel(5)).toBe(739)
     expect(expNeedForLevel(99)).toBe(Infinity)
   })
 
@@ -169,8 +169,8 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
       [{ attribute: 'attack', modifierType: 'percent' as const, value: 10 }],
       store.battleSnapshot,
     )
-    // round(attackMax 20 × 10%) = 2
-    expect(bonuses.attack).toBe(2)
+    // round(attackMax 48 × 10%) = 5
+    expect(bonuses.attack).toBe(5)
   })
 
   it('equipBonuses isPercentage 词条按百分点直接相加（dodge/critDamage/hit 不静默失效）', () => {
@@ -178,16 +178,16 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     const store = usePlayerStore()
     const bonuses = equipBonuses(
       [
-        { attribute: 'dodge', modifierType: 'percent' as const, value: 6 },
+        { attribute: 'dodgeRate', modifierType: 'percent' as const, value: 6 },
         { attribute: 'critDamage', modifierType: 'percent' as const, value: 15 },
-        { attribute: 'hit', modifierType: 'percent' as const, value: 8 },
+        { attribute: 'hitRate', modifierType: 'percent' as const, value: 8 },
       ],
       store.battleSnapshot,
     )
     // isPercentage 属性 value 即百分点，直接相加；此前按 baseByAttr（无 dodge/critDamage/hit）恒算 0
-    expect(bonuses.dodge).toBe(6)
+    expect(bonuses.dodgeRate).toBe(6)
     expect(bonuses.critDamage).toBe(15)
-    expect(bonuses.hit).toBe(8)
+    expect(bonuses.hitRate).toBe(8)
   })
 
   it('buildBattleTeams 全量注入装备加成（含 dodge/critDamage/hit 等词条属性）', () => {
@@ -195,14 +195,14 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     const store = usePlayerStore()
     const { ally } = buildBattleTeams(
       scene,
-      { dodge: 6, critDamage: 15, hit: 8, attack: 2 },
+      { dodgeRate: 6, critDamage: 15, hitRate: 8, attack: 2 },
       store.battleSnapshot,
     )
     const hero = ally[0]
     // 主角基础 dodge 10 + 6 = 16；critDamage 125 + 15 = 140；hit 90 + 8 = 98
-    expect(hero.getAttribute(ATTRIBUTE_CODE.dodge)).toBe(store.battleSnapshot.dodge + 6)
+    expect(hero.getAttribute(ATTRIBUTE_CODE.dodgeRate)).toBe(store.battleSnapshot.dodge + 6)
     expect(hero.getAttribute(ATTRIBUTE_CODE.critDamage)).toBe(store.battleSnapshot.critDamage + 15)
-    expect(hero.getAttribute(ATTRIBUTE_CODE.hit)).toBe(store.player.hitRate + 8)
+    expect(hero.getAttribute(ATTRIBUTE_CODE.hitRate)).toBe(store.player.hitRate + 8)
     expect(hero.getAttribute(ATTRIBUTE_CODE.attack)).toBe(store.player.attackMax + 2)
   })
 })

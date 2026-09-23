@@ -150,18 +150,12 @@ function buildParams(): BattleParamData[] {
   ]
 }
 
-/** 经验与金钱管理结构化种子：玩家升级经验表（params 域，key=exp_table） */
+/** 经验与金钱管理结构化种子：玩家升级经验表（params 域，key=exp_table）
+ *  §19 公式 EXP(L) = round(50 × L^1.35 + 60 × L)；运行时权威同式
+ *  （configs/xiyou/player.json expTable 由此式生成，两处单源对齐） */
 function buildExpTable(): BattleParamData {
-  const levelRange = (start: number, end: number): { level: number; expRequired: number }[] => {
-    const out: { level: number; expRequired: number }[] = []
-    for (let lv = start; lv <= end; lv++) out.push({ level: lv, expRequired: 300 * lv })
-    return out
-  }
-  const growthRange = (start: number, end: number, perLv: number): { level: number; expRequired: number }[] => {
-    const out: { level: number; expRequired: number }[] = []
-    for (let lv = start; lv <= end; lv++) out.push({ level: lv, expRequired: perLv * lv })
-    return out
-  }
+  const expRequired = (lv: number): number => Math.round(50 * Math.pow(lv, 1.35) + 60 * lv)
+  const entries = Array.from({ length: 50 }, (_, i) => ({ level: i + 1, expRequired: expRequired(i + 1) }))
   return {
     id: BATTLE_PARAM_IDS.EXP_TABLE,
     name: '玩家升级经验表',
@@ -169,12 +163,8 @@ function buildExpTable(): BattleParamData {
     data: {
       id: BATTLE_PARAM_IDS.EXP_TABLE,
       maxLevel: 50,
-      entries: [
-        ...levelRange(1, 10),
-        ...growthRange(11, 30, 600),
-        ...growthRange(31, 50, 900),
-      ],
-      formulaHint: '1-10级：300×等级；11-30级：600×等级；31-50级：900×等级',
+      entries,
+      formulaHint: 'EXP(L) = round(50 × L^1.35 + 60 × L)（完整项目说明 §19）',
     },
     updatedAt: nowIso(),
   }
@@ -233,7 +223,7 @@ export function buildPlayerConfig(): BattleParamData {
       id: 'player_config',
       maxLevel: 50,
       expFormula: 'round(50 × L^1.35 + 60 × L)',
-      base: { maxHealth: 60, attack: 15, defense: 10, hitValue: 10, dodgeValue: 10, speed: 10 },
+      base: { maxHealth: 60, attack: 16, defense: 10, hitValue: 10, dodgeValue: 10, speed: 10 },
       growth: { maxHealth: 24, attack: 8, defense: 4, hitValue: 3, dodgeValue: 3, speed: 2 },
       freePointsPerLevel: 4,
       conversion: { maxHealth: 12, attack: 2, defense: 2, hitValue: 2, dodgeValue: 2, speed: 2 },

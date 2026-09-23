@@ -312,7 +312,7 @@ function defaultGrowth(): PlayerGrowthConfig {
     id: 'player_config',
     maxLevel: 50,
     expFormula: 'round(50 × L^1.35 + 60 × L)',
-    base: { maxHealth: 60, attack: 15, defense: 10, hitValue: 10, dodgeValue: 10, speed: 10 },
+    base: { maxHealth: 60, attack: 16, defense: 10, hitValue: 10, dodgeValue: 10, speed: 10 },
     growth: { maxHealth: 24, attack: 8, defense: 4, hitValue: 3, dodgeValue: 3, speed: 2 },
     freePointsPerLevel: 4,
     conversion: { maxHealth: 12, attack: 2, defense: 2, hitValue: 2, dodgeValue: 2, speed: 2 },

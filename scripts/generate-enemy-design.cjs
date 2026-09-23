@@ -10,7 +10,7 @@
  *
  * 本脚本做什么：
  *   1. 从 configs/enemies/enemies.json 现场拟合品阶系数矩阵与次级曲线（改配置即重算）
- *   2. 从 src/infrastructure/adapters/storage/seed.ts 抽取玩家成长与奖励基准种子（单一事实源）
+ *   2. 读 configs/xiyou/player.json 运行时玩家成长线（演劫台 computePlayerBase 同式）与 domain 层奖励基准
  *   3. 跑平衡断言（拟合度/单调性/玩家对标/TTK 模拟/配置自洽），失败非零退出
  *   4. 输出报告；--write 时把数值总表写回设计文档的生成区间（保留 UTF-8 BOM）
  *
@@ -24,7 +24,7 @@ const ROOT = path.resolve(__dirname, '..')
 const ENEMIES_FILE = path.join(ROOT, 'configs', 'enemies', 'enemies.json')
 const CURVES_FILE = path.join(ROOT, 'configs', 'params', 'curves.json')
 const AFFIXES_FILE = path.join(ROOT, 'configs', 'affixes', 'affixes.json')
-const SEED_FILE = path.join(ROOT, 'src', 'infrastructure', 'adapters', 'storage', 'seed.ts')
+const PLAYER_JSON_FILE = path.join(ROOT, 'configs', 'xiyou', 'player.json')
 const EXP_REWARD_FILE = path.join(ROOT, 'src', 'domain', 'fengshen', 'exp-reward.ts')
 const ROLE_GRADES_FILE = path.join(ROOT, 'src', 'domain', 'fengshen', 'role-grades.ts')
 const DOC_FILE = path.join(ROOT, 'documents', '需求文档', '敌人生成设计.md')
@@ -54,7 +54,6 @@ const enemies = allEnemies.filter((e) => !(frozenPrefixes.some((p) => String(e.i
 const curves = JSON.parse(fs.readFileSync(CURVES_FILE, 'utf8'))
 const oldEnemies = allEnemies.filter((e) => String(e.id).startsWith('yaotu_'))
 const affixes = JSON.parse(fs.readFileSync(AFFIXES_FILE, 'utf8'))
-const seedSrc = fs.readFileSync(SEED_FILE, 'utf8')
 // 奖励种子已抽到 domain 层单一来源（seed.ts 仅引用）：entries ← exp-reward.ts，倍率 ← role-grades.ts
 const expRewardSrc = fs.readFileSync(EXP_REWARD_FILE, 'utf8')
 const roleGradesSrc = fs.readFileSync(ROLE_GRADES_FILE, 'utf8')
@@ -84,45 +83,27 @@ const B = {
 }
 
 // ---------------------------------------------------------------------------
-// 玩家成长参数：从 seed.ts 的 buildPlayerConfig() 抽取（单一事实源），失败用兜底常量
+// 玩家成长参数：读 configs/xiyou/player.json（运行时权威，演劫台 computePlayerBase 同式）
 // ---------------------------------------------------------------------------
 
-function extractSeedSection(fnName) {
-  const m = seedSrc.match(new RegExp(`function ${fnName}[\\s\\S]*?\\n\\}`))
-  return m ? m[0] : ''
+const playerJson = JSON.parse(fs.readFileSync(PLAYER_JSON_FILE, 'utf8'))
+// A4 对标基准 = base + (L−1)×growth（不含自由点/装备，下界口径）；攻击取 attackMin（attackMin=attackMax）
+const PLAYER_BASE = {
+  maxHealth: playerJson.base.maxHealth,
+  attack: playerJson.base.attackMin,
+  defense: playerJson.base.defense,
+  speed: playerJson.base.speed,
 }
-function grabObject(seg, key) {
-  const m = seg.match(new RegExp(`${key}:\\s*\\{([^}]+)\\}`))
-  if (!m) return null
-  const out = {}
-  for (const part of m[1].split(',')) {
-    const kv = part.split(':')
-    if (kv.length === 2 && Number.isFinite(Number(kv[1]))) out[kv[0].trim()] = Number(kv[1].trim())
-  }
-  return Object.keys(out).length ? out : null
+const PLAYER_GROWTH = {
+  maxHealth: playerJson.growth.maxHealth,
+  attack: playerJson.growth.attack,
+  defense: playerJson.growth.defense,
+  speed: playerJson.growth.speed,
 }
-
-const pcSeg = extractSeedSection('buildPlayerConfig')
-const warn = []
-const PLAYER_BASE = grabObject(pcSeg, 'base') ?? { maxHealth: 60, attack: 15, defense: 10, hitValue: 10, dodgeValue: 10, speed: 10 }
-const PLAYER_GROWTH = grabObject(pcSeg, 'growth') ?? { maxHealth: 24, attack: 8, defense: 4, hitValue: 3, dodgeValue: 3, speed: 2 }
-if (!grabObject(pcSeg, 'base')) warn.push('seed.ts 玩家 base 抽取失败，使用兜底常量（抄录自 buildPlayerConfig）')
 const playerBase = (attr, L) => (PLAYER_BASE[attr] ?? 0) + (L - 1) * (PLAYER_GROWTH[attr] ?? 0)
 
-// 玩家升级经验表种子（buildExpTable 的分段字面量）：击杀数分析用
-const expSeg = extractSeedSection('buildExpTable')
-function parseExpSegments(seg) {
-  const out = []
-  const re = /\.\.\.(levelRange|growthRange)\((\d+),\s*(\d+)(?:,\s*(\d+))?\)/g
-  let m
-  while ((m = re.exec(seg))) out.push({ from: +m[2], to: +m[3], perLv: m[1] === 'levelRange' ? 300 : +m[4] })
-  return out
-}
-const EXP_SEGMENTS = parseExpSegments(expSeg)
-const expRequiredAt = (L) => {
-  const seg = EXP_SEGMENTS.find((s) => L >= s.from && L <= s.to)
-  return seg ? seg.perLv * L : null
-}
+// 玩家升级经验表（player.json expTable，§19 公式生成）：击杀数分析用
+const expRequiredAt = (L) => playerJson.expTable?.find((r) => r.level === L)?.expRequired ?? null
 
 // 敌人奖励基准表种子（exp-reward.ts 的 DEFAULT_ENEMY_REWARD_ENTRIES + role-grades.ts 的 ENEMY_ROLE_MULTIPLIERS）
 const rewardEntries = [...expRewardSrc.matchAll(/enemyLevel:\s*(\d+),\s*baseExp:\s*(\d+),\s*goldMin:\s*(\d+),\s*goldMax:\s*(\d+)/g)].map(
@@ -440,7 +421,7 @@ const wallRows = [...ROLES].map((role) => {
 // ---------------------------------------------------------------------------
 
 console.log('=== 敌人生成模型拟合报告 ===')
-console.log(`敌人 124 只（enemies.json）｜曲线中枢 curves.json｜玩家/奖励种子 seed.ts`)
+console.log(`敌人 124 只（enemies.json）｜曲线中枢 curves.json｜玩家成长线 configs/xiyou/player.json`)
 console.log('\n-- 品阶系数矩阵（实数/模板 中位数） --')
 const coefHeader = ['档位', ...STAT_KEYS].join('\t')
 console.log(coefHeader)
@@ -484,7 +465,6 @@ if (Object.keys(outliers).length) {
   console.log('\n-- 拟合离群清单（超出容差，计入 A3 白名单容量） --')
   for (const [k, list] of Object.entries(outliers)) console.log(`${k}: ${list.join('; ')}`)
 }
-if (warn.length) console.log('\n[warn]', warn.join(' / '))
 
 console.log('\n=== 断言结果 ===')
 if (failures.length) {

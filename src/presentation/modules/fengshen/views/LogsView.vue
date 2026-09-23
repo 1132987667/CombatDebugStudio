@@ -32,13 +32,19 @@
           <div v-if="expandedId === log.id && diffOf(log).length" class="fs-tl-diff" role="region">
             <table class="fs-diff-table">
               <thead>
-                <tr><th>字段</th><th>原值</th><th>新值</th></tr>
+                <tr><th>字段</th><th>原值</th><th>新值</th><th v-if="log.op === 'update'">回退</th></tr>
               </thead>
               <tbody>
                 <tr v-for="d in diffOf(log)" :key="d.key">
                   <td class="fs-diff-key">{{ d.key }}</td>
                   <td class="fs-diff-val fs-diff-before">{{ d.before }}</td>
                   <td class="fs-diff-val fs-diff-after">{{ d.after }}</td>
+                  <td v-if="log.op === 'update'" class="fs-diff-act">
+                    <button v-if="fieldSchema(log.table, d.key)" class="fs-restore-btn" :disabled="restoring"
+                      title="把修改前的值填入该实体的编辑表单，确认后保存（不直接写库）" @click="restoreField(log, d)">
+                      还原旧值
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -60,9 +66,12 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import IconSearch from '~icons/app/search'
 
-import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
+import { TABLE_SCHEMAS, type FieldSchema, type FieldType } from '@/domain/fengshen/schema'
+import { GameDataApi } from '@/application/service/GameDataApi'
+import { container } from '@/infrastructure/di/Container'
+import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
-import type { OperationKind, OperationLogEntry } from '@/domain/fengshen/types'
+import type { FengshenTableName, OperationKind, OperationLogEntry } from '@/domain/fengshen/types'
 import type { FieldDiff } from '@/shared/utils/entity-diff'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
@@ -71,11 +80,14 @@ import { downloadCsv } from '@/shared/utils/csv'
 const PAGE_SIZE = 50
 
 const store = useFengshenStore()
+const gameDataApi = container.resolve<GameDataApi>('GameDataApi')
+const notification = useNotificationStore()
 const tableFilter = ref('')
 const opFilter = ref('')
 const keyword = ref('')
 const page = ref(1)
 const expandedId = ref<string | null>(null)
+const restoring = ref(false)
 
 /** 展开/收起日志条目（无 diff 的 create/delete 不可展开） */
 function toggleDetail(id: string): void {
@@ -90,6 +102,59 @@ function diffOf(log: OperationLogEntry): FieldDiff[] {
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
+  }
+}
+
+function fieldSchema(table: string, key: string): FieldSchema | undefined {
+  return TABLE_SCHEMAS[table as FengshenTableName]?.fields.find((f) => f.key === key)
+}
+
+/**
+ * 「还原旧值」：把改动前的值填入该实体的编辑抽屉，由人确认后走正常校验链保存，不直接写库。
+ * NOTE: diffValueText 将 null/undefined 编码为 '—'，文本字段真值为「—」时会被误判为空——
+ * 调试工具可接受，保存前表单可见。
+ */
+async function restoreField(log: OperationLogEntry, d: FieldDiff): Promise<void> {
+  const field = fieldSchema(log.table, d.key)
+  if (!field || restoring.value) return
+  restoring.value = true
+  try {
+    const rows = await gameDataApi.listByTable<Record<string, unknown>>(log.table as FengshenTableName)
+    const row = rows.find((r) => String(r.id) === String(log.entityId))
+    if (!row) {
+      notification.notify('无法回退', `「${tableLabel(log.table)}」中已找不到实体 ${log.entityId}`, 'error')
+      return
+    }
+    const draft = { ...row }
+    if (d.before === '—') delete draft[d.key]
+    else draft[d.key] = parseDiffValue(d.before, field.type)
+    store.navigateTo(log.table as FengshenTableName)
+    store.openEdit(draft)
+  } catch (e) {
+    notification.notify('回退失败', e instanceof Error ? e.message : String(e), 'error')
+  } finally {
+    restoring.value = false
+  }
+}
+
+/** entity-diff diffValueText 字符串化值的逆解析（按 schema 字段类型）；解析失败抛错由调用方提示 */
+function parseDiffValue(text: string, type: FieldType): unknown {
+  switch (type) {
+    case 'number': {
+      const n = Number(text)
+      if (!Number.isFinite(n)) throw new Error(`「${text}」无法解析为数值`)
+      return n
+    }
+    case 'boolean':
+      if (text !== 'true' && text !== 'false') throw new Error(`「${text}」无法解析为布尔值`)
+      return text === 'true'
+    case 'multi':
+    case 'map':
+    case 'array':
+    case 'object':
+      return JSON.parse(text)
+    default:
+      return text
   }
 }
 

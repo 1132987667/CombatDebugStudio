@@ -33,6 +33,7 @@ import type {
   SystemBudgetConfig,
   XiyouData,
 } from '@/domain/fengshen/types'
+import { BATTLE_PARAM_IDS } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { StackRule } from '@/domain/buff/types'
 import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -162,11 +163,11 @@ function buildExpTable(): BattleParamData {
     return out
   }
   return {
-    id: 'exp_table',
+    id: BATTLE_PARAM_IDS.EXP_TABLE,
     name: '玩家升级经验表',
     description: '定义玩家每个等级升至下一级所需的经验值',
     data: {
-      id: 'exp_table',
+      id: BATTLE_PARAM_IDS.EXP_TABLE,
       maxLevel: 50,
       entries: [
         ...levelRange(1, 10),
@@ -182,11 +183,11 @@ function buildExpTable(): BattleParamData {
 /** 经验与金钱管理结构化种子：敌人经验与金钱基准表（params 域，key=enemy_reward_table） */
 function buildEnemyRewardTable(): BattleParamData {
   return {
-    id: 'enemy_reward_table',
+    id: BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE,
     name: '敌人经验与金钱基准表',
     description: '定义每个等级敌人被击败后给予的基础经验与金钱区间',
     data: {
-      id: 'enemy_reward_table',
+      id: BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE,
       baseExpFormula: 'enemyLevel × 10',
       baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
       roleMultiplier: { ...ENEMY_ROLE_MULTIPLIERS },
@@ -200,11 +201,11 @@ function buildEnemyRewardTable(): BattleParamData {
 /** 经验与金钱管理结构化种子：等级差经验加成规则（params 域，key=level_diff_bonus） */
 function buildLevelDiffBonus(): BattleParamData {
   return {
-    id: 'level_diff_bonus',
+    id: BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS,
     name: '等级差经验加成规则',
     description: '玩家攻击高于或低于自身等级的敌人时，经验获取的倍率修正',
     data: {
-      id: 'level_diff_bonus',
+      id: BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS,
       rules: [
         { id: 'rule_underleveled_5', label: '碾压（低5级及以上）', condition: { diff: '<= -5' }, expMultiplier: 0.1, goldMultiplier: 0.5, description: '敌人等级比玩家低5级及以上，经验大幅衰减', note: '防止低级刷怪' },
         { id: 'rule_underleveled_3', label: '轻松（低3~4级）', condition: { diff: [-4, -3] }, expMultiplier: 0.5, goldMultiplier: 0.8, description: '敌人等级比玩家低3~4级，经验减半' },

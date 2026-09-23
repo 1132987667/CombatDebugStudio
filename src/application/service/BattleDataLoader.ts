@@ -21,6 +21,7 @@ import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BattleRuleManager, type BattleRulesConfig } from '@/domain/battle/service/BattleRuleManager'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleParamData, EnemyRewardTableConfig, ExpTableConfig, LevelDiffBonusConfig, EconomyRatiosConfig } from '@/domain/fengshen/types'
+import { BATTLE_PARAM_IDS } from '@/domain/fengshen/types'
 import { container } from '@/infrastructure/di/Container'
 
 /** 引擎规则参数路径映射：params 表 id → BattleRulesConfig 路径（规格说明书 §3.10 收拢引擎调参） */
@@ -52,9 +53,9 @@ export class BattleDataLoader {
 
       // NOTE: params 表混合简单数字参数（BattleRuleManager 消费）与结构化经验/金钱表（按 id 提取）
       const params = await this.loadAll<BattleParamData>(FENGSHEN_STORE.PARAMS)
-      const expTable = params.find((p) => p.id === 'exp_table')?.data as ExpTableConfig | undefined ?? null
-      const enemyRewardTable = params.find((p) => p.id === 'enemy_reward_table')?.data as EnemyRewardTableConfig | undefined ?? null
-      const levelDiffBonus = params.find((p) => p.id === 'level_diff_bonus')?.data as LevelDiffBonusConfig | undefined ?? null
+      const expTable = params.find((p) => p.id === BATTLE_PARAM_IDS.EXP_TABLE)?.data as ExpTableConfig | undefined ?? null
+      const enemyRewardTable = params.find((p) => p.id === BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE)?.data as EnemyRewardTableConfig | undefined ?? null
+      const levelDiffBonus = params.find((p) => p.id === BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS)?.data as LevelDiffBonusConfig | undefined ?? null
       const economyRatios = params.find((p) => p.id === 'economy_ratios')?.data as EconomyRatiosConfig | undefined ?? null
 
       const source: IDataSource = {

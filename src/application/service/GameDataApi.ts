@@ -29,6 +29,7 @@ import type {
   FengshenTableName,
   XiyouData,
 } from '@/domain/fengshen/types'
+import { BATTLE_PARAM_IDS } from '@/domain/fengshen/types'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { Enemy } from '@/shared/types/enemy'
@@ -114,19 +115,19 @@ export class GameDataApi {
 
   /** 玩家升级经验表（params 域 exp_table 的 data；未 seed / 无配置返回 null） */
   async getExpTable(): Promise<ExpTableConfig | null> {
-    const rec = await this.getBattleParam('exp_table')
+    const rec = await this.getBattleParam(BATTLE_PARAM_IDS.EXP_TABLE)
     return rec?.data && typeof rec.data === 'object' && 'maxLevel' in rec.data ? (rec.data as ExpTableConfig) : null
   }
 
   /** 敌人经验与金钱基准表（params 域 enemy_reward_table 的 data） */
   async getEnemyRewardTable(): Promise<EnemyRewardTableConfig | null> {
-    const rec = await this.getBattleParam('enemy_reward_table')
+    const rec = await this.getBattleParam(BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE)
     return rec?.data && typeof rec.data === 'object' && 'roleMultiplier' in rec.data ? (rec.data as EnemyRewardTableConfig) : null
   }
 
   /** 等级差经验加成规则（params 域 level_diff_bonus 的 data） */
   async getLevelDiffBonus(): Promise<LevelDiffBonusConfig | null> {
-    const rec = await this.getBattleParam('level_diff_bonus')
+    const rec = await this.getBattleParam(BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS)
     return rec?.data && typeof rec.data === 'object' && 'rules' in rec.data ? (rec.data as LevelDiffBonusConfig) : null
   }
 

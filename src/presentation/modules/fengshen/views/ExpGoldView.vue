@@ -198,6 +198,7 @@ import {
   DEFAULT_ENEMY_REWARD_ENTRIES,
 } from '@/domain/fengshen/exp-reward'
 import { ENEMY_ROLE_MULTIPLIERS, type EnemyRole } from '@/domain/fengshen/role-grades'
+import { BATTLE_PARAM_IDS } from '@/domain/fengshen/types'
 import LineChart, { type ChartSeries } from '@/presentation/modules/fengshen/components/LineChart.vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import TacticalSelect, { type TSelectOption } from '@/presentation/components/TacticalSelect.vue'
@@ -222,7 +223,7 @@ const INTERPOLATION_OPTIONS: TSelectOption[] = [
 
 /** 升级经验表草稿 */
 const expTable = reactive<ExpTableConfig>({
-  id: 'exp_table',
+  id: BATTLE_PARAM_IDS.EXP_TABLE,
   maxLevel: 50,
   entries: [],
   formulaHint: '',
@@ -231,7 +232,7 @@ const expErrors = ref<string[]>([])
 
 /** 敌人奖励基准草稿 */
 const enemyReward = reactive<EnemyRewardTableConfig>({
-  id: 'enemy_reward_table',
+  id: BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE,
   roleMultiplier: {},
   entries: [],
   interpolation: 'linear',
@@ -245,7 +246,7 @@ const simResult = ref<ReturnType<typeof calcEnemyReward> | null>(null)
 
 /** 等级差规则草稿 */
 const levelDiff = reactive<LevelDiffBonusConfig>({
-  id: 'level_diff_bonus',
+  id: BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS,
   rules: [],
   fallbackMultiplier: 1,
   clampRange: { min: 0.1, max: 3 },
@@ -290,7 +291,7 @@ async function saveExpTable(): Promise<void> {
   const errors = validateExpTable()
   expErrors.value = errors
   if (errors.length) return
-  const result = await write.save('params', { id: 'exp_table', name: '玩家升级经验表', data: toPlain(expTable) })
+  const result = await write.save('params', { id: BATTLE_PARAM_IDS.EXP_TABLE, name: '玩家升级经验表', data: toPlain(expTable) })
   if (result.ok) notification.notify('已保存', `升级经验表已保存 · 数据版本 v${await api.getDataVersion()}`, 'success')
   else notification.notify('保存失败', result.errors?.join('\n') ?? '', 'error')
 }
@@ -302,7 +303,7 @@ async function saveEnemyReward(): Promise<void> {
     notification.notify('保存失败', errors.join('\n'), 'error')
     return
   }
-  const result = await write.save('params', { id: 'enemy_reward_table', name: '敌人经验与金钱基准表', data: toPlain(enemyReward) })
+  const result = await write.save('params', { id: BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE, name: '敌人经验与金钱基准表', data: toPlain(enemyReward) })
   if (result.ok) notification.notify('已保存', `敌人经验与金钱基准表已保存 · 数据版本 v${await api.getDataVersion()}`, 'success')
   else notification.notify('保存失败', result.errors?.join('\n') ?? '', 'error')
 }
@@ -312,7 +313,7 @@ async function saveLevelDiff(): Promise<void> {
   const errors = validateLevelDiff()
   diffErrors.value = errors
   if (errors.length) return
-  const result = await write.save('params', { id: 'level_diff_bonus', name: '等级差经验加成规则', data: toPlain(levelDiff) })
+  const result = await write.save('params', { id: BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS, name: '等级差经验加成规则', data: toPlain(levelDiff) })
   if (result.ok) notification.notify('已保存', `等级差经验加成规则已保存 · 数据版本 v${await api.getDataVersion()}`, 'success')
   else notification.notify('保存失败', result.errors?.join('\n') ?? '', 'error')
 }
@@ -392,7 +393,7 @@ function defaultExpTable(): ExpTableConfig {
   for (let lv = 1; lv <= 50; lv++) {
     entries.push({ level: lv, expRequired: lv <= 10 ? 300 * lv : lv <= 30 ? 600 * lv : 900 * lv })
   }
-  return { id: 'exp_table', maxLevel: 50, entries, formulaHint: '1-10级：300×等级；11-30级：600×等级；31-50级：900×等级' }
+  return { id: BATTLE_PARAM_IDS.EXP_TABLE, maxLevel: 50, entries, formulaHint: '1-10级：300×等级；11-30级：600×等级；31-50级：900×等级' }
 }
 
 // ════════════ Tab2 交互 ════════════
@@ -434,7 +435,7 @@ function resetEnemyReward(): void {
 
 function defaultEnemyReward(): EnemyRewardTableConfig {
   return {
-    id: 'enemy_reward_table',
+    id: BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE,
     baseExpFormula: 'enemyLevel × 10',
     baseGoldFormula: 'enemyLevel × 3 + random(0, enemyLevel × 2)',
     roleMultiplier: { ...ENEMY_ROLE_MULTIPLIERS },
@@ -530,7 +531,7 @@ function resetLevelDiff(): void {
 
 function defaultLevelDiff(): LevelDiffBonusConfig {
   return {
-    id: 'level_diff_bonus',
+    id: BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS,
     rules: [
       { id: 'rule_underleveled_5', label: '碾压（低5级及以上）', condition: { diff: '<= -5' }, expMultiplier: 0.1, goldMultiplier: 0.5, description: '敌人等级比玩家低5级及以上，经验大幅衰减', note: '防止低级刷怪' },
       { id: 'rule_underleveled_3', label: '轻松（低3~4级）', condition: { diff: [-4, -3] }, expMultiplier: 0.5, goldMultiplier: 0.8, description: '敌人等级比玩家低3~4级，经验减半' },

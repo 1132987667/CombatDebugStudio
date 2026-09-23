@@ -16,33 +16,41 @@
         </div>
 
         <div class="xy-timeline-path" :aria-label="`${region.name} 关卡路径`">
-          <div v-if="region.city" class="xy-timeline-city" :title="region.city.desc">
-            <span class="xy-timeline-city__marker" aria-hidden="true"></span>
-            <span class="xy-timeline-city__name">{{ region.city.name }}</span>
-            <span class="xy-timeline-city__tag">城镇</span>
-          </div>
-          <button
-            v-for="(s, si) in regionScenes(region.id)"
-            :key="s.id"
-            type="button"
-            class="xy-timeline-node"
-            :class="{
-              boss: isBoss(si),
-              current: isCurrent(s),
-              locked: !s.unlocked,
-            }"
-            :aria-pressed="isCurrent(s)"
-            :aria-label="`${s.name}${isBoss(si) ? '（首领）' : ''}${s.unlocked ? '' : '（未解锁）'}`"
-            @click="select(s)"
-          >
-            <span class="xy-timeline-node__marker" aria-hidden="true"></span>
-            <span class="xy-timeline-node__content">
-              <span class="xy-timeline-node__name">{{ s.name }}</span>
-              <span class="xy-timeline-node__meta">
-                {{ isBoss(si) ? 'BOSS' : `Lv.${s.levelRange?.[0] ?? ''}` }}
+          <template v-for="(s, si) in regionScenes(region.id)" :key="s.id">
+            <!-- 一域一城（PRD §24）：城镇枢纽站在第二关之后（渲染于第 3 关前），点击进入城镇 -->
+            <button
+              v-if="si === 2 && region.city"
+              type="button"
+              class="xy-timeline-city"
+              :title="region.city?.desc"
+              :aria-label="`进入城镇 ${region.city?.name}`"
+              @click="emit('enter-town', region)"
+            >
+              <span class="xy-timeline-city__marker" aria-hidden="true"></span>
+              <span class="xy-timeline-city__name">{{ region.city?.name }}</span>
+              <span class="xy-timeline-city__tag">城镇</span>
+            </button>
+            <button
+              type="button"
+              class="xy-timeline-node"
+              :class="{
+                boss: isBoss(s),
+                current: isCurrent(s),
+                locked: !s.unlocked,
+              }"
+              :aria-pressed="isCurrent(s)"
+              :aria-label="`${s.name}${isBoss(s) ? '（首领）' : ''}${s.unlocked ? '' : '（未解锁）'}`"
+              @click="select(s)"
+            >
+              <span class="xy-timeline-node__marker" aria-hidden="true"></span>
+              <span class="xy-timeline-node__content">
+                <span class="xy-timeline-node__name">{{ s.name }}</span>
+                <span class="xy-timeline-node__meta">
+                  {{ isBoss(s) ? 'BOSS' : `Lv.${s.levelRange?.[0] ?? ''}` }}
+                </span>
               </span>
-            </span>
-          </button>
+            </button>
+          </template>
         </div>
       </template>
 
@@ -62,7 +70,10 @@ const props = defineProps<{
   current: XiyouScene | null
 }>()
 
-const emit = defineEmits<{ select: [scene: XiyouScene] }>()
+const emit = defineEmits<{
+  select: [scene: XiyouScene]
+  'enter-town': [region: XiyouRegion]
+}>()
 
 /** 仅展示存在关卡的区域（region_final 暂无场景则不出现在路引） */
 const activeRegions = computed(() => props.regions.filter(r => props.scenes.some(s => s.regionId === r.id)))
@@ -77,8 +88,9 @@ function regionLevelText(r: XiyouRegion): string {
   return r.levelRange ? `${r.levelRange[0]}-${r.levelRange[1]}` : ''
 }
 
-function isBoss(index: number): boolean {
-  return index === 4
+/** 妖魁关按 id 判定（scene_*_boss），不按索引——索引魔法数会随关卡增删漂移 */
+function isBoss(s: XiyouScene): boolean {
+  return s.id.endsWith('_boss')
 }
 
 function isCurrent(s: XiyouScene): boolean {
@@ -222,14 +234,20 @@ function select(s: XiyouScene): void {
   }
 }
 
-/* 一域一城（PRD §24）：路径首站的城镇节点，纯展示不可讨伐 */
+/* 一域一城（PRD §24）：路径中段的城镇节点（第二关后），点击进入城镇 */
 .xy-timeline-city {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  width: 100%;
   padding: var(--space-2) 0;
+  border: none;
+  background: transparent;
+  font-family: var(--xy-font-body);
   font-size: var(--font-size-md);
+  text-align: left;
+  cursor: pointer;
 }
 
 .xy-timeline-city__marker {
@@ -251,6 +269,11 @@ function select(s: XiyouScene): void {
   background: var(--xy-paper);
   color: var(--xy-ink-1);
   letter-spacing: 1px;
+  transition: border-color var(--transition-fast);
+}
+
+.xy-timeline-city:hover .xy-timeline-city__name {
+  border-color: var(--xy-gold);
 }
 
 .xy-timeline-city__tag {

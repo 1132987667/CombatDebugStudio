@@ -29,40 +29,47 @@
 
         <div class="xy-map-dlg__body">
           <div class="xy-map-dlg__list" :aria-label="`${activeRegion.name} · ${activeRegion.sub} 关卡列表`">
-            <div v-if="activeRegion.city" class="xy-map-dlg__city">
-              <span class="xy-map-dlg__city-tag">城镇</span>
-              <span class="xy-map-dlg__city-name">{{ activeRegion.city.name }}</span>
-              <span class="xy-map-dlg__city-desc">{{ activeRegion.city.desc }}</span>
-            </div>
-            <button
-              v-for="s in regionScenes"
-              :key="s.id"
-              type="button"
-              class="xy-map-dlg__stage xy-ink-hover"
-              :class="{ selected: s.id === selectedId, locked: !s.unlocked }"
-              role="button"
-              :tabindex="s.unlocked ? 0 : -1"
-              :aria-label="`${s.name}${s.unlocked ? '' : '（未解锁）'}`"
-              @click="selectNode(s)"
-              @keydown.enter="selectNode(s)"
-            >
-              <span class="xy-map-dlg__stage-head">
-                <span class="xy-map-dlg__stage-name">{{ s.name }}</span>
-                <span v-if="!s.unlocked" class="xy-map-dlg__stage-lock" aria-hidden="true">
-                  <IconLock />
+            <template v-for="(s, si) in regionScenes" :key="s.id">
+              <!-- 一域一城（PRD §24）：城镇通栏置于第二关之后（渲染于第 3 关前），点击进入城镇 -->
+              <button
+                v-if="si === 2 && activeRegion?.city"
+                type="button"
+                class="xy-map-dlg__city"
+                :aria-label="`进入城镇 ${activeRegion.city?.name}`"
+                @click="emit('enter-town', activeRegion)"
+              >
+                <span class="xy-map-dlg__city-tag">城镇</span>
+                <span class="xy-map-dlg__city-name">{{ activeRegion.city?.name }}</span>
+                <span class="xy-map-dlg__city-desc">{{ activeRegion.city?.desc }}</span>
+              </button>
+              <button
+                type="button"
+                class="xy-map-dlg__stage xy-ink-hover"
+                :class="{ selected: s.id === selectedId, locked: !s.unlocked }"
+                role="button"
+                :tabindex="s.unlocked ? 0 : -1"
+                :aria-label="`${s.name}${s.unlocked ? '' : '（未解锁）'}`"
+                @click="selectNode(s)"
+                @keydown.enter="selectNode(s)"
+              >
+                <span class="xy-map-dlg__stage-head">
+                  <span class="xy-map-dlg__stage-name">{{ s.name }}</span>
+                  <span v-if="!s.unlocked" class="xy-map-dlg__stage-lock" aria-hidden="true">
+                    <IconLock />
+                  </span>
+                  <span v-else class="xy-map-dlg__stage-check" aria-hidden="true">
+                    <IconCheck />
+                  </span>
                 </span>
-                <span v-else class="xy-map-dlg__stage-check" aria-hidden="true">
-                  <IconCheck />
+                <span class="xy-map-dlg__stage-range">Lv.{{ s.levelRange?.[0] }}-{{ s.levelRange?.[1] }}</span>
+                <span class="xy-map-dlg__stage-meta">
+                  <span class="xy-map-dlg__stars" :aria-label="`关卡星级 ${s.stars}/${s.maxStars}`">
+                    <IconStar v-for="i in s.maxStars" :key="i" class="xy-map-dlg__star"
+                      :class="{ on: i <= s.stars }" />
+                  </span>
                 </span>
-              </span>
-              <span class="xy-map-dlg__stage-range">Lv.{{ s.levelRange?.[0] }}-{{ s.levelRange?.[1] }}</span>
-              <span class="xy-map-dlg__stage-meta">
-                <span class="xy-map-dlg__stars" :aria-label="`关卡星级 ${s.stars}/${s.maxStars}`">
-                  <IconStar v-for="i in s.maxStars" :key="i" class="xy-map-dlg__star"
-                    :class="{ on: i <= s.stars }" />
-                </span>
-              </span>
-            </button>
+              </button>
+            </template>
             <p v-if="regionScenes.length === 0" class="xy-map-dlg__list-empty">此域暂无关卡</p>
           </div>
 
@@ -150,6 +157,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   select: [scene: XiyouScene]
+  'enter-town': [region: XiyouRegion]
 }>()
 
 const activeRegionId = ref(props.current?.regionId ?? props.regions[0]?.id ?? '')
@@ -386,7 +394,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   align-content: start;
 }
 
-/* ── 一域一城（PRD §24）：区域城镇条，列表首行通栏 ── */
+/* ── 一域一城（PRD §24）：区域城镇通栏，第二关之后，点击进入城镇 ── */
 .xy-map-dlg__city {
   grid-column: 1 / -1;
   display: flex;
@@ -398,6 +406,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   border-left-width: 3px;
   border-radius: 3px;
   background: var(--xy-gold-soft);
+  font-family: var(--xy-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+
+  &:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
 }
 
 .xy-map-dlg__city-tag {

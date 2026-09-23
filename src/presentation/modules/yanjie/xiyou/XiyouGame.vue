@@ -26,7 +26,7 @@
 
       <!-- 功能宝阁（行路态 290px / 功能态全屏） -->
       <TreasureCabinet :tab="activeCabinet" :current="currentScene" :regions="regions" :scenes="scenes"
-        @select="onSceneSelect" />
+        @select="onSceneSelect" @enter-town="enterTown" />
 
       <!-- 战斗禅台（仅行路态显示；gameLoaded 前不挂载，避免首屏用存档前初始属性初始化战斗） -->
       <BattleZen v-if="gameLoaded" v-show="!isFeature" :scene="currentScene" @open-map="mapOpen = true" />
@@ -35,7 +35,10 @@
 
     <!-- 降妖路引：弹窗大地图 -->
     <SceneMapDialog v-model="mapOpen" :regions="regions" :scenes="scenes" :current="currentScene"
-      @select="currentScene = $event" />
+      @select="currentScene = $event" @enter-town="enterTown" />
+
+    <!-- 城镇（一域一城 PRD §24）：路引/大地图城镇节点点击进入 -->
+    <TownDialog v-model="townOpen" :region="townRegion" />
 
     <!-- 设置：居中弹窗 -->
     <SettingsDialog v-model="settingsOpen" v-model:sidebar="sidebarSide" @back="emit('back')"
@@ -52,8 +55,10 @@ import DebugCavePanel from './components/DebugCavePanel.vue'
 import FourAspectBar, { type GroupTab } from './components/FourAspectBar.vue'
 import SceneMapDialog from './components/SceneMapDialog.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
+import TownDialog from './components/TownDialog.vue'
 import TreasureCabinet from './components/TreasureCabinet.vue'
 import { regions, scenes, loadXiyouData, type XiyouScene } from './xiyouData'
+import type { XiyouRegion } from './types'
 import { saveManager } from './save-bridge'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
@@ -69,6 +74,15 @@ const activeCabinet = ref<GroupTab>('battle')
 
 /** 降妖路引弹窗开关 */
 const mapOpen = ref(false)
+
+/** 城镇弹窗（一域一城 PRD §24）：由路引时间线/大地图城镇节点进入 */
+const townOpen = ref(false)
+const townRegion = ref<XiyouRegion | null>(null)
+
+function enterTown(region: XiyouRegion): void {
+  townRegion.value = region
+  townOpen.value = true
+}
 
 /** 设置弹窗开关 */
 const settingsOpen = ref(false)

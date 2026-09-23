@@ -174,7 +174,7 @@
   {
     "id": "eqaff_hit",
     "name": "定神",
-    "attribute": "hit",
+    "attribute": "hitRate",
     "modifierType": "percent",
     "valueRange": {
       "min": 3,
@@ -190,7 +190,7 @@
   {
     "id": "eqaff_dodge",
     "name": "幻身",
-    "attribute": "dodge",
+    "attribute": "dodgeRate",
     "modifierType": "percent",
     "valueRange": {
       "min": 2,
@@ -329,7 +329,7 @@
   {
     "id": "eqaff_linghou_dodge",
     "name": "灵步",
-    "attribute": "dodge",
+    "attribute": "dodgeRate",
     "modifierType": "percent",
     "valueRange": {
       "min": 3,
@@ -474,7 +474,7 @@
   {
     "id": "eqaff_hit_boots",
     "name": "寻踪",
-    "attribute": "hit",
+    "attribute": "hitRate",
     "modifierType": "percent",
     "valueRange": {
       "min": 3,

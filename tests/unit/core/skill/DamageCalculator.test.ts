@@ -105,7 +105,7 @@ describe('DamageCalculator', () => {
       // 叠加闪避率修正后实际命中率 = 10 + 100 − 100 = 10%
       target.getAttribute = (attr: string) => {
         if (attr === ATTRIBUTE_CODE.dodgeValue) return 900
-        if (attr === ATTRIBUTE_CODE.dodge) return 100
+        if (attr === ATTRIBUTE_CODE.dodgeRate) return 100
         return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
       }
 
@@ -133,7 +133,7 @@ describe('DamageCalculator', () => {
       // 闪避值远大于命中值 → 下限钳制 10%，0.5×100=50 > 10 → 闪避
       target.getAttribute = (attr: string) => {
         if (attr === ATTRIBUTE_CODE.dodgeValue) return 99999
-        if (attr === ATTRIBUTE_CODE.dodge) return 100
+        if (attr === ATTRIBUTE_CODE.dodgeRate) return 100
         return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
       }
       result = calculator.calculateDamage(step, source, target)
@@ -148,7 +148,7 @@ describe('DamageCalculator', () => {
       const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] } })
       const origGetAttr = source.getAttribute
       source.getAttribute = (attr: string) => {
-        if (attr === ATTRIBUTE_CODE.hit) return 100
+        if (attr === ATTRIBUTE_CODE.hitRate) return 100
         if (attr === ATTRIBUTE_CODE.attack) return 0
         return origGetAttr(attr)
       }

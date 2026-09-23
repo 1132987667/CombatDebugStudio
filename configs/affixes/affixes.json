@@ -75,7 +75,7 @@
       "allowed": ["enemy"],
       "statModifiers": [
         {
-          "attribute": "hit",
+          "attribute": "hitRate",
           "percent": 20,
           "type": "ADDITIVE"
         }
@@ -92,7 +92,7 @@
       "allowed": ["enemy"],
       "statModifiers": [
         {
-          "attribute": "dodge",
+          "attribute": "dodgeRate",
           "percent": 20,
           "type": "ADDITIVE"
         }
@@ -847,7 +847,7 @@
           "percent": 80
         },
         {
-          "attribute": "dodge",
+          "attribute": "dodgeRate",
           "percent": 50,
           "type": "ADDITIVE"
         },
@@ -1010,7 +1010,7 @@
       "allowed": ["player"],
       "statModifiers": [
         {
-          "attribute": "hit",
+          "attribute": "hitRate",
           "percent": -20,
           "type": "ADDITIVE"
         }
@@ -1026,7 +1026,7 @@
       "allowed": ["player"],
       "statModifiers": [
         {
-          "attribute": "dodge",
+          "attribute": "dodgeRate",
           "percent": -20,
           "type": "ADDITIVE"
         }

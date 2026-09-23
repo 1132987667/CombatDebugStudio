@@ -136,10 +136,10 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   critResist:                  { displayTier: 'advanced',    group: 'crit' },
 
   // ── 命中闪避族 ──
-  hit:                         { displayTier: 'advanced',    group: 'accuracy' },
+  hitRate:                    { displayTier: 'advanced',    group: 'accuracy' },
   hitBonus:                    { displayTier: 'advanced',    group: 'accuracy' },
   hitCoefficient:              { displayTier: 'advanced',    group: 'accuracy' },
-  dodge:                       { displayTier: 'advanced',    group: 'accuracy' },
+  dodgeRate:                  { displayTier: 'advanced',    group: 'accuracy' },
   dodgeBonus:                  { displayTier: 'advanced',    group: 'accuracy' },
   dodgeCoefficient:            { displayTier: 'advanced',    group: 'accuracy' },
   effectHit:                   { displayTier: 'advanced',    group: 'accuracy' },

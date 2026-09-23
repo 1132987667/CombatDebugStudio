@@ -217,8 +217,8 @@ describe('affixConflictFor / affixEffectiveWeight（§14.9 部位冲突检测）
   })
   it('皮甲禁止格挡率，铠甲禁止闪避率', () => {
     expect(affixConflictFor('armor', '皮甲', 'blockRate')).toBe('forbidden')
-    expect(affixConflictFor('armor', '铠甲', 'dodge')).toBe('forbidden')
-    expect(affixConflictFor('armor', '木甲', 'dodge')).toBeNull()
+    expect(affixConflictFor('armor', '铠甲', 'dodgeRate')).toBe('forbidden')
+    expect(affixConflictFor('armor', '木甲', 'dodgeRate')).toBeNull()
   })
   it('护符禁止暴击率/暴击伤害，靴子禁止暴击伤害', () => {
     expect(affixConflictFor('charm', '护符', 'critRate')).toBe('forbidden')

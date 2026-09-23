@@ -57,13 +57,13 @@ export const defaultAttrs = {
     modifiers: [],
     cachedVersion: 0,
   },
-  [ATTRIBUTE_CODE.dodge]: {
+  [ATTRIBUTE_CODE.dodgeRate]: {
     value: 0,
     base: 0,
     modifiers: [],
     cachedVersion: 0,
   },
-  [ATTRIBUTE_CODE.hit]: {
+  [ATTRIBUTE_CODE.hitRate]: {
     value: 100,
     base: 100,
     modifiers: [],

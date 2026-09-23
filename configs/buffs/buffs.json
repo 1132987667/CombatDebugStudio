@@ -397,7 +397,7 @@
           "modifiers": [
             {
               "id": "demon_aura_dodge",
-              "targetAttribute": "dodge",
+              "targetAttribute": "dodgeRate",
               "type": "ADDITIVE",
               "value": 10
             }
@@ -475,7 +475,7 @@
           "modifiers": [
             {
               "id": "mist_coverage_dodge",
-              "targetAttribute": "dodge",
+              "targetAttribute": "dodgeRate",
               "type": "ADDITIVE",
               "value": 15
             }
@@ -1074,7 +1074,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "dodge": {
+            "dodgeRate": {
               "value": 15,
               "type": "ADDITIVE"
             }
@@ -1253,7 +1253,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "hit": {
+            "hitRate": {
               "value": -10,
               "type": "ADDITIVE"
             }
@@ -2072,7 +2072,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "dodge": {
+            "dodgeRate": {
               "value": 50,
               "type": "ADDITIVE"
             }
@@ -2123,7 +2123,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "hit": {
+            "hitRate": {
               "value": 100,
               "type": "ADDITIVE"
             }
@@ -2144,7 +2144,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "hit": {
+            "hitRate": {
               "value": -30,
               "type": "ADDITIVE"
             }
@@ -2603,7 +2603,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "dodge": {
+            "dodgeRate": {
               "value": 3,
               "type": "ADDITIVE"
             },
@@ -2813,7 +2813,7 @@
               "value": 15,
               "type": "ADDITIVE"
             },
-            "hit": {
+            "hitRate": {
               "value": 10,
               "type": "ADDITIVE"
             }
@@ -2884,7 +2884,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "hit": {
+            "hitRate": {
               "value": -10,
               "type": "ADDITIVE"
             }
@@ -3115,7 +3115,7 @@
         "type": "modifier",
         "params": {
           "attributes": {
-            "dodge": {
+            "dodgeRate": {
               "value": 20,
               "type": "ADDITIVE"
             }

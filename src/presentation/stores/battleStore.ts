@@ -782,8 +782,8 @@ export const useBattleStore = defineStore('battle', () => {
   const forceDodgeOrig = new Map<string, number>()
   const setForceDodge = (on: boolean): void => {
     for (const p of allyTeam.value) {
-      if (on && !forceDodgeOrig.has(p.id)) forceDodgeOrig.set(p.id, p.getAttribute(ATTRIBUTE_CODE.dodge))
-      p.setAttribute(ATTRIBUTE_CODE.dodge, on ? 100 : (forceDodgeOrig.get(p.id) ?? 0))
+      if (on && !forceDodgeOrig.has(p.id)) forceDodgeOrig.set(p.id, p.getAttribute(ATTRIBUTE_CODE.dodgeRate))
+      p.setAttribute(ATTRIBUTE_CODE.dodgeRate, on ? 100 : (forceDodgeOrig.get(p.id) ?? 0))
       if (!on) forceDodgeOrig.delete(p.id)
     }
     battleService.value?.clearUndoHistory() // 绕过快照的状态变更，回退栈失效

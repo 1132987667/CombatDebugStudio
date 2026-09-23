@@ -10,7 +10,7 @@ export class DodgeUpBuff extends BaseBuffScript {
     
     // 提升闪避率
     const dodgeBonus = this.getConfigValue(context, 'dodgeBonus', 20)
-    this.addModifier(context, ATTRIBUTE_CODE.dodge, dodgeBonus, ModifierType.ADDITIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.dodgeRate, dodgeBonus, ModifierType.ADDITIVE)
     
     context.setVariable('dodgeBonus', dodgeBonus)
   }

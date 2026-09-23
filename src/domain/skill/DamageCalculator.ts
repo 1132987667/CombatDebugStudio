@@ -133,8 +133,8 @@ export class DamageCalculator {
       // 计算命中率 = 命中值 / (命中值 + 闪避值) × 100%；分母为 0 时按 0 处理（无对抗基础）
       const denominator = hitValue + dodgeValue
       const baseHitRate = denominator > 0 ? (hitValue / denominator) * 100 : 0
-      const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit)
-      const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge)
+      const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hitRate)
+      const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodgeRate)
       // 命中公式 = 计算命中率 + 命中率 − 闪避率，最小 10%，最高 95%
       const actualHitRate = clamp(baseHitRate + hitRate - dodgeRate, 10, 95)
       if (nextRandom(this.rng) * 100 > actualHitRate) {

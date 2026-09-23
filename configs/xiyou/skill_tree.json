@@ -40,7 +40,7 @@
           "totalValue": 24
         },
         {
-          "attribute": "hit",
+          "attribute": "hitRate",
           "name": "命中",
           "cost": 1,
           "value": 1,
@@ -48,7 +48,7 @@
           "totalValue": 24
         },
         {
-          "attribute": "dodge",
+          "attribute": "dodgeRate",
           "name": "闪避",
           "cost": 1,
           "value": 1,
@@ -752,7 +752,7 @@
           "totalValue": 48
         },
         {
-          "attribute": "hit",
+          "attribute": "hitRate",
           "name": "命中",
           "cost": 2,
           "value": 2,
@@ -760,7 +760,7 @@
           "totalValue": 48
         },
         {
-          "attribute": "dodge",
+          "attribute": "dodgeRate",
           "name": "闪避",
           "cost": 2,
           "value": 2,

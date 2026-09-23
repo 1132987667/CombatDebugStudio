@@ -18,7 +18,7 @@
         ]
       },
       "secondary": {
-        "attr": "hit",
+        "attr": "hitRate",
         "label": "命中",
         "values": [
           16,
@@ -60,7 +60,7 @@
         ]
       },
       "secondary": {
-        "attr": "hit",
+        "attr": "hitRate",
         "label": "命中",
         "values": [
           16,
@@ -186,7 +186,7 @@
         ]
       },
       "secondary": {
-        "attr": "hit",
+        "attr": "hitRate",
         "label": "命中",
         "values": [
           16,
@@ -270,7 +270,7 @@
         ]
       },
       "secondary": {
-        "attr": "hit",
+        "attr": "hitRate",
         "label": "命中",
         "values": [
           16,

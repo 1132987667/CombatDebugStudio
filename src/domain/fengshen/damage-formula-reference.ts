@@ -55,7 +55,7 @@ export const DAMAGE_FORMULA_STEPS: FormulaStep[] = [
   {
     zoneId: 'judge', key: 'actualHit', label: '实际命中率',
     expr: 'clamp(计算命中率 + 命中率 − 闪避率, 10%, 95%)',
-    attrs: ['hit', 'dodge'], prd: '§12', align: 'ok',
+    attrs: ['hitRate', 'dodgeRate'], prd: '§12', align: 'ok',
   },
   {
     zoneId: 'judge', key: 'crit', label: '暴击判定',

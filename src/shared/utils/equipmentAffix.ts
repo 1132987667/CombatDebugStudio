@@ -81,7 +81,7 @@ export const EQUIPMENT_CONFLICT_RULES: EquipmentConflictRule[] = [
   { slot: 'weapon', subType: '重型', halved: ['comboRate'] },
   { slot: 'weapon', subType: '刺', forbidden: ['comboRate', 'comboDamageCoefficient', 'armorBreak', 'vulnerability'] },
   { slot: 'armor', subType: '皮甲', forbidden: ['blockRate'] },
-  { slot: 'armor', subType: '铠甲', forbidden: ['dodge'] },
+  { slot: 'armor', subType: '铠甲', forbidden: ['dodgeRate'] },
   { slot: 'charm', subType: '护符', forbidden: ['critRate', 'critDamage'] },
   { slot: 'boots', subType: '靴子', forbidden: ['critDamage'] },
 ]

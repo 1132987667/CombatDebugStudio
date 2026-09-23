@@ -62,8 +62,8 @@ export const usePlayerStore = defineStore('player', () => {
       [ATTRIBUTE_CODE.critDamage]: player.critDamage,
       [ATTRIBUTE_CODE.comboRate]: playerConfig.base.comboRate ?? 0,
       [ATTRIBUTE_CODE.damageReduction]: playerConfig.base.damageReduction ?? 0,
-      [ATTRIBUTE_CODE.hit]: player.hitRate,
-      [ATTRIBUTE_CODE.dodge]: player.dodgeRate,
+      [ATTRIBUTE_CODE.hitRate]: player.hitRate,
+      [ATTRIBUTE_CODE.dodgeRate]: player.dodgeRate,
       [ATTRIBUTE_CODE.hitValue]: playerConfig.base.hitValue,
       [ATTRIBUTE_CODE.dodgeValue]: playerConfig.base.dodgeValue,
     }
@@ -101,7 +101,7 @@ export const usePlayerStore = defineStore('player', () => {
       side: 'player',
       critRate: attr[ATTRIBUTE_CODE.critRate] ?? player.critRate,
       critDamage: attr[ATTRIBUTE_CODE.critDamage] ?? player.critDamage,
-      dodge: attr[ATTRIBUTE_CODE.dodge] ?? player.dodgeRate,
+      dodge: attr[ATTRIBUTE_CODE.dodgeRate] ?? player.dodgeRate,
       damageReduction: attr[ATTRIBUTE_CODE.damageReduction] ?? 0,
     }
   })

@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ==========================================
 // ⚠️ 自动生成，勿手动编辑
-// 生成时间: 2026-09-22T16:19:14.532Z
+// 生成时间: 2026-09-23T03:03:26.038Z
 // 数据源: configs/attributes/attributes.json
 // 配置修改后请重新运行: npm run generate:attributes
 // ==========================================
@@ -30,8 +30,8 @@ export const ATTRIBUTE_CODE = {
   speedBonus: 'speedBonus',
   hitValue: 'hitValue',
   dodgeValue: 'dodgeValue',
-  dodge: 'dodge',
-  hit: 'hit',
+  dodgeRate: 'dodgeRate',
+  hitRate: 'hitRate',
   controlSuccessRate: 'controlSuccessRate',
   controlDurationReduction: 'controlDurationReduction',
   damageBoost: 'damageBoost',
@@ -307,8 +307,8 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-99999',
     impact: '闪避值越高，基础命中率越低，提高生存能力',
   },
-  dodge: {
-    code: 'dodge',
+  dodgeRate: {
+    code: 'dodgeRate',
     name: '闪避率',
     displayName: '闪避率',
     description: '完全躲避攻击的概率（进阶属性，作为命中公式修正项）',
@@ -317,8 +317,8 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-75%',
     impact: '有概率完全避免受到伤害，命中公式中作为减项',
   },
-  hit: {
-    code: 'hit',
+  hitRate: {
+    code: 'hitRate',
     name: '命中率',
     displayName: '命中率',
     description: '攻击命中目标的概率（进阶属性，作为命中公式修正项）',

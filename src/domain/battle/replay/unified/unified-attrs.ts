@@ -29,8 +29,8 @@ const SHORT_TO_CODE: Record<string, string> = {
   MAX_EN: 'maxEnergy',
   CRIT: 'critRate',
   CDMG: 'critDamage',
-  DODGE: 'dodge',
-  HIT: 'hit',
+  DODGE: 'dodgeRate',
+  HIT: 'hitRate',
   DMG_RED: 'damageReduction',
   RES: 'resist',
 }

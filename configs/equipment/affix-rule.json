@@ -130,7 +130,7 @@
     "cloth_armor": {
       "fixed": "dodgeBonus",
       "random_pool": [
-        "dodge",
+        "dodgeRate",
         "hpRegenPercent",
         "damageReduction",
         "dodgeCoefficient"
@@ -183,14 +183,14 @@
     "cloth_boots": {
       "fixed": "energyGainEfficiency",
       "random_pool": [
-        "dodge",
+        "dodgeRate",
         "hpRegenPercent",
         "energyInit",
         "dodgeBonus"
       ]
     },
     "leather_boots": {
-      "fixed": "dodge",
+      "fixed": "dodgeRate",
       "random_pool": [
         "energyGainEfficiency",
         "dodgeBonus",
@@ -202,7 +202,7 @@
       "random_pool": [
         "trueDamageResist",
         "normalAtkDmgReduction",
-        "dodge",
+        "dodgeRate",
         "skillDmgReduction"
       ]
     }
@@ -251,8 +251,8 @@
       },
       {
         "attributes": [
-          "hit",
-          "dodge",
+          "hitRate",
+          "dodgeRate",
           "lifestealRate",
           "effectHit",
           "controlSuccessRate"
@@ -527,8 +527,8 @@
       },
       {
         "attributes": [
-          "hit",
-          "dodge",
+          "hitRate",
+          "dodgeRate",
           "lifestealRate",
           "effectHit",
           "controlSuccessRate"
@@ -792,7 +792,7 @@
       "attributes": [
         "critRate",
         "critDamage",
-        "hit",
+        "hitRate",
         "comboRate",
         "trueDamageRate",
         "damageBoost",
@@ -907,7 +907,7 @@
         "shieldBonus",
         "healBonus",
         "reflectBonus",
-        "dodge",
+        "dodgeRate",
         "critResist",
         "critDmgTakenReduction",
         "trueDamageResist",
@@ -1034,7 +1034,7 @@
       "attributes": [
         "critRate",
         "critDamage",
-        "hit",
+        "hitRate",
         "comboRate",
         "trueDamageRate",
         "damageBoost",
@@ -1098,7 +1098,7 @@
         "shieldBonus",
         "healBonus",
         "reflectBonus",
-        "dodge",
+        "dodgeRate",
         "critResist",
         "critDmgTakenReduction",
         "trueDamageResist",

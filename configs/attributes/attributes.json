@@ -219,7 +219,7 @@
   },
   {
     "uid": "D1_02",
-    "code": "dodge",
+    "code": "dodgeRate",
     "name": "闪避率",
     "displayName": "闪避率",
     "description": "完全躲避攻击的概率（进阶属性，作为命中公式修正项）",
@@ -230,7 +230,7 @@
   },
   {
     "uid": "D1_01",
-    "code": "hit",
+    "code": "hitRate",
     "name": "命中率",
     "displayName": "命中率",
     "description": "攻击命中目标的概率（进阶属性，作为命中公式修正项）",

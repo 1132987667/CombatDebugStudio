@@ -179,7 +179,7 @@ const SCHOOL_PURE_BONUS: Record<string, { attribute: string; value: number; desc
   lianji: { attribute: 'comboRate', value: 10, desc: '连击率 +10%' },
   pojun: { attribute: 'critDamage', value: 15, desc: '暴击伤害 +15%' },
   budong: { attribute: 'damageReduction', value: 10, desc: '免伤率 +10%' },
-  huanying: { attribute: 'dodge', value: 10, desc: '闪避率 +10%' },
+  huanying: { attribute: 'dodgeRate', value: 10, desc: '闪避率 +10%' },
 }
 
 export const schools: XiyouSchool[] = reactive<XiyouSchool[]>(

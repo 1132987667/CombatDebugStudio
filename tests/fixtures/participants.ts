@@ -22,8 +22,8 @@ export function makeDefaultAttributes(overrides?: Partial<Record<ATTRIBUTE_CODE,
     [ATTRIBUTE_CODE.maxEnergy]: 200,
     [ATTRIBUTE_CODE.critRate]: 0.05,
     [ATTRIBUTE_CODE.critDamage]: 1.5,
-    [ATTRIBUTE_CODE.dodge]: 0,
-    [ATTRIBUTE_CODE.hit]: 1,
+    [ATTRIBUTE_CODE.dodgeRate]: 0,
+    [ATTRIBUTE_CODE.hitRate]: 1,
   }
   return { ...defaults, ...overrides }
 }

@@ -53,8 +53,8 @@ export function computePlayerBase(level: number): Pick<
     critRate: b.critRate,
     critDamage: b.critDamage,
     maxEnergy: b.maxEnergy,
-    hitRate: b.hit,
-    dodgeRate: b.dodge,
+    hitRate: b.hitRate,
+    dodgeRate: b.dodgeRate,
   }
 }
 

@@ -397,7 +397,9 @@ export class DamageCalculator {
         ATTRIBUTE_CODE.critDmgTakenReduction,
       )
       breakdown.critDmgTakenReduction = critReduction
-      if (critReduction > 0) {
+      // NOTE: 负值 = 暴击承伤加深（buffs.json 破绽/暴露依赖），× (1 − 负值/100) 自然放大；
+      // truthy 判断同时挡住 0（无效）与 NaN（mock 实体未定义属性）
+      if (critReduction) {
         const before = damage
         damage = floor(damage * (1 - critReduction / 100))
         breakdown.steps.push({
@@ -406,7 +408,10 @@ export class DamageCalculator {
           before,
           after: damage,
           sourceType: 'skill',
-          description: `暴击承伤减免(${critReduction}%): ${before} → ${damage}`,
+          description:
+            critReduction > 0
+              ? `暴击承伤减免(${critReduction}%): ${before} → ${damage}`
+              : `暴击承伤加深(${critReduction}%): ${before} → ${damage}`,
         })
       }
     }

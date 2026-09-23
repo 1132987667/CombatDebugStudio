@@ -619,6 +619,37 @@ describe('DamageCalculator', () => {
         expect(steps[i].after).toBe(steps[i + 1].before)
       }
     })
+
+    it('负值 critDmgTakenReduction = 暴击承伤加深（破绽/暴露语义）', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      source.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.critRate) return 100
+        if (attr === ATTRIBUTE_CODE.critDamage) return 200
+        return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
+      }
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.critDmgTakenReduction) return -10
+        return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
+      }
+
+      calculator = new DamageCalculator({
+        enableCrit: true,
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+      })
+
+      const context: any = { record: { effects: [] } }
+      const step = createSkillStep({ calculation: { baseValue: 100 } })
+      calculator.calculateDamage(step, source, target, context)
+      const steps = context.record.damageBreakdown.steps
+      const critStep = steps.find((s: { stepName: string }) => s.stepName === 'crit')
+      const reductionStep = steps.find((s: { stepName: string }) => s.stepName === 'critDmgTakenReduction')
+
+      expect(reductionStep).toBeDefined()
+      expect(reductionStep.after).toBe(Math.floor(critStep.after * 1.1))
+      expect(reductionStep.description).toContain('加深')
+    })
   })
 
   describe('config', () => {

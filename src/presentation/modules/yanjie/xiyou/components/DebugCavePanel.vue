@@ -215,7 +215,7 @@ const previewInsts: PetMountInstance[] = (
     { quality: 3, level: 24, aptitude: 410 },
     { quality: 5, level: 45, aptitude: 496 },
   ] as const
-).map(([quality, level, aptitude], i) => ({
+).map(({ quality, level, aptitude }, i) => ({
   uid: `skin_preview_${i}`,
   individualId: 'mount_01',
   kind: 'mount',

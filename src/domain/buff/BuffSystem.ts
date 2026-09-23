@@ -509,7 +509,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const resolvedConfig: BuffConfig = {
       id: config.id ?? scriptDefaultConfig?.id ?? jsonConfig?.id ?? buffId,
       name: scriptDefaultConfig?.name ?? jsonConfig?.name ?? buffId,
-      description: scriptDefaultConfig?.description ?? '',
+      // description 取 resolver 解析值（JSON 显式声明优先，缺失时 resolver 自动生成），
+      // 与 LogTooltipResolver.resolveBuffDescription 同源——否则投影快照描述恒空，
+      // useBuffDisplay 回退成 buff 名（A1 断链）
+      description:
+        scriptDefaultConfig?.description ??
+        this.scriptRegistry.getResolvedBuffConfig(buffId)?.description ??
+        '',
       duration:
         config.duration ??
         scriptDefaultConfig?.duration ??

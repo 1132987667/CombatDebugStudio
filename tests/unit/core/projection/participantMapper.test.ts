@@ -128,6 +128,21 @@ describe('participantToSnapshot', () => {
       expect(snap.buffs.find((b) => b.buffId === 'buff_liejia')?.isNegative).toBe(true)
     })
 
+    // 回归锁定（2026-09-23 A1 修复）：合并链此前不读 JSON description，
+    // 快照描述恒空 → useBuffDisplay 回退成 buff 名，190 条配置描述从未上屏。
+    it('JSON 声明的 description 应透传到快照条目', () => {
+      BattleParticipantImpl.eventBus = mockEventBus as never
+      const p = createParticipantFromEnemy('yaotu_gold', ParticipantSide.ENEMY)
+      if (!p) throw new Error('配置缺失')
+      p.setBuffQuery(buffSystem as never)
+      buffSystem.addBuff(p.id, 'buff_liejia', {}, 1)
+
+      const snap = participantToSnapshot(p as unknown as BattleEntity, buffSystem)
+      const expected = registry.getBuffConfig('buff_liejia')?.description
+      expect(expected).toBeTruthy()
+      expect(snap.buffs.find((b) => b.buffId === 'buff_liejia')?.description).toBe(expected)
+    })
+
     it('perStack=false 的修饰符透传该标志（展示层据此跳过 ×stacks）', () => {
       const cfg = {
         id: 'test_psr_off',

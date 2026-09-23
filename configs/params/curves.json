@@ -1,8 +1,8 @@
 {
   "enemy": {
-    "hp": { "base": 80, "perLevel": 11, "type": "linear" },
-    "atk": { "base": 10, "perLevel": 2.0, "type": "linear" },
-    "def": { "base": 1, "perLevel": 0.9, "type": "linear" },
+    "hp": { "base": 45, "perLevel": 18, "type": "linear" },
+    "atk": { "base": 14.4, "perLevel": 7.2, "type": "linear" },
+    "def": { "base": 3.2, "perLevel": 1.6, "type": "linear" },
     "spd": { "base": 10, "perLevel": 1.2, "type": "linear" }
   }
 }

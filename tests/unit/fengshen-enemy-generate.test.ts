@@ -34,39 +34,39 @@ function realInput(id: string): { id: string; level: number; role?: string } {
 
 describe('expectEnemyStats：模型期望值（手工算样例 + 脚本对拍值）', () => {
   it('L1 小妖：round(模板×小妖系数)', () => {
-    // hp=round(80×1.08)=86 atk=round(10×1.43)=14 def=round(1×2.3)=2 spd=round(10×0.69)=7
+    // hp=round(45×1.0)=45 atk=round(14.4×1.0)=14 def=round(3.2×1.0)=3 spd=round(10×0.69)=7
     // hitValue=round(10×1.0)=10 dodgeValue=round(2.212679×1.0)=2 critRate=round(4.815582)=5 critDamage=round(120.153682)=120
     expect(expectEnemyStats('xiaoyao', 1)).toEqual({
-      maxHealth: 86, attack: 14, defense: 2, speed: 7,
+      maxHealth: 45, attack: 14, defense: 3, speed: 7,
       hitValue: 10, dodgeValue: 2, critRate: 5, critDamage: 120,
       maxEnergy: 150, energyInit: 25,
     })
   })
 
   it('L65 王级（boss_king_* 档）', () => {
-    // hp=round((80+11×64)×3.04)=round(784×3.04)=2383 atk=round((10+2×64)×4.12)=round(138×4.12)=569
-    // def=round((1+0.9×64)×6.31)=round(58.6×6.31)=370 spd=round((10+1.2×64)×1.9)=round(86.8×1.9)=165
+    // hp=round((45+18×64)×20.0)=round(1197×20)=23940 atk=round((14.4+7.2×64)×1.89)=round(475.2×1.89)=898
+    // def=round((3.2+1.6×64)×1.7)=round(105.6×1.7)=180 spd=round((10+1.2×64)×1.9)=round(86.8×1.9)=165
     expect(expectEnemyStats('king', 65)).toEqual({
-      maxHealth: 2383, attack: 569, defense: 370, speed: 165,
+      maxHealth: 23940, attack: 898, defense: 180, speed: 165,
       hitValue: 139, dodgeValue: 84, critRate: 18, critDamage: 152,
       maxEnergy: 150, energyInit: 25,
     })
   })
 
-  it('L70 终局：energyInit 特例 50，超肉低速（与现状 8000/250/120/45 同量级）', () => {
+  it('L70 终局：energyInit 特例 50，超肉低速（hp = 24×SAPhp 线）', () => {
     const s = expectEnemyStats('final', 70)
-    expect(s.maxHealth).toBe(8004)
-    expect(s.attack).toBe(250)
-    expect(s.defense).toBe(120)
+    expect(s.maxHealth).toBe(30888)
+    expect(s.attack).toBe(680)
+    expect(s.defense).toBe(136)
     expect(s.speed).toBe(45)
     expect(s.energyInit).toBe(50)
     expect(s.maxEnergy).toBe(150)
   })
 
   it('L2 妖徒（防御特化档）', () => {
-    // hp=round((80+11)×1.4)=127 atk=round(12×1.87)=22 def=round(1.9×2.99)=6 spd=round(11.2×0.89)=10
+    // hp=round((45+18)×2.93)=185 atk=round(21.6×1.33)=29 def=round(4.8×1.2)=6 spd=round(11.2×0.89)=10
     const s = expectEnemyStats('yaotu', 2)
-    expect([s.maxHealth, s.attack, s.defense, s.speed]).toEqual([127, 22, 6, 10])
+    expect([s.maxHealth, s.attack, s.defense, s.speed]).toEqual([185, 29, 6, 10])
   })
 
   it('全部 7 档 × L1~70 输出恒在健壮性边界内且逐级单调不减', () => {
@@ -116,7 +116,7 @@ describe('rebuildEnemyStats / rebuildAllEnemies：真实配置条目重算', () 
     }
   })
 
-  it('全量 172 条：可重算条目输出十键；沙盒/测试/场景 BOSS 冻结跳过并登记 warning', () => {
+  it('全量重算：可重算条目输出十键；沙盒/测试实体冻结跳过并登记 warning', () => {
     const report = rebuildAllEnemies(realEnemies as never)
     const frozen = realEnemies.filter((e) => FROZEN_IDS(String(e.id)) || !e.role).length
     expect(report.total).toBe(realEnemies.length - frozen)
@@ -163,7 +163,7 @@ describe('rebuildEnemyStats / rebuildAllEnemies：真实配置条目重算', () 
     expect(report.skippedCount).toBe(1)
     expect(report.warnings.length).toBe(2)
     expect(report.entries[0].level).toBe(1)
-    expect(report.entries[0].after.maxHealth).toBe(86)
+    expect(report.entries[0].after.maxHealth).toBe(45)
     expect(report.entries[1].level).toBe(10)
   })
 

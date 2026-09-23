@@ -27,16 +27,21 @@ import enemiesConfigJson from '@configs/enemies/enemies.json'
  */
 export type EnemyTier = 'xiaoyao' | 'yaobing' | 'yaotu' | 'yaokui' | 'yaowang' | 'yaozun' | 'king' | 'final'
 
-/** 档位系数矩阵（实数/模板 中位数，round2；来源 scripts/generate-enemy-design.cjs 拟合输出 = 设计文档 §4 表） */
+/**
+ * 档位系数矩阵（实数/模板 中位数，round2；来源 scripts/generate-enemy-design.cjs 拟合输出 = 设计文档 §4 表）。
+ * 2026-09-23 曲线重定标到 SAP 玩家线（curves.json hp{45,18}/atk{14.4,7.2}/def{3.2,1.6} = 0.75/0.90/0.20×玩家线），
+ * hp/atk/def 系数 = §25 目标比例 ÷ 基准比例（如小妖 hp 0.75/0.75 = 1.0、妖魁 6.0/0.75 = 8.0）；
+ * speed/hitValue/dodgeValue 无平衡断言，沿用旧档位结构。
+ */
 export const ENEMY_TIER_COEF: Record<EnemyTier, EnemyCoefRow> = {
-  xiaoyao: { maxHealth: 1.08, attack: 1.43, defense: 2.3, speed: 0.69, hitValue: 1.0, dodgeValue: 1.0 },
-  yaobing: { maxHealth: 1.23, attack: 1.63, defense: 2.65, speed: 0.77, hitValue: 1.0, dodgeValue: 1.08 },
-  yaotu: { maxHealth: 1.4, attack: 1.87, defense: 2.99, speed: 0.89, hitValue: 1.0, dodgeValue: 1.19 },
-  yaokui: { maxHealth: 1.94, attack: 2.58, defense: 4.13, speed: 1.21, hitValue: 1.03, dodgeValue: 1.43 },
-  yaowang: { maxHealth: 2.38, attack: 3.21, defense: 5.18, speed: 1.57, hitValue: 1.02, dodgeValue: 1.59 },
-  yaozun: { maxHealth: 2.71, attack: 3.67, defense: 5.64, speed: 1.71, hitValue: 1.02, dodgeValue: 1.56 },
-  king: { maxHealth: 3.04, attack: 4.12, defense: 6.31, speed: 1.9, hitValue: 1.01, dodgeValue: 1.56 },
-  final: { maxHealth: 9.54, attack: 1.69, defense: 1.9, speed: 0.48, hitValue: 1.01, dodgeValue: 1.55 },
+  xiaoyao: { maxHealth: 1.0, attack: 1.0, defense: 1.0, speed: 0.69, hitValue: 1.0, dodgeValue: 1.0 },
+  yaobing: { maxHealth: 1.2, attack: 1.11, defense: 1.1, speed: 0.77, hitValue: 1.0, dodgeValue: 1.08 },
+  yaotu: { maxHealth: 2.93, attack: 1.33, defense: 1.2, speed: 0.89, hitValue: 1.0, dodgeValue: 1.19 },
+  yaokui: { maxHealth: 8.0, attack: 1.5, defense: 1.34, speed: 1.21, hitValue: 1.03, dodgeValue: 1.43 },
+  yaowang: { maxHealth: 12.0, attack: 1.67, defense: 1.5, speed: 1.57, hitValue: 1.02, dodgeValue: 1.6 },
+  yaozun: { maxHealth: 16.0, attack: 1.83, defense: 1.6, speed: 1.71, hitValue: 1.02, dodgeValue: 1.56 },
+  king: { maxHealth: 20.0, attack: 1.89, defense: 1.7, speed: 1.9, hitValue: 1.01, dodgeValue: 1.56 },
+  final: { maxHealth: 24.0, attack: 1.33, defense: 1.2, speed: 0.48, hitValue: 1.01, dodgeValue: 1.55 },
 }
 
 interface EnemyCoefRow {
@@ -180,12 +185,11 @@ export type EnemyStatsRow = {
   stats?: Record<string, number | undefined>
 }
 
-/** 沙盒/测试/场景 BOSS 实体冻结：yaotu_* 五行护法是 TTK 断言（A5）的我方基准与 ACTORS 派生源，
- *  test_* 是战斗机制测试靶子（数值与测试断言绑定），
- *  boss_major_*（五大场景 BOSS）数值为场景设计值——
- *  重算产物只回写 enemies.json，覆盖它们会造成 IDB 与 configs 权威漂移。一律跳过 */
-export const FROZEN_IDS = (id: string) =>
-  id.startsWith('yaotu_') || id.startsWith('test_') || id.startsWith('boss_major_')
+/** 沙盒/测试实体冻结：yaotu_* 五行护法是 TTK 断言（A5）我方基准的派生源与沙盒实体，
+ *  test_* 是战斗机制测试靶子（数值与测试断言绑定）。
+ *  boss_major_*（五大场景 BOSS）2026-09-23 起为生成模型精确值（rebase-enemies-to-sap f=1），
+ *  不再冻结——重算产物与 configs 仅存拟合系数 round2 引入的圆整级偏差，可用重算 diff 兜住两者漂移。 */
+export const FROZEN_IDS = (id: string) => id.startsWith('yaotu_') || id.startsWith('test_')
 
 /** 全量重算：逐只产出 before/after，纯函数不写库（写回由调用方走 FengshenDataService）。
  *  role 缺失/非法且非特殊档的记录**跳过**（生成模型先决条件 §3.8 assert role ∈ 五档；
@@ -205,11 +209,7 @@ export function rebuildAllEnemies(rows: EnemyStatsRow[]): EnemyStatsRebuildRepor
     if (FROZEN_IDS(row.id)) {
       const kind = row.id.startsWith('yaotu_')
         ? '五行护法沙盒基准（TTK 我方/ACTORS 派生源）'
-        : row.id.startsWith('test_')
-          ? '战斗测试靶子'
-          : row.id.startsWith('boss_major_')
-            ? '场景 BOSS（设计值）'
-            : '旧体系章节守护者（沙盒实体）'
+        : '战斗测试靶子'
       warnings.push(`${row.id}（${row.name ?? '无名'}）为${kind}，数值冻结，已跳过重算`)
       skippedCount++
       continue

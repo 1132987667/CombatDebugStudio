@@ -35,24 +35,26 @@ const WRITE = process.argv.includes('--write')
 // 数据装载
 // ---------------------------------------------------------------------------
 
-// boss_major_* 定义权威 = configs/enemies/enemies.json 同名条目（曾外置 bosses.json，该文件已归档至 configs/expired/bosses-expired.json），
-// 但其归档样本仍是 yaowang 档系数拟合与 A4 存在域的现状样本，再生时并入拟合池保持口径不变
+// boss_major_* 曾外置 bosses.json（已归档 configs/expired/enemies-expired.json）。
+// 曲线重定标后主表条目 = 生成模型精确值（SAP 线 × 目标比例，f=1），参与拟合与断言；
+// 归档版为旧场景设计值（旧曲线口径），剥离出样本集，防止同名 id 双份进拟合池
 const ARCHIVED_ENEMIES_FILE = path.join(ROOT, 'configs', 'expired', 'enemies-expired.json')
-// 归档条目打来源标记：同名 id（如 boss_major_*）归档版为模型贴合样本（参与拟合），
-// 主表版为场景设计值/沙盒冻结值（剥离出断言样本集）
 const archivedEnemies = (fs.existsSync(ARCHIVED_ENEMIES_FILE) ? JSON.parse(fs.readFileSync(ARCHIVED_ENEMIES_FILE, 'utf8')) : [])
   .map((e) => ({ ...e, __archived: true }))
-const frozenPrefixes = ['yaotu_', 'boss_major_', 'test_']
+// 剥离规则：沙盒玩家实体（yaotu_）与测试靶子（test_）不归生成模型管辖，双向剥离；
+// boss_major_* 只取主表（模型精确值），归档旧值剥离
+const frozenPrefixes = ['yaotu_', 'test_']
 const allEnemies = [
   ...JSON.parse(fs.readFileSync(ENEMIES_FILE, 'utf8')),
   ...archivedEnemies,
 ]
-const enemies = allEnemies.filter((e) => !(frozenPrefixes.some((p) => String(e.id).startsWith(p)) && !e.__archived))
-// 主表冻结条目（沙盒护法 / 测试靶子 / 场景 BOSS 设计值）不归生成模型管辖：
-// 剥离出断言样本集（与合并前口径一致）；yaotu_* 仍作为 A5 TTK 的我方基准单独取用。
-// 归档条目（expired）与主表同名 id 时语义不同：如 boss_major_* 归档版为模型贴合样本，保留参与拟合。
+const enemies = allEnemies.filter((e) => {
+  const id = String(e.id)
+  if (frozenPrefixes.some((p) => id.startsWith(p))) return false
+  if (id.startsWith('boss_major_') && e.__archived) return false
+  return true
+})
 const curves = JSON.parse(fs.readFileSync(CURVES_FILE, 'utf8'))
-const oldEnemies = allEnemies.filter((e) => String(e.id).startsWith('yaotu_'))
 const affixes = JSON.parse(fs.readFileSync(AFFIXES_FILE, 'utf8'))
 // 奖励种子已抽到 domain 层单一来源（seed.ts 仅引用）：entries ← exp-reward.ts，倍率 ← role-grades.ts
 const expRewardSrc = fs.readFileSync(EXP_REWARD_FILE, 'utf8')
@@ -248,12 +250,15 @@ function simCombat(foes, allies, seed = 1) {
   return { turns: turn, alliesWin: allies.some((a) => a.alive) && !foes.some((f) => f.alive) }
 }
 
-// 主角团基准：enemies.json 的 yaotu_*（沙盒玩家实体，L10 固定值，数值冻结）（沙盒玩家实体，L10 固定值）
-const heroes = {}
-for (const e of oldEnemies.filter((e) => String(e.id).startsWith('yaotu_'))) {
-  heroes[e.id] = { hp: e.stats.maxHealth, atk: e.stats.attack, def: e.stats.defense, spd: e.stats.speed }
-}
-const mkHero = (id) => ({ id, ...heroes[id], alive: true })
+// 我方基准 = SAP 裸线小队（player.json base + growth，不含加点/装备/丹药，computePlayerBase 同式）
+const mkSapHero = (id, L) => ({
+  id,
+  hp: playerBase('maxHealth', L),
+  atk: playerBase('attack', L),
+  def: playerBase('defense', L),
+  spd: playerBase('speed', L),
+  alive: true,
+})
 const mkModelFoe = (tier, L) => {
   const s = expectStats(tier, L)
   return { id: `${tier}#L${L}`, hp: s.maxHealth, atk: s.attack, def: s.defense, spd: s.speed, alive: true }
@@ -299,30 +304,33 @@ for (const [k, list] of Object.entries(outliers)) {
   assert(list.length <= OUTLIER_ALLOWANCE, `A3 拟合离群超限 ${k}: ${list.length} 只 > ${OUTLIER_ALLOWANCE}（${list.slice(0, 5).join('; ')}）`)
 }
 
-// A4 玩家对标带宽（对标基准 = computePlayerBase：base + (L−1)×growth，不含自由点/装备）
-// 带宽锚点来自现状实数：L10 小妖血量 70%、L50 小妖血量 54%
+// A4 玩家对标（带宽 = §25 击杀回合带反推的目标比例 + 拟合/圆整余量；基准 = computePlayerBase 裸线）
+// 目标比例：小妖 hp 75%（2~3 回合全歼）、妖徒 220%（4~6）、Boss 档 600~1800%（8~12）
 const ratioToPlayer = (tier, L, statKey, playerAttr) => (expectStats(tier, L)[statKey] / playerBase(playerAttr, L)) * 100
 const inBand = (v, lo, hi) => v >= lo && v <= hi
-assert(inBand(ratioToPlayer('xiaoyao', 10, 'maxHealth', 'maxHealth'), 60, 85),
-  `A4 L10 小妖血量/玩家超出 [60%,85%]: ${ratioToPlayer('xiaoyao', 10, 'maxHealth', 'maxHealth').toFixed(0)}%`)
-assert(inBand(ratioToPlayer('xiaoyao', 50, 'maxHealth', 'maxHealth'), 45, 65),
-  `A4 L50 小妖血量/玩家超出 [45%,65%]: ${ratioToPlayer('xiaoyao', 50, 'maxHealth', 'maxHealth').toFixed(0)}%`)
-// BOSS 档在其存在域内血量必须 ≥ 玩家同等级的 95%（低于则 BOSS 缺乏威胁）
-for (const tier of ['yaokui', 'yaowang', 'yaozun']) {
-  const { min, max } = LEVEL_RANGE[tier]
-  for (let L = min; L <= max; L++) {
-    assert(ratioToPlayer(tier, L, 'maxHealth', 'maxHealth') >= 95,
-      `A4 L${L} ${tier} 血量低于玩家 95%: ${ratioToPlayer(tier, L, 'maxHealth', 'maxHealth').toFixed(0)}%`)
+for (const L of [10, 20, 30, 40, 50]) {
+  assert(inBand(ratioToPlayer('xiaoyao', L, 'maxHealth', 'maxHealth'), 70, 120),
+    `A4 L${L} 小妖血量/玩家超出 [70%,120%]: ${ratioToPlayer('xiaoyao', L, 'maxHealth', 'maxHealth').toFixed(0)}%`)
+}
+for (const L of [10, 30, 50]) {
+  assert(inBand(ratioToPlayer('yaotu', L, 'maxHealth', 'maxHealth'), 200, 400),
+    `A4 L${L} 妖徒血量/玩家超出 [200%,400%]: ${ratioToPlayer('yaotu', L, 'maxHealth', 'maxHealth').toFixed(0)}%`)
+}
+for (const tier of ['yaokui', 'yaowang', 'yaozun', 'king', 'final']) {
+  for (let L = 1; L <= 70; L++) {
+    assert(inBand(ratioToPlayer(tier, L, 'maxHealth', 'maxHealth'), 590, 1850),
+      `A4 L${L} ${tier} 血量/玩家超出 [590%,1850%]: ${ratioToPlayer(tier, L, 'maxHealth', 'maxHealth').toFixed(0)}%`)
   }
 }
-for (const [tier, cap] of [['xiaoyao', 100], ['yaobing', 105], ['yaotu', 110]]) {
-  const { min, max } = LEVEL_RANGE[tier]
-  for (let L = min; L <= max; L++) {
-    assert(ratioToPlayer(tier, L, 'attack', 'attack') <= cap, `A4 L${L} ${tier} 攻击高于玩家攻击 ${cap}%`)
-  }
+for (const [tier, lo, hi] of [['xiaoyao', 0, 105], ['yaobing', 0, 105], ['yaotu', 110, 160], ['yaokui', 110, 175], ['yaowang', 130, 175], ['yaozun', 140, 175], ['king', 140, 180], ['final', 100, 175]]) {
+  assert(inBand(ratioToPlayer(tier, 50, 'attack', 'attack'), lo, hi),
+    `A4 L50 ${tier} 攻击/玩家超出 [${lo}%,${hi}%]: ${ratioToPlayer(tier, 50, 'attack', 'attack').toFixed(0)}%`)
 }
 
-// A5 TTK：前期域（普攻减法模型有效域）节奏断言
+// A5 TTK：SAP 裸线小队 vs 模型期望怪（确定性普攻减法模拟，含我方减员——
+// 无技能/治疗，实测带比 §25 连续 dps 估算带偏长 ~1.5 倍，口径差异见注释）
+// 场景覆盖 §25 回合带全段：普通(2~3 全歼)/精英(4~6)/小 Boss(6~8)/大 Boss(8~12)，
+// 以及大 Boss 战长度下限（裸线险胜/惨败均可，胜负不作要求——需养成才能碾压）
 function runTtk(label, foes, allies, min, max, mustWin) {
   const r = simCombat(foes, allies)
   assert(r.turns >= min && r.turns <= max, `A5 TTK ${label}: ${r.turns} 回合超出 [${min},${max}]`)
@@ -330,15 +338,16 @@ function runTtk(label, foes, allies, min, max, mustWin) {
   return r
 }
 const ttkResults = []
-ttkResults.push(['1v1 fire vs 小妖L5', 1, ['xiaoyao', 5], ['yaotu_fire'], 4, 14, true])
-ttkResults.push(['1v1 fire vs 小妖L10', 1, ['xiaoyao', 10], ['yaotu_fire'], 4, 14, true])
-ttkResults.push(['1v1 fire vs 妖徒L10', 1, ['yaotu', 10], ['yaotu_fire'], 4, 14, true])
-ttkResults.push(['1v1 fire vs 妖魁L6', 1, ['yaokui', 6], ['yaotu_fire'], 6, 12, true])
-ttkResults.push(['4v4 vs L5章节末(2小妖+妖徒)', 4, [['xiaoyao', 5], ['xiaoyao', 5], ['yaotu', 5]], ['yaotu_fire', 'yaotu_gold', 'yaotu_wood', 'yaotu_water'], 3, 10, true])
-ttkResults.push(['4v4 vs L10精英(小妖+2妖徒)', 4, [['xiaoyao', 10], ['yaotu', 10], ['yaotu', 10]], ['yaotu_fire', 'yaotu_gold', 'yaotu_wood', 'yaotu_water'], 4, 12, true])
-const ttkRows = ttkResults.map(([label, mode, foeSpec, heroIds, min, max, mustWin]) => {
+ttkResults.push(['1v1 SAP-L10 vs 小妖L10', 1, ['xiaoyao', 10], [[10, 'a']], 2, 6, true])
+ttkResults.push(['1v1 SAP-L30 vs 小妖L30', 1, ['xiaoyao', 30], [[30, 'a']], 2, 6, true])
+ttkResults.push(['1v1 SAP-L50 vs 小妖L50', 1, ['xiaoyao', 50], [[50, 'a']], 2, 6, true])
+ttkResults.push(['4v4 SAP-L10 普通关末节(2小妖+妖徒L10)', 4, [['xiaoyao', 10], ['xiaoyao', 10], ['yaotu', 10]], [[10, 'a'], [10, 'b'], [10, 'c'], [10, 'd']], 3, 8, true])
+ttkResults.push(['4v4 SAP-L30 精英战(小妖+2妖徒L30)', 4, [['xiaoyao', 30], ['yaotu', 30], ['yaotu', 30]], [[30, 'a'], [30, 'b'], [30, 'c'], [30, 'd']], 5, 10, true])
+ttkResults.push(['4v4 SAP-L50 妖魁关末节(2小妖+妖魁L50)', 4, [['xiaoyao', 50], ['xiaoyao', 50], ['yaokui', 50]], [[50, 'a'], [50, 'b'], [50, 'c'], [50, 'd']], 7, 14, true])
+ttkResults.push(['4v4 SAP-L50 vs 妖王L50(Boss战长度下限)', 4, [['yaowang', 50]], [[50, 'a'], [50, 'b'], [50, 'c'], [50, 'd']], 8, 18, false])
+const ttkRows = ttkResults.map(([label, mode, foeSpec, heroSpecs, min, max, mustWin]) => {
   const foes = mode === 1 ? [mkModelFoe(...foeSpec)] : foeSpec.map(([t, L]) => mkModelFoe(t, L))
-  const r = runTtk(label, foes, heroIds.map(mkHero), min, max, mustWin)
+  const r = runTtk(label, foes, heroSpecs.map(([L, id]) => mkSapHero(id, L)), min, max, mustWin)
   return { label, turns: r.turns, win: r.alliesWin }
 })
 
@@ -409,19 +418,20 @@ for (const role of ROLES) {
   rewardGap[role] = { exp: median(expR), gold: median(goldR), n: pool.length }
 }
 
-// 破防悬崖报告：各档位 def 首次超过「主角最低攻击×0.85」的等级（普攻减法模型失效边界）
-const BREAK_WALL = 34 // yaotu_earth atk40 × 0.85
-const wallRows = [...ROLES].map((role) => {
-  for (let L = 1; L <= 70; L++) if (expectStats(role, L).defense > BREAK_WALL) return { role, at: L }
-  return { role, at: null }
+// 破防悬崖检查（旧模型专有问题）：旧曲线 def 独立成长，越过「主角攻×0.85」后普攻被减法防御
+// 完全吞掉。重定标后敌 def 占同等级玩家攻的 20%~34%（TARGET.defense），敌 def/敌攻 比恒 ≈0.20，
+// 普攻下限 0.85×玩家攻 − 0.34×玩家攻 = 0.51×玩家攻 > 0 恒成立 → 悬崖在全等级域不再出现。
+const defAtkRows = [...ROLES, ...SPECIAL_TIERS.map((t) => t.key)].map((tier) => {
+  const s = expectStats(tier, 50)
+  return { tier, ratio: s.defense / s.attack, toPlayerAtk: s.defense / playerBase('attack', 50) }
 })
 
 // ---------------------------------------------------------------------------
 // 报告输出
 // ---------------------------------------------------------------------------
 
-console.log('=== 敌人生成模型拟合报告 ===')
-console.log(`敌人 124 只（enemies.json）｜曲线中枢 curves.json｜玩家成长线 configs/xiyou/player.json`)
+console.log(`=== 敌人生成模型拟合报告 ===`)
+console.log(`敌人 ${JSON.parse(fs.readFileSync(ENEMIES_FILE, 'utf8')).length} 只（enemies.json）｜曲线中枢 curves.json｜玩家成长线 configs/xiyou/player.json`)
 console.log('\n-- 品阶系数矩阵（实数/模板 中位数） --')
 const coefHeader = ['档位', ...STAT_KEYS].join('\t')
 console.log(coefHeader)
@@ -458,8 +468,8 @@ for (let L = 1; L <= 50; L += 7) console.log(`L${L}: ${killsAt(L).toFixed(1)} �
 console.log('\n-- 奖励现状偏差（enemy.exp/money 实数 ÷ 基准×roleMult，中位；warning 不阻断） --')
 for (const [role, g] of Object.entries(rewardGap)) console.log(`${ROLE_LABEL[role]}: exp×${g.exp.toFixed(2)} gold×${g.gold.toFixed(2)} (n=${g.n})`)
 
-console.log('\n-- 破防悬崖边界（def > 34 = 主角最低攻×0.85 的首发等级） --')
-for (const w of wallRows) console.log(`${ROLE_LABEL[w.role]}: L${w.at ?? '>70'}`)
+console.log('\n-- 敌人 def/攻 比（L50 期望；「破防悬崖」在新曲线下不存在） --')
+for (const w of defAtkRows) console.log(`${ROLE_LABEL[w.tier] ?? w.tier}: def/攻 ${w.ratio.toFixed(2)}｜def/玩家攻 ${(w.toPlayerAtk * 100).toFixed(0)}%`)
 
 if (Object.keys(outliers).length) {
   console.log('\n-- 拟合离群清单（超出容差，计入 A3 白名单容量） --')
@@ -525,7 +535,7 @@ if (WRITE) {
   md.push('')
 
   md.push('### 玩家对标比例表（模型期望 ÷ computePlayerBase，%）', '')
-  md.push('> 玩家基准 = base + (L−1)×growth（不含自由点/装备，下界口径）。小妖血量比例随等级单调衰减并趋近 11/24 ≈ 46%（敌人血成长 11/级 ÷ 玩家 24/级），后期强度差由品阶系数、词缀与阵容规模弥补。', '')
+  md.push('> 玩家基准 = base + (L−1)×growth（不含自由点/装备，下界口径）。敌人曲线与玩家线同斜率重定标（hp{45,18} = 0.75×SAPhp），小妖血量比例恒定 75%，各档位比例不随等级漂移；后期强度差由品阶系数、词缀与阵容规模弥补。', '')
   md.push('| 等级 | 小妖血 | 妖徒血 | 妖魁血 | 妖王血 | 妖尊血 | 小妖攻 | 妖徒攻 | 小妖防 |')
   md.push('| --- | --- | --- | --- | --- | --- | --- | --- | --- |')
   for (let L = 5; L <= 70; L += 5) {
@@ -543,12 +553,12 @@ if (WRITE) {
   }
   md.push('')
 
-  md.push('### TTK 模拟（普攻减法模型有效域）', '')
+  md.push('### TTK 模拟（SAP 裸线小队，确定性普攻减法模拟）', '')
   md.push('| 对局 | 回合数 | 结果 |')
   md.push('| --- | --- | --- |')
   for (const r of ttkRows) md.push(`| ${r.label} | ${r.turns} | ${r.win ? '我方胜' : '我方败'} |`)
   md.push('')
-  md.push(`破防悬崖边界（def 超过主角最低攻×0.85 = ${BREAK_WALL} 的首发等级）：${wallRows.map((w) => `${ROLE_LABEL[w.role]} L${w.at ?? '>70'}`).join('、')}。此后普攻减法模型失效，输出依赖技能倍率与装备成长。`, '')
+  md.push(`敌人 def 对标（L50 期望）：${defAtkRows.map((w) => `${ROLE_LABEL[w.tier] ?? w.tier} def/攻 ${w.ratio.toFixed(2)}、def/玩家攻 ${(w.toPlayerAtk * 100).toFixed(0)}%`).join('；')}。敌 def 占同等级玩家攻的 20%~34%（随档位递增），普攻下限 0.85×玩家攻 − 0.34×玩家攻 = 0.51×玩家攻 > 0 恒成立 → 旧减法模型的「破防悬崖」在全等级域不再出现。`, '')
 
   md.push('### 升级所需同等级击杀数（exp_table ÷ (基准exp×roleMult)）', '')
   md.push('| 等级 | ' + Array.from({ length: 8 }, (_, i) => 1 + i * 7).join(' | ') + ' |')

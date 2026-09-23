@@ -14,6 +14,7 @@ import {
   ATTRIBUTE_DICTIONARY,
   getCoreAttributes,
   getAttributeDict,
+  compareAttributeDisplayOrder,
 } from '@/domain/fengshen/attribute-dictionary'
 
 const jsonCodes = (attributesData as Array<{ code: string }>).map((r) => r.code)
@@ -64,5 +65,23 @@ describe('属性权威字典', () => {
     expect(getAttributeDict('damageTakenIncrease')).toBeUndefined()
     // critDamageTaken 已彻底废弃（与暴伤减免重叠、引擎读取语义相反），定义在 configs/expired/attributes-expired.json
     expect(getAttributeDict('critDamageTaken')).toBeUndefined()
+  })
+
+  it('展示顺序：基础六维为核心属性前 6 项（聚合面板基础属性在前的单源）', () => {
+    const six = ['maxHealth', 'attack', 'defense', 'hitValue', 'dodgeValue', 'speed']
+    expect(getCoreAttributes().slice(0, 6).map((e) => e.code)).toEqual(six)
+  })
+
+  it('展示顺序比较器：基础 < 同组派生 < 后续分组，未登记 code 兜底最后', () => {
+    // 基础六维 → 其 L2 派生（加成）→ 其他分组（输出转化）
+    expect(compareAttributeDisplayOrder('attack', 'attackBonus')).toBeLessThan(0)
+    expect(compareAttributeDisplayOrder('attackBonus', 'critRate')).toBeLessThan(0)
+    expect(compareAttributeDisplayOrder('speed', 'maxHealth')).toBeGreaterThan(0)
+    // 未登记 code 排在所有已登记之后；未登记之间按拼音
+    expect(compareAttributeDisplayOrder('attack', 'unknownCode')).toBeLessThan(0)
+    expect(compareAttributeDisplayOrder('unknownCode', 'attack')).toBeGreaterThan(0)
+    expect(compareAttributeDisplayOrder('unknownA', 'unknownB')).not.toBe(0)
+    // 相同 code 恒等
+    expect(compareAttributeDisplayOrder('attack', 'attack')).toBe(0)
   })
 })

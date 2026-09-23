@@ -204,3 +204,21 @@ export function getCoreAttributes(): AttributeDictEntry[] {
 export function getArchivedAttributes(): AttributeDictEntry[] {
   return ATTRIBUTE_DICTIONARY.filter((e) => !e.numeric)
 }
+
+/** 展示序号 = 字典枚举位次（基础六维在前，组内 L1→L4，分组按 CORE_CATEGORY_ORDER） */
+const DICT_ORDER_BY_CODE = new Map<string, number>(
+  ATTRIBUTE_DICTIONARY.map((e, i) => [e.code, i]),
+)
+
+/**
+ * 属性展示顺序比较器：聚合面板（装备总属性等）统一用它排序，不按拼音。
+ * 字典未登记的 code 兜底排最后（彼此按拼音），保证新增属性不丢只是靠后。
+ */
+export function compareAttributeDisplayOrder(a: string, b: string): number {
+  const ia = DICT_ORDER_BY_CODE.get(a)
+  const ib = DICT_ORDER_BY_CODE.get(b)
+  if (ia !== undefined && ib !== undefined) return ia - ib
+  if (ia !== undefined) return -1
+  if (ib !== undefined) return 1
+  return a.localeCompare(b, 'zh')
+}

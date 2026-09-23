@@ -572,6 +572,24 @@
   color: var(--xy-seal);
 }
 
+/* 印章红操作按钮（坊市/养成通用；原先定义在 PackPane scoped 内，
+   跨组件使用处拿不到样式，提升到全局） */
+.xy-shop-buy {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--xy-seal);
+  border-radius: 2px;
+  background: var(--xy-seal-soft);
+  color: var(--xy-seal);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+
+  &:hover {
+    background: var(--xy-seal);
+    color: var(--xy-on-seal);
+  }
+}
+
 /* 双列卡片网格 */
 .xy-card-grid {
   display: grid;

@@ -1,30 +1,14 @@
 <template>
   <div>
     <h5 class="xy-cave-sec">选择装备</h5>
-    <div class="xy-cave-enh-grid">
-      <button
-        v-for="(g, i) in gears"
-        :key="g.slot"
-        type="button"
-        class="xy-cave-card xy-cave-enh-slot"
-        :class="{ 'is-selected': idx === i }"
-        :disabled="!usable(g)"
-        @click="selectGear(i)"
-      >
-        <span class="xy-cave-enh-slot__meta">
-          <span class="xy-cave-enh-slot__item">{{ g.item }}</span>
-          <span class="xy-cave-enh-slot__lv">{{ qualityName(g.quality) }} · {{ g.slotLabel }}</span>
-        </span>
-        <p class="xy-cave-enh-slot__effect">{{ washable(g).length }} 条词条</p>
-      </button>
-      <p v-if="gears.length === 0" class="xy-cave-enh-empty">尚未穿戴任何装备</p>
-    </div>
+    <!-- 全部装备（已穿戴 + 背包）按部位分组，卡片与装备页背包池同款 -->
+    <GearPicker v-model="selectedId" />
 
-    <template v-if="gear">
+    <template v-if="gearInst">
       <h5 class="xy-cave-sec">附加词条（{{ washModes.directed ? '点选一条作为定向/锁词条目标' : '定向/锁词条需精/超品质' }}）</h5>
       <div class="xy-cave-wash-affixes">
         <button
-          v-for="(a, i) in washable(gear)"
+          v-for="(a, i) in washable(gearInst)"
           :key="`${a.attribute}:${a.modifierType}:${i}`"
           type="button"
           class="xy-cave-wash-affix"
@@ -42,6 +26,7 @@
         >
           {{ affixText(r) }}
         </span>
+        <span v-if="washable(gearInst).length === 0" class="xy-cave-wash-diff-note">该装备没有可洗练的附加词条</span>
       </div>
       <p v-if="removedAffixes.length" class="xy-cave-wash-diff-note">删除线为本次洗练被替换掉的旧词条</p>
 
@@ -76,9 +61,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+/** 洗练面板：选择交给 GearPicker（全背包），本面板只做洗练操作区（词条点选/diff 高亮/三种洗练） */
+import { computed, ref, watch } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey, type GearAffix } from '@/presentation/stores/packStore'
+import { usePackStore, type GearAffix, type GearInstance } from '@/presentation/stores/packStore'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import {
   WASH_COST_GOLD,
@@ -87,60 +73,35 @@ import {
   washAllowed,
   type WashMode,
 } from '../../caveLogic'
-
-/** 洗练槽位视图（真实穿戴实例） */
-interface WashGearView {
-  slot: GearSlotKey
-  slotLabel: string
-  item: string
-  quality: number
-  affixes: GearAffix[]
-}
+import GearPicker from './GearPicker.vue'
 
 const pack = usePackStore()
 const notification = useNotificationStore()
 
-const idx = ref(-1)
+const selectedId = ref<string | null>(null)
 const targetIdx = ref(-1)
+const rippling = ref(false)
+const shaking = ref(false)
 
-const gears = computed<WashGearView[]>(() =>
-  (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
-    .filter((slot) => pack.equippedGear(slot))
-    .map((slot) => {
-      const inst = pack.equippedInstance(slot) as NonNullable<ReturnType<typeof pack.equippedInstance>>
-      return {
-        slot,
-        slotLabel: GEAR_SLOT_LABELS[slot],
-        item: (pack.equippedGear(slot) as { name: string }).name,
-        quality: inst.quality,
-        affixes: inst.affixes,
-      }
-    }),
+/** 切换选中装备时，词条目标与上一次 diff 失效 */
+watch(selectedId, () => {
+  targetIdx.value = -1
+  lastWashDiff.value = null
+})
+
+const gearInst = computed<GearInstance | null>(() =>
+  selectedId.value ? pack.gearInstanceById(selectedId.value) : null,
 )
 
 /** 可洗练的附加词条（§21：主要属性 fixed 第 1 条 / main 第 2 条不参与洗练，index 与 washGear 的附加下标一致） */
-function washable(g: WashGearView): GearAffix[] {
-  return g.affixes.filter((a) => !a.fixed && !a.main)
+function washable(inst: GearInstance): GearAffix[] {
+  return inst.affixes.filter((a) => !a.fixed && !a.main)
 }
-
-function usable(g: WashGearView): boolean {
-  return washable(g).length > 0
-}
-
-const gear = computed<WashGearView | null>(() => (idx.value >= 0 ? gears.value[idx.value] ?? null : null))
-
-function selectGear(i: number): void {
-  idx.value = i
-  targetIdx.value = -1
-  lastWashDiff.value = null
-}
-
-const qualityName = (q: number): string => ({ 1: '凡', 2: '精', 3: '超', 4: '绝', 5: '神' })[q] ?? `品质${q}`
 
 const washModes = computed(() => ({
-  normal: washAllowed('normal', gear.value?.quality ?? 1),
-  directed: washAllowed('directed', gear.value?.quality ?? 1),
-  locked: washAllowed('locked', gear.value?.quality ?? 1),
+  normal: washAllowed('normal', gearInst.value?.quality ?? 1),
+  directed: washAllowed('directed', gearInst.value?.quality ?? 1),
+  locked: washAllowed('locked', gearInst.value?.quality ?? 1),
 }))
 
 function matCount(mode: WashMode): number {
@@ -152,18 +113,18 @@ function hasMat(mode: WashMode): boolean {
 const hasGold = computed(() => pack.currency.money >= WASH_COST_GOLD)
 
 function canWash(mode: WashMode): boolean {
-  if (!gear.value || !washModes.value[mode] || !hasGold.value || !hasMat(mode)) return false
+  if (!gearInst.value || !washModes.value[mode] || !hasGold.value || !hasMat(mode)) return false
   if (mode !== 'normal') return targetIdx.value >= 0
   return true
 }
 
 function doWash(mode: WashMode): void {
-  const g = gear.value
-  if (!g || !canWash(mode)) return
+  const inst = gearInst.value
+  if (!inst || !canWash(mode)) return
   // 洗练前快照:词条键(attribute|modifierType) → 旧值,供洗练后 diff 高亮
   const before = new Map<string, number>()
-  for (const a of washable(g)) before.set(affixKey(a), a.value)
-  const ok = pack.washGear(g.slot, mode, targetIdx.value)
+  for (const a of washable(inst)) before.set(affixKey(a), a.value)
+  const ok = pack.washGear(inst.instanceId, mode, targetIdx.value)
   if (ok) {
     computeWashDiff(before)
     rippling.value = true
@@ -173,9 +134,6 @@ function doWash(mode: WashMode): void {
     window.setTimeout(() => { shaking.value = false }, 400)
   }
 }
-
-const rippling = ref(false)
-const shaking = ref(false)
 
 /* ── 洗练 diff 高亮:对比最近一次洗练前后的附加词条 ── */
 
@@ -191,13 +149,13 @@ interface WashDiff {
 const lastWashDiff = ref<WashDiff | null>(null)
 
 function computeWashDiff(before: Map<string, number>): void {
-  const g = gear.value
-  if (!g) { lastWashDiff.value = null; return }
+  const inst = gearInst.value
+  if (!inst) { lastWashDiff.value = null; return }
   const up = new Set<string>()
   const down = new Set<string>()
   const added = new Set<string>()
   const afterKeys = new Set<string>()
-  for (const a of washable(g)) {
+  for (const a of washable(inst)) {
     const k = affixKey(a)
     afterKeys.add(k)
     const prev = before.get(k)

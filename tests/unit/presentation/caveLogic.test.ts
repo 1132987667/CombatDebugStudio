@@ -12,6 +12,7 @@ import {
   formatEffect,
   fragmentRuleViews,
   itemIdByName,
+  missingMatsText,
   qualityOf,
   starCost,
   starFactor,
@@ -37,6 +38,23 @@ describe('物品索引与品质', () => {
   it('未知 id 兜底凡品不抛错', () => {
     expect(qualityOf('no_such_item')).toBe('凡品')
     expect(catalogById('no_such_item')).toBeUndefined()
+  })
+})
+
+describe('缺失材料清单文本', () => {
+  it('只列不足项，格式「名 ×数量」顿号连接', () => {
+    expect(
+      missingMatsText([
+        { name: '桃木', count: 3, have: 4, enough: true },
+        { name: '铜精', count: 1, have: 0, enough: false },
+        { name: '粗石', count: 2, have: 1, enough: false },
+      ]),
+    ).toBe('铜精 ×1、粗石 ×2')
+  })
+
+  it('全部齐备返回空串（调用方据此回落通用文案）', () => {
+    expect(missingMatsText([{ name: '桃木', count: 3, have: 4, enough: true }])).toBe('')
+    expect(missingMatsText([])).toBe('')
   })
 })
 

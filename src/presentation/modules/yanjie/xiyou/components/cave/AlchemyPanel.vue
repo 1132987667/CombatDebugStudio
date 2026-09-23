@@ -57,7 +57,7 @@
         <button
           type="button"
           class="xy-cave-action"
-          :disabled="!selected || brewing || !canCraft(selected)"
+          :disabled="!selected || brewing"
           @click="brew"
         >
           {{ brewing ? '炼 制 中…' : '开 始 炼 制' }}
@@ -75,7 +75,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 import { progressQuests } from '../../questProgress'
 import { alchemyRecipes } from '../../xiyouData'
-import { itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
+import { itemIdByName, itemName, missingMatsText, qualityOf, type MatView } from '../../caveLogic'
 import type { XiyouQuality } from '../../types'
 import { qualityClassOf } from '../../quality'
 
@@ -124,7 +124,8 @@ function brew(): void {
     return
   }
   if (!canCraft(r)) {
-    notification.toast('材料不足，无法开炉', 'error')
+    const missing = missingMatsText(materialsOf(r))
+    notification.toast(missing ? `材料不足：${missing}` : '材料不足，无法开炉', 'error')
     return
   }
   brewing.value = true

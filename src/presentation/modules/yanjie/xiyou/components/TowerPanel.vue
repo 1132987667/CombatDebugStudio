@@ -114,7 +114,7 @@ async function challenge(floor: number): Promise<void> {
   // 与 BattleZen / 扫荡同口径的主角加成（装备 + 流派树 + 法宝 + 宠物坐骑光环）
   const allyBonuses = {
     ...equipBonuses(pack.equippedStats(), protagonist),
-    ...schoolTreeCombatBonuses(),
+    ...schoolTreeCombatBonuses(protagonist),
     ...fabaoAttributeBonuses(),
     ...petMountAttributeBonuses(),
   }

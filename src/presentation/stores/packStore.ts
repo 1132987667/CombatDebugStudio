@@ -672,12 +672,22 @@ export const usePackStore = defineStore('pack', () => {
     return out
   }
 
-  /** 强化当前槽位装备：扣材料与金钱 → 成功率判定 → 强化等级 +1（失败只扣消耗） */
-  function enhanceGear(slot: GearSlotKey, rng: Rng = Math.random): boolean {
-    const inst = equipped[slot]
+  /** 按实例 id 查装备实例（穿戴槽 + 背包统一查找；洞府养成三操作共用） */
+  function gearInstanceById(instanceId: string): GearInstance | null {
+    return (
+      Object.values(equipped).find((e) => e.instanceId === instanceId) ??
+      gearInstances.value.find((e) => e.instanceId === instanceId) ??
+      null
+    )
+  }
+
+  /** 强化装备实例：扣材料与金钱 → 成功率判定 → 强化等级 +1（失败只扣消耗）。
+   *  按实例 id 在穿戴槽与背包中统一查找，未穿戴的背包装备同样可强化 */
+  function enhanceGear(instanceId: string, rng: Rng = Math.random): boolean {
+    const inst = gearInstanceById(instanceId)
     const g = inst ? gearById(inst.itemId) : undefined
     if (!inst || !g) {
-      notification.toast('该槽位未穿戴装备')
+      notification.toast('未找到该装备')
       return false
     }
     const maxEnhance = enhanceMaxByRarity(g.rarity)
@@ -721,15 +731,16 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 升星当前槽位装备：残魂点支付（每星 3 点，累计 3/6/9）→ 星级 +1（§21 装备养成操作与材料）
+   * 升星装备实例：残魂点支付（每星 3 点，累计 3/6/9）→ 星级 +1（§21 装备养成操作与材料）
    * 点源混合支付，优先级：破境耀星石（上3/中2/下1，贪心）→ 兵解残魄晶（1 点/个）→ 同名未穿戴装备（1 点/件，被消耗）
-   * NOTE: 升星只增强基础属性（+5%/+10%/+10% 累计 25%），不改词条内容/数量
+   * NOTE: 升星只增强基础属性（+5%/+10%/+10% 累计 25%），不改词条内容/数量；
+   *  目标自身也在背包同名池中，计点与消耗均排除自身（否则升星背包装备会把自己吃掉）
    */
-  function starGear(slot: GearSlotKey): boolean {
-    const inst = equipped[slot]
+  function starGear(instanceId: string): boolean {
+    const inst = gearInstanceById(instanceId)
     const g = inst ? gearById(inst.itemId) : undefined
     if (!inst || !g) {
-      notification.toast('该槽位未穿戴装备')
+      notification.toast('未找到该装备')
       return false
     }
     const cur = inst.star ?? 0
@@ -738,27 +749,28 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     const need = starCost(cur + 1)
-    if (starPointsAvailable(inst.itemId) < need) {
+    if (starPointsAvailable(inst.itemId, instanceId) < need) {
       notification.toast(`残魂点不足（需 ${need} 点：破境耀星石 / 兵解残魄晶 / 同名装备均可）`, 'warning')
       return false
     }
-    consumeStarPoints(inst.itemId, need)
+    consumeStarPoints(inst.itemId, need, instanceId)
     inst.star = cur + 1
     scheduleSave()
     notification.toast(`升星成功！「${g.name}」升至 ${inst.star} 星`, 'success')
     return true
   }
 
-  /** 升星可用残魂点：破境耀星石（上3/中2/下1）+ 兵解残魄晶 decomp_soul（1/个）+ 同名未穿戴装备（1/件） */
-  function starPointsAvailable(itemId: string): number {
+  /** 升星可用残魂点：破境耀星石（上3/中2/下1）+ 兵解残魄晶 decomp_soul（1/个）+ 同名未穿戴装备（1/件）；
+   *  excludeInstanceId 用于把升星目标自身从同名池排除 */
+  function starPointsAvailable(itemId: string, excludeInstanceId?: string): number {
     const stonePts = STAR_STONES.reduce((sum, [id, pts]) => sum + (inventory.value[id] ?? 0) * pts, 0)
     const souls = inventory.value['decomp_soul'] ?? 0
-    const sameCount = gearInstances.value.filter((x) => x.itemId === itemId).length
+    const sameCount = gearInstances.value.filter((x) => x.itemId === itemId && x.instanceId !== excludeInstanceId).length
     return stonePts + souls + sameCount
   }
 
   /** 按优先级扣减残魂点（调用方先以 starPointsAvailable 校验充足），支付顺序见 starGear 注释 */
-  function consumeStarPoints(itemId: string, need: number): void {
+  function consumeStarPoints(itemId: string, need: number, excludeInstanceId?: string): void {
     let remain = need
     const takeItem = (id: string, count: number): number => {
       const use = Math.min(inventory.value[id] ?? 0, count)
@@ -775,7 +787,7 @@ export const usePackStore = defineStore('pack', () => {
     }
     if (remain > 0) remain -= takeItem('decomp_soul', remain)
     while (remain > 0) {
-      const sameIdx = gearInstances.value.findIndex((x) => x.itemId === itemId)
+      const sameIdx = gearInstances.value.findIndex((x) => x.itemId === itemId && x.instanceId !== excludeInstanceId)
       if (sameIdx < 0) break
       gearInstances.value.splice(sameIdx, 1)
       remain--
@@ -783,16 +795,16 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 洗练当前槽位装备词条（§21 装备养成操作与材料）：
+   * 洗练装备实例词条（§21 装备养成操作与材料）：
    * normal 全部重 roll / directed 指定 1 条重 roll / locked 锁 1 条（种类+数值不变）其余重 roll。
    * 词条数不变、同部位池内抽取、结果可能更差；开放品质 washAllowed（§8.4.4：凡普通/精定向/超锁词条）。
    * 消耗：对应洗练材料 ×1 + 200 金钱；先 roll 后扣（池耗尽不扣消耗）。
    */
-  function washGear(slot: GearSlotKey, mode: WashMode, targetIndex: number, rng: Rng = Math.random): boolean {
-    const inst = equipped[slot]
+  function washGear(instanceId: string, mode: WashMode, targetIndex: number, rng: Rng = Math.random): boolean {
+    const inst = gearInstanceById(instanceId)
     const g = inst ? gearById(inst.itemId) : undefined
     if (!inst || !g) {
-      notification.toast('该槽位未穿戴装备')
+      notification.toast('未找到该装备')
       return false
     }
     if (!washAllowed(mode, inst.quality)) {
@@ -1497,6 +1509,7 @@ export const usePackStore = defineStore('pack', () => {
     subTypeLabel,
     equippedStats,
     packGearInstances,
+    gearInstanceById,
     equipInstance,
     equip,
     unequip,

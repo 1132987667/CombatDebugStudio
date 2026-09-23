@@ -559,7 +559,8 @@ function doReset(): void {
 .xy-tree-layer {
   display: flex;
   gap: var(--space-2);
-  padding: var(--space-2) 0;
+  /* 左右同留 8px：节点 hover scale(1.08) 时首尾列外扩 ~2px，画布 overflow:auto 会裁 */
+  padding: var(--space-2);
 }
 
 /* ── 节点：圆形三态 ── */

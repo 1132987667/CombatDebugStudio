@@ -611,7 +611,7 @@ describe("装备穿戴（背包实例化闭环）", () => {
     expect(Object.keys(pack.equipped)).toHaveLength(6)
     // 强化护符消耗强化石（六部位通用）
     pack.addItem("enh_stone", 10)
-    expect(pack.enhanceGear("charm", () => 0)).toBe(true)
+    expect(pack.enhanceGear(pack.equipped.charm!.instanceId, () => 0)).toBe(true)
     expect(pack.equipped.charm?.enhance).toBe(1)
     // 总属性包含护手加成（攻击类）
     expect(pack.equippedStats().length).toBeGreaterThan(0)
@@ -782,7 +782,7 @@ describe("装备制造与强化（实例化）", () => {
     pack.addItem("enh_stone", 10) // 强化材料：强化石
     const beforeMoney = pack.currency.money
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // rng 0 → 100% 成功
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)).toBe(true) // rng 0 → 100% 成功
     expect(pack.equipped.weapon?.enhance).toBe(1)
     expect(pack.currency.money).toBe(beforeMoney - 50) // ⌊50×1²×1.0⌋（凡品 K=1.0）
     expect(pack.countOf("enh_stone")).toBe(enh0 + 9) // L=1 消耗 1
@@ -795,10 +795,10 @@ describe("装备制造与强化（实例化）", () => {
     await pack.init()
     pack.equip("wp_t1_light_01")
     pack.addItem("enh_stone", 10)
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // → Lv.1（rate 100%）
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)).toBe(true) // → Lv.1（rate 100%）
     const money1 = pack.currency.money
     const mat1 = pack.countOf("enh_stone")
-    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false) // L=2 rate 95%，99 ≥ 95 → 失败
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0.99)).toBe(false) // L=2 rate 95%，99 ≥ 95 → 失败
     expect(pack.equipped.weapon?.enhance).toBe(1)
     expect(pack.equipped.weapon?.enhanceFails).toBe(1) // 连败 +1（下次 rate +10%）
     expect(pack.currency.money).toBe(money1 - 200) // ⌊50×2²×1.0⌋
@@ -811,7 +811,7 @@ describe("装备制造与强化（实例化）", () => {
     pack.equip("wp_t1_light_01")
     pack.currency.money = 0 // 材料充足但金钱不足
     const mat0 = pack.countOf("enh_stone")
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(false)
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)).toBe(false)
     expect(pack.currency.money).toBe(0)
     expect(pack.countOf("enh_stone")).toBe(mat0)
     expect(pack.equipped.weapon?.enhance).toBe(0)
@@ -825,12 +825,27 @@ describe("装备制造与强化（实例化）", () => {
     pack.currency.money = 9999999
     let guard = 0
     while (pack.equipped.weapon!.enhance < 3 && guard < 10) {
-      pack.enhanceGear("weapon", () => 0)
+      pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)
       guard++
     }
     expect(pack.equipped.weapon!.enhance).toBe(3)
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(false) // 已达上限，拒绝
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)).toBe(false) // 已达上限，拒绝
     expect(pack.equipped.weapon!.enhance).toBe(3)
+  })
+
+  it("强化背包未穿戴装备：按实例 id 生效，不影响已穿戴槽位", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.addItem("wp_t1_light_01", 1) // 背包实例（未穿戴）
+    const inst = pack.packGearInstances().find((g) => g.itemId === "wp_t1_light_01")!
+    pack.addItem("enh_stone", 10)
+    pack.currency.money = 9999999
+    expect(pack.enhanceGear(inst.instanceId, () => 0)).toBe(true)
+    // 强化落在背包实例本身
+    expect(pack.packGearInstances().find((g) => g.instanceId === inst.instanceId)?.enhance).toBe(1)
+    expect(pack.equipped.weapon?.enhance ?? 0).toBe(0) // 已穿戴槽位不受影响
+    // 不存在的实例 id 拒绝
+    expect(pack.enhanceGear("no-such-instance", () => 0)).toBe(false)
   })
 
   it("升星真实生效：残魂点 3 点混合支付 → 星级 +1 → 基础属性提升（残魂优先于同名装备）", async () => {
@@ -841,7 +856,7 @@ describe("装备制造与强化（实例化）", () => {
     pack.equip("wp_t3_light_01")
     pack.addItem("decomp_soul", 3) // 兵解残魄晶 ×3 = 3 点
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
-    expect(pack.starGear("weapon")).toBe(true)
+    expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(true)
     expect(pack.equipped.weapon?.star).toBe(1)
     expect(pack.countOf("decomp_soul")).toBe(0) // 残魂优先消耗
     expect(pack.countOf("wp_t3_light_01")).toBe(1) // 同名装备保留
@@ -855,7 +870,7 @@ describe("装备制造与强化（实例化）", () => {
     pack.addItem("wp_t1_mid_01", 1) // 新手套已不含松木棍，先补一件穿上
     pack.equip("wp_t1_mid_01")
     pack.addItem("wp_t1_mid_01", 3) // 3 件同名 = 3 点
-    expect(pack.starGear("weapon")).toBe(true)
+    expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(true)
     expect(pack.equipped.weapon?.star).toBe(1)
     expect(pack.countOf("wp_t1_mid_01")).toBe(0)
   })
@@ -868,7 +883,7 @@ describe("装备制造与强化（实例化）", () => {
     pack.addItem("wp_t1_mid_01", 1)
     pack.addItem("decomp_soul", 1)
     pack.addItem("star_up_high", 1) // 3 点
-    expect(pack.starGear("weapon")).toBe(true)
+    expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(true)
     expect(pack.equipped.weapon?.star).toBe(1)
     expect(pack.countOf("star_up_high")).toBe(0)
     expect(pack.countOf("wp_t1_mid_01")).toBe(1)
@@ -880,13 +895,28 @@ describe("装备制造与强化（实例化）", () => {
     await pack.init()
     pack.equip("wp_t1_light_01")
     pack.addItem("wp_t1_light_01", 1) // 1 点 < 3 点
-    expect(pack.starGear("weapon")).toBe(false)
+    expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(false)
     expect(pack.equipped.weapon?.star ?? 0).toBe(0)
     // 3 星满级后拒绝（9 件同名 = 9 点 = 三轮消耗）
     pack.addItem("wp_t1_light_01", 9)
-    for (let i = 0; i < 3; i++) pack.starGear("weapon")
+    for (let i = 0; i < 3; i++) pack.starGear(pack.equipped.weapon!.instanceId)
     expect(pack.equipped.weapon?.star).toBe(3)
-    expect(pack.starGear("weapon")).toBe(false) // 满星拒绝
+    expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(false) // 满星拒绝
+  })
+
+  it("升星背包未穿戴实例：同名点数排除自身（不吃掉正在升星的这件）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.addItem("wp_t1_light_01", 2) // seed 自带 1 件 → 背包共 3 件同名
+    pack.addItem("decomp_soul", 2) // 残魂 2 点；可用 2 + 同名其余 2 件（排除目标自身）= 4 点 ≥ 3
+    const target = pack.packGearInstances().find((g) => g.itemId === "wp_t1_light_01")!
+    expect(pack.starGear(target.instanceId)).toBe(true)
+    // 目标仍在背包且星级 +1（未被同名池当作材料消耗）
+    const after = pack.packGearInstances().find((g) => g.instanceId === target.instanceId)
+    expect(after?.star).toBe(1)
+    // 支付：残魂 2 点 + 吃掉 1 件同名 → 背包剩 2 件
+    expect(pack.countOf("wp_t1_light_01")).toBe(2)
+    expect(pack.countOf("decomp_soul")).toBe(0)
   })
 })
 
@@ -913,7 +943,7 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     pack.addItem("wash_stone", 1)
     pack.currency.money += 200
     const money0 = pack.currency.money
-    expect(pack.washGear("weapon", "normal", -1, () => 0.3)).toBe(true)
+    expect(pack.washGear(pack.equipped.weapon!.instanceId, "normal", -1, () => 0.3)).toBe(true)
     const after = pack.equipped.weapon!.affixes
     expect(after.filter((a) => a.fixed || a.main)).toHaveLength(2) // 主要属性不参与洗练
     expect(after.filter((a) => !a.fixed && !a.main)).toHaveLength(3) // 附加条数不变
@@ -931,7 +961,7 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     const beforeAppend = before.filter((a) => !a.fixed && !a.main)
     pack.addItem("wash_directed", 1)
     pack.currency.money += 200
-    expect(pack.washGear("weapon", "directed", 0, () => 0.3)).toBe(true) // 附加下标 0
+    expect(pack.washGear(pack.equipped.weapon!.instanceId, "directed", 0, () => 0.3)).toBe(true) // 附加下标 0
     const after = pack.equipped.weapon!.affixes
     expect(after.filter((a) => !a.fixed && !a.main)).toHaveLength(3)
     expect(after.filter((a) => a.fixed || a.main)).toEqual(before.filter((a) => a.fixed || a.main)) // 主要不动
@@ -948,7 +978,7 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     const beforeAppend = before.filter((a) => !a.fixed && !a.main)
     pack.addItem("wash_lock", 1)
     pack.currency.money += 200
-    expect(pack.washGear("weapon", "locked", 1, () => 0.3)).toBe(true) // 锁附加下标 1
+    expect(pack.washGear(pack.equipped.weapon!.instanceId, "locked", 1, () => 0.3)).toBe(true) // 锁附加下标 1
     const after = pack.equipped.weapon!.affixes
     expect(after.filter((a) => !a.fixed && !a.main)).toHaveLength(3)
     expect(after.filter((a) => a.fixed || a.main)).toEqual(before.filter((a) => a.fixed || a.main)) // 主要不动
@@ -969,8 +999,8 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
     pack.addItem("wash_directed", 1)
     pack.addItem("wash_lock", 1)
     const money0 = pack.currency.money
-    const dOk = pack.washGear("weapon", "directed", 0, () => 0.3)
-    const lOk = pack.washGear("weapon", "locked", 0, () => 0.3)
+    const dOk = pack.washGear(pack.equipped.weapon!.instanceId, "directed", 0, () => 0.3)
+    const lOk = pack.washGear(pack.equipped.weapon!.instanceId, "locked", 0, () => 0.3)
     if (q < 2) {
       expect(dOk).toBe(false)
       expect(pack.countOf("wash_directed")).toBe(1)
@@ -985,17 +1015,38 @@ describe("词条洗练（§21 装备养成操作与材料）", () => {
   it("洗练材料/金钱不足或未选目标时拒绝且不扣消耗", async () => {
     const pack = await equipChaoLiuyun()
     // 无材料
-    expect(pack.washGear("weapon", "normal", -1, () => 0.3)).toBe(false)
+    expect(pack.washGear(pack.equipped.weapon!.instanceId, "normal", -1, () => 0.3)).toBe(false)
     // 有材料无金钱
     pack.addItem("wash_stone", 1)
     pack.currency.money = 0
-    expect(pack.washGear("weapon", "normal", -1, () => 0.3)).toBe(false)
+    expect(pack.washGear(pack.equipped.weapon!.instanceId, "normal", -1, () => 0.3)).toBe(false)
     expect(pack.countOf("wash_stone")).toBe(1)
     // 有材料有金钱，定向未选目标
     pack.currency.money = 1000
-    expect(pack.washGear("weapon", "directed", -1, () => 0.3)).toBe(false)
+    expect(pack.washGear(pack.equipped.weapon!.instanceId, "directed", -1, () => 0.3)).toBe(false)
     expect(pack.countOf("wash_stone")).toBe(1)
     expect(pack.currency.money).toBe(1000)
+  })
+
+  it("洗练背包未穿戴实例：按实例 id 生效，不影响已穿戴槽位", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 造一把超品流云剑留在背包（不穿）
+    pack.addItem("bp_t3_wp", 1)
+    pack.addItem("mat_tiemu", 4)
+    pack.addItem("mat_jinjing", 2)
+    pack.addItem("mat_xianyun", 1)
+    const inst = pack.craftEquipment("wp_t3_light_01", () => 0.8)
+    expect(inst?.quality).toBe(3)
+    pack.addItem("wash_stone", 1)
+    pack.currency.money += 200
+    expect(pack.washGear(inst!.instanceId, "normal", -1, () => 0.3)).toBe(true)
+    // 洗练落在背包实例上（附加词条重 roll、主要属性保留），仍不在穿戴槽
+    const after = pack.packGearInstances().find((g) => g.instanceId === inst!.instanceId)!
+    expect(after.affixes.filter((a) => a.fixed || a.main)).toHaveLength(2)
+    expect(after.affixes.filter((a) => !a.fixed && !a.main)).toHaveLength(3)
+    expect(pack.countOf("wash_stone")).toBe(0)
+    expect(pack.equipped.weapon ?? null).toBeNull()
   })
 })
 
@@ -1023,22 +1074,22 @@ describe("强化保护符", () => {
     await pack.init()
     pack.equip("wp_t1_light_01")
     pack.addItem("enh_protect", 1)
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(true) // 0→1 必成（rate 100%）
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)).toBe(true) // 0→1 必成（rate 100%）
     const mat1 = pack.countOf("enh_stone")
 
     // 失败（L=2 rate 95%，rng 0.99）：保护符保住材料，仅消耗保护符
-    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0.99)).toBe(false)
     expect(pack.equipped.weapon?.enhance).toBe(1)
     expect(pack.countOf("enh_stone")).toBe(mat1)
     expect(pack.countOf("enh_protect")).toBe(0)
 
     // 连败后保底 100%：L=2 rate 100% 必成，连败清零
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(true)
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)).toBe(true)
     expect(pack.equipped.weapon?.enhanceFails).toBe(0)
 
     // 再无保护符：L=3 rate 90%，rng 0.99 失败 → 材料 ×3 照扣
     const mat2 = pack.countOf("enh_stone")
-    expect(pack.enhanceGear("weapon", () => 0.99)).toBe(false)
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0.99)).toBe(false)
     expect(pack.countOf("enh_stone")).toBe(mat2 - 3)
   })
 
@@ -1047,7 +1098,7 @@ describe("强化保护符", () => {
     await pack.init()
     pack.equip("wp_t1_light_01")
     pack.addItem("enh_protect", 1)
-    expect(pack.enhanceGear("weapon", () => 0)).toBe(true)
+    expect(pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0)).toBe(true)
     expect(pack.countOf("enh_protect")).toBe(1)
   })
 })

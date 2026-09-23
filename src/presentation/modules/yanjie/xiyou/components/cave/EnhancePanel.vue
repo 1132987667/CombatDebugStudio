@@ -1,24 +1,8 @@
 <template>
   <div>
     <h5 class="xy-cave-sec">选择装备</h5>
-    <div class="xy-cave-enh-grid">
-      <button
-        v-for="(g, i) in gears"
-        :key="g.slot"
-        type="button"
-        class="xy-cave-card xy-cave-enh-slot"
-        :class="{ 'is-selected': idx === i }"
-        :disabled="!usable(g)"
-        @click="idx = i"
-      >
-        <span class="xy-cave-enh-slot__meta">
-          <span class="xy-cave-enh-slot__item">{{ g.item }}</span>
-          <span class="xy-cave-enh-slot__lv">强化 {{ g.enhance }}/{{ g.maxEnhance }}</span>
-        </span>
-        <p class="xy-cave-enh-slot__effect">{{ qualityOf(g.rarity) }} · {{ g.slot }}</p>
-      </button>
-      <p v-if="gears.length === 0" class="xy-cave-enh-empty">尚未穿戴任何装备</p>
-    </div>
+    <!-- 全部装备（已穿戴 + 背包）按部位分组，卡片与装备页背包池同款 -->
+    <GearPicker v-model="selectedId" />
 
     <template v-if="gear">
       <div class="xy-cave-enh-compare">
@@ -47,7 +31,7 @@
       </p>
 
       <div :class="{ 'xy-cave-ripple': rippling, 'xy-cave-shake': shaking }">
-        <button type="button" class="xy-cave-action" :disabled="!canEnhance" @click="enhance">强 化</button>
+        <button type="button" class="xy-cave-action" :disabled="!canEnhance" @click="doEnhance">强 化</button>
       </div>
       <p class="xy-cave-enh-risk">失败将消耗材料，强化等级不变</p>
     </template>
@@ -55,90 +39,49 @@
 </template>
 
 <script setup lang="ts">
+/** 强化面板：选择交给 GearPicker（全背包），本面板只做强化操作区（对比/消耗/成功率） */
 import { computed, ref } from 'vue'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
-import type { EquipmentData } from '@/domain/fengshen/types'
+import { usePackStore } from '@/presentation/stores/packStore'
 import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
-import { qualityOf } from '../../quality'
-import {
-  enhanceCost,
-  enhanceMaterialOf,
-  enhanceMaxByRarity,
-  enhanceSuccessRate,
-  type MaterialCost,
-} from '../../caveLogic'
-
-/** 强化槽位视图（真实穿戴实例 → 强化等级为实例属性） */
-interface EnhanceGearView {
-  slot: GearSlotKey
-  slotLabel: string
-  item: string
-  rarity: number
-  enhance: number
-  failStreak: number
-  maxEnhance: number
-  stats: EquipmentStatEntry[]
-  nextStats: EquipmentStatEntry[]
-}
+import { enhanceCost, enhanceMaterialOf, enhanceMaxByRarity, enhanceSuccessRate, type MaterialCost } from '../../caveLogic'
+import GearPicker from './GearPicker.vue'
 
 const pack = usePackStore()
 const notification = useNotificationStore()
 
-const idx = ref(-1)
+const selectedId = ref<string | null>(null)
 const rippling = ref(false)
 const shaking = ref(false)
 
-// NOTE: 强化数据源 = 真实穿戴实例（pack.equipped），强化等级/词缀持久化在实例，与装备面板同源。
-const gears = computed<EnhanceGearView[]>(() =>
-  (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
-    .filter((slot) => pack.equippedInstance(slot))
-    .map((slot) => {
-      const inst = pack.equippedInstance(slot) as NonNullable<ReturnType<typeof pack.equippedInstance>>
-      const g = pack.gearById(inst.itemId) as EquipmentData
-      return {
-        slot,
-        slotLabel: GEAR_SLOT_LABELS[slot],
-        item: g.name,
-        rarity: g.rarity,
-        enhance: inst.enhance,
-        failStreak: inst.enhanceFails ?? 0,
-        maxEnhance: enhanceMaxByRarity(g.rarity),
-        stats: pack.instanceStats(inst),
-        nextStats: pack.instanceStats({ ...inst, enhance: inst.enhance + 1 }),
-      }
-    }),
-)
+/** 选中装备实例 + 养成字段（强化等级/连败/上限持久化在实例，与装备面板同源） */
+const gearInst = computed(() => (selectedId.value ? pack.gearInstanceById(selectedId.value) : null))
+const gearDef = computed(() => (gearInst.value ? pack.gearById(gearInst.value.itemId) : undefined))
 
-function usable(_g: EnhanceGearView): boolean {
-  return true
-}
+const enhance = computed(() => gearInst.value?.enhance ?? 0)
+const maxEnhance = computed(() => enhanceMaxByRarity(gearDef.value?.rarity ?? 1))
+const failStreak = computed(() => gearInst.value?.enhanceFails ?? 0)
+const maxed = computed(() => gearInst.value !== null && gearInst.value.enhance >= maxEnhance.value)
 
-const gear = computed<EnhanceGearView | null>(() => (idx.value >= 0 ? gears.value[idx.value] ?? null : null))
-
-const mat = computed<MaterialCost>(() =>
-  enhanceMaterialOf(gear.value?.enhance ?? 0),
-)
-
-const cost = computed(() => (gear.value ? enhanceCost(gear.value.enhance, gear.value.rarity) : 0))
-const rate = computed(() => (gear.value ? enhanceSuccessRate(gear.value.enhance, gear.value.failStreak) : 0))
-const maxed = computed(() => !!gear.value && gear.value.enhance >= gear.value.maxEnhance)
+const mat = computed<MaterialCost>(() => enhanceMaterialOf(enhance.value))
+const cost = computed(() => (gearDef.value ? enhanceCost(enhance.value, gearDef.value.rarity) : 0))
+const rate = computed(() => enhanceSuccessRate(enhance.value, failStreak.value))
 
 const hasMat = computed(() => pack.countOf(mat.value.itemId) >= mat.value.count)
 const hasMoney = computed(() => pack.currency.money >= cost.value)
 
-const canEnhance = computed(
-  () => !!gear.value && !maxed.value && hasMat.value && hasMoney.value,
+const canEnhance = computed(() => gearInst.value !== null && !maxed.value && hasMat.value && hasMoney.value)
+
+const curEffect = computed(() => (gearInst.value ? statText(pack.instanceStats(gearInst.value)) : ''))
+const nextEffect = computed(() =>
+  gearInst.value ? statText(pack.instanceStats({ ...gearInst.value, enhance: gearInst.value.enhance + 1 })) : '',
 )
 
-const curEffect = computed(() => (gear.value ? statText(gear.value.stats) : ''))
-const nextEffect = computed(() => (gear.value ? statText(gear.value.nextStats) : ''))
-
-function enhance(): void {
-  const g = gear.value
-  if (!g || !canEnhance.value) return
-  const ok = pack.enhanceGear(g.slot)
+function doEnhance(): void {
+  const inst = gearInst.value
+  if (!inst || !canEnhance.value) return
+  const ok = pack.enhanceGear(inst.instanceId)
   if (ok) {
     rippling.value = true
     window.setTimeout(() => {

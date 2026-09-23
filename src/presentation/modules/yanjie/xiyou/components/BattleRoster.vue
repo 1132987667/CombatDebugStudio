@@ -92,6 +92,7 @@
     </section>
 
     <AttributeTooltip :visible="attrTooltip.visible" :title="attrTooltip.title"
+      :modifiers="attrTooltip.modifiers"
       :final-value="attrTooltip.finalValue" :value-type="attrTooltip.valueType"
       :trigger-rect="attrTooltip.triggerRect" :attribute-code="attrTooltip.attributeCode" />
   </aside>

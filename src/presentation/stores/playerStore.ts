@@ -10,8 +10,8 @@
 import { computed, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import type { XiyouCurrency, XiyouPlayer, XiyouStatPoints, ProtagonistSnapshot } from '@/presentation/modules/yanjie/xiyou/types'
-import { BREAK_NODES, computeStatBonuses, createPlayerProfile, expNeedForLevel, isBreakBlocked, playerConfig } from '@/presentation/modules/yanjie/xiyou/playerProfile'
-import { schoolAttributeBonuses, schoolTreeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
+import { BREAK_NODES, computePlayerBase, computeStatBonuses, createPlayerProfile, expNeedForLevel, isBreakBlocked, playerConfig } from '@/presentation/modules/yanjie/xiyou/playerProfile'
+import { collapseLayeredBonusKeys, schoolAttributeBonuses, schoolTreeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
 import { grantLevelPoint } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { PLAYER_ID } from '@/shared/constants/player'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -38,34 +38,35 @@ export const usePlayerStore = defineStore('player', () => {
    *  灵韵初始 100 ≈ 5 次一阶催熟，保证新手首日能体验"种1收3"循环） */
   const currency = reactive<XiyouCurrency>({ money: 536480, xianyuan: 100 })
 
-  /** 玩家属性值快照（实时计算：player 基础 + 等级成长 + 加点 + 流派加成；缺省走领域默认值 getAttrDv） */
+  /** 玩家属性值快照（实时计算：基础+等级成长（computePlayerBase）+ 加点 + 流派加成；缺省走领域默认值 getAttrDv） */
   const playerAttributes = computed<Partial<Record<ATTRIBUTE_CODE, number>>>(() => {
+    // NOTE: 基础层用 computePlayerBase（纯 base+成长，不含加点）。不可读 player.attackMax 等
+    //       profile 混合字段——升级重建 profile 时已把加点写进这些字段，再叠 bonus 会加点双算
+    const base = computePlayerBase(player.level)
     const bonus = computeStatBonuses(statPoints)
+    const b = (code: ATTRIBUTE_CODE): number => bonus[code] ?? 0
     const school = schoolAttributeBonuses({
-      attack: player.attackMax + (bonus[ATTRIBUTE_CODE.attack] ?? 0),
-      defense: player.defense + (bonus[ATTRIBUTE_CODE.defense] ?? 0),
-      speed: player.speed + (bonus[ATTRIBUTE_CODE.speed] ?? 0),
-      maxHp: player.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0),
+      attack: base.attackMax + b(ATTRIBUTE_CODE.attack),
+      defense: base.defense + b(ATTRIBUTE_CODE.defense),
+      speed: base.speed + b(ATTRIBUTE_CODE.speed),
+      maxHp: base.maxHp + b(ATTRIBUTE_CODE.maxHealth),
     })
-    // NOTE: 基础快照只含 player 基础值 + 加点；流派增量统一由下方全键循环叠加（此前逐键
-    //       withSchool 只覆盖 9 个键，lifestealRate/critResist/armorBreak 等进阶属性节点
-    //       增量被丢弃，面板与战斗快照都看不到）
     const snapshot: Partial<Record<ATTRIBUTE_CODE, number>> = {
       [ATTRIBUTE_CODE.currentHealth]: player.hp,
-      [ATTRIBUTE_CODE.maxHealth]: player.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0),
+      [ATTRIBUTE_CODE.maxHealth]: base.maxHp + b(ATTRIBUTE_CODE.maxHealth),
       [ATTRIBUTE_CODE.currentEnergy]: player.energy,
-      [ATTRIBUTE_CODE.maxEnergy]: player.maxEnergy + (bonus[ATTRIBUTE_CODE.maxEnergy] ?? 0),
-      [ATTRIBUTE_CODE.attack]: player.attackMax + (bonus[ATTRIBUTE_CODE.attack] ?? 0),
-      [ATTRIBUTE_CODE.defense]: player.defense + (bonus[ATTRIBUTE_CODE.defense] ?? 0),
-      [ATTRIBUTE_CODE.speed]: player.speed + (bonus[ATTRIBUTE_CODE.speed] ?? 0),
-      [ATTRIBUTE_CODE.critRate]: player.critRate,
-      [ATTRIBUTE_CODE.critDamage]: player.critDamage,
+      [ATTRIBUTE_CODE.maxEnergy]: base.maxEnergy + b(ATTRIBUTE_CODE.maxEnergy),
+      [ATTRIBUTE_CODE.attack]: base.attackMax + b(ATTRIBUTE_CODE.attack),
+      [ATTRIBUTE_CODE.defense]: base.defense + b(ATTRIBUTE_CODE.defense),
+      [ATTRIBUTE_CODE.speed]: base.speed + b(ATTRIBUTE_CODE.speed),
+      [ATTRIBUTE_CODE.critRate]: base.critRate,
+      [ATTRIBUTE_CODE.critDamage]: base.critDamage,
       [ATTRIBUTE_CODE.comboRate]: playerConfig.base.comboRate ?? 0,
       [ATTRIBUTE_CODE.damageReduction]: playerConfig.base.damageReduction ?? 0,
-      [ATTRIBUTE_CODE.hitRate]: player.hitRate,
-      [ATTRIBUTE_CODE.dodgeRate]: player.dodgeRate,
-      [ATTRIBUTE_CODE.hitValue]: player.hitValue + (bonus[ATTRIBUTE_CODE.hitValue] ?? 0),
-      [ATTRIBUTE_CODE.dodgeValue]: player.dodgeValue + (bonus[ATTRIBUTE_CODE.dodgeValue] ?? 0),
+      [ATTRIBUTE_CODE.hitRate]: base.hitRate,
+      [ATTRIBUTE_CODE.dodgeRate]: base.dodgeRate,
+      [ATTRIBUTE_CODE.hitValue]: base.hitValue + b(ATTRIBUTE_CODE.hitValue),
+      [ATTRIBUTE_CODE.dodgeValue]: base.dodgeValue + b(ATTRIBUTE_CODE.dodgeValue),
     }
     // NOTE: school 为流派属性增量（schoolAttributeBonuses 已归一为绝对增量：percent 属性
     //       已是百分点、数值属性已按基础值换算），逐键直接叠加
@@ -74,9 +75,10 @@ export const usePlayerStore = defineStore('player', () => {
       const code = attr as ATTRIBUTE_CODE
       snapshot[code] = (snapshot[code] ?? 0) + inc
     }
-    // NOTE: 流派树（schools.json）已投属性节点增量：code 即属性码直接累加
-    //       （绝对值节点加绝对值，百分比/率节点 value 已是百分点）
-    for (const [attr, inc] of Object.entries(schoolTreeBonuses())) {
+    // NOTE: 流派树六维加成/系数键先归一为主属性绝对增量（基准 = 处理前快照：基础+加点+流派属性增量），
+    //       原键不落快照——否则挂独立键六维不消费，点亮无效（与 equipBonuses 词条归一同源同函数）
+    const treeInc = collapseLayeredBonusKeys(schoolTreeBonuses(), snapshot)
+    for (const [attr, inc] of Object.entries(treeInc)) {
       if (!inc) continue
       const code = attr as ATTRIBUTE_CODE
       snapshot[code] = (snapshot[code] ?? 0) + inc

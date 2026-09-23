@@ -97,6 +97,13 @@ export class IndexedDbStorage implements IPersistentStorage {
           this.dbPromise = null  // 清空缓存，允许后续操作重试
           reject((event.target as IDBOpenDBRequest).error)
         }
+
+        // NOTE: open 被其他连接阻塞（如另一标签页持有旧连接时发生版本迁移）必须显式失败——
+        //       不处理则 Promise 永远 pending，应用停在 main.ts 挂载前且无任何报错（无声死锁）
+        request.onblocked = () => {
+          this.dbPromise = null
+          reject(new DOMException('IndexedDB open blocked：其他标签页持有旧版本连接，升级无法进行', 'InvalidStateError'))
+        }
       })
     }
     return this.dbPromise

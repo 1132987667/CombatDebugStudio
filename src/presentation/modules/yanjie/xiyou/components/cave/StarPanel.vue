@@ -1,36 +1,16 @@
 <template>
   <div>
     <h5 class="xy-cave-sec">选择装备</h5>
-    <div class="xy-cave-enh-grid">
-      <button
-        v-for="(g, i) in gears"
-        :key="g.slot"
-        type="button"
-        class="xy-cave-card xy-cave-enh-slot"
-        :class="{ 'is-selected': idx === i }"
-        :disabled="!usable(g)"
-        @click="idx = i"
-      >
-        <span class="xy-cave-enh-slot__meta">
-          <span class="xy-cave-enh-slot__item">{{ g.item }}</span>
-          <span class="xy-cave-star-stars" :aria-label="`星级 ${g.star}/${STAR_MAX}`">
-            <IconStar v-for="s in STAR_MAX" :key="s" class="xy-cave-star-star"
-              :class="{ on: s <= g.star }" />
-          </span>
-          <span class="xy-cave-enh-slot__lv">{{ g.slotLabel }}</span>
-        </span>
-        <p class="xy-cave-enh-slot__effect">{{ qualityOf(g.rarity) }} · {{ g.effect }}</p>
-      </button>
-      <p v-if="gears.length === 0" class="xy-cave-enh-empty">尚未穿戴任何装备</p>
-    </div>
+    <!-- 全部装备（已穿戴 + 背包）按部位分组，卡片与装备页背包池同款 -->
+    <GearPicker v-model="selectedId" />
 
-    <template v-if="gear">
+    <template v-if="gearInst && gearDef">
       <div class="xy-cave-star-info">
         <p class="xy-cave-card__desc">
-          「{{ gear.item }}」当前星级
-          <span class="xy-cave-star-stars" :aria-label="`星级 ${gear.star}/${STAR_MAX}`">
+          「{{ gearDef.name }}」当前星级
+          <span class="xy-cave-star-stars" :aria-label="`星级 ${star}/${STAR_MAX}`">
             <IconStar v-for="s in STAR_MAX" :key="s" class="xy-cave-star-star"
-              :class="{ on: s <= gear.star }" />
+              :class="{ on: s <= star }" />
           </span>
         </p>
         <div class="xy-cave-star-cost">
@@ -51,70 +31,38 @@
 </template>
 
 <script setup lang="ts">
+/** 升星面板：选择交给 GearPicker（全背包），本面板只做升星操作区（残魂点消耗） */
 import { computed, ref } from 'vue'
 import IconStar from '~icons/app/star'
-import { useNotificationStore } from '@/presentation/stores/notificationStore'
-import { usePackStore, GEAR_SLOT_LABELS, type GearSlotKey } from '@/presentation/stores/packStore'
-import type { EquipmentStatEntry } from '@/domain/fengshen/types'
-import { attrShortName } from '@/domain/fengshen/equipment-overview'
-import { qualityOf } from '../../quality'
-import { itemIdByName, STAR_MAX, starCost } from '../../caveLogic'
-
-/** 升星槽位视图（真实穿戴实例 → 星级为实例属性，持久化） */
-interface StarGearView {
-  slot: GearSlotKey
-  slotLabel: string
-  item: string
-  rarity: number
-  star: number
-  effect: string
-}
+import { usePackStore } from '@/presentation/stores/packStore'
+import { STAR_MAX, starCost } from '../../caveLogic'
+import GearPicker from './GearPicker.vue'
 
 const pack = usePackStore()
-const notification = useNotificationStore()
 
-const idx = ref(-1)
+const selectedId = ref<string | null>(null)
 const rippling = ref(false)
 const shaking = ref(false)
 
-// NOTE: 升星数据源 = 真实穿戴实例（pack.equipped），星级/强化/品质持久化在实例，与装备面板同源。
-const gears = computed<StarGearView[]>(() =>
-  (Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[])
-    .filter((slot) => pack.equippedGear(slot))
-    .map((slot) => {
-      const g = pack.equippedGear(slot)!
-      const inst = pack.equippedInstance(slot) as NonNullable<ReturnType<typeof pack.equippedInstance>>
-      return {
-        slot,
-        slotLabel: GEAR_SLOT_LABELS[slot],
-        item: g.name,
-        rarity: g.rarity,
-        star: inst.star ?? 0,
-        effect: statText(pack.instanceStats(inst)),
-      }
-    }),
+/** 选中装备实例 + 定义（星级持久化在实例；残魂点按同名装备计，排除目标自身） */
+const gearInst = computed(() => (selectedId.value ? pack.gearInstanceById(selectedId.value) : null))
+const gearDef = computed(() => (gearInst.value ? pack.gearById(gearInst.value.itemId) : undefined))
+
+const star = computed(() => gearInst.value?.star ?? 0)
+const maxed = computed(() => gearInst.value !== null && star.value >= STAR_MAX)
+
+const pointNeed = computed(() => starCost(star.value + 1))
+const pointPool = computed(() =>
+  gearInst.value ? pack.starPointsAvailable(gearInst.value.itemId, gearInst.value.instanceId) : 0,
 )
 
-function usable(_g: StarGearView): boolean {
-  return true
-}
-
-const gear = computed<StarGearView | null>(() => (idx.value >= 0 ? gears.value[idx.value] ?? null : null))
-
-const pointNeed = computed(() => (gear.value ? starCost(gear.value.star + 1) : 0))
-const pointPool = computed(() => {
-  if (!gear.value) return 0
-  return pack.starPointsAvailable(itemIdByName(gear.value.item) ?? gear.value.item)
-})
-const maxed = computed(() => !!gear.value && gear.value.star >= STAR_MAX)
-
-const canStar = computed(() => !!gear.value && !maxed.value && pointPool.value >= pointNeed.value)
+const canStar = computed(() => gearInst.value !== null && !maxed.value && pointPool.value >= pointNeed.value)
 
 function doStar(): void {
-  const g = gear.value
-  if (!g || !canStar.value) return
+  const inst = gearInst.value
+  if (!inst || !canStar.value) return
 
-  if (!pack.starGear(g.slot)) {
+  if (!pack.starGear(inst.instanceId)) {
     shaking.value = true
     window.setTimeout(() => {
       shaking.value = false
@@ -125,14 +73,5 @@ function doStar(): void {
   window.setTimeout(() => {
     rippling.value = false
   }, 700)
-}
-
-/** 装备 stats 文案（含品质系数/强化/星级/词缀），供升星展示 */
-function statText(stats: EquipmentStatEntry[]): string {
-  return stats.map((s) => {
-    const n = attrShortName(s.attribute)
-    const suffix = s.modifierType === 'percent' ? '%' : ''
-    return `${n} ${s.value >= 0 ? '+' : ''}${s.value}${suffix}`
-  }).join(' · ')
 }
 </script>

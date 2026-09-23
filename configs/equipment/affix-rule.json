@@ -104,11 +104,30 @@
     },
     "staff": {
       "fixed": "counterRate",
-      "random_pool": []
+      "random_pool": [
+        "critDamage",
+        "trueDamageRate",
+        "counterRate",
+        "normalAtkBonus"
+      ]
     },
     "blade": {
       "fixed": "critRate",
-      "random_pool": []
+      "random_pool": [
+        "armorBreak",
+        "critDamage",
+        "critRate",
+        "skillBonus"
+      ]
+    },
+    "dagger": {
+      "fixed": "dodgeRate",
+      "random_pool": [
+        "dodgeBonus",
+        "attackBonus",
+        "trueDamageRate",
+        "normalAtkBonus"
+      ]
     },
     "charm": {
       "fixed": "hitBonus",
@@ -121,89 +140,67 @@
       ]
     },
     "glove": {
-      "fixed": "effectHit",
+      "fixed": "speedBonus",
       "random_pool": [
-        "ALL-MEC",
-        "SHD-L2"
+        "trueDamageRate",
+        "comboRate",
+        "counterRate",
+        "energyInit",
+        "energyGainEfficiency"
       ]
     },
     "cloth_armor": {
-      "fixed": "dodgeBonus",
+      "fixed": "dodgeRate",
       "random_pool": [
-        "dodgeRate",
-        "hpRegenPercent",
-        "damageReduction",
-        "dodgeCoefficient"
+        "DEF-MEC"
       ]
     },
     "leather_armor": {
-      "fixed": "defenseBonus",
+      "fixed": "healthBonus",
       "random_pool": [
-        "dodgeBonus",
-        "damageReduction",
-        "hpRegenPercent",
-        "critResist"
+        "DEF-MEC"
       ]
     },
     "plate_armor": {
-      "fixed": "damageReduction",
+      "fixed": "reflectDamagePercent",
       "random_pool": [
-        "reflectDamagePercent",
-        "critResist",
-        "defenseCoefficient",
-        "shieldBonus"
+        "DEF-MEC"
       ]
     },
     "crown": {
-      "fixed": "healBonus",
+      "fixed": "critResist",
       "random_pool": [
-        "shieldBonus",
-        "hpRegenPercent",
-        "energyGainEfficiency",
-        "critResist"
+        "DEF-MEC"
       ]
     },
     "face_guard": {
-      "fixed": "normalAtkDmgReduction",
+      "fixed": "effectHit",
       "random_pool": [
-        "skillDmgReduction",
-        "trueDamageResist",
-        "damageReduction"
+        "DEF-MEC"
       ]
     },
     "helmet": {
-      "fixed": "normalAtkDmgReduction",
+      "fixed": "critDmgTakenReduction",
       "random_pool": [
-        "skillDmgReduction",
-        "trueDamageResist",
-        "shieldBonus",
-        "critDmgTakenReduction"
+        "DEF-MEC"
       ]
     },
     "cloth_boots": {
-      "fixed": "energyGainEfficiency",
+      "fixed": "dodgeRate",
       "random_pool": [
-        "dodgeRate",
-        "hpRegenPercent",
-        "energyInit",
-        "dodgeBonus"
+        "DEF-MEC"
       ]
     },
     "leather_boots": {
-      "fixed": "dodgeRate",
+      "fixed": "controlImmunity",
       "random_pool": [
-        "energyGainEfficiency",
-        "dodgeBonus",
-        "controlImmunity"
+        "DEF-MEC"
       ]
     },
     "battle_boots": {
-      "fixed": "controlImmunity",
+      "fixed": "hitRate",
       "random_pool": [
-        "trueDamageResist",
-        "normalAtkDmgReduction",
-        "dodgeRate",
-        "skillDmgReduction"
+        "DEF-MEC"
       ]
     }
   },

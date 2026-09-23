@@ -85,6 +85,8 @@
   flex-direction: column;
   gap: var(--space-2);
   overflow-y: auto;
+  /* 兜住 nav-item hover 上移 2px，首尾项不被滚动容器裁剪 */
+  padding: var(--space-1);
 }
 
 .xy-cave-nav-item {
@@ -761,40 +763,38 @@
    强化装备 Enhance
    ══════════════════════════════════════════════════════════════════ */
 
-.xy-cave-enh-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-2);
-}
-
-.xy-cave-enh-slot {
+/* 强化面板：全部装备选择网格（部位分组；卡片本体用共享的 xy-gear-pack-item 样式） */
+.xy-enh-pool {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
-.xy-cave-enh-slot__meta {
+.xy-enh-pool__group {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: var(--space-2);
 }
 
-.xy-cave-enh-slot__item {
+.xy-enh-pool__label {
+  flex: 0 0 3em;
+  padding-top: var(--space-2);
   font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--xy-ink-1);
+  color: var(--xy-ink-4);
 }
 
-.xy-cave-enh-slot__lv {
-  margin-left: auto;
-  font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
+.xy-enh-pool__items {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-2);
 }
 
-.xy-cave-enh-slot__effect {
-  margin: 0;
+/* 穿戴中标记：区分已穿戴与背包实例 */
+.xy-enh-pool__worn {
   font-size: var(--font-size-md);
-  color: var(--xy-ink-2);
+  color: var(--xy-seal);
 }
 
 /* 强化面板中部：属性对比 */

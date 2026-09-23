@@ -263,16 +263,26 @@ describe('主要属性', () => {
     expect(o.mainRandom.map((r) => r.attribute)).toEqual(['speedBonus', 'hitBonus', 'comboRate', 'normalAtkBonus'])
   })
 
-  it('随机池混写组码与属性码时一并展开（护腕 ALL-MEC + SHD-L2 = 7 项，fixed 已补为 effectHit）', () => {
+  it('护腕主要属性：fixed=speedBonus，随机池 5 项（真伤率/连击率/反击率/初始能量/能量获取效率）', () => {
     const o = buildEquipmentOverview(cfg, formula, conv, { level: 10, slot: 'glove', subType: 'glove', tier: 'xian', quality: 1 })
-    expect(o.mainRandom).toHaveLength(7)
-    expect(o.mainFixed).not.toBeNull()
-    expect(o.mainFixed?.attribute).toBe('effectHit')
+    expect(o.mainFixed?.attribute).toBe('speedBonus')
+    expect(o.mainRandom.map((r) => r.attribute)).toEqual([
+      'trueDamageRate', 'comboRate', 'counterRate', 'energyInit', 'energyGainEfficiency',
+    ])
     expect(o.warnings.some((w) => /第 1 条（固定）未配置/.test(w))).toBe(false)
   })
 
-  it('未配置主要池的子类型给出告警而非崩溃', () => {
-    const o = buildEquipmentOverview(cfg, formula, conv, { level: 10, slot: 'weapon', subType: 'dagger', tier: 'xian', quality: 1 })
+  it('随机池混写组码与属性码时一并展开（克隆配置模拟 ALL-MEC + SHD-L2 = 7 项）', () => {
+    const mixed = { ...cfg, main_affix_pool: { ...cfg.main_affix_pool, glove: { fixed: 'speedBonus', random_pool: ['ALL-MEC', 'SHD-L2'] } } }
+    const o = buildEquipmentOverview(mixed, formula, conv, { level: 10, slot: 'glove', subType: 'glove', tier: 'xian', quality: 1 })
+    expect(o.mainRandom).toHaveLength(7)
+    expect(o.mainFixed?.attribute).toBe('speedBonus')
+  })
+
+  it('未配置主要池的子类型给出告警而非崩溃（克隆配置移除 dagger）', () => {
+    const noPool = { ...cfg, main_affix_pool: { ...cfg.main_affix_pool } }
+    delete (noPool.main_affix_pool as Record<string, unknown>).dagger
+    const o = buildEquipmentOverview(noPool, formula, conv, { level: 10, slot: 'weapon', subType: 'dagger', tier: 'xian', quality: 1 })
     expect(o.mainFixed).toBeNull()
     expect(o.mainRandom).toEqual([])
     expect(o.warnings.some((w) => /dagger 未配置主要属性池/.test(w))).toBe(true)

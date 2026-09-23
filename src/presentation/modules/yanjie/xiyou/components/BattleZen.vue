@@ -341,7 +341,7 @@ async function initBattle(node: RunNode): Promise<void> {
   await pack.init()
   const protagonist = usePlayerStore().battleSnapshot
   // NOTE: 装备加成 + 流派树增量（schoolTreeCombatBonuses 已排除快照承载键，避免双算）一并注入主角
-  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses(), ...petMountAttributeBonuses() }
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(protagonist), ...fabaoAttributeBonuses(), ...petMountAttributeBonuses() }
   const { ally, enemy } = buildBattleTeams(props.scene, allyBonuses, protagonist, node)
   store.initializeBattleService(battleService)
   battleService.loadSkillConfigs()

@@ -73,6 +73,14 @@ export interface MatView {
   enough: boolean
 }
 
+/** 缺失材料清单文本（缺料 toast 用：「铜精 ×1、桃木 ×2」；全部齐备返回空串） */
+export function missingMatsText(mats: MatView[]): string {
+  return mats
+    .filter((m) => !m.enough)
+    .map((m) => `${m.name} ×${m.count}`)
+    .join('、')
+}
+
 /** 强化材料：统一强化石（六部位/全品阶通用；2026-09-06 裁定）
  *  消耗 = 目标强化等级 L（当前 enhance + 1），线性增长（§21 装备强化） */
 const ENHANCE_STONE_ID = 'enh_stone'
@@ -141,6 +149,13 @@ const STAR_FACTOR = [1, 1.05, 1.15, 1.25] as const
 
 export function starFactor(star: number): number {
   return STAR_FACTOR[Math.min(Math.max(star, 0), STAR_MAX)]!
+}
+
+/** 星级文案（0-3 星，§21 升星）：实心=已升、空心=空位（同 BattleZen 关卡星评范式）；
+ *  旧档实例可能缺 star 字段，回退 0 */
+export function starLabel(star: number | undefined): string {
+  const s = Math.min(Math.max(star ?? 0, 0), STAR_MAX)
+  return '★'.repeat(s) + '☆'.repeat(STAR_MAX - s)
 }
 
 /** 破境耀星石点数（附录B 破境耀星石·上/中/下 → 3/2/1 点，贪心支付不溢出） */

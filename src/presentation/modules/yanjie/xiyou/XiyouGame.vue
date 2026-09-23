@@ -160,4 +160,6 @@ onUnmounted(() => {
 
 <style lang="scss">
 @use './styles/xiyou.scss';
+/* 卡片视觉皮肤（调试面板「样式」分类切换；全局生效便于任意面板预览） */
+@use './styles/card-skins.scss';
 </style>

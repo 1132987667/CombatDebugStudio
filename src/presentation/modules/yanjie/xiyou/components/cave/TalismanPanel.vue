@@ -47,7 +47,7 @@
         <button
           type="button"
           class="xy-cave-action"
-          :disabled="!selected || brewing || !canCraft(selected)"
+          :disabled="!selected || brewing"
           @click="brew"
         >
           {{ brewing ? '炼 制 中…' : '开 始 炼 制' }}
@@ -63,7 +63,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 import { talismanRecipes } from '../../xiyouData'
-import { itemIdByName, itemName, qualityOf, type MatView } from '../../caveLogic'
+import { itemIdByName, itemName, missingMatsText, qualityOf, type MatView } from '../../caveLogic'
 import type { XiyouQuality } from '../../types'
 import { qualityClassOf } from '../../quality'
 
@@ -101,6 +101,11 @@ function canCraft(r: XiyouRecipe): boolean {
 function brew(): void {
   const r = selected.value
   if (!r || brewing.value) return
+  if (!canCraft(r)) {
+    const missing = missingMatsText(materialsOf(r))
+    notification.toast(missing ? `材料不足：${missing}` : '材料不足，无法开炉', 'error')
+    return
+  }
   brewing.value = true
   window.setTimeout(() => {
     for (const m of r.materials ?? []) pack.removeItem(m.itemId, m.count)

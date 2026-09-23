@@ -315,10 +315,8 @@ function doBuy(g: XiyouShopGood): void {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-left: var(--space-2);
-  padding-right: var(--space-2);
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
+  /* 四周留白兜住卡片 hover 上移 4px + 外圈 ring（同 xy-gear-side/xy-roster-pack-list 口径） */
+  padding: 14px var(--space-3);
   /* 容器宽度基准：驱动下方 @container 卡片多列自适应 */
   container-type: inline-size;
 }
@@ -463,22 +461,8 @@ function doBuy(g: XiyouShopGood): void {
   }
 }
 
-.xy-shop-buy {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--xy-seal);
-  border-radius: 2px;
-  background: var(--xy-seal-soft);
-  color: var(--xy-seal);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--font-size-md);
-
-  &:hover {
-    background: var(--xy-seal);
-    color: var(--xy-on-seal);
-  }
-}
-
+/* .xy-shop-buy 已提升到 xiyou.scss 全局（EquipPanel/MatePanel/TowerPanel 等跨组件使用，
+   scoped 定义对它们不可达——按钮曾回落浏览器默认样式） */
 .xy-shop-buybox {
   margin-top: var(--space-2);
   padding-top: var(--space-2);

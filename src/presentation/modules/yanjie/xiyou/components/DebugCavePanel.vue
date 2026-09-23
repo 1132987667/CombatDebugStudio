@@ -18,6 +18,26 @@
 
     <!-- 操作区 -->
     <div class="xy-debug__body">
+      <!-- 样式实验室：皮肤切换 + 预览卡（选中即全局生效，localStorage 持久化） -->
+      <section v-if="activeCat === 'skin'" class="xy-debug__groups">
+        <div class="xy-debug__group">
+          <h4 class="xy-debug__group-title">卡片皮肤（选中即应用到游戏内伴灵卡）</h4>
+          <div class="xy-debug__group-body xy-skin-lab__picker">
+            <button v-for="s in CARD_SKINS" :key="s.id" type="button" class="xy-skin-lab__opt"
+              :class="{ on: cardSkin() === s.id }" @click="setCardSkin(s.id)">
+              <span class="xy-skin-lab__opt-name">{{ s.label }}</span>
+              <span class="xy-skin-lab__opt-desc">{{ s.desc }}</span>
+            </button>
+          </div>
+        </div>
+        <div class="xy-debug__group">
+          <h4 class="xy-debug__group-title">预览 · 凡 / 超 / 神（悬停看 hover 效果）</h4>
+          <div class="xy-debug__group-body xy-skin-lab__preview">
+            <PetMountCard v-for="inst in previewInsts" :key="inst.uid" :inst="inst" kind="mount" preview />
+          </div>
+        </div>
+      </section>
+
       <template v-for="cat in categories" :key="cat.id">
         <section v-if="activeCat === cat.id" class="xy-debug__groups">
           <div v-for="group in cat.groups" :key="group.id" class="xy-debug__group">
@@ -118,6 +138,9 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { LogLevel } from '@/shared/types/battle-log'
 import type { GameDataApi } from '@/application/service/GameDataApi'
+import { CARD_SKINS, cardSkin, setCardSkin } from '../cardSkin'
+import PetMountCard from './PetMountCard.vue'
+import type { PetMountInstance } from '../petMount'
 import type { DataIntegrityService } from '@/application/service/DataIntegrityService'
 import { container } from '@/infrastructure/di/Container'
 import { createDebugCategories, type DebugActionDef, type DebugActionInput, type DebugActionResult, type DebugCategory } from '../debugActions'
@@ -179,7 +202,32 @@ const env: PlayerStoreDebugEnv = {
   toast: (message, type) => notification.toast(message, type),
 }
 
-const categories = computed<DebugCategory[]>(() => createDebugCategories(env))
+const categories = computed<DebugCategory[]>(() => [
+  ...createDebugCategories(env),
+  /* 样式实验室：纯 UI 分类，不走 action 体系（模板里自定义渲染皮肤切换 + 预览卡） */
+  { id: 'skin', label: '样式', groups: [] },
+])
+
+/** 预览实例：凡/超/神三档品质，共用踏云灵驹个体（只展示不响应养成操作） */
+const previewInsts: PetMountInstance[] = (
+  [
+    { quality: 1, level: 6, aptitude: 300 },
+    { quality: 3, level: 24, aptitude: 410 },
+    { quality: 5, level: 45, aptitude: 496 },
+  ] as const
+).map(([quality, level, aptitude], i) => ({
+  uid: `skin_preview_${i}`,
+  individualId: 'mount_01',
+  kind: 'mount',
+  quality,
+  aptitude,
+  level,
+  exp: 0,
+  breakthroughs: quality >= 3 ? 1 : 0,
+  floatFactor: 1,
+  trait: undefined,
+  active: false,
+}))
 
 // ════════════ 面板状态 ════════════
 const activeCat = ref(categories.value[0]?.id ?? 'battle')
@@ -638,5 +686,56 @@ defineExpose({ env, categories })
   color: var(--xy-ink-1);
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* ── 样式实验室：皮肤选择器 + 预览网格 ── */
+.xy-skin-lab__picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+
+.xy-skin-lab__opt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--xy-ink-3);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  font-size: var(--font-size-md);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--xy-seal);
+    color: var(--xy-ink-1);
+  }
+
+  &.on {
+    border-color: var(--xy-seal);
+    background: var(--xy-seal-soft);
+    color: var(--xy-seal);
+  }
+}
+
+.xy-skin-lab__opt-name {
+  font-weight: var(--font-weight-bold);
+}
+
+.xy-skin-lab__opt-desc {
+  font-size: var(--font-size-md);
+  opacity: 0.75;
+}
+
+/* 预览卡网格：四周留白兜住各皮肤的 hover 外扩（同 xy-beast-tab 口径） */
+.xy-skin-lab__preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-3);
+  padding: 14px var(--space-3);
 }
 </style>

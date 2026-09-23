@@ -16,13 +16,16 @@
                     {{ equippedInstance(slot)?.name ?? '空位' }}
                   </span>
                   <span class="xy-gear-slot-name">{{ GEAR_SLOT_LABELS[slot] }}</span>
-                  <span v-if="equippedInstance(slot)" class="xy-gear-slot-enhance">
-                    强化 +{{ equippedInstance(slot)!.enhance }}
-                  </span>
                 </span>
                 <template v-if="equippedInstance(slot)">
-                  <span class="xy-gear-slot-quality" :class="equipQualityClass(equippedInstance(slot)!.quality)">
-                    {{ qualityLabel(equippedInstance(slot)!.quality, equippedInstance(slot)!.qualityFactor) }}
+                  <span class="xy-gear-slot-sub">
+                    <span class="xy-gear-slot-quality" :class="equipQualityClass(equippedInstance(slot)!.quality)">
+                      {{ qualityLabel(equippedInstance(slot)!.quality, equippedInstance(slot)!.qualityFactor) }}
+                    </span>
+                    <span class="xy-gear-slot-enhance">强化 +{{ equippedInstance(slot)!.enhance }}</span>
+                    <span class="xy-gear-slot-star" :title="`星级 ${starLabel(equippedInstance(slot)!.star)}/${STAR_MAX}`">
+                      {{ starLabel(equippedInstance(slot)!.star) }}
+                    </span>
                   </span>
                   <button type="button" class="xy-gear-unequip" @click="pack.unequip(slot)">卸下</button>
                 </template>
@@ -65,10 +68,13 @@
                 >
                   <span class="xy-gear-pack-item__title">
                     <span class="xy-gear-pack-item__name" :class="qualityClass(g.rarity)">{{ g.name }}</span>
+                  </span>
+                  <span class="xy-gear-pack-item__sub">
                     <span class="xy-gear-pack-item__quality" :class="equipQualityClass(g.quality)">
                       {{ qualityLabel(g.quality, g.qualityFactor) }}
                     </span>
-                    <span v-if="g.enhance" class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
+                    <span class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
+                    <span class="xy-gear-pack-item__star" :title="`星级 ${starLabel(g.star)}/${STAR_MAX}`">{{ starLabel(g.star) }}</span>
                   </span>
                 </button>
                 <button type="button" class="xy-gear-pack-item__detail" @click="openDetail(g)">详情</button>
@@ -83,7 +89,8 @@
             <h5 class="xy-panel-hint">已穿戴装备提供总属性</h5>
             <div v-if="equippedTotal.length" class="xy-gear-total-rows">
               <span v-for="t in equippedTotal" :key="t.key" class="xy-gear-total-chip">
-                {{ t.label }} +{{ t.value }}{{ t.percent ? '%' : '' }}
+                <span>{{ t.label }}</span>
+                <span class="xy-gear-total-chip__value">+{{ t.value }}{{ t.percent ? '%' : '' }}</span>
               </span>
             </div>
             <p v-else class="xy-gear-pool__empty">尚未穿戴装备</p>
@@ -148,33 +155,21 @@
       </template>
 
       <template #mount>
-        <p class="xy-panel-hint">坐骑伴战提供防御属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
-        <p v-if="mountRows.length === 0" class="xy-panel-hint">尚未获得坐骑——击败敌人有几率掉落个体（调试面板可发放）</p>
-        <div v-for="row in mountRows" :key="row.inst.uid" class="xy-row-card">
-          <div class="xy-row-top">
-            <span class="xy-row-name">{{ row.name }}</span>
-            <span class="xy-chip xy-chip--jade">{{ qualityOf(row.inst.quality) }}</span>
-            <span v-if="row.inst.active" class="xy-chip xy-chip--gold">出战</span>
-            <span class="xy-row-side">Lv.{{ row.inst.level }}/{{ PET_MAX_LEVEL }}</span>
+        <div class="xy-beast-tab xy-panel-tabs">
+          <p class="xy-panel-hint">坐骑伴战提供防御属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
+          <p v-if="petMountState.mounts.length === 0" class="xy-panel-hint">尚未获得坐骑——击败敌人有几率掉落个体（调试面板可发放）</p>
+          <div v-else class="xy-beast-grid">
+            <PetMountCard v-for="inst in petMountState.mounts" :key="inst.uid" :inst="inst" kind="mount" />
           </div>
-          <p class="xy-row-desc">{{ row.statsText }}</p>
-          <p class="xy-row-desc xy-row-desc--key">
-            资质 {{ row.inst.aptitude }}/{{ APTITUDE_CAP }} · 突破 {{ row.inst.breakthroughs }}/3
-            <template v-if="row.inst.trait"> · {{ row.inst.trait }}</template>
-          </p>
-          <div class="xy-fabao-ops">
-            <button type="button" class="xy-shop-buy" @click="toggleMountActive(row.inst)">
-              {{ row.inst.active ? '歇战' : '出战' }}
-            </button>
-            <button v-if="row.inst.level < PET_MAX_LEVEL" type="button" class="xy-shop-buy" @click="feedMount(row.inst)">
-              经验丹(+500)
-            </button>
-            <button v-if="row.inst.aptitude < APTITUDE_CAP" type="button" class="xy-shop-buy" @click="raiseMountApt(row.inst)">
-              资质丹(+2)
-            </button>
-            <button v-if="row.inst.breakthroughs < BREAKTHROUGH_STAGES.length" type="button" class="xy-shop-buy" @click="brkMount(row.inst)">
-              突破
-            </button>
+        </div>
+      </template>
+
+      <template #pet>
+        <div class="xy-beast-tab xy-panel-tabs">
+          <p class="xy-panel-hint">宠物伴战提供输出属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
+          <p v-if="petMountState.pets.length === 0" class="xy-panel-hint">尚未获得宠物——击败敌人有几率掉落个体（调试面板可发放）</p>
+          <div v-else class="xy-beast-grid">
+            <PetMountCard v-for="inst in petMountState.pets" :key="inst.uid" :inst="inst" kind="pet" />
           </div>
         </div>
       </template>
@@ -194,11 +189,12 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
-import { mountIndividuals, individualById, petMountState, petMountStats, PET_MAX_LEVEL, APTITUDE_CAP, BREAKTHROUGH_STAGES,
-  breakthrough as mountBreakthrough, feedExpPill as mountFeedPill, raiseAptitude as mountRaiseApt, setPetMountActive, type PetMountInstance } from '../petMount'
-import { equipQualityClass, qualityClass, qualityLabel, qualityOf } from '../quality'
+import { petMountState } from '../petMount'
+import PetMountCard from './PetMountCard.vue'
+import { equipQualityClass, qualityClass, qualityLabel } from '../quality'
+import { STAR_MAX, starLabel } from '../caveLogic'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
-import { PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
+import { compareAttributeDisplayOrder } from '@/domain/fengshen/attribute-dictionary'
 import { gearTooltipData, type GearTooltipView } from '../gearTooltip'
 import GearDetailDialog from './GearDetailDialog.vue'
 import {
@@ -265,39 +261,6 @@ function doDecompose(row: FabaoRow): void {
   if (row.inst) decomposeFabao(row.inst.uid)
 }
 
-/** 坐骑个体行（petMountState 权威；持有列表 + 养成操作） */
-interface MountRow {
-  inst: PetMountInstance
-  name: string
-  statsText: string
-}
-
-const mountRows = computed<MountRow[]>(() =>
-  petMountState.mounts.map((inst) => ({
-    inst,
-    name: individualById(inst.individualId)?.name ?? inst.individualId,
-    statsText: petMountStats(inst)
-      .map((s) => `${PLAYER_BASE_ATTR_LABELS[s.attr as keyof typeof PLAYER_BASE_ATTR_LABELS] ?? s.attr} +${s.value}`)
-      .join(' · '),
-  })),
-)
-
-function toggleMountActive(inst: PetMountInstance): void {
-  setPetMountActive('mount', inst.uid)
-}
-
-function feedMount(inst: PetMountInstance): void {
-  mountFeedPill('mount', inst.uid)
-}
-
-function raiseMountApt(inst: PetMountInstance): void {
-  mountRaiseApt('mount', inst.uid)
-}
-
-function brkMount(inst: PetMountInstance): void {
-  mountBreakthrough('mount', inst.uid)
-}
-
 const pack = usePackStore()
 
 // NOTE: 独立进入装备 tab 时可能尚未开过行囊/洞府，确保背包与穿戴状态就绪
@@ -305,12 +268,13 @@ onMounted(() => {
   void pack.init()
 })
 
-const sub = ref<'gear' | 'treasure' | 'mount'>('gear')
+const sub = ref<'gear' | 'treasure' | 'mount' | 'pet'>('gear')
 
 const SUBS: TabItem[] = [
   { id: 'gear', label: '装备' },
   { id: 'treasure', label: '法宝' },
   { id: 'mount', label: '坐骑' },
+  { id: 'pet', label: '宠物' },
 ]
 
 /** 六类装备槽键（顺序 = 展示顺序；单一来源 EQUIPMENT_SLOTS） */
@@ -371,8 +335,8 @@ function gearInPack(slot: GearSlotKey): GearPackView[] {
   return list
 }
 
-/** 已穿戴装备提供的总属性（equippedStats 按 attribute+modifierType 聚合） */
-const equippedTotal = computed<Array<{ key: string; label: string; value: number; percent: boolean }>>(() => {
+/** 已穿戴装备提供的总属性（equippedStats 按 attribute+modifierType 聚合；顺序=字典权威序，基础六维在前） */
+const equippedTotal = computed<Array<{ key: string; attribute: string; label: string; value: number; percent: boolean }>>(() => {
   const agg = new Map<string, { value: number; percent: boolean }>()
   for (const s of pack.equippedStats()) {
     const key = `${s.attribute}:${s.modifierType}`
@@ -382,9 +346,13 @@ const equippedTotal = computed<Array<{ key: string; label: string; value: number
   return [...agg.entries()]
     .map(([key, v]) => {
       const [attribute] = key.split(':')
-      return { key, label: attrShortName(attribute), value: v.value, percent: v.percent }
+      return { key, attribute, label: attrShortName(attribute), value: v.value, percent: v.percent }
     })
-    .sort((a, b) => a.label.localeCompare(b.label, 'zh'))
+    .sort((a, b) => {
+      const byAttr = compareAttributeDisplayOrder(a.attribute, b.attribute)
+      if (byAttr !== 0) return byAttr
+      return Number(a.percent) - Number(b.percent) // 同属性：固定值在前，百分比在后
+    })
 })
 
 /* ── 装备详情（新旧对比弹窗） ── */
@@ -490,12 +458,12 @@ function act(action: 'equip' | 'unequip' | 'discard'): void {
 onBeforeUnmount(() => {
   removeDocListener?.()
 })
-
-/** 坐骑品级 → chip 类（EquipPanel 专属，不入统一映射表） */
 </script>
 
 <style scoped lang="scss">
 @use '@/presentation/styles/mixins' as *;
+/* 背包装备卡片样式提取到 ../styles/gear-pack-item.scss（洞府强化选择网格共用） */
+@use '../styles/gear-pack-item.scss';
 
 .xy-panel-hint {
   margin: 0 0 var(--space-3);
@@ -552,7 +520,7 @@ onBeforeUnmount(() => {
   align-items: flex-start;
   gap: 2px;
   padding: var(--space-2) var(--space-3);
-  /* 六槽等高：内容固定为 标题行+品质行+卸下按钮（属性明细走悬浮详情），空槽同高 */
+  /* 六槽等高：内容固定为 标题行+养成行（强化/星级）+卸下按钮（属性明细走悬浮详情），空槽同高 */
   height: 112px;
   border: 2px solid var(--r-color);
   border-radius: 2px;
@@ -592,7 +560,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 名称行：装备名（品阶色）+ 部位 + 强化（同背包卡片标题行结构） */
+/* 名称行：装备名（品阶色）+ 部位（品质/强化/星级下沉到养成行，名称行长卡不折行） */
 .xy-gear-slot-title {
   display: flex;
   align-items: baseline;
@@ -605,8 +573,21 @@ onBeforeUnmount(() => {
   color: var(--xy-ink-3);
 }
 
+/* 养成行：品质系数 + 强化等级 + 星级（两行卡片结构的固定第二行） */
+.xy-gear-slot-sub {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
 .xy-gear-slot-enhance {
   color: var(--color-success);
+}
+
+.xy-gear-slot-star {
+  color: var(--xy-gold);
+  font-size: var(--font-size-md);
+  letter-spacing: 1px;
 }
 
 .xy-gear-slot-quality {
@@ -651,16 +632,25 @@ onBeforeUnmount(() => {
 .xy-gear-total-rows {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: var(--space-1);
 }
 
+/* 每条占满整行：属性名左对齐、数值右对齐成列 */
 .xy-gear-total-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   padding: 2px var(--space-2);
   border: 1px solid var(--xy-ink-line);
   border-radius: 2px;
   font-size: var(--font-size-md);
   color: var(--xy-ink-2);
+}
+
+.xy-gear-total-chip__value {
+  flex: none;
+  color: var(--xy-ink-1);
 }
 
 /* ── 背包装备池工具栏（排序 + 部位筛选 + 品质筛选） ── */
@@ -741,98 +731,7 @@ onBeforeUnmount(() => {
 }
 
 /* 背包池卡片：与行囊 PackItemCard 同款视觉 */
-.xy-gear-pack-item {
-  --r-color: var(--xy-ink-line);
-  --ring: var(--r-color);
-  --glow: color-mix(in srgb, var(--r-color) 40%, transparent);
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: flex;
-  align-items: stretch;
-  border: 2px solid var(--r-color);
-  border-radius: 2px;
-
-  &::after {
-    @include mixin-bg-dual-dots();
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow:
-      0 0 0 2px var(--xy-paper),
-      0 0 0 4px var(--ring),
-      0 0 34px var(--glow),
-      0 22px 46px rgba(var(--rgb-black), 0.4);
-
-    &::after {
-      animation: dots-flow 6s linear infinite;
-    }
-  }
-
-  &--r1 { --r-color: var(--rarity-1); }
-  &--r2 { --r-color: var(--rarity-2); }
-  &--r3 { --r-color: var(--rarity-3); }
-  &--r4 { --r-color: var(--rarity-4); }
-  &--r5 { --r-color: var(--rarity-5); }
-}
-
-.xy-gear-pack-item__main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  background: transparent;
-  color: var(--xy-ink-1);
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-}
-
-/* 标题行：名称（品阶色）+ 品质系数 + 词缀 + 强化 */
-.xy-gear-pack-item__title {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.xy-gear-pack-item__quality {
-  font-weight: 600;
-}
-
-.xy-gear-pack-item__enhance {
-  color: var(--color-success);
-}
-
-.xy-gear-pack-item__detail {
-  align-self: center;
-  flex-shrink: 0;
-  margin: 0 var(--space-2) 0 0;
-  padding: 2px var(--space-2);
-  border: 1px solid var(--xy-ink-line);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--xy-ink-3);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--font-size-md);
-
-  &:hover {
-    border-color: var(--xy-seal);
-    color: var(--xy-seal);
-  }
-}
+/* 背包装备卡片样式已提取到 ../styles/gear-pack-item.scss（洞府强化选择网格共用） */
 
 .xy-gear-pool__empty {
   font-size: var(--font-size-md);
@@ -878,5 +777,18 @@ onBeforeUnmount(() => {
   &--danger:hover:not(:disabled) {
     color: var(--color-danger);
   }
+}
+
+/* ── 伴灵个体 tab（坐骑/宠物共用）：滚动容器 xy-panel-scroll 无预留，
+   此处自带四周留白兜住卡片 hover 的上移 4px + 外圈 ring（同 xy-gear-side/xy-roster-pack-list 口径）；
+   xy-panel-tabs 豁免 xiyou.scss 功能态对 tabpanel 直接子 div 的网格化 ── */
+.xy-beast-tab {
+  padding: 14px var(--space-3);
+}
+
+.xy-beast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-3);
 }
 </style>

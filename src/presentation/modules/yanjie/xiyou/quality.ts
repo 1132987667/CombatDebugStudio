@@ -55,10 +55,10 @@ export function qualityName(quality: number): string {
   return QUALITY_NAMES[quality] ?? '凡'
 }
 
-/** 品质行文案（玩家语言）：「凡 · 基础 85%」——品质系数本质是核心属性乘数，
- *  整百分比已够玩家决策；roll 锁存的第三位小数精度只留数据不进 UI */
+/** 品质行文案（玩家语言）：「绝135%」——品质字 + 基础系数整百分比紧凑成词；
+ *  系数本质是核心属性乘数，整百分比已够玩家决策，roll 锁存的第三位小数精度只留数据不进 UI */
 export function qualityLabel(quality: number, qualityFactor: number): string {
-  return `${qualityName(quality)} · 基础 ${Math.round(qualityFactor * 100)}%`
+  return `${qualityName(quality)}${Math.round(qualityFactor * 100)}%`
 }
 
 /** 装备品质色（1-5 → --eq-q-*，独立于品阶的 QUALITY_COLORS/--rarity-*） */

@@ -2,11 +2,16 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta } from '@/domain/attribute/types'
+import type { Modifier } from '@/domain/attribute/types'
+import { ModifierSourceType, ModifierType } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
+import { round } from '@/shared/utils/math'
 
+import { computePlayerBase, computeStatBonuses, playerConfig } from './playerProfile'
 import { equipBonuses } from './battle'
+import { schools } from './xiyouData'
 
 /* ── 角色属性派生（修行 CharacterPanel / 战斗侧栏 BattleRoster 共用，口径必须同源） ── */
 
@@ -40,7 +45,7 @@ export interface CharacterAttrsOptions {
 }
 
 export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
-  const { playerAttributes, battleSnapshot } = storeToRefs(usePlayerStore())
+  const { player, playerAttributes, statPoints, battleSnapshot } = storeToRefs(usePlayerStore())
   const pack = usePackStore()
 
   // NOTE: 装备加成与战斗主角同口径（BattleZen.initBattle / BattleRoster 均 equipBonuses(equippedStats, battleSnapshot)），
@@ -131,7 +136,7 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
     }
   }
 
-  // 悬浮属性说明（AttributeTooltip 全局组件）
+  // 悬浮属性说明（AttributeTooltip 全局组件；modifiers = 来源分解，见 buildAttrModifiers）
   const attrTooltip = ref({
     visible: false,
     title: '',
@@ -139,7 +144,66 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
     valueType: AttributeValueType.VALUE as AttributeValueType,
     attributeCode: '' as string,
     triggerRect: null as DOMRect | null,
+    modifiers: [] as Modifier[],
   })
+
+  /** 属性码 → 玩家成长字段映射（computePlayerBase 键；等级成长只覆盖这些属性，缺省 = 无成长层） */
+  const PLAYER_BASE_KEY: Partial<Record<ATTRIBUTE_CODE, keyof ReturnType<typeof computePlayerBase>>> = {
+    [ATTRIBUTE_CODE.maxHealth]: 'maxHp',
+    [ATTRIBUTE_CODE.maxEnergy]: 'maxEnergy',
+    [ATTRIBUTE_CODE.attack]: 'attackMax',
+    [ATTRIBUTE_CODE.defense]: 'defense',
+    [ATTRIBUTE_CODE.speed]: 'speed',
+    [ATTRIBUTE_CODE.critRate]: 'critRate',
+    [ATTRIBUTE_CODE.critDamage]: 'critDamage',
+    [ATTRIBUTE_CODE.hitRate]: 'hitRate',
+    [ATTRIBUTE_CODE.dodgeRate]: 'dodgeRate',
+    [ATTRIBUTE_CODE.hitValue]: 'hitValue',
+    [ATTRIBUTE_CODE.dodgeValue]: 'dodgeValue',
+  }
+
+  /**
+   * 属性值来源分解（悬浮「来源明细 + 计算过程」的数据侧，文档《属性监控显示设计.md》显示格式）：
+   * 基础(1级) → 等级成长 → 加点 → 流派（含流派树）→ 装备（词条直加 / 词条加成换算两条），全部 ADDITIVE 同层叠加。
+   * 流派由快照差值倒推（快照=基础+成长+加点+流派，与 playerStore 归并口径同源），不重复归并逻辑；
+   * 运行时状态（当前气血/法力/护盾）不分解，单列当前值。
+   */
+  function buildAttrModifiers(code: ATTRIBUTE_CODE): Modifier[] {
+    const mk = (sourceType: ModifierSourceType, sourceKey: string, value: number, description?: string): Modifier => ({
+      sourceKey,
+      sourceType,
+      attribute: code,
+      value,
+      type: ModifierType.ADDITIVE,
+      description,
+    })
+    if (AttributeMetaMap[code]?.isRuntimeState) {
+      return [mk(ModifierSourceType.BASE, 'runtime', attrVal(code), '运行时状态')]
+    }
+    const key = PLAYER_BASE_KEY[code]
+    const baseVal = key ? computePlayerBase(1)[key] : Number((playerConfig.base as Record<string, number>)[code] ?? 0)
+    const levelVal = key ? computePlayerBase(player.value.level)[key] - baseVal : 0
+    const pointVal = computeStatBonuses(statPoints.value)[code] ?? 0
+    // 装备拆两条：词条 flat 直加值 + 词条百分比换算值（含六维加成/系数折算，差值倒推自 equipBonuses
+    // 同一结果，不在组件层复制换算映射）
+    const gearStats = pack.equippedStats()
+    const gearFlatVal = gearStats
+      .filter((s) => s.attribute === code && s.modifierType === 'flat')
+      .reduce((sum, s) => sum + s.value, 0)
+    const gearVal = gearBonus.value[code] ?? 0
+    const gearPctVal = gearVal - gearFlatVal
+    const schoolVal = round((playerAttributes.value[code] ?? getAttrDv(code)) - baseVal - levelVal - pointVal, 6)
+    const items = [
+      { t: ModifierSourceType.BASE, k: 'base', v: baseVal, d: undefined as string | undefined },
+      { t: ModifierSourceType.LEVEL, k: 'level', v: levelVal, d: `Lv.${player.value.level}` },
+      { t: ModifierSourceType.POINT, k: 'point', v: pointVal, d: '自由加点' },
+      { t: ModifierSourceType.SCHOOL, k: 'school', v: schoolVal, d: schools.find((s) => s.selected)?.name },
+      { t: ModifierSourceType.EQUIPMENT, k: 'gear', v: gearFlatVal, d: undefined },
+      { t: ModifierSourceType.EQUIPMENT, k: 'gear-affix', v: gearPctVal, d: '词条加成' },
+    ].filter((it) => Math.abs(it.v) > 1e-9)
+    if (items.length === 0) return [mk(ModifierSourceType.BASE, 'base', 0)]
+    return items.map((it) => mk(it.t, it.k, it.v, it.d))
+  }
 
   function showAttrTooltip(event: MouseEvent, code: ATTRIBUTE_CODE, value: number) {
     const meta = getAttrMeta(code)
@@ -150,6 +214,7 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
       valueType: meta?.isPercentage ? AttributeValueType.PERCENT : AttributeValueType.VALUE,
       attributeCode: code,
       triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect(),
+      modifiers: buildAttrModifiers(code),
     }
   }
 

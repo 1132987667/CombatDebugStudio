@@ -62,13 +62,13 @@
           <span class="xy-char-level">Lv.{{ player.level }}</span>
         </div>
         <p class="xy-char-title">{{ player.title }}</p>
-        <div class="xy-vital-bar" role="img" :aria-label="`气血 ${player.hp}/${player.maxHp}`">
+        <div class="xy-vital-bar" role="img" :aria-label="`气血 ${hpText}`">
           <div class="xy-vital-fill xy-vital-fill--hp" :style="{ width: hpPct + '%' }"></div>
-          <span class="xy-vital-text">{{ player.hp }} / {{ player.maxHp }}</span>
+          <span class="xy-vital-text">{{ hpText }}</span>
         </div>
-        <div class="xy-vital-bar" role="img" :aria-label="`法力 ${player.energy}/${player.maxEnergy}`">
+        <div class="xy-vital-bar" role="img" :aria-label="`法力 ${energyText}`">
           <div class="xy-vital-fill xy-vital-fill--energy" :style="{ width: energyPct + '%' }"></div>
-          <span class="xy-vital-text">{{ player.energy }} / {{ player.maxEnergy }}</span>
+          <span class="xy-vital-text">{{ energyText }}</span>
         </div>
         <div class="xy-vital-bar xy-vital-bar--exp" role="img" :aria-label="`经验 ${player.exp}/${player.expNeed}`">
           <div class="xy-vital-fill xy-vital-fill--exp" :style="{ width: expPct + '%' }"></div>
@@ -121,6 +121,7 @@
     </div>
 
     <AttributeTooltip :visible="attrTooltip.visible" :title="attrTooltip.title"
+      :modifiers="attrTooltip.modifiers"
       :final-value="attrTooltip.finalValue" :value-type="attrTooltip.valueType"
       :trigger-rect="attrTooltip.triggerRect" :attribute-code="attrTooltip.attributeCode" />
   </div>
@@ -144,8 +145,16 @@ const { player, currency, statPoints } = storeToRefs(usePlayerStore())
 const pack = usePackStore()
 
 const expPct = computed(() => (player.value.expNeed > 0 ? (player.value.exp / player.value.expNeed) * 100 : 0))
-const hpPct = computed(() => (player.value.maxHp > 0 ? (player.value.hp / player.value.maxHp) * 100 : 0))
-const energyPct = computed(() => (player.value.maxEnergy > 0 ? (player.value.energy / player.value.maxEnergy) * 100 : 0))
+// NOTE: 血条与属性面板同源(attrVal/playerAttributes)——player.maxHp 等混合字段仅升级重建时更新,
+//       手动加点后会与面板数值漂移,不得作为血条上限
+const hpPct = computed(() => {
+  const max = attrVal(ATTRIBUTE_CODE.maxHealth)
+  return max > 0 ? (attrVal(ATTRIBUTE_CODE.currentHealth) / max) * 100 : 0
+})
+const energyPct = computed(() => {
+  const max = attrVal(ATTRIBUTE_CODE.maxEnergy)
+  return max > 0 ? (attrVal(ATTRIBUTE_CODE.currentEnergy) / max) * 100 : 0
+})
 
 // 当前流派（schools 单例的 selected；新档未选流派时显式给出状态而非留白）
 const currentSchoolName = computed(() => schools.find((s) => s.selected)?.name ?? '未选定')

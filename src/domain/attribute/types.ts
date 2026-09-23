@@ -33,6 +33,9 @@ export const ModifierSourceType = {
   TERRAIN: 'terrain',
   FORMATION: 'formation',
   BASE: 'base',
+  LEVEL: 'level',
+  POINT: 'point',
+  SCHOOL: 'school',
   TALENT: 'talent',
   AFFIX: 'affix',
 } as const
@@ -48,6 +51,9 @@ export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
   terrain: '地形',
   formation: '阵型',
   base: '基础',
+  level: '等级',
+  point: '加点',
+  school: '流派',
   talent: '天赋',
   affix: '词缀',
 }

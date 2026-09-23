@@ -51,7 +51,7 @@
                 <div class="source-value">
                   <span class="source-amount"
                     :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                    {{ fmtAdditive(modifier.value) }}
                   </span>
                 </div>
               </div>
@@ -201,6 +201,13 @@ const displayValue = computed(() => {
 
 // ===================== 标准模式计算 =====================
 
+/** 百分比型属性（critRate 等本身存百分点）的加法层来源/合计按百分点显示（+2.5%），
+ *  数值型属性与其他乘区保持原格式 */
+const fmtAdditive = (value: number): string => {
+  const type = props.valueType === AttributeValueType.PERCENT ? ModifierType.PERCENTAGE : ModifierType.ADDITIVE
+  return formatModifierValue(value, type)
+}
+
 // 按乘区分组修饰符
 const additiveGroup = computed(() => {
   return props.modifiers.filter(m => m.type === ModifierType.ADDITIVE)
@@ -222,7 +229,7 @@ const formatLayerTotal = (mods: Modifier[], type: ModifierType): string => {
   if (type === ModifierType.MULTIPLICATIVE || type === ModifierType.FINAL) {
     return `${total >= 0 ? '+' : ''}${round(total * 100, 2)}%`
   }
-  return formatModifierValue(total, type)
+  return type === ModifierType.ADDITIVE ? fmtAdditive(total) : formatModifierValue(total, type)
 }
 
 /** 分步计算过程：基础值 → 加法 → 百分比乘区 → 独立乘区 → 最终乘区，每步带中间结果 */
@@ -247,14 +254,12 @@ const calcSteps = computed(() => {
 
   steps.push({ label: '基础值', result: fmt(current) })
 
-  if (additiveMods.length > 0) {
-    const total = additiveMods.reduce((s, m) => s + m.value, 0)
+  // 加法来源逐条一步（来源标签 + 细节），计算过程可追溯到每一项
+  for (const m of additiveMods) {
     const before = current
-    current = before + total
-    steps.push({
-      label: `加法修正 (${additiveMods.map(m => formatModifierValue(m.value, ModifierType.ADDITIVE)).join(' ')})`,
-      result: `${fmt(before)} → ${fmt(current)} (${signed(total)})`,
-    })
+    current = before + m.value
+    const label = getSourceLabel(m.sourceType) + (m.description ? ` · ${m.description}` : '')
+    steps.push({ label, result: `${fmt(before)} → ${fmt(current)} (${signed(m.value)})` })
   }
 
   if (percentMods.length > 0) {
@@ -352,6 +357,8 @@ const tooltipStyle = computed(() => {
   } else {
     top = Math.max(10, Math.min(props.triggerRect.top, viewportHeight - tooltipHeight - 10))
   }
+  // 目标贴近视口上/下缘时，各分支的 top 均钳制在视口内（tooltipHeight 为估算值，取实际可显示区兜底）
+  top = Math.max(10, Math.min(top, viewportHeight - 80))
 
   return {
     left: `${left}px`,
@@ -516,63 +523,66 @@ const tooltipStyle = computed(() => {
         }
       }
 
-      .calculation-section {
-        background: rgba(var(--rgb-energy), var(--alpha-tint));
-        border-radius: var(--radius-md);
-        padding: var(--space-3);
-        margin-top: var(--space-2);
+    }
 
-        .calculation-title {
+    /* NOTE: calculation-section 是 .tooltip-content 直接子级（不在 .source-list 内），
+       选择器层级必须与之匹配，否则 calc-step 的 flex 布局全部失效挤成一行 */
+    .calculation-section {
+      background: rgba(var(--rgb-energy), var(--alpha-tint));
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      margin-top: var(--space-2);
+
+      .calculation-title {
+        color: var(--color-text-tertiary);
+        margin-bottom: var(--space-2);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .calc-step {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: var(--space-2);
+        padding: var(--space-1) 0;
+        border-bottom: 1px dashed var(--border-common-color-dark);
+        font-family: var(--font-family-mono);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .calc-step-label {
           color: var(--color-text-tertiary);
-          margin-bottom: var(--space-2);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          flex-shrink: 0;
         }
 
-        .calc-step {
-          display: flex;
-          justify-content: space-between;
-          align-items: baseline;
-          gap: var(--space-2);
-          padding: var(--space-1) 0;
-          border-bottom: 1px dashed var(--border-common-color-dark);
+        .calc-step-result {
+          color: var(--color-text-secondary);
+          text-align: right;
+          white-space: nowrap;
+        }
+      }
+
+      .calculation-result {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-top: var(--space-2);
+        padding-top: var(--space-2);
+        border-top: 1px dashed var(--border-common-color-dark);
+
+        .result-label {
+          font-size: var(--font-size-md);
+          color: var(--color-text-tertiary);
+        }
+
+        .result-value {
+          font-size: var(--font-size-lg);
+          font-weight: var(--font-weight-bold);
+          color: var(--color-energy);
           font-family: var(--font-family-mono);
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          .calc-step-label {
-            color: var(--color-text-tertiary);
-            flex-shrink: 0;
-          }
-
-          .calc-step-result {
-            color: var(--color-text-secondary);
-            text-align: right;
-            white-space: nowrap;
-          }
-        }
-
-        .calculation-result {
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-          margin-top: var(--space-2);
-          padding-top: var(--space-2);
-          border-top: 1px dashed var(--border-common-color-dark);
-
-          .result-label {
-            font-size: var(--font-size-md);
-            color: var(--color-text-tertiary);
-          }
-
-          .result-value {
-            font-size: var(--font-size-lg);
-            font-weight: var(--font-weight-bold);
-            color: var(--color-energy);
-            font-family: var(--font-family-mono);
-          }
         }
       }
     }

@@ -1,0 +1,117 @@
+/* 背包装备卡片（xy-gear-pack-item）：装备页背包池与洞府强化选择网格共用。
+ * 消费方在 scoped style 里 @use 本文件；dots 纹理 mixin 与 dots-flow keyframes 均为全局定义。 */
+@use '@/presentation/styles/mixins' as *;
+
+.xy-gear-pack-item {
+  --r-color: var(--xy-ink-line);
+  --ring: var(--r-color);
+  --glow: color-mix(in srgb, var(--r-color) 40%, transparent);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--r-color);
+  border-radius: 2px;
+
+  &::after {
+    @include mixin-bg-dual-dots();
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 0 0 2px var(--xy-paper),
+      0 0 0 4px var(--ring),
+      0 0 34px var(--glow),
+      0 22px 46px rgba(var(--rgb-black), 0.4);
+
+    &::after {
+      animation: dots-flow 6s linear infinite;
+    }
+  }
+
+  /* 选择态（强化等"点选装备"场景）：外圈 ring 常亮，不依赖 hover */
+  &.is-selected {
+    box-shadow:
+      0 0 0 2px var(--xy-paper),
+      0 0 0 4px var(--xy-seal),
+      0 0 20px color-mix(in srgb, var(--xy-seal) 45%, transparent);
+  }
+
+  &--r1 { --r-color: var(--rarity-1); }
+  &--r2 { --r-color: var(--rarity-2); }
+  &--r3 { --r-color: var(--rarity-3); }
+  &--r4 { --r-color: var(--rarity-4); }
+  &--r5 { --r-color: var(--rarity-5); }
+}
+
+.xy-gear-pack-item__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--xy-ink-1);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+/* 标题行：名称（品阶色）（品质/强化/星级下沉到养成行） */
+.xy-gear-pack-item__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* 养成行：品质系数 + 强化等级 + 星级（两行卡片结构的固定第二行） */
+.xy-gear-pack-item__sub {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.xy-gear-pack-item__quality {
+  font-weight: 600;
+}
+
+.xy-gear-pack-item__enhance {
+  color: var(--color-success);
+}
+
+.xy-gear-pack-item__star {
+  color: var(--xy-gold);
+  font-size: var(--font-size-md);
+  letter-spacing: 1px;
+}
+
+.xy-gear-pack-item__detail {
+  align-self: center;
+  flex-shrink: 0;
+  margin: 0 var(--space-2) 0 0;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--xy-ink-3);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+
+  &:hover {
+    border-color: var(--xy-seal);
+    color: var(--xy-seal);
+  }
+}

@@ -182,6 +182,11 @@ function brk(inst: PetMountInstance): void {
   color: var(--xy-ink-4);
 }
 
+/* 滚动容器 xy-panel-scroll 无预留：网格四周留 4px 兜住 xy-card hover 上移 1px（ mates/pets 两 tab 共用） */
+.xy-card-grid {
+  padding: var(--space-1);
+}
+
 /* ── 伙伴 ── */
 .xy-mate-card {
   display: flex;

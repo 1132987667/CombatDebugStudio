@@ -95,7 +95,7 @@
         <button
           type="button"
           class="xy-cave-action"
-          :disabled="brewing || !canCraft(selected)"
+          :disabled="brewing"
           @click="craft"
         >
           {{ brewing ? '铸 造 中…' : '消 耗 材 料 · 铸 造' }}
@@ -116,7 +116,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouForgeRecipe } from '../../types'
 import { crafts, forgeRecipes, equipmentCatalog } from '../../xiyouData'
-import { itemName, type MatView } from '../../caveLogic'
+import { itemName, missingMatsText, type MatView } from '../../caveLogic'
 import { equipQualityColor, qualityOdds, tierName } from '../../quality'
 
 const pack = usePackStore()
@@ -252,7 +252,8 @@ function craft(): void {
   }
   if (!canCraft(r)) {
     shaking.value = true
-    notification.toast('材料不足，无法铸造', 'error')
+    const missing = missingMatsText(materialsOf(r))
+    notification.toast(missing ? `材料不足：${missing}` : '金钱不足，无法铸造', 'error')
     window.setTimeout(() => {
       shaking.value = false
     }, 400)

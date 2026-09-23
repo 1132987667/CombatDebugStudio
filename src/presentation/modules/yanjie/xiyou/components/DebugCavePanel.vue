@@ -323,7 +323,8 @@ function onConfirm(): void {
 async function dispatch(act: DebugActionDef, param: unknown, current: boolean | undefined): Promise<DebugActionResult> {
   try {
     const raw = await act.execute(param as string | number | File | Record<string, string | number | File | null> | null | undefined, current)
-    if (raw.success && raw.payload !== undefined && detailEnabled.value) openDetail(raw.payload)
+    // NOTE: 失败结果同样可能有明细 payload（如批量校验的违规清单），不随 success 一起跳过
+    if (raw.payload !== undefined && detailEnabled.value) openDetail(raw.payload)
     if (raw.success) {
       notification.toast(raw.message, 'success')
     } else {

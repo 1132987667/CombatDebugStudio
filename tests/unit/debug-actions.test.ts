@@ -8,7 +8,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { container, initializeContainer } from '@/infrastructure/di/Container'
 import { createDebugCategories, fail, ok, type DebugCategory } from '@/presentation/modules/yanjie/xiyou/debugActions'
 import type { PlayerStoreDebugEnv } from '@/presentation/modules/yanjie/xiyou/debugEnv'
-import { equipment, packItems, quests, scenes, schools, shopGoods, skillPoints, starterEnabled, mates, mounts, pets } from '@/presentation/modules/yanjie/xiyou/xiyouData'
+import { equipment, equipmentCatalog, packItems, quests, scenes, schools, shopGoods, skillPoints, starterEnabled, mates, mounts, pets } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { saveManager } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { makeInstance, usePackStore } from '@/presentation/stores/packStore'
@@ -425,5 +425,46 @@ describe('行囊/装备动作真实行为', () => {
     // 神品质词缀数量（affixCountByQuality(5)=5；词库不足时取可用上限）应 ≥ 凡品质语义（1）
     expect(after?.affixes.length).toBeGreaterThanOrEqual(2)
     vi.restoreAllMocks()
+  })
+})
+
+describe('批量生成与词条校验（gear_batch_*）', () => {
+  /** 每次调用重建分类树：批次清单是模块级状态，跨调用共享正是被测语义 */
+  const gearAct = (env: PlayerStoreDebugEnv, id: string) => {
+    const gear = createDebugCategories(env).find((c) => c.id === 'gear') as DebugCategory
+    return gear.groups.flatMap((g) => g.actions).find((a) => a.id === id)!
+  }
+  /** 只做目录注入，不 init（避免新手套装备污染计数基线） */
+  const envWithCatalog = (): PlayerStoreDebugEnv => ({ ...makeEnv(), equipmentCatalog })
+
+  it('两次生成的批次累加，一次清空全删（不遗留清不掉的孤儿批次）', async () => {
+    const env = envWithCatalog()
+    const gen = gearAct(env, 'gear_batch_gen')
+    await gen.execute(3)
+    await gen.execute(3)
+    expect(env.pack.gearInstances.length).toBe(6)
+    expect((await gearAct(env, 'gear_batch_check').execute()).message).toContain('检查 6 件')
+    const cleared = await gearAct(env, 'gear_batch_clear').execute()
+    expect(cleared.message).toContain('已移除本批 6 件')
+    expect(env.pack.gearInstances.length).toBe(0)
+  })
+
+  it('穿戴中的本批装备不被清空，但仍留在清单里，卸下后可再清', async () => {
+    const env = envWithCatalog()
+    const pack = env.pack
+    await gearAct(env, 'gear_batch_gen').execute(3)
+    const worn = pack.gearInstances[0]!
+    expect(pack.equipInstance(worn.instanceId)).toBe(true)
+    expect(pack.gearInstances.length).toBe(2)
+
+    const first = await gearAct(env, 'gear_batch_clear').execute()
+    expect(first.message).toContain('已移除本批 2 件')
+    expect(first.message).toContain('仍穿戴 1 件')
+    expect(pack.gearInstances.length).toBe(0)
+
+    expect(pack.unequip(pack.slotKeyOf(worn.itemId)!)).toBe(true)
+    const second = await gearAct(env, 'gear_batch_clear').execute()
+    expect(second.message).toContain('已移除本批 1 件')
+    expect(pack.gearInstances.length).toBe(0)
   })
 })

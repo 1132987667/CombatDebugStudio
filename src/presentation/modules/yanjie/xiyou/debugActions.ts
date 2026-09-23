@@ -10,7 +10,8 @@
  * - 本文件不 import 任何 store，仅依赖注入的 env。
  */
 
-import { makeInstance, GEAR_SLOT_LABELS, type GearInstance, type GearSlotKey } from '@/presentation/stores/packStore'
+import { makeInstance, equipRollParams, GEAR_SLOT_LABELS, type GearInstance, type GearSlotKey } from '@/presentation/stores/packStore'
+import { checkGearRoll } from '@/domain/fengshen/equip-roll-check'
 import { applyAffixToParticipant, clearAffixesFromParticipant } from '@/shared/utils/affix'
 import { PLAYER_ID } from '@/shared/constants/player'
 import type { AffixData, EquipmentAffixData } from '@/domain/fengshen/types'
@@ -36,7 +37,7 @@ import { enhanceCost, enhanceMaxByRarity, enhanceSuccessRate } from './caveLogic
 import { createRng, rngFn } from '@/shared/utils/seeded-rng'
 import type { PlayerStoreDebugEnv } from './debugEnv'
 import { ALL_ITEM_TYPES_SET } from '@/shared/constants/item-types'
-import { RARITY_NAMES, rollQualityFactor } from './quality'
+import { QUALITY_FACTOR_RANGE, RARITY_NAMES, rollQualityFactor } from './quality'
 
 /** 品级 1-5 → select options（单一来源 quality.RARITY_NAMES） */
 const RARITY_OPTIONS = Object.entries(RARITY_NAMES).map(([value, label]) => ({ value, label }))
@@ -144,6 +145,12 @@ let craftQualityLock: number | null = null
 function getCraftQualityLock(): number | null {
   return craftQualityLock
 }
+
+/**
+ * 最近一次「一键生成随机装备」产生的实例 id 清单，供「一键检查词条 / 清空本批」定位对象。
+ * NOTE: 仅内存态（生命周期同面板会话）——页面重载后失效，届时检查会提示先重新生成。
+ */
+let lastBatchIds: string[] = []
 
 /**
  * 设置玩家等级并重算属性（基础 + 成长 + 加点），返回属性快照。
@@ -1425,6 +1432,93 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: (q) => {
               craftQualityLock = q === '' || q === null ? null : Number(q)
               return ok(craftQualityLock === null ? '制造品质锁定已解除' : `制造品质已锁定为 ${craftQualityLock} 品`)
+            },
+          },
+        ],
+      },
+      {
+        id: 'batch',
+        label: '批量生成与词条校验',
+        actions: [
+          {
+            id: 'gear_batch_gen',
+            label: '一键生成随机装备',
+            input: { type: 'number', min: 1, max: 500, placeholder: '数量（缺省 100）' },
+            execute: (n) => {
+              const count = Math.min(500, Math.max(1, Math.floor(Number(n)) || 100))
+              if (!env.equipmentCatalog.length) return fail('装备目录为空')
+              // 无重复抽样（Fisher-Yates 洗牌取前 count，目录不足时按容量收口）
+              const pool = [...env.equipmentCatalog]
+              for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1))
+                ;[pool[i], pool[j]] = [pool[j]!, pool[i]!]
+              }
+              const before = pack.gearInstances.length
+              // 走 store 正规入口：品质按阶位 roll、核心/主要/附加属性按 affix-rule 公式 roll 并锁存
+              for (const g of pool.slice(0, count)) pack.addItem(g.id, 1)
+              const created = pack.gearInstances.slice(before)
+              // 跨批累加：连点两次生成时，前一批仍留在清单里，否则它就成了清不掉的孤儿
+              lastBatchIds = [...new Set([...lastBatchIds, ...created.map((g) => g.instanceId)])]
+              const qualityDist: Record<string, number> = {}
+              for (const g of created) qualityDist[g.quality] = (qualityDist[g.quality] ?? 0) + 1
+              return ok(
+                `已生成 ${created.length} 件入背包（目录 ${env.equipmentCatalog.length} 件无重复抽样）`,
+                { 品质分布: qualityDist },
+              )
+            },
+          },
+          {
+            id: 'gear_batch_check',
+            label: '一键检查本批词条',
+            execute: () => {
+              const ids = new Set(lastBatchIds)
+              // 已穿戴的实例不在 gearInstances，一并纳入（穿进战斗验证后仍可查）
+              const worn = Object.values(pack.equipped).filter((g): g is GearInstance => !!g)
+              const targets = [...pack.gearInstances, ...worn].filter((g) => ids.has(g.instanceId))
+              if (!targets.length) return fail('本会话没有可检查的生成批次（先执行「一键生成随机装备」）')
+              const ctx = { ...equipRollParams(), factorRange: QUALITY_FACTOR_RANGE }
+              const violations: string[] = []
+              const gaps: string[] = []
+              for (const inst of targets) {
+                const def = env.equipmentCatalog.find((e) => e.id === inst.itemId)
+                if (!def) {
+                  violations.push(`${inst.itemId}: 装备定义不在目录`)
+                  continue
+                }
+                const report = checkGearRoll(def, inst, ctx)
+                violations.push(...report.violations)
+                gaps.push(...report.gaps)
+              }
+              const summary = `检查 ${targets.length} 件：违规 ${violations.length} 条、配置缺口 ${gaps.length} 条`
+              // 明细进 message：执行日志记 message 全文，未开「弹出数据详情」也能看到前几条
+              const preview = [...violations, ...gaps].slice(0, 5)
+              const detail = preview.length
+                ? `\n  ${preview.join('\n  ')}${violations.length + gaps.length > preview.length ? '\n  …（完整清单见数据详情弹窗）' : ''}`
+                : ''
+              if (violations.length) return fail(summary + detail, { 违规: violations, 配置缺口: gaps })
+              return ok(summary + detail, gaps.length ? { 配置缺口: gaps } : undefined)
+            },
+          },
+          {
+            id: 'gear_batch_clear',
+            label: '清空本批生成装备',
+            execute: () => {
+              if (!lastBatchIds.length) return fail('本会话没有生成批次')
+              const ids = new Set(lastBatchIds)
+              const wornIds = new Set(
+                Object.values(pack.equipped).filter((g): g is GearInstance => !!g).map((g) => g.instanceId),
+              )
+              const before = pack.gearInstances.length
+              pack.gearInstances = pack.gearInstances.filter((g) => !ids.has(g.instanceId))
+              const removed = before - pack.gearInstances.length
+              // 穿戴中的不在背包，本轮删不到——留在清单里，卸下后再点即可清掉
+              lastBatchIds = lastBatchIds.filter((id) => wornIds.has(id))
+              void pack.flush()
+              return ok(
+                lastBatchIds.length
+                  ? `已移除本批 ${removed} 件；仍穿戴 ${lastBatchIds.length} 件未移除，卸下后再点可继续清`
+                  : `已移除本批 ${removed} 件`,
+              )
             },
           },
         ],

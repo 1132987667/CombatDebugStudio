@@ -117,6 +117,12 @@ async function refreshFormulaParams(): Promise<void> {
   }
 }
 
+/** 当前生效的装备 roll 参数三件套（种子默认，或封神榜 params 覆盖后的值）。
+ *  NOTE: 供调试侧「一键检查词条」以与生成完全相同的基准复算规则——用 affixRuleDefaults() 会漏掉策划改动。 */
+export function equipRollParams(): { cfg: AffixRuleConfig; formula: EquipFormulaConfig; conversion: Record<string, number> } {
+  return { cfg: AFFIX_RULE, formula: EQUIP_FORMULA, conversion: PLAYER_CONVERSION }
+}
+
 /** 按实例品质 roll 一件装备的全部属性（核心 1 条 + 主要/附加词条；§21 三属性固定/随机边界） */
 function rollInstanceParts(
   itemId: string,

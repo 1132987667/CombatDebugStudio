@@ -38,7 +38,7 @@ export function expNeedForLevel(level: number): number {
 /** 基础属性（仅 base + 等级成长，不含加点） */
 export function computePlayerBase(level: number): Pick<
   XiyouPlayer,
-  'maxHp' | 'attackMin' | 'attackMax' | 'defense' | 'speed' | 'critRate' | 'critDamage' | 'maxEnergy' | 'hitRate' | 'dodgeRate'
+  'maxHp' | 'attackMin' | 'attackMax' | 'defense' | 'speed' | 'critRate' | 'critDamage' | 'maxEnergy' | 'hitRate' | 'dodgeRate' | 'hitValue' | 'dodgeValue'
 > {
   const g = level - 1
   const b = playerConfig.base
@@ -55,6 +55,8 @@ export function computePlayerBase(level: number): Pick<
     maxEnergy: b.maxEnergy,
     hitRate: b.hitRate,
     dodgeRate: b.dodgeRate,
+    hitValue: b.hitValue + g * (growth.hitValue ?? 0),
+    dodgeValue: b.dodgeValue + g * (growth.dodgeValue ?? 0),
   }
 }
 
@@ -128,6 +130,8 @@ export function createPlayerProfile(opts?: { level?: number; exp?: number; stats
     critDamage: base.critDamage,
     hitRate: base.hitRate,
     dodgeRate: base.dodgeRate,
+    hitValue: base.hitValue + (bonus[ATTRIBUTE_CODE.hitValue] ?? 0),
+    dodgeValue: base.dodgeValue + (bonus[ATTRIBUTE_CODE.dodgeValue] ?? 0),
     exp: opts?.exp ?? 0,
     expNeed: expNeedForLevel(level),
     breakStage: opts?.breakStage ?? 0,

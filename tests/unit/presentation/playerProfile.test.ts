@@ -23,7 +23,7 @@ import type { XiyouScene } from '@/presentation/modules/yanjie/xiyou/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 describe('playerProfile 玩家属性创建', () => {
-  it('level 5 档位对齐 SAP 模型（player.json：base 60/16/10/10 + 4×growth 24/8/4/2）', () => {
+  it('level 5 档位对齐 SAP 模型（player.json：base 60/16/10/10 + 4×growth 24/8/4/3/3/2）', () => {
     const p = createPlayerProfile({ level: 5, exp: 360 })
     expect(p.maxHp).toBe(156)
     expect(p.attackMin).toBe(48)
@@ -34,6 +34,8 @@ describe('playerProfile 玩家属性创建', () => {
     expect(p.critRate).toBe(7.5)
     expect(p.hitRate).toBe(90)
     expect(p.dodgeRate).toBe(10)
+    expect(p.hitValue).toBe(22)
+    expect(p.dodgeValue).toBe(22)
     expect(p.expNeed).toBe(739)
     expect(p.hp).toBe(p.maxHp)
   })
@@ -45,6 +47,8 @@ describe('playerProfile 玩家属性创建', () => {
     expect(b.attackMax).toBe(16)
     expect(b.defense).toBe(10)
     expect(b.speed).toBe(10)
+    expect(b.hitValue).toBe(10)
+    expect(b.dodgeValue).toBe(10)
   })
 
   it('突破节点表（§20）：五阶 10/20/30/40/50 级，丹与阶位金钱对应', () => {
@@ -82,11 +86,13 @@ describe('playerProfile 玩家属性创建', () => {
     expect(createPlayerProfile({ level: 25, breakStage: 2 }).breakStage).toBe(2)
   })
 
-  it('加点换算按 statBonuses 计算（SAP 六维：1 点 = 12 气血 = 2 攻 = 2 速度）', () => {
-    const bonus = computeStatBonuses({ available: 0, hp: 2, atk: 3, def: 0, hit: 0, dodge: 0, speed: 1 })
+  it('加点换算按 statBonuses 计算（SAP 六维：1 点 = 12 气血 = 2 攻 = 2 速度 = 2 命中值）', () => {
+    const bonus = computeStatBonuses({ available: 0, hp: 2, atk: 3, def: 0, hit: 2, dodge: 0, speed: 1 })
     expect(bonus.attack).toBe(6)
     expect(bonus.maxHealth).toBe(24)
     expect(bonus.speed).toBe(2)
+    expect(bonus.hitValue).toBe(4)
+    expect(bonus.dodgeValue).toBe(0)
   })
 
   it('createPlayerProfile 满血创建且含加点加成', () => {
@@ -94,6 +100,13 @@ describe('playerProfile 玩家属性创建', () => {
     // 2 点 × 2 攻/点 = +4
     expect(p.attackMin).toBe(20)
     expect(p.attackMax).toBe(20)
+  })
+
+  it('createPlayerProfile 命中/闪避值含等级成长与加点（§19 每级 +3/+3）', () => {
+    const p = createPlayerProfile({ level: 5, stats: { available: 0, hp: 0, atk: 0, def: 0, hit: 2, dodge: 0, speed: 0 } })
+    // 10 + 4 级×3 + 2 点×2 = 26
+    expect(p.hitValue).toBe(26)
+    expect(p.dodgeValue).toBe(22)
   })
 
   it('经验表缺档封顶（§19 公式 EXP(L)=round(50×L^1.35+60L)）', () => {
@@ -131,6 +144,8 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     setActivePinia(createPinia())
     const store = usePlayerStore()
     expect(store.battleSnapshot.attack).toBe(store.player.attackMax)
+    expect(store.battleSnapshot.hitValue).toBe(store.player.hitValue)
+    expect(store.battleSnapshot.dodgeValue).toBe(store.player.dodgeValue)
     store.statPoints.atk += 2
     expect(store.battleSnapshot.attack).toBe(store.player.attackMax + 4)
     store.statPoints.atk -= 2
@@ -145,6 +160,9 @@ describe('战斗主角数据源（playerStore → buildBattleTeams / equipBonuse
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.attack)).toBe(store.player.attackMax)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.maxHealth)).toBe(store.player.maxHp)
     expect(ally[0].getAttribute(ATTRIBUTE_CODE.critRate)).toBe(store.player.critRate)
+    // 命中值/闪避值经快照注入战斗实体（§19 成长 + 加点，命中公式对抗基础）
+    expect(ally[0].getAttribute(ATTRIBUTE_CODE.hitValue)).toBe(store.battleSnapshot.hitValue)
+    expect(ally[0].getAttribute(ATTRIBUTE_CODE.dodgeValue)).toBe(store.battleSnapshot.dodgeValue)
     // 伙伴按 mate.json stats × 等级成长系数派生（孙小圣 lv5：230 × 1.6 = 368）
     const mate = mates.find((m) => m.name === '孙小圣')!
     expect(mate.active).toBe(true)

@@ -304,7 +304,7 @@ export function firstKillRewardDrops(enemyIds: string[]): EnemyDrop[] {
 export function equipBonuses(
   stats: EquipmentStatEntry[],
   // NOTE: 引擎按百分数消费 critDamage（DamageCalculator /100 折算倍率），默认值同用百分数语义
-  protagonist: ProtagonistSnapshot = { ...playerParty[0], critRate: 0, critDamage: 150, dodge: 0, damageReduction: 0 },
+  protagonist: ProtagonistSnapshot = { ...playerParty[0], critRate: 0, critDamage: 150, dodge: 0, damageReduction: 0, hitValue: 10, dodgeValue: 10 },
 ): Partial<Record<string, number>> {
   const base = protagonist
   const flat: Record<string, number> = {}
@@ -319,6 +319,9 @@ export function equipBonuses(
     [ATTRIBUTE_CODE.speed]: base.speed,
     [ATTRIBUTE_CODE.maxHealth]: base.maxHp,
     [ATTRIBUTE_CODE.critRate]: base.critRate,
+    // 护符/靴子主词条（affix-rule.json）为 hitValue/dodgeValue，缺基准会恒算 0
+    [ATTRIBUTE_CODE.hitValue]: base.hitValue ?? 10,
+    [ATTRIBUTE_CODE.dodgeValue]: base.dodgeValue ?? 10,
   }
   const out: Record<string, number> = { ...flat }
   for (const [attr, pct] of Object.entries(percent)) {
@@ -451,6 +454,8 @@ const SNAPSHOT_ATTR_KEYS = new Set<string>([
   ATTRIBUTE_CODE.critDamage,
   ATTRIBUTE_CODE.dodgeRate,
   ATTRIBUTE_CODE.damageReduction,
+  ATTRIBUTE_CODE.hitValue,
+  ATTRIBUTE_CODE.dodgeValue,
 ])
 
 /** 流派树增量中需经 allyBonuses 注入战斗的子集（快照已承载键除外） */
@@ -465,7 +470,7 @@ export function schoolTreeCombatBonuses(): Partial<Record<string, number>> {
 
 /** 西游战斗单位（含主角快照扩展字段）→ Enemy 形状（ATTRIBUTE_CODE stats）。无头模拟与 buildBattleTeams 共用同一映射，保证口径一致 */
 function xiyouToEnemy(
-  c: XiyouCombatant & { critRate?: number; critDamage?: number; hitRate?: number; dodge?: number; damageReduction?: number },
+  c: XiyouCombatant & { critRate?: number; critDamage?: number; hitRate?: number; dodge?: number; damageReduction?: number; hitValue?: number; dodgeValue?: number },
   player: boolean,
 ): Enemy {
   return {
@@ -485,6 +490,8 @@ function xiyouToEnemy(
       [ATTRIBUTE_CODE.hitRate]: c.hitRate ?? 90,
       [ATTRIBUTE_CODE.dodgeRate]: c.dodge ?? 0,
       [ATTRIBUTE_CODE.damageReduction]: c.damageReduction ?? 0,
+      [ATTRIBUTE_CODE.hitValue]: c.hitValue ?? 10,
+      [ATTRIBUTE_CODE.dodgeValue]: c.dodgeValue ?? 10,
     },
     drops: dropsForEnemy(c.name),
     // NOTE: 主角注入装备槽选出的技能（equipped 节点映射后的技能）+ 法宝/神器被动（充能/释放）；伙伴为固定空技能（引擎普攻兜底）

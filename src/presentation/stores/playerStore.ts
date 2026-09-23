@@ -64,8 +64,8 @@ export const usePlayerStore = defineStore('player', () => {
       [ATTRIBUTE_CODE.damageReduction]: playerConfig.base.damageReduction ?? 0,
       [ATTRIBUTE_CODE.hitRate]: player.hitRate,
       [ATTRIBUTE_CODE.dodgeRate]: player.dodgeRate,
-      [ATTRIBUTE_CODE.hitValue]: playerConfig.base.hitValue,
-      [ATTRIBUTE_CODE.dodgeValue]: playerConfig.base.dodgeValue,
+      [ATTRIBUTE_CODE.hitValue]: player.hitValue + (bonus[ATTRIBUTE_CODE.hitValue] ?? 0),
+      [ATTRIBUTE_CODE.dodgeValue]: player.dodgeValue + (bonus[ATTRIBUTE_CODE.dodgeValue] ?? 0),
     }
     // NOTE: school 为流派属性增量（schoolAttributeBonuses 已归一为绝对增量：percent 属性
     //       已是百分点、数值属性已按基础值换算），逐键直接叠加
@@ -103,6 +103,8 @@ export const usePlayerStore = defineStore('player', () => {
       critDamage: attr[ATTRIBUTE_CODE.critDamage] ?? player.critDamage,
       dodge: attr[ATTRIBUTE_CODE.dodgeRate] ?? player.dodgeRate,
       damageReduction: attr[ATTRIBUTE_CODE.damageReduction] ?? 0,
+      hitValue: attr[ATTRIBUTE_CODE.hitValue] ?? player.hitValue,
+      dodgeValue: attr[ATTRIBUTE_CODE.dodgeValue] ?? player.dodgeValue,
     }
   })
 

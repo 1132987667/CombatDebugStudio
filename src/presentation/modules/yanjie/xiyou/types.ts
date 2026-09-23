@@ -27,6 +27,9 @@ export interface XiyouPlayer {
   critDamage: number
   hitRate: number
   dodgeRate: number
+  /** 命中值/闪避值（§19 每级 +3/+3，命中公式 hitValue/(hitValue+dodgeValue) 的对抗基础） */
+  hitValue: number
+  dodgeValue: number
   exp: number
   expNeed: number
   /** 已完成等级突破阶次（0~5，§20；10 的倍数级需对应阶突破丹+金钱解锁） */
@@ -83,6 +86,8 @@ export type ProtagonistSnapshot = XiyouCombatant & {
   critDamage: number
   dodge: number
   damageReduction: number
+  hitValue: number
+  dodgeValue: number
 }
 
 /** 物品品质（凡 / 玄 / 地 / 天 / 仙） */

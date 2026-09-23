@@ -9,7 +9,7 @@
  *
  * - 血/攻/防/速模板曲线来自 configs/params/curves.json（数值中枢，改曲线后
  *   重跑 node scripts/generate-enemy-design.cjs 并同步下方 CoEF/次级模板常量）
- * - 次级维度：hit/dodge 吃品阶系数（差异 1.00~1.59），critRate/critDamage
+ * - 次级维度：hitValue/dodgeValue 吃品阶系数（差异 1.00~1.59），critRate/critDamage
  *   不吃（全体统一模板曲线）
  * - maxEnergy = 150 全体常量；energyInit = 25（终局 boss_final_liuer 特例 50，§3.7）
  * - 确定性计算，无随机数：同输入同输出
@@ -29,14 +29,14 @@ export type EnemyTier = 'xiaoyao' | 'yaobing' | 'yaotu' | 'yaokui' | 'yaowang' |
 
 /** 档位系数矩阵（实数/模板 中位数，round2；来源 scripts/generate-enemy-design.cjs 拟合输出 = 设计文档 §4 表） */
 export const ENEMY_TIER_COEF: Record<EnemyTier, EnemyCoefRow> = {
-  xiaoyao: { maxHealth: 1.08, attack: 1.43, defense: 2.3, speed: 0.69, hit: 1.0, dodge: 1.0 },
-  yaobing: { maxHealth: 1.23, attack: 1.63, defense: 2.65, speed: 0.77, hit: 1.0, dodge: 1.08 },
-  yaotu: { maxHealth: 1.4, attack: 1.87, defense: 2.99, speed: 0.89, hit: 1.0, dodge: 1.19 },
-  yaokui: { maxHealth: 1.94, attack: 2.58, defense: 4.13, speed: 1.21, hit: 1.03, dodge: 1.43 },
-  yaowang: { maxHealth: 2.38, attack: 3.21, defense: 5.18, speed: 1.57, hit: 1.02, dodge: 1.59 },
-  yaozun: { maxHealth: 2.71, attack: 3.67, defense: 5.64, speed: 1.71, hit: 1.02, dodge: 1.56 },
-  king: { maxHealth: 3.04, attack: 4.12, defense: 6.31, speed: 1.9, hit: 1.01, dodge: 1.56 },
-  final: { maxHealth: 9.54, attack: 1.69, defense: 1.9, speed: 0.48, hit: 1.01, dodge: 1.55 },
+  xiaoyao: { maxHealth: 1.08, attack: 1.43, defense: 2.3, speed: 0.69, hitValue: 1.0, dodgeValue: 1.0 },
+  yaobing: { maxHealth: 1.23, attack: 1.63, defense: 2.65, speed: 0.77, hitValue: 1.0, dodgeValue: 1.08 },
+  yaotu: { maxHealth: 1.4, attack: 1.87, defense: 2.99, speed: 0.89, hitValue: 1.0, dodgeValue: 1.19 },
+  yaokui: { maxHealth: 1.94, attack: 2.58, defense: 4.13, speed: 1.21, hitValue: 1.03, dodgeValue: 1.43 },
+  yaowang: { maxHealth: 2.38, attack: 3.21, defense: 5.18, speed: 1.57, hitValue: 1.02, dodgeValue: 1.59 },
+  yaozun: { maxHealth: 2.71, attack: 3.67, defense: 5.64, speed: 1.71, hitValue: 1.02, dodgeValue: 1.56 },
+  king: { maxHealth: 3.04, attack: 4.12, defense: 6.31, speed: 1.9, hitValue: 1.01, dodgeValue: 1.56 },
+  final: { maxHealth: 9.54, attack: 1.69, defense: 1.9, speed: 0.48, hitValue: 1.01, dodgeValue: 1.55 },
 }
 
 interface EnemyCoefRow {
@@ -44,8 +44,8 @@ interface EnemyCoefRow {
   attack: number
   defense: number
   speed: number
-  hit: number
-  dodge: number
+  hitValue: number
+  dodgeValue: number
 }
 
 /** 特殊档：id 前缀/全名匹配（boss_king_* 数值超 yaowang 档、终局独立登记） */
@@ -79,10 +79,10 @@ interface EnemyCurvesJson {
 
 const CURVES = curvesJson as EnemyCurvesJson
 
-/** 次级维度模板曲线（小妖样本最小二乘拟合，6 位小数与脚本全精度逐值对拍一致；hit 恰为整数值） */
+/** 次级维度模板曲线（小妖样本最小二乘拟合，6 位小数与脚本全精度逐值对拍一致；hitValue 恰为整数值） */
 const SECONDARY = {
-  hit: { a: 10, b: 2 },
-  dodge: { a: 2.212679, b: 0.808794 },
+  hitValue: { a: 10, b: 2 },
+  dodgeValue: { a: 2.212679, b: 0.808794 },
   critRate: { a: 4.815582, b: 0.19936 },
   critDamage: { a: 120.153682, b: 0.500534 },
 } as const
@@ -93,8 +93,8 @@ const SANITY_BOUNDS = {
   attack: [1, 9999],
   defense: [0, 9999],
   speed: [1, 9999],
-  hit: [0, 9999],
-  dodge: [0, 9999],
+  hitValue: [0, 9999],
+  dodgeValue: [0, 9999],
   critRate: [0, 100],
   critDamage: [100, 500],
 } as const
@@ -105,8 +105,8 @@ export type EnemyStatValues = {
   attack: number
   defense: number
   speed: number
-  hit: number
-  dodge: number
+  hitValue: number
+  dodgeValue: number
   critRate: number
   critDamage: number
   maxEnergy: number
@@ -127,8 +127,8 @@ export function expectEnemyStats(tier: EnemyTier, level: number): EnemyStatValue
     attack: Math.round(evalCurve(CURVES.enemy.atk, L) * c.attack),
     defense: Math.round(evalCurve(CURVES.enemy.def, L) * c.defense),
     speed: Math.round(evalCurve(CURVES.enemy.spd, L) * c.speed),
-    hit: Math.round(sec(SECONDARY.hit) * c.hit),
-    dodge: Math.round(sec(SECONDARY.dodge) * c.dodge),
+    hitValue: Math.round(sec(SECONDARY.hitValue) * c.hitValue),
+    dodgeValue: Math.round(sec(SECONDARY.dodgeValue) * c.dodgeValue),
     critRate: Math.round(sec(SECONDARY.critRate)),
     critDamage: Math.round(sec(SECONDARY.critDamage)),
     maxEnergy: 150,

@@ -95,8 +95,8 @@ const metricRows: MetricRow[] = [
   { label: '攻击', pick: (r) => stat(r, 'attack'), value: (r) => String(stat(r, 'attack')) },
   { label: '防御', pick: (r) => stat(r, 'defense'), value: (r) => String(stat(r, 'defense')) },
   { label: '速度', pick: (r) => stat(r, 'speed'), value: (r) => String(stat(r, 'speed')) },
-  { label: '命中', pick: (r) => stat(r, 'hit'), value: (r) => String(stat(r, 'hit')) },
-  { label: '闪避', pick: (r) => stat(r, 'dodge'), value: (r) => String(stat(r, 'dodge')) },
+  { label: '命中', pick: (r) => stat(r, 'hitValue'), value: (r) => String(stat(r, 'hitValue')) },
+  { label: '闪避', pick: (r) => stat(r, 'dodgeValue'), value: (r) => String(stat(r, 'dodgeValue')) },
   { label: '暴击率', pick: (r) => stat(r, 'critRate'), value: (r) => `${stat(r, 'critRate')}%` },
   { label: '暴击伤害', pick: (r) => stat(r, 'critDamage'), value: (r) => `${stat(r, 'critDamage')}%` },
   {

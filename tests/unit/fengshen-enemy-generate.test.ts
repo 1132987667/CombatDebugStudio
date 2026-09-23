@@ -35,10 +35,10 @@ function realInput(id: string): { id: string; level: number; role?: string } {
 describe('expectEnemyStats：模型期望值（手工算样例 + 脚本对拍值）', () => {
   it('L1 小妖：round(模板×小妖系数)', () => {
     // hp=round(80×1.08)=86 atk=round(10×1.43)=14 def=round(1×2.3)=2 spd=round(10×0.69)=7
-    // hit=round(10×1.0)=10 dodge=round(2.212679×1.0)=2 critRate=round(4.815582)=5 critDamage=round(120.153682)=120
+    // hitValue=round(10×1.0)=10 dodgeValue=round(2.212679×1.0)=2 critRate=round(4.815582)=5 critDamage=round(120.153682)=120
     expect(expectEnemyStats('xiaoyao', 1)).toEqual({
       maxHealth: 86, attack: 14, defense: 2, speed: 7,
-      hit: 10, dodge: 2, critRate: 5, critDamage: 120,
+      hitValue: 10, dodgeValue: 2, critRate: 5, critDamage: 120,
       maxEnergy: 150, energyInit: 25,
     })
   })
@@ -48,7 +48,7 @@ describe('expectEnemyStats：模型期望值（手工算样例 + 脚本对拍值
     // def=round((1+0.9×64)×6.31)=round(58.6×6.31)=370 spd=round((10+1.2×64)×1.9)=round(86.8×1.9)=165
     expect(expectEnemyStats('king', 65)).toEqual({
       maxHealth: 2383, attack: 569, defense: 370, speed: 165,
-      hit: 139, dodge: 84, critRate: 18, critDamage: 152,
+      hitValue: 139, dodgeValue: 84, critRate: 18, critDamage: 152,
       maxEnergy: 150, energyInit: 25,
     })
   })
@@ -124,7 +124,7 @@ describe('rebuildEnemyStats / rebuildAllEnemies：真实配置条目重算', () 
     expect(report.skippedCount).toBe(frozen)
     expect(report.warnings.length).toBe(frozen)
     expect(report.warnings.every((w) => w.includes('数值冻结'))).toBe(true)
-    const TEN_KEYS = ['maxHealth', 'attack', 'defense', 'speed', 'hit', 'dodge', 'critRate', 'critDamage', 'maxEnergy', 'energyInit']
+    const TEN_KEYS = ['maxHealth', 'attack', 'defense', 'speed', 'hitValue', 'dodgeValue', 'critRate', 'critDamage', 'maxEnergy', 'energyInit']
     for (const entry of report.entries) {
       expect(Object.keys(entry.after).sort()).toEqual([...TEN_KEYS].sort())
       expect(entry.after.energyInit).toBe(entry.tier === 'final' ? 50 : 25)

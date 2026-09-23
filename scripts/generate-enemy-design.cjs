@@ -159,19 +159,19 @@ const round2 = (v) => Math.round(v * 100) / 100
 
 // 次级维度模板以小妖（基准档、最大样本 n=75）拟合：模板语义 = 「小妖基准曲线」，
 // 与 curves.json 对血/攻/防/速的定位一致；其余档位系数 = 实数 / 小妖模板。
-const SECONDARY_KEYS = ['hit', 'dodge', 'critRate', 'critDamage']
+const SECONDARY_KEYS = ['hitValue', 'dodgeValue', 'critRate', 'critDamage']
 const xiaoyaoPool = enemies.filter((e) => e.role === 'xiaoyao')
 const secondaryFit = {}
 for (const k of SECONDARY_KEYS) {
   secondaryFit[k] = fitLinear(xiaoyaoPool.map((e) => [e.level - 1, e.stats[k] ?? 0]))
 }
-const B_HIT = (L) => secondaryFit.hit.a + secondaryFit.hit.b * (L - 1)
-const B_DODGE = (L) => secondaryFit.dodge.a + secondaryFit.dodge.b * (L - 1)
+const B_HIT = (L) => secondaryFit.hitValue.a + secondaryFit.hitValue.b * (L - 1)
+const B_DODGE = (L) => secondaryFit.dodgeValue.a + secondaryFit.dodgeValue.b * (L - 1)
 const B_CRITR = (L) => secondaryFit.critRate.a + secondaryFit.critRate.b * (L - 1)
 const B_CRITD = (L) => secondaryFit.critDamage.a + secondaryFit.critDamage.b * (L - 1)
 
 // 血/攻/防/速模板函数表（系数矩阵统一按键取用）
-const TEMPLATE = { maxHealth: B.maxHealth, attack: B.attack, defense: B.defense, speed: B.speed, hit: B_HIT, dodge: B_DODGE }
+const TEMPLATE = { maxHealth: B.maxHealth, attack: B.attack, defense: B.defense, speed: B.speed, hitValue: B_HIT, dodgeValue: B_DODGE }
 const STAT_KEYS = Object.keys(TEMPLATE)
 
 // 品阶系数：各档位实数 / 模板 的中位数（普通 5 档 + 特殊档），圆整 2 位
@@ -208,8 +208,8 @@ function expectStats(tier, L) {
     attack: Math.round(B.attack(L) * c.attack),
     defense: Math.round(B.defense(L) * c.defense),
     speed: Math.round(B.speed(L) * c.speed),
-    hit: Math.round(B_HIT(L) * c.hit),
-    dodge: Math.round(B_DODGE(L) * c.dodge),
+    hitValue: Math.round(B_HIT(L) * c.hitValue),
+    dodgeValue: Math.round(B_DODGE(L) * c.dodgeValue),
     critRate: Math.round(B_CRITR(L)),
     critDamage: Math.round(B_CRITD(L)),
     maxEnergy: 150,
@@ -282,7 +282,7 @@ for (const k of ['maxHealth', 'attack', 'defense', 'speed']) {
 }
 
 // A3 拟合度：逐只逐维 |实/模−1| ≤ max(维容差, 圆整噪声界 0.6/期望)；离群需 ≤ 白名单容量
-const TOL = { maxHealth: 0.12, attack: 0.12, defense: 0.35, speed: 0.12, hit: 0.1, dodge: 0.3 }
+const TOL = { maxHealth: 0.12, attack: 0.12, defense: 0.35, speed: 0.12, hitValue: 0.1, dodgeValue: 0.3 }
 const OUTLIER_ALLOWANCE = 10 // 每维允许的离群数上限；剩余离群多为新手域(L≤5)手调弱化，逐只点名进报告
 const outliers = {}
 for (const e of enemies) {
@@ -344,7 +344,7 @@ const ttkRows = ttkResults.map(([label, mode, foeSpec, heroIds, min, max, mustWi
 
 // A6 模型期望逐级单调不减（同档位同维，L1→70）
 for (const tier of [...ROLES, ...SPECIAL_TIERS.map((t) => t.key)]) {
-  for (const k of ['maxHealth', 'attack', 'defense', 'speed', 'hit', 'dodge', 'critRate', 'critDamage']) {
+  for (const k of ['maxHealth', 'attack', 'defense', 'speed', 'hitValue', 'dodgeValue', 'critRate', 'critDamage']) {
     for (let L = 2; L <= 70; L++) {
       assert(expectStats(tier, L)[k] >= expectStats(tier, L - 1)[k], `A6 模型非单调: ${tier} ${k} L${L - 1}→L${L}`)
     }
@@ -429,8 +429,8 @@ for (const role of ROLES) console.log(`${ROLE_LABEL[role]}(${role})`, ...STAT_KE
 for (const t of SPECIAL_TIERS) console.log(`${t.label}`, ...STAT_KEYS.map((k) => COEF[t.key][k].toFixed(2)).join('\t'))
 
 console.log('\n-- 次级维度模板曲线（小妖样本最小二乘） --')
-console.log(`hit        = ${secondaryFit.hit.a.toFixed(1)} + ${secondaryFit.hit.b.toFixed(2)}×(L−1)`)
-console.log(`dodge      = ${secondaryFit.dodge.a.toFixed(1)} + ${secondaryFit.dodge.b.toFixed(2)}×(L−1)`)
+console.log(`hitValue        = ${secondaryFit.hitValue.a.toFixed(1)} + ${secondaryFit.hitValue.b.toFixed(2)}×(L−1)`)
+console.log(`dodgeValue      = ${secondaryFit.dodgeValue.a.toFixed(1)} + ${secondaryFit.dodgeValue.b.toFixed(2)}×(L−1)`)
 console.log(`critRate   = ${secondaryFit.critRate.a.toFixed(1)} + ${secondaryFit.critRate.b.toFixed(2)}×(L−1)`)
 console.log(`critDamage = ${secondaryFit.critDamage.a.toFixed(1)} + ${secondaryFit.critDamage.b.toFixed(2)}×(L−1)`)
 
@@ -486,7 +486,7 @@ if (WRITE) {
 
   md.push('### 品阶系数矩阵（拟合值）', '')
   md.push('> 各档位实数相对等级模板曲线的中位数，由脚本现场拟合；改 enemies.json / curves.json 后重跑即再生。', '')
-  md.push('| 档位 | ' + STAT_KEYS.map((k) => ({ maxHealth: '血量', attack: '攻击', defense: '防御', speed: '速度', hit: '命中', dodge: '闪避' }[k])).join(' | ') + ' |')
+  md.push('| 档位 | ' + STAT_KEYS.map((k) => ({ maxHealth: '血量', attack: '攻击', defense: '防御', speed: '速度', hitValue: '命中', dodgeValue: '闪避' }[k])).join(' | ') + ' |')
   md.push('| --- | ' + STAT_KEYS.map(() => '---').join(' | ') + ' |')
   for (const role of ROLES) md.push(`| ${ROLE_LABEL[role]} ${role} | ` + STAT_KEYS.map((k) => cell(COEF[role][k].toFixed(2))).join(' | ') + ' |')
   for (const t of SPECIAL_TIERS) md.push(`| ${t.label} | ` + STAT_KEYS.map((k) => cell(COEF[t.key][k].toFixed(2))).join(' | ') + ' |')
@@ -494,8 +494,8 @@ if (WRITE) {
 
   md.push('### 次级维度模板曲线（小妖样本最小二乘拟合）', '')
   md.push('```')
-  md.push(`hit        = ${secondaryFit.hit.a.toFixed(1)} + ${secondaryFit.hit.b.toFixed(2)}×(L−1)`)
-  md.push(`dodge      = ${secondaryFit.dodge.a.toFixed(1)} + ${secondaryFit.dodge.b.toFixed(2)}×(L−1)`)
+  md.push(`hitValue        = ${secondaryFit.hitValue.a.toFixed(1)} + ${secondaryFit.hitValue.b.toFixed(2)}×(L−1)`)
+  md.push(`dodgeValue      = ${secondaryFit.dodgeValue.a.toFixed(1)} + ${secondaryFit.dodgeValue.b.toFixed(2)}×(L−1)`)
   md.push(`critRate   = ${secondaryFit.critRate.a.toFixed(1)} + ${secondaryFit.critRate.b.toFixed(2)}×(L−1)`)
   md.push(`critDamage = ${secondaryFit.critDamage.a.toFixed(1)} + ${secondaryFit.critDamage.b.toFixed(2)}×(L−1)`)
   md.push('maxEnergy = 150（全体常量）；energyInit = 25（终局 BOSS 特例 50）')

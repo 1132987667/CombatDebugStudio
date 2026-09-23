@@ -12,13 +12,13 @@
 import type { Enemy } from '@/shared/types/enemy'
 import type { PlayerBaseAttrCode } from '@/domain/fengshen/types'
 
-/** 玩家六维 → 敌人 stats 键映射（敌人命中/闪避键名不同：hit / dodge） */
+/** 玩家六维 → 敌人 stats 键映射（enemies.json stats 键与 PlayerBaseAttrCode 同名） */
 export const ENEMY_STAT_KEY_BY_PLAYER_ATTR: Record<PlayerBaseAttrCode, string> = {
   maxHealth: 'maxHealth',
   attack: 'attack',
   defense: 'defense',
-  hitValue: 'hit',
-  dodgeValue: 'dodge',
+  hitValue: 'hitValue',
+  dodgeValue: 'dodgeValue',
   speed: 'speed',
 }
 

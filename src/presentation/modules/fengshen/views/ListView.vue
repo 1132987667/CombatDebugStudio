@@ -153,7 +153,7 @@
                     <td class="fs-rebuild-name">{{ e.name }}<span class="fs-rebuild-id">{{ e.id }}</span></td>
                     <td>L{{ e.level }}</td>
                     <td>{{ tierLabel(e.tier) }}</td>
-                    <td v-for="k in ['maxHealth', 'attack', 'defense', 'speed', 'dodge'] as const" :key="k">
+                    <td v-for="k in ['maxHealth', 'attack', 'defense', 'speed', 'dodgeValue'] as const" :key="k">
                       <span v-if="e.before[k] !== e.after[k]" class="fs-rebuild-delta">{{ e.before[k] }} → {{ e.after[k] }}</span>
                       <span v-else>{{ e.after[k] }}</span>
                     </td>

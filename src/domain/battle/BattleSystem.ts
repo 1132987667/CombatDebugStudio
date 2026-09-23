@@ -366,6 +366,9 @@ export class BattleSystem {
     this.damageCalculator.setConfig({
       enableCrit: combatRules.critEnabled,
       enableDodge: combatRules.dodgeEnabled,
+      // 单次伤害上下限规则 → 计算器 clamp（此前只存在于配置未桥接，UI 无从生效）
+      minDamageThreshold: combatRules.minDamage ?? 1,
+      maxDamageThreshold: combatRules.maxDamage ?? 9999,
       fieldElementalModifier: (elementType: string) =>
         this.fieldEffectManager.getElementalModifier(elementType),
     })

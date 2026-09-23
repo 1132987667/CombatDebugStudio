@@ -59,6 +59,10 @@ export interface BattleRules {
   dodgeEnabled: boolean
   /** 每回合自动回复的法力值（同步领域层 BattleRuleManager.combat.energyGainPerTurn） */
   energyGainPerTurn: number
+  /** 单次攻击最小伤害（同步领域层 combat.minDamage，下一场战斗 initialize 时生效） */
+  minDamage: number
+  /** 单次攻击最大伤害（同步领域层 combat.maxDamage，下一场战斗 initialize 时生效） */
+  maxDamage: number
 }
 
 /** 动画步骤类型（与 AnimationState key 一一对应） */
@@ -112,6 +116,8 @@ export const useBattleStore = defineStore('battle', () => {
     critEnabled: true,
     dodgeEnabled: false,
     energyGainPerTurn: 15,
+    minDamage: 1,
+    maxDamage: 9999,
   })
   /** 当前行动者角色ID（用于高亮显示当前行动方） */
   const currentActorId = ref<string | null>(null)
@@ -538,6 +544,8 @@ export const useBattleStore = defineStore('battle', () => {
             critEnabled: rules.value.critEnabled,
             dodgeEnabled: rules.value.dodgeEnabled,
             energyGainPerTurn: rules.value.energyGainPerTurn,
+            minDamage: rules.value.minDamage,
+            maxDamage: rules.value.maxDamage,
           },
         },
       })
@@ -657,6 +665,12 @@ export const useBattleStore = defineStore('battle', () => {
       undoDepth.value = 0 // 引擎 initialize 已清空回退栈
       pendingManualAction.value = null
       battleLogManager.addSystemLog({ message: '战斗已开始' })
+      // 种子入日志：随机场次也能事后取用复现（配「回退一步」做分支对比）
+      const activeSeed = battleService
+        .value!.getBattleManager().getBattleSystem().getBattleData()?.rng.getSeed()
+      if (activeSeed !== undefined && activeSeed !== null) {
+        battleLogManager.addSystemLog({ message: `战斗种子: ${activeSeed}` })
+      }
       return true
     }, {
       loading: '开始战斗',

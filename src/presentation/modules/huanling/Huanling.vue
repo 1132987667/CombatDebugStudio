@@ -33,7 +33,9 @@
 
     <!-- 对话框组件 -->
     <BattleRulesDialog v-model="showRulesDialog" :rules="battleStore.rules" :speed="battleStore.battleSpeed"
-      @update:rules="battleStore.updateRules" @update:speed="updateSpeed" @rule-change="handleRuleChange" />
+      :seed="battleStore.pendingSeed"
+      @update:rules="battleStore.updateRules" @update:speed="updateSpeed" @update:seed="battleStore.setPendingSeed"
+      @rule-change="handleRuleChange" />
 
     <CharacterEditor v-model="showStatusDialog" :characters="characterOptions"
       :selected-char-id="selectedCharacterId || ''" :current-attrs="currentAttrs"

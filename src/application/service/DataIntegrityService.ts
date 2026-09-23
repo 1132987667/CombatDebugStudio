@@ -13,6 +13,7 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { TABLE_SCHEMAS, REFERENCE_RULES, extractReferenceIds } from '@/domain/fengshen/schema'
 import type { FengshenTableName, XiyouData } from '@/domain/fengshen/types'
 import type { ElementsData } from '@/domain/fengshen/types'
+import { BATTLE_PARAM_IDS, ALL_BATTLE_PARAM_IDS } from '@/domain/fengshen/types'
 import { AttributeMetaMap } from '@/domain/attribute/types'
 import { validateSlotKey, affixConflictFor } from '@/shared/utils/equipmentAffix'
 import { validateBuffConfigShape } from '@/domain/buff/buffConfigValidation'
@@ -175,7 +176,7 @@ export class DataIntegrityService {
     // 经验与金钱结构化参数扫描（exp_table / enemy_reward_table / level_diff_bonus）
     const params = await this.listAll('params')
     for (const entity of params) {
-      if (!['exp_table', 'enemy_reward_table', 'level_diff_bonus'].includes(entity.id)) continue
+      if (!ALL_BATTLE_PARAM_IDS.includes(entity.id)) continue
       checkedEntities++
       for (const message of this.expGoldIssues(entity)) {
         issues.push({
@@ -316,16 +317,16 @@ export class DataIntegrityService {
     if (typeof entity.id !== 'string') return []
     const data = entity.data as Record<string, unknown> | undefined
     if (!data || typeof data !== 'object') {
-      return entity.id.startsWith('exp_table') || entity.id.startsWith('enemy_reward_table') || entity.id.startsWith('level_diff_bonus')
+      return ALL_BATTLE_PARAM_IDS.some((p) => typeof entity.id === 'string' && entity.id.startsWith(p))
         ? ['结构化参数缺少 data 字段']
         : []
     }
     switch (entity.id) {
-      case 'exp_table':
+      case BATTLE_PARAM_IDS.EXP_TABLE:
         return this.validateExpTable(data)
-      case 'enemy_reward_table':
+      case BATTLE_PARAM_IDS.ENEMY_REWARD_TABLE:
         return this.validateEnemyRewardTable(data)
-      case 'level_diff_bonus':
+      case BATTLE_PARAM_IDS.LEVEL_DIFF_BONUS:
         return this.validateLevelDiffBonus(data)
       default:
         return []

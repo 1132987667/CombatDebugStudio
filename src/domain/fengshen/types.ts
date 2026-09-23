@@ -421,6 +421,21 @@ export interface EquipFormulaConfig {
   tierWeight: Record<string, EquipTierWeight>
 }
 
+/**
+ * params 域三条"结构化参数"记录的固定 id（单源）。
+ * 这些记录用 data 字段承载复杂配置（区别于简单数字参数 value），
+ * 校验/加载/种子/视图均以此为准，禁止各处再裸写字面量。
+ */
+export const BATTLE_PARAM_IDS = {
+  EXP_TABLE: 'exp_table',
+  ENEMY_REWARD_TABLE: 'enemy_reward_table',
+  LEVEL_DIFF_BONUS: 'level_diff_bonus',
+} as const
+
+/** 全部结构化参数 id（遍历/成员判断用；元素类型即各记录固定 id） */
+export const ALL_BATTLE_PARAM_IDS: readonly string[] = Object.values(BATTLE_PARAM_IDS)
+export type BattleParamId = (typeof BATTLE_PARAM_IDS)[keyof typeof BATTLE_PARAM_IDS]
+
 /** 玩家升级经验表（params 域，key=exp_table）—— 每个等级升至下一级所需经验 */
 export interface ExpTableEntry {
   level: number

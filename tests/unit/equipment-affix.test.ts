@@ -98,17 +98,6 @@ const affixArmor: EquipmentAffixData = {
   rarity: 1,
 }
 
-const affixBlock: EquipmentAffixData = {
-  id: 'eqaff_test_block',
-  name: '测试格挡',
-  attribute: 'blockRate',
-  modifierType: 'percent',
-  valueRange: { min: 3, max: 12 },
-  applicableSlots: ['weapon', 'armor'],
-  weight: 50,
-  rarity: 2,
-}
-
 const affixCombo: EquipmentAffixData = {
   id: 'eqaff_test_combo',
   name: '测试连击',
@@ -207,16 +196,11 @@ describe('rollAffixValue / rollAffixStat（数值区间随机）', () => {
 })
 
 describe('affixConflictFor / affixEffectiveWeight（§14.9 部位冲突检测）', () => {
-  it('轻型武器禁止格挡率', () => {
-    expect(affixConflictFor('weapon', '轻型', 'blockRate')).toBe('forbidden')
-    expect(affixConflictFor('weapon', '轻型', 'comboRate')).toBeNull()
-  })
   it('重型武器连击率权重减半（不禁止）', () => {
     expect(affixConflictFor('weapon', '重型', 'comboRate')).toBe('halved')
-    expect(affixConflictFor('weapon', '重型', 'blockRate')).toBeNull()
+    expect(affixConflictFor('weapon', '重型', 'critRate')).toBeNull()
   })
-  it('皮甲禁止格挡率，铠甲禁止闪避率', () => {
-    expect(affixConflictFor('armor', '皮甲', 'blockRate')).toBe('forbidden')
+  it('铠甲禁止闪避率', () => {
     expect(affixConflictFor('armor', '铠甲', 'dodgeRate')).toBe('forbidden')
     expect(affixConflictFor('armor', '木甲', 'dodgeRate')).toBeNull()
   })
@@ -227,11 +211,11 @@ describe('affixConflictFor / affixEffectiveWeight（§14.9 部位冲突检测）
     expect(affixConflictFor('boots', '靴子', 'critRate')).toBeNull()
   })
   it('未指定子类型或无匹配规则返回 null', () => {
-    expect(affixConflictFor('weapon', undefined, 'blockRate')).toBeNull()
-    expect(affixConflictFor('glove', '护手', 'blockRate')).toBeNull()
+    expect(affixConflictFor('weapon', undefined, 'critRate')).toBeNull()
+    expect(affixConflictFor('glove', '护手', 'critRate')).toBeNull()
   })
   it('生效权重：禁止 → 0，减半 → 减半（保底 1），无冲突原样', () => {
-    expect(affixEffectiveWeight('weapon', '轻型', { attribute: 'blockRate', weight: 50 })).toBe(0)
+    expect(affixEffectiveWeight('weapon', '刺', { attribute: 'comboRate', weight: 50 })).toBe(0)
     expect(affixEffectiveWeight('weapon', '重型', { attribute: 'comboRate', weight: 30 })).toBe(15)
     expect(affixEffectiveWeight('weapon', '重型', { attribute: 'comboRate', weight: 1 })).toBe(1)
     expect(affixEffectiveWeight('weapon', '轻型', { attribute: 'comboRate', weight: 30 })).toBe(30)
@@ -240,13 +224,6 @@ describe('affixConflictFor / affixEffectiveWeight（§14.9 部位冲突检测）
 })
 
 describe('rollEquipmentAffix（冲突规则应用）', () => {
-  it('轻型武器池中含格挡词条被剔除（不抽取）', () => {
-    const pool = [affixAttack, affixBlock]
-    for (let i = 0; i < 20; i++) {
-      const picked = rollEquipmentAffix(pool, 'weapon', '轻型', () => Math.random())
-      expect(picked?.attribute).not.toBe('blockRate')
-    }
-  })
   it('重型武器连击词条权重减半：抽取频率低于同池同权重词条', () => {
     const pool = [affixCombo, { ...affixAttack, applicableSlots: ['weapon'], weight: 30 }]
     let combo = 0

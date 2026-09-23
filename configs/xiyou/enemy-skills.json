@@ -2523,7 +2523,7 @@
         "duration": 2
       }
     ],
-    "description": "格挡成功时提升自身防御2回合。"
+    "description": "提升自身防御2回合。"
   },
   {
     "id": "skill_enemy_s2_2_g_s1",
@@ -2893,7 +2893,7 @@
         "duration": 2
       }
     ],
-    "description": "格挡成功时提升自身防御2回合。"
+    "description": "提升自身防御2回合。"
   },
   {
     "id": "skill_enemy_s3_5_g_s1",

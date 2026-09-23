@@ -54,7 +54,7 @@
           "id": "plate_armor",
           "name": "铠甲",
           "style": "不动",
-          "desc": "重装格挡"
+          "desc": "重装防护"
         }
       ],
       "enhance_attribute": "defense",

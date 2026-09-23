@@ -140,15 +140,6 @@ export function reflectFireDamage(ctx: TriggerExecutionContext): void {
   ctx.buffSystem?.requestDamage(attackerId, Math.round(damageTaken * percent), undefined, undefined, 'trigger')
 }
 
-/** block_damage_percent — 按百分比格挡伤害，减少所受伤害 */
-export function blockDamagePercent(ctx: TriggerExecutionContext): void {
-  const percent = (ctx.params?.percent as number) ?? 0.5
-  const damageTaken = (ctx.extra?.damage as number) ?? 0
-  if (damageTaken <= 0) return
-  const blocked = Math.round(damageTaken * percent)
-  ctx.buffSystem?.requestHeal(ctx.targetId ?? '', blocked)
-}
-
 /** share_damage — 将伤害分摊给所有队友 */
 export function shareDamage(ctx: TriggerExecutionContext): void {
   const damageTaken = (ctx.extra?.damage as number) ?? 0
@@ -285,7 +276,7 @@ export const TRIGGER_SCRIPTS: Record<
   deal_dot_damage: dealDotDamage,
   reflect_damage: reflectDamage,
   reflect_fire_damage: reflectFireDamage,
-  block_damage_percent: blockDamagePercent,
+
   share_damage: shareDamage,
   apply_debuff_to_attacker: applyDebuffToAttacker,
   apply_poison: applyPoison,

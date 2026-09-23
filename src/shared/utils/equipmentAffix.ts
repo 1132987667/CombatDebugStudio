@@ -66,21 +66,19 @@ export type AffixConflictKind = 'forbidden' | 'halved'
 export interface EquipmentConflictRule {
   slot: EquipmentSlot
   subType: string
-  /** 禁止出现的词条 attribute（如 blockRate 格挡率） */
+  /** 禁止出现的词条 attribute */
   forbidden?: string[]
   /** 权重减半的词条 attribute（不禁止） */
   halved?: string[]
 }
 
 /** 冲突规则表（设计稿 v2.0 §14.9）：
- * 轻型武器：格挡率禁止；重型武器：连击率权重减半（不禁止）；刺：连击率/连击伤害系数/破甲/易伤禁止；
- * 皮甲：格挡率禁止；铠甲：闪避率禁止；
+ * 重型武器：连击率权重减半（不禁止）；刺：连击率/连击伤害系数/破甲/易伤禁止；
+ * 铠甲：闪避率禁止；
  * 护符：暴击率、暴击伤害禁止；靴子：暴击伤害禁止。 */
 export const EQUIPMENT_CONFLICT_RULES: EquipmentConflictRule[] = [
-  { slot: 'weapon', subType: '轻型', forbidden: ['blockRate'] },
   { slot: 'weapon', subType: '重型', halved: ['comboRate'] },
   { slot: 'weapon', subType: '刺', forbidden: ['comboRate', 'comboDamageCoefficient', 'armorBreak', 'vulnerability'] },
-  { slot: 'armor', subType: '皮甲', forbidden: ['blockRate'] },
   { slot: 'armor', subType: '铠甲', forbidden: ['dodgeRate'] },
   { slot: 'charm', subType: '护符', forbidden: ['critRate', 'critDamage'] },
   { slot: 'boots', subType: '靴子', forbidden: ['critDamage'] },

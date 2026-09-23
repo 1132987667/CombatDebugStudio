@@ -82,7 +82,7 @@
       "level": 0,
       "stars": 0,
       "active": false,
-      "desc": "土灵守护，格挡增益",
+      "desc": "土灵守护，防御增益",
       "stats": {
         "maxHp": 260,
         "attack": 11,
@@ -131,7 +131,7 @@
         "土地公",
         "孙悟空"
       ],
-      "bonus": "格挡率 +8%",
+      "bonus": "防御 +8%",
       "progress": 0.25,
       "activated": false
     }

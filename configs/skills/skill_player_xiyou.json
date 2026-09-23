@@ -376,24 +376,6 @@
     ]
   },
   {
-    "id": "skill_xiyou_stone_unshakable",
-    "name": "不动如山",
-    "description": "被动：受到伤害时 20% 概率格挡 50% 伤害",
-    "energyCost": 0,
-    "cooldown": 0,
-    "skillType": "passive",
-    "selector": { "faction": "self", "strategy": "first", "count": 1 },
-    "passiveCategory": ["trigger"],
-    "triggerTimes": ["ON_DAMAGE_TAKEN"],
-    "triggerProbability": 0.2,
-    "steps": [
-      {
-        "type": "custom",
-        "parameters": { "customType": "block_damage", "description": "格挡 50% 伤害" }
-      }
-    ]
-  },
-  {
     "id": "skill_xiyou_earthquake",
     "name": "撼地击",
     "description": "造成 {{damage}} 伤害，30% 概率眩晕 1 回合",

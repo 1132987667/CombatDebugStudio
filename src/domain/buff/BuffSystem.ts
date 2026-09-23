@@ -825,6 +825,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         path,
         stackRule: resolvedConfig.stackRule,
         maxStacks: resolvedConfig.maxStacks,
+        // 极性取 resolver 归一产物（与 SkillExecutor 减益判定同源）；
+        // 不塞进 resolvedConfig——调用方误传极性会污染存档（A1 合并链教训）
+        polarity: this.scriptRegistry.getResolvedBuffConfig(buffId)?.polarity,
         modifiers: resolvedConfig.attributes
           ? Object.entries(resolvedConfig.attributes).map(([attribute, cfg]) => ({
               attribute,

@@ -134,8 +134,8 @@ const sides = computed<ArchiveParticipant[][]>(() => {
 const unitOf = (id: string) => store.cur[id] ?? { hp: 0, en: 0, buffs: [] }
 
 /**
- * ArchiveBuff → BuffRawItem：存档仅含 name/stacks/turns，
- * 正负与属性明细由 resolveBuffMeta 按名字反查 buffs.json 配置补全
+ * ArchiveBuff → BuffRawItem：新档带显式 polarity（发射端从已解析配置带出），优先采用；
+ * 老档无该字段时回退 resolveBuffMeta 按名字反查 buffs.json 补全
  * （匹配失败时退化为纯名字展示，未记录进存档的脚本自定义 buff 亦可显示）。
  */
 function toBuffRawItem(b: ArchiveBuff): BuffRawItem {
@@ -147,7 +147,7 @@ function toBuffRawItem(b: ArchiveBuff): BuffRawItem {
     currentStacks: b.stacks,
     remainingTurns: b.turns,
     isAura: false,
-    isNegative: meta.isNegative,
+    isNegative: b.polarity ? b.polarity === 'negative' : meta.isNegative,
     attributes: meta.attributes,
     description: meta.description,
   }
@@ -318,8 +318,11 @@ function fx(ev: UnifiedEvent): void {
   } else if (ev.phase === 'buff_lifecycle') {
     const target = ev.targetId
     if (!target || pl.action !== 'apply') return
-    // 正负由 payload.buff / buffName 反查 buffs.json 配置；未命中默认正向
-    const isNegative = resolveBuffMeta(String(pl.buff ?? pl.buffName ?? '')).isNegative === true
+    // 正负优先读 payload.polarity（新档发射端显式带出），老档无该字段（undefined）回退按名字反查 buffs.json；均未命中默认正向
+    const isNegative =
+      pl.polarity != null
+        ? pl.polarity === 'negative'
+        : resolveBuffMeta(String(pl.buff ?? pl.buffName ?? '')).isNegative === true
     cardOf(target)?.triggerVisualState('shielded', budget * BATTLE_ANIMATION_TIMING.PHASES.settle.start)
     void playBuffAnimation(target, !isNegative)
   }

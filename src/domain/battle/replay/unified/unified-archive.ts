@@ -9,6 +9,7 @@
  */
 
 import type { TraceLevel, TracePhase } from '@/shared/types/trace-event'
+import type { BuffPolarity } from '@/shared/types/buff-classification'
 
 /** 存档参与者初始状态（V4 ARCHIVE initialState.participants） */
 export interface ArchiveParticipant {
@@ -33,6 +34,12 @@ export interface ArchiveBuff {
   name: string
   stacks: number
   turns: number
+  /**
+   * 显式极性（发射端 BuffTraceLogger 从已解析配置带出）。
+   * 可选：老档无此字段，消费端回退 resolveBuffMeta 名字反查；
+   * 脚本自定义 buff 只有此字段能正确表达正负（反查不命中）。
+   */
+  polarity?: BuffPolarity
 }
 
 /** 状态快照条目（snapshot / payload.anchor.participants 成员；缺省字段表示不变） */

@@ -7,6 +7,9 @@
  */
 
 import type { ArchiveBuff, ArchiveStateEntry, UnifiedArchive, UnifiedEvent } from './unified-archive'
+import { BuffPolarity } from '@/shared/types/buff-classification'
+
+const POLARITY_VALUES: readonly string[] = Object.values(BuffPolarity)
 
 export interface SimUnit {
   hp: number
@@ -25,7 +28,7 @@ export function cloneSimTable(sim: SimTable): SimTable {
     out[id] = {
       hp: s.hp,
       en: s.en,
-      buffs: s.buffs.map((b) => ({ name: b.name, stacks: b.stacks, turns: b.turns })),
+      buffs: s.buffs.map((b) => ({ ...b })),
     }
   }
   return out
@@ -98,7 +101,7 @@ export function freshSim(log: UnifiedArchive): SimTable {
     sim[p.id] = {
       hp: p.hp,
       en: p.energy,
-      buffs: (p.buffs ?? []).map((b) => ({ name: b.name, stacks: b.stacks, turns: b.turns })),
+      buffs: (p.buffs ?? []).map((b) => ({ ...b })),
     }
   }
   return sim
@@ -111,7 +114,7 @@ export function applyListToSim(sim: SimTable, list: ArchiveStateEntry[]): void {
     if (!s) continue
     if (p.hp != null) s.hp = p.hp
     if (p.energy != null) s.en = p.energy
-    if (p.buffs) s.buffs = p.buffs.map((b) => ({ name: b.name, stacks: b.stacks, turns: b.turns }))
+    if (p.buffs) s.buffs = p.buffs.map((b) => ({ ...b }))
   }
 }
 
@@ -145,6 +148,10 @@ export function applyEventToSim(sim: SimTable, ev: UnifiedEvent): void {
           name: buffName,
           stacks: typeof pl.stacks === 'number' ? pl.stacks : 1,
           turns: typeof pl.turns === 'number' ? pl.turns : typeof pl.duration === 'number' ? pl.duration : 2,
+          // 发射端显式极性（新档有、老档无→消费端回退反查）
+          polarity: POLARITY_VALUES.includes(String(pl.polarity))
+            ? (pl.polarity as BuffPolarity)
+            : undefined,
         })
       }
     }

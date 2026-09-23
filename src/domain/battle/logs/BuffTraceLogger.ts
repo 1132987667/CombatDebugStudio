@@ -8,6 +8,7 @@
  */
 
 import { createTraceEvent, BuffAction, TraceLevel, TracePhase, type TraceScope } from '@/shared/types/trace-event'
+import type { BuffPolarity } from '@/shared/types/buff-classification'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 
 /**
@@ -42,6 +43,7 @@ export class BuffTraceLogger {
       path?: 'A' | 'B' | 'D'
       stackRule?: string
       maxStacks?: number
+      polarity?: BuffPolarity
       modifiers?: Array<{ attribute: string; value: number; type: string }>
     },
   ): void {
@@ -70,6 +72,7 @@ export class BuffTraceLogger {
             path: extras?.path,
             stackRule: extras?.stackRule,
             maxStacks: extras?.maxStacks,
+            polarity: extras?.polarity,
             modifiers: extras?.modifiers,
           },
         }),

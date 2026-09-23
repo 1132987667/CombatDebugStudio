@@ -293,6 +293,31 @@ describe('unified-sim（回放投影状态推演）', () => {
     expect(applied!.turns).toBe(1)
   })
 
+  it('apply 携带 polarity 进 sim；值域外/缺省均归 undefined（老档与坏值回退反查）', () => {
+    const log = createDemoArchive()
+    const sim = freshSim(log)
+    applyEventToSim(sim, {
+      id: 'p1', phase: 'buff_lifecycle', correlationId: 'c', timestamp: 100, targetId: 'u2',
+      payload: { action: 'APPLY', buffName: '寒髓', stacks: 1, duration: 2, polarity: 'negative' },
+      summary: 'x',
+    })
+    applyEventToSim(sim, {
+      id: 'p2', phase: 'buff_lifecycle', correlationId: 'c', timestamp: 110, targetId: 'u2',
+      payload: { action: 'APPLY', buffName: '怪值', stacks: 1, duration: 2, polarity: 'NOT_A_POLARITY' },
+      summary: 'x',
+    })
+    applyEventToSim(sim, {
+      id: 'p3', phase: 'buff_lifecycle', correlationId: 'c', timestamp: 120, targetId: 'u2',
+      payload: { action: 'APPLY', buffName: '老档形态', stacks: 1, duration: 2 },
+      summary: 'x',
+    })
+    expect(sim.u2.buffs.find((b) => b.name === '寒髓')!.polarity).toBe('negative')
+    expect(sim.u2.buffs.find((b) => b.name === '怪值')!.polarity).toBeUndefined()
+    expect(sim.u2.buffs.find((b) => b.name === '老档形态')!.polarity).toBeUndefined()
+    // cloneSimTable 不丢显式极性
+    expect(cloneSimTable(sim).u2.buffs.find((b) => b.name === '寒髓')!.polarity).toBe('negative')
+  })
+
   it('currentTurnAt / lastEventAt / formatTime', () => {
     const log = createDemoArchive()
     const idx = buildArchiveIndices(log)

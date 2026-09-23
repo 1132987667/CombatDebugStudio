@@ -10,6 +10,7 @@ import { SkillType } from '@/domain/skill/types'
 import type { ActorData, EquipmentStatEntry } from '@/domain/fengshen/types'
 import type { EnemyRole } from '@/domain/fengshen/role-grades'
 import { PLAYER_ID } from '@/shared/constants/player'
+import { LAYERED_ATTR_TO_MAIN } from '@/shared/utils/attributeSync'
 import type { Enemy, EnemyAffixPool, EnemyDrop, EnemySkills } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import enemiesJson from '@configs/enemies/enemies.json'
@@ -296,26 +297,7 @@ export function firstKillRewardDrops(enemyIds: string[]): EnemyDrop[] {
 }
 
 /**
- * 六维「加成(L2)/系数(L3)」键 → 主属性（attribute-dictionary 分层：L1 基础 ← L2 加成% ← L3 系数%）。
- * 词条（equipBonuses）与流派树属性节点共用此单一映射。
- */
-const EQUIP_LAYERED_TO_BASE: Record<string, ATTRIBUTE_CODE> = {
-  [ATTRIBUTE_CODE.healthBonus]: ATTRIBUTE_CODE.maxHealth,
-  [ATTRIBUTE_CODE.attackBonus]: ATTRIBUTE_CODE.attack,
-  [ATTRIBUTE_CODE.defenseBonus]: ATTRIBUTE_CODE.defense,
-  [ATTRIBUTE_CODE.hitBonus]: ATTRIBUTE_CODE.hitValue,
-  [ATTRIBUTE_CODE.dodgeBonus]: ATTRIBUTE_CODE.dodgeValue,
-  [ATTRIBUTE_CODE.speedBonus]: ATTRIBUTE_CODE.speed,
-  [ATTRIBUTE_CODE.healthCoefficient]: ATTRIBUTE_CODE.maxHealth,
-  [ATTRIBUTE_CODE.attackCoefficient]: ATTRIBUTE_CODE.attack,
-  [ATTRIBUTE_CODE.defenseCoefficient]: ATTRIBUTE_CODE.defense,
-  [ATTRIBUTE_CODE.hitCoefficient]: ATTRIBUTE_CODE.hitValue,
-  [ATTRIBUTE_CODE.dodgeCoefficient]: ATTRIBUTE_CODE.dodgeValue,
-  [ATTRIBUTE_CODE.speedCoefficient]: ATTRIBUTE_CODE.speed,
-}
-
-/**
- * 主角快照 → 各属性换算基准（equipBonuses 与流派树折算共用；hitValue/dodgeValue 缺省兜底 10，
+ * 主角快照 → 各属性换算基准（equipBonuses 数值词条换算用；hitValue/dodgeValue 缺省兜底 10，
  * 否则护符/靴子词条（affix-rule.json 主词条）恒算 0）
  */
 function protagonistBaseBy(base: ProtagonistSnapshot): Record<string, number> {
@@ -330,35 +312,52 @@ function protagonistBaseBy(base: ProtagonistSnapshot): Record<string, number> {
   }
 }
 
-/**
- * 六维「加成(L2)/系数(L3)」键归一 → 主属性绝对增量并消费原键（单一映射源 EQUIP_LAYERED_TO_BASE）。
- * 词条（equipBonuses）与流派树属性节点（playerStore / schoolTreeCombatBonuses）共用——
- * 这些键只挂在独立属性上时面板六维与战斗乘区都不消费，数值凭空消失（显示有、计算无）。
- */
-export function collapseLayeredBonusKeys(
-  bonuses: Partial<Record<string, number>>,
-  baseBy: Partial<Record<string, number>>,
-): Partial<Record<string, number>> {
-  const out: Partial<Record<string, number>> = {}
-  for (const [code, val] of Object.entries(bonuses)) {
+/** 六维分层（面板与悬浮共用）：某主属性的乘区层贡献 */
+export interface AttrLayerPcts {
+  /** L1 绝对值合计（直加部分） */
+  flat: number
+  /** L2 加成% 合计（百分点） */
+  bonus: number
+  /** L3 系数% 合计（百分点） */
+  coefficient: number
+}
+
+/** 流派树属性节点按主属性+乘区分层（《属性监控显示设计.md》四层模型；非六维键不在此列） */
+export function treeAttrLayers(code: ATTRIBUTE_CODE): AttrLayerPcts {
+  const out: AttrLayerPcts = { flat: 0, bonus: 0, coefficient: 0 }
+  for (const [attr, val] of Object.entries(schoolTreeBonuses())) {
     if (!val) continue
-    const mainAttr = EQUIP_LAYERED_TO_BASE[code]
-    if (mainAttr) {
-      out[mainAttr] = (out[mainAttr] ?? 0) + Math.round((baseBy[mainAttr] ?? 0) * (val / 100))
-    } else {
-      out[code] = (out[code] ?? 0) + val
+    const layered = LAYERED_ATTR_TO_MAIN[attr as ATTRIBUTE_CODE]
+    if (layered?.main === code) {
+      if (layered.layer === 'bonus') out.bonus += val
+      else out.coefficient += val
+    } else if (attr === code) {
+      out.flat += val
+    }
+  }
+  return out
+}
+
+/** 装备词条六维分层：某主属性的 percent 词条乘区贡献（bonus/系数词条百分点合计） */
+export function gearAttrLayers(stats: EquipmentStatEntry[], code: ATTRIBUTE_CODE): AttrLayerPcts {
+  const out: AttrLayerPcts = { flat: 0, bonus: 0, coefficient: 0 }
+  for (const s of stats) {
+    if (s.modifierType !== 'percent' || !s.value) continue
+    const layered = LAYERED_ATTR_TO_MAIN[s.attribute as ATTRIBUTE_CODE]
+    if (layered?.main === code) {
+      if (layered.layer === 'bonus') out.bonus += s.value
+      else out.coefficient += s.value
     }
   }
   return out
 }
 
 /**
- * 装备加成 → 主角最终属性增量
- * NOTE: flat 直接相加；percent 按 buildBattleTeams 实际使用的主角基础属性（protagonist 或 playerParty[0]）
- *       计算绝对增量，保证 flat 与 percent 的基准与战斗主角同源。
- *       六维加成/系数词条（healthBonus/healthCoefficient 等）同样按主属性基准折算绝对增量并
- *       消费掉原键——敌方路径 enemyToParticipant 只认 stats.healthBonus 的再注入，系数层无此
- *       逻辑；归一后双算也不会发生（原键不再输出）。
+ * 装备加成 → 主角属性增量
+ * NOTE: flat 直接相加；数值属性 percent 词条按主角快照基准换算绝对增量（基准与战斗主角同源）；
+ *       isPercentage 属性（critRate/dodge/damageReduction 及六维加成/系数键等）value 即百分点，
+ *       原样输出——六维加成/系数键由消费方按乘区层归并（LAYERED_ATTR_TO_MAIN，见 attributeSync.ts），
+ *       多个乘区各自相乘，禁止折算合并。
  * @param protagonist 主角实时战斗快照（playerStore.player 派生），缺省回退 playerParty[0] 演示值
  */
 export function equipBonuses(
@@ -366,30 +365,19 @@ export function equipBonuses(
   // NOTE: 引擎按百分数消费 critDamage（DamageCalculator /100 折算倍率），默认值同用百分数语义
   protagonist: ProtagonistSnapshot = { ...playerParty[0], critRate: 0, critDamage: 150, dodge: 0, damageReduction: 0, hitValue: 10, dodgeValue: 10 },
 ): Partial<Record<string, number>> {
+  const base = protagonist
   const flat: Record<string, number> = {}
   const percent: Record<string, number> = {}
   for (const s of stats) {
     if (s.modifierType === 'flat') flat[s.attribute] = (flat[s.attribute] ?? 0) + s.value
     else percent[s.attribute] = (percent[s.attribute] ?? 0) + s.value
   }
-  const baseByAttr = protagonistBaseBy(protagonist)
+  const baseByAttr = protagonistBaseBy(base)
   const out: Record<string, number> = { ...flat }
-  // percent 分流:六维加成/系数键先归一(输出已是绝对增量,直加,不得再过基准缩放);
-  // 其余键走 isPercentage/数值基准两条既有路径
-  const layeredPercent: Record<string, number> = {}
-  const plainPercent: Record<string, number> = {}
-  for (const [attr, val] of Object.entries(percent)) {
-    if (!val) continue
-    if (EQUIP_LAYERED_TO_BASE[attr]) layeredPercent[attr] = val
-    else plainPercent[attr] = val
-  }
-  for (const [attr, v] of Object.entries(collapseLayeredBonusKeys(layeredPercent, baseByAttr))) {
-    if (!v) continue
-    out[attr] = (out[attr] ?? 0) + v
-  }
-  for (const [attr, pct] of Object.entries(plainPercent)) {
-    // NOTE: isPercentage 属性（critRate/dodge/damageReduction 等）value 即百分点，直接相加
-    //       （与 schoolAttributeBonuses 同语义）；数值属性按基础值相对缩放。
+  for (const [attr, pct] of Object.entries(percent)) {
+    if (!pct) continue
+    // NOTE: isPercentage 属性（critRate/dodge/damageReduction 及六维加成/系数键）value 即百分点，
+    //       直接相加（与 schoolAttributeBonuses 同语义）；数值属性按基础值相对缩放。
     //       否则 dodge/damageReduction 不在 baseByAttr 且基值常为 0，相对缩放恒算 0 而失效。
     if (getAttrMeta(attr as ATTRIBUTE_CODE)?.isPercentage) {
       out[attr] = (out[attr] ?? 0) + pct
@@ -523,16 +511,13 @@ const SNAPSHOT_ATTR_KEYS = new Set<string>([
 
 /**
  * 流派树增量中需经 allyBonuses 注入战斗的子集（快照已承载键除外）。
- * NOTE: 六维加成/系数键先归一为主属性绝对增量（基准 = 主角快照，与 equipBonuses 同口径）——
- *       否则这些键只挂在 Enemy 独立属性上，enemyToParticipant 仅回注 attackBonus/healthBonus、
- *       系数层无任何消费方，点亮了也无效。
+ * NOTE: 六维加成/系数键原样输出（百分点），enemyToParticipant 按乘区层注入为主属性的
+ *       PERCENTAGE/MULTIPLICATIVE 修饰符（多个乘区各自相乘）；快照六维已含其分层贡献，
+ *       SNAPSHOT_ATTR_KEYS 排除的六维主属性键不会双算。
  */
-export function schoolTreeCombatBonuses(protagonist?: ProtagonistSnapshot): Partial<Record<string, number>> {
-  const tree = protagonist
-    ? collapseLayeredBonusKeys(schoolTreeBonuses(), protagonistBaseBy(protagonist))
-    : schoolTreeBonuses()
+export function schoolTreeCombatBonuses(): Partial<Record<string, number>> {
   const out: Partial<Record<string, number>> = {}
-  for (const [code, val] of Object.entries(tree)) {
+  for (const [code, val] of Object.entries(schoolTreeBonuses())) {
     if (!val || SNAPSHOT_ATTR_KEYS.has(code)) continue
     out[code] = val
   }

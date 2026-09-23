@@ -721,7 +721,7 @@ async function runSimSweep(
   const { player, pack } = env
   const protagonist = player.battleSnapshot
   // 与 BattleZen.initBattle 同口径：装备 + 流派树加成只作用于主角
-  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(protagonist), ...fabaoAttributeBonuses(), ...petMountAttributeBonuses() }
+  const allyBonuses = { ...equipBonuses(pack.equippedStats(), protagonist), ...schoolTreeCombatBonuses(), ...fabaoAttributeBonuses(), ...petMountAttributeBonuses() }
   // 我方编成与场景无关，构造一次全场景复用（prep 已定妆：加点/穿装/阵容不再变化）
   const allyActors = buildSimAlly(allyBonuses, protagonist)
   const rows: SimSceneRow[] = []

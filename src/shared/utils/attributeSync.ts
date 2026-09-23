@@ -20,7 +20,32 @@ export const REVERSE_BONUS_ATTR_MAP: Partial<Record<ATTRIBUTE_CODE, ATTRIBUTE_CO
   [ATTRIBUTE_CODE.healthBonus]: ATTRIBUTE_CODE.maxHealth,
   [ATTRIBUTE_CODE.attackBonus]: ATTRIBUTE_CODE.attack,
   [ATTRIBUTE_CODE.defenseBonus]: ATTRIBUTE_CODE.defense,
-  [ATTRIBUTE_CODE.speedBonus]: ATTRIBUTE_CODE.speedBonus,
+  [ATTRIBUTE_CODE.hitBonus]: ATTRIBUTE_CODE.hitValue,
+  [ATTRIBUTE_CODE.dodgeBonus]: ATTRIBUTE_CODE.dodgeValue,
+  [ATTRIBUTE_CODE.speedBonus]: ATTRIBUTE_CODE.speed,
+}
+
+/**
+ * 六维「加成(L2)/系数(L3)」独立属性键 → 主属性 + 乘区层（单一映射源）。
+ * 《属性监控显示设计.md》四层模型：基础数值(ADDITIVE) × 属性加成(PERCENTAGE, L2) × 独立乘区(MULTIPLICATIVE, L3) × 最终乘区(FINAL)。
+ * 消费方：GameDataProcessor.enemyToParticipant（键值注入为主属性的乘区修饰符）、
+ *        xiyou/battle.ts（面板分层计算与悬浮来源分解）。多个乘区各自相乘，禁止折算合并。
+ */
+export const LAYERED_ATTR_TO_MAIN: Partial<
+  Record<ATTRIBUTE_CODE, { main: ATTRIBUTE_CODE; layer: 'bonus' | 'coefficient' }>
+> = {
+  [ATTRIBUTE_CODE.healthBonus]: { main: ATTRIBUTE_CODE.maxHealth, layer: 'bonus' },
+  [ATTRIBUTE_CODE.attackBonus]: { main: ATTRIBUTE_CODE.attack, layer: 'bonus' },
+  [ATTRIBUTE_CODE.defenseBonus]: { main: ATTRIBUTE_CODE.defense, layer: 'bonus' },
+  [ATTRIBUTE_CODE.hitBonus]: { main: ATTRIBUTE_CODE.hitValue, layer: 'bonus' },
+  [ATTRIBUTE_CODE.dodgeBonus]: { main: ATTRIBUTE_CODE.dodgeValue, layer: 'bonus' },
+  [ATTRIBUTE_CODE.speedBonus]: { main: ATTRIBUTE_CODE.speed, layer: 'bonus' },
+  [ATTRIBUTE_CODE.healthCoefficient]: { main: ATTRIBUTE_CODE.maxHealth, layer: 'coefficient' },
+  [ATTRIBUTE_CODE.attackCoefficient]: { main: ATTRIBUTE_CODE.attack, layer: 'coefficient' },
+  [ATTRIBUTE_CODE.defenseCoefficient]: { main: ATTRIBUTE_CODE.defense, layer: 'coefficient' },
+  [ATTRIBUTE_CODE.hitCoefficient]: { main: ATTRIBUTE_CODE.hitValue, layer: 'coefficient' },
+  [ATTRIBUTE_CODE.dodgeCoefficient]: { main: ATTRIBUTE_CODE.dodgeValue, layer: 'coefficient' },
+  [ATTRIBUTE_CODE.speedCoefficient]: { main: ATTRIBUTE_CODE.speed, layer: 'coefficient' },
 }
 
 /**

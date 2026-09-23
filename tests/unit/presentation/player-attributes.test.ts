@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import { collapseLayeredBonusKeys, equipBonuses, schoolAttributeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
+import { equipBonuses, schoolAttributeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
 import { nodeValueAtRank, pureSchoolBonus, schools, schoolsLayers } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { computePlayerBase, computeStatBonuses } from '@/presentation/modules/yanjie/xiyou/playerProfile'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -90,7 +90,7 @@ describe('装备词缀面板口径（equipBonuses）', () => {
     expect(out.critRate).toBe(5) // isPercentage：百分点直接相加
   })
 
-  it('六维加成/系数词条按主属性基准折算绝对增量并消费原键（回归：面板/战斗/悬浮不再漏算 L2/L3 词条）', () => {
+  it('六维加成/系数词条原样输出百分点（回归：不折算合并，乘区由消费方单独相乘）', () => {
     const protagonist = { ...usePlayerStore().battleSnapshot, maxHp: 1000, attack: 200, hitValue: 50 }
     const out = equipBonuses(
       [
@@ -98,19 +98,20 @@ describe('装备词缀面板口径（equipBonuses）', () => {
         { attribute: 'healthCoefficient', modifierType: 'percent', value: 5 },
         { attribute: 'attackCoefficient', modifierType: 'percent', value: 20 },
         { attribute: 'hitCoefficient', modifierType: 'percent', value: 8 },
+        { attribute: 'attack', modifierType: 'percent', value: 10 },
       ],
       protagonist,
     )
-    expect(out.maxHealth).toBe(150) // 10% + 5% × 基准 1000
-    expect(out.attack).toBe(40) // 20% × 200
-    expect(out.hitValue).toBe(4) // 8% × 50
-    expect(out.healthBonus).toBeUndefined()
-    expect(out.healthCoefficient).toBeUndefined()
-    expect(out.attackCoefficient).toBeUndefined()
-    expect(out.hitCoefficient).toBeUndefined()
+    expect(out.healthBonus).toBe(10) // L2 加成词条：百分点原样输出
+    expect(out.healthCoefficient).toBe(5) // L3 系数词条：百分点原样输出
+    expect(out.attackCoefficient).toBe(20)
+    expect(out.hitCoefficient).toBe(8)
+    expect(out.attack).toBe(20) // 主属性直接 percent 词条：按基准换算绝对值（10% × 200）
+    expect(out.maxHealth).toBeUndefined()
+    expect(out.hitValue).toBeUndefined()
   })
 
-  it('流派树六维加成/系数键归一:折算进主属性且不残留独立键(回归:点而无效的另一半)', () => {
+  it('流派树六维加成/系数节点按乘区单独相乘（回归：点而无效的另一半）', () => {
     const store = usePlayerStore()
     const coefNode = schoolsLayers.flatMap((l) => l.nodes).find(
       (n) => n.type === 'attribute' && n.code === 'speedCoefficient',
@@ -120,23 +121,11 @@ describe('装备词缀面板口径（equipBonuses）', () => {
     coefNode.ranks = 1
     try {
       const inc = nodeValueAtRank(coefNode, 1)
-      const expected = baseSpeed + Math.round((baseSpeed * inc) / 100)
+      const expected = Math.round(baseSpeed * (1 + inc / 100))
       expect(store.playerAttributes[ATTRIBUTE_CODE.speed]).toBe(expected)
       expect(store.playerAttributes[ATTRIBUTE_CODE.speedCoefficient]).toBeUndefined()
     } finally {
       coefNode.ranks = 0
     }
-  })
-
-  it('collapseLayeredBonusKeys:六维加成/系数键折算主属性基准,非六维键原样保留(共享纯函数)', () => {
-    const out = collapseLayeredBonusKeys(
-      { speedCoefficient: 4, attackBonus: 10, lifestealRate: 5 },
-      { speed: 300, attack: 200 },
-    )
-    expect(out.speed).toBe(12) // 4% × 300
-    expect(out.attack).toBe(20) // 10% × 200
-    expect(out.lifestealRate).toBe(5) // 非六维键透传
-    expect(out.speedCoefficient).toBeUndefined()
-    expect(out.attackBonus).toBeUndefined()
   })
 })

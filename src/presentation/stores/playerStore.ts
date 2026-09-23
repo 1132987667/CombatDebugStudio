@@ -11,7 +11,8 @@ import { computed, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import type { XiyouCurrency, XiyouPlayer, XiyouStatPoints, ProtagonistSnapshot } from '@/presentation/modules/yanjie/xiyou/types'
 import { BREAK_NODES, computePlayerBase, computeStatBonuses, createPlayerProfile, expNeedForLevel, isBreakBlocked, playerConfig } from '@/presentation/modules/yanjie/xiyou/playerProfile'
-import { collapseLayeredBonusKeys, schoolAttributeBonuses, schoolTreeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
+import { LAYERED_ATTR_TO_MAIN } from '@/shared/utils/attributeSync'
+import { schoolAttributeBonuses, schoolTreeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
 import { grantLevelPoint } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { PLAYER_ID } from '@/shared/constants/player'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -75,13 +76,26 @@ export const usePlayerStore = defineStore('player', () => {
       const code = attr as ATTRIBUTE_CODE
       snapshot[code] = (snapshot[code] ?? 0) + inc
     }
-    // NOTE: 流派树六维加成/系数键先归一为主属性绝对增量（基准 = 处理前快照：基础+加点+流派属性增量），
-    //       原键不落快照——否则挂独立键六维不消费，点亮无效（与 equipBonuses 词条归一同源同函数）
-    const treeInc = collapseLayeredBonusKeys(schoolTreeBonuses(), snapshot)
-    for (const [attr, inc] of Object.entries(treeInc)) {
+    // NOTE: 流派树按四层模型分层（《属性监控显示设计.md》）：绝对值节点入 L1 直加；
+    //       加成/系数节点按主属性分别进 L2/L3 乘区——多个乘区单独相乘，禁止折算合并
+    const treeBonusByMain: Record<string, number> = {}
+    const treeCoefByMain: Record<string, number> = {}
+    for (const [attr, inc] of Object.entries(schoolTreeBonuses())) {
       if (!inc) continue
+      const layered = LAYERED_ATTR_TO_MAIN[attr as ATTRIBUTE_CODE]
+      if (layered) {
+        const bucket = layered.layer === 'bonus' ? treeBonusByMain : treeCoefByMain
+        bucket[layered.main] = (bucket[layered.main] ?? 0) + inc
+        continue
+      }
       const code = attr as ATTRIBUTE_CODE
       snapshot[code] = (snapshot[code] ?? 0) + inc
+    }
+    const layeredMains = new Set([...Object.keys(treeBonusByMain), ...Object.keys(treeCoefByMain)])
+    for (const main of layeredMains) {
+      const code = main as ATTRIBUTE_CODE
+      const cur = snapshot[code] ?? 0
+      snapshot[code] = Math.round(cur * (1 + (treeBonusByMain[main] ?? 0) / 100) * (1 + (treeCoefByMain[main] ?? 0) / 100))
     }
     return snapshot
   })

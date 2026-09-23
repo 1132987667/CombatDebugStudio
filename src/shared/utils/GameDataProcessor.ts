@@ -37,6 +37,7 @@ import type {
   AffixLibraryData,
 } from '@/domain/fengshen/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import { LAYERED_ATTR_TO_MAIN } from '@/shared/utils/attributeSync'
 import type { Item } from '@/shared/types/Item'
 import { Counter } from '@/shared/utils/Counter'
 import { DataProcessor } from '@/shared/utils/DataProcessor'
@@ -219,9 +220,6 @@ export class GameDataProcessor {
       stats[ATTRIBUTE_CODE.maxHealth] = stats[ATTRIBUTE_CODE.currentHealth]
     }
 
-    // 将攻击力加成/气血加成的基础值提取出来，后续直接作为 PERCENTAGE 修饰符注入
-    const attackBonusBase = stats[ATTRIBUTE_CODE.attackBonus] || 0
-    const healthBonusBase = stats[ATTRIBUTE_CODE.healthBonus] || 0
 
     // 3. 构造标准初始化 DTO
     const initData: BattleParticipantData = {
@@ -245,32 +243,23 @@ export class GameDataProcessor {
     // 4. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
     const participant = new BattleParticipantImpl(initData)
 
-    // 6. 将配置中的 attackBonus/healthBonus 作为 PERCENTAGE 修饰符注入到对应属性
-    if (attackBonusBase) {
-      const attrData = participant.getAttrValue(ATTRIBUTE_CODE.attack)
-      if (attrData) {
-        attrData.modifiers.push({
-          sourceKey: 'bonus:attackBonus',
-          sourceType: ModifierSourceType.BASE,
-          attribute: ATTRIBUTE_CODE.attack,
-          value: attackBonusBase,
-          type: ModifierType.PERCENTAGE,
-          description: '攻击加成',
-        })
-      }
-    }
-    if (healthBonusBase) {
-      const hpData = participant.getAttrValue(ATTRIBUTE_CODE.maxHealth)
-      if (hpData) {
-        hpData.modifiers.push({
-          sourceKey: 'bonus:healthBonus',
-          sourceType: ModifierSourceType.BASE,
-          attribute: ATTRIBUTE_CODE.maxHealth,
-          value: healthBonusBase,
-          type: ModifierType.PERCENTAGE,
-          description: '气血加成',
-        })
-      }
+    // 6. 六维加成/系数独立键按乘区层注入为主属性修饰符（《属性监控显示设计.md》四层模型）：
+    //    加成(L2) → PERCENTAGE、系数(L3) → MULTIPLICATIVE，多个乘区单独相乘
+    const layeredEntries = Object.entries(LAYERED_ATTR_TO_MAIN) as Array<
+      [ATTRIBUTE_CODE, { main: ATTRIBUTE_CODE; layer: 'bonus' | 'coefficient' }]
+    >
+    for (const [code, layered] of layeredEntries) {
+      const val = (stats as Partial<Record<string, number>>)[code] || 0
+      if (!val) continue
+      const data = participant.getAttrValue(layered.main)
+      if (!data) continue
+      data.modifiers.push({
+        sourceKey: `bonus:${code}`,
+        sourceType: ModifierSourceType.BASE,
+        attribute: layered.main,
+        value: val,
+        type: layered.layer === 'bonus' ? ModifierType.PERCENTAGE : ModifierType.MULTIPLICATIVE,
+      })
     }
 
     // 7. 重新计算全部属性（使被动技能和配置加成的修饰符生效）

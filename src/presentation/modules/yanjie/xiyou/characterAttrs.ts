@@ -10,7 +10,8 @@ import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { round } from '@/shared/utils/math'
 
 import { computePlayerBase, computeStatBonuses, playerConfig } from './playerProfile'
-import { equipBonuses } from './battle'
+import { schoolAttributeBonuses, treeAttrLayers, gearAttrLayers, equipBonuses } from './battle'
+import { LAYERED_ATTR_TO_MAIN } from '@/shared/utils/attributeSync'
 import { schools } from './xiyouData'
 
 /* ── 角色属性派生（修行 CharacterPanel / 战斗侧栏 BattleRoster 共用，口径必须同源） ── */
@@ -49,10 +50,25 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
   const pack = usePackStore()
 
   // NOTE: 装备加成与战斗主角同口径（BattleZen.initBattle / BattleRoster 均 equipBonuses(equippedStats, battleSnapshot)），
-  //       面板数值 = 实时快照（基础+加点+流派）+ 已穿戴装备词缀增量，否则面板与战斗数值不同源
+  //       面板数值 = 实时快照（基础+加点+流派+树乘区）+ 已穿戴装备词缀增量，否则面板与战斗数值不同源
   const gearBonus = computed(() => equipBonuses(pack.equippedStats(), battleSnapshot.value))
 
+  /** 六维主属性集合（LAYERED_ATTR_TO_MAIN 的值域 main；注意键域是加成/系数码，不可直接用 code 查键） */
+  const LAYERED_MAINS: Set<ATTRIBUTE_CODE> = new Set(
+    Object.values(LAYERED_ATTR_TO_MAIN).map((l) => l.main),
+  )
+
+  /** 六维：快照(已含树乘区) + 装备直加(词条flat+数值词条换算),再乘装备乘区(加成L2/系数L3,多个乘区单独相乘,同文档四层模型) */
+  function sixAttrVal(code: ATTRIBUTE_CODE): number {
+    const snap = playerAttributes.value[code] ?? getAttrDv(code)
+    // gearBonus[code] = 装备 flat 直加 + 主属性数值 percent 词条换算值（不含 bonus/coef 乘区键）
+    const gearBase = gearBonus.value[code] ?? 0
+    const gear = gearAttrLayers(pack.equippedStats(), code)
+    return Math.round((snap + gearBase) * (1 + gear.bonus / 100) * (1 + gear.coefficient / 100))
+  }
+
   function attrVal(code: ATTRIBUTE_CODE): number {
+    if (LAYERED_MAINS.has(code)) return sixAttrVal(code)
     return (playerAttributes.value[code] ?? getAttrDv(code)) + (gearBonus.value[code] ?? 0)
   }
 
@@ -163,35 +179,80 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
   }
 
   /**
-   * 属性值来源分解（悬浮「来源明细 + 计算过程」的数据侧，文档《属性监控显示设计.md》显示格式）：
-   * 基础(1级) → 等级成长 → 加点 → 流派（含流派树）→ 装备（词条直加 / 词条加成换算两条），全部 ADDITIVE 同层叠加。
-   * 流派由快照差值倒推（快照=基础+成长+加点+流派，与 playerStore 归并口径同源），不重复归并逻辑；
-   * 运行时状态（当前气血/法力/护盾）不分解，单列当前值。
+   * 属性值来源分解（悬浮「来源明细 + 计算过程」的数据侧，《属性监控显示设计.md》四层模型）：
+   * 基础数值层（ADDITIVE）：基础(1级) → 等级成长 → 加点 → 流派 → 流派树 → 装备；
+   * 属性加成层（PERCENTAGE，L2）：流派树加成节点 + 装备加成词条；
+   * 独立乘区层（MULTIPLICATIVE，L3）：流派树系数节点 + 装备系数词条。
+   * 多个乘区单独相乘，禁止折算合并；运行时状态（当前气血/法力/护盾）不分解，单列当前值。
    */
   function buildAttrModifiers(code: ATTRIBUTE_CODE): Modifier[] {
-    const mk = (sourceType: ModifierSourceType, sourceKey: string, value: number, description?: string): Modifier => ({
+    const mk = (sourceType: ModifierSourceType, sourceKey: string, value: number, type: ModifierType, description?: string): Modifier => ({
       sourceKey,
       sourceType,
       attribute: code,
       value,
-      type: ModifierType.ADDITIVE,
+      type,
       description,
     })
     if (AttributeMetaMap[code]?.isRuntimeState) {
-      return [mk(ModifierSourceType.BASE, 'runtime', attrVal(code), '运行时状态')]
+      return [mk(ModifierSourceType.BASE, 'runtime', attrVal(code), ModifierType.ADDITIVE, '运行时状态')]
     }
+
+    // ── 六维主属性：按四层模型正推（快照六维已乘树乘区，差值倒推失效） ──
+    const isLayeredMain = Object.values(LAYERED_ATTR_TO_MAIN).some((l) => l.main === code)
     const key = PLAYER_BASE_KEY[code]
+    if (isLayeredMain && key) {
+      const baseVal = computePlayerBase(1)[key]
+      const levelVal = computePlayerBase(player.value.level)[key] - baseVal
+      const bonus = computeStatBonuses(statPoints.value)
+      const pointVal = bonus[code] ?? 0
+      // 流派属性绝对增量（schoolAttributeBonuses 输入与 playerStore 同口径：四维含加点）
+      const leveled = computePlayerBase(player.value.level)
+      const schoolAbs = schoolAttributeBonuses({
+        attack: leveled.attackMax + (bonus[ATTRIBUTE_CODE.attack] ?? 0),
+        defense: leveled.defense + (bonus[ATTRIBUTE_CODE.defense] ?? 0),
+        speed: leveled.speed + (bonus[ATTRIBUTE_CODE.speed] ?? 0),
+        maxHp: leveled.maxHp + (bonus[ATTRIBUTE_CODE.maxHealth] ?? 0),
+      })[code] ?? 0
+      const tree = treeAttrLayers(code)
+      // 装备直加 = gearBonus[code]（词条 flat + 主属性数值 percent 词条换算,与 sixAttrVal 同源）
+      const gearBase = gearBonus.value[code] ?? 0
+      const gear = gearAttrLayers(pack.equippedStats(), code)
+      const schoolName = schools.find((s) => s.selected)?.name
+
+      const additive = [
+        { t: ModifierSourceType.BASE, k: 'base', v: baseVal, d: undefined as string | undefined },
+        { t: ModifierSourceType.LEVEL, k: 'level', v: levelVal, d: `Lv.${player.value.level}` },
+        { t: ModifierSourceType.POINT, k: 'point', v: pointVal, d: '自由加点' },
+        { t: ModifierSourceType.SCHOOL, k: 'school', v: schoolAbs, d: schoolName },
+        { t: ModifierSourceType.SCHOOL, k: 'tree', v: tree.flat, d: '流派树' },
+        { t: ModifierSourceType.EQUIPMENT, k: 'gear', v: gearBase, d: undefined },
+      ].filter((it) => Math.abs(it.v) > 1e-9)
+      const pctLayer = [
+        { t: ModifierSourceType.SCHOOL, k: 'tree-bonus', v: tree.bonus, d: '流派树加成' },
+        { t: ModifierSourceType.EQUIPMENT, k: 'gear-bonus', v: gear.bonus, d: '词条加成' },
+      ].filter((it) => Math.abs(it.v) > 1e-9)
+      const coefLayer = [
+        { t: ModifierSourceType.SCHOOL, k: 'tree-coef', v: tree.coefficient, d: '流派树系数' },
+        { t: ModifierSourceType.EQUIPMENT, k: 'gear-coef', v: gear.coefficient, d: '词条系数' },
+      ].filter((it) => Math.abs(it.v) > 1e-9)
+      const mods = [
+        ...additive.map((it) => mk(it.t, it.k, it.v, ModifierType.ADDITIVE, it.d)),
+        ...pctLayer.map((it) => mk(it.t, it.k, it.v, ModifierType.PERCENTAGE, it.d)),
+        ...coefLayer.map((it) => mk(it.t, it.k, it.v, ModifierType.MULTIPLICATIVE, it.d)),
+      ]
+      return mods.length > 0 ? mods : [mk(ModifierSourceType.BASE, 'base', 0, ModifierType.ADDITIVE)]
+    }
+
+    // ── 非乘区属性：加法模型（配置基础 + 流派差值 + 装备） ──
     const baseVal = key ? computePlayerBase(1)[key] : Number((playerConfig.base as Record<string, number>)[code] ?? 0)
     const levelVal = key ? computePlayerBase(player.value.level)[key] - baseVal : 0
     const pointVal = computeStatBonuses(statPoints.value)[code] ?? 0
-    // 装备拆两条：词条 flat 直加值 + 词条百分比换算值（含六维加成/系数折算，差值倒推自 equipBonuses
-    // 同一结果，不在组件层复制换算映射）
     const gearStats = pack.equippedStats()
     const gearFlatVal = gearStats
       .filter((s) => s.attribute === code && s.modifierType === 'flat')
       .reduce((sum, s) => sum + s.value, 0)
-    const gearVal = gearBonus.value[code] ?? 0
-    const gearPctVal = gearVal - gearFlatVal
+    const gearPctVal = (gearBonus.value[code] ?? 0) - gearFlatVal
     const schoolVal = round((playerAttributes.value[code] ?? getAttrDv(code)) - baseVal - levelVal - pointVal, 6)
     const items = [
       { t: ModifierSourceType.BASE, k: 'base', v: baseVal, d: undefined as string | undefined },
@@ -201,8 +262,8 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
       { t: ModifierSourceType.EQUIPMENT, k: 'gear', v: gearFlatVal, d: undefined },
       { t: ModifierSourceType.EQUIPMENT, k: 'gear-affix', v: gearPctVal, d: '词条加成' },
     ].filter((it) => Math.abs(it.v) > 1e-9)
-    if (items.length === 0) return [mk(ModifierSourceType.BASE, 'base', 0)]
-    return items.map((it) => mk(it.t, it.k, it.v, it.d))
+    if (items.length === 0) return [mk(ModifierSourceType.BASE, 'base', 0, ModifierType.ADDITIVE)]
+    return items.map((it) => mk(it.t, it.k, it.v, ModifierType.ADDITIVE, it.d))
   }
 
   function showAttrTooltip(event: MouseEvent, code: ATTRIBUTE_CODE, value: number) {

@@ -124,6 +124,13 @@ describe('装备获取契约（C 方案分层：常规打造 / 专属直落）',
     expect(droppersOf('ac_sp_01')).toContain('boss_major_shanshen')
   })
 
+  it('妖王/终局 boss 有战斗入口（出现在妖王挑战场景敌组）', () => {
+    const sceneEnemyIds = new Set(sceneRows.flatMap((s) => (s.enemies ?? []).map((e) => e.id ?? '')))
+    for (const boss of ['boss_king_niumo', 'boss_king_pansi', 'boss_king_dapeng', 'boss_final_liuer']) {
+      expect(sceneEnemyIds.has(boss), boss).toBe(true)
+    }
+  })
+
   it('死图纸不再出现在任何掉落里（legend/immortal/sp_01，掉落者不可达）', () => {
     const dead = ['bp_legend_01', 'bp_legend_02', 'bp_legend_03', 'bp_immortal_01', 'bp_immortal_02', 'bp_immortal_03', 'bp_immortal_04', 'bp_sp_01']
     const leaked: string[] = []

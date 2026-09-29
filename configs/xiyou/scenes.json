@@ -1789,5 +1789,225 @@
       "sceneId": "scene_maze_2"
     },
     "narrativeHook": "万妖之首睁开眼：你的气运，到此为止。"
+  },
+  {
+    "id": "scene_king_1",
+    "regionId": "region_king",
+    "name": "牛魔岭",
+    "levelRange": [
+      65,
+      65
+    ],
+    "desc": "积雷山摩云洞外，赤焰灼空。牛魔王闻西行战意之名，提棍相候。",
+    "enemies": [
+      {
+        "id": "boss_king_niumo",
+        "name": "牛魔·赤焰",
+        "level": 65
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2000,
+        3200
+      ],
+      "exp": [
+        1600,
+        2400
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 230,
+      "y": 210
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_boss"
+    },
+    "narrativeHook": "牛魔横棍当道：想见六耳？先接俺老牛一棒。"
+  },
+  {
+    "id": "scene_king_2",
+    "regionId": "region_king",
+    "name": "盘丝洞",
+    "levelRange": [
+      65,
+      65
+    ],
+    "desc": "濯垢泉丝雾弥漫，七情网后织梦者素手轻抬。",
+    "enemies": [
+      {
+        "id": "boss_king_pansi",
+        "name": "盘丝·织梦",
+        "level": 65
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2400,
+        3600
+      ],
+      "exp": [
+        1800,
+        2600
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 380,
+      "y": 210
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_king_1"
+    },
+    "narrativeHook": "丝线自四面八方收拢：进来容易，脱身可要拿宝贝来换。"
+  },
+  {
+    "id": "scene_king_3",
+    "regionId": "region_king",
+    "name": "狮驼云顶",
+    "levelRange": [
+      65,
+      65
+    ],
+    "desc": "云程万里一翅九万里，遮天蔽日者俯瞰来客。",
+    "enemies": [
+      {
+        "id": "boss_king_dapeng",
+        "name": "大鹏·遮天",
+        "level": 65
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2800,
+        4000
+      ],
+      "exp": [
+        2000,
+        2800
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 530,
+      "y": 210
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_king_2"
+    },
+    "narrativeHook": "鹏鸣裂云：五百年无人能逼我离巢，你算第几个。"
+  },
+  {
+    "id": "scene_king_final",
+    "regionId": "region_king",
+    "name": "灵山之巅",
+    "levelRange": [
+      70,
+      70
+    ],
+    "desc": "灵山之巅，真假悟空的千年之局迎来终章。",
+    "enemies": [
+      {
+        "id": "boss_final_liuer",
+        "name": "六耳猕猴",
+        "level": 70
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        4000,
+        6000
+      ],
+      "exp": [
+        3000,
+        4200
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 680,
+      "y": 210
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_king_3"
+    },
+    "narrativeHook": "六耳执棒而立：唯有时谛听者，方知胜负一念之间。"
   }
 ]

@@ -95,11 +95,20 @@ describe('buildRunNodes（节点序列构造）', () => {
     expect(nodes[3].amp).toBe(1)
   })
 
-  it('全 33 关不变量：每场 1~4 席（编成不被 buildEnemyRoster 截断），有妖徒的关底妖徒必在场', () => {
+  it('妖王挑战关：无妖徒单场 boss 战，妖王与护法同席且不增幅', () => {
+    const king = makeScene('scene_king_1', ['boss_king_niumo', 'w1', 'w2', 'w3'])
+    const nodes = buildRunNodes(king, [king])
+    expect(nodes).toHaveLength(1)
+    expect(nodes[0].isBoss).toBe(true)
+    expect(nodes[0].amp).toBe(1)
+    expect(nodes[0].enemyIds).toEqual(['boss_king_niumo', 'w1', 'w2', 'w3'])
+  })
+
+  it('全 37 关不变量：每场 1~4 席（编成不被 buildEnemyRoster 截断），有妖徒的关底妖徒必在场', () => {
     const all = (scenesJson as Array<{ id: string; enemies: Array<{ id?: string }>; yaotu?: { id?: string } | null }>).map(
       (s) => makeScene(s.id, (s.enemies ?? []).map((e) => e.id ?? ''), s.yaotu?.id),
     )
-    expect(all.length).toBe(33)
+    expect(all.length).toBe(37)
     for (const scene of all) {
       const nodes = buildRunNodes(scene, all)
       // NOTE: 无妖徒的普通场景（秘境三关）走「合编一场」，§24 场数表对其不生效——

@@ -1636,14 +1636,6 @@
         "probability": 1
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.3
-      },
-      {
-        "itemId": "bp_t1_ar",
-        "probability": 0.3
-      },
-      {
         "itemId": "wp_sb01",
         "probability": 0.3
       },

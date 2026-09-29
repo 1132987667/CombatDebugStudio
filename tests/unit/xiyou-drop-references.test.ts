@@ -20,7 +20,7 @@ interface ItemRow { id: string; name: string }
 interface DropRow { itemId: string; chance: number }
 
 const itemIds = new Set((itemsJson.items as ItemRow[]).map((i) => i.id))
-const gearRows = equipmentJson as unknown as (ItemRow & { blueprintId?: string; craftable?: boolean })[]
+const gearRows = equipmentJson as unknown as (ItemRow & { blueprintId?: string; craftable?: boolean; tier?: string })[]
 const gearIds = new Set(gearRows.map((g) => g.id))
 
 /** 掉落可解析域：物品目录（items.json）∪ 装备目录（equipment.json），与运行时 addItem 的分支一致 */
@@ -106,6 +106,8 @@ describe('装备获取契约（C 方案分层：常规打造 / 专属直落）',
     const broken: string[] = []
     for (const g of gearRows) {
       if (!g.craftable || !g.blueprintId) continue
+      // 一阶免图谱：packStore.blueprintUnlocked 对 tier==='t1' 直接放行，图纸无需有掉落源
+      if (g.tier === 't1') continue
       const bpReachable = droppersOf(g.blueprintId).some((id) => reachableEnemyIds.has(id))
       const directDrop = droppersOf(g.id).length > 0
       if (!bpReachable && !directDrop) broken.push(`${g.id} ← ${g.blueprintId}（掉落者不可达且无直落）`)

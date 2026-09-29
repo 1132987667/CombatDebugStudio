@@ -549,10 +549,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
-      },
-      {
         "itemId": "exp_pill_large",
         "probability": 0.1
       },
@@ -658,10 +654,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
-      },
-      {
         "itemId": "exp_pill_large",
         "probability": 0.1
       }
@@ -762,10 +754,6 @@
       {
         "itemId": "misc_yaodan",
         "probability": 0.3
-      },
-      {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
       },
       {
         "itemId": "exp_pill_large",
@@ -869,10 +857,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
-      },
-      {
         "itemId": "exp_pill_large",
         "probability": 0.1
       }
@@ -972,10 +956,6 @@
       {
         "itemId": "misc_yaodan",
         "probability": 0.3
-      },
-      {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
       },
       {
         "itemId": "exp_pill_large",
@@ -1086,10 +1066,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
-      },
-      {
         "itemId": "exp_pill_large",
         "probability": 0.1
       },
@@ -1098,19 +1074,23 @@
         "probability": 0.2
       },
       {
-        "itemId": "bp_immortal_01",
+        "itemId": "wp_t5_01",
+        "probability": 0.3
+      },
+      {
+        "itemId": "ar_t5_01",
         "probability": 0.25
       },
       {
-        "itemId": "bp_immortal_02",
+        "itemId": "ac_t5_01",
         "probability": 0.25
       },
       {
-        "itemId": "bp_immortal_03",
+        "itemId": "ac_t5_02",
         "probability": 0.25
       },
       {
-        "itemId": "bp_immortal_04",
+        "itemId": "wp_sp_01",
         "probability": 0.25
       }
     ],
@@ -1224,16 +1204,20 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_legend_03",
-        "probability": 0.3
-      },
-      {
         "itemId": "bt_sb08",
         "probability": 0.1
       },
       {
         "itemId": "bt_sp_05",
         "probability": 0.06
+      },
+      {
+        "itemId": "ac_t4_02",
+        "probability": 0.3
+      },
+      {
+        "itemId": "bt_t4_03",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -1341,12 +1325,20 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_legend_01",
+        "itemId": "wp_sb06",
+        "probability": 0.1
+      },
+      {
+        "itemId": "wp_t4_01",
         "probability": 0.3
       },
       {
-        "itemId": "wp_sb06",
-        "probability": 0.1
+        "itemId": "wp_t4_dagger_01",
+        "probability": 0.2
+      },
+      {
+        "itemId": "hd_t4_war_02",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -1450,12 +1442,16 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_legend_02",
+        "itemId": "hf_sb07",
+        "probability": 0.1
+      },
+      {
+        "itemId": "ac_t4_01",
         "probability": 0.3
       },
       {
-        "itemId": "hf_sb07",
-        "probability": 0.1
+        "itemId": "bt_t4_02",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -1535,6 +1531,10 @@
       },
       {
         "itemId": "ar_sb02",
+        "probability": 0.3
+      },
+      {
+        "itemId": "bp_t2_ar",
         "probability": 0.3
       }
     ],
@@ -1697,6 +1697,14 @@
       },
       {
         "itemId": "jz_sb04",
+        "probability": 0.3
+      },
+      {
+        "itemId": "ar_sp_01",
+        "probability": 0.2
+      },
+      {
+        "itemId": "bp_t4_ar",
         "probability": 0.3
       }
     ],
@@ -1865,6 +1873,10 @@
       {
         "itemId": "hd_sb03",
         "probability": 0.3
+      },
+      {
+        "itemId": "ac_sp_01",
+        "probability": 0.2
       }
     ],
     "phases": [
@@ -3389,10 +3401,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
-      },
-      {
         "itemId": "exp_pill_large",
         "probability": 0.1
       },
@@ -3519,10 +3527,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
-      },
-      {
         "itemId": "exp_pill_large",
         "probability": 0.1
       },
@@ -3643,10 +3647,6 @@
       {
         "itemId": "misc_yaodan",
         "probability": 0.3
-      },
-      {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
       },
       {
         "itemId": "exp_pill_large",
@@ -3771,10 +3771,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
-      },
-      {
         "itemId": "exp_pill_large",
         "probability": 0.1
       },
@@ -3895,10 +3891,6 @@
       {
         "itemId": "misc_yaodan",
         "probability": 0.3
-      },
-      {
-        "itemId": "bp_sp_01",
-        "probability": 0.1
       },
       {
         "itemId": "exp_pill_large",

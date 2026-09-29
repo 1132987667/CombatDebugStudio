@@ -1367,6 +1367,84 @@
   line-height: 1.5;
 }
 
+/* ── 抽屉影响面面板（引用树：改动前预判波及范围）── */
+.fs-drawer-impact {
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(var(--rgb-info), var(--alpha-border));
+  border-radius: var(--radius-md);
+  background: rgba(var(--rgb-info), var(--alpha-tint));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fs-drawer-impact-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.fs-drawer-impact-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+}
+
+.fs-drawer-impact-sub {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
+}
+
+.fs-drawer-impact-layer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fs-drawer-impact-depth {
+  color: var(--color-info);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
+}
+
+.fs-drawer-impact-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding-left: var(--space-2);
+}
+
+.fs-drawer-impact-ids {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  word-break: break-word;
+}
+
+.fs-drawer-impact-id {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-info);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-info);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
 /* ── 数据包导入预览（F8）── */
 .fs-pkg-preview {
   margin-top: var(--space-3);

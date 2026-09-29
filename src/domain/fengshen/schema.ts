@@ -115,6 +115,12 @@ export interface ReferenceRule {
   targetTables: FengshenTableName[]
   /** 可选字段：为 undefined/null/空时跳过检查 */
   optional?: boolean
+  /**
+   * 软引用：目标值空间不是表内 id 外键，引擎遇到未知值静默落空（如属性 code 取 0）。
+   * 仅参与「影响面推演 / 删除保护 / 反向引用」，不进保存校验与健康检查
+   * ——否则会与专门校验器（equipmentAffixIssues 等）重复报错。
+   */
+  soft?: boolean
 }
 
 /** 全表引用规则注册表（保存校验 + 删除保护 + 健康检查共用） */
@@ -140,10 +146,20 @@ export const REFERENCE_RULES: ReferenceRule[] = [
   { sourceTable: 'enemies', path: 'skillIds', targetTables: ['skills'], optional: true },
   { sourceTable: 'enemies', path: 'passiveSkillIds', targetTables: ['skills'], optional: true },
   { sourceTable: 'enemies', path: 'affixes', targetTables: ['affixes'], optional: true },
+  // 阵型效果 buff：FormationManager.applyFormation 直接 addBuff，未知 id 静默落空
+  { sourceTable: 'formations', path: 'effects[].buffId', targetTables: ['buffs'], optional: true },
+  // 敌人阶段增益：FormationManager 同类消费路径，引擎对未知 buffId 静默忽略，必须登记
+  { sourceTable: 'enemies', path: 'phases[].buffId', targetTables: ['buffs'], optional: true },
+  // 技能步骤参数内的 buff 引用（轮转施法等多 buff 步骤）
+  { sourceTable: 'skills', path: 'steps[].parameters.buffIds', targetTables: ['buffs'], optional: true },
   { sourceTable: 'equipment', path: 'factionRestriction', targetTables: ['elements'], optional: true },
   { sourceTable: 'equipment', path: 'materials[].itemId', targetTables: ['items', 'materials'] },
   { sourceTable: 'elements', path: 'matrix[].attackerId', targetTables: ['elements'], optional: true },
   { sourceTable: 'elements', path: 'matrix[].defenderId', targetTables: ['elements'], optional: true },
+  // ── 软引用：属性 code 是跨表值空间（非 id 外键），只服务影响面推演 / 删除保护 ──
+  { sourceTable: 'equipment_affixes', path: 'attribute', targetTables: ['attributes'], optional: true, soft: true },
+  { sourceTable: 'affixes', path: 'statModifiers[].attribute', targetTables: ['attributes'], optional: true, soft: true },
+  { sourceTable: 'scenes', path: 'fieldEffects[].modifiers[].attribute', targetTables: ['attributes'], optional: true, soft: true },
 ]
 
 export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {

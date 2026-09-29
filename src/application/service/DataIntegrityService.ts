@@ -55,6 +55,29 @@ export interface HealthCheckReport {
   issues: HealthCheckIssue[]
 }
 
+/** 引用树节点：depth=1 为直接引用方，≥2 为间接引用方（逐级上溯） */
+export interface ReferenceTreeNode {
+  depth: number
+  table: FengshenTableName
+  id: string
+}
+
+/** 引用树报告（影响面推演：改动某实体前预估会波及多少实体） */
+export interface ReferenceTreeReport {
+  /** 直接引用方数量（depth=1） */
+  directCount: number
+  /** 间接引用方数量（depth≥2） */
+  indirectCount: number
+  /** 合计 */
+  total: number
+  nodes: ReferenceTreeNode[]
+  /** 达到深度上限仍未展开完（存在更远引用方未列出） */
+  truncated: boolean
+}
+
+/** 引用树默认最大上溯层数（直接 + 2 级间接；足够覆盖 属性→词条→敌人→场景 一类链路） */
+export const REFERENCE_TREE_MAX_DEPTH = 3
+
 export class DataIntegrityService {
   constructor(private readonly storage: IPersistentStorage) {}
 
@@ -63,6 +86,9 @@ export class DataIntegrityService {
     const errors: string[] = []
     const schema = TABLE_SCHEMAS[table]
     if (!schema) return { valid: true, errors }
+
+    // 单次调用内的表索引：唯一性检查与引用校验共用，同表只读一次
+    const index = new DataIndex(this.storage)
 
     for (const field of schema.fields) {
       const value = entity[field.key]
@@ -80,7 +106,7 @@ export class DataIntegrityService {
     }
 
     if (schema.uniqueFields?.length) {
-      const all = await this.listAll(table)
+      const all = await index.listAll(table)
       for (const uf of schema.uniqueFields) {
         const v = entity[uf]
         if (isEmpty(v)) continue
@@ -109,11 +135,12 @@ export class DataIntegrityService {
       errors.push(...this.expGoldIssues(entity as { id?: unknown; data?: unknown }))
     }
 
-    for (const rule of REFERENCE_RULES.filter((r) => r.sourceTable === table)) {
+    // NOTE: 软引用（属性 code 等非 id 外键）不进保存校验，其合法性由专门校验器负责
+    for (const rule of REFERENCE_RULES.filter((r) => r.sourceTable === table && !r.soft)) {
       const refIds = extractReferenceIds(entity, rule.path)
       if (refIds.length === 0 && rule.optional) continue
       for (const refId of refIds) {
-        if (!(await this.existsIn(rule.targetTables, refId))) {
+        if (!(await index.existsIn(rule.targetTables, refId))) {
           errors.push(`引用 ${rule.path} → ${refId} 不存在（目标表：${rule.targetTables.join('|')}）`)
         }
       }
@@ -125,9 +152,11 @@ export class DataIntegrityService {
   /** 删除前置检查：其他表是否引用该 ID，被引用则拦截并提示引用方 */
   async assertDeletable(table: FengshenTableName, id: string): Promise<DeleteBlock> {
     const blockers: DeleteBlocker[] = []
+    // 索引：同一 sourceTable 被多条规则命中时不再重复整表读取
+    const index = new DataIndex(this.storage)
     for (const rule of REFERENCE_RULES) {
       if (!rule.targetTables.includes(table)) continue
-      const entities = await this.listAll(rule.sourceTable)
+      const entities = await index.listAll(rule.sourceTable)
       const referencing = entities
         .filter((e) => extractReferenceIds(e, rule.path).includes(id))
         .map((e) => e.id)
@@ -141,15 +170,19 @@ export class DataIntegrityService {
   /** 全局健康检查：按 REFERENCE_RULES 扫描全部引用 + 装备词条强约束，输出断裂/非法报告 */
   async runHealthCheck(): Promise<HealthCheckReport> {
     const issues: HealthCheckIssue[] = []
+    // 索引：全部扫描共用一次整表读取，复杂度由 O(规则数 × 全表) 降到 O(表数 × 全表)
+    const index = new DataIndex(this.storage)
     let checkedEntities = 0
-    for (const rule of REFERENCE_RULES) {
-      const entities = await this.listAll(rule.sourceTable)
+    // NOTE: 软引用目标值空间非 id 外键（属性 code 取 0 静默落空），健康检查只扫硬引用
+    const hardRules = REFERENCE_RULES.filter((r) => !r.soft)
+    for (const rule of hardRules) {
+      const entities = await index.listAll(rule.sourceTable)
       for (const entity of entities) {
         checkedEntities++
         const refIds = extractReferenceIds(entity, rule.path)
         if (refIds.length === 0 && rule.optional) continue
         for (const refId of refIds) {
-          if (!(await this.existsIn(rule.targetTables, refId))) {
+          if (!(await index.existsIn(rule.targetTables, refId))) {
             issues.push({
               kind: 'integrity',
               sourceTable: rule.sourceTable,
@@ -165,7 +198,7 @@ export class DataIntegrityService {
 
     // 装备词条强约束扫描（attribute / slotKey / school / valueRange）
     const schoolNames = await this.getSchoolNames()
-    const eqAffixes = await this.listAll('equipment_affixes')
+    const eqAffixes = await index.listAll('equipment_affixes')
     for (const entity of eqAffixes) {
       checkedEntities++
       for (const issue of this.equipmentAffixIssues(entity, schoolNames)) {
@@ -174,7 +207,7 @@ export class DataIntegrityService {
     }
 
     // 经验与金钱结构化参数扫描（exp_table / enemy_reward_table / level_diff_bonus）
-    const params = await this.listAll('params')
+    const params = await index.listAll('params')
     for (const entity of params) {
       if (!ALL_BATTLE_PARAM_IDS.includes(entity.id)) continue
       checkedEntities++
@@ -191,12 +224,12 @@ export class DataIntegrityService {
     }
 
     // 命名重复（表内 / items×equipment 跨表）：名称 → 组内去重 id，不同 id 数 >1 即重复
-    checkedEntities += await this.scanNameDuplicates(issues)
+    checkedEntities += await this.scanNameDuplicates(issues, index)
 
     // 字段内重复引用：数组路径（skillIds / drops[].itemId / steps[].buffId 等）同一 id 出现多次
-    checkedEntities += await this.scanDuplicateRefs(issues)
+    checkedEntities += await this.scanDuplicateRefs(issues, index)
 
-    return { scannedRules: REFERENCE_RULES.length, checkedEntities, issues }
+    return { scannedRules: hardRules.length, checkedEntities, issues }
   }
 
   /**
@@ -205,7 +238,7 @@ export class DataIntegrityService {
    * NOTE: 派生关系（materials⊂items）与装备注册（装备同 id 同时在 items 与 equipment）
    *       天然同 id 同名，经 id 去重后不计为重复；只有真正「不同 id 共用一名」才报。
    */
-  private async scanNameDuplicates(issues: HealthCheckIssue[]): Promise<number> {
+  private async scanNameDuplicates(issues: HealthCheckIssue[], index: DataIndex): Promise<number> {
     const byName = new Map<string, Map<string, FengshenTableName>>()
     const collect = (table: FengshenTableName, entities: Array<Record<string, unknown> & { id: string }>) => {
       for (const e of entities) {
@@ -215,8 +248,8 @@ export class DataIntegrityService {
         byName.get(name)!.set(e.id, table)
       }
     }
-    const items = await this.listAll('items')
-    const equipment = await this.listAll('equipment')
+    const items = await index.listAll('items')
+    const equipment = await index.listAll('equipment')
     collect('items', items)
     collect('equipment', equipment)
 
@@ -237,10 +270,11 @@ export class DataIntegrityService {
   }
 
   /** 字段内重复引用扫描：REFERENCE_RULES 各路径下，同一实体对某 id 引用多次（数组字段重复项） */
-  private async scanDuplicateRefs(issues: HealthCheckIssue[]): Promise<number> {
+  private async scanDuplicateRefs(issues: HealthCheckIssue[], index: DataIndex): Promise<number> {
     let checked = 0
     for (const rule of REFERENCE_RULES) {
-      const entities = await this.listAll(rule.sourceTable)
+      if (rule.soft) continue
+      const entities = await index.listAll(rule.sourceTable)
       for (const entity of entities) {
         checked++
         const refIds = extractReferenceIds(entity, rule.path)
@@ -266,24 +300,83 @@ export class DataIntegrityService {
     return checked
   }
 
-  /** 反向引用：哪些表的哪些实体引用了指定 id（供详情面板「被引用」视图） */
+  /** 反向引用：哪些表的哪些实体引用了指定 id（供详情面板「被引用」视图；= 引用树第 1 层） */
   async findReferencing(
     table: FengshenTableName,
     id: string,
   ): Promise<Array<{ sourceTable: FengshenTableName; ids: string[] }>> {
-    const out: Array<{ sourceTable: FengshenTableName; ids: string[] }> = []
-    for (const rule of REFERENCE_RULES) {
-      if (!rule.targetTables.includes(table)) continue
-      const entities = await this.listAll(rule.sourceTable)
-      const ids = entities
-        .filter((e) => extractReferenceIds(e, rule.path).includes(id))
-        .map((e) => e.id)
-      if (ids.length) out.push({ sourceTable: rule.sourceTable, ids })
+    const { nodes } = await this.findReferenceTree(table, id, 1)
+    const byTable = new Map<FengshenTableName, string[]>()
+    for (const n of nodes) {
+      const arr = byTable.get(n.table)
+      if (arr) arr.push(n.id)
+      else byTable.set(n.table, [n.id])
     }
-    return out
+    return Array.from(byTable, ([sourceTable, ids]) => ({ sourceTable, ids }))
+  }
+
+  /**
+   * 引用树（影响面推演）：自 (table, id) 起逐层上溯「谁引用了它」，返回直接/间接分层结果。
+   *
+   * - BFS 分层：depth=1 直接引用方，depth≥2 为间接（引用方又被谁引用）。
+   * - 整表索引（DataIndex）在单次调用内共享，visited 兼作去重与环保护（初始含根节点）。
+   * - truncated：存在超出 maxDepth 的更远引用方（列到上限后再探一层，命中即早退，
+   *   故「恰好到上限且无更深引用」不会误报）。
+   */
+  async findReferenceTree(
+    table: FengshenTableName,
+    id: string,
+    maxDepth: number = REFERENCE_TREE_MAX_DEPTH,
+  ): Promise<ReferenceTreeReport> {
+    const index = new DataIndex(this.storage)
+    const nodes: ReferenceTreeNode[] = []
+    const visited = new Set<string>([`${table}:${id}`])
+    let frontier: Array<{ table: FengshenTableName; id: string }> = [{ table, id }]
+    let depth = 0
+    let truncated = false
+    let stop = false
+    while (frontier.length && !stop) {
+      const next: Array<{ table: FengshenTableName; id: string }> = []
+      for (const node of frontier) {
+        for (const parent of await this.referencingOf(node.table, node.id, index)) {
+          const key = `${parent.table}:${parent.id}`
+          if (visited.has(key)) continue
+          visited.add(key)
+          if (depth + 1 > maxDepth) {
+            // 探到超出上限的一层：仅标记被截断，不列出
+            truncated = true
+            stop = true
+            break
+          }
+          nodes.push({ depth: depth + 1, ...parent })
+          next.push(parent)
+        }
+        if (stop) break
+      }
+      frontier = next
+      depth++
+    }
+    const directCount = nodes.filter((n) => n.depth === 1).length
+    return { directCount, indirectCount: nodes.length - directCount, total: nodes.length, nodes, truncated }
   }
 
   // ── 内部工具 ────────────────────────────────────────────────
+
+  /** 直接引用 (table, id) 的全部实体（跨 REFERENCE_RULES，含软引用；整表索引单次调用内共享） */
+  private async referencingOf(
+    table: FengshenTableName,
+    id: string,
+    index: DataIndex,
+  ): Promise<Array<{ table: FengshenTableName; id: string }>> {
+    const out: Array<{ table: FengshenTableName; id: string }> = []
+    for (const rule of REFERENCE_RULES) {
+      if (!rule.targetTables.includes(table)) continue
+      for (const e of await index.listAll(rule.sourceTable)) {
+        if (extractReferenceIds(e, rule.path).includes(id)) out.push({ table: rule.sourceTable, id: e.id })
+      }
+    }
+    return out
+  }
 
   /** 学校（流派）name 集合：读封神榜 xiyou 表 schools 文档（seed 自 configs/xiyou/schools.json） */
   private async getSchoolNames(): Promise<Set<string>> {
@@ -478,29 +571,69 @@ export class DataIntegrityService {
 
     return issues
   }
+}
 
-  private async listAll(table: FengshenTableName): Promise<Array<Record<string, unknown> & { id: string }>> {
-    // NOTE: 表名与 store 名一致（FENGSHEN_STORE 值），直接用表名作 store
-    const keys = await this.storage.keys(table as StorageStoreName)
+/**
+ * 单次调用内的表索引：整表只读一遍，后续「整表遍历 / id 命中」全部命中内存。
+ *
+ * NOTE: 生命周期严格限定在一次公开方法调用内（不做跨调用缓存与失效链——任何写入方
+ *       都得负责失效，成本远高于收益）。
+ * NOTE: 语义与旧实现等价：`listAll` 仍只收带字符串 id 的记录；`existsIn` 对普通表判定
+ *       「键存在」，对单文档表 `elements` 判定其文档内元素 id。
+ */
+class DataIndex {
+  /** 表 → 带 id 的实体列表（懒建，同表只读一次） */
+  private readonly rows = new Map<FengshenTableName, Array<Record<string, unknown> & { id: string }>>()
+  /** 表 → 键集合（键即主键 id；懒建） */
+  private readonly keys = new Map<FengshenTableName, Set<string>>()
+  /** elements 单文档内的元素 id 集合（懒建） */
+  private elementsIds: Set<string> | null = null
+
+  constructor(private readonly storage: IPersistentStorage) {}
+
+  /** 整表实体（仅保留带字符串 id 的记录） */
+  async listAll(table: FengshenTableName): Promise<Array<Record<string, unknown> & { id: string }>> {
+    const cached = this.rows.get(table)
+    if (cached) return cached
     const out: Array<Record<string, unknown> & { id: string }> = []
-    for (const key of keys) {
+    // NOTE: 表名与 store 名一致（FENGSHEN_STORE 值），直接用表名作 store
+    for (const key of await this.keySet(table)) {
       const rec = await this.storage.get<Record<string, unknown>>(table as StorageStoreName, key)
       if (rec && typeof rec.id === 'string') out.push(rec as Record<string, unknown> & { id: string })
     }
+    this.rows.set(table, out)
     return out
   }
 
-  private async existsIn(tables: FengshenTableName[], id: string): Promise<boolean> {
+  /** 目标表集合中是否存在该 id（任一命中即真） */
+  async existsIn(tables: FengshenTableName[], id: string): Promise<boolean> {
     for (const table of tables) {
       if (table === 'elements') {
-        const doc = await this.storage.get<ElementsData>(FENGSHEN_STORE.ELEMENTS, 'elements')
-        if (doc?.elements?.some((e) => e.id === id)) return true
+        if (await this.hasElementId(id)) return true
         continue
       }
-      const rec = await this.storage.get(table as StorageStoreName, id)
-      if (rec) return true
+      if ((await this.keySet(table)).has(id)) return true
     }
     return false
+  }
+
+  /** 表 → 键集合（懒建，同表只读一次） */
+  private async keySet(table: FengshenTableName): Promise<Set<string>> {
+    let set = this.keys.get(table)
+    if (!set) {
+      set = new Set(await this.storage.keys(table as StorageStoreName))
+      this.keys.set(table, set)
+    }
+    return set
+  }
+
+  /** elements 单文档（{ elements: [...] }）内的元素 id 集合（懒建） */
+  private async hasElementId(id: string): Promise<boolean> {
+    if (!this.elementsIds) {
+      const doc = await this.storage.get<ElementsData>(FENGSHEN_STORE.ELEMENTS, 'elements')
+      this.elementsIds = new Set((doc?.elements ?? []).map((e) => e.id))
+    }
+    return this.elementsIds.has(id)
   }
 }
 

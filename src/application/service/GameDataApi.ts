@@ -38,6 +38,10 @@ import type { FormationConfig } from '@/shared/types/formation'
 import type { ElementDef } from '@/domain/fengshen/types'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { buildElementIndex, buildNameIndex } from '@/domain/fengshen/refNames'
+import {
+  ATTRIBUTE_OCCURRENCE_RULES,
+  type AttributeOccurrence,
+} from '@/domain/fengshen/attribute-occurrences'
 
 export interface ListQuery {
   /** 按 name 模糊搜索 */
@@ -176,6 +180,54 @@ export class GameDataApi {
   /** 属性定义列表（attributes 表） */
   async listAttributes(): Promise<AttributeDef[]> {
     return this.listByTable<AttributeDef>('attributes', { limit: 1000 })
+  }
+
+  /**
+   * 属性中心（B1b）：以属性 code 为入口，列出该属性在全系统的出现位置。
+   *
+   * 逐条套用 `ATTRIBUTE_OCCURRENCE_RULES`：带 `docId` 的走 params 域单文档读取，
+   * 其余逐行扫来源表。返回顺序即规则表顺序（基准值 → 派生值 → 引用值）。
+   * @param code 属性代码（attributes.code）
+   * @returns 命中记录数组；无任何出现时返回空数组
+   */
+  async findAttributeOccurrences(code: string): Promise<AttributeOccurrence[]> {
+    const out: AttributeOccurrence[] = []
+    for (const rule of ATTRIBUTE_OCCURRENCE_RULES) {
+      if (rule.docId) {
+        const doc = await this.getBattleParam(rule.docId)
+        if (!doc) continue
+        const rowName = doc.name ?? doc.id
+        for (const hit of rule.extract(doc.data, code)) {
+          out.push({
+            table: rule.table,
+            rowId: doc.id,
+            rowName,
+            field: hit.field,
+            valueText: hit.valueText,
+            kind: rule.kind,
+            label: rule.label,
+          })
+        }
+        continue
+      }
+      const rows = await this.listAll<Record<string, unknown>>(rule.table as StorageStoreName)
+      for (const row of rows) {
+        for (const hit of rule.extract(row, code)) {
+          const rowId = String(row.id ?? '')
+          if (!rowId) continue
+          out.push({
+            table: rule.table,
+            rowId,
+            rowName: String(row.name ?? rowId),
+            field: hit.field,
+            valueText: hit.valueText,
+            kind: rule.kind,
+            label: rule.label,
+          })
+        }
+      }
+    }
+    return out
   }
 
   async listBattleParams(): Promise<BattleParamData[]> {

@@ -15,7 +15,7 @@ import { GameDataApi } from '@/application/service/GameDataApi'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { BattleDataLoader } from '@/application/service/BattleDataLoader'
 import { DataPackageService } from '@/application/service/DataPackageService'
-import { DataIntegrityService, type HealthCheckReport } from '@/application/service/DataIntegrityService'
+import { DataIntegrityService, type HealthCheckReport, type ReferenceTreeReport } from '@/application/service/DataIntegrityService'
 import { runValidations, type ValidationIssue, type ValidationReport } from '@/domain/fengshen/validators/registry'
 import { TABLE_SCHEMAS } from '@/domain/fengshen/schema'
 import { nextEntityId, type FengshenTableName } from '@/domain/fengshen/types'
@@ -23,7 +23,7 @@ import type { OperationLogEntry } from '@/domain/fengshen/types'
 import { useBattleStore } from '@/presentation/stores'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
-export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule' | 'curves' | 'equipgen' | 'distribution'
+export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule' | 'curves' | 'equipgen' | 'distribution' | 'attributecenter'
 
 export interface OptionItem {
   id: string
@@ -67,6 +67,9 @@ export const useFengshenStore = defineStore('fengshen', () => {
   // 详情面板：当前实体的反向引用（谁引用了它）与跨表定位待办
   const references = ref<Array<{ sourceTable: FengshenTableName; ids: string[] }>>([])
   const pendingDetailId = ref<string | null>(null)
+
+  // 编辑抽屉：改动影响面（引用树：直接/间接分层），打开编辑时预载，修改前即可见
+  const impactReport = ref<ReferenceTreeReport | null>(null)
 
   const currentSchema = () => TABLE_SCHEMAS[currentTable.value]
 
@@ -169,6 +172,15 @@ export const useFengshenStore = defineStore('fengshen', () => {
     }
   }
 
+  /** 加载指定实体的改动影响面（引用树）；失败静默降级为「无影响面信息」，不阻断编辑 */
+  async function loadImpact(table: FengshenTableName, id: string): Promise<void> {
+    try {
+      impactReport.value = await integrity.findReferenceTree(table, id)
+    } catch {
+      impactReport.value = null
+    }
+  }
+
   async function openCreate(): Promise<void> {
     const existing = await api.listByTable<Record<string, unknown>>(currentTable.value, { limit: 1000 })
     // elements 为单文档（固定 id），其余表按前缀自增生成
@@ -177,6 +189,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
       : { id: nextEntityId(existing.map((r) => String(r.id)), `${currentTable.value}_`) }
     isNew.value = true
     formErrors.value = []
+    impactReport.value = null
     drawerOpen.value = true
   }
 
@@ -195,6 +208,11 @@ export const useFengshenStore = defineStore('fengshen', () => {
     isNew.value = isNewEntity
     formErrors.value = []
     drawerOpen.value = true
+    // 影响面推演：编辑既有实体时预载引用树（改动前就显示「将波及 N 个实体」）；新增/复制无反向引用
+    impactReport.value = null
+    if (!isNewEntity && typeof entity.id === 'string' && entity.id) {
+      void loadImpact(currentTable.value, entity.id)
+    }
   }
 
   /** 复制为模板：新 ID 派生 + 名称加副本后缀，进入编辑抽屉（新增态）；不可复制时返回 false 由界面提示 */
@@ -211,6 +229,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     drawerOpen.value = false
     editingEntity.value = null
     formErrors.value = []
+    impactReport.value = null
   }
 
   async function save(): Promise<boolean> {
@@ -442,6 +461,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     refIndex,
     references,
     pendingDetailId,
+    impactReport,
     currentSchema,
     refreshVersion,
     refreshList,
@@ -452,6 +472,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     setTable,
     navigateTo,
     loadReferences,
+    loadImpact,
     setView,
     openCreate,
     openEdit,

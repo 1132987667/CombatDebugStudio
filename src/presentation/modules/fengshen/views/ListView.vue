@@ -90,8 +90,9 @@
     </div>
 
     <EntityDrawer :open="store.drawerOpen" :schema="schema" :entity="store.editingEntity" :is-new="store.isNew"
-      :errors="store.formErrors" :load-options="store.loadOptions" @save="onSave" @close="store.closeDrawer"
-      @validate="store.validateEntity" />
+      :errors="store.formErrors" :load-options="store.loadOptions" :impact="store.impactReport"
+      :ref-index="store.refIndex" @save="onSave" @close="store.closeDrawer"
+      @validate="store.validateEntity" @goto="onImpactGoto" />
 
     <!-- 区域编辑抽屉（scenes 分组头的上级实体；独立于主抽屉因主抽屉绑定 currentTable） -->
     <EntityDrawer :open="regionDrawerOpen" :schema="TABLE_SCHEMAS.regions" :entity="regionEntity" :is-new="regionIsNew"
@@ -625,6 +626,12 @@ function schemaLabel(table: string): string {
 /** 详情面板「被引用」跳转到引用方表 */
 function onGotoTable(table: string): void {
   store.navigateTo(table as never)
+}
+
+/** 抽屉影响面「跳转」：关闭抽屉并定位到引用方实体（切换列表 + 预置详情高亮行） */
+function onImpactGoto(table: string, id: string): void {
+  store.closeDrawer()
+  store.navigateTo(table as never, id)
 }
 
 /** 详情面板「在唤灵台打开」：发布跨模块导航事件（BattleArena 切 tab + ParticipantPanel 加载阵容） */

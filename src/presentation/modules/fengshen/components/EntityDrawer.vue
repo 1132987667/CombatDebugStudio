@@ -8,6 +8,29 @@
     <div class="fs-drawer-body">
       <div v-if="readonlyId" class="fs-drawer-note">「{{ schema.label }}」为全局唯一文档（固定 id），直接修改即可，保存后影响全部战斗。</div>
 
+      <!-- 影响面推演：编辑既有实体时，改动前即显示会波及哪些实体（直接/间接分层，可点击跳转） -->
+      <div v-if="impact?.total" class="fs-drawer-impact">
+        <div class="fs-drawer-impact-head">
+          <span class="fs-drawer-impact-title">改动影响面：将波及 {{ impact.total }} 个实体</span>
+          <span class="fs-drawer-impact-sub">
+            直接 {{ impact.directCount }} · 间接 {{ impact.indirectCount }}<template v-if="impact.truncated">（仅列出前 {{ impact.nodes.length }} 个）</template>
+          </span>
+        </div>
+        <div v-for="layer in impactLayers" :key="layer.depth" class="fs-drawer-impact-layer">
+          <span class="fs-drawer-impact-depth">{{ layer.depth === 1 ? '直接引用' : `间接引用 · 第 ${layer.depth} 级` }}</span>
+          <div v-for="g in layer.groups" :key="g.table" class="fs-drawer-impact-row">
+            <button type="button" class="fs-link" :title="`跳转到${tableLabel(g.table)}表`"
+              @click="emit('goto', g.table, g.ids[0])">{{ tableLabel(g.table) }}</button>
+            <span class="fs-drawer-impact-ids">
+              <template v-for="(id, i) in g.ids" :key="id">
+                <button type="button" class="fs-drawer-impact-id" :title="`id: ${id}`"
+                  @click="emit('goto', g.table, id)">{{ refName(id) }}</button>{{ i < g.ids.length - 1 ? '、' : '' }}
+              </template>
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div v-if="isNew && !readonlyId" class="fs-form-group">
         <TacticalInput :model-value="String(entity?.id ?? '')" disabled label="ID" required
           hint="新实体 ID 自动生成，保存后不可修改" aria-label="实体 ID" />
@@ -38,10 +61,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { TableSchema, FieldSchema } from '@/domain/fengshen/schema'
+import { TABLE_SCHEMAS, type TableSchema, type FieldSchema } from '@/domain/fengshen/schema'
 import type { FengshenTableName } from '@/domain/fengshen/types'
+import type { ReferenceTreeReport } from '@/application/service/DataIntegrityService'
 import type { OptionItem } from '@/presentation/modules/fengshen/stores/fengshenStore'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { resolveRefName } from '@/domain/fengshen/refNames'
 import FieldEditor from './FieldEditor.vue'
 
 const props = defineProps<{
@@ -51,16 +76,51 @@ const props = defineProps<{
   isNew: boolean
   errors: string[]
   loadOptions: (table: FengshenTableName) => Promise<OptionItem[]>
+  /** 改动影响面（引用树）；仅编辑既有实体时传入 */
+  impact?: ReferenceTreeReport | null
+  /** 全表引用字典（id → 中文名）：影响面条目优先中文，缺省回退原始 id */
+  refIndex?: Record<string, string>
 }>()
 
 const emit = defineEmits<{
   save: []
   close: []
   validate: []
+  /** 跳转到影响面中某引用方实体（切换列表并定位详情） */
+  goto: [table: string, id: string]
 }>()
 
 const saving = ref(false)
 const options = ref<Record<string, OptionItem[]>>({})
+
+/** 表名 → 中文标签（影响面分组标题） */
+function tableLabel(table: string): string {
+  return TABLE_SCHEMAS[table as keyof typeof TABLE_SCHEMAS]?.label ?? table
+}
+
+/** 引用值 → 中文名（未命中回退原 id，保留调试语义） */
+function refName(id: string): string {
+  return resolveRefName(id, props.refIndex ?? {})
+}
+
+/** 影响面按深度分层 → 层内按来源表分组（保持引用树节点顺序） */
+const impactLayers = computed(() => {
+  const layers: Array<{ depth: number; groups: Array<{ table: string; ids: string[] }> }> = []
+  for (const node of props.impact?.nodes ?? []) {
+    let layer = layers.find((l) => l.depth === node.depth)
+    if (!layer) {
+      layer = { depth: node.depth, groups: [] }
+      layers.push(layer)
+    }
+    let group = layer.groups.find((g) => g.table === node.table)
+    if (!group) {
+      group = { table: node.table, ids: [] }
+      layer.groups.push(group)
+    }
+    group.ids.push(node.id)
+  }
+  return layers
+})
 
 /** elements 单文档固定 id，无需 ID 输入框 */
 const readonlyId = computed(() => props.schema.table === 'elements')

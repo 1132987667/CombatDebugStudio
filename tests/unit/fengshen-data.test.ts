@@ -399,6 +399,85 @@ describe('健康检查 runHealthCheck', () => {
   })
 })
 
+describe('引用树 findReferenceTree（影响面推演）', () => {
+  const now = (): string => new Date().toISOString()
+
+  it('BFS 分层：直接/间接引用方按 depth 归层，跨表链路逐级上溯', async () => {
+    const storage = new MemoryStorage()
+    await storage.set(FENGSHEN_STORE.SKILLS, 'skill_x', { id: 'skill_x', name: 'X', updatedAt: now() })
+    await storage.set(FENGSHEN_STORE.ENEMIES, 'enemy_a', { id: 'enemy_a', name: 'A', skillIds: ['skill_x'], updatedAt: now() })
+    await storage.set(FENGSHEN_STORE.ENEMIES, 'enemy_b', { id: 'enemy_b', name: 'B', skillIds: ['skill_x'], updatedAt: now() })
+    await storage.set(FENGSHEN_STORE.SCENES, 'scene_a', { id: 'scene_a', name: 'SA', enemies: [{ id: 'enemy_a' }], updatedAt: now() })
+    await storage.set(FENGSHEN_STORE.REGIONS, 'region_a', { id: 'region_a', name: 'RA', schoolUnlock: { sceneId: 'scene_a' }, updatedAt: now() })
+
+    const report = await new DataIntegrityService(storage).findReferenceTree('skills', 'skill_x')
+    expect(report.directCount).toBe(2)
+    expect(report.nodes.filter((n) => n.depth === 1).map((n) => n.id).sort()).toEqual(['enemy_a', 'enemy_b'])
+    expect(report.nodes.filter((n) => n.depth === 2).map((n) => n.id)).toEqual(['scene_a'])
+    expect(report.nodes.filter((n) => n.depth === 3).map((n) => n.id)).toEqual(['region_a'])
+    expect(report.total).toBe(4)
+    expect(report.indirectCount).toBe(2)
+    // 恰好到深度上限且无更深引用 → 不应误报截断
+    expect(report.truncated).toBe(false)
+  })
+
+  it('环保护：互相引用的实体不重复计入（scenes 互引 unlockCondition.sceneId）', async () => {
+    const storage = new MemoryStorage()
+    await storage.set(FENGSHEN_STORE.SCENES, 'scene_a', { id: 'scene_a', name: 'SA', unlockCondition: { sceneId: 'scene_b' }, updatedAt: now() })
+    await storage.set(FENGSHEN_STORE.SCENES, 'scene_b', { id: 'scene_b', name: 'SB', unlockCondition: { sceneId: 'scene_a' }, updatedAt: now() })
+
+    const report = await new DataIntegrityService(storage).findReferenceTree('scenes', 'scene_a')
+    // scene_b 引用 scene_a → depth1；scene_a 引用 scene_b 但根节点已访问，不再回环
+    expect(report.nodes.map((n) => n.id)).toEqual(['scene_b'])
+    expect(report.truncated).toBe(false)
+  })
+
+  it('软引用参与反向引用与删除保护（属性 code 非 id 外键）', async () => {
+    const storage = new MemoryStorage()
+    await storage.set(FENGSHEN_STORE.ATTRIBUTES, 'attack', { id: 'attack', name: '攻击力', code: 'attack', updatedAt: now() })
+    await storage.set(FENGSHEN_STORE.EQUIPMENT_AFFIXES, 'eqaffix_a', {
+      id: 'eqaffix_a', name: '攻击词条', attribute: 'attack', modifierType: 'flat',
+      valueRange: { min: 1, max: 2 }, applicableSlots: ['weapon'], weight: 1, updatedAt: now(),
+    })
+    const integrity = new DataIntegrityService(storage)
+
+    expect(await integrity.findReferencing('attributes', 'attack')).toEqual([
+      { sourceTable: 'equipment_affixes', ids: ['eqaffix_a'] },
+    ])
+    const block = await integrity.assertDeletable('attributes', 'attack')
+    expect(block.allowed).toBe(false)
+    expect(block.blockers[0].table).toBe('equipment_affixes')
+  })
+
+  it('软引用不进保存校验与健康检查（合法性由专门校验器负责，避免重复报错）', async () => {
+    const storage = new MemoryStorage()
+    const integrity = new DataIntegrityService(storage)
+    // 保存校验：属性非法只报专门校验器的措辞，不报引用注册表的通用措辞
+    const result = await integrity.validateOnSave('equipment_affixes', {
+      id: 'eqaffix_bad', name: '坏词条', attribute: 'not_an_attribute', modifierType: 'flat',
+      valueRange: { min: 1, max: 2 }, applicableSlots: ['weapon'], weight: 1,
+    })
+    expect(result.errors.some((e) => e.includes('引用 attribute →'))).toBe(false)
+    expect(result.errors.some((e) => e.includes('不存在于 attributes.json'))).toBe(true)
+
+    // 健康检查：软规则不计入扫描规则数
+    const report = await integrity.runHealthCheck()
+    expect(report.scannedRules).toBe(REFERENCE_RULES.filter((r) => !r.soft).length)
+  })
+
+  it('新增硬规则 enemies.phases[].buffId：引用不存在的 Buff 被报告', async () => {
+    const { integrity, storage } = makeServices()
+    await storage.set(FENGSHEN_STORE.ENEMIES, 'enemy_phase_broken', {
+      id: 'enemy_phase_broken', name: '阶段敌', level: 1, stats: {}, drops: [],
+      phases: [{ hpThreshold: 0.5, buffId: 'buff_not_exist' }], updatedAt: now(),
+    })
+    const report = await integrity.runHealthCheck()
+    const hit = report.issues.find((i) => i.sourceId === 'enemy_phase_broken' && i.missingId === 'buff_not_exist')
+    expect(hit?.field).toBe('phases[].buffId')
+    expect(hit?.targetTable).toBe('buffs')
+  })
+})
+
 describe('DataPackageService 导入导出', () => {
   it('完整导出含全部数据表；导出→清空→导入可还原', async () => {
     const src = new MemoryStorage()
@@ -658,6 +737,15 @@ describe('纯函数', () => {
     // Buff 触发器与丹药自身的 buffId 引用（引擎侧未知 id 静默落空，必须在保存期拦住）
     expect(keys).toContain('buffs.triggers[].params.buffId')
     expect(keys).toContain('items.effects[].buffId')
+    // 阵型效果 / 敌人阶段增益 / 技能步骤参数内的 buff 引用（同属静默落空路径）
+    expect(keys).toContain('formations.effects[].buffId')
+    expect(keys).toContain('enemies.phases[].buffId')
+    expect(keys).toContain('skills.steps[].parameters.buffIds')
+    // 属性 code 软引用（仅服务影响面推演 / 删除保护）
+    const softKeys = REFERENCE_RULES.filter((r) => r.soft).map((r) => `${r.sourceTable}.${r.path}`)
+    expect(softKeys).toContain('equipment_affixes.attribute')
+    expect(softKeys).toContain('affixes.statModifiers[].attribute')
+    expect(softKeys).toContain('scenes.fieldEffects[].modifiers[].attribute')
   })
 
   it('词缀数据与 AffixId 常量一一对应（防漂移）', async () => {

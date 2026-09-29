@@ -98,7 +98,7 @@ for (const r of recipes) {
   }
 }
 
-// 5. 掉落断裂引用：enemies / drops 的 itemId 须在 items ∪ equipment
+// 5. 掉落断裂引用：enemies 的 itemId 须在 items ∪ equipment
 const validDrops = new Set([...itemIds, ...eqIds])
 for (const file of fs.readdirSync(cfg('enemies')).filter((f) => f.endsWith('.json'))) {
   const enemies = JSON.parse(fs.readFileSync(cfg('enemies', file), 'utf8'))
@@ -106,12 +106,6 @@ for (const file of fs.readdirSync(cfg('enemies')).filter((f) => f.endsWith('.jso
     for (const d of en.drops || []) {
       if (!validDrops.has(d.itemId)) report.brokenDrops.push(`${file}:${en.id}.drops → ${d.itemId}`)
     }
-  }
-}
-const drops = JSON.parse(fs.readFileSync(cfg('drops', 'drops.json'), 'utf8'))
-for (const g of drops) {
-  for (const entry of g.entries || []) {
-    if (!validDrops.has(entry.itemId)) report.brokenDrops.push(`drops.json:${g.id}.entries → ${entry.itemId}`)
   }
 }
 
@@ -134,7 +128,7 @@ const sections = [
 let total = 0
 for (const [title, items] of sections) total += items.length
 
-console.log(`打造闭环检查：装备 ${equipment.length} / 图谱 ${itemsDoc.items.filter((i) => i.type === '图纸').length} / 配方 ${recipes.length} / 掉落组 ${drops.length}`)
+console.log(`打造闭环检查：装备 ${equipment.length} / 图谱 ${itemsDoc.items.filter((i) => i.type === '图纸').length} / 配方 ${recipes.length}`)
 console.log(`断裂引用：${total} 条`)
 
 if (total === 0) {

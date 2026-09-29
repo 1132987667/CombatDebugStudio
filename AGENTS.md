@@ -151,9 +151,7 @@ configs/             # 配置数据（JSON）
 │   └── equipment.json  # 唯一装备定义
 ├── attributes/
 │   └── attributes.json # 属性代码
-├── drops/
-│   └── drops.json    # 掉落组
-├── enemies/         # 敌人基础属性 + 掉落组引用（enemies.json）
+├── enemies/         # 敌人基础属性 + 掉落配置（drops[] 0~1 概率，掉落唯一配置入口）
 ├── skills/          # 技能配置
 ├── buffs/           # Buff 配置
 └── ...

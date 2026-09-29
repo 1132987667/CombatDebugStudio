@@ -3,7 +3,6 @@
  *
  * 确认 items.json 中的 ID 与各掉落表 / 制造表引用零断裂：
  * - enemies/*.json  drops[].itemId
- * - drops/drops.json  entries[].itemId
  * - equipment/equipment.json  materials[].itemId（装备详情统一在此）
  * - items.json 内部 ID 唯一性
  * - equipment.json 内部 ID 唯一性 + blueprintId 引用存在
@@ -49,14 +48,6 @@ for (const file of fs.readdirSync(cfg('enemies')).filter((f) => f.endsWith('.jso
   }
 }
 
-// drops 掉落组（掉落组可含装备本体，id 合法集含 equipment.json）
-const drops = JSON.parse(fs.readFileSync(cfg('drops', 'drops.json'), 'utf8'))
-for (const g of drops) {
-  for (const entry of g.entries || []) {
-    checkRef(`drops.json:${g.id}.entries`, entry.itemId, true)
-  }
-}
-
 // equipment 制造材料（装备详情统一数据源 configs/equipment/equipment.json；equipmentDoc/equipIds 已在文件头加载）
 const equipment = equipmentDoc
 const forgeRecipes = JSON.parse(fs.readFileSync(cfg('xiyou', 'cave.json'), 'utf8')).forgeRecipes || []
@@ -96,7 +87,6 @@ if (issues.length === 0) {
   console.log('健康检查通过：零断裂报告 ✅')
   console.log(`  - items.json ID 唯一 ✅`)
   console.log(`  - enemies/*.json drops 引用零断裂 ✅`)
-  console.log(`  - drops.json entries 引用零断裂 ✅`)
   console.log(`  - equipment/equipment.json materials 引用零断裂 ✅`)
   console.log(`  - equipment.json 内部 ID 唯一 + blueprintId/recipeId 引用零断裂 ✅`)
   process.exit(0)

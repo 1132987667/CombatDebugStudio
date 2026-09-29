@@ -420,7 +420,7 @@ function buildXiyou(): XiyouData[] {
     { id: 'equip', name: '装备', description: '西游·装备槽/法宝/坐骑', data: xiyouEquipJson, updatedAt: now },
     { id: 'mate', name: '伙伴', description: '西游·伙伴/灵宠/缘分', data: xiyouMateJson, updatedAt: now },
     { id: 'collect', name: '图鉴', description: '西游·图鉴/成就/称号', data: xiyouCollectJson, updatedAt: now },
-    { id: 'quest', name: '任务', description: '西游·任务/签到/活动', data: xiyouQuestJson, updatedAt: now },
+    { id: 'quest', name: '任务', description: '西游·任务', data: xiyouQuestJson, updatedAt: now },
     { id: 'cave', name: '洞府', description: '西游·炼丹/炼器/闭关/药园/百艺', data: xiyouCaveJson, updatedAt: now },
   ]
 }

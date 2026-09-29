@@ -570,9 +570,6 @@ function onBattleEnded(data: BattleEndedEventData): void {
     }
     if (money > 0) player.gainCurrency('money', money)
     if (xianyuan > 0) player.gainCurrency('xianyuan', xianyuan)
-    // 任务推进：任意战斗胜利 +1、击杀计数按本节点敌方数（任务子系统接线）
-    progressQuests('battle_win')
-    progressQuests('kill_count', node?.enemyIds.length ?? 0)
     // 掉落：入包（applyDrops 内部逐条 roll + toast），返回命中列表供小结算展示
     const hits = pack.applyDrops(
       dropsForEnemyIds(node?.enemyIds ?? [], node?.isBoss ? props.scene.drops?.materials : undefined),

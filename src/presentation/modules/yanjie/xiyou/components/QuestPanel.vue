@@ -24,18 +24,6 @@
           </div>
         </div>
       </template>
-
-      <template #event>
-        <div v-for="e in events" :key="e.name" class="xy-row-card">
-          <div class="xy-row-top">
-            <span class="xy-row-name">{{ e.name }}</span>
-            <span class="xy-chip" :class="eventChip(e.status)">{{ e.status }}</span>
-            <span class="xy-row-side">{{ e.time }}</span>
-          </div>
-          <p class="xy-row-desc">{{ e.desc }}</p>
-          <p class="xy-row-desc xy-row-desc--key">奖励 {{ e.reward }}</p>
-        </div>
-      </template>
     </Tabs>
   </div>
 </template>
@@ -48,16 +36,15 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { saveManager } from '../save-bridge'
-import { events, quests } from '../xiyouData'
+import { quests } from '../xiyouData'
 import type { XiyouQuest } from '../types'
 
-const sub = ref<'quest' | 'event'>('quest')
+const sub = ref<'quest'>('quest')
 
 const notification = useNotificationStore()
 
 const SUBS: TabItem[] = [
   { id: 'quest', label: '任务' },
-  { id: 'event', label: '活动' },
 ]
 
 /** 任务态文案与配色：已领取 > 可领取 > 进行中 */
@@ -92,16 +79,12 @@ function claim(q: XiyouQuest): void {
 }
 
 const questCats = computed(() => {
-  const order: Array<XiyouQuest['type']> = ['主线', '日常', '周常']
+  const order: Array<XiyouQuest['type']> = ['主线']
   return order.map(type => {
     const items = quests.filter(q => q.type === type)
     return { label: type, items, done: items.filter(q => q.progress >= q.target).length }
   })
 })
-
-function eventChip(status: string): string {
-  return { 进行中: 'xy-chip--gold', 预告: 'xy-chip--seal', 已结束: 'xy-chip--muted' }[status] ?? 'xy-chip--muted'
-}
 </script>
 
 <style scoped lang="scss">

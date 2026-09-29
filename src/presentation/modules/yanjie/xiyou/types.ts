@@ -389,8 +389,9 @@ export interface XiyouAchievement {
 }
 
 
-/** 任务目标类型（quest.json goal.kind；缺省 = 纯展示任务，暂无推进源） */
-export type QuestGoalKind = 'clear_scene' | 'battle_win' | 'kill_count' | 'purchase' | 'brew'
+/** 任务目标类型（quest.json goal.kind；缺省 = 纯展示任务，暂无推进源）。
+ *  NOTE: battle_win/kill_count/purchase/brew 曾为网游日常/周常服务，已按单机定位移除 */
+export type QuestGoalKind = 'clear_scene'
 
 /** 结构化目标：kind + 达成次数；clear_scene 需 sceneId 指定关卡 */
 export interface QuestGoal {
@@ -409,7 +410,7 @@ export interface QuestReward {
 /** 任务（任务子系统；id/goal/rewards 为接线字段，缺省回退纯展示） */
 export interface XiyouQuest {
   id?: string
-  type: '主线' | '日常' | '周常'
+  type: '主线'
   name: string
   desc: string
   progress: number
@@ -441,15 +442,6 @@ export interface XiyouTitle {
   desc: string
   owned: boolean
   equipped: boolean
-}
-
-/** 活动（活动子系统） */
-export interface XiyouEvent {
-  name: string
-  time: string
-  desc: string
-  reward: string
-  status: '进行中' | '预告' | '已结束'
 }
 
 /** 配方材料（结构化：itemId + count，引用 items 表；锻造配方材料经 equipmentId 引用装备 JSON，权威在 equipment.json） */

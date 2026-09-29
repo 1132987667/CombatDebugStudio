@@ -61,7 +61,7 @@ const CURRENT_TAB = computed<{ label: string; sub: string }>(() => {
     equip: { label: '装备', sub: '兵器法宝 · 装备 / 法宝 / 坐骑 / 宠物' },
     mate: { label: '伙伴', sub: '结伴同行 · 伙伴 / 灵宠 / 缘分' },
     collect: { label: '收集', sub: '志怪录 · 图鉴 / 成就 / 称号' },
-    quest: { label: '历练', sub: '云游四海 · 任务 / 签到 / 活动' },
+    quest: { label: '历练', sub: '云游四海 · 任务' },
     cave: { label: '洞府', sub: '修炼洞 · 打造 / 炼制 / 强化 / 升星 / 修炼 / 合成' },
     settings: { label: '设置', sub: '游戏 · 战斗 · 音效 · 关于' },
   }

@@ -37,7 +37,6 @@ import type {
   XiyouCodexChapter,
   XiyouCraft,
   XiyouCrop,
-  XiyouEvent,
   XiyouGardenCrop,
   XiyouItem,
   XiyouMate,
@@ -417,7 +416,6 @@ export const codexChapters = computed<XiyouCodexChapter[]>(() =>
 )
 
 export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(questJson.quests as unknown as XiyouQuest[])
-export const events: XiyouEvent[] = reactive<XiyouEvent[]>(questJson.events as unknown as XiyouEvent[])
 
 /** 装备定义目录（configs/equipment/equipment.json 唯一数据源 · 锻造配方按 equipmentId 引用其材料） */
 export const equipmentCatalog: EquipmentData[] = equipmentJson as unknown as EquipmentData[]
@@ -543,7 +541,6 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(achievements, 'collect', 'achievements')
   aIn(titles, 'collect', 'titles')
   aIn(quests, 'quest', 'quests')
-  aIn(events, 'quest', 'events')
   aIn(alchemyRecipes, 'cave', 'alchemyRecipes')
   aIn(forgeRecipes, 'cave', 'forgeRecipes')
   aIn(talismanRecipes, 'cave', 'talismanRecipes')

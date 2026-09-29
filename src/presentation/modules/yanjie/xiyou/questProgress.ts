@@ -1,10 +1,10 @@
 /**
  * questProgress.ts — 任务进度推进（任务子系统接线）
  *
- * 推进源（调用方）：战斗胜利/击杀计数（BattleZen 结算）、关卡通关（BattleZen finishRun）、
- * 坊市购买（packStore.purchase）、炼丹（AlchemyPanel.brew）。
+ * 推进源（调用方）：关卡通关（BattleZen finishRun）。
+ * NOTE: 战斗胜利/击杀/购买/炼丹推进源曾为网游日常/周常服务，已按单机定位随 goal kinds 一并移除。
  * 进度直接写在 xiyouData.quests 的响应式对象上（QuestPanel 免桥接），存档经 save-bridge 持久化。
- * NOTE: 本模块只 import 数据层（xiyouData/types），供 packStore 等 store 反向依赖而不成环；
+ * NOTE: 本模块只 import 数据层（xiyouData/types），不依赖 store 不成环；
  *       奖励发放（需 playerStore/packStore）由 QuestPanel 领取时执行。
  */
 import type { QuestGoalKind } from './types'

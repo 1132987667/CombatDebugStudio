@@ -265,13 +265,6 @@ export class TraceEventCollector implements IDebugTracePort {
   }
 
   /**
-   * 获取某一回合的所有事件 id
-   */
-  getTraceIdsByTurn(turn: number): string[] {
-    return this.byTurn.get(turn) ?? []
-  }
-
-  /**
    * 获取某一回合的所有根节点（无 parentId 的条目），并挂好子树
    */
   getRootsByTurn(turn: number): TraceEventNode[] {

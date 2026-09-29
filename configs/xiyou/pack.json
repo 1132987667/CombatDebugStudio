@@ -245,5 +245,15 @@
       "name": "空位",
       "count": 0
     }
-  ]
+  ],
+  "warehouseBuild": {
+    "maxCount": 5,
+    "baseSlots": 12,
+    "levels": [
+      { "cost": [{ "itemId": "mat_taomu", "count": 20 }, { "itemId": "mat_cushi", "count": 10 }] },
+      { "cost": [{ "itemId": "mat_taomu", "count": 40 }, { "itemId": "mat_cushi", "count": 20 }, { "itemId": "mat_tongjing", "count": 10 }] },
+      { "cost": [{ "itemId": "mat_songmu", "count": 40 }, { "itemId": "mat_tiejing", "count": 20 }, { "itemId": "mat_tongjing", "count": 20 }] },
+      { "cost": [{ "itemId": "mat_songmu", "count": 80 }, { "itemId": "mat_tiejing", "count": 40 }, { "itemId": "mat_xuantie", "count": 5 }] }
+    ]
+  }
 }

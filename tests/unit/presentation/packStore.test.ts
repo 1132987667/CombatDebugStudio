@@ -41,6 +41,11 @@ function makeGood(overrides: Partial<XiyouShopGood> = {}): XiyouShopGood {
   }
 }
 
+/** 按 id 取仓库（store 未导出 warehouseById，测试内联） */
+function whOf(pack: ReturnType<typeof usePackStore>, id: string) {
+  return pack.warehouses.find((w) => w.id === id)!
+}
+
 beforeEach(() => {
   setActivePinia(createPinia())
   vi.restoreAllMocks()
@@ -48,14 +53,17 @@ beforeEach(() => {
 })
 
 describe('初始化', () => {
-  it('从 pack.json 生成初始持有量与仓库 12 格', async () => {
+  it('从 pack.json 生成初始持有量与首仓 12 格', async () => {
     const pack = usePackStore()
     await pack.init()
     // 桃木 ×24 / 疗伤丹药 ×5（pack.json 初始值）
     expect(pack.countOf('mat_taomu')).toBe(24)
     expect(pack.countOf('elix_001')).toBe(5)
-    expect(pack.storage).toHaveLength(12)
-    expect(pack.storage[0]).toMatchObject({ itemId: 'mat_lupi', count: 12 }) // 鹿皮 ×12
+    // 新档只有一座仓库，id/名称固定，容量取该仓 slots 长度
+    expect(pack.warehouseCount).toBe(1)
+    expect(pack.activeWarehouseId).toBe('wh_main')
+    expect(pack.activeWarehouse?.slots).toHaveLength(12)
+    expect(pack.activeWarehouse?.slots[0]).toMatchObject({ itemId: 'mat_lupi', count: 12 }) // 鹿皮 ×12
     expect(pack.storageCapacity).toBe(12)
   })
 
@@ -116,26 +124,41 @@ describe('数量增减', () => {
   })
 })
 
-describe('仓库存取', () => {
-  it('存入仓库找空位，数量移出背包；取出回背包', async () => {
+describe('仓库存取（当前仓）', () => {
+  it('存入当前仓找空位，数量移出背包；取出回背包', async () => {
     const pack = usePackStore()
     await pack.init()
-    const emptyIdx = pack.storage.findIndex((s) => !s.itemId)
+    const slots = pack.activeWarehouse!.slots
+    const emptyIdx = slots.findIndex((s) => !s.itemId)
     expect(emptyIdx).toBeGreaterThanOrEqual(0)
     expect(pack.moveToStorage('mat_taomu')).toBe(true)
     expect(pack.countOf('mat_taomu')).toBe(0)
-    const slot = pack.storage[emptyIdx]
+    const slot = slots[emptyIdx]
     expect(slot.itemId).toBe('mat_taomu')
     expect(slot.count).toBe(24)
     expect(pack.moveToInventory(emptyIdx)).toBe(true)
     expect(pack.countOf('mat_taomu')).toBe(24)
-    expect(pack.storage[emptyIdx].itemId).toBeNull()
+    expect(slots[emptyIdx].itemId).toBeNull()
   })
 
-  it('仓库满时存入失败并保留背包数量', async () => {
+  it('指定 warehouseId 存入目标仓，不改动当前仓', async () => {
     const pack = usePackStore()
     await pack.init()
-    // 逐个存入直到仓库填满：初始 4 空格，第 5 次应失败
+    // 造第二座仓（建造成本：桃木 20 + 粗石 10）
+    pack.addItem('mat_cushi', 10)
+    expect(pack.buildWarehouse()).toBe(true)
+    const secondId = pack.activeWarehouse!.id
+    // 切回首仓后，显式指定第二仓存入
+    expect(pack.switchActiveWarehouse('wh_main')).toBe(true)
+    expect(pack.moveToStorage('mat_taomu', secondId)).toBe(true)
+    expect(pack.activeWarehouse!.slots.some((s) => s.itemId === 'mat_taomu')).toBe(false)
+    expect(pack.warehouses.find((w) => w.id === secondId)!.slots[0].itemId).toBe('mat_taomu')
+  })
+
+  it('指定仓已满时存入失败并保留背包数量', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 逐个存入直到首仓填满：初始 4 空格，第 5 次应失败
     let ok = true
     let guard = 0
     while (ok && guard < 10) {
@@ -145,7 +168,32 @@ describe('仓库存取', () => {
       guard++
     }
     expect(ok).toBe(false)
-    expect(pack.storage.every((s) => s.itemId)).toBe(true)
+    expect(pack.warehouseFull).toBe(true)
+    expect(pack.activeWarehouse!.slots.every((s) => s.itemId)).toBe(true)
+  })
+
+  it('anyWarehouseHasSpace：当前仓满但另有空仓时仍可存（「能否存入」判定单源）', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 填满首仓（按 inventory 键遍历，避免装备项空转）
+    for (const id of Object.keys(pack.inventory)) {
+      if (pack.inventory[id] <= 0) continue
+      pack.moveToStorage(id)
+      if (pack.warehouseFull) break
+    }
+    expect(pack.warehouseFull).toBe(true)
+    expect(pack.anyWarehouseHasSpace).toBe(false)
+
+    // 建第二仓（首仓已满，材料直接补给背包）
+    pack.addItem('mat_taomu', 20)
+    pack.addItem('mat_cushi', 10)
+    expect(pack.buildWarehouse()).toBe(true)
+    expect(pack.anyWarehouseHasSpace).toBe(true)
+
+    // 切回首仓：当前仓满，但另有空仓 → 判定仍为可存入
+    expect(pack.switchActiveWarehouse('wh_main')).toBe(true)
+    expect(pack.warehouseFull).toBe(true)
+    expect(pack.anyWarehouseHasSpace).toBe(true)
   })
 })
 
@@ -180,6 +228,144 @@ describe('仓库扩容', () => {
     pack.currency.money = 10
     expect(pack.expandStorage()).toBe(false)
     expect(pack.storageCapacity).toBe(12)
+  })
+
+  it('每座仓库独立扩容：扩首仓不影响第二仓容量', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.addItem('mat_cushi', 10)
+    expect(pack.buildWarehouse()).toBe(true)
+    const secondId = pack.activeWarehouse!.id
+    // 当前（第二仓）扩容一次 → 18
+    expect(pack.expandStorage()).toBe(true)
+    expect(pack.storageCapacity).toBe(18)
+    // 显式指定首仓仍为 12，且其扩容档位独立（首次仍 50）
+    expect(whOf(pack,'wh_main')!.slots).toHaveLength(12)
+    expect(pack.expandCost('wh_main')).toBe(50)
+    expect(pack.expandCost(secondId)).toBe(100)
+    expect(pack.expandStorage('wh_main')).toBe(true)
+    expect(whOf(pack,'wh_main')!.slots).toHaveLength(18)
+  })
+})
+
+describe('多仓库建造', () => {
+  it('材料充足时建造成功：扣料、新增 12 格仓库并切换为当前仓', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.addItem('mat_cushi', 10) // 初始粗石 8，二仓需 10
+    expect(pack.buildCost()).toEqual([
+      { itemId: 'mat_taomu', count: 20 },
+      { itemId: 'mat_cushi', count: 10 },
+    ])
+    expect(pack.buildWarehouse()).toBe(true)
+    expect(pack.warehouseCount).toBe(2)
+    expect(pack.countOf('mat_taomu')).toBe(24 - 20)
+    expect(pack.countOf('mat_cushi')).toBe(18 - 10)
+    // 新仓独立空仓，容量 12，建造后自动切为当前仓
+    expect(pack.activeWarehouseId).not.toBe('wh_main')
+    expect(pack.activeWarehouse?.name).toBe('仓库·2')
+    expect(pack.storageCapacity).toBe(12)
+    expect(pack.activeWarehouse?.slots.every((s) => !s.itemId)).toBe(true)
+  })
+
+  it('材料不足时拒绝且不扣料、不新增', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 初始粗石仅 8，二仓需 10
+    expect(pack.buildWarehouse()).toBe(false)
+    expect(pack.warehouseCount).toBe(1)
+    expect(pack.countOf('mat_taomu')).toBe(24)
+    expect(pack.countOf('mat_cushi')).toBe(8)
+  })
+
+  it('建造上限 5 座：第 5 次成功后 buildCost 为 null 并拒绝', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 备足 4 次建造所需材料（桃木 60 / 粗石 30 / 铜精 30 / 松木 120 / 铁精 60 / 玄铁 5）
+    pack.addItem('mat_taomu', 60)
+    pack.addItem('mat_cushi', 30)
+    pack.addItem('mat_tongjing', 30)
+    pack.addItem('mat_songmu', 120)
+    pack.addItem('mat_tiejing', 60)
+    pack.addItem('mat_xuantie', 5)
+    for (let i = 0; i < 4; i++) expect(pack.buildWarehouse()).toBe(true)
+    expect(pack.warehouseCount).toBe(5)
+    expect(pack.canBuildWarehouse).toBe(false)
+    expect(pack.buildCost()).toBeNull()
+    expect(pack.buildWarehouse()).toBe(false)
+    expect(pack.warehouseCount).toBe(5)
+  })
+})
+
+describe('仓库切换 / 改名 / 转移', () => {
+  /** 造出第二座仓并返回其 id（前置：补足二仓材料） */
+  function buildSecond(pack: ReturnType<typeof usePackStore>): string {
+    pack.addItem('mat_cushi', 10)
+    pack.buildWarehouse()
+    return pack.activeWarehouse!.id
+  }
+
+  it('switchActiveWarehouse 切换当前仓；未知 id 返回 false', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const secondId = buildSecond(pack)
+    expect(pack.switchActiveWarehouse('wh_main')).toBe(true)
+    expect(pack.activeWarehouseId).toBe('wh_main')
+    expect(pack.switchActiveWarehouse(secondId)).toBe(true)
+    expect(pack.switchActiveWarehouse('ghost')).toBe(false)
+    expect(pack.activeWarehouseId).toBe(secondId)
+  })
+
+  it('renameWarehouse：trim 后截断 8 字；空名与未知 id 拒绝', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const secondId = buildSecond(pack)
+    expect(pack.renameWarehouse(secondId, '  药材库  ')).toBe(true)
+    expect(whOf(pack,secondId)!.name).toBe('药材库')
+    expect(pack.renameWarehouse(secondId, '')).toBe(false)
+    expect(whOf(pack,secondId)!.name).toBe('药材库')
+    expect(pack.renameWarehouse('ghost', 'x')).toBe(false)
+    // 超长截断为 8 字
+    expect(pack.renameWarehouse(secondId, '一二三四五六七八九十')).toBe(true)
+    expect(whOf(pack,secondId)!.name).toBe('一二三四五六七八')
+  })
+
+  it('仓库间整格直接转移：源格清空、目标仓首个空位落位', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const secondId = buildSecond(pack)
+    // 首仓前 8 格被 configs 初始物资占用；首个空位为索引 8
+    // （buildSecond 已消耗桃木 20，剩 4）
+    expect(whOf(pack, 'wh_main')!.slots[8].itemId).toBeNull()
+    expect(pack.moveToStorage('mat_taomu', 'wh_main')).toBe(true)
+    expect(whOf(pack, 'wh_main')!.slots[8]).toMatchObject({ itemId: 'mat_taomu', count: 4 })
+    expect(pack.transferWarehouseItem('wh_main', 8, secondId)).toBe(true)
+    expect(whOf(pack, 'wh_main')!.slots[8].itemId).toBeNull()
+    expect(whOf(pack, secondId)!.slots[0]).toMatchObject({ itemId: 'mat_taomu', count: 4 })
+  })
+
+  it('转移拒绝：同仓 / 空源格 / 未知仓 / 目标仓已满', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const secondId = buildSecond(pack)
+    expect(pack.moveToStorage('mat_taomu', 'wh_main')).toBe(true) // 存入索引 8
+    // 同仓
+    expect(pack.transferWarehouseItem('wh_main', 8, 'wh_main')).toBe(false)
+    // 空源格（首仓索引 9 仍为空）
+    expect(whOf(pack, 'wh_main')!.slots[9].itemId).toBeNull()
+    expect(pack.transferWarehouseItem('wh_main', 9, secondId)).toBe(false)
+    // 未知仓
+    expect(pack.transferWarehouseItem('wh_main', 8, 'ghost')).toBe(false)
+    // 目标仓填满后拒绝（把背包中的非装备物品塞满第二仓 12 格）
+    for (const id of Object.keys(pack.inventory)) {
+      if (pack.inventory[id] <= 0) continue
+      pack.moveToStorage(id, secondId)
+      if (whOf(pack, secondId)!.slots.every((s) => s.itemId)) break
+    }
+    expect(whOf(pack, secondId)!.slots.every((s) => s.itemId)).toBe(true)
+    expect(pack.transferWarehouseItem('wh_main', 8, secondId)).toBe(false)
+    // 源格未被清空
+    expect(whOf(pack, 'wh_main')!.slots[8].itemId).toBe('mat_taomu')
   })
 })
 
@@ -422,33 +608,91 @@ describe('战斗掉落', () => {
 })
 
 describe('持久化', () => {
-  it('flush 写入 pack_runtime 文档，load 可恢复', async () => {
+  it('flush 写入 pack_runtime 文档，load 可恢复（多仓结构随存档往返）', async () => {
     const pack = usePackStore()
     await pack.init()
-    pack.addItem('mat_taomu', 5)
+    pack.addItem('mat_taomu', 5) // 桃木 29
     pack.setQuickSlot(0, 'elix_001')
-    pack.moveToStorage('mat_tongjing')
+    pack.addItem('mat_cushi', 10)
+    pack.buildWarehouse() // 建第二仓（耗桃木 20）并切为当前仓 → 桃木 9
+    const secondId = pack.activeWarehouse!.id
+    pack.moveToStorage('mat_tongjing') // 铜精 ×12 存入当前（第二）仓
     pack.purchase(makeGood(), 1)
     await pack.flush()
 
-    const doc = __mem.get('xiyou')?.get('pack_runtime') as { data: { inventory: Record<string, number>; storage: unknown[]; quickSlots: (string | null)[]; currency: { money: number } } }
-    expect(doc.data.inventory['mat_taomu']).toBe(29)
+    const doc = __mem.get('xiyou')?.get('pack_runtime') as {
+      data: {
+        version: number
+        inventory: Record<string, number>
+        warehouses: Array<{ id: string; name: string; slots: Array<{ itemId: string | null; count: number }> }>
+        activeWarehouseId: string
+        quickSlots: (string | null)[]
+        currency: { money: number }
+      }
+    }
+    expect(doc.data.version).toBe(7)
+    expect(doc.data.inventory['mat_taomu']).toBe(9)
     expect(doc.data.quickSlots[0]).toBe('elix_001')
     expect(doc.data.currency.money).toBe(536480 - 50)
+    expect(doc.data.warehouses).toHaveLength(2)
+    expect(doc.data.activeWarehouseId).toBe(secondId)
+    expect(doc.data.warehouses[1].slots[0]).toMatchObject({ itemId: 'mat_tongjing', count: 12 })
 
     // 新 store 实例从 IDB 恢复
     setActivePinia(createPinia())
     const pack2 = usePackStore()
     await pack2.init()
-    expect(pack2.countOf('mat_taomu')).toBe(29)
+    expect(pack2.countOf('mat_taomu')).toBe(9)
     expect(pack2.quickSlots[0]).toBe('elix_001')
     expect(pack2.currency.money).toBe(536480 - 50)
+    expect(pack2.warehouseCount).toBe(2)
+    expect(pack2.activeWarehouseId).toBe(secondId)
+    expect(pack2.activeWarehouse!.slots[0]).toMatchObject({ itemId: 'mat_tongjing', count: 12 })
   })
 
   it('无存档时保持 configs 兜底', async () => {
     const pack = usePackStore()
     await pack.init()
     expect(pack.countOf('mat_taomu')).toBe(24)
+  })
+
+  it('v6→v7 迁移：旧单仓 storage 包裹为首仓 wh_main；落盘升版后重复 load 幂等', async () => {
+    // 预置一份 v6 旧档（单仓 storage 形状）
+    __mem.set('xiyou', new Map([['pack_runtime', {
+      id: 'pack_runtime',
+      name: '行囊运行时',
+      data: {
+        version: 6,
+        inventory: { mat_taomu: 3 },
+        storage: [
+          { itemId: 'mat_lupi', count: 12 },
+          { itemId: null, count: 0 },
+        ],
+        quickSlots: [null, null, null, null],
+        currency: { money: 500, xianyuan: 0 },
+        gearInstances: [],
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }]]))
+
+    const pack = usePackStore()
+    await pack.init()
+    expect(pack.warehouseCount).toBe(1)
+    expect(pack.activeWarehouseId).toBe('wh_main')
+    expect(pack.activeWarehouse?.name).toBe('主仓库')
+    expect(pack.activeWarehouse!.slots).toHaveLength(2)
+    expect(pack.activeWarehouse!.slots[0]).toMatchObject({ itemId: 'mat_lupi', count: 12 })
+    expect(pack.countOf('mat_taomu')).toBe(3)
+
+    // 落盘升版 v7 后，再次 load 走 warehouses 分支，不再重复包裹
+    await pack.flush()
+    setActivePinia(createPinia())
+    const pack2 = usePackStore()
+    await pack2.init()
+    expect(pack2.warehouseCount).toBe(1)
+    expect(pack2.activeWarehouse!.slots).toHaveLength(2)
+    expect(pack2.activeWarehouse!.slots[0]).toMatchObject({ itemId: 'mat_lupi', count: 12 })
   })
 
   it('v4→v5 迁移：补发启动草药、清理种子残留；旧档三币合并为金钱、仙缘兜底初始值', async () => {

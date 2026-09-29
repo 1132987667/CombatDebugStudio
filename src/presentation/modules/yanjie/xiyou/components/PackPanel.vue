@@ -20,7 +20,7 @@
 
     <!-- 仓库：存入选择（仓库格只存 itemId+count，装备实例不可入仓） -->
     <Dialog :model-value="storePickOpen" title="存入仓库" width="440px" @update:model-value="storePickOpen = false">
-      <p class="xy-store-hint">选择背包物品（整组存入；装备逐件持有，暂不支持入仓）</p>
+      <p class="xy-store-hint">存入「{{ pack.activeWarehouse?.name ?? '仓库' }}」——选择背包物品（整组存入；装备逐件持有，暂不支持入仓）</p>
       <div class="xy-store-pick-list">
         <button v-for="it in storableItems" :key="it.id" type="button" class="xy-store-pick-item"
           @click="pickIntoStorage(it.id)">
@@ -31,9 +31,29 @@
       </div>
     </Dialog>
 
-    <!-- 仓库：取出确认 -->
-    <ConfirmDialog v-model="storageTakeOpen" title="取出物品"
-      :message="storageTakeMsg" confirm-text="取出" @confirm="onTakeOut" />
+    <!-- 背包：存入目标仓选择（多仓时先选仓，单仓由 onMoveToStorage 直接存入） -->
+    <Dialog :model-value="storeTargetItem !== null" title="存入仓库" width="400px"
+      @update:model-value="storeTargetItem = null">
+      <p class="xy-store-hint">将「{{ storeTargetItem ? nameOf(storeTargetItem) : '' }}」整组存入目标仓库</p>
+      <div class="xy-store-pick-list">
+        <button v-for="w in pack.warehouses" :key="w.id" type="button" class="xy-store-pick-item"
+          :disabled="!freeSlotsOf(w.id)" @click="pickTargetWarehouse(w.id)">
+          <span class="xy-store-pick-name">{{ w.name }}</span>
+          <span class="xy-store-pick-count">空位 {{ freeSlotsOf(w.id) }}/{{ w.slots.length }}</span>
+        </button>
+      </div>
+    </Dialog>
+
+    <!-- 仓库：格物品操作（取回背包 / 转移到其他仓库） -->
+    <Dialog v-model="storageCellOpen" title="仓库物品" width="400px">
+      <p class="xy-store-hint">{{ storageCellMsg }}</p>
+      <TacticalSelect v-if="transferTargets.length" v-model="transferTo" :options="transferTargets"
+        placeholder="选择目标仓库" class="xy-storage-transfer" />
+      <div class="xy-storage-cell-actions">
+        <Button size="small" variant="secondary" @click="onTakeOut">取回背包</Button>
+        <Button size="small" variant="primary" :disabled="!transferTo" @click="onTransfer">转移</Button>
+      </div>
+    </Dialog>
 
     <!-- 卡片右键：丢弃确认 -->
     <ConfirmDialog v-model="cardDiscardOpen" title="丢弃物品"
@@ -111,8 +131,23 @@ function onUse(itemId: string): void {
   if (pack.useItem(itemId)) selectedId.value = null
 }
 
+/** 存入仓库：单仓直接存入；多仓先弹目标仓选择（刷宝玩法需分仓存放） */
 function onMoveToStorage(itemId: string): void {
-  if (pack.moveToStorage(itemId)) selectedId.value = null
+  if (pack.warehouses.length <= 1) {
+    if (pack.moveToStorage(itemId, pack.activeWarehouseId)) selectedId.value = null
+    return
+  }
+  storeTargetItem.value = itemId
+}
+
+/** 选定目标仓后存入 */
+function pickTargetWarehouse(warehouseId: string): void {
+  const itemId = storeTargetItem.value
+  if (!itemId) return
+  if (pack.moveToStorage(itemId, warehouseId)) {
+    storeTargetItem.value = null
+    selectedId.value = null
+  }
 }
 
 function onDiscard(itemId: string): void {
@@ -153,36 +188,62 @@ function nameOf(itemId: string): string {
 
 /* ── 仓库存取 ── */
 const storePickOpen = ref(false)
+/** 待存入的物品 id（多仓时先选目标仓；null = 未进入选择） */
+const storeTargetItem = ref<string | null>(null)
 
 /** 可入仓物品：装备逐件持有（gearInstances），不支持整堆入仓 */
 const storableItems = computed(() => pack.ownedItems.filter((it) => !pack.gearById(it.id)))
-const storageTakeIdx = ref<number | null>(null)
-const storageTakeOpen = ref(false)
 
-const storageTakeMsg = computed(() => {
-  if (storageTakeIdx.value === null) return ''
-  const slot = pack.storage[storageTakeIdx.value]
-  return slot?.itemId ? `取出「${nameOf(slot.itemId)}」×${slot.count} 到背包？` : ''
+/** 某仓剩余空位数 */
+function freeSlotsOf(warehouseId: string): number {
+  const w = pack.warehouses.find((x) => x.id === warehouseId)
+  return w ? w.slots.filter((s) => !s.itemId).length : 0
+}
+
+/* ── 仓库格物品操作（取回背包 / 转移到其他仓库） ── */
+const storageCellIdx = ref<number | null>(null)
+const storageCellOpen = ref(false)
+/** 转移目标仓 id（空串 = 未选择） */
+const transferTo = ref('')
+
+/** 操作弹窗标题文案：物品名 × 数量 */
+const storageCellMsg = computed(() => {
+  const idx = storageCellIdx.value
+  const slot = idx === null ? undefined : pack.activeWarehouse?.slots[idx]
+  return slot?.itemId ? `「${nameOf(slot.itemId)}」×${slot.count}` : ''
 })
 
+/** 可转移目标仓（排除当前仓；附空位数） */
+const transferTargets = computed(() =>
+  pack.warehouses
+    .filter((w) => w.id !== pack.activeWarehouseId)
+    .map((w) => ({ value: w.id, label: `${w.name}（空位 ${w.slots.filter((s) => !s.itemId).length}）` })),
+)
+
 function openStorageCell(i: number): void {
-  const slot = pack.storage[i]
+  const slot = pack.activeWarehouse?.slots[i]
   if (slot?.itemId) {
-    storageTakeIdx.value = i
-    storageTakeOpen.value = true
+    storageCellIdx.value = i
+    transferTo.value = ''
+    storageCellOpen.value = true
   } else {
     storePickOpen.value = true
   }
 }
 
 function pickIntoStorage(itemId: string): void {
-  if (pack.moveToStorage(itemId)) storePickOpen.value = false
+  if (pack.moveToStorage(itemId, pack.activeWarehouseId)) storePickOpen.value = false
 }
 
 function onTakeOut(): void {
-  if (storageTakeIdx.value !== null) {
-    pack.moveToInventory(storageTakeIdx.value)
-    storageTakeIdx.value = null
+  if (storageCellIdx.value === null) return
+  if (pack.moveToInventory(storageCellIdx.value, pack.activeWarehouseId)) storageCellOpen.value = false
+}
+
+function onTransfer(): void {
+  if (storageCellIdx.value === null || !transferTo.value) return
+  if (pack.transferWarehouseItem(pack.activeWarehouseId, storageCellIdx.value, transferTo.value)) {
+    storageCellOpen.value = false
   }
 }
 
@@ -238,6 +299,12 @@ onMounted(() => {
   &:hover {
     border-color: var(--color-brand-red);
   }
+
+  /* 目标仓已满：不可选 */
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
 .xy-store-pick-name {
@@ -249,5 +316,18 @@ onMounted(() => {
 .xy-store-pick-count {
   font-size: var(--font-size-md);
   color: var(--color-text-tertiary);
+}
+
+/* ── 仓库格操作弹窗（取回 / 转移） ── */
+.xy-storage-transfer {
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.xy-storage-cell-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 </style>

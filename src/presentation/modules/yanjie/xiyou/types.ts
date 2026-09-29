@@ -323,6 +323,16 @@ export interface XiyouStorageCell {
   locked: boolean
 }
 
+/** 仓库建造配置（pack.json warehouseBuild）：可材料建造多座，成本按已建座数递增 */
+export interface XiyouWarehouseBuild {
+  /** 仓库座数上限 */
+  maxCount: number
+  /** 新仓初始格子数 */
+  baseSlots: number
+  /** 分级成本表：下标 = 已建座数 - 1（当前 1 座 → levels[0] 即第 2 座成本） */
+  levels: Array<{ cost: XiyouRecipeMaterial[] }>
+}
+
 /** 法宝（法宝子系统） */
 export interface XiyouTreasure {
   name: string

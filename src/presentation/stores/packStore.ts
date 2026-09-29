@@ -11,7 +11,7 @@
 
 import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { XiyouCatalogItem, XiyouCurrency, XiyouGardenCrop, XiyouPlayer, XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/types'
+import type { XiyouCatalogItem, XiyouCurrency, XiyouGardenCrop, XiyouPlayer, XiyouRecipeMaterial, XiyouShopGood, XiyouWarehouseBuild } from '@/presentation/modules/yanjie/xiyou/types'
 import {
   equipmentCatalog,
   materials,
@@ -21,6 +21,7 @@ import {
   pills,
   consumables,
   storageCells,
+  warehouseBuild,
   grantPillPoint,
   gardenCrops,
   shopGoods as shopPool,
@@ -67,6 +68,16 @@ import { usePlayerStore } from './playerStore'
 export interface StorageSlot {
   itemId: string | null
   count: number
+}
+
+/** 仓库（多座：可材料建造、可改名；每座独立格子，slots 长度即该仓容量） */
+export interface Warehouse {
+  /** 稳定 id（改名/排序不变；首仓固定 'wh_main'） */
+  id: string
+  /** 展示名（可改） */
+  name: string
+  /** 格子列表 */
+  slots: StorageSlot[]
 }
 
 /** 药园地块（运行时）：cropId 非空 = 已种植可收获；cropId 空且 cooldownUntil 未到 = 冷却中 */
@@ -193,11 +204,14 @@ export interface GearInstance {
   affixes: GearAffix[]
 }
 
-/** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 实例品质；v5 药园迁移；v6 货币收缩 money/xianyuan） */
+/** 行囊运行时持久化快照（xiyou 表 pack_runtime 文档的 data；v3 实例品质；v5 药园迁移；v6 货币收缩 money/xianyuan；v7 多仓库 warehouses） */
 export interface PackRuntimeSnapshot {
-  version: 6
+  version: typeof PACK_SNAPSHOT_VERSION
   inventory: Record<string, number>
-  storage: StorageSlot[]
+  /** 仓库列表（多座；v7 前为单仓 storage，见 load 迁移） */
+  warehouses: Warehouse[]
+  /** 当前操作的仓库 id */
+  activeWarehouseId: string
   quickSlots: (string | null)[]
   currency: XiyouCurrency
   /** 背包中未穿戴的装备实例 */
@@ -214,12 +228,21 @@ export interface PackRuntimeSnapshot {
 }
 
 const PACK_RUNTIME_ID = 'pack_runtime'
+/** 存档快照版本（PackRuntimeSnapshot.version 与 flush 落盘的单一来源） */
+export const PACK_SNAPSHOT_VERSION = 7
 const QUICK_SLOT_COUNT = 4
+/** 首仓固定 id（初始化与 v6 存档迁移共用） */
+const MAIN_WAREHOUSE_ID = 'wh_main'
+/** 首仓展示名 */
+const MAIN_WAREHOUSE_NAME = '主仓库'
 const STORAGE_BASE = 12
 const STORAGE_EXPAND_STEP = 6
-const MAX_STORAGE = 36
+/** 单座仓库格子上限（逻辑与 UI 共用的单一来源） */
+export const MAX_STORAGE = 36
 /** 扩容消耗（金钱），按扩容次数取档 */
 const EXPAND_COSTS = [50, 100, 200, 400]
+/** 仓库建造配置缺省兜底（pack.json warehouseBuild 缺失时保证功能可用；等级表空 = 不可建造） */
+const DEFAULT_WAREHOUSE_BUILD: XiyouWarehouseBuild = { maxCount: 5, baseSlots: STORAGE_BASE, levels: [] }
 
 /** 药园地块数量（对齐 cave.json crops 六格） */
 const GARDEN_PLOT_COUNT = 6
@@ -283,8 +306,10 @@ export const usePackStore = defineStore('pack', () => {
   const pillUses = ref<Record<string, number>>({})
   /** 永久丹药属性累计增量：attr → 总和（save-bridge 持久化到存档 pill_bonuses，恢复时叠回 player） */
   const pillBonuses = ref<Record<string, number>>({})
-  /** 仓库格子（长度即容量） */
-  const storage = ref<StorageSlot[]>([])
+  /** 仓库列表（多座；首仓在初始化/迁移时生成） */
+  const warehouses = ref<Warehouse[]>([])
+  /** 当前操作的仓库 id（失效时 activeWarehouse 回退首仓） */
+  const activeWarehouseId = ref<string>(MAIN_WAREHOUSE_ID)
   /** 快捷栏（固定 4 格，存 itemId） */
   const quickSlots = ref<(string | null)[]>(Array(QUICK_SLOT_COUNT).fill(null))
   /** 背包中未穿戴的装备实例（制造 / 掉落 / 初始装备均实例化） */
@@ -322,7 +347,27 @@ export const usePackStore = defineStore('pack', () => {
     for (const g of gearInstances.value) has.add(g.itemId)
     return packItems.filter((it) => has.has(it.id))
   })
-  const storageCapacity = computed(() => storage.value.length)
+  /** 仓库建造配置（pack.json warehouseBuild；缺失回退内置默认） */
+  const warehouseConfig = warehouseBuild ?? DEFAULT_WAREHOUSE_BUILD
+  /** 当前操作仓库（id 失效时回退首仓） */
+  const activeWarehouse = computed<Warehouse | undefined>(() =>
+    warehouses.value.find((w) => w.id === activeWarehouseId.value) ?? warehouses.value[0],
+  )
+  /** 当前仓格子数（沿用旧字段语义：容量 = 当前仓 slots 长度） */
+  const storageCapacity = computed(() => activeWarehouse.value?.slots.length ?? 0)
+  /** 当前仓是否已满（无可存空位） */
+  const warehouseFull = computed(() => {
+    const w = activeWarehouse.value
+    return !!w && w.slots.length > 0 && w.slots.every((s) => !!s.itemId)
+  })
+  /** 是否任一仓库尚有空位——「能否存入」判定的单一来源（当前仓满 ≠ 没地方放） */
+  const anyWarehouseHasSpace = computed(() => warehouses.value.some((w) => w.slots.some((s) => !s.itemId)))
+  /** 已建造仓库座数 */
+  const warehouseCount = computed(() => warehouses.value.length)
+  /** 仓库座数上限 */
+  const maxWarehouseCount = computed(() => warehouseConfig.maxCount)
+  /** 是否还能建造新仓 */
+  const canBuildWarehouse = computed(() => warehouseCount.value < maxWarehouseCount.value)
 
   // ════════════ 持久化 ════════════
   let saveTimer: ReturnType<typeof setTimeout> | null = null
@@ -338,9 +383,14 @@ export const usePackStore = defineStore('pack', () => {
     // 未 init（从未打开行囊）时跳过：避免把空快照写入覆盖 configs 初始持有
     if (!initialized) return
     const snapshot: PackRuntimeSnapshot = {
-      version: 6,
+      version: PACK_SNAPSHOT_VERSION,
       inventory: { ...inventory.value },
-      storage: storage.value.map((s) => ({ itemId: s.itemId, count: s.count })),
+      warehouses: warehouses.value.map((w) => ({
+        id: w.id,
+        name: w.name,
+        slots: w.slots.map((s) => ({ itemId: s.itemId, count: s.count })),
+      })),
+      activeWarehouseId: activeWarehouseId.value,
       quickSlots: [...quickSlots.value],
       currency: { money: currency.money, xianyuan: currency.xianyuan },
       gearInstances: gearInstances.value.map((g) => ({
@@ -400,8 +450,28 @@ export const usePackStore = defineStore('pack', () => {
         }
         gearInstances.value = gear
       }
-      if (Array.isArray(snap.storage)) {
-        storage.value = snap.storage.map((s) => ({ itemId: s.itemId, count: s.count ?? 0 }))
+      // NOTE: v7 多仓库恢复；v6 及更早是单仓 storage，首次加载包裹为首仓（幂等：仅当快照无 warehouses 时触发）
+      const legacy = snap as PackRuntimeSnapshot & { storage?: StorageSlot[] }
+      if (Array.isArray(snap.warehouses) && snap.warehouses.length > 0) {
+        warehouses.value = snap.warehouses.map((w) => ({
+          id: w.id,
+          name: w.name,
+          slots: (Array.isArray(w.slots) ? w.slots : []).map((s) => ({ itemId: s.itemId ?? null, count: s.count ?? 0 })),
+        }))
+        if (snap.activeWarehouseId) activeWarehouseId.value = snap.activeWarehouseId
+      } else if (Array.isArray(legacy.storage)) {
+        warehouses.value = [{
+          id: MAIN_WAREHOUSE_ID,
+          name: MAIN_WAREHOUSE_NAME,
+          slots: legacy.storage.map((s) => ({ itemId: s.itemId, count: s.count ?? 0 })),
+        }]
+        activeWarehouseId.value = MAIN_WAREHOUSE_ID
+      }
+      if (!warehouses.value.length) {
+        warehouses.value = [{ id: MAIN_WAREHOUSE_ID, name: MAIN_WAREHOUSE_NAME, slots: [] }]
+      }
+      if (!warehouses.value.some((w) => w.id === activeWarehouseId.value)) {
+        activeWarehouseId.value = warehouses.value[0].id
       }
       if (Array.isArray(snap.quickSlots)) {
         quickSlots.value = [...snap.quickSlots.slice(0, QUICK_SLOT_COUNT)]
@@ -505,11 +575,16 @@ export const usePackStore = defineStore('pack', () => {
     }
     gearInstances.value = gear
 
-    storage.value = storageCells.map((cell) => {
-      if (cell.locked || !cell.name || cell.name === '空位') return { itemId: null, count: 0 }
-      const id = nameToId(cell.name)
-      return id ? { itemId: id, count: cell.count } : { itemId: null, count: 0 }
-    })
+    warehouses.value = [{
+      id: MAIN_WAREHOUSE_ID,
+      name: MAIN_WAREHOUSE_NAME,
+      slots: storageCells.map((cell) => {
+        if (cell.locked || !cell.name || cell.name === '空位') return { itemId: null, count: 0 }
+        const id = nameToId(cell.name)
+        return id ? { itemId: id, count: cell.count } : { itemId: null, count: 0 }
+      }),
+    }]
+    activeWarehouseId.value = MAIN_WAREHOUSE_ID
 
     garden.value = Array.from({ length: GARDEN_PLOT_COUNT }, () => ({ cropId: null, cooldownUntil: null }))
     shopGoods.value = shopPool.map((g) => ({ ...g }))
@@ -1070,29 +1145,122 @@ export const usePackStore = defineStore('pack', () => {
     return true
   }
 
+  // ════════════ 多仓库 ════════════
+
+  /** 新仓库 id（时间戳 + 随机，避免与既有冲突） */
+  function newWarehouseId(): string {
+    return `wh_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+  }
+
+  /** 按 id 取仓库；缺省返回当前仓 */
+  function warehouseById(id?: string): Warehouse | undefined {
+    return id ? warehouses.value.find((w) => w.id === id) : activeWarehouse.value
+  }
+
+  /** 下一座仓库建造成本（已满上限返回 null） */
+  function buildCost(): XiyouRecipeMaterial[] | null {
+    if (warehouseCount.value >= maxWarehouseCount.value) return null
+    const levels = warehouseConfig.levels
+    const level = levels[warehouses.value.length - 1] ?? levels[levels.length - 1]
+    return level?.cost ?? null
+  }
+
+  /** 建造新仓库：上限 → 材料校验 → 扣料 → 新建并切换。返回是否成功 */
+  function buildWarehouse(): boolean {
+    if (warehouseCount.value >= maxWarehouseCount.value) {
+      notification.toast(`仓库已达上限（${maxWarehouseCount.value} 座）`, 'warning')
+      return false
+    }
+    const cost = buildCost()
+    if (!cost || !cost.length) {
+      notification.toast('暂无可建造的仓库', 'warning')
+      return false
+    }
+    for (const m of cost) {
+      if ((inventory.value[m.itemId] ?? 0) < m.count) {
+        notification.toast(`材料不足：缺「${catalogById(m.itemId)?.name ?? m.itemId}」×${m.count}`, 'warning')
+        return false
+      }
+    }
+    for (const m of cost) removeItem(m.itemId, m.count)
+    const name = `仓库·${warehouses.value.length + 1}`
+    const wh: Warehouse = {
+      id: newWarehouseId(),
+      name,
+      slots: Array.from({ length: warehouseConfig.baseSlots }, () => ({ itemId: null, count: 0 })),
+    }
+    warehouses.value.push(wh)
+    activeWarehouseId.value = wh.id
+    scheduleSave()
+    notification.toast(`建造完成，新增「${name}」（${warehouseConfig.baseSlots} 格）`, 'success')
+    return true
+  }
+
+  /** 切换当前操作仓库（id 不存在返回 false） */
+  function switchActiveWarehouse(id: string): boolean {
+    if (!warehouses.value.some((w) => w.id === id)) return false
+    activeWarehouseId.value = id
+    return true
+  }
+
+  /** 重命名仓库（trim 后非空；长度上限 8 字） */
+  function renameWarehouse(id: string, name: string): boolean {
+    const w = warehouses.value.find((x) => x.id === id)
+    const trimmed = name.trim()
+    if (!w || !trimmed) return false
+    w.name = trimmed.slice(0, 8)
+    scheduleSave()
+    return true
+  }
+
+  /** 仓库间整格直接转移（目标仓找首个空位；源/目标非法或目标仓满则拒绝） */
+  function transferWarehouseItem(fromId: string, slotIdx: number, toId: string): boolean {
+    if (fromId === toId) return false
+    const from = warehouses.value.find((w) => w.id === fromId)
+    const to = warehouses.value.find((w) => w.id === toId)
+    const slot = from?.slots[slotIdx]
+    if (!from || !to || !slot?.itemId || slot.count <= 0) return false
+    const empty = to.slots.find((s) => !s.itemId)
+    if (!empty) {
+      notification.toast(`「${to.name}」已满，无法转移`, 'warning')
+      return false
+    }
+    const { itemId, count } = slot
+    empty.itemId = itemId
+    empty.count = count
+    slot.itemId = null
+    slot.count = 0
+    scheduleSave()
+    notification.toast(`「${catalogById(itemId)?.name ?? itemId}」已转移到「${to.name}」`)
+    return true
+  }
+
   // ════════════ 仓库存取 ════════════
 
-  /** 存入仓库（全部数量），找第一个空位 */
-  function moveToStorage(itemId: string): boolean {
+  /** 存入仓库（整组存入目标仓首个空位；warehouseId 缺省 = 当前仓） */
+  function moveToStorage(itemId: string, warehouseId?: string): boolean {
     const count = inventory.value[itemId] ?? 0
     if (count <= 0) return false
-    const slot = storage.value.find((s) => !s.itemId)
+    const wh = warehouseById(warehouseId)
+    if (!wh) return false
+    const slot = wh.slots.find((s) => !s.itemId)
     if (!slot) {
-      notification.toast('仓库已满，可扩容', 'warning')
+      notification.toast(`「${wh.name}」已满，可扩容或建造新仓`, 'warning')
       return false
     }
     slot.itemId = itemId
     slot.count = count
     delete inventory.value[itemId]
     scheduleSave()
-    notification.toast(`「${catalogById(itemId)?.name ?? itemId}」已存入仓库 ×${count}`)
+    notification.toast(`「${catalogById(itemId)?.name ?? itemId}」已存入「${wh.name}」×${count}`)
     return true
   }
 
-  /** 取出回背包（该格全部） */
-  function moveToInventory(slotIdx: number): boolean {
-    const slot = storage.value[slotIdx]
-    if (!slot?.itemId || slot.count <= 0) return false
+  /** 取出回背包（该格全部；warehouseId 缺省 = 当前仓） */
+  function moveToInventory(slotIdx: number, warehouseId?: string): boolean {
+    const wh = warehouseById(warehouseId)
+    const slot = wh?.slots[slotIdx]
+    if (!wh || !slot?.itemId || slot.count <= 0) return false
     const { itemId, count } = slot
     inventory.value[itemId] = (inventory.value[itemId] ?? 0) + count
     slot.itemId = null
@@ -1104,24 +1272,29 @@ export const usePackStore = defineStore('pack', () => {
 
   // ════════════ 仓库扩容 ════════════
 
-  function expandCost(): number {
-    const times = Math.floor((storage.value.length - STORAGE_BASE) / STORAGE_EXPAND_STEP)
+  /** 指定仓库下一次扩容消耗（金钱），按该仓扩容次数取档；缺省 = 当前仓 */
+  function expandCost(warehouseId?: string): number {
+    const wh = warehouseById(warehouseId)
+    const times = wh ? Math.floor((wh.slots.length - STORAGE_BASE) / STORAGE_EXPAND_STEP) : 0
     return EXPAND_COSTS[Math.min(Math.max(times, 0), EXPAND_COSTS.length - 1)]
   }
 
-  function expandStorage(): boolean {
-    if (storage.value.length >= MAX_STORAGE) {
+  /** 扩容指定仓库（金钱消耗；单仓上限 MAX_STORAGE）；缺省 = 当前仓 */
+  function expandStorage(warehouseId?: string): boolean {
+    const wh = warehouseById(warehouseId)
+    if (!wh) return false
+    if (wh.slots.length >= MAX_STORAGE) {
       notification.toast('仓库已达上限')
       return false
     }
-    const cost = expandCost()
+    const cost = expandCost(wh.id)
     if (currency.money < cost) {
       notification.toast('金钱不足')
       return false
     }
     currency.money -= cost
-    const added = Math.min(STORAGE_EXPAND_STEP, MAX_STORAGE - storage.value.length)
-    for (let i = 0; i < added; i++) storage.value.push({ itemId: null, count: 0 })
+    const added = Math.min(STORAGE_EXPAND_STEP, MAX_STORAGE - wh.slots.length)
+    for (let i = 0; i < added; i++) wh.slots.push({ itemId: null, count: 0 })
     scheduleSave()
     notification.toast(`扩容成功，仓库新增 ${added} 格`)
     return true
@@ -1490,7 +1663,14 @@ export const usePackStore = defineStore('pack', () => {
     inventory,
     pillUses,
     pillBonuses,
-    storage,
+    warehouses,
+    activeWarehouseId,
+    activeWarehouse,
+    warehouseCount,
+    maxWarehouseCount,
+    canBuildWarehouse,
+    warehouseFull,
+    anyWarehouseHasSpace,
     storageCapacity,
     quickSlots,
     currency,
@@ -1528,6 +1708,11 @@ export const usePackStore = defineStore('pack', () => {
     discardGearInstance,
     moveToStorage,
     moveToInventory,
+    buildCost,
+    buildWarehouse,
+    switchActiveWarehouse,
+    renameWarehouse,
+    transferWarehouseItem,
     expandCost,
     expandStorage,
     spend,

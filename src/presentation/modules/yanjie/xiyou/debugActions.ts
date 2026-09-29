@@ -1806,7 +1806,11 @@ function buildPackCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: () => {
               const snapshot = {
                 inventory: { ...pack.inventory },
-                storage: pack.storage.map((s) => ({ itemId: s.itemId, count: s.count })),
+                warehouses: pack.warehouses.map((w) => ({
+                  id: w.id,
+                  name: w.name,
+                  slots: w.slots.map((s) => ({ itemId: s.itemId, count: s.count })),
+                })),
                 gearCount: pack.gearInstances.length,
                 owned: pack.ownedItems.length,
               }
@@ -2277,7 +2281,11 @@ function buildDiagCategory(env: PlayerStoreDebugEnv): DebugCategory {
                   inventory: { ...pack.inventory },
                   gearCount: pack.gearInstances.length,
                   equipped: { ...pack.equipped },
-                  storage: pack.storage.map((s) => ({ itemId: s.itemId, count: s.count })),
+                  warehouses: pack.warehouses.map((w) => ({
+                    id: w.id,
+                    name: w.name,
+                    slots: w.slots.map((s) => ({ itemId: s.itemId, count: s.count })),
+                  })),
                 },
                 battle: {
                   active: battle.isBattleActive,

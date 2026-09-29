@@ -58,6 +58,7 @@ import type {
   XiyouSkillPoints,
   XiyouEquippedSkills,
   XiyouStorageCell,
+  XiyouWarehouseBuild,
   XiyouTitle,
   XiyouTreasure,
   SchoolsLayer,
@@ -382,6 +383,8 @@ export const pills: XiyouItem[] = reactive<XiyouItem[]>(packJson.pills as unknow
 export const consumables: XiyouItem[] = reactive<XiyouItem[]>(packJson.consumables as unknown as XiyouItem[])
 export const shopGoods: XiyouShopGood[] = reactive<XiyouShopGood[]>(packJson.shopGoods as unknown as XiyouShopGood[])
 export const storageCells: XiyouStorageCell[] = reactive<XiyouStorageCell[]>(packJson.storageCells as unknown as XiyouStorageCell[])
+/** 仓库建造配置（pack.json warehouseBuild；多仓库建造的成本表与上限） */
+export const warehouseBuild: XiyouWarehouseBuild = packJson.warehouseBuild as unknown as XiyouWarehouseBuild
 export const packItems: XiyouCatalogItem[] = catalogItems
 
 export const treasures: XiyouTreasure[] = reactive<XiyouTreasure[]>(equipJson.treasures as unknown as XiyouTreasure[])

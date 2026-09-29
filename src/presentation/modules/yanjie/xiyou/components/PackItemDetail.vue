@@ -74,10 +74,11 @@ const inBattleOnly = computed(() => !!eff.value && !canUse.value)
 //       items.json type 已无「饰品」分类，不能用旧 3 类白名单判断
 const canEquip = computed(() => (props.itemId ? !!pack.slotKeyOf(props.itemId) : false))
 
-const canStore = computed(() => props.count > 0 && pack.storage.some((s) => !s.itemId))
+/** 可存入：任一仓库有空位即可（当前仓满时详情内弹目标仓选择） */
+const canStore = computed(() => props.count > 0 && pack.anyWarehouseHasSpace)
 
-/** 仓库已满：详情内提供扩容快捷入口 */
-const storageFull = computed(() => props.count > 0 && !pack.storage.some((s) => !s.itemId))
+/** 当前仓已满：详情内提供扩容快捷入口 */
+const storageFull = computed(() => props.count > 0 && pack.warehouseFull)
 
 const canDiscard = computed(() => props.count > 0 && item.value?.type !== '任务')
 
@@ -155,7 +156,7 @@ function onDecompose(): void {
 }
 
 .px-detail-rarity {
-  font-family: 'KaiTi', 'STKaiti', 'Kaiti SC', serif;
+  font-family: var(--font-family-display);
   font-size: var(--font-size-lg);
   letter-spacing: 2px;
 }

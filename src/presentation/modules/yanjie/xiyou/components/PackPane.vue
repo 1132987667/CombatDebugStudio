@@ -47,12 +47,30 @@ export type PackSub = 'pack' | 'storage' | 'shop'
       <!-- ── 仓库 ── -->
       <template #storage>
         <div class="xy-pack-list xy-panel-tabs">
-          <div class="xy-storage-head">
-            <p class="xy-panel-hint">仓库 {{ pack.storageCapacity }}/{{ MAX_STORAGE }} 格</p>
-            <Button size="small" variant="energy" :disabled="pack.storageCapacity >= MAX_STORAGE" @click="pack.expandStorage()">
-              扩容 · {{ pack.expandCost() }} 金钱
-            </Button>
+          <!-- 仓库切换条：每座一钮，点击切换当前仓；可建造时追加「建造仓库」 -->
+          <div class="xy-storage-tabs">
+            <button v-for="w in pack.warehouses" :key="w.id" type="button" class="xy-storage-tab"
+              :class="{ 'is-active': w.id === pack.activeWarehouseId }" @click="pack.switchActiveWarehouse(w.id)">
+              {{ w.name }}<span class="xy-storage-tab-count">{{ usedOf(w) }}/{{ w.slots.length }}</span>
+            </button>
+            <button v-if="pack.canBuildWarehouse" type="button" class="xy-storage-tab xy-storage-tab--build"
+              :disabled="!canBuild" :title="buildHint" @click="askBuild = true">
+              建造仓库
+            </button>
           </div>
+
+          <div class="xy-storage-head">
+            <p class="xy-panel-hint">{{ pack.activeWarehouse?.name ?? '仓库' }} {{ pack.storageCapacity }}/{{ MAX_STORAGE }} 格</p>
+            <div class="xy-storage-actions">
+              <Button size="small" variant="ghost" @click="askRename">改名</Button>
+              <Button size="small" variant="energy" :disabled="pack.storageCapacity >= MAX_STORAGE" @click="pack.expandStorage()">
+                扩容 · {{ pack.expandCost() }} 金钱
+              </Button>
+            </div>
+          </div>
+
+          <p class="xy-panel-hint xy-storage-buildcost">建造下一座：{{ buildCostText }}</p>
+
           <div class="xy-card-grid">
             <template v-for="s in storageSlots" :key="s.index">
               <PackItemCard v-if="s.item" :item="s.item" :count="s.count" in-storage
@@ -65,6 +83,19 @@ export type PackSub = 'pack' | 'storage' | 'shop'
             </template>
           </div>
         </div>
+
+        <!-- 仓库改名 -->
+        <Dialog v-model="renameOpen" title="重命名仓库" width="320px">
+          <TacticalInput v-model="renameValue" type="text" placeholder="仓库名（最多 8 字）" maxlength="8" />
+          <div class="xy-storage-rename-actions">
+            <Button size="small" @click="renameOpen = false">取消</Button>
+            <Button size="small" variant="primary" :disabled="!renameValue.trim()" @click="confirmRename">确定</Button>
+          </div>
+        </Dialog>
+
+        <!-- 建造仓库二次确认（材料不可逆消耗） -->
+        <ConfirmDialog v-model="askBuild" title="建造仓库" :message="buildMsg" confirm-text="建造"
+          @confirm="pack.buildWarehouse()" />
       </template>
 
       <!-- ── 坊市 ── -->
@@ -111,7 +142,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
 import { computed, ref, watch } from 'vue'
 import type { TabItem } from '@/presentation/components'
 
-import { usePackStore, type GearInstance } from '@/presentation/stores/packStore'
+import { usePackStore, MAX_STORAGE, type GearInstance, type Warehouse } from '@/presentation/stores/packStore'
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import type { XiyouCatalogItem, XiyouShopGood } from '../types'
 import PackItemCard from './PackItemCard.vue'
@@ -157,8 +188,6 @@ function onSubChange(v: string): void {
 }
 
 const pack = usePackStore()
-
-const MAX_STORAGE = 36
 
 const SUBS: TabItem[] = [
   { id: 'pack', label: '背包' },
@@ -333,14 +362,72 @@ function countOf(itemId: string): number {
   return pack.countOf(itemId)
 }
 
-/** 仓库格数据：目录缺失的 itemId 视同空位渲染 */
+/** 当前仓格数据：目录缺失的 itemId 视同空位渲染 */
 const storageSlots = computed<Array<{ index: number; item: XiyouCatalogItem | null; count: number }>>(() =>
-  pack.storage.map((slot, index) => ({
+  (pack.activeWarehouse?.slots ?? []).map((slot, index) => ({
     index,
     item: slot.itemId ? pack.catalogById(slot.itemId) ?? null : null,
     count: slot.count,
   })),
 )
+
+/* ── 多仓库（切换 / 建造 / 改名） ── */
+
+/** 建造成本展示文案：名称×数量 以 + 连接 */
+function costText(cost: Array<{ itemId: string; count: number }>): string {
+  return cost.map((m) => `${pack.catalogById(m.itemId)?.name ?? m.itemId}×${m.count}`).join(' + ')
+}
+
+/** 某仓已用格数（有物品的格子） */
+function usedOf(w: Warehouse): number {
+  return w.slots.filter((s) => !!s.itemId).length
+}
+
+/** 下一座仓库建造成本（材料）；已达上限为 null */
+const nextBuildCost = computed(() => pack.buildCost())
+
+/** 建造材料是否充足 */
+const canBuild = computed(() => {
+  const cost = nextBuildCost.value
+  return !!cost && cost.every((m) => countOf(m.itemId) >= m.count)
+})
+
+/** 下一座建造成本文案 */
+const buildCostText = computed(() => {
+  const cost = nextBuildCost.value
+  return cost ? costText(cost) : '已达上限'
+})
+
+/** 建造按钮悬停提示（缺料时列出缺料项） */
+const buildHint = computed(() => {
+  const cost = nextBuildCost.value
+  if (!cost) return '仓库已达上限'
+  const lack = cost.filter((m) => countOf(m.itemId) < m.count)
+  return lack.length ? `材料不足：${costText(lack)}` : '建造新仓库'
+})
+
+/** 改名弹窗 */
+const renameOpen = ref(false)
+const renameValue = ref('')
+
+function askRename(): void {
+  renameValue.value = pack.activeWarehouse?.name ?? ''
+  renameOpen.value = true
+}
+
+function confirmRename(): void {
+  if (!pack.activeWarehouse) return
+  if (pack.renameWarehouse(pack.activeWarehouse.id, renameValue.value)) renameOpen.value = false
+}
+
+/** 建造二次确认（材料不可逆消耗） */
+const askBuild = ref(false)
+
+/** 建造确认文案：材料清单 */
+const buildMsg = computed(() => {
+  const cost = nextBuildCost.value
+  return cost ? `消耗 ${costText(cost)} 建造一座新仓库？` : ''
+})
 
 /* ── 坊市购买 ── */
 interface BuyState {
@@ -496,6 +583,64 @@ function doBuy(g: XiyouShopGood): void {
 }
 
 /* ── 仓库（有物品的格子复用 PackItemCard，仅空位保留虚线格） ── */
+/* 仓库切换条：每座一钮 + 建造入口 */
+.xy-storage-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.xy-storage-tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: 2px;
+  background: var(--xy-paper);
+  color: var(--xy-ink-2);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--xy-seal);
+  }
+
+  &.is-active {
+    border-color: var(--xy-seal);
+    color: var(--xy-seal);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.xy-storage-tab-count {
+  color: var(--xy-ink-4);
+  font-size: var(--font-size-md);
+}
+
+.xy-storage-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.xy-storage-buildcost {
+  margin-top: calc(-1 * var(--space-2));
+}
+
+.xy-storage-rename-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
 .xy-storage-head {
   display: flex;
   align-items: baseline;

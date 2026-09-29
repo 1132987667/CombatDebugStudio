@@ -130,7 +130,8 @@ const canUseNow = computed(() => pack.canUseOutOfBattle(props.item.id))
 const inBattleOnly = computed(() => !!props.item.effects?.[0] && !canUseNow.value)
 const showUse = computed(() => canUseNow.value || inBattleOnly.value)
 
-const canStore = computed(() => props.count > 0 && pack.storage.some((s) => !s.itemId))
+/** 可存入：任一仓库有空位即可（多仓时由父级弹目标仓选择） */
+const canStore = computed(() => props.count > 0 && pack.anyWarehouseHasSpace)
 const canDiscard = computed(() => props.count > 0 && props.item.type !== '任务')
 
 /** 可出售：items.json value > 0（无该字段视为不可出售，如任务/钥匙/宝箱） */

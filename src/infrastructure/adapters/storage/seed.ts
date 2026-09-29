@@ -551,6 +551,52 @@ async function repairBuffsStackRuleCase(storage: IPersistentStorage): Promise<bo
   return repaired
 }
 
+/** configs 种子行集（表名 → 行 id → 实体），种子导入与双源漂移检查共用同一构建链 */
+export type SeedTableSet = Record<string, Record<string, unknown>>
+
+/**
+ * 从 configs/ 与代码内构建器重建全部数据表种子行集（不含 meta，不落库）。
+ * 漂移检查以它为对照源：库内被手改/新增/删除的行相对它检出（见 DriftCheckService）。
+ */
+export function buildSeedTableSet(): SeedTableSet {
+  const config = new ConfigDataSource()
+  const enemies = config.getEnemies()
+  const skills = config.getSkills() as SkillConfig[]
+
+  const tables: Array<[StorageStoreName, readonly unknown[]]> = [
+    [FENGSHEN_STORE.ENEMIES, enemies],
+    [FENGSHEN_STORE.SKILLS, skills],
+    [FENGSHEN_STORE.REGIONS, xiyouRegionsJson],
+    [FENGSHEN_STORE.SCENES, config.getScenes()],
+    [FENGSHEN_STORE.BUFFS, buffsWithEffects],
+    [FENGSHEN_STORE.FORMATIONS, formationsDataRaw],
+    [FENGSHEN_STORE.LINEUPS, lineupsDataRaw as LineupData[]],
+    [FENGSHEN_STORE.MATERIALS, deriveMaterials((itemsDataRaw as { items: ItemData[] }).items)],
+    [FENGSHEN_STORE.EQUIPMENT, equipmentDataRaw as EquipmentData[]],
+    [FENGSHEN_STORE.ACTORS, deriveActors(enemies)],
+    [FENGSHEN_STORE.GROWTH, buildGrowth()],
+    [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
+    [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
+    [FENGSHEN_STORE.ATTRIBUTES, buildAttributes()],
+    [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule(), buildAttributeLimit(), buildSystemDistribution()]],
+    [FENGSHEN_STORE.XIYOU, buildXiyou()],
+    [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
+  ]
+
+  const set: SeedTableSet = {}
+  for (const [store, rows] of tables) {
+    const bucket: Record<string, unknown> = (set[store] ??= {})
+    for (const row of rows) {
+      const entity = row as { id?: unknown }
+      if (!entity || typeof entity.id !== 'string' || !entity.id) continue
+      bucket[entity.id] = row
+    }
+  }
+  // elements 单文档
+  set[FENGSHEN_STORE.ELEMENTS] = { elements: buildElements() }
+  return set
+}
+
 /**
  * 执行种子导入（幂等）。
  * 底层 storage 不可用时（如无 IndexedDB 环境）由调用方容错，此处不预检。
@@ -572,40 +618,12 @@ export async function seedFengshenData(storage: IPersistentStorage): Promise<See
         : { imported: false, reason: 'already-seeded' }
     }
 
-    const config = new ConfigDataSource()
-    const enemies = config.getEnemies()
-    const skills = config.getSkills() as SkillConfig[]
-
-    const tables: Array<[StorageStoreName, readonly unknown[]]> = [
-      [FENGSHEN_STORE.ENEMIES, enemies],
-      [FENGSHEN_STORE.SKILLS, skills],
-      [FENGSHEN_STORE.REGIONS, xiyouRegionsJson],
-      [FENGSHEN_STORE.SCENES, config.getScenes()],
-      [FENGSHEN_STORE.BUFFS, buffsWithEffects],
-      [FENGSHEN_STORE.FORMATIONS, formationsDataRaw],
-      [FENGSHEN_STORE.LINEUPS, lineupsDataRaw as LineupData[]],
-      [FENGSHEN_STORE.MATERIALS, deriveMaterials((itemsDataRaw as { items: ItemData[] }).items)],
-      [FENGSHEN_STORE.EQUIPMENT, equipmentDataRaw as EquipmentData[]],
-      [FENGSHEN_STORE.ACTORS, deriveActors(enemies)],
-      [FENGSHEN_STORE.GROWTH, buildGrowth()],
-      [FENGSHEN_STORE.AFFIXES, (affixesDataRaw as AffixLibraryData).affixes as AffixData[]],
-      [FENGSHEN_STORE.EQUIPMENT_AFFIXES, equipmentAffixesDataRaw as EquipmentAffixData[]],
-      [FENGSHEN_STORE.ATTRIBUTES, buildAttributes()],
-      [FENGSHEN_STORE.PARAMS, [...buildParams(), buildExpTable(), buildEnemyRewardTable(), buildLevelDiffBonus(), buildPlayerConfig(), buildSystemBudget(), buildEquipFormula(), buildAffixRule(), buildAttributeLimit(), buildSystemDistribution()]],
-      [FENGSHEN_STORE.XIYOU, buildXiyou()],
-      [FENGSHEN_STORE.ITEMS, (itemsDataRaw as { items: ItemData[] }).items],
-    ]
-
-    for (const [store, rows] of tables) {
-      for (const row of rows) {
-        const entity = row as { id: string }
-        if (!entity || typeof entity.id !== 'string' || !entity.id) continue
-        await storage.set(store, entity.id, { ...(row as object), updatedAt: nowIso() })
+    const seedSet = buildSeedTableSet()
+    for (const [store, rowsById] of Object.entries(seedSet)) {
+      for (const [id, entity] of Object.entries(rowsById)) {
+        await storage.set(store as StorageStoreName, id, { ...(entity as object), updatedAt: nowIso() })
       }
     }
-
-    // elements 单文档
-    await storage.set(FENGSHEN_STORE.ELEMENTS, 'elements', { ...buildElements(), updatedAt: nowIso() })
 
     // meta：dataVersion 初值 1 + 种子标记（全量重播已含 pack 文档，新手套刷新标记同步落位保持幂等）
     await storage.set(FENGSHEN_STORE.META, 'dataVersion', { id: 'dataVersion', version: 1, updatedAt: nowIso() })

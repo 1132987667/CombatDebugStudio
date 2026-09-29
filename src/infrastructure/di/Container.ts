@@ -118,6 +118,8 @@ import { GameDataApi } from '@/application/service/GameDataApi'
 import { DataIntegrityService } from '@/application/service/DataIntegrityService'
 import { FengshenDataService } from '@/application/service/FengshenDataService'
 import { DataPackageService } from '@/application/service/DataPackageService'
+import { SnapshotService } from '@/application/service/SnapshotService'
+import { DriftCheckService } from '@/application/service/DriftCheckService'
 
 
 /**
@@ -207,7 +209,11 @@ export function initializeContainer(): void {
   container.register('GameDataApi', gameDataApi)
   container.register('DataIntegrityService', dataIntegrityService)
   container.register('FengshenDataService', fengshenDataService)
-  container.register('DataPackageService', new DataPackageService(persistentStorage, dataIntegrityService))
+  // 快照服务先于数据包服务注册：overwrite 导入的兜底快照经构造注入（B2 交付闭环）
+  const snapshotService = new SnapshotService(persistentStorage, dataIntegrityService)
+  container.register('SnapshotService', snapshotService)
+  container.register('DriftCheckService', new DriftCheckService(persistentStorage))
+  container.register('DataPackageService', new DataPackageService(persistentStorage, dataIntegrityService, snapshotService))
 
   // 注册子管理器，使其可通过容器独立访问
   container.registerFactory('BattleStateManager', () => {

@@ -24,24 +24,6 @@
     "description": "光环：全体友方 攻击+10%"
   },
   {
-    "id": "buff_guard_shield",
-    "name": "近卫之盾",
-    "category": "trigger",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_ALLY_FATAL_DAMAGE",
-        "scriptId": "block_damage_percent",
-        "params": {
-          "percent": 0.5
-        },
-        "probability": 0.3
-      }
-    ],
-    "polarity": "positive",
-    "description": "30%概率百分比抵挡伤害"
-  },
-  {
     "id": "buff_general_awe",
     "name": "将军之威",
     "category": "aura",

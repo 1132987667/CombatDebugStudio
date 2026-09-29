@@ -63,7 +63,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
             <p class="xy-panel-hint">{{ pack.activeWarehouse?.name ?? '仓库' }} {{ pack.storageCapacity }}/{{ MAX_STORAGE }} 格</p>
             <div class="xy-storage-actions">
               <Button size="small" variant="ghost" @click="askRename">改名</Button>
-              <Button size="small" variant="energy" :disabled="pack.storageCapacity >= MAX_STORAGE" @click="pack.expandStorage()">
+              <Button size="small" variant="energy" :disabled="pack.storageCapacity >= MAX_STORAGE" @click="askExpand = true">
                 扩容 · {{ pack.expandCost() }} 金钱
               </Button>
             </div>
@@ -96,6 +96,10 @@ export type PackSub = 'pack' | 'storage' | 'shop'
         <!-- 建造仓库二次确认（材料不可逆消耗） -->
         <ConfirmDialog v-model="askBuild" title="建造仓库" :message="buildMsg" confirm-text="建造"
           @confirm="pack.buildWarehouse()" />
+
+        <!-- 扩容二次确认（金钱不可逆消耗，作用于当前仓） -->
+        <ConfirmDialog v-model="askExpand" title="扩容仓库" :message="expandMsg" confirm-text="扩容"
+          @confirm="pack.expandStorage()" />
       </template>
 
       <!-- ── 坊市 ── -->
@@ -428,6 +432,12 @@ const buildMsg = computed(() => {
   const cost = nextBuildCost.value
   return cost ? `消耗 ${costText(cost)} 建造一座新仓库？` : ''
 })
+
+/** 扩容二次确认（金钱不可逆消耗，作用于当前仓） */
+const askExpand = ref(false)
+
+/** 扩容确认文案：当前仓下一次扩容消耗（容量未达上限时按钮才可用，故固定 +6 格） */
+const expandMsg = computed(() => `消耗 金钱 ×${pack.expandCost()} 扩容 6 格？`)
 
 /* ── 坊市购买 ── */
 interface BuyState {

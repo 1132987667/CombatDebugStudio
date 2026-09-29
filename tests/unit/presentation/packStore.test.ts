@@ -328,6 +328,11 @@ describe('仓库切换 / 改名 / 转移', () => {
     // 超长截断为 8 字
     expect(pack.renameWarehouse(secondId, '一二三四五六七八九十')).toBe(true)
     expect(whOf(pack,secondId)!.name).toBe('一二三四五六七八')
+    // 与其他仓重名拒绝（首仓固定名「主仓库」），原名保留
+    expect(pack.renameWarehouse(secondId, '主仓库')).toBe(false)
+    expect(whOf(pack,secondId)!.name).toBe('一二三四五六七八')
+    // 与自身同名放行（幂等，不误判为重名）
+    expect(pack.renameWarehouse(secondId, '一二三四五六七八')).toBe(true)
   })
 
   it('仓库间整格直接转移：源格清空、目标仓首个空位落位', async () => {

@@ -23,7 +23,7 @@ import type { OperationLogEntry } from '@/domain/fengshen/types'
 import { useBattleStore } from '@/presentation/stores'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
-export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule' | 'curves' | 'equipgen' | 'distribution' | 'attributecenter'
+export type FengshenView = 'domain' | 'formulas' | 'packages' | 'health' | 'logs' | 'expgold' | 'playerconfig' | 'audit' | 'affixrule' | 'curves' | 'equipgen' | 'distribution' | 'attributecenter' | 'snapshots'
 
 export interface OptionItem {
   id: string
@@ -491,5 +491,7 @@ export const useFengshenStore = defineStore('fengshen', () => {
     applyQuickFix,
     loadLogs,
     reloadFromProject,
+    // 快照回滚 / 差异表重载等不经 write 门面的批量写操作，完成后由视图调用此通知走统一刷新链
+    notifyDataChanged: onDataChanged,
   }
 })

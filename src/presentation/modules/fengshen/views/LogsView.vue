@@ -172,6 +172,7 @@ const OP_META: Record<OperationKind, { label: string; cls: string }> = {
   update: { label: '修改', cls: 'fs-tag-aura' },
   delete: { label: '删除', cls: 'fs-tag-danger' },
   import: { label: '导入', cls: 'fs-tag-buff' },
+  rollback: { label: '回退', cls: 'fs-tag-muted' },
 }
 
 const opOptions: TSelectOption[] = [
@@ -180,6 +181,7 @@ const opOptions: TSelectOption[] = [
   { value: 'update', label: '修改' },
   { value: 'delete', label: '删除' },
   { value: 'import', label: '导入' },
+  { value: 'rollback', label: '回退' },
 ]
 
 function opLabel(op: OperationKind): string {

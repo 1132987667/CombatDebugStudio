@@ -17,6 +17,26 @@ export interface SaveResult {
   errors?: string[]
 }
 
+/**
+ * 递增全局 dataVersion（写门面 save/remove 与快照回滚、差异表重载等批量写操作共用，口径单源）。
+ * 写失败返回 null（存储已满或数据库不可用），由调用方决定如何处置；notify 用于触发 onDataChanged。
+ */
+export async function bumpDataVersion(
+  storage: IPersistentStorage,
+  notify: ((version: number) => void) | null,
+): Promise<number | null> {
+  const meta = await storage.get<MetaDataVersion>(FENGSHEN_STORE.META, 'dataVersion')
+  const next = (meta?.version ?? 0) + 1
+  const written = await storage.set(FENGSHEN_STORE.META, 'dataVersion', {
+    id: 'dataVersion',
+    version: next,
+    updatedAt: new Date().toISOString(),
+  })
+  if (!written) return null
+  notify?.(next)
+  return next
+}
+
 export class FengshenDataService {
   /** 写操作后回调（UI 订阅 dataVersion 变更） */
   onDataChanged: ((version: number) => void) | null = null
@@ -69,16 +89,10 @@ export class FengshenDataService {
     return { ok: true }
   }
 
-  /** 递增全局 dataVersion 并通知订阅方 */
+  /** 递增全局 dataVersion 并通知订阅方；版本行写失败视为致命（版本错乱比报错更难排查） */
   private async bumpVersion(): Promise<number> {
-    const meta = await this.storage.get<MetaDataVersion>(FENGSHEN_STORE.META, 'dataVersion')
-    const next = (meta?.version ?? 0) + 1
-    await this.storage.set(FENGSHEN_STORE.META, 'dataVersion', {
-      id: 'dataVersion',
-      version: next,
-      updatedAt: new Date().toISOString(),
-    })
-    this.onDataChanged?.(next)
+    const next = await bumpDataVersion(this.storage, (v) => this.onDataChanged?.(v))
+    if (next === null) throw new Error('数据版本写入失败（存储已满或数据库不可用）')
     return next
   }
 

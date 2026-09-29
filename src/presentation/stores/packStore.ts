@@ -1202,12 +1202,16 @@ export const usePackStore = defineStore('pack', () => {
     return true
   }
 
-  /** 重命名仓库（trim 后非空；长度上限 8 字） */
+  /** 重命名仓库（trim 后非空、不与其他仓重名；长度上限 8 字） */
   function renameWarehouse(id: string, name: string): boolean {
     const w = warehouses.value.find((x) => x.id === id)
-    const trimmed = name.trim()
+    const trimmed = name.trim().slice(0, 8)
     if (!w || !trimmed) return false
-    w.name = trimmed.slice(0, 8)
+    if (warehouses.value.some((x) => x.id !== id && x.name === trimmed)) {
+      notification.toast(`已有同名仓库「${trimmed}」`)
+      return false
+    }
+    w.name = trimmed
     scheduleSave()
     return true
   }

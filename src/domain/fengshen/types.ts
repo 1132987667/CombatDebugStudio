@@ -254,8 +254,8 @@ export interface MetaDataVersion {
   updatedAt: string
 }
 
-/** meta 表：操作日志条目（每写操作一条） */
-export type OperationKind = 'create' | 'update' | 'delete' | 'import'
+/** meta 表：操作日志条目（每写操作一条）；rollback = 快照回滚 / 差异表重载回 configs（B2 交付闭环） */
+export type OperationKind = 'create' | 'update' | 'delete' | 'import' | 'rollback'
 export interface OperationLogEntry {
   id: string
   op: OperationKind

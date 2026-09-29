@@ -52,6 +52,7 @@
       <AttributeCenterView v-else-if="store.activeView === 'attributecenter'" />
       <LogsView v-else-if="store.activeView === 'logs'" />
       <PackagesView v-else-if="store.activeView === 'packages'" />
+      <SnapshotView v-else-if="store.activeView === 'snapshots'" />
     </main>
 
     <ConfirmDialog v-model="confirmReload" title="从项目文件重载"
@@ -73,6 +74,7 @@ import AuditView from '@/presentation/modules/fengshen/views/AuditView.vue'
 import HealthView from '@/presentation/modules/fengshen/views/HealthView.vue'
 import LogsView from '@/presentation/modules/fengshen/views/LogsView.vue'
 import PackagesView from '@/presentation/modules/fengshen/views/PackagesView.vue'
+import SnapshotView from '@/presentation/modules/fengshen/views/SnapshotView.vue'
 import ExpGoldView from '@/presentation/modules/fengshen/views/ExpGoldView.vue'
 import AffixRuleView from '@/presentation/modules/fengshen/views/AffixRuleView.vue'
 import EquipGeneratorView from '@/presentation/modules/fengshen/views/EquipGeneratorView.vue'
@@ -161,6 +163,7 @@ const SYSTEM_GROUPS: Array<{ label: string; items: Array<{ view: FengshenView; l
     label: '系统工具',
     items: [
       { view: 'packages', label: '数据包管理' },
+      { view: 'snapshots', label: '快照与对比' },
       { view: 'logs', label: '操作日志' },
     ],
   },

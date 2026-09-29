@@ -13,6 +13,10 @@ export type PackSub = 'pack' | 'storage' | 'shop'
             <TacticalSelect v-model="sortBy" :options="SORT_OPTIONS" placeholder="排序" class="xy-pack-sort" />
           </div>
 
+          <!-- 装备词条筛选 + 排序（仅作用于装备实例卡：非装备物品无词条可筛，保持不变） -->
+          <StatFilterPanel v-model:conditions="gearConditions" v-model:sorts="gearSorts"
+            :options="gearStatOptions" scope="gear" class="xy-pack-sf" />
+
           <Tabs v-model="cat" :tabs="PACK_TABS" size="sm" destroy-inactive class="xy-pack-sub">
             <template v-for="c in PACK_CATEGORIES" :key="c.id" #[c.id]>
               <div class="xy-pack-list xy-panel-tabs">
@@ -23,6 +27,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
                       <PackItemCard
                         v-for="card in group.cards" :key="card.key"
                         :item="card.item" :count="card.gear ? 1 : countOf(card.item.id)" :gear="card.gear"
+                        :conditions="gearConditions"
                         :selected="selectedId === card.item.id && !card.gear"
                         @open="(id, inst) => emit('open-detail', id, inst)" @use="emit('use', $event)"
                         @storage="emit('move-storage', $event)" @discard="emit('ask-card-discard', $event)"
@@ -32,7 +37,7 @@ export type PackSub = 'pack' | 'storage' | 'shop'
                     </div>
                   </div>
                 </template>
-                <EmptyState v-else>{{ keyword.trim() ? '未找到「' + keyword.trim() + '」相关物品' : '该分类下暂无物品' }}</EmptyState>
+                <EmptyState v-else>{{ emptyText }}</EmptyState>
               </div>
             </template>
           </Tabs>
@@ -110,6 +115,15 @@ import { usePackStore, type GearInstance } from '@/presentation/stores/packStore
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import type { XiyouCatalogItem, XiyouShopGood } from '../types'
 import PackItemCard from './PackItemCard.vue'
+import StatFilterPanel from './StatFilterPanel.vue'
+import {
+  collectStatOptions,
+  filterStatTargets,
+  makeStatTarget,
+  sortStatTargets,
+  type StatCondition,
+  type StatSortKey,
+} from '../statFilter'
 
 const props = defineProps<{
   /** 当前激活页签（v-model:sub，互斥由父级保证） */
@@ -216,6 +230,64 @@ const filtered = computed<XiyouCatalogItem[]>(() => {
   return list
 })
 
+/** 装备词条筛选条件（会话级，不落存档）与排序键（下标 0 主键 / 1 次键） */
+const gearConditions = ref<StatCondition[]>([])
+const gearSorts = ref<StatSortKey[]>([])
+
+/** 背包装备实例 + 属性投影（筛选/排序的唯一数据源，口径同装备池：核心 + 词条） */
+const gearStatEntries = computed(() =>
+  pack.packGearInstances().map((g) => ({
+    gear: g,
+    target: makeStatTarget({
+      id: g.instanceId,
+      name: pack.catalogById(g.itemId)?.name ?? g.itemId,
+      quality: g.quality,
+      rows: pack.instanceStats(g),
+    }),
+  })),
+)
+
+/** 候选属性：只收录当前背包装备真实出现过的属性 */
+const gearStatOptions = computed(() => collectStatOptions(gearStatEntries.value.map((e) => e.target)))
+
+/** 已筛选 + 排序的装备实例（全局序列，按 itemId 归组与跨条目重排都以它为序） */
+const orderedGearInstances = computed<GearInstance[]>(() => {
+  const targets = filterStatTargets(gearStatEntries.value.map((e) => e.target), gearConditions.value)
+  const ordered = sortStatTargets(targets, gearSorts.value)
+  const gearById = new Map(gearStatEntries.value.map((e) => [e.target.id, e.gear]))
+  return ordered.map((t) => gearById.get(t.id)).filter((g): g is GearInstance => g !== undefined)
+})
+
+/** 装备实例的全局排序位（instanceId → 序号；条目在序列中连续，取首个实例即代表该条目位次） */
+const gearRankById = computed<Map<string, number>>(() => {
+  const rank = new Map<string, number>()
+  orderedGearInstances.value.forEach((g, i) => rank.set(g.instanceId, i))
+  return rank
+})
+
+/** 已筛选 + 排序的装备实例，按 itemId 归组（供各分类 tab 直接取用） */
+const filteredGearByItem = computed<Map<string, GearInstance[]>>(() => {
+  const map = new Map<string, GearInstance[]>()
+  for (const gear of orderedGearInstances.value) {
+    const group = map.get(gear.itemId)
+    if (group) group.push(gear)
+    else map.set(gear.itemId, [gear])
+  }
+  return map
+})
+
+/** 装备条目在全局排序序列中的位次；非装备条目（或未命中筛选）排到末尾，保持原相对顺序 */
+function gearRankOf(itemId: string): number {
+  const first = filteredGearByItem.value.get(itemId)?.[0]
+  return first ? gearRankById.value.get(first.instanceId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER
+}
+
+/** 空态文案：筛选态优先提示「筛选」，其次关键词，最后才是分类本身为空 */
+const emptyText = computed(() => {
+  if (gearConditions.value.length > 0) return '没有符合筛选条件的装备'
+  return debouncedKeyword.value ? `未找到「${debouncedKeyword.value}」相关物品` : '该分类下暂无物品'
+})
+
 /** 背包卡片视图：普通物品一张聚合卡；装备逐实例展开（key=instanceId，不叠加） */
 interface PackCard {
   key: string
@@ -223,20 +295,38 @@ interface PackCard {
   gear?: GearInstance
 }
 
-/** 按二级分类过滤 + 按 type 分组（保持 items.json 顺序），装备组内逐实例展开 */
+/** 按二级分类过滤 + 按 type 分组（组顺序 = items.json 顺序），装备组内逐实例展开并应用词条筛选/排序 */
 function displayGroups(types: readonly string[]): Array<{ type: string; cards: PackCard[] }> {
-  const list = types.length === 0 ? filtered.value : filtered.value.filter((it) => types.includes(it.type))
-  const map = new Map<string, PackCard[]>()
-  for (const it of list) {
-    const gears = pack.gearById(it.id) ? pack.packGearInstances().filter((g) => g.itemId === it.id) : []
-    const cards = gears.length
-      ? gears.map((g) => ({ key: g.instanceId, item: it, gear: g }))
-      : [{ key: it.id, item: it }]
-    const group = map.get(it.type)
-    if (group) group.push(...cards)
-    else map.set(it.type, cards)
+  const base = types.length === 0 ? filtered.value : filtered.value.filter((it) => types.includes(it.type))
+
+  // 先按 type 归组（组顺序取目录序，不受排序影响，避免分组标题随排序跳动）
+  const byType = new Map<string, XiyouCatalogItem[]>()
+  for (const it of base) {
+    const group = byType.get(it.type)
+    if (group) group.push(it)
+    else byType.set(it.type, [it])
   }
-  return [...map.entries()].map(([type, cards]) => ({ type, cards }))
+
+  const out: Array<{ type: string; cards: PackCard[] }> = []
+  for (const [type, items] of byType) {
+    // NOTE: 组内装备条目按词条排序位重排，使「排序」跨不同装备条目生效（否则只在同 itemId 实例组内有序）。
+    // 无排序键时保持目录序；Array.sort 稳定，非装备条目（位次并列最大）维持原相对顺序。
+    const orderedItems =
+      gearSorts.value.length > 0 ? [...items].sort((a, b) => gearRankOf(a.id) - gearRankOf(b.id)) : items
+    const cards: PackCard[] = []
+    for (const it of orderedItems) {
+      if (!pack.gearById(it.id)) {
+        cards.push({ key: it.id, item: it })
+        continue
+      }
+      const insts = filteredGearByItem.value.get(it.id)
+      // 装备被筛选条件排除时不占位（否则会留下「空分组标题」）
+      if (!insts) continue
+      cards.push(...insts.map((g) => ({ key: g.instanceId, item: it, gear: g })))
+    }
+    if (cards.length > 0) out.push({ type, cards })
+  }
+  return out
 }
 
 function countOf(itemId: string): number {
@@ -379,6 +469,11 @@ function doBuy(g: XiyouShopGood): void {
   .t-select {
     width: 9rem;
   }
+}
+
+/* 词条筛选面板：工具栏下方独占一行 */
+.xy-pack-sf {
+  margin-bottom: var(--space-3);
 }
 
 .xy-pack-search {

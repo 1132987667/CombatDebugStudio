@@ -36,7 +36,10 @@
 
       <template #pets>
         <p class="xy-panel-hint">灵宠伴战提供输出属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
-        <p v-if="petRows.length === 0" class="xy-panel-hint">尚未获得灵宠——击败敌人有几率掉落个体（调试面板可发放）</p>
+        <!-- 灵宠词条筛选 + 排序（与装备池同一套面板） -->
+        <StatFilterPanel v-model:conditions="petConditions" v-model:sorts="petSorts"
+          :options="petStatOptions" scope="pet" class="xy-pet-filter" />
+        <p v-if="petRows.length === 0" class="xy-panel-hint">{{ petEmptyText }}</p>
         <div v-for="row in petRows" :key="row.inst.uid" class="xy-row-card">
           <div class="xy-row-top">
             <span class="xy-row-name">{{ row.name }}</span>
@@ -100,6 +103,8 @@ import {
   type PetMountInstance,
 } from '../petMount'
 import { PLAYER_BASE_ATTR_LABELS } from '@/domain/fengshen/player-config'
+import StatFilterPanel from './StatFilterPanel.vue'
+import { usePetMountFilter } from '../usePetMountFilter'
 
 const playerStore = usePlayerStore()
 const notification = useNotificationStore()
@@ -133,15 +138,30 @@ function setMateActive(name: string, active: boolean): void {
   notification.toast(active ? `${m.name} 已上阵` : `${m.name} 已下场`, 'success')
 }
 
-/** 灵宠个体行（petMountState 权威；持有列表 + 养成操作） */
+/** 灵宠个体行（petMountState 权威；持有列表 + 养成操作）——已应用词条筛选与排序 */
 interface PetRow {
   inst: PetMountInstance
   name: string
   statsText: string
 }
 
+/** 灵宠筛选状态（属性池与坐骑不同，独立一套条件与排序） */
+const {
+  conditions: petConditions,
+  sorts: petSorts,
+  options: petStatOptions,
+  visible: visiblePets,
+} = usePetMountFilter(() => petMountState.pets)
+
+/** 灵宠空态文案：筛选态优先提示「筛选」，否则才是真的没获得（口径同行囊 PackPane.emptyText） */
+const petEmptyText = computed(() =>
+  petConditions.value.length > 0
+    ? '没有符合筛选条件的灵宠'
+    : '尚未获得灵宠——击败敌人有几率掉落个体（调试面板可发放）',
+)
+
 const petRows = computed<PetRow[]>(() =>
-  petMountState.pets.map((inst) => ({
+  visiblePets.value.map((inst) => ({
     inst,
     name: individualById(inst.individualId)?.name ?? inst.individualId,
     statsText: petMountStats(inst)
@@ -180,6 +200,11 @@ function brk(inst: PetMountInstance): void {
   margin: 0 0 var(--space-3);
   font-size: var(--font-size-md);
   color: var(--xy-ink-4);
+}
+
+/* 灵宠筛选面板：与顶部提示之间留出间距 */
+.xy-pet-filter {
+  margin-bottom: var(--space-3);
 }
 
 /* 滚动容器 xy-panel-scroll 无预留：网格四周留 4px 兜住 xy-card hover 上移 1px（ mates/pets 两 tab 共用） */

@@ -37,7 +37,6 @@
           <!-- 右侧：背包装备池（独立滚动，可排序筛选） -->
           <div class="xy-gear-pool">
           <div class="xy-gear-toolbar">
-            <TacticalSelect v-model="sortBy" :options="SORT_OPTIONS" placeholder="排序" class="xy-gear-sort" />
             <div class="xy-gear-filters" role="group" aria-label="部位筛选">
               <span class="xy-gear-filter-cap">部位</span>
               <button v-for="f in SLOT_FILTERS" :key="f.value" type="button"
@@ -53,6 +52,11 @@
               </button>
             </div>
           </div>
+
+          <!-- 词条筛选 + 多键排序（条件仅作用于装备实例；候选属性取自当前池真实属性） -->
+          <StatFilterPanel v-model:conditions="gearConditions" v-model:sorts="gearSorts"
+            :options="gearStatOptions" scope="gear" class="xy-gear-sf" />
+
           <h5 class="xy-panel-hint xy-gear-pool-hint">背包装备 · 点击穿戴</h5>
           <div v-for="slot in visibleGearGroups" :key="slot" class="xy-gear-pool__group">
             <span class="xy-gear-pool__label">{{ GEAR_SLOT_LABELS[slot] }}</span>
@@ -116,6 +120,9 @@
 
       <template #treasure>
         <p class="xy-panel-hint">法宝主攻伐 · 神器主防守；战斗中灵能/护体充能满 3 层自动释放，不占行动回合</p>
+        <!-- 词条筛选 + 排序：条件非空时未获得的法宝（无属性）自然被排除 -->
+        <StatFilterPanel v-model:conditions="fabaoConditions" v-model:sorts="fabaoSorts"
+          :options="fabaoStatOptions" scope="fabao" class="xy-filter-row" />
         <section v-for="group in fabaoGroups" :key="group.kind" class="xy-fabao-group">
           <h5 class="xy-cave-sec">{{ group.label }}</h5>
           <div v-for="row in group.rows" :key="row.def.id" class="xy-row-card">
@@ -157,9 +164,11 @@
       <template #mount>
         <div class="xy-beast-tab xy-panel-tabs">
           <p class="xy-panel-hint">坐骑伴战提供防御属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
-          <p v-if="petMountState.mounts.length === 0" class="xy-panel-hint">尚未获得坐骑——击败敌人有几率掉落个体（调试面板可发放）</p>
+          <StatFilterPanel v-model:conditions="mountConditions" v-model:sorts="mountSorts"
+            :options="mountStatOptions" scope="mount" class="xy-filter-row" />
+          <p v-if="visibleMounts.length === 0" class="xy-panel-hint">{{ mountEmptyText }}</p>
           <div v-else class="xy-beast-grid">
-            <PetMountCard v-for="inst in petMountState.mounts" :key="inst.uid" :inst="inst" kind="mount" />
+            <PetMountCard v-for="inst in visibleMounts" :key="inst.uid" :inst="inst" kind="mount" />
           </div>
         </div>
       </template>
@@ -167,9 +176,11 @@
       <template #pet>
         <div class="xy-beast-tab xy-panel-tabs">
           <p class="xy-panel-hint">宠物伴战提供输出属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
-          <p v-if="petMountState.pets.length === 0" class="xy-panel-hint">尚未获得宠物——击败敌人有几率掉落个体（调试面板可发放）</p>
+          <StatFilterPanel v-model:conditions="petConditions" v-model:sorts="petSorts"
+            :options="petStatOptions" scope="pet" class="xy-filter-row" />
+          <p v-if="visiblePets.length === 0" class="xy-panel-hint">{{ petEmptyText }}</p>
           <div v-else class="xy-beast-grid">
-            <PetMountCard v-for="inst in petMountState.pets" :key="inst.uid" :inst="inst" kind="pet" />
+            <PetMountCard v-for="inst in visiblePets" :key="inst.uid" :inst="inst" kind="pet" />
           </div>
         </div>
       </template>
@@ -191,12 +202,23 @@ import {
 import { EQUIPMENT_SLOTS } from '@/shared/utils/equipmentAffix'
 import { petMountState } from '../petMount'
 import PetMountCard from './PetMountCard.vue'
+import { usePetMountFilter } from '../usePetMountFilter'
 import { equipQualityClass, qualityClass, qualityLabel } from '../quality'
 import { STAR_MAX, starLabel } from '../caveLogic'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { compareAttributeDisplayOrder } from '@/domain/fengshen/attribute-dictionary'
 import { gearTooltipData, type GearTooltipView } from '../gearTooltip'
 import GearDetailDialog from './GearDetailDialog.vue'
+import StatFilterPanel from './StatFilterPanel.vue'
+import {
+  collectStatOptions,
+  filterStatTargets,
+  makeStatTarget,
+  sortStatTargets,
+  type StatCondition,
+  type StatSortKey,
+  type StatTarget,
+} from '../statFilter'
 import {
   FABAO_MAX_SKILL_RANK,
   fabaoDefs,
@@ -222,28 +244,91 @@ interface FabaoRow {
   stats: ReturnType<typeof fabaoInstanceStats>
 }
 
+/** 法宝词条筛选条件（会话级）与排序键 */
+const fabaoConditions = ref<StatCondition[]>([])
+const fabaoSorts = ref<StatSortKey[]>([])
+
+/** 法宝行 → 可筛选实体（系数为百分点 pct，主/副属性为固定值 flat；未获得无属性行） */
+function fabaoTarget(row: FabaoRow): StatTarget {
+  return makeStatTarget({
+    id: row.def.id,
+    name: row.def.name,
+    quality: row.inst?.quality ?? 0,
+    rows: row.stats.map((s) => ({
+      attribute: s.attr,
+      modifierType: row.def.coefficient.attr === s.attr ? ('percent' as const) : ('flat' as const),
+      value: s.value,
+    })),
+  })
+}
+
+/** 全部法宝行（未筛选；持有判定与出战态在此集中） */
+const allFabaoRows = computed<FabaoRow[]>(() =>
+  fabaoDefs.map((def): FabaoRow => {
+    const owned = fabaoState.instances.filter((i) => i.defId === def.id)
+    const inst = owned[0]
+    return {
+      def,
+      inst,
+      count: owned.length,
+      equipped: inst
+        ? fabaoState[def.kind === 'fabao' ? 'equippedFabao' : 'equippedRelic'] === inst.uid
+        : false,
+      stats: inst ? fabaoInstanceStats(def, inst) : [],
+    }
+  }),
+)
+
+/** 候选属性：只收录已获得实例真实出现的属性 */
+const fabaoStatOptions = computed(() => collectStatOptions(allFabaoRows.value.map((r) => fabaoTarget(r))))
+
+/** 已筛选 + 排序的法宝行（条件非空时未获得的行自然被排除） */
+const filteredFabaoRows = computed<FabaoRow[]>(() => {
+  const entries = allFabaoRows.value.map((row) => ({ row, target: fabaoTarget(row) }))
+  const targets = filterStatTargets(entries.map((e) => e.target), fabaoConditions.value)
+  const ordered = sortStatTargets(targets, fabaoSorts.value)
+  const rowById = new Map(entries.map((e) => [e.target.id, e.row]))
+  return ordered.map((t) => rowById.get(t.id)).filter((r): r is FabaoRow => r !== undefined)
+})
+
+/** 法宝页签分组（法宝 / 神器），行已应用筛选与排序 */
 const fabaoGroups = computed(() => {
   const build = (kind: 'fabao' | 'relic', label: string) => ({
     kind,
     label,
-    rows: fabaoDefs
-      .filter((d) => d.kind === kind)
-      .map((def): FabaoRow => {
-        const owned = fabaoState.instances.filter((i) => i.defId === def.id)
-        const inst = owned[0]
-        return {
-          def,
-          inst,
-          count: owned.length,
-          equipped: inst
-            ? fabaoState[kind === 'fabao' ? 'equippedFabao' : 'equippedRelic'] === inst.uid
-            : false,
-          stats: inst ? fabaoInstanceStats(def, inst) : [],
-        }
-      }),
+    rows: filteredFabaoRows.value.filter((r) => r.def.kind === kind),
   })
   return [build('fabao', '法宝'), build('relic', '神器')]
 })
+
+/* ── 坐骑 / 宠物列表筛选（属性池不同，各自独立一套条件与排序） ── */
+const {
+  conditions: mountConditions,
+  sorts: mountSorts,
+  options: mountStatOptions,
+  visible: visibleMounts,
+} = usePetMountFilter(() => petMountState.mounts)
+
+const {
+  conditions: petConditions,
+  sorts: petSorts,
+  options: petStatOptions,
+  visible: visiblePets,
+} = usePetMountFilter(() => petMountState.pets)
+
+/** 坐骑空态文案：筛选态优先提示「筛选」，否则才是真的没获得（口径同行囊 PackPane.emptyText） */
+const mountEmptyText = computed(() =>
+  mountConditions.value.length > 0
+    ? '没有符合筛选条件的坐骑'
+    : '尚未获得坐骑——击败敌人有几率掉落个体（调试面板可发放）',
+)
+
+/** 宠物空态文案：同上 */
+const petEmptyText = computed(() =>
+  petConditions.value.length > 0
+    ? '没有符合筛选条件的宠物'
+    : '尚未获得宠物——击败敌人有几率掉落个体（调试面板可发放）',
+)
 
 function toggleEquip(row: FabaoRow): void {
   if (row.inst) equipFabao(row.inst.uid)
@@ -283,16 +368,38 @@ const GEAR_SLOT_KEYS: GearSlotKey[] = [...EQUIPMENT_SLOTS]
 /** 背包装备实例视图 = 悬浮卡输入视图（属性行已从卡面移除，明细走悬浮/详情弹窗） */
 type GearPackView = GearTooltipView
 
-/** 背包装备排序键 */
-type GearSortKey = 'default' | 'rarity-desc' | 'rarity-asc' | 'name'
-const sortBy = ref<GearSortKey>('default')
+/** 词条筛选条件（会话级，不落存档）与排序键（下标 0 主键 / 1 次键） */
+const gearConditions = ref<StatCondition[]>([])
+const gearSorts = ref<StatSortKey[]>([])
 
-const SORT_OPTIONS = [
-  { value: 'default', label: '默认排序' },
-  { value: 'rarity-desc', label: '品阶降序' },
-  { value: 'rarity-asc', label: '品阶升序' },
-  { value: 'name', label: '名称' },
-]
+/** 背包池条目：展示视图 + 属性投影（筛选/排序共用的唯一数据源） */
+interface GearPoolEntry {
+  view: GearPackView
+  target: StatTarget
+}
+
+const gearPool = computed<GearPoolEntry[]>(() =>
+  pack.packGearInstances().map((g) => {
+    const def = pack.gearById(g.itemId)
+    const view: GearPackView = { ...g, name: def?.name ?? g.itemId, rarity: def?.rarity ?? 1 }
+    return {
+      view,
+      // 属性口径与悬浮卡一致：核心属性（含强化/升星倍率）+ 主要词条 + 附加词条
+      target: makeStatTarget({ id: g.instanceId, name: view.name, quality: g.quality, rows: pack.instanceStats(g) }),
+    }
+  }),
+)
+
+/** 候选属性：只收录当前池里真实出现过的属性（避免筛出必然为空的条件） */
+const gearStatOptions = computed(() => collectStatOptions(gearPool.value.map((e) => e.target)))
+
+/** 已筛选 + 排序的背包池视图（条件为空时保持原顺序） */
+const filteredGearPool = computed<GearPackView[]>(() => {
+  const targets = filterStatTargets(gearPool.value.map((e) => e.target), gearConditions.value)
+  const ordered = sortStatTargets(targets, gearSorts.value)
+  const viewById = new Map(gearPool.value.map((e) => [e.target.id, e.view]))
+  return ordered.map((t) => viewById.get(t.id)).filter((v): v is GearPackView => v !== undefined)
+})
 
 /** 品质筛选：0 全部，1-5 凡/精/超/绝/神（按装备实例 quality，与品阶正交） */
 const QUALITY_FILTERS = [
@@ -317,22 +424,11 @@ const visibleGearGroups = computed(() =>
   GEAR_SLOT_KEYS.filter((s) => slotFilter.value === 'all' || s === slotFilter.value),
 )
 
-/** 背包中该槽位可穿戴的装备实例（应用品质筛选 + 排序） */
+/** 背包中该槽位可穿戴的装备实例（应用词条筛选/排序 + 品质筛选） */
 function gearInPack(slot: GearSlotKey): GearPackView[] {
-  const list = pack
-    .packGearInstances()
-    .filter((g) => pack.gearById(g.itemId)?.slot === slot)
-    .filter((g) => qualityFilter.value === 0 || g.quality === qualityFilter.value)
-    .map((g) => ({
-      ...g,
-      name: pack.gearById(g.itemId)?.name ?? g.itemId,
-      rarity: pack.gearById(g.itemId)?.rarity ?? 1,
-    }))
-  const by = sortBy.value
-  if (by === 'rarity-desc') list.sort((a, b) => b.rarity - a.rarity)
-  else if (by === 'rarity-asc') list.sort((a, b) => a.rarity - b.rarity)
-  else if (by === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'zh'))
-  return list
+  return filteredGearPool.value.filter(
+    (g) => pack.gearById(g.itemId)?.slot === slot && (qualityFilter.value === 0 || g.quality === qualityFilter.value),
+  )
 }
 
 /** 已穿戴装备提供的总属性（equippedStats 按 attribute+modifierType 聚合；顺序=字典权威序，基础六维在前） */
@@ -397,7 +493,8 @@ const tooltipData = ref<TooltipData | null>(null)
 function onEnter(e: MouseEvent, g: GearPackView | null): void {
   if (!g) return
   triggerRect.value = (e.currentTarget as HTMLElement)?.getBoundingClientRect() ?? null
-  tooltipData.value = gearTooltipData(pack, GEAR_SLOT_LABELS, g)
+  // 传入当前筛选条件：命中词条行在悬浮卡内高亮（无条件下不高亮）
+  tooltipData.value = gearTooltipData(pack, GEAR_SLOT_LABELS, g, gearConditions.value)
   tooltipVisible.value = true
 }
 
@@ -666,8 +763,14 @@ onBeforeUnmount(() => {
   }
 }
 
-.xy-gear-sort {
-  flex-shrink: 0;
+/* 词条筛选面板：工具栏下方独占一行，与「背包装备」标题之间留出间距 */
+.xy-gear-sf {
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+/* 词条筛选面板（法宝 / 坐骑 / 宠物 tab 共用）：内容顶部独占一行 */
+.xy-filter-row {
+  margin-bottom: var(--space-3);
 }
 
 .xy-gear-filters {

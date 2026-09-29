@@ -29,6 +29,7 @@
         :value="innerText"
         :placeholder="placeholder"
         :disabled="disabled"
+        :maxlength="maxlength"
         :aria-label="ariaLabel ?? label ?? placeholder"
         :aria-invalid="!!errorText || undefined"
         :aria-required="required || undefined"
@@ -71,6 +72,12 @@ interface Props {
   size?: TInputSize
   /** 覆盖 aria-label（默认取 label 或 placeholder） */
   ariaLabel?: string
+  /**
+   * 最大输入长度（透传到原生 input）
+   * NOTE: 必须声明为 prop —— 本组件单根节点且未 v-bind="$attrs"，
+   *       不声明的话父级传的 maxlength 会落到根 div 上，input 实际不受限。
+   */
+  maxlength?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {

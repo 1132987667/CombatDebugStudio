@@ -9,6 +9,7 @@ import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import type { GearInstance } from '@/presentation/stores/packStore'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { qualityColor, qualityLabel, qualityOf } from './quality'
+import type { StatCondition } from './statFilter'
 
 /** 悬浮卡组装所需的最小 store 接口（避免整 store 类型循环依赖） */
 export interface GearTooltipSource {
@@ -20,10 +21,24 @@ export interface GearTooltipSource {
 /** 悬浮卡输入的装备实例视图（含装备定义名与品级） */
 export type GearTooltipView = GearInstance & { name: string; rarity: number }
 
+/** 属性行是否命中筛选条件：任一条件在该属性同口径上成立即高亮（与列表过滤同口径；'has' 恒成立） */
+function rowAccented(
+  row: EquipmentStatEntry,
+  conditions: readonly StatCondition[],
+): boolean {
+  return conditions.some(
+    (cond) =>
+      cond.attribute === row.attribute &&
+      (row.modifierType === 'percent' ? 'pct' : 'flat') === cond.flavor &&
+      (cond.op === 'has' || (cond.op === 'gte' ? row.value >= cond.value : row.value <= cond.value)),
+  )
+}
+
 export function gearTooltipData(
   pack: GearTooltipSource,
   slotLabels: Record<string, string>,
   g: GearTooltipView,
+  conditions: readonly StatCondition[] = [],
 ): TooltipData {
   const def = pack.gearById(g.itemId)
   const groups = pack.instanceStatGroups(g)
@@ -31,6 +46,7 @@ export function gearTooltipData(
     list.map((s) => ({
       label: attrShortName(s.attribute),
       value: `${s.value >= 0 ? '+' : ''}${s.value}${s.modifierType === 'percent' ? '%' : ''}`,
+      accent: conditions.length > 0 && rowAccented(s, conditions),
     }))
   const section = (label: string) => ({ label, value: '', section: true })
   const grouped = (label: string, list: EquipmentStatEntry[]) =>

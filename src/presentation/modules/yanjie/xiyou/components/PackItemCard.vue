@@ -56,6 +56,7 @@ import IconMoney from '~icons/app/money'
 import { usePackStore, GEAR_SLOT_LABELS, type GearInstance } from '@/presentation/stores/packStore'
 import { equipQualityClass, qualityClass, qualityColor, qualityLabel, qualityName, qualityOf } from '../quality'
 import { gearTooltipData } from '../gearTooltip'
+import type { StatCondition } from '../statFilter'
 import type { XiyouCatalogItem } from '../types'
 
 const props = defineProps<{
@@ -66,6 +67,8 @@ const props = defineProps<{
   inStorage?: boolean
   /** 装备实例模式：逐件独立卡（品质/强化按实例展示，不显示数量，操作回传 instanceId） */
   gear?: GearInstance
+  /** 当前属性筛选条件（仅装备实例模式）：用于悬浮卡内命中词条高亮 */
+  conditions?: StatCondition[]
 }>()
 
 const emit = defineEmits<{
@@ -86,7 +89,7 @@ const triggerRect = ref<DOMRect | null>(null)
 
 const tooltipData = computed<TooltipData>(() => {
   if (props.gear) {
-    return gearTooltipData(pack, GEAR_SLOT_LABELS, { ...props.gear, name: props.item.name, rarity: props.item.rarity })
+    return gearTooltipData(pack, GEAR_SLOT_LABELS, { ...props.gear, name: props.item.name, rarity: props.item.rarity }, props.conditions ?? [])
   }
   return {
     name: props.item.name,

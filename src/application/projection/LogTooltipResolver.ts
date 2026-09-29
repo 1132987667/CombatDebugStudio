@@ -43,6 +43,8 @@ export interface TooltipDetailRow {
   value: string
   /** 分组标题行（如装备的「核心属性」）：value 忽略，整行渲染为小节头 */
   section?: boolean
+  /** 高亮行（如命中筛选条件的词条）：整行强调色，弱化当前品质对比等场景 */
+  accent?: boolean
 }
 
 /** Tooltip 卡片数据 */

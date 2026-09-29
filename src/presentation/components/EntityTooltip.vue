@@ -33,7 +33,7 @@
         <div v-if="data.details.length > 0" class="tooltip-details">
           <template v-for="(row, idx) in data.details" :key="idx">
             <div v-if="row.section" class="detail-section">{{ row.label }}</div>
-            <div v-else class="detail-row">
+            <div v-else class="detail-row" :class="{ 'is-accent': row.accent }">
               <span class="detail-label">{{ row.label }}</span>
               <span class="detail-value">{{ row.value }}</span>
             </div>
@@ -276,6 +276,17 @@ const tooltipStyle = computed(() => {
 
   &:last-child {
     border-bottom: none;
+  }
+
+  /* 命中筛选条件的词条行（青色点缀，延续工具面板的交互高亮色） */
+  &.is-accent {
+    .detail-label {
+      color: var(--color-info);
+    }
+
+    .detail-value {
+      color: var(--color-info);
+    }
   }
 }
 

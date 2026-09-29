@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "物品主键索引：全部物品的唯一 ID 注册表。所有掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须在本表存在，零断裂引用为硬性约束。ID 命名前缀：mat_ 材料 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / wash_ 洗炼 / reforge_ 重铸 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装 / wp_ar_ac_ 装备（wp 武器 / ar 衣甲 / ac 饰品，ac 按六槽细分为 helmet/boots/charm/glove）。装备详情（stats/materials/cost 等）统一由 configs/equipment/equipment.json 承载，本表仅保留装备 ID 注册。装备经 equipment.json legacyIds 映射。",
+  "description": "物品主键索引：非装备物品的唯一 ID 注册表（材料/丹药/图纸/货币/消耗品等）。掉落表（enemies）与制造表（equipment/cave）引用的 itemId 必须存在于「本表 ∪ configs/equipment/equipment.json」，零断裂引用为硬性约束（校验见 tests/unit/xiyou-drop-references.test.ts）。ID 命名前缀：mat_ 材料 / elix_ 丹药 / frag_ 碎片 / ess_ 灵气 / curr_ 货币 / bp_ 图纸 / star_ 升星 / wash_ 洗炼 / reforge_ 重铸 / decomp_ 分解 / enh_ 强化 / cons_ 符箓 / break_ 突破 / exp_ 经验 / misc_ 杂物 / key_ 钥匙 / quest_ 任务 / spirit_ 灵气·器灵 / set_brand_ 套装。装备（wp/ar/ac/hd/bt/hf/jz_ 前缀）已 itemId 化整体退出本表：定义与 rarity 权威均在 configs/equipment/equipment.json，本表不注册装备 ID。",
   "items": [
     {
       "id": "mat_taomu",

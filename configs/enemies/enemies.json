@@ -630,14 +630,6 @@
         "probability": 0.6
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.6
-      },
-      {
-        "itemId": "bp_t1_ar",
-        "probability": 0.6
-      },
-      {
         "itemId": "mat_wudao_dan",
         "probability": 0.1
       },
@@ -1092,6 +1084,26 @@
       {
         "itemId": "wp_sp_01",
         "probability": 0.25
+      },
+      {
+        "itemId": "bp_immortal_01",
+        "quantity": 1,
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_immortal_02",
+        "quantity": 1,
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_immortal_03",
+        "quantity": 1,
+        "probability": 0.5
+      },
+      {
+        "itemId": "bp_immortal_04",
+        "quantity": 1,
+        "probability": 0.5
       }
     ],
     "money": [
@@ -1218,6 +1230,11 @@
       {
         "itemId": "bt_t4_03",
         "probability": 0.2
+      },
+      {
+        "itemId": "bp_legend_03",
+        "quantity": 1,
+        "probability": 0.35
       }
     ],
     "money": [
@@ -1339,6 +1356,11 @@
       {
         "itemId": "hd_t4_war_02",
         "probability": 0.2
+      },
+      {
+        "itemId": "bp_legend_01",
+        "quantity": 1,
+        "probability": 0.35
       }
     ],
     "money": [
@@ -1452,6 +1474,11 @@
       {
         "itemId": "bt_t4_02",
         "probability": 0.2
+      },
+      {
+        "itemId": "bp_legend_02",
+        "quantity": 1,
+        "probability": 0.35
       }
     ],
     "money": [
@@ -1619,6 +1646,16 @@
       {
         "itemId": "wp_sb01",
         "probability": 0.3
+      },
+      {
+        "itemId": "bp_sp_01",
+        "quantity": 1,
+        "probability": 0.3
+      },
+      {
+        "itemId": "mat_sp_03",
+        "quantity": 1,
+        "probability": 0.5
       }
     ],
     "phases": [
@@ -1710,6 +1747,16 @@
       {
         "itemId": "mat_tianxiewangdu",
         "probability": 0.3
+      },
+      {
+        "itemId": "bp_sp_02",
+        "quantity": 1,
+        "probability": 0.3
+      },
+      {
+        "itemId": "mat_sp_04",
+        "quantity": 1,
+        "probability": 0.5
       }
     ],
     "phases": [
@@ -1888,6 +1935,16 @@
       {
         "itemId": "mat_gangjing",
         "probability": 0.3
+      },
+      {
+        "itemId": "bp_sp_03",
+        "quantity": 1,
+        "probability": 0.3
+      },
+      {
+        "itemId": "mat_sp_05",
+        "quantity": 1,
+        "probability": 0.5
       }
     ],
     "phases": [
@@ -2142,10 +2199,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.5
-      },
-      {
         "itemId": "enh_stone",
         "probability": 0.3
       },
@@ -2160,22 +2213,6 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.15
-      },
-      {
-        "itemId": "bp_t1_hl",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_bs",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_ch",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_rg",
-        "probability": 0.2
       }
     ],
     "money": [
@@ -2235,10 +2272,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.5
-      },
-      {
         "itemId": "enh_stone",
         "probability": 0.3
       },
@@ -2253,22 +2286,6 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.15
-      },
-      {
-        "itemId": "bp_t1_hl",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_bs",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_ch",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_rg",
-        "probability": 0.2
       }
     ],
     "money": [
@@ -2328,10 +2345,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.5
-      },
-      {
         "itemId": "enh_stone",
         "probability": 0.3
       },
@@ -2346,22 +2359,6 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.15
-      },
-      {
-        "itemId": "bp_t1_hl",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_bs",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_ch",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_rg",
-        "probability": 0.2
       }
     ],
     "money": [
@@ -2714,10 +2711,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.5
-      },
-      {
         "itemId": "enh_stone",
         "probability": 0.3
       },
@@ -2732,22 +2725,6 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.15
-      },
-      {
-        "itemId": "bp_t1_hl",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_bs",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_ch",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_rg",
-        "probability": 0.2
       }
     ],
     "money": [
@@ -2908,10 +2885,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.5
-      },
-      {
         "itemId": "enh_stone",
         "probability": 0.3
       },
@@ -2925,22 +2898,6 @@
       },
       {
         "itemId": "exp_pill_small",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_hl",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_bs",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_ch",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_rg",
         "probability": 0.2
       }
     ],
@@ -3098,10 +3055,6 @@
         "probability": 0.3
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.5
-      },
-      {
         "itemId": "enh_stone",
         "probability": 0.3
       },
@@ -3116,22 +3069,6 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.15
-      },
-      {
-        "itemId": "bp_t1_hl",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_bs",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_ch",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_rg",
-        "probability": 0.2
       }
     ],
     "money": [
@@ -3187,10 +3124,6 @@
         "probability": 0.6
       },
       {
-        "itemId": "bp_t1_wp",
-        "probability": 0.5
-      },
-      {
         "itemId": "enh_stone",
         "probability": 0.3
       },
@@ -3205,22 +3138,6 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.15
-      },
-      {
-        "itemId": "bp_t1_hl",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_bs",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_ch",
-        "probability": 0.2
-      },
-      {
-        "itemId": "bp_t1_rg",
-        "probability": 0.2
       }
     ],
     "money": [
@@ -3509,10 +3426,7 @@
         "itemId": "mat_dixing_tu",
         "probability": 1
       },
-      {
-        "itemId": "mat_sp_04",
-        "probability": 0.5
-      },
+
       {
         "itemId": "mat_wudao_dan",
         "probability": 0.1
@@ -3631,10 +3545,7 @@
         "itemId": "mat_heifeng_ling",
         "probability": 1
       },
-      {
-        "itemId": "mat_sp_03",
-        "probability": 0.5
-      },
+
       {
         "itemId": "mat_wudao_dan",
         "probability": 0.1
@@ -3950,449 +3861,6 @@
       "intro": "九齿钉耙，横扫万妖。你既来此，便做我的耙下之鬼。",
       "outro": "耙虽折，妖帅犹在。万妖国的战鼓，永不停歇。",
       "deathQuote": "九齿……钉耙……终归……尘土……"
-    }
-  },
-  {
-    "id": "enemy_001",
-    "name": "旧花妖",
-    "level": 1,
-    "role": "xiaoyao",
-    "stats": {
-      "maxHealth": 45,
-      "attack": 14,
-      "defense": 3,
-      "speed": 7,
-      "hitValue": 10,
-      "dodgeValue": 2,
-      "critRate": 5,
-      "critDamage": 120,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_001_small"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 2,
-        "probability": 0.8
-      },
-      {
-        "itemId": "elix_001",
-        "probability": 0.2
-      }
-    ],
-    "money": [
-      5,
-      15
-    ],
-    "exp": [
-      10,
-      20
-    ]
-  },
-  {
-    "id": "enemy_002",
-    "name": "旧草精",
-    "level": 2,
-    "role": "xiaoyao",
-    "stats": {
-      "maxHealth": 63,
-      "attack": 21,
-      "defense": 4,
-      "speed": 8,
-      "hitValue": 12,
-      "dodgeValue": 3,
-      "critRate": 5,
-      "critDamage": 121,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_002_small"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "probability": 0.7
-      },
-      {
-        "itemId": "mat_cushi",
-        "probability": 0.3
-      }
-    ],
-    "money": [
-      6,
-      18
-    ],
-    "exp": [
-      12,
-      22
-    ]
-  },
-  {
-    "id": "enemy_004",
-    "name": "旧食人花妖",
-    "level": 4,
-    "role": "xiaoyao",
-    "stats": {
-      "maxHealth": 99,
-      "attack": 36,
-      "defense": 8,
-      "speed": 9,
-      "hitValue": 16,
-      "dodgeValue": 5,
-      "critRate": 5,
-      "critDamage": 122,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_004_small"
-    ],
-    "passiveSkillIds": [
-      "skill_enemy_004_passive"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 3,
-        "probability": 0.75
-      },
-      {
-        "itemId": "mat_tongjing",
-        "probability": 0.25
-      }
-    ],
-    "money": [
-      8,
-      22
-    ],
-    "exp": [
-      16,
-      28
-    ]
-  },
-  {
-    "id": "enemy_005",
-    "name": "旧巨石精",
-    "level": 5,
-    "role": "xiaoyao",
-    "stats": {
-      "maxHealth": 117,
-      "attack": 44,
-      "defense": 10,
-      "speed": 10,
-      "hitValue": 18,
-      "dodgeValue": 5,
-      "critRate": 6,
-      "critDamage": 122,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_005_small"
-    ],
-    "passiveSkillIds": [
-      "skill_enemy_005_passive"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_cushi",
-        "quantity": 3,
-        "probability": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "probability": 0.3
-      }
-    ],
-    "money": [
-      9,
-      24
-    ],
-    "exp": [
-      18,
-      30
-    ]
-  },
-  {
-    "id": "enemy_006",
-    "name": "旧山魈",
-    "level": 5,
-    "role": "xiaoyao",
-    "stats": {
-      "maxHealth": 117,
-      "attack": 44,
-      "defense": 10,
-      "speed": 10,
-      "hitValue": 18,
-      "dodgeValue": 5,
-      "critRate": 6,
-      "critDamage": 122,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_006_small"
-    ],
-    "passiveSkillIds": [
-      "skill_enemy_006_passive"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 4,
-        "probability": 0.65
-      },
-      {
-        "itemId": "enh_stone",
-        "probability": 0.05
-      }
-    ],
-    "money": [
-      9,
-      24
-    ],
-    "exp": [
-      18,
-      30
-    ]
-  },
-  {
-    "id": "enemy_007",
-    "name": "旧花妖王",
-    "level": 8,
-    "role": "yaokui",
-    "stats": {
-      "maxHealth": 1370,
-      "attack": 97,
-      "defense": 19,
-      "speed": 22,
-      "hitValue": 25,
-      "dodgeValue": 11,
-      "critRate": 6,
-      "critDamage": 124,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_007_small",
-      "skill_enemy_007_ultimate"
-    ],
-    "passiveSkillIds": [
-      "skill_enemy_007_passive"
-    ],
-    "affixPool": {
-      "buffTier": 1,
-      "count": 1
-    },
-    "drops": [
-      {
-        "itemId": "mat_taomu",
-        "quantity": 5,
-        "probability": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "probability": 0.3
-      }
-    ],
-    "money": [
-      56,
-      88
-    ],
-    "exp": [
-      92,
-      128
-    ]
-  },
-  {
-    "id": "enemy_010",
-    "name": "旧幼年蟹将",
-    "level": 4,
-    "role": "yaobing",
-    "stats": {
-      "maxHealth": 119,
-      "attack": 40,
-      "defense": 9,
-      "speed": 10,
-      "hitValue": 16,
-      "dodgeValue": 5,
-      "critRate": 5,
-      "critDamage": 122,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_010_small"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_beike",
-        "probability": 0.7
-      },
-      {
-        "itemId": "elix_001",
-        "probability": 0.3
-      }
-    ],
-    "money": [
-      9,
-      24
-    ],
-    "exp": [
-      18,
-      31
-    ],
-    "affixPool": {
-      "buffTier": 1,
-      "count": 1
-    }
-  },
-  {
-    "id": "enemy_013",
-    "name": "旧铁甲蟹将",
-    "level": 7,
-    "role": "yaobing",
-    "stats": {
-      "maxHealth": 184,
-      "attack": 64,
-      "defense": 14,
-      "speed": 13,
-      "hitValue": 22,
-      "dodgeValue": 8,
-      "critRate": 6,
-      "critDamage": 123,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_013_small"
-    ],
-    "passiveSkillIds": [
-      "skill_enemy_013_passive"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_danshuiyu",
-        "quantity": 3,
-        "probability": 0.7
-      },
-      {
-        "itemId": "elix_003",
-        "probability": 0.3
-      }
-    ],
-    "money": [
-      12,
-      31
-    ],
-    "exp": [
-      24,
-      39
-    ],
-    "affixPool": {
-      "buffTier": 1,
-      "count": 1
-    }
-  },
-  {
-    "id": "enemy_015",
-    "name": "旧虾兵统领",
-    "level": 10,
-    "role": "yaobing",
-    "stats": {
-      "maxHealth": 248,
-      "attack": 89,
-      "defense": 19,
-      "speed": 16,
-      "hitValue": 28,
-      "dodgeValue": 10,
-      "critRate": 7,
-      "critDamage": 125,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_015_small",
-      "skill_enemy_015_ultimate"
-    ],
-    "passiveSkillIds": [
-      "skill_enemy_015_passive"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_beike",
-        "quantity": 5,
-        "probability": 0.7
-      },
-      {
-        "itemId": "elix_004",
-        "probability": 0.3
-      }
-    ],
-    "money": [
-      15,
-      37
-    ],
-    "exp": [
-      31,
-      46
-    ],
-    "affixPool": {
-      "buffTier": 1,
-      "count": 1
-    }
-  },
-  {
-    "id": "enemy_016",
-    "name": "旧金甲蟹将",
-    "level": 11,
-    "role": "yaobing",
-    "stats": {
-      "maxHealth": 270,
-      "attack": 96,
-      "defense": 22,
-      "speed": 17,
-      "hitValue": 30,
-      "dodgeValue": 11,
-      "critRate": 7,
-      "critDamage": 125,
-      "maxEnergy": 150,
-      "energyInit": 25
-    },
-    "skillIds": [
-      "skill_enemy_016_small",
-      "skill_enemy_016_ultimate"
-    ],
-    "passiveSkillIds": [
-      "skill_enemy_016_passive"
-    ],
-    "drops": [
-      {
-        "itemId": "mat_danshuiyu",
-        "quantity": 4,
-        "probability": 0.65
-      },
-      {
-        "itemId": "mat_tongjing",
-        "quantity": 2,
-        "probability": 0.35
-      }
-    ],
-    "money": [
-      17,
-      40
-    ],
-    "exp": [
-      33,
-      48
-    ],
-    "affixPool": {
-      "buffTier": 1,
-      "count": 1
     }
   },
   {

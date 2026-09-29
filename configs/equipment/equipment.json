@@ -207,7 +207,7 @@
     "cost": 280,
     "craftable": true,
     "blueprintId": "bp_sp_01",
-    "source": "妖尊（特殊装备制造）",
+    "source": "花妖王·千瓣掉落图纸后打造（火灵珠同源）",
     "description": "火灵淬刃，出鞘烈焰焚身。",
     "value": 2000
   },
@@ -237,7 +237,7 @@
     "cost": 300,
     "craftable": true,
     "blueprintId": "bp_sp_02",
-    "source": "妖尊（特殊装备制造）",
+    "source": "迷雾妖主·幻影掉落图纸后打造（风灵珠同源）",
     "description": "风灵织就，身轻如燕，御风而行。",
     "value": 2000
   },
@@ -267,7 +267,7 @@
     "cost": 260,
     "craftable": true,
     "blueprintId": "bp_sp_03",
-    "source": "妖尊（特殊装备制造）",
+    "source": "山神·岩坚掉落图纸后打造（地灵珠同源）",
     "description": "地灵护体，厚德载物，百害不侵。",
     "value": 2000
   },
@@ -2605,7 +2605,6 @@
     "materials": [],
     "cost": 0,
     "craftable": false,
-    "blueprintId": "bp_sp_04",
     "legacyIds": [],
     "source": "黑风老妖掉落",
     "description": "刃饮魂魄，出鞘有声，闻者胆寒。",

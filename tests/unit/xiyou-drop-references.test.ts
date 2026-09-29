@@ -4,9 +4,9 @@
  *       装备获取契约（C 方案分层）：常规件图纸掉落者可达，专属件被 boss 直接掉落。
  * 背景：2026-09-13 落地 BOSS 首杀装备（场景 BOSS rare 掉落，现已并入 enemies.json）与 bp_sp_02~04 图纸拆分，
  *       此前 bp_sp_01 被三件装备共用导致风灵袍/地灵护符造不出正确图纸。
- *       2026-09-29 材料产出审计：legend/immortal/sp 图纸的掉落者曾无战斗入口，
- *       专属装备改为 boss 直落成品、通用图纸迁到可达 major boss，死图纸从掉落摘除；
- *       同日隐藏妖王（boss_hidden_*）与万妖国（boss_wanyao_*）接入场景，全部 boss 可达。
+ *       2026-09-29 材料产出审计：legend/immortal/sp 图纸的掉落者曾无战斗入口，专属装备改为 boss 直落成品；
+ *       同日隐藏妖王（boss_hidden_*）与万妖国（boss_wanyao_*）接入场景，全部 boss 可达；
+ *       同日再裁定：11 张专属图纸恢复投放——legend 挂对应妖王、immortal 挂六耳、sp 挂主题 major boss（图纸+灵珠同敌）。
  */
 import { describe, expect, it } from 'vitest'
 import itemsJson from '@configs/xiyou/items.json'
@@ -73,7 +73,7 @@ describe('装备图纸映射', () => {
     expect(broken).toEqual([])
   })
 
-  it('特殊图纸与装备一一对应（bp_sp_01~04，禁止共用）', () => {
+  it('特殊图纸与装备一一对应（bp_sp_01~03，禁止共用）', () => {
     const byBlueprint = new Map<string, string[]>()
     for (const g of gearRows) {
       if (!g.blueprintId) continue
@@ -82,7 +82,7 @@ describe('装备图纸映射', () => {
     expect(byBlueprint.get('bp_sp_01')).toEqual(['wp_sp_01'])
     expect(byBlueprint.get('bp_sp_02')).toEqual(['ar_sp_01'])
     expect(byBlueprint.get('bp_sp_03')).toEqual(['ac_sp_01'])
-    expect(byBlueprint.get('bp_sp_04')).toEqual(['wp_sp_02'])
+    expect(byBlueprint.has('bp_sp_04')).toBe(false)
   })
 })
 
@@ -147,15 +147,26 @@ describe('装备获取契约（C 方案分层：常规打造 / 专属直落）',
     }
   })
 
-  it('死图纸不再出现在任何掉落里（legend/immortal/sp_01，掉落者不可达）', () => {
-    const dead = ['bp_legend_01', 'bp_legend_02', 'bp_legend_03', 'bp_immortal_01', 'bp_immortal_02', 'bp_immortal_03', 'bp_immortal_04', 'bp_sp_01']
-    const leaked: string[] = []
-    for (const e of enemyRows) {
-      for (const d of e.drops ?? []) {
-        if (dead.includes(d.itemId)) leaked.push(`${e.id} → ${d.itemId}`)
-      }
+  it('专属图纸投放位在位（2026-09-29 裁定：legend/immortal/sp 图纸恢复挂首领掉落，禁止再成死配置）', () => {
+    const placed: [string, string][] = [
+      ['bp_legend_01', 'boss_king_niumo'],
+      ['bp_legend_02', 'boss_king_pansi'],
+      ['bp_legend_03', 'boss_king_dapeng'],
+      ['bp_immortal_01', 'boss_final_liuer'],
+      ['bp_immortal_02', 'boss_final_liuer'],
+      ['bp_immortal_03', 'boss_final_liuer'],
+      ['bp_immortal_04', 'boss_final_liuer'],
+      ['bp_sp_01', 'boss_major_huayaowang'],
+      ['bp_sp_02', 'boss_major_miwu'],
+      ['bp_sp_03', 'boss_major_shanshen'],
+    ]
+    for (const [bp, boss] of placed) {
+      expect(droppersOf(bp), bp).toContain(boss)
     }
-    expect(leaked).toEqual([])
+    // sp 图纸与主灵珠同敌投放（图纸+材料单点闭环）
+    for (const [bp, pearl] of [['bp_sp_01', 'mat_sp_03'], ['bp_sp_02', 'mat_sp_04'], ['bp_sp_03', 'mat_sp_05']]) {
+      expect(droppersOf(pearl).sort()).toEqual(droppersOf(bp).sort())
+    }
   })
 
   it('craftable 装备的材料必须有产出源（boss 直落件豁免）', () => {

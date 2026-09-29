@@ -288,8 +288,11 @@ export class LogTooltipResolver {
       details.push({ label: ROW.triggerPhase, value: config.triggerTimes.map((t) => this.formatTriggerPhase(t)).join('、') })
     }
 
-    // 触发概率（从 parameters 或 steps 中推测）
-    const rawProbability = config.parameters?.triggerProbability ?? config.parameters?.probability
+    // 触发概率（顶层 triggerProbability 为准，兼容 parameters 内的旧写法）
+    const rawProbability =
+      config.parameters?.triggerProbability ??
+      config.triggerProbability ??
+      config.parameters?.probability
     const probability = typeof rawProbability === 'number' ? rawProbability : undefined
     if (probability != null) {
       details.push({ label: ROW.triggerChance, value: `${Math.round(probability * 100)}%` })

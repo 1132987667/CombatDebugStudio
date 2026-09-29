@@ -262,6 +262,7 @@
     "energyCost": 0,
     "cooldown": 0,
     "skillType": "passive",
+    "triggerTimes": ["battle_start"],
     "selector": { "faction": "self", "strategy": "first", "count": 1 },
     "passiveCategory": ["modifier"],
     "steps": [

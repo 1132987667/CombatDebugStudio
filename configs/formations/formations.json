@@ -24,9 +24,7 @@
       { "index": 2, "row": "back" },
       { "index": 3, "row": "back" }
     ],
-    "effects": [
-      { "id": "all_def", "condition": "all", "buffId": "buff_formation_all_def" }
-    ],
+    "effects": [],
     "frontProtection": true
   }
 ]

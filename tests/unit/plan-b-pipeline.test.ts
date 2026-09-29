@@ -5,7 +5,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
+import { PassiveSkillManager, type PassiveSkillConfig } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
@@ -57,8 +59,8 @@ describe('方案 B 统一管道', () => {
   })
 
   describe('GameDataProcessor.registerParticipantPassives', () => {
-    it('无 triggerTimes 的被动应注册为 BATTLE_START', () => {
-      // 确保使用有 triggerTimes 的真实被动
+    it('显式配置 triggerTimes 的被动按其触发时机注册', () => {
+      // realStaticPassive 显式声明了 triggerTimes: ['battle_start']
       expect(realStaticPassive.triggerTimes).toEqual(['battle_start'])
       const participant = createTestParticipantWithPassives([realStaticPassive])
       participant.setModifierProvider(buffSystem)
@@ -81,6 +83,61 @@ describe('方案 B 统一管道', () => {
 
       const passives = passiveSkillManager.getPassives(participant.id)
       expect(passives[0].maxTriggerCount).toBe(1)
+    })
+
+    it('缺少 triggerTimes 的被动不注册（不再兜底 BATTLE_START）', () => {
+      const broken = {
+        id: 'skill_test_no_trigger',
+        name: '缺触发时机',
+        description: '',
+        steps: [],
+      } as unknown as SkillConfig
+      const participant = createTestParticipantWithPassives([broken])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      const logSpy = vi
+        .spyOn(LoggerProvider.logger, 'addDebugLog')
+        .mockImplementation(() => {})
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('缺少 triggerTimes'),
+        expect.objectContaining({
+          level: LogLevel.ERROR,
+          context: expect.objectContaining({ skillId: 'skill_test_no_trigger' }),
+        }),
+      )
+      expect(passiveSkillManager.getPassives(participant.id)).toHaveLength(0)
+      logSpy.mockRestore()
+    })
+
+    it('无法识别的 triggerTimes 值不注册并报错', () => {
+      const broken = {
+        id: 'skill_test_bad_trigger',
+        name: '错值触发时机',
+        description: '',
+        triggerTimes: ['NOT_A_REAL_PHASE'],
+        steps: [],
+      } as unknown as SkillConfig
+      const participant = createTestParticipantWithPassives([broken])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      const logSpy = vi
+        .spyOn(LoggerProvider.logger, 'addDebugLog')
+        .mockImplementation(() => {})
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('无法识别的被动触发时机: NOT_A_REAL_PHASE'),
+        expect.objectContaining({
+          level: LogLevel.ERROR,
+          context: expect.objectContaining({ rawTrigger: 'NOT_A_REAL_PHASE' }),
+        }),
+      )
+      expect(passiveSkillManager.getPassives(participant.id)).toHaveLength(0)
+      logSpy.mockRestore()
     })
   })
 
@@ -123,6 +180,29 @@ describe('方案 B 统一管道', () => {
 
       const passives = passiveSkillManager.getPassives(participant.id)
       expect(passives.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('triggerProbability = 0 判定为不触发（0 是合法边界值，而非"未配置"）', () => {
+      const participant = createTestParticipantWithPassives([])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      const zeroChance: PassiveSkillConfig = {
+        id: 'test:zero_chance:battle_start',
+        name: '零概率被动',
+        description: '',
+        trigger: BattleTriggerPhase.BATTLE_START,
+        skillId: 'skill_test_zero_chance',
+        cooldown: 0,
+        triggerProbability: 0,
+      }
+
+      expect(
+        passiveSkillManager.shouldTriggerPassive(zeroChance, participant, undefined, {
+          phase: BattleTriggerPhase.BATTLE_START,
+          currentTurn: 0,
+        }),
+      ).toBe(false)
     })
   })
 

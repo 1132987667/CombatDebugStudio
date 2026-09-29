@@ -273,7 +273,12 @@ export class PassiveSkillManager {
       }
     }
     // 检查触发概率是否命中
-    if (config.triggerProbability && nextRandom(this.rng) > config.triggerProbability) {
+    // NOTE: 用 !== undefined 而非真值判断——0 是合法边界值（永不触发），
+    //       写成 `config.triggerProbability &&` 会把 0 当作"未配置"而恒触发
+    if (
+      config.triggerProbability !== undefined &&
+      nextRandom(this.rng) > config.triggerProbability
+    ) {
       this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.PROBABILITY, {
         probability: { required: config.triggerProbability, passed: false },
       })
@@ -311,9 +316,10 @@ export class PassiveSkillManager {
     this.lastPassChecks = {
       phaseMatch: true,
       cooldown: { ready: true, remaining: 0 },
-      probability: config.triggerProbability
-        ? { required: config.triggerProbability, passed: true }
-        : undefined,
+      probability:
+        config.triggerProbability !== undefined
+          ? { required: config.triggerProbability, passed: true }
+          : undefined,
       maxTriggers: config.maxTriggerCount
         ? { limit: config.maxTriggerCount, used: config.triggerCount ?? 0 }
         : undefined,

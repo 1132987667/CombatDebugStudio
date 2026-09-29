@@ -16,7 +16,12 @@ import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
-import { BattleEntity, ParticipantSide, BattleTriggerPhase } from '@/domain/battle/type/types'
+import {
+  BattleEntity,
+  ParticipantSide,
+  BattleTriggerPhase,
+  normalizeTriggerPhase,
+} from '@/domain/battle/type/types'
 import type {
   PassiveSkillConfig,
   PassiveSkillManager,
@@ -44,6 +49,8 @@ import { DataProcessor } from '@/shared/utils/DataProcessor'
 import { toArray } from '@/shared/utils/Utils'
 import { resolveAffixPlan, applyRandomAffixesByPool } from '@/shared/utils/affix'
 import type { IDataSource } from '@/domain/port/IDataSource'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 import { ConfigDataSource } from '@/shared/utils/ConfigDataSource'
 import affixLibraryRaw from '@configs/affixes/affixes.json'
 const counter = new Counter()
@@ -361,32 +368,12 @@ export class GameDataProcessor {
       .filter((p): p is BattleParticipantImpl => p !== null)
   }
 
-  /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
-  private static readonly TRIGGER_TIME_MAP: Record<string, BattleTriggerPhase> =
-    {
-      battle_start: BattleTriggerPhase.BATTLE_START,
-      turn_start: BattleTriggerPhase.TURN_START,
-      turn_end: BattleTriggerPhase.TURN_END,
-      before_attack: BattleTriggerPhase.BEFORE_ATTACK,
-      after_attack: BattleTriggerPhase.AFTER_ATTACK,
-      on_hit: BattleTriggerPhase.ON_HIT,
-      on_death: BattleTriggerPhase.ON_DEATH,
-      on_kill: BattleTriggerPhase.ON_KILL,
-      damage_taken: BattleTriggerPhase.DAMAGE_TAKEN,
-      heal_received: BattleTriggerPhase.HEAL_RECEIVED,
-      energy_gained: BattleTriggerPhase.ENERGY_GAINED,
-      skill_use: BattleTriggerPhase.SKILL_USE,
-      hp_lower_than: BattleTriggerPhase.HP_LOWER_THAN,
-      dodge: BattleTriggerPhase.DODGE,
-      on_crit: BattleTriggerPhase.CRIT,
-      shield_break: BattleTriggerPhase.SHIELD_BREAK,
-      action_start: BattleTriggerPhase.ACTION_START,
-    }
-
   /**
    * 注册参与者的触发型被动技能到 PassiveSkillManager
-   * 只有配置了 triggerTimes 的被动技能才会被注册
-   * @param participant 参与者实体
+   * 只有配置了 triggerTimes 的被动技能才会被注册：触发时机统一经
+   * normalizeTriggerPhase 归一化（与 Buff 触发器同一单源），缺失或无法识别的
+   * 值一律记错误日志并跳过，不再兜底为 BATTLE_START（避免字段错位静默生效）
+   * @param entity 参与者实体
    * @param passiveSkillManager PassiveSkillManager 实例
    */
   static registerParticipantPassives(
@@ -397,19 +384,37 @@ export class GameDataProcessor {
     if (!passives || passives.length === 0) return
 
     for (const skill of passives) {
-      const triggerTimes = skill.triggerTimes?.length
-        ? skill.triggerTimes
-        : [BattleTriggerPhase.BATTLE_START]
+      // NOTE: 缺失 triggerTimes 视为配置错误——旧实现兜底 BATTLE_START 会让
+      //       字段名错位的被动静默变成"开场触发 + 概率恒 100%"（enemy-skills.json 曾如此）
+      if (!skill.triggerTimes?.length) {
+        LoggerProvider.logger.addDebugLog(
+          `[registerParticipantPassives] 被动技能缺少 triggerTimes，已跳过注册: ${skill.id}`,
+          {
+            level: LogLevel.ERROR,
+            context: { entityId: entity.id, skillId: skill.id },
+          },
+        )
+        continue
+      }
 
-      for (const rawTrigger of triggerTimes) {
-        const phase = GameDataProcessor.TRIGGER_TIME_MAP[rawTrigger]
-        if (!phase) {
-          console.warn(`未知的被动触发时机: ${rawTrigger} (技能: ${skill.id})`)
+      for (const rawTrigger of skill.triggerTimes) {
+        let phase: BattleTriggerPhase
+        try {
+          phase = normalizeTriggerPhase(rawTrigger, `被动技能 ${skill.id}`)
+        } catch {
+          LoggerProvider.logger.addDebugLog(
+            `[registerParticipantPassives] 无法识别的被动触发时机: ${rawTrigger} (技能: ${skill.id})`,
+            {
+              level: LogLevel.ERROR,
+              context: { entityId: entity.id, skillId: skill.id, rawTrigger },
+            },
+          )
           continue
         }
 
         const maxTriggerCount =
-          skill.maxUses ?? (rawTrigger === 'battle_start' ? 1 : undefined)
+          skill.maxUses ??
+          (phase === BattleTriggerPhase.BATTLE_START ? 1 : undefined)
 
         const config: PassiveSkillConfig = {
           id: `${entity.id}:${skill.id}:${rawTrigger}`,

@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url'
 import buffsJson from '@configs/buffs/buffs.json'
 import effectsJson from '@configs/effects/effects.json'
 import { KNOWN_BUFF_IDS } from '@/domain/buff/types'
+import { normalizeTriggerPhase } from '@/domain/battle/type/types'
 
 interface BuffRow { id: string }
 
@@ -154,5 +155,71 @@ describe('引用收集器负例（校验逻辑自身的可运行检查）', () =
     const refs = new Set<string>()
     collectBuffRefs({ description: '引爆 buff_fengshi 层', name: 'x' }, refs)
     expect(refs.size).toBe(0)
+  })
+})
+
+/**
+ * 被动技能 triggerTimes 契约锁。
+ * 背景：enemy-skills.json 64 条被动曾用错位字段名（trigger/probability），
+ *       引擎读不到就兜底成"开场触发 + 概率恒 100%"，静默错配久未暴露。
+ * 守住：所有 skillType=passive 的条目必须显式配置可归一化的 triggerTimes。
+ */
+describe('被动技能 triggerTimes 一致性', () => {
+  /** 覆盖 configs/skills 全目录 + 目录之外的 enemy-skills.json */
+  const passiveFiles = [
+    ...readdirSync(`${repoRoot}configs/skills`)
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => `${repoRoot}configs/skills/${f}`),
+    `${repoRoot}configs/xiyou/enemy-skills.json`,
+  ]
+
+  it('所有被动技能都显式配置了可归一化的 triggerTimes', () => {
+    const broken: string[] = []
+    let passiveCount = 0
+    for (const file of passiveFiles) {
+      const json = JSON.parse(readFileSync(file, 'utf8'))
+      const list: Array<{ id?: string; skillType?: string; triggerTimes?: unknown }> =
+        Array.isArray(json) ? json : (json.skills ?? [])
+      for (const skill of list) {
+        if (skill?.skillType !== 'passive') continue
+        passiveCount++
+        const times = skill.triggerTimes
+        if (!Array.isArray(times) || times.length === 0) {
+          broken.push(`${file} :: ${skill.id} 缺少 triggerTimes`)
+          continue
+        }
+        for (const t of times) {
+          try {
+            normalizeTriggerPhase(String(t), String(skill.id))
+          } catch {
+            broken.push(`${file} :: ${skill.id} 无法识别的触发时机 ${String(t)}`)
+          }
+        }
+      }
+    }
+    // 防目录改名/结构变更导致空跑
+    expect(passiveCount).toBeGreaterThanOrEqual(100)
+    expect(broken).toEqual([])
+  })
+
+  it('被动技能不得残留错位字段，triggerProbability 必须是 0~1 数字', () => {
+    const problems: string[] = []
+    for (const file of passiveFiles) {
+      const json = JSON.parse(readFileSync(file, 'utf8'))
+      const list: Array<Record<string, unknown>> = Array.isArray(json)
+        ? json
+        : (json.skills ?? [])
+      for (const skill of list) {
+        if (skill?.skillType !== 'passive') continue
+        const id = String(skill.id)
+        if ('trigger' in skill) problems.push(`${file} :: ${id} 残留 trigger 字段`)
+        if ('probability' in skill) problems.push(`${file} :: ${id} 残留 probability 字段`)
+        const p = skill.triggerProbability
+        if (p !== undefined && (typeof p !== 'number' || p < 0 || p > 1)) {
+          problems.push(`${file} :: ${id} triggerProbability 非法: ${String(p)}`)
+        }
+      }
+    }
+    expect(problems).toEqual([])
   })
 })

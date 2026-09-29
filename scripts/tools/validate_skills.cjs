@@ -99,6 +99,40 @@ function validate() {
   console.log(`Skills scanned: ${skillCount}; buff references: ${usedCount}\n`);
 
   console.log('=== Validation Results ===\n');
+
+  // ── 被动技能触发契约：skillType=passive 必须显式配置非空 triggerTimes ──
+  // 背景：enemy-skills.json 64 条曾用错位字段名（trigger/probability），引擎读不到
+  //       就兜底成"开场触发 + 概率恒 100%"，静默错配久未暴露。
+  // 注：triggerTimes 值的归一化合法性由 tests/unit/config-cross-refs.test.ts 守护，
+  //     此处只拦"字段缺失/错位"这一最易发生的形态，不重复枚举阶段名（避免第二份映射）。
+  const passiveProblems = [];
+  let passiveCount = 0;
+  for (const [name, doc] of skillDocs()) {
+    const entries = Array.isArray(doc) ? doc : [];
+    for (const skill of entries) {
+      if (!skill || skill.skillType !== 'passive') continue;
+      passiveCount++;
+      if (!Array.isArray(skill.triggerTimes) || skill.triggerTimes.length === 0) {
+        passiveProblems.push(
+          `${name} :: ${skill.id} 缺少 triggerTimes（被动技能必须显式声明触发时机）`,
+        );
+      }
+      if ('trigger' in skill || 'probability' in skill) {
+        passiveProblems.push(
+          `${name} :: ${skill.id} 残留错位字段 trigger/probability（应为 triggerTimes/triggerProbability）`,
+        );
+      }
+    }
+  }
+  console.log(`Passive skills scanned: ${passiveCount}\n`);
+  if (passiveProblems.length > 0) {
+    console.log('❌ Passive trigger contract violations:');
+    for (const p of passiveProblems) console.log(`   - ${p}`);
+    console.log('');
+    console.log(`Validation FAILED: ${passiveProblems.length} passive trigger problem(s)`);
+    process.exit(1);
+  }
+
   if (missing.size > 0) {
     console.log('❌ Unresolvable Buff references:');
     for (const [id, from] of missing) console.log(`   - ${id}  (first seen: ${from})`);

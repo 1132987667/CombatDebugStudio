@@ -2275,8 +2275,8 @@
     "id": "passive_enemy_s1_1_g_p1",
     "name": "荆棘之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.3,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.3,
     "steps": [
       {
         "type": "apply_buff",
@@ -2319,8 +2319,8 @@
     "id": "passive_enemy_s1_2_g_p1",
     "name": "岩石之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.25,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -2369,8 +2369,8 @@
     "id": "passive_enemy_s1_3_g_p1",
     "name": "流水之躯",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -2419,8 +2419,8 @@
     "id": "passive_enemy_s1_4_g_p1",
     "name": "枯木逢春",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -2469,8 +2469,8 @@
     "id": "passive_enemy_s1_5_g_p1",
     "name": "花语守护",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.25,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -2513,8 +2513,8 @@
     "id": "passive_enemy_s2_1_g_p1",
     "name": "蟹壳之固",
     "skillType": "passive",
-    "trigger": "ON_BLOCK_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -2557,8 +2557,8 @@
     "id": "passive_enemy_s2_2_g_p1",
     "name": "铁甲之固",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -2607,8 +2607,8 @@
     "id": "passive_enemy_s2_3_g_p1",
     "name": "水流涌动",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 0.3,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 0.3,
     "steps": [
       {
         "type": "apply_buff",
@@ -2651,8 +2651,8 @@
     "id": "passive_enemy_s2_4_g_p1",
     "name": "流沙之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.25,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -2695,8 +2695,8 @@
     "id": "passive_enemy_s2_5_g_p1",
     "name": "河伯之力",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -2739,8 +2739,8 @@
     "id": "passive_enemy_s3_1_g_p1",
     "name": "岩石之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.25,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -2789,8 +2789,8 @@
     "id": "passive_enemy_s3_2_g_p1",
     "name": "铁精之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -2839,8 +2839,8 @@
     "id": "passive_enemy_s3_3_g_p1",
     "name": "崩山之力",
     "skillType": "passive",
-    "trigger": "ON_ATTACK_LANDED",
-    "probability": 0.2,
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -2883,8 +2883,8 @@
     "id": "passive_enemy_s3_4_g_p1",
     "name": "铁甲之固",
     "skillType": "passive",
-    "trigger": "ON_BLOCK_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -2933,8 +2933,8 @@
     "id": "passive_enemy_s3_5_g_p1",
     "name": "五行之力",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -2983,8 +2983,8 @@
     "id": "passive_enemy_s4_1_g_p1",
     "name": "迷雾之躯",
     "skillType": "passive",
-    "trigger": "ON_DODGE_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["dodge"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3033,8 +3033,8 @@
     "id": "passive_enemy_s4_2_g_p1",
     "name": "毒蘑菇之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.25,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -3083,8 +3083,8 @@
     "id": "passive_enemy_s4_3_g_p1",
     "name": "蛛网感应",
     "skillType": "passive",
-    "trigger": "ON_DODGE_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["dodge"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3133,8 +3133,8 @@
     "id": "passive_enemy_s4_4_g_p1",
     "name": "回声之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -3183,8 +3183,8 @@
     "id": "passive_enemy_s4_5_g_p1",
     "name": "蛛后之力",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3227,8 +3227,8 @@
     "id": "passive_enemy_s5_1_g_p1",
     "name": "金刚不坏",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -3277,8 +3277,8 @@
     "id": "passive_enemy_s5_2_g_p1",
     "name": "金刚怒目",
     "skillType": "passive",
-    "trigger": "ON_ATTACK_LANDED",
-    "probability": 0.25,
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -3321,8 +3321,8 @@
     "id": "passive_enemy_s5_3_g_p1",
     "name": "罗汉护法",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.25,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -3371,8 +3371,8 @@
     "id": "passive_enemy_s5_4_g_p1",
     "name": "须弥之力",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3421,8 +3421,8 @@
     "id": "passive_enemy_s5_5_g_p1",
     "name": "灵霄之力",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3505,8 +3505,8 @@
     "id": "passive_boss_yaotu_taoyao_p1",
     "name": "根须缠绕",
     "skillType": "passive",
-    "trigger": "ON_ATTACK_LANDED",
-    "probability": 0.2,
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -3589,8 +3589,8 @@
     "id": "passive_boss_yaotu_liuyao_p1",
     "name": "柳絮飘飞",
     "skillType": "passive",
-    "trigger": "BATTLE_START",
-    "probability": 1.0,
+    "triggerTimes": ["battle_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3673,8 +3673,8 @@
     "id": "passive_boss_yaotu_yanjing_p1",
     "name": "岩石肌肤",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 1.0,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3757,8 +3757,8 @@
     "id": "passive_boss_yaotu_zhuyao_p1",
     "name": "蛛网感应",
     "skillType": "passive",
-    "trigger": "ON_DODGE_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["dodge"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3835,8 +3835,8 @@
     "id": "passive_boss_yaotu_panseng_p1",
     "name": "破戒之力",
     "skillType": "passive",
-    "trigger": "BATTLE_START",
-    "probability": 1.0,
+    "triggerTimes": ["battle_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -3940,8 +3940,8 @@
     "id": "passive_boss_major_huayaowang_p1",
     "name": "花语",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -4045,8 +4045,8 @@
     "id": "passive_boss_major_hebo_p1",
     "name": "水流涌动",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 0.3,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 0.3,
     "steps": [
       {
         "type": "apply_buff",
@@ -4144,8 +4144,8 @@
     "id": "passive_boss_major_shanshen_p1",
     "name": "不动如山",
     "skillType": "passive",
-    "trigger": "BATTLE_START",
-    "probability": 1.0,
+    "triggerTimes": ["battle_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -4249,8 +4249,8 @@
     "id": "passive_boss_major_miwu_p1",
     "name": "迷雾笼罩",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 0.25,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -4354,8 +4354,8 @@
     "id": "passive_boss_major_rulai_p1",
     "name": "无上正觉",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -4465,8 +4465,8 @@
     "id": "passive_boss_achieve_huayaowang_p1",
     "name": "花语真身",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -4481,8 +4481,8 @@
     "id": "passive_boss_achieve_huayaowang_p2",
     "name": "灵根通天",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -4586,8 +4586,8 @@
     "id": "passive_boss_achieve_hebo_p1",
     "name": "千年执念",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 0.3,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 0.3,
     "steps": [
       {
         "type": "apply_buff",
@@ -4602,8 +4602,8 @@
     "id": "passive_boss_achieve_hebo_p2",
     "name": "水流不灭",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -4713,8 +4713,8 @@
     "id": "passive_boss_achieve_shanshen_p1",
     "name": "五行残躯",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -4729,8 +4729,8 @@
     "id": "passive_boss_achieve_shanshen_p2",
     "name": "山岳不灭",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -4834,8 +4834,8 @@
     "id": "passive_boss_achieve_miwu_p1",
     "name": "千年迷途",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 0.25,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -4850,8 +4850,8 @@
     "id": "passive_boss_achieve_miwu_p2",
     "name": "幻影不灭",
     "skillType": "passive",
-    "trigger": "ON_DODGE_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["dodge"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -4955,8 +4955,8 @@
     "id": "passive_boss_achieve_rulai_p1",
     "name": "六耳投影",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -4971,8 +4971,8 @@
     "id": "passive_boss_achieve_rulai_p2",
     "name": "听心",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -5076,8 +5076,8 @@
     "id": "passive_boss_oldsoul_heifeng_p1",
     "name": "残影之躯",
     "skillType": "passive",
-    "trigger": "ON_DODGE_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["dodge"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5092,8 +5092,8 @@
     "id": "passive_boss_oldsoul_heifeng_p2",
     "name": "黑风不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5203,8 +5203,8 @@
     "id": "passive_boss_oldsoul_dixing_p1",
     "name": "遁地之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.25,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -5219,8 +5219,8 @@
     "id": "passive_boss_oldsoul_dixing_p2",
     "name": "地行不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5324,8 +5324,8 @@
     "id": "passive_boss_oldsoul_jiuchi_p1",
     "name": "九齿之躯",
     "skillType": "passive",
-    "trigger": "ON_ATTACK_LANDED",
-    "probability": 0.25,
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.25,
     "steps": [
       {
         "type": "apply_buff",
@@ -5340,8 +5340,8 @@
     "id": "passive_boss_oldsoul_jiuchi_p2",
     "name": "天蓬不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5445,8 +5445,8 @@
     "id": "passive_boss_oldsoul_baiyan_p1",
     "name": "百目之躯",
     "skillType": "passive",
-    "trigger": "ON_DODGE_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["dodge"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5461,8 +5461,8 @@
     "id": "passive_boss_oldsoul_baiyan_p2",
     "name": "百目不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5566,8 +5566,8 @@
     "id": "passive_boss_oldsoul_jinchan_p1",
     "name": "金蝉之躯",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.2,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
     "steps": [
       {
         "type": "apply_buff",
@@ -5582,8 +5582,8 @@
     "id": "passive_boss_oldsoul_jinchan_p2",
     "name": "净坛不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5693,8 +5693,8 @@
     "id": "passive_boss_king_niumo_p1",
     "name": "奴役之力",
     "skillType": "passive",
-    "trigger": "ON_ATTACK_LANDED",
-    "probability": 0.3,
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.3,
     "steps": [
       {
         "type": "apply_buff",
@@ -5709,8 +5709,8 @@
     "id": "passive_boss_king_niumo_p2",
     "name": "赤焰不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5820,8 +5820,8 @@
     "id": "passive_boss_king_pansi_p1",
     "name": "囚禁之力",
     "skillType": "passive",
-    "trigger": "ON_DODGE_SUCCESS",
-    "probability": 1.0,
+    "triggerTimes": ["dodge"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5836,8 +5836,8 @@
     "id": "passive_boss_king_pansi_p2",
     "name": "织梦不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -5947,8 +5947,8 @@
     "id": "passive_boss_king_dapeng_p1",
     "name": "傲慢之力",
     "skillType": "passive",
-    "trigger": "ON_CRIT_LANDED",
-    "probability": 0.3,
+    "triggerTimes": ["on_crit"],
+    "triggerProbability": 0.3,
     "steps": [
       {
         "type": "apply_buff",
@@ -5963,8 +5963,8 @@
     "id": "passive_boss_king_dapeng_p2",
     "name": "遮天不灭",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -6114,8 +6114,8 @@
     "id": "passive_boss_final_liuer_p1",
     "name": "七十二变",
     "skillType": "passive",
-    "trigger": "ON_DAMAGE_TAKEN",
-    "probability": 0.15,
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.15,
     "steps": [
       {
         "type": "apply_buff",
@@ -6136,8 +6136,8 @@
     "id": "passive_boss_final_liuer_p2",
     "name": "听心术",
     "skillType": "passive",
-    "trigger": "ON_TURN_START",
-    "probability": 1.0,
+    "triggerTimes": ["turn_start"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",
@@ -6152,8 +6152,8 @@
     "id": "passive_boss_final_liuer_p3",
     "name": "六耳不灭",
     "skillType": "passive",
-    "trigger": "ON_KILL",
-    "probability": 1.0,
+    "triggerTimes": ["on_kill"],
+    "triggerProbability": 1.0,
     "steps": [
       {
         "type": "apply_buff",

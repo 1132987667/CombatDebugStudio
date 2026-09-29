@@ -1,9 +1,9 @@
 <template>
   <aside class="xy-roster xy-panel" aria-label="角色与行囊">
     <!-- 角色头：名字 / 等级 / 技能点 / 境界 / 流派 / 经验条 -->
-    <div class="xy-row-card">
+    <div class="xy-row-card xy-roster-head">
       <div class="xy-row-top">
-        <span class="xy-row-name">{{ player.name }}</span>
+        <span class="xy-row-name xy-roster-name">{{ player.name }}</span>
       </div>
       <div class="xy-row-desc mt-2">
         <span class="xy-chip xy-chip--gold">金钱: {{ currency.money }}</span>
@@ -11,6 +11,9 @@
       <div class="xy-row-desc mt-2">
         <span class="xy-chip xy-chip--gold">Lv.{{ player.level }}</span>
         <span class="xy-roster-exp-text ml-2">经验 {{ player.exp }} / {{ expNeedText }}</span>
+      </div>
+      <div class="xy-progress xy-progress--gold mt-2" aria-label="经验进度">
+        <div class="xy-progress-fill" :style="{ width: expPct }"></div>
       </div>
       <div class="xy-row-desc mt-2">
         <span class="xy-roster-sp">技能点 {{ statPoints.available }}</span>
@@ -120,6 +123,13 @@ onMounted(() => {
 
 const expNeedText = computed(() => (Number.isFinite(player.value.expNeed) ? player.value.expNeed : 'MAX'))
 
+/** 经验条宽度（0-100%）：expNeed 非有限值（MAX）时充满 */
+const expPct = computed(() => {
+  const need = player.value.expNeed
+  if (!Number.isFinite(need) || need <= 0) return '100%'
+  return `${Math.min(100, Math.max(0, (player.value.exp / need) * 100))}%`
+})
+
 // 角色属性（与修行「角色」页共用 characterAttrs 派生：基础/进阶分组 + 装备加成同口径）
 const {
   coreAttrs,
@@ -152,6 +162,26 @@ const {
   margin-left: auto;
   font-size: var(--font-size-md);
   color: var(--xy-ink-3);
+}
+
+/* 角色头部：姓名题字楷体 + 印章方块（呼应 .xy-seal-title::after 的印章语言） */
+.xy-roster-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 2px;
+
+  &::after {
+    content: '';
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    background: var(--xy-seal);
+    border-radius: 2px;
+  }
 }
 
 .xy-roster-realm {

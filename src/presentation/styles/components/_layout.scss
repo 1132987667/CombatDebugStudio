@@ -28,6 +28,14 @@
   overflow: hidden;
 }
 
+/* ----- 模块面板切换入场（BattleArena 四模块容器） -----
+   NOTE: 只用 opacity 渐入——transform 会创建 containing block，
+   动画期间面板内 fixed 定位的弹层/特效层会错位。v-show 从 display:none
+   恢复显示时 CSS animation 自动重放，无需 JS 参与。 */
+.module-panel {
+  animation: module-enter var(--duration-base) ease-out;
+}
+
 .panel-left,
 .panel-center,
 .panel-right {
@@ -37,6 +45,10 @@
 
 .panel-left {
   background: var(--color-bg-secondary);
+  /* NOTE: 海拔体系——顶部内高光 + 轻外投影把侧栏从背景上托起（此前平底零阴影） */
+  box-shadow:
+    inset 0 1px 0 rgba(var(--rgb-white), 0.04),
+    0 0 24px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -54,6 +66,9 @@
 .panel-right {
   background: var(--color-bg-secondary);
   border-right: none;
+  box-shadow:
+    inset 0 1px 0 rgba(var(--rgb-white), 0.04),
+    0 0 24px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
 }
@@ -64,6 +79,7 @@
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
   padding: var(--space-3);
   overflow-y: auto;
   height: calc((100vh - 60px - 67px - var(--space-6)) / 2);
@@ -76,6 +92,9 @@
 .panel-title {
   background: var(--color-bg-tertiary);
   color: var(--color-brand-red);
+  /* NOTE: 面板题字用楷体展示栈——西游题材的「题匾」语言 */
+  font-family: var(--font-family-display);
+  letter-spacing: 2px;
   padding: var(--space-2) var(--space-3);
   font-weight: var(--font-weight-bold);
   margin: 0;
@@ -96,6 +115,7 @@
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
   padding: var(--space-3);
   margin-bottom: var(--space-3);
 }

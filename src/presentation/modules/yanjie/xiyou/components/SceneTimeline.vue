@@ -134,7 +134,9 @@ function select(s: XiyouScene): void {
 
 .xy-timeline-title {
   margin: 0;
-  
+
+  /* 题字楷体：路引是题材记忆点，标题用书法字呼应水墨语言 */
+  font-family: var(--xy-font-title);
   font-size: var(--font-size-lg);
   letter-spacing: 3px;
   color: var(--xy-ink-1);

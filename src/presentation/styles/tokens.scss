@@ -197,7 +197,13 @@ $transition-fast: var(--transition-fast);
   /* ==========================================================================
      2. 排版系统 (基准 14px，适配当前项目)
      ========================================================================== */
-  --font-family-base: 'Consolas', 'Monaco', 'Courier New', monospace;
+  /* NOTE: 字体分层——base 显式中文字栈（此前 Consolas 无中文字形，中文回退不确定）；
+     mono 仅用于代码/日志/数值表；display 为标题/品牌楷体书法栈（西游题材气质，
+     xiyou.scss 等处同名硬编码已单源化到此） */
+  --font-family-base:
+    'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, sans-serif;
+  --font-family-display:
+    'KaiTi', 'STKaiti', 'Kaiti SC', 'BiauKai', var(--font-family-serif);
   --font-family-sans:
     'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-family-serif: Georgia, 'Times New Roman', serif;

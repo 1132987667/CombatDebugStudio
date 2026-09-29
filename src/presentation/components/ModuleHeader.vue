@@ -124,6 +124,8 @@ function onKeydown(e: KeyboardEvent) {
   font-size: var(--font-size-xxxl);
   font-weight: var(--font-weight-bold);
   color: var(--color-brand-red);
+  /* 品牌题字用楷体展示栈，书法气质与四大模块题材呼应 */
+  font-family: var(--font-family-display);
   letter-spacing: 4px; /* 蓝本：封神榜后台管理Demo.html */
   text-shadow: 0 0 12px rgba(var(--rgb-brand-red), 0.35);
 }

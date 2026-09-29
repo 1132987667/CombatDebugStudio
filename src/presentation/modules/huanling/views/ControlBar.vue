@@ -165,7 +165,9 @@ onUnmounted(() => {
 <style scoped>
 .auto-battle-indicator {
   position: absolute;
-  top: 10px;
+  /* NOTE: 悬浮于控制栏上缘外——原先 top:10px 会盖住中央的战斗速度/快速开关，
+     自动战斗中恰好是最需要操作它们的时刻 */
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;

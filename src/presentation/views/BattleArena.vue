@@ -16,19 +16,19 @@
     </ModuleHeader>
 
     <!-- 唤灵台（默认模块）：v-show 保活，切 Tab 不销毁战场状态。三栏布局由 Huanling 内部 main-layout 持有 -->
-    <div v-show="activeModule === 'huanling'" :id="modulePanelId('huanling')"
+    <div v-show="activeModule === 'huanling'" class="module-panel" :id="modulePanelId('huanling')"
       role="tabpanel" :aria-labelledby="moduleTabId('huanling')">
       <Huanling ref="huanlingRef" />
     </div>
 
     <!-- 昊天镜：战斗分析（双工作台 · 回放 / 调试） -->
-    <div v-show="activeModule === 'haotian'" class="module-layout module-layout--full" :id="modulePanelId('haotian')"
+    <div v-show="activeModule === 'haotian'" class="module-layout module-layout--full module-panel" :id="modulePanelId('haotian')"
       role="tabpanel" :aria-labelledby="moduleTabId('haotian')">
       <HaotianMirror :active="activeModule === 'haotian'" />
     </div>
 
     <!-- 封神榜：数据后台管理 -->
-    <div v-show="activeModule === 'fengshen'" class="module-layout module-layout--full" :id="modulePanelId('fengshen')"
+    <div v-show="activeModule === 'fengshen'" class="module-layout module-layout--full module-panel" :id="modulePanelId('fengshen')"
       role="tabpanel" :aria-labelledby="moduleTabId('fengshen')">
       <Fengshen />
     </div>
@@ -36,7 +36,7 @@
     <!-- 演劫台：斗战西游（唯一项目）。进入即游戏全屏态，
          NOTE: 面板切换为全屏（隐藏 ModuleHeader 时去掉 60px 顶部预留） -->
     <div v-show="activeModule === 'yanjie'"
-      class="module-layout module-layout--immersive"
+      class="module-layout module-layout--immersive module-panel"
       :id="modulePanelId('yanjie')" role="tabpanel" :aria-labelledby="moduleTabId('yanjie')">
       <Yanjie @back="activeModule = 'huanling'" />
     </div>

@@ -1,5 +1,5 @@
 <template>
-  <aside class="xy-aspect" aria-label="功能菜单 · 四象栏">
+  <aside class="xy-aspect bg-dual-dots" aria-label="功能菜单 · 四象栏">
     <span>功能菜单</span>
     <button
       v-for="tab in TABS"
@@ -105,6 +105,7 @@ const TAB_ICONS: Record<GroupTab, Component> = {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-2);
+  /* 淡墨点底纹：与行囊/装备卡片同一纹样语言（全局 bg-dual-dots 类，模板已挂） */
   background: var(--color-bg-secondary);
   overflow-y: auto;
 }
@@ -121,18 +122,52 @@ const TAB_ICONS: Record<GroupTab, Component> = {
   background: transparent;
   color: var(--color-text-tertiary);
   cursor: pointer;
-  
+
   letter-spacing: 2px;
+  /* NOTE: 与洞府导航（cave.scss）同一交互范式——上浮 + 描线提亮 + 图标变朱砂，
+     补齐此前的无过渡素面 hover */
+  transition:
+    transform var(--transition-fast),
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: -2px;
+  }
 
   &:hover:not(.active) {
+    transform: translateY(-2px);
     color: var(--color-text-secondary);
     background: var(--color-bg-hover);
+    border-color: var(--xy-ink-2);
+
+    .xy-aspect-icon {
+      color: var(--xy-seal);
+    }
   }
 
   &.active {
-    background: var(--xy-seal);
+    background: var(--xy-seal-soft);
     border-color: var(--xy-seal);
-    color: var(--xy-on-seal);
+    color: var(--xy-seal);
+    font-weight: var(--font-weight-bold);
+
+    .xy-aspect-icon {
+      color: var(--xy-gold);
+    }
+  }
+
+  /* 激活态左侧朱红竖条指示（与洞府导航同款语言） */
+  &.active::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    background: var(--xy-seal);
   }
 }
 
@@ -144,6 +179,7 @@ const TAB_ICONS: Record<GroupTab, Component> = {
 .xy-aspect-icon {
   width: 22px;
   height: 22px;
+  transition: color var(--transition-fast);
 }
 
 .xy-aspect-badge {

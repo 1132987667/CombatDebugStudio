@@ -756,7 +756,7 @@ onUnmounted(() => {
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px rgba(var(--rgb-black), var(--alpha-glow)), 0 0 16px var(--border-common-color-dark);
   backdrop-filter: blur(12px);
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: var(--font-family-mono);
   line-height: var(--line-height-md);
   color: var(--color-text-secondary);
   pointer-events: none;

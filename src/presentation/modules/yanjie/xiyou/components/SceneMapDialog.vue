@@ -261,7 +261,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 .xy-map-dlg__name {
   margin: 0;
-  
+
+  font-family: var(--xy-font-title);
   font-size: var(--font-size-xxl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 8px;
@@ -578,7 +579,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 .xy-map-dlg__detail-name {
   margin: 0;
-  
+
+  font-family: var(--xy-font-title);
   font-size: var(--font-size-xxl);
   letter-spacing: 3px;
   color: var(--xy-ink-1);

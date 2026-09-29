@@ -19,6 +19,16 @@
   }
 }
 
+/* ----- 模块面板切换渐入（v-show display 切换自动重放，见 _layout.scss .module-panel） ----- */
+@keyframes module-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* ----- 受击闪烁 ----- */
 @keyframes hitFlash {
   0% {

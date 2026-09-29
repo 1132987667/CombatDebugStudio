@@ -20,7 +20,7 @@ html {
   font-size: var(--font-size-base);
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
-  /* 数值列防跳动：战斗数值/日志/统计统一 tabular 数字（等宽主字体下无副作用） */
+  /* 数值列防跳动：战斗数值/日志/统计统一 tabular 数字（等宽/比例字体下均生效） */
   font-variant-numeric: tabular-nums;
 }
 
@@ -36,6 +36,12 @@ body {
 body {
   min-height: 100vh;
   background-color: var(--color-bg-primary);
+  /* NOTE: 氛围光——顶部天光青 + 底部劫火红，极低透明度只做环境不做装饰；
+     fixed 防滚动时背景随内容抖动 */
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, rgba(var(--rgb-energy), 0.05), transparent 60%),
+    radial-gradient(1600px 900px at 50% 115%, rgba(var(--rgb-brand-red), 0.05), transparent 55%);
+  background-attachment: fixed;
   color: var(--color-text-primary);
   font-family: var(--font-family-base);
   font-size: var(--font-size-md);

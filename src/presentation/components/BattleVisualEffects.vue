@@ -544,7 +544,7 @@ onUnmounted(() => {
 /* 技能名飞行 */
 .skill-name {
   position: fixed;
-  font-family: 'Noto Serif SC', serif;
+  font-family: var(--font-family-display);
   font-weight: 900;
   font-size: 22px;
   letter-spacing: 4px;
@@ -1087,7 +1087,7 @@ onUnmounted(() => {
   top: -22px;
   left: 50%;
   transform: translateX(-50%);
-  font-family: 'Noto Serif SC', serif;
+  font-family: var(--font-family-display);
   font-size: var(--font-size-xl);
   color: var(--color-danger);
   text-shadow: 0 0 10px var(--color-danger), 0 0 20px var(--color-danger);

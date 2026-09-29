@@ -12,10 +12,17 @@
   /* NOTE: 速度按钮紧凑 padding（~2.4px/6.4px），非 4px 栅格值，保持紧凑形态 */
   padding: 0.15rem 0.4rem;
   cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .speed-btn:hover:not(:disabled) {
-  background: var(--color-bg-hover);
+  /* NOTE: hover 提亮（原 --color-bg-hover 比常态底更暗，是负反馈） */
+  background: var(--color-bg-tertiary-hover);
+  border-color: var(--color-border-tertiary-hover);
+  color: var(--color-energy);
 }
 
 .speed-btn:active:not(:disabled) {

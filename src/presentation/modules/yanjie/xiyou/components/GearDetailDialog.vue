@@ -182,7 +182,7 @@ function onEquip(): void {
 
 .gd-rank,
 .gd-quality {
-  font-family: 'KaiTi', 'STKaiti', 'Kaiti SC', serif;
+  font-family: var(--font-family-display);
   font-size: var(--font-size-lg);
   letter-spacing: 2px;
 }

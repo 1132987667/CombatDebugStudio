@@ -97,6 +97,7 @@
 
     <div v-else-if="run.phase === 'finished'" class="xy-run xy-run--finish" aria-label="整关大结算">
       <div class="xy-run-head">
+        <span class="xy-run-stamp" aria-hidden="true">胜</span>
         <span class="xy-run-title">{{ scene.name }} · 通关</span>
         <span class="xy-run-stars">{{ starsText }}</span>
         <span v-if="run.firstClear" class="xy-run-first">首杀</span>
@@ -634,6 +635,13 @@ onUnmounted(() => {
   grid-area: zen;
   margin: var(--space-3);
   padding: var(--space-4);
+  /* NOTE: 战场水墨氛围底——顶部朱砂暖意 + 底部墨色沉降 + 中性墨晕，极低透明度只做环境；
+     玩家停留最久的区域此前是纯 panel 素面 */
+  background:
+    radial-gradient(ellipse 85% 55% at 50% 0%, rgba(193, 75, 58, 0.05), transparent 62%),
+    radial-gradient(ellipse 95% 70% at 50% 108%, rgba(var(--rgb-black), 0.28), transparent 58%),
+    radial-gradient(ellipse 60% 45% at 18% 45%, rgba(var(--rgb-white), 0.025), transparent 70%),
+    var(--xy-paper-light);
 }
 
 /* ═══ 头部纵向流：标题+开战同行 → 描述 → 敌情徽章横排（掉落收进悬浮浮层，hover/键盘 focus 均可唤出） ═══ */
@@ -668,6 +676,8 @@ onUnmounted(() => {
 .xy-battle-scene {
   margin: 0;
 
+  /* 场景名题字：楷体栈（激活闲置的 --xy-font-title） */
+  font-family: var(--xy-font-title);
   font-size: var(--font-size-xl);
   letter-spacing: 3px;
   color: var(--xy-ink-1);
@@ -897,10 +907,47 @@ onUnmounted(() => {
 
 .xy-run--finish {
   border-color: var(--xy-gold);
+  /* 大结算金底渐层：与普通推进条拉开情绪差 */
+  background:
+    linear-gradient(135deg, rgba(var(--rgb-warning), 0.07), transparent 55%),
+    var(--xy-paper-warm);
+}
+
+/* 通关朱砂印：盖章动效（scale 落下 + 回弹，keyframes 留模块内——xy- 前缀约定；
+   reduced-motion 由 base.scss 全局兜底压到 0.01ms） */
+.xy-run-stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 2px solid var(--xy-seal);
+  border-radius: 4px;
+  color: var(--xy-seal);
+  font-family: var(--xy-font-title);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  animation: xy-stamp-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes xy-stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-14deg) scale(2.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(-8deg) scale(1);
+  }
 }
 
 .xy-run--fail {
   border-color: var(--xy-seal);
+  /* 战败情绪：结算条出现时抖一下（复用洞府失败 shake，全局 keyframes 可跨文件引用） */
+  animation: xy-cave-shake 400ms ease-in-out;
 }
 
 .xy-run--ready {
@@ -1049,10 +1096,25 @@ onUnmounted(() => {
   align-self: center;
 
   .xy-vs-mark {
+    /* 「斗」字朱砂印章：方印 + 白字 + 微倾，敌我两阵之间的镇场印 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 4px;
+    background: var(--xy-seal);
+    box-shadow:
+      0 0 0 1px rgba(193, 75, 58, 0.4),
+      0 2px 10px rgba(var(--rgb-black), 0.35);
+    color: var(--xy-on-seal);
+    font-family: var(--xy-font-title);
     font-size: var(--font-size-lg);
-    letter-spacing: 4px;
-    color: var(--xy-seal);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0; /* 单字印章去字距，否则视觉偏心 */
     line-height: 1;
+    transform: rotate(-3deg);
+    text-shadow: 0 1px 2px rgba(var(--rgb-black), 0.3);
   }
 
   .xy-vs-speed {

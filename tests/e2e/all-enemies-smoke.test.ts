@@ -42,7 +42,7 @@ describe('全量敌人冒烟（T5）', () => {
   }
 
   it('冒烟名册覆盖 enemies.json 全部条目', () => {
-    expect(enemyIds.length).toBeGreaterThanOrEqual(180)
+    expect(enemyIds.length).toBeGreaterThanOrEqual(170)
     expect(new Set(enemyIds).size).toBe(enemyIds.length)
   })
 

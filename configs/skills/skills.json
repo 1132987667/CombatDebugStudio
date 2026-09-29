@@ -388,225 +388,6 @@
     "energyCost": 150,
     "skillType": "ultimate"
   },
-{
-    "id": "skill_enemy_001_small",
-    "name": "花粉迷雾",
-    "description": "对单个敌人造成80%攻击力的普通伤害，并使其命中率降低30%，持续1回合",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 0.8,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 1,
-        "effectId": "buff_hit_reduction",
-        "calculation": {
-          "baseValue": 0.3,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_002_small",
-    "name": "缠绕根须",
-    "description": "对单个敌人造成85%攻击力的普通伤害，并使其速度降低25%，持续1回合",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 0.85,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 1,
-        "effectId": "buff_speed_reduction",
-        "calculation": {
-          "baseValue": 0.25,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-
-  {
-    "id": "skill_enemy_004_small",
-    "name": "毒液喷射",
-    "description": "对单个敌人造成85%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 0.85,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 2,
-        "effectId": "buff_poison",
-        "calculation": {
-          "baseValue": 1,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_005_small",
-    "name": "岩石投掷",
-    "description": "对单个敌人造成110%攻击力的普通伤害",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 1.1,
-              "attribute": "attack"
-            }
-          ]
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_006_small",
-    "name": "狂怒连击",
-    "description": "对单个敌人进行两次连续攻击，每次造成60%攻击力的普通伤害，总计120%攻击力",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 0.6,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 0.6,
-              "attribute": "attack"
-            }
-          ]
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_007_small",
-    "name": "剧毒荆棘",
-    "description": "对单个敌人造成90%攻击力的普通伤害，并施加强效中毒效果，每回合造成攻击者攻击力15%的伤害，持续2回合",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 0.9,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 2,
-        "effectId": "buff_strong_poison",
-        "calculation": {
-          "baseValue": 0.4,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-
   {
     "id": "skill_boss_001_small",
     "name": "守护之光",
@@ -645,44 +426,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_007_ultimate",
-    "name": "万花齐放",
-    "description": "终极技能：对所有敌人造成120%攻击力的普通伤害，并使其受到30%额外伤害，持续2回合",
-    "cooldown": 5,
-    "maxUses": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "all"
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 1.2,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 2,
-        "effectId": "buff_flower_bloom",
-        "calculation": {
-          "baseValue": 0.3,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 150,
-    "skillType": "ultimate"
-  },
-
-  {
     "id": "skill_boss_001_ultimate",
     "name": "山神降临",
     "description": "终极技能：使自身进入山神状态，攻击力和防御力大幅提升，持续2回合",
@@ -706,140 +449,6 @@
     ],
     "energyCost": 150,
     "skillType": "ultimate"
-  },
-
-  {
-    "id": "skill_enemy_010_small",
-    "name": "钳击",
-    "description": "对单个敌人造成110%攻击力的普通伤害",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 1.1,
-              "attribute": "attack"
-            }
-          ]
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-
-
-  {
-    "id": "skill_enemy_013_small",
-    "name": "铁甲冲击",
-    "description": "对单个敌人造成100%攻击力的普通伤害，并为自身提升防御力，持续1回合",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 1,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 1,
-        "effectId": "buff_def_up",
-        "calculation": {
-          "baseValue": 1,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-
-  {
-    "id": "skill_enemy_015_small",
-    "name": "统领之击",
-    "description": "对单个敌人造成105%攻击力的普通伤害",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 1.05,
-              "attribute": "attack"
-            }
-          ]
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_016_small",
-    "name": "金甲护体",
-    "description": "对单个敌人造成95%攻击力的普通伤害，并为自身施加黄金护盾，持续2回合",
-    "cooldown": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 0.95,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 2,
-        "effectId": "buff_gold_shield",
-        "calculation": {
-          "baseValue": 1,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 50,
-    "skillType": "small"
   },
   {
     "id": "skill_boss_002_small",
@@ -882,81 +491,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_015_ultimate",
-    "name": "水军冲锋",
-    "description": "终极技能：对所有敌人造成110%攻击力的普通伤害，并使其速度降低40%，持续2回合",
-    "cooldown": 5,
-    "maxUses": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "all"
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 1.1,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 2,
-        "effectId": "buff_speed_reduction",
-        "calculation": {
-          "baseValue": 0.4,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 150,
-    "skillType": "ultimate"
-  },
-  {
-    "id": "skill_enemy_016_ultimate",
-    "name": "甲壳风暴",
-    "description": "终极技能：对单个敌人造成190%攻击力的普通伤害，并使其防御力降低100%，持续2回合",
-    "cooldown": 5,
-    "maxUses": 2,
-    "selector": {
-      "faction": "enemy",
-      "strategy": "first",
-      "count": 1
-    },
-    "steps": [
-      {
-        "type": "deal_damage",
-        "attackType": "normal",
-        "calculation": {
-          "baseValue": 0,
-          "extraValues": [
-            {
-              "ratio": 1.9,
-              "attribute": "attack"
-            }
-          ]
-        }
-      },
-      {
-        "type": "apply_buff",
-        "duration": 2,
-        "effectId": "buff_def_reduction",
-        "calculation": {
-          "baseValue": 1,
-          "extraValues": []
-        }
-      }
-    ],
-    "energyCost": 150,
-    "skillType": "ultimate"
-  },
-  {
     "id": "skill_boss_002_ultimate",
     "name": "涧水狂澜",
     "description": "终极技能：对所有敌人造成130%攻击力的普通伤害，并施加潮湿效果，使其受到50%额外伤害，持续3回合",
@@ -993,14 +527,6 @@
     "energyCost": 150,
     "skillType": "ultimate"
   },
-
-
-
-
-
-
-
-
   {
     "id": "skill_boss_003_small",
     "name": "地脉涌动",
@@ -1041,10 +567,6 @@
     "energyCost": 50,
     "skillType": "small"
   },
-
-
-
-
   {
     "id": "skill_boss_003_ultimate",
     "name": "山神震怒",
@@ -1082,50 +604,6 @@
     "energyCost": 150,
     "skillType": "ultimate"
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   {
     "id": "skill_boss_007_small",
     "name": "守护蛛网",
@@ -1149,8 +627,6 @@
     "energyCost": 50,
     "skillType": "small"
   },
-
-
   {
     "id": "skill_boss_007_ultimate",
     "name": "蛛谷天罗",
@@ -1188,31 +664,6 @@
     "energyCost": 150,
     "skillType": "ultimate"
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   {
     "id": "skill_enemy_079_small",
     "name": "首领之怒",
@@ -1249,8 +700,6 @@
     "energyCost": 50,
     "skillType": "small"
   },
-
-
   {
     "id": "skill_enemy_079_ultimate",
     "name": "叛变之潮",
@@ -1288,13 +737,6 @@
     "energyCost": 150,
     "skillType": "ultimate"
   },
-
-
-
-
-
-
-
   {
     "id": "skill_normal_attack",
     "name": "普通攻击",
@@ -1303,14 +745,22 @@
     "isNormalAttack": true,
     "energyCost": 0,
     "cooldown": 0,
-    "selector": { "faction": "enemy", "strategy": "first" },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
     "steps": [
       {
         "type": "deal_damage",
         "attackType": "normal",
         "calculation": {
           "baseValue": 0,
-          "extraValues": [{ "attribute": "attack", "ratio": 1.0 }]
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 1
+            }
+          ]
         }
       }
     ]
@@ -1322,11 +772,16 @@
     "skillType": "small",
     "energyCost": 10,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first" },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
     "steps": [
       {
         "type": "deal_damage",
-        "calculation": { "baseValue": 5 }
+        "calculation": {
+          "baseValue": 5
+        }
       },
       {
         "type": "apply_buff",
@@ -1342,7 +797,10 @@
     "skillType": "small",
     "energyCost": 10,
     "cooldown": 2,
-    "selector": { "faction": "enemy", "strategy": "first" },
+    "selector": {
+      "faction": "enemy",
+      "strategy": "first"
+    },
     "steps": [
       {
         "type": "apply_buff",
@@ -1358,7 +816,10 @@
     "skillType": "small",
     "energyCost": 15,
     "cooldown": 3,
-    "selector": { "faction": "ally", "strategy": "all" },
+    "selector": {
+      "faction": "ally",
+      "strategy": "all"
+    },
     "steps": [
       {
         "type": "apply_buff",

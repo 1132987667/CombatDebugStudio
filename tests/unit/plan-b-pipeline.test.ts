@@ -20,11 +20,11 @@ import type { SkillConfig } from '@/domain/skill/types'
 
 // ───── 从真实配置加载测试数据 ─────
 
-/** skill_enemy_004_passive：常驻被动，battle_start 触发，modify_attribute 步骤 */
-const realStaticPassive = getSkillConfig('skill_enemy_004_passive')!
+/** passive_boss_minor_taoyao_p1：常驻被动，battle_start 触发，modify_attribute 步骤 */
+const realStaticPassive = getSkillConfig('passive_boss_minor_taoyao_p1')!
 
-/** skill_enemy_006_passive：山林之子，battle_start 触发，apply_buff buff_mountain_child */
-const realApplyBuffPassive = getSkillConfig('skill_enemy_006_passive')!
+/** skill_enemy_079_passive：首领光环，battle_start 触发，apply_buff 步骤 */
+const realApplyBuffPassive = getSkillConfig('skill_enemy_079_passive')!
 
 // ───── 辅助函数 ─────
 
@@ -71,7 +71,7 @@ describe('方案 B 统一管道', () => {
       const passives = passiveSkillManager.getPassives(participant.id)
       expect(passives).toHaveLength(1)
       expect(passives[0].trigger).toBe(BattleTriggerPhase.BATTLE_START)
-      expect(passives[0].skillId).toBe('skill_enemy_004_passive')
+      expect(passives[0].skillId).toBe('passive_boss_minor_taoyao_p1')
     })
 
     it('battle_start 被动默认 maxTriggerCount = 1', () => {
@@ -165,8 +165,8 @@ describe('方案 B 统一管道', () => {
     })
 
     it('多个被动一起触发', () => {
-      const pSkill2 = getSkillConfig('skill_enemy_005_passive')!
-      skillManager.setSkillConfig('skill_enemy_005_passive', pSkill2)
+      const pSkill2 = getSkillConfig('passive_boss_minor_liuyao_p1')!
+      skillManager.setSkillConfig('passive_boss_minor_liuyao_p1', pSkill2)
 
       const participant = createTestParticipantWithPassives([realStaticPassive, pSkill2])
       participant.setModifierProvider(buffSystem)
@@ -208,7 +208,7 @@ describe('方案 B 统一管道', () => {
 
   describe('apply_buff 步骤的被动', () => {
     it('battle_start 触发的 apply_buff 被动注册正确', () => {
-      skillManager.setSkillConfig('skill_enemy_006_passive', realApplyBuffPassive)
+      skillManager.setSkillConfig('skill_enemy_079_passive', realApplyBuffPassive)
 
       const participant = createTestParticipantWithPassives([realApplyBuffPassive])
       participant.setModifierProvider(buffSystem)
@@ -219,7 +219,7 @@ describe('方案 B 统一管道', () => {
       const passives = passiveSkillManager.getPassives(participant.id)
       expect(passives).toHaveLength(1)
       expect(passives[0].trigger).toBe(BattleTriggerPhase.BATTLE_START)
-      expect(passives[0].skillId).toBe('skill_enemy_006_passive')
+      expect(passives[0].skillId).toBe('skill_enemy_079_passive')
     })
   })
 })

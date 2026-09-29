@@ -28,26 +28,26 @@
   {
     "id": "lineup_003",
     "name": "花妖先锋阵",
-    "description": "小花山试炼敌方编组：花妖王率众花妖精锐，供场景 hard 难度引用。",
+    "description": "花果山花妖系敌方编组：花妖近卫率花妖护卫、毒蜂、花妖精英。",
     "formationId": "crane_wing",
     "roles": [
-      { "seatIndex": 0, "roleId": "enemy_007" },
-      { "seatIndex": 1, "roleId": "enemy_001" },
-      { "seatIndex": 2, "roleId": "enemy_004" },
-      { "seatIndex": 3, "roleId": "enemy_002" }
+      { "seatIndex": 0, "roleId": "enemy_s1_5_g" },
+      { "seatIndex": 1, "roleId": "enemy_s1_5_a" },
+      { "seatIndex": 2, "roleId": "enemy_s1_5_b" },
+      { "seatIndex": 3, "roleId": "enemy_s1_5_c" }
     ],
     "tags": ["敌方", "试炼"]
   },
   {
     "id": "lineup_004",
     "name": "浅水涧巡守阵",
-    "description": "浅水涧试炼敌方编组：金甲蟹将统领虾兵蟹将，供场景 hard 难度引用。",
+    "description": "浅水涧水族敌方编组：金甲蟹将率虾兵、幼年蟹将、青鱼精。",
     "formationId": "iron_wall",
     "roles": [
-      { "seatIndex": 0, "roleId": "enemy_016" },
-      { "seatIndex": 1, "roleId": "enemy_013" },
-      { "seatIndex": 2, "roleId": "enemy_010" },
-      { "seatIndex": 3, "roleId": "enemy_015" }
+      { "seatIndex": 0, "roleId": "enemy_s2_5_b" },
+      { "seatIndex": 1, "roleId": "enemy_s2_1_a" },
+      { "seatIndex": 2, "roleId": "enemy_s2_1_b" },
+      { "seatIndex": 3, "roleId": "enemy_s2_1_c" }
     ],
     "tags": ["敌方", "试炼"]
   }

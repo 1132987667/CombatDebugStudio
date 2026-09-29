@@ -256,127 +256,6 @@
       "heal"
     ]
   },
-{
-    "id": "skill_enemy_004_passive",
-    "name": "坚韧表皮",
-    "description": "被动效果：永久降低受到的暴击伤害15%",
-    "cooldown": 0,
-    "selector": {
-      "faction": "self",
-      "strategy": "first"
-    },
-    "steps": [
-      {
-        "type": "modify_attribute",
-        "modifiers": [
-          {
-            "id": "tough_skin_crit_dmg_reduce",
-            "targetAttribute": "critDmgTakenReduction",
-            "type": "ADDITIVE",
-            "value": 15,
-            "sourceName": "坚韧表皮"
-          }
-        ]
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ],
-    "passiveCategory": [
-      "attribute"
-    ]
-  },
-  {
-    "id": "skill_enemy_005_passive",
-    "name": "石化皮肤",
-    "description": "被动效果：受到普通攻击时，伤害降低20%",
-    "cooldown": 0,
-    "selector": {
-      "faction": "self",
-      "strategy": "first"
-    },
-    "steps": [
-      {
-        "type": "modify_attribute",
-        "modifiers": [
-          {
-            "id": "stone_skin_normal_dmg_reduce",
-            "targetAttribute": "normalAtkDmgReduction",
-            "type": "ADDITIVE",
-            "value": 20,
-            "sourceName": "石化皮肤"
-          }
-        ]
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ],
-    "passiveCategory": [
-      "attribute"
-    ]
-  },
-  {
-    "id": "skill_enemy_006_passive",
-    "name": "山林之子",
-    "description": "被动效果：免疫减速效果",
-    "cooldown": 0,
-    "selector": {
-      "faction": "self",
-      "strategy": "first"
-    },
-    "steps": [
-      {
-        "type": "apply_buff",
-        "buffId": "buff_mountain_child"
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ],
-    "passiveCategory": [
-      "immunity"
-    ]
-  },
-  {
-    "id": "skill_enemy_007_passive",
-    "name": "花之再生",
-    "description": "被动效果：每回合结束时，恢复自身最大气血值5%的气血值",
-    "cooldown": 0,
-    "selector": {
-      "faction": "self",
-      "strategy": "first"
-    },
-    "steps": [
-      {
-        "type": "modify_attribute",
-        "modifiers": [
-          {
-            "id": "flower_regen_percent",
-            "targetAttribute": "hpRegenPercent",
-            "type": "ADDITIVE",
-            "value": 5,
-            "sourceName": "花之再生"
-          }
-        ]
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ],
-    "passiveCategory": [
-      "attribute"
-    ]
-  },
-
   {
     "id": "skill_boss_001_passive",
     "name": "山灵庇护",
@@ -414,40 +293,6 @@
       "trigger"
     ]
   },
-
-  {
-    "id": "skill_enemy_013_passive",
-    "name": "甲壳防御",
-    "description": "被动效果：永久降低受到的伤害15%",
-    "skillType": "passive",
-    "cooldown": 0,
-    "energyCost": 0,
-    "selector": {
-      "faction": "self",
-      "strategy": "first"
-    },
-    "steps": [
-      {
-        "type": "modify_attribute",
-        "modifiers": [
-          {
-            "id": "shell_defense_phys_dmg_reduce",
-            "targetAttribute": "physicalDmgReduction",
-            "type": "ADDITIVE",
-            "value": 15,
-            "sourceName": "甲壳防御"
-          }
-        ]
-      }
-    ],
-    "triggerTimes": [
-      "battle_start"
-    ],
-    "passiveCategory": [
-      "attribute"
-    ]
-  },
-
   {
     "id": "skill_boss_002_passive",
     "name": "水之共鸣",
@@ -486,65 +331,6 @@
     ]
   },
   {
-    "id": "skill_enemy_015_passive",
-    "name": "统御水域",
-    "description": "被动效果：为所有友方单位施加水元素共鸣光环，提升水属性攻击力",
-    "cooldown": 0,
-    "selector": {
-      "faction": "self",
-      "strategy": "first"
-    },
-    "steps": [
-      {
-        "type": "apply_buff",
-        "buffId": "buff_water_dominance"
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ],
-    "passiveCategory": [
-      "aura"
-    ]
-  },
-  {
-    "id": "skill_enemy_016_passive",
-    "name": "黄金甲壳",
-    "description": "被动效果：永久降低受到的魔法伤害20%",
-    "cooldown": 0,
-    "selector": {
-      "faction": "self",
-      "strategy": "first"
-    },
-    "steps": [
-      {
-        "type": "modify_attribute",
-        "modifiers": [
-          {
-            "id": "gold_shell_magic_reduce",
-            "targetAttribute": "magicalDmgReduction",
-            "type": "ADDITIVE",
-            "value": 20,
-            "sourceName": "黄金甲壳"
-          }
-        ]
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ],
-    "passiveCategory": [
-      "attribute"
-    ]
-  },
-
-
-
-  {
     "id": "skill_boss_003_passive",
     "name": "大地恩赐",
     "description": "被动效果：气血值低于50%时，每回合结束时恢复10%最大气血值；永久提升自身气血值20%",
@@ -581,29 +367,6 @@
       "heal"
     ]
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   {
     "id": "skill_boss_007_passive",
     "name": "谷中霸主",
@@ -648,21 +411,6 @@
       "immunity"
     ]
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   {
     "id": "skill_enemy_079_passive",
     "name": "首领光环",
@@ -687,8 +435,6 @@
       "aura"
     ]
   },
-
-
   {
     "id": "passive_boss_minor_taoyao_p1",
     "name": "根须缠绕",

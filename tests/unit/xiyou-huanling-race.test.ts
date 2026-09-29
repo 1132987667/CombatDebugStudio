@@ -60,10 +60,10 @@ describe('唤灵台 × 斗战西游 初始化竞态', () => {
     await store.startBattle()
   }
 
-  /** 唤灵台默认阵容（合并 lineups 后）：5 我方护法 + 8 敌方（花妖王/蟹将系列） */
+  /** 唤灵台默认阵容（合并 lineups 后）：5 我方护法 + 8 敌方（花妖近卫/金甲蟹将系列） */
   function huanlingDefaultTeams(): { ally: BattleEntity[]; enemy: BattleEntity[] } {
     const allyIds = ['yaotu_fire', 'yaotu_gold', 'yaotu_water', 'yaotu_wood', 'yaotu_earth']
-    const enemyIds = ['enemy_007', 'enemy_001', 'enemy_004', 'enemy_002', 'enemy_016', 'enemy_013', 'enemy_010', 'enemy_015']
+    const enemyIds = ['enemy_s1_5_g', 'enemy_s1_5_a', 'enemy_s1_5_b', 'enemy_s1_5_c', 'enemy_s2_5_b', 'enemy_s2_1_a', 'enemy_s2_1_b', 'enemy_s2_1_c']
     const ally = allyIds.map((id, i) =>
       GameDataProcessor.enemyToParticipant(
         { id, name: id, level: 10, stats: { currentHealth: 350 }, skills: { small: [], passive: [], ultimate: [] } },

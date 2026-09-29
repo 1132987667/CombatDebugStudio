@@ -124,6 +124,18 @@ const toggleBattleSpeed = () => {
 const debugMode = ref(debugGate?.enabled ?? false)
 const debugPhase = ref<string | null>(debugGate?.waitingPhase ?? null)
 
+// NOTE: handler 提取为命名函数——off 必须带 handler 精确移除，
+//       不带 handler 的 off(event) 会清掉该事件上的其他订阅者
+const onDebugToggle = (data: { enabled?: boolean } | undefined) => {
+  debugMode.value = data?.enabled ?? false
+}
+const onDebugPause = (data: { phase?: string } | undefined) => {
+  debugPhase.value = data?.phase ?? null
+}
+const onDebugPauseResume = () => {
+  debugPhase.value = null
+}
+
 const PHASE_LABELS: Record<string, string> = {
   BATTLE_START: '战斗开始',
   TURN_START: '回合开始',
@@ -145,20 +157,14 @@ const handleDebugStep = () => {
 }
 
 onMounted(() => {
-  emitter.on(BattleEventCodes.DEBUG_TOGGLE, (data) => {
-    debugMode.value = data?.enabled ?? false
-  })
-  emitter.on(BattleEventCodes.DEBUG_PAUSE, (data) => {
-    debugPhase.value = data?.phase ?? null
-  })
-  emitter.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
-    debugPhase.value = null
-  })
+  emitter.on(BattleEventCodes.DEBUG_TOGGLE, onDebugToggle)
+  emitter.on(BattleEventCodes.DEBUG_PAUSE, onDebugPause)
+  emitter.on(BattleEventCodes.DEBUG_PAUSE_RESUME, onDebugPauseResume)
 })
 onUnmounted(() => {
-  emitter.off(BattleEventCodes.DEBUG_TOGGLE)
-  emitter.off(BattleEventCodes.DEBUG_PAUSE)
-  emitter.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
+  emitter.off(BattleEventCodes.DEBUG_TOGGLE, onDebugToggle)
+  emitter.off(BattleEventCodes.DEBUG_PAUSE, onDebugPause)
+  emitter.off(BattleEventCodes.DEBUG_PAUSE_RESUME, onDebugPauseResume)
 })
 </script>
 

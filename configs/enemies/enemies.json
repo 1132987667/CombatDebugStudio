@@ -485,7 +485,7 @@
     ]
   },
   {
-    "id": "boss_achieve_hebo",
+    "id": "boss_hidden_hebo",
     "name": "河伯·沧浪·千年执念",
     "level": 55,
     "faction": "water",
@@ -503,13 +503,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_achieve_hebo_s1",
-      "skill_boss_achieve_hebo_s2",
-      "skill_boss_achieve_hebo_ult"
+      "skill_boss_hidden_hebo_s1",
+      "skill_boss_hidden_hebo_s2",
+      "skill_boss_hidden_hebo_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_achieve_hebo_p1",
-      "passive_boss_achieve_hebo_p2"
+      "passive_boss_hidden_hebo_p1",
+      "passive_boss_hidden_hebo_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -570,17 +570,17 @@
       {
         "threshold": 75,
         "trigger": "河伯·沧浪·千年执念掀起巨浪",
-        "buffId": "buff_boss_achieve_phase2_atk"
+        "buffId": "buff_boss_hidden_phase2_atk"
       },
       {
         "threshold": 50,
         "trigger": "河伯·沧浪·千年执念进入狂暴状态",
-        "buffId": "buff_boss_achieve_phase3_berserk"
+        "buffId": "buff_boss_hidden_phase3_berserk"
       },
       {
         "threshold": 25,
         "trigger": "河伯·沧浪·千年执念释放终极海啸",
-        "buffId": "buff_boss_achieve_phase4_ult"
+        "buffId": "buff_boss_hidden_phase4_ult"
       }
     ],
     "narrative": {
@@ -590,7 +590,7 @@
     }
   },
   {
-    "id": "boss_achieve_huayaowang",
+    "id": "boss_hidden_huayaowang",
     "name": "花妖王·千瓣·真身",
     "level": 55,
     "faction": "wood",
@@ -608,13 +608,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_achieve_huayaowang_s1",
-      "skill_boss_achieve_huayaowang_s2",
-      "skill_boss_achieve_huayaowang_ult"
+      "skill_boss_hidden_huayaowang_s1",
+      "skill_boss_hidden_huayaowang_s2",
+      "skill_boss_hidden_huayaowang_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_achieve_huayaowang_p1",
-      "passive_boss_achieve_huayaowang_p2"
+      "passive_boss_hidden_huayaowang_p1",
+      "passive_boss_hidden_huayaowang_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -671,17 +671,17 @@
       {
         "threshold": 75,
         "trigger": "花妖王·千瓣·真身绽放第一层花瓣",
-        "buffId": "buff_boss_achieve_phase2_atk"
+        "buffId": "buff_boss_hidden_phase2_atk"
       },
       {
         "threshold": 50,
         "trigger": "花妖王·千瓣·真身进入狂暴状态",
-        "buffId": "buff_boss_achieve_phase3_berserk"
+        "buffId": "buff_boss_hidden_phase3_berserk"
       },
       {
         "threshold": 25,
         "trigger": "花妖王·千瓣·真身释放终极花葬",
-        "buffId": "buff_boss_achieve_phase4_ult"
+        "buffId": "buff_boss_hidden_phase4_ult"
       }
     ],
     "narrative": {
@@ -691,7 +691,7 @@
     }
   },
   {
-    "id": "boss_achieve_miwu",
+    "id": "boss_hidden_miwu",
     "name": "迷雾妖主·幻影·千年迷途",
     "level": 55,
     "type": "old_soul",
@@ -710,13 +710,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_achieve_miwu_s1",
-      "skill_boss_achieve_miwu_s2",
-      "skill_boss_achieve_miwu_ult"
+      "skill_boss_hidden_miwu_s1",
+      "skill_boss_hidden_miwu_s2",
+      "skill_boss_hidden_miwu_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_achieve_miwu_p1",
-      "passive_boss_achieve_miwu_p2"
+      "passive_boss_hidden_miwu_p1",
+      "passive_boss_hidden_miwu_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -773,17 +773,17 @@
       {
         "threshold": 75,
         "trigger": "迷雾妖主·幻影·千年迷途释放迷雾",
-        "buffId": "buff_boss_achieve_phase2_atk"
+        "buffId": "buff_boss_hidden_phase2_atk"
       },
       {
         "threshold": 50,
         "trigger": "迷雾妖主·幻影·千年迷途进入狂暴状态",
-        "buffId": "buff_boss_achieve_phase3_berserk"
+        "buffId": "buff_boss_hidden_phase3_berserk"
       },
       {
         "threshold": 25,
         "trigger": "迷雾妖主·幻影·千年迷途释放终极幻灭",
-        "buffId": "buff_boss_achieve_phase4_ult"
+        "buffId": "buff_boss_hidden_phase4_ult"
       }
     ],
     "narrative": {
@@ -793,7 +793,7 @@
     }
   },
   {
-    "id": "boss_achieve_rulai",
+    "id": "boss_hidden_rulai",
     "name": "如来法相·须弥·六耳投影",
     "level": 55,
     "faction": "earth",
@@ -811,13 +811,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_achieve_rulai_s1",
-      "skill_boss_achieve_rulai_s2",
-      "skill_boss_achieve_rulai_ult"
+      "skill_boss_hidden_rulai_s1",
+      "skill_boss_hidden_rulai_s2",
+      "skill_boss_hidden_rulai_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_achieve_rulai_p1",
-      "passive_boss_achieve_rulai_p2"
+      "passive_boss_hidden_rulai_p1",
+      "passive_boss_hidden_rulai_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -874,17 +874,17 @@
       {
         "threshold": 75,
         "trigger": "如来法相·须弥·六耳投影释放佛光",
-        "buffId": "buff_boss_achieve_phase2_atk"
+        "buffId": "buff_boss_hidden_phase2_atk"
       },
       {
         "threshold": 50,
         "trigger": "如来法相·须弥·六耳投影进入狂暴状态",
-        "buffId": "buff_boss_achieve_phase3_berserk"
+        "buffId": "buff_boss_hidden_phase3_berserk"
       },
       {
         "threshold": 25,
         "trigger": "如来法相·须弥·六耳投影释放终极法相",
-        "buffId": "buff_boss_achieve_phase4_ult"
+        "buffId": "buff_boss_hidden_phase4_ult"
       }
     ],
     "narrative": {
@@ -894,7 +894,7 @@
     }
   },
   {
-    "id": "boss_achieve_shanshen",
+    "id": "boss_hidden_shanshen",
     "name": "山神·岩坚·五行残躯",
     "level": 55,
     "faction": "earth",
@@ -912,13 +912,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_achieve_shanshen_s1",
-      "skill_boss_achieve_shanshen_s2",
-      "skill_boss_achieve_shanshen_ult"
+      "skill_boss_hidden_shanshen_s1",
+      "skill_boss_hidden_shanshen_s2",
+      "skill_boss_hidden_shanshen_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_achieve_shanshen_p1",
-      "passive_boss_achieve_shanshen_p2"
+      "passive_boss_hidden_shanshen_p1",
+      "passive_boss_hidden_shanshen_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -975,17 +975,17 @@
       {
         "threshold": 75,
         "trigger": "山神·岩坚·五行残躯召唤五行护盾",
-        "buffId": "buff_boss_achieve_phase2_atk"
+        "buffId": "buff_boss_hidden_phase2_atk"
       },
       {
         "threshold": 50,
         "trigger": "山神·岩坚·五行残躯进入狂暴状态",
-        "buffId": "buff_boss_achieve_phase3_berserk"
+        "buffId": "buff_boss_hidden_phase3_berserk"
       },
       {
         "threshold": 25,
         "trigger": "山神·岩坚·五行残躯释放终极山崩",
-        "buffId": "buff_boss_achieve_phase4_ult"
+        "buffId": "buff_boss_hidden_phase4_ult"
       }
     ],
     "narrative": {
@@ -1808,11 +1808,6 @@
       {
         "threshold": 50,
         "trigger": "六耳低语，攻击力提升20%，暴击率提升10%",
-        "buffId": "buff_boss_major_phase3_berserk"
-      },
-      {
-        "threshold": 25,
-        "trigger": "法相崩裂，进入狂暴状态，攻击力提升40%",
         "buffId": "buff_boss_major_phase3_berserk"
       }
     ],

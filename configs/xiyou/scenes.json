@@ -319,6 +319,40 @@
     }
   },
   {
+    "id": "scene_1_hidden",
+    "regionId": "region_1",
+    "name": "桃源深处",
+    "levelRange": [
+      55,
+      55
+    ],
+    "desc": "花妖王的真身藏在桃林最深处，千瓣花开，瓣瓣是杀阵。",
+    "enemies": [
+      {
+        "id": "boss_hidden_huayaowang",
+        "name": "花妖王·千瓣·真身",
+        "level": 55
+      }
+    ],
+    "drops": {
+      "materials": [
+        "mat_lupi"
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 1000,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_1_boss"
+    },
+    "narrativeHook": "千瓣尽绽：这才是我的真身。"
+  },
+  {
     "id": "scene_2_1",
     "regionId": "region_2",
     "name": "渡口残桥",
@@ -652,6 +686,35 @@
       "sceneId": "scene_2_5"
     },
     "narrativeHook": "河水倒流之际，河伯低语：净化我，或是被我吞没。"
+  },
+  {
+    "id": "scene_2_hidden",
+    "regionId": "region_2",
+    "name": "沧浪水底",
+    "levelRange": [
+      55,
+      55
+    ],
+    "desc": "断柳渡的水底别有洞天，沧浪之水在此倒卷成穹。",
+    "enemies": [
+      {
+        "id": "boss_hidden_hebo",
+        "name": "河伯·沧浪·千年执念",
+        "level": 55
+      }
+    ],
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 1000,
+      "y": 110
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_2_boss"
+    },
+    "narrativeHook": "千年之水，今日决堤。"
   },
   {
     "id": "scene_3_1",
@@ -990,6 +1053,43 @@
     }
   },
   {
+    "id": "scene_3_hidden",
+    "regionId": "region_3",
+    "name": "山神祠遗址",
+    "levelRange": [
+      55,
+      55
+    ],
+    "desc": "碎石岭的山神祠早已废弃，残躯仍在符文之下喘息。",
+    "enemies": [
+      {
+        "id": "boss_hidden_shanshen",
+        "name": "山神·岩坚·五行残躯",
+        "level": 55
+      }
+    ],
+    "drops": {
+      "materials": [
+        "mat_gangjing",
+        "mat_yanxin",
+        "mat_cuiyu",
+        "mat_hupi"
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 1000,
+      "y": 80
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_3_boss"
+    },
+    "narrativeHook": "五行山弃下的残躯，也有山的威严。"
+  },
+  {
     "id": "scene_4_1",
     "regionId": "region_4",
     "name": "谷口雾墙",
@@ -1308,6 +1408,46 @@
     }
   },
   {
+    "id": "scene_4_hidden",
+    "regionId": "region_4",
+    "name": "幻雾深处",
+    "levelRange": [
+      55,
+      55
+    ],
+    "desc": "迷雾谷的雾气在此凝成实体，幻影层叠，真假难辨。",
+    "enemies": [
+      {
+        "id": "boss_hidden_miwu",
+        "name": "迷雾妖主·幻影·千年迷途",
+        "level": 55
+      }
+    ],
+    "drops": {
+      "materials": [
+        "mat_youmu",
+        "mat_huancai",
+        "mat_yingbao",
+        "mat_youlan",
+        "mat_wuling",
+        "mat_feicui",
+        "mat_tianxiewangdu"
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 1000,
+      "y": 100
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_4_boss"
+    },
+    "narrativeHook": "雾散之前，你找不到真的我。"
+  },
+  {
     "id": "scene_5_1",
     "regionId": "region_5",
     "name": "假佛门",
@@ -1624,6 +1764,44 @@
         "mat_lingxiao"
       ]
     }
+  },
+  {
+    "id": "scene_5_hidden",
+    "regionId": "region_5",
+    "name": "伪佛莲台",
+    "levelRange": [
+      55,
+      55
+    ],
+    "desc": "莲花宝座之后还藏着一座莲台，六耳的投影端坐其上。",
+    "enemies": [
+      {
+        "id": "boss_hidden_rulai",
+        "name": "如来法相·须弥·六耳投影",
+        "level": 55
+      }
+    ],
+    "drops": {
+      "materials": [
+        "mat_puti",
+        "mat_foguang",
+        "mat_xumi",
+        "mat_tiancan",
+        "mat_lingxiao"
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 1000,
+      "y": 90
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_boss"
+    },
+    "narrativeHook": "我不是投影，我是另一个可能。"
   },
   {
     "id": "scene_maze_1",

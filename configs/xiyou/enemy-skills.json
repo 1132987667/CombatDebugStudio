@@ -4367,7 +4367,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_achieve_huayaowang_s1",
+    "id": "skill_boss_hidden_huayaowang_s1",
     "name": "千瓣毒雾",
     "skillType": "small",
     "energyCost": 50,
@@ -4401,7 +4401,7 @@
     "description": "释放千瓣毒雾，对全体造成150%攻击伤害，50%概率中毒3回合。"
   },
   {
-    "id": "skill_boss_achieve_huayaowang_s2",
+    "id": "skill_boss_hidden_huayaowang_s2",
     "name": "花葬护盾",
     "skillType": "small",
     "energyCost": 50,
@@ -4428,7 +4428,7 @@
     "description": "获得花葬护盾和反伤效果，持续3回合。"
   },
   {
-    "id": "skill_boss_achieve_huayaowang_ult",
+    "id": "skill_boss_hidden_huayaowang_ult",
     "name": "万花葬灭",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -4462,7 +4462,7 @@
     "description": "万花葬灭，对全体造成320%攻击伤害，80%概率中毒3回合。"
   },
   {
-    "id": "passive_boss_achieve_huayaowang_p1",
+    "id": "passive_boss_hidden_huayaowang_p1",
     "name": "花语真身",
     "skillType": "passive",
     "triggerTimes": ["turn_start"],
@@ -4478,7 +4478,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "passive_boss_achieve_huayaowang_p2",
+    "id": "passive_boss_hidden_huayaowang_p2",
     "name": "灵根通天",
     "skillType": "passive",
     "triggerTimes": ["damage_taken"],
@@ -4494,7 +4494,7 @@
     "description": "受到攻击时20%概率获得护盾。"
   },
   {
-    "id": "skill_boss_achieve_hebo_s1",
+    "id": "skill_boss_hidden_hebo_s1",
     "name": "沧浪冲击",
     "skillType": "small",
     "energyCost": 50,
@@ -4528,7 +4528,7 @@
     "description": "以沧浪之水冲击，对全体造成150%攻击伤害，40%概率减速2回合。"
   },
   {
-    "id": "skill_boss_achieve_hebo_s2",
+    "id": "skill_boss_hidden_hebo_s2",
     "name": "千年之雨",
     "skillType": "small",
     "energyCost": 50,
@@ -4549,7 +4549,7 @@
     "description": "获得千年之雨持续治疗效果，持续3回合。"
   },
   {
-    "id": "skill_boss_achieve_hebo_ult",
+    "id": "skill_boss_hidden_hebo_ult",
     "name": "千年海啸",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -4583,7 +4583,7 @@
     "description": "千年海啸，对全体造成320%攻击伤害，70%概率减速3回合。"
   },
   {
-    "id": "passive_boss_achieve_hebo_p1",
+    "id": "passive_boss_hidden_hebo_p1",
     "name": "千年执念",
     "skillType": "passive",
     "triggerTimes": ["turn_start"],
@@ -4599,7 +4599,7 @@
     "description": "回合开始时30%概率提升自身攻击2回合。"
   },
   {
-    "id": "passive_boss_achieve_hebo_p2",
+    "id": "passive_boss_hidden_hebo_p2",
     "name": "水流不灭",
     "skillType": "passive",
     "triggerTimes": ["damage_taken"],
@@ -4615,7 +4615,7 @@
     "description": "受到攻击时20%概率获得护盾。"
   },
   {
-    "id": "skill_boss_achieve_shanshen_s1",
+    "id": "skill_boss_hidden_shanshen_s1",
     "name": "五行碾压",
     "skillType": "small",
     "energyCost": 50,
@@ -4649,7 +4649,7 @@
     "description": "以五行之力碾压，造成160%攻击伤害，30%概率眩晕1回合。"
   },
   {
-    "id": "skill_boss_achieve_shanshen_s2",
+    "id": "skill_boss_hidden_shanshen_s2",
     "name": "五行护盾",
     "skillType": "small",
     "energyCost": 50,
@@ -4676,7 +4676,7 @@
     "description": "获得五行护盾和防御提升，持续3回合。"
   },
   {
-    "id": "skill_boss_achieve_shanshen_ult",
+    "id": "skill_boss_hidden_shanshen_ult",
     "name": "五行崩落灭",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -4710,7 +4710,7 @@
     "description": "五行崩落灭，对全体造成320%攻击伤害，60%概率眩晕1回合。"
   },
   {
-    "id": "passive_boss_achieve_shanshen_p1",
+    "id": "passive_boss_hidden_shanshen_p1",
     "name": "五行残躯",
     "skillType": "passive",
     "triggerTimes": ["turn_start"],
@@ -4726,7 +4726,7 @@
     "description": "回合开始时提升自身防御2回合。"
   },
   {
-    "id": "passive_boss_achieve_shanshen_p2",
+    "id": "passive_boss_hidden_shanshen_p2",
     "name": "山岳不灭",
     "skillType": "passive",
     "triggerTimes": ["damage_taken"],
@@ -4742,7 +4742,7 @@
     "description": "受到攻击时20%概率获得护盾。"
   },
   {
-    "id": "skill_boss_achieve_miwu_s1",
+    "id": "skill_boss_hidden_miwu_s1",
     "name": "千年幻影",
     "skillType": "small",
     "energyCost": 50,
@@ -4776,7 +4776,7 @@
     "description": "释放千年幻影，对全体造成150%攻击伤害，40%概率中毒2回合。"
   },
   {
-    "id": "skill_boss_achieve_miwu_s2",
+    "id": "skill_boss_hidden_miwu_s2",
     "name": "永恒迷雾",
     "skillType": "small",
     "energyCost": 50,
@@ -4797,7 +4797,7 @@
     "description": "进入永恒迷雾，自身速度提升3回合。"
   },
   {
-    "id": "skill_boss_achieve_miwu_ult",
+    "id": "skill_boss_hidden_miwu_ult",
     "name": "千年迷途灭",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -4831,7 +4831,7 @@
     "description": "千年迷途灭，对全体造成320%攻击伤害，70%概率减速3回合。"
   },
   {
-    "id": "passive_boss_achieve_miwu_p1",
+    "id": "passive_boss_hidden_miwu_p1",
     "name": "千年迷途",
     "skillType": "passive",
     "triggerTimes": ["turn_start"],
@@ -4847,7 +4847,7 @@
     "description": "回合开始时25%概率提升自身速度2回合。"
   },
   {
-    "id": "passive_boss_achieve_miwu_p2",
+    "id": "passive_boss_hidden_miwu_p2",
     "name": "幻影不灭",
     "skillType": "passive",
     "triggerTimes": ["dodge"],
@@ -4863,7 +4863,7 @@
     "description": "闪避成功时获得持续治疗效果。"
   },
   {
-    "id": "skill_boss_achieve_rulai_s1",
+    "id": "skill_boss_hidden_rulai_s1",
     "name": "六耳佛掌",
     "skillType": "small",
     "energyCost": 50,
@@ -4891,7 +4891,7 @@
     "description": "以六耳佛掌攻击，造成160%攻击伤害。"
   },
   {
-    "id": "skill_boss_achieve_rulai_s2",
+    "id": "skill_boss_hidden_rulai_s2",
     "name": "六耳结界",
     "skillType": "small",
     "energyCost": 50,
@@ -4918,7 +4918,7 @@
     "description": "获得六耳结界护盾和反伤效果，持续3回合。"
   },
   {
-    "id": "skill_boss_achieve_rulai_ult",
+    "id": "skill_boss_hidden_rulai_ult",
     "name": "六耳万佛朝宗",
     "skillType": "ultimate",
     "energyCost": 150,
@@ -4952,7 +4952,7 @@
     "description": "六耳万佛朝宗，对全体造成320%攻击伤害，自身获得持续治疗3回合。"
   },
   {
-    "id": "passive_boss_achieve_rulai_p1",
+    "id": "passive_boss_hidden_rulai_p1",
     "name": "六耳投影",
     "skillType": "passive",
     "triggerTimes": ["turn_start"],
@@ -4968,7 +4968,7 @@
     "description": "回合开始时获得持续治疗效果。"
   },
   {
-    "id": "passive_boss_achieve_rulai_p2",
+    "id": "passive_boss_hidden_rulai_p2",
     "name": "听心",
     "skillType": "passive",
     "triggerTimes": ["damage_taken"],

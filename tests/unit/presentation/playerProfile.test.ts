@@ -231,7 +231,7 @@ describe('xianyuanForEnemyIds 战胜仙缘聚合（完整项目说明 §10.1）'
     expect(xianyuanForEnemyIds(['enemy_s1_1_g'])).toBe(20) // yaotu 桃林守卫
     expect(xianyuanForEnemyIds(['boss_minor_taoyao'])).toBe(30) // yaokui
     expect(xianyuanForEnemyIds(['boss_major_huayaowang'])).toBe(50) // yaowang
-    expect(xianyuanForEnemyIds(['boss_achieve_huayaowang'])).toBe(150) // yaozun
+    expect(xianyuanForEnemyIds(['boss_hidden_huayaowang'])).toBe(150) // yaozun
   })
 
   it('多敌节点求和；未知 id 与未知分级兜底 0', () => {

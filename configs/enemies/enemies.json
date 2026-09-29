@@ -3343,10 +3343,10 @@
     }
   },
   {
-    "id": "boss_oldsoul_baiyan",
-    "name": "百眼旧将·多目",
+    "id": "boss_wanyao_baiyan",
+    "name": "百眼魔君·多目",
     "level": 60,
-    "type": "old_soul",
+    "type": "",
     "faction": "metal",
     "role": "yaozun",
     "stats": {
@@ -3362,13 +3362,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_oldsoul_baiyan_s1",
-      "skill_boss_oldsoul_baiyan_s2",
-      "skill_boss_oldsoul_baiyan_ult"
+      "skill_boss_wanyao_baiyan_s1",
+      "skill_boss_wanyao_baiyan_s2",
+      "skill_boss_wanyao_baiyan_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_oldsoul_baiyan_p1",
-      "passive_boss_oldsoul_baiyan_p2"
+      "passive_boss_wanyao_baiyan_p1",
+      "passive_boss_wanyao_baiyan_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -3440,35 +3440,35 @@
       700,
       800
     ],
-    "description": "百眼魔君的旧将，多目怪，千眼万目。",
+    "description": "万妖国妖王，蜈蚣得道，千眼万目，洞察妖界四方。",
     "phases": [
       {
         "threshold": 70,
         "trigger": "百眼旧将·多目释放千眼",
-        "buffId": "buff_boss_oldsoul_phase2_atk"
+        "buffId": "buff_boss_wanyao_phase2_atk"
       },
       {
         "threshold": 40,
         "trigger": "百眼旧将·多目进入狂暴状态",
-        "buffId": "buff_boss_oldsoul_phase3_berserk"
+        "buffId": "buff_boss_wanyao_phase3_berserk"
       },
       {
         "threshold": 20,
         "trigger": "百眼旧将·多目释放终极万目葬",
-        "buffId": "buff_boss_oldsoul_phase4_ult"
+        "buffId": "buff_boss_wanyao_phase4_ult"
       }
     ],
     "narrative": {
       "intro": "千眼万目，无处可藏。你在我眼中，不过是蝼蚁。",
-      "outro": "万目虽闭，千眼犹开。千年之后，又是一场注视。",
+      "outro": "万目虽闭，千眼犹开。万妖国的注视，永不停歇。",
       "deathQuote": "百眼……千目……终归……闭合……"
     }
   },
   {
-    "id": "boss_oldsoul_dixing",
+    "id": "boss_wanyao_dixing",
     "name": "地行仙·遁地",
     "level": 60,
-    "type": "old_soul",
+    "type": "",
     "faction": "earth",
     "role": "yaozun",
     "stats": {
@@ -3484,13 +3484,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_oldsoul_dixing_s1",
-      "skill_boss_oldsoul_dixing_s2",
-      "skill_boss_oldsoul_dixing_ult"
+      "skill_boss_wanyao_dixing_s1",
+      "skill_boss_wanyao_dixing_s2",
+      "skill_boss_wanyao_dixing_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_oldsoul_dixing_p1",
-      "passive_boss_oldsoul_dixing_p2"
+      "passive_boss_wanyao_dixing_p1",
+      "passive_boss_wanyao_dixing_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -3562,35 +3562,35 @@
       700,
       800
     ],
-    "description": "地行仙的残影，遁地千里，无迹可寻。",
+    "description": "万妖国妖王，遁地千里，无迹可寻，大地脉动皆在其掌中。",
     "phases": [
       {
         "threshold": 70,
         "trigger": "地行仙·遁地释放地裂",
-        "buffId": "buff_boss_oldsoul_phase2_atk"
+        "buffId": "buff_boss_wanyao_phase2_atk"
       },
       {
         "threshold": 40,
         "trigger": "地行仙·遁地进入狂暴状态",
-        "buffId": "buff_boss_oldsoul_phase3_berserk"
+        "buffId": "buff_boss_wanyao_phase3_berserk"
       },
       {
         "threshold": 20,
         "trigger": "地行仙·遁地释放终极地裂葬",
-        "buffId": "buff_boss_oldsoul_phase4_ult"
+        "buffId": "buff_boss_wanyao_phase4_ult"
       }
     ],
     "narrative": {
       "intro": "地行千里，遁地无踪。你踩在大地上，便已在我的掌中。",
-      "outro": "地裂虽合，地脉犹动。千年之后，又是一场地裂。",
+      "outro": "地裂虽合，地脉犹动。万妖国的地脉，永不停歇。",
       "deathQuote": "遁地……千里……终归……尘土……"
     }
   },
   {
-    "id": "boss_oldsoul_heifeng",
-    "name": "黑风老妖·残影",
+    "id": "boss_wanyao_heifeng",
+    "name": "黑风大王·玄罴",
     "level": 60,
-    "type": "old_soul",
+    "type": "",
     "faction": "neutral",
     "role": "yaozun",
     "stats": {
@@ -3606,13 +3606,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_oldsoul_heifeng_s1",
-      "skill_boss_oldsoul_heifeng_s2",
-      "skill_boss_oldsoul_heifeng_ult"
+      "skill_boss_wanyao_heifeng_s1",
+      "skill_boss_wanyao_heifeng_s2",
+      "skill_boss_wanyao_heifeng_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_oldsoul_heifeng_p1",
-      "passive_boss_oldsoul_heifeng_p2"
+      "passive_boss_wanyao_heifeng_p1",
+      "passive_boss_wanyao_heifeng_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -3688,35 +3688,35 @@
       700,
       800
     ],
-    "description": "黑风老妖的残影，千年前被封印，如今残影重现。",
+    "description": "万妖国妖王，黑风山故主，一啸卷起万妖狂风。",
     "phases": [
       {
         "threshold": 70,
         "trigger": "黑风老妖·残影释放黑风",
-        "buffId": "buff_boss_oldsoul_phase2_atk"
+        "buffId": "buff_boss_wanyao_phase2_atk"
       },
       {
         "threshold": 40,
         "trigger": "黑风老妖·残影进入狂暴状态",
-        "buffId": "buff_boss_oldsoul_phase3_berserk"
+        "buffId": "buff_boss_wanyao_phase3_berserk"
       },
       {
         "threshold": 20,
         "trigger": "黑风老妖·残影释放终极黑风葬",
-        "buffId": "buff_boss_oldsoul_phase4_ult"
+        "buffId": "buff_boss_wanyao_phase4_ult"
       }
     ],
     "narrative": {
-      "intro": "黑风过处，万物凋零。千年封印，不过一场梦。今日梦醒，便是你的死期。",
-      "outro": "残影虽灭，黑风犹在。千年之后，又是一场黑风。",
+      "intro": "黑风过处，万物凋零。我的风，从不问来者何人。",
+      "outro": "黑风虽止，风眼犹在。万妖国的风，永不停歇。",
       "deathQuote": "黑风……过处……万物……凋零……"
     }
   },
   {
-    "id": "boss_oldsoul_jinchan",
-    "name": "金蝉残影·净坛",
+    "id": "boss_wanyao_jinchan",
+    "name": "金蝉妖僧·禅魇",
     "level": 60,
-    "type": "old_soul",
+    "type": "",
     "faction": "neutral",
     "role": "yaozun",
     "stats": {
@@ -3732,13 +3732,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_oldsoul_jinchan_s1",
-      "skill_boss_oldsoul_jinchan_s2",
-      "skill_boss_oldsoul_jinchan_ult"
+      "skill_boss_wanyao_jinchan_s1",
+      "skill_boss_wanyao_jinchan_s2",
+      "skill_boss_wanyao_jinchan_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_oldsoul_jinchan_p1",
-      "passive_boss_oldsoul_jinchan_p2"
+      "passive_boss_wanyao_jinchan_p1",
+      "passive_boss_wanyao_jinchan_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -3806,35 +3806,35 @@
       700,
       800
     ],
-    "description": "金蝉子的残影，净坛使者，佛光之下，残影犹存。",
+    "description": "万妖国妖王，佛门叛僧，禅音惑心，金蝉脱壳幻梦无穷。",
     "phases": [
       {
         "threshold": 70,
         "trigger": "金蝉残影·净坛释放佛光",
-        "buffId": "buff_boss_oldsoul_phase2_atk"
+        "buffId": "buff_boss_wanyao_phase2_atk"
       },
       {
         "threshold": 40,
         "trigger": "金蝉残影·净坛进入狂暴状态",
-        "buffId": "buff_boss_oldsoul_phase3_berserk"
+        "buffId": "buff_boss_wanyao_phase3_berserk"
       },
       {
         "threshold": 20,
         "trigger": "金蝉残影·净坛释放终极净坛葬",
-        "buffId": "buff_boss_oldsoul_phase4_ult"
+        "buffId": "buff_boss_wanyao_phase4_ult"
       }
     ],
     "narrative": {
-      "intro": "金蝉脱壳，净坛成佛。千年残影，不过是一场梦。你既来此，便做我的梦中之人。",
-      "outro": "残影虽灭，金蝉犹在。千年之后，又是一场脱壳。",
-      "deathQuote": "金蝉……残影……终归……净坛……"
+      "intro": "金蝉脱壳，禅音惑心。你既来此，便留在我的梦中吧。",
+      "outro": "梦虽醒，禅音犹在。万妖国的钟声，永不停歇。",
+      "deathQuote": "金蝉……脱壳……终归……尘梦……"
     }
   },
   {
-    "id": "boss_oldsoul_jiuchi",
-    "name": "九齿残魂·朱刚鬣",
+    "id": "boss_wanyao_jiuchi",
+    "name": "九齿妖帅·朱刚鬣",
     "level": 60,
-    "type": "old_soul",
+    "type": "",
     "faction": "neutral",
     "role": "yaozun",
     "stats": {
@@ -3850,13 +3850,13 @@
       "energyInit": 25
     },
     "skillIds": [
-      "skill_boss_oldsoul_jiuchi_s1",
-      "skill_boss_oldsoul_jiuchi_s2",
-      "skill_boss_oldsoul_jiuchi_ult"
+      "skill_boss_wanyao_jiuchi_s1",
+      "skill_boss_wanyao_jiuchi_s2",
+      "skill_boss_wanyao_jiuchi_ult"
     ],
     "passiveSkillIds": [
-      "passive_boss_oldsoul_jiuchi_p1",
-      "passive_boss_oldsoul_jiuchi_p2"
+      "passive_boss_wanyao_jiuchi_p1",
+      "passive_boss_wanyao_jiuchi_p2"
     ],
     "affixPool": {
       "buffTier": 4,
@@ -3928,28 +3928,28 @@
       700,
       800
     ],
-    "description": "九齿钉耙的残魂，朱刚鬣的执念所化。",
+    "description": "万妖国妖王，执九齿钉耙的野猪妖帅，一柄钉耙横扫万妖。",
     "phases": [
       {
         "threshold": 70,
         "trigger": "九齿残魂·朱刚鬣释放九齿钉耙",
-        "buffId": "buff_boss_oldsoul_phase2_atk"
+        "buffId": "buff_boss_wanyao_phase2_atk"
       },
       {
         "threshold": 40,
         "trigger": "九齿残魂·朱刚鬣进入狂暴状态",
-        "buffId": "buff_boss_oldsoul_phase3_berserk"
+        "buffId": "buff_boss_wanyao_phase3_berserk"
       },
       {
         "threshold": 20,
         "trigger": "九齿残魂·朱刚鬣释放终极九齿葬",
-        "buffId": "buff_boss_oldsoul_phase4_ult"
+        "buffId": "buff_boss_wanyao_phase4_ult"
       }
     ],
     "narrative": {
-      "intro": "九齿钉耙，天蓬元帅。千年执念，化为残魂。你既来此，便做我的祭品。",
-      "outro": "残魂虽灭，执念犹在。千年之后，又是一场执念。",
-      "deathQuote": "九齿……残魂……终归……天蓬……"
+      "intro": "九齿钉耙，横扫万妖。你既来此，便做我的耙下之鬼。",
+      "outro": "耙虽折，妖帅犹在。万妖国的战鼓，永不停歇。",
+      "deathQuote": "九齿……钉耙……终归……尘土……"
     }
   },
   {

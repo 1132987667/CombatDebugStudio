@@ -1969,6 +1969,281 @@
     "narrativeHook": "万妖之首睁开眼：你的气运，到此为止。"
   },
   {
+    "id": "scene_wanyao_1",
+    "regionId": "region_wanyao",
+    "name": "百目林",
+    "levelRange": [
+      60,
+      60
+    ],
+    "desc": "百目林的每一片叶子上都睁着一只眼，林深处即是百眼魔君的王座。",
+    "enemies": [
+      {
+        "id": "boss_wanyao_baiyan",
+        "name": "百眼魔君·多目",
+        "level": 60
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2000,
+        3200
+      ],
+      "exp": [
+        1600,
+        2400
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 80,
+      "y": 280
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_5_boss"
+    },
+    "narrativeHook": "多目齐睁：擅闯万妖国者，留下眼睛。"
+  },
+  {
+    "id": "scene_wanyao_2",
+    "regionId": "region_wanyao",
+    "name": "玄风岭",
+    "levelRange": [
+      60,
+      60
+    ],
+    "desc": "玄风岭上无草木，唯有一道盘旋不散的黑风，风眼中卧着黑风大王。",
+    "enemies": [
+      {
+        "id": "boss_wanyao_heifeng",
+        "name": "黑风大王·玄罴",
+        "level": 60
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2000,
+        3200
+      ],
+      "exp": [
+        1600,
+        2400
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 230,
+      "y": 280
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_wanyao_1"
+    },
+    "narrativeHook": "黑风起，万妖啸。接我一啸。"
+  },
+  {
+    "id": "scene_wanyao_3",
+    "regionId": "region_wanyao",
+    "name": "遁地渊",
+    "levelRange": [
+      60,
+      60
+    ],
+    "desc": "大地在此裂开深壑，地行仙自地脉深处起身，尘土如浪。",
+    "enemies": [
+      {
+        "id": "boss_wanyao_dixing",
+        "name": "地行仙·遁地",
+        "level": 60
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2000,
+        3200
+      ],
+      "exp": [
+        1600,
+        2400
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 380,
+      "y": 280
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_wanyao_2"
+    },
+    "narrativeHook": "大地即是我的疆土，你无路可退。"
+  },
+  {
+    "id": "scene_wanyao_4",
+    "regionId": "region_wanyao",
+    "name": "禅音寺",
+    "levelRange": [
+      60,
+      60
+    ],
+    "desc": "荒废的古寺钟声自鸣，金蝉妖僧端坐佛前，禅音织成迷梦。",
+    "enemies": [
+      {
+        "id": "boss_wanyao_jinchan",
+        "name": "金蝉妖僧·禅魇",
+        "level": 60
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2000,
+        3200
+      ],
+      "exp": [
+        1600,
+        2400
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 530,
+      "y": 280
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_wanyao_3"
+    },
+    "narrativeHook": "钟鸣三响，梦已入心。施主要往何处去？"
+  },
+  {
+    "id": "scene_wanyao_5",
+    "regionId": "region_wanyao",
+    "name": "刚鬣寨",
+    "levelRange": [
+      60,
+      60
+    ],
+    "desc": "万妖国最深的山寨，酒旗与战鼓齐鸣，九齿妖帅横耙当关。",
+    "enemies": [
+      {
+        "id": "boss_wanyao_jiuchi",
+        "name": "九齿妖帅·朱刚鬣",
+        "level": 60
+      },
+      {
+        "id": "enemy_s5_5_a",
+        "name": "金刚护法统帅",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_b",
+        "name": "降龙罗汉",
+        "level": 49
+      },
+      {
+        "id": "enemy_s5_5_c",
+        "name": "灵霄台守护者",
+        "level": 50
+      }
+    ],
+    "drops": {
+      "materials": [],
+      "gold": [
+        2000,
+        3200
+      ],
+      "exp": [
+        1600,
+        2400
+      ]
+    },
+    "unlocked": false,
+    "stars": 0,
+    "maxStars": 3,
+    "pos": {
+      "x": 680,
+      "y": 280
+    },
+    "unlockCondition": {
+      "type": "clear_scene",
+      "sceneId": "scene_wanyao_4"
+    },
+    "narrativeHook": "老猪的钉耙，九齿九洞，正缺你一个。"
+  },
+  {
     "id": "scene_king_1",
     "regionId": "region_king",
     "name": "牛魔岭",
@@ -2019,7 +2294,7 @@
     },
     "unlockCondition": {
       "type": "clear_scene",
-      "sceneId": "scene_5_boss"
+      "sceneId": "scene_wanyao_5"
     },
     "narrativeHook": "牛魔横棍当道：想见六耳？先接俺老牛一棒。"
   },

@@ -4,8 +4,9 @@
  *       装备获取契约（C 方案分层）：常规件图纸掉落者可达，专属件被 boss 直接掉落。
  * 背景：2026-09-13 落地 BOSS 首杀装备（场景 BOSS rare 掉落，现已并入 enemies.json）与 bp_sp_02~04 图纸拆分，
  *       此前 bp_sp_01 被三件装备共用导致风灵袍/地灵护符造不出正确图纸。
- *       2026-09-29 材料产出审计：legend/immortal/sp 图纸的掉落者（boss_king/final/achieve/oldsoul）无战斗入口，
- *       专属装备改为 boss 直落成品、通用图纸迁到可达 major boss，死图纸从掉落摘除。
+ *       2026-09-29 材料产出审计：legend/immortal/sp 图纸的掉落者曾无战斗入口，
+ *       专属装备改为 boss 直落成品、通用图纸迁到可达 major boss，死图纸从掉落摘除；
+ *       同日隐藏妖王（boss_hidden_*）与万妖国（boss_wanyao_*）接入场景，全部 boss 可达。
  */
 import { describe, expect, it } from 'vitest'
 import itemsJson from '@configs/xiyou/items.json'
@@ -136,6 +137,11 @@ describe('装备获取契约（C 方案分层：常规打造 / 专属直落）',
       'boss_hidden_shanshen',
       'boss_hidden_miwu',
       'boss_hidden_rulai',
+      'boss_wanyao_baiyan',
+      'boss_wanyao_heifeng',
+      'boss_wanyao_dixing',
+      'boss_wanyao_jinchan',
+      'boss_wanyao_jiuchi',
     ]) {
       expect(sceneEnemyIds.has(boss), boss).toBe(true)
     }

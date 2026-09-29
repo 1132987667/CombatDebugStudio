@@ -444,8 +444,8 @@
     "description": "隐藏妖王终极形态：攻击+80%，速度+30%，暴击率+15%。"
   },
   {
-    "id": "buff_boss_oldsoul_phase2_atk",
-    "name": "残影苏醒",
+    "id": "buff_boss_wanyao_phase2_atk",
+    "name": "妖威苏醒",
     "polarity": "positive",
     "category": "modifier",
     "duration": -1,
@@ -458,11 +458,11 @@
       "attack": { "value": 40, "type": "PERCENTAGE" },
       "speed": { "value": 20, "type": "PERCENTAGE" }
     },
-    "description": "残魂BOSS阶段转换：攻击+40%，速度+20%。"
+    "description": "万妖国妖王阶段转换：攻击+40%，速度+20%。"
   },
   {
-    "id": "buff_boss_oldsoul_phase3_berserk",
-    "name": "怨念爆发",
+    "id": "buff_boss_wanyao_phase3_berserk",
+    "name": "凶性爆发",
     "polarity": "positive",
     "category": "modifier",
     "duration": -1,
@@ -476,11 +476,11 @@
       "defense": { "value": -20, "type": "PERCENTAGE" },
       "speed": { "value": 30, "type": "PERCENTAGE" }
     },
-    "description": "残魂BOSS狂暴状态：攻击+65%，防御-20%，速度+30%。"
+    "description": "万妖国妖王狂暴状态：攻击+65%，防御-20%，速度+30%。"
   },
   {
-    "id": "buff_boss_oldsoul_phase4_ult",
-    "name": "残魂觉醒",
+    "id": "buff_boss_wanyao_phase4_ult",
+    "name": "妖王临世",
     "polarity": "positive",
     "category": "modifier",
     "duration": -1,
@@ -495,7 +495,7 @@
       "critRate": { "value": 20, "type": "ADDITIVE" },
       "critDamage": { "value": 30, "type": "ADDITIVE" }
     },
-    "description": "残魂BOSS终极形态：攻击+90%，速度+35%，暴击率+20%，暴击伤害+30%。"
+    "description": "万妖国妖王终极形态：攻击+90%，速度+35%，暴击率+20%，暴击伤害+30%。"
   },
   {
     "id": "buff_boss_king_phase2_atk",

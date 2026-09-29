@@ -75,7 +75,7 @@ const emit = defineEmits<{
   'enter-town': [region: XiyouRegion]
 }>()
 
-/** 仅展示存在关卡的区域（region_final 暂无场景则不出现在路引） */
+/** 仅展示存在关卡的区域（无场景的区域不出现在路引） */
 const activeRegions = computed(() => props.regions.filter(r => props.scenes.some(s => s.regionId === r.id)))
 
 const unlockedCount = computed(() => props.scenes.filter(s => s.unlocked).length)

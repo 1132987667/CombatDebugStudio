@@ -251,14 +251,19 @@ function doBreak(): void {
 .xy-character-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 400px;
+  /* 行必须可收缩：隐式 auto 行会被 78 项内容撑到自然高溢出定高容器，两列内部滚动就失效了 */
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
   max-width: 1440px;
 }
 
 @media (max-width: 1280px) {
   .xy-character-panel {
     grid-template-columns: minmax(0, 1fr);
+    height: auto;
   }
 }
 
@@ -267,6 +272,10 @@ function doBreak(): void {
   flex-direction: column;
   gap: var(--space-4);
   min-width: 0;
+  min-height: 0;
+  /* 属性面板 78 项全展开远超一屏：定高内部滚，右栏角色卡固定不随之跑
+     （tabpanel 的 overflow:hidden 由 xiyou.scss 修行例外提供） */
+  overflow-y: auto;
 }
 
 .xy-char-header {

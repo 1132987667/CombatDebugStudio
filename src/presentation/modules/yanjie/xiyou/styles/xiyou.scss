@@ -22,7 +22,9 @@
   --xy-jade-soft: rgba(var(--rgb-success), var(--alpha-wash));
   --xy-gold: var(--color-warning); /* 鎏金 = 警示金 */
   --xy-gold-soft: rgba(var(--rgb-warning), var(--alpha-wash));
-  --xy-font-title: 'KaiTi', 'STKaiti', 'Kaiti SC', var(--font-family-serif);
+  --xy-gold-muted: #d9a86a; /* 柔金 = 低饱和暖金，属性名等大面积索引文字用（全饱和 #ff9800 压过白色数值） */
+  /* 值单源到全局 display 楷体栈（tokens.scss），域内仅保留别名 */
+  --xy-font-title: var(--font-family-display);
   --xy-font-body: var(--font-family-base);
 
   display: flex;
@@ -65,6 +67,8 @@
 .xy-topbar-title {
   margin: 0;
 
+  /* 激活闲置资产：楷体标题栈（--xy-font-title 此前定义后零消费） */
+  font-family: var(--xy-font-title);
   font-size: var(--font-size-xxxl);
   font-weight: var(--font-weight-bold);
   letter-spacing: 4px;
@@ -196,10 +200,13 @@
 
         /* 修行角色面板：双列布局（左属性主列 + 右角色侧列）。
            本规则域的 auto-fill 轨道会把面板劈成多个 300px 窄条，右侧留白——
-           & 复合到同一元素（面板根即 div:not(...) 本身），特异性高于 auto-fill 声明 */
+           & 复合到同一元素（面板根即 div:not(...) 本身），特异性高于 auto-fill 声明。
+           align-items 必须 stretch 覆盖本域上方的 start：两列要拉伸到定高容器，
+           属性列内部滚动 + 右栏固定才成立（start 会让列保持内容自然高整体溢出） */
         &.xy-character-panel {
           grid-template-columns: minmax(0, 1fr) 400px;
           gap: var(--space-4);
+          align-items: stretch;
         }
 
         @media (max-width: 1280px) {
@@ -302,6 +309,31 @@
   > [role='tabpanel'][id$='-panel-gear'] {
   display: flex;
   overflow: hidden;
+}
+
+/* 修行·角色页签例外：78 项属性面板全展开远超一屏，整片滚动会拖着右栏角色卡一起跑；
+   面板定高、左右两列各自内部滚动（窄屏单列时恢复整片滚动，见下） */
+.xy-panel-scroll:not(.xy-pack-host)
+  > .tabs-root
+  .flex-col-fill
+  > [role='tabpanel'][id$='-panel-character'] {
+  display: flex;
+  overflow: hidden;
+
+  > .xy-character-panel {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 1280px) {
+  .xy-panel-scroll:not(.xy-pack-host)
+    > .tabs-root
+    .flex-col-fill
+    > [role='tabpanel'][id$='-panel-character'] {
+    display: block;
+    overflow-y: auto;
+  }
 }
 
 .xy-seal-title {
@@ -604,23 +636,27 @@
   gap: var(--space-2);
 }
 
+/* 格子提亮：secondary 底(#0f0f1a)比面板还黑，大片黑补丁压暗整个面板；
+   改为面板上叠 4% 白的黛蓝卡 + 黛蓝细描边，hover 6% 白自然递进（随主题联动） */
 .xy-attr-item {
   display: flex;
   justify-content: space-between;
   padding: var(--space-1) var(--space-2);
-  background: var(--color-bg-secondary);
+  background: rgba(var(--rgb-white), 0.04);
+  border: 1px solid var(--xy-ink-line);
   border-radius: 2px;
-  transition: background-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
   cursor: help;
 
   &:hover {
     background: var(--color-bg-hover);
+    border-color: var(--color-border-hairline);
   }
 }
 
 .xy-attr-label {
   font-size: var(--font-size-md);
-  color: var(--xy-ink-3);
+  color: var(--xy-gold-muted);
 }
 
 .xy-attr-value {
@@ -634,12 +670,6 @@
   color: var(--xy-ink-1);
 }
 
-/* 零值弱化：扫视时即刻分辨「有」与「无」（进阶属性新手期大面积为 0） */
-.xy-attr-value--zero {
-  font-weight: var(--font-weight-regular);
-  color: var(--xy-ink-4);
-}
-
 /* 属性分组折叠（基础/进阶两层 · 角色面板/战斗侧栏共用） */
 .xy-attr-group {
   margin-bottom: var(--space-3);
@@ -647,6 +677,16 @@
   &:last-child {
     margin-bottom: 0;
   }
+}
+
+/* 进阶子组（防御/生存/输出…）：此前无样式定义，组标题直接贴上一组网格，间隔忽近忽远 */
+.xy-attr-sub-group {
+  margin-bottom: var(--space-3);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+  /* 格子不缩进：78 项左缘一条线利于扫视，层级由子标题的竖条/箭头/字重表达 */
 }
 
 /* 层级区分：一级节标题（sec-title 红条）> 二级子标题（纯文字+字距，无条）> 三级组（缩进+灰条） */
@@ -662,7 +702,6 @@
 }
 
 .xy-attr-sub--minor {
-  margin-left: var(--space-2);
   border-left: 3px solid var(--xy-ink-line);
   font-weight: var(--font-weight-regular);
   color: var(--xy-ink-3);

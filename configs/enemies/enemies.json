@@ -1706,6 +1706,10 @@
       {
         "itemId": "bp_t4_ar",
         "probability": 0.3
+      },
+      {
+        "itemId": "mat_tianxiewangdu",
+        "probability": 0.3
       }
     ],
     "phases": [
@@ -1784,6 +1788,14 @@
       },
       {
         "itemId": "bp_t5_ar",
+        "probability": 0.3
+      },
+      {
+        "itemId": "mat_tiancan",
+        "probability": 0.3
+      },
+      {
+        "itemId": "mat_lingxiao",
         "probability": 0.3
       }
     ],
@@ -1877,6 +1889,10 @@
       {
         "itemId": "ac_sp_01",
         "probability": 0.2
+      },
+      {
+        "itemId": "mat_gangjing",
+        "probability": 0.3
       }
     ],
     "phases": [
@@ -4709,6 +4725,10 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.2
+      },
+      {
+        "itemId": "mat_lupi",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -4846,6 +4866,10 @@
       },
       {
         "itemId": "exp_pill_small",
+        "probability": 0.2
+      },
+      {
+        "itemId": "mat_lupi",
         "probability": 0.2
       }
     ],
@@ -5532,6 +5556,10 @@
       {
         "itemId": "misc_shougu",
         "probability": 0.2
+      },
+      {
+        "itemId": "mat_lupi",
+        "probability": 0.25
       }
     ],
     "money": [
@@ -6918,6 +6946,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_xuantie",
+        "probability": 0.1
       }
     ],
     "money": [
@@ -7330,6 +7362,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yanxin",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -7396,6 +7432,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_cuiyu",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -7458,6 +7498,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_xuantie",
+        "probability": 0.1
       }
     ],
     "money": [
@@ -7588,6 +7632,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_gangjing",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -7651,6 +7699,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_gangjing",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -7714,6 +7766,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_xuantie",
+        "probability": 0.1
       }
     ],
     "money": [
@@ -7844,6 +7900,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yanxin",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -7906,6 +7966,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_gangjing",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -7968,6 +8032,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_xuantie",
+        "probability": 0.1
+      },
+      {
+        "itemId": "mat_hupi",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -8099,6 +8171,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_gangjing",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -8161,6 +8237,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yanxin",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -8227,6 +8307,14 @@
       {
         "itemId": "misc_shougu",
         "probability": 0.2
+      },
+      {
+        "itemId": "mat_cuiyu",
+        "probability": 0.2
+      },
+      {
+        "itemId": "mat_xuantie",
+        "probability": 0.1
       }
     ],
     "money": [
@@ -8357,6 +8445,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_cuiyu",
+        "probability": 0.2
+      },
+      {
+        "itemId": "mat_hupi",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -8419,6 +8515,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yanxin",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -8482,6 +8582,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_cuiyu",
+        "probability": 0.2
       }
     ],
     "money": [
@@ -8620,6 +8724,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_youmu",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -8686,6 +8794,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_youmu",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_youlan",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -8752,6 +8868,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_youlan",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -8886,6 +9006,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_youmu",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -8952,6 +9076,18 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_youmu",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_feicui",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_tianxiewangdu",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9018,6 +9154,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_youlan",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_wuling",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9152,6 +9296,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yingbao",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_wuling",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9218,6 +9370,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_youlan",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_tianxiewangdu",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9284,6 +9444,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_huancai",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9418,6 +9582,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_huancai",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_feicui",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9481,6 +9653,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_huancai",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_wuling",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9544,6 +9724,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_huancai",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_feicui",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9678,6 +9866,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yingbao",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9744,6 +9936,18 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yingbao",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_wuling",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_tianxiewangdu",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9807,6 +10011,14 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_yingbao",
+        "probability": 0.18
+      },
+      {
+        "itemId": "mat_feicui",
+        "probability": 0.18
       }
     ],
     "money": [
@@ -9941,6 +10153,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_tiancan",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10003,6 +10219,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_puti",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10061,6 +10281,10 @@
       },
       {
         "itemId": "exp_pill_mid",
+        "probability": 0.15
+      },
+      {
+        "itemId": "mat_foguang",
         "probability": 0.15
       }
     ],
@@ -10184,6 +10408,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_xumi",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10246,6 +10474,10 @@
       {
         "itemId": "exp_pill_mid",
         "probability": 0.15
+      },
+      {
+        "itemId": "mat_puti",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10304,6 +10536,10 @@
       },
       {
         "itemId": "exp_pill_mid",
+        "probability": 0.15
+      },
+      {
+        "itemId": "mat_foguang",
         "probability": 0.15
       }
     ],
@@ -10427,6 +10663,10 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_puti",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10485,6 +10725,10 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_tiancan",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10544,6 +10788,10 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_foguang",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10666,6 +10914,14 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_xumi",
+        "probability": 0.15
+      },
+      {
+        "itemId": "mat_lingxiao",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10728,6 +10984,10 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_xumi",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10787,6 +11047,10 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_foguang",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10909,6 +11173,14 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_xumi",
+        "probability": 0.15
+      },
+      {
+        "itemId": "mat_lingxiao",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -10971,6 +11243,10 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_puti",
+        "probability": 0.15
       }
     ],
     "money": [
@@ -11030,6 +11306,14 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "mat_tiancan",
+        "probability": 0.15
+      },
+      {
+        "itemId": "mat_lingxiao",
+        "probability": 0.15
       }
     ],
     "money": [

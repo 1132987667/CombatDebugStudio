@@ -311,7 +311,12 @@
       "type": "clear_scene",
       "sceneId": "scene_1_5"
     },
-    "narrativeHook": "千瓣花冠之下，一双眼睛打量着你：又一个来摘花的？"
+    "narrativeHook": "千瓣花冠之下，一双眼睛打量着你：又一个来摘花的？",
+    "drops": {
+      "materials": [
+        "mat_lupi"
+      ]
+    }
   },
   {
     "id": "scene_2_1",
@@ -974,7 +979,15 @@
       "type": "clear_scene",
       "sceneId": "scene_3_5"
     },
-    "narrativeHook": "山神的声音从岩缝中传出：我快压不住了，孩子。"
+    "narrativeHook": "山神的声音从岩缝中传出：我快压不住了，孩子。",
+    "drops": {
+      "materials": [
+        "mat_gangjing",
+        "mat_yanxin",
+        "mat_cuiyu",
+        "mat_hupi"
+      ]
+    }
   },
   {
     "id": "scene_4_1",
@@ -1281,7 +1294,18 @@
       "type": "clear_scene",
       "sceneId": "scene_4_5"
     },
-    "narrativeHook": "万声齐响中，有一个声音格外清晰：你分得清真假吗？"
+    "narrativeHook": "万声齐响中，有一个声音格外清晰：你分得清真假吗？",
+    "drops": {
+      "materials": [
+        "mat_youmu",
+        "mat_huancai",
+        "mat_yingbao",
+        "mat_youlan",
+        "mat_wuling",
+        "mat_feicui",
+        "mat_tianxiewangdu"
+      ]
+    }
   },
   {
     "id": "scene_5_1",
@@ -1590,7 +1614,16 @@
       "type": "clear_scene",
       "sceneId": "scene_5_5"
     },
-    "narrativeHook": "法相睁开眼：世间已无如来，只有被六耳夺舍的躯壳。"
+    "narrativeHook": "法相睁开眼：世间已无如来，只有被六耳夺舍的躯壳。",
+    "drops": {
+      "materials": [
+        "mat_puti",
+        "mat_foguang",
+        "mat_xumi",
+        "mat_tiancan",
+        "mat_lingxiao"
+      ]
+    }
   },
   {
     "id": "scene_maze_1",

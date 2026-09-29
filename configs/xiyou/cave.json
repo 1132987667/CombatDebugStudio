@@ -1048,6 +1048,46 @@
       "yield": 1,
       "cooldown": 300,
       "xianyuan": 240
+    },
+    {
+      "id": "mat_chenlutaozhi",
+      "name": "晨露桃脂",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 240,
+      "input": 1
+    },
+    {
+      "id": "mat_hantanyusui",
+      "name": "寒潭玉髓",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 240,
+      "input": 1
+    },
+    {
+      "id": "mat_dimaishiru",
+      "name": "地脉石乳",
+      "yield": 2,
+      "cooldown": 300,
+      "xianyuan": 240,
+      "input": 1
+    },
+    {
+      "id": "mat_youmingxuelian",
+      "name": "幽冥血莲籽",
+      "yield": 1,
+      "cooldown": 300,
+      "xianyuan": 600,
+      "input": 1
+    },
+    {
+      "id": "mat_putiganiu",
+      "name": "菩提甘露",
+      "yield": 1,
+      "cooldown": 300,
+      "xianyuan": 600,
+      "input": 1
     }
   ]
 }

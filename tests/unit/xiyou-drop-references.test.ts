@@ -12,6 +12,8 @@ import itemsJson from '@configs/xiyou/items.json'
 import equipmentJson from '@configs/equipment/equipment.json'
 import enemiesJson from '@configs/enemies/enemies.json'
 import scenesJson from '@configs/xiyou/scenes.json'
+import caveJson from '@configs/xiyou/cave.json'
+import packJson from '@configs/xiyou/pack.json'
 
 interface ItemRow { id: string; name: string }
 interface DropRow { itemId: string; chance: number }
@@ -131,5 +133,27 @@ describe('装备获取契约（C 方案分层：常规打造 / 专属直落）',
       }
     }
     expect(leaked).toEqual([])
+  })
+
+  it('craftable 装备的材料必须有产出源（boss 直落件豁免）', () => {
+    const itemRows = itemsJson.items as ItemRow[]
+    const produced = new Set<string>([
+      ...enemyRows.flatMap((e) => (e.drops ?? []).map((d) => d.itemId)),
+      ...sceneRows.flatMap((s) => (s.drops?.materials ?? []) as string[]),
+      ...((caveJson.gardenCrops ?? []) as { id: string }[]).map((c) => c.id),
+      // 坊市按 name 出售，经 items.json 反查 itemId（与 packStore.nameToId 同口径）
+      ...((packJson.shopGoods ?? []) as { name: string }[])
+        .map((g) => itemRows.find((i) => i.name === g.name)?.id)
+        .filter((id): id is string => !!id),
+    ])
+    const broken: string[] = []
+    for (const g of gearRows as unknown as { id: string; craftable?: boolean; materials?: { itemId: string; count: number }[] }[]) {
+      if (!g.craftable) continue
+      if (droppersOf(g.id).length > 0) continue
+      for (const m of g.materials ?? []) {
+        if (!produced.has(m.itemId)) broken.push(`${g.id} ← ${m.itemId}（零产出）`)
+      }
+    }
+    expect(broken).toEqual([])
   })
 })

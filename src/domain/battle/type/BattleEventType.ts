@@ -4,7 +4,6 @@ import type {
   DamageCategory,
 } from '@/domain/skill/types';
 import type { AnimationType } from '@/domain/battle/type/BattleAnimationType';
-import type { BattleLogEntry } from '@/shared/types/battle-log';
 
 
 
@@ -70,12 +69,6 @@ export interface BattleEndedEventData {
 
 
 
-/** 战斗日志事件数据类型 */
-export interface BattleLogEventData {
-  battleId: string;
-  log: BattleLogEntry;
-}
-
 /** 团队数据变更事件数据类型 */
 export interface TeamDataChangedEventData {
   allyTeam: BattleEntity[];
@@ -91,7 +84,6 @@ export interface AnimationCompleteEventData {
 
 /** 战斗事件类型映射 */
 export interface BattleEvents {
-  [BattleEventCodes.BATTLE_LOG]: BattleLogEventData;
   [BattleEventCodes.DAMAGE_ANIMATION]: DamageEventData;
   [BattleEventCodes.MISS_ANIMATION]: MissEventData;
   [BattleEventCodes.BATTLE_START]: void;
@@ -122,8 +114,6 @@ export type BattleEventCallback<T extends BattleEventName> = (data: BattleEvents
 
 
 export const BattleEventCodes = {
-  /** 战斗日志事件 */
-  BATTLE_LOG: 'battle-log',
   /** 伤害动画事件 */
   DAMAGE_ANIMATION: 'damage-animation',
   /** 闪避动画事件 */

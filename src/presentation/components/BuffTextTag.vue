@@ -2,7 +2,8 @@
   <span class="buff-text-tag" :class="[colorClass, { 'has-stacks': stacks > 1, 'tag--last-turn': turnsLeft === 1 }]"
     :title="tooltipText" @mouseenter="$emit('hover', $event)" @mouseleave="$emit('leave')">
     <template v-if="type === 'control'">
-      【{{ text }}】<span v-if="turnsLeft > 0" class="tag-turns">（{{ turnsLeft }}）</span>
+      <!-- 0 = 仅当轮存在，显示（0）与永久(-1，不显示数字)区分 -->
+      【{{ text }}】<span v-if="turnsLeft >= 0" class="tag-turns">（{{ turnsLeft }}）</span>
     </template>
     <template v-else>
       {{ text }}

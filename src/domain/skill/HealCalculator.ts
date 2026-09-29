@@ -7,7 +7,7 @@ import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { LogLevel } from '@/shared/types/battle-log'
 import { processExtraValues, processTargetModifiers } from '@/domain/skill/calculation-utils'
-import { floor } from '@/shared/utils/math'
+import { floor, round, COMBAT_PRECISION } from '@/shared/utils/math'
 import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 
@@ -66,7 +66,7 @@ export class HealCalculator {
             return source.getAttribute(attr) || 0
           },
         )
-        heal += total
+        heal = round(heal + total, COMBAT_PRECISION)
       }
     }
     // 修饰前计算值（baseValue + extraValues 之后、targetModifiers/cap/debuff 之前）— 供 HEAL_CALCULATION 的 before 语义

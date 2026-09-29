@@ -17,6 +17,7 @@ import type {
   LogSegment,
 } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { formatDisplayNumber } from '@/shared/utils/math'
 import { skillSegment, type SkillConfigLookup } from '@/shared/utils/log-segment-factory'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -82,10 +83,18 @@ export function valueSegment(
   type: 'damage' | 'heal',
 ): LogSegment {
   return {
-    text: `${value}`,
+    text: formatDisplayNumber(value),
     classStr: type === 'damage' ? 'log-damage' : 'log-heal',
     kind: type,
   }
+}
+
+/**
+ * 气血变化箭头文本（「  119.8 → 91.8」）——伤害/治疗 sub 共用，
+ * 数值经 formatDisplayNumber 清洗，避免浮点尾数直进日志
+ */
+function hpArrowText(r: { hpBefore: number; hpAfter: number }): string {
+  return `  ${formatDisplayNumber(r.hpBefore)} → ${formatDisplayNumber(r.hpAfter)}`
 }
 
 /**
@@ -227,14 +236,14 @@ export function projectAttackLog(
     entitySegment(target),
     { text: ' 发起「普通攻击」' },
     ...(isCrit ? [{ text: '，★ 暴击!', classStr: 'log-crit' }] : []),
-    { text: `，造成 ${shownDamage} 点伤害` },
+    { text: `，造成 ${formatDisplayNumber(shownDamage)} 点伤害` },
     ...(!target.isAlive() ? [{ text: '，✦ 击杀!', classStr: 'log-kill' }] : []),
   ]
   const dmgSegs: LogSegment[] = [
     entitySegment(target),
     { text: ' 受到 ' },
     valueSegment(r.damage, 'damage'),
-    { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
+    { text: ` 点伤害${hpArrowText(r)}` },
   ]
   return {
     action: {
@@ -286,8 +295,10 @@ export function projectSkillLog(
     (sum, r) => sum + (r.rawDamage ?? r.damage),
     0,
   )
-  const damageText = totalRawDamage > 0 ? `，造成 ${totalRawDamage} 点伤害` : ''
-  const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
+  const damageText =
+    totalRawDamage > 0 ? `，造成 ${formatDisplayNumber(totalRawDamage)} 点伤害` : ''
+  const healText =
+    totalHeal > 0 ? `，恢复 ${formatDisplayNumber(totalHeal)} 点气血` : ''
   const isKill = primary ? !primary.target.isAlive() : false
   const targetSegs: LogSegment[] = []
   targets.forEach((t, i) => {
@@ -334,7 +345,7 @@ export function projectSkillLog(
         entitySegment(r.target, r.target.id === source.id),
         { text: ' 受到 ' },
         valueSegment(r.damage, 'damage'),
-        { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
+        { text: ` 点伤害${hpArrowText(r)}` },
       ]
       subs.push({
         message: dmgSegs.map((s) => s.text).join(''),
@@ -354,7 +365,7 @@ export function projectSkillLog(
         entitySegment(r.target, r.target.id === source.id),
         { text: ' 恢复 ' },
         valueSegment(r.heal, 'heal'),
-        { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
+        { text: ` 点气血${hpArrowText(r)}` },
       ]
       subs.push({
         message: healSegs.map((s) => s.text).join(''),
@@ -411,7 +422,7 @@ export function projectSnapshotLogs(
     if (!p.isAlive()) continue
     const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
     const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
-    const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
+    const entry = `${p.name} ${formatDisplayNumber(hp)}/${formatDisplayNumber(maxHp)}`
     if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
     else enemySnapshot.push(entry)
   }

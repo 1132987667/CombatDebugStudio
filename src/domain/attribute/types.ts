@@ -238,6 +238,24 @@ export function getAttrMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefined {
   return AttributeMetaMap[code]
 }
 
+// ========== 气血 / 能量精度口径 ==========
+
+/**
+ * 适用 COMBAT_PRECISION 量化的属性码 —— 状态写入与显示层单源引用此处，不各自内联判断。
+ * 精度位数本身见 shared/utils/math.ts 的 COMBAT_PRECISION。
+ */
+export const VITAL_ATTRIBUTE_CODES: readonly ATTRIBUTE_CODE[] = [
+  ATTRIBUTE_CODE.currentHealth,
+  ATTRIBUTE_CODE.maxHealth,
+  ATTRIBUTE_CODE.currentEnergy,
+  ATTRIBUTE_CODE.maxEnergy,
+]
+
+/** 是否为气血 / 能量类状态量（受 COMBAT_PRECISION 量化约束） */
+export function isVitalAttribute(code: ATTRIBUTE_CODE): boolean {
+  return VITAL_ATTRIBUTE_CODES.includes(code)
+}
+
 /**
  * 根据属性编码获取属性的中文显示名称
  * @param code 属性编码

@@ -5,6 +5,7 @@
  */
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE, AttributeMetaMap } from '@/domain/attribute/types'
+import { formatDisplayNumber, round, COMBAT_PRECISION } from '@/shared/utils/math'
 import { StepEffectType, type DamageHealCalculationConfig, type ExtendedSkillStep, type SkillConfig } from '@/domain/skill/types'
 
 /** extraValues 中单个条目的处理结果 */
@@ -36,12 +37,14 @@ export function processExtraValues(
 
   for (const extra of extras) {
     const attrValue = resolveAttr(extra.attribute)
-    const extraValue = attrValue * extra.ratio
+    // 属性×系数 是浮点尾数的产地（24×0.7986…）；在源头量化，
+    // 下游各步的 before/after 与描述文本随之全部干净
+    const extraValue = round(attrValue * extra.ratio, COMBAT_PRECISION)
     total += extraValue
     contributions.push({ attribute: extra.attribute, value: extraValue, ratio: extra.ratio })
   }
 
-  return { total, contributions }
+  return { total: round(total, COMBAT_PRECISION), contributions }
 }
 
 /**
@@ -94,11 +97,6 @@ export function resolveAttributeValue(
 // 根治手写描述与数值脱节（如佛光普照描述"等级×10"实际 level×5×2）。
 // 渲染幂等：无 {{ 的描述原样返回，重复调用/缓存安全。
 
-/** 数值显示：消除浮点误差尾数（1.2*100=120.000...01 → 120） */
-function formatNumber(n: number): string {
-  return String(Number(n.toFixed(2)))
-}
-
 /**
  * 将伤害/治疗计算配置转为公式描述
  * 如 {baseValue:0, attack×1} → "100% 攻击力"；{baseValue:50, level×5} → "50+等级×5"
@@ -114,10 +112,10 @@ export function describeCalculation(calc: DamageHealCalculationConfig): string {
   }
   for (const [attr, ratio] of ratioByAttr) {
     if (attr === 'level') {
-      parts.push(`等级×${formatNumber(ratio)}`)
+      parts.push(`等级×${formatDisplayNumber(ratio, 2)}`)
     } else {
       const attrName = AttributeMetaMap[attr as ATTRIBUTE_CODE]?.name ?? attr
-      parts.push(`${formatNumber(ratio * 100)}% ${attrName}`)
+      parts.push(`${formatDisplayNumber(ratio * 100, 2)}% ${attrName}`)
     }
   }
   return parts.join('+')

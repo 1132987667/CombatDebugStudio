@@ -1,5 +1,6 @@
 import type { BattleEffect, BattleEntity } from '@/domain/battle/type/types'
 import type { LogSegment } from '@/shared/types/battle-log'
+import { formatDisplayNumber } from '@/shared/utils/math'
 import { ActionResultType } from '@/domain/skill/types'
 
 /**
@@ -81,7 +82,7 @@ export class EffectRenderer {
     snap?: { before: number; after: number },
   ): LogSegment[] {
     // NOTE: 「造成」显示减免前原始伤害（rawDamage），HP 箭头显示最终承伤 —— 与 action 日志同口径
-    const dmg = Math.round(e.rawDamage ?? e.damage ?? e.value ?? 0)
+    const dmg = formatDisplayNumber(e.rawDamage ?? e.damage ?? e.value ?? 0)
     const segs: LogSegment[] = [
       { text: `对 ${name} 造成 ` },
       { text: `${dmg}`, classStr: 'log-damage' },
@@ -91,7 +92,7 @@ export class EffectRenderer {
       segs.push({ text: ' (暴击)', classStr: 'log-crit' })
     }
     if (e.shieldAbsorbed && e.shieldAbsorbed > 0) {
-      segs.push({ text: ` (护盾吸收 ${Math.round(e.shieldAbsorbed)})`, classStr: 'log-shield' })
+      segs.push({ text: ` (护盾吸收 ${formatDisplayNumber(e.shieldAbsorbed)})`, classStr: 'log-shield' })
     }
     if (snap) segs.push(...this.renderHpArrow(snap))
     return segs
@@ -105,14 +106,14 @@ export class EffectRenderer {
     name: string,
     snap?: { before: number; after: number },
   ): LogSegment[] {
-    const heal = Math.round(e.heal ?? e.value ?? 0)
+    const heal = formatDisplayNumber(e.heal ?? e.value ?? 0)
     const segs: LogSegment[] = [
       { text: `${name} 恢复 ` },
       { text: `${heal}`, classStr: 'log-heal' },
       { text: ' 点气血' },
     ]
     if (e.overflow && e.overflow > 0) {
-      segs.push({ text: ` (溢出 ${Math.round(e.overflow)})`, classStr: 'log-info' })
+      segs.push({ text: ` (溢出 ${formatDisplayNumber(e.overflow)})`, classStr: 'log-info' })
     }
     if (snap) segs.push(...this.renderHpArrow(snap))
     return segs
@@ -128,8 +129,8 @@ export class EffectRenderer {
   ): LogSegment[] {
     const targetName = ctx.getEntityName(e.targetId!)
     const sourceName = ctx.getEntityName(e.sourceId!)
-    const dmg = Math.round(e.damage ?? e.value ?? 0)
-    const heal = Math.round(e.heal ?? 0)
+    const dmg = formatDisplayNumber(e.damage ?? e.value ?? 0)
+    const heal = formatDisplayNumber(e.heal ?? 0)
     const segs: LogSegment[] = [
       { text: `吸取 ${targetName} ` },
       { text: `${dmg}`, classStr: 'log-damage' },
@@ -138,7 +139,7 @@ export class EffectRenderer {
       { text: ' 气血' },
     ]
     if (e.overflow && e.overflow > 0) {
-      segs.push({ text: ` (溢出 ${Math.round(e.overflow)})`, classStr: 'log-info' })
+      segs.push({ text: ` (溢出 ${formatDisplayNumber(e.overflow)})`, classStr: 'log-info' })
     }
     return segs
   }
@@ -152,7 +153,7 @@ export class EffectRenderer {
     snap?: { before: number; after: number },
   ): LogSegment[] {
     const attackerName = ctx.getEntityName(e.targetId!) // 反伤的目标是攻击者
-    const dmg = Math.round(e.damage ?? e.value ?? 0)
+    const dmg = formatDisplayNumber(e.damage ?? e.value ?? 0)
     const segs: LogSegment[] = [
       { text: `反弹 ` },
       { text: `${dmg}`, classStr: 'log-damage' },
@@ -191,7 +192,7 @@ export class EffectRenderer {
    * 渲染护盾：{name} 获得 {value} 点护盾
    */
   private renderShield(e: BattleEffect, name: string): LogSegment[] {
-    const shieldVal = Math.round(e.value ?? 0)
+    const shieldVal = formatDisplayNumber(e.value ?? 0)
     return [
       { text: `${name} 获得 ` },
       { text: `${shieldVal}`, classStr: 'log-shield' },
@@ -215,9 +216,9 @@ export class EffectRenderer {
     if (snap.before === snap.after) return []
     return [
       { text: '  ' },
-      { text: `${Math.round(snap.before)}`, classStr: 'log-hp' },
+      { text: `${formatDisplayNumber(snap.before)}`, classStr: 'log-hp' },
       { text: ' → ', classStr: 'log-info' },
-      { text: `${Math.round(snap.after)}`, classStr: 'log-warning' },
+      { text: `${formatDisplayNumber(snap.after)}`, classStr: 'log-warning' },
     ]
   }
 }

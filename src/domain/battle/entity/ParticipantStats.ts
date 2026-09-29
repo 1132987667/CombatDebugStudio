@@ -5,9 +5,9 @@
  ** 功能: 参与者属性管理
  ** 描述: 
  **/
-import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv, isVitalAttribute } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
-import { round } from '@/shared/utils/math'
+import { round, COMBAT_PRECISION } from '@/shared/utils/math'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 
@@ -98,7 +98,11 @@ export class ParticipantStats {
   setAttributeValue(attr: ATTRIBUTE_CODE, value: number): void {
     const attrData = this.attributes.get(attr)
     if (attrData) {
-      attrData.value = value
+      // 运行时状态量（气血/能量）的唯一写入口：在此量化，百分比类效果带出的
+      // 二进制浮点尾数（119.80000000000001）不会进入状态，也不依赖各调用方自觉取整
+      attrData.value = isVitalAttribute(attr)
+        ? round(value, COMBAT_PRECISION)
+        : value
       attrData.cachedVersion = this.version
     }
   }
@@ -165,7 +169,11 @@ export class ParticipantStats {
     // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
     const before = attrData.value
-    const after = round(value, 2)
+    // 气血/能量上限按战斗精度量化，其余属性沿用 2 位小数
+    const after = round(
+      value,
+      isVitalAttribute(attrCode) ? COMBAT_PRECISION : 2,
+    )
     attrData.value = after
     // P1: ATTRIBUTE_RECALC 事件（trace 级高频，文档 §5 示例 4）
     //     只记录值实际变化的属性：invalidateCache 会对全部属性幂等重算，

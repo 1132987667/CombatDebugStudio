@@ -13,7 +13,7 @@ import { processExtraValues, processTargetModifiers, resolveAttributeValue } fro
 import { LogLevel } from '@/shared/types/battle-log'
 import { ActionResultType } from '@/domain/skill/types'
 import { KNOWN_BUFF_IDS } from '@/domain/buff/types'
-import { clamp, floor } from '@/shared/utils/math'
+import { clamp, floor, round, COMBAT_PRECISION } from '@/shared/utils/math'
 import { resolveElementCoefficient, type ElementMatrixLike } from '@/domain/fengshen/elementMatrix'
 import type { SeededRandom } from '@/shared/utils/SeededRandom'
 import { nextRandom } from '@/shared/utils/SeededRandom'
@@ -176,7 +176,7 @@ export class DamageCalculator {
         skillStep.calculation.extraValues,
         (attr) => resolveAttributeValue(attr, source, target),
       )
-      damage += total
+      damage = round(damage + total, COMBAT_PRECISION)
       breakdown.extraContributions.push(...contributions)
       for (const c of contributions) {
         breakdown.steps.push({

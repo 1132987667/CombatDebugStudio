@@ -46,7 +46,7 @@
               <span class="xy-timeline-node__content">
                 <span class="xy-timeline-node__name">{{ s.name }}</span>
                 <span class="xy-timeline-node__meta">
-                  {{ isBoss(s) ? 'BOSS' : `Lv.${s.levelRange?.[0] ?? ''}` }}
+                  {{ !s.unlocked ? '未解锁' : isBoss(s) ? 'BOSS' : `Lv.${s.levelRange?.[0] ?? ''}` }}
                 </span>
               </span>
             </button>
@@ -326,6 +326,13 @@ function select(s: XiyouScene): void {
 .xy-timeline-node.current .xy-timeline-node__content {
   background: var(--xy-seal-soft);
   border-color: rgba(var(--rgb-brand-red), 0.25);
+}
+
+/* 节点内部元素不参与命中检测：布局挤压/过渡期间子元素可能几何覆盖相邻节点，
+   elementFromPoint 与自动化点击应始终命中按钮本身（点击经冒泡本就归 button） */
+.xy-timeline-node__marker,
+.xy-timeline-node__content {
+  pointer-events: none;
 }
 
 .xy-timeline-node__name {

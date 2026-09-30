@@ -8,9 +8,10 @@
               {{ scene.name }}
               <span class="xy-battle-meta">Lv.{{ scene.levelRange?.[0] }}-{{ scene.levelRange?.[1] }}</span>
             </h2>
-            <!-- 开战入口与标题同行（内联于场景头部，替代原"战斗就绪"横幅）：手动开战模式下显示 -->
-            <div v-if="run.phase === 'battle' && !store.autoPlayMode" class="xy-battle-start">
-              <span class="xy-battle-start-badge">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 就绪</span>
+            <!-- 开战入口与标题同行（内联于场景头部，替代原"战斗就绪"横幅）：
+                 手动开战模式或引擎暂停时显示——暂停态此前在演劫台零提示，战斗停转玩家无从分辨 -->
+            <div v-if="run.phase === 'battle' && (!store.autoPlayMode || store.isPaused)" class="xy-battle-start">
+              <span class="xy-battle-start-badge">{{ store.isPaused ? '战斗已暂停' : `第 ${run.nodeIndex + 1}/${run.total} 场 · 就绪` }}</span>
               <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
             </div>
           </div>
@@ -365,8 +366,10 @@ async function initBattle(node: RunNode): Promise<void> {
 type RunPhase = 'advancing' | 'battle' | 'settling' | 'finished' | 'failed' | 'retreated'
 
 /** 开战：确保进入自动战斗（显式 set 语义，不用 toggle——引擎标志残留 true 时 toggle 会翻成手动，
- *  表现为每场就绪后都要手点「开战」；autoPlayMode 每场 startBattle 时与引擎标志同步，此处判断可靠） */
+ *  表现为每场就绪后都要手点「开战」；autoPlayMode 每场 startBattle 时与引擎标志同步，此处判断可靠）。
+ *  若引擎处于暂停态（含异常处理路径置入的暂停），先恢复再拉起自动播放 */
 async function beginBattle(): Promise<void> {
+  if (store.isPaused) store.togglePause()
   if (!store.autoPlayMode) await store.toggleAutoPlay()
 }
 
@@ -613,16 +616,29 @@ function onBattleEnded(data: BattleEndedEventData): void {
   void saveManager.autoSave()
 }
 
+// mitt 分发不吞监听器异常：结算链任一环抛错都会中断引擎收尾与其余 BATTLE_ENDED
+// 监听器（battleStore 的状态同步），表现为敌全灭后静默死锁——此处整体兜底
+const onBattleEndedSafe = (data: BattleEndedEventData): void => {
+  try {
+    onBattleEnded(data)
+  } catch (error) {
+    console.error('[BattleZen] 战斗结算异常:', error)
+    useNotificationStore().toast('战斗结算异常，自动推进已停止（战利品以已入包部分为准）', 'warning')
+    clearRunTimers()
+    run.phase = 'failed'
+  }
+}
+
 watch(() => props.scene.id, () => { startRun() })
 
 onMounted(() => {
-  battleService.on(BattleEventCodes.BATTLE_ENDED, onBattleEnded)
+  battleService.on(BattleEventCodes.BATTLE_ENDED, onBattleEndedSafe)
   startRun()
 })
 
 onUnmounted(() => {
   // NOTE: 必须按 callback 注销——off(event) 不带 callback 会清空该事件全部监听（含 battleStore 的）
-  battleService.off(BattleEventCodes.BATTLE_ENDED, onBattleEnded)
+  battleService.off(BattleEventCodes.BATTLE_ENDED, onBattleEndedSafe)
   clearRunTimers()
   stopAllAnimations()
   participantCardRefs.value = {}

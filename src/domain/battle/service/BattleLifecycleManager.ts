@@ -20,7 +20,7 @@ import type { RAFTimer } from '@/shared/utils/RAF'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
-import { LogLevel } from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 
 export class BattleLifecycleManager {
   private autoBattleTimerId?: symbol
@@ -190,6 +190,15 @@ export class BattleLifecycleManager {
         }
       } catch (error) {
         this.stopAutoBattle()
+        // 玩家可见的异常终止日志：此前只写 debug 级，战斗日志毫无痕迹，
+        // 表现为「敌方全灭后永久冻结」的死锁（战斗保持 ACTIVE 且无驱动）
+        LoggerProvider.logger.addBattleLog({
+          turn: this.getBattleData()?.currentTurn ?? 1,
+          message: '战斗引擎异常终止，自动战斗已停止（可通过调试面板「立即胜利」或重开战斗恢复）',
+          segments: [{ text: '战斗引擎异常终止，自动战斗已停止', classStr: 'log-warn' }],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'battle' },
+        })
         LoggerProvider.logger.addDebugLog(`自动战斗循环出错: ${String(error)}`, {
           level: LogLevel.ERROR,
         })

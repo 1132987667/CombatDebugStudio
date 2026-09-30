@@ -1331,19 +1331,36 @@ export class BattleSystem {
           )
         }
         // 仍然死亡 → 触发死亡被动
-        this.passiveSkillManager.triggerPassives(
-          dead,
-          createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
-            target: killer, sourceId: killerId, cause: ActionResultType.DAMAGE,
-          }),
-        )
-        if (killer) {
+        // 容错：单个被动失败不得中断死亡结算——triggerPassives 无内部兜底，裸抛会让
+        // checkBattleEndCondition 永不执行（敌方全灭不判胜 → 挂机循环静默停机 = 死锁）
+        try {
           this.passiveSkillManager.triggerPassives(
-            killer,
-            createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
-              target: dead, targetId: deadId, cause: ActionResultType.DAMAGE,
+            dead,
+            createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
+              target: killer, sourceId: killerId, cause: ActionResultType.DAMAGE,
             }),
           )
+        } catch (error) {
+          LoggerProvider.logger.addDebugLog(
+            `ON_DEATH 被动触发失败(${dead.name ?? deadId}): ${String(error)}`,
+            { level: LogLevel.ERROR },
+          )
+        }
+        if (killer) {
+          // 容错：同上，击杀侧被动失败同样不得阻断胜负判定
+          try {
+            this.passiveSkillManager.triggerPassives(
+              killer,
+              createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
+                target: dead, targetId: deadId, cause: ActionResultType.DAMAGE,
+              }),
+            )
+          } catch (error) {
+            LoggerProvider.logger.addDebugLog(
+              `ON_KILL 被动触发失败(${killer.name ?? killerId}): ${String(error)}`,
+              { level: LogLevel.ERROR },
+            )
+          }
         }
       }
       // 若 dead.isAlive() === true（已被复活），跳过死亡被动

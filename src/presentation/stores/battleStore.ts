@@ -268,6 +268,21 @@ export const useBattleStore = defineStore('battle', () => {
     initProjection()
   }
 
+  /**
+   * 清空战斗展示快照（演劫台切关/再战前调用）
+   * @description 我方/敌方卡片数据源只随 TEAM_DATA_CHANGED（战斗运行时事件）刷新，
+   *              切关不经过战斗系统——不清则敌方卡片残留上一关的队伍直到新战斗首事件；
+   *              再战重建同理，重建前旧等级/旧血量会短暂可见。战斗中调用无害：
+   *              下一个战斗事件 syncTeams 会立即重建快照。
+   */
+  function clearBattleDisplay(): void {
+    allyTeam.value = []
+    enemyTeam.value = []
+    fullAllyTeam.value = []
+    fullEnemyTeam.value = []
+    projection?.clear()
+  }
+
   // 所有事件订阅在 events Map 创建后统一注册（见下方  3. 事件订阅管理器）
 
   //  4. 事件处理器（仅负责同步业务数据到响应式状态）
@@ -1292,6 +1307,7 @@ export const useBattleStore = defineStore('battle', () => {
 
     // ========== 同步方法（Sync） ==========
     syncTeams, // 同步队伍数据
+    clearBattleDisplay, // 清空战斗展示快照（切关/再战前防旧队伍残留）
     initProjection, // 初始化/刷新投影层快照
 
     // ========== 核心操作（Actions） ==========

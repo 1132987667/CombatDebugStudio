@@ -11,6 +11,8 @@ import type { XiyouCatalogItem, XiyouQuality } from './types'
 import itemsJson from '@configs/xiyou/items.json'
 import equipmentJson from '@configs/equipment/equipment.json'
 import equipmentSystemJson from '@configs/xiyou/equipment/equipment-system.json'
+import petsJson from '@configs/pets/pets.json'
+import mountsJson from '@configs/mounts/mounts.json'
 import { qualityOf as qualityByRarity } from './quality'
 
 /** 装备目录条目：由 equipment.json 派生（装备详情唯一数据源；原 items.json 重复内联的
@@ -49,8 +51,14 @@ export function itemIdByName(name: string): string | null {
   return nameToId.get(name) ?? null
 }
 
+/** 灵宠/坐骑名补充索引：战斗掉落表会塞入 pet_11 等个体 id（BattleZen 获得灵宠/坐骑时），
+ *  这些 id 只注册在 pets.json / mounts.json 而非 items.json，itemName 须能兜住显示名 */
+const PET_MOUNT_NAMES = new Map<string, string>()
+for (const r of petsJson as unknown as Array<{ id: string; name: string }>) PET_MOUNT_NAMES.set(r.id, r.name)
+for (const r of mountsJson as unknown as Array<{ id: string; name: string }>) PET_MOUNT_NAMES.set(r.id, r.name)
+
 export function itemName(itemId: string): string {
-  return idToItem.get(itemId)?.name ?? itemId
+  return idToItem.get(itemId)?.name ?? PET_MOUNT_NAMES.get(itemId) ?? itemId
 }
 
 /** items.json rarity 1-5 → 品质名（凡/玄/地/天/仙），映射源在 quality.ts 统一表 */

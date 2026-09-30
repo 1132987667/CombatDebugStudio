@@ -437,6 +437,8 @@ function syncAllyVitals(): void {
 /** 开新局（进关/切关/再战）：节点序列重建，主角状态回满（局边界重置） */
 function startRun(): void {
   clearRunTimers()
+  // 再战先清上一场展示快照：重建完成前旧等级/旧血量会短暂可见
+  store.clearBattleDisplay()
   runNodes = buildRunNodes(props.scene, scenes)
   run.nodeIndex = 0
   run.total = runNodes.length

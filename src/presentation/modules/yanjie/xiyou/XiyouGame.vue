@@ -62,6 +62,7 @@ import type { XiyouRegion } from './types'
 import { saveManager } from './save-bridge'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
 /** 调试面板仅在开发环境渲染（生产零开销，PRD §8.12） */
 const isDev = import.meta.env.DEV
@@ -132,6 +133,8 @@ onMounted(async () => {
   saveManager.setCurrentSceneId(currentScene.value.id)
   // NOTE: onMounted 内注册 watch——确保初始赋值不触发存档，仅后续切换（地图/时间线）触发
   stopSceneWatch = watch(() => currentScene.value.id, id => {
+    // 切关先清战斗展示快照：敌方卡片数据源只随战斗事件刷新，不清则残留上一关队伍
+    useBattleStore().clearBattleDisplay()
     saveManager.setCurrentSceneId(id)
     void saveManager.autoSave()
   })

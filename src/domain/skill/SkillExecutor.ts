@@ -371,7 +371,8 @@ export class SkillExecutor {
     const buffCfgForName = this.buffSystem
       .getScriptRegistry()
       .getBuffConfig(buffId)
-    const buffName = buffCfgForName?.name ?? buffId
+    // 展示名兜底用中性词：战斗日志玩家可见，裸 buffId 会直接暴露内部命名（调试 id 仍保留在 effects.buffId）
+    const buffName = buffCfgForName?.name ?? '未知增益'
 
     const instanceId = this.buffSystem.addBuff(
       buffTarget.id,

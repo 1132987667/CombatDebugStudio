@@ -1,11 +1,11 @@
 [
   {
     "id": "boss_001",
-    "name": "旧小花山守护者",
+    "name": "桃林守护者",
     "level": 9,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 2269,
+      "maxHealth": 851,
       "attack": 119,
       "defense": 24,
       "speed": 31,
@@ -47,15 +47,15 @@
       132
     ],
     "faction": "wood",
-    "description": "小花山旧时代的石质守护者，历经妖气侵蚀而苏醒。"
+    "description": "桃林深处的石质守护者，历经妖气侵蚀而苏醒。"
   },
   {
     "id": "boss_002",
-    "name": "旧浅水涧守护者",
+    "name": "浅水涧守护者",
     "level": 11,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 2699,
+      "maxHealth": 1012,
       "attack": 144,
       "defense": 29,
       "speed": 35,
@@ -100,11 +100,11 @@
   },
   {
     "id": "boss_003",
-    "name": "旧碎石坡守护者",
+    "name": "碎石坡守护者",
     "level": 13,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 3135,
+      "maxHealth": 1176,
       "attack": 168,
       "defense": 34,
       "speed": 38,
@@ -145,12 +145,12 @@
   },
   {
     "id": "boss_004",
-    "name": "旧迷雾林守护者",
+    "name": "迷雾林守护者",
     "level": 15,
     "faction": "wood",
     "role": "yaowang",
     "stats": {
-      "maxHealth": 3565,
+      "maxHealth": 1337,
       "attack": 192,
       "defense": 38,
       "speed": 42,
@@ -190,12 +190,12 @@
   },
   {
     "id": "boss_005",
-    "name": "旧浊浪滩守护者",
+    "name": "浊浪滩守护者",
     "level": 17,
     "faction": "water",
     "role": "yaowang",
     "stats": {
-      "maxHealth": 3994,
+      "maxHealth": 1498,
       "attack": 216,
       "defense": 43,
       "speed": 46,
@@ -239,12 +239,12 @@
   },
   {
     "id": "boss_006",
-    "name": "旧熔岩洞守护者",
+    "name": "熔岩洞守护者",
     "level": 19,
     "faction": "fire",
     "role": "yaowang",
     "stats": {
-      "maxHealth": 4430,
+      "maxHealth": 1661,
       "attack": 241,
       "defense": 48,
       "speed": 50,
@@ -288,11 +288,11 @@
   },
   {
     "id": "boss_007",
-    "name": "旧蛛丝谷守护者",
+    "name": "蛛丝谷守护者",
     "level": 21,
     "role": "yaowang",
     "stats": {
-      "maxHealth": 4860,
+      "maxHealth": 1823,
       "attack": 265,
       "defense": 53,
       "speed": 53,
@@ -337,12 +337,12 @@
   },
   {
     "id": "boss_008",
-    "name": "旧狂风岭守护者",
+    "name": "狂风岭守护者",
     "level": 23,
     "faction": "metal",
     "role": "yaowang",
     "stats": {
-      "maxHealth": 5290,
+      "maxHealth": 1984,
       "attack": 287,
       "defense": 58,
       "speed": 57,
@@ -387,12 +387,12 @@
   },
   {
     "id": "boss_009",
-    "name": "旧禅音崖守护者",
+    "name": "禅音崖守护者",
     "level": 25,
     "faction": "neutral",
     "role": "yaowang",
     "stats": {
-      "maxHealth": 5726,
+      "maxHealth": 2147,
       "attack": 312,
       "defense": 62,
       "speed": 61,
@@ -436,12 +436,12 @@
   },
   {
     "id": "boss_010",
-    "name": "旧灵霄台守护者",
+    "name": "灵霄台守护者",
     "level": 27,
     "faction": "metal",
     "role": "yaowang",
     "stats": {
-      "maxHealth": 6155,
+      "maxHealth": 2308,
       "attack": 336,
       "defense": 67,
       "speed": 65,
@@ -1599,7 +1599,7 @@
     "type": "old_blood",
     "role": "yaowang",
     "stats": {
-      "maxHealth": 2484,
+      "maxHealth": 1400,
       "attack": 132,
       "defense": 26,
       "speed": 33,

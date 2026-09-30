@@ -94,7 +94,7 @@
             <div v-if="equippedTotal.length" class="xy-gear-total-rows">
               <span v-for="t in equippedTotal" :key="t.key" class="xy-gear-total-chip">
                 <span>{{ t.label }}</span>
-                <span class="xy-gear-total-chip__value">+{{ t.value }}{{ t.percent ? '%' : '' }}</span>
+                <span class="xy-gear-total-chip__value">+{{ formatDisplayNumber(t.value) }}{{ t.percent ? '%' : '' }}</span>
               </span>
             </div>
             <p v-else class="xy-gear-pool__empty">尚未穿戴装备</p>
@@ -134,7 +134,7 @@
               <span v-if="row.count > 1" class="xy-row-side">拥有 ×{{ row.count }}</span>
             </div>
             <p v-if="row.inst" class="xy-row-desc">
-              {{ row.stats.map((s) => `${s.label} +${s.value}${row.def.coefficient.attr === s.attr ? '%' : ''}`).join(' · ') }}
+              {{ row.stats.map((s) => `${s.label} +${formatDisplayNumber(s.value)}${row.def.coefficient.attr === s.attr ? '%' : ''}`).join(' · ') }}
             </p>
             <p v-if="row.inst" class="xy-row-desc xy-row-desc--key">
               强化 +{{ row.inst.enhance }}/{{ fabaoTier(row.inst.quality).enhanceCap }}
@@ -163,7 +163,7 @@
 
       <template #mount>
         <div class="xy-beast-tab xy-panel-tabs">
-          <p class="xy-panel-hint">坐骑伴战提供防御属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
+          <p class="xy-panel-hint">坐骑伴战提供防御属性（常驻光环）· 伴战期间与角色同池获得经验</p>
           <StatFilterPanel v-model:conditions="mountConditions" v-model:sorts="mountSorts"
             :options="mountStatOptions" scope="mount" class="xy-filter-row" />
           <p v-if="visibleMounts.length === 0" class="xy-panel-hint">{{ mountEmptyText }}</p>
@@ -175,7 +175,7 @@
 
       <template #pet>
         <div class="xy-beast-tab xy-panel-tabs">
-          <p class="xy-panel-hint">宠物伴战提供输出属性（常驻光环）· 伴战期间与角色同池获得经验（§18）</p>
+          <p class="xy-panel-hint">宠物伴战提供输出属性（常驻光环）· 伴战期间与角色同池获得经验</p>
           <StatFilterPanel v-model:conditions="petConditions" v-model:sorts="petSorts"
             :options="petStatOptions" scope="pet" class="xy-filter-row" />
           <p v-if="visiblePets.length === 0" class="xy-panel-hint">{{ petEmptyText }}</p>
@@ -210,6 +210,7 @@ import { compareAttributeDisplayOrder } from '@/domain/fengshen/attribute-dictio
 import { gearTooltipData, type GearTooltipView } from '../gearTooltip'
 import GearDetailDialog from './GearDetailDialog.vue'
 import StatFilterPanel from './StatFilterPanel.vue'
+import { formatDisplayNumber } from '@/shared/utils/math'
 import {
   collectStatOptions,
   filterStatTargets,

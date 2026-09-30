@@ -16,7 +16,7 @@
             <span class="xy-cave-card__top">
               <span class="xy-cave-card__name">{{ recipeName(r) }}</span>
               <span class="xy-cave-chip xy-cave-chip--jade">{{ tierOf(r) }}</span>
-              <span class="xy-cave-card__side">已有 ×{{ countOfOut(r) }}</span>
+              <span class="xy-cave-card__side" title="仅统计背包中未穿戴的装备，穿身上的不计入">已有 ×{{ countOfOut(r) }}</span>
             </span>
             <p class="xy-cave-card__desc xy-cave-card__key">{{ recipeDesc(r) }}</p>
             <span class="xy-cave-card__mats">

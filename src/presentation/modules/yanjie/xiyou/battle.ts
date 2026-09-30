@@ -68,6 +68,10 @@ export function buildEnemyRoster(scene: XiyouScene, node?: RunNode): Enemy[] {
   const rows = ids
     .map((id) => (id ? (enemyById.get(id) ?? null) : null))
     .filter((r): r is EnemyRow => !!r)
+  // 场景侧覆盖名优先：scenes.json enemies[].name 是关卡叙事的显示名权威（如河伯祠「河伯亲卫」），
+  // enemies.json 的 name 只是全库 id 的注册名（如「旧碎石坡守护者」），两者不一致时以场景叙事为准
+  const sceneNameById = new Map(scene.enemies.map((e) => [e.id, e.name]))
+  if (scene.yaotu) sceneNameById.set(scene.yaotu.id, scene.yaotu.name)
   const amp = node?.amp ?? 1
   // NOTE: 席位制（runFlow.enemySlotCount）已保证 node.enemyIds ≤ 4，此处 slice 仅作无头模拟
   //       （不传 node 的整场景合编路径）的越界兜底——真实战斗不应在此截断，截断即编成与结算脱钩
@@ -78,7 +82,7 @@ export function buildEnemyRoster(scene: XiyouScene, node?: RunNode): Enemy[] {
     const scaled = (v?: number): number => Math.round((v ?? 0) * amp)
     return {
       id: row.id,
-      name: row.name,
+      name: sceneNameById.get(row.id) ?? row.name,
       level: row.level,
       stats: {
         [ATTRIBUTE_CODE.currentHealth]: scaled(st.maxHealth),

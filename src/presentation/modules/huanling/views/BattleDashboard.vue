@@ -22,7 +22,7 @@
             @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)" @mousemove="updateTooltipPosition"
             @mouseleave="hideAttrTooltip">
             <span class="monitor-label">{{ a.meta.displayName }}:</span>
-            <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : '' }}</span>
+            <span class="monitor-value">{{ formatDisplayNumber(attrVal(a.code as ATTRIBUTE_CODE), 1) }}{{ a.meta.isPercentage ? '%' : '' }}</span>
           </div>
         </div>
       </div>
@@ -44,7 +44,7 @@
                 @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)" @mousemove="updateTooltipPosition"
                 @mouseleave="hideAttrTooltip">
                 <span class="monitor-label">{{ a.meta.displayName }}:</span>
-                <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : ''
+                <span class="monitor-value">{{ formatDisplayNumber(attrVal(a.code as ATTRIBUTE_CODE), 1) }}{{ a.meta.isPercentage ? '%' : ''
                 }}</span>
               </div>
             </div>
@@ -204,6 +204,7 @@ import type { TabItem } from '@/presentation/components'
 import { useBattleStore } from '@/presentation/stores';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
 import type { BuffRawItem } from '@/shared/types/buff-display'
+import { formatDisplayNumber } from '@/shared/utils/math'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import BuffTextGroup from '@/presentation/components/BuffTextGroup.vue'
 

@@ -10,7 +10,7 @@
       <div v-if="rows.length" class="ht-attrs-grid">
         <div v-for="r in rows" :key="r.code" class="ht-attrs-row" :title="`${r.code} · ${r.tier}`">
           <span class="k">{{ r.name }}</span>
-          <span class="v">{{ r.value }}{{ r.pct ? '%' : '' }}</span>
+          <span class="v">{{ formatDisplayNumber(r.value, 1) }}{{ r.pct ? '%' : '' }}</span>
         </div>
       </div>
       <div v-else class="ht-attrs-empty">该角色无属性数据（存档未携带 attributes）</div>
@@ -26,6 +26,7 @@ import { computed, ref } from 'vue'
 
 import { getAttrMeta, getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, type DisplayTier } from '@/presentation/config/attributeDisplay'
+import { formatDisplayNumber } from '@/shared/utils/math'
 import type { ArchiveParticipant } from '@/domain/battle/replay/unified/unified-archive'
 import { useHaotianStore } from '../stores/haotianStore'
 

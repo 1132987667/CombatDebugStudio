@@ -7,7 +7,7 @@ import { ModifierSourceType, ModifierType } from '@/domain/attribute/types'
 import { getAttributeDisplayConfig, DISPLAY_GROUP_LABELS } from '@/presentation/config/attributeDisplay'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import { round } from '@/shared/utils/math'
+import { round, formatDisplayNumber } from '@/shared/utils/math'
 
 import { computePlayerBase, computeStatBonuses, playerConfig } from './playerProfile'
 import { schoolAttributeBonuses, treeAttrLayers, gearAttrLayers, equipBonuses } from './battle'
@@ -58,13 +58,15 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
     Object.values(LAYERED_ATTR_TO_MAIN).map((l) => l.main),
   )
 
-  /** 六维：快照(已含树乘区) + 装备直加(词条flat+数值词条换算),再乘装备乘区(加成L2/系数L3,多个乘区单独相乘,同文档四层模型) */
+  /** 六维：快照(已含树乘区) + 装备直加(词条flat+数值词条换算),再乘装备乘区(加成L2/系数L3,多个乘区单独相乘,同文档四层模型)。
+   *  NOTE: 此处保留计算精度不取整——取整语义单源在显示层 formatDisplayNumber(n, 1)（数值精度规范 §2），
+   *  面板(1位)与昊天镜/唤灵台(同口径)才能同源对账。 */
   function sixAttrVal(code: ATTRIBUTE_CODE): number {
     const snap = playerAttributes.value[code] ?? getAttrDv(code)
     // gearBonus[code] = 装备 flat 直加 + 主属性数值 percent 词条换算值（不含 bonus/coef 乘区键）
     const gearBase = gearBonus.value[code] ?? 0
     const gear = gearAttrLayers(pack.equippedStats(), code)
-    return Math.round((snap + gearBase) * (1 + gear.bonus / 100) * (1 + gear.coefficient / 100))
+    return (snap + gearBase) * (1 + gear.bonus / 100) * (1 + gear.coefficient / 100)
   }
 
   function attrVal(code: ATTRIBUTE_CODE): number {
@@ -137,11 +139,20 @@ export function useCharacterAttrs(options: CharacterAttrsOptions = {}) {
     return count
   })
 
-  const hpText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentHealth)}/${attrVal(ATTRIBUTE_CODE.maxHealth)}`)
-  const energyText = computed(() => `${attrVal(ATTRIBUTE_CODE.currentEnergy)}/${attrVal(ATTRIBUTE_CODE.maxEnergy)}`)
+  /** 属性面板主值显示口径（数值精度规范 §2）：最多 1 位小数、四舍五入、不补零 */
+  const ATTR_PANEL_DECIMALS = 1
+
+  const hpText = computed(
+    () =>
+      `${formatDisplayNumber(attrVal(ATTRIBUTE_CODE.currentHealth), ATTR_PANEL_DECIMALS)}/${formatDisplayNumber(attrVal(ATTRIBUTE_CODE.maxHealth), ATTR_PANEL_DECIMALS)}`,
+  )
+  const energyText = computed(
+    () =>
+      `${formatDisplayNumber(attrVal(ATTRIBUTE_CODE.currentEnergy), ATTR_PANEL_DECIMALS)}/${formatDisplayNumber(attrVal(ATTRIBUTE_CODE.maxEnergy), ATTR_PANEL_DECIMALS)}`,
+  )
 
   function attrText(item: AttrEntry): string {
-    return attrVal(item.code) + (item.isPercentage ? '%' : '')
+    return formatDisplayNumber(attrVal(item.code), ATTR_PANEL_DECIMALS) + (item.isPercentage ? '%' : '')
   }
 
   /** 零值弱化 + 百分比标记（0 值灰化后百分比金标只剩噪音，统一交由 zero 类表达「无」） */

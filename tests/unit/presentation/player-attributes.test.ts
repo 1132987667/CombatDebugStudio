@@ -10,6 +10,7 @@ import { equipBonuses, schoolAttributeBonuses } from '@/presentation/modules/yan
 import { nodeValueAtRank, pureSchoolBonus, schools, schoolsLayers } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { computePlayerBase, computeStatBonuses } from '@/presentation/modules/yanjie/xiyou/playerProfile'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { round } from '@/shared/utils/math'
 
 /** 重置流派运行时状态（防测试间串扰，同 school-system.test.ts） */
 function resetSkillTree(): void {
@@ -121,7 +122,8 @@ describe('装备词缀面板口径（equipBonuses）', () => {
     coefNode.ranks = 1
     try {
       const inc = nodeValueAtRank(coefNode, 1)
-      const expected = Math.round(baseSpeed * (1 + inc / 100))
+      // 快照存储口径 2 位（数值精度规范 §2）；取整语义单源在显示层 formatDisplayNumber(n, 1)
+      const expected = round(baseSpeed * (1 + inc / 100), 2)
       expect(store.playerAttributes[ATTRIBUTE_CODE.speed]).toBe(expected)
       expect(store.playerAttributes[ATTRIBUTE_CODE.speedCoefficient]).toBeUndefined()
     } finally {

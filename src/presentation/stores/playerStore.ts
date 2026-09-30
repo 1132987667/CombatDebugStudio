@@ -15,6 +15,7 @@ import { LAYERED_ATTR_TO_MAIN } from '@/shared/utils/attributeSync'
 import { schoolAttributeBonuses, schoolTreeBonuses } from '@/presentation/modules/yanjie/xiyou/battle'
 import { grantLevelPoint } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { PLAYER_ID } from '@/shared/constants/player'
+import { round } from '@/shared/utils/math'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /** 每级自由属性点（configs/xiyou/player.json freePointsPerLevel，文档 D1：每级 4 点） */
@@ -95,7 +96,8 @@ export const usePlayerStore = defineStore('player', () => {
     for (const main of layeredMains) {
       const code = main as ATTRIBUTE_CODE
       const cur = snapshot[code] ?? 0
-      snapshot[code] = Math.round(cur * (1 + (treeBonusByMain[main] ?? 0) / 100) * (1 + (treeCoefByMain[main] ?? 0) / 100))
+      // 存储口径 2 位（数值精度规范 §2）：快照是存储语义，取整留给显示层 formatDisplayNumber(n, 1)
+      snapshot[code] = round(cur * (1 + (treeBonusByMain[main] ?? 0) / 100) * (1 + (treeCoefByMain[main] ?? 0) / 100), 2)
     }
     return snapshot
   })

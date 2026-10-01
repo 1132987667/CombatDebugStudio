@@ -104,7 +104,7 @@
         <span v-if="run.firstClear" class="xy-run-first">首杀</span>
         <span class="xy-run-meta">{{ finishLeftSec }}s 后自动再战</span>
         <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
-        <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
+        <button type="button" class="xy-run-btn xy-run-btn--primary" @click="emit('open-map')">打开路引</button>
       </div>
       <div class="xy-run-loot">
         <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
@@ -121,13 +121,14 @@
       <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
       <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
       <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
-      <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
+      <button type="button" class="xy-run-btn xy-run-btn--primary" @click="emit('open-map')">打开路引</button>
     </div>
 
     <div v-else-if="run.phase === 'failed'" class="xy-run xy-run--fail" aria-label="战败结算">
       <span class="xy-run-title">战败 · 已获战利品保留</span>
+      <span class="xy-run-meta">可整备装备/加点后再战，或换一处关卡</span>
       <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
-      <button type="button" class="xy-run-btn" @click="emit('open-map')">打开路引</button>
+      <button type="button" class="xy-run-btn xy-run-btn--primary" title="打开降妖路引，另择关卡或回到功能页签" @click="emit('open-map')">打开路引</button>
     </div>
 
     <!-- 中上部：角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard；敌方按席位阶梯 2~4 员） -->
@@ -1085,6 +1086,19 @@ onUnmounted(() => {
   &:hover {
     border-color: var(--xy-gold);
     color: var(--xy-gold);
+  }
+
+  /* 逃生出口强调：战败/通关结算条上的「打开路引」是唯一离开战斗循环的入口，
+     视觉上要与「再来一次」拉开层级，避免误以为界面卡死（评审 P2-7） */
+  &--primary {
+    border-color: var(--xy-gold);
+    background: var(--xy-gold-soft);
+    color: var(--xy-gold);
+
+    &:hover {
+      border-color: var(--xy-gold);
+      color: var(--xy-ink-1);
+    }
   }
 }
 

@@ -76,7 +76,7 @@ import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import { useNotificationStore } from '@/presentation/stores/notificationStore';
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
-import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
+import { computed, onMounted, ref, shallowReactive, watch } from "vue";
 import BattleDashboard from "./views/BattleDashboard.vue";
 import BattleField from "./views/BattleField.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
@@ -725,9 +725,10 @@ defineExpose({
   saveRecording,
 })
 
-onUnmounted(() => {
-  battleStore.destroy();
-});
+// NOTE: 此处不再调 battleStore.destroy()——唤灵台是 v-show 保活的 app 级模块，本钩子只在
+//       dev HMR / 整页卸载时触发；destroy 会清掉共享 BattleService 的引用与全部事件桥，
+//       而演劫台（v-show 保活、不重挂）的战斗链会被误杀，表现为战斗画面永久冻结。
+//       事件订阅由 battleStore.subscribeBattleEvents 幂等重挂，无需在此清理。
 </script>
 
 <style scoped lang="scss">

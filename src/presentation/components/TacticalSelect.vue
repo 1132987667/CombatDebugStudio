@@ -242,17 +242,20 @@ function updatePosition() {
   const r = trig.getBoundingClientRect()
   const panelH = panelRef.value?.offsetHeight || estimatePanelHeight()
   const panelW = Math.max(r.width, 200)
+  // NOTE: 钳制宽度须与下方 maxWidth 一致，否则窄视口下面板按 maxWidth 渲染、
+  //       按 panelW 钳制 left，右缘仍可能探出屏幕
+  const clampW = Math.max(panelW, 360)
   const spaceBelow = window.innerHeight - r.bottom - PANEL_GAP - 8
   const spaceAbove = r.top - PANEL_GAP - 8
   dropUp.value = panelH > spaceBelow && spaceAbove > spaceBelow
   const top = dropUp.value ? r.top - panelH - PANEL_GAP : r.bottom + PANEL_GAP
-  const left = Math.max(8, Math.min(r.left, window.innerWidth - panelW - 8))
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - clampW - 8))
   const maxH = Math.max(180, dropUp.value ? spaceAbove : spaceBelow)
   panelStyle.value = {
     top: `${top}px`,
     left: `${left}px`,
     minWidth: `${panelW}px`,
-    maxWidth: `${Math.max(panelW, 360)}px`,
+    maxWidth: `${clampW}px`,
     maxHeight: `${maxH}px`,
   }
 }
@@ -336,7 +339,13 @@ function onKeydown(e: KeyboardEvent) {
       }
       break
     case 'Escape':
-      if (open.value) { e.preventDefault(); close() }
+      if (open.value) {
+        e.preventDefault()
+        // NOTE: 阻断冒泡——宿主容器（如调试面板）常在 window 上监听 Esc 关闭自身，
+        //       下拉仅想关自己时若让事件冒到 window 会把宿主一起关掉
+        e.stopPropagation()
+        close()
+      }
       break
     case 'Tab':
       if (open.value) close()

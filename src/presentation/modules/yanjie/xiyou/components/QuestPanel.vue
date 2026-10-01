@@ -79,7 +79,8 @@ function claim(q: XiyouQuest): void {
 }
 
 const questCats = computed(() => {
-  const order: Array<XiyouQuest['type']> = ['主线']
+  // 引导在前（新手第一眼看到「穿装/加点/打造」三步），主线随后
+  const order: Array<XiyouQuest['type']> = ['引导', '主线']
   return order.map(type => {
     const items = quests.filter(q => q.type === type)
     return { label: type, items, done: items.filter(q => q.progress >= q.target).length }

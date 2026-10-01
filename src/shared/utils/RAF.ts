@@ -22,6 +22,13 @@ interface Timer {
 export class RAFTimer {
   private readonly timers: Map<symbol, Timer> = new Map()
   private rafId: number | null = null
+  /** 页面不可见时的兜底驱动句柄（rAF 在后台标签完全停转，战斗挂机会整体冻结） */
+  private fallbackTimerId: ReturnType<typeof setTimeout> | null = null
+  /** rAF 失约看门狗（嵌入式 webview/节能模式隐藏页面时 document.hidden 不变、
+   *  无 visibilitychange 事件，但 rAF 静默停转——只能靠时间兜底发现） */
+  private watchdogId: ReturnType<typeof setInterval> | null = null
+  private lastLoopAt: number = 0
+  private visibilityHandler: (() => void) | null = null
   private isRunning: boolean = false
 
   constructor() {
@@ -35,8 +42,70 @@ export class RAFTimer {
   private startLoop(): void {
     if (!this.isRunning && this.timers.size > 0) {
       this.isRunning = true
-      this.rafId = requestAnimationFrame(this.loop)
+      this.startDrive()
+      this.startWatchdog()
     }
+  }
+
+  /** 按可见性选择驱动方式：前台 rAF（帧对齐），后台 setTimeout 兜底（被浏览器节流但持续推进） */
+  private startDrive(): void {
+    if (this.fallbackTimerId !== null) return
+    if (typeof document !== 'undefined' && document.hidden) {
+      this.startFallbackDrive()
+      return
+    }
+    this.rafId = requestAnimationFrame(this.loop)
+    this.ensureVisibilityListener()
+  }
+
+  private startFallbackDrive(): void {
+    if (this.fallbackTimerId !== null) return
+    this.fallbackTimerId = setTimeout(() => {
+      this.fallbackTimerId = null
+      this.loop(performance.now())
+    }, 250)
+  }
+
+  /** 看门狗：rAF 驱动失约 >1s（帧不再来）时切换到 setTimeout 兜底驱动 */
+  private startWatchdog(): void {
+    // NOTE: lastLoopAt 刷新须在复用守卫之前——stop 后未经 clear 直接重启（未来调用方）
+    //       会复用旧 watchdog，过期 lastLoopAt 会误判 rAF 失约切一次 fallback
+    this.lastLoopAt = performance.now()
+    if (this.watchdogId !== null || typeof setInterval === 'undefined') return
+    this.watchdogId = setInterval(() => {
+      if (!this.isRunning || this.timers.size === 0) return
+      if (this.fallbackTimerId !== null) return
+      if (performance.now() - this.lastLoopAt < 1000) return
+      // rAF 已失约且无事件通知（hidden 未变）——强制切兜底
+      if (this.rafId !== null) {
+        cancelAnimationFrame(this.rafId)
+        this.rafId = null
+      }
+      this.startFallbackDrive()
+    }, 500)
+  }
+
+  /** 可见性切换时在两种驱动间迁移（幂等） */
+  private ensureVisibilityListener(): void {
+    if (typeof document === 'undefined' || this.visibilityHandler) return
+    this.visibilityHandler = () => {
+      if (document.hidden) {
+        if (this.rafId !== null) {
+          cancelAnimationFrame(this.rafId)
+          this.rafId = null
+        }
+        if (this.isRunning) this.startFallbackDrive()
+      } else {
+        if (this.fallbackTimerId !== null) {
+          clearTimeout(this.fallbackTimerId)
+          this.fallbackTimerId = null
+        }
+        if (this.isRunning && this.rafId === null) {
+          this.rafId = requestAnimationFrame(this.loop)
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', this.visibilityHandler)
   }
 
   /**
@@ -44,6 +113,7 @@ export class RAFTimer {
    * 移除 async 关键字，防止阻塞帧更新
    */
   private loop(now: number): void {
+    this.lastLoopAt = now
     if (this.timers.size === 0) {
       this.stop()
       return
@@ -71,7 +141,17 @@ export class RAFTimer {
     }
 
     if (this.isRunning && this.timers.size > 0) {
-      this.rafId = requestAnimationFrame(this.loop)
+      // NOTE: rAF 回调执行期间 rafId 仍持有旧句柄（尚未消费完），不能以 rafId===null
+      //       判断是否续接——rAF 在此续排下一帧；fallback tick 走到此处时句柄已被
+      //       回调入口清掉，直接续排 fallback（无事件证明 rAF 已恢复，切回会退化成
+      //       「失约 1s → 兜底一拍」的节奏，由 visibilitychange hidden=false 正常切回）
+      if (this.fallbackTimerId !== null) {
+        // 双保险（实际不可达：回调入口已置 null）
+      } else if (this.rafId !== null) {
+        this.rafId = requestAnimationFrame(this.loop)
+      } else {
+        this.startFallbackDrive()
+      }
     } else {
       this.stop()
     }
@@ -94,6 +174,17 @@ export class RAFTimer {
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId)
       this.rafId = null
+    }
+    if (this.fallbackTimerId !== null) {
+      clearTimeout(this.fallbackTimerId)
+      this.fallbackTimerId = null
+    }
+  }
+
+  private clearWatchdog(): void {
+    if (this.watchdogId !== null) {
+      clearInterval(this.watchdogId)
+      this.watchdogId = null
     }
   }
 
@@ -131,6 +222,7 @@ export class RAFTimer {
     const deleted = this.timers.delete(timerId)
     if (this.timers.size === 0) {
       this.stop()
+      this.clearWatchdog()
     }
     return deleted
   }
@@ -161,7 +253,12 @@ export class RAFTimer {
 
   destroy(): void {
     this.stop()
+    this.clearWatchdog()
     this.timers.clear()
+    if (this.visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityHandler)
+      this.visibilityHandler = null
+    }
   }
 }
 

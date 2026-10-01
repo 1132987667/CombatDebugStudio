@@ -415,7 +415,13 @@ export const codexChapters = computed<XiyouCodexChapter[]>(() =>
   }),
 )
 
-export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(questJson.quests as unknown as XiyouQuest[])
+// NOTE: 逐元素浅拷贝初始化——reactive 直接包 configs 数组（或仅拷贝数组壳）时，
+//       restore 改写元素顶层字段（progress/claimed）、applyXiyou 整表覆盖（splice），
+//       都会把 questJson 源数据一起改写：配置演进判断（补录）与「新游戏重置」共用同一份
+//       元素引用，进度会残留到新档
+export const quests: XiyouQuest[] = reactive<XiyouQuest[]>(
+  questJson.quests.map(q => ({ ...q })) as unknown as XiyouQuest[],
+)
 
 /** 装备定义目录（configs/equipment/equipment.json 唯一数据源 · 锻造配方按 equipmentId 引用其材料） */
 export const equipmentCatalog: EquipmentData[] = equipmentJson as unknown as EquipmentData[]
@@ -541,13 +547,20 @@ function applyXiyou(map: Map<string, Record<string, unknown>>): void {
   aIn(achievements, 'collect', 'achievements')
   aIn(titles, 'collect', 'titles')
   aIn(quests, 'quest', 'quests')
+  // NOTE: 配置新增任务补录——快照只含恢复时刻的任务全集，configs 演进（如新增引导任务）
+  //       会被旧快照整表盖丢；进度权威在 save-bridge 的 quest_progress（按 id），
+  //       补录的新任务 progress 保持配置初始值 0
+  const savedQuestIds = new Set(quests.map(q => q.id))
+  for (const q of questJson.quests as unknown as XiyouQuest[]) {
+    if (q.id && !savedQuestIds.has(q.id)) quests.push({ ...q })
+  }
   aIn(alchemyRecipes, 'cave', 'alchemyRecipes')
   aIn(forgeRecipes, 'cave', 'forgeRecipes')
   aIn(talismanRecipes, 'cave', 'talismanRecipes')
   // NOTE: gardenCrops 不从存档恢复——灵韵催熟制后它是纯静态设计数值（configs/xiyou/cave.json 唯一权威），
   //       旧档的 3 作物快照会盖住新配置（无 xianyuan/input 字段直接让药园不可用）。
   //       天花板：若未来给作物加运行时状态（如生长进度），需改为按 id 合并而非整表恢复。
-  // aIn(gardenCrops, 'cave', 'gardenCrops')
+  // aIn(gardenCrops, "cave", "gardenCrops")
   aIn(retreats, 'cave', 'retreats')
   aIn(crops, 'cave', 'crops')
   aIn(crafts, 'cave', 'crafts')

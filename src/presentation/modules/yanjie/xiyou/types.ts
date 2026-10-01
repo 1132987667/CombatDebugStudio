@@ -390,8 +390,9 @@ export interface XiyouAchievement {
 
 
 /** 任务目标类型（quest.json goal.kind；缺省 = 纯展示任务，暂无推进源）。
- *  NOTE: battle_win/kill_count/purchase/brew 曾为网游日常/周常服务，已按单机定位移除 */
-export type QuestGoalKind = 'clear_scene'
+ *  NOTE: battle_win/kill_count/purchase/brew 曾为网游日常/周常服务，已按单机定位移除。
+ *  equip_gear/alloc_stat/forge_gear 为新手引导三步（评审 P2-5：开局零提示导致首场必败） */
+export type QuestGoalKind = 'clear_scene' | 'equip_gear' | 'alloc_stat' | 'forge_gear'
 
 /** 结构化目标：kind + 达成次数；clear_scene 需 sceneId 指定关卡 */
 export interface QuestGoal {

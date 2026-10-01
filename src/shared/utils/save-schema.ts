@@ -124,6 +124,8 @@ export interface SaveData {
   pill_bonuses?: Record<string, number>
   /** 任务进度（接线任务）：questId → 进度与领取态（旧档缺省保留 configs 初始值） */
   quest_progress?: Record<string, { progress: number; claimed?: boolean }>
+  /** 战斗倍速（1/2/4/5；旧档缺省 1）——挂机循环靠刷新恢复，倍速不持久化会被重置回 1x */
+  battle_speed?: number
 }
 
 /** 初始状态工厂（新游戏 / 无档兜底，PRD §6.4） */

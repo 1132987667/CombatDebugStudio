@@ -1,6 +1,48 @@
 {
   "quests": [
     {
+      "id": "q_intro_01",
+      "type": "引导",
+      "name": "装束齐整",
+      "desc": "背包里有一套新手装：打开行囊，穿戴武器与衣甲再出战",
+      "progress": 0,
+      "target": 1,
+      "reward": "经验 30 · 金钱 20",
+      "goal": { "kind": "equip_gear", "target": 1 },
+      "rewards": [
+        { "kind": "exp", "amount": 30 },
+        { "kind": "money", "amount": 20 }
+      ]
+    },
+    {
+      "id": "q_intro_02",
+      "type": "引导",
+      "name": "淬体炼骨",
+      "desc": "修行面板分配 3 点属性点：气血、攻击各按所需加点",
+      "progress": 0,
+      "target": 3,
+      "reward": "经验 40 · 金钱 30",
+      "goal": { "kind": "alloc_stat", "target": 3 },
+      "rewards": [
+        { "kind": "exp", "amount": 40 },
+        { "kind": "money", "amount": 30 }
+      ]
+    },
+    {
+      "id": "q_intro_03",
+      "type": "引导",
+      "name": "初试锻锤",
+      "desc": "洞府打造一件装备：材料齐备即可开锤，品质随机",
+      "progress": 0,
+      "target": 1,
+      "reward": "经验 60 · 金钱 50",
+      "goal": { "kind": "forge_gear", "target": 1 },
+      "rewards": [
+        { "kind": "exp", "amount": 60 },
+        { "kind": "money", "amount": 50 }
+      ]
+    },
+    {
       "id": "q_main_01",
       "type": "主线",
       "name": "初探花果山",

@@ -116,6 +116,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouForgeRecipe } from '../../types'
 import { crafts, forgeRecipes, equipmentCatalog } from '../../xiyouData'
+import { progressQuests } from '../../questProgress'
 import { itemName, missingMatsText, type MatView } from '../../caveLogic'
 import { equipQualityColor, qualityOdds, tierName } from '../../quality'
 
@@ -264,6 +265,7 @@ function craft(): void {
   window.setTimeout(() => {
     const inst = pack.craftEquipment(g.id)
     if (inst) {
+      progressQuests('forge_gear', 1)
       rippling.value = true
       // NOTE: 成功提示由 packStore.craftEquipment 统一弹出，此处不再重复 toast
       window.setTimeout(() => {

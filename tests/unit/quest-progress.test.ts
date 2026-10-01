@@ -81,3 +81,40 @@ describe('questCompleted', () => {
     expect(questCompleted({ progress: 2, target: 3 })).toBe(false)
   })
 })
+
+describe('progressQuests（新手引导推进源）', () => {
+  // 直接用 quest.json 的 q_intro_*（配置即夹具），不动 quests 数组结构避免与顶层快照钩子嵌套
+  const intro = (id: string) => byId(id)
+
+  beforeEach(() => {
+    for (const q of quests) {
+      if (q.id?.startsWith('q_intro_')) q.progress = 0
+    }
+  })
+
+  it('穿装备推进 equip_gear，不影响加点/打造任务', () => {
+    progressQuests('equip_gear', 1)
+    expect(intro('q_intro_01').progress).toBe(1)
+    expect(intro('q_intro_02').progress).toBe(0)
+    expect(intro('q_intro_03').progress).toBe(0)
+  })
+
+  it('加点逐次推进 alloc_stat，封顶 target', () => {
+    progressQuests('alloc_stat', 2)
+    expect(intro('q_intro_02').progress).toBe(2)
+    progressQuests('alloc_stat', 2)
+    expect(intro('q_intro_02').progress).toBe(3)
+  })
+
+  it('打造推进 forge_gear', () => {
+    progressQuests('forge_gear', 1)
+    expect(intro('q_intro_03').progress).toBe(1)
+  })
+
+  it('clear_scene 不误推进引导任务（kind 隔离）', () => {
+    progressQuests('clear_scene', 5, { sceneId: 'scene_fixture' })
+    expect(intro('q_intro_01').progress).toBe(0)
+    expect(intro('q_intro_02').progress).toBe(0)
+    expect(intro('q_intro_03').progress).toBe(0)
+  })
+})

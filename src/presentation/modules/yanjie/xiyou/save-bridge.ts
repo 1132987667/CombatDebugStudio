@@ -19,6 +19,7 @@ import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import type { XiyouStatPoints } from './types'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 import {
   GEAR_SLOT_LABELS,
   makeInstance,
@@ -30,6 +31,20 @@ import {
 import { materials as packMaterials, equipment as packStarterEquipment, starterEnabled, packItems, pills as packPills, consumables as packConsumables, quests, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
+
+/** 战斗页可切档位（与 BattleZen.BATTLE_SPEEDS 同口径；引擎 DELAYS 的合法键域） */
+const BATTLE_SPEED_LEVELS = [1, 2, 4, 5]
+
+/**
+ * 当前战斗倍速（battleStore setup 依赖战斗容器，单测环境无 BattleService 时回退默认 1x）
+ */
+function battleSpeedOrDefault(): number {
+  try {
+    return useBattleStore().battleSpeed
+  } catch {
+    return 1
+  }
+}
 
 const INITIAL_STAT_POINTS: XiyouStatPoints = { available: 4, hp: 0, atk: 0, def: 0, hit: 0, dodge: 0, speed: 0 }
 
@@ -203,6 +218,10 @@ export const xiyouSaveBridge: SaveStatePort = {
 
     // 上阵伙伴名单（出战阵容 = 主角 + 至多 3 名上阵伙伴）
     data.mates_active = mates.filter((m) => m.active).map((m) => m.name)
+
+    // 战斗倍速（挂机体验核心，刷新/重进后不应回到 1x）
+    const battleSpeed = battleSpeedOrDefault()
+    if (battleSpeed !== 1) data.battle_speed = battleSpeed
 
     return data
   },
@@ -404,6 +423,17 @@ export const xiyouSaveBridge: SaveStatePort = {
     if (Array.isArray(matesActive)) {
       const activeSet = new Set(matesActive)
       for (const m of mates) m.active = activeSet.has(m.name)
+    }
+
+    // 战斗倍速恢复（旧档缺省 1；非法值/越界档位忽略，防脏档写入 store 后 UI 循环失锚。
+    // 引擎侧每场 startBattle 会把 store 值下发，此处只需改 store，动画服务由 BattleZen 的 watch 同步）
+    const savedSpeed = data.battle_speed
+    if (typeof savedSpeed === 'number' && BATTLE_SPEED_LEVELS.includes(savedSpeed)) {
+      try {
+        useBattleStore().battleSpeed = savedSpeed
+      } catch {
+        // battleStore setup 需要战斗容器（单测环境无 BattleService）：跳过恢复不阻塞存档
+      }
     }
 
     // 同步行囊运行时落盘（防止旧 pack_runtime 覆盖恢复结果）

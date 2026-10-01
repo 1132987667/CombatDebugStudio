@@ -436,6 +436,9 @@ async function copyDetail(): Promise<void> {
 // ════════════ 键盘快捷键：Ctrl+Shift+D 切换面板 / Esc 关闭 ════════════
 function onKeydown(e: KeyboardEvent): void {
   if (e.key === 'Escape' && props.modelValue) {
+    // TacticalSelect 的下拉面板 Teleport 在 body 上：有打开的下拉时 Esc 先归它，
+    // 面板自身不响应（焦点不在控件内时该组件收不到 Esc，此处兜底判断）
+    if (document.querySelector('.t-select__panel')) return
     emit('update:modelValue', false)
     return
   }
@@ -566,6 +569,8 @@ defineExpose({ env, categories })
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-3);
+  /* 底部留白：滚动内容与「执行后弹出数据详情」开关条视觉分离（评审 P2-7：贴挤似重叠） */
+  padding-bottom: var(--space-6);
 }
 
 .xy-debug__group {
@@ -661,6 +666,9 @@ defineExpose({ env, categories })
 .xy-debug__log {
   flex-shrink: 0;
   border-top: 1px solid var(--xy-ink-line);
+  /* 开关条上浮感：与上方滚动内容拉开层次（评审 P2-7） */
+  box-shadow: 0 -4px 10px rgba(var(--rgb-black), 0.18);
+  background: var(--color-bg-tertiary);
 }
 
 .xy-debug__options {

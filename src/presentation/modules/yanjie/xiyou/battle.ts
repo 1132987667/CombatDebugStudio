@@ -28,16 +28,32 @@ export const playerParty: XiyouCombatant[] = [
 /** 上阵伙伴上限（主角 + 3 = 4v4） */
 export const MAX_ACTIVE_MATES = 3
 
+/** 伙伴等级跟随基准：mate.json 初始等级以此为梯度锚（孙小圣 5 为最高） */
+const MATE_LEVEL_BASE = 5
+
+/**
+ * 伙伴有效等级：跟随主角等级成长，保留 mate.json 初始梯度（相对基准的差值不变）。
+ * mate.json 的 level 是「初始等级」而非永久写死值——此前伙伴等级不随主角成长，
+ * 主角 Lv.8+ 时 4v4 战力断层，成长全压主角单人（评审 P2-6）。
+ * level ≤ 0 视为未解锁（不上阵、不成长）。
+ */
+export function effectiveMateLevel(m: XiyouMate, playerLevel?: number): number {
+  if (m.level <= 0) return 0
+  if (!playerLevel || playerLevel <= 0) return m.level
+  return Math.max(m.level, playerLevel + (m.level - MATE_LEVEL_BASE))
+}
+
 /** 伙伴参战属性：mate.json Lv.1 基准 stats × 等级成长系数（每级 +15%） */
-export function mateToCombatant(m: XiyouMate, slot: number): XiyouCombatant | null {
-  if (!m.stats || m.level <= 0) return null
-  const factor = 1 + (m.level - 1) * 0.15
+export function mateToCombatant(m: XiyouMate, slot: number, playerLevel?: number): XiyouCombatant | null {
+  const level = effectiveMateLevel(m, playerLevel)
+  if (!m.stats || level <= 0) return null
+  const factor = 1 + (level - 1) * 0.15
   const scaled = (v: number) => Math.round(v * factor)
   const maxHp = scaled(m.stats.maxHp)
   return {
     id: `${PLAYER_ID}_mate_${slot}`,
     name: m.name,
-    level: m.level,
+    level,
     hp: maxHp,
     maxHp,
     energy: 0,
@@ -50,11 +66,11 @@ export function mateToCombatant(m: XiyouMate, slot: number): XiyouCombatant | nu
 }
 
 /** 我方出战阵容（4v4）：主角 + 至多 3 名上阵伙伴（mate.json active 且已激活） */
-export function buildPlayerParty(): XiyouCombatant[] {
+export function buildPlayerParty(playerLevel?: number): XiyouCombatant[] {
   const partners = mates
     .filter((m) => m.active && m.stats && m.level > 0)
     .slice(0, MAX_ACTIVE_MATES)
-    .map((m, i) => mateToCombatant(m, i + 1))
+    .map((m, i) => mateToCombatant(m, i + 1, playerLevel))
     .filter((c): c is XiyouCombatant => c !== null)
   return [playerParty[0], ...partners]
 }
@@ -595,7 +611,7 @@ function applyAllyBonuses(enemy: Enemy, allyBonuses: Partial<Record<string, numb
  *           血量继承，超过无头模拟「独立满血单场」的能力时再来扩展。
  */
 export function buildSimAlly(allyBonuses?: Partial<Record<string, number>>, protagonist?: ProtagonistSnapshot): ActorData[] {
-  return buildPlayerParty().map((c, i) => {
+  return buildPlayerParty(protagonist?.level).map((c, i) => {
     const src = i === 0 && protagonist ? { ...c, ...protagonist } : c
     const enemy = i === 0 && allyBonuses ? applyAllyBonuses(xiyouToEnemy(src, true), allyBonuses) : xiyouToEnemy(src, i === 0)
     return enemyToActor(enemy)
@@ -616,8 +632,9 @@ export function buildBattleTeams(
   protagonist?: ProtagonistSnapshot,
   node?: RunNode,
 ): { ally: BattleEntity[]; enemy: BattleEntity[] } {
-  // NOTE: 主角属性以 protagonist（playerStore 派生）为权威，伙伴为 mate.json 出战属性；装备加成仅作用于主角
-  const ally = buildPlayerParty().map((c, i) => {
+  // NOTE: 主角属性以 protagonist（playerStore 派生）为权威；伙伴等级跟随主角（effectiveMateLevel），
+  //       装备加成仅作用于主角
+  const ally = buildPlayerParty(protagonist?.level).map((c, i) => {
     const src = i === 0 && protagonist ? { ...c, ...protagonist } : c
     const enemy = i === 0 && allyBonuses ? applyAllyBonuses(xiyouToEnemy(src, true), allyBonuses) : xiyouToEnemy(src, i === 0)
     const participant = GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ALLY, i)

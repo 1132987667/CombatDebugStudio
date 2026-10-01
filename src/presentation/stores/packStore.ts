@@ -29,6 +29,7 @@ import {
 import type { EquipmentData, EquipmentStatEntry, GearAffix } from '@/domain/fengshen/types'
 import type { XiyouData } from '@/domain/fengshen/types'
 import type { EnemyDrop } from '@/shared/types/enemy'
+import { progressQuests } from '@/presentation/modules/yanjie/xiyou/questProgress'
 import { EquipmentSlot, EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
 import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
@@ -668,6 +669,7 @@ export const usePackStore = defineStore('pack', () => {
     gearInstances.value.splice(idx, 1)
     scheduleSave()
     notification.toast(`已穿戴「${gearById(inst.itemId)?.name ?? inst.itemId}」`, 'success')
+    progressQuests('equip_gear', 1)
     return true
   }
 
@@ -688,6 +690,7 @@ export const usePackStore = defineStore('pack', () => {
       equipped[slot] = makeInstance(itemId, [], 0)
       scheduleSave()
       notification.toast(`已穿戴「${gearById(itemId)?.name ?? itemId}」`, 'success')
+      progressQuests('equip_gear', 1)
       return true
     }
     notification.toast('背包中没有该装备')

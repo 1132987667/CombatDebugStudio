@@ -98,7 +98,7 @@
             </div>
             <div class="xy-settings-dlg__row xy-settings-dlg__row--muted">
               <span class="xy-settings-dlg__label">战斗倍速</span>
-              <span class="xy-settings-dlg__hint">1× / 2×</span>
+              <span class="xy-settings-dlg__hint">1× / 2× / 4× / 5×（战斗页速度按钮切换）</span>
             </div>
           </section>
 

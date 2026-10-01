@@ -141,6 +141,10 @@ export class BattleLifecycleManager {
     const battle = this.getBattleData()
     if (!battle) return
 
+    // NOTE: 先清旧调度再起新循环——重复启动（调试面板/重开竞态）时旧 timer 不清
+    //       会形成双循环，回合节奏翻倍且 clearTimer 只能清到其中一个
+    this.clearTimer()
+
     battle.autoBattle = true
     battle.battleState = BattleStatus.ACTIVE
 

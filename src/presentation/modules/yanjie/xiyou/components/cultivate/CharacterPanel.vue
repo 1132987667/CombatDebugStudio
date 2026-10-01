@@ -138,6 +138,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import { playerConfig, BREAK_NODES, breakNodeLabel, nextBreakNode } from '../../playerProfile'
 import { useCharacterAttrs } from '../../characterAttrs'
 import { schools } from '../../xiyouData'
+import { progressQuests } from '../../questProgress'
 
 const notification = useNotificationStore()
 
@@ -208,6 +209,7 @@ function incStat(key: StatKey) {
   if (statPoints.value.available <= 0) return
   statPoints.value.available--
   statPoints.value[key]++
+  progressQuests('alloc_stat', 1)
 }
 
 function decStat(key: StatKey) {

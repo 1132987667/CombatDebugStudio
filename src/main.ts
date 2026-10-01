@@ -110,6 +110,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pinia = createPinia()
     app.use(pinia)
 
+    // NOTE: 渲染/生命周期错误集中可见化——「局部冻结、刷新恢复」类问题此前只能靠 DOM 反推，
+    //       errorHandler 把出错组件链打进 console，评审/排查时第一现场不再丢失
+    app.config.errorHandler = (err, instance, info) => {
+      const chain: string[] = []
+      let cur = instance
+      while (cur) {
+        const name = (cur.$options as { name?: string; __name?: string }).name ?? (cur.$options as { __name?: string }).__name
+        chain.push(name ?? `#${cur.uid}`)
+        cur = cur.$parent
+      }
+      console.error(`[Vue] ${info}: ${err instanceof Error ? err.stack : String(err)}`, `\n  组件链: ${chain.join(' ← ')}`)
+    }
+
     // 全局注册高频通用组件
     for (const [name, component] of Object.entries(globalComponents)) {
       app.component(name, component)

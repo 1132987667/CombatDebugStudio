@@ -10,7 +10,7 @@
               <span v-if="m.active" class="xy-chip xy-chip--gold">上阵</span>
             </div>
             <span class="xy-mate-role xy-chip xy-chip--jade">{{ m.role }}</span>
-            <span class="xy-mate-level">Lv.{{ m.level }} · {{ qualityOf(m.rarity) }}</span>
+            <span class="xy-mate-level">Lv.{{ effectiveMateLevel(m, playerStore.player.level) }} · {{ qualityOf(m.rarity) }}</span>
             <div class="xy-mate-stars" aria-label="星级">
               <IconStar v-for="i in 5" :key="i" class="xy-star" :class="{ on: i <= m.stars }" />
             </div>
@@ -83,7 +83,7 @@ import IconStar from '~icons/app/star'
 
 import type { TabItem } from '@/presentation/components'
 import { mates } from '../xiyouData'
-import { MAX_ACTIVE_MATES } from '../battle'
+import { effectiveMateLevel, MAX_ACTIVE_MATES } from '../battle'
 import { saveManager } from '../save-bridge'
 import { qualityClass, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'

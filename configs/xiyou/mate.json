@@ -49,8 +49,8 @@
       "name": "小白龙",
       "role": "输出",
       "rarity": 4,
-      "level": 0,
-      "stars": 0,
+      "level": 2,
+      "stars": 2,
       "active": false,
       "desc": "腾云驾雾，群体灼伤",
       "stats": {

@@ -347,7 +347,9 @@ function buildBattleCategory(env: PlayerStoreDebugEnv): DebugCategory {
                 options: (values) => {
                   const sceneId = values[`battle_grind:scene`] as string | undefined
                   const scene = env.scenes.find((s) => s.id === sceneId)
-                  if (!scene) return []
+                  // 未选场景给禁用提示项而非空列表：空列表只显示「暂无选项」，
+                  // 玩家不知道要先选场景（评审实测在此卡住）
+                  if (!scene) return [{ value: '', label: '↑ 请先选择场景', disabled: true }]
                   const enemies = [
                     ...scene.enemies
                       .filter((e): e is { id: string; name: string; level: number; type?: string } => !!e.id)

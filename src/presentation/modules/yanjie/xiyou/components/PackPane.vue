@@ -147,7 +147,7 @@ import { computed, ref, watch } from 'vue'
 import type { TabItem } from '@/presentation/components'
 
 import { usePackStore, MAX_STORAGE, type GearInstance, type Warehouse } from '@/presentation/stores/packStore'
-import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
+import { ITEM_CATEGORIES, type ItemCategoryId } from '@/shared/constants/item-types'
 import type { XiyouCatalogItem, XiyouShopGood } from '../types'
 import PackItemCard from './PackItemCard.vue'
 import StatFilterPanel from './StatFilterPanel.vue'
@@ -205,20 +205,14 @@ const tabs = computed<TabItem[]>(() =>
 )
 
 /**
- * 背包二级分类（方案二 2.2：40 种 type → 7 组）
+ * 背包二级分类：分类树单源派生（@/shared/constants/item-types ITEM_CATEGORIES）+「全部」首组。
+ * 类型归属调整去 item-types.ts 改，勿在此手补——漏登记的类型行囊分类页签会漏收。
  */
-const PACK_CATEGORIES = [
-  { id: 'all', label: '全部', types: [] as string[] },
-  { id: 'equip', label: '装备', types: Object.values(EQUIPMENT_SLOT_LABELS) },
-  { id: 'consumable', label: '消耗', types: ['丹药', '永久丹药', '符箓', '药引', '经验丹', '卷轴'] },
-  { id: 'material', label: '材料', types: ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '特殊材料', '首领材料', '图纸', '草药', '制造辅助'] },
-  { id: 'essence', label: '灵气', types: ['灵气', '碎片'] },
-  // '洗练'（items.json 实配）与 '洗炼'（schema 枚举写法）为历史数据双写，分组兜住两种键
-  { id: 'enhance', label: '强化', types: ['强化', '升星', '洗练', '洗炼', '重铸', '传承', '分解', '突破', '技能书', '经验'] },
-  { id: 'misc', label: '杂物', types: ['货币', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '功能道具'] },
-] as const
-
-type PackCatId = (typeof PACK_CATEGORIES)[number]['id']
+type PackCatId = ItemCategoryId | 'all'
+const PACK_CATEGORIES: ReadonlyArray<{ id: PackCatId; label: string; types: readonly string[] }> = [
+  { id: 'all', label: '全部', types: [] },
+  ...ITEM_CATEGORIES,
+]
 
 const cat = ref<PackCatId>('all')
 

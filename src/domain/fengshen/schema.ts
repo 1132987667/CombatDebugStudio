@@ -8,6 +8,7 @@
 import type { FengshenTableName, GearTier, AffixQualityCode } from '@/domain/fengshen/types'
 import { ENEMY_ROLE_LABELS, ENEMY_ROLES } from '@/domain/fengshen/role-grades'
 import { EQUIPMENT_SLOT_LABELS } from '@/shared/types/Item'
+import { ALL_DECLARED_ITEM_TYPES, ITEM_TYPE_CATEGORY } from '@/shared/constants/item-types'
 import { StackRule } from '@/domain/buff/types'
 import { SkillTypeName } from '@/domain/skill/types'
 
@@ -41,7 +42,9 @@ export const AFFIX_QUALITY_VALUE_LABEL: Record<AffixQualityCode, string> = { fan
 const SLOT_ENUM = Object.keys(EQUIPMENT_SLOT_LABELS)
 const GEAR_TIER_ENUM = Object.keys(GEAR_TIER_VALUE_LABEL)
 const MATERIAL_TYPE_ENUM = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '灵气', '碎片', '货币', '草药', '药引', '种子']
-const ITEM_TYPE_ENUM = ['木材', '矿石', '金属', '玉石', '水产', '皮革', '织物', '陶瓷', '天材地宝', '液体', '毒物', '特殊材料', '首领材料', '灵气', '碎片', '货币', '丹药', '永久丹药', '图纸', '强化', '升星', '洗炼', '重铸', '传承', '分解', '符箓', '突破', '技能书', '经验', '杂物', '钥匙', '门票', '任务', '器灵', '套装烙印', '武器', '衣甲', '饰品', '草药', '药引', '种子', '制造辅助', '法宝', '神器', '经验丹', '卷轴', '功能道具', '宝箱']
+/** 物品类型枚举——分类树 flatten 派生（@/shared/constants/item-types 单源；曾手写 48 项，
+ *  与 items.json 实配双向漂移：4 种实配类型选不到、13 个死选项永远空） */
+const ITEM_TYPE_ENUM = [...ALL_DECLARED_ITEM_TYPES]
 
 export type FieldType = 'text' | 'number' | 'select' | 'multi' | 'map' | 'array' | 'object' | 'boolean'
 
@@ -84,6 +87,8 @@ export interface TableFilter {
   type: 'select' | 'range'
   /** select：选项（值 = 显示名）或引用表取选项 */
   options?: string[]
+  /** select：值 → 分组名（下拉按组渲染分组头，如物品类型 → 大类；来自 ITEM_TYPE_CATEGORY 单源） */
+  valueGroup?: Record<string, string>
   /** select：值 → 显示名映射（如 role 码 → 中文档位名）；多个值映射到同一显示名时下拉合并为一个档位，过滤按档位全匹配 */
   labelMap?: Record<string, string>
   refTable?: FengshenTableName
@@ -574,7 +579,7 @@ export const TABLE_SCHEMAS: Record<FengshenTableName, TableSchema> = {
       { key: 'description', label: '描述', type: 'text', searchable: true },
     ],
     filters: [
-      { key: 'type', label: '类型', type: 'select', options: ITEM_TYPE_ENUM },
+      { key: 'type', label: '类型', type: 'select', options: ITEM_TYPE_ENUM, valueGroup: ITEM_TYPE_CATEGORY },
       { key: 'rarity', label: '品级', type: 'range', min: 1, max: 5 },
     ],
   },

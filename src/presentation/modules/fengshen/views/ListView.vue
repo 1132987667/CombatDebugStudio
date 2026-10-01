@@ -469,7 +469,8 @@ function filterOptions(f: TableFilter): TSelectOption[] {
   }
   return [
     { value: '', label: `全部${f.label}` },
-    ...selectOptions(f).map((o) => ({ value: o.id, label: o.name })),
+    // group 缺省为 undefined → TacticalSelect 归入无组头单列，行为同平铺
+    ...selectOptions(f).map((o) => ({ value: o.id, label: o.name, group: f.valueGroup?.[o.id] })),
   ]
 }
 

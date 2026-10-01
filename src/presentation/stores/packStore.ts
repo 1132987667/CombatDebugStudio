@@ -48,7 +48,6 @@ import {
   enhanceMaxByRarity,
   enhanceSuccessRate,
   STAR_MAX,
-  STAR_STONES,
   starCost,
   starFactor,
   WASH_COST_GOLD,
@@ -194,7 +193,7 @@ export interface GearInstance {
   quality: number
   /** 品质系数（制造时品质区间内 roll 并锁存；旧档/未锁定实例用区间中值兜底） */
   qualityFactor: number
-  /** 星级（0-3，§21 升星表：+5%/+10%/+10%）；升星消耗同名装备 + 残魂点 */
+  /** 星级（0-3，§21 升星表：+5%/+10%/+10%）；升星消耗同名未穿戴装备 */
   star: number
   /** 强化连败次数（成功率保底：每连败 1 次 +10%，成功清零；§21 装备强化） */
   enhanceFails?: number
@@ -255,17 +254,17 @@ const DECOMP_HAMMER_ID = 'decomp_hammer'
 
 /**
  * 分解产出表（§21「装备分解」，键 = 装备实例品质 1-5）：
- * soulChance/soulCount 兵解残魄晶（概率×数量）、enhChance 强化石（精低/超中概率）、
- * extract 神品质必得太古汲灵符（附录B「分解神品质装备必得 ×1」）。
+ * enhChance 强化石（精低/超中概率）、extract 神品质必得太古汲灵符（附录B「分解神品质装备必得 ×1」）。
  * 「基础材料 ×N」落地为制造材料按品质档比例返还（matRatio，神品质 50% 对齐分解锤「返还 50% 制造材料」口径）。
  * 已强化的装备不按强化等级返还强化石——强化是沉没成本（§21 裁定），强化石为品质档固定产出。
+ * 裁定（2026-10-01）：兵解残魄晶产出删除——升星只消耗同名装备，晶退出体系。
  */
-const DECOMPOSE_TABLE: Record<number, { soulChance: number; soulCount: number; enhChance: number; matRatio: number; extract?: boolean }> = {
-  1: { soulChance: 0.3, soulCount: 1, enhChance: 0, matRatio: 0.1 },
-  2: { soulChance: 0.6, soulCount: 1, enhChance: 0.3, matRatio: 0.2 },
-  3: { soulChance: 0.4, soulCount: 1, enhChance: 0.6, matRatio: 0.3 },
-  4: { soulChance: 1, soulCount: 1, enhChance: 0, matRatio: 0.4 },
-  5: { soulChance: 1, soulCount: 3, enhChance: 0, matRatio: 0.5, extract: true },
+const DECOMPOSE_TABLE: Record<number, { enhChance: number; matRatio: number; extract?: boolean }> = {
+  1: { enhChance: 0, matRatio: 0.1 },
+  2: { enhChance: 0.3, matRatio: 0.2 },
+  3: { enhChance: 0.6, matRatio: 0.3 },
+  4: { enhChance: 0, matRatio: 0.4 },
+  5: { enhChance: 0, matRatio: 0.5, extract: true },
 }
 
 /** 目录索引：委托 caveLogic 合并目录（items.json + equipment.json 装备派生条目，
@@ -808,10 +807,11 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 升星装备实例：残魂点支付（每星 3 点，累计 3/6/9）→ 星级 +1（§21 装备养成操作与材料）
-   * 点源混合支付，优先级：破境耀星石（上3/中2/下1，贪心）→ 兵解残魄晶（1 点/个）→ 同名未穿戴装备（1 点/件，被消耗）
+   * 升星装备实例：消耗同名未穿戴装备（每星 3 件，累计 3/6/9）→ 星级 +1（§21 装备养成操作与材料）
+   * 点源唯一：完全相同 itemId 的背包未穿戴实例，1 件 = 1 点，被消耗（裁定 2026-10-01：
+   * 兵解残魄晶 / 破境耀星石退出升星体系，物品整链删除）
    * NOTE: 升星只增强基础属性（+5%/+10%/+10% 累计 25%），不改词条内容/数量；
-   *  目标自身也在背包同名池中，计点与消耗均排除自身（否则升星背包装备会把自己吃掉）
+   *  目标自身也在背包同名池中，计件与消耗均排除自身（否则升星背包装备会把自己吃掉）
    */
   function starGear(instanceId: string): boolean {
     const inst = gearInstanceById(instanceId)
@@ -826,43 +826,26 @@ export const usePackStore = defineStore('pack', () => {
       return false
     }
     const need = starCost(cur + 1)
-    if (starPointsAvailable(inst.itemId, instanceId) < need) {
-      notification.toast(`残魂点不足（需 ${need} 点：破境耀星石 / 兵解残魄晶 / 同名装备均可）`, 'warning')
+    if (starFodderCount(inst.itemId, instanceId) < need) {
+      notification.toast(`同名装备不足（升 ${cur + 1} 星需背包内未穿戴同名装备 ${need} 件）`, 'warning')
       return false
     }
-    consumeStarPoints(inst.itemId, need, instanceId)
+    consumeStarFodder(inst.itemId, need, instanceId)
     inst.star = cur + 1
     scheduleSave()
     notification.toast(`升星成功！「${g.name}」升至 ${inst.star} 星`, 'success')
     return true
   }
 
-  /** 升星可用残魂点：破境耀星石（上3/中2/下1）+ 兵解残魄晶 decomp_soul（1/个）+ 同名未穿戴装备（1/件）；
+  /** 升星可用饲料件数：背包内同名（相同 itemId）未穿戴装备件数；
    *  excludeInstanceId 用于把升星目标自身从同名池排除 */
-  function starPointsAvailable(itemId: string, excludeInstanceId?: string): number {
-    const stonePts = STAR_STONES.reduce((sum, [id, pts]) => sum + (inventory.value[id] ?? 0) * pts, 0)
-    const souls = inventory.value['decomp_soul'] ?? 0
-    const sameCount = gearInstances.value.filter((x) => x.itemId === itemId && x.instanceId !== excludeInstanceId).length
-    return stonePts + souls + sameCount
+  function starFodderCount(itemId: string, excludeInstanceId?: string): number {
+    return gearInstances.value.filter((x) => x.itemId === itemId && x.instanceId !== excludeInstanceId).length
   }
 
-  /** 按优先级扣减残魂点（调用方先以 starPointsAvailable 校验充足），支付顺序见 starGear 注释 */
-  function consumeStarPoints(itemId: string, need: number, excludeInstanceId?: string): void {
+  /** 按件消耗同名装备作饲料（调用方先以 starFodderCount 校验充足） */
+  function consumeStarFodder(itemId: string, need: number, excludeInstanceId?: string): void {
     let remain = need
-    const takeItem = (id: string, count: number): number => {
-      const use = Math.min(inventory.value[id] ?? 0, count)
-      if (use > 0) {
-        inventory.value[id] = (inventory.value[id] ?? 0) - use
-        if (inventory.value[id]! <= 0) delete inventory.value[id]
-      }
-      return use
-    }
-    for (const [id, pts] of STAR_STONES) {
-      if (remain <= 0) break
-      const use = takeItem(id, Math.floor(remain / pts))
-      remain -= use * pts
-    }
-    if (remain > 0) remain -= takeItem('decomp_soul', remain)
     while (remain > 0) {
       const sameIdx = gearInstances.value.findIndex((x) => x.itemId === itemId && x.instanceId !== excludeInstanceId)
       if (sameIdx < 0) break
@@ -950,7 +933,7 @@ export const usePackStore = defineStore('pack', () => {
 
   /**
    * 分解背包装备实例（§21 装备分解，全品质可分解）：
-   * 消耗分解锤 ×1，产出金钱 + 制造材料（按品质档比例）+ 兵解残魄晶（升星替代点数），
+   * 消耗分解锤 ×1，产出金钱 + 制造材料（按品质档比例），
    * 精品质/超品质概率产强化石、神品质必得太古汲灵符；强化等级不参与产出（沉没成本）。
    * 只处理背包中该装备的第一件实例（穿戴中的装备不在背包，天然不可分解）。
    * 返回失败原因文案（成功返回 null）。
@@ -976,10 +959,6 @@ export const usePackStore = defineStore('pack', () => {
       const n = Math.max(1, Math.floor(m.count * t.matRatio))
       addItem(m.itemId, n)
       parts.push(`材料×${n}`)
-    }
-    if (rng() < t.soulChance) {
-      addItem('decomp_soul', t.soulCount)
-      parts.push(`兵解残魄晶×${t.soulCount}`)
     }
     if (t.enhChance > 0 && rng() < t.enhChance) {
       addItem('enh_stone', 1)
@@ -1700,7 +1679,7 @@ export const usePackStore = defineStore('pack', () => {
     unequip,
     enhanceGear,
     starGear,
-    starPointsAvailable,
+    starFodderCount,
     washGear,
     decompose,
     blueprintUnlocked,

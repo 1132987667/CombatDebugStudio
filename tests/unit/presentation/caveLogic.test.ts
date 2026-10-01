@@ -109,7 +109,7 @@ describe('强化数值', () => {
 })
 
 describe('升星消耗与加成', () => {
-  it('残魂点需求：每星 3 点（配置累计 3/6/9 差值），目标 0 星为 0', () => {
+  it('同名装备需求：每星 3 件（配置累计 3/6/9 差值），目标 0 星为 0', () => {
     expect(starCost(1)).toBe(3)
     expect(starCost(2)).toBe(3)
     expect(starCost(3)).toBe(3)

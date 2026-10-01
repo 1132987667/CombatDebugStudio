@@ -1062,10 +1062,6 @@
         "probability": 0.1
       },
       {
-        "itemId": "star_up_high",
-        "probability": 0.2
-      },
-      {
         "itemId": "wp_t5_01",
         "probability": 0.3
       },
@@ -1212,10 +1208,6 @@
         "probability": 0.1
       },
       {
-        "itemId": "star_up_mid",
-        "probability": 0.3
-      },
-      {
         "itemId": "bt_sb08",
         "probability": 0.1
       },
@@ -1338,10 +1330,6 @@
         "probability": 0.1
       },
       {
-        "itemId": "star_up_mid",
-        "probability": 0.3
-      },
-      {
         "itemId": "wp_sb06",
         "probability": 0.1
       },
@@ -1458,10 +1446,6 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
-      },
-      {
-        "itemId": "star_up_mid",
-        "probability": 0.3
       },
       {
         "itemId": "hf_sb07",
@@ -8159,10 +8143,6 @@
         "probability": 0.1
       },
       {
-        "itemId": "star_up_low",
-        "probability": 0.15
-      },
-      {
         "itemId": "exp_pill_mid",
         "probability": 0.15
       }
@@ -9594,10 +9574,6 @@
       {
         "itemId": "wash_lock",
         "probability": 0.05
-      },
-      {
-        "itemId": "star_up_low",
-        "probability": 0.15
       },
       {
         "itemId": "exp_pill_mid",

@@ -111,7 +111,7 @@ const ACTIVE_NAV = computed(() => {
     talisman: { label: '炼制符箓', sub: '符炉 · 炼制强化保护符' },
     garden: { label: '药园灵田', sub: '灵田 · 种植收获灵草仙果' },
     enhance: { label: '强化装备', sub: '砺台 · 消耗强化石与金钱强化' },
-    star: { label: '装备升星', sub: '星台 · 消耗残魂点突破星级' },
+    star: { label: '装备升星', sub: '星台 · 消耗同名装备突破星级' },
     wash: { label: '词条洗练', sub: '灵泉 · 消耗洗练材料更换词条' },
     fragment: { label: '碎片合成', sub: '熔炼 · 碎片合成为完整之物' },
   }

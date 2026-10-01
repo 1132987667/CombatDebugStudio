@@ -93,7 +93,7 @@ const firstInstance = computed(() =>
 const decomposeMsg = computed(() => {
   const inst = firstInstance.value
   const qualityText = inst ? qualityOf(inst.quality) : '未知品质'
-  return `消耗分解锤×1，分解背包中第一件「${item.value?.name ?? ''}」（${qualityText}），按品质返还金钱/制造材料/兵解残魄晶。此操作不可恢复。`
+  return `消耗分解锤×1，分解背包中第一件「${item.value?.name ?? ''}」（${qualityText}），按品质返还金钱/制造材料。此操作不可恢复。`
 })
 
 /** 品阶色类（px-q* 为全局令牌映射，见下方样式） */

@@ -1501,36 +1501,6 @@
       "usage": "制造辅助材料，超品概率+5%（二至地品）"
     },
     {
-      "id": "star_up_low",
-      "name": "破境耀星石·下",
-      "type": "升星",
-      "rarity": 2,
-      "source": "场景首领首杀",
-      "description": "凡品→玄品装备升星（0→1星）",
-      "value": 80,
-      "usage": "装备升星"
-    },
-    {
-      "id": "star_up_mid",
-      "name": "破境耀星石·中",
-      "type": "升星",
-      "rarity": 3,
-      "source": "三大妖王掉落(30%)",
-      "description": "玄品→地品装备升星（1→2星）",
-      "value": 200,
-      "usage": "装备升星"
-    },
-    {
-      "id": "star_up_high",
-      "name": "破境耀星石·上",
-      "type": "升星",
-      "rarity": 4,
-      "source": "最终妖王掉落(20%)",
-      "description": "地品→天品装备升星（2→3星）",
-      "value": 500,
-      "usage": "装备升星"
-    },
-    {
       "id": "enh_stone",
       "name": "强化石",
       "type": "强化",
@@ -1689,16 +1659,6 @@
       "description": "将极品词条吸出，可移植到另一件同阶装备",
       "value": 500,
       "usage": "终局定制"
-    },
-    {
-      "id": "decomp_soul",
-      "name": "兵解残魄晶",
-      "type": "功能道具",
-      "rarity": 3,
-      "source": "分解绝品装备得×1/神品×3",
-      "description": "分解高品质装备获得，用于重铸和合成",
-      "value": 100,
-      "usage": "重铸材料"
     },
     {
       "id": "spirit_core",

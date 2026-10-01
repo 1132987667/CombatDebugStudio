@@ -292,17 +292,16 @@ export function dropsForEnemy(name: string): EnemyDrop[] {
 }
 
 /**
- * BOSS 首杀一次性奖励（enemyId → 物品清单）：装备本体以 equipment.json source「首杀掉落」为口径，
- * 破境耀星石·下按 §21「场景 BOSS 首杀奖励」。
+ * BOSS 首杀一次性奖励（enemyId → 物品清单）：装备本体以 equipment.json source「首杀掉落」为口径。
  * NOTE: 不进敌人常规 drops（首杀后重复刷取会通胀神兵/图纸），发放挂在场景首杀（markSceneCleared），
  *       关底节点中 id 命中本表的敌人逐项必掉。
+ * 裁定（2026-10-01）：破境耀星石整链删除（升星只消耗同名装备），如来首杀随石移除。
  */
 export const FIRST_KILL_REWARDS: Record<string, string[]> = {
-  boss_major_huayaowang: ['wp_sb01', 'star_up_low'],
-  boss_major_hebo: ['ar_sb02', 'star_up_low'],
-  boss_major_shanshen: ['hd_sb03', 'star_up_low'],
-  boss_major_miwu: ['jz_sb04', 'star_up_low'],
-  boss_major_rulai: ['star_up_low'],
+  boss_major_huayaowang: ['wp_sb01'],
+  boss_major_hebo: ['ar_sb02'],
+  boss_major_shanshen: ['hd_sb03'],
+  boss_major_miwu: ['jz_sb04'],
 }
 
 /** 首杀奖励转为必掉掉落形态（quantity=1 / chance=1；供入包与结算展示共用） */

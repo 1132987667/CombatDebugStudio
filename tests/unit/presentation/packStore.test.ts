@@ -1097,75 +1097,46 @@ describe("装备制造与强化（实例化）", () => {
     expect(pack.enhanceGear("no-such-instance", () => 0)).toBe(false)
   })
 
-  it("升星真实生效：残魂点 3 点混合支付 → 星级 +1 → 基础属性提升（残魂优先于同名装备）", async () => {
+  it("升星真实生效：消耗未穿戴同名装备 3 件 → 星级 +1 → 基础属性提升", async () => {
     const pack = usePackStore()
     await pack.init()
     // t3 流云剑（itemLevel 25，核心攻击 ≥34）：t1 低值 +5% 会被整数取整吞掉，基数高才可观测
-    pack.addItem("wp_t3_light_01", 2)
-    pack.equip("wp_t3_light_01")
-    pack.addItem("decomp_soul", 3) // 兵解残魄晶 ×3 = 3 点
+    pack.addItem("wp_t3_light_01", 4)
+    pack.equip("wp_t3_light_01") // 背包余 3 件同名饲料
     const atk0 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(true)
     expect(pack.equipped.weapon?.star).toBe(1)
-    expect(pack.countOf("decomp_soul")).toBe(0) // 残魂优先消耗
-    expect(pack.countOf("wp_t3_light_01")).toBe(1) // 同名装备保留
+    expect(pack.countOf("wp_t3_light_01")).toBe(0) // 3 件同名被消耗
     const atk1 = pack.equippedStats().find((s) => s.attribute === "attack")!.value
     expect(atk1).toBeGreaterThan(atk0) // 1 星 +5% 基础属性
   })
 
-  it("升星同名装备兜底支付：无残魂/破境耀星石时消耗同名 3 件（1 点/件）", async () => {
-    const pack = usePackStore()
-    await pack.init()
-    pack.addItem("wp_t1_mid_01", 1) // 新手套已不含松木棍，先补一件穿上
-    pack.equip("wp_t1_mid_01")
-    pack.addItem("wp_t1_mid_01", 3) // 3 件同名 = 3 点
-    expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(true)
-    expect(pack.equipped.weapon?.star).toBe(1)
-    expect(pack.countOf("wp_t1_mid_01")).toBe(0)
-  })
-
-  it("破境耀星石支付：破境耀星石·上 1 颗 = 3 点，不消耗同名与残魂", async () => {
-    const pack = usePackStore()
-    await pack.init()
-    pack.addItem("wp_t1_mid_01", 1) // 新手套已不含松木棍，先补一件穿上
-    pack.equip("wp_t1_mid_01")
-    pack.addItem("wp_t1_mid_01", 1)
-    pack.addItem("decomp_soul", 1)
-    pack.addItem("star_up_high", 1) // 3 点
-    expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(true)
-    expect(pack.equipped.weapon?.star).toBe(1)
-    expect(pack.countOf("star_up_high")).toBe(0)
-    expect(pack.countOf("wp_t1_mid_01")).toBe(1)
-    expect(pack.countOf("decomp_soul")).toBe(1)
-  })
-
-  it("升星点数不足 / 满星时拒绝", async () => {
+  it("升星同名装备不足 3 件时拒绝", async () => {
     const pack = usePackStore()
     await pack.init()
     pack.equip("wp_t1_light_01")
-    pack.addItem("wp_t1_light_01", 1) // 1 点 < 3 点
+    pack.addItem("wp_t1_light_01", 1) // 1 件 < 3 件
     expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(false)
     expect(pack.equipped.weapon?.star ?? 0).toBe(0)
-    // 3 星满级后拒绝（9 件同名 = 9 点 = 三轮消耗）
+    expect(pack.countOf("wp_t1_light_01")).toBe(1) // 拒绝时不吞饲料
+    // 3 星满级后拒绝（9 件同名 = 三轮消耗）
     pack.addItem("wp_t1_light_01", 9)
     for (let i = 0; i < 3; i++) pack.starGear(pack.equipped.weapon!.instanceId)
     expect(pack.equipped.weapon?.star).toBe(3)
     expect(pack.starGear(pack.equipped.weapon!.instanceId)).toBe(false) // 满星拒绝
   })
 
-  it("升星背包未穿戴实例：同名点数排除自身（不吃掉正在升星的这件）", async () => {
+  it("升星背包未穿戴实例：同名计数排除自身（不吃掉正在升星的这件）", async () => {
     const pack = usePackStore()
     await pack.init()
-    pack.addItem("wp_t1_light_01", 2) // seed 自带 1 件 → 背包共 3 件同名
-    pack.addItem("decomp_soul", 2) // 残魂 2 点；可用 2 + 同名其余 2 件（排除目标自身）= 4 点 ≥ 3
+    pack.addItem("wp_t1_light_01", 3) // seed 自带 1 件 → 背包共 4 件同名
     const target = pack.packGearInstances().find((g) => g.itemId === "wp_t1_light_01")!
-    expect(pack.starGear(target.instanceId)).toBe(true)
+    expect(pack.starGear(target.instanceId)).toBe(true) // 排除自身后 3 件 ≥ 3
     // 目标仍在背包且星级 +1（未被同名池当作材料消耗）
     const after = pack.packGearInstances().find((g) => g.instanceId === target.instanceId)
     expect(after?.star).toBe(1)
-    // 支付：残魂 2 点 + 吃掉 1 件同名 → 背包剩 2 件
-    expect(pack.countOf("wp_t1_light_01")).toBe(2)
-    expect(pack.countOf("decomp_soul")).toBe(0)
+    // 支付：吃掉 3 件同名 → 背包剩 1 件（即目标自身）
+    expect(pack.countOf("wp_t1_light_01")).toBe(1)
   })
 })
 
@@ -1434,7 +1405,7 @@ describe("坊市刷新", () => {
   it("初始全量上架；刷新后抽取 8 种，列表变化", async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.shopGoods.length).toBe(16) // 商品池 16 种（养成材料补货 +7 后）
+    expect(pack.shopGoods.length).toBe(15) // 商品池 15 种（耀星石 2026-10-01 整链删除后；养成材料补货 +7）
 
     const before = new Set(pack.shopGoods.map((g) => g.name))
     pack.refreshShop(new Date(), () => 0)
@@ -1481,45 +1452,40 @@ describe("装备分解（§21 装备分解）", () => {
     })
   }
 
-  it("绝品分解：必得残魂×1，制造材料按 40% 返还（至少 1），扣分解锤、移除实例、金钱入账", async () => {
+  it("绝品分解：制造材料按 40% 返还（至少 1），扣分解锤、移除实例、金钱入账", async () => {
     const pack = usePackStore()
     await pack.init()
     pushInst(pack, "wp_t1_light_01", 4, "test-decomp-1") // 竹剑：桃木×3+铜精×1，value 150
     pack.addItem("decomp_hammer", 1)
     const before = {
       money: pack.currency.money,
-      soul: pack.countOf("decomp_soul"),
       taomu: pack.countOf("mat_taomu"),
       tongjing: pack.countOf("mat_tongjing"),
     }
     expect(pack.decompose("wp_t1_light_01", () => 0)).toBeNull()
     expect(pack.countOf("decomp_hammer")).toBe(0)
     expect(pack.gearInstances.some((g) => g.instanceId === "test-decomp-1")).toBe(false)
-    expect(pack.countOf("decomp_soul")).toBe(before.soul + 1)
     expect(pack.countOf("mat_taomu")).toBe(before.taomu + 1) // max(1, floor(3×0.4)) = 1
     expect(pack.countOf("mat_tongjing")).toBe(before.tongjing + 1)
     expect(pack.currency.money).toBe(before.money + 84) // ⌊150×0.56⌋
   })
 
-  it("神品分解：残魂×3 + 太古汲灵符必得", async () => {
+  it("神品分解：太古汲灵符必得", async () => {
     const pack = usePackStore()
     await pack.init()
     pushInst(pack, "wp_t1_light_01", 5, "test-decomp-2")
     pack.addItem("decomp_hammer", 1)
-    const soul0 = pack.countOf("decomp_soul")
     expect(pack.decompose("wp_t1_light_01", () => 0)).toBeNull()
-    expect(pack.countOf("decomp_soul")).toBe(soul0 + 3)
     expect(pack.countOf("wash_extract")).toBe(1)
   })
 
-  it("超品分解概率分支：rng 0.5 → 残魂(40%)未中、强化石(60%)命中", async () => {
+  it("超品分解概率分支：rng 0.5 → 强化石(60%)命中", async () => {
     const pack = usePackStore()
     await pack.init()
     pushInst(pack, "wp_t1_light_01", 3, "test-decomp-3")
     pack.addItem("decomp_hammer", 1)
-    const before = { soul: pack.countOf("decomp_soul"), enh: pack.countOf("enh_stone") }
+    const before = { enh: pack.countOf("enh_stone") }
     expect(pack.decompose("wp_t1_light_01", () => 0.5)).toBeNull()
-    expect(pack.countOf("decomp_soul")).toBe(before.soul)
     expect(pack.countOf("enh_stone")).toBe(before.enh + 1)
   })
 
@@ -1529,7 +1495,6 @@ describe("装备分解（§21 装备分解）", () => {
     pushInst(pack, "wp_t1_light_01", 4, "test-decomp-4")
     expect(pack.decompose("wp_t1_light_01")).toBe("缺少分解锤（坊市有售）")
     expect(pack.gearInstances.some((g) => g.instanceId === "test-decomp-4")).toBe(true)
-    expect(pack.countOf("decomp_soul")).toBe(0)
   })
 
   it("穿戴中的装备不可分解（不在背包实例中，分解锤不消耗）", async () => {

@@ -172,15 +172,12 @@ describe('通关解锁链（markSceneCleared，V08）', () => {
 })
 
 describe('BOSS 首杀奖励（FIRST_KILL_REWARDS）', () => {
-  it('五大妖王命中奖励表：首杀神兵/耀星石以必掉形态返回', () => {
+  it('五大妖王命中奖励表：首杀神兵以必掉形态返回（耀星石整链删除后仅装备）', () => {
     const drops = firstKillRewardDrops(['boss_major_huayaowang'])
     expect(drops).toEqual([
       { itemId: 'wp_sb01', quantity: 1, chance: 1 },
-      { itemId: 'star_up_low', quantity: 1, chance: 1 },
     ])
-    expect(firstKillRewardDrops(['boss_major_rulai'])).toEqual([
-      { itemId: 'star_up_low', quantity: 1, chance: 1 },
-    ])
+    expect(firstKillRewardDrops(['boss_major_rulai'])).toEqual([])
     expect(firstKillRewardDrops(['enemy_s1_1_a', 'ghost_enemy'])).toEqual([])
   })
 

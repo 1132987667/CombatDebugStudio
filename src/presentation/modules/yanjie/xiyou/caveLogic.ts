@@ -140,8 +140,8 @@ export function formatEffect(effect: string, level: number): string {
   return `${prefix}${sign}${next}${suffix}`
 }
 
-/** 升星残魂点需求：升到 targetStar 星的本次消耗 = 配置累计值差值（cost_by_star 3/6/9 → 每星 3 点）。
- *  点源 = 破境耀星石（上3/中2/下1 点）+ 兵解残魄晶 decomp_soul（1 点/个）+ 同名未穿戴装备（1 点/件），可混合支付（§21 装备养成操作与材料）。 */
+/** 升星同名装备需求：升到 targetStar 星的本次消耗 = 配置累计值差值（cost_by_star 3/6/9 → 每星 3 件）。
+ *  点源唯一 = 背包内同名未穿戴装备（1 件 1 点，被消耗）；裁定 2026-10-01：兵解残魄晶与破境耀星石退出升星体系（§21 装备养成操作与材料）。 */
 const STAR_COST_BY_STAR = (equipmentSystemJson as unknown as { star_system: { cost_by_star: Record<string, number> } }).star_system.cost_by_star
 
 export function starCost(targetStar: number): number {
@@ -165,13 +165,6 @@ export function starLabel(star: number | undefined): string {
   const s = Math.min(Math.max(star ?? 0, 0), STAR_MAX)
   return '★'.repeat(s) + '☆'.repeat(STAR_MAX - s)
 }
-
-/** 破境耀星石点数（附录B 破境耀星石·上/中/下 → 3/2/1 点，贪心支付不溢出） */
-export const STAR_STONES: ReadonlyArray<readonly [string, number]> = [
-  ['star_up_high', 3],
-  ['star_up_mid', 2],
-  ['star_up_low', 1],
-]
 
 // ════════════ 洗练（更换词条）════════════
 

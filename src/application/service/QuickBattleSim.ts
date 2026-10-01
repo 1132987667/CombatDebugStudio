@@ -13,6 +13,7 @@ import { container } from '@/infrastructure/di/Container'
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStatus, ParticipantSide } from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import type { ActorData } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
@@ -61,29 +62,49 @@ function resolveDebugGate(): DebugGate | undefined {
   catch { return undefined }
 }
 
+/** 无头整局核心（参与者已构造）——UI 快速验证与系统级测试的同一实现 */
+export interface HeadlessBattleOptions {
+  ally: BattleEntity[]
+  enemy: BattleEntity[]
+  seed?: string
+  maxRounds?: number
+  /** 未决出场次也给（残缺）战报——默认按 UI 语义不给；测试统计管线需要 */
+  provideDrawSummary?: boolean
+}
+
+export interface HeadlessBattleResult {
+  ok: boolean
+  reason?: string
+  winner: ParticipantSide | null
+  /** 实际 processTurn 轮数 */
+  rounds: number
+  /** 引擎终态回合指针 */
+  currentTurn: number
+  summary?: BattleSummary
+  /** 引擎真实终态：id → {side, hp}（ok=false 时为空表） */
+  finalUnits: Map<string, { side: ParticipantSide; hp: number }>
+}
+
 /**
- * 无头跑一场战斗并输出战报。
- * 全局状态（headless/日志/DebugGate）先备份后恢复，可安全在任意模块上下文调用。
+ * 无头跑一整局的唯一生产实现：headless + 日志静音 + DebugGate 关闭 + 全量复原。
+ * runQuickBattle 与系统级测试共用，杜绝"测试复刻一套模拟口径"的漂移。
  */
-export async function runQuickBattle(opts: QuickBattleOptions): Promise<QuickBattleResult> {
-  const allyNames = opts.allyActors.map((a) => a.name)
-  const enemyNames = opts.enemyEnemies.map((e) => e.name)
+export async function runHeadlessBattle(opts: HeadlessBattleOptions): Promise<HeadlessBattleResult> {
   const maxRounds = opts.maxRounds ?? DEFAULT_MAX_ROUNDS
+  const empty = new Map<string, { side: ParticipantSide; hp: number }>()
 
   let battleSystem: BattleSystem
   try {
     battleSystem = resolveBattleSystem()
   } catch (e) {
-    return { ok: false, reason: `战斗引擎不可用: ${String(e)}`, winner: null, rounds: 0, allyNames, enemyNames }
+    return { ok: false, reason: `战斗引擎不可用: ${String(e)}`, winner: null, rounds: 0, currentTurn: 0, finalUnits: empty }
   }
   // 全局单例引擎：演劫台/唤灵台正在战斗时 initialize 会摧毁进行中的对局，拒绝执行
   if (battleSystem.getBattleStatus() === BattleStatus.ACTIVE) {
-    return { ok: false, reason: '有战斗正在进行，请先结束当前战斗再验证', winner: null, rounds: 0, allyNames, enemyNames }
+    return { ok: false, reason: '有战斗正在进行，请先结束当前战斗再验证', winner: null, rounds: 0, currentTurn: 0, finalUnits: empty }
   }
 
-  const ally = opts.allyActors.map((a, i) => GameDataProcessor.actorToParticipant(a, ParticipantSide.ALLY, i))
-  const enemy = opts.enemyEnemies.map((e, i) => GameDataProcessor.enemyToParticipant(e, ParticipantSide.ENEMY, i))
-  const participantIds = [...ally, ...enemy].map((p) => p.id)
+  const participantIds = [...opts.ally, ...opts.enemy].map((p) => p.id)
 
   const savedLogs = LoggerProvider.logger.exportLogs()
   const prevHeadless = battleSystem.getHeadless()
@@ -98,7 +119,7 @@ export async function runQuickBattle(opts: QuickBattleOptions): Promise<QuickBat
 
   try {
     battleSystem.regenerateBattleId()
-    battleSystem.initialize(ally, enemy, undefined, opts.seed)
+    battleSystem.initialize(opts.ally, opts.enemy, undefined, opts.seed)
     battleSystem.setBattleState(BattleStatus.ACTIVE)
 
     let rounds = 0
@@ -108,23 +129,29 @@ export async function runQuickBattle(opts: QuickBattleOptions): Promise<QuickBat
     }
 
     const battleData = battleSystem.getBattleData()
+    const finalUnits = new Map<string, { side: ParticipantSide; hp: number }>()
+    if (battleData) {
+      for (const p of battleData.participants.values()) {
+        finalUnits.set(p.id, { side: p.team, hp: p.currentHealth })
+      }
+    }
     const winner = battleData?.winner ?? null
-    if (!battleData || !winner) {
-      // 达到回合上限未决出：录制无 BATTLE_END 事件，战报统计残缺，不给 summary
-      return { ok: true, winner: null, rounds, allyNames, enemyNames }
+    const base = {
+      ok: true as const,
+      winner,
+      rounds,
+      currentTurn: battleData?.currentTurn ?? 0,
+      finalUnits,
+    }
+    if (!battleData || (!winner && !opts.provideDrawSummary)) {
+      // 达到回合上限未决出：录制无 BATTLE_END 事件，UI 语义不给残缺战报
+      return base
     }
     const rec = battleSystem.getBattleRecording(battleData.battleId)
     const archive = rec ? fromRecordedBattle(rec) : null
-    return {
-      ok: true,
-      winner,
-      rounds,
-      summary: archive ? summarizeBattle(archive) : undefined,
-      allyNames,
-      enemyNames,
-    }
+    return { ...base, summary: archive ? summarizeBattle(archive) : undefined }
   } catch (e) {
-    return { ok: false, reason: String(e), winner: null, rounds: 0, allyNames, enemyNames }
+    return { ok: false, reason: String(e), winner: null, rounds: 0, currentTurn: 0, finalUnits: empty }
   } finally {
     battleSystem.resetBattle()
     // 清理参与者残留在 BuffSystem 的修饰符/护盾（参照 BattleDataGenerator.cleanupPrevBuffSystemEntries）
@@ -140,6 +167,30 @@ export async function runQuickBattle(opts: QuickBattleOptions): Promise<QuickBat
     await new Promise((resolve) => setTimeout(resolve, 0))
     LoggerProvider.logger.clearLogs()
     LoggerProvider.logger.importLogs(savedLogs)
+  }
+}
+
+/**
+ * 用「当前已保存配置」无头跑一场战斗并输出战报（封神榜/演劫台 UI 入口）。
+ * 核心循环在 runHeadlessBattle——与系统级测试同一实现，口径不分叉。
+ */
+export async function runQuickBattle(opts: QuickBattleOptions): Promise<QuickBattleResult> {
+  const allyNames = opts.allyActors.map((a) => a.name)
+  const enemyNames = opts.enemyEnemies.map((e) => e.name)
+  const ally = opts.allyActors.map((a, i) => GameDataProcessor.actorToParticipant(a, ParticipantSide.ALLY, i))
+  const enemy = opts.enemyEnemies.map((e, i) => GameDataProcessor.enemyToParticipant(e, ParticipantSide.ENEMY, i))
+
+  const r = await runHeadlessBattle({ ally, enemy, seed: opts.seed, maxRounds: opts.maxRounds })
+  if (!r.ok) {
+    return { ok: false, reason: r.reason, winner: null, rounds: 0, allyNames, enemyNames }
+  }
+  return {
+    ok: true,
+    winner: r.winner,
+    rounds: r.rounds,
+    summary: r.summary,
+    allyNames,
+    enemyNames,
   }
 }
 

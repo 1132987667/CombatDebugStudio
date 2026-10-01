@@ -484,6 +484,11 @@ export class BattleManager {
     // 传递阵型配置到 BattleSystem
     this.battleSystem.setFormations(this.allyFormation, this.enemyFormation)
 
+    // NOTE: 每场交互开战换新 battleId —— 原 id 只在构造时生成一次，整局会话所有战斗共用，
+    //       封神榜快照(buildSnapshot(battleId))与战报录音按 id 键控，跨场互相覆盖、无法区分。
+    //       批量模拟通路(QuickBattleSim/Generator)已各自 regenerate，交互通路在此补齐。
+    this.battleSystem.regenerateBattleId()
+
     // 直接使用 BattleEntity 数组（传入场景 ID；seed 可选，确定性复现用）
     const battleState = this.battleSystem.initialize(allyTeam, enemyTeam, this.currentSceneId, seed)
     this.battleSystem.setBattleState(BattleStatus.ACTIVE)

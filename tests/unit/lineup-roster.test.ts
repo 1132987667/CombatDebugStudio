@@ -103,6 +103,7 @@ function makeStub() {
   return {
     getBattleData: () => ({ participants: new Map() }),
     setFormations: vi.fn(),
+    regenerateBattleId: vi.fn(), // startBattle 每场换新战斗句柄（BattleManager.ts:490）
     initialize: vi.fn(() => ({ battleId: 'b1' })),
     setBattleState: vi.fn(),
     getAutoBattle: () => false,

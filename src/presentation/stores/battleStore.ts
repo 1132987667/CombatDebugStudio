@@ -233,6 +233,10 @@ export const useBattleStore = defineStore('battle', () => {
       }
       const allEntities = [...allyTeam.value, ...enemyTeam.value]
       projection.clear()
+      // NOTE: 清理与重建成对——projection.clear() 只清调度器内部注册表，UI 快照 Map 此前
+      //       只在 destroy() 清，跨场旧参与者快照会永久累积（换阵容后旧 id 残留）。
+      //       重建入口先清快照表，registerAll+flushAll 随即按当前队伍原子重建。
+      participants.clear()
       projection.registerAll(allEntities)
       projection.flushAll()
     } catch (err) {
@@ -706,6 +710,8 @@ export const useBattleStore = defineStore('battle', () => {
       battleService.value!.endBattle(winner)
       battleService.value!.syncBattleState()
       setBattleActive(false)
+      // NOTE: 待选手动行动属于本场会话——战斗终止即作废，否则下一场 UI 带着上一场的待选目标
+      pendingManualAction.value = null
       return true
     }, {
       loading: '结束战斗',

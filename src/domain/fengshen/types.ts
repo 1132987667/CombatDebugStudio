@@ -97,6 +97,8 @@ export interface EquipmentData {
   legacyIds?: string[]
   /** 获取来源说明 */
   source?: string
+  /** 投放批次登记：'planned' = 计划投放（获取入口机制未实现，经济可达性测试免检，但必须带 source 登记，封神榜台账可见）；缺省 = 已投放，必须可达 */
+  deployBatch?: 'planned'
   description?: string
   /** 实际价值（金钱口径，出售/坊市价 = 价值 × 全局系数；原 items.json 装备条目的 value 已迁入，装备详情唯一数据源） */
   value?: number

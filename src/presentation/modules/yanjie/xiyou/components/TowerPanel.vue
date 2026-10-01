@@ -82,28 +82,28 @@ function enemyNamesOf(floor: number): string {
   return towerEnemiesForFloor(floor).map((e) => e.name).join(' · ')
 }
 
-const REWARD_LABELS: Record<string, string> = {
-  spirit_dust: '灵尘',
-  spirit_core: '器灵',
-  pet_break_pill_3: '突破丹·叁',
+/** 奖励展示名（目录唯一索引：items.json + equipment.json 派生条目） */
+function rewardLabel(itemId: string): string {
+  return pack.catalogById(itemId)?.name ?? itemId
 }
 
 function rewardTextOf(floor: number): string {
   const parts = [`金钱 ${TOWER_FLOOR_GOLD * floor}`, `经验 ${TOWER_FLOOR_EXP * floor}`]
-  for (const r of towerClearRewards(floor, false)) {
-    parts.push(`${REWARD_LABELS[r.itemId] ?? r.itemId}×${r.count}`)
+  // 未首通的层预览含首通奖励（灵尘 + 该层装备直落）
+  for (const r of towerClearRewards(floor, floor > towerState.bestFloor)) {
+    parts.push(`${rewardLabel(r.itemId)}×${r.count}`)
   }
   return `奖励：${parts.join(' · ')}`
 }
 
-/** 通关奖励入包（金钱/经验走玩家账，材料走背包） */
+/** 通关奖励入包（金钱/经验走玩家账，材料与装备走背包；装备经 addItem 按阶位 roll 品质成实例） */
 async function settleRewards(floor: number, firstClear: boolean): Promise<string[]> {
   player.gainCurrency('money', TOWER_FLOOR_GOLD * floor)
   player.gainExp(TOWER_FLOOR_EXP * floor)
   const msgs: string[] = []
   for (const r of towerClearRewards(floor, firstClear)) {
     pack.addItem(r.itemId, r.count)
-    msgs.push(`${REWARD_LABELS[r.itemId] ?? r.itemId}×${r.count}`)
+    msgs.push(`${rewardLabel(r.itemId)}×${r.count}`)
   }
   return msgs
 }

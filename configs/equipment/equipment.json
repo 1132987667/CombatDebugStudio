@@ -2387,6 +2387,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "罗汉尊者掉落",
+    "deployBatch": "planned",
     "description": "金身加护，诸邪不破。",
     "value": 6000
   },
@@ -2624,6 +2625,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "成就「百战不殆」奖励",
+    "deployBatch": "planned",
     "description": "百战其甲，愈战愈坚，不灭不折。",
     "value": 2500
   },
@@ -2641,6 +2643,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "成就「九死一生」奖励",
+    "deployBatch": "planned",
     "description": "冠载轮回，窥生死之门。",
     "value": 2500
   },
@@ -2675,6 +2678,7 @@
     "craftable": false,
     "legacyIds": [],
     "source": "成就「降妖除魔」奖励",
+    "deployBatch": "planned",
     "description": "万妖俯首，臣服于此拳之下。",
     "value": 6000
   },

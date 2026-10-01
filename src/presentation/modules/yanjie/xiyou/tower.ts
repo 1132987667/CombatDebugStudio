@@ -88,14 +88,24 @@ export function towerEnemiesForFloor(floor: number): Enemy[] {
   return out
 }
 
-/** 塔层通关奖励（§22 灵尘/器灵、§18 突破丹叁的 PRD 来源节点；首次通关额外灵尘） */
+/** 塔层装备线 id（批次①：wt_01~50 与层号直映；隐藏层 51 无装备） */
+export function towerFloorEquipId(floor: number): string | null {
+  if (floor < 1 || floor > TOWER_MAX_FLOOR) return null
+  return `wt_${String(floor).padStart(2, '0')}`
+}
+
+/** 塔层通关奖励（§22 灵尘/器灵、§18 突破丹叁的 PRD 来源节点；首次通关额外灵尘 + 该层装备直落） */
 export function towerClearRewards(floor: number, firstClear: boolean): { itemId: string; count: number }[] {
   const out: { itemId: string; count: number }[] = []
   if (floor >= 15 && floor % 5 === 0) out.push({ itemId: 'spirit_dust', count: 2 })
   if (floor === 20 || floor === 35) out.push({ itemId: 'spirit_core', count: 1 })
   if (floor === 30 || floor === 50) out.push({ itemId: 'pet_break_pill_3', count: 1 })
   if (floor >= TOWER_HIDDEN_FLOOR) out.push({ itemId: 'spirit_core', count: 3 })
-  if (firstClear) out.push({ itemId: 'spirit_dust', count: 2 })
+  if (firstClear) {
+    out.push({ itemId: 'spirit_dust', count: 2 })
+    const equip = towerFloorEquipId(floor)
+    if (equip) out.push({ itemId: equip, count: 1 })
+  }
   return out
 }
 

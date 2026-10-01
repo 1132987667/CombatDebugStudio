@@ -1737,6 +1737,22 @@
         "probability": 0.3
       },
       {
+        "itemId": "bp_t4_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t4_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t4_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t4_rg",
+        "probability": 0.15
+      },
+      {
         "itemId": "mat_tianxiewangdu",
         "probability": 0.3
       },
@@ -1830,11 +1846,31 @@
         "probability": 0.3
       },
       {
+        "itemId": "bp_t5_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t5_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t5_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t5_rg",
+        "probability": 0.15
+      },
+      {
         "itemId": "mat_tiancan",
         "probability": 0.3
       },
       {
         "itemId": "mat_lingxiao",
+        "probability": 0.3
+      },
+      {
+        "itemId": "hd_sb10",
         "probability": 0.3
       }
     ],
@@ -1915,6 +1951,22 @@
       {
         "itemId": "bp_t3_ar",
         "probability": 0.3
+      },
+      {
+        "itemId": "bp_t3_hl",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t3_bs",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t3_ch",
+        "probability": 0.15
+      },
+      {
+        "itemId": "bp_t3_rg",
+        "probability": 0.15
       },
       {
         "itemId": "hd_sb03",

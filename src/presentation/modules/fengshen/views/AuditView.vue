@@ -109,6 +109,40 @@
         </div>
       </div>
     </div>
+    <div class="fs-block">
+      <div class="fs-block-title">
+        装备投放台账
+        <span class="fs-page-hint">获取通路分组（制造 / 敌人直落 / 塔首通直落 / 计划投放）；计划件 = 入口机制未实现、免可达性检验但必须登记 source；孤儿 = 无任何通路且未登记（红线，应为 0）</span>
+      </div>
+      <div class="fs-audit-spread">
+        <span class="fs-audit-spread-item"><b>{{ equipLedger.craftable }}</b> 制造</span>
+        <span class="fs-audit-spread-item"><b>{{ equipLedger.directDrop }}</b> 敌人直落</span>
+        <span class="fs-audit-spread-item"><b>{{ equipLedger.tower }}</b> 塔首通直落</span>
+        <span class="fs-audit-spread-item"><b>{{ equipLedger.planned.length }}</b> 计划投放</span>
+        <span class="fs-audit-spread-item" :class="{ 'fs-audit-spread-warn': equipLedger.orphan.length > 0 }">
+          <b>{{ equipLedger.orphan.length }}</b> 孤儿（应为 0）
+        </span>
+      </div>
+      <div class="fs-table-wrap" v-if="equipLedger.planned.length || equipLedger.orphan.length">
+        <table class="fs-table">
+          <thead><tr><th>装备</th><th>声称入口（source）</th><th>批次状态</th></tr></thead>
+          <tbody>
+            <tr v-for="x in [...equipLedger.planned, ...equipLedger.orphan]" :key="x.id">
+              <td>
+                <button type="button" class="fs-audit-link" title="点击在装备表定位"
+                  @click="gotoItem(x.id)">{{ x.name }}</button>
+                <span class="fs-audit-item-id">{{ x.id }}</span>
+              </td>
+              <td>{{ x.source || '—（未登记入口设计）' }}</td>
+              <td>
+                <span v-if="x.deployBatch === 'planned'" class="fs-tag fs-tag-muted">计划投放（批次③）</span>
+                <span v-else class="fs-tag fs-tag-danger">孤儿：无通路且未登记</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -117,9 +151,10 @@ import { computed, onMounted, ref } from 'vue'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import { useFengshenStore } from '@/presentation/modules/fengshen/stores/fengshenStore'
-import type { AttributeDef, SystemBudgetConfig } from '@/domain/fengshen/types'
+import type { AttributeDef, EquipmentData, SystemBudgetConfig } from '@/domain/fengshen/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { getCoreAttributes } from '@/domain/fengshen/attribute-dictionary'
+import { TOWER_MAX_FLOOR, towerFloorEquipId } from '@/presentation/modules/yanjie/xiyou/tower'
 import TacticalInput from '@/presentation/components/TacticalInput.vue'
 import {
   dropOwnership,
@@ -162,6 +197,34 @@ const dropSpread = computed(() => {
     else buckets.many++
   }
   return buckets
+})
+
+// ── 装备投放台账：按获取通路分组，计划件登记免检、孤儿为零红线 ──
+const equipmentList = ref<EquipmentData[]>([])
+
+const equipLedger = computed(() => {
+  const towerIds = new Set<string>()
+  for (let f = 1; f <= TOWER_MAX_FLOOR; f++) {
+    const id = towerFloorEquipId(f)
+    if (id) towerIds.add(id)
+  }
+  const directIds = new Set<string>()
+  for (const e of enemies.value) {
+    for (const d of e.drops ?? []) directIds.add(d.itemId)
+  }
+  let craftable = 0
+  let directDrop = 0
+  let tower = 0
+  const planned: EquipmentData[] = []
+  const orphan: EquipmentData[] = []
+  for (const x of equipmentList.value) {
+    if (x.deployBatch === 'planned') planned.push(x)
+    else if (x.craftable) craftable++
+    else if (towerIds.has(x.id)) tower++
+    else if (directIds.has(x.id)) directDrop++
+    else orphan.push(x)
+  }
+  return { craftable, directDrop, tower, planned, orphan }
 })
 
 function itemName(id: string): string {
@@ -226,6 +289,7 @@ onMounted(async () => {
   budget.value = sb ?? { id: 'system_budget', systems: [] }
   totalWeight.value = budget.value.systems.reduce((sum, s) => sum + s.weight, 0)
   enemies.value = enm
+  equipmentList.value = eqs as EquipmentData[]
   const index: Record<string, ItemRef> = {}
   for (const it of items) index[it.id] = { name: String(it.name ?? it.id), table: 'items' }
   for (const it of materials) index[it.id] = { name: String(it.name ?? it.id), table: 'materials' }
@@ -388,6 +452,12 @@ onMounted(async () => {
 
   b {
     color: var(--color-info);
+  }
+}
+
+.fs-audit-spread-warn {
+  b {
+    color: var(--color-danger);
   }
 }
 

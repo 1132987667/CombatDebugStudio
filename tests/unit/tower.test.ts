@@ -5,11 +5,13 @@
  * - 层编成确定性（同层同编成）、层≈等级带直映、BOSS 层 role 模式
  * - 隐藏层 51（51~60 级妖尊镇守，通关 50 层解锁）
  * - 奖励节点表（§22 灵尘/器灵、§18 突破丹叁的 PRD 来源；首通额外）
+ * - 批次① 装备直落：层 N → wt_NN 映射与装备表登记对账、仅首通发放
  * - 解锁顺序推进 + recordTowerClear 首通判定
  *
  * 运行: npx vitest run tests/unit/tower.test.ts
  */
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
   TOWER_HIDDEN_FLOOR,
   TOWER_MAX_FLOOR,
@@ -17,6 +19,7 @@ import {
   recordTowerClear,
   towerClearRewards,
   towerEnemiesForFloor,
+  towerFloorEquipId,
   towerFloorPlan,
   towerState,
 } from '@/presentation/modules/yanjie/xiyou/tower'
@@ -76,6 +79,34 @@ describe('奖励节点表（§22/§18 材料来源）', () => {
   it('首通额外灵尘×2', () => {
     expect(towerClearRewards(3, true)).toContainEqual({ itemId: 'spirit_dust', count: 2 })
     expect(towerClearRewards(3, false)).toHaveLength(0)
+  })
+})
+
+describe('批次① 装备直落（wt_01~50 层号直映）', () => {
+  const equipmentIds = new Set<string>(
+    (JSON.parse(readFileSync('configs/equipment/equipment.json', 'utf8')) as Array<{ id: string }>).map((e) => e.id),
+  )
+
+  it('层 N → wt_NN 零填充映射；界外（0 / 51 隐藏层）无装备', () => {
+    expect(towerFloorEquipId(1)).toBe('wt_01')
+    expect(towerFloorEquipId(9)).toBe('wt_09')
+    expect(towerFloorEquipId(10)).toBe('wt_10')
+    expect(towerFloorEquipId(TOWER_MAX_FLOOR)).toBe('wt_50')
+    expect(towerFloorEquipId(TOWER_HIDDEN_FLOOR)).toBeNull()
+    expect(towerFloorEquipId(0)).toBeNull()
+  })
+
+  it('1~50 层映射出的 50 个 id 与装备表 wt 条目一一对应（配置契约）', () => {
+    const mapped = new Set<string>()
+    for (let f = 1; f <= TOWER_MAX_FLOOR; f++) mapped.add(towerFloorEquipId(f)!)
+    const registered = new Set<string>([...equipmentIds].filter((id) => id.startsWith('wt_')))
+    expect([...mapped].sort()).toEqual([...registered].sort())
+  })
+
+  it('装备仅在首通发放，重复通关不再掉', () => {
+    expect(towerClearRewards(7, true)).toContainEqual({ itemId: 'wt_07', count: 1 })
+    expect(towerClearRewards(7, false)).not.toContainEqual({ itemId: 'wt_07', count: 1 })
+    expect(towerClearRewards(TOWER_HIDDEN_FLOOR, true).some((r) => r.itemId.startsWith('wt_'))).toBe(false)
   })
 })
 

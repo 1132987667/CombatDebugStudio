@@ -525,7 +525,7 @@ function finishRun(bossTurns: number, aliveCount: number): void {
   // 任务推进：通关指定关卡（主线任务接线）
   progressQuests('clear_scene', 1, { sceneId: props.scene.id })
   if (run.firstClear) {
-    // BOSS 首杀一次性奖励（首杀神兵/耀星石，battle.ts FIRST_KILL_REWARDS 口径）：入包并并入结算展示
+    // BOSS 首杀一次性奖励（首杀神兵，battle.ts FIRST_KILL_REWARDS 口径）：入包并并入结算展示
     const pack = usePackStore()
     const bossIds = runNodes[run.nodeIndex]?.enemyIds ?? []
     const firstKillDrops = firstKillRewardDrops(bossIds)
@@ -649,6 +649,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .xy-battle {
   grid-area: zen;
+  position: relative; /* 结算横幅浮层的定位锚 */
   margin: var(--space-3);
   padding: var(--space-4);
   /* NOTE: 战场水墨氛围底——顶部朱砂暖意 + 底部墨色沉降 + 中性墨晕，极低透明度只做环境；
@@ -902,6 +903,10 @@ onUnmounted(() => {
 /* 双行阵容：敌方一行在上（2~4 员，席位阶梯）、我方一行在下（主角 + 3 伙伴），ParticipantCard 演武台同款 */
 .xy-vitals {
   flex-shrink: 0;
+  /* 空窗占位：推进过渡（advancing）时队伍快照已清、卡片不渲染，整区塌到只剩「斗」印（实测 82px），
+     日志区随之胀缩跳动。27.25rem ≈ 敌方满席 + 我方 4 员常规双行总高（实测 381px），
+     只作下限——战斗中情境标签/buff 行加高时仍由内容撑开 */
+  min-height: 27.25rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -910,15 +915,22 @@ onUnmounted(() => {
 
 /* ═══ 关卡推进 HUD（非阻塞内嵌条：推进/小结算/大结算/战败，玩法主循环设计.md §四/§六/§七） ═══ */
 .xy-run {
-  flex-shrink: 0;
+  /* 浮层覆盖而非文档流插入：自动循环里横幅几乎常驻（仅 battle 阶段缺席），此前插在
+     header 与卡片区之间，每次出现/消失把战场面板和日志整体推移（日志 205↔115↔440 反复跳）。
+     锚定 header 下沿、卡片区上方（视觉位置不变），出现时覆盖卡片顶部——面板与日志位置恒定 */
+  position: absolute;
+  top: calc(12.5rem + var(--space-4));
+  left: 0;
+  right: 0;
+  z-index: var(--z-float);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-bottom: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--xy-ink-line);
   border-radius: var(--radius-sm);
   background: var(--xy-paper-warm);
+  box-shadow: 0 2px 10px rgba(var(--rgb-black), 0.25);
 }
 
 .xy-run--finish {

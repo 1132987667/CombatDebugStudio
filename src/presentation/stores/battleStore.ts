@@ -734,6 +734,10 @@ export const useBattleStore = defineStore('battle', () => {
       turnOrder.value = []
       undoDepth.value = 0
       pendingManualAction.value = null
+      // 原值表按实体 id 记录上一场的属性快照，不清则重开后会
+      // 把上一场实体的暴击/闪避率写进新实体（跨战斗污染调试结论）
+      forceCritOrig.clear()
+      forceDodgeOrig.clear()
       battleLogManager.addSystemLog({ message: '战斗已重置' })
       return true
     }, {
@@ -1164,6 +1168,11 @@ export const useBattleStore = defineStore('battle', () => {
         _currentGenerator = null
         generationProgress.isGenerating = false
       }
+
+      // 强制暴击/闪避的原值表随战斗会话销毁，防止残留到下一会话污染新实体
+      // （放在 early-return 之前，battleService 已空时同样要清）
+      forceCritOrig.clear()
+      forceDodgeOrig.clear()
 
       if (!battleService.value) return
       // 精确移除自己注册的 handler（不带 handler 的 off 会清掉该事件上其他订阅者）

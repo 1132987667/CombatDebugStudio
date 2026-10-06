@@ -644,18 +644,22 @@ export class BattleExecutor {
         allEffects.push(...skillAction.effects)
       }
 
-      // 将所有详细记录存入 BattleRecorder
-      for (const record of records) {
-        record.damageSource = 'skill'
-        record.actionOrder = this.getActionOrder()
-        const recordOverkill = overkillMap.get(record.targetId)
-        if (recordOverkill && recordOverkill > 0) record.overkill = recordOverkill
-        this.battleRecorder.recordCombatRecord(battleData.battleId, record)
-        // ponytail: 技术调试日志 — 技能伤害计算链路追踪
-        try {
-          TraceDamageLogger.log(record, this.tracePort, scope?.correlationId, scope?.parentId)
-        } catch {
-          // 调试日志失败绝不中断战斗
+      // 详细记录入库推迟到本函数末尾 flushRecords()：溢伤（overkill）在下方结算循环
+      // settleDamage 后才写入 overkillMap，先入库时读取必为空——技能路径溢伤永远丢失
+      // （普攻路径在 handleHitAttack 结算后回填，是对的）
+      const flushRecords = (): void => {
+        for (const record of records) {
+          record.damageSource = 'skill'
+          record.actionOrder = this.getActionOrder()
+          const recordOverkill = overkillMap.get(record.targetId)
+          if (recordOverkill && recordOverkill > 0) record.overkill = recordOverkill
+          this.battleRecorder.recordCombatRecord(battleData.battleId, record)
+          // ponytail: 技术调试日志 — 技能伤害计算链路追踪
+          try {
+            TraceDamageLogger.log(record, this.tracePort, scope?.correlationId, scope?.parentId)
+          } catch {
+            // 调试日志失败绝不中断战斗
+          }
         }
       }
 
@@ -772,6 +776,9 @@ export class BattleExecutor {
         // 无伤害/治疗时仍输出行动日志
         this.emitSkillLog(battleData, manifest)
       }
+
+      // 记录入库（结算后 flush：overkill 已写入；无伤害/治疗分支 overkillMap 为空，正常入库）
+      flushRecords()
     } catch (error) {
       //  catch 路径也需刷出缓冲的 sub 日志，防止内存泄漏
       LoggerProvider.logger.flushBufferedSubLogs()
@@ -780,7 +787,7 @@ export class BattleExecutor {
         this.buildEntitySegment(source),
         { text: ' 尝试使用 ' },
         { text: `【${skill.name || skill.id}】`, classStr: 'log-skill' },
-        { text: ' 时发生异常，降级为普通攻击', classStr: 'log-info' },
+        { text: ' 时发生异常，本次行动未生效', classStr: 'log-info' },
       ]
       LoggerProvider.logger.addBattleLog({
         turn: battleData.currentTurn,
@@ -793,13 +800,13 @@ export class BattleExecutor {
         level: LogLevel.ERROR,
         error: error as Error,
       })
-      action.type = ActionTypes.ATTACK
-      action.damage = battleData.rng.nextInt(10, 29)
+      // 异常兜底只做诚实的空行动：此前 rng.nextInt(10,29) 伪造了伤害——
+      // 战报记"造成 X 伤害"实际一滴血没扣，还白耗 RNG 序列破坏同 seed 回放对齐
+      action.damage = 0
       action.effects = [
         {
-          type: ActionResultType.DAMAGE,
-          value: action.damage,
-          description: `${source.name} 普通攻击 (技能执行失败)`,
+          type: ActionResultType.STATUS,
+          description: `${source.name} 的技能执行失败，本次行动未生效`,
         },
       ]
     }
@@ -1548,6 +1555,8 @@ export class BattleExecutor {
     battle: BattleData,
     action: BattleAction,
   ): void {
+    // 攻击者已被反伤/荆棘击杀时中断：死人不再造成溅射
+    if (!source.isAlive()) return
     if (baseDamage <= 0) return
     const splash = source.getAttribute(ATTRIBUTE_CODE.splash)
     if (Number.isNaN(splash) || splash <= 0) return
@@ -1600,7 +1609,10 @@ export class BattleExecutor {
 
     for (
       let segment = 2;
-      segment <= BATTLE_CONSTANTS.MAX_COMBO_SEGMENTS && target.isAlive();
+      segment <= BATTLE_CONSTANTS.MAX_COMBO_SEGMENTS
+        && target.isAlive()
+        // 攻击者被反伤/荆棘击杀时中断：死人不再打完剩余连击段
+        && source.isAlive();
       segment++
     ) {
       const comboRate = source.getAttribute(ATTRIBUTE_CODE.comboRate)

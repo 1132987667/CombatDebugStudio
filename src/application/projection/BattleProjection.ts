@@ -46,8 +46,6 @@ export class BattleProjection {
   private scheduled = false
   /** 注册的参与者 { id → entity } */
   private entities = new Map<string, BattleEntity>()
-  /** 缓存版本号，用于跳过无变化写入 */
-  private lastVersions = new Map<string, number>()
 
   constructor(
     private store: ParticipantStore,
@@ -83,7 +81,6 @@ export class BattleProjection {
   unregister(id: string): void {
     this.entities.delete(id)
     this.dirtyIds.delete(id)
-    this.lastVersions.delete(id)
   }
 
   /**
@@ -92,7 +89,6 @@ export class BattleProjection {
   clear(): void {
     this.entities.clear()
     this.dirtyIds.clear()
-    this.lastVersions.clear()
     this.scheduled = false
   }
 
@@ -138,9 +134,10 @@ export class BattleProjection {
         const entity = this.entities.get(id)
         if (!entity) continue
 
-        // 版本检查：跳过无变化写入
-        if (entity.statsVersion === this.lastVersions.get(id)) continue
-        this.lastVersions.set(id, entity.statsVersion)
+        // NOTE: 不做 statsVersion 版本比对跳过——进入 dirtyIds 的唯一途径是实体
+        //       markDirty（属性写入/冷却变更/MarkProjectionDirty 的 Buff 变化），
+        //       本身就是变化信号；而 statsVersion 不覆盖 buff 结构变化，
+        //       拿它当唯一比对依据会把这些变更挡在快照外（UI 卡片状态陈旧）。
         const snap = participantToSnapshot(
           entity,
           this.buffSystem,

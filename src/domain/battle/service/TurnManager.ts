@@ -42,18 +42,20 @@ export class TurnManager {
   ): string[] {
     const alive = participants.filter((p) => p.isAlive())
     if (!speedFirst) return alive.map((p) => p.id)
-    return alive
-      .sort((a, b) => {
-        const speedA = this.calculateEffectiveSpeed(a)
-        const speedB = this.calculateEffectiveSpeed(b)
-
-        if (speedA !== speedB) {
-          return speedB - speedA
-        }
-
-        return rng ? (rng.nextBoolean() ? -1 : 1) : Math.random() - 0.5
-      })
-      .map((p) => p.id)
+    // 随机键先取后排（Schwartzian transform）：比较器必须自洽。
+    // 旧实现在比较器内掷硬币——同一对元素两次比较可返回相反结果，
+    // 既不是均匀洗牌，RNG 消耗次数还依赖 V8 sort 实现，同 seed 回放跨环境不可复现
+    const keyed = alive.map((p) => ({
+      id: p.id,
+      speed: this.calculateEffectiveSpeed(p),
+      coin: rng ? rng.nextBoolean() : Math.random() < 0.5,
+    }))
+    keyed.sort((a, b) => {
+      if (a.speed !== b.speed) return b.speed - a.speed
+      // 同速度同硬币结果保持注册顺序（ES2019 sort 稳定），行为确定性可复现
+      return a.coin === b.coin ? 0 : a.coin ? -1 : 1
+    })
+    return keyed.map((k) => k.id)
   }
 
   /**

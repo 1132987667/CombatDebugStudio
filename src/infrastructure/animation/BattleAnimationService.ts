@@ -76,8 +76,17 @@ export class BattleAnimationService {
 
   private createTimeline(): gsap.core.Timeline {
     const timeline = gsap.timeline()
-    this.activeAnimations.push(timeline)
+    this.trackTimeline(timeline)
     return timeline
+  }
+
+  /** 登记 timeline 并在完成时自动出列——模块级单例不清理会让数组随长会话单调增长 */
+  private trackTimeline(timeline: gsap.core.Timeline): void {
+    this.activeAnimations.push(timeline)
+    timeline.eventCallback('onComplete', () => {
+      const i = this.activeAnimations.indexOf(timeline)
+      if (i >= 0) this.activeAnimations.splice(i, 1)
+    })
   }
 
   playAttackAnimation(data: AttackAnimationData): Promise<void> {
@@ -268,12 +277,19 @@ export class BattleAnimationService {
     const { distance, times } = intensityMap[data.intensity || 'medium']
     const shakeDuration = this.getScaledDuration(50)
 
-    gsap.to(data.targetElement, {
+    // 震屏 tween 纳入 activeTweens 追踪并在完成时出列——
+    // 裸 gsap.to 绕过追踪时 stopAllAnimations kill 不到，长会话泄漏
+    const tween = gsap.to(data.targetElement, {
       x: `+=${distance}`,
       duration: shakeDuration / 1000,
       repeat: times * 2 - 1,
       yoyo: true,
       ease: 'power1.inOut',
+    })
+    this.activeTweens.push(tween)
+    tween.eventCallback('onComplete', () => {
+      const i = this.activeTweens.indexOf(tween)
+      if (i >= 0) this.activeTweens.splice(i, 1)
     })
   }
 

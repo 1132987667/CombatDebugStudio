@@ -367,7 +367,7 @@ describe('BattleExecutor 日志发射器', () => {
     expect(sub.meta).toMatchObject({ role: 'sub', miss: true })
   })
 
-  it('技能执行异常：输出降级警告日志并降级为普攻（风险点 3 兜底）', async () => {
+  it('技能执行异常：输出警告日志并记为诚实空行动（不伪造伤害数据）', async () => {
     const source = makeEntity('s1', '剑客', ParticipantSide.ALLY, 100)
     const battle = {
       currentTurn: 1,
@@ -390,16 +390,16 @@ describe('BattleExecutor 日志发射器', () => {
     const action = await executor.selectAndExecuteSkill(battle, source, skill)
 
     expect(executeSkill).toHaveBeenCalled()
-    // 降级为普通攻击
-    expect(action.type).toBe('attack')
-    expect(action.damage).toBeGreaterThan(0)
-    // 用户可见的降级警告日志
+    // 诚实空行动：保持技能行动类型、伤害为 0（此前兜底伪造 10~29 伤害，实际一滴血没扣）
+    expect(action.type).toBe('skill')
+    expect(action.damage).toBe(0)
+    // 用户可见的失败警告日志
     const warn = addBattleLog.mock.calls.find((c: any[]) =>
       c[0].message.includes('发生异常'),
     )
     expect(warn).toBeTruthy()
     expect(warn[0].message).toBe(
-      '[友方]剑客 尝试使用 【火球术】 时发生异常，降级为普通攻击',
+      '[友方]剑客 尝试使用 【火球术】 时发生异常，本次行动未生效',
     )
     expect(warn[0].category).toBe(BATTLE_LOG_CATEGORIES.STATUS)
     expect(warn[0].meta).toMatchObject({

@@ -154,6 +154,27 @@ export class BattleParticipantImpl implements BattleEntity {
     this._onDirty?.()
   }
 
+  /**
+   * 通知投影层本实体状态已变化（公开入口）
+   * 供 BattleSystem 在 Buff 增删/叠层（BuffSystem.triggerAttributeChange）等
+   * 不走属性写入、不 bump statsVersion 的路径上显式触发投影刷新；
+   * 否则纯 tag 类 buff（控制/沉默）上身时 UI 卡片状态陈旧。
+   */
+  markProjectionDirty(): void {
+    this.notifyDirty()
+  }
+
+  /** 当前回合提供者（BattleSystem 每场战斗开始时注入；实体自身拿不到 battleData） */
+  private turnProvider: (() => number) | null = null
+
+  /**
+   * 注入回合提供者。ENERGY_GAINED 事件需携带真实回合，
+   * BuffSystem 触发器冷却判定（turn - lastTurn < cooldown）依赖它。
+   */
+  setTurnProvider(provider: (() => number) | null): void {
+    this.turnProvider = provider
+  }
+
   getImmunities(): string[] {
     return [...this._immunities]
   }
@@ -602,7 +623,9 @@ export class BattleParticipantImpl implements BattleEntity {
         phase: BattleTriggerPhase.ENERGY_GAINED,
         sourceId: this.id,
         value: actualGain,
-        currentTurn: 0,
+        // 真实回合（未注入 turnProvider 时回退 0）：硬编码 0 曾使触发器
+        // 冷却判定 turn - lastTurn = 0 < cooldown 永真，首次触发后永久沉默
+        currentTurn: this.turnProvider?.() ?? 0,
       })
     }
   }
@@ -692,6 +715,8 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   setSkillCooldown(skillId: string, cooldown: number): void {
     this.skillManager.setSkillCooldown(skillId, cooldown)
+    // 冷却变化不 bump statsVersion，需显式驱动投影，否则 UI 卡片技能可用性陈旧
+    this.notifyDirty()
   }
 
   /**

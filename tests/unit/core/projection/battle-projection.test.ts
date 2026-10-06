@@ -1,10 +1,13 @@
 /**
- * battle-projection.test.ts — BattleProjection 批处理与版本语义（T3）
+ * battle-projection.test.ts — BattleProjection 批处理与脏标记语义（T3）
  *
- * 锁三条契约：
+ * 锁四条契约：
  *   1. markDirty 经 microtask 合并，一帧最多投影一次
- *   2. statsVersion 未变 → 跳过写入；已存在快照 → Object.assign 就地更新（引用不变）
- *   3. 单个实体投影抛错只吞掉该实体，不拖垮同批其他参与者
+ *   2. 脏标记是唯一投影信号：statsVersion 未变也投影（版本比对曾拦截
+ *      纯 tag buff / 冷却等不 bump 版本的结构变化，UI 卡片状态陈旧）；
+ *      已存在快照 → Object.assign 就地更新（引用不变）
+ *   3. 单个实体投影抛错只吞掉该实体，不拖垮同批其他参与者，
+ *      且不吞掉脏标记（下次标脏重试，快照不永久冻结）
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BattleProjection, type ParticipantStore } from '@/application/projection/BattleProjection'
@@ -107,26 +110,48 @@ describe('BattleProjection', () => {
     expect(store.participants.get('a')?.name).toBe('第二次')
   })
 
-  it('statsVersion 未变 → 跳过写入（快照停留在旧值）', async () => {
+  it('statsVersion 未变但被标脏 → 仍投影（脏标记是唯一信号，不拦 buff/冷却类结构变化）', async () => {
     const e = createControllableEntity('a')
     projection.register(e.toEntity())
     e.markDirty()
     await settleMicrotasks()
     expect(store.participants.get('a')?.name).toBe('实体-a')
 
-    // 变更数据但不推进版本号 → 投影应跳过
+    // 变更数据但不推进版本号（如纯 tag buff 上身）→ 投影照常生效
     e.name = '改了个名'
     e.markDirty()
     await settleMicrotasks()
-    expect(store.participants.get('a')?.name).toBe('实体-a')
+    expect(store.participants.get('a')?.name).toBe('改了个名')
 
-    // 推进版本号后更新生效，且对象引用不变（就地 Object.assign，reactive 契约）
+    // 就地更新，对象引用不变（reactive 契约）
     const before = store.participants.get('a')
     e.statsVersion++
     e.markDirty()
     await settleMicrotasks()
-    expect(store.participants.get('a')?.name).toBe('改了个名')
     expect(store.participants.get('a')).toBe(before)
+  })
+
+  it('快照构建抛错不冻结快照：同实体再次标脏时重试成功', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const e = createControllableEntity('flaky')
+    e.getAttribute = () => {
+      if (e.name === '会炸的名字') throw new Error('属性读取爆炸')
+      return 50
+    }
+    projection.register(e.toEntity())
+
+    e.name = '会炸的名字'
+    e.markDirty()
+    await settleMicrotasks()
+    expect(store.participants.has('flaky')).toBe(false)
+    expect(errSpy).toHaveBeenCalled()
+
+    // 恢复后再次标脏 → 成功写入（旧实现先记账后建快照，失败即永久冻结）
+    e.name = '恢复后的名字'
+    e.markDirty()
+    await settleMicrotasks()
+    expect(store.participants.get('flaky')?.name).toBe('恢复后的名字')
+    errSpy.mockRestore()
   })
 
   it('单个实体投影抛错被吞并记 console.error，同批其他实体正常投影', async () => {
@@ -157,7 +182,7 @@ describe('BattleProjection', () => {
     projection.flushAll()
     expect(store.participants.has('a')).toBe(false)
 
-    // clear 后重新注册：版本号缓存已清空，即使 version 未变也会全量投影
+    // clear 后重新注册：flushAll 本就全量投影，未注册期间不参与
     projection.register(e.toEntity())
     projection.clear()
     projection.register(e.toEntity())

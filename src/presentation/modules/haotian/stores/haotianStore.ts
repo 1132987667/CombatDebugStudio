@@ -390,10 +390,14 @@ export const useHaotianStore = defineStore('haotian', () => {
     useNotificationStore().toast(msg, 'info', 2600)
   }
 
+  /** 加载请求序号：快速切换数据源时丢弃先发后至的过期结果，防止旧数据覆盖新选择 */
+  let loadSeq = 0
+
   async function loadArchive(
     next: UnifiedArchive,
     opts: { followEnd?: boolean; skipWorker?: boolean; label?: string } = {},
   ): Promise<void> {
+    const seq = ++loadSeq
     loadingDepth++
     loadingArchive.value = true
     try {
@@ -404,6 +408,8 @@ export const useHaotianStore = defineStore('haotian', () => {
       } else {
         pipeline = await runValidationPipeline(next)
       }
+      // 过期请求：期间已有更新的加载发起，放弃写入（标签与内容错位的根源）
+      if (seq !== loadSeq) return
       const idx = buildArchiveIndices(next)
       archive.value = next
       validation.value = pipeline.validation

@@ -756,7 +756,15 @@ export class PassiveSkillManager {
               `[PassiveSkillManager] 条件 "${condition}" 需要 params.count`
             )
           }
-          return source.getBuffInstanceIds().length >= debuffThreshold
+          // 只数减益（polarity === 'negative'）："绝境反击"类条件看的是负面状态数。
+          // 旧实现数全部 buff 实例——增益越多越容易触发，与设计相反
+          const debuffCount = this.buffSystem
+            .getBuffInstances(source.id)
+            .filter((inst) => {
+              const config = this.buffSystem.getBuffConfigByInstanceId(inst.id)
+              return config?.polarity === 'negative'
+            }).length
+          return debuffCount >= debuffThreshold
         }
         case 'source_energy_high': {
           const energyRatio = (params?.ratio as number) ?? 0.9

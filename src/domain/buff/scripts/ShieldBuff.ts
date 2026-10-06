@@ -42,14 +42,24 @@ export class ShieldBuff extends BaseBuffScript {
       return
     }
     const actualShield = context.getVariable<number>('maxShieldValue') ?? 0
-    buffSystem.setShieldValue(context.characterId, actualShield)
+    // 累加语义（与 ShieldEffect 原语一致）：护盾值是共享池，覆盖会吞掉其他盾源的值，
+    // 且本实例到期清零时也会连带清掉别的盾。本实例贡献量记入 _shieldAmount 供 onRemove 精确回收
+    const current = buffSystem.getShieldValue(context.characterId)
+    buffSystem.setShieldValue(context.characterId, current + actualShield)
+    context.setVariable('_shieldAmount', actualShield)
   }
 
   protected _onRemove(context: BuffContext): void {
-    const remaining = context.getBuffSystem()?.getShieldValue(context.characterId) ?? 0
-    this.log(context, `护盾效果消失，剩余护盾值：${remaining}`)
-    // 清除 BuffSystem 中的护盾值
-    context.getBuffSystem()?.setShieldValue(context.characterId, 0)
+    const buffSystem = context.getBuffSystem()
+    if (!buffSystem) return
+    // 只回收本实例投入的护盾量（apply/refresh/regen 累计），不触碰其他盾源
+    const contributed = context.getVariable<number>('_shieldAmount') ?? 0
+    const current = buffSystem.getShieldValue(context.characterId)
+    const deduction = Math.min(contributed, current)
+    if (deduction > 0) {
+      buffSystem.setShieldValue(context.characterId, current - deduction)
+      this.log(context, `护盾效果消失，回收护盾值：${deduction}`)
+    }
   }
 
   protected _onUpdate(context: BuffContext): void {
@@ -58,11 +68,20 @@ export class ShieldBuff extends BaseBuffScript {
 
     // 每回合恢复 shieldRegen 点护盾值
     // _onUpdate 由 updatePerTurn 每回合调用一次，无需时间判定
-    const currentGlobal = context.getBuffSystem()?.getShieldValue(context.characterId) ?? 0
+    const buffSystem = context.getBuffSystem()
+    if (!buffSystem) return
+    const currentGlobal = buffSystem.getShieldValue(context.characterId)
     const maxShield = context.getVariable<number>('maxShieldValue') || currentGlobal
     const newShield = Math.min(currentGlobal + shieldRegen, maxShield)
+    const grown = newShield - currentGlobal
+    if (grown <= 0) return
 
-    context.getBuffSystem()?.setShieldValue(context.characterId, newShield)
+    buffSystem.setShieldValue(context.characterId, newShield)
+    // 实际恢复量归入本实例贡献，供 onRemove 回收口径一致
+    context.setVariable(
+      '_shieldAmount',
+      (context.getVariable<number>('_shieldAmount') ?? 0) + grown,
+    )
     this.log(context, `护盾恢复：${currentGlobal} → ${newShield}`)
   }
 
@@ -70,7 +89,9 @@ export class ShieldBuff extends BaseBuffScript {
     this.log(context, '护盾效果增强！')
 
     // 刷新时增加护盾值
-    const currentGlobal = context.getBuffSystem()?.getShieldValue(context.characterId) ?? 0
+    const buffSystem = context.getBuffSystem()
+    if (!buffSystem) return
+    const currentGlobal = buffSystem.getShieldValue(context.characterId)
     const maxShield = context.getVariable<number>('maxShieldValue') || currentGlobal
     const refreshBonus = this.getConfigValue(context, 'refreshBonus', 20)
 
@@ -78,8 +99,12 @@ export class ShieldBuff extends BaseBuffScript {
     const newShield = currentGlobal + refreshBonus
 
     context.setVariable('maxShieldValue', newMaxShield)
-    // 同步更新 BuffSystem 中的护盾值
-    context.getBuffSystem()?.setShieldValue(context.characterId, newShield)
+    // 累加 refreshBonus（非覆盖），并计入本实例贡献供 onRemove 精确回收
+    buffSystem.setShieldValue(context.characterId, newShield)
+    context.setVariable(
+      '_shieldAmount',
+      (context.getVariable<number>('_shieldAmount') ?? 0) + refreshBonus,
+    )
 
     this.log(context, `护盾值提升至 ${newShield}/${newMaxShield}`)
   }

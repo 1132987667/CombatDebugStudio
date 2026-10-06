@@ -26,6 +26,7 @@ import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { ShieldBuff } from '@/domain/buff/scripts/ShieldBuff'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { createTestParticipantsFromConfig } from '@tests/fixtures/participants'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -120,6 +121,39 @@ describe('shield/aura 配置→面板施加链路', () => {
     expect(buffSystem.removeBuff(i1)).toBe(true)
     expect(buffSystem.getShieldValue(id)).toBe(s1)
     expect(buffSystem.removeBuff(i2)).toBe(true)
+    expect(buffSystem.getShieldValue(id)).toBe(0)
+  })
+
+  it('双盾源共存：ShieldBuff 脚本与 ShieldEffect 原语累加共存，任一到期只回收自己（非覆盖/清零）', () => {
+    // buff_wind_shield 走 atomic ShieldEffect（flat 100，累加）；
+    // buff_shield 走 ShieldBuff 脚本（盾值 = baseShield 100 + maxHP×10%）。修复前
+    // ShieldBuff 用覆盖/清零语义：后上盾吞掉前者、任一到期清空另一盾源。
+    // 脚本由 BuffScriptLoader 异步加载，同步测试环境需手动注册
+    container
+      .resolve<BuffScriptRegistry>('BuffScriptRegistry')
+      .registerScript('buff_shield', new ShieldBuff())
+
+    const { enemies } = createTestParticipantsFromConfig(['yaotu_fire'], ['yaotu_gold'])
+    const enemy = enemies[0]!
+    const id = enemy.id
+    buffSystem.setCharacterResolver((cid) => (cid === id ? (enemy as never) : undefined))
+    expect(buffSystem.getShieldValue(id)).toBe(0)
+
+    const wind = buffSystem.addBuff(id, 'buff_wind_shield')
+    expect(buffSystem.getShieldValue(id)).toBe(100)
+
+    const shieldBuff = buffSystem.addBuff(id, 'buff_shield')
+    const maxHp = enemy.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    const shieldBuffValue = Math.floor(100 * 1 + maxHp * 0.1)
+    // 修复后：累加共存（修复前覆盖 → 总盾值丢失 wind 的 100）
+    expect(buffSystem.getShieldValue(id)).toBe(100 + shieldBuffValue)
+
+    // ShieldBuff 到期移除：只回收自己的贡献，风盾保留
+    expect(buffSystem.removeBuff(shieldBuff)).toBe(true)
+    expect(buffSystem.getShieldValue(id)).toBe(100)
+
+    // 风盾到期移除：精确回收归零
+    expect(buffSystem.removeBuff(wind)).toBe(true)
     expect(buffSystem.getShieldValue(id)).toBe(0)
   })
 })

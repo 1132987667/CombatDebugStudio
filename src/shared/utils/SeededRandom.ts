@@ -36,8 +36,16 @@ export class SeededRandom {
   }
 
   public next(): number {
-    this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff
-    return this.seed / 0x7fffffff
+    // mulberry32（纯 32 位整数运算，与 seeded-rng.ts 同算法）。
+    // 旧 LCG `seed * 1103515245 + 12345` 乘积超 double 安全整数（2^53），
+    // 按位与取低位前精度已丢失，概率判定系统性偏差（期望 25% 实测 16%）。
+    // 确定性契约不变：同 seed 序列可复现、restoreSeed 回退语义不受影响；
+    // 但序列与旧算法不同——已存战报是记录播放不受影响，仅"旧 seed 重模拟"结果会变。
+    this.seed = (this.seed + 0x6d2b79f5) | 0
+    let t = this.seed
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 
   public nextInt(min: number, max: number): number {

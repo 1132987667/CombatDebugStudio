@@ -467,9 +467,9 @@ const skillAvailabilities = computed<Record<string, SkillAvailability>>(() => {
   return map
 })
 
-// HACK: 快照 version = statsVersion，冷却变更（setSkillCooldown）与纯 tag 类 buff（控制/沉默
-// 无属性修改时）都不 bump 它，对应状态变化要等下一次属性事件（行动回能/回合开始 recalcAll）才
-// 刷到这里；技能释放入口落地时统一解决冷却/buff 的投影触发
+// 冷却变更（setSkillCooldown）与纯 tag 类 buff（控制/沉默无属性修改时）不 bump statsVersion，
+// 但都会经实体的 dirty 回调驱动投影重建快照（BattleSystem 属性变化回调 → markProjectionDirty；
+// setSkillCooldown 内置 notifyDirty），此处无需额外补偿刷新
 const isSkillUnavailable = (skill: SkillConfig): boolean =>
   skillAvailabilities.value[skill.id]?.can === false;
 

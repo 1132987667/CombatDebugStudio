@@ -387,6 +387,10 @@ export class BattleSystem {
       if (participant instanceof BattleParticipantImpl) {
         participant.setModifierProvider(this.buffSystem)
         participant.setBuffQuery(this.buffSystem)
+        // 注入回合提供者：ENERGY_GAINED 事件携带真实回合，触发器冷却判定
+        // （turn - lastTurn < cooldown）依赖它；实体自身拿不到 battleData，
+        // 此前硬编码 currentTurn: 0 使"每 N 回合最多触发一次"首次触发后永久沉默
+        participant.setTurnProvider(() => this.battleData?.currentTurn ?? 1)
       }
     })
     const battleData = this.battleData
@@ -438,6 +442,12 @@ export class BattleSystem {
 
     // 注册属性变化回调，Buff 修改 ModifierStack 后发射事件通知 UI 层
     this.buffSystem.setAttributeChangeCallback((characterId: string) => {
+      // Buff 增删/叠层（含纯 tag 类控制/沉默，不 bump statsVersion）也驱动投影刷新，
+      // 否则 UI 卡片的 buff/控制状态要等下一次属性事件才更新（原 HACK 见 BattleDashboard.vue）
+      const participant = this.battleData?.participants.get(characterId)
+      if (participant instanceof BattleParticipantImpl) {
+        participant.markProjectionDirty()
+      }
       this.uiEventPort.emit(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, {
         characterId,
       })
@@ -546,9 +556,17 @@ export class BattleSystem {
               1,
               Math.floor(baseHp * damagePercent),
             )
-            target.takeDamage(actualDamage)
-            if (origin === 'dot') emitDotTrace(actualDamage)
-            else if (origin === 'trigger') emitTriggerTrace(targetId, actualDamage)
+            // 与固定值伤害同管道（settleDamage）：护盾吸收/守护转移/DAMAGE_TAKEN/被动/pendingDeaths。
+            // 此前直接 takeDamage 绕过死亡结算——百分比 DOT/自残/场地伤害击杀目标时
+            // ON_DEATH/ON_KILL/队友救护/连击清理整条链路不触发
+            actualDamage = this.executor.settleDamage(
+              null, target, actualDamage, actualDamage, false, battleData,
+            )
+            settledViaExecutor = true
+            if (actualDamage > 0) {
+              if (origin === 'dot') emitDotTrace(actualDamage)
+              else if (origin === 'trigger') emitTriggerTrace(targetId, actualDamage)
+            }
           } else if (damagePercent && damagePercent < 0) {
             // 负百分比 = 按最大气血百分比治疗
             actualDamage = Math.floor(

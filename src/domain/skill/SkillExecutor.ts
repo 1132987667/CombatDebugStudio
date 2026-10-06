@@ -1189,12 +1189,18 @@ export class SkillExecutor {
   }
 
   /** 第三连击：每第3次普攻伤害+50% */
-  private handleThirdStrike(action: BattleAction, source: BattleEntity): void {    let state = this.comboStates.get(source.id)
+  private handleThirdStrike(action: BattleAction, source: BattleEntity): void {
+    let state = this.comboStates.get(source.id)
     if (!state) {
       state = { lastTargetId: '', streak: 0, totalAttacks: 0 }
       this.comboStates.set(source.id, state)
     }
     state.totalAttacks++
+
+    // 先移除上一击的加成残留：+50% 只作用于加成窗口，不能从第 3 击起永久生效
+    // （本被动在 on_hit 触发，晚于本次伤害结算——加成实际覆盖"触发后到下次触发前"窗口，
+    //  下次进入时清除是唯一可靠的生命周期终点）
+    this.removeBoostModifier(source, 'custom:third_strike')
 
     if (state.totalAttacks % 3 === 0) {
       // 应用伤害加成
@@ -1208,8 +1214,6 @@ export class SkillExecutor {
           ModifierType.ADDITIVE,
           '第三连击',
         )
-        // 通过 recalcAll 使生效，但在被动触发时 source.recalcAll 可能导致问题
-        // 简化实现 — 加一个临时 buff 替代
         source.recalcAll()
       }
       action.effects.push({
@@ -1235,8 +1239,10 @@ export class SkillExecutor {
     if (state.lastTargetId === target.id) {
       state.streak++
     } else {
+      // 切换目标：加成必须随 streak 一起归零，否则上一目标的加成永久残留
       state.streak = 1
       state.lastTargetId = target.id
+      this.removeBoostModifier(source, 'custom:combo_master')
     }
 
     if (state.streak > 1) {
@@ -1258,6 +1264,18 @@ export class SkillExecutor {
         targetId: source.id,
         description: `连击 x${state.streak}，伤害+${bonus}%`,
       })
+    }
+  }
+
+  /** 移除 SkillExecutor 自持有的伤害加成修饰符并触发重算（无残留时无操作） */
+  private removeBoostModifier(source: BattleEntity, sourceKey: string): void {
+    const attrData = source.getAttrValue(ATTRIBUTE_CODE.damageBoost)
+    if (!attrData) return
+    const before = attrData.modifiers.length
+    attrData.modifiers = attrData.modifiers.filter((m) => m.sourceKey !== sourceKey)
+    if (attrData.modifiers.length !== before) {
+      attrData.cachedVersion = -1
+      source.recalcAll()
     }
   }
 

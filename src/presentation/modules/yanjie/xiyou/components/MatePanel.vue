@@ -43,7 +43,7 @@
         <div v-for="row in petRows" :key="row.inst.uid" class="xy-row-card">
           <div class="xy-row-top">
             <span class="xy-row-name">{{ row.name }}</span>
-            <span class="xy-chip xy-chip--jade">{{ qualityOf(row.inst.quality) }}</span>
+            <span class="xy-chip xy-chip--jade">{{ qualityName(row.inst.quality) }}</span>
             <span v-if="row.inst.active" class="xy-chip xy-chip--gold">伴战</span>
             <span class="xy-row-side">Lv.{{ row.inst.level }}/{{ PET_MAX_LEVEL }}</span>
           </div>
@@ -85,7 +85,7 @@ import type { TabItem } from '@/presentation/components'
 import { mates } from '../xiyouData'
 import { effectiveMateLevel, MAX_ACTIVE_MATES } from '../battle'
 import { saveManager } from '../save-bridge'
-import { qualityClass, qualityOf } from '../quality'
+import { qualityClass, qualityName, qualityOf } from '../quality'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import {

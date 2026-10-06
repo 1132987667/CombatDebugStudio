@@ -90,6 +90,8 @@ export interface SaveEquipmentInstance {
   enhanceFails?: number
   /** fixed/main 标记与运行时 GearAffix 同构（缺字段的旧档由读档端按 main_affix_pool 推断） */
   affixes: { id: string; attribute: string; modifierType: string; value: number; fixed?: boolean; main?: boolean }[]
+  /** 核心属性锁存（制造时公式 roll，§21）；缺字段的旧档（写死 stats 时代）由读档端按公式补 roll 一次 */
+  stats?: { attribute: string; modifierType: string; value: number }[]
 }
 
 /** 流派（v3.0 技能树 · 存档：所选流派 + 已点亮节点 id + 已用技能点 + 出战装备槽） */

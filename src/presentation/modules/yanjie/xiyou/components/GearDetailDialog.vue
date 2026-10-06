@@ -27,10 +27,10 @@
       <div class="gd-rows">
         <p v-for="s in statRows" :key="s.key" class="gd-row">
           <span class="gd-row-key">{{ s.label }}</span>
-          <span class="gd-row-val">{{ s.value >= 0 ? '+' : '' }}{{ s.value }}{{ s.percent ? '%' : '' }}</span>
+          <span class="gd-row-val">{{ s.value >= 0 ? '+' : '' }}{{ formatDisplayNumber(s.value) }}{{ s.percent ? '%' : '' }}</span>
           <span v-if="s.delta !== null" class="gd-row-delta"
             :class="s.delta >= 0 ? 'gd-row-delta--up' : 'gd-row-delta--down'">
-            {{ s.delta >= 0 ? '+' : '' }}{{ s.delta }}{{ s.percent ? '%' : '' }}
+            {{ s.delta >= 0 ? '+' : '' }}{{ formatDisplayNumber(s.delta) }}{{ s.percent ? '%' : '' }}
           </span>
           <span v-if="s.isNew" class="gd-row-tag">新增</span>
           <span v-if="s.isGone" class="gd-row-tag gd-row-tag--gone">移除</span>
@@ -67,6 +67,7 @@ import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { equipQualityClass, equipQualityColor, qualityClass, qualityLabel, qualityOf, tierName } from '../quality'
 import { gearDisplayName } from '../caveLogic'
+import { formatDisplayNumber } from '@/shared/utils/math'
 
 const props = defineProps<{
   instance: GearInstance | null

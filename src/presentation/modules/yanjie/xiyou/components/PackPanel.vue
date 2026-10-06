@@ -166,11 +166,13 @@ function countOf(itemId: string): number {
 const cardDiscardId = ref<string | null>(null)
 const cardDiscardOpen = ref(false)
 
-const cardDiscardMsg = computed(() =>
-  cardDiscardId.value
-    ? `确定丢弃「${nameOf(cardDiscardId.value)}」×${countOf(cardDiscardId.value)} 吗？此操作不可恢复。`
-    : '',
-)
+const cardDiscardMsg = computed(() => {
+  if (!cardDiscardId.value) return ''
+  const id = cardDiscardId.value
+  // 装备按实例逐件养成：整堆丢弃会把已强化/升星的件一并删掉，确认文案必须点名
+  const gearWarn = pack.gearById(id) && countOf(id) > 1 ? '该装备全部实例（含已强化/升星的）将一并丢弃，' : ''
+  return `确定丢弃「${nameOf(id)}」×${countOf(id)} 吗？${gearWarn}此操作不可恢复。`
+})
 
 function askCardDiscard(itemId: string): void {
   cardDiscardId.value = itemId

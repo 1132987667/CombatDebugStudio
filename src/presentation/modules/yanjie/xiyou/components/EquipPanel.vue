@@ -132,9 +132,11 @@
             <p v-if="row.inst" class="xy-row-desc">
               {{ row.stats.map((s) => `${s.label} +${formatDisplayNumber(s.value)}${row.def.coefficient.attr === s.attr ? '%' : ''}`).join(' · ') }}
             </p>
-            <p v-if="row.inst" class="xy-row-desc xy-row-desc--key">
-              强化 +{{ row.inst.enhance }}/{{ fabaoTier(row.inst.quality).enhanceCap }}
-              <template v-if="row.def.kind === 'fabao'"> · 技能 {{ row.inst.skillRank }}/{{ FABAO_MAX_SKILL_RANK }} 阶</template>
+            <!-- 养成行 0 值不占位（与装备约定一致：无「强化 +0」） -->
+            <p v-if="row.inst && (row.inst.enhance > 0 || row.inst.skillRank > 0)" class="xy-row-desc xy-row-desc--key">
+              <template v-if="row.inst.enhance > 0">强化 +{{ row.inst.enhance }}/{{ fabaoTier(row.inst.quality).enhanceCap }}</template>
+              <template v-if="row.inst.enhance > 0 && row.def.kind === 'fabao' && row.inst.skillRank > 0"> · </template>
+              <template v-if="row.def.kind === 'fabao' && row.inst.skillRank > 0">技能 {{ row.inst.skillRank }}/{{ FABAO_MAX_SKILL_RANK }} 阶</template>
             </p>
             <p class="xy-row-desc">{{ row.def.skill ?? row.def.trigger }}</p>
             <p class="xy-row-desc xy-row-desc--key">{{ row.def.mechanic }}</p>

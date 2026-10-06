@@ -225,6 +225,9 @@ export interface PackRuntimeSnapshot {
   shopGoods?: XiyouShopGood[]
   /** 坊市上次刷新时间（v4，ISO） */
   shopRefreshedAt?: string
+  /** 永久丹药服用计数与属性累计（缺省空；旧快照无字段时 load 回退空表，主档通道另有 pill_uses/pill_bonuses） */
+  pillUses?: Record<string, number>
+  pillBonuses?: Record<string, number>
   updatedAt: string
 }
 
@@ -413,6 +416,8 @@ export const usePackStore = defineStore('pack', () => {
       garden: garden.value.map((p) => ({ cropId: p.cropId, cooldownUntil: p.cooldownUntil })),
       shopGoods: shopGoods.value.map((g) => ({ ...g })),
       shopRefreshedAt: shopRefreshedAt.value,
+      pillUses: { ...pillUses.value },
+      pillBonuses: { ...pillBonuses.value },
       updatedAt: new Date().toISOString(),
     }
     try {
@@ -548,6 +553,9 @@ export const usePackStore = defineStore('pack', () => {
         shopGoods.value = snap.shopGoods.map((g) => ({ ...g }))
       }
       shopRefreshedAt.value = snap.shopRefreshedAt ?? shopRefreshedAt.value
+      // 永久丹药计数/属性累计：旧快照无字段回退空表（主档通道恢复时同样写入，双通道幂等）
+      pillUses.value = { ...(snap.pillUses ?? {}) }
+      pillBonuses.value = { ...(snap.pillBonuses ?? {}) }
     } catch {
       // IDB 不可用/损坏时保持 configs 兜底
     }

@@ -15,6 +15,7 @@ import { calculateChecksum } from '@/shared/utils/Checksum'
 import type { SaveStatePort } from '@/shared/utils/save-manager'
 import { SaveManager } from '@/shared/utils/save-manager'
 import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { container } from '@/infrastructure/di/Container'
 import { GameDataApi } from '@/application/service/GameDataApi'
 import type { XiyouStatPoints } from './types'
@@ -30,6 +31,7 @@ import {
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
 import { expandPoolRef } from '@/domain/fengshen/equipment-overview'
+import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import { materials as packMaterials, equipment as packStarterEquipment, starterEnabled, packItems, pills as packPills, consumables as packConsumables, quests, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
@@ -94,12 +96,12 @@ function serializeInstances(): SaveEquipmentInstance[] {
   const pack = usePackStore()
   const out: SaveEquipmentInstance[] = []
   for (const g of pack.gearInstances) {
-    out.push({ instanceId: g.instanceId, itemId: g.itemId, enhance: g.enhance, enhanceFails: g.enhanceFails ?? 0, quality: g.quality, qualityFactor: g.qualityFactor, star: g.star ?? 0, affixes: g.affixes.map((a) => ({ ...a })) })
+    out.push({ instanceId: g.instanceId, itemId: g.itemId, enhance: g.enhance, enhanceFails: g.enhanceFails ?? 0, quality: g.quality, qualityFactor: g.qualityFactor, star: g.star ?? 0, stats: g.stats.map((s) => ({ ...s })), affixes: g.affixes.map((a) => ({ ...a })) })
   }
   for (const slot of Object.keys(GEAR_SLOT_LABELS) as GearSlotKey[]) {
     const inst = pack.equipped[slot]
     if (inst) {
-      out.push({ instanceId: inst.instanceId, itemId: inst.itemId, enhance: inst.enhance, enhanceFails: inst.enhanceFails ?? 0, quality: inst.quality, qualityFactor: inst.qualityFactor, star: inst.star ?? 0, affixes: inst.affixes.map((a) => ({ ...a })) })
+      out.push({ instanceId: inst.instanceId, itemId: inst.itemId, enhance: inst.enhance, enhanceFails: inst.enhanceFails ?? 0, quality: inst.quality, qualityFactor: inst.qualityFactor, star: inst.star ?? 0, stats: inst.stats.map((s) => ({ ...s })), affixes: inst.affixes.map((a) => ({ ...a })) })
     }
   }
   return out
@@ -124,6 +126,18 @@ function restoreEquipped(eq: { passive?: string[]; small?: string[]; ultimate?: 
 }
 
 export const xiyouSaveBridge: SaveStatePort = {
+  /** 主档之外的运行时文档（行囊快照/法宝/灵宠坐骑/降妖塔）——save-manager.reset 只清 saves 与
+   *  localStorage，不清这些独立 IDB 键；不清则「新游戏」后法宝/宠物/塔进度与旧行囊快照残留 */
+  async resetRuntimeState(): Promise<void> {
+    for (const id of ['pack_runtime', 'fabao', 'petmount', 'tower']) {
+      try {
+        await persistentStorage.remove(FENGSHEN_STORE.XIYOU, id)
+      } catch {
+        /* 单文档失败不阻断重置 */
+      }
+    }
+  },
+
   /**
    * 新游戏初始态：pack.json 初始持有整组并入（与 buildFromConfigs 同源口径）——
    * - materials/pills/consumables → inventory 三类（restore 合并回背包）
@@ -331,8 +345,10 @@ export const xiyouSaveBridge: SaveStatePort = {
           quality,
           qualityFactor: Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality),
           star: Number.isInteger(inst.star) && (inst.star as number) >= 0 ? (inst.star as number) : 0,
-          // 旧档无锁存核心属性（写死 stats 时代）→ 按公式补 roll 一次
-          stats: makeInstance(inst.itemId, [], 0, quality, Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality)).stats,
+          // 主档已锁存核心属性则原样恢复（读档重 roll 会让养成资产漂移）；旧档（写死 stats 时代）无字段 → 按公式补 roll 一次
+          stats: Array.isArray(inst.stats)
+            ? (inst.stats as EquipmentStatEntry[]).map((s) => ({ ...s }))
+            : makeInstance(inst.itemId, [], 0, quality, Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality)).stats,
           affixes: inferAffixFlags(inst.itemId, (inst.affixes ?? []).map((a): GearAffix => ({
             id: a.id,
             // HACK: 存档词缀的 attribute 为历史持久化字符串（SaveEquipmentInstance 保持宽容键域），

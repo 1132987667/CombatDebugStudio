@@ -33,6 +33,8 @@ export interface SaveStatePort {
   restore(data: SaveData): Promise<void>
   /** 新游戏初始态提供方（缺省用 createInitialGameState）；bridge 实现据此把 configs 权威的新手内容并入 */
   createInitial?(): SaveData
+  /** 重置时清理主档之外的运行时文档（独立 IDB 键，如行囊快照/法宝/灵宠坐骑/降妖塔）；可选 */
+  resetRuntimeState?(): Promise<void>
 }
 
 export interface SaveResult {
@@ -242,6 +244,11 @@ export class SaveManager {
     try {
       await this.storage.remove(SAVE_STORE.SAVES, SAVE_MAIN_KEY)
       await this.storage.remove(SAVE_STORE.SAVES, SAVE_AUTO_KEY)
+    } catch {
+      /* ignore */
+    }
+    try {
+      await this.port.resetRuntimeState?.()
     } catch {
       /* ignore */
     }

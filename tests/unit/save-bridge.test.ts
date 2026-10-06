@@ -316,6 +316,23 @@ describe('装备词条 fixed/main 存档保真（主要属性不因存档退化�
     expect(restored?.affixes[1]?.main).toBe(true)
   })
 
+  it('装备核心属性 stats 主档往返保真（读档不再重 roll 核心属性）', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const inst = makeInstance('wp_t1_light_01', [], 0, 3, 1.1)
+    const before = inst.stats.map((s) => ({ ...s }))
+    expect(before.length).toBeGreaterThan(0)
+    pack.gearInstances.push(inst)
+
+    const data = await xiyouSaveBridge.collect({ currentSceneId: null })
+    const saved = data.equipment_instances?.find((i) => i.instanceId === inst.instanceId)
+    expect(saved?.stats?.length).toBe(before.length)
+
+    await xiyouSaveBridge.restore(data)
+    const restored = usePackStore().gearInstances.find((g) => g.instanceId === inst.instanceId)
+    expect(restored?.stats).toEqual(before)
+  })
+
   it('旧档词条无标记：读档按主要池推断前 2 条，第 3 条不误标', async () => {
     const { cfg } = equipRollParams()
     const pool = cfg.main_affix_pool!.sword!

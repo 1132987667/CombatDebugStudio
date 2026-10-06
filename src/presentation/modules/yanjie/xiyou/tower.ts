@@ -106,7 +106,10 @@ export function towerClearRewards(floor: number, firstClear: boolean): { itemId:
     const equip = towerFloorEquipId(floor)
     if (equip) out.push({ itemId: equip, count: 1 })
   }
-  return out
+  // 同层多来源同物品合并（如 5 的倍数层常规灵尘 + 首通灵尘），否则 UI 显示「灵尘×2 · 灵尘×2」
+  const merged = new Map<string, number>()
+  for (const r of out) merged.set(r.itemId, (merged.get(r.itemId) ?? 0) + r.count)
+  return [...merged].map(([itemId, count]) => ({ itemId, count }))
 }
 
 // ===== 进度状态（IDB xiyou 表 'tower' 文档）=====

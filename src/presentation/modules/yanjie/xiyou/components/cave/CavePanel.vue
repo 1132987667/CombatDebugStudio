@@ -32,9 +32,7 @@
           <AlchemyPanel v-else-if="active === 'alchemy'" />
           <TalismanPanel v-else-if="active === 'talisman'" />
           <GardenPanel v-else-if="active === 'garden'" />
-          <EnhancePanel v-else-if="active === 'enhance'" />
-          <StarPanel v-else-if="active === 'star'" />
-          <WashPanel v-else-if="active === 'wash'" />
+          <CultivatePanel v-else-if="active === 'cultivate'" />
           <FragmentPanel v-else-if="active === 'fragment'" />
         </div>
 
@@ -55,19 +53,15 @@ import IconNavForge from '~icons/app/nav-forge'
 import IconNavAlchemy from '~icons/app/nav-alchemy'
 import IconNavTalisman from '~icons/app/nav-talisman'
 import IconNavGarden from '~icons/app/nav-garden'
-import IconNavEnhance from '~icons/app/nav-enhance'
-import IconNavStar from '~icons/app/nav-star'
-import IconNavWash from '~icons/app/nav-wash'
+import IconNavCultivate from '~icons/app/nav-enhance'
 import IconNavFragment from '~icons/app/nav-fragment'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { crafts } from '../../xiyouData'
 import AlchemyPanel from './AlchemyPanel.vue'
-import EnhancePanel from './EnhancePanel.vue'
+import CultivatePanel from './CultivatePanel.vue'
 import ForgePanel from './ForgePanel.vue'
 import FragmentPanel from './FragmentPanel.vue'
 import GardenPanel from './GardenPanel.vue'
-import StarPanel from './StarPanel.vue'
-import WashPanel from './WashPanel.vue'
 import TalismanPanel from './TalismanPanel.vue'
 
 const pack = usePackStore()
@@ -76,7 +70,7 @@ onMounted(() => {
   void pack.init()
 })
 
-type CaveNavId = 'forge' | 'alchemy' | 'talisman' | 'garden' | 'enhance' | 'star' | 'wash' | 'fragment'
+type CaveNavId = 'forge' | 'alchemy' | 'talisman' | 'garden' | 'cultivate' | 'fragment'
 
 const active = ref<CaveNavId>('forge')
 
@@ -86,9 +80,7 @@ const NAVS: Array<{ id: CaveNavId; label: string }> = [
   { id: 'alchemy', label: '炼制丹药' },
   { id: 'talisman', label: '炼制符箓' },
   { id: 'garden', label: '药园灵田' },
-  { id: 'enhance', label: '强化装备' },
-  { id: 'star', label: '装备升星' },
-  { id: 'wash', label: '词条洗练' },
+  { id: 'cultivate', label: '装备养成' },
   { id: 'fragment', label: '碎片合成' },
 ]
 
@@ -98,9 +90,7 @@ const NAV_ICONS: Record<CaveNavId, Component> = {
   alchemy: IconNavAlchemy,
   talisman: IconNavTalisman,
   garden: IconNavGarden,
-  enhance: IconNavEnhance,
-  star: IconNavStar,
-  wash: IconNavWash,
+  cultivate: IconNavCultivate,
   fragment: IconNavFragment,
 }
 
@@ -110,9 +100,7 @@ const ACTIVE_NAV = computed(() => {
     alchemy: { label: '炼制丹药', sub: '丹炉 · 投入草药炼制灵丹' },
     talisman: { label: '炼制符箓', sub: '符炉 · 炼制强化保护符' },
     garden: { label: '药园灵田', sub: '灵田 · 种植收获灵草仙果' },
-    enhance: { label: '强化装备', sub: '砺台 · 消耗强化石与金钱强化' },
-    star: { label: '装备升星', sub: '星台 · 消耗同名装备突破星级' },
-    wash: { label: '词条洗练', sub: '灵泉 · 消耗洗练材料更换词条' },
+    cultivate: { label: '装备养成', sub: '砺台 · 强化 / 升星 / 洗练，选一件装备一并完成' },
     fragment: { label: '碎片合成', sub: '熔炼 · 碎片合成为完整之物' },
   }
   return map[active.value]

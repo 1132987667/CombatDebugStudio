@@ -159,11 +159,12 @@ export function starFactor(star: number): number {
   return STAR_FACTOR[Math.min(Math.max(star, 0), STAR_MAX)]!
 }
 
-/** 星级文案（0-3 星，§21 升星）：实心=已升、空心=空位（同 BattleZen 关卡星评范式）；
- *  旧档实例可能缺 star 字段，回退 0 */
-export function starLabel(star: number | undefined): string {
+/** 装备显示名：星级以「+N」跟随装备名（0 星不带后缀；旧档实例可能缺 star 字段，回退 0）。
+ *  全显示面单源（卡片/详情弹窗/悬浮卡/toast，裁定 2026-10-06：★☆ 符号不直观，
+ *  统一「竹剑 +2」格式，与强化 +N 同为玩家通行惯例） */
+export function gearDisplayName(name: string, star: number | undefined): string {
   const s = Math.min(Math.max(star ?? 0, 0), STAR_MAX)
-  return '★'.repeat(s) + '☆'.repeat(STAR_MAX - s)
+  return s > 0 ? `${name} +${s}` : name
 }
 
 // ════════════ 洗练（更换词条）════════════

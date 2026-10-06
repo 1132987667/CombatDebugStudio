@@ -88,7 +88,8 @@ export interface SaveEquipmentInstance {
   star?: number
   /** 强化连败次数（成功率保底 +10%/次，成功清零；缺省 0） */
   enhanceFails?: number
-  affixes: { id: string; attribute: string; modifierType: string; value: number }[]
+  /** fixed/main 标记与运行时 GearAffix 同构（缺字段的旧档由读档端按 main_affix_pool 推断） */
+  affixes: { id: string; attribute: string; modifierType: string; value: number; fixed?: boolean; main?: boolean }[]
 }
 
 /** 流派（v3.0 技能树 · 存档：所选流派 + 已点亮节点 id + 已用技能点 + 出战装备槽） */

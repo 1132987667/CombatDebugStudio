@@ -67,7 +67,7 @@
   text-align: left;
 }
 
-/* 标题行：名称（品阶色）（品质/强化/星级下沉到养成行） */
+/* 标题行：名称（品阶色，星级以「+N」跟随名称，单源 gearDisplayName） */
 .xy-gear-pack-item__title {
   display: flex;
   align-items: baseline;
@@ -76,7 +76,7 @@
   flex-wrap: wrap;
 }
 
-/* 养成行：品质系数 + 强化等级 + 星级（两行卡片结构的固定第二行） */
+/* 养成行：品质系数 + 强化等级（两行卡片结构的固定第二行） */
 .xy-gear-pack-item__sub {
   display: flex;
   align-items: baseline;
@@ -89,12 +89,6 @@
 
 .xy-gear-pack-item__enhance {
   color: var(--color-success);
-}
-
-.xy-gear-pack-item__star {
-  color: var(--xy-gold);
-  font-size: var(--font-size-md);
-  letter-spacing: 1px;
 }
 
 .xy-gear-pack-item__detail {

@@ -863,23 +863,6 @@
    装备升星 Star
    ══════════════════════════════════════════════════════════════════ */
 
-.xy-cave-star-stars {
-  display: inline-flex;
-  gap: 3px;
-}
-
-.xy-cave-star-star {
-  width: 16px;
-  height: 16px;
-  color: var(--xy-ink-4);
-  opacity: 0.35;
-
-  &.on {
-    color: var(--xy-gold);
-    opacity: 1;
-  }
-}
-
 .xy-cave-star-info {
   display: flex;
   flex-direction: column;
@@ -1266,4 +1249,32 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   装备养成 Cultivate（强化/升星/洗练三合一：左选装备 + 右操作区）
+   ══════════════════════════════════════════════════════════════════ */
+
+.xy-cult {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* 左栏装备列表自身纵向滚动（装备多时不撑开整页） */
+.xy-cult-pick {
+  max-height: 620px;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+}
+
+.xy-cult-ops {
+  min-width: 0;
+}
+
+.xy-cult-empty {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-4);
 }

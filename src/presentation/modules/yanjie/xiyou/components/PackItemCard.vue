@@ -2,11 +2,11 @@
   <div class="xy-item-card-wrap">
     <button type="button"
       :class="['xy-item-card', `xy-item-card--r${item.rarity}`, { 'is-selected': selected }, 'xy-ink-hover']"
-      :aria-label="gear ? `${item.name}（${qualityName(gear.quality)}品·强化+${gear.enhance}）` : `${item.name} ×${count}`"
+      :aria-label="gear ? `${gearDisplayName(item.name, gear.star)}（${qualityName(gear.quality)}品·强化+${gear.enhance}）` : `${item.name} ×${count}`"
       @mouseenter="onEnter" @mouseleave="onLeave" @click="onCardClick"
       @contextmenu.prevent="onContextmenu">
       <span class="xy-item-title">
-        <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ item.name }}</span>
+        <span class="xy-item-name" :class="qualityClass(item.rarity)">{{ gear ? gearDisplayName(item.name, gear.star) : item.name }}</span>
         <span class="xy-item-type">{{ item.type }}</span>
         <span v-if="gear" class="xy-item-quality" :class="equipQualityClass(gear.quality)">
           {{ qualityLabel(gear.quality, gear.qualityFactor) }}
@@ -55,6 +55,7 @@ import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import IconMoney from '~icons/app/money'
 import { usePackStore, GEAR_SLOT_LABELS, type GearInstance } from '@/presentation/stores/packStore'
 import { equipQualityClass, qualityClass, qualityColor, qualityLabel, qualityName, qualityOf } from '../quality'
+import { gearDisplayName } from '../caveLogic'
 import { gearTooltipData } from '../gearTooltip'
 import type { StatCondition } from '../statFilter'
 import type { XiyouCatalogItem } from '../types'

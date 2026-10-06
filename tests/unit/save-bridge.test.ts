@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { xiyouSaveBridge } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
-import { usePackStore } from '@/presentation/stores/packStore'
+import { equipRollParams, makeInstance, usePackStore } from '@/presentation/stores/packStore'
 import { equipment as starterEquipment, scenes, starterEnabled } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { SaveManager } from '@/shared/utils/save-manager'
 import { createInitialGameState, verifySaveChecksum, type SaveData } from '@/shared/utils/save-schema'
@@ -295,6 +295,54 @@ describe('collect → restore 往返', () => {
       scene11.stars = 0
       for (const s of scenes) if (s.id !== 'scene_1_1') s.stars = 0
     }
+  })
+})
+
+describe('装备词条 fixed/main 存档保真（主要属性不因存档退化为附加）', () => {
+  it('collect → restore 往返：主要词条标记保留', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    // 完整 roll 契约：affixes 前 2 条 = 第 1 条固定主要（fixed）+ 第 2 条随机主要（main）
+    const inst = makeInstance('wp_t1_light_01', [], 0, 3, 1.1)
+    expect(inst.affixes[0]?.fixed).toBe(true)
+    expect(inst.affixes[1]?.main).toBe(true)
+    pack.gearInstances.push(inst)
+
+    const data = await xiyouSaveBridge.collect({ currentSceneId: null })
+    await xiyouSaveBridge.restore(data)
+
+    const restored = usePackStore().gearInstances.find((g) => g.instanceId === inst.instanceId)
+    expect(restored?.affixes[0]?.fixed).toBe(true)
+    expect(restored?.affixes[1]?.main).toBe(true)
+  })
+
+  it('旧档词条无标记：读档按主要池推断前 2 条，第 3 条不误标', async () => {
+    const { cfg } = equipRollParams()
+    const pool = cfg.main_affix_pool!.sword!
+    const data: SaveData = {
+      ...createInitialGameState(),
+      equipment_instances: [
+        {
+          instanceId: 'inst_old',
+          itemId: 'wp_t1_light_01',
+          enhance: 0,
+          quality: 2,
+          affixes: [
+            { id: pool.fixed, attribute: pool.fixed, modifierType: 'percent', value: 3 },
+            { id: 'hitBonus', attribute: 'hitBonus', modifierType: 'percent', value: 4 },
+            { id: 'attack', attribute: 'attack', modifierType: 'flat', value: 5 },
+          ],
+        },
+      ],
+    }
+    await xiyouSaveBridge.restore(data)
+
+    const inst = usePackStore().gearInstances.find((g) => g.instanceId === 'inst_old')
+    expect(inst?.affixes[0]?.fixed).toBe(true)
+    expect(inst?.affixes[1]?.main).toBe(true)
+    // 位置契约只覆盖前 2 条：第 3 条（基础属性，不在主要池）保持无标记 → 归附加组
+    expect(inst?.affixes[2]?.fixed).toBeUndefined()
+    expect(inst?.affixes[2]?.main).toBeUndefined()
   })
 })
 

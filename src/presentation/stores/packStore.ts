@@ -47,6 +47,7 @@ import {
   enhanceMaterialOf,
   enhanceMaxByRarity,
   enhanceSuccessRate,
+  gearDisplayName,
   STAR_MAX,
   starCost,
   starFactor,
@@ -133,8 +134,9 @@ export function equipRollParams(): { cfg: AffixRuleConfig; formula: EquipFormula
   return { cfg: AFFIX_RULE, formula: EQUIP_FORMULA, conversion: PLAYER_CONVERSION }
 }
 
-/** 按实例品质 roll 一件装备的全部属性（核心 1 条 + 主要/附加词条；§21 三属性固定/随机边界） */
-function rollInstanceParts(
+/** 按实例品质 roll 一件装备的全部属性（核心 1 条 + 主要/附加词条；§21 三属性固定/随机边界）。
+ *  NOTE: 调试生成/词缀重roll 必须走本函数——rollAffixes 仅附加词条（洗练专用），混用会把主要词条 roll 丢 */
+export function rollInstanceParts(
   itemId: string,
   quality: number,
   qualityFactor: number,
@@ -833,7 +835,7 @@ export const usePackStore = defineStore('pack', () => {
     consumeStarFodder(inst.itemId, need, instanceId)
     inst.star = cur + 1
     scheduleSave()
-    notification.toast(`升星成功！「${g.name}」升至 ${inst.star} 星`, 'success')
+    notification.toast(`升星成功！「${gearDisplayName(g.name, inst.star)}」`, 'success')
     return true
   }
 

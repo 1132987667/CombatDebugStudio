@@ -1,7 +1,7 @@
 <template>
   <Dialog
     :model-value="!!instance"
-    :title="gear?.name ?? '装备详情'"
+    :title="gear ? gearDisplayName(gear.name, instance?.star) : '装备详情'"
     :title-color="instance ? equipQualityColor(instance.quality) : undefined"
     width="460px"
     @update:model-value="onClose"
@@ -13,6 +13,7 @@
           {{ qualityLabel(instance.quality, instance.qualityFactor) }}
         </span>
         <span class="gd-meta">{{ slotLabel }} · {{ tierLabel }}</span>
+        <span v-if="instance.star > 0" class="gd-star">星级 +{{ instance.star }}</span>
         <span v-if="instance.enhance > 0" class="gd-enhance">强化 +{{ instance.enhance }}</span>
       </div>
       <p class="gd-desc">{{ gear.description || '暂无描述' }}</p>
@@ -65,6 +66,7 @@ import type { EquipmentData } from '@/domain/fengshen/types'
 import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { equipQualityClass, equipQualityColor, qualityClass, qualityLabel, qualityOf, tierName } from '../quality'
+import { gearDisplayName } from '../caveLogic'
 
 const props = defineProps<{
   instance: GearInstance | null
@@ -194,6 +196,11 @@ function onEquip(): void {
 .gd-meta {
   font-size: var(--font-size-md);
   color: var(--color-text-tertiary);
+}
+
+.gd-star {
+  font-size: var(--font-size-md);
+  color: var(--color-warning);
 }
 
 .gd-enhance {

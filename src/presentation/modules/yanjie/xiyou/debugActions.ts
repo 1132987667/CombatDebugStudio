@@ -10,7 +10,7 @@
  * - 本文件不 import 任何 store，仅依赖注入的 env。
  */
 
-import { makeInstance, equipRollParams, GEAR_SLOT_LABELS, type GearInstance, type GearSlotKey } from '@/presentation/stores/packStore'
+import { makeInstance, equipRollParams, rollInstanceParts, GEAR_SLOT_LABELS, type GearInstance, type GearSlotKey } from '@/presentation/stores/packStore'
 import { checkGearRoll } from '@/domain/fengshen/equip-roll-check'
 import { applyAffixToParticipant, clearAffixesFromParticipant } from '@/shared/utils/affix'
 import { PLAYER_ID } from '@/shared/constants/player'
@@ -1138,10 +1138,11 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
 
   /** 装备品质（equipment.json rarity，供词缀 roll 的 quality 参数） */
   const rarityOf = (itemId: string): number => pack.gearById(itemId)?.rarity ?? 1
-  /** 生成装备实例（品质按稀有度 roll / 制造锁定；品质系数同打造/掉落口径在区间内 roll，不取中值） */
+  /** 生成装备实例（品质按稀有度 roll / 制造锁定；品质系数同打造/掉落口径在区间内 roll，不取中值）。
+   *  affixes 传空 → makeInstance 内部完整 roll（核心+主要+附加）；此前误传 rollAffixes（仅附加）丢主要词条 */
   const newInstance = (itemId: string): GearInstance => {
     const quality = getCraftQualityLock() ?? rarityOf(itemId)
-    return makeInstance(itemId, pack.rollAffixes(itemId, quality), 0, quality, rollQualityFactor(quality))
+    return makeInstance(itemId, [], 0, quality, rollQualityFactor(quality))
   }
 
   return {
@@ -1344,9 +1345,9 @@ function buildGearCategory(env: PlayerStoreDebugEnv): DebugCategory {
             execute: (instId) => {
               const inst = pack.gearInstances.find((g) => g.instanceId === instId)
               if (!inst) return fail('未找到该装备实例')
-              // NOTE: 用实例品质 inst.quality（而非装备阶位 rarityOf）——制造品质锁定后两者可不同，
-              //       重roll应保持实例词缀数量语义（affixCountByQuality）
-              inst.affixes = pack.rollAffixes(inst.itemId, inst.quality)
+              // NOTE: 用实例品质 inst.quality（而非装备阶位 rarityOf）——制造品质锁定后两者可不同。
+              //       完整重roll（主要+附加）与制造同口径；rollAffixes 仅附加（洗练专用），误用会丢主要词条
+              inst.affixes = rollInstanceParts(inst.itemId, inst.quality, inst.qualityFactor).affixes
               void pack.flush()
               return ok(`「${pack.gearById(inst.itemId)?.name ?? inst.itemId}」词缀已重roll`, inst.affixes)
             },

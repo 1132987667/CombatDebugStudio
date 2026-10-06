@@ -11,6 +11,7 @@ import {
   enhanceSuccessRate,
   formatEffect,
   fragmentRuleViews,
+  gearDisplayName,
   itemIdByName,
   missingMatsText,
   qualityOf,
@@ -123,6 +124,14 @@ describe('升星消耗与加成', () => {
     expect(starFactor(3)).toBe(1.25)
     expect(starFactor(-1)).toBe(1)
     expect(starFactor(9)).toBe(1.25)
+  })
+
+  it('装备显示名：星级以「+N」跟随名称，0 星不带后缀，缺字段/越界回退 clamp', () => {
+    expect(gearDisplayName('竹剑', 0)).toBe('竹剑')
+    expect(gearDisplayName('竹剑', 2)).toBe('竹剑 +2')
+    expect(gearDisplayName('竹剑', undefined)).toBe('竹剑')
+    expect(gearDisplayName('竹剑', -1)).toBe('竹剑')
+    expect(gearDisplayName('竹剑', 9)).toBe('竹剑 +3')
   })
 })
 

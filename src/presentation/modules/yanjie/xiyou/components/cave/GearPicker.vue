@@ -8,15 +8,14 @@
           <button type="button" class="xy-gear-pack-item__main" @mouseenter="onEnter($event, g)"
             @mouseleave="onLeave" @click="emit('update:modelValue', g.instanceId)">
             <span class="xy-gear-pack-item__title">
-              <span class="xy-gear-pack-item__name" :class="qualityClass(g.rarity)">{{ g.name }}</span>
+              <span class="xy-gear-pack-item__name" :class="qualityClass(g.rarity)">{{ gearDisplayName(g.name, g.star) }}</span>
               <span v-if="g.equipped" class="xy-enh-pool__worn">穿戴中</span>
             </span>
             <span class="xy-gear-pack-item__sub">
               <span class="xy-gear-pack-item__quality" :class="equipQualityClass(g.quality)">
                 {{ qualityLabel(g.quality, g.qualityFactor) }}
               </span>
-              <span class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
-              <span class="xy-gear-pack-item__star" :title="`星级 ${g.star}/${STAR_MAX}`">{{ starLabel(g.star) }}</span>
+              <span v-if="g.enhance > 0" class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
             </span>
           </button>
           <button type="button" class="xy-gear-pack-item__detail" @click="openDetail(g)">详情</button>
@@ -44,7 +43,7 @@ import { usePackStore, GEAR_SLOT_LABELS, type GearInstance, type GearSlotKey } f
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import type { EquipmentData } from '@/domain/fengshen/types'
 import { equipQualityClass, qualityClass, qualityLabel } from '../../quality'
-import { STAR_MAX, starLabel } from '../../caveLogic'
+import { gearDisplayName } from '../../caveLogic'
 import { gearTooltipData, type GearTooltipView } from '../../gearTooltip'
 import GearDetailDialog from '../GearDetailDialog.vue'
 

@@ -1,9 +1,5 @@
 <template>
   <div>
-    <h5 class="xy-cave-sec">选择装备</h5>
-    <!-- 全部装备（已穿戴 + 背包）按部位分组，卡片与装备页背包池同款 -->
-    <GearPicker v-model="selectedId" />
-
     <template v-if="gearInst">
       <h5 class="xy-cave-sec">附加词条（{{ washModes.directed ? '点选一条作为定向/锁词条目标' : '定向/锁词条需精/超品质' }}）</h5>
       <div class="xy-cave-wash-affixes">
@@ -61,9 +57,8 @@
 </template>
 
 <script setup lang="ts">
-/** 洗练面板：选择交给 GearPicker（全背包），本面板只做洗练操作区（词条点选/diff 高亮/三种洗练） */
+/** 洗练操作区：选择由装备养成面板（CultivatePanel）共享，本组件只做洗练（词条点选/diff 高亮/三种洗练） */
 import { computed, ref, watch } from 'vue'
-import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore, type GearAffix, type GearInstance } from '@/presentation/stores/packStore'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import {
@@ -73,24 +68,26 @@ import {
   washAllowed,
   type WashMode,
 } from '../../caveLogic'
-import GearPicker from './GearPicker.vue'
+
+const props = defineProps<{ instanceId: string | null }>()
 
 const pack = usePackStore()
-const notification = useNotificationStore()
 
-const selectedId = ref<string | null>(null)
 const targetIdx = ref(-1)
 const rippling = ref(false)
 const shaking = ref(false)
 
 /** 切换选中装备时，词条目标与上一次 diff 失效 */
-watch(selectedId, () => {
-  targetIdx.value = -1
-  lastWashDiff.value = null
-})
+watch(
+  () => props.instanceId,
+  () => {
+    targetIdx.value = -1
+    lastWashDiff.value = null
+  },
+)
 
 const gearInst = computed<GearInstance | null>(() =>
-  selectedId.value ? pack.gearInstanceById(selectedId.value) : null,
+  props.instanceId ? pack.gearInstanceById(props.instanceId) : null,
 )
 
 /** 可洗练的附加词条（§21：主要属性 fixed 第 1 条 / main 第 2 条不参与洗练，index 与 washGear 的附加下标一致） */

@@ -1,10 +1,6 @@
 <template>
   <div>
-    <h5 class="xy-cave-sec">选择装备</h5>
-    <!-- 全部装备（已穿戴 + 背包）按部位分组，卡片与装备页背包池同款 -->
-    <GearPicker v-model="selectedId" />
-
-    <template v-if="gear">
+    <template v-if="gearInst">
       <div class="xy-cave-enh-compare">
         <div class="xy-cave-enh-row">
           <span class="xy-cave-enh-row__name">当前属性</span>
@@ -39,24 +35,22 @@
 </template>
 
 <script setup lang="ts">
-/** 强化面板：选择交给 GearPicker（全背包），本面板只做强化操作区（对比/消耗/成功率） */
+/** 强化操作区：选择由装备养成面板（CultivatePanel）共享，本组件只做强化对比/消耗/成功率 */
 import { computed, ref } from 'vue'
-import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import type { EquipmentStatEntry } from '@/domain/fengshen/types'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { enhanceCost, enhanceMaterialOf, enhanceMaxByRarity, enhanceSuccessRate, type MaterialCost } from '../../caveLogic'
-import GearPicker from './GearPicker.vue'
+
+const props = defineProps<{ instanceId: string | null }>()
 
 const pack = usePackStore()
-const notification = useNotificationStore()
 
-const selectedId = ref<string | null>(null)
 const rippling = ref(false)
 const shaking = ref(false)
 
-/** 选中装备实例 + 养成字段（强化等级/连败/上限持久化在实例，与装备面板同源） */
-const gearInst = computed(() => (selectedId.value ? pack.gearInstanceById(selectedId.value) : null))
+/** 养成字段（强化等级/连败/上限持久化在实例，与装备面板同源） */
+const gearInst = computed(() => (props.instanceId ? pack.gearInstanceById(props.instanceId) : null))
 const gearDef = computed(() => (gearInst.value ? pack.gearById(gearInst.value.itemId) : undefined))
 
 const enhance = computed(() => gearInst.value?.enhance ?? 0)

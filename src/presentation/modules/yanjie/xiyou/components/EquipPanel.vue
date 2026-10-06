@@ -13,7 +13,7 @@
                 @contextmenu.prevent="openMenu($event, { slot, equipped: true, g: equippedInstance(slot) })">
                 <span class="xy-gear-slot-title">
                   <span class="xy-gear-slot-item" :class="qualityClass(equippedInstance(slot)?.rarity ?? 1)">
-                    {{ equippedInstance(slot)?.name ?? '空位' }}
+                    {{ equippedInstance(slot) ? gearDisplayName(equippedInstance(slot)!.name, equippedInstance(slot)!.star) : '空位' }}
                   </span>
                   <span class="xy-gear-slot-name">{{ GEAR_SLOT_LABELS[slot] }}</span>
                 </span>
@@ -22,10 +22,7 @@
                     <span class="xy-gear-slot-quality" :class="equipQualityClass(equippedInstance(slot)!.quality)">
                       {{ qualityLabel(equippedInstance(slot)!.quality, equippedInstance(slot)!.qualityFactor) }}
                     </span>
-                    <span class="xy-gear-slot-enhance">强化 +{{ equippedInstance(slot)!.enhance }}</span>
-                    <span class="xy-gear-slot-star" :title="`星级 ${starLabel(equippedInstance(slot)!.star)}/${STAR_MAX}`">
-                      {{ starLabel(equippedInstance(slot)!.star) }}
-                    </span>
+                    <span v-if="equippedInstance(slot)!.enhance > 0" class="xy-gear-slot-enhance">强化 +{{ equippedInstance(slot)!.enhance }}</span>
                   </span>
                   <button type="button" class="xy-gear-unequip" @click="pack.unequip(slot)">卸下</button>
                 </template>
@@ -71,14 +68,13 @@
                   @click="pack.equipInstance(g.instanceId)"
                 >
                   <span class="xy-gear-pack-item__title">
-                    <span class="xy-gear-pack-item__name" :class="qualityClass(g.rarity)">{{ g.name }}</span>
+                    <span class="xy-gear-pack-item__name" :class="qualityClass(g.rarity)">{{ gearDisplayName(g.name, g.star) }}</span>
                   </span>
                   <span class="xy-gear-pack-item__sub">
                     <span class="xy-gear-pack-item__quality" :class="equipQualityClass(g.quality)">
                       {{ qualityLabel(g.quality, g.qualityFactor) }}
                     </span>
-                    <span class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
-                    <span class="xy-gear-pack-item__star" :title="`星级 ${starLabel(g.star)}/${STAR_MAX}`">{{ starLabel(g.star) }}</span>
+                    <span v-if="g.enhance > 0" class="xy-gear-pack-item__enhance">强化 +{{ g.enhance }}</span>
                   </span>
                 </button>
                 <button type="button" class="xy-gear-pack-item__detail" @click="openDetail(g)">详情</button>
@@ -204,7 +200,7 @@ import { petMountState } from '../petMount'
 import PetMountCard from './PetMountCard.vue'
 import { usePetMountFilter } from '../usePetMountFilter'
 import { equipQualityClass, qualityClass, qualityLabel } from '../quality'
-import { STAR_MAX, starLabel } from '../caveLogic'
+import { gearDisplayName } from '../caveLogic'
 import { attrShortName } from '@/domain/fengshen/equipment-overview'
 import { compareAttributeDisplayOrder } from '@/domain/fengshen/attribute-dictionary'
 import { gearTooltipData, type GearTooltipView } from '../gearTooltip'
@@ -671,7 +667,7 @@ onBeforeUnmount(() => {
   color: var(--xy-ink-3);
 }
 
-/* 养成行：品质系数 + 强化等级 + 星级（两行卡片结构的固定第二行） */
+/* 养成行：品质系数 + 强化等级（星级以「+N」上到名称行，单源 gearDisplayName） */
 .xy-gear-slot-sub {
   display: flex;
   align-items: baseline;
@@ -680,12 +676,6 @@ onBeforeUnmount(() => {
 
 .xy-gear-slot-enhance {
   color: var(--color-success);
-}
-
-.xy-gear-slot-star {
-  color: var(--xy-gold);
-  font-size: var(--font-size-md);
-  letter-spacing: 1px;
 }
 
 .xy-gear-slot-quality {

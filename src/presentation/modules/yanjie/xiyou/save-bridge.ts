@@ -21,6 +21,7 @@ import type { XiyouStatPoints } from './types'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import {
+  equipRollParams,
   GEAR_SLOT_LABELS,
   makeInstance,
   usePackStore,
@@ -28,6 +29,7 @@ import {
   type GearInstance,
   type GearSlotKey,
 } from '@/presentation/stores/packStore'
+import { expandPoolRef } from '@/domain/fengshen/equipment-overview'
 import { materials as packMaterials, equipment as packStarterEquipment, starterEnabled, packItems, pills as packPills, consumables as packConsumables, quests, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
@@ -68,6 +70,25 @@ function classifyInventory(): SaveData['inventory'] {
   return out
 }
 
+/**
+ * 旧档词条主要/附加标记推断（fixed/main 为后补存档字段，老档全部缺省）。
+ * 双重生成契约保证不误标：① 主要词条恒在数组前 2 位（rollGearStats 主要在前拼接）；
+ * ② 第 1 条属性码 = main_affix_pool.fixed、第 2 条 ∈ random_pool 展开。
+ * 任一已有标记（新档/混合）则整体不动，保守不猜。
+ */
+function inferAffixFlags(itemId: string, affixes: GearAffix[]): GearAffix[] {
+  if (affixes.length === 0 || affixes.some((a) => a.fixed || a.main)) return affixes
+  const g = usePackStore().gearById(itemId)
+  const { cfg } = equipRollParams()
+  const pool = g ? cfg.main_affix_pool?.[g.subType ?? g.slot] : undefined
+  if (!pool) return affixes
+  const randomAttrs = new Set((pool.random_pool ?? []).flatMap((ref) => expandPoolRef(cfg, ref)))
+  return affixes.map((a, i) => {
+    if (i === 0 && a.attribute === pool.fixed) return { ...a, fixed: true }
+    if (i === 1 && randomAttrs.has(a.attribute)) return { ...a, main: true }
+    return a
+  })
+}
 /** 装备实例 → 存档结构（六槽一一对应） */
 function serializeInstances(): SaveEquipmentInstance[] {
   const pack = usePackStore()
@@ -312,14 +333,16 @@ export const xiyouSaveBridge: SaveStatePort = {
           star: Number.isInteger(inst.star) && (inst.star as number) >= 0 ? (inst.star as number) : 0,
           // 旧档无锁存核心属性（写死 stats 时代）→ 按公式补 roll 一次
           stats: makeInstance(inst.itemId, [], 0, quality, Number.isFinite(inst.qualityFactor) ? (inst.qualityFactor as number) : qualityFactorOf(quality)).stats,
-          affixes: (inst.affixes ?? []).map((a): GearAffix => ({
+          affixes: inferAffixFlags(inst.itemId, (inst.affixes ?? []).map((a): GearAffix => ({
             id: a.id,
             // HACK: 存档词缀的 attribute 为历史持久化字符串（SaveEquipmentInstance 保持宽容键域），
             //       写入时由 configs 词条库生成，按配置契约视为合法属性码
             attribute: a.attribute as GearAffix['attribute'],
             modifierType: a.modifierType as GearAffix['modifierType'],
             value: a.value,
-          })),
+            fixed: a.fixed,
+            main: a.main,
+          }))),
         })
       }
     }

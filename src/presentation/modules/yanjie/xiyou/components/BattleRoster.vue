@@ -177,7 +177,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { dropsForEnemy, sceneDropSummary } from '../battle'
 import { itemName } from '../caveLogic'
-import { fabaoDefById } from '../fabao'
+import { fabaoDropName } from '../fabao'
 import { useCharacterAttrs } from '../characterAttrs'
 import type { XiyouScene } from '../types'
 import PackItemCard from './PackItemCard.vue'
@@ -217,13 +217,9 @@ const activeTab = ref<TabKey>('scene')
 /** 场景掉落汇总（computed：全敌人 + 守护者 drops 合并；materials 必掉单列） */
 const dropSummary = computed(() => sceneDropSummary(props.scene))
 
-/** 掉落物品名：fabao_ 前缀条目不在物品目录，解析为「法宝·名/神器·名」（否则显示原始 id） */
+/** 掉落物品名：fabao_ 前缀解析「法宝·名/神器·名」（fabao 模块共用 helper），其余走物品目录 */
 function dropName(itemId: string): string {
-  if (itemId.startsWith('fabao_')) {
-    const def = fabaoDefById(itemId.slice('fabao_'.length))
-    if (def) return `${def.kind === 'relic' ? '神器' : '法宝'}·${def.name}`
-  }
-  return itemName(itemId)
+  return fabaoDropName(itemId) ?? itemName(itemId)
 }
 
 /** 掉落概率色阶：主掉落青 / 次掉落灰 / 稀有金（与 SceneMapDialog/路引同口径） */

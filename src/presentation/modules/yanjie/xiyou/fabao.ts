@@ -96,6 +96,13 @@ export function fabaoDefByName(name: string): FabaoDef | undefined {
   return fabaoDefs.find((d) => d.name === name)
 }
 
+/** 掉落条目名（fabao_<defId> 前缀专用）：解析为「法宝·名/神器·名」；非 fabao 条目返回 null */
+export function fabaoDropName(itemId: string): string | null {
+  if (!itemId.startsWith('fabao_')) return null
+  const def = fabaoDefById(itemId.slice('fabao_'.length))
+  return def ? `${def.kind === 'relic' ? '神器' : '法宝'}·${def.name}` : itemId
+}
+
 export function fabaoTier(quality: number): FabaoQualityTier {
   return FABAO_QUALITY_TIERS[Math.min(5, Math.max(1, quality)) - 1]
 }

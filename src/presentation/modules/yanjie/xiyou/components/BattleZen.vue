@@ -17,12 +17,27 @@
            改为全阶段常驻条——battle 态就绪/交战，其余推进/结算态 HUD；高度取最高态，
            全阶段恒定零跳动，不遮敌我卡） -->
       <div class="xy-battle-strip">
-        <div v-if="run.phase === 'battle' && (!store.autoPlayMode || store.isPaused)" class="xy-battle-start">
-          <span class="xy-battle-start-badge">{{ store.isPaused ? '战斗已暂停' : `第 ${run.nodeIndex + 1}/${run.total} 场 · 就绪` }}</span>
-          <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
-        </div>
-        <div v-else-if="run.phase === 'battle'" class="xy-strip-idle" aria-label="战斗进行中">
-          <span class="xy-strip-idle-text">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 交战中</span>
+        <!-- battle 态：状态 + 本次挂机累计（模块级跨关累计，用户挂机一段时间后在此看战利品）；
+             就绪/暂停/交中共一容器，累计恒显 -->
+        <div v-if="run.phase === 'battle'" class="xy-strip-battle" aria-label="战斗进行中">
+          <div class="xy-strip-battle-head">
+            <template v-if="!store.autoPlayMode || store.isPaused">
+              <span class="xy-battle-start-badge">{{ store.isPaused ? '战斗已暂停' : `第 ${run.nodeIndex + 1}/${run.total} 场 · 就绪` }}</span>
+              <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
+            </template>
+            <span v-else class="xy-strip-idle-text">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 交战中</span>
+            <span class="xy-strip-session-title">本次挂机</span>
+            <button type="button" class="xy-run-btn" title="清空本次挂机累计（不影响已入包的物品）"
+              @click="resetBattleSession">清零</button>
+          </div>
+          <div class="xy-strip-session">
+            <span class="xy-run-gain">经验 +{{ formatDisplayNumber(battleSession.exp) }}</span>
+            <span class="xy-run-gain">金钱 +{{ formatDisplayNumber(battleSession.money) }}</span>
+            <span v-if="battleSession.xianyuan > 0" class="xy-run-gain">灵韵 +{{ battleSession.xianyuan }}</span>
+            <span v-if="!battleSession.drops.length && battleSession.exp === 0" class="xy-strip-idle-text">暂无战利品</span>
+            <span v-for="d in battleSession.drops" :key="d.itemId" class="xy-drop-chip">{{ sessionDropName(d.itemId) }}×{{ d.quantity
+            }}</span>
+          </div>
         </div>
         <!-- 推进/结算态（玩法主循环设计.md §四/§六/§七；禁用弹窗战报） -->
         <div v-else-if="run.phase === 'advancing'" class="xy-run xy-run--advance" aria-label="关卡推进">
@@ -141,6 +156,7 @@ import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { BATTLE_ANIMATION_TIMING, getActionBudget } from '@/shared/constants/animation-timing'
 import { PLAYER_ID } from '@/shared/constants/player'
 import type { EnemyDrop } from '@/shared/types/enemy'
+import { formatDisplayNumber } from '@/shared/utils/math'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import {
@@ -158,7 +174,8 @@ import {
 } from '../battle'
 import { fabaoDefById, grantFabao } from '../fabao'
 import { RARITY_NAMES } from '../quality'
-import { fabaoAttributeBonuses } from '../fabao'
+import { fabaoAttributeBonuses, fabaoDropName } from '../fabao'
+import { battleSession, recordSessionGain, resetBattleSession } from '../battleSession'
 import { individualById, petMountAttributeBonuses, rollPetMountDrops, settlePetMountBattleExp } from '../petMount'
 import { itemName } from '../caveLogic'
 import { progressQuests } from '../questProgress'
@@ -352,6 +369,11 @@ function retreat(): void {
 const lastSettle = reactive({ exp: 0, money: 0, xianyuan: 0, drops: [] as EnemyDrop[] })
 
 /** 结算掉落展示合并：同物品多次命中（多敌独立 roll）→ 一个 chip，数量求和 */
+/** 会话战利品条目名：fabao_ 前缀解析「法宝·名/神器·名」，个体/物品走目录（itemName 已兜底个体名） */
+function sessionDropName(itemId: string): string {
+  return fabaoDropName(itemId) ?? itemName(itemId)
+}
+
 function mergedDrops(drops: EnemyDrop[]): Array<{ itemId: string; quantity: number }> {
   const m = new Map<string, number>()
   for (const d of drops) m.set(d.itemId, (m.get(d.itemId) ?? 0) + d.quantity)
@@ -548,6 +570,7 @@ function onBattleEnded(data: BattleEndedEventData): void {
       const name = individualById(g.individualId)?.name ?? g.individualId
       notification.toast(`获得${g.kind === 'pet' ? '灵宠' : '坐骑'}「${name}」（资质 ${g.aptitude}）`, 'success')
       run.totals.drops.push({ itemId: g.individualId, quantity: 1, chance: 1 })
+      recordSessionGain({ drops: [{ itemId: g.individualId, quantity: 1 }] })
     }
     // 法宝/神器：drops 表 fabao_ 前缀条目在此 roll 发放（applyDrops 对目录外 id 跳过，不双发）
     for (const g of rollFabaoDrops(node?.enemyIds ?? [])) {
@@ -556,11 +579,14 @@ function onBattleEnded(data: BattleEndedEventData): void {
       const def = fabaoDefById(g.defId)
       notification.toast(`获得${def?.kind === 'relic' ? '神器' : '法宝'}「${def?.name ?? g.defId}」（${RARITY_NAMES[g.quality]}）`, 'success')
       run.totals.drops.push({ itemId: g.defId, quantity: 1, chance: 1 })
+      recordSessionGain({ drops: [{ itemId: g.defId, quantity: 1 }] })
     }
     run.totals.exp += exp
     run.totals.money += money
     run.totals.xianyuan += xianyuan
     run.totals.drops.push(...hits)
+    // 挂机会话累计（模块级：跨关/切页签不丢，battle 态信息条常驻展示）
+    recordSessionGain({ exp, money, xianyuan, drops: hits })
     lastSettle.exp = exp
     lastSettle.money = money
     lastSettle.xianyuan = xianyuan
@@ -745,6 +771,37 @@ onUnmounted(() => {
   font-size: var(--font-size-md);
   color: var(--xy-ink-3);
   white-space: nowrap;
+}
+
+/* battle 态信息条：第一行状态+清零，第二行本次挂机累计（超宽横向滚动） */
+.xy-strip-battle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+}
+
+.xy-strip-battle-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.xy-strip-session-title {
+  font-size: var(--font-size-md);
+  color: var(--xy-gold);
+  white-space: nowrap;
+}
+
+.xy-strip-session {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .xy-run {

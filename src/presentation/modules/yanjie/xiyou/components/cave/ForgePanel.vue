@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div class="xy-cave-forge">
+    <!-- 列表区内部滚动，选中详情常驻底部（裁定 2026-10-07：长列表把操作区推出视口） -->
+    <div class="xy-cave-forge__list">
     <!-- 部位 Tab：武器 / 衣甲 / 头盔 / 靴子 / 护符 / 护手 -->
     <Tabs v-model="part" :tabs="PART_TABS" destroy-inactive class="xy-tabs--seal">
       <template v-for="p in PART_TABS" :key="p.id" #[p.id]>
@@ -35,12 +37,17 @@
         </div>
       </template>
     </Tabs>
+    </div>
 
-    <!-- 底部：选中配方详情（产物信息 / 出品品质概率 / 相关技艺 / 铸造） -->
+    <!-- 底部：选中配方详情（产物信息 / 出品品质概率 / 相关技艺 / 铸造），固定贴底不随列表滚动 -->
     <div
       v-if="selected"
       class="xy-cave-forge-detail"
-      :class="{ 'xy-cave-ripple': rippling, 'xy-cave-shake': shaking }"
+      :class="{
+        'xy-cave-forge-detail--brewing': brewing,
+        'xy-cave-forge-detail--struck': struck,
+        'xy-cave-shake': shaking,
+      }"
     >
       <div class="xy-cave-forge-detail__main">
         <span class="xy-cave-card__top">
@@ -132,7 +139,7 @@ const PART_TABS: TabItem[] = EQUIPMENT_SLOTS.map((id) => ({ id, label: EQUIPMENT
 
 const selected = ref<XiyouForgeRecipe | null>(null)
 const brewing = ref(false)
-const rippling = ref(false)
+const struck = ref(false)
 const shaking = ref(false)
 
 watch(part, () => {
@@ -266,10 +273,10 @@ function craft(): void {
     const inst = pack.craftEquipment(g.id)
     if (inst) {
       progressQuests('forge_gear', 1)
-      rippling.value = true
+      struck.value = true
       // NOTE: 成功提示由 packStore.craftEquipment 统一弹出，此处不再重复 toast
       window.setTimeout(() => {
-        rippling.value = false
+        struck.value = false
       }, 700)
     }
     brewing.value = false

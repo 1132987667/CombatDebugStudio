@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div class="xy-cave-alc">
+    <!-- 列表区内部滚动，炼炉常驻底部（裁定 2026-10-07，同打造面板） -->
+    <div class="xy-cave-alc__list">
     <!-- 炼器配方网格 -->
     <div class="xy-cave-alc-grid">
       <button
@@ -29,8 +31,9 @@
         </span>
       </button>
     </div>
+    </div>
 
-    <!-- 炼炉：选中配方后投料 → 炼制 -->
+    <!-- 炼炉：选中配方后投料 → 炼制，固定贴底不随列表滚动 -->
     <div class="xy-cave-alc-hearth" :class="{ 'xy-cave-alc-hearth--brew': brewing, 'xy-cave-ripple': rippling }">
       <span class="xy-cave-alc-ingrids">
         <template v-if="selected">

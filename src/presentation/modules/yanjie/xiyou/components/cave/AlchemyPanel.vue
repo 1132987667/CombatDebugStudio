@@ -3,7 +3,9 @@
 
 -->
 <template>
-  <div>
+  <div class="xy-cave-alc">
+    <!-- 列表区内部滚动，丹炉常驻底部（裁定 2026-10-07，同打造面板） -->
+    <div class="xy-cave-alc__list">
     <!-- 丹方网格 -->
     <div class="xy-cave-alc-grid">
       <button
@@ -34,8 +36,9 @@
         </span>
       </button>
     </div>
+    </div>
 
-    <!-- 丹炉：选中丹方后投料 → 炼制 -->
+    <!-- 丹炉：选中丹方后投料 → 炼制，固定贴底不随列表滚动 -->
     <div class="xy-cave-alc-hearth" :class="{ 'xy-cave-alc-hearth--brew': brewing, 'xy-cave-ripple': rippling }">
       <div class="xy-cave-alc-kettle-wrap">
         <IconKettle class="xy-cave-alc-kettle" />

@@ -486,7 +486,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: 0 0 0 2px var(--xy-gold);
+    box-shadow: 0 0 0 3px var(--xy-gold);
     opacity: 1;
     animation: xy-cave-ripple 600ms ease-out forwards;
     pointer-events: none;
@@ -496,15 +496,15 @@
 @keyframes xy-cave-ripple {
   from {
     box-shadow:
-      0 0 0 2px var(--xy-gold),
-      0 0 0 6px rgba(var(--rgb-warning), 0.35);
+      0 0 0 3px var(--xy-gold),
+      0 0 0 10px rgba(var(--rgb-warning), 0.5);
     opacity: 1;
   }
 
   to {
     box-shadow:
-      0 0 0 4px transparent,
-      0 0 0 18px transparent;
+      0 0 0 6px transparent,
+      0 0 0 32px transparent;
     opacity: 0;
   }
 }
@@ -541,8 +541,33 @@
   gap: var(--space-3);
 }
 
+/* 制造/炼制面板：列表区内部滚动 + 操作区贴底常驻（裁定 2026-10-07：
+   长列表把选中详情推出视口，玩家滚回来才能点铸造） */
+.xy-cave-forge,
+.xy-cave-alc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.xy-cave-forge__list,
+.xy-cave-alc__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 部位页签吸顶：列表滚动时切部位不必滚回顶部 */
+.xy-cave-forge__list .tabs-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 /* 选中配方详情：产物信息 | 出品品质概率 | 技艺 + 铸造，三栏横排填满下方空白 */
 .xy-cave-forge-detail {
+  flex: none;
   margin-top: var(--space-4);
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--xy-ink-line);
@@ -552,6 +577,53 @@
   align-items: stretch;
   gap: var(--space-4);
   flex-wrap: wrap;
+}
+
+/* 铸造中：炉火起——按钮侧暖光渐亮 + 灶膛呼吸（对标炼丹炉 brew 火光） */
+.xy-cave-forge-detail--brewing {
+  border-color: var(--xy-seal);
+  background:
+    radial-gradient(circle at 88% 50%, var(--xy-seal-soft), transparent 60%),
+    var(--xy-paper);
+  animation: xy-cave-forge-breathe 800ms ease-in-out infinite;
+}
+
+@keyframes xy-cave-forge-breathe {
+  0%,
+  100% {
+    box-shadow: inset 0 0 16px rgba(var(--rgb-brand-red), 0.1);
+  }
+
+  50% {
+    box-shadow: inset 0 0 32px rgba(var(--rgb-brand-red), 0.3);
+  }
+}
+
+/* 铸成：金光迸发——金框闪亮 + 外扩金晕，收敛回常态（forwards 停在常态，class 移除无残留） */
+.xy-cave-forge-detail--struck {
+  animation: xy-cave-forge-struck 700ms ease-out forwards;
+}
+
+@keyframes xy-cave-forge-struck {
+  0% {
+    border-color: var(--xy-gold);
+    box-shadow:
+      0 0 0 2px var(--xy-gold),
+      0 0 24px rgba(var(--rgb-warning), 0.55),
+      inset 0 0 30px rgba(var(--rgb-warning), 0.35);
+  }
+
+  60% {
+    border-color: var(--xy-gold);
+  }
+
+  100% {
+    border-color: var(--xy-ink-line);
+    box-shadow:
+      0 0 0 6px transparent,
+      0 0 0 transparent,
+      inset 0 0 0 transparent;
+  }
 }
 
 .xy-cave-forge-detail__main {
@@ -666,8 +738,9 @@
   gap: var(--space-3);
 }
 
-/* 丹炉区 */
+/* 丹炉区（flex: none 贴底常驻） */
 .xy-cave-alc-hearth {
+  flex: none;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1278,3 +1351,4 @@
   font-size: var(--font-size-md);
   color: var(--xy-ink-4);
 }
+

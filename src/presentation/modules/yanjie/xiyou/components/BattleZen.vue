@@ -1,135 +1,24 @@
 <template>
   <main class="xy-battle xy-panel" aria-label="战斗禅台">
     <header class="xy-battle-head">
-      <div class="xy-battle-head-grid">
-        <div class="xy-battle-head-left">
-          <div class="xy-battle-title-row">
-            <h2 class="xy-battle-scene">
-              {{ scene.name }}
-              <span class="xy-battle-meta">Lv.{{ scene.levelRange?.[0] }}-{{ scene.levelRange?.[1] }}</span>
-            </h2>
-            <!-- 开战入口与标题同行（内联于场景头部，替代原"战斗就绪"横幅）：
-                 手动开战模式或引擎暂停时显示——暂停态此前在演劫台零提示，战斗停转玩家无从分辨 -->
-            <div v-if="run.phase === 'battle' && (!store.autoPlayMode || store.isPaused)" class="xy-battle-start">
-              <span class="xy-battle-start-badge">{{ store.isPaused ? '战斗已暂停' : `第 ${run.nodeIndex + 1}/${run.total} 场 · 就绪` }}</span>
-              <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
-            </div>
+      <!-- 矮条：场景名锚点（左）+ 倍速/开战入口（右）。场景详情/敌情已迁左栏「场景」页签
+           （BattleRoster），此处不再承担信息展示 -->
+      <div class="xy-battle-head-row">
+        <h2 class="xy-battle-scene">
+          {{ scene.name }}
+          <span class="xy-battle-meta">Lv.{{ scene.levelRange?.[0] }}-{{ scene.levelRange?.[1] }}</span>
+        </h2>
+        <div class="xy-battle-head-tools">
+          <!-- 手动开战模式或引擎暂停时显示开战入口——暂停态此前在演劫台零提示，战斗停转玩家无从分辨 -->
+          <div v-if="run.phase === 'battle' && (!store.autoPlayMode || store.isPaused)" class="xy-battle-start">
+            <span class="xy-battle-start-badge">{{ store.isPaused ? '战斗已暂停' : `第 ${run.nodeIndex + 1}/${run.total} 场 · 就绪` }}</span>
+            <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
           </div>
-
-          <p class="xy-battle-desc">{{ scene.desc }}</p>
-          <p v-if="scene.narrativeHook" class="xy-battle-hook">{{ scene.narrativeHook }}</p>
-        </div>
-        <div class="xy-battle-head-right" role="list" aria-label="敌人与掉落">
-          <div v-for="e in scene.enemies" :key="e.name" class="xy-drop-row" role="listitem" tabindex="0">
-            <span class="xy-drop-ename">
-              <span class="xy-drop-name">{{ e.name }}</span>
-              <span class="xy-drop-lv">Lv.{{ e.level }}</span>
-            </span>
-            <span class="xy-drop-pop" role="tooltip">
-              <span v-for="d in dropsForEnemy(e.name)" :key="d.itemId" class="xy-drop-chip">
-                <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
-                }}</template></span>
-                <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
-              </span>
-            </span>
-          </div>
-          <div v-if="scene.yaotu" class="xy-drop-row xy-drop-row--yaotu" role="listitem" tabindex="0">
-            <span class="xy-drop-ename">
-              <span class="xy-dot xy-dot--yaotu"></span>
-              <span class="xy-drop-name">{{ scene.yaotu.name }}</span>
-              <span class="xy-guard-tag">守护</span>
-            </span>
-            <span class="xy-drop-pop" role="tooltip">
-              <span v-for="d in dropsForEnemy(scene.yaotu.name)" :key="d.itemId" class="xy-drop-chip">
-                <span class="xy-drop-chip-name">{{ itemName(d.itemId) }}<template v-if="d.quantity > 1">×{{ d.quantity
-                }}</template></span>
-                <span class="xy-pct" :class="pctClass(d.chance)">{{ Math.round(d.chance * 100) }}%</span>
-              </span>
-            </span>
-          </div>
-          <div v-if="scene.drops?.materials?.length" class="xy-drop-row xy-drop-row--materials" role="listitem" tabindex="0">
-            <span class="xy-drop-ename">
-              <span class="xy-dot xy-dot--materials"></span>
-              <span class="xy-drop-name">关卡必掉</span>
-            </span>
-            <span class="xy-drop-pop" role="tooltip">
-              <span v-for="m in scene.drops.materials" :key="m" class="xy-drop-chip">
-                <span class="xy-drop-chip-name">{{ itemName(m) }}</span>
-                <span class="xy-pct xy-pct--main">必掉</span>
-              </span>
-            </span>
-          </div>
+          <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`" @click="cycleSpeed">{{
+            store.battleSpeed }}x</button>
         </div>
       </div>
     </header>
-
-    <!-- 关卡推进 HUD（非阻塞内嵌条，玩法主循环设计.md §四/§六/§七：推进/小结算/大结算/战败，禁用弹窗战报） -->
-    <div v-if="run.phase === 'advancing'" class="xy-run xy-run--advance" aria-label="关卡推进">
-      <div class="xy-run-head">
-        <span class="xy-run-title">推进中 · 第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场</span>
-        <span class="xy-run-meta">妖气增幅 ×{{ currentNode?.amp ?? 1 }}</span>
-      </div>
-      <div class="xy-run-enemies">
-        <span v-for="e in currentNodeBriefs" :key="e.id" class="xy-run-enemy"
-          :class="{ 'xy-run-enemy--boss': e.isBoss }">{{ e.name }}<span class="xy-run-lv">Lv.{{ e.level }}</span></span>
-      </div>
-      <div class="xy-run-progress">
-        <span class="xy-run-progress-fill" :style="{ animationDuration: `${RUN_TIMING.ADVANCE_MS}ms` }"></span>
-      </div>
-      <button v-if="run.total >= 2" type="button" class="xy-run-btn" @click="retreat">撤离</button>
-    </div>
-
-    <div v-else-if="run.phase === 'settling'" class="xy-run xy-run--settle" aria-label="收拾战利品">
-      <div class="xy-run-head">
-        <span class="xy-run-title">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场胜利 · 收拾战利品</span>
-        <span class="xy-run-meta">气血回复中 · {{ regenLeftSec }}s</span>
-        <button type="button" class="xy-run-btn" @click="skipWait">加速</button>
-        <button v-if="run.total >= 2" type="button" class="xy-run-btn" @click="retreat">撤离</button>
-      </div>
-      <div class="xy-run-loot">
-        <span class="xy-run-gain">经验 +{{ lastSettle.exp }}</span>
-        <span class="xy-run-gain">金钱 +{{ lastSettle.money }}</span>
-        <span v-if="lastSettle.xianyuan > 0" class="xy-run-gain">灵韵 +{{ lastSettle.xianyuan }}</span>
-        <span v-for="d in mergedDrops(lastSettle.drops)" :key="d.itemId" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
-        }}</span>
-        <span v-if="!lastSettle.drops.length" class="xy-run-meta">本场无掉落</span>
-      </div>
-    </div>
-
-    <div v-else-if="run.phase === 'finished'" class="xy-run xy-run--finish" aria-label="整关大结算">
-      <div class="xy-run-head">
-        <span class="xy-run-stamp" aria-hidden="true">胜</span>
-        <span class="xy-run-title">{{ scene.name }} · 通关</span>
-        <span class="xy-run-stars">{{ starsText }}</span>
-        <span v-if="run.firstClear" class="xy-run-first">首杀</span>
-        <span class="xy-run-meta">{{ finishLeftSec }}s 后自动再战</span>
-        <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
-        <button type="button" class="xy-run-btn xy-run-btn--primary" @click="emit('open-map')">打开路引</button>
-      </div>
-      <div class="xy-run-loot">
-        <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
-        <span v-if="run.totals.levelUps > 0" class="xy-run-gain xy-run-gain--level">升级 ×{{ run.totals.levelUps }}</span>
-        <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
-        <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">灵韵 +{{ run.totals.xianyuan }}</span>
-        <span v-for="d in mergedDrops(run.totals.drops)" :key="d.itemId" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
-        }}</span>
-      </div>
-    </div>
-
-    <div v-else-if="run.phase === 'retreated'" class="xy-run xy-run--fail" aria-label="撤离结算">
-      <span class="xy-run-title">已撤离 · 已获战利品保留</span>
-      <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
-      <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
-      <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
-      <button type="button" class="xy-run-btn xy-run-btn--primary" @click="emit('open-map')">打开路引</button>
-    </div>
-
-    <div v-else-if="run.phase === 'failed'" class="xy-run xy-run--fail" aria-label="战败结算">
-      <span class="xy-run-title">战败 · 已获战利品保留</span>
-      <span class="xy-run-meta">可整备装备/加点后再战，或换一处关卡</span>
-      <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
-      <button type="button" class="xy-run-btn xy-run-btn--primary" title="打开降妖路引，另择关卡或回到功能页签" @click="emit('open-map')">打开路引</button>
-    </div>
 
     <!-- 中上部：角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard；敌方按席位阶梯 2~4 员） -->
     <div class="xy-vitals">
@@ -141,8 +30,75 @@
 
       <div class="xy-vs">
         <span class="xy-vs-mark" aria-hidden="true">斗</span>
-        <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`" @click="cycleSpeed">{{
-          store.battleSpeed }}x</button>
+
+        <!-- 推进 HUD（非阻塞悬浮条，玩法主循环设计.md §四/§六/§七：推进/小结算/大结算/战败，禁用弹窗战报）
+             悬浮于对垒带（敌我两行之间）：右锚展开，不遮敌我卡片；速度按钮已移场景条，被覆盖的只有装饰「斗」印 -->
+        <div v-if="run.phase === 'advancing'" class="xy-run xy-run--advance" aria-label="关卡推进">
+          <div class="xy-run-head">
+            <span class="xy-run-title">推进中 · 第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场</span>
+            <span class="xy-run-meta">妖气增幅 ×{{ currentNode?.amp ?? 1 }}</span>
+          </div>
+          <div class="xy-run-enemies">
+            <span v-for="e in currentNodeBriefs" :key="e.id" class="xy-run-enemy"
+              :class="{ 'xy-run-enemy--boss': e.isBoss }">{{ e.name }}<span class="xy-run-lv">Lv.{{ e.level }}</span></span>
+          </div>
+          <div class="xy-run-progress">
+            <span class="xy-run-progress-fill" :style="{ animationDuration: `${RUN_TIMING.ADVANCE_MS}ms` }"></span>
+          </div>
+          <button v-if="run.total >= 2" type="button" class="xy-run-btn" @click="retreat">撤离</button>
+        </div>
+
+        <div v-else-if="run.phase === 'settling'" class="xy-run xy-run--settle" aria-label="收拾战利品">
+          <div class="xy-run-head">
+            <span class="xy-run-title">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场胜利 · 收拾战利品</span>
+            <span class="xy-run-meta">气血回复中 · {{ regenLeftSec }}s</span>
+            <button type="button" class="xy-run-btn" @click="skipWait">加速</button>
+            <button v-if="run.total >= 2" type="button" class="xy-run-btn" @click="retreat">撤离</button>
+          </div>
+          <div class="xy-run-loot">
+            <span class="xy-run-gain">经验 +{{ lastSettle.exp }}</span>
+            <span class="xy-run-gain">金钱 +{{ lastSettle.money }}</span>
+            <span v-if="lastSettle.xianyuan > 0" class="xy-run-gain">灵韵 +{{ lastSettle.xianyuan }}</span>
+            <span v-for="d in mergedDrops(lastSettle.drops)" :key="d.itemId" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
+            }}</span>
+            <span v-if="!lastSettle.drops.length" class="xy-run-meta">本场无掉落</span>
+          </div>
+        </div>
+
+        <div v-else-if="run.phase === 'finished'" class="xy-run xy-run--finish" aria-label="整关大结算">
+          <div class="xy-run-head">
+            <span class="xy-run-stamp" aria-hidden="true">胜</span>
+            <span class="xy-run-title">{{ scene.name }} · 通关</span>
+            <span class="xy-run-stars">{{ starsText }}</span>
+            <span v-if="run.firstClear" class="xy-run-first">首杀</span>
+            <span class="xy-run-meta">{{ finishLeftSec }}s 后自动再战</span>
+            <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
+            <button type="button" class="xy-run-btn xy-run-btn--primary" @click="emit('open-map')">打开路引</button>
+          </div>
+          <div class="xy-run-loot">
+            <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
+            <span v-if="run.totals.levelUps > 0" class="xy-run-gain xy-run-gain--level">升级 ×{{ run.totals.levelUps }}</span>
+            <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
+            <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">灵韵 +{{ run.totals.xianyuan }}</span>
+            <span v-for="d in mergedDrops(run.totals.drops)" :key="d.itemId" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
+            }}</span>
+          </div>
+        </div>
+
+        <div v-else-if="run.phase === 'retreated'" class="xy-run xy-run--fail" aria-label="撤离结算">
+          <span class="xy-run-title">已撤离 · 已获战利品保留</span>
+          <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
+          <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
+          <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
+          <button type="button" class="xy-run-btn xy-run-btn--primary" @click="emit('open-map')">打开路引</button>
+        </div>
+
+        <div v-else-if="run.phase === 'failed'" class="xy-run xy-run--fail" aria-label="战败结算">
+          <span class="xy-run-title">战败 · 已获战利品保留</span>
+          <span class="xy-run-meta">可整备装备/加点后再战，或换一处关卡</span>
+          <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
+          <button type="button" class="xy-run-btn xy-run-btn--primary" title="打开降妖路引，另择关卡或回到功能页签" @click="emit('open-map')">打开路引</button>
+        </div>
       </div>
 
       <div class="xy-vitals-row xy-vitals-row--player" role="list" aria-label="我方阵容">
@@ -183,7 +139,6 @@ import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import {
   buildBattleTeams,
-  dropsForEnemy,
   dropsForEnemyIds,
   enemyBriefById,
   equipBonuses,
@@ -326,13 +281,6 @@ function selectCharacter(id: string): void {
 
 function getCharacterSide(characterId: string): 'left' | 'right' {
   return store.allyTeam.some((c) => c.id === characterId) ? 'left' : 'right'
-}
-
-/** 掉落概率色阶：主掉落青 / 次掉落灰 / 稀有金 */
-function pctClass(chance: number): string {
-  if (chance >= 0.35) return 'xy-pct--main'
-  if (chance < 0.1) return 'xy-pct--rare'
-  return 'xy-pct--minor'
 }
 
 // ════════════ 战斗初始化（真实引擎） ════════════
@@ -672,33 +620,32 @@ onUnmounted(() => {
     var(--xy-paper-light);
 }
 
-/* ═══ 头部纵向流：标题+开战同行 → 描述 → 敌情徽章横排（掉落收进悬浮浮层，hover/键盘 focus 均可唤出） ═══ */
-/* NOTE: 高度按最坏场景（渡口残桥：描述 2 行 + 钩子 + 敌情 2 行）实测取值，换场景时战场区不跳；
-   用 rem 与内容字号等比缩放防裁切（.xy-panel overflow hidden 无滚动兜底，宁松勿紧） */
+/* ═══ 头部矮条：场景名锚点（左）+ 倍速/开战入口（右）。高度按内容一行取值，
+       开战入口出现/消失不引起跳动（min-height + 单行 flex）；场景详情/敌情在左栏「场景」页签 ═══ */
 .xy-battle-head {
   flex-shrink: 0;
-  height: 12.5rem;
-  border-bottom: 1px solid var(--xy-ink-line);
-  padding-bottom: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-
-.xy-battle-head-grid {
+  min-height: 3.25rem;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  border-bottom: 1px solid var(--xy-ink-line);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
-.xy-battle-head-left,
-.xy-battle-head-right {
+.xy-battle-head-row {
+  flex: 1;
   min-width: 0;
-}
-
-.xy-battle-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+}
+
+.xy-battle-head-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .xy-battle-scene {
@@ -713,19 +660,6 @@ onUnmounted(() => {
 
 .xy-battle-meta {
   margin: var(--space-1) 0 0;
-  color: var(--xy-ink-3);
-}
-
-.xy-battle-desc {
-  margin: var(--space-2) 0 0;
-  line-height: var(--line-height-md);
-  color: var(--xy-ink-2);
-}
-
-.xy-battle-hook {
-  margin: var(--space-1) 0 0;
-  padding-left: var(--space-2);
-  border-left: 2px solid var(--xy-gold);
   color: var(--xy-ink-3);
 }
 
@@ -762,178 +696,45 @@ onUnmounted(() => {
   &:hover { filter: brightness(1.15); }
 }
 
-.xy-battle-head-right {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-3);
-  min-width: 0;
-}
-
-.xy-drop-row {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-
-  &:hover,
-  &:focus-visible {
-    background: var(--xy-paper-warm);
-  }
-
-  &:hover .xy-drop-name,
-  &:focus-visible .xy-drop-name {
-    color: var(--xy-gold);
-  }
-}
-
-.xy-drop-ename {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-  min-width: 0;
-  cursor: pointer;
-}
-
-.xy-drop-name {
-  color: var(--xy-ink-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.xy-drop-lv {
-  color: var(--xy-seal);
-  white-space: nowrap;
-}
-
-/* 掉落浮层：默认隐藏，行 hover / focus-within 时弹出。
-   锚定敌情列表正下方（相对列表容器），横向不超出面板；不同徽章的浮层同位互斥切换 */
-.xy-drop-pop {
-  position: absolute;
-  left: 0;
-  top: calc(100% + var(--space-1));
-  z-index: 30;
-  display: flex;
-  gap: var(--space-1);
-  flex-wrap: wrap;
-  width: max-content;
-  max-width: 100%;
-  padding: var(--space-2);
+/* 倍速按钮（常驻场景条右端）：等宽数字防切换时跳动 */
+.xy-vs-speed {
+  padding: 2px 10px;
   border: 1px solid var(--xy-ink-line);
   border-radius: var(--radius-sm);
-  background: var(--xy-paper-light);
-  box-shadow: 0 4px 12px rgba(var(--rgb-black), 0.3);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-  pointer-events: none;
-}
-
-.xy-drop-row:hover .xy-drop-pop,
-.xy-drop-row:focus-within .xy-drop-pop {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.xy-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-
-  &--new-born {
-    background: var(--xy-jade);
-  }
-
-  &--old-blood {
-    background: var(--xy-seal);
-  }
-
-  &--old-soul {
-    background: var(--color-skill-active);
-  }
-
-  &--yaotu {
-    background: var(--xy-gold);
-  }
-
-  &--materials {
-    background: var(--xy-jade);
-  }
-}
-
-.xy-drop-chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  padding: 1px var(--space-2);
-  border: 1px solid var(--xy-ink-line);
-  border-radius: var(--radius-full);
   background: var(--xy-paper-warm);
   color: var(--xy-ink-2);
-  white-space: nowrap;
-}
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
 
-.xy-drop-chip-name {
-  color: var(--xy-ink-2);
-}
-
-.xy-pct {
-  &--main {
-    color: var(--xy-jade);
-  }
-
-  &--minor {
-    color: var(--xy-ink-4);
-  }
-
-  &--rare {
+  &:hover {
+    border-color: var(--xy-gold);
     color: var(--xy-gold);
   }
-}
-
-.xy-drop-row--yaotu .xy-drop-name {
-  color: var(--xy-gold);
-}
-
-.xy-guard-tag {
-  color: var(--xy-gold);
-  border: 1px solid rgba(var(--rgb-warning), var(--alpha-border));
-  background: var(--xy-gold-soft);
-  padding: 0 5px;
-  border-radius: 3px;
-  flex-shrink: 0;
 }
 
 /* 双行阵容：敌方一行在上（2~4 员，席位阶梯）、我方一行在下（主角 + 3 伙伴），ParticipantCard 演武台同款 */
 .xy-vitals {
   flex-shrink: 0;
-  /* 空窗占位：推进过渡（advancing）时队伍快照已清、卡片不渲染，整区塌到只剩「斗」印（实测 82px），
-     日志区随之胀缩跳动。27.25rem ≈ 敌方满席 + 我方 4 员常规双行总高（实测 381px），
-     只作下限——战斗中情境标签/buff 行加高时仍由内容撑开 */
-  min-height: 27.25rem;
+  /* 区域高度恒定由两行的 min-height 占位保证（推进空窗期卡片不渲染也不塌陷），
+     战斗中情境标签/buff 行加高时仍由内容撑开 */
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   margin-bottom: var(--space-4);
 }
 
-/* ═══ 关卡推进 HUD（非阻塞内嵌条：推进/小结算/大结算/战败，玩法主循环设计.md §四/§六/§七） ═══ */
+/* ═══ 关卡推进 HUD（非阻塞悬浮条：推进/小结算/大结算/战败，玩法主循环设计.md §四/§六/§七） ═══ */
 .xy-run {
-  /* 浮层覆盖而非文档流插入：自动循环里横幅几乎常驻（仅 battle 阶段缺席），此前插在
-     header 与卡片区之间，每次出现/消失把战场面板和日志整体推移（日志 205↔115↔440 反复跳）。
-     锚定 header 下沿、卡片区上方（视觉位置不变），出现时覆盖卡片顶部——面板与日志位置恒定 */
+  /* 悬浮于对垒带（.xy-vs 敌我两行之间）右端：不遮敌我卡片，出现/消失不推移任何内容；
+     被覆盖的只有装饰「斗」印；宽随内容封顶，超宽 loot 行内部滚动（.xy-run-loot） */
   position: absolute;
-  top: calc(12.5rem + var(--space-4));
-  left: 0;
+  top: 50%;
   right: 0;
+  transform: translateY(-50%);
   z-index: var(--z-float);
+  width: max-content;
+  max-width: min(100% - var(--space-8), 56rem);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -1068,7 +869,27 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex-wrap: wrap;
+  /* 恒高约束：大额掉落不换行、横向滚动兜底——横幅高度稳定才能不撑破对垒带占位 */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  min-width: 0;
+}
+
+/* 战利品 chip（结算横幅 loot 行用；敌情徽章的同款样式在 BattleRoster 场景页签） */
+.xy-drop-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-full);
+  background: var(--xy-paper-warm);
+  color: var(--xy-ink-2);
+  white-space: nowrap;
+}
+
+.xy-drop-chip-name {
+  color: var(--xy-ink-2);
 }
 
 .xy-run-gain {
@@ -1131,6 +952,11 @@ onUnmounted(() => {
   gap: var(--space-2);
   align-items: stretch;
 
+  /* 常规满席行高占位（实测 140px）：推进空窗期队伍快照已清、卡片不渲染，
+     两行若无占位则「斗」印贴顶，切回战斗时又被卡片推下（top 281↔421 跳动 140px）。
+     只作下限——战斗中情境标签/buff 行加高时仍由内容撑开 */
+  min-height: 10rem;
+
   // 席位阶梯（runFlow.enemySlotCount）下敌方可能只有 2~3 员：单卡宽度仍以满席 4 档为上限，
   // 少员时整行居中，不左对齐留白
   > * {
@@ -1141,11 +967,15 @@ onUnmounted(() => {
 }
 
 .xy-vs {
+  position: relative; /* 推进 HUD 悬浮条的定位锚 */
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
-  align-self: center;
+  /* 对垒带占位：按最高横幅变体（大结算：印章行+战利品行+内边距，实测 ~97px）预留，
+     各阶段横幅出现/消失、卡片行撑高时「斗」印与日志位置均恒定 */
+  min-height: 6.25rem;
 
   .xy-vs-mark {
     /* 「斗」字朱砂印章：方印 + 白字 + 微倾，敌我两阵之间的镇场印 */
@@ -1167,22 +997,6 @@ onUnmounted(() => {
     line-height: 1;
     transform: rotate(-3deg);
     text-shadow: 0 1px 2px rgba(var(--rgb-black), 0.3);
-  }
-
-  .xy-vs-speed {
-    padding: 2px 10px;
-    border: 1px solid var(--xy-ink-line);
-    border-radius: var(--radius-sm);
-    background: var(--xy-paper-warm);
-    color: var(--xy-ink-2);
-    font-family: var(--font-family-mono);
-    font-variant-numeric: tabular-nums;
-    cursor: pointer;
-
-    &:hover {
-      border-color: var(--xy-gold);
-      color: var(--xy-gold);
-    }
   }
 }
 </style>

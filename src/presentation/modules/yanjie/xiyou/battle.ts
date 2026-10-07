@@ -192,7 +192,55 @@ function dropsFromRow(row: EnemyRow): EnemyDrop[] {
     itemId: d.itemId,
     quantity: d.quantity ?? 1,
     chance: d.probability,
+    ...(d.quality != null ? { quality: d.quality } : {}),
   }))
+}
+
+/** 场景掉落汇总行（sceneDropSummary 输出；fabao 行名称/品质由组件层 fabaoDefById 解析） */
+export interface SceneDropRow {
+  itemId: string
+  /** 多来源同物品取最大单条数量 */
+  quantity: number
+  /** 多来源独立判定合并概率上界：1 − Π(1−p)（各敌独立 roll，全不中的补集） */
+  chance: number
+  /** 掉落来源数（同一物品多敌可掉 >1，供 UI 标注） */
+  sources: number
+  /** 法宝/神器条目（fabao_ 前缀，不在物品目录） */
+  fabao: boolean
+}
+
+/**
+ * 场景掉落汇总（裁定 2026-10-07：头部单敌浮层只有逐敌掉落，缺「这关能掉什么」一眼总览）。
+ * 汇总 = 场景敌人 + 守护者的 drops 合并（同物品数量取大、概率按独立判定合并）；
+ * materials（关卡必掉）单列，不走概率合并。首杀/个体不在本汇总（首杀一次性、个体为个体池机制）。
+ */
+export function sceneDropSummary(
+  scene: Pick<XiyouScene, 'enemies' | 'yaotu' | 'drops'>,
+): { merged: SceneDropRow[]; materials: string[] } {
+  const all: EnemyDrop[] = []
+  const names = [...scene.enemies.map((e) => e.name), ...(scene.yaotu ? [scene.yaotu.name] : [])]
+  for (const name of names) {
+    const row = enemyRows.find((r) => r.name === name)
+    if (row) all.push(...dropsFromRow(row))
+  }
+  // 合并：物品 → 数量取最大单条、概率独立合并、来源计数；fabao 条目不与普通物品混算（同 id 语义不同）
+  const byItem = new Map<string, SceneDropRow>()
+  for (const d of all) {
+    const fabao = d.itemId.startsWith('fabao_')
+    const prev = byItem.get(d.itemId)
+    if (!prev) {
+      byItem.set(d.itemId, { itemId: d.itemId, quantity: d.quantity, chance: d.chance, sources: 1, fabao })
+      continue
+    }
+    prev.quantity = Math.max(prev.quantity, d.quantity)
+    prev.chance = 1 - (1 - prev.chance) * (1 - d.chance)
+    prev.sources += 1
+  }
+  const merged = [...byItem.values()].sort((a, b) => {
+    if (a.fabao !== b.fabao) return a.fabao ? 1 : -1
+    return b.chance - a.chance
+  })
+  return { merged, materials: [...(scene.drops?.materials ?? [])] }
 }
 
 /** 敌情横幅用敌方简报（推进演出展示名称/等级/是否关底） */

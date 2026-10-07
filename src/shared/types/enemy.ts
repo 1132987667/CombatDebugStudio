@@ -8,6 +8,8 @@ export interface EnemyDrop {
   itemId: string
   quantity: number
   chance: number
+  /** 法宝/神器掉落品质（fabao_ 前缀条目专用，缺省凡品） */
+  quality?: number
 }
 
 /**

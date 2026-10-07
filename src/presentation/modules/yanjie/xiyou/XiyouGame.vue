@@ -20,8 +20,8 @@
 
     <!-- 主体四栏（行路态：角色行囊栏+战斗+宝阁+四象栏；功能态：全屏宝阁+四象栏） -->
     <div class="xy-body" :class="[`xy-side--${sidebarSide}`, isFeature ? 'xy-body--feature' : 'xy-body--journey']">
-      <!-- 最左：角色行囊栏（角色属性 + 行囊，仅行路态显示） -->
-      <BattleRoster v-show="!isFeature" @open-pack="activeCabinet = 'pack'" />
+      <!-- 最左：角色行囊栏（场景/属性/行囊页签，仅行路态显示） -->
+      <BattleRoster v-show="!isFeature" :scene="currentScene" @open-pack="activeCabinet = 'pack'" />
       <FourAspectBar v-model="activeCabinet" @open-map="mapOpen = true" @open-settings="settingsOpen = true" />
 
       <!-- 功能宝阁（行路态 290px / 功能态全屏） -->

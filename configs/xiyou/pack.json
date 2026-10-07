@@ -189,6 +189,118 @@
       "name": "妖丹",
       "stock": 3,
       "tag": "限量"
+    },
+    {
+      "name": "斩仙剑",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "破军斧",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "追魂锥",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "降妖杵",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "镇魔塔",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "缚妖索",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "离火扇",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "聚灵珠",
+      "type": "法宝",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "金刚罩",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "太极图",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "玉净瓶",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "镇妖铃",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "风火轮",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "八卦镜",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "紫金葫芦",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
+    },
+    {
+      "name": "琉璃盏",
+      "type": "神器",
+      "price": 1500,
+      "stock": 1,
+      "tag": "限量"
     }
   ],
   "storageCells": [
@@ -245,10 +357,66 @@
     "maxCount": 5,
     "baseSlots": 12,
     "levels": [
-      { "cost": [{ "itemId": "mat_taomu", "count": 20 }, { "itemId": "mat_cushi", "count": 10 }] },
-      { "cost": [{ "itemId": "mat_taomu", "count": 40 }, { "itemId": "mat_cushi", "count": 20 }, { "itemId": "mat_tongjing", "count": 10 }] },
-      { "cost": [{ "itemId": "mat_songmu", "count": 40 }, { "itemId": "mat_tiejing", "count": 20 }, { "itemId": "mat_tongjing", "count": 20 }] },
-      { "cost": [{ "itemId": "mat_songmu", "count": 80 }, { "itemId": "mat_tiejing", "count": 40 }, { "itemId": "mat_xuantie", "count": 5 }] }
+      {
+        "cost": [
+          {
+            "itemId": "mat_taomu",
+            "count": 20
+          },
+          {
+            "itemId": "mat_cushi",
+            "count": 10
+          }
+        ]
+      },
+      {
+        "cost": [
+          {
+            "itemId": "mat_taomu",
+            "count": 40
+          },
+          {
+            "itemId": "mat_cushi",
+            "count": 20
+          },
+          {
+            "itemId": "mat_tongjing",
+            "count": 10
+          }
+        ]
+      },
+      {
+        "cost": [
+          {
+            "itemId": "mat_songmu",
+            "count": 40
+          },
+          {
+            "itemId": "mat_tiejing",
+            "count": 20
+          },
+          {
+            "itemId": "mat_tongjing",
+            "count": 20
+          }
+        ]
+      },
+      {
+        "cost": [
+          {
+            "itemId": "mat_songmu",
+            "count": 80
+          },
+          {
+            "itemId": "mat_tiejing",
+            "count": 40
+          },
+          {
+            "itemId": "mat_xuantie",
+            "count": 5
+          }
+        ]
+      }
     ]
   }
 }

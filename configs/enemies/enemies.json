@@ -555,6 +555,16 @@
       {
         "itemId": "ar_sb05",
         "probability": 0.08
+      },
+      {
+        "itemId": "fabao_fb_julingzhu",
+        "probability": 0.08,
+        "quality": 4
+      },
+      {
+        "itemId": "fabao_sq_zijinhulu",
+        "probability": 0.08,
+        "quality": 4
       }
     ],
     "money": [
@@ -648,6 +658,16 @@
       {
         "itemId": "exp_pill_large",
         "probability": 0.1
+      },
+      {
+        "itemId": "fabao_fb_lihuoshan",
+        "probability": 0.08,
+        "quality": 4
+      },
+      {
+        "itemId": "fabao_sq_fenghuolun",
+        "probability": 0.08,
+        "quality": 4
       }
     ],
     "money": [
@@ -1547,6 +1567,14 @@
       {
         "itemId": "bp_t2_ar",
         "probability": 0.3
+      },
+      {
+        "itemId": "fabao_fb_jiangyaochu",
+        "probability": 0.08
+      },
+      {
+        "itemId": "fabao_sq_liulizhan",
+        "probability": 0.08
       }
     ],
     "phases": [
@@ -1632,6 +1660,14 @@
         "itemId": "mat_sp_03",
         "quantity": 1,
         "probability": 0.5
+      },
+      {
+        "itemId": "fabao_fb_zhaoxianjian",
+        "probability": 0.08
+      },
+      {
+        "itemId": "fabao_sq_yujingping",
+        "probability": 0.08
       }
     ],
     "phases": [
@@ -2168,6 +2204,14 @@
       {
         "itemId": "bp_t2_rg",
         "probability": 0.2
+      },
+      {
+        "itemId": "fabao_fb_zhuihunzhui",
+        "probability": 0.08
+      },
+      {
+        "itemId": "fabao_sq_baguajing",
+        "probability": 0.08
       }
     ],
     "money": [
@@ -2846,6 +2890,14 @@
       {
         "itemId": "bp_t2_rg",
         "probability": 0.2
+      },
+      {
+        "itemId": "fabao_fb_fuyaosuo",
+        "probability": 0.08
+      },
+      {
+        "itemId": "fabao_sq_zhenyaoling",
+        "probability": 0.08
       }
     ],
     "money": [
@@ -3097,6 +3149,14 @@
       {
         "itemId": "exp_pill_small",
         "probability": 0.15
+      },
+      {
+        "itemId": "fabao_fb_pojunfu",
+        "probability": 0.08
+      },
+      {
+        "itemId": "fabao_sq_jingangzhao",
+        "probability": 0.08
       }
     ],
     "money": [
@@ -3454,7 +3514,6 @@
         "itemId": "mat_dixing_tu",
         "probability": 1
       },
-
       {
         "itemId": "mat_wudao_dan",
         "probability": 0.1
@@ -3573,7 +3632,6 @@
         "itemId": "mat_heifeng_ling",
         "probability": 1
       },
-
       {
         "itemId": "mat_wudao_dan",
         "probability": 0.1
@@ -3617,6 +3675,16 @@
       {
         "itemId": "wp_sp_02",
         "probability": 0.08
+      },
+      {
+        "itemId": "fabao_fb_zhenmota",
+        "probability": 0.08,
+        "quality": 3
+      },
+      {
+        "itemId": "fabao_sq_taijitu",
+        "probability": 0.08,
+        "quality": 3
       }
     ],
     "money": [

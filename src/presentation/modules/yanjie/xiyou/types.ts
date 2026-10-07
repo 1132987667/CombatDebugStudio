@@ -308,7 +308,7 @@ export interface XiyouCatalogItem {
  *  无 itemId（如引路香）保留 price 手写兜底价；货币统一为金钱（单一结算单位） */
 export interface XiyouShopGood {
   name: string
-  type: '杂货' | '材料' | '丹药' | '装备'
+  type: '杂货' | '材料' | '丹药' | '装备' | '法宝' | '神器'
   /** 关联物品（items.json 主键）；存在时价格由 价值×购买系数 派生，price 仅兜底 */
   itemId?: string
   price: number

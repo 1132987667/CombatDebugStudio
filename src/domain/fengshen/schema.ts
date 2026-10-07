@@ -120,6 +120,8 @@ export interface ReferenceRule {
   targetTables: FengshenTableName[]
   /** 可选字段：为 undefined/null/空时跳过检查 */
   optional?: boolean
+  /** 目录外引用前缀豁免（如 fabao_ 由演劫台 fabao.json 解析），命中即跳过表内存在性校验 */
+  exemptPrefix?: string
   /**
    * 软引用：目标值空间不是表内 id 外键，引擎遇到未知值静默落空（如属性 code 取 0）。
    * 仅参与「影响面推演 / 删除保护 / 反向引用」，不进保存校验与健康检查
@@ -147,7 +149,9 @@ export const REFERENCE_RULES: ReferenceRule[] = [
   { sourceTable: 'regions', path: 'schoolUnlock.sceneId', targetTables: ['scenes'], optional: true },
   { sourceTable: 'lineups', path: 'formationId', targetTables: ['formations'] },
   { sourceTable: 'lineups', path: 'roles[].roleId', targetTables: ['actors', 'enemies'] },
-  { sourceTable: 'enemies', path: 'drops[].itemId', targetTables: ['materials', 'equipment', 'items'], optional: true },
+  { sourceTable: 'enemies', path: 'drops[].itemId', targetTables: ['materials', 'equipment', 'items'], optional: true,
+    // 法宝/神器投放（fabao_<defId>，裁定 2026-10-07）：由演劫台 fabao.json 定义解析，不在封神榜数据域
+    exemptPrefix: 'fabao_' },
   { sourceTable: 'enemies', path: 'skillIds', targetTables: ['skills'], optional: true },
   { sourceTable: 'enemies', path: 'passiveSkillIds', targetTables: ['skills'], optional: true },
   { sourceTable: 'enemies', path: 'affixes', targetTables: ['affixes'], optional: true },

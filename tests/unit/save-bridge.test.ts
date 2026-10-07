@@ -8,6 +8,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { xiyouSaveBridge } from '@/presentation/modules/yanjie/xiyou/save-bridge'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { equipRollParams, makeInstance, usePackStore } from '@/presentation/stores/packStore'
+import { fabaoState } from '@/presentation/modules/yanjie/xiyou/fabao'
+import { towerState } from '@/presentation/modules/yanjie/xiyou/tower'
 import { equipment as starterEquipment, scenes, starterEnabled } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import { SaveManager } from '@/shared/utils/save-manager'
 import { createInitialGameState, verifySaveChecksum, type SaveData } from '@/shared/utils/save-schema'
@@ -331,6 +333,40 @@ describe('装备词条 fixed/main 存档保真（主要属性不因存档退化�
     await xiyouSaveBridge.restore(data)
     const restored = usePackStore().gearInstances.find((g) => g.instanceId === inst.instanceId)
     expect(restored?.stats).toEqual(before)
+  })
+
+  it('演劫台运行时快照主档往返（法宝持有/出战/塔层），旧档无字段保持现状', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    fabaoState.instances = [
+      { uid: 'fb_t1', defId: 'fb_zhaoxianjian', quality: 2, enhance: 1, skillRank: 0 },
+      { uid: 'sq_t1', defId: 'sq_taijitu', quality: 4, enhance: 0, skillRank: 1 },
+    ]
+    fabaoState.equippedFabao = 'fb_t1'
+    towerState.bestFloor = 7
+
+    const data = await xiyouSaveBridge.collect({ currentSceneId: null })
+    expect(data.fabao?.instances.length).toBe(2)
+    expect(data.tower?.bestFloor).toBe(7)
+
+    // 模拟换机：清空内存后仅凭主档恢复
+    fabaoState.instances = []
+    fabaoState.equippedFabao = null
+    towerState.bestFloor = 0
+    await xiyouSaveBridge.restore(data)
+    expect(fabaoState.instances.map((i) => i.uid)).toEqual(['fb_t1', 'sq_t1'])
+    expect(fabaoState.equippedFabao).toBe('fb_t1')
+    expect(towerState.bestFloor).toBe(7)
+
+    // 旧档（无演劫台快照字段）：restore 保持 IDB 既有状态，平滑迁移不丢
+    fabaoState.instances = [{ uid: 'keep', defId: 'fb_pojunfu', quality: 1, enhance: 0, skillRank: 0 }]
+    await xiyouSaveBridge.restore({ ...createInitialGameState() })
+    expect(fabaoState.instances.map((i) => i.uid)).toEqual(['keep'])
+
+    // 还原模块级单例现场，避免污染其他用例
+    fabaoState.instances = []
+    fabaoState.equippedFabao = null
+    towerState.bestFloor = 0
   })
 
   it('旧档词条无标记：读档按主要池推断前 2 条，第 3 条不误标', async () => {

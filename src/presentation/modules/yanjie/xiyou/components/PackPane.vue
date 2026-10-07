@@ -147,6 +147,7 @@ import { computed, ref, watch } from 'vue'
 import type { TabItem } from '@/presentation/components'
 
 import { usePackStore, MAX_STORAGE, type GearInstance, type Warehouse } from '@/presentation/stores/packStore'
+import { fabaoDefByName, purchaseFabaoGood } from '../fabao'
 import { ITEM_CATEGORIES, type ItemCategoryId } from '@/shared/constants/item-types'
 import type { XiyouCatalogItem, XiyouShopGood } from '../types'
 import PackItemCard from './PackItemCard.vue'
@@ -460,7 +461,10 @@ function walletShort(g: XiyouShopGood): number | null {
 
 function doBuy(g: XiyouShopGood): void {
   if (!buyState.value) return
-  const err = pack.purchase(g, buyState.value.count)
+  // 法宝/神器为目录外商品（名字不在物品目录），走 fabao 购买桥（价格口径同为 shopPrice）
+  const err = fabaoDefByName(g.name)
+    ? purchaseFabaoGood(g, buyState.value.count, pack.shopPrice(g))
+    : pack.purchase(g, buyState.value.count)
   if (err === null) buyState.value = null
 }
 

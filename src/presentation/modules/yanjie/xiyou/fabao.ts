@@ -16,6 +16,8 @@ import { FENGSHEN_STORE } from '@/domain/port/IPersistentStorage'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { RARITY_NAMES } from './quality'
+import type { XiyouShopGood } from './types'
 
 // ===== 类型 =====
 
@@ -67,12 +69,14 @@ export interface FabaoQualityTier {
   dustReturnRate: number
 }
 
+/** 品质名单源 quality.RARITY_NAMES（裁定 2026-10-07：法宝品阶与装备品阶同为一套 凡/玄/地/天/仙，
+ *  此前本表独立维护中文名与装备页两套叫法；enhanceCap 与装备 enhance_max_by_tier 同表同源） */
 export const FABAO_QUALITY_TIERS: FabaoQualityTier[] = [
-  { quality: 1, name: '凡品', enhanceCap: 3, goldPerLevel: 20, dustReturnRate: 0.5 },
-  { quality: 2, name: '玄品', enhanceCap: 6, goldPerLevel: 50, dustReturnRate: 0.55 },
-  { quality: 3, name: '地品', enhanceCap: 9, goldPerLevel: 100, dustReturnRate: 0.6 },
-  { quality: 4, name: '天品', enhanceCap: 12, goldPerLevel: 150, dustReturnRate: 0.65 },
-  { quality: 5, name: '仙品', enhanceCap: 15, goldPerLevel: 200, dustReturnRate: 0.7 },
+  { quality: 1, name: RARITY_NAMES[1], enhanceCap: 3, goldPerLevel: 20, dustReturnRate: 0.5 },
+  { quality: 2, name: RARITY_NAMES[2], enhanceCap: 6, goldPerLevel: 50, dustReturnRate: 0.55 },
+  { quality: 3, name: RARITY_NAMES[3], enhanceCap: 9, goldPerLevel: 100, dustReturnRate: 0.6 },
+  { quality: 4, name: RARITY_NAMES[4], enhanceCap: 12, goldPerLevel: 150, dustReturnRate: 0.65 },
+  { quality: 5, name: RARITY_NAMES[5], enhanceCap: 15, goldPerLevel: 200, dustReturnRate: 0.7 },
 ]
 
 export const FABAO_MAX_SKILL_RANK = 2
@@ -86,6 +90,10 @@ export const fabaoDefs: FabaoDef[] = [
 
 export function fabaoDefById(id: string): FabaoDef | undefined {
   return fabaoDefs.find((d) => d.id === id)
+}
+
+export function fabaoDefByName(name: string): FabaoDef | undefined {
+  return fabaoDefs.find((d) => d.name === name)
 }
 
 export function fabaoTier(quality: number): FabaoQualityTier {
@@ -284,7 +292,7 @@ export function fabaoEquippedRank(): number {
   return fabaoInstanceByUid(fabaoState.equippedFabao)?.skillRank ?? 0
 }
 
-/** 发放实例（调试/奖励通道；品质 1-5，缺省凡品） */
+/** 发放实例（掉落/坊市/调试通道；品质 1-5，缺省凡品） */
 export function grantFabao(defId: string, quality = 1): FabaoInstance | null {
   const def = fabaoDefById(defId)
   if (!def) return null
@@ -293,3 +301,26 @@ export function grantFabao(defId: string, quality = 1): FabaoInstance | null {
   void persistFabaoState()
   return inst
 }
+
+// ===== 坊市购买桥（目录外商品）=====
+
+/**
+ * 坊市法宝/神器购买（目录外商品，由坊市 UI 按名字索引判断后调用——packStore 不反向依赖本模块）。
+ * 口径与物品购买一致：数量/库存/金钱三重校验 → 扣款扣库存 → 逐件发放（凡品起步，养成靠强化）。
+ */
+export function purchaseFabaoGood(good: XiyouShopGood, count: number, unitPrice: number): string | null {
+  const def = fabaoDefByName(good.name)
+  if (!def) return '商品未收录'
+  if (count <= 0) return '数量无效'
+  if (good.stock >= 0 && good.stock < count) return '库存不足'
+  const player = usePlayerStore()
+  const total = unitPrice * count
+  if (player.currency.money < total) return '金钱不足'
+  player.currency.money -= total
+  if (good.stock >= 0) good.stock -= count
+  for (let i = 0; i < count; i++) grantFabao(def.id, 1)
+  void persistFabaoState()
+  useNotificationStore().toast(`购买了${def.kind === 'relic' ? '神器' : '法宝'}「${def.name}」×${count}`, 'success')
+  return null
+}
+

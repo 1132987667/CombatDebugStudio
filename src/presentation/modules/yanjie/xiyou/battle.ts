@@ -152,6 +152,8 @@ interface EnemyDropRow {
   itemId: string
   probability: number
   quantity?: number
+  /** 法宝/神器掉落品质（fabao_ 前缀条目专用，缺省凡品） */
+  quality?: number
 }
 
 interface EnemyRow {
@@ -277,6 +279,24 @@ export function xianyuanForEnemyIds(enemyIds: string[]): number {
     sum += row && row.role ? ROLE_XIANYUAN[row.role] : 0
   }
   return sum
+}
+
+/**
+ * 法宝/神器掉落判定（drops 表 fabao_ 前缀条目，裁定 2026-10-07 投放设计）：
+ * applyDrops 对目录外 id 天然跳过，本函数专管其 roll 与发放参数；逐条独立 roll，可同时命中多件。
+ * 条目 quality 指定掉落品质（缺省凡品）——隐藏层/终局 BOSS 掉高品阶。
+ */
+export function rollFabaoDrops(enemyIds: string[], rng: () => number = Math.random): { defId: string; quality: number }[] {
+  const out: { defId: string; quality: number }[] = []
+  for (const id of enemyIds) {
+    const row = enemyById.get(id)
+    for (const d of row?.drops ?? []) {
+      if (!d.itemId.startsWith('fabao_')) continue
+      if (rng() >= d.probability) continue
+      out.push({ defId: d.itemId.slice('fabao_'.length), quality: d.quality ?? 1 })
+    }
+  }
+  return out
 }
 
 /** 单个敌人掉落条目（按敌人 id，供 BattleZen 头部按敌人展示掉落概率，缺省无掉落） */

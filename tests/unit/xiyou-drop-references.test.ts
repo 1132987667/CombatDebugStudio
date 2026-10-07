@@ -19,12 +19,16 @@ import packJson from '@configs/xiyou/pack.json'
 interface ItemRow { id: string; name: string }
 interface DropRow { itemId: string; chance: number }
 
+import { fabaoDefById } from '@/presentation/modules/yanjie/xiyou/fabao'
+
 const itemIds = new Set((itemsJson.items as ItemRow[]).map((i) => i.id))
 const gearRows = equipmentJson as unknown as (ItemRow & { blueprintId?: string; craftable?: boolean; tier?: string })[]
 const gearIds = new Set(gearRows.map((g) => g.id))
 
 /** 掉落可解析域：物品目录（items.json）∪ 装备目录（equipment.json），与运行时 addItem 的分支一致 */
 function isResolvable(itemId: string): boolean {
+  // 法宝/神器投放（fabao_<defId>）：由 fabao.json 定义解析，不在物品目录（裁定 2026-10-07）
+  if (itemId.startsWith('fabao_')) return fabaoDefById(itemId.slice('fabao_'.length)) !== undefined
   return itemIds.has(itemId) || gearIds.has(itemId)
 }
 

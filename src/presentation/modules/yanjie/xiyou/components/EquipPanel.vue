@@ -154,7 +154,7 @@
                 分解（返灵尘×{{ fabaoDustReturn(row.inst) }}）
               </button>
             </div>
-            <p v-else class="xy-row-desc xy-row-desc--key">未获得（调试面板可发放）</p>
+            <p v-else class="xy-row-desc xy-row-desc--key">未获得——对应 BOSS 掉落（8%）或坊市限量购买</p>
           </div>
         </section>
       </template>

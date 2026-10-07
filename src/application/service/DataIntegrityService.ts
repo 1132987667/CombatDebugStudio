@@ -182,6 +182,8 @@ export class DataIntegrityService {
         const refIds = extractReferenceIds(entity, rule.path)
         if (refIds.length === 0 && rule.optional) continue
         for (const refId of refIds) {
+          // 前缀豁免（fabao_ 等目录外引用）：由各自运行时定义解析，不按封神榜表判断裂
+          if (rule.exemptPrefix && refId.startsWith(rule.exemptPrefix)) continue
           if (!(await index.existsIn(rule.targetTables, refId))) {
             issues.push({
               kind: 'integrity',

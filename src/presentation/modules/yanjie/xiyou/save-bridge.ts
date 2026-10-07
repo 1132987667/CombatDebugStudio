@@ -32,6 +32,9 @@ import {
 } from '@/presentation/stores/packStore'
 import { expandPoolRef } from '@/domain/fengshen/equipment-overview'
 import type { EquipmentStatEntry } from '@/domain/fengshen/types'
+import { fabaoState, persistFabaoState } from './fabao'
+import { petMountState, persistPetMountState } from './petMount'
+import { persistTowerState, towerState } from './tower'
 import { materials as packMaterials, equipment as packStarterEquipment, starterEnabled, packItems, pills as packPills, consumables as packConsumables, quests, scenes, schools, schoolsLayers, mates, skillPoints, equippedSkills, skillNodeMap, pureSchoolBonus, calcPureSchool, nodeRankCost, PILL_POINT_LIMIT } from './xiyouData'
 import { qualityFactorOf } from './quality'
 import { createPlayerProfile } from './playerProfile'
@@ -127,7 +130,8 @@ function restoreEquipped(eq: { passive?: string[]; small?: string[]; ultimate?: 
 
 export const xiyouSaveBridge: SaveStatePort = {
   /** 主档之外的运行时文档（行囊快照/法宝/灵宠坐骑/降妖塔）——save-manager.reset 只清 saves 与
-   *  localStorage，不清这些独立 IDB 键；不清则「新游戏」后法宝/宠物/塔进度与旧行囊快照残留 */
+   *  localStorage，不清这些独立 IDB 键；不清则「新游戏」后法宝/宠物/塔进度与旧行囊快照残留。
+   *  内存态同步清空：初始档不含三模块快照，restore 不会覆盖，不清则新游戏残留旧持有 */
   async resetRuntimeState(): Promise<void> {
     for (const id of ['pack_runtime', 'fabao', 'petmount', 'tower']) {
       try {
@@ -136,6 +140,12 @@ export const xiyouSaveBridge: SaveStatePort = {
         /* 单文档失败不阻断重置 */
       }
     }
+    fabaoState.instances = []
+    fabaoState.equippedFabao = null
+    fabaoState.equippedRelic = null
+    petMountState.pets = []
+    petMountState.mounts = []
+    towerState.bestFloor = 0
   },
 
   /**
@@ -257,6 +267,18 @@ export const xiyouSaveBridge: SaveStatePort = {
     // 战斗倍速（挂机体验核心，刷新/重进后不应回到 1x）
     const battleSpeed = battleSpeedOrDefault()
     if (battleSpeed !== 1) data.battle_speed = battleSpeed
+
+    // 演劫台运行时快照并入主档（法宝/灵宠坐骑/降妖塔；此前独立 IDB 文档，导出导入/换机即丢）
+    data.fabao = {
+      instances: fabaoState.instances.map((i) => ({ ...i })),
+      equippedFabao: fabaoState.equippedFabao,
+      equippedRelic: fabaoState.equippedRelic,
+    }
+    data.petmount = {
+      pets: petMountState.pets.map((p) => ({ ...p })) as Record<string, unknown>[],
+      mounts: petMountState.mounts.map((m) => ({ ...m })) as Record<string, unknown>[],
+    }
+    data.tower = { bestFloor: towerState.bestFloor }
 
     return data
   },
@@ -462,6 +484,24 @@ export const xiyouSaveBridge: SaveStatePort = {
     if (Array.isArray(matesActive)) {
       const activeSet = new Set(matesActive)
       for (const m of mates) m.active = activeSet.has(m.name)
+    }
+
+    // 演劫台运行时快照恢复（旧档无字段 = 保持 IDB 独立文档既有状态，平滑迁移不丢）；
+    // 恢复后回写 IDB，双通道一致（独立文档加载入口 loadFabaoState 等仅在启动时读一次）
+    if (data.fabao && Array.isArray(data.fabao.instances)) {
+      fabaoState.instances = data.fabao.instances.map((i) => ({ ...i }))
+      fabaoState.equippedFabao = data.fabao.equippedFabao ?? null
+      fabaoState.equippedRelic = data.fabao.equippedRelic ?? null
+      void persistFabaoState()
+    }
+    if (data.petmount && Array.isArray(data.petmount.pets)) {
+      petMountState.pets = data.petmount.pets as unknown as typeof petMountState.pets
+      if (Array.isArray(data.petmount.mounts)) petMountState.mounts = data.petmount.mounts as unknown as typeof petMountState.mounts
+      void persistPetMountState()
+    }
+    if (data.tower && typeof data.tower.bestFloor === 'number') {
+      towerState.bestFloor = data.tower.bestFloor
+      void persistTowerState()
     }
 
     // 战斗倍速恢复（旧档缺省 1；非法值/越界档位忽略，防脏档写入 store 后 UI 循环失锚。

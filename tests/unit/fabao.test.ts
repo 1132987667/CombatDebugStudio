@@ -11,6 +11,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import fabaoJson from '@configs/xiyou/fabao.json'
+import packJson from '@configs/xiyou/pack.json'
 import fabaoSkillsJson from '@configs/skills/skills_fabao.json'
 import buffsJson from '@configs/buffs/buffs.json'
 import {
@@ -18,12 +19,15 @@ import {
   FABAO_MAX_SKILL_RANK,
   FABAO_QUALITY_TIERS,
   fabaoAttrValue,
+  fabaoDefByName,
   fabaoDefs,
   fabaoDustReturn,
   fabaoEnhanceCost,
   fabaoInstanceStats,
   fabaoTier,
 } from '@/presentation/modules/yanjie/xiyou/fabao'
+import { rollFabaoDrops } from '@/presentation/modules/yanjie/xiyou/battle'
+import { RARITY_NAMES } from '@/presentation/modules/yanjie/xiyou/quality'
 
 interface SkillStepLike {
   type?: string
@@ -43,6 +47,42 @@ interface SkillLike {
 const skills = fabaoSkillsJson as unknown as SkillLike[]
 const skillById = new Map(skills.map((s) => [s.id ?? '', s]))
 const buffIds = new Set((buffsJson as { id: string }[]).map((b) => b.id))
+
+describe('法宝投放（掉落判定 + 品质名单源 + 坊市配置零断裂）', () => {
+  it('rollFabaoDrops：fabao_ 前缀条目逐条独立 roll，quality 缺省凡品，非 fabao 条目忽略', () => {
+    // 恒命中 rng=0 / 恒不命中 rng=0.99
+    const hit = rollFabaoDrops(['boss_major_huayaowang'], () => 0)
+    expect(hit).toEqual([
+      { defId: 'fb_zhaoxianjian', quality: 1 },
+      { defId: 'sq_yujingping', quality: 1 },
+    ])
+    expect(rollFabaoDrops(['boss_major_huayaowang'], () => 0.99)).toEqual([])
+    // 隐藏层掉天品（配置 quality 4）
+    const hidden = rollFabaoDrops(['boss_hidden_hebo'], () => 0)
+    expect(hidden).toEqual([
+      { defId: 'fb_julingzhu', quality: 4 },
+      { defId: 'sq_zijinhulu', quality: 4 },
+    ])
+    // 无 fabao 条目的敌人不掉
+    expect(rollFabaoDrops(['enemy_s1_1_a'], () => 0)).toEqual([])
+  })
+
+  it('品质名单源 quality.RARITY_NAMES（法宝品阶与装备品阶同一套 凡/玄/地/天/仙）', () => {
+    expect(FABAO_QUALITY_TIERS.map((t) => t.name)).toEqual(['凡品', '玄品', '地品', '天品', '仙品'])
+    expect(FABAO_QUALITY_TIERS.map((t) => t.name)).toEqual([1, 2, 3, 4, 5].map((q) => RARITY_NAMES[q]))
+  })
+
+  it('坊市配置：16 件法宝/神器上架零断裂（名字可索引到定义，限量平价）', () => {
+    const shop = (packJson as { shopGoods: Array<{ name: string; type: string; price: number; stock: number }> }).shopGoods
+    const fabaoGoods = shop.filter((g) => g.type === '法宝' || g.type === '神器')
+    expect(fabaoGoods.length).toBe(fabaoJson.fabao.length + fabaoJson.relic.length)
+    for (const g of fabaoGoods) {
+      expect(fabaoDefByName(g.name)).toBeDefined()
+      expect(g.price).toBeGreaterThan(0)
+      expect(g.stock).toBe(1)
+    }
+  })
+})
 
 describe('法宝/神器养成纯函数（PRD §22.5 品质基准）', () => {
   it('品质档强化上限 凡+3 → 仙+15', () => {

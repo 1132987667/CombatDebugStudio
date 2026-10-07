@@ -1405,7 +1405,7 @@ describe("坊市刷新", () => {
   it("初始全量上架；刷新后抽取 8 种，列表变化", async () => {
     const pack = usePackStore()
     await pack.init()
-    expect(pack.shopGoods.length).toBe(15) // 商品池 15 种（耀星石 2026-10-01 整链删除后；养成材料补货 +7）
+    expect(pack.shopGoods.length).toBe(31) // 商品池 31 种（耀星石 2026-10-01 整链删除后养成材料 +7；法宝/神器 16 件上架 2026-10-07）
 
     const before = new Set(pack.shopGoods.map((g) => g.name))
     pack.refreshShop(new Date(), () => 0)

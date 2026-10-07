@@ -109,6 +109,24 @@ export interface SaveSchoolState {
   equipped?: { passive: string[]; small: string[]; ultimate: string | null }
 }
 
+/** 演劫台运行时快照（裁定 2026-10-07 纳入主档：此前走独立 IDB 文档，导出导入/换机即丢）。
+ *  结构与各模块运行时状态同构；旧档无字段时 restore 不覆盖 IDB 既有状态（平滑迁移） */
+export interface SaveFabaoState {
+  instances: { uid: string; defId: string; quality: number; enhance: number; skillRank: number }[]
+  equippedFabao: string | null
+  equippedRelic: string | null
+}
+
+/** 灵宠/坐骑个体结构复杂（资质/成长/技能三件套），保持宽容键域——还原由桥接层按运行时类型断言 */
+export interface SavePetMountState {
+  pets: Record<string, unknown>[]
+  mounts: Record<string, unknown>[]
+}
+
+export interface SaveTowerState {
+  bestFloor: number
+}
+
 export interface SaveData {
   meta: SaveMeta
   player: SavePlayerState
@@ -123,6 +141,12 @@ export interface SaveData {
   pill_uses?: Record<string, number>
   /** 上阵伙伴名单（name；缺省按 mate.json active 初始值） */
   mates_active?: string[]
+  /** 法宝/神器持有与出战（旧档缺省 = 不覆盖 IDB 独立文档状态） */
+  fabao?: SaveFabaoState
+  /** 灵宠/坐骑个体（旧档缺省同上） */
+  petmount?: SavePetMountState
+  /** 降妖塔进度（旧档缺省同上） */
+  tower?: SaveTowerState
   /** 永久丹药属性累计增量：attr → 总和（恢复时叠回 player；maxHp/attackMin 已含于 hp_max/base_atk，恢复时跳过防双算） */
   pill_bonuses?: Record<string, number>
   /** 任务进度（接线任务）：questId → 进度与领取态（旧档缺省保留 configs 初始值） */

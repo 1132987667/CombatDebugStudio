@@ -193,7 +193,10 @@ import {
   xianyuanForEnemyIds,
   rewardForEnemyIds,
   type EnemyBrief,
+  rollFabaoDrops,
 } from '../battle'
+import { fabaoDefById, grantFabao } from '../fabao'
+import { RARITY_NAMES } from '../quality'
 import { fabaoAttributeBonuses } from '../fabao'
 import { individualById, petMountAttributeBonuses, rollPetMountDrops, settlePetMountBattleExp } from '../petMount'
 import { itemName } from '../caveLogic'
@@ -591,6 +594,14 @@ function onBattleEnded(data: BattleEndedEventData): void {
       const name = individualById(g.individualId)?.name ?? g.individualId
       notification.toast(`获得${g.kind === 'pet' ? '灵宠' : '坐骑'}「${name}」（资质 ${g.aptitude}）`, 'success')
       run.totals.drops.push({ itemId: g.individualId, quantity: 1, chance: 1 })
+    }
+    // 法宝/神器：drops 表 fabao_ 前缀条目在此 roll 发放（applyDrops 对目录外 id 跳过，不双发）
+    for (const g of rollFabaoDrops(node?.enemyIds ?? [])) {
+      const inst = grantFabao(g.defId, g.quality)
+      if (!inst) continue
+      const def = fabaoDefById(g.defId)
+      notification.toast(`获得${def?.kind === 'relic' ? '神器' : '法宝'}「${def?.name ?? g.defId}」（${RARITY_NAMES[g.quality]}）`, 'success')
+      run.totals.drops.push({ itemId: g.defId, quantity: 1, chance: 1 })
     }
     run.totals.exp += exp
     run.totals.money += money

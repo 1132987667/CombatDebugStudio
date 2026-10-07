@@ -174,6 +174,7 @@ import {
 } from '../battle'
 import { fabaoDefById, grantFabao } from '../fabao'
 import { RARITY_NAMES } from '../quality'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { fabaoAttributeBonuses, fabaoDropName } from '../fabao'
 import { battleSession, recordSessionGain, resetBattleSession } from '../battleSession'
 import { individualById, petMountAttributeBonuses, rollPetMountDrops, settlePetMountBattleExp } from '../petMount'
@@ -555,7 +556,7 @@ function onBattleEnded(data: BattleEndedEventData): void {
     }
     if (money > 0) player.gainCurrency('money', money)
     if (xianyuan > 0) player.gainCurrency('xianyuan', xianyuan)
-    // 掉落：入包（applyDrops 内部逐条 roll + toast），返回命中列表供小结算展示
+    // 掉落：入包（applyDrops 内部逐条 roll + 掉落日志），返回命中列表供小结算展示
     const hits = pack.applyDrops(
       dropsForEnemyIds(node?.enemyIds ?? [], node?.isBoss ? props.scene.drops?.materials : undefined),
     )
@@ -568,7 +569,7 @@ function onBattleEnded(data: BattleEndedEventData): void {
       : []
     for (const g of gainedIndividuals) {
       const name = individualById(g.individualId)?.name ?? g.individualId
-      notification.toast(`获得${g.kind === 'pet' ? '灵宠' : '坐骑'}「${name}」（资质 ${g.aptitude}）`, 'success')
+      battleLogManager.addItemLog({ segments: [{ text: `获得了：${g.kind === 'pet' ? '灵宠' : '坐骑'}「${name}」（资质 ${g.aptitude}）` }] })
       run.totals.drops.push({ itemId: g.individualId, quantity: 1, chance: 1 })
       recordSessionGain({ drops: [{ itemId: g.individualId, quantity: 1 }] })
     }
@@ -577,7 +578,7 @@ function onBattleEnded(data: BattleEndedEventData): void {
       const inst = grantFabao(g.defId, g.quality)
       if (!inst) continue
       const def = fabaoDefById(g.defId)
-      notification.toast(`获得${def?.kind === 'relic' ? '神器' : '法宝'}「${def?.name ?? g.defId}」（${RARITY_NAMES[g.quality]}）`, 'success')
+      battleLogManager.addItemLog({ segments: [{ text: `获得了：${def?.kind === 'relic' ? '神器' : '法宝'}「${def?.name ?? g.defId}」（${RARITY_NAMES[g.quality]}）` }] })
       run.totals.drops.push({ itemId: g.defId, quantity: 1, chance: 1 })
       recordSessionGain({ drops: [{ itemId: g.defId, quantity: 1 }] })
     }

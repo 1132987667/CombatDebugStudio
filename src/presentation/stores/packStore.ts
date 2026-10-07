@@ -60,6 +60,7 @@ import {
   type WashMode,
 } from '@/presentation/modules/yanjie/xiyou/caveLogic'
 import { affixCountByQuality, qualityFactorOf, rollQuality, rollQualityFactor } from '@/presentation/modules/yanjie/xiyou/quality'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { useNotificationStore } from './notificationStore'
 import { useBattleStore } from './battleStore'
 import { usePlayerStore } from './playerStore'
@@ -1617,8 +1618,8 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /**
-   * 战斗胜利掉落结算：逐条 roll（命中 chance 才入包），toast 按物品聚合
-   * @param silent 静默模式（批量结算用，如刷关模拟；抑制逐条 toast 刷屏）
+   * 战斗胜利掉落结算：逐条 roll（命中 chance 才入包），命中物品聚合为一条掉落日志
+   * @param silent 静默模式（批量结算用，如刷关模拟；不弹提示也不写日志）
    * @returns 实际命中的掉落条目（供结算展示；确定性由战斗引擎自身保证，掉落非其验证点）
    * NOTE: debugForceDrops 为调试开关（DebugCavePanel「掉落率锁定」），开启时全部命中，验证掉落表完整性
    */
@@ -1646,9 +1647,12 @@ export const usePackStore = defineStore('pack', () => {
       if (agg) agg.quantity += d.quantity
       else byItem.set(d.itemId, { name: item.name, quantity: d.quantity })
     }
-    // NOTE: 同物品多次命中（多敌同表 / 一表多条）合并为一条 toast，重复条目只是独立 roll，不是重复入包
-    if (!silent) {
-      for (const a of byItem.values()) notification.toast(`获得「${a.name}」×${a.quantity}`, 'success')
+    // NOTE: 同物品多次命中（多敌同表 / 一表多条）合并数量，重复条目只是独立 roll，不是重复入包。
+    // 掉落只记日志（系统页签 ITEM），战斗结束不再右上角 toast 刷屏（裁定 2026-10-07）；
+    // silent（刷关模拟批量结算）连日志也免，避免模拟几十场冲掉真实掉落记录。
+    if (!silent && byItem.size > 0) {
+      const summary = [...byItem.values()].map((a) => `${a.name} ×${a.quantity}`).join('、')
+      battleLogManager.addItemLog({ segments: [{ text: `获得了：${summary}` }] })
     }
     return hit
   }

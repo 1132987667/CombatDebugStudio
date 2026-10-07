@@ -96,7 +96,8 @@
             <!-- NOTE: 显示本地序号而非全局 index——全局计数器被 debug 等占用会产生空洞（跳号） -->
             <span class="flat-seq">#{{ idx + 1 }}</span>
             <span class="flat-level">{{ levelName(entry.level) }}</span>
-            <span class="flat-msg">{{ entry.message }}</span>
+            <!-- NOTE: addDebugLog 的文本只写 segments[0].text（不设 message 字段），须从 segments 取，否则全部条目空白 -->
+            <span class="flat-msg">{{ flatToText(entry) }}</span>
             <pre v-if="entry.context" class="flat-ctx">{{ JSON.stringify(entry.context, null, 2) }}</pre>
             <div v-if="entry.error" class="flat-err">{{ entry.error.message }}</div>
             <button type="button" class="copy-btn" title="复制此条" @click="copyEntry(entry)">复制</button>

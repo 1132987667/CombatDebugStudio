@@ -496,9 +496,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           return ''
         }
       } else {
-        // 有 JSON 配置但无脚本——由 effectPlan 驱动，标记 script 为 null
+        // 有 JSON 配置但无脚本——由 effectPlan 驱动，标记 script 为 null。
+        // NOTE: 这是数据驱动的合法路径（如 yaotu_buff_swift_wind），不是缺失：每次施加都会走到，
+        //       用 WARN 会把调试页签刷满误报（挂机十几场即顶满 1000 条上限），降为 DEBUG。
         script = null
-        this.logger.addDebugLog(`Buff script not found: ${buffId}`, { level: LogLevel.WARN })
+        this.logger.addDebugLog(`Buff ${buffId} 由 effectPlan 驱动（JSON 配置，无脚本）`, { level: LogLevel.DEBUG })
       }
     }
 

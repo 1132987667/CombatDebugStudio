@@ -8,6 +8,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { starterEnabled } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import type { XiyouShopGood } from '@/presentation/modules/yanjie/xiyou/types'
 
@@ -575,20 +576,29 @@ describe('战斗掉落', () => {
     expect(pack.countOf('mat_taomu')).toBe(24)
   })
 
-  it('同物品多次命中合并为一条 toast（数量求和），不同物品各一条', async () => {
+  it('命中物品聚合为一条掉落日志（数量求和），不再弹 toast', async () => {
     const pack = usePackStore()
     await pack.init()
-    const notification = useNotificationStore()
-    const spy = vi.spyOn(notification, 'toast')
+    const logSpy = vi.spyOn(battleLogManager, 'addItemLog')
+    const toastSpy = vi.spyOn(useNotificationStore(), 'toast')
     vi.spyOn(Math, 'random').mockReturnValue(0)
     pack.applyDrops([
       { itemId: 'mat_taomu', quantity: 1, chance: 1 },
       { itemId: 'mat_taomu', quantity: 2, chance: 1 },
       { itemId: 'mat_cushi', quantity: 1, chance: 1 },
     ])
-    expect(spy).toHaveBeenCalledTimes(2)
-    expect(spy).toHaveBeenCalledWith('获得「桃木」×3', 'success')
-    expect(spy).toHaveBeenCalledWith('获得「粗石」×1', 'success')
+    expect(logSpy).toHaveBeenCalledTimes(1)
+    expect(logSpy).toHaveBeenCalledWith({ segments: [{ text: '获得了：桃木 ×3、粗石 ×1' }] })
+    expect(toastSpy).not.toHaveBeenCalled()
+  })
+
+  it('silent（刷关模拟）不写掉落日志', async () => {
+    const pack = usePackStore()
+    await pack.init()
+    const logSpy = vi.spyOn(battleLogManager, 'addItemLog')
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    pack.applyDrops([{ itemId: 'mat_taomu', quantity: 1, chance: 1 }], true)
+    expect(logSpy).not.toHaveBeenCalled()
   })
 
   it('掉落率锁定（setDebugForceDrops(true)）时全部命中，忽略 chance', async () => {

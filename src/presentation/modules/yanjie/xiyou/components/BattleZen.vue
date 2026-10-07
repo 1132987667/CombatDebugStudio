@@ -657,9 +657,12 @@ onUnmounted(() => {
 .xy-battle-head {
   position: relative;
   flex-shrink: 0;
-  min-height: 3.25rem;
   display: flex;
-  align-items: center;
+  /* 纵向两行：场景名行 + 顶部信息条——此前缺 flex-direction（默认 row）把信息条
+     作为第二个 flex 项横向并排挤出战场区，大结算横幅越界压到右栏路引面板上 */
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
   border-bottom: 1px solid var(--xy-ink-line);
   padding-bottom: var(--space-2);
   margin-bottom: var(--space-3);

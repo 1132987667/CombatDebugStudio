@@ -9,31 +9,23 @@
           <span class="xy-battle-meta">Lv.{{ scene.levelRange?.[0] }}-{{ scene.levelRange?.[1] }}</span>
         </h2>
         <div class="xy-battle-head-tools">
-          <!-- 手动开战模式或引擎暂停时显示开战入口——暂停态此前在演劫台零提示，战斗停转玩家无从分辨 -->
-          <div v-if="run.phase === 'battle' && (!store.autoPlayMode || store.isPaused)" class="xy-battle-start">
-            <span class="xy-battle-start-badge">{{ store.isPaused ? '战斗已暂停' : `第 ${run.nodeIndex + 1}/${run.total} 场 · 就绪` }}</span>
-            <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
-          </div>
           <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`" @click="cycleSpeed">{{
             store.battleSpeed }}x</button>
         </div>
       </div>
-    </header>
-
-    <!-- 中上部：角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard；敌方按席位阶梯 2~4 员） -->
-    <div class="xy-vitals">
-      <div class="xy-vitals-row xy-vitals-row--enemy" role="list" aria-label="敌方阵容">
-        <ParticipantCard v-for="c in store.enemyTeam" :key="c.id" :ref="(el) => handleCardRef(c.id, el)"
-          :participant="c" :is-active="isCurrentActor(c.id)" :is-selected="store.selectedCharacterId === c.id"
-          :is-enemy="true" :turn-tick="store.currentTurn" @click="selectCharacter(c.id)" />
-      </div>
-
-      <div class="xy-vs">
-        <span class="xy-vs-mark" aria-hidden="true">斗</span>
-
-        <!-- 推进 HUD（非阻塞悬浮条，玩法主循环设计.md §四/§六/§七：推进/小结算/大结算/战败，禁用弹窗战报）
-             悬浮于对垒带（敌我两行之间）：右锚展开，不遮敌我卡片；速度按钮已移场景条，被覆盖的只有装饰「斗」印 -->
-        <div v-if="run.phase === 'advancing'" class="xy-run xy-run--advance" aria-label="关卡推进">
+      <!-- 顶部信息条（固定高度，裁定 2026-10-07：结算/推进 HUD 此前悬浮对垒带遮挡战场视线，
+           改为全阶段常驻条——battle 态就绪/交战，其余推进/结算态 HUD；高度取最高态，
+           全阶段恒定零跳动，不遮敌我卡） -->
+      <div class="xy-battle-strip">
+        <div v-if="run.phase === 'battle' && (!store.autoPlayMode || store.isPaused)" class="xy-battle-start">
+          <span class="xy-battle-start-badge">{{ store.isPaused ? '战斗已暂停' : `第 ${run.nodeIndex + 1}/${run.total} 场 · 就绪` }}</span>
+          <button type="button" class="xy-battle-start-btn" @click="beginBattle">开战</button>
+        </div>
+        <div v-else-if="run.phase === 'battle'" class="xy-strip-idle" aria-label="战斗进行中">
+          <span class="xy-strip-idle-text">第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场 · 交战中</span>
+        </div>
+        <!-- 推进/结算态（玩法主循环设计.md §四/§六/§七；禁用弹窗战报） -->
+        <div v-else-if="run.phase === 'advancing'" class="xy-run xy-run--advance" aria-label="关卡推进">
           <div class="xy-run-head">
             <span class="xy-run-title">推进中 · 第 {{ run.nodeIndex + 1 }}/{{ run.total }} 场</span>
             <span class="xy-run-meta">妖气增幅 ×{{ currentNode?.amp ?? 1 }}</span>
@@ -99,6 +91,20 @@
           <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
           <button type="button" class="xy-run-btn xy-run-btn--primary" title="打开降妖路引，另择关卡或回到功能页签" @click="emit('open-map')">打开路引</button>
         </div>
+      </div>
+    </header>
+
+    <!-- 中上部：角色卡片（敌方一行 / 我方一行，演武台同款 ParticipantCard；敌方按席位阶梯 2~4 员） -->
+    <div class="xy-vitals">
+      <div class="xy-vitals-row xy-vitals-row--enemy" role="list" aria-label="敌方阵容">
+        <ParticipantCard v-for="c in store.enemyTeam" :key="c.id" :ref="(el) => handleCardRef(c.id, el)"
+          :participant="c" :is-active="isCurrentActor(c.id)" :is-selected="store.selectedCharacterId === c.id"
+          :is-enemy="true" :turn-tick="store.currentTurn" @click="selectCharacter(c.id)" />
+      </div>
+
+      <div class="xy-vs">
+        <span class="xy-vs-mark" aria-hidden="true">斗</span>
+
       </div>
 
       <div class="xy-vitals-row xy-vitals-row--player" role="list" aria-label="我方阵容">
@@ -623,6 +629,7 @@ onUnmounted(() => {
 /* ═══ 头部矮条：场景名锚点（左）+ 倍速/开战入口（右）。高度按内容一行取值，
        开战入口出现/消失不引起跳动（min-height + 单行 flex）；场景详情/敌情在左栏「场景」页签 ═══ */
 .xy-battle-head {
+  position: relative;
   flex-shrink: 0;
   min-height: 3.25rem;
   display: flex;
@@ -725,13 +732,24 @@ onUnmounted(() => {
 }
 
 /* ═══ 关卡推进 HUD（非阻塞悬浮条：推进/小结算/大结算/战败，玩法主循环设计.md §四/§六/§七） ═══ */
+.xy-battle-strip {
+  /* 顶部信息条容器：高度取推进态（最高）取值，全阶段恒定——HUD 出现/消失不引起战场跳动 */
+  min-height: 6.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--space-2) 0;
+}
+
+.xy-strip-idle-text {
+  font-size: var(--font-size-md);
+  color: var(--xy-ink-3);
+  white-space: nowrap;
+}
+
 .xy-run {
-  /* 悬浮于对垒带（.xy-vs 敌我两行之间）右端：不遮敌我卡片，出现/消失不推移任何内容；
-     被覆盖的只有装饰「斗」印；宽随内容封顶，超宽 loot 行内部滚动（.xy-run-loot） */
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
+  /* 顶部信息条内右锚流内排布（裁定 2026-10-07：对垒带中间遮挡战场视线，移顶部常驻条）；
+     宽随内容封顶，超宽 loot 行内部滚动（.xy-run-loot） */
   z-index: var(--z-float);
   width: max-content;
   max-width: min(100% - var(--space-8), 56rem);

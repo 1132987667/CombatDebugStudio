@@ -10,17 +10,20 @@
       :aria-pressed="tab.id === modelValue"
       @click="onTabClick(tab.id)"
     >
-      <span class="xy-aspect-icon-wrap">
-        <component :is="TAB_ICONS[tab.id]" class="xy-aspect-icon" aria-hidden="true" />
-        <span v-if="tab.badge" class="xy-aspect-badge" aria-hidden="true">{{ tab.badge }}</span>
-      </span>
+        <span class="xy-aspect-icon-wrap">
+          <component :is="TAB_ICONS[tab.id]" class="xy-aspect-icon" aria-hidden="true" />
+          <span v-if="tabBadges[tab.id]" class="xy-aspect-badge" aria-hidden="true">{{ tabBadges[tab.id] }}</span>
+        </span>
       <span class="xy-aspect-label">{{ tab.label }}</span>
     </button>
   </aside>
 </template>
 
 <script setup lang="ts">
-import type { Component } from 'vue'
+import { computed, type Component } from 'vue'
+
+import { usePackStore } from '@/presentation/stores/packStore'
+import { usePlayerStore } from '@/presentation/stores/playerStore'
 import IconAspectBattle from '~icons/app/aspect-battle'
 import IconAspectMap from '~icons/app/aspect-map'
 import IconAspectPack from '~icons/app/aspect-pack'
@@ -32,6 +35,9 @@ import IconAspectQuest from '~icons/app/aspect-quest'
 import IconAspectTower from '~icons/app/aspect-tower'
 import IconAspectCave from '~icons/app/aspect-cave'
 import IconAspectSettings from '~icons/app/aspect-settings'
+import { breakReady, nextBreakNode } from '../playerProfile'
+import { questClaimable } from '../questProgress'
+import { quests } from '../xiyouData'
 
 export type GroupTab =
   | 'battle'
@@ -68,7 +74,7 @@ function onTabClick(tab: GroupTab): void {
 }
 
 /** 四象栏一级分组（墨线简笔画 + 文字，禁 emoji）；图标经 TAB_ICONS 映射为独立 svg 文件 */
-const TABS: Array<{ id: GroupTab; label: string; badge?: string }> = [
+const TABS: Array<{ id: GroupTab; label: string }> = [
   { id: 'battle', label: '战斗' },
   { id: 'map', label: '路引' },
   { id: 'pack', label: '行囊' },
@@ -81,6 +87,31 @@ const TABS: Array<{ id: GroupTab; label: string; badge?: string }> = [
   { id: 'cave', label: '洞府' },
   { id: 'settings', label: '设置' },
 ]
+
+const playerStore = usePlayerStore()
+const pack = usePackStore()
+
+/**
+ * 四象栏角标：只挂「该回来看」的 actionable 信号（tab.id → 数字/短字）。
+ * 修行内加点优先于突破——加点漏斗是持续态，突破是瞬时条件满足；无信号不挂。
+ */
+const tabBadges = computed<Partial<Record<GroupTab, string>>>(() => {
+  const out: Partial<Record<GroupTab, string>> = {}
+  const available = playerStore.statPoints.available
+  if (available > 0) {
+    out.cultivate = String(available)
+  } else {
+    const node = nextBreakNode(playerStore.player.breakStage ?? 0)
+    if (node && breakReady(node, playerStore.player.level, pack.countOf(node.pillId), playerStore.currency.money)) {
+      out.cultivate = '破'
+    }
+  }
+  const claimable = quests.filter(questClaimable).length
+  if (claimable > 0) out.quest = String(claimable)
+  // 仓库全满无处可存（warehouseCount guard：restore 前零仓库的瞬时态不算满）
+  if (pack.warehouseCount > 0 && !pack.anyWarehouseHasSpace) out.cave = '满'
+  return out
+})
 
 /** tab id → 图标组件（svg 文件位于 src/presentation/assets/icons/aspect-*.svg） */
 const TAB_ICONS: Record<GroupTab, Component> = {

@@ -13,6 +13,7 @@ import {
   fragmentRuleViews,
   gearDisplayName,
   itemIdByName,
+  maxCraftTimes,
   missingMatsText,
   qualityOf,
   starCost,
@@ -106,6 +107,27 @@ describe('强化数值', () => {
 
   it('无数字的 effect 原样返回', () => {
     expect(formatEffect('未装备', 3)).toBe('未装备')
+  })
+})
+
+describe('批量炼制上限', () => {
+  const mat = (count: number, have: number) => ({ name: 'x', count, have, enough: have >= count })
+
+  it('按最紧缺材料取整：铁木 7/2=3、金精 4/2=2 → 可炼 2 炉', () => {
+    expect(maxCraftTimes([mat(2, 7), mat(2, 4)])).toBe(2)
+  })
+
+  it('单材料整除与零持有边界', () => {
+    expect(maxCraftTimes([mat(3, 9)])).toBe(3)
+    expect(maxCraftTimes([mat(3, 2)])).toBe(0) // 一炉都炼不了
+  })
+
+  it('无材料定义返回 0（不放开成无限炉）', () => {
+    expect(maxCraftTimes([])).toBe(0)
+  })
+
+  it('材料需求为 0 的脏数据不产生除零（按 1 兜底）', () => {
+    expect(maxCraftTimes([mat(0, 5)])).toBe(5)
   })
 })
 

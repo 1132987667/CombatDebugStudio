@@ -1107,6 +1107,60 @@ describe("装备制造与强化（实例化）", () => {
     expect(pack.enhanceGear("no-such-instance", () => 0)).toBe(false)
   })
 
+  it("强化至成功（首发即成）：只弹汇总一条 toast（逐发 silent）", async () => {
+    const pack = usePackStore()
+    const notification = useNotificationStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    pack.addItem("enh_stone", 50)
+    pack.currency.money = 9999999
+    const toasts0 = notification.items.length
+    const r = pack.enhanceGearToSuccess(pack.equipped.weapon!.instanceId, () => 0) // L=1 rate 100% 一发必成
+    expect(r).toMatchObject({ attempts: 1, success: true, blocked: null })
+    expect(pack.equipped.weapon?.enhance).toBe(1)
+    expect(notification.items.length).toBe(toasts0 + 1) // 无逐发 toast，仅汇总
+  })
+
+  it("强化至成功（连败后保底）：95% 失败一发 → 连败 +10% 至 100% 必成，共 2 发", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    pack.addItem("enh_stone", 100)
+    pack.currency.money = 9999999
+    pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0) // → Lv.1
+    const money1 = pack.currency.money
+    // rng 0.99：发1（L=2 rate 95%）99 ≥ 95 失败；发2（F=1 rate 100%）99 < 100 必成
+    const r = pack.enhanceGearToSuccess(pack.equipped.weapon!.instanceId, () => 0.99)
+    expect(r).toMatchObject({ attempts: 2, success: true, blocked: null })
+    expect(pack.equipped.weapon?.enhance).toBe(2)
+    expect(pack.equipped.weapon?.enhanceFails).toBe(0) // 成功清零
+    expect(pack.currency.money).toBe(money1 - 200 - 200) // 两发均按 L=2 计 ⌊50×2²×1.0⌋
+  })
+
+  it("强化至成功：资源中途耗尽即中断（金钱只够一发，失败后停）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01")
+    pack.addItem("enh_stone", 100)
+    pack.enhanceGear(pack.equipped.weapon!.instanceId, () => 0) // → Lv.1
+    pack.currency.money = 200 // 正好一发 L=2 的钱
+    const r = pack.enhanceGearToSuccess(pack.equipped.weapon!.instanceId, () => 0.99) // 发1失败
+    expect(r).toMatchObject({ attempts: 1, success: false, blocked: "money" })
+    expect(pack.equipped.weapon?.enhance).toBe(1)
+    expect(pack.equipped.weapon?.enhanceFails).toBe(1)
+    expect(pack.currency.money).toBe(0)
+  })
+
+  it("强化至成功：已达上限直接拦截（0 发）", async () => {
+    const pack = usePackStore()
+    await pack.init()
+    pack.equip("wp_t1_light_01") // 凡品上限 +3
+    pack.equipped.weapon!.enhance = 3
+    const r = pack.enhanceGearToSuccess(pack.equipped.weapon!.instanceId, () => 0)
+    expect(r).toMatchObject({ attempts: 0, success: false, blocked: "maxed" })
+    expect(pack.equipped.weapon?.enhance).toBe(3)
+  })
+
   it("升星真实生效：消耗未穿戴同名装备 3 件 → 星级 +1 → 基础属性提升", async () => {
     const pack = usePackStore()
     await pack.init()

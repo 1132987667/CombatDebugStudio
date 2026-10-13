@@ -13,7 +13,7 @@
               <span class="xy-chip" :class="questChip(q)">
                 {{ questState(q) }}
               </span>
-              <button v-if="canClaim(q)" type="button" class="xy-claim-btn" @click="claim(q)">领取奖励</button>
+              <button v-if="questClaimable(q)" type="button" class="xy-claim-btn" @click="claim(q)">领取奖励</button>
               <span v-else class="xy-row-side">{{ q.progress }}/{{ q.target }}</span>
             </div>
             <p class="xy-row-desc">{{ q.desc }}</p>
@@ -36,6 +36,7 @@ import { useNotificationStore } from '@/presentation/stores/notificationStore'
 import { usePackStore } from '@/presentation/stores/packStore'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { saveManager } from '../save-bridge'
+import { questClaimable } from '../questProgress'
 import { quests } from '../xiyouData'
 import type { XiyouQuest } from '../types'
 
@@ -58,14 +59,9 @@ function questChip(q: XiyouQuest): string {
   return q.progress >= q.target ? 'xy-chip--gold' : 'xy-chip--jade'
 }
 
-/** 结构化任务达成未领取才出领取按钮（纯展示任务如「勤修苦练」无 rewards，不出） */
-function canClaim(q: XiyouQuest): boolean {
-  return !!q.rewards?.length && !q.claimed && q.progress >= q.target
-}
-
 /** 领取奖励：exp/money/item 分别入账并标记录态（进度经存档持久化） */
 function claim(q: XiyouQuest): void {
-  if (!canClaim(q) || !q.rewards) return
+  if (!questClaimable(q) || !q.rewards) return
   const player = usePlayerStore()
   const pack = usePackStore()
   for (const r of q.rewards) {

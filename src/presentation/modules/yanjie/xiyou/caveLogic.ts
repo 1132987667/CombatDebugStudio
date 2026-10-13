@@ -89,6 +89,12 @@ export function missingMatsText(mats: MatView[]): string {
     .join('、')
 }
 
+/** 批量炼制上限：按最紧缺材料取整 ⌊持有/单炉需求⌋ 取最小；无材料定义返回 0 */
+export function maxCraftTimes(mats: MatView[]): number {
+  if (mats.length === 0) return 0
+  return Math.min(...mats.map((m) => Math.floor(m.have / Math.max(1, m.count))))
+}
+
 /** 强化材料：统一强化石（六部位/全品阶通用；2026-09-06 裁定）
  *  消耗 = 目标强化等级 L（当前 enhance + 1），线性增长（§21 装备强化） */
 const ENHANCE_STONE_ID = 'enh_stone'

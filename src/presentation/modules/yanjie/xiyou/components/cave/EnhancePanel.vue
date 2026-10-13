@@ -27,9 +27,19 @@
       </p>
 
       <div :class="{ 'xy-cave-ripple': rippling, 'xy-cave-shake': shaking }">
-        <button type="button" class="xy-cave-action" :disabled="!canEnhance" @click="doEnhance">强 化</button>
+        <div class="xy-cave-enh-actions">
+          <button type="button" class="xy-cave-action" :disabled="!canEnhance" @click="doEnhance">强 化</button>
+          <button
+            type="button"
+            class="xy-cave-action xy-cave-action--ghost"
+            :disabled="!canEnhance"
+            @click="doEnhanceToSuccess"
+          >
+            强化至成功
+          </button>
+        </div>
       </div>
-      <p class="xy-cave-enh-risk">失败将消耗材料，强化等级不变</p>
+      <p class="xy-cave-enh-risk">失败将消耗材料，强化等级不变；连败每次成功率 +10%，6 败后必成</p>
     </template>
   </div>
 </template>
@@ -82,6 +92,25 @@ function doEnhance(): void {
       rippling.value = false
     }, 700)
   } else {
+    shaking.value = true
+    window.setTimeout(() => {
+      shaking.value = false
+    }, 400)
+  }
+}
+
+/** 批量强化至当前级成功（连败保底必成，资源不足中途停；汇总 toast 由 store 弹） */
+function doEnhanceToSuccess(): void {
+  const inst = gearInst.value
+  if (!inst || !canEnhance.value) return
+  const r = pack.enhanceGearToSuccess(inst.instanceId)
+  if (r.success) {
+    rippling.value = true
+    window.setTimeout(() => {
+      rippling.value = false
+    }, 700)
+  } else if (r.blocked !== 'maxed') {
+    // 中途资源耗尽：抖动提示（maxed 理论被 canEnhance 拦住，防御不播动画）
     shaking.value = true
     window.setTimeout(() => {
       shaking.value = false

@@ -100,6 +100,11 @@ export function nextBreakNode(breakStage: number): BreakNode | null {
   return BREAK_NODES.find((n) => n.stage === breakStage + 1) ?? null
 }
 
+/** 可立即突破：有待突破节点 + 等级达前置（node.level-1）+ 丹与金钱齐备；突破按钮与四象栏角标共用 */
+export function breakReady(node: BreakNode | null, level: number, pillCount: number, money: number): boolean {
+  return !!node && level >= node.level - 1 && pillCount >= 1 && money >= node.money
+}
+
 /** 节点中文名（突破·壹/贰/叁/肆/伍） */
 export function breakNodeLabel(stage: number): string {
   return ['壹', '贰', '叁', '肆', '伍'][stage - 1] ?? String(stage)

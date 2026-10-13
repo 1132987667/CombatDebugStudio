@@ -9,6 +9,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import {
   BREAK_NODES,
   breakNodeLabel,
+  breakReady,
   computePlayerBase,
   computeStatBonuses,
   createPlayerProfile,
@@ -79,6 +80,22 @@ describe('playerProfile 玩家属性创建', () => {
     expect(isBreakBlocked(50, 5)).toBe(false)
     expect(isBreakBlocked(51, 5)).toBe(false)
     expect(isBreakBlocked(30, 0)).toBe(true)
+  })
+
+  it('breakReady 可立即突破：节点/等级/丹/钱四条件缺一不可（四象栏角标与突破按钮共用）', () => {
+    const node = nextBreakNode(0)
+    expect(node).not.toBeNull()
+    // 全齐：等级达 node.level-1（9 级可破至 10）即算 ready
+    expect(breakReady(node, (node?.level ?? 0) - 1, 1, node?.money ?? 0)).toBe(true)
+    // 等级差一级
+    expect(breakReady(node, (node?.level ?? 0) - 2, 1, node?.money ?? 0)).toBe(false)
+    // 无丹
+    expect(breakReady(node, node?.level ?? 0, 0, node?.money ?? 0)).toBe(false)
+    // 差一块钱（边界：恰好等于节点价即够）
+    expect(breakReady(node, node?.level ?? 0, 1, (node?.money ?? 0) - 1)).toBe(false)
+    expect(breakReady(node, node?.level ?? 0, 1, node?.money ?? 0)).toBe(true)
+    // 五阶圆满无节点
+    expect(breakReady(null, 60, 99, 999999)).toBe(false)
   })
 
   it('profile 快照带突破阶次（缺省 0，升级链透传不被重置）', () => {

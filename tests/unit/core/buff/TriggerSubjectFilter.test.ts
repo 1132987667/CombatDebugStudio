@@ -12,6 +12,7 @@ import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { ControlType, StackRule } from '@/domain/buff/types'
 import type { BuffConfig } from '@/domain/buff/types'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
+import { LogLevel } from '@/shared/types/battle-log'
 import { createMockLogManager } from '@tests/mocks/MockLogger'
 
 const mockEventBus = {
@@ -166,6 +167,28 @@ describe('Buff 触发器事件主体过滤（P0-2）', () => {
     cb({ phase: 'battle_start', sourceId: 'starter_2', currentTurn: 1 })
     expect(scriptCalls).toHaveLength(0)
     cb({ phase: 'battle_start', sourceId: 'starter_1', currentTurn: 1 })
+    expect(scriptCalls).toHaveLength(1)
+  })
+
+  it('condition 条件表达式暂不支持：注册时显式 WARN，不阻断注册', () => {
+    buffSystem.addBuff('cond_holder', 'spy_buff', {
+      ...createBuffConfig({ id: 'spy_buff' }),
+      triggers: [
+        {
+          phase: BattleTriggerPhase.TURN_START,
+          scriptId: 'spy_subject_script',
+          condition: "self.hp_ratio < 0.5",
+        },
+      ],
+    }, 1)
+    // WARN 落日志（静默忽略会误导配置者以为条件生效）
+    expect(mockLogger.addDebugLog).toHaveBeenCalledWith(
+      expect.stringContaining('condition'),
+      expect.objectContaining({ level: LogLevel.WARN }),
+    )
+    // 条件未生效但触发器本身照常注册（主体过滤后可触发）
+    const cb = getRegisteredCallback('turn_start')
+    cb({ phase: 'turn_start', sourceId: 'cond_holder', currentTurn: 1 })
     expect(scriptCalls).toHaveLength(1)
   })
 })

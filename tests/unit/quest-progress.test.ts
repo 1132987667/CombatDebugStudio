@@ -5,7 +5,7 @@
  *       日常/周常及 battle_win/kill_count/purchase/brew 推进源已按单机定位删除。
  */
 import { beforeEach, describe, expect, it } from 'vitest'
-import { progressQuests, questCompleted } from '@/presentation/modules/yanjie/xiyou/questProgress'
+import { progressQuests, questClaimable, questCompleted } from '@/presentation/modules/yanjie/xiyou/questProgress'
 import { quests } from '@/presentation/modules/yanjie/xiyou/xiyouData'
 import type { XiyouQuest } from '@/presentation/modules/yanjie/xiyou/types'
 
@@ -79,6 +79,30 @@ describe('questCompleted', () => {
   it('进度达标判定', () => {
     expect(questCompleted({ progress: 3, target: 3 })).toBe(true)
     expect(questCompleted({ progress: 2, target: 3 })).toBe(false)
+  })
+})
+
+describe('questClaimable（领取入口判定：QuestPanel 按钮与四象栏历练角标共用）', () => {
+  /** 构造仅覆盖被测字段的任务（其余字段不参与判定） */
+  const q = (over: Partial<XiyouQuest>): XiyouQuest => ({
+    type: '主线', name: 't', desc: '', progress: 0, target: 1, reward: '', ...over,
+  })
+
+  it('达成未领取且有结构化奖励才可领', () => {
+    expect(questClaimable(q({ progress: 1, rewards: [{ kind: 'money', amount: 10 }] }))).toBe(true)
+  })
+
+  it('进度未达不可领（边界：恰好等于 target 才算达成）', () => {
+    expect(questClaimable(q({ progress: 0, target: 1, rewards: [{ kind: 'money', amount: 10 }] }))).toBe(false)
+  })
+
+  it('已领取不可重复领', () => {
+    expect(questClaimable(q({ progress: 1, claimed: true, rewards: [{ kind: 'money', amount: 10 }] }))).toBe(false)
+  })
+
+  it('纯展示任务无 rewards 不出领取（勤修苦练类）', () => {
+    expect(questClaimable(q({ progress: 1 }))).toBe(false)
+    expect(questClaimable(q({ progress: 1, rewards: [] }))).toBe(false)
   })
 })
 

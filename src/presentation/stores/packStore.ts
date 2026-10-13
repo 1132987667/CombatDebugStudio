@@ -99,6 +99,14 @@ export type { GearAffix } from '@/domain/fengshen/types'
 /** 随机数生成器（可注入做确定性测试） */
 export type Rng = () => number
 
+/** 批量强化至成功的结果：attempts=尝试发数；blocked=中断原因（maxed=已达上限、
+ *  material=强化石不足、money=金钱不足），成功收尾为 null */
+export interface EnhanceBatchResult {
+  attempts: number
+  success: boolean
+  blocked: 'maxed' | 'material' | 'money' | null
+}
+
 /** 装备实例唯一 id（优先 crypto.randomUUID，降级时间戳+随机） */
 export function newInstanceId(): string {
   const c = globalThis.crypto as Crypto | undefined
@@ -769,27 +777,28 @@ export const usePackStore = defineStore('pack', () => {
   }
 
   /** 强化装备实例：扣材料与金钱 → 成功率判定 → 强化等级 +1（失败只扣消耗）。
-   *  按实例 id 在穿戴槽与背包中统一查找，未穿戴的背包装备同样可强化 */
-  function enhanceGear(instanceId: string, rng: Rng = Math.random): boolean {
+   *  按实例 id 在穿戴槽与背包中统一查找，未穿戴的背包装备同样可强化。
+   *  silent=true 时不弹逐发 toast（批量强化 enhanceGearToSuccess 用，结束后自行汇总） */
+  function enhanceGear(instanceId: string, rng: Rng = Math.random, silent = false): boolean {
     const inst = gearInstanceById(instanceId)
     const g = inst ? gearById(inst.itemId) : undefined
     if (!inst || !g) {
-      notification.toast('未找到该装备')
+      if (!silent) notification.toast('未找到该装备')
       return false
     }
     const maxEnhance = enhanceMaxByRarity(g.rarity)
     if (inst.enhance >= maxEnhance) {
-      notification.toast('已达强化上限')
+      if (!silent) notification.toast('已达强化上限')
       return false
     }
     const mat = enhanceMaterialOf(inst.enhance)
     if ((inventory.value[mat.itemId] ?? 0) < mat.count) {
-      notification.toast(`强化材料不足（需要「${mat.name}」×${mat.count}）`, 'warning')
+      if (!silent) notification.toast(`强化材料不足（需要「${mat.name}」×${mat.count}）`, 'warning')
       return false
     }
     const cost = enhanceCost(inst.enhance, g.rarity)
     if (currency.money < cost) {
-      notification.toast(`金钱不足（需要 ${cost}）`, 'warning')
+      if (!silent) notification.toast(`金钱不足（需要 ${cost}）`, 'warning')
       return false
     }
     inventory.value[mat.itemId] = (inventory.value[mat.itemId] ?? 0) - mat.count
@@ -799,7 +808,7 @@ export const usePackStore = defineStore('pack', () => {
       inst.enhance += 1
       inst.enhanceFails = 0
       scheduleSave()
-      notification.toast(`强化成功！「${g.name}」强化 +${inst.enhance}`, 'success')
+      if (!silent) notification.toast(`强化成功！「${g.name}」强化 +${inst.enhance}`, 'success')
       return true
     }
     inst.enhanceFails = (inst.enhanceFails ?? 0) + 1
@@ -809,12 +818,47 @@ export const usePackStore = defineStore('pack', () => {
       inventory.value[ENH_PROTECT_ID] = (inventory.value[ENH_PROTECT_ID] ?? 0) - 1
       if (inventory.value[ENH_PROTECT_ID]! <= 0) delete inventory.value[ENH_PROTECT_ID]
       scheduleSave()
-      notification.toast(`强化失败，保护符保住了「${mat.name}」`, 'warning')
+      if (!silent) notification.toast(`强化失败，保护符保住了「${mat.name}」`, 'warning')
       return false
     }
     scheduleSave()
-    notification.toast(`强化失败，「${g.name}」等级不变（连败 ${inst.enhanceFails}，下次成功率 +10%）`, 'error')
+    if (!silent) notification.toast(`强化失败，「${g.name}」等级不变（连败 ${inst.enhanceFails}，下次成功率 +10%）`, 'error')
     return false
+  }
+
+  /** 强化至成功：连点直到当前等级 +1。保底规则（连败每败 +10%，6 败后 100%）保证最多 7 发必成，
+   *  循环天然有界；资源耗尽/已达上限中途停。逐发静默（silent），结束后汇总一条 toast。 */
+  function enhanceGearToSuccess(instanceId: string, rng: Rng = Math.random): EnhanceBatchResult {
+    const inst = gearInstanceById(instanceId)
+    const g = inst ? gearById(inst.itemId) : undefined
+    if (!inst || !g) return { attempts: 0, success: false, blocked: 'maxed' }
+    if (inst.enhance >= enhanceMaxByRarity(g.rarity)) return { attempts: 0, success: false, blocked: 'maxed' }
+
+    const mat = enhanceMaterialOf(inst.enhance)
+    if ((inventory.value[mat.itemId] ?? 0) < mat.count) return { attempts: 0, success: false, blocked: 'material' }
+    if (currency.money < enhanceCost(inst.enhance, g.rarity)) return { attempts: 0, success: false, blocked: 'money' }
+
+    let attempts = 0
+    // 20 发纯防死循环守卫：正常连败 6 后第 7 发必成（成功率公式封顶 100）
+    while (attempts < 20) {
+      const ok = enhanceGear(instanceId, rng, true)
+      attempts++
+      if (ok) {
+        notification.toast(`强化成功！「${g.name}」强化 +${inst.enhance}（共 ${attempts} 发${attempts > 1 ? '，连败后保底必成' : ''}）`, 'success')
+        return { attempts, success: true, blocked: null }
+      }
+      // 失败后资源预检：不够下一发则中断（enhanceGear 已扣掉本发消耗）
+      const nextMat = enhanceMaterialOf(inst.enhance)
+      if ((inventory.value[nextMat.itemId] ?? 0) < nextMat.count) {
+        notification.toast(`强化中断：强化石不足（已尝试 ${attempts} 发，当前 +${inst.enhance}）`, 'warning')
+        return { attempts, success: false, blocked: 'material' }
+      }
+      if (currency.money < enhanceCost(inst.enhance, g.rarity)) {
+        notification.toast(`强化中断：金钱不足（已尝试 ${attempts} 发，当前 +${inst.enhance}）`, 'warning')
+        return { attempts, success: false, blocked: 'money' }
+      }
+    }
+    return { attempts, success: false, blocked: null }
   }
 
   /**
@@ -1692,6 +1736,7 @@ export const usePackStore = defineStore('pack', () => {
     equip,
     unequip,
     enhanceGear,
+    enhanceGearToSuccess,
     starGear,
     starFodderCount,
     washGear,

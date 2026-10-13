@@ -57,13 +57,28 @@
       </p>
 
       <div class="xy-cave-alc-action">
+        <div class="xy-cave-alc-batch" role="radiogroup" aria-label="炼制炉数">
+          <button
+            v-for="n in BATCH_OPTIONS"
+            :key="n"
+            type="button"
+            role="radio"
+            :aria-checked="batch === n"
+            class="xy-cave-alc-batch__opt"
+            :class="{ 'is-selected': batch === n }"
+            :disabled="brewing"
+            @click="batch = n"
+          >
+            ×{{ n }}
+          </button>
+        </div>
         <button
           type="button"
           class="xy-cave-action"
           :disabled="!selected || brewing"
           @click="brew"
         >
-          {{ brewing ? '炼 制 中…' : '开 始 炼 制' }}
+          {{ brewing ? '炼 制 中…' : batch > 1 ? `炼 制 ×${batch}` : '开 始 炼 制' }}
         </button>
       </div>
     </div>
@@ -78,7 +93,7 @@ import { usePackStore } from '@/presentation/stores/packStore'
 import type { XiyouRecipe } from '../../types'
 
 import { alchemyRecipes } from '../../xiyouData'
-import { itemIdByName, itemName, missingMatsText, qualityOf, type MatView } from '../../caveLogic'
+import { itemIdByName, itemName, maxCraftTimes, missingMatsText, qualityOf, type MatView } from '../../caveLogic'
 import type { XiyouQuality } from '../../types'
 import { qualityClassOf } from '../../quality'
 
@@ -89,6 +104,10 @@ const recipes = alchemyRecipes
 const selected = ref<XiyouRecipe | null>(null)
 const brewing = ref(false)
 const rippling = ref(false)
+
+/** 批量炼制档位（×1 即原有单炉；材料不足档位时按可炼炉数取整） */
+const BATCH_OPTIONS = [1, 5, 10, 20] as const
+const batch = ref<number>(1)
 
 function select(r: XiyouRecipe): void {
   if (brewing.value) return
@@ -112,12 +131,8 @@ function materialsOf(r: XiyouRecipe): MatView[] {
   })
 }
 
-function canCraft(r: XiyouRecipe): boolean {
-  const mats = materialsOf(r)
-  return mats.length > 0 && mats.every((m) => m.enough)
-}
-
-/** 炼制：1.5s 后结算（防连点 + 炉火动画）。产出数量取丹方 count（至少 1 颗），材料不足/无产出定义不扣料 */
+/** 炼制：1.5s 后结算（防连点 + 炉火动画）。按 batch 档位批量开炉，材料不足档位时
+ *  取整到可炼炉数；产出 = 炉数 × 丹方 count（至少 1 颗）。1.5s 只播一次（N 炉一次结算） */
 function brew(): void {
   const r = selected.value
   if (!r || brewing.value) return
@@ -126,21 +141,31 @@ function brew(): void {
     notification.toast(`炼制失败：未找到「${r.name}」的产出定义`, 'error')
     return
   }
-  if (!canCraft(r)) {
-    const missing = missingMatsText(materialsOf(r))
+  const views = materialsOf(r)
+  const nMax = maxCraftTimes(views)
+  if (nMax < 1) {
+    const missing = missingMatsText(views)
     notification.toast(missing ? `材料不足：${missing}` : '材料不足，无法开炉', 'error')
     return
   }
+  const times = Math.min(batch.value, nMax)
   brewing.value = true
   window.setTimeout(() => {
-    for (const m of r.materials ?? []) pack.removeItem(m.itemId, m.count)
-    const outCount = Math.max(1, r.count ?? 1)
+    // 结算窗内材料可能被其他面板消耗：结算时重验，不足则整炉失败不扣不产（防半扣脏状态）
+    if (maxCraftTimes(materialsOf(r)) < times) {
+      notification.toast(`炼制中断：结算时「${r.name}」材料已不足`, 'error')
+      brewing.value = false
+      return
+    }
+    for (const m of r.materials ?? []) pack.removeItem(m.itemId, m.count * times)
+    const outCount = times * Math.max(1, r.count ?? 1)
     pack.addItem(outId, outCount)
     rippling.value = true
     window.setTimeout(() => {
       rippling.value = false
     }, 700)
-    notification.toast(`炼制成功！获得「${r.name}」×${outCount}`, 'success')
+    const clipped = times < batch.value ? `（材料仅够 ${times} 炉）` : ''
+    notification.toast(`炼制成功！获得「${r.name}」×${outCount}${times > 1 ? ` · 共 ${times} 炉` : ''}${clipped}`, 'success')
     brewing.value = false
   }, 1500)
 }

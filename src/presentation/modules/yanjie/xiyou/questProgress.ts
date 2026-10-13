@@ -7,7 +7,7 @@
  * NOTE: 本模块只 import 数据层（xiyouData/types），不依赖 store 不成环；
  *       奖励发放（需 playerStore/packStore）由 QuestPanel 领取时执行。
  */
-import type { QuestGoalKind } from './types'
+import type { QuestGoalKind, XiyouQuest } from './types'
 import { quests } from './xiyouData'
 
 /** 推进匹配目标类型的所有未达成任务；clear_scene 仅当 meta.sceneId 与 goal.sceneId 一致时推进 */
@@ -24,4 +24,9 @@ export function progressQuests(kind: QuestGoalKind, amount = 1, meta?: { sceneId
 /** 任务是否达成（供领取校验 / UI 判定） */
 export function questCompleted(q: { progress: number; target: number }): boolean {
   return q.progress >= q.target
+}
+
+/** 结构化任务达成未领取即出领取入口（纯展示任务无 rewards，不出）；QuestPanel 领取按钮与四象栏角标共用 */
+export function questClaimable(q: XiyouQuest): boolean {
+  return !!q.rewards?.length && !q.claimed && q.progress >= q.target
 }

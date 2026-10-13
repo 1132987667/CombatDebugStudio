@@ -42,7 +42,7 @@ describe('BattleLogManager.setMuted', () => {
     manager.removeListener(listener)
   })
 
-  it('muted=false 时恢复通知', () => {
+  it('muted=false 时恢复通知', async () => {
     const listener = vi.fn()
     manager.addListener(listener)
     listener.mockClear()
@@ -55,15 +55,16 @@ describe('BattleLogManager.setMuted', () => {
     })
     expect(listener).not.toHaveBeenCalled()
 
-    // 解除静默时补发一次通知，监听器拿到当前全量日志
+    // 解除静默时补发一次通知（同步直达），监听器拿到当前全量日志
     manager.setMuted(false)
     expect(listener).toHaveBeenCalledTimes(1)
     expect(listener).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ type: LogType.BATTLE })]),
     )
 
-    // 解除后正常写入恢复逐条通知
+    // 解除后正常写入恢复通知（写入路径走微任务合帧，P4 批量广播优化）
     manager.addSystemLog({ message: '恢复后' })
+    await Promise.resolve()
     expect(listener).toHaveBeenCalledTimes(2)
     manager.removeListener(listener)
   })

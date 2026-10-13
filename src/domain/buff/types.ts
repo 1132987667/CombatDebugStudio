@@ -447,6 +447,14 @@ export interface TriggerAction {
   cooldown?: number
   /** 最大触发次数（-1表示无限制） */
   maxTriggers?: number
+  /**
+   * 触发条件表达式（如 "self.hp_ratio < 0.5"、"damageCategory == 'elemental'"）。
+   * HACK: 尚无条件求值器——字段经 BuffConfigResolver 透传到运行时，但
+   * registerTriggersForInstance 不评估它，配置了等同未配置（注册时 WARN）。
+   * 接入时在此处声明数据源契约：hp_ratio 需持有者实体，damageCategory 需
+   * 事件发射点在 extra 中携带（当前 DAMAGE_TAKEN 的 extra 无此字段）。
+   */
+  condition?: string
 }
 
 // 删除，改为从 battle/type/types.ts 导入

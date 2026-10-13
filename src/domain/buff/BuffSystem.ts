@@ -416,6 +416,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       //       运行时动态创建（调用方 config.triggers）的 Buff 未经解析器，此处兜底归一化。
       const phase = normalizeTriggerPhase(trigger.phase, buffInstance.buffId)
       const state = runtime[t]
+      // condition 条件表达式尚无条件求值器（见 TriggerAction.condition 注释）——
+      // 配置了等同未配置，显式 WARN 替代静默忽略，配置者至少能在控制台看到
+      if (trigger.condition) {
+        this.logger.addDebugLog(
+          `[BuffSystem] ${buffInstance.buffId} 触发器 ${trigger.scriptId} 的 condition "${trigger.condition}" 暂不支持，已忽略（无条件触发）`,
+          { level: LogLevel.WARN },
+        )
+      }
 
       const callback = (ctx: TriggerEventContext) => {
         // NOTE: 事件主体过滤——触发事件按 phase 广播到所有监听器（与持有者无关），触发器

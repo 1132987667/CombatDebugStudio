@@ -370,14 +370,26 @@ export class BattleLogManager implements IBattleLogManager {
    * 获取所有战斗日志
    */
   getAllLogs(): LogEntry[] {
-    const array = [
-      ...this.battleLogs,
-      ...this.actionLogs,
-      ...this.systemLogs,
-      ...this.itemLogs,
-      ...this.debugLogs,
-    ]
-    return array.sort((a, b) => a.index - b.index)
+    // NOTE: 五个来源数组均为尾部 push + 头部淘汰（slice），内部按 index 有序，
+    //       五路归并 O(N) 替代全量 sort O(N log N)。此方法经 emitLogUpdate 在每条
+    //       日志后触发（战斗中 ~1100 条），sort 的比较器调用是日志面板最大的固定税。
+    const sources = [this.battleLogs, this.actionLogs, this.systemLogs, this.itemLogs, this.debugLogs]
+    const total = sources.reduce((sum, s) => sum + s.length, 0)
+    const merged: LogEntry[] = new Array(total)
+    const cursors = [0, 0, 0, 0, 0]
+    for (let i = 0; i < total; i++) {
+      let best = -1
+      let bestIndex = Infinity
+      for (let s = 0; s < sources.length; s++) {
+        const candidate = sources[s][cursors[s]]
+        if (candidate !== undefined && candidate.index < bestIndex) {
+          best = s
+          bestIndex = candidate.index
+        }
+      }
+      merged[i] = sources[best][cursors[best]++]
+    }
+    return merged
   }
 
   /**
@@ -392,7 +404,7 @@ export class BattleLogManager implements IBattleLogManager {
    */
   clearLogs(): void {
     this.battleLogs = []
-    this.emitLogUpdate()
+    this.broadcastNow()
   }
 
   /**
@@ -406,7 +418,7 @@ export class BattleLogManager implements IBattleLogManager {
       else if (type === LogType.ITEM) this.itemLogs = []
       else if (type === LogType.DEBUG) this.debugLogs = []
     }
-    this.emitLogUpdate()
+    this.broadcastNow()
   }
 
   /**
@@ -422,6 +434,9 @@ export class BattleLogManager implements IBattleLogManager {
   importLogs(logsData: string): void {
     try {
       const importedLogs = JSON.parse(logsData) as BattleLogEntry[]
+      // NOTE: 外部数据 index 顺序无保证，排序一次恢复"数组内部按 index 有序"的
+      //       归并前提（getAllLogs 的五路归并依赖它）
+      importedLogs.sort((a, b) => a.index - b.index)
       this.battleLogs = importedLogs
       this.emitLogUpdate()
     } catch (error) {
@@ -460,7 +475,8 @@ export class BattleLogManager implements IBattleLogManager {
    */
   setMuted(muted: boolean): void {
     this.muted = muted
-    if (!muted) this.emitLogUpdate()
+    // 解除静默的补发是显式一次性动作，同步直达（生成器收尾/测试依赖立即通知）
+    if (!muted) this.broadcastNow()
   }
 
   /**
@@ -487,6 +503,9 @@ export class BattleLogManager implements IBattleLogManager {
 
   private listeners: Set<(logs: LogEntry[]) => void> = new Set()
 
+  /** emitLogUpdate 合帧标记：同 tick 多次通知合并为一次微任务广播 */
+  private _logUpdateScheduled = false
+
   /**
    * 添加日志更新监听器
    */
@@ -506,6 +525,23 @@ export class BattleLogManager implements IBattleLogManager {
    * 触发日志更新通知
    */
   private emitLogUpdate(): void {
+    if (this.muted || this.listeners.size === 0) {
+      return
+    }
+    // NOTE: 同 tick 内多条日志合并为一次广播——一条结算链常连发 5-10 条日志
+    //       （sub 缓冲 flush 逐条 addBattleLog），逐条全量重建+广播会等比放大
+    //       Vue 重渲染次数。微任务级延迟对 UI 无感；回调执行时重新拉取最新日志。
+    //       setMuted(false) 的补发走 broadcastNow 保持同步（生成器收尾依赖立即通知）。
+    if (this._logUpdateScheduled) return
+    this._logUpdateScheduled = true
+    Promise.resolve().then(() => {
+      this._logUpdateScheduled = false
+      this.broadcastNow()
+    })
+  }
+
+  /** 立即同步广播当前过滤日志（绕过合帧） */
+  private broadcastNow(): void {
     if (this.muted || this.listeners.size === 0) {
       return
     }

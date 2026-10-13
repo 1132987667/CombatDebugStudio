@@ -183,6 +183,30 @@ export function currentTurnAt(evs: UnifiedEvent[], t: number): number {
   return turn
 }
 
+/**
+ * 回合号单调游标：播放头 t 递增时增量推进（均摊 O(1)），回退（拖进度条）或换
+ * 事件数组时从头重扫。回放派生 computed 每帧调用，从头线性扫是长战斗播放掉帧主因。
+ */
+export function createTurnCursor(evs: UnifiedEvent[]): { at(t: number): number } {
+  let pos = 0
+  let turn = 0
+  return {
+    at(t: number): number {
+      if (pos > 0 && evs[pos - 1].timestamp > t) {
+        pos = 0
+        turn = 0
+      }
+      while (pos < evs.length && evs[pos].timestamp <= t) {
+        const e = evs[pos++]
+        if (e.phase === 'turn_flow' && (e.payload as Record<string, unknown>)?.action === 'start') {
+          turn = typeof e.turn === 'number' ? e.turn : turn
+        }
+      }
+      return turn
+    },
+  }
+}
+
 /** 当前时点最近事件（无则 null） */
 export function lastEventAt(evs: UnifiedEvent[], t: number): UnifiedEvent | null {
   let last: UnifiedEvent | null = null
@@ -191,6 +215,24 @@ export function lastEventAt(evs: UnifiedEvent[], t: number): UnifiedEvent | null
     last = e
   }
   return last
+}
+
+/** 最近事件单调游标（语义同 lastEventAt，增量推进；见 createTurnCursor 注释） */
+export function createLastEventCursor(evs: UnifiedEvent[]): { at(t: number): UnifiedEvent | null } {
+  let pos = 0
+  let last: UnifiedEvent | null = null
+  return {
+    at(t: number): UnifiedEvent | null {
+      if (pos > 0 && evs[pos - 1].timestamp > t) {
+        pos = 0
+        last = null
+      }
+      while (pos < evs.length && evs[pos].timestamp <= t) {
+        last = evs[pos++]
+      }
+      return last
+    },
+  }
 }
 
 /** 时长格式化 mm:ss.mmm */

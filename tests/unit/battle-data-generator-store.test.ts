@@ -63,6 +63,11 @@ function makeBattleSystem() {
   const battleSystem = {
     getHeadless: vi.fn(() => false),
     setHeadless: vi.fn(),
+    // trace 门控访问器（P4：批量模拟非录制场景关门控），最小 isEnabled/setPhaseEnabled 存根
+    getTraceEventCollector: vi.fn(() => ({
+      isEnabled: vi.fn(() => true),
+      setPhaseEnabled: vi.fn(),
+    })),
     regenerateBattleId: vi.fn(() => {
       battleId = `b_${Math.random()}`
     }),

@@ -344,6 +344,15 @@ export class BattleSystem {
   }
 
   /**
+   * 结构化追踪收集器访问器（批量模拟按 phase 关门控用）。
+   * 追踪是调试数据管道，与战斗事件流（events）独立——关门控只影响 traceEvents，
+   * 不影响战报摘要/回放模拟（它们只消费 events）。
+   */
+  public getTraceEventCollector(): TraceEventCollector {
+    return this.traceCollector
+  }
+
+  /**
    * 初始化战斗
    * @param {BattleEntity[]} allyParticipants - 我方参与者数组
    * @param {BattleEntity[]} enemyParticipants - 敌方参与者数组

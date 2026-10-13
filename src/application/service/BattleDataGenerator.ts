@@ -26,6 +26,7 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 
 import { LogType, LogLevel, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { TracePhase } from '@/shared/types/trace-event'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import { projectSnapshotLogs } from '@/domain/battle/logs/BattleLogProjector'
 import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
@@ -140,6 +141,22 @@ export class BattleDataGenerator {
     if (dg) dg.enabled = false
     const prevHeadless = this.battleSystem.getHeadless()
     this.battleSystem.setHeadless(true)
+
+    // NOTE: 批量模拟不消费实时 trace——非录制场景把全部 phase 门控关闭，省掉每场数百轮
+    //       的 trace emit/索引维护/环形淘汰（50 场 × 200 轮批量下是数十万次纯开销）。
+    //       战报摘要/回放模拟只消费 events（战斗事件流），与 traceEvents 是独立管道，
+    //       关门控不影响；RECORD 格式与"存入昊天镜"的调试树依赖 traceEvents，保持开启。
+    const exportFormat = options.format ?? BattleExportFormat.TXT
+    const needsTrace = options.record === true || exportFormat === BattleExportFormat.RECORD
+    const collector = this.battleSystem.getTraceEventCollector()
+    const tracePhases = Object.values(TracePhase) as TracePhase[]
+    const prevTraceGates = new Map<TracePhase, boolean>()
+    if (!needsTrace) {
+      for (const p of tracePhases) {
+        prevTraceGates.set(p, collector.isEnabled(p))
+        collector.setPhaseEnabled(p, false)
+      }
+    }
 
     try {
       for (let i = 0; i < total; i++) {
@@ -257,6 +274,9 @@ export class BattleDataGenerator {
     } finally {
       // 恢复原始设置
       this.battleSystem.setHeadless(prevHeadless)
+      for (const [p, enabled] of prevTraceGates) {
+        collector.setPhaseEnabled(p, enabled)
+      }
       const dgRestore = this.getDebugGate()
       if (dgRestore) dgRestore.enabled = prevDebugEnabled
       LoggerProvider.logger.setAutoCleanup(true)
@@ -274,7 +294,7 @@ export class BattleDataGenerator {
     options.onProgress?.(1, total, total)
 
     if (!this._cancelled && battleLogs.length > 0) {
-      const format = options.format ?? BattleExportFormat.TXT
+      const format = exportFormat
       if (format === BattleExportFormat.JSON) {
         //  统一存档 JSON：单场为单个 UnifiedArchive（昊天镜可直接导入），多场为数组（导入第一场）
         if (archives.length === 1) {

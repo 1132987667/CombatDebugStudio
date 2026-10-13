@@ -26,9 +26,9 @@ import {
 import { validateUnified, type ValidationResult } from '@/domain/battle/replay/unified/unified-validator'
 import {
   advanceSimTo,
-  currentTurnAt,
+  createTurnCursor,
+  createLastEventCursor,
   formatTime,
-  lastEventAt,
   cloneSimTable,
   buildSimCheckpoints,
   nearestCheckpoint,
@@ -40,7 +40,9 @@ import { isLegacyRecordedBattle, migrateUnifiedArchive } from '@/domain/battle/r
 import { diffArchives, createRateVariant, createRollVariant, diffSummary, type DiffRow } from '@/domain/battle/replay/unified/unified-diff'
 import { createBreakpoint, findHitBreakpoints, type BreakpointConfig } from '@/domain/battle/replay/unified/unified-breakpoint'
 import { summarizeBattle, type BattleSummary, type UnitSummary } from '@/domain/battle/replay/unified/unified-summary'
-import { deriveAttrsAt } from '@/domain/battle/replay/unified/unified-attrs'
+import {
+  createAttrsCursor,
+} from '@/domain/battle/replay/unified/unified-attrs'
 import { runValidationPipeline } from '@/shared/utils/unified-worker'
 import { UnifiedArchiveService, type RecordingMeta } from '@/application/service/UnifiedArchiveService'
 import { LiveBattleStream, type LiveParticipant } from '@/application/service/LiveBattleStream'
@@ -229,9 +231,16 @@ export const useHaotianStore = defineStore('haotian', () => {
   const service = new UnifiedArchiveService()
 
   const pname = computed(() => (archive.value ? pnameOf(archive.value) : (id: string) => id))
-  const evs = computed(() => indices.value?.evs ?? [])
+  // NOTE: 空兜底用模块级常量保持引用稳定——内联 [] 每次求值新建引用，
+  //       回放游标按 evs 引用对齐会被迫每帧重建（退化为从头扫）
+  const EMPTY_EVENTS: UnifiedEvent[] = []
+  const evs = computed(() => indices.value?.evs ?? EMPTY_EVENTS)
   const byId = computed(() => indices.value?.byId ?? new Map<string, UnifiedEvent>())
   const duration = computed(() => indices.value?.duration ?? 0)
+  // 回放派生游标槽位：evs 与游标绑定（切存档时 indices 重建出新的 evs，游标随之重建）
+  let turnCursor: { evs: UnifiedEvent[]; cur: ReturnType<typeof createTurnCursor> } | null = null
+  let lastEventCursor: { evs: UnifiedEvent[]; cur: ReturnType<typeof createLastEventCursor> } | null = null
+  let attrsCursor: { evs: UnifiedEvent[]; cur: ReturnType<typeof createAttrsCursor> } | null = null
   const debugNodes = computed(() => allNodesFlat(debugEntries.value))
   const selectedEvent = computed<UnifiedEvent | null>(() =>
     selectedId.value ? byId.value.get(selectedId.value) ?? null : null,
@@ -267,10 +276,32 @@ export const useHaotianStore = defineStore('haotian', () => {
   })
   /** 当前选中事件的行动角色（sourceId 初始快照），供"角色属性"面板行动 tab */
   const selectedActor = computed<ArchiveParticipant | null>(() => participantOf(selectedEvent.value?.sourceId))
-  /** 当前回放时刻的属性快照（id → attributes，沿 attribute_recalc 事件推演） */
-  const attrsAt = computed(() => (archive.value ? deriveAttrsAt(archive.value, evs.value, playback.value.t) : new Map<string, Record<string, number>>()))
-  const currentTurn = computed(() => currentTurnAt(evs.value, playback.value.t))
-  const lastEvent = computed(() => lastEventAt(evs.value, playback.value.t))
+  /** 当前回放时刻的属性快照（id → attributes，沿 attribute_recalc 事件推演）。
+   *  三条派生链走单调游标增量推进（见 createTurnCursor 注释）：播放头每帧更新，
+   *  纯函数版从头线性扫是长战斗播放掉帧主因；evs 数组更换（切存档）时游标重建。 */
+  const attrsAt = computed(() => {
+    const arch = archive.value
+    if (!arch) return new Map<string, Record<string, number>>()
+    const list = evs.value
+    if (!attrsCursor || attrsCursor.evs !== list) {
+      attrsCursor = { evs: list, cur: createAttrsCursor(arch, list) }
+    }
+    return attrsCursor.cur.at(playback.value.t)
+  })
+  const currentTurn = computed(() => {
+    const list = evs.value
+    if (!turnCursor || turnCursor.evs !== list) {
+      turnCursor = { evs: list, cur: createTurnCursor(list) }
+    }
+    return turnCursor.cur.at(playback.value.t)
+  })
+  const lastEvent = computed(() => {
+    const list = evs.value
+    if (!lastEventCursor || lastEventCursor.evs !== list) {
+      lastEventCursor = { evs: list, cur: createLastEventCursor(list) }
+    }
+    return lastEventCursor.cur.at(playback.value.t)
+  })
   const bookmarkCount = computed(() => bookmarks.value.size)
   const summary = computed<BattleSummary | null>(() =>
     archive.value ? summarizeBattle(archive.value, summaryCut.value === 'playback' ? playback.value.t : undefined) : null,
@@ -511,21 +542,38 @@ export const useHaotianStore = defineStore('haotian', () => {
     return out
   }
 
-  /** 实时更新：首次全量装载；后续增量追加（重建索引/树，保留选中态，跟随尾部） */
+  /** 实时更新：首次全量装载；后续增量追加（重建索引/树，保留选中态，跟随尾部）。
+   *  NOTE: 索引/调试树重建是全量 O(N)，事件密集（4x/5x 自动战斗）时每帧重建是
+   *        实时跟随卡顿主因——200ms 节流闸门，闸门期事件不丢（由下次 diff 补齐），
+   *        排兜底定时器保证尾部事件最终可见。 */
+  let liveLastRebuildAt = 0
+  let livePendingTimer: ReturnType<typeof setTimeout> | null = null
   function applyLive(): void {
     if (!liveStream || liveRaf) return
-    liveRaf = requestAnimationFrame(() => {
+    liveRaf = requestAnimationFrame((ts) => {
       liveRaf = 0
       if (!liveStream) return
+      const sinceLast = ts - liveLastRebuildAt
+      if (liveLastRebuildAt > 0 && sinceLast < 200) {
+        if (!livePendingTimer) {
+          livePendingTimer = setTimeout(() => {
+            livePendingTimer = null
+            applyLive()
+          }, 200 - sinceLast + 1)
+        }
+        return
+      }
       const arch = archive.value
       // 首次装载或切换场次：全量
       if (!arch || arch.battleId !== liveStream.getBattleId()) {
+        liveLastRebuildAt = ts
         void loadArchive(liveStream.currentArchive(), { followEnd: true, skipWorker: true, label: '实时战斗' })
         return
       }
       const existing = new Set(arch.events.map((e) => e.id))
       const fresh = liveStream.getEvents().filter((e) => !existing.has(e.id))
       if (!fresh.length) return
+      liveLastRebuildAt = ts
       arch.events.push(...fresh)
       const idx = buildArchiveIndices(arch)
       indices.value = idx
@@ -582,6 +630,11 @@ export const useHaotianStore = defineStore('haotian', () => {
       followWatcher()
       followWatcher = null
     }
+    if (livePendingTimer) {
+      clearTimeout(livePendingTimer)
+      livePendingTimer = null
+    }
+    liveLastRebuildAt = 0
     liveFollowArmed.value = false
     liveStream?.dispose()
     liveStream = null

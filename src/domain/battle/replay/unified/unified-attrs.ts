@@ -79,3 +79,42 @@ export function deriveAttrsAt(log: UnifiedArchive, evs: UnifiedEvent[], t: numbe
   }
   return out
 }
+
+/**
+ * 属性快照单调游标（语义同 deriveAttrsAt，播放头递增时增量推进；回退时重扫）。
+ * 内部维护工作 Map 做增量 patch，at() 返回浅拷贝——拷贝 O(参与者数) 代替 O(事件数)
+ * 重扫，且引用每次变化，保证 Vue computed 链下游能感知更新。
+ */
+export function createAttrsCursor(
+  log: UnifiedArchive,
+  evs: UnifiedEvent[],
+): { at(t: number): Map<string, Record<string, number>> } {
+  const work = new Map<string, Record<string, number>>()
+  for (const p of log.initialState.participants) {
+    if (p.attributes) work.set(p.id, { ...p.attributes })
+  }
+  let pos = 0
+  return {
+    at(t: number): Map<string, Record<string, number>> {
+      if (pos > 0 && evs[pos - 1].timestamp > t) {
+        // 回退：从 initialState 重建工作 Map 重扫
+        pos = 0
+        work.clear()
+        for (const p of log.initialState.participants) {
+          if (p.attributes) work.set(p.id, { ...p.attributes })
+        }
+      }
+      while (pos < evs.length && evs[pos].timestamp <= t) {
+        const ev = evs[pos++]
+        const patches = extractAttrPatches(ev)
+        if (!patches.length) continue
+        const owner = String((ev.payload as Record<string, unknown>)?.entityId ?? ev.sourceId ?? ev.targetId ?? '')
+        if (!owner) continue
+        const attrs = work.get(owner)
+        if (!attrs) continue
+        for (const patch of patches) attrs[patch.code] = patch.value
+      }
+      return new Map(work)
+    },
+  }
+}

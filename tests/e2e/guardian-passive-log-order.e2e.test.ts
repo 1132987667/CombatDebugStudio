@@ -65,7 +65,7 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
 
     // 火护法攻击块：命中触发的法力过载/疾风叠步应挂在攻击之后
     const fireAction = actions.find((b) =>
-      blockText(b.header).startsWith('[友方]旧火护法'),
+      blockText(b.header).startsWith('[友方]火护法'),
     )
     expect(fireAction).toBeDefined()
     expect(subTexts(fireAction!)).toContain('法力过载')
@@ -78,7 +78,7 @@ describe('守护者被动日志顺序（攻击后触发 + 缓冲 flush）', () =
 
     // 金护法攻击块：火护法受击触发的复仇怒火应挂在对应攻击之后
     const goldAction = actions.find((b) =>
-      blockText(b.header).startsWith('[敌方]旧金护法'),
+      blockText(b.header).startsWith('[敌方]金护法'),
     )
     expect(goldAction).toBeDefined()
     expect(subTexts(goldAction!)).toContain('复仇怒火')

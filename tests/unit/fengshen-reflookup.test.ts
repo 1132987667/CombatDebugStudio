@@ -59,7 +59,7 @@ describe('GameDataApi 引用字典 / 元素选项', () => {
 
     expect(idx['crane_wing']).toBe('鹤翼阵')
     expect(idx['growth_balanced']).toBe('均衡型')
-    expect(idx['yaotu_fire']).toBe('旧火护法') // 旧体系沙盒实体带「旧」前缀
+    expect(idx['yaotu_fire']).toBe('火护法')
     expect(idx['fire']).toBe('火')
     expect(idx['buff_hit_reduction']).toBeDefined()
     expect(idx['mat_taomu']).toBe('桃木')

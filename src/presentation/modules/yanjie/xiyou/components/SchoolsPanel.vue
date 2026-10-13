@@ -312,6 +312,7 @@ function formatDesc(node: SchoolsNode): string {
     .replace('${skillKind}', node.skillKind ?? '')
     .replace('${cost}', String(node.cost?.[0] ?? ''))
     .replace('${value}', String(node.value?.[0] ?? ''))
+    .replace('${suffix}', node.suffix ?? '')
     .replace('${name}', node.name)
 }
 

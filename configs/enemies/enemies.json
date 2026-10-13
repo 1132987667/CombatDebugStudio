@@ -20,9 +20,6 @@
       "skill_boss_001_small",
       "skill_boss_001_ultimate"
     ],
-    "passiveSkillIds": [
-      "skill_boss_001_passive"
-    ],
     "affixPool": {
       "buffTier": 3,
       "count": 1
@@ -3961,7 +3958,7 @@
   },
   {
     "id": "enemy_079",
-    "name": "旧佛门叛徒首领",
+    "name": "佛门叛徒首领",
     "level": 26,
     "role": "yaokui",
     "stats": {
@@ -11311,7 +11308,7 @@
   },
   {
     "id": "yaotu_earth",
-    "name": "旧土护法",
+    "name": "土护法",
     "level": 10,
     "role": "yaotu",
     "stats": {
@@ -11324,7 +11321,7 @@
   },
   {
     "id": "yaotu_fire",
-    "name": "旧火护法",
+    "name": "火护法",
     "level": 10,
     "role": "yaotu",
     "stats": {
@@ -11343,7 +11340,7 @@
   },
   {
     "id": "yaotu_gold",
-    "name": "旧金护法",
+    "name": "金护法",
     "level": 10,
     "role": "yaotu",
     "stats": {
@@ -11359,7 +11356,7 @@
   },
   {
     "id": "yaotu_water",
-    "name": "旧水护法",
+    "name": "水护法",
     "level": 10,
     "role": "yaotu",
     "stats": {
@@ -11372,7 +11369,7 @@
   },
   {
     "id": "yaotu_wood",
-    "name": "旧木护法",
+    "name": "木护法",
     "level": 10,
     "role": "yaotu",
     "stats": {

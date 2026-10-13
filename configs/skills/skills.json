@@ -427,8 +427,8 @@
   },
   {
     "id": "skill_boss_001_ultimate",
-    "name": "山神降临",
-    "description": "终极技能：使自身进入山神状态，攻击力和防御力大幅提升，持续2回合",
+    "name": "古桃之怒",
+    "description": "终极技能：桃林妖气涌入体内，攻击力和防御力大幅提升，持续2回合",
     "cooldown": 5,
     "maxUses": 1,
     "selector": {

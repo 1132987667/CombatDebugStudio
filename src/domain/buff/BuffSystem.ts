@@ -867,6 +867,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         type: buffResolved?.polarity === 'negative' ? ActionResultType.DEBUFF : ActionResultType.BUFF,
         targetId: characterId,
         buffId: resolvedConfig.id,
+        // NOTE: 日志渲染走 effects[].buffName（EffectRenderer 兜底才显示 buffId）；
+        //       技能路径由 SkillExecutor 填充，此处补齐触发器/被动施加路径，防止内部 id 直出日志
+        buffName: resolvedConfig.name,
         instanceId,
         description: `${characterId} 获得 ${resolvedConfig.name}`,
       })

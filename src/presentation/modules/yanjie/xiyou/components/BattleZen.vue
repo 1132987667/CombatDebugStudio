@@ -9,6 +9,11 @@
           <span class="xy-battle-meta">Lv.{{ scene.levelRange?.[0] }}-{{ scene.levelRange?.[1] }}</span>
         </h2>
         <div class="xy-battle-head-tools">
+          <button type="button" class="xy-vs-toggle" :disabled="!battleLive"
+            :title="battleLive ? (store.isPaused ? '继续战斗' : '暂停战斗') : '当前无进行中的战斗'" @click="store.togglePause()">
+            <IconPlay v-if="store.isPaused" />
+            <IconPause v-else />
+          </button>
           <button type="button" class="xy-vs-speed" :title="`战斗速度 ${store.battleSpeed}x，点击切换`" @click="cycleSpeed">{{
             store.battleSpeed }}x</button>
         </div>
@@ -33,7 +38,7 @@
           <div class="xy-strip-session">
             <span class="xy-run-gain">经验 +{{ formatDisplayNumber(battleSession.exp) }}</span>
             <span class="xy-run-gain">金钱 +{{ formatDisplayNumber(battleSession.money) }}</span>
-            <span v-if="battleSession.xianyuan > 0" class="xy-run-gain">灵韵 +{{ battleSession.xianyuan }}</span>
+            <span v-if="battleSession.xianyuan > 0" class="xy-run-gain">灵韵 +{{ formatDisplayNumber(battleSession.xianyuan) }}</span>
             <span v-if="!battleSession.drops.length && battleSession.exp === 0" class="xy-strip-idle-text">暂无战利品</span>
             <span v-for="d in battleSession.drops" :key="d.itemId" class="xy-drop-chip">{{ sessionDropName(d.itemId) }}×{{ d.quantity
             }}</span>
@@ -82,14 +87,7 @@
             <button type="button" class="xy-run-btn" @click="startRun">再来一次</button>
             <button type="button" class="xy-run-btn xy-run-btn--primary" @click="emit('open-map')">打开路引</button>
           </div>
-          <div class="xy-run-loot">
-            <span class="xy-run-gain">整关经验 +{{ run.totals.exp }}</span>
-            <span v-if="run.totals.levelUps > 0" class="xy-run-gain xy-run-gain--level">升级 ×{{ run.totals.levelUps }}</span>
-            <span class="xy-run-gain">金钱 +{{ run.totals.money }}</span>
-            <span v-if="run.totals.xianyuan > 0" class="xy-run-gain">灵韵 +{{ run.totals.xianyuan }}</span>
-            <span v-for="d in mergedDrops(run.totals.drops)" :key="d.itemId" class="xy-drop-chip">{{ itemName(d.itemId) }}×{{ d.quantity
-            }}</span>
-          </div>
+          <!-- 整关收益不再重复展示：battle 态信息条的「本次挂机」累计已覆盖，且战利品已实时入包 -->
         </div>
 
         <div v-else-if="run.phase === 'retreated'" class="xy-run xy-run--fail" aria-label="撤离结算">
@@ -159,6 +157,8 @@ import type { EnemyDrop } from '@/shared/types/enemy'
 import { formatDisplayNumber } from '@/shared/utils/math'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import IconPause from '~icons/app/pause'
+import IconPlay from '~icons/app/play'
 import {
   buildBattleTeams,
   dropsForEnemyIds,
@@ -357,6 +357,9 @@ const run = reactive({
   firstClear: false,
   stars: 0,
 })
+
+/** 暂停/继续按钮可用态：战斗态且自动播放中——手动停战时引擎本就静止（ControlBar 同语义），无暂停可言 */
+const battleLive = computed(() => run.phase === 'battle' && store.autoPlayMode)
 
 /** 中途撤离（§6.3）：场数 ≥2 的关卡开放，已入包资源保留、不计通关星级 */
 function retreat(): void {
@@ -750,6 +753,34 @@ onUnmounted(() => {
   }
 }
 
+/* 暂停/继续图标按钮（倍速左侧，同风格）：战斗态可点，其余态置灰 */
+.xy-vs-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 7px;
+  border: 1px solid var(--xy-ink-line);
+  border-radius: var(--radius-sm);
+  background: var(--xy-paper-warm);
+  color: var(--xy-ink-2);
+  cursor: pointer;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--xy-gold);
+    color: var(--xy-gold);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
 /* 双行阵容：敌方一行在上（2~4 员，席位阶梯）、我方一行在下（主角 + 3 伙伴），ParticipantCard 演武台同款 */
 .xy-vitals {
   flex-shrink: 0;
@@ -975,11 +1006,6 @@ onUnmounted(() => {
   font-size: var(--font-size-md);
   color: var(--xy-jade);
   font-variant-numeric: tabular-nums;
-}
-
-.xy-run-gain--level {
-  color: var(--xy-gold);
-  font-weight: var(--font-weight-bold);
 }
 
 .xy-run-stars {

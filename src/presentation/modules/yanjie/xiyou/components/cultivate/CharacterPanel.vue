@@ -72,11 +72,11 @@
         </div>
         <div class="xy-vital-bar xy-vital-bar--exp" role="img" :aria-label="`经验 ${player.exp}/${player.expNeed}`">
           <div class="xy-vital-fill xy-vital-fill--exp" :style="{ width: expPct + '%' }"></div>
-          <span class="xy-vital-text">经验 {{ player.exp }} / {{ player.expNeed }}</span>
+          <span class="xy-vital-text">经验 {{ fmt(player.exp) }} / {{ fmt(player.expNeed) }}</span>
         </div>
         <div class="xy-char-meta">
-          <span class="xy-coin">金钱 {{ currency.money }}</span>
-          <span class="xy-coin">灵韵 {{ currency.xianyuan }}</span>
+          <span class="xy-coin">金钱 {{ fmt(currency.money) }}</span>
+          <span class="xy-coin">灵韵 {{ fmt(currency.xianyuan) }}</span>
           <span class="xy-coin">流派 {{ currentSchoolName }}</span>
         </div>
       </section>
@@ -133,14 +133,18 @@ import { storeToRefs } from 'pinia'
 import { useNotificationStore } from '@/presentation/stores/notificationStore'
 
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { formatDisplayNumber } from '@/shared/utils/math'
 import { usePlayerStore } from '@/presentation/stores/playerStore'
 import { usePackStore } from '@/presentation/stores/packStore'
-import { playerConfig, BREAK_NODES, breakNodeLabel, nextBreakNode } from '../../playerProfile'
+import { playerConfig, BREAK_NODES, breakNodeLabel, breakReady, nextBreakNode } from '../../playerProfile'
 import { useCharacterAttrs } from '../../characterAttrs'
 import { schools } from '../../xiyouData'
 import { progressQuests } from '../../questProgress'
 
 const notification = useNotificationStore()
+
+/** 货币/经验等计数显示统一走 formatDisplayNumber（浮点尾数不出屏，与属性面板同口径） */
+const fmt = (n: number): string => formatDisplayNumber(n)
 
 const { player, currency, statPoints } = storeToRefs(usePlayerStore())
 const pack = usePackStore()
@@ -235,9 +239,7 @@ const breakNode = computed(() => nextBreakNode(player.value.breakStage ?? 0))
 const breakNodeCn = computed(() => (breakNode.value ? breakNodeLabel(breakNode.value.stage) : ''))
 const breakPillCount = computed(() => (breakNode.value ? pack.countOf(breakNode.value.pillId) : 0))
 const breakLevelReady = computed(() => !!breakNode.value && player.value.level >= breakNode.value.level - 1)
-const canBreak = computed(
-  () => !!breakNode.value && breakLevelReady.value && breakPillCount.value >= 1 && currency.value.money >= (breakNode.value?.money ?? 0),
-)
+const canBreak = computed(() => breakReady(breakNode.value, player.value.level, breakPillCount.value, currency.value.money))
 
 function doBreak(): void {
   const node = breakNode.value

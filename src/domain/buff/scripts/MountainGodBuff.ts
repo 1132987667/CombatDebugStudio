@@ -6,7 +6,7 @@ export class MountainGodBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_mountain_god'
 
   protected _onApply(context: BuffContext): void {
-    this.log(context, '山神降临！获得强大的力量')
+    this.log(context, '古桃之怒！妖气涌遍全身')
 
     // 添加攻击力和防御力提升
     const attackBonus = this.getConfigValue(context, 'attackBonus', 50)
@@ -37,20 +37,20 @@ export class MountainGodBuff extends BaseBuffScript {
   }
 
   protected _onRemove(context: BuffContext): void {
-    this.log(context, '山神之力消散')
+    this.log(context, '古桃之怒消散')
   }
 
   protected _onUpdate(context: BuffContext): void {
     // 每回合恢复少量气血值
     const regeneration = this.getConfigValue(context, 'regeneration', 5)
-    this.log(context, `山神的祝福：恢复 ${regeneration} 气血值`)
+    this.log(context, `古桃的庇佑：恢复 ${regeneration} 气血值`)
     this.triggerEvent(context, StepEffectType.HEAL, {
       amount: regeneration,
     })
   }
 
   protected _onRefresh(context: BuffContext): void {
-    this.log(context, '山神之力得到强化！')
+    this.log(context, '古桃之怒愈演愈烈！')
 
     // 刷新时增加额外的攻击力
     const refreshBonus = this.getConfigValue(context, 'refreshBonus', 10)

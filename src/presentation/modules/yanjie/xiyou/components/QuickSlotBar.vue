@@ -38,6 +38,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePackStore } from '@/presentation/stores/packStore'
+import { itemName } from '../caveLogic'
 
 defineProps<{ open: boolean }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
@@ -52,8 +53,9 @@ const consumables = computed(() => {
     .sort((a, b) => a.rarity - b.rarity)
 })
 
+/** 槽位名走 caveLogic.itemName 单源（目录 + 灵宠/坐骑个体名兜底，与掉落 chip/战斗日志同一套映射） */
 function nameOf(itemId: string): string {
-  return pack.catalogById(itemId)?.name ?? itemId
+  return itemName(itemId)
 }
 
 /** 快捷栏品级色类（px-qs-q1..q5，数字类；色值对齐 quality.ts QUALITY_COLORS） */

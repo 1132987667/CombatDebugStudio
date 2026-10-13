@@ -1675,8 +1675,11 @@ export class BattleExecutor {
     const currentTurn = battle.currentTurn
 
     //  开始缓冲 BEFORE_ATTACK 的 sub 日志
+    // NOTE: begin 与 flush 必须成对跨异常——主体包在 try/finally 里（缩进保持原样以压
+    //       小 diff）。此前中间隔着多个 await 动画点且无 finally，结算一旦抛错 _buffering
+    //       永久为 true，此后所有 sub 战斗日志被吞进缓冲不再上屏。
     LoggerProvider.logger.beginBufferSubLogs()
-
+    try {
     this.passiveSkillManager.triggerPassives(
       source,
       createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle, {
@@ -1750,7 +1753,7 @@ export class BattleExecutor {
       await this.executeComboSegments(action, source, target, battle, record, attackStep)
     }
 
-    //  action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
+    //  action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志（finally 兜底，见上方 begin 处 NOTE）
     LoggerProvider.logger.flushBufferedSubLogs()
 
     // 回填最终伤害到记录
@@ -1780,6 +1783,10 @@ export class BattleExecutor {
 
     this.recordBattleAction(battle, action)
     return action
+    } finally {
+      // 异常路径也必须刷缓冲并复位 _buffering，否则后续战斗日志全部被吞
+      LoggerProvider.logger.flushBufferedSubLogs()
+    }
   }
 
   /**

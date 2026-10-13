@@ -770,6 +770,48 @@ export const BattleTriggerPhase = {
 export type BattleTriggerPhase =
   (typeof BattleTriggerPhase)[keyof typeof BattleTriggerPhase]
 
+/**
+ * 各触发事件的「事件主体」字段约定（单源）。
+ *
+ * 触发事件经 TriggerEventBus 按 phase 广播到所有监听器（与持有者无关），监听方
+ * （BuffSystem.registerTriggersForInstance）据此过滤：只有持有者是事件主体时才触发。
+ * 发射方必须按本表填写主体字段：
+ * - 'source'：主体在 sourceId——回合/行动/战斗生命周期类按 per-participant 逐单位广播
+ *   （BATTLE_START / TURN_START / TURN_END / ACTION_*），CRIT 为来源侧（打出暴击），
+ *   SKILL_USE / ON_KILL / BEFORE_ATTACK / AFTER_ATTACK / ON_HIT 为攻击者视角；
+ * - 'target'：主体在 targetId——结算类按每次结算广播，sourceId 是交互对方（可为空）：
+ *   DAMAGE_TAKEN / HEAL_RECEIVED / ALLY_* / SHIELD_BREAK（持有者侧）/ ON_DEATH /
+ *   DODGE / ON_REVIVE / HP_LOWER_THAN / CONDITION_CHANGED / ON_APPLY / BATTLE_END。
+ *
+ * Record 强制穷举：新增 phase 时必须同时声明主体字段，防止消费端遗漏。
+ */
+export const TRIGGER_SUBJECT_FIELD: Record<BattleTriggerPhase, 'source' | 'target'> = {
+  [BattleTriggerPhase.BATTLE_START]: 'source',
+  [BattleTriggerPhase.BATTLE_END]: 'target',
+  [BattleTriggerPhase.TURN_START]: 'source',
+  [BattleTriggerPhase.TURN_END]: 'source',
+  [BattleTriggerPhase.BEFORE_ATTACK]: 'source',
+  [BattleTriggerPhase.ON_HIT]: 'source',
+  [BattleTriggerPhase.AFTER_ATTACK]: 'source',
+  [BattleTriggerPhase.ACTION_END]: 'source',
+  [BattleTriggerPhase.ACTION_START]: 'source',
+  [BattleTriggerPhase.DAMAGE_TAKEN]: 'target',
+  [BattleTriggerPhase.ON_KILL]: 'source',
+  [BattleTriggerPhase.ON_DEATH]: 'target',
+  [BattleTriggerPhase.HEAL_RECEIVED]: 'target',
+  [BattleTriggerPhase.ENERGY_GAINED]: 'source',
+  [BattleTriggerPhase.SKILL_USE]: 'source',
+  [BattleTriggerPhase.HP_LOWER_THAN]: 'target',
+  [BattleTriggerPhase.ALLY_FATAL_DAMAGE]: 'target',
+  [BattleTriggerPhase.ALLY_DAMAGE_TAKEN]: 'target',
+  [BattleTriggerPhase.ON_APPLY]: 'target',
+  [BattleTriggerPhase.CONDITION_CHANGED]: 'target',
+  [BattleTriggerPhase.DODGE]: 'target',
+  [BattleTriggerPhase.ON_REVIVE]: 'target',
+  [BattleTriggerPhase.CRIT]: 'source',
+  [BattleTriggerPhase.SHIELD_BREAK]: 'target',
+}
+
 /** 旧风格阶段名（ON_TURN_START 等）→ 标准化阶段名映射，供 JSON 配置向后兼容 */
 export const OLD_PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
   ON_TURN_START: BattleTriggerPhase.TURN_START,

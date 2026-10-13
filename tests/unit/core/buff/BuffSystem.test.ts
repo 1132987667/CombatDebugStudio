@@ -255,7 +255,8 @@ describe('BuffSystem', () => {
       const callback = registration![1] as (ctx: Record<string, unknown>) => void
 
       // 修复前：抛错一路逃到行动层 catch，整个行动降级为默认行动，已结算的扣血不回滚
-      expect(() => callback({ currentTurn: 1 })).not.toThrow()
+      // ctx 需携带事件主体（targetId=持有者）以通过 P0-2 主体过滤
+      expect(() => callback({ currentTurn: 1, targetId: 'char_1' })).not.toThrow()
       expect(fired).toBe(1)
       expect(buffSystem.getBuffInstances('char_1').map((b) => b.id)).toContain(instanceId)
     })

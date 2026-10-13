@@ -10,6 +10,7 @@ import {
   BattleTriggerPhase,
   StepExecutionContext,
   normalizeTriggerPhase,
+  TRIGGER_SUBJECT_FIELD,
   type BattleEntity,
 } from '@/domain/battle/type/types'
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'
@@ -417,6 +418,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const state = runtime[t]
 
       const callback = (ctx: TriggerEventContext) => {
+        // NOTE: 事件主体过滤——触发事件按 phase 广播到所有监听器（与持有者无关），触发器
+        //       只应在持有者是事件主体时执行。回合/行动类主体在 sourceId（per-participant
+        //       广播，缺此过滤时"回合开始回复 5%"会在每个单位的回合各触发一次，N 人局放大
+        //       N 倍）；结算类主体在 targetId（sourceId 是交互对方或空，按 sourceId 过滤会
+        //       让反伤打到攻击者自己）。字段约定单源见 TRIGGER_SUBJECT_FIELD。
+        const subjectId =
+          TRIGGER_SUBJECT_FIELD[phase] === 'source' ? ctx.sourceId : ctx.targetId
+        if ((subjectId ?? '') !== characterId) return
         // 概率检查
         if (
           trigger.probability !== undefined &&

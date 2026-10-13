@@ -27,13 +27,14 @@ function getSourceTeam(ctx: TriggerExecutionContext): string | undefined {
 /** heal_percent_max_hp — 按最大气血值百分比治疗目标 */
 export function healPercentMaxHp(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percent as number) ?? 0.05
-  const targetId =
-    (ctx.params?.target as string) === 'self'
-      ? (ctx.targetId ?? '')
-      : (ctx.targetId ?? '')
+  const targetId = ctx.targetId ?? ''
   if (!targetId) return
-  // ponytail: 通过负 damage 实现百分比治疗; requestHeal(0) 曾在此处但会触发无效回调链
-  ctx.buffSystem?.requestDamage(targetId, 0, -Math.abs(percent))
+  // NOTE: 修复参数错位——负值必须传 damagePercent 参数位（第 4 参），
+  //       BattleSystem 回调的负百分比分支按最大气血百分比治疗。
+  //       原实现把负数放入 rawDamage 位（第 3 参）且 damage=0，回调三个分支全不
+  //       命中，治疗静默失效（与 dealDotDamage 当年同类错位）。不走 requestHeal
+  //       以避免触发 HEAL_RECEIVED 被动循环。
+  ctx.buffSystem?.requestDamage(targetId, 0, undefined, -Math.abs(percent))
 }
 
 /** heal_lowest_hp_ally — 治疗血量最低的队友 */
@@ -54,8 +55,9 @@ export function healLowestHpAlly(ctx: TriggerExecutionContext): void {
       ? a
       : b,
   )
-  // ponytail: 同上，不调用 requestHeal(0) 以避免触发 HEAL_RECEIVED 被动循环
-  ctx.buffSystem?.requestDamage(lowest.id, 0, -percent)
+  // NOTE: 负值传 damagePercent 位（错位修复说明同 healPercentMaxHp），
+  //       不走 requestHeal 以避免触发 HEAL_RECEIVED 被动循环
+  ctx.buffSystem?.requestDamage(lowest.id, 0, undefined, -percent)
 }
 
 /** heal_all_allies — 治疗所有队友 */
@@ -69,8 +71,8 @@ export function healAllAllies(ctx: TriggerExecutionContext): void {
     (p: BattleEntity) => p.team === sourceTeam && p.isAlive?.(),
   )
   for (const ally of allies) {
-    // 百分比治疗路径已通过 requestDamage 处理，固定值 0 无需触发回调链
-    ctx.buffSystem?.requestDamage(ally.id, 0, -percent)
+    // NOTE: 负值传 damagePercent 位（错位修复说明同 healPercentMaxHp）
+    ctx.buffSystem?.requestDamage(ally.id, 0, undefined, -percent)
   }
 }
 
